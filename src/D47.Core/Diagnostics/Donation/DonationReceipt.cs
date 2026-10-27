@@ -17,6 +17,12 @@ public sealed record DonationOutcome(bool Sent, string? Key, string Said)
         new(Sent: false, Key: null, said);
 }
 
+/// <summary>Which of several parts of one donation an envelope is.</summary>
+public readonly record struct DonationPart(int Number, int Of)
+{
+    public string Label => $"part {Number} of {Of}";
+}
+
 /// <summary>The donor's own copy, written on this machine at the moment of sending (#175).</summary>
 public static class DonationReceipt
 {
@@ -26,9 +32,11 @@ public static class DonationReceipt
     /// </summary>
     /// <param name="envelope">What is being sent.</param>
     /// <returns>The document's name, and the receipt's.</returns>
-    public static (string Document, string Receipt) NamesFor(DonationEnvelope envelope)
+    public static (string Document, string Receipt) NamesFor(
+        DonationEnvelope envelope, DonationPart? part = null)
     {
-        var stem = $"{DonationEnvelope.Stamp(envelope.TakenAt)}-{envelope.Kind}";
+        var stem = $"{DonationEnvelope.Stamp(envelope.TakenAt)}-{envelope.Kind}"
+            + (part is { Of: > 1 } p ? $"-part{p.Number}of{p.Of}" : string.Empty);
         return ($"{stem}.md", $"{stem}.receipt.md");
     }
 
@@ -43,6 +51,7 @@ public static class DonationReceipt
     /// <param name="documentIsPayload">
     /// Whether <paramref name="document"/> is the payload byte for byte.
     /// </param>
+    /// <param name="part">Which part this is, where the donation went in several.</param>
     public static string? Write(
         IFileSystem files,
         string folder,
@@ -50,9 +59,10 @@ public static class DonationReceipt
         DonationOutcome outcome,
         string destination,
         string document,
-        bool documentIsPayload)
+        bool documentIsPayload,
+        DonationPart? part = null)
     {
-        var (documentName, receiptName) = NamesFor(envelope);
+        var (documentName, receiptName) = NamesFor(envelope, part);
 
         try
         {
@@ -62,7 +72,7 @@ public static class DonationReceipt
             var receipt = Path.Combine(folder, receiptName);
             files.WriteText(
                 receipt,
-                Render(envelope, outcome, destination, documentName, documentIsPayload));
+                Render(envelope, outcome, destination, documentName, documentIsPayload, part));
 
             return receipt;
         }
@@ -78,7 +88,8 @@ public static class DonationReceipt
         DonationOutcome outcome,
         string destination,
         string documentName,
-        bool documentIsPayload)
+        bool documentIsPayload,
+        DonationPart? part = null)
     {
         var receipt = new StringBuilder();
 
@@ -98,6 +109,11 @@ public static class DonationReceipt
         receipt.AppendLine("| | |");
         receipt.AppendLine("|---|---|");
         receipt.AppendLine($"| What kind | {Describe(envelope.Kind)} |");
+        if (part is { Of: > 1 } which)
+        {
+            receipt.AppendLine($"| Which part | {which.Label} |");
+        }
+
         receipt.AppendLine($"| Format | {envelope.Format.ToString(CultureInfo.InvariantCulture)} |");
         receipt.AppendLine($"| Your donation identifier | `{envelope.Donor ?? "none"}` |");
         receipt.AppendLine($"| Cut from build | {envelope.Build} |");

@@ -56,6 +56,10 @@ above the buttons counts the files as it goes.
    The report lists every kind of event included, with one real scrubbed line of each.
 2. Press **SEND IT**.
 
+A very long history is too large for one upload, so it is sent in parts. The report says how many,
+the progress line says which part is sending, and your one yes covers all of them. Each part is a
+donation of its own with its own receipt, and **Take back my donations** erases every part.
+
 Rather not send it over the network? **SAVE IT INSTEAD…** writes the scrubbed history to a file, and
 what you do with that file is up to you.
 

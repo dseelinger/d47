@@ -1568,6 +1568,7 @@ public partial class MainWindow : Window
         var logger = _host?.Loggers.CreateLogger("Corpus");
 
         Pseudonyms? names = null;
+        CorpusSurvey? surveyed = null;
         var from = DateTimeOffset.MinValue;
 
         Func<CorpusScope, IProgress<int>, CancellationToken, Task<Controls.HelpImprovePage.CorpusReading>> read =
@@ -1581,6 +1582,7 @@ public partial class MainWindow : Window
                     from = scope.From(now);
 
                     var survey = CorpusDonation.Survey(host.Files, folder, from, now, names, logger, progress, cancel);
+                    surveyed = survey;
 
                     return new Controls.HelpImprovePage.CorpusReading(
                         survey,
@@ -1610,6 +1612,26 @@ public partial class MainWindow : Window
                 },
                 cancel);
 
+        Func<IReadOnlyList<string>, Stream, IProgress<int>, CancellationToken, Task> writePart =
+            (files, stream, progress, cancel) => Task.Run(
+                () =>
+                {
+                    if (names is not { } standIns)
+                    {
+                        return;
+                    }
+
+                    using var writer = new StreamWriter(
+                        stream,
+                        new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+                        bufferSize: 65536,
+                        leaveOpen: true);
+
+                    CorpusDonation.Write(
+                        host.Files, folder, from, now, standIns, writer, logger, progress, cancel, files);
+                },
+                cancel);
+
         // The sends are null where there is nowhere to send, which is what makes each send button appear only
         // when it can work — the same rule the button itself follows.
         await Panel.Open(new Controls.HelpImprovePage(
@@ -1623,7 +1645,15 @@ public partial class MainWindow : Window
             write,
             dispatch.CanSend
                 ? (report, progress, cancel) =>
-                    dispatch.SendCorpusAsync(report, write, paperwork, progress, cancel)
+                    dispatch.SendCorpusAsync(
+                        report,
+                        surveyed?.Parts() is { Count: > 1 } parts ? parts : [[]],
+                        (files, stream, counted, token) => files.Count == 0
+                            ? write(stream, counted, token)
+                            : writePart(files, stream, counted, token),
+                        paperwork,
+                        progress,
+                        cancel)
                 : null,
 
             // The way back out, on the page that sent it (#295).

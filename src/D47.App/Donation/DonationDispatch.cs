@@ -26,7 +26,10 @@ public sealed record DonationForgotten(ErasureOutcome Outcome, string? Receipt);
 /// <param name="Files">How many journal files have been read.</param>
 /// <param name="Sent">How many compressed bytes have been handed to the network stack.</param>
 /// <param name="Total">How many there are altogether.</param>
-public sealed record DonationStep(bool Sending, int Files, long Sent = 0, long Total = 0)
+/// <param name="Part">Which part is in hand, counting from one.</param>
+/// <param name="Parts">How many parts the donation goes in.</param>
+public sealed record DonationStep(
+    bool Sending, int Files, long Sent = 0, long Total = 0, int Part = 1, int Parts = 1)
 {
     /// <summary>
     /// How far along, nought to one — or null where there is nothing to draw: the preparing step, which
@@ -168,12 +171,48 @@ public sealed class DonationDispatch
     /// The report that was on screen when the Commander said yes.
     /// </param>
     /// <param name="write">Writes the payload to a stream.</param>
-    public async Task<DonationSent> SendCorpusAsync(
+    public Task<DonationSent> SendCorpusAsync(
         string consentDocument,
         Func<Stream, IProgress<int>, CancellationToken, Task> write,
         ExcerptPaperwork paperwork,
         IProgress<DonationStep>? progress = null,
-        CancellationToken cancel = default)
+        CancellationToken cancel = default) =>
+        SendPartsAsync(
+            consentDocument,
+            partCount: 1,
+            (_, stream, counted, token) => write(stream, counted, token),
+            paperwork,
+            progress,
+            cancel);
+
+    /// <summary>
+    /// The same send for a history too large for one request: each entry of <paramref name="parts"/> is
+    /// the journal file names of one part, posted as a donation of its own, in order, stopping at the
+    /// first that is refused.
+    /// </summary>
+    public Task<DonationSent> SendCorpusAsync(
+        string consentDocument,
+        IReadOnlyList<IReadOnlyList<string>> parts,
+        Func<IReadOnlyList<string>, Stream, IProgress<int>, CancellationToken, Task> writePart,
+        ExcerptPaperwork paperwork,
+        IProgress<DonationStep>? progress = null,
+        CancellationToken cancel = default) =>
+        SendPartsAsync(
+            consentDocument,
+            Math.Max(parts.Count, 1),
+            (index, stream, counted, token) => writePart(
+                index < parts.Count ? parts[index] : [], stream, counted, token),
+            paperwork,
+            progress,
+            cancel);
+
+    private async Task<DonationSent> SendPartsAsync(
+        string consentDocument,
+        int partCount,
+        Func<int, Stream, IProgress<int>, CancellationToken, Task> write,
+        ExcerptPaperwork paperwork,
+        IProgress<DonationStep>? progress,
+        CancellationToken cancel)
     {
         var endpoint = _endpoint();
 
@@ -187,12 +226,60 @@ public sealed class DonationDispatch
         }
 
         var donor = DonorToken.Ensure(_files, _paths.DonorTokenFile);
+        string? firstReceipt = null;
+        string? firstKey = null;
+
+        for (var index = 0; index < partCount; index++)
+        {
+            DonationPart? part = partCount > 1 ? new DonationPart(index + 1, partCount) : null;
+            var sent = await SendPartAsync(
+                consentDocument, donor, endpoint, index, partCount, part, write, paperwork, progress, cancel);
+
+            if (partCount == 1)
+            {
+                return sent;
+            }
+
+            firstReceipt ??= sent.Receipt;
+            firstKey ??= sent.Outcome.Key;
+
+            if (!sent.Outcome.Sent)
+            {
+                var said = index == 0
+                    ? $"Nothing was stored. Part 1 of {partCount}: {sent.Outcome.Said}"
+                    : $"{index} of {partCount} parts were stored. Part {index + 1} of {partCount}: "
+                      + $"{sent.Outcome.Said} No later part was sent.";
+
+                return new DonationSent(DonationOutcome.Refused(said), firstReceipt);
+            }
+        }
+
+        return new DonationSent(
+            new DonationOutcome(
+                Sent: true,
+                firstKey,
+                $"Sent in {partCount} parts. The store has all of them."),
+            firstReceipt);
+    }
+
+    private async Task<DonationSent> SendPartAsync(
+        string consentDocument,
+        string? donor,
+        string endpoint,
+        int index,
+        int partCount,
+        DonationPart? part,
+        Func<int, Stream, IProgress<int>, CancellationToken, Task> write,
+        ExcerptPaperwork paperwork,
+        IProgress<DonationStep>? progress,
+        CancellationToken cancel)
+    {
         var files = 0;
 
         var counting = new Progress<int>(read =>
         {
             files = read;
-            progress?.Report(new DonationStep(Sending: false, read));
+            progress?.Report(new DonationStep(Sending: false, read, Part: index + 1, Parts: partCount));
         });
 
         DonationEnvelope envelope;
@@ -202,12 +289,14 @@ public sealed class DonationDispatch
         {
             Directory.CreateDirectory(_paths.Donations);
 
-            // **Beside the executable in data\, like everything else d47 writes**, rather than in the system
+            // Beside the executable in data\, like everything else d47 writes, rather than in the system
             // temp folder — and DeleteOnClose, so the spool goes whatever happens to this method, including a
             // process that never reaches the finally.
             var spooled = Path.Combine(
                 _paths.Donations,
-                $"{DonationEnvelope.Stamp(paperwork.TakenAt)}-{DonationEnvelope.Corpus}.sending");
+                $"{DonationEnvelope.Stamp(paperwork.TakenAt)}-{DonationEnvelope.Corpus}"
+                + (part is { } p ? $"-part{p.Number}of{p.Of}" : string.Empty)
+                + ".sending");
 
             await using var spool = new FileStream(
                 spooled,
@@ -217,7 +306,8 @@ public sealed class DonationDispatch
                 bufferSize: 64 * 1024,
                 FileOptions.DeleteOnClose | FileOptions.Asynchronous);
 
-            var (bytes, sha256) = await SpoolAsync(spool, write, counting, cancel);
+            var (bytes, sha256) = await SpoolAsync(
+                spool, (stream, counted, token) => write(index, stream, counted, token), counting, cancel);
 
             await spool.FlushAsync(cancel);
             spool.Position = 0;
@@ -225,17 +315,29 @@ public sealed class DonationDispatch
             // The denominator, read once, off the spool that holds exactly what will be posted.
             var wire = spool.Length;
 
-            progress?.Report(new DonationStep(Sending: true, files, Sent: 0, Total: wire));
-
             envelope = DonationEnvelope.For(
                 DonationEnvelope.Corpus, donor, paperwork, bytes, sha256);
 
-            outcome = await _upload.SendAsync(
-                endpoint,
-                envelope,
-                spool,
-                progress is null ? null : new Uploading(progress, files, wire),
-                cancel);
+            if (wire > DonationUpload.MostCorpusBytes)
+            {
+                outcome = DonationOutcome.Refused(
+                    $"{(part is { } named ? $"Part {named.Number} of {named.Of}" : "The donation")} is "
+                    + $"{wire / (1024 * 1024)} MiB compressed, over the "
+                    + $"{DonationUpload.MostCorpusBytes / (1024 * 1024)} MiB the store takes, so nothing "
+                    + "was sent. Choose a shorter span.");
+            }
+            else
+            {
+                progress?.Report(
+                    new DonationStep(Sending: true, files, Sent: 0, Total: wire, index + 1, partCount));
+
+                outcome = await _upload.SendAsync(
+                    endpoint,
+                    envelope,
+                    spool,
+                    progress is null ? null : new Uploading(progress, files, wire, index + 1, partCount),
+                    cancel);
+            }
         }
         catch (OperationCanceledException)
         {
@@ -253,7 +355,7 @@ public sealed class DonationDispatch
                 Receipt: null);
         }
 
-        // **documentIsPayload: false, and never guessed from the kind.** What is kept beside the executable
+        // documentIsPayload: false, and never guessed from the kind. What is kept beside the executable
         // is the report the Commander read; the payload itself is hundreds of megabytes and a second copy of
         // it on their own disk would tell them nothing the hash does not.
         var receipt = DonationReceipt.Write(
@@ -263,7 +365,8 @@ public sealed class DonationDispatch
             outcome,
             DonationUpload.Destination(endpoint),
             consentDocument,
-            documentIsPayload: false);
+            documentIsPayload: false,
+            part);
 
         if (receipt is null)
         {
@@ -329,17 +432,21 @@ public sealed class DonationDispatch
         private readonly IProgress<DonationStep> _steps;
         private readonly int _files;
         private readonly long _total;
+        private readonly int _part;
+        private readonly int _parts;
 
-        public Uploading(IProgress<DonationStep> steps, int files, long total)
+        public Uploading(IProgress<DonationStep> steps, int files, long total, int part, int parts)
         {
             _steps = steps;
             _files = files;
             _total = total;
+            _part = part;
+            _parts = parts;
         }
 
         // The file count travels on through the send.
         public void Report(long sent) =>
-            _steps.Report(new DonationStep(Sending: true, _files, sent, _total));
+            _steps.Report(new DonationStep(Sending: true, _files, sent, _total, _part, _parts));
     }
 
     /// <summary>Writes the payload into the spool, compressing it and hashing it in one pass.</summary>

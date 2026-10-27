@@ -38,13 +38,55 @@ public sealed record CorpusTally(
 /// <param name="Kinds">
 /// One entry per distinct event kind, with a real scrubbed instance of each.
 /// </param>
+/// <param name="FileBytes">
+/// The scrubbed bytes each journal file contributes, oldest first; files that contribute nothing are absent.
+/// </param>
 public sealed record CorpusSurvey(
     DateTimeOffset? First,
     DateTimeOffset? Last,
     int Files,
     long Bytes,
     CorpusTally Tally,
-    IReadOnlyList<KindCensus> Kinds);
+    IReadOnlyList<KindCensus> Kinds,
+    IReadOnlyList<CorpusFileBytes>? FileBytes = null)
+{
+    /// <summary>The most scrubbed payload one part carries.</summary>
+    public const long MostPartBytes = 256L * 1024 * 1024;
+
+    /// <summary>
+    /// The journal file names of each part, oldest first. Parts split only between files; a file larger
+    /// than <paramref name="mostBytes"/> is a part on its own.
+    /// </summary>
+    public IReadOnlyList<IReadOnlyList<string>> Parts(long mostBytes = MostPartBytes)
+    {
+        var parts = new List<IReadOnlyList<string>>();
+        var current = new List<string>();
+        var size = 0L;
+
+        foreach (var (name, bytes) in FileBytes ?? [])
+        {
+            if (current.Count > 0 && size + bytes > mostBytes)
+            {
+                parts.Add(current);
+                current = [];
+                size = 0;
+            }
+
+            current.Add(name);
+            size += bytes;
+        }
+
+        if (current.Count > 0)
+        {
+            parts.Add(current);
+        }
+
+        return parts;
+    }
+}
+
+/// <summary>One journal file and the scrubbed bytes it contributes.</summary>
+public sealed record CorpusFileBytes(string Name, long Bytes);
 
 /// <summary>
 /// Reads a whole journal history, scrubs it, and describes the result without holding it (#174).
@@ -68,10 +110,11 @@ public static class CorpusDonation
         var messages = 0;
         var links = 0;
         var bytes = 0L;
+        var perFile = new List<CorpusFileBytes>();
         DateTimeOffset? first = null;
         DateTimeOffset? last = null;
 
-        var walked = Walk(fileSystem, folder, from, to, names, logger, progress, cancel, (entry, scrubbed) =>
+        var walked = Walk(fileSystem, folder, from, to, names, logger, progress, cancel, null, (file, entry, scrubbed) =>
         {
             census.Saw(entry.Kind, entry.Compact, scrubbed.Json);
 
@@ -86,7 +129,17 @@ public static class CorpusDonation
             links += scrubbed.FieldsDropped;
 
             // The payload is one line per event, so the newline is part of what it will weigh.
-            bytes += line.Length + Environment.NewLine.Length;
+            var weight = line.Length + Environment.NewLine.Length;
+            bytes += weight;
+
+            if (perFile.Count > 0 && perFile[^1].Name == file)
+            {
+                perFile[^1] = perFile[^1] with { Bytes = perFile[^1].Bytes + weight };
+            }
+            else
+            {
+                perFile.Add(new CorpusFileBytes(file, weight));
+            }
 
             first ??= entry.Timestamp;
             last = entry.Timestamp;
@@ -98,13 +151,15 @@ public static class CorpusDonation
             walked.Files,
             bytes,
             new CorpusTally(events, withheld, names.Count, messages, links, walked.Unreadable),
-            census.Kinds);
+            census.Kinds,
+            perFile);
     }
 
     /// <summary>
     /// Walks it again and writes the payload, one scrubbed event per line, oldest first — the order a
     /// replay needs, which is the order this is collected for.
     /// </summary>
+    /// <param name="only">The journal file names to write, or null for every file in range.</param>
     /// <returns>What actually travelled, so a caller can check it against the survey.</returns>
     public static CorpusTally Write(
         IFileSystem fileSystem,
@@ -115,14 +170,15 @@ public static class CorpusDonation
         TextWriter sink,
         ILogger? logger = null,
         IProgress<int>? progress = null,
-        CancellationToken cancel = default)
+        CancellationToken cancel = default,
+        IReadOnlyCollection<string>? only = null)
     {
         var events = 0;
         var withheld = 0;
         var messages = 0;
         var links = 0;
 
-        var walked = Walk(fileSystem, folder, from, to, names, logger, progress, cancel, (_, scrubbed) =>
+        var walked = Walk(fileSystem, folder, from, to, names, logger, progress, cancel, only, (_, _, scrubbed) =>
         {
             if (scrubbed.Json is not { } line)
             {
@@ -155,7 +211,8 @@ public static class CorpusDonation
         ILogger? logger,
         IProgress<int>? progress,
         CancellationToken cancel,
-        Action<JournalEntry, ScrubbedLine> onEvent)
+        IReadOnlyCollection<string>? only,
+        Action<string, JournalEntry, ScrubbedLine> onEvent)
     {
         var files = fileSystem
             .Enumerate(folder, JournalFolder.FilePattern)
@@ -170,6 +227,13 @@ public static class CorpusDonation
         foreach (var file in IncidentSources.Overlapping(files, from, to))
         {
             cancel.ThrowIfCancellationRequested();
+
+            var name = Path.GetFileName(file);
+
+            if (only is not null && !only.Contains(name))
+            {
+                continue;
+            }
 
             // One file's events, then let them go.
             var log = new JournalLog(keep: int.MaxValue);
@@ -200,7 +264,7 @@ public static class CorpusDonation
 
             foreach (var entry in log.Entries)
             {
-                onEvent(entry, JournalScrub.Line(entry.Compact, names));
+                onEvent(name, entry, JournalScrub.Line(entry.Compact, names));
             }
 
             opened++;

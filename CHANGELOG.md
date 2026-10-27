@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A journal history too large for one upload is now sent in parts, split between journal files. The report says how many parts, the progress line says which is sending, and each part has its own receipt. A refused part stops the rest, and the outcome says how many parts the store has.
+
 A donated journal no longer carries a crewmate's name on boarding or leaving a ship, and a player name that was replaced in one field is replaced in every other field that holds the same value.
 
 An Operation in a journal written by game 4.4.0, which has no mode-change line, is now recognised from the docked arrival at the Operations runner, so history and replay no longer count its location, missions and signals as ordinary play.

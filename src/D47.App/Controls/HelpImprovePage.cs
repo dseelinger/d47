@@ -959,7 +959,9 @@ public sealed class HelpImprovePage : DialogPage
                 return;
             }
 
-            _status.Text = step switch
+            var which = step.Parts > 1 ? $"Part {step.Part} of {step.Parts} — " : string.Empty;
+
+            _status.Text = which + step switch
             {
                 { Sending: false } =>
                     $"Preparing what you are sharing — {step.Files:N0} journal files so far",

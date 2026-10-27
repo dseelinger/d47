@@ -21,6 +21,9 @@ public sealed class DonationUpload
     /// <summary>The path a withdrawal is posted to (#167).</summary>
     public const string ForgetPath = "forget";
 
+    /// <summary>The most compressed bytes the Worker takes for a corpus (<c>KINDS.corpus.mostBytes</c>).</summary>
+    public const long MostCorpusBytes = 96L * 1024 * 1024;
+
     /// <summary>How long one donation may take.</summary>
     public static readonly TimeSpan Patience = TimeSpan.FromMinutes(10);
 

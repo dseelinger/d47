@@ -46,7 +46,7 @@ defect and a history is test data, and neither is any use unread. The copy is on
 donation, in one folder, made by a utility that holds a read-only credential and can neither write
 to the store nor delete from it. It is not a second store: when the object goes — because you asked
 for it to be deleted, or because an excerpt reached its 30 days — the copy goes with it, the next
-time that utility is opened.
+time that utility is opened. A history too long for one upload arrives as several donations, one file per part.
 
 **What is not covered is a copy you carried somewhere yourself.** The review window can also put
 the excerpt on your clipboard or save it to a file, and where it goes after that is where it went.

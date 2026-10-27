@@ -33,6 +33,15 @@ public static class CorpusReport
             + $"{Count(survey.Tally.Events, "event")}, "
             + $"{Count(kinds.Count, "distinct event kind")}, {Size(survey.Bytes)}.");
 
+        if (survey.Parts().Count is > 1 and var parts)
+        {
+            report.AppendLine();
+            report.AppendLine(
+                $"**Sent in {parts} parts.** The history is too large for one upload, so it goes as "
+                + $"{parts} separate donations, split between journal files. Your yes covers all of "
+                + "them, and each is stored and can be taken back like any other donation.");
+        }
+
         report.AppendLine();
         report.AppendLine(
             "**What it is for.** Two things. It is test data: it may be run through the same code "
