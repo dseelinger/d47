@@ -281,6 +281,8 @@ public sealed record ShipLoadout
 
         // Renaming does not re-emit Loadout, so without this the ship would keep answering to the name it had
         // when it was last outfitted.
+        "SetUserShipName" when IsKnown && journalEvent.Int("ShipID") is { } renamed && renamed != ShipId => this,
+
         "SetUserShipName" => this with
         {
             Name = Blank(journalEvent.String("UserShipName")) ?? Name,

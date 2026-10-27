@@ -181,6 +181,40 @@ public class GameKnowledgeTests
     }
 
     [Fact]
+    public void RenamingAnotherVehicleLeavesTheFlownShipsNameAlone()
+    {
+        var ship = Fold(
+            AnacondaLoadout,
+            """{"timestamp":"3311-01-01T00:02:00Z","event":"SetUserShipName","Ship":"lander01","ShipID":99,"UserShipName":"Little Hop","UserShipID":"NM-01"}""")
+            .Ship;
+
+        Assert.NotEqual("Little Hop", ship.Name);
+        Assert.NotEqual("NM-01", ship.Ident);
+    }
+
+    [Fact]
+    public void RenamingTheFlownShipByItsIdRenamesIt()
+    {
+        var ship = Fold(
+            AnacondaLoadout,
+            """{"timestamp":"3311-01-01T00:02:00Z","event":"SetUserShipName","Ship":"Anaconda","ShipID":7,"UserShipName":"Second Wind","UserShipID":"JM-02"}""")
+            .Ship;
+
+        Assert.Equal("Second Wind", ship.Name);
+        Assert.Equal("JM-02", ship.Ident);
+    }
+
+    [Fact]
+    public void ARenameBeforeAnyLoadoutIsApplied()
+    {
+        var ship = new ShipLoadout().Apply(Event(
+            """{"timestamp":"3311-01-01T00:02:00Z","event":"SetUserShipName","Ship":"Anaconda","ShipID":7,"UserShipName":"Second Wind","UserShipID":"JM-02"}"""));
+
+        Assert.False(ship.IsKnown);
+        Assert.Equal("Second Wind", ship.Name);
+    }
+
+    [Fact]
     public void ANewLoadoutReplacesTheModuleListRatherThanMergingIntoIt()
     {
         var ship = Fold(
