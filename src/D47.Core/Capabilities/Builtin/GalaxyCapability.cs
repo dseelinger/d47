@@ -421,7 +421,7 @@ public static class GalaxyCapability
                 Name = "describe_system",
                 Description =
                     "One star system's government, allegiance, economy, population, controlling faction, "
-                    + "Powerplay and stations, as last reported, and opens its page on the panel. "
+                    + "Powerplay, main star and stations, as last reported, and opens its page on the panel. "
                     + "Leave 'system' out for the one the Commander is in.",
                 Parameters =
                 [
@@ -2065,6 +2065,20 @@ public static class GalaxyCapability
             said.Append(" Powerplay: ")
                 .Append(string.Join(", ", parts.Where(part => !string.IsNullOrWhiteSpace(part))))
                 .Append('.');
+        }
+
+        if (profile.MainStar is { } star)
+        {
+            var kind = star.SpectralClass is { } spectral
+                ? $"{spectral} {star.Luminosity}".TrimEnd()
+                : star.SubType;
+
+            if (!string.IsNullOrWhiteSpace(kind))
+            {
+                said.Append(" Main star: ").Append(kind)
+                    .Append(star.Scoopable switch { true => ", scoopable", false => ", not scoopable", null => "" })
+                    .Append('.');
+            }
         }
 
         var stations = profile.Stations

@@ -117,6 +117,40 @@ public class DescribeSystemAnswersAndOpensItsPageTests
         return tool.Handler(new ToolArguments(arguments), TestContext.Current.CancellationToken);
     }
 
+    private static BodyProfile Star(int id, string spectral, string luminosity, bool main = false) => new()
+    {
+        BodyId = id,
+        Name = $"Fixture {id}",
+        Type = "Star",
+        SpectralClass = spectral,
+        Luminosity = luminosity,
+        IsMainStar = main,
+    };
+
+    [Fact]
+    public void TheSummaryNamesTheFlaggedMainStar()
+    {
+        var said = GalaxyCapability.DescribeProfile(Profile with { Bodies = [Star(0, "K7", "V"), Star(1, "M5", "Va", main: true)] });
+
+        Assert.Contains(" Main star: M5 Va, scoopable. Stations:", said);
+    }
+
+    [Fact]
+    public void TheSummaryNamesTheLowestNumberedStarWhenNoneIsFlagged()
+    {
+        var said = GalaxyCapability.DescribeProfile(Profile with { Bodies = [Star(3, "T", "V"), Star(1, "L", "V")] });
+
+        Assert.Contains(" Main star: L V, not scoopable. Stations:", said);
+    }
+
+    [Fact]
+    public void TheSummaryNamesNoStarWhenTheProfileHasNone()
+    {
+        var said = GalaxyCapability.DescribeProfile(Profile);
+
+        Assert.DoesNotContain("Main star", said);
+    }
+
     [Fact]
     public async Task TellMeAboutANamedSystemOpensItsPage()
     {

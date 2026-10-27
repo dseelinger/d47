@@ -63,6 +63,11 @@ public sealed record StarSystemProfile
     public IReadOnlyList<BodyProfile> Bodies { get; init; } = [];
 
     public DateTimeOffset? ReportedAt { get; init; }
+
+    /// <summary>The flagged main star, else the star with the lowest <c>BodyId</c>; null with no star.</summary>
+    public BodyProfile? MainStar =>
+        Bodies.FirstOrDefault(body => body.IsMainStar)
+        ?? Bodies.Where(body => body.Type == "Star").OrderBy(body => body.BodyId).FirstOrDefault();
 }
 
 /// <summary>A minor faction in a system, its influence as a fraction of 1.</summary>

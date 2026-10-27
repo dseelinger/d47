@@ -656,7 +656,7 @@ One star system as Spansh last had it, said in a few sentences, with its page op
 ```
 
 The answer gives the government, allegiance, primary economy, population, the controlling faction
-and its state, the controlling power and its Powerplay state, how many stations of each kind, and
+and its state, the controlling power and its Powerplay state, the main star's class, luminosity and whether it is scoopable, how many stations of each kind, and
 the date of Spansh's last report. With no `system`, it describes the system the Commander is in.
 
 The panel opens **Search › System** on that system and stops following the Commander, as typing

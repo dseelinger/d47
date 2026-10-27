@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Asking about a system, such as "tell me about LTT 7786", now includes its main star: the class, the luminosity and whether you can scoop from it.
+
 Directive 47 now knows the star you are at after logging in or a carrier jump, from the scan Elite writes when you arrive, and says giant and supergiant stars in words, such as "class K orange giant".
 
 Codex pictures you save are now kept per Commander, and a codex page shows only the active Commander's. Pictures saved before this move to the first Commander whose journal is read. The setting **Share my codex pictures with my other Commanders** is off by default; ticked, every Commander's pictures are one pool.

@@ -724,10 +724,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     /// <summary>"K7 V · Scoopable": the main star's class, luminosity and whether a scoop works on it.</summary>
     public static string MainStar(StarSystemProfile profile)
     {
-        var star = profile.Bodies.FirstOrDefault(body => body.IsMainStar)
-            ?? profile.Bodies.Where(body => body.Type == "Star").OrderBy(body => body.BodyId).FirstOrDefault();
-
-        if (star is null)
+        if (profile.MainStar is not { } star)
         {
             return Dash;
         }
