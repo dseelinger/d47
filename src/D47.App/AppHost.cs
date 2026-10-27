@@ -4070,6 +4070,10 @@ public sealed class AppHost : IDisposable
         // The cores the Commander wrote, on the tick like every other store.
         tick.Add("own cores", _ => ownPersonas.Poll());
 
+        // After "journal"; the move is posted to each surface's own thread, so the tick does not wait.
+        tick.Add("codex entry page", context =>
+            host.PanelRouting.OpenDiscovered(feed.Arrived, context.IsFirst, settings.Current.Ui.OpenNewCodexEntries));
+
         tick.Add("core absences", context => host.Absences.Observe(feed.Arrived, context.IsFirst, host.Personas.Current.Id));
 
         // A core per ship (Phase 35).

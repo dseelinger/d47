@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The panel now opens the page of a new codex entry as you log it, in the window and on the headset panel, unless a dialog or keyboard entry is open there. The setting is **Open new codex entries**, on by default.
+
 Directive 47 now says "Discovered" and the name when you log a new codex entry of any kind, such as "Discovered T Tauri Star." The setting is **New codex entries** in the callouts, on by default.
 
 Planet and gas giant codex entries are now named by what the body is, such as "High metal content world with an atmosphere" or "Class II gas giant", instead of "Non Terraformable" or "Standard gas giant". The codex pages, search and transcript use the new names.

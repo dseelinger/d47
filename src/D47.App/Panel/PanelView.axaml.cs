@@ -2984,7 +2984,7 @@ public partial class PanelView : UserControl, IPanelTabHost
             return null;
         }
 
-        return () => PageTrail.Open(Nav, target.Root, target.Crumb);
+        return () => PageTrail.Open(Nav, target.Root, target.Crumbs);
     }
 
     /// <summary>Whether the fields are drawn beside the list.</summary>

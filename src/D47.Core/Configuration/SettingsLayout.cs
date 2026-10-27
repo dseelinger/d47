@@ -671,6 +671,12 @@ public static class SettingsLayout
                                 E("screenshots.folder"),
                             ]),
                         G(
+                            "Codex",
+                            "Whether a new codex entry opens its page on the panel.",
+                            [
+                                E(Capabilities.Builtin.JournalCapability.OpenNewCodexEntriesKey),
+                            ]),
+                        G(
                             "Codex publishing",
                             "The maintainer's token for publishing stock codex pictures to every Commander.",
                             [

@@ -518,6 +518,15 @@ the picture and none of them. An entry in a region D47 cannot name has none of t
 **Codex pictures** in the settings turns it off. Nothing is fetched and a codex page shows only the
 pictures you saved yourself, even for stock pictures already on disk, which are kept.
 
+### Open new codex entries {#open-new-codex-entries}
+
+When you log a codex entry for the first time, the panel opens that entry's page, in the window and on the
+headset panel: Commander › Ledgers › Codex › the region › the entry. It is on by default. A surface showing a
+dialog page or a keyboard entry stays where it is, and the others still move. When several entries are
+logged at once, the last one's page is shown. Entries replayed from the journal when D47 starts open nothing.
+
+**Open new codex entries** in the settings turns it off.
+
 ### Codex publish token {#codex-publish-token}
 
 This is for the maintainer of the stock codex pictures. The stock pictures are files on releases of the

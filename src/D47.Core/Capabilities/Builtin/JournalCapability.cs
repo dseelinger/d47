@@ -20,6 +20,8 @@ public static class JournalCapability
 
     public const string CodexPicturesKey = "journal.codexPictures";
 
+    public const string OpenNewCodexEntriesKey = "journal.openNewCodexEntries";
+
     public const string CodexPublishTokenKey = "journal.codexPublishToken";
 
     /// <param name="history">
@@ -165,6 +167,24 @@ public static class JournalCapability
                         Write = (s, v) => s with
                         {
                             Ui = s.Ui with { CodexPictures = v is not "false" },
+                        },
+                    },
+                },
+                new SettingRow
+                {
+                    Key = OpenNewCodexEntriesKey,
+                    Label = "Open new codex entries",
+                    Help =
+                        "When you log a codex entry for the first time, the panel opens that entry's page, in the window and on the headset panel. "
+                        + "A page that is open as a dialog, or a keyboard entry, stays where it is.",
+                    Kind = SettingKind.Toggle,
+                    DocsAnchor = "open-new-codex-entries",
+                    Binding = new SettingBinding
+                    {
+                        Read = s => s.Ui.OpenNewCodexEntries ? "true" : "false",
+                        Write = (s, v) => s with
+                        {
+                            Ui = s.Ui with { OpenNewCodexEntries = v is not "false" },
                         },
                     },
                 },

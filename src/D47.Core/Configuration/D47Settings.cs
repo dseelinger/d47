@@ -1227,6 +1227,9 @@ public sealed record UiSettings
     /// <summary>Whether d47 fetches stock codex pictures from a GitHub release.</summary>
     public bool CodexPictures { get; init; } = true;
 
+    /// <summary>Whether a new codex entry opens its page on every panel surface.</summary>
+    public bool OpenNewCodexEntries { get; init; } = true;
+
     /// <summary>Whether d47 fetches the avatar clips of the core aboard.</summary>
     public bool AvatarClips { get; init; } = true;
 

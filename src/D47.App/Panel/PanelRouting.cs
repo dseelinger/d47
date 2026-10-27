@@ -1,6 +1,7 @@
 using D47.Core.Capabilities;
 using D47.Core.Hotas;
 using D47.Core.Interface;
+using D47.Core.Journal;
 using D47.Core.Ships;
 using Microsoft.Extensions.Logging;
 
@@ -152,7 +153,27 @@ public sealed class PanelRouting(
     }
 
     /// <summary>Opens the page a Commander's question was about on every surface (#575).</summary>
-    public void Open(PageRef page) => PageTrail.OpenEverywhere(page, _surfaces, fleet);
+    public void Open(PageRef page) => PageTrail.OpenEverywhere(page, _surfaces, fleet, PromptHolds);
+
+    /// <summary>
+    /// Opens the page of the last new codex entry among <paramref name="arrived"/> on every surface. The first
+    /// tick replays the backlog and moves nothing.
+    /// </summary>
+    public void OpenDiscovered(IEnumerable<JournalEvent> arrived, bool first, bool enabled)
+    {
+        if (first || !enabled)
+        {
+            return;
+        }
+
+        if (arrived.Select(CodexDiscovery.Of).LastOrDefault(found => found is not null) is { } discovery)
+        {
+            Open(PageRef.CodexEntry(discovery.EntryId, discovery.RegionId, discovery.Name));
+        }
+    }
+
+    private bool PromptHolds(PanelNavigator nav) =>
+        _promptSurfaces.Any(surface => surface.Prompts.Nav == nav && surface.Prompts.IsOpen);
 
     /// <summary>Moves the page on every surface and says so, or null when the phrase was not a scroll (#34).</summary>
     public string? Scroll(string spoken)

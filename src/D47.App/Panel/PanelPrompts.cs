@@ -33,6 +33,8 @@ public sealed class PanelPrompts : IHearsText
     /// cref="PanelViewModel.ListeningPrompt"/>, which the host fills from the listening settings
     /// (remediation.md 10, item 12).
     /// </summary>
+    public PanelNavigator Nav => _nav;
+
     public Func<string?>? Waiting { get; set; }
 
     /// <summary>What each open prompt is, by the crumb key it was pushed as.</summary>
