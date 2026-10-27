@@ -262,6 +262,9 @@ public static class JournalSentence
             "LaunchSRV" => Named(raw, "SRVType") is { } srv
                 ? $"Deployed the {srv}"
                 : "Deployed the SRV",
+            "LaunchVessel" => Named(raw, "VesselType") is { } vessel
+                ? $"Launched the {vessel}"
+                : "Launched a vessel",
             "DockSRV" => "Docked the SRV",
             "SRVDestroyed" => "The SRV was destroyed",
             "RestockVehicle" => "Restocked a vehicle",

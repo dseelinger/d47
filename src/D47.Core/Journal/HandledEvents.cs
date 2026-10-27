@@ -104,6 +104,7 @@ public static class HandledEvents
         "LaunchDrone",
         "LaunchFighter",
         "LaunchSRV",
+        "LaunchVessel",
         "LeaveBody",
         "LeftSquadron",
         "Liftoff",

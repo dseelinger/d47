@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Launching the Nomad from a Mk II Vessel Hangar is now read as leaving the ship in an SRV. Kills, scenes, story SRV objectives and the journal line ("Launched the Nomad") follow it; a launch the Commander does not fly changes nothing but the journal line.
+
 Naming the Nomad no longer renames the ship you are flying. A rename for a vehicle with a different ship id is ignored.
 
 A story objective to map bodies, survey signals or analyse organic samples can now name a system, as one to drop into signal sources already could. It counts only what happens in that system, the story is told when the system cannot supply the count, and the objective's confirmation names the system.

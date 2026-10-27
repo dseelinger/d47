@@ -174,7 +174,7 @@ public sealed class SceneTracker
                 CloseFight();
                 break;
 
-            case "LaunchSRV":
+            case "LaunchSRV" or "LaunchVessel" when journalEvent.LaunchesSrv:
                 _normalSpace = false;
                 break;
 

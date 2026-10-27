@@ -163,7 +163,7 @@ public sealed partial record CombatRecord
             case "Disembark":
                 return result with { Vehicle = CombatVehicle.OnFoot };
 
-            case "LaunchSRV":
+            case "LaunchSRV" or "LaunchVessel" when journalEvent.LaunchesSrv:
                 return result with { Vehicle = CombatVehicle.Srv };
 
             case "Embark":

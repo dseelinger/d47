@@ -492,7 +492,7 @@ public static class AdventureFold
                 journalEvent.Kind is "EngineerProgress"
                 && EngineerReached(trigger, raw),
 
-            TriggerKind.Srv => journalEvent.Kind is "LaunchSRV",
+            TriggerKind.Srv => journalEvent.LaunchesSrv,
 
             TriggerKind.Crew => journalEvent.Kind is "CrewHire",
 

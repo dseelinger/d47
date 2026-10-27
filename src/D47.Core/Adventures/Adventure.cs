@@ -91,7 +91,7 @@ public enum TriggerKind
     /// <summary><c>EngineerProgress</c> reaching a stage with one engineer. Not counted.</summary>
     Engineer,
 
-    /// <summary><c>LaunchSRV</c> events.</summary>
+    /// <summary><c>LaunchSRV</c> and player-controlled <c>LaunchVessel</c> events.</summary>
     Srv,
 
     /// <summary><c>CrewHire</c> events.</summary>

@@ -9,7 +9,7 @@ public static class CombatBackfill
     private static readonly string[] Kinds =
     [
         "Commander", "LoadGame", "NewCommander", "Location", "FSDJump", "CarrierJump", "Loadout", "ShipyardSwap",
-        "LaunchSRV", "DockSRV", "Embark", "Disembark", "Bounty", "FactionKillBond",
+        "LaunchSRV", "LaunchVessel", "DockSRV", "Embark", "Disembark", "Bounty", "FactionKillBond",
     ];
 
     /// <summary>Each Commander's kills, keyed by Frontier id, over journals oldest-first.</summary>

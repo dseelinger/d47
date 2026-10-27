@@ -67,6 +67,9 @@ public sealed record JournalEvent(DateTimeOffset Timestamp, string Kind, JsonEle
 
     public bool Bool(string property) => Raw.Bool(property);
 
+    /// <summary><c>LaunchSRV</c>, or a <c>LaunchVessel</c> the Commander flies, such as the Nomad.</summary>
+    public bool LaunchesSrv => Kind is "LaunchSRV" || (Kind is "LaunchVessel" && Bool("PlayerControlled"));
+
     public int? Int(string property) => Raw.Int(property);
 
     public long? Long(string property) => Raw.Long(property);
