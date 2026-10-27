@@ -12,8 +12,6 @@ public class AnOutfittingItemIsReadAndOfferedByNameTests
         "Basic Discovery Scanner",
         "Cargo Hatch",
         "Intermediate Discovery Scanner",
-        "Large Planetary Vehicle Hangar",
-        "Mk II Large Planetary Vehicle Hangar",
         "MkII Business Class Passenger Cabin (size5)",
         "MkII Business Class Passenger Cabin (size6)",
         "MkII Economy Class Passenger Cabin (size5)",

@@ -36,8 +36,8 @@ public static class OutfittingCatalogue
         "Guardian Hybrid Power Plant", "Guardian Module Reinforcement", "Guardian Nanite Torpedo Pylon",
         "Guardian Plasma Charger", "Guardian Shard Cannon", "Guardian Shield Reinforcement",
         "Hatch Breaker Limpet Controller", "Heat Sink Launcher", "Hull Reinforcement Package",
-        "Imperial Hammer Rail Gun", "Kill Warrant Scanner", "Life Support", "Lightweight Alloy",
-        "Luxury Class Passenger Cabin", "Meta Alloy Hull Reinforcement", "Military Grade Composite",
+        "Imperial Hammer Rail Gun", "Kill Warrant Scanner", "Large Planetary Vehicle Hangar", "Life Support",
+        "Lightweight Alloy", "Luxury Class Passenger Cabin", "Meta Alloy Hull Reinforcement", "Military Grade Composite",
         "Mine Launcher", "Mining Lance", "Mining Laser", "Mining Multi Limpet Controller",
         "Mining Volley Repeater", "Mirrored Surface Composite", "Missile Rack",
         "Mk II Ablative Lightweight Alloys", "Mk II Ablative Military Grade Composite",
@@ -45,6 +45,7 @@ public static class OutfittingCatalogue
         "Mk II Ablative Reinforced Alloys", "Mk II Agile Boost Thrusters",
         "Mk II Business Class Passenger Cabin", "Mk II Cargo Rack",
         "Mk II Economy Class Passenger Cabin", "Mk II Gravity Optimised Thrusters",
+        "Mk II Large Planetary Vehicle Hangar",
         "Mk II Mining Multi-Limpet Controller", "Mk II Plasma Shock Accelerator",
         "Mk II Supercharge Optimised Frame Shift Drive (SCO)", "Mk II Vessel Hangar",
         "Module Reinforcement Package", "Multi-Cannon", "Operations Multi Limpet Controller",
@@ -64,6 +65,36 @@ public static class OutfittingCatalogue
         "Xeno Multi Limpet Controller", "Xeno Scanner",
     ];
 
+    /// <summary>Other names Spansh lists a module under, by catalogue name.</summary>
+    public static IReadOnlyDictionary<string, IReadOnlyList<string>> OtherNames { get; } =
+        new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
+        {
+            ["Abrasion Blaster"] = ["Far-Reaching Abrasion Blaster"],
+            ["Beam Laser"] = ["Overloaded Beam Laser"],
+            ["Burst Laser"] = ["Regenerative Burst Laser"],
+            ["Cannon"] = ["Force Impact Cannon"],
+            ["Cargo Rack"] = ["Extended Cargo Rack"],
+            ["Detailed Surface Scanner"] = ["Long Range Detailed Surface Scanner"],
+            ["Enzyme Missile Rack"] = ["High-Yield Enzyme Missile Rack"],
+            ["Fighter Hangar"] = ["Vessel Hangar"],
+            ["Fragment Cannon"] = ["Double Screaming Fragment Cannon"],
+            ["Mining Laser"] = ["Long Range Mining Laser"],
+            ["Mk II Business Class Passenger Cabin"] = ["MkII Business Class Passenger Cabin"],
+            ["Mk II Economy Class Passenger Cabin"] = ["MkII Economy Class Passenger Cabin"],
+            ["Module Reinforcement Package"] = ["Heavy Duty Module Reinforcement Package"],
+            ["Multi-Cannon"] = ["Rapid Phase Multi-Cannon"],
+            ["Power Distributor"] = ["Support Focused Power Distributor", "Balanced Power Distributor"],
+            ["Rail Gun"] = ["Enduring Feedback Rail Gun"],
+            ["Seeker Missile Rack"] = ["Lockdown Seeker Missile Rack", "Exposing Missiles"],
+        };
+
+    /// <summary>Other names Spansh lists a ship under, by catalogue name.</summary>
+    public static IReadOnlyDictionary<string, IReadOnlyList<string>> OtherShipNames { get; } =
+        new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+
+    /// <summary>Hulls Spansh has no shipyard listing for.</summary>
+    public static IReadOnlyList<string> UnlistedShips { get; } = ["Anaconda Mk II"];
+
     /// <summary>Module sizes, as the service spells them.</summary>
     public static IReadOnlyList<string> Classes { get; } = ["0", "1", "2", "3", "4", "5", "6", "7", "8"];
 
@@ -72,7 +103,28 @@ public static class OutfittingCatalogue
 
     public static string? MatchShip(string spoken) => Catalogue.Match(Ships, spoken);
 
-    public static string? MatchModule(string spoken) => Catalogue.Match(Modules, spoken);
+    public static string? MatchModule(string spoken) => ByOtherName(spoken) ?? Catalogue.Match(Modules, spoken);
+
+    /// <summary>The catalogue name, then every other name Spansh lists the module under.</summary>
+    public static IReadOnlyList<string> ModuleNames(string module) =>
+        OtherNames.TryGetValue(module, out var others) ? [module, .. others] : [module];
+
+    /// <summary>The catalogue name, then every other name Spansh lists the ship under.</summary>
+    public static IReadOnlyList<string> ShipNames(string ship) =>
+        OtherShipNames.TryGetValue(ship, out var others) ? [ship, .. others] : [ship];
+
+    /// <summary>Whether Spansh lists no shipyard selling the ship.</summary>
+    public static bool IsUnlisted(string ship) =>
+        UnlistedShips.Contains(ship, StringComparer.OrdinalIgnoreCase);
+
+    private static string? ByOtherName(string spoken)
+    {
+        var wanted = Catalogue.Relax(spoken);
+
+        return wanted.Length == 0
+            ? null
+            : OtherNames.FirstOrDefault(pair => pair.Value.Any(name => Catalogue.Relax(name) == wanted)).Key;
+    }
 
     /// <summary>Names close enough to be worth offering back.</summary>
     public static IReadOnlyList<string> Near(IReadOnlyList<string> catalogue, string spoken) =>

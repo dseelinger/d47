@@ -383,6 +383,12 @@ public sealed record StationQuery
                     return false;
                 }
 
+                if (OutfittingCatalogue.IsUnlisted(item.Name))
+                {
+                    failure = Unlisted(item.Name);
+                    return false;
+                }
+
                 ship = item.Name;
             }
             else
@@ -606,6 +612,12 @@ public sealed record StationQuery
                 failure = Unknown("ship", ship, OutfittingCatalogue.Near(OutfittingCatalogue.Ships, ship));
                 return false;
             }
+
+            if (OutfittingCatalogue.IsUnlisted(matchedShip))
+            {
+                failure = Unlisted(matchedShip);
+                return false;
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(moduleClass)
@@ -690,6 +702,9 @@ public sealed record StationQuery
 
     /// <summary>Whether this search is about traders rather than about something being sold.</summary>
     public bool IsAboutTraders { get; init; }
+
+    private static string Unlisted(string ship) =>
+        $"No shipyard in the station index sells the {ship}.";
 
     private static string Unknown(string kind, string spoken, IReadOnlyList<string> near) =>
         near.Count > 0

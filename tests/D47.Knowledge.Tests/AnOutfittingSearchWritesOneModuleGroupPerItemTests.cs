@@ -36,6 +36,36 @@ public class AnOutfittingSearchWritesOneModuleGroupPerItemTests
     }
 
     [Fact]
+    public void AModuleSpansListsUnderTwoNamesIsSearchedForUnderBoth()
+    {
+        var module = Filters(new OutfittingSearch { Items = "Detailed Surface Scanner" }).GetProperty("modules");
+
+        Assert.Equal(
+            ["Detailed Surface Scanner", "Long Range Detailed Surface Scanner"],
+            Values(module.GetProperty("name")));
+    }
+
+    [Fact]
+    public void ANameSaidOutLoudUnderTheOtherNameIsSearchedForUnderBoth()
+    {
+        var module = Filters(new OutfittingSearch { Items = "long range mining laser" }).GetProperty("modules");
+
+        Assert.Equal(["Mining Laser", "Long Range Mining Laser"], Values(module.GetProperty("name")));
+    }
+
+    [Fact]
+    public void AnAnacondaMkIIIsSaidToBeSoldAtNoShipyard()
+    {
+        Assert.False(StationQuery.TryParse(
+            new OutfittingSearch { Items = "Anaconda Mk II", ReferenceSystem = "Sol" }, out _, out var failure));
+        Assert.Equal("No shipyard in the station index sells the Anaconda Mk II.", failure);
+
+        Assert.False(StationQuery.TryParse(
+            new StationSearch { Ship = "Anaconda Mk II", ReferenceSystem = "Sol" }, out _, out var searched));
+        Assert.Equal(failure, searched);
+    }
+
+    [Fact]
     public void AShipAndModulesAreAllRequired()
     {
         var filters = Filters(new OutfittingSearch { Items = "Python MkII, Fuel Scoop, 5A Frame Shift Drive (SCO)" });

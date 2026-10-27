@@ -73,8 +73,9 @@ public class OutfittingCatalogueTests
     public void TheCataloguesAreTheOnesTheServiceActuallyHas()
     {
         // Read from the service's own field_values endpoints on 2026-08-14; "Anaconda Mk II" is
-        // added from the game's spelling before the service lists it (2026-10-22).
+        // added from the game's spelling before the service lists it (2026-10-22). Both Large Planetary
+        // Vehicle Hangars were added on 2026-10-27 from the same list.
         Assert.Equal(49, OutfittingCatalogue.Ships.Count);
-        Assert.Equal(132, OutfittingCatalogue.Modules.Count);
+        Assert.Equal(134, OutfittingCatalogue.Modules.Count);
     }
 }

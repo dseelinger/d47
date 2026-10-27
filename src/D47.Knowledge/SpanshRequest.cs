@@ -143,7 +143,12 @@ internal static class SpanshRequest
             {
                 writer.WriteStartObject("ships");
                 writer.WriteStartArray("value");
-                writer.WriteStringValue(query.Ship);
+
+                foreach (var name in OutfittingCatalogue.ShipNames(query.Ship))
+                {
+                    writer.WriteStringValue(name);
+                }
+
                 writer.WriteEndArray();
                 writer.WriteEndObject();
             }
@@ -731,7 +736,16 @@ internal static class SpanshRequest
     {
         writer.WriteStartObject();
 
-        WriteGroupMember(writer, "name", module.Name);
+        writer.WriteStartObject("name");
+        writer.WriteStartArray("value");
+
+        foreach (var name in OutfittingCatalogue.ModuleNames(module.Name))
+        {
+            writer.WriteStringValue(name);
+        }
+
+        writer.WriteEndArray();
+        writer.WriteEndObject();
 
         if (module.Class is not null)
         {
