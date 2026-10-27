@@ -12,6 +12,19 @@ public enum CalloutUrgency
     Urgent,
 }
 
+/// <summary>Where a transcript line came from, when a filter needs to tell.</summary>
+public enum AnnouncementOrigin
+{
+    /// <summary>Neither of the others.</summary>
+    None,
+
+    /// <summary>A relayed message from a station, authority, carrier or NPC ship.</summary>
+    Comms,
+
+    /// <summary>A line d47 wrote that nobody in the game said.</summary>
+    InventedChatter,
+}
+
 /// <summary>The arbiter groups unprompted speech is spoken in.</summary>
 public static class SpokenGroup
 {
@@ -33,6 +46,9 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
 {
     /// <summary>How long this key stays suppressed after being said.</summary>
     public TimeSpan Cooldown { get; init; } = TimeSpan.Zero;
+
+    /// <summary>Where the line came from; independent of <see cref="Group"/>.</summary>
+    public AnnouncementOrigin Origin { get; init; }
 
     /// <summary>A line not addressed to the Commander, heard as traffic further off.</summary>
     public bool Overheard { get; init; }

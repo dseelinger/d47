@@ -77,7 +77,7 @@ public sealed class Announcer : IDisposable
     /// said it, and the callout key, once the wording and the contradiction check have settled what was
     /// actually said.
     /// </summary>
-    public event Action<string, string, string, string?, string?>? CalloutSaid;
+    public event Action<string, string, string, string?, string?, AnnouncementOrigin>? CalloutSaid;
 
     private VoicePipeline Voice { get; }
 
@@ -158,7 +158,7 @@ public sealed class Announcer : IDisposable
             .ConfigureAwait(false);
 
         // The Transcript keeps the names the voice replaced with a pronoun.
-        CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.Current.Name), written.Key, picture, written.Translation);
+        CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.Current.Name), written.Key, picture, written.Translation, written.Origin);
         return clip;
     }
 

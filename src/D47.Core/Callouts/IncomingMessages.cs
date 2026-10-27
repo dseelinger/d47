@@ -181,6 +181,7 @@ public sealed partial class IncomingMessages : ICallout
             {
                 Voice = VoiceRole.TowerControl,
                 CommsChannel = channel,
+                Origin = isPlayer ? AnnouncementOrigin.None : AnnouncementOrigin.Comms,
                 Transcript = $"{sender}: {text}\n",
                 Cooldown = TimeSpan.Zero,
                 MessageKey = journalEvent.String("Message"),
@@ -197,6 +198,7 @@ public sealed partial class IncomingMessages : ICallout
             {
                 Key = AuthorityCannedKey,
                 Text = text,
+                Origin = AnnouncementOrigin.Comms,
                 Transcript = $"{sender}: {text}\n",
                 Cooldown = TimeSpan.Zero,
             };
@@ -225,6 +227,7 @@ public sealed partial class IncomingMessages : ICallout
         {
             Key = key,
             Text = Spoken(sender, text, isPlayer),
+            Origin = isPlayer ? AnnouncementOrigin.None : AnnouncementOrigin.Comms,
 
             // Written down with the sender on it, whoever they are.
             Transcript = sender is { Length: > 0 } named

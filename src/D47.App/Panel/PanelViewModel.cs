@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
+using D47.Core.Callouts;
 
 namespace D47.App.Panel;
 
@@ -70,6 +71,7 @@ public enum TranscriptRunKind
 /// <param name="Picture">The speaker's picture name, or null for a run drawn without one.</param>
 /// <param name="SettingKey">The settings row a failed turn's "Settings" link opens, or null.</param>
 /// <param name="Translation">The English for a line in another language, drawn under it, or null.</param>
+/// <param name="Origin">Whether the line is comms traffic or invented chatter.</param>
 public sealed record TranscriptSegment(
     string Text,
     bool Marker,
@@ -82,7 +84,8 @@ public sealed record TranscriptSegment(
     TurnProvenance? Provenance = null,
     string? Picture = null,
     string? SettingKey = null,
-    string? Translation = null);
+    string? Translation = null,
+    AnnouncementOrigin Origin = AnnouncementOrigin.None);
 
 /// <summary>What the panel shows, independent of where it is being shown.</summary>
 public sealed class PanelViewModel : INotifyPropertyChanged
@@ -122,6 +125,9 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
         /// <summary>The English for the run's text when it is in another language.</summary>
         public StringBuilder Translation { get; } = new();
+
+        /// <summary>Whether the run is comms traffic or invented chatter.</summary>
+        public AnnouncementOrigin Origin { get; init; }
     }
 
     /// <summary>Guards <see cref="_runs"/> and the strings derived from it.</summary>
@@ -567,7 +573,8 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         string? sourceKey = null,
         DateTimeOffset? time = null,
         string? picture = null,
-        string? translation = null)
+        string? translation = null,
+        AnnouncementOrigin origin = AnnouncementOrigin.None)
     {
         var named = speaker ?? (voice == TranscriptVoice.Commander ? "CMDR" : ShipName);
         var pictured = marker ? null
@@ -590,10 +597,11 @@ public sealed class PanelViewModel : INotifyPropertyChanged
                 || _runs[^1].SourceKey != sourceKey
                 || _runs[^1].Picture != pictured
                 || _runs[^1].Kind != TranscriptRunKind.Text
+                || _runs[^1].Origin != origin
                 || _runs[^1].Translation.Length > 0
                 || translation is { Length: > 0 })
             {
-                _runs.Add(new Run(marker, voice, named, sourceKey, at, new StringBuilder()) { Picture = pictured });
+                _runs.Add(new Run(marker, voice, named, sourceKey, at, new StringBuilder()) { Picture = pictured, Origin = origin });
             }
 
             _runs[^1].Text.Append(text);
@@ -788,7 +796,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
                     new TranscriptSegment(
                         Text(run), run.Marker, run.Voice, run.Speaker, run.SourceKey, run.Time,
                         run.Kind, run.ProposalId, run.Provenance, run.Picture, run.SettingKey,
-                        run.Translation.Length > 0 ? run.Translation.ToString() : null))
+                        run.Translation.Length > 0 ? run.Translation.ToString() : null, run.Origin))
             ],
         };
     }

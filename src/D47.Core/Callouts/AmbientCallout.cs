@@ -90,6 +90,7 @@ public sealed class AmbientCallout : ICallout
         {
             // Routine, and it never silences anything.
             Urgency = CalloutUrgency.Routine,
+            Origin = AnnouncementOrigin.InventedChatter,
             Cooldown = Interval,
 
             // Said because nothing happened, and the rate the Commander asked for it at — which is both the

@@ -144,6 +144,7 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
         new($"{NpcChatter.KeyPrefix}{kind}".ToLowerInvariant(), string.Empty)
         {
             Urgency = CalloutUrgency.Routine,
+            Origin = AnnouncementOrigin.InventedChatter,
             Cooldown = Interval,
             Variant = _picks - 1,
 

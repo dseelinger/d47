@@ -347,6 +347,7 @@ internal sealed class LineWriter
             heard.Add(new Announcement(NpcChatter.LineKey, said)
             {
                 Urgency = CalloutUrgency.Routine,
+                Origin = AnnouncementOrigin.InventedChatter,
                 Voice = line.Role ?? D47.Core.Audio.VoiceRole.Comms,
                 Speaker = line.Name,
                 SpeakerIsPlayer = false,

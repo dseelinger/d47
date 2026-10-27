@@ -138,6 +138,7 @@ public sealed class SceneCallout(SceneTracker tracker) : ICallout
         new(Key, string.Empty)
         {
             Urgency = CalloutUrgency.Routine,
+            Origin = AnnouncementOrigin.InventedChatter,
             Variant = _picks++,
             Scene = beat,
         };
