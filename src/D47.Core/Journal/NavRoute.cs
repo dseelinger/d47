@@ -86,8 +86,30 @@ public static class StarClasses
         "N" => "a neutron star",
         "H" or "SupermassiveBlackHole" => "a black hole",
         { } dwarf when IsWhiteDwarf(dwarf) => "a white dwarf",
-        { } other => $"class {other}",
+        { } other => SpeakClass(other),
     };
+
+    private static string SpeakClass(string starClass)
+    {
+        var underscore = starClass.IndexOf('_');
+
+        if (underscore <= 0)
+        {
+            return $"class {starClass}";
+        }
+
+        var size = starClass[(underscore + 1)..];
+        var words = size.EndsWith("SuperGiant", StringComparison.Ordinal)
+            ? $"{SplitWords(size[..^"SuperGiant".Length])} supergiant"
+            : size.EndsWith("Giant", StringComparison.Ordinal)
+                ? $"{SplitWords(size[..^"Giant".Length])} giant"
+                : null;
+
+        return words is null ? $"class {starClass}" : $"class {starClass[..underscore]} {words.TrimStart()}";
+    }
+
+    private static string SplitWords(string pascal) =>
+        string.Join('-', System.Text.RegularExpressions.Regex.Split(pascal, "(?<=[a-z])(?=[A-Z])").Select(w => w.ToLowerInvariant()));
 
     /// <summary>The Mk II overcharge booster's item suffix — the only drive that reaches ×6/×3.</summary>
     private const string OverchargeBoosterMkIiSuffix = "_overchargebooster_mkii";

@@ -274,6 +274,12 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             }
             : this,
 
+        // The arrival star's scan: the giant code StartJump leaves out.
+        "Scan" when journalEvent.String("StarType") is { Length: > 0 } starType
+            && journalEvent.Double("DistanceFromArrivalLS") == 0
+            && journalEvent.Long("SystemAddress") is { } address
+            && address == SystemAddress => this with { StarClass = starType },
+
         "FuelScoop" => this with { FuelMain = journalEvent.Double("Total") ?? FuelMain },
 
         _ => this,
