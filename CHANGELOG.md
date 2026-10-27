@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Galaxy map no longer shows arrivals from before a Commander erased their pilot data.
+
 d47 now sums up an Operation run when it ends: what it was, whether it was finished, how long it took, what it paid, the kills and who flew it.
 
 A journal history too large for one upload is now sent in parts, split between journal files. The report says how many parts, the progress line says which is sending, and each part has its own receipt. A refused part stops the rest, and the outcome says how many parts the store has.

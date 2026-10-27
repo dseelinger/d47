@@ -180,6 +180,7 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
 
     private static bool Relevant(string line) =>
         line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"GameModeChange\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"Fileheader\"", StringComparison.Ordinal)
@@ -198,6 +199,19 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
                 if (journalEvent.String("FID") is { Length: > 0 } named)
                 {
                     fid = named;
+                }
+
+                return;
+
+            case "NewCommander":
+                if (journalEvent.String("FID") is { Length: > 0 } erased)
+                {
+                    fid = erased;
+
+                    if (_steps.TryGetValue(erased, out var before))
+                    {
+                        before.RemoveAll(step => step.At <= journalEvent.Timestamp);
+                    }
                 }
 
                 return;
