@@ -618,7 +618,9 @@ public static class CodexModel
         Func<long, int, string?> bodyName,
         bool whole)
     {
-        var body = entry.SystemAddress is { } address && entry.BodyId is { } id ? bodyName(address, id) : null;
+        var body = entry.SubCategorySymbol is "$Codex_SubCategory_Terrestrials;" or "$Codex_SubCategory_Gas_Giants;"
+            ? entry.Body
+            : entry.SystemAddress is { } address && entry.BodyId is { } id ? bodyName(address, id) : null;
         var first = firsts[(entry.EntryId, entry.RegionId)];
 
         return new CodexEntryRow(

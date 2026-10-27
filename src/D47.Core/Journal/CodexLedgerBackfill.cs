@@ -98,8 +98,10 @@ public static class CodexLedgerBackfill
         var kind = line.AsSpan(start, end - start);
 
         return end > start
-            && (CodexLedger.Reads.GetAlternateLookup<ReadOnlySpan<char>>().Contains(kind)
-                || kind.SequenceEqual("GameModeChange") || kind.SequenceEqual("Shutdown"));
+            && (kind.SequenceEqual("Scan")
+                ? line.Contains("\"PlanetClass\"", StringComparison.Ordinal)
+                : CodexLedger.Reads.GetAlternateLookup<ReadOnlySpan<char>>().Contains(kind)
+                    || kind.SequenceEqual("GameModeChange") || kind.SequenceEqual("Shutdown"));
     }
 
     private static IEnumerable<string> Lines(IFileSystem fileSystem, string file, ILogger logger)

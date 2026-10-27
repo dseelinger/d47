@@ -10,6 +10,8 @@
 
 Planet and gas giant codex entries are now named by what the body is, such as "High metal content world with an atmosphere" or "Class II gas giant", instead of "Non Terraformable" or "Standard gas giant". The codex pages, search and transcript use the new names.
 
+A planet or gas giant codex row now names the body that was scanned, taken from the `Scan` events in the same second and system, or no body when more than one scan fits. It used to show the star or another planet from the entry's body number.
+
 Erasing pilot data now deletes the Commander's stories and adventures from before the erase: past stories, the story under way and its chapters, and adventures finished, under way or waiting. Deleting a story under way releases its cores and restores the Backstory it replaced. An erase from before this version takes effect on the first start after it.
 
 The Galaxy map no longer shows arrivals from before a Commander erased their pilot data.

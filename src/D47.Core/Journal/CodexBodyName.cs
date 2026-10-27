@@ -29,6 +29,45 @@ public static partial class CodexBodyName
         ["Water_Giant"] = "Water giant",
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
+    private static readonly FrozenDictionary<string, string> ScanClasses = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["High_Metal_Content"] = "High metal content body",
+        ["Metal_Rich"] = "Metal rich body",
+        ["Rocky"] = "Rocky body",
+        ["Rocky_Ice"] = "Rocky ice body",
+        ["Ice"] = "Icy body",
+        ["Water_Worlds"] = "Water world",
+        ["Ammonia_Worlds"] = "Ammonia world",
+        ["Sudarsky_Class_I"] = "Sudarsky class I gas giant",
+        ["Sudarsky_Class_II"] = "Sudarsky class II gas giant",
+        ["Sudarsky_Class_III"] = "Sudarsky class III gas giant",
+        ["Sudarsky_Class_IV"] = "Sudarsky class IV gas giant",
+        ["Sudarsky_Class_V"] = "Sudarsky class V gas giant",
+        ["Giant_With_Water_Life"] = "Gas giant with water based life",
+        ["Giant_With_Ammonia_Life"] = "Gas giant with ammonia based life",
+        ["Water_Giant"] = "Water giant",
+    }.ToFrozenDictionary(StringComparer.Ordinal);
+
+    /// <summary>True when a <c>Scan</c> body with these values is the body a planet or gas giant codex symbol describes.</summary>
+    public static bool Matches(string? symbol, string? planetClass, bool hasAtmosphere, string? terraformState)
+    {
+        if (Of(symbol) is null || Symbol().Match(symbol!.Trim()) is not { Success: true } match
+            || !ScanClasses.TryGetValue(match.Groups["type"].Value, out var scanClass)
+            || Squash(planetClass) != Squash(scanClass))
+        {
+            return false;
+        }
+
+        var terraformable = string.Equals(terraformState, "Terraformable", StringComparison.OrdinalIgnoreCase);
+
+        return match.Groups["kind"].Value.Equals("TRF", StringComparison.OrdinalIgnoreCase) == terraformable
+            && (!match.Groups["ter"].Success || hasAtmosphere)
+            && (!match.Groups["noatmos"].Success || !hasAtmosphere);
+    }
+
+    private static string Squash(string? text) =>
+        string.Concat((text ?? string.Empty).Where(char.IsLetterOrDigit)).ToUpperInvariant();
+
     /// <summary>The name for a planet or gas giant symbol such as <c>$Codex_Ent_TRF_Ter_Rocky_Name;</c>, or null when it is neither.</summary>
     public static string? Of(string? symbol)
     {

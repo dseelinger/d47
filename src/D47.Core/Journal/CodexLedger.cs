@@ -5,7 +5,7 @@ using D47.Core.Knowledge;
 
 namespace D47.Core.Journal;
 
-/// <summary>One <c>CodexEntry</c> event. <c>RegionId</c> is the codex region number, null when <c>Region</c> does not parse. <c>SubCategorySymbol</c> is the raw symbol, which does not change with the game's language.</summary>
+/// <summary>One <c>CodexEntry</c> event. <c>RegionId</c> is the codex region number, null when <c>Region</c> does not parse. <c>SubCategorySymbol</c> is the raw symbol, which does not change with the game's language. <c>Body</c> is the scanned body of a planet or gas giant entry, null when no single scan matches.</summary>
 public sealed record CodexLogEntry(
     DateTimeOffset At,
     long EntryId,
@@ -19,7 +19,9 @@ public sealed record CodexLogEntry(
     double? Latitude,
     double? Longitude,
     bool IsNew,
-    string? SubCategorySymbol = null);
+    string? SubCategorySymbol = null,
+    string? NameSymbol = null,
+    string? Body = null);
 
 /// <summary>Entries logged in one region.</summary>
 public sealed record CodexRegionTotal(int? RegionId, int Count);
@@ -46,7 +48,7 @@ public sealed record CodexLedger
     public static readonly FrozenSet<string> Reads = FrozenSet.ToFrozenSet<string>(
     [
         "CodexEntry", "Commander", "Fileheader", "LoadGame", "MultiSellExplorationData", "NewCommander",
-        "SellExplorationData",
+        "Scan", "SellExplorationData",
     ], StringComparer.Ordinal);
 
     private const string RegionPrefix = "$Codex_RegionName_";
@@ -73,6 +75,8 @@ public sealed record CodexLedger
         [.. Held.Select(entry => (entry.EntryId, entry.RegionId)).Distinct()];
 
     private ImmutableList<CodexLogEntry> Held { get; init; } = [];
+
+    private ImmutableList<ScannedBody> Recent { get; init; } = [];
 
     private bool Legacy { get; init; }
 
@@ -134,13 +138,18 @@ public sealed record CodexLedger
             return this;
         }
 
-        var result = this with { OnRecordSince = OnRecordSince ?? journalEvent.Timestamp };
+        var result = this with
+        {
+            OnRecordSince = OnRecordSince ?? journalEvent.Timestamp,
+            Recent = Recent.IsEmpty ? Recent : Recent.RemoveAll(scan => scan.At < journalEvent.Timestamp),
+        };
 
         return journalEvent.Kind switch
         {
+            "Scan" => result.WithScan(journalEvent),
             "LoadGame" when journalEvent.StartsSession => result with { SessionStart = journalEvent.Timestamp },
             "SellExplorationData" or "MultiSellExplorationData" => result with { TripStart = journalEvent.Timestamp },
-            "CodexEntry" when journalEvent.Long("EntryID") is { } id => result with { Held = Held.Add(Entry(journalEvent, id)) },
+            "CodexEntry" when journalEvent.Long("EntryID") is { } id => result with { Held = Held.Add(Settled(Entry(journalEvent, id), result.Recent)) },
             _ => result,
         };
     }
@@ -170,8 +179,57 @@ public sealed record CodexLedger
                 : OnRecordSince ?? live.OnRecordSince,
             IsWhole = true,
             Legacy = live.Legacy,
+            Recent = live.Recent,
         };
     }
+
+    private CodexLedger WithScan(JournalEvent journalEvent)
+    {
+        if (journalEvent.String("PlanetClass") is not { Length: > 0 } planetClass
+            || journalEvent.String("BodyName") is not { Length: > 0 } name
+            || journalEvent.Long("SystemAddress") is not { } address)
+        {
+            return this;
+        }
+
+        var scan = new ScannedBody(journalEvent.Timestamp, address, name, planetClass, HasAtmosphere(journalEvent), journalEvent.String("TerraformState"));
+        var recent = Recent.Add(scan);
+        var held = Held;
+
+        for (var index = held.Count - 1; index >= 0 && held[index].At == scan.At; index--)
+        {
+            if (held[index].NameSymbol is not null && held[index].SystemAddress == address)
+            {
+                held = held.SetItem(index, Settled(held[index], recent));
+            }
+        }
+
+        return this with { Held = held, Recent = recent };
+    }
+
+    private static bool HasAtmosphere(JournalEvent scan) =>
+        !string.IsNullOrWhiteSpace(scan.String("Atmosphere"))
+        || scan.String("AtmosphereType") is { Length: > 0 } type && !type.Equals("None", StringComparison.OrdinalIgnoreCase);
+
+    private static CodexLogEntry Settled(CodexLogEntry entry, ImmutableList<ScannedBody> scans)
+    {
+        if (entry.NameSymbol is null)
+        {
+            return entry;
+        }
+
+        var matches = scans
+            .Where(scan => scan.At == entry.At && scan.Address == entry.SystemAddress
+                && CodexBodyName.Matches(entry.NameSymbol, scan.PlanetClass, scan.HasAtmosphere, scan.TerraformState))
+            .Select(scan => scan.Name)
+            .Distinct(StringComparer.Ordinal)
+            .Take(2)
+            .ToList();
+
+        return entry with { Body = matches.Count == 1 ? matches[0] : null };
+    }
+
+    private sealed record ScannedBody(DateTimeOffset At, long Address, string Name, string PlanetClass, bool HasAtmosphere, string? TerraformState);
 
     private static DateTimeOffset? Later(DateTimeOffset? a, DateTimeOffset? b) =>
         a is { } x && b is { } y ? (x > y ? x : y) : a ?? b;
@@ -189,5 +247,6 @@ public sealed record CodexLedger
         e.Double("Latitude"),
         e.Double("Longitude"),
         e.Bool("IsNewEntry"),
-        e.String("SubCategory"));
+        e.String("SubCategory"),
+        CodexBodyName.Of(e.String("Name")) is null ? null : e.String("Name"));
 }
