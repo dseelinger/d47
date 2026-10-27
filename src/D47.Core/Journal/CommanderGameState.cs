@@ -107,6 +107,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>The mining run in progress and the last one finished.</summary>
     public MiningRuns Mining { get; private set; } = MiningRuns.None;
 
+    /// <summary>The Operation run in progress and the last one to end.</summary>
+    public OperationRuns Operations { get; private set; } = OperationRuns.None;
+
     /// <summary>Construction sites they have visited (Phase 17).</summary>
     public ColonisationSites Colonisation { get; internal set; } = ColonisationSites.Empty;
 
@@ -218,6 +221,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(CodexLedger), "your codex entries", state => state.CodexLedger),
         new(nameof(Salvage), "your scooped salvage", state => state.Salvage),
         new(nameof(Mining), "your mining runs", state => state.Mining),
+        new(nameof(Operations), "your Operation runs", state => state.Operations),
         new(nameof(Bodies), "body signals", state => state.Bodies),
         new(nameof(Scans), "body scans", state => state.Scans),
         new(nameof(TechBroker), "your tech broker unlocks", state => state.TechBroker),
@@ -325,6 +329,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         CodexLedger = CodexLedger.Apply(journalEvent);
         Salvage = Salvage.Apply(journalEvent, Location, Pledge);
         Mining = Mining.Apply(journalEvent);
+        Operations = Operations.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);
         Scans = Scans.Apply(journalEvent);
         TechBroker = TechBroker.Apply(journalEvent);
