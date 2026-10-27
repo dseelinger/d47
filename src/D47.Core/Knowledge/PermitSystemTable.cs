@@ -1,4 +1,5 @@
 using System.Reflection;
+using D47.Core.Journal;
 
 namespace D47.Core.Knowledge;
 
@@ -18,6 +19,30 @@ public static class PermitSystemTable
     /// <summary>Whether entering this system needs a permit. Matched on the index's own spelling.</summary>
     public static bool Locked(string? system) =>
         system is { Length: > 0 } named && Loaded.Value.Contains(named);
+
+    /// <summary>
+    /// Whether this locked system is shut to the Commander: a starter system always is; any other is open
+    /// at the permit's navy rank or once <paramref name="visited"/> (entering it means holding the permit).
+    /// </summary>
+    public static bool ClosedTo(string? system, RankState ranks, Func<bool> visited)
+    {
+        if (!Locked(system))
+        {
+            return false;
+        }
+
+        if (StarterSystemTable.Contains(system))
+        {
+            return true;
+        }
+
+        if (NavalRanks.PermitGate(system) is { } gate && (ranks.For(gate.Navy.ToString())?.Rank ?? 0) >= gate.Rank)
+        {
+            return false;
+        }
+
+        return !visited();
+    }
 
     private static HashSet<string> Load()
     {

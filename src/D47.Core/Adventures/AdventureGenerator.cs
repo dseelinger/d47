@@ -1390,7 +1390,7 @@ public sealed class AdventureGenerator(
 
             foreach (var station in stations.Stations.Where(station =>
                          station.IsFixed
-                         && !PermitSystemTable.Locked(station.SystemName)
+                         && !Closed(station.SystemName, station.SystemAddress, facts)
                          && (facts.NeedsPad(facts.ThisShipOnly) is not { } pad || station.Admits(pad))
                          && (facts.ClosedMarketId is null || station.MarketId != facts.ClosedMarketId)))
             {
@@ -1402,7 +1402,7 @@ public sealed class AdventureGenerator(
 
             return new Candidates(
                 open,
-                [.. bodies.Bodies.Where(body => !PermitSystemTable.Locked(body.SystemName))])
+                [.. bodies.Bodies.Where(body => !Closed(body.SystemName, body.SystemAddress, facts))])
             {
                 Anarchy = anarchy,
                 Sites = sites,
@@ -1415,7 +1415,7 @@ public sealed class AdventureGenerator(
         }
     }
 
-    private static async Task<IReadOnlyList<SystemSummary>> AnarchyAsync(
+    private async Task<IReadOnlyList<SystemSummary>> AnarchyAsync(
         IGalaxyService search, Facts facts, string here, CancellationToken cancellationToken, List<string> notes)
     {
         var requested = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -1433,7 +1433,7 @@ public sealed class AdventureGenerator(
         {
             var found = await search.SearchAsync(query, cancellationToken).ConfigureAwait(false);
 
-            return [.. found.Systems.Where(system => IsAnarchy(system.Government) && !PermitSystemTable.Locked(system.Name)).Take(5)];
+            return [.. found.Systems.Where(system => IsAnarchy(system.Government) && !Closed(system.Name, system.SystemAddress, facts)).Take(5)];
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -1479,7 +1479,7 @@ public sealed class AdventureGenerator(
             guardian =
             [
                 .. found.Bodies
-                    .Where(body => body is { SystemAddress: not null, BodyId: not null, IsLandable: true } && !PermitSystemTable.Locked(body.SystemName) && !Visited(body.SystemAddress.Value))
+                    .Where(body => body is { SystemAddress: not null, BodyId: not null, IsLandable: true } && !Closed(body.SystemName, body.SystemAddress, facts) && !Visited(body.SystemAddress.Value))
                     .OrderBy(body => body.Distance ?? double.MaxValue)
                     .Take(SitesPerKind),
             ];
@@ -1505,7 +1505,7 @@ public sealed class AdventureGenerator(
             tourist = await Task.Run(
                 () => (IReadOnlyList<TouristSite>)[
                     .. index.Within(position, radius)
-                        .Where(sighting => sighting.Kind == SignalKind.TouristBeacon && !PermitSystemTable.Locked(sighting.SystemName) && !Visited(sighting.SystemAddress))
+                        .Where(sighting => sighting.Kind == SignalKind.TouristBeacon && !Closed(sighting.SystemName, sighting.SystemAddress, facts) && !Visited(sighting.SystemAddress))
                         .Select(sighting => new TouristSite(sighting.SystemAddress, sighting.SystemName, sighting.SignalName, position.DistanceTo(sighting.Position)))
                         .OrderBy(site => site.LightYears)
                         .DistinctBy(site => site.SystemAddress)
@@ -1519,7 +1519,7 @@ public sealed class AdventureGenerator(
                         .Where(sighting => sighting.Kind == SignalKind.Megaship && sighting.SignalName.StartsWith(GenerationShipPrefix, StringComparison.OrdinalIgnoreCase))
                         .GroupBy(sighting => sighting.SignalName, StringComparer.OrdinalIgnoreCase)
                         .Select(ship => ship.MaxBy(sighting => sighting.LastSeen)!)
-                        .Where(sighting => !PermitSystemTable.Locked(sighting.SystemName) && !Visited(sighting.SystemAddress))
+                        .Where(sighting => !Closed(sighting.SystemName, sighting.SystemAddress, facts) && !Visited(sighting.SystemAddress))
                         .Select(sighting => new TouristSite(sighting.SystemAddress, sighting.SystemName, sighting.SignalName, position.DistanceTo(sighting.Position)))
                         .OrderBy(site => site.LightYears)
                         .Take(SitesPerKind),
@@ -2882,7 +2882,7 @@ public sealed class AdventureGenerator(
         }
 
         text.AppendLine();
-        text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Never use a system that needs a permit, such as Shinrarta Dezhra or Sol, unless the Commander is already in it. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
+        text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Never use a system that needs a permit, such as Shinrarta Dezhra or Sol, unless the Commander is already in it, has visited it (which means they hold its permit), or holds the navy rank that grants it (Federal Navy rank 4 for Sol, Imperial Navy rank 4 for Achenar). A starter system is never allowed. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
         text.Append(TriggerConfirms.Section(kinds, ask.Story is not null));
         text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier objectives' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first objective; the last objective's line is the ending.");
         text.AppendLine("Write every line plainly, whoever says it. Do not use a metaphor or an image where a direct statement would do. Do not end a line on an aphorism or a moral (\"That will hold.\", \"It will keep.\"). Do not repeat the spine's premise, want, stake, turn or ending as a line.");
@@ -4034,7 +4034,7 @@ public sealed class AdventureGenerator(
                         // An arrive beat fires only on a jump into the system, so one where the Commander already is never fires.
                         Refuse(index, $"{where} arrives at {place.System}, but the Commander is already there at that point; send them to another system, or make it a dock, land or scan objective.");
                     }
-                    else if (PermitSystemTable.Locked(place.System))
+                    else if (Closed(place.System, place.SystemAddress, facts))
                     {
                         Refuse(index, PermitRefusal(where, place.System!));
                     }
@@ -4249,7 +4249,7 @@ public sealed class AdventureGenerator(
         slot.Kind == kind && (slot.Family is null || string.Equals(family?.Trim(), slot.Family, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The destination finale chapter 1 names, resolved as a land beat's place, or why it cannot stand.</summary>
-    private static async Task<(AdventureDestination? Destination, string? Refusal)> DestinationAsync(
+    private async Task<(AdventureDestination? Destination, string? Refusal)> DestinationAsync(
         ReadPlace? named, Facts facts, AdventureStory story, AdventureResolver resolver, CancellationToken cancellationToken)
     {
         const string Where = "The finale's destination";
@@ -4266,7 +4266,7 @@ public sealed class AdventureGenerator(
             return (null, resolution.Refusal ?? $"{Where} could not be resolved.");
         }
 
-        if (PermitSystemTable.Locked(found))
+        if (Closed(found, address, facts))
         {
             return (null, PermitRefusal(Where, found));
         }
@@ -4604,6 +4604,9 @@ public sealed class AdventureGenerator(
             return text.ToString();
         }
     }
+
+    private bool Closed(string? system, long? address, Facts facts) =>
+        PermitSystemTable.ClosedTo(system, facts.Ranks, () => address is { } id && visited?.Find(state()?.Identity.FrontierId, id).State == VisitState.Visited);
 
     private static string PermitRefusal(string where, string system) =>
         StarterSystemTable.Contains(system)

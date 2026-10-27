@@ -42,6 +42,12 @@ public static class NavalRanks
         return null;
     }
 
+    /// <summary>The navy and rank that opens this system's permit, or null when no rank does.</summary>
+    public static (Navy Navy, int Rank)? PermitGate(string? system) =>
+        Permits.FirstOrDefault(permit => string.Equals(permit.Name, system + " permit", StringComparison.OrdinalIgnoreCase)) is { Name: not null } found
+            ? (found.Navy, found.Rank)
+            : null;
+
     /// <summary>The rank name at this grade in this navy, or null outside 0 to 14.</summary>
     public static string? Name(Navy navy, int rank) => navy == Navy.Empire ? EmpireName(rank) : FederationName(rank);
 

@@ -1,13 +1,16 @@
 using D47.Core.Adventures;
+using D47.Core.Journal;
+using D47.Core.Storage;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>
-/// A generated adventure never sends the Commander to a permit-locked system, the one they are in included,
-/// because the journal does not say which permits they hold: such a system is left out of the places offered, and
-/// a beat that names one is sent back through the turn.
+/// A generated adventure does not send the Commander to a permit-locked system they have not visited and whose
+/// permit their navy rank does not grant: such a system is left out of the places offered, and a beat that names
+/// one is sent back through the turn.
 /// </summary>
 public sealed class APermitSystemIsNeverAStopTests
 {
@@ -109,5 +112,32 @@ public sealed class APermitSystemIsNeverAStopTests
         Assert.Contains(
             "Objective 2 (The Memorial) is in HIP 97950, a starter system the Commander can no longer enter; use another.",
             provider.Requests[2].Prompt.History[0].Text);
+    }
+
+    [Fact]
+    public async Task AVisitedPermitSystemIsOfferedAndStands()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(ToShinrarta));
+
+        const string root = "C:/d47-test/visits";
+        var files = new MemoryFileSystem();
+        files.WriteBytes(
+            Path.Combine(root, "1", VisitedStarsCache.FileName),
+            VisitedStarsCacheIsReadFromItsBytesTests.File(512, [(3932277478106, 1, VisitedStarsCacheIsReadFromItsBytesTests.Second)]));
+
+        var state = AdventureGeneratorTests.State(1, []);
+        var generator = new AdventureGenerator(
+            () => provider, () => null, () => "You are the ship.", () => "core", () => null, () => state,
+            () => new AdventureGeneratorTests.Galaxy(), () => null, null, null,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance,
+            visited: new VisitedStarsBook(root, files));
+
+        var outcome = await generator.GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Contains("Jameson Memorial", provider.Requests[0].Prompt.History[0].Text);
+        Assert.Contains(outcome.Draft!.Beats, beat => beat.Trigger.System == "Shinrarta Dezhra");
     }
 }
