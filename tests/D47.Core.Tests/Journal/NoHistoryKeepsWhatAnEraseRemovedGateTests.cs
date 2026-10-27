@@ -41,6 +41,7 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
         [nameof(HistoryBackfill.Commanders)] = "Who exists, which an erase does not change.",
         [nameof(HistoryBackfill.Names)] = "How names are said, which an erase does not change.",
         [nameof(HistoryBackfill.Signals)] = "What is in a system, which is not the Commander's.",
+        [nameof(HistoryBackfill.Erases)] = "The record of the erase itself.",
         [nameof(HistoryBackfill.Credits)] = "Replaced by the LoadGame that follows the erase.",
     };
 

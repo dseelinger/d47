@@ -77,6 +77,9 @@ public sealed class HistoryBackfill
     /// <summary>The Commanders met, folded the same way.</summary>
     public CommanderLog? MetCommanders { get; init; }
 
+    /// <summary>When each Commander last erased, folded the same way.</summary>
+    public CommanderErases? Erases { get; init; }
+
     /// <summary>Each Commander's arrivals, folded the same way.</summary>
     public TravelLog? Travel { get; init; }
 
@@ -357,6 +360,15 @@ public sealed class HistoryBackfill
                 Timed("signal backfill", () =>
                 {
                     signals.FoldHistory(Files(), cancellation);
+                    return true;
+                });
+            }
+
+            if (Erases is { } erases)
+            {
+                Timed("commander erase backfill", () =>
+                {
+                    erases.FoldHistory(Files(), cancellation);
                     return true;
                 });
             }

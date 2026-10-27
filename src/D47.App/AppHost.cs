@@ -1135,6 +1135,10 @@ public sealed class AppHost : IDisposable
             files,
             loggerFactory.CreateLogger<D47.Core.Journal.CommanderLog>());
 
+        var commanderErases = new D47.Core.Journal.CommanderErases(
+            files,
+            loggerFactory.CreateLogger<D47.Core.Journal.CommanderErases>());
+
         var travelLog = new D47.Core.Journal.TravelLog(
             files,
             loggerFactory.CreateLogger<D47.Core.Journal.TravelLog>());
@@ -1160,6 +1164,7 @@ public sealed class AppHost : IDisposable
             Mail = mail,
             Signals = signalSightings,
             MetCommanders = commanderLog,
+            Erases = commanderErases,
             Travel = travelLog,
             Step = StartupTimer.Step,
         };
@@ -1590,6 +1595,7 @@ public sealed class AppHost : IDisposable
             Memories = memories,
             SignalSightings = signalSightings,
             CommanderLog = commanderLog,
+            CommanderErases = commanderErases,
             Friends = friends,
             CommsChannels = commsChannels,
             TravelLog = travelLog,
@@ -1732,6 +1738,7 @@ public sealed class AppHost : IDisposable
             crimes.Apply(events, inGame);
             activities.Apply(events, inGame);
             signalSightings.Apply(events);
+            stores.CommanderErases.Apply(events);
             stores.Friends.Apply(events);
             stores.CommanderLog.Apply(events);
             stores.TravelLog.Apply(events);
@@ -4534,6 +4541,8 @@ public sealed class AppHost : IDisposable
         public required D47.Core.Journal.SignalSightings SignalSightings { get; init; }
 
         public required D47.Core.Journal.CommanderLog CommanderLog { get; init; }
+
+        public required D47.Core.Journal.CommanderErases CommanderErases { get; init; }
 
         public required D47.Core.Journal.FriendRoster Friends { get; init; }
 
