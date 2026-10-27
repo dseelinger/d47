@@ -20,7 +20,7 @@ public sealed record UnlockEvidence(
         ArgumentNullException.ThrowIfNull(journalEvent);
 
         return journalEvent.Kind == "NewCommander"
-            ? new UnlockEvidence(Reputation.WithoutFactions(), EngineerContributions.Empty, EngineerTallies.Empty)
+            ? Empty
             : new UnlockEvidence(
                 Reputation.Apply(journalEvent),
                 Contributions.Apply(journalEvent),

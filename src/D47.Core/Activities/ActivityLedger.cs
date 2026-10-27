@@ -21,6 +21,9 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
 
         public DateTimeOffset? Earliest { get; set; }
 
+        /// <summary>The latest <c>NewCommander</c>; nothing at or before it is recorded.</summary>
+        public DateTimeOffset? ErasedAt { get; set; }
+
         public HashSet<string> NotSuggested { get; } = new(StringComparer.Ordinal);
     }
 
@@ -236,6 +239,7 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
 
     private static bool Relevant(string line) =>
         line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"MiningRefined\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"AsteroidCracked\"", StringComparison.Ordinal)
@@ -272,6 +276,15 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
                 if (commander is not null)
                 {
                     Seen(Open(commander), journalEvent.Timestamp);
+                }
+
+                return;
+
+            case "NewCommander":
+                if (journalEvent.String("FID") is { Length: > 0 } erased)
+                {
+                    commander = erased;
+                    Erase(Open(erased), journalEvent.Timestamp);
                 }
 
                 return;
@@ -358,8 +371,34 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
         }
     }
 
+    /// <summary>Drops the dates at or before <paramref name="at"/>; the suggestion choices are kept.</summary>
+    private static void Erase(Book book, DateTimeOffset at)
+    {
+        if (book.ErasedAt is { } erased && erased >= at)
+        {
+            return;
+        }
+
+        book.ErasedAt = at;
+
+        foreach (var key in book.Last.Where(pair => pair.Value <= at).Select(pair => pair.Key).ToList())
+        {
+            book.Last.Remove(key);
+        }
+
+        if (book.Earliest is not { } earliest || earliest < at)
+        {
+            book.Earliest = at;
+        }
+    }
+
     private static void Record(Book book, string key, DateTimeOffset at)
     {
+        if (book.ErasedAt is { } erased && at <= erased)
+        {
+            return;
+        }
+
         if (!book.Last.TryGetValue(key, out var last) || at > last)
         {
             book.Last[key] = at;
@@ -378,6 +417,11 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
 
     private static void Seen(Book book, DateTimeOffset at)
     {
+        if (book.ErasedAt is { } erased && at < erased)
+        {
+            return;
+        }
+
         if (book.Earliest is not { } earliest || at < earliest)
         {
             book.Earliest = at;

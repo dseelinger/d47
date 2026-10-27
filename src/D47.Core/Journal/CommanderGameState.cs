@@ -271,7 +271,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     {
         if (journalEvent.Kind == "NewCommander")
         {
-            Reputation = Reputation.WithoutFactions();
+            Reputation = ReputationState.Empty;
             Standings = SystemStandings.Empty;
             BgsWork = BgsWork.None;
             Combat = CombatRecord.None with { IsWhole = Combat.IsWhole };

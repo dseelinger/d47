@@ -38,9 +38,6 @@ public sealed record ReputationState
         return readings.TryGetValue(name, out var reading) ? reading : null;
     }
 
-    /// <summary>The same superpower readings, with no faction readings.</summary>
-    internal ReputationState WithoutFactions() => this with { FactionReadings = FactionReadings.Clear() };
-
     /// <summary>These readings and <paramref name="live"/>'s, keeping the later per name; a tie keeps the live one.</summary>
     internal ReputationState With(ReputationState live) => new()
     {

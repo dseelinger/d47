@@ -18,6 +18,8 @@ Erasing pilot data now also clears the Commander's fleet, carrier, construction 
 
 Erasing pilot data now also clears the Commander's unsold organic and exploration data, unpaid fines and bounties, and the list of other Commanders met, both live and when d47 reads back through older journals.
 
+Erasing pilot data now also clears the Commander's superpower reputation, when each activity was last done and the unread mission and promotion notices, both live and when d47 reads back through older journals. Which activities you chose not to have suggested is kept.
+
 d47 now sums up an Operation run when it ends: what it was, whether it was finished, how long it took, what it paid, the kills and who flew it.
 
 A journal history too large for one upload is now sent in parts, split between journal files. The report says how many parts, the progress line says which is sending, and each part has its own receipt. A refused part stops the rest, and the outcome says how many parts the store has.

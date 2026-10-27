@@ -51,6 +51,9 @@ public sealed class MailLedger
     private readonly Dictionary<string, Dictionary<string, Entry>> _entries = new(StringComparer.Ordinal);
     private readonly Dictionary<string, DateTimeOffset> _readThrough;
 
+    /// <summary>Each Commander's latest <c>NewCommander</c>; not written to <see cref="FileName"/>.</summary>
+    private readonly Dictionary<string, DateTimeOffset> _erases = new(StringComparer.Ordinal);
+
     /// <summary>Keys a live callout has already spoken, which history never counts.</summary>
     private readonly HashSet<string> _said = new(StringComparer.Ordinal);
 
@@ -117,6 +120,13 @@ public sealed class MailLedger
                     continue;
                 }
 
+                if (ErasedBy(journalEvent) is { } erased)
+                {
+                    current = erased;
+                    Erase(erased, journalEvent.Timestamp);
+                    continue;
+                }
+
                 if (current is null)
                 {
                     continue;
@@ -158,6 +168,7 @@ public sealed class MailLedger
             : files.TakeLast(1).ToList();
 
         var found = new List<Found>();
+        var erases = new List<(string Commander, DateTimeOffset At)>();
         var newest = new Dictionary<string, int>(StringComparer.Ordinal);
 
         for (var index = 0; index < read.Count; index++)
@@ -178,6 +189,12 @@ public sealed class MailLedger
                     commander = named;
                     newest[named] = index;
                 }
+                else if (ErasedBy(parsed) is { } erased)
+                {
+                    commander = erased;
+                    newest[erased] = index;
+                    erases.Add((erased, parsed.Timestamp));
+                }
                 else if (commander is not null && EntryOf(parsed) is { } entry)
                 {
                     found.Add(new Found(index, commander, Key(parsed), entry));
@@ -187,6 +204,11 @@ public sealed class MailLedger
 
         lock (_gate)
         {
+            foreach (var (erased, at) in erases)
+            {
+                Erase(erased, at);
+            }
+
             foreach (var item in found)
             {
                 if (!_readThrough.ContainsKey(item.Commander) && item.File != newest[item.Commander])
@@ -342,9 +364,33 @@ public sealed class MailLedger
         }
     }
 
+    /// <summary>Drops <paramref name="commander"/>'s entries at or before <paramref name="at"/>; the watermark is kept.</summary>
+    private void Erase(string commander, DateTimeOffset at)
+    {
+        if (_erases.TryGetValue(commander, out var held) && held >= at)
+        {
+            return;
+        }
+
+        _erases[commander] = at;
+
+        if (_entries.TryGetValue(commander, out var book))
+        {
+            foreach (var key in book.Where(pair => pair.Value.At <= at).Select(pair => pair.Key).ToList())
+            {
+                book.Remove(key);
+            }
+        }
+    }
+
     private void Add(string commander, string key, Entry entry)
     {
         if (_readThrough.TryGetValue(commander, out var through) && entry.At <= through)
+        {
+            return;
+        }
+
+        if (_erases.TryGetValue(commander, out var erased) && entry.At <= erased)
         {
             return;
         }
@@ -357,6 +403,9 @@ public sealed class MailLedger
 
         book.TryAdd(key, entry);
     }
+
+    private static string? ErasedBy(JournalEvent journalEvent) =>
+        journalEvent.Kind == "NewCommander" && journalEvent.String("FID") is { Length: > 0 } fid ? fid : null;
 
     private static string? CommanderOf(JournalEvent journalEvent) =>
         journalEvent.Kind is "Commander" or "LoadGame" && journalEvent.String("FID") is { Length: > 0 } fid ? fid : null;
@@ -461,6 +510,7 @@ public sealed class MailLedger
     /// <summary>The text test, before any JSON is touched.</summary>
     private static bool Relevant(string line) =>
         line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"MissionCompleted\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"MissionFailed\"", StringComparison.Ordinal)
