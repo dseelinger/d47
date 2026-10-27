@@ -76,7 +76,7 @@ public static class ChecklistWatching
         foreach (var journalEvent in events)
         {
             if (journalEvent.Long("MarketID") is { } market
-                && journalEvent.String("StationName") is { Length: > 0 } station
+                && journalEvent.Named("StationName") is { Length: > 0 } station
                 && (journalEvent.Kind == "Docked" || journalEvent.Bool("Docked")))
             {
                 stations[market] = station;
@@ -141,7 +141,8 @@ public static class ChecklistWatching
         switch (watch.Kind, journalEvent.Kind)
         {
             case (ChecklistWatchKind.Dock, "Docked"):
-                return Same(journalEvent.String("StationName"), watch.Subject)
+                return (Same(journalEvent.String("StationName"), watch.Subject)
+                        || Same(journalEvent.Named("StationName"), watch.Subject))
                        && (watch.Place is null || Same(journalEvent.String("StarSystem"), watch.Place))
                     ? 1
                     : null;
@@ -219,7 +220,7 @@ public static class ChecklistWatching
 
     private static string Met(ChecklistWatch watch, JournalEvent journalEvent, int amount) => watch.Kind switch
     {
-        ChecklistWatchKind.Dock => $"you docked at {journalEvent.String("StationName") ?? watch.Subject}",
+        ChecklistWatchKind.Dock => $"you docked at {journalEvent.Named("StationName") ?? watch.Subject}",
         ChecklistWatchKind.Arrive => $"you arrived in {journalEvent.String("StarSystem") ?? watch.Subject}",
         _ => $"your carrier has a buy order for {amount.ToString(CultureInfo.InvariantCulture)} "
              + $"{journalEvent.String("Commodity_Localised") ?? watch.Subject}",

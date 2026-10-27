@@ -111,12 +111,12 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
 
     private const string ColonisationShipPrefix = "$EXT_PANEL_ColonisationShip;";
 
-    /// <summary>The station's name, with the colonisation ship's untranslated token removed.</summary>
+    /// <summary>The station's name, with the colonisation ship's untranslated token removed and the localised name preferred.</summary>
     private static string? Station(JournalEvent journalEvent) =>
         journalEvent.String("StationName") is { } name
         && name.StartsWith(ColonisationShipPrefix, StringComparison.Ordinal)
             ? name[ColonisationShipPrefix.Length..].TrimStart(' ')
-            : journalEvent.String("StationName");
+            : journalEvent.Named("StationName");
 
     /// <summary>Folds one event into the current location.</summary>
     public JournalLocation Apply(JournalEvent journalEvent) => journalEvent.Kind switch

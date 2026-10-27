@@ -404,8 +404,10 @@ public static class AdventureFold
                 Bound(trigger, standing) is { } destination
                 && (journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump"
                         && Named(destination.DestinationSystem, raw.String("StarSystem"))
-                    || journalEvent.Kind is "Docked" && Named(destination.DestinationStation, raw.String("StationName"))
-                    || journalEvent.Kind is "ApproachSettlement" && Named(destination.DestinationStation, raw.String("Name"))),
+                    || journalEvent.Kind is "Docked" && (Named(destination.DestinationStation, raw.String("StationName"))
+                        || Named(destination.DestinationStation, raw.Named("StationName")))
+                    || journalEvent.Kind is "ApproachSettlement" && (Named(destination.DestinationStation, raw.String("Name"))
+                        || Named(destination.DestinationStation, raw.Named("Name")))),
 
             TriggerKind.MissionComplete =>
                 journalEvent.Kind is "MissionCompleted" && Bound(trigger, standing) is { } done && raw.Long("MissionID") == done.MissionId,

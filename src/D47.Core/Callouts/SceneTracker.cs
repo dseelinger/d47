@@ -244,7 +244,7 @@ public sealed class SceneTracker
 
     private void Approached(JournalEvent journalEvent)
     {
-        if (journalEvent.String("Name") is not { Length: > 0 } name)
+        if (journalEvent.Named("Name") is not { Length: > 0 } name)
         {
             return;
         }

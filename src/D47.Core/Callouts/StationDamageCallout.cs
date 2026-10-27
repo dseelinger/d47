@@ -17,7 +17,7 @@ public sealed class StationDamageCallout : ICallout
         foreach (var journalEvent in context.Events)
         {
             if (journalEvent.Kind == "Docked"
-                && journalEvent.String("StationName") is { Length: > 0 } station
+                && journalEvent.Named("StationName") is { Length: > 0 } station
                 && Condition(journalEvent.String("StationState")) is { } condition)
             {
                 yield return new Announcement(Key, $"{station} is {condition}.");

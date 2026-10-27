@@ -35,6 +35,27 @@ public class AWatchedLineTicksFromTheJournalTests
     }
 
     [Fact]
+    public void ADockAtATokenStationTicksByItsLocalisedNameAndSpeaksIt()
+    {
+        var (game, checklists) = Started(new MemoryInstall());
+        var line = Save(checklists, "Dock at the runner", new ChecklistWatch(ChecklistWatchKind.Dock, "Frontline Runner")
+        {
+            Since = Set,
+        });
+
+        var docked = Event(
+            """
+            {"timestamp":"2026-10-07T19:10:00Z","event":"Docked","StationName":"$Operations_Runner_Name:#index=1;",
+             "StationName_Localised":"Frontline Runner","StationType":"Megaship","StarSystem":"Sol","SystemAddress":1,"MarketID":5}
+            """);
+        game.Apply(docked);
+        checklists.Poll(events: [docked]);
+
+        Assert.Equal(ChecklistState.Done, Find(checklists, line).State);
+        Assert.Equal("Ticked \"Dock at the runner\": you docked at Frontline Runner.", Assert.Single(checklists.Drain()).Text);
+    }
+
+    [Fact]
     public void ADockInAnotherSystemOfTheSameNameDoesNotCount()
     {
         var (game, checklists) = Started(new MemoryInstall());

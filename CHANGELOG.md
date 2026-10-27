@@ -10,6 +10,8 @@
 
 Launching the Nomad from a Mk II Vessel Hangar is now read as leaving the ship in an SRV. Kills, scenes, story SRV objectives and the journal line ("Launched the Nomad") follow it; a launch the Commander does not fly changes nothing but the journal line.
 
+A station or settlement that Elite names with a token, such as an Operations runner, a colonisation ship or a Guardian structure, is now called by its readable name in the Commander's location, the docking checklist, the station condition callout and settlement scenes.
+
 Naming the Nomad no longer renames the ship you are flying. A rename for a vehicle with a different ship id is ignored.
 
 A story objective to map bodies, survey signals or analyse organic samples can now name a system, as one to drop into signal sources already could. It counts only what happens in that system, the story is told when the system cannot supply the count, and the objective's confirmation names the system.
