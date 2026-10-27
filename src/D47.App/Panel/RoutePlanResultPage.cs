@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using D47.App.Theming;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
@@ -182,10 +183,18 @@ public sealed class RoutePlanResultPage : UserControl
     private IEnumerable<Control> Rows(StoredRoutePlan plan, string? here) => plan switch
     {
         { Jump: { } jump } => jump.Waypoints.Select((waypoint, index) => Waypoint(waypoint, State(index, plan.Reached), here)),
-        { Riches: { } riches } => riches.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
+        { Riches: { } riches } => riches.Stops.Select((stop, index) => Stop(
+            stop,
+            State(index, plan.Reached),
+            here,
+            LegLength(index == 0 ? riches.Start?.Position : riches.Stops[index - 1].Position, stop.Position))),
         { Trade: { } trade } => trade.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
         { Exobiology: { } exobiology } =>
-            exobiology.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
+            exobiology.Stops.Select((stop, index) => Stop(
+                stop,
+                State(index, plan.Reached),
+                here,
+                LegLength(index == 0 ? exobiology.Start?.Position : exobiology.Stops[index - 1].Position, stop.Position))),
         { Carrier: { } carrier } =>
             carrier.Waypoints.Select((waypoint, index) => Waypoint(waypoint, State(index, plan.Reached), here)),
         _ => [],
@@ -251,57 +260,72 @@ public sealed class RoutePlanResultPage : UserControl
             _copy);
     }
 
-    private Control Stop(RichesStop stop, RowState state, string? here)
+    private static string Away(double? lightSeconds) =>
+        lightSeconds is { } ls ? $", {ls:N0} ls" : string.Empty;
+
+    private static string? LegLength(StarPosition? from, StarPosition? to) =>
+        from is { } a && to is { } b ? $"{a.DistanceTo(b):N0} ly" : null;
+
+    private static string StopValues(int jumps, string? leg, int bodies)
+    {
+        var values = new List<string> { jumps == 1 ? "1 jump" : $"{jumps} jumps" };
+
+        if (leg is not null)
+        {
+            values.Add(leg);
+        }
+
+        values.Add(bodies == 1 ? "1 body" : $"{bodies} bodies");
+
+        return Joined(values);
+    }
+
+    private Control Stop(RichesStop stop, RowState state, string? here, string? leg)
     {
         var lines = new List<Control>
         {
             Line(stop.System, stop.System, state, here),
-            RoutingKit.Values(
-                Joined(
-                [
-                    stop.Jumps == 1 ? "1 jump" : $"{stop.Jumps} jumps",
-                    stop.Bodies.Count == 1 ? "1 body" : $"{stop.Bodies.Count} bodies",
-                ]),
-                state.Reached),
+            RoutingKit.Values(StopValues(stop.Jumps, leg, stop.Bodies.Count), state.Reached),
         };
 
         // Worth-most first, because that is the number deciding whether the stop is worth making.
         foreach (var body in stop.Bodies.OrderByDescending(body => body.MappingValue ?? 0))
         {
             lines.Add(RoutingKit.Values(
-                body.MappingValue is { } value
-                    ? $"{body.Name} — {body.Subtype ?? "unknown"}, {value:N0} cr"
-                    : $"{body.Name} — {body.Subtype ?? "unknown"}",
+                $"{body.Name} — {body.Subtype ?? "unknown"}{Away(body.DistanceToArrival)}"
+                + (body.MappingValue is { } value ? $", {value:N0} cr" : string.Empty),
                 state.Reached));
         }
 
         return RoutingKit.Row(lines, stop.System, _copy);
     }
 
-    private Control Stop(ExobiologyStop stop, RowState state, string? here)
+    private Control Stop(ExobiologyStop stop, RowState state, string? here, string? leg)
     {
         var lines = new List<Control>
         {
             Line(stop.System, stop.System, state, here),
-            RoutingKit.Values(
-                Joined(
-                [
-                    stop.Jumps == 1 ? "1 jump" : $"{stop.Jumps} jumps",
-                    stop.Bodies.Count == 1 ? "1 body" : $"{stop.Bodies.Count} bodies",
-                ]),
-                state.Reached),
+            RoutingKit.Values(StopValues(stop.Jumps, leg, stop.Bodies.Count), state.Reached),
         };
 
         foreach (var body in stop.Bodies.OrderByDescending(body => body.LandmarkValue))
         {
             lines.Add(RoutingKit.Values(
-                $"{body.Name} — {body.Subtype ?? "unknown"}, {body.LandmarkValue:N0} cr",
+                $"{body.Name} — {body.Subtype ?? "unknown"}{Away(body.DistanceToArrival)}, {body.LandmarkValue:N0} cr",
                 state.Reached));
 
             foreach (var species in body.Species)
             {
                 var count = species.Count > 1 ? $" ×{species.Count}" : string.Empty;
                 var line = RoutingKit.Values($"{species.Name}{count} — {species.Value:N0} cr", state.Reached);
+                line.Margin = new Thickness(16, 0, 0, 0);
+
+                lines.Add(line);
+            }
+
+            if (body.LandmarkValue - body.Species.Sum(species => species.Value) is > 0 and var under)
+            {
+                var line = RoutingKit.Values($"species under the minimum — {under:N0} cr", state.Reached);
                 line.Margin = new Thickness(16, 0, 0, 0);
 
                 lines.Add(line);

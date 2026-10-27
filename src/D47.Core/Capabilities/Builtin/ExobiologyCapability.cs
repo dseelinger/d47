@@ -672,6 +672,11 @@ public static class ExobiologyCapability
                         $"    {species.Name}{(species.Count > 1 ? $" ×{species.Count}" : string.Empty)}"
                         + $" — {Number(species.Value)} cr");
                 }
+
+                if (body.LandmarkValue - body.Species.Sum(species => species.Value) is > 0 and var under)
+                {
+                    report.AppendLine($"    species under the minimum — {Number(under)} cr");
+                }
             }
         }
 

@@ -330,6 +330,31 @@ public class ExobiologyCapabilityTests
     }
 
     [Fact]
+    public async Task ThePlotSaysWhatABodyHoldsBelowTheMinimum()
+    {
+        const string Jump = """{"timestamp":"2026-08-16T09:05:00Z","event":"FSDJump","StarSystem":"Sol"}""";
+
+        var result = await Ask(Store(Jump), "plot_exobiology_route", "{}", new FakeRoutes());
+
+        Assert.Contains("species under the minimum — 3,328,600 cr", result.Content, StringComparison.Ordinal);
+
+        var covered = new FakeRoutes
+        {
+            Route = new([new ExobiologyStop("Opet", 3, [
+                new ExobiologyBody("Opet 7 b", "Rocky body")
+                {
+                    LandmarkValue = 1_000,
+                    Species = [new ExobiologySpecies("Frutexa", "Frutexa Flabellum", 1, 1_000)],
+                },
+            ])]),
+        };
+
+        result = await Ask(Store(Jump), "plot_exobiology_route", "{}", covered);
+
+        Assert.DoesNotContain("under the minimum", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ThePlotCountsTheJumpsBackToTheStart()
     {
         var routes = new FakeRoutes

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Exobiology and Road to Riches stops on the route page show the straight-line distance of each leg, such as "6 jumps · 51 ly · 2 bodies", and each body shows its distance from arrival in light seconds. An exobiology body whose species are worth less than the body's total gains a line, "species under the minimum", with the difference; the spoken plot says the same.
+
 The organic sampling callout for the first and second specimen now says how far to go before the next one, such as "Aleoida Gravis, 1 of 3. 2 to go, 150 metres from here."
 
 Saying "how much further" or "how much farther" while a sampling set is open on the body you are on now answers by voice, without the model, with the metres still to go for each genus. The distance is measured from every specimen in the set, not only the last one, so driving back towards an earlier specimen is no longer reported as far enough.
