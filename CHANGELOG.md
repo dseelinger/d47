@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+An Operation in a journal written by game 4.4.0, which has no mode-change line, is now recognised from the docked arrival at the Operations runner, so history and replay no longer count its location, missions and signals as ordinary play.
+
 Launching the Nomad from a Mk II Vessel Hangar is now read as leaving the ship in an SRV. Kills, scenes, story SRV objectives and the journal line ("Launched the Nomad") follow it; a launch the Commander does not fly changes nothing but the journal line.
 
 A station or settlement that Elite names with a token, such as an Operations runner, a colonisation ship or a Guardian structure, is now called by its readable name in the Commander's location, the docking checklist, the station condition callout and settlement scenes.

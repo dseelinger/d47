@@ -2,13 +2,20 @@ namespace D47.Core.Journal;
 
 /// <summary>
 /// Sets <see cref="JournalEvent.InOperation"/> on the lines Elite writes for an Operation, in order of arrival. A
-/// <c>LoadGame</c> outside an Operation is held until the line after it, which says whether it entered one.
+/// <c>LoadGame</c> outside an Operation is held until the line after it, which says whether it entered one. Game 4.4.0
+/// writes no <c>GameModeChange</c>: a docked <c>Location</c> at the Operations runner opens an Operation that the next
+/// <c>LoadGame</c> closes.
 /// </summary>
 public sealed class OperationMarker
 {
     private bool _open;
 
+    private bool _openedAtRunner;
+
     private JournalEvent? _held;
+
+    private static bool AtRunner(JournalEvent journalEvent) =>
+        journalEvent.Bool("Docked") && journalEvent.String("StationName") is { } station && station.StartsWith("$Operations_Runner_Name", StringComparison.Ordinal);
 
     /// <summary>The next lines of a file being tailed, marked; a <c>LoadGame</c> ending them is held for the next call.</summary>
     public IReadOnlyList<JournalEvent> Next(IReadOnlyList<JournalEvent> events)
@@ -72,20 +79,31 @@ public sealed class OperationMarker
         {
             case "Fileheader" or "Shutdown":
                 _open = false;
+                _openedAtRunner = false;
                 marked.Add(journalEvent);
                 break;
 
-            case "LoadGame" when !_open:
+            case "LoadGame" when !_open || _openedAtRunner:
+                _open = false;
+                _openedAtRunner = false;
                 _held = journalEvent;
                 break;
 
             case "GameModeChange" when entersOperation:
                 _open = true;
+                _openedAtRunner = false;
                 marked.Add(journalEvent with { InOperation = true });
                 break;
 
             case "GameModeChange" when _open:
                 _open = false;
+                _openedAtRunner = false;
+                marked.Add(journalEvent with { InOperation = true });
+                break;
+
+            case "Location" when !_open && AtRunner(journalEvent):
+                _open = true;
+                _openedAtRunner = true;
                 marked.Add(journalEvent with { InOperation = true });
                 break;
 
