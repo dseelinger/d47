@@ -449,6 +449,7 @@ public sealed class AdventureGeneratorTests
             ["Colonia"] = 3238296097059,
             ["IC 2391 Sector MX-T b3-6"] = 13872878396833,
             ["Shinrarta Dezhra"] = 3932277478106,
+            ["HIP 97950"] = 3932277478107,
         };
 
         public List<StationQuery> StationQueries { get; } = [];
@@ -495,6 +496,7 @@ public sealed class AdventureGeneratorTests
                 new() { Name = "Lantern Dock", SystemName = "Ossen's Lantern", SystemAddress = AdventureFixtures.Lantern, MarketId = 1001, Distance = 8, HasLargePad = false, Type = "Outpost" },
                 new() { Name = "Maren Anchorage", SystemName = "Dyson's Hollow", SystemAddress = AdventureFixtures.Hollow, MarketId = AdventureFixtures.Anchorage, Distance = 12, HasLargePad = true, Type = "Coriolis Starport" },
                 new() { Name = "Jameson Memorial", SystemName = "Shinrarta Dezhra", SystemAddress = 3932277478106, MarketId = 128666762, Distance = 30, HasLargePad = true, Type = "Orbis Starport" },
+                new() { Name = "Starter Port", SystemName = "HIP 97950", SystemAddress = 3932277478107, MarketId = 128666763, Distance = 30, HasLargePad = true, Type = "Orbis Starport" },
                 .. Extra,
             ];
 

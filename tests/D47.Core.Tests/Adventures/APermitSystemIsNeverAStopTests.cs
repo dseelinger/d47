@@ -93,4 +93,21 @@ public sealed class APermitSystemIsNeverAStopTests
         Assert.DoesNotContain("Jameson Memorial", spine);
         Assert.DoesNotContain("Jameson Memorial", provider.Requests[1].Prompt.History[0].Text);
     }
+
+    [Fact]
+    public async Task AStarterSystemIsNamedAsOneWhenARepairIsAsked()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(ToShinrarta.Replace("Shinrarta Dezhra", "HIP 97950").Replace("Jameson Memorial", "Starter Port")),
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(Elsewhere, 2)));
+
+        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
+            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Contains(
+            "Objective 2 (The Memorial) is in HIP 97950, a starter system the Commander can no longer enter; use another.",
+            provider.Requests[2].Prompt.History[0].Text);
+    }
 }

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Stories no longer send you to a starter system. A story objective in a system you start the game in, such as HIP 97950, is refused and the story is asked to use another; the refusal says it is a starter system you can no longer enter. The list of starter systems is read from journals, from the first system after a new Commander is created.
+
 The search pages have a Max report age dropdown. System, Station, Outfitting and Signal searches choose Any, 1 hour up to 180 days, and Any sends no bound. The Market page picks a price age the same way, starting at 30 days, and the Trade page's hours box is now the same dropdown, with a saved 720 showing as 30 days. Replaying a search from history restores the choice, and the Outfitting table's Updated column shows the stock date the search filters on.
 
 Signal search can leave out old sightings. `find_signal` takes a maximum report age in hours and drops signals last seen before it, from the daily index and from your own scans, and the answer says how far back it looked. With no age given, nothing changes.

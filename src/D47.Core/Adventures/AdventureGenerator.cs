@@ -4036,7 +4036,7 @@ public sealed class AdventureGenerator(
                     }
                     else if (PermitSystemTable.Locked(place.System))
                     {
-                        Refuse(index, $"{where} is in {place.System}, which needs a permit the Commander may not hold; use a system without one.");
+                        Refuse(index, PermitRefusal(where, place.System!));
                     }
                     else if (hop is { } far && far > facts.RadiusLightYears
                              && !(closing && index == beats.Count - 1 && place.Kind == TriggerKind.Land && AdventureValidation.SameBody(place, destination!.Landing())))
@@ -4268,7 +4268,7 @@ public sealed class AdventureGenerator(
 
         if (PermitSystemTable.Locked(found))
         {
-            return (null, $"{Where} is in {found}, which needs a permit the Commander may not hold; use a system without one.");
+            return (null, PermitRefusal(Where, found));
         }
 
         if (facts.System is { } here && !string.Equals(here, found, StringComparison.OrdinalIgnoreCase))
@@ -4604,4 +4604,9 @@ public sealed class AdventureGenerator(
             return text.ToString();
         }
     }
+
+    private static string PermitRefusal(string where, string system) =>
+        StarterSystemTable.Contains(system)
+            ? $"{where} is in {system}, a starter system the Commander can no longer enter; use another."
+            : $"{where} is in {system}, which needs a permit the Commander may not hold; use a system without one.";
 }
