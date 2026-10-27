@@ -6,7 +6,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Callouts;
 
-/// <summary>The Narrator speaks only in a settled, quiet moment, and only with a story to tell.</summary>
+/// <summary>The Narrator speaks only in a settled, quiet moment, and only while a story runs or an adventure is under way.</summary>
 public class TheNarratorWaitsForALullTests
 {
     private static readonly DateTimeOffset T0 = new(3312, 5, 1, 12, 0, 0, TimeSpan.Zero);
@@ -20,7 +20,7 @@ public class TheNarratorWaitsForALullTests
         {
             Interval = Gap,
             Longest = Gap,
-            HasStory = () => story,
+            StoryRunning = () => story,
         };
 
     private static CalloutContext At(DateTimeOffset now, StatusFlags flags = Docked, ChatterSaid? lastChatter = null) =>
@@ -87,7 +87,7 @@ public class TheNarratorWaitsForALullTests
     }
 
     [Fact]
-    public void WithNoSheetBackstoryOrScenarioNothingIsNarrated()
+    public void WithNoStoryRunningNothingIsNarrated()
     {
         var narrator = Narrator(story: false);
         _ = narrator.Examine(At(T0)).ToArray();

@@ -5890,7 +5890,7 @@ public sealed class AppHost : IDisposable
 
     private D47.App.Panel.RunningCast? RunningCast(string? frontierId)
     {
-        if (Stories is not { } director || StoryStore?.Current(frontierId) is not { State: D47.Core.Stories.StoryState.Running } story)
+        if (Stories is not { } director || StoryStore?.Current(frontierId) is not { State: D47.Core.Stories.StoryState.Running, IsOff: false } story)
         {
             return null;
         }

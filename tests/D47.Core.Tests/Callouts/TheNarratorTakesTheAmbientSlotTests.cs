@@ -6,7 +6,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Callouts;
 
-/// <summary>With a stock core aboard, the Narrator speaks at its own gap, with or without a story.</summary>
+/// <summary>With a stock core aboard, the Narrator speaks at its own gap while a story runs and is silent otherwise.</summary>
 public class TheNarratorTakesTheAmbientSlotTests
 {
     private static readonly DateTimeOffset T0 = new(3312, 5, 1, 12, 0, 0, TimeSpan.Zero);
@@ -20,7 +20,7 @@ public class TheNarratorTakesTheAmbientSlotTests
         {
             Interval = OwnGap,
             Longest = OwnGap,
-            HasStory = () => story,
+            StoryRunning = () => story,
             StockCoreAboard = stock,
         };
 
@@ -28,9 +28,18 @@ public class TheNarratorTakesTheAmbientSlotTests
         new(now, false, null, GameStatus.Unknown with { Flags = flags }, NavRoute.None, []);
 
     [Fact]
-    public void WithCovasAboardAndNoStoryTheNarratorSpeaksNoSoonerThanItsOwnGap()
+    public void WithCovasAboardAndNoStoryTheNarratorStaysSilent()
     {
         var narrator = Narrator(() => true);
+        _ = narrator.Examine(At(T0)).ToArray();
+
+        Assert.Empty(narrator.Examine(At(T0 + OwnGap * 3)));
+    }
+
+    [Fact]
+    public void WithCovasAboardAndARunningStoryTheNarratorSpeaksNoSoonerThanItsOwnGap()
+    {
+        var narrator = Narrator(() => true, story: true);
         _ = narrator.Examine(At(T0)).ToArray();
 
         Assert.Empty(narrator.Examine(At(T0 + OwnGap - TimeSpan.FromSeconds(1))));
@@ -79,7 +88,7 @@ public class TheNarratorTakesTheAmbientSlotTests
     [Fact]
     public void TwoNarrationsAreNeverCloserThanTheLeastOrFurtherThanTheMost()
     {
-        var narrator = Narrator(() => true);
+        var narrator = Narrator(() => true, story: true);
         narrator.Interval = TimeSpan.FromMinutes(30);
         narrator.Longest = TimeSpan.FromMinutes(60);
 

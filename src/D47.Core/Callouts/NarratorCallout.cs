@@ -23,9 +23,6 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
     /// <summary>Off means no narration, whatever else is enabled.</summary>
     public Func<bool> Enabled { get; set; } = () => true;
 
-    /// <summary>Whether the character sheet, the backstory or the scenario is set.</summary>
-    public Func<bool> HasStory { get; set; } = () => false;
-
     /// <summary>Whether a stock story is running and switched on for the active Commander.</summary>
     public Func<bool> StoryRunning { get; set; } = () => false;
 
@@ -41,7 +38,7 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
     /// <summary>The longest; each gap lands somewhere in [<see cref="Interval"/>, <see cref="Longest"/>].</summary>
     public TimeSpan Longest { get; set; } = TimeSpan.FromMinutes(60);
 
-    /// <summary>Whether the core aboard is a stock core. The Narrator then narrates whether or not there is a story.</summary>
+    /// <summary>Whether the core aboard is a stock core. It does not change when the Narrator speaks: lull narration needs a running story or an adventure under way.</summary>
     public Func<bool> StockCoreAboard { get; set; } = () => false;
 
     /// <summary>How long a situation has to hold before it is narrated.</summary>
@@ -95,7 +92,7 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
         var stalled = Adventures().FirstOrDefault(standing =>
             !_nudged.Contains(standing.Adventure.Key) && AdventureNudge.IsDue(standing, context.Now));
 
-        if (stalled is null && !StockCoreAboard() && !HasStory() && !StoryRunning())
+        if (stalled is null && !StoryRunning() && Adventures().Count == 0)
         {
             yield break;
         }

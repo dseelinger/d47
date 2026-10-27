@@ -14,6 +14,8 @@ Exobiology and Road to Riches stops on the route page show the straight-line dis
 
 The organic sampling callout for the first and second specimen now says how far to go before the next one, such as "Aleoida Gravis, 1 of 3. 2 to go, 150 metres from here."
 
+The Narrator now speaks during a lull only while a stock story is running or an adventure is under way. With COVAS aboard and no story it no longer narrates, and About me or a character sheet alone does not count as a story. A story you have switched off no longer offers the Narrator on the comms panel.
+
 Saying "how much further" or "how much farther" while a sampling set is open on the body you are on now answers by voice, without the model, with the metres still to go for each genus. The distance is measured from every specimen in the set, not only the last one, so driving back towards an earlier specimen is no longer reported as far enough.
 
 The callout for the third organic specimen no longer says "Analyse when you are ready", since Elite analyses it by itself a few seconds later. It now ends at the count and the distance from the last one.

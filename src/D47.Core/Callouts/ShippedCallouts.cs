@@ -598,10 +598,6 @@ public static class ShippedCallouts
                     narrator.Interval = TimeSpan.FromSeconds(callouts.NarratorSeconds);
                     narrator.Longest = TimeSpan.FromSeconds(callouts.NarratorMaxSeconds);
                     narrator.Enabled = () => settings.Current.Callouts.Narrator && settings.Current.Llm.PersonalityEnabled;
-                    narrator.HasStory = () => settings.Current.Llm is var llm
-                        && (!string.IsNullOrWhiteSpace(llm.CharacterSheet)
-                            || !string.IsNullOrWhiteSpace(llm.AboutMe)
-                            || !string.IsNullOrWhiteSpace(llm.Scenario));
                     break;
 
                 case SessionLengthCallout length:

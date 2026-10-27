@@ -29,7 +29,6 @@ public class AStalledStoryGetsANudgeTests
         {
             Interval = Gap,
             Longest = Gap,
-            HasStory = () => true,
             Adventures = () => book.Active("F1"),
         };
 

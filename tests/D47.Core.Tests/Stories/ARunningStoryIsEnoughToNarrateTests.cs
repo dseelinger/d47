@@ -33,7 +33,6 @@ public sealed class ARunningStoryIsEnoughToNarrateTests
         {
             Interval = Gap,
             Longest = Gap,
-            HasStory = () => false,
             StoryRunning = () => fixtures.Director.IsRunning("F1"),
         };
 
