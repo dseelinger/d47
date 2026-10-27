@@ -48,6 +48,40 @@ public sealed class AnEraseClearsActivitiesMailAndReputationTests
     }
 
     [Fact]
+    public void FoldingTheSameEraseAgainChangesNoActivityDate()
+    {
+        var ledger = new ActivityLedger(null, new MemoryFileSystem(), NullLogger.Instance);
+
+        ledger.Apply([Load(G, "08:00:00"), Refined("08:10:00"), Load(F, "09:00:00"), Refined("09:10:00"), Erase(F, "10:00:00"), Load(F, "10:00:01"), Refined("11:00:00")]);
+
+        var mining = ledger.LastDone("mining", F);
+        var from = ledger.CorpusFrom(F);
+        var other = ledger.LastDone("mining", G);
+
+        ledger.Apply([Erase(F, "10:00:00")]);
+
+        Assert.Equal(mining, ledger.LastDone("mining", F));
+        Assert.Equal(from, ledger.CorpusFrom(F));
+        Assert.Equal(other, ledger.LastDone("mining", G));
+    }
+
+    [Fact]
+    public void FoldingTheSameEraseAgainChangesNoMail()
+    {
+        var mail = new MailLedger("mail-read.json", new MemoryFileSystem(), NullLogger.Instance);
+
+        mail.Fold([Load(G, "08:00:00"), Completed("08:10:00", 1), Load(F, "09:00:00"), Completed("09:10:00", 2), Erase(F, "10:00:00"), Load(F, "10:00:01"), Completed("11:00:00", 3)], live: true);
+
+        var forF = mail.Compose(F);
+        var forG = mail.Compose(G);
+
+        mail.Fold([Erase(F, "10:00:00")], live: true);
+
+        Assert.Equal(forF, mail.Compose(F));
+        Assert.Equal(forG, mail.Compose(G));
+    }
+
+    [Fact]
     public void AnEraseKeepsWhichActivitiesAreSuggested()
     {
         var ledger = new ActivityLedger(null, new MemoryFileSystem(), NullLogger.Instance);
