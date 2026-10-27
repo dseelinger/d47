@@ -355,6 +355,21 @@ public class ExobiologyCapabilityTests
     }
 
     [Fact]
+    public async Task ThePlotPassesTheFarthestDistanceFromArrival()
+    {
+        const string Jump = """{"timestamp":"2026-08-16T09:05:00Z","event":"FSDJump","StarSystem":"Sol"}""";
+        var routes = new FakeRoutes();
+
+        await Ask(Store(Jump), "plot_exobiology_route", """{"max_distance_to_arrival":50000}""", routes);
+
+        Assert.Equal(50_000, routes.LastQuery!.MaxDistanceToArrival);
+
+        await Ask(Store(Jump), "plot_exobiology_route", "{}", routes);
+
+        Assert.Equal(10_000, routes.LastQuery!.MaxDistanceToArrival);
+    }
+
+    [Fact]
     public async Task ThePlotCountsTheJumpsBackToTheStart()
     {
         var routes = new FakeRoutes

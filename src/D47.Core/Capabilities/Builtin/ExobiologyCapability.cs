@@ -159,8 +159,8 @@ public static class ExobiologyCapability
                 Name = "plot_exobiology_route",
                 Description =
                     "Plot a circuit through systems with known, already-surveyed biology, with the "
-                    + "species on each body and what each is worth. Everything on it has been visited "
-                    + "by somebody, so none of it can be a first footfall — for undiscovered systems, "
+                    + "species on each body and what each is worth. The route avoids Thargoid systems. "
+                    + "Everything on it has been visited by somebody, so none of it can be a first footfall — for undiscovered systems, "
                     + "read a system name instead.",
                 Parameters =
                 [
@@ -174,7 +174,7 @@ public static class ExobiologyCapability
                     {
                         Name = "jump_range",
                         Type = ToolParameterType.Number,
-                        Description = "Laden jump range in light years. Defaults to 50.",
+                        Description = "Jump range in light years. Defaults to the ship's own range.",
                     },
                     new ToolParameter
                     {
@@ -193,8 +193,15 @@ public static class ExobiologyCapability
                         Name = "min_value",
                         Type = ToolParameterType.Integer,
                         Description =
-                            "The least a body's biology must be worth to be a stop, in credits. "
-                            + "Defaults to 1,000,000.",
+                            "The least a species must be worth to be listed, in credits; a body is a stop "
+                            + "when any of its species clears it. Defaults to 1,000,000.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "max_distance_to_arrival",
+                        Type = ToolParameterType.Number,
+                        Description =
+                            "How far in-system a body may sit, in light seconds. Defaults to 10,000.",
                     },
                     new ToolParameter
                     {
@@ -623,7 +630,7 @@ public static class ExobiologyCapability
                 Number(arguments, "radius"),
                 arguments.TryGetInt32("max_results", out var max) ? max : null,
                 arguments.TryGetInt32("min_value", out var min) ? min : null,
-                maxDistanceToArrival: null,
+                Number(arguments, "max_distance_to_arrival"),
                 Flag(arguments, "loop"),
                 out var query,
                 out var failure))

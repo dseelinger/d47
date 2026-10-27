@@ -39,7 +39,7 @@ nav_order: 206
 </section>
 <section>
 <h2><span class="num">3</span> Stops, radius and a floor, as on Road to Riches.</h2>
-<svg viewBox="0 0 880 200" role="img" aria-label="Stops, radius and the least a body's biology must be worth, with their defaults">
+<svg viewBox="0 0 880 330" role="img" aria-label="Stops, radius, the least a species must be worth, jump range and the farthest a body may sit from arrival, with their defaults">
  <rect x="20" y="30" width="270" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="68" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">STOPS</text>
  <text x="155" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">how many systems</text>
@@ -50,9 +50,17 @@ nav_order: 206
  <text x="440" y="130" text-anchor="middle" font-size="15" fill="var(--text)">200 ly out of the box</text>
  <rect x="590" y="30" width="270" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="725" y="68" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WORTH STOPPING</text>
- <text x="725" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">the least a body must pay</text>
+ <text x="725" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">the least a species must pay</text>
  <text x="725" y="130" text-anchor="middle" font-size="15" fill="var(--text)">1,000,000 cr out of the box</text>
- <text x="440" y="186" text-anchor="middle" font-size="15" fill="var(--text-muted)">Coming back to the start is on out of the box, and can be turned off.</text>
+ <rect x="20" y="170" width="410" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="225" y="208" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">JUMP RANGE</text>
+ <text x="225" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">how far one jump goes</text>
+ <text x="225" y="266" text-anchor="middle" font-size="15" fill="var(--text)">this ship’s out of the box</text>
+ <rect x="450" y="170" width="410" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="655" y="208" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">FARTHEST FROM ARRIVAL</text>
+ <text x="655" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">how far in-system a body may sit</text>
+ <text x="655" y="266" text-anchor="middle" font-size="15" fill="var(--text)">10,000 ls out of the box</text>
+ <text x="440" y="318" text-anchor="middle" font-size="15" fill="var(--text-muted)">Coming back to the start is on out of the box, and can be turned off.</text>
 </svg>
 </section>
 <div class="next">
@@ -76,10 +84,14 @@ behind it.
 |---|---|---|
 | **Stops** | How many systems the circuit visits | 10 |
 | **Radius (ly)** | How far from the start it may look | 200 |
-| **Least worth stopping for (cr)** | The least a body's biology must be worth | 1,000,000 |
+| **Least a species is worth (cr)** | The least a species must be worth to be listed; a body is a stop when any of its species clears it | 1,000,000 |
+| **Jump range (ly)** | How far one jump goes | This ship's |
+| **Farthest from arrival (ls)** | How far in-system a body may sit | 10,000 |
 | **Come back to the start** | Whether the circuit ends where it started | On |
 
-It starts from where you are, at this ship's jump range.
+It starts from where you are. Systems with Thargoid presence are avoided. A body's worth is the total of all its species, including those under the minimum.
+
+A loop can come back in either direction. Spansh may return the same systems in a different order for the same request.
 
 ### What the plan shows
 

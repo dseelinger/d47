@@ -101,6 +101,7 @@ public sealed class SpanshRouteService : IRouteService, IDisposable
                 ["max_results"] = query.MaxResults.ToString(CultureInfo.InvariantCulture),
                 ["min_value"] = query.MinimumValue.ToString(CultureInfo.InvariantCulture),
                 ["max_distance"] = Number(query.MaxDistanceToArrival),
+                ["avoid_thargoids"] = "1",
                 ["loop"] = query.Loop ? "1" : "0",
             },
             "the exobiology plotter",

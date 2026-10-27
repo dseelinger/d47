@@ -40,7 +40,7 @@ nav_order: 202
 </section>
 <section>
 <h2><span class="num">2</span> Three dials, and each one trades against the others.</h2>
-<svg viewBox="0 0 880 250" role="img" aria-label="Stops, radius and the least a body must be worth, and what raising each one does">
+<svg viewBox="0 0 880 400" role="img" aria-label="Stops, radius, the least a body must be worth, jump range and the farthest a body may sit from arrival">
  <rect x="20" y="30" width="270" height="140" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="68" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">STOPS</text>
  <text x="155" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">how many systems</text>
@@ -56,8 +56,16 @@ nav_order: 202
  <text x="725" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">the floor a body must</text>
  <text x="725" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">clear to be included</text>
  <text x="725" y="152" text-anchor="middle" font-size="15" fill="var(--text)">500,000 cr out of the box</text>
- <rect x="20" y="188" width="840" height="48" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="440" y="218" text-anchor="middle" font-size="16" fill="var(--text)">Raise the floor and you must widen the radius, or there will not be enough bodies left to fill the stops.</text>
+ <rect x="20" y="188" width="410" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="225" y="226" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">JUMP RANGE</text>
+ <text x="225" y="258" text-anchor="middle" font-size="15" fill="var(--text-muted)">how far one jump goes</text>
+ <text x="225" y="284" text-anchor="middle" font-size="15" fill="var(--text)">this ship’s out of the box</text>
+ <rect x="450" y="188" width="410" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="655" y="226" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">FARTHEST FROM ARRIVAL</text>
+ <text x="655" y="258" text-anchor="middle" font-size="15" fill="var(--text-muted)">how far in-system a body may sit</text>
+ <text x="655" y="284" text-anchor="middle" font-size="15" fill="var(--text)">10,000 ls out of the box</text>
+ <rect x="20" y="326" width="840" height="48" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="356" text-anchor="middle" font-size="16" fill="var(--text)">Raise the floor and you must widen the radius, or there will not be enough bodies left to fill the stops.</text>
 </svg>
 </section>
 <section>
@@ -97,6 +105,8 @@ The card called **Road to Riches** on the Navigation tab's Plan page, and the
 | **Stops** | How many systems the tour visits | 10 |
 | **Radius (ly)** | How far from the start it may look | 500 |
 | **Least worth stopping for (cr)** | The floor a body must clear to be included | 500,000 |
+| **Jump range (ly)** | How far one jump goes | This ship's |
+| **Farthest from arrival (ls)** | How far in-system a body may sit | 10,000 |
 | **Come back to the start** | Whether the last stop is where the first was | On |
 
 It starts from where you are. There is no destination box, because there is no destination — the

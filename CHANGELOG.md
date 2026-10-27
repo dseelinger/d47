@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Exobiology and Road to Riches cards on the Plan page now have **Jump range (ly)** and **Farthest from arrival (ls)** fields, and the exobiology plot takes a farthest distance from arrival, so a body past 10,000 ls can be included. Exobiology routes now avoid Thargoid systems. The Exobiology minimum is now labelled **Least a species is worth (cr)**, which is how it is applied: a body is a stop when any of its species clears it.
+
 Exobiology and Road to Riches stops on the route page show the straight-line distance of each leg, such as "6 jumps · 51 ly · 2 bodies", and each body shows its distance from arrival in light seconds. An exobiology body whose species are worth less than the body's total gains a line, "species under the minimum", with the difference; the spoken plot says the same.
 
 The organic sampling callout for the first and second specimen now says how far to go before the next one, such as "Aleoida Gravis, 1 of 3. 2 to go, 150 metres from here."

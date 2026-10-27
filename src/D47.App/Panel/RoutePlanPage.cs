@@ -257,13 +257,21 @@ public sealed class RoutePlanPage : UserControl
         var stops = Field("Stops", "10");
         var radius = Field("Radius (ly)", "500");
         var minimum = Field("Least worth stopping for (cr)", "500,000");
+        var range = Field(
+            "Jump range (ly)",
+            "this ship's",
+            FieldNeed.Supplied,
+            () => _jumpRange?.Invoke() is { } ly
+                ? ly.ToString("0.##", System.Globalization.CultureInfo.CurrentCulture) + " ly"
+                : null);
+        var farthest = Field("Farthest from arrival (ls)", "10,000");
         var loop = RoutingKit.Switch("Come back to the start");
         loop.IsChecked = true;
 
         var form = new StackPanel
         {
             Spacing = 8,
-            Children = { Row(stops, radius), Row(minimum, null), loop },
+            Children = { Row(stops, radius), Row(range, minimum), Row(farthest, null), loop },
         };
 
         return Plottable(
@@ -275,23 +283,34 @@ public sealed class RoutePlanPage : UserControl
                 ("stops", stops.Text),
                 ("radius", radius.Text),
                 ("minimum_value", minimum.Text),
+                ("jump_range", range.Text),
+                ("max_distance_to_arrival", farthest.Text),
                 ("loop", loop.IsChecked == true ? "true" : "false")),
             () => true,
-            RichesHelp);
+            RichesHelp,
+            FormField.Legend(required: false, supplied: true));
     }
 
     private Control ExobiologyCard()
     {
         var stops = Field("Stops", "10");
         var radius = Field("Radius (ly)", "200");
-        var minimum = Field("Least worth stopping for (cr)", "1,000,000");
+        var minimum = Field("Least a species is worth (cr)", "1,000,000");
+        var range = Field(
+            "Jump range (ly)",
+            "this ship's",
+            FieldNeed.Supplied,
+            () => _jumpRange?.Invoke() is { } ly
+                ? ly.ToString("0.##", System.Globalization.CultureInfo.CurrentCulture) + " ly"
+                : null);
+        var farthest = Field("Farthest from arrival (ls)", "10,000");
         var loop = RoutingKit.Switch("Come back to the start");
         loop.IsChecked = true;
 
         var form = new StackPanel
         {
             Spacing = 8,
-            Children = { Row(stops, radius), Row(minimum, null), loop },
+            Children = { Row(stops, radius), Row(range, minimum), Row(farthest, null), loop },
         };
 
         return Plottable(
@@ -303,9 +322,12 @@ public sealed class RoutePlanPage : UserControl
                 ("max_results", stops.Text),
                 ("radius", radius.Text),
                 ("min_value", minimum.Text),
+                ("jump_range", range.Text),
+                ("max_distance_to_arrival", farthest.Text),
                 ("loop", loop.IsChecked == true ? "true" : "false")),
             () => true,
-            ExobiologyHelp);
+            ExobiologyHelp,
+            FormField.Legend(required: false, supplied: true));
     }
 
     /// <summary>The Commander's own fleet carrier, plotted with the tank and hold it last reported.</summary>

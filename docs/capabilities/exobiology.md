@@ -397,8 +397,8 @@ the model is refused.
 
 #### `plot_exobiology_route`
 
-A circuit through surveyed biology, with species and values.
+A circuit through surveyed biology, with species and values. It avoids Thargoid systems.
 
 ```json
-{"type":"object","properties":{"from":{"type":"string","description":"System to start from. Leave out to start where the Commander is."},"jump_range":{"type":"number","description":"Laden jump range in light years. Defaults to 50."},"loop":{"type":"boolean","description":"Whether the circuit returns to the start. Defaults to true."},"max_results":{"type":"integer","description":"How many systems to visit. Defaults to 10."},"min_value":{"type":"integer","description":"The least a body\u0027s biology must be worth to be a stop, in credits. Defaults to 1,000,000."},"radius":{"type":"number","description":"How far from the origin to look, in light years. Defaults to 200."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"from":{"type":"string","description":"System to start from. Leave out to start where the Commander is."},"jump_range":{"type":"number","description":"Jump range in light years. Defaults to the ship\u0027s own range."},"loop":{"type":"boolean","description":"Whether the circuit returns to the start. Defaults to true."},"max_distance_to_arrival":{"type":"number","description":"How far in-system a body may sit, in light seconds. Defaults to 10,000."},"max_results":{"type":"integer","description":"How many systems to visit. Defaults to 10."},"min_value":{"type":"integer","description":"The least a species must be worth to be listed, in credits; a body is a stop when any of its species clears it. Defaults to 1,000,000."},"radius":{"type":"number","description":"How far from the origin to look, in light years. Defaults to 200."}},"required":[],"additionalProperties":false}
 ```

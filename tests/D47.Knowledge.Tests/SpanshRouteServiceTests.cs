@@ -429,6 +429,23 @@ public class SpanshRouteServiceTests
         Assert.Equal("/api/exobiology/route", recorder.Paths[0]);
     }
 
+    [Fact]
+    public async Task TheExobiologyPlotAvoidsThargoidSystems()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK, """{"status":"ok","result":[]}"""));
+
+        using var service = Service(recorder, out _);
+
+        Assert.True(ExobiologyQuery.TryParse(
+            "Sol", 50, 200, 10, 1_000_000, 10_000, true, out var query, out _));
+
+        await service.PlotExobiologyAsync(query, TestContext.Current.CancellationToken);
+
+        Assert.Contains("avoid_thargoids=1", recorder.Requests[0].Split('&'));
+    }
+
     private static CarrierRouteQuery CarrierQuery()
     {
         var carrier = new D47.Core.Journal.CarrierState
