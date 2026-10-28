@@ -223,6 +223,8 @@ public static class ShippedCallouts
 
             .Add(new FriendsCallout(sources.Friends))
 
+            .Add(new WingCallout())
+
             .Add(new ServerStatusCallout())
 
             // Phase 23.
@@ -446,6 +448,7 @@ public static class ShippedCallouts
         engine.SetEnabled("powerplay-cycle", callouts.PowerplayCycle, now);
         engine.SetEnabled("bgs-tick", callouts.BgsTick, now);
         engine.SetEnabled("friends", callouts.FriendsOnline, now);
+        engine.SetEnabled("wing", callouts.Wing, now);
         engine.SetEnabled("galnet", callouts.GalNet, now);
         engine.SetEnabled("server-status", callouts.ServerStatus, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);

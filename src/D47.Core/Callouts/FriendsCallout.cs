@@ -60,6 +60,14 @@ public sealed class FriendsCallout(FriendRoster roster) : ICallout
     /// <summary>"Arcturus and Vega are online."; names past the third are a count.</summary>
     public static string Line(IReadOnlyList<string> names)
     {
+        var who = Listed(names);
+
+        return names.Count == 1 ? $"{who} is online." : $"{who} are online.";
+    }
+
+    /// <summary>"Arcturus, Vega and two others"; names past the third are a count.</summary>
+    internal static string Listed(IReadOnlyList<string> names)
+    {
         var listed = names.Take(NamesSaid).ToList();
         var others = names.Count - listed.Count;
 
@@ -68,10 +76,8 @@ public sealed class FriendsCallout(FriendRoster roster) : ICallout
             listed.Add(others == 1 ? "one other" : $"{SpokenNumber.UpTo999(others)} others");
         }
 
-        var who = listed.Count == 1
+        return listed.Count == 1
             ? listed[0]
             : string.Join(", ", listed.Take(listed.Count - 1)) + " and " + listed[^1];
-
-        return names.Count == 1 ? $"{who} is online." : $"{who} are online.";
     }
 }

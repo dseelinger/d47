@@ -228,6 +228,7 @@ public static class SettingsLayout
                                 E("callouts.powerplayCycle"),
                                 E("callouts.bgsTick"),
                                 E("callouts.friendsOnline"),
+                                E("callouts.wing"),
                                 E("callouts.metBefore"),
                                 E("callouts.galNet"),
                                 E("callouts.serverStatus"),

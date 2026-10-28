@@ -634,6 +634,9 @@ public sealed record CalloutSettings
     /// <summary>A friend coming online, said once for a burst of arrivals.</summary>
     public bool FriendsOnline { get; init; } = true;
 
+    /// <summary>Joining a wing, and a wingmate joining.</summary>
+    public bool Wing { get; init; } = true;
+
     /// <summary>The headlines of new GalNet articles.</summary>
     public bool GalNet { get; init; } = true;
 

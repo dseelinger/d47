@@ -614,6 +614,20 @@ than thirty minutes old, so the restatement Elite writes shortly after login sta
 said during the startup replay. The names are spoken by your ship's voice provider. Turn this one off
 with the `friends` row.
 
+#### Wing changes {#wing}
+
+When you join a wing, the members already in it; when a wingmate joins, who, with a five-second wait so
+a burst is one line. Leaving is not said: Elite writes `WingLeave` every time you quit to the main menu.
+
+```text
+We're in a wing with Arcturus and Vega.
+Arcturus joined the wing.
+```
+
+Three names are said at most, and the rest are a count. A `WingAdd` within sixty seconds after
+`LoadGame` restores the wing after a reload and is not said. Nothing is said during the startup replay.
+Turn this one off with the `wing` row.
+
 #### GalNet headlines {#galnet}
 
 When new GalNet articles arrive, the headlines, newest first and never the articles. Needs **GalNet news**

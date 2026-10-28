@@ -72,6 +72,8 @@ public static class CalloutCapability
     public const string PowerplayCycleKey = "callouts.powerplayCycle";
     public const string BgsTickKey = "callouts.bgsTick";
     public const string FriendsOnlineKey = "callouts.friendsOnline";
+
+    public const string WingKey = "callouts.wing";
     public const string GalNetKey = "callouts.galNet";
     public const string ServerStatusKey = "callouts.serverStatus";
     public const string ChecklistKey = "callouts.checklist";
@@ -694,6 +696,15 @@ public static class CalloutCapability
                 "friends online",
                 s => s.Callouts.FriendsOnline,
                 (s, v) => s with { Callouts = s.Callouts with { FriendsOnline = v } }),
+
+            Toggle(
+                WingKey,
+                "Wing changes",
+                "When you join a wing, says who is in it, and when a wingmate joins, says who. Leaving is not said.",
+                "wing",
+                "wing changes",
+                s => s.Callouts.Wing,
+                (s, v) => s with { Callouts = s.Callouts with { Wing = v } }),
 
             Toggle(
                 ChecklistKey,
