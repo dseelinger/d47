@@ -10,6 +10,8 @@
 
 Say "set course for my next objective" to plot to the system of the objective your story is waiting on, or "copy my next objective to my clipboard" to put that system on the clipboard. They work for a running story chapter or the one short story under way, and say so when the objective has no system.
 
+A story chapter whose draft is objected to after its place checks now gets one more rewrite for that objection, and a sightseeing mission objective is checked as confirming the visit to the sights, not what the passengers made of them.
+
 Story chapters can now ask for planetary scan jobs, for Hack missions, from a ship or on foot, and for settlement Disable missions.
 
 The Exobiology and Road to Riches cards on the Plan page now have **Jump range (ly)** and **Farthest from arrival (ls)** fields, and the exobiology plot takes a farthest distance from arrival, so a body past 10,000 ls can be included. Exobiology routes now avoid Thargoid systems. The Exobiology minimum is now labelled **Least a species is worth (cr)**, which is how it is applied: a body is a stop when any of its species clears it.

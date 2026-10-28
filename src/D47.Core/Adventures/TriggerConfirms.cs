@@ -81,9 +81,13 @@ internal static class TriggerConfirms
     /// <summary>The entry for a kind; in a stock story the beacon's entry says the story's cores came aboard.</summary>
     internal static string Of(TriggerKind kind, bool story = false) => story && kind == TriggerKind.Beacon ? StockBeacon : Entries[kind];
 
-    /// <summary>The entry for an objective of a kind with a filter; a site objective is described by its filter alone.</summary>
-    internal static string Of(TriggerKind kind, string? filter, bool story = false, string? system = null) =>
-        kind == TriggerKind.Uss && !string.IsNullOrWhiteSpace(system)
+    private const string Sightseeing = "a sightseeing mission was handed in, so its passengers were taken to the sights it listed — not what they made of them";
+
+    /// <summary>The entry for an objective of a kind with a filter; a site objective is described by its filter alone, a sightseeing mission by its family.</summary>
+    internal static string Of(TriggerKind kind, string? filter, bool story = false, string? system = null, string? family = null) =>
+        kind == TriggerKind.Mission && family is not null && family.Trim().StartsWith("Mission_Sightseeing", StringComparison.OrdinalIgnoreCase)
+            ? Sightseeing
+            : kind == TriggerKind.Uss && !string.IsNullOrWhiteSpace(system)
             ? $"the ship dropped into signal sources in {system.Trim()} — not who sent the signal or what was found there"
             : kind == TriggerKind.Organic && !string.IsNullOrWhiteSpace(system)
             ? $"organic samples were analysed in {system.Trim()} — not the species found or the sample's worth"

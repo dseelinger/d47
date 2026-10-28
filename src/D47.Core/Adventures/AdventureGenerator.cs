@@ -588,6 +588,7 @@ public sealed class AdventureGenerator(
         var passed = new HashSet<int>();
 
         string? outage = null;
+        var objected = false;
         var resolved = await HoldToWhatTheyConfirmAsync(await CheckAsync(read).ConfigureAwait(false), read).ConfigureAwait(false);
 
         if (cancellationToken.IsCancellationRequested)
@@ -608,8 +609,13 @@ public sealed class AdventureGenerator(
         }
 
         // The objectives that stood are kept; only the refused ones go back through the turn, before the Commander sees anything.
-        for (var round = 1; round <= RepairRounds && resolved.Refusals.Count > 0; round++)
+        var placeRounds = 0;
+        var fidelityRounds = 0;
+
+        while (resolved.Refusals.Count > 0 && (objected ? fidelityRounds < FidelityRepairRounds : placeRounds < RepairRounds))
         {
+            var forFidelity = objected;
+            var round = forFidelity ? ++fidelityRounds : ++placeRounds;
             var repair = new Repair(read.Beats, resolved.Refusals, offset);
             var again = await AskJsonAsync(
                 RepairStep,
@@ -653,7 +659,7 @@ public sealed class AdventureGenerator(
                 return GalaxyDown(outage, notes, started);
             }
 
-            LogRefusals(ask, $"repair {round.ToString(CultureInfo.InvariantCulture)}", again.Step, resolved.Refusals);
+            LogRefusals(ask, $"{(forFidelity ? "fidelity repair" : "repair")} {round.ToString(CultureInfo.InvariantCulture)}", again.Step, resolved.Refusals);
         }
 
         resolved = KeepWhatTheRewriteKept(NarrateSelfNaming(resolved, ask));
@@ -722,8 +728,11 @@ public sealed class AdventureGenerator(
 
         // Asked only of a draft the dry run found nothing in; a refused objective is written again before its lines are read.
         // An objective the check has passed is not refused by a later round unless its group was replaced since.
+        // Sets objected when the refusals returned are the check's objections.
         async Task<Resolved> HoldToWhatTheyConfirmAsync(Resolved dryRun, ReadAnswer answer)
         {
+            objected = false;
+
             if (dryRun.Refusals.Count > 0 || cancellationToken.IsCancellationRequested)
             {
                 return dryRun;
@@ -734,6 +743,8 @@ public sealed class AdventureGenerator(
                 .ToList();
 
             passed.UnionWith(Enumerable.Range(0, answer.Beats.Count).Except(objections.SelectMany(objection => objection.Objectives)));
+
+            objected = objections.Count > 0;
 
             return objections.Count == 0 ? dryRun : dryRun with { Refusals = objections };
         }
@@ -842,7 +853,7 @@ public sealed class AdventureGenerator(
             var last = index == beats.Count - 1 ? " (the last objective: its lines are the ending)" : string.Empty;
 
             text.AppendLine($"{offset + index + 1}. {beat.Title}{last} — {beat.Describe()}{(beat.Continues ? " (a further step of the objective above)" : string.Empty)}");
-            text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind, beat.Filter, story, beat.Written().System)}");
+            text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind, beat.Filter, story, beat.Written().System, beat.MissionFamily)}");
 
             if (!beat.Continues)
             {
@@ -865,6 +876,9 @@ public sealed class AdventureGenerator(
 
     /// <summary>Rounds of replacements a draft's refused objectives get before the draft fails.</summary>
     public const int RepairRounds = 2;
+
+    /// <summary>Rounds of replacements a draft's fidelity objections get, counted apart from <see cref="RepairRounds"/>.</summary>
+    public const int FidelityRepairRounds = 1;
 
     private void LogRefusals(AdventureAsk ask, string round, string step, IReadOnlyList<Refusal> refusals)
     {
