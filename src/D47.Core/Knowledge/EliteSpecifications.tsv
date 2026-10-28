@@ -13,7 +13,7 @@
 # Ships: 49. Modules: 1221, of which bulkheads 247. Known but unmeasured: 0.
 # Slots: 1290 across 49 hulls. Modules with no type: 11.
 # coriolis-data tree 0db9234b5b9c. EDSY eddb.js as of the same day.
-# Built: 2026-10-22.
+# Built: 2026-10-27.
 [ships]
 symbol	name	manufacturer	pad	speed	boost	armour	shields	hardness	hull_mass	fuel	crew	masslock	cost	hardpoints	internals	requirement
 adder	Adder	Zorgon Peterson	small	220	320	90	60	35	35	0.36	2	7	40833	2,1,1	3,3,2,2,1,1,1	
@@ -789,47 +789,47 @@ int_largebuggybay_size6_class3_free	Large Planetary Vehicle Hangar (free)	6	F			
 int_largecargorack_size6_class1	Mk II Cargo Rack	6	D		0			587400										icr	anacondamkii panthermkii		capacity=96					
 int_largecargorack_size7_class1	Mk II Cargo Rack	7	D		0			1958680										icr	anacondamkii panthermkii		capacity=192	Panther Clipper storage rack for use in automated cargo transfer system.				
 int_largecargorack_size8_class1	Mk II Cargo Rack	8	D		0			4929317										icr	anacondamkii panthermkii		capacity=384	Panther Clipper storage rack for use in automated cargo transfer system.				
-int_lifesupport_size1_class1	Life Support	1	E		1.3	0.32	32	517										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size1_class1	Life Support	1	E		1.3	0.32	32	517										cls			oxygen=300	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
 int_lifesupport_size1_class1_free	Life Support (free)	1	E																							
-int_lifesupport_size1_class2	Life Support	1	D		0.5	0.36	36	1293										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size1_class3	Life Support	1	C		1.3	0.4	40	3231										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size1_class4	Life Support	1	B		2	0.44	44	8078										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size1_class5	Life Support	1	A		1.3	0.48	48	20195										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size2_class1	Life Support	2	E		2.5	0.37	41	1448										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size2_class2	Life Support	2	D		1	0.41	46	3619										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size2_class3	Life Support	2	C		2.5	0.46	51	9048										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size2_class4	Life Support	2	B		4	0.51	56	22619										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size2_class5	Life Support	2	A		2.5	0.55	61	56547										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size3_class1	Life Support	3	E		5	0.42	51	4053										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size3_class2	Life Support	3	D		2	0.48	58	10133										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size3_class3	Life Support	3	C		5	0.53	64	25333										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size3_class4	Life Support	3	B		8	0.58	70	63333										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size3_class5	Life Support	3	A		5	0.64	77	158331										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size4_class1	Life Support	4	E		10	0.5	64	11349										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size4_class2	Life Support	4	D		4	0.56	72	28373										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size4_class3	Life Support	4	C		10	0.62	80	70932										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size4_class4	Life Support	4	B		16	0.68	88	177331										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size4_class5	Life Support	4	A		10	0.74	96	443328										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size5_class1	Life Support	5	E		20	0.57	77	31778										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size5_class2	Life Support	5	D		8	0.64	86	79444										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size5_class3	Life Support	5	C		20	0.71	96	198611										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size5_class4	Life Support	5	B		32	0.78	106	496527										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size5_class5	Life Support	5	A		20	0.85	115	1241317										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size6_class1	Life Support	6	E		40	0.64	90	88978										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size6_class2	Life Support	6	D		16	0.72	102	222444										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size6_class3	Life Support	6	C		40	0.8	113	556110										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size6_class4	Life Support	6	B		64	0.88	124	1390275										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size6_class5	Life Support	6	A		40	0.96	136	3475688										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size7_class1	Life Support	7	E		80	0.72	105	249137										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size7_class2	Life Support	7	D		32	0.81	118	622843										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size7_class3	Life Support	7	C		80	0.9	131	1557108										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size7_class4	Life Support	7	B		128	0.99	144	3892770										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size7_class5	Life Support	7	A		80	1.08	157	9731925										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size8_class1	Life Support	8	E		160	0.8	120	697584										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size8_class2	Life Support	8	D		64	0.9	135	1743961										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size8_class3	Life Support	8	C		160	1	150	4359903										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size8_class4	Life Support	8	B		256	1.1	165	10899756										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
-int_lifesupport_size8_class5	Life Support	8	A		160	1.2	180	27249391										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size1_class2	Life Support	1	D		0.5	0.36	36	1293										cls			oxygen=450	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size1_class3	Life Support	1	C		1.3	0.4	40	3231										cls			oxygen=600	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size1_class4	Life Support	1	B		2	0.44	44	8078										cls			oxygen=900	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size1_class5	Life Support	1	A		1.3	0.48	48	20195										cls			oxygen=1500	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size2_class1	Life Support	2	E		2.5	0.37	41	1448										cls			oxygen=300	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size2_class2	Life Support	2	D		1	0.41	46	3619										cls			oxygen=450	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size2_class3	Life Support	2	C		2.5	0.46	51	9048										cls			oxygen=600	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size2_class4	Life Support	2	B		4	0.51	56	22619										cls			oxygen=900	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size2_class5	Life Support	2	A		2.5	0.55	61	56547										cls			oxygen=1500	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size3_class1	Life Support	3	E		5	0.42	51	4053										cls			oxygen=300	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size3_class2	Life Support	3	D		2	0.48	58	10133										cls			oxygen=450	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size3_class3	Life Support	3	C		5	0.53	64	25333										cls			oxygen=600	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size3_class4	Life Support	3	B		8	0.58	70	63333										cls			oxygen=900	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size3_class5	Life Support	3	A		5	0.64	77	158331										cls			oxygen=1500	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size4_class1	Life Support	4	E		10	0.5	64	11349										cls			oxygen=300	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size4_class2	Life Support	4	D		4	0.56	72	28373										cls			oxygen=450	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size4_class3	Life Support	4	C		10	0.62	80	70932										cls			oxygen=600	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size4_class4	Life Support	4	B		16	0.68	88	177331										cls			oxygen=900	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size4_class5	Life Support	4	A		10	0.74	96	443328										cls			oxygen=1500	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size5_class1	Life Support	5	E		20	0.57	77	31778										cls			oxygen=300	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size5_class2	Life Support	5	D		8	0.64	86	79444										cls			oxygen=450	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size5_class3	Life Support	5	C		20	0.71	96	198611										cls			oxygen=600	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size5_class4	Life Support	5	B		32	0.78	106	496527										cls			oxygen=900	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size5_class5	Life Support	5	A		20	0.85	115	1241317										cls			oxygen=1500	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size6_class1	Life Support	6	E		40	0.64	90	88978										cls			oxygen=300	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size6_class2	Life Support	6	D		16	0.72	102	222444										cls			oxygen=450	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size6_class3	Life Support	6	C		40	0.8	113	556110										cls			oxygen=600	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size6_class4	Life Support	6	B		64	0.88	124	1390275										cls			oxygen=900	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size6_class5	Life Support	6	A		40	0.96	136	3475688										cls			oxygen=1500	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size7_class1	Life Support	7	E		80	0.72	105	249137										cls			oxygen=300	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size7_class2	Life Support	7	D		32	0.81	118	622843										cls			oxygen=450	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size7_class3	Life Support	7	C		80	0.9	131	1557108										cls			oxygen=600	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size7_class4	Life Support	7	B		128	0.99	144	3892770										cls			oxygen=900	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size7_class5	Life Support	7	A		80	1.08	157	9731925										cls			oxygen=1500	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size8_class1	Life Support	8	E		160	0.8	120	697584										cls			oxygen=300	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size8_class2	Life Support	8	D		64	0.9	135	1743961										cls			oxygen=450	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size8_class3	Life Support	8	C		160	1	150	4359903										cls			oxygen=600	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size8_class4	Life Support	8	B		256	1.1	165	10899756										cls			oxygen=900	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
+int_lifesupport_size8_class5	Life Support	8	A		160	1.2	180	27249391										cls			oxygen=1500	Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
 int_metaalloyhullreinforcement_size1_class1	Meta Alloy Hull Reinforcement	1	E		2			7501										imahrp				Increases the ship's hull integrity and resistance to caustic damage.		ELITE_HORIZONS_V_METAHULL		
 int_metaalloyhullreinforcement_size1_class2	Meta Alloy Hull Reinforcement	1	D		2			22501										imahrp				Increases the ship's hull integrity and resistance to caustic damage.		ELITE_HORIZONS_V_METAHULL		
 int_metaalloyhullreinforcement_size2_class1	Meta Alloy Hull Reinforcement	2	E		4			18000										imahrp				Increases the ship's hull integrity and resistance to caustic damage.		ELITE_HORIZONS_V_METAHULL		

@@ -206,6 +206,12 @@ FIGURES = {
     "passengers": "passengers",
 }
 
+# Figures whose coriolis key means something else on other kinds: `time` is a limpet controller's
+# lifetime outside life support. Keyed by coriolis's `grp`.
+GROUP_FIGURES = {
+    "ls": {"time": "oxygen"},
+}
+
 # The damage a weapon does, by type. `X` is anti-xeno and is a marker beside a real type rather
 # than a share of it: those distributions sum to 2 where every other sums to 1.
 DAMAGE_TYPES = {
@@ -480,7 +486,7 @@ def figures(module: dict) -> str:
     if (types := damage_types(module)):
         found.append(f"damage type={types}")
 
-    for key, name in FIGURES.items():
+    for key, name in {**FIGURES, **GROUP_FIGURES.get(module.get("grp"), {})}.items():
         value = module.get(key)
 
         if value is not None and value != "" and not isinstance(value, dict):

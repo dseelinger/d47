@@ -373,6 +373,12 @@ public static class EliteSpecifications
     /// <summary>
     /// How many modules of one limit group a ship may carry, or null for a group nothing limits.
     /// </summary>
+    /// <summary>The seconds of oxygen a life support module holds, or null for any other module.</summary>
+    public static int? OxygenSeconds(string? symbol) =>
+        Module(symbol) is { Type: "cls" } module && module.Figure("oxygen") is { } seconds
+            ? (int)seconds
+            : null;
+
     public static int? MostOf(string? group) =>
         group is { Length: > 0 } named && Loaded.Value.Limits.TryGetValue(named, out var most)
             ? most
