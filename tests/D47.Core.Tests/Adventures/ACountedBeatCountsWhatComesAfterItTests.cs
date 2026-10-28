@@ -131,7 +131,7 @@ public class ACountedBeatCountsWhatComesAfterItTests : IDisposable
     }
 
     [Theory]
-    [InlineData("Mission_Scan")]
+    [InlineData("Mission_Massacre_Skimmer")]
     [InlineData("Mission_RS_Massacre")]
     [InlineData("Mission_OnFoot_Hack")]
     public void ASetAsideFamilyIsRefused(string family)

@@ -56,8 +56,7 @@ Every story keeps all twelve. Check the draft against each before showing it.
    PvP beats.
 
    Set aside until their spikes are flown: skimmer massacres (`Mission_Massacre_Skimmer`, #721),
-   Disable (`Mission_Disable*`, #722), Hack (`Mission_Hack*`, `Mission_OnFoot_Hack*`, #723), Scan
-   (`Mission_Scan`, #724) and damaged-station missions (`Mission_RS_*`, `Mission_DS_*`, #725). No
+   Disable (`Mission_Disable*`, #722), Hack (`Mission_Hack*`, `Mission_OnFoot_Hack*`, #723) and damaged-station missions (`Mission_RS_*`, `Mission_DS_*`, #725). No
    beat or clue uses them.
 6. No clue or ending depends on an earlier choice.
 7. Hidden text never tells a core that another Guardian mind is alive. Other cores are spoken of
