@@ -326,7 +326,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         // After Location, for the reason Colonisation below is: storing a ship happens wherever the Commander
         // is standing, and neither ShipyardSwap nor ShipyardBuy names a place.
         Fleet = Fleet.Apply(journalEvent, Location.StarSystem, Location.StationName);
-        Modules = Modules.Apply(journalEvent);
+        Modules = Modules.Apply(journalEvent, Location.StarSystem, Location.StationName);
 
         // Names of places, and only places — see SpokenNames.Apply, which reads named fields rather than
         // scraping the event, because the line between a place Elite wrote and words another player typed is

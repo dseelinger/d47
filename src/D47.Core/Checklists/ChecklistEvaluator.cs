@@ -111,6 +111,11 @@ public static class ChecklistEvaluator
 
         var module = Fitted(loadout, intent.Subject);
 
+        if (intent.Kind == ChecklistIntentKind.Module && NamesAModule(intent))
+        {
+            return Bought(intent, module, state, loadout);
+        }
+
         if (module is null)
         {
             return Missing(intent, state, loadout);
@@ -128,6 +133,59 @@ public static class ChecklistEvaluator
 
             _ => Blueprint(intent, module, state),
         };
+    }
+
+    /// <summary>Whether a module line names the module it plans, rather than only the slot.</summary>
+    private static bool NamesAModule(ChecklistIntent intent) =>
+        intent.Variant is { Length: > 0 } || PlannedName(intent) is { Length: > 0 };
+
+    private static string? PlannedName(ChecklistIntent intent) => intent.Module ?? intent.Detail;
+
+    /// <summary>A planned module is bought when it is fitted in the planned slot or a matching one is stored.</summary>
+    private static ChecklistVerdict Bought(
+        ChecklistIntent intent, ShipModule? fitted, CommanderGameState state, ShipLoadout loadout)
+    {
+        if (fitted is not null && Meets(intent, fitted.Item))
+        {
+            return new ChecklistVerdict(ChecklistState.Done, $"{Describe(fitted)} is fitted in {intent.Subject}.");
+        }
+
+        if (state.Modules.Modules.FirstOrDefault(module => Meets(intent, module.Symbol)) is { } stored)
+        {
+            var where = stored.StationName is { } station
+                ? $"at {station} in {stored.StarSystem}"
+                : $"in {stored.StarSystem}";
+
+            return new ChecklistVerdict(
+                ChecklistState.Done, $"{Describe(stored.Symbol!)} is bought and stored {where}.");
+        }
+
+        var planned = intent.Variant is { Length: > 0 } variant ? Describe(variant) : PlannedName(intent);
+
+        return fitted is not null
+            ? new ChecklistVerdict(ChecklistState.Open, $"{Describe(fitted)} is fitted rather than {planned}.")
+            : Empty(intent, loadout);
+    }
+
+    /// <summary>
+    /// Whether a module is the one a line plans: the same symbol where the plan has a variant, else the same
+    /// module type as the planned name.
+    /// </summary>
+    private static bool Meets(ChecklistIntent intent, string? symbol)
+    {
+        if (JournalJson.Symbol(symbol) is not { } held)
+        {
+            return false;
+        }
+
+        if (intent.Variant is { Length: > 0 } variant)
+        {
+            return string.Equals(held, JournalJson.Symbol(variant), StringComparison.Ordinal);
+        }
+
+        return EliteSpecifications.Module(held)?.Type is { } type
+               && EliteSpecifications.ModulesNamed(PlannedName(intent), null, null)
+                   .Any(module => string.Equals(module.Type, type, StringComparison.OrdinalIgnoreCase));
     }
 
     private static ChecklistVerdict Experimental(ChecklistIntent intent, ShipModule module)
@@ -283,6 +341,11 @@ public static class ChecklistEvaluator
                 $"You already own {stored.Name} — it is in {stored.StarSystem}{cost}.");
         }
 
+        return Empty(intent, loadout);
+    }
+
+    private static ChecklistVerdict Empty(ChecklistIntent intent, ShipLoadout loadout)
+    {
         var where = Knowledge.EliteSpecifications.Slot(loadout.Type, intent.Subject)?.Describe()
                     ?? intent.Subject;
 
@@ -645,11 +708,13 @@ public static class ChecklistEvaluator
     /// The module as a Commander says it: the size and rating in front of the name, which is the order
     /// outfitting lists it in.
     /// </summary>
-    internal static string Describe(ShipModule module)
+    internal static string Describe(ShipModule module) => Describe(module.Item);
+
+    private static string Describe(string symbol)
     {
-        if (EliteSpecifications.Module(module.Item) is not { } specification)
+        if (EliteSpecifications.Module(symbol) is not { } specification)
         {
-            return ModuleNames.Readable(module.Item);
+            return ModuleNames.Readable(symbol);
         }
 
         return specification.IsBulkhead

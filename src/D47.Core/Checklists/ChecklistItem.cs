@@ -224,6 +224,9 @@ public sealed record ChecklistIntent(ChecklistIntentKind Kind, string Subject)
     /// Reinforcement Package (asked for 2026-08-24).
     /// </summary>
     public string? Module { get; init; }
+
+    /// <summary>The exact module the plan names, as the journal's symbol, where it picked a size and rating.</summary>
+    public string? Variant { get; init; }
 }
 
 /// <summary>One item's identity: the list it is in, and what it is within that list.</summary>

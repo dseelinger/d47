@@ -5,6 +5,9 @@ namespace D47.Core.Journal;
 /// <summary>One module in storage, and where it is.</summary>
 public sealed record StoredModule(string Name, string StarSystem)
 {
+    /// <summary>The journal's symbol for the item, folded as <see cref="JournalJson.Symbol(string?)"/> folds it.</summary>
+    public string? Symbol { get; init; }
+
     /// <summary>Size and rating, such as <c>5A</c>, parsed from the symbol; null where the symbol carries none.</summary>
     public string? Class { get; init; }
 
@@ -97,8 +100,17 @@ public sealed record ModuleStore
             : [.. Modules.Where(module => module.Name.Contains(wanted, StringComparison.OrdinalIgnoreCase))];
     }
 
-    public ModuleStore Apply(JournalEvent journalEvent)
+    /// <summary>
+    /// The store after one event: a <c>StoredModules</c> snapshot replaces the list, and a
+    /// <c>ModuleBuyAndStore</c> adds the module bought, at the system and station the Commander is at.
+    /// </summary>
+    public ModuleStore Apply(JournalEvent journalEvent, string? atSystem = null, string? atStation = null)
     {
+        if (journalEvent.Kind == "ModuleBuyAndStore")
+        {
+            return Bought(journalEvent, atSystem, atStation);
+        }
+
         if (journalEvent.Kind != "StoredModules")
         {
             return this;
@@ -113,6 +125,7 @@ public sealed record ModuleStore
 
             return new StoredModule(ModuleNames.Readable(element.Named("Name")), where)
             {
+                Symbol = element.Symbol("Name"),
                 // Only the station of the snapshot is knowable.
                 StationName = system is not null
                               && string.Equals(where, system, StringComparison.OrdinalIgnoreCase)
@@ -135,6 +148,25 @@ public sealed record ModuleStore
             TakenAt = journalEvent.Timestamp,
             Modules = [.. modules],
         };
+    }
+
+    private ModuleStore Bought(JournalEvent journalEvent, string? atSystem, string? atStation)
+    {
+        var symbol = journalEvent.Raw.Symbol("BuyItem");
+
+        if (symbol is null)
+        {
+            return this;
+        }
+
+        var bought = new StoredModule(ModuleNames.Readable(journalEvent.Named("BuyItem")), atSystem ?? "unknown")
+        {
+            Symbol = symbol,
+            Class = ModuleNames.Class(symbol),
+            StationName = atSystem is null ? null : atStation,
+        };
+
+        return this with { Modules = [.. Modules, bought] };
     }
 }
 

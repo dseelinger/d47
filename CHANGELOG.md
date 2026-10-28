@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A module you buy straight into storage is listed on the Stored modules page as soon as you buy it, at the station you bought it from, and leaves a ship's To buy block at the same time. Before, both waited until Elite next reported your module storage.
+
 A ship's page on Asset Mgmt › Ships now has a To buy block between the hull's figures and Plan whenever its plan still needs something bought: the hull, if you do not own it yet, and each planned module that is neither fitted in its slot nor in module storage. It names three items and counts the rest, and a "Plot a route to buy them" tile plots the route from your system and opens it on Navigation › Plan. The route page lists each stop with its distance and a "buy" line per item, a Not found group for items no station in range sells, and a Storage not checked notice when D47 has not seen your module storage. Opening module storage takes what you have stored off the list. With "Look things up in the galaxy" off the tile is disabled and the reason shows under it, on the main window and the headset panel. The mini panel does not show the block.
 
 Ask D47 to plot a route to buy several modules or ships, such as "plot a route to buy a 6A fuel scoop and a 5A frame shift drive". It picks the fewest stations near you that sell the list between them, up to six, visits them nearest-next, and says the first stop, what to buy there and any item no station in range sells. "Plot next outfitting stop" is not a phrase yet; ask for the next stop of the outfitting plan.

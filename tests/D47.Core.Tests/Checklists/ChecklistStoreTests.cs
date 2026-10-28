@@ -40,6 +40,42 @@ public class ChecklistStoreTests
         Assert.Equal("buy limpets", store.For("F1").Items.Single().Text);
     }
 
+    [Fact]
+    public void APlannedVariantIsWrittenAndReadBack()
+    {
+        var intent = new ChecklistIntent(ChecklistIntentKind.Module, "MainEngines")
+        {
+            Module = "Thrusters",
+            Variant = "int_engine_size5_class5",
+        };
+
+        Store().Save(
+        [
+            ChecklistDocument.For("F1", "Jameson") with
+            {
+                Items =
+                [
+                    new ChecklistItem
+                    {
+                        Key = ChecklistKeys.For(intent),
+                        Scope = ChecklistScope.Ship(12),
+                        Kind = ChecklistItemKind.Derived,
+                        Source = ChecklistSource.EngineeringPlan,
+                        Text = "5A Thrusters",
+                        Intent = intent,
+                        Hull = "krait_mkii",
+                    },
+                ],
+            },
+        ]);
+
+        var reread = Store();
+
+        Assert.True(reread.Poll());
+        Assert.Empty(reread.Problems);
+        Assert.Equal("int_engine_size5_class5", reread.For("F1").Items.Single().Intent!.Variant);
+    }
+
     /// <summary>Files written by older versions hold this state.</summary>
     [Fact]
     public void AStaleLineWrittenByAnOlderVersionStillLoads()
