@@ -178,7 +178,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         if (_surface.Stories is { } director
             && (crumb.Key == StoriesView.RootKey || crumb.Key.StartsWith(StoriesView.ReadPrefix, StringComparison.Ordinal)))
         {
-            _storiesView ??= new StoriesView(_surface, director, _nav, _prompts);
+            _storiesView ??= new StoriesView(_surface, director, _nav, _prompts, _copy);
             return crumb.Key == StoriesView.RootKey ? _storiesView : _storiesView.Build(crumb);
         }
 

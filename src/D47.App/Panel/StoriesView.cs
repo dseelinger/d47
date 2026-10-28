@@ -44,8 +44,16 @@ public sealed class StoriesView : UserControl, IPageSummary
     private readonly CatalogueFilters _filters;
     private StoryFilter _filter;
 
-    public StoriesView(AdventureSurface surface, StoryDirector director, PanelNavigator nav, PanelPrompts prompts)
+    private readonly Func<Func<string, Task<bool>>?>? _copy;
+
+    public StoriesView(
+        AdventureSurface surface,
+        StoryDirector director,
+        PanelNavigator nav,
+        PanelPrompts prompts,
+        Func<Func<string, Task<bool>>?>? copy = null)
     {
+        _copy = copy;
         _surface = surface;
         _director = director;
         _nav = nav;
@@ -610,10 +618,11 @@ public sealed class StoriesView : UserControl, IPageSummary
             }));
 
         var group = new StackPanel { Spacing = 6, Margin = new Thickness(0, 6, 0, 0) };
-        group.Children.Add(AdventuresPage.Trigger(AdventuresPage.Sentence(next), _surface.State()?.Location?.StarSystem));
+        var current = _surface.Book.Standing(commander, chapterKey)?.CurrentTrigger;
+        group.Children.Add(AdventuresPage.Trigger(
+            AdventuresPage.Sentence(next), _surface.State()?.Location?.StarSystem, current?.System, _copy?.Invoke()));
 
-        var ship = ShipObjectiveButtons.For(
-            _surface, _surface.Book.Standing(commander, chapterKey)?.CurrentTrigger, _nav, _prompts);
+        var ship = ShipObjectiveButtons.For(_surface, current, _nav, _prompts);
 
         group.Children.Add(ship is null ? AdventuresPage.Buttons(change, refuse) : AdventuresPage.Buttons(ship, change, refuse));
         return group;

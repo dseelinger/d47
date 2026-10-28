@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A stock story's objective on the Stories tab now has a copy glyph after its system name, as a short story's objective does. Pressing it copies the system name.
+
 The Galaxy map's Unvisited squares now show only the systems near the Commander's current system. After an arrival, the squares around the previous system are no longer drawn, and they come back, without a new search, when the Commander returns there.
 
 Refining ore in an SRV, such as the Rhino's surface mining, no longer starts a mining run. The mining summary is no longer spoken after surface mining, and surface ore is no longer counted as ring mining.
