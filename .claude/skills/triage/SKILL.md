@@ -36,6 +36,17 @@ Keep an issue only if **all** of these hold:
 Say in one line how many survived and how many each rule removed. Then stop justifying: the point
 of the report is the order, not the filter.
 
+## Design and architect work comes first
+
+From the same list, take the open issues that carry `design` or `needs-architect` and not `tabled`.
+If there are any, complain before going further: one line saying that open issues still need
+Claude Design or `/architect`, with the count for each label and every number as a link. Then ask
+with `AskUserQuestion` whether to continue the triage, the first option continuing. On no, stop
+there: no table and no grid written. On yes, carry on with the report and leave the complaint out
+of it.
+
+This holds in every mode, and when `/coordinator` runs triage.
+
 ## What each issue needs first
 
 Many bodies name their prerequisites: a `Needs first: #537, #538.` line, or a sentence
@@ -331,10 +342,12 @@ Markdown, and short. Three parts:
 1. One line: how many eligible, and what the filter removed.
 2. **Next up** — the queue and its release groups, as one table:
 
-   | Release | # | Issue | Model | Effort | Advisor | Review |
-   | --- | --- | --- | --- | --- | --- | --- |
-   | 0.110.10 — Tables answer for themselves | [105](https://github.com/dseelinger/d47/issues/105) | Join the experimental effect on its symbol | `sonnet` | `medium` | `opus` | |
-   | | [104](https://github.com/dseelinger/d47/issues/104) | No way to ask which engineer works in a system | `sonnet` | `medium` | | |
+   | Release | # | Issue | Labels | Model | Effort | Advisor | Review |
+   | --- | --- | --- | --- | --- | --- | --- | --- |
+   | 0.110.10 — Tables answer for themselves | [105](https://github.com/dseelinger/d47/issues/105) | Join the experimental effect on its symbol | bug, data-accuracy | `sonnet` | `medium` | `opus` | |
+   | | [104](https://github.com/dseelinger/d47/issues/104) | No way to ask which engineer works in a system | enhancement | `sonnet` | `medium` | | |
+
+   The Labels cell lists every label on the issue, comma-separated, as the list call returned them.
 
    A group's issues are consecutive rows. The version and title go in the first of them; the
    Release cell is blank on the rest, and blank throughout for an issue in no group. There is no
@@ -354,11 +367,11 @@ Markdown, and short. Three parts:
    In lanes mode the table gains a **Lane** column first, and rows are ordered by lane, then by
    their order within it:
 
-   | Lane | Release | # | Issue | Model | Effort | Advisor | Review |
-   | --- | --- | --- | --- | --- | --- | --- | --- |
-   | A | 1.25.0 — Missions rank the same everywhere | [794](https://github.com/dseelinger/d47/issues/794) | Rank the mission board in one place | `sonnet` | `medium` | | |
-   | | 1.25.0 — Missions rank the same everywhere | [841](https://github.com/dseelinger/d47/issues/841) | Rank the Situation missions like the board | `sonnet` | `medium` | `opus` | |
-   | B | 1.26.0 — Carrier warnings | [834](https://github.com/dseelinger/d47/issues/834) | Warn when the carrier cannot jump twice | `sonnet` | `medium` | | |
+   | Lane | Release | # | Issue | Labels | Model | Effort | Advisor | Review |
+   | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+   | A | 1.25.0 — Missions rank the same everywhere | [794](https://github.com/dseelinger/d47/issues/794) | Rank the mission board in one place | enhancement | `sonnet` | `medium` | | |
+   | | 1.25.0 — Missions rank the same everywhere | [841](https://github.com/dseelinger/d47/issues/841) | Rank the Situation missions like the board | bug | `sonnet` | `medium` | `opus` | |
+   | B | 1.26.0 — Carrier warnings | [834](https://github.com/dseelinger/d47/issues/834) | Warn when the carrier cannot jump twice | enhancement | `sonnet` | `medium` | | |
 
    The lane's letter goes in its first row. A group can span lanes, so the Release cell is filled
    on every row of an issue in a group.
