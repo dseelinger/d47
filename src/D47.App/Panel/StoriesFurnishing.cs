@@ -12,8 +12,11 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
 
     public AdventureMini? Mini { get; private set; }
 
-    /// <summary>Shows or hides Short Story and Story log as the settings and the book change.</summary>
-    public bool Tick() => ShowConditionalRoots();
+    /// <summary>The next objective, drawn under the title rule of every tab of the full panel.</summary>
+    public ObjectiveStrip? Strip { get; private set; }
+
+    /// <summary>Shows or hides Short Story and Story log as the settings and the book change, and redraws the strip when the system does.</summary>
+    public bool Tick() => ShowConditionalRoots() | (Strip?.Refresh() ?? false);
 
     private bool ShowConditionalRoots()
     {
@@ -92,5 +95,6 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
         }
 
         Mini = new AdventureMini(surface);
+        Strip = new ObjectiveStrip(surface, () => host.Copy);
     }
 }

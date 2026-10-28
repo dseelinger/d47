@@ -601,6 +601,9 @@
             Height="1"
             Background="{DynamicResource D47.A}" />
 
+    <!-- The next story objective, on every tab of the full panel; empty when there is none. -->
+    <Border x:Name="ObjectiveSlot" DockPanel.Dock="Top" IsVisible="False" />
+
     <!--
       One slot, every page. The transcript and each furnished tab occupy the same place under
       the strip and are swapped by which tab is checked, which is what makes settings a page of

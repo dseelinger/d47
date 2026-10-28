@@ -15,6 +15,9 @@ namespace D47.Core.Stories;
 /// <summary>A story picked with a narrated beacon scan, waiting for the tick to say its scan line and wake the cores. <see cref="Line"/> is null when the entry has none.</summary>
 public sealed record StoryScanDue(string StoryId, string Title, StoryLine? Line);
 
+/// <summary>An objective <see cref="StoryDirector.CurrentObjective"/> returns: its standing, its story's name, and whether the stock story is paused.</summary>
+public sealed record ShownObjective(AdventureStanding Standing, string StoryName, bool Paused);
+
 /// <summary>A story picked with fixed opening lines, waiting for the tick to say them before anything else of the story.</summary>
 public sealed record StoryOpeningDue(string StoryId, string Title, IReadOnlyList<StoryLine> Lines);
 
@@ -1097,6 +1100,25 @@ public sealed class StoryDirector(
         return book.Standing(frontierId, key) is { } standing && AdventureNudge.Destination(standing) is { } system
             ? (system, null)
             : (null, "That objective has no system to go to.");
+    }
+
+    /// <summary>
+    /// The objective <see cref="MarkObjectiveDone(string?, DateTimeOffset)"/> selects, but a paused stock story is returned and
+    /// flagged. Null with no story, with several short stories under way, or with nothing active.
+    /// </summary>
+    public ShownObjective? CurrentObjective(string? frontierId)
+    {
+        if (stories.Current(frontierId) is { CurrentChapter: { } chapter } story
+            && book.Standing(frontierId, chapter) is { Adventure.IsActive: true, IsDone: false } standing)
+        {
+            return new ShownObjective(standing, story.Title, !IsRunning(frontierId));
+        }
+
+        var shortStories = book.Standings(frontierId)
+            .Where(standing => standing.Adventure is { StoryId: null, IsActive: true } && !standing.IsDone)
+            .ToList();
+
+        return shortStories.Count == 1 ? new ShownObjective(shortStories[0], shortStories[0].Adventure.Name, false) : null;
     }
 
     private (string? Key, string? Refusal) ObjectiveKey(string? frontierId, string pausedRefusal, string severalAdvice)

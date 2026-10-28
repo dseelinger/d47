@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+While a story objective is under way, every tab of the full panel, on the desktop window and the headset big panel, shows it on one line under the title rule: NEXT, the objective, its system, a copy glyph for the system, and the story's name at the right. The system is cyan when it is your current system. A paused story reads PAUSED in grey, and while Change objective writes a new one the strip says "Writing a different objective…". On a narrow window the sentence is cut with an ellipsis first and the story's name second. With several short stories under way, or none, there is no strip. The mini panel keeps its own Next row.
+
 A story's page in the Stories tab now shows the speaker's picture beside each line: the cast member's, the narrator's, or the core's for the ship and for your questions. Pressing a picture opens it full size. A finished story's lines are named by their speaker instead of by an id. Lines recorded before this update have no stored picture and show none.
 
 Each row of a region's Discoveries list now has its own Search tile, which runs the same search as the entry page's Search tile; pressing the rest of the row still opens the entry page. The tile is disabled, with the same reason, while "Look things up in the galaxy" is off.

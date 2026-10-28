@@ -2220,6 +2220,8 @@ public partial class PanelView : UserControl, IPanelTabHost
         Frame.Margin = new Thickness(28, full ? 20 : 26, 28, 24);
         PageHeader.IsVisible = full;
         TitleRule.IsVisible = full;
+        ObjectiveSlot.Child = _stories.Strip;
+        ObjectiveSlot.IsVisible = full;
 
         // A furnished tab brings its own footer — the settings surface has the storage line, About and the
         // data folder — so the ask line and the provenance line give way to it rather than sitting under it
