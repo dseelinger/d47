@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Each row of a region's Discoveries list now has its own Search tile, which runs the same search as the entry page's Search tile; pressing the rest of the row still opens the entry page. The tile is disabled, with the same reason, while "Look things up in the galaxy" is off.
+
 A codex entry's page now has a Search tile, on the main window and the headset panel. It opens Search › Bodies with Codex entry set to that entry and runs the search from your current system. With "Look things up in the galaxy" off the tile is disabled and says to turn it on.
 
 You can now search for bodies by codex entry. Ask "where can I find Bacterium Cerbrus" or type the name into the new Codex entry field on the Search tab's Bodies page, and the answer lists the nearest bodies where Spansh records that species or geological feature. A colour variant such as "Frutexa Flammasis - Red" is searched as its species, and the answer says the species it searched.

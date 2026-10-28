@@ -196,7 +196,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             : CodexPage.PictureOf(crumb.Key) is { } picture
             ? pictures is not null && !headset ? PicturePage(crumb.Key, picture, pictures, work) : new Border()
             : CodexPage.IsDiscoveries(crumb.Key)
-            ? _codexDiscoveries = new CodexDiscoveriesPage(state, history, CodexPage.DiscoveriesOf(crumb.Key), headset: headset, nav: host.Nav, pictures: pictures, columnWidths: host.ColumnWidths)
+            ? _codexDiscoveries = new CodexDiscoveriesPage(state, history, CodexPage.DiscoveriesOf(crumb.Key), headset: headset, nav: host.Nav, pictures: pictures, columnWidths: host.ColumnWidths, bodySearch: () => host.BodySearch)
             : CodexPage.IsRegion(crumb.Key)
             ? _codexRegion = new CodexRegionPage(state, history, now, choice, CodexPage.RegionOf(crumb.Key), headset, host.Nav, columnWidths: host.ColumnWidths)
             : _codex = new CodexPage(state, history, now, choice, host.Nav, headset, host.ColumnWidths);

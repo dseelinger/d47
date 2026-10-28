@@ -17,6 +17,8 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
 {
     private const int ThumbnailPixels = 88;
 
+    private const double SearchWidth = 96;
+
     public const string TableId = "Codex.Discoveries";
 
     private static readonly TableColumn[] ColumnList =
@@ -37,6 +39,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     private TableLayout _layout;
     private readonly ColumnWidthMemory? _columnWidths;
     private readonly PanelNavigator? _nav;
+    private readonly Func<BodySearchLink?>? _bodySearch;
     private readonly CodexPictureSet? _pictures;
     private readonly Dictionary<long, (Bitmap Bitmap, string Name)> _thumbs = [];
     private readonly Dictionary<string, Bitmap?> _families = new(StringComparer.OrdinalIgnoreCase);
@@ -53,6 +56,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     private CodexLedger? _seenLedger;
     private HistoryState _seenHistory;
     private string _query = string.Empty;
+    private bool? _seenLookups;
 
     public CodexDiscoveriesPage(
         Func<CommanderGameState?> state,
@@ -62,9 +66,11 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         bool headset = false,
         PanelNavigator? nav = null,
         CodexPictureSet? pictures = null,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        Func<BodySearchLink?>? bodySearch = null)
     {
         _nav = nav;
+        _bodySearch = bodySearch;
         _pictures = pictures;
         Refresh();
         _state = state;
@@ -143,7 +149,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     /// <summary>Redraws when the record or the history walk has changed.</summary>
     public bool Tick()
     {
-        if (ReferenceEquals(_state()?.CodexLedger, _seenLedger) && _history() == _seenHistory)
+        if (ReferenceEquals(_state()?.CodexLedger, _seenLedger) && _history() == _seenHistory && Lookups() == _seenLookups)
         {
             return false;
         }
@@ -160,6 +166,14 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     {
         _seenLedger = _state()?.CodexLedger;
         _seenHistory = _history();
+
+        var lookups = Lookups();
+
+        if (lookups != _seenLookups)
+        {
+            _seenLookups = lookups;
+            _shown = [];
+        }
 
         var view = Build();
 
@@ -211,7 +225,14 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         }
 
         _layout = NewLayout();
-        _top.Children.Add(CreditsKit.HeaderRow(_head, _layout, i => HorizontalAlignment.Left));
+        var header = CreditsKit.HeaderRow(_head, _layout, i => HorizontalAlignment.Left);
+
+        if (_bodySearch is not null)
+        {
+            header.Margin = new Thickness(14, 0, 14 + Gaps.Tile + SearchWidth, 0);
+        }
+
+        _top.Children.Add(header);
 
         Rows(_head.Sort(view.Rows));
     }
@@ -258,7 +279,9 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
 
     private TableLayout NewLayout() => new(TableId, ColumnList, _columnWidths, _headset ? 12 : 16);
 
-    private Button RowView(CodexMissingRow row)
+    private bool? Lookups() => _bodySearch?.Invoke()?.Enabled();
+
+    private Grid RowView(CodexMissingRow row)
     {
         var grid = _layout.Row([]);
         grid.VerticalAlignment = VerticalAlignment.Center;
@@ -280,13 +303,48 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
             Content = grid,
             MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 0),
-            Margin = new Thickness(0, 0, 0, Gaps.Tile),
             HorizontalAlignment = HorizontalAlignment.Stretch,
         });
         Avalonia.Automation.AutomationProperties.SetName(button, row.Name);
         button.Click += (_, _) => _nav?.Drill(CodexPage.EntryCrumb(_regionId, row.EntryId, row.Name));
 
-        return button;
+        var line = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, Gaps.Tile) };
+        line.Children.Add(button);
+
+        if (SearchTile(row) is { } search)
+        {
+            Grid.SetColumn(search, 1);
+            line.Children.Add(search);
+        }
+
+        return line;
+    }
+
+    /// <summary>The row's Search tile: for an entry the codex table lists, disabled while the galaxy lookups are off.</summary>
+    private Button? SearchTile(CodexMissingRow row)
+    {
+        if (_bodySearch?.Invoke() is not { } link || _table.Entry(row.EntryId) is not { } entry)
+        {
+            return null;
+        }
+
+        var enabled = link.Enabled();
+        var tile = new Button
+        {
+            Name = "CodexSearch." + row.EntryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Content = "Search",
+            IsEnabled = enabled,
+            Width = SearchWidth,
+            MinHeight = TypeScale.MinimumTarget,
+            Margin = Gaps.TileBefore,
+            VerticalAlignment = VerticalAlignment.Stretch,
+        };
+        Avalonia.Automation.AutomationProperties.SetName(tile, "Search " + row.Name);
+        ToolTip.SetShowOnDisabled(tile, true);
+        ToolTip.SetTip(tile, enabled ? null : GalaxySearchPage.LookupsOffTip);
+        tile.Click += (_, _) => link.Run(new Dictionary<string, string>(StringComparer.Ordinal) { ["codex_entry"] = entry.Name });
+
+        return tile;
     }
 
     private Border Thumbnail(CodexMissingRow row)
