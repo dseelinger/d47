@@ -1,6 +1,6 @@
 ---
 name: new-story
-description: Develop one d47 stock story with the maintainer — a pitch of premise, secret and twist to accept or reject, then both layers — on a draft page of its own, revise it until he approves, then publish it to the stories release; or, for surprise stories he does not read, encoded premises reviewed by other AIs and then written and published unseen. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
+description: Develop one d47 stock story with the maintainer — a pitch of premise, secret and twist to accept or reject, then both layers, or straight to a drafted story with its cast pictures when the argument supplies the length, level, genre, core and premise — on a draft page of its own, revise it until he approves, then publish it to the stories release; or, for surprise stories he does not read, encoded premises reviewed by other AIs and then written and published unseen. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
 ---
 
 # New story
@@ -11,7 +11,8 @@ him; the sealing keeps the hidden layer out of the tree's plain text, not out of
 surprise story (Surprise stories, below) is the exception: he asked not to read it.
 
 `/new-story <anything>` has named the work, so start on it in that same turn: a pitch (below),
-built from whatever the argument fixes. `/new-story` with a surprise id such as `N-3D-A`, or with
+built from whatever the argument fixes. An argument that fixes everything the pitch table needs goes
+straight to the draft instead, with no pitch to accept (Straight to the draft, below). `/new-story` with a surprise id such as `N-3D-A`, or with
 "surprise" or "premises", is surprise work (below). A bare `/new-story` looks for draft pages first (below): if
 there are any, ask whether to continue one or start another; if there are none, pitch one.
 
@@ -113,7 +114,8 @@ If the release has no `index.json` yet, only the list below applies.
 
 ## The pitch
 
-The first thing he sees is one pitch, in chat, before any layer or draft page is written.
+The first thing he sees is one pitch, in chat, before any layer or draft page is written, unless the
+argument supplied everything (Straight to the draft, below).
 
 The maintainer may fix any of the length, level, genre, tone, core or premise, in the argument or in
 reply. Keep what he fixed and choose the rest. Where you choose, favour what the catalog lacks:
@@ -145,6 +147,18 @@ The pitch gives:
 Check the pitch against all twelve rules before showing it. The pitch fixes the premise, secret and
 twist; once he accepts it, write the rest without asking again, and bring back only a choice the
 pitch did not settle.
+
+### Straight to the draft
+
+When the argument fixes the length, level, genre and core and gives a premise (the situation and the
+cast it turns on), the data is supplied and there is no pitch in chat and no stop for an accept.
+Choose the tone, title, secret and twist as the pitch would, and do all of its work: the catalog
+counts and the gaps line, the surprise-title check, the three guesses, and the three closest stories.
+Then write both layers, generate the cast pictures, and publish the draft page with the pictures on
+it, all in that turn. The page carries what the pitch would have said: the gaps line, the three
+guesses and why the twist is none of them, the three closest stories, and any lore the story bends.
+The argument is his permission to generate the pictures. He reads the draft as he would after
+step 4, and his notes and approval follow as in steps 5 and 6.
 
 ## The length
 
@@ -277,7 +291,8 @@ python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name 
   `gpt-image-2.5-flare`. `--quality low` is for trying a prompt; `--model` and `--list-models`
   pick another model. A romantic lead gets one for each version, named `.for-man` and
   `.for-woman`.
-- Generate once the cast is settled, not every round. Regenerate only the members whose prompt
+- Generate once the cast is settled, not every round; a story that went straight to the draft
+  generates them with the first draft. Regenerate only the members whose prompt
   changed or whose picture the maintainer turned down, one picture each time.
 - Show each picture on the draft page under its member's prompt, embedded as a data URI, and look
   at it before showing it: a picture with text, a logo, a present-day setting or the wrong person
@@ -287,7 +302,9 @@ python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name 
 ## The steps
 
 1. **Pitch the story** as the pitch section says, and stop for his accept or reject. Write nothing
-   else until he accepts it; on a reject, pitch again with his notes.
+   else until he accepts it; on a reject, pitch again with his notes. When the argument supplied
+   everything (Straight to the draft), skip this step, and step 4 generates the pictures with the
+   first draft.
 2. **Write both layers** to `card.json` and `hidden.json` in the story folder,
    `<scratchpad>/<story-id>/`, outside the repository. Never write hidden text into the tree:
    `NoSealedTextAppearsInTheTreeTests` fails on any hidden sentence of 24 characters or more in a
