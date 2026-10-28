@@ -1,5 +1,7 @@
+using System.Globalization;
 using D47.Core.Audio;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Callouts;
 
@@ -147,6 +149,17 @@ public sealed class DangerCallout : ICallout
                     break;
                 }
 
+                case "CockpitBreached" when !context.IsPriming:
+                    yield return Urgent("danger.canopy", CanopyBreachLine(context), AlertCue.UnderFire);
+                    break;
+
+                case "Docked" when journalEvent.Bool("CockpitBreach") && !context.IsPriming:
+                    yield return Urgent(
+                        "danger.canopydocked",
+                        "The canopy is still breached. Repair it before launching.",
+                        AlertCue.UnderFire);
+                    break;
+
                 case "HeatDamage":
                     yield return Urgent("danger.heat", "Taking heat damage.", AlertCue.Overheating);
                     break;
@@ -170,6 +183,32 @@ public sealed class DangerCallout : ICallout
                     break;
             }
         }
+    }
+
+    /// <summary>The breach warning, naming the oxygen time of the fitted life support when it is known.</summary>
+    private static string CanopyBreachLine(CalloutContext context)
+    {
+        var symbol = context.State?.FlownShip.Modules
+            .FirstOrDefault(module => module.Item.StartsWith("int_lifesupport", StringComparison.OrdinalIgnoreCase))
+            ?.Item;
+
+        var seconds = EliteSpecifications.OxygenSeconds(symbol) ?? 0;
+
+        if (seconds <= 0)
+        {
+            return "Canopy breach. We are on emergency oxygen.";
+        }
+
+        var halves = (int)Math.Round(seconds / 30.0);
+        var whole = halves / 2;
+        var half = halves % 2 == 1;
+        var spoken = whole == 0
+            ? "Half a"
+            : SpokenNumbers.Expand(whole.ToString(CultureInfo.InvariantCulture))
+                + (half ? " and a half" : string.Empty);
+        var unit = whole == 1 && !half ? "minute" : "minutes";
+
+        return $"Canopy breach. {char.ToUpperInvariant(spoken[0])}{spoken[1..]} {unit} of oxygen.";
     }
 
     private void ForgetJump()

@@ -42,6 +42,7 @@ public static class HandledEvents
         "CarrierShipPack",
         "CarrierStats",
         "CarrierTradeOrder",
+        "CockpitBreached",
         "CodexEntry",
         "CodexPicture",
         "CollectCargo",

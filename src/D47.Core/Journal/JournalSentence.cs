@@ -285,6 +285,7 @@ public static class JournalSentence
                 : "Hull damage",
             "HeatWarning" => "Heat warning",
             "HeatDamage" => "Taking heat damage",
+            "CockpitBreached" => "The canopy was breached",
             "ShieldState" => raw.Bool("ShieldsUp") ? "Shields back up" : "Shields down",
             "Died" => raw.String("KillerName") is { } killer
                 ? $"Destroyed by {killer}"
