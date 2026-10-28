@@ -465,6 +465,22 @@ public partial class PanelView : UserControl, IPanelTabHost
                 Dispatcher.UIThread.Post(ApplyMicrophone);
                 return;
 
+            case nameof(PanelViewModel.HideComms):
+            case nameof(PanelViewModel.HideInventedChatter):
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    SyncConversationFilterBoxes();
+                    DrawTranscript();
+                    return;
+                }
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    SyncConversationFilterBoxes();
+                    DrawTranscript();
+                });
+                return;
+
             case nameof(PanelViewModel.HasAsked):
                 if (Dispatcher.UIThread.CheckAccess())
                 {
@@ -3066,6 +3082,9 @@ public partial class PanelView : UserControl, IPanelTabHost
         if (bubbled)
         {
             DrawBubbles(messages, appended);
+            EmptyConversation.Text = _bound.ConversationHidesRuns
+                ? "Everything said is hidden by the filters above."
+                : "Nothing has been said yet.";
             EmptyConversation.IsVisible = messages.Count == 0;
         }
         else
@@ -4161,9 +4180,52 @@ public partial class PanelView : UserControl, IPanelTabHost
         TitleLine.InvalidateMeasure();
     }
 
+    /// <summary>The In Ship filter row, on the Transcript tab's Conversation page at its root.</summary>
+    private void ShowConversationFilterStrip()
+    {
+        var show = Tab == PanelTab.Transcript && Page == TranscriptPage.Conversation && Mode == PanelMode.Full
+                   && Nav.AtRoot && !OutputOnly;
+
+        ConversationFilterStrip.IsVisible = show;
+        SyncConversationFilterBoxes();
+    }
+
+    private void SyncConversationFilterBoxes()
+    {
+        if (_bound is null)
+        {
+            return;
+        }
+
+        _settingMode = true;
+
+        try
+        {
+            HideCommsBox.IsChecked = _bound.HideComms;
+            HideChatterBox.IsChecked = _bound.HideInventedChatter;
+        }
+        finally
+        {
+            _settingMode = false;
+        }
+    }
+
+    private void OnConversationFilterToggled(object? sender, RoutedEventArgs e)
+    {
+        if (_settingMode || _bound is null)
+        {
+            return;
+        }
+
+        _bound.HideComms = HideCommsBox.IsChecked == true;
+        _bound.HideInventedChatter = HideChatterBox.IsChecked == true;
+    }
+
     /// <summary>Built lazily the first time it would show, and never rebuilt after (#283).</summary>
     private void ShowLogSettingsStrip()
     {
+        ShowConversationFilterStrip();
+
         var show = Tab == PanelTab.Transcript && Page == TranscriptPage.Log && Mode == PanelMode.Full;
 
         if (show && LogSettingsStrip.Content is null)

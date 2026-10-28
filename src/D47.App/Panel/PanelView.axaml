@@ -690,6 +690,23 @@
                        IsVisible="False"
                        Margin="14,0" />
 
+      <!-- In Ship's filters: comms traffic and invented chatter. -->
+      <StackPanel x:Name="ConversationFilterStrip"
+                  DockPanel.Dock="Top"
+                  Orientation="Horizontal"
+                  Spacing="8"
+                  Margin="0,4,0,0"
+                  IsVisible="False">
+        <CheckBox x:Name="HideCommsBox"
+                  Classes="sentence"
+                  Content="Hide comms traffic"
+                  IsCheckedChanged="OnConversationFilterToggled" />
+        <CheckBox x:Name="HideChatterBox"
+                  Classes="sentence"
+                  Content="Hide invented chatter"
+                  IsCheckedChanged="OnConversationFilterToggled" />
+      </StackPanel>
+
       <Panel>
       <Border x:Name="TranscriptPane"
               Padding="14">

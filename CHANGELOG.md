@@ -16,6 +16,8 @@ The organic sampling callout for the first and second specimen now says how far 
 
 The Narrator now speaks during a lull only while a stock story is running or an adventure is under way. With COVAS aboard and no story it no longer narrates, and About me or a character sheet alone does not count as a story. A story you have switched off no longer offers the Narrator on the comms panel.
 
+The Transcript tab's In Ship page has two checkboxes, **Hide comms traffic** and **Hide invented chatter**. A checked box hides lines of that kind from In Ship, the headset panel and the mini panel; nothing is deleted, and unchecking shows them again. Both start unchecked and are remembered across launches.
+
 Saying "how much further" or "how much farther" while a sampling set is open on the body you are on now answers by voice, without the model, with the metres still to go for each genus. The distance is measured from every specimen in the set, not only the last one, so driving back towards an earlier specimen is no longer reported as far enough.
 
 The callout for the third organic specimen no longer says "Analyse when you are ready", since Elite analyses it by itself a few seconds later. It now ends at the count and the distance from the last one.

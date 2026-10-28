@@ -20,8 +20,8 @@ public enum PanelMode
 public enum TranscriptPage
 {
     /// <summary>
-    /// The Commander, the ship's AI, and the callouts spoken to the Commander — everything but
-    /// invented chatter they may not answer and an overheard relay.
+    /// Everything said aloud and typed, in order. The comms and invented-chatter filters hide the runs
+    /// of that origin without removing them.
     /// </summary>
     Conversation,
 
@@ -792,7 +792,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
                 [new TranscriptSegment(JournalRawText, Marker: false, TranscriptVoice.Ship)],
             _ =>
             [
-                .. _runs.Select(run =>
+                .. _runs.Where(run => page != TranscriptPage.Conversation || !Hidden(run)).Select(run =>
                     new TranscriptSegment(
                         Text(run), run.Marker, run.Voice, run.Speaker, run.SourceKey, run.Time,
                         run.Kind, run.ProposalId, run.Provenance, run.Picture, run.SettingKey,
@@ -800,6 +800,39 @@ public sealed class PanelViewModel : INotifyPropertyChanged
             ],
         };
     }
+
+    private bool Hidden(Run run) =>
+        (HideComms && run.Origin == AnnouncementOrigin.Comms)
+        || (HideInventedChatter && run.Origin == AnnouncementOrigin.InventedChatter);
+
+    /// <summary>Whether the transcript holds a run the Conversation page is leaving out.</summary>
+    public bool ConversationHidesRuns
+    {
+        get
+        {
+            lock (_appendLock)
+            {
+                return _runs.Any(Hidden);
+            }
+        }
+    }
+
+    /// <summary>Whether In Ship leaves out relayed comms traffic.</summary>
+    public bool HideComms
+    {
+        get => _hideComms;
+        set => Set(ref _hideComms, value);
+    }
+
+    /// <summary>Whether In Ship leaves out chatter d47 invented.</summary>
+    public bool HideInventedChatter
+    {
+        get => _hideInventedChatter;
+        set => Set(ref _hideInventedChatter, value);
+    }
+
+    private bool _hideComms;
+    private bool _hideInventedChatter;
 
     /// <summary>One run as a flat page draws it.</summary>
     private static string Flatten(Run run) =>

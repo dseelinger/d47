@@ -59,6 +59,12 @@ public sealed record ViewState
     /// <summary>Which way the journal's Raw switch was left (#267): the file's own JSON, or sentences.</summary>
     public bool JournalRaw { get; init; }
 
+    /// <summary>Whether In Ship leaves out relayed comms traffic.</summary>
+    public bool HideComms { get; init; }
+
+    /// <summary>Whether In Ship leaves out chatter d47 invented.</summary>
+    public bool HideInventedChatter { get; init; }
+
     /// <summary>How the Stories page was left filtered, or null for no filter.</summary>
     public D47.Core.Stories.StoryFilter? StoryFilter { get; init; }
 

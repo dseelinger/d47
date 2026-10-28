@@ -151,6 +151,9 @@ public partial class MainWindow : Window
             // And it keeps the switch where the Commander left it (#267).
             Panel.RememberJournalReading(new JournalReadingMemory(host.ViewState));
 
+            // And the In Ship filters.
+            _ = new TranscriptFilterMemory(host.ViewState, _model);
+
             // The sharper half of that same act (#160).
             Panel.EnableDonation(() => _ = ShowDonationAsync(host));
 
