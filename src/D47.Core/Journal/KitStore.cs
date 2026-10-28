@@ -21,8 +21,6 @@ public sealed class KitStore(string path, IFileSystem files, ILogger<KitStore> l
 
     private DateTimeOffset? _foldedThrough;
 
-    public string Path => path;
-
     /// <summary>The journal timestamp this file has already been folded through, or null for a file never written.</summary>
     public DateTimeOffset? FoldedThrough
     {

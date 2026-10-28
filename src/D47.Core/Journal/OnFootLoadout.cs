@@ -60,9 +60,6 @@ public sealed record OnFootLoadout
 
     public IReadOnlyList<CarriedWeapon> Weapons { get; init; } = [];
 
-    /// <summary>When the loadout was last reported.</summary>
-    public DateTimeOffset? SeenAt { get; init; }
-
     public bool IsKnown => SuitSymbol is not null;
 
     public OnFootEntry? Suit => OnFootCatalogue.Find(SuitSymbol);
@@ -133,7 +130,6 @@ public sealed record OnFootLoadout
                     Grade = module.Int("Class"),
                     Modifications = Modifications(module, "WeaponMods"),
                 })],
-            SeenAt = journalEvent.Timestamp,
         };
     }
 
@@ -152,7 +148,6 @@ public sealed record OnFootLoadout
             : this with
             {
                 SuitSymbol = $"{family}_class{grade}",
-                SeenAt = journalEvent.Timestamp,
             };
     }
 
@@ -166,7 +161,6 @@ public sealed record OnFootLoadout
             {
                 Weapons = [.. Weapons.Select(weapon =>
                     weapon.ModuleId == moduleId ? weapon with { Grade = grade } : weapon)],
-                SeenAt = journalEvent.Timestamp,
             };
     }
 
@@ -182,7 +176,6 @@ public sealed record OnFootLoadout
         return this with
         {
             Weapons = [.. Weapons.Where(weapon => weapon.ModuleId != moduleId)],
-            SeenAt = journalEvent.Timestamp,
         };
     }
 
@@ -206,7 +199,6 @@ public sealed record OnFootLoadout
         {
             Weapons = [.. Weapons.Where(weapon => !string.Equals(
                 weapon.Slot, slot, StringComparison.OrdinalIgnoreCase)), fitted],
-            SeenAt = journalEvent.Timestamp,
         };
     }
 
@@ -221,7 +213,6 @@ public sealed record OnFootLoadout
         {
             Weapons = [.. Weapons.Where(weapon => !string.Equals(
                 weapon.Slot, slot, StringComparison.OrdinalIgnoreCase))],
-            SeenAt = journalEvent.Timestamp,
         };
     }
 

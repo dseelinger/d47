@@ -22,19 +22,6 @@ public sealed record GapDemand(string What, int Units)
     /// <summary>The build the slot belongs to.</summary>
     public GapBuildKey? Build { get; init; }
 
-    /// <summary>The module and blueprint, with no ship or slot — "Thrusters · Dirty Drive Tuning 5".</summary>
-    public string Purpose() =>
-        (Module, Blueprint) switch
-        {
-            ({ Length: > 0 } module, { Length: > 0 } blueprint) => $"{module} · {blueprint}",
-            ({ Length: > 0 } module, _) => module,
-            (_, { Length: > 0 } blueprint) => blueprint,
-            _ => What,
-        };
-
-    public string Describe() =>
-        $"{What} — {Units.ToString(CultureInfo.InvariantCulture)}";
-
     /// <summary>The demand with the blueprint named, for the one-material answer.</summary>
     public string Fully() =>
         Blueprint is { Length: > 0 } blueprint ? $"{What} · {blueprint}" : What;

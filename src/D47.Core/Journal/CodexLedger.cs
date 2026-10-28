@@ -68,8 +68,6 @@ public sealed record CodexLedger
     /// <summary>True once the walk over earlier journals has been merged in.</summary>
     public bool IsWhole { get; init; }
 
-    public bool IsKnown => !Held.IsEmpty || OnRecordSince is not null;
-
     /// <summary>The distinct (entry, region) pairs the record holds.</summary>
     public IReadOnlyCollection<(long EntryId, int? RegionId)> Logged =>
         [.. Held.Select(entry => (entry.EntryId, entry.RegionId)).Distinct()];

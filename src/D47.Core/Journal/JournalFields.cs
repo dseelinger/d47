@@ -130,8 +130,4 @@ public static class JournalFields
     public static JournalField? Find(string name, string? kind = null) =>
         Array.Find(Table, field => field.Name == name && field.Kind == kind && kind is not null)
         ?? Array.Find(Table, field => field.Name == name && field.Kind is null);
-
-    /// <summary>The tooltip for a field: its name, then what it means; null where the table has no entry.</summary>
-    public static string? Tooltip(string name, string? kind = null) =>
-        Find(name, kind) is { } field ? $"{name} — {field.Meaning}" : null;
 }

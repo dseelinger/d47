@@ -3,12 +3,6 @@ using D47.Core.Knowledge;
 
 namespace D47.Core.Loadout;
 
-/// <summary>The same-line material one grade up, and what it trades for at the fixed rate.</summary>
-public sealed record MaterialTradeDown(MaterialEntry From, MaterialExchange Rate);
-
-/// <summary>One module and blueprint grade a material is needed for, and how many units.</summary>
-public sealed record MaterialPurpose(string What, int Units);
-
 /// <summary>How many rows in a card carry one origin.</summary>
 public sealed record MaterialOriginCount(string Origin, int Rows);
 
@@ -18,40 +12,18 @@ public sealed record MaterialRow(MaterialEntry Material, int Held, int Needed)
     /// <summary>Every plan that asked for it, most demanding first.</summary>
     public IReadOnlyList<GapDemand> Wanted { get; init; } = [];
 
-    /// <summary>What a trader could cover the shortfall with, or null.</summary>
-    public TradeOffer? Trade { get; init; }
-
-    /// <summary>What one grade up in the same line trades for, or null off that line, at grade 5, or on foot.</summary>
-    public MaterialTradeDown? TradeDown { get; init; }
-
     public int Short => Math.Max(0, Needed - Held);
-
-    /// <summary>
-    /// What it is needed for, by module and blueprint grade with no ship named; the same purpose from
-    /// two builds is one line, units summed. Most units first.
-    /// </summary>
-    public IReadOnlyList<MaterialPurpose> NeededFor =>
-        [.. Wanted
-            .GroupBy(demand => demand.Purpose(), StringComparer.Ordinal)
-            .Select(group => new MaterialPurpose(group.Key, group.Sum(demand => demand.Units)))
-            .OrderByDescending(purpose => purpose.Units)
-            .ThenBy(purpose => purpose.What, StringComparer.Ordinal)];
 
     /// <summary>The per-grade cap, for ship materials only.</summary>
     public int? Capacity =>
         Material.Ledger == MaterialLedger.Material && Material.Grade is { } grade
             ? MaterialGrades.CapacityOfGrade(grade)
             : null;
-
-    /// <summary>Whether this alone forces more than one trip.</summary>
-    public bool ExceedsCapacity => Capacity is { } capacity && Needed > capacity;
 }
 
 /// <summary>One group of rows on a material tracker page — a ship grade band, Guardian, Thargoid, or an on-foot kind.</summary>
 public sealed record MaterialCard(string Name, IReadOnlyList<MaterialRow> Rows)
 {
-    public int UnitsShort => Rows.Sum(row => row.Short);
-
     /// <summary>The three origins carried by the most rows, most first, ties by name.</summary>
     public IReadOnlyList<MaterialOriginCount> Sources { get; init; } = [];
 }
@@ -89,8 +61,7 @@ public static class MaterialTracker
                     .OrderBy(entry => entry.Grade)
                     .ThenBy(entry => entry.Name, StringComparer.Ordinal),
                 state,
-                lines,
-                tradeDown: true))
+                lines))
             .ToList();
 
         var onFoot = OnFootCards
@@ -101,8 +72,7 @@ public static class MaterialTracker
                         && string.Equals(entry.Category, card.Category, StringComparison.Ordinal))
                     .OrderBy(entry => entry.Name, StringComparer.Ordinal),
                 state,
-                lines,
-                tradeDown: false))
+                lines))
             .ToList();
 
         return new MaterialTrackerReport(ship, onFoot);
@@ -112,10 +82,9 @@ public static class MaterialTracker
         string name,
         IEnumerable<MaterialEntry> entries,
         CommanderGameState? state,
-        IReadOnlyDictionary<string, GapLine> lines,
-        bool tradeDown)
+        IReadOnlyDictionary<string, GapLine> lines)
     {
-        var rows = entries.Select(entry => Row(entry, state, lines, tradeDown)).ToList();
+        var rows = entries.Select(entry => Row(entry, state, lines)).ToList();
 
         return new MaterialCard(name, rows) { Sources = Sources(rows) };
     }
@@ -123,16 +92,13 @@ public static class MaterialTracker
     private static MaterialRow Row(
         MaterialEntry material,
         CommanderGameState? state,
-        IReadOnlyDictionary<string, GapLine> lines,
-        bool tradeDown)
+        IReadOnlyDictionary<string, GapLine> lines)
     {
         var gapLine = lines.GetValueOrDefault(material.Symbol);
 
         return new MaterialRow(material, HeldCount(material, state), gapLine?.Needed ?? 0)
         {
             Wanted = gapLine?.Wanted ?? [],
-            Trade = gapLine?.Trade,
-            TradeDown = tradeDown ? TradeDownFor(material) : null,
         };
     }
 
@@ -151,20 +117,6 @@ public static class MaterialTracker
 
     private static bool IsThargoid(string symbol) =>
         symbol.StartsWith("tg_", StringComparison.Ordinal) || symbol.StartsWith("unknown", StringComparison.Ordinal);
-
-    private static MaterialTradeDown? TradeDownFor(MaterialEntry material)
-    {
-        if (!material.IsTradeable || material.Grade is not { } grade || grade >= 5)
-        {
-            return null;
-        }
-
-        var from = MaterialCatalogue.InLine(material.Line).FirstOrDefault(entry => entry.Grade == grade + 1);
-
-        return from is not null && EngineeringRules.TradeRate(grade + 1, grade, sameLine: true) is { } rate
-            ? new MaterialTradeDown(from, rate)
-            : null;
-    }
 
     /// <summary>The three origins carried by the most rows in the card, most first, ties by name.</summary>
     private static IReadOnlyList<MaterialOriginCount> Sources(IReadOnlyList<MaterialRow> rows) =>

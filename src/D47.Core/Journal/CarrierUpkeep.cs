@@ -29,7 +29,6 @@ public readonly record struct CarrierBalance(
 /// <summary>Elite's weekly tick, when it takes the carrier's upkeep.</summary>
 public static class CarrierUpkeep
 {
-    public const DayOfWeek TickDay = DayOfWeek.Thursday;
 
     public const int TickHourUtc = 7;
 

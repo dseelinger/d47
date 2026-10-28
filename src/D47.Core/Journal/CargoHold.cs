@@ -10,9 +10,6 @@ public sealed record CargoItem(string Symbol, int Count)
 {
     /// <summary>Elite's own spelling, where it wrote one.</summary>
     public string? DisplayName { get; init; }
-
-    /// <summary>How many of these are stolen, as Elite reports it.</summary>
-    public int Stolen { get; init; }
 }
 
 /// <summary>What is in the hold right now (Phase 18, "Colonisation and construction tracking").</summary>
@@ -88,7 +85,6 @@ public sealed class CargoManifestReader(string directory, IFileSystem files, ILo
                 items.Add(new CargoItem(symbol, element.Int("Count") ?? 0)
                 {
                     DisplayName = element.String("Name_Localised"),
-                    Stolen = element.Int("Stolen") ?? 0,
                 });
             }
 

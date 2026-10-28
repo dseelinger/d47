@@ -19,10 +19,6 @@ public sealed record CommoditySale(
 {
     /// <summary>Gain or loss on the sale, net of what the cargo cost.</summary>
     public long Net => TotalSale - CostBasis;
-
-    public int UnitPrice => Count > 0 ? (int)(TotalSale / Count) : 0;
-
-    public int UnitPaid => Count > 0 ? (int)(CostBasis / Count) : 0;
 }
 
 /// <summary>Sales added up over a window.</summary>

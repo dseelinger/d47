@@ -384,17 +384,6 @@ public class GameKnowledgeTests
     }
 
     [Fact]
-    public void AnInTransitModuleBelongsToNoSystem()
-    {
-        var store = Fold(StoredModules).Modules;
-
-        // It has left one station and not arrived at the next, so listing it under either would send the
-        // Commander somewhere it is not.
-        Assert.DoesNotContain("Shinrarta Dezhra", store.Systems.Where(s => s == "unknown"));
-        Assert.Equal(["Deciat", "Shinrarta Dezhra"], store.Systems);
-    }
-
-    [Fact]
     public void AFreshStoredModulesSnapshotReplacesTheStore()
     {
         var store = Fold(

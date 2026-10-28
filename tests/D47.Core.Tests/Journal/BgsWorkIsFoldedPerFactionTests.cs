@@ -147,17 +147,6 @@ public class BgsWorkIsFoldedPerFactionTests
     }
 
     [Fact]
-    public void SinceReturnsOnlyTheLaterEntryGroupedBySystemAndFaction()
-    {
-        var work = Fold(Docked, Sale(), Sale("2026-10-11T10:00:00Z"), Sale("2026-10-11T11:00:00Z"));
-
-        var groups = work.Since(DateTimeOffset.Parse("2026-10-11T00:00:00Z"));
-
-        var group = Assert.Single(groups);
-        Assert.Equal((1L, "Alpha Mining", 1000000L, 200000L), (group.SystemAddress, group.Faction, group.Totals[BgsWorkKind.Trade], group.TradeProfit));
-    }
-
-    [Fact]
     public void AnEventInTheWalkAndTheLiveJournalCountsOnceEvenWithTwoInTheSameSecond()
     {
         var sale = Sale("2026-10-10T10:05:00Z");

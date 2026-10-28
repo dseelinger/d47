@@ -293,11 +293,4 @@ public static class HandledEvents
     /// <summary>All three blocks: whether d47 knows the event at all.</summary>
     public static readonly FrozenSet<string> All =
         ActedOn.Concat(NarratedOnly).Concat(Intentional).ToFrozenSet(StringComparer.Ordinal);
-
-    /// <summary>
-    /// Of the event names seen — in a corpus, a session, a Frontier update's notes — the ones nothing
-    /// in d47 matches.
-    /// </summary>
-    public static IReadOnlyList<string> Unhandled(IEnumerable<string> seen) =>
-        [.. seen.Where(kind => !All.Contains(kind)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 }

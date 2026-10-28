@@ -126,12 +126,6 @@ public sealed record UnlockChain(IReadOnlyList<UnlockStep> Steps)
 
     /// <summary>How many stops cost something that is not a trip.</summary>
     public int OpenEnded => Steps.Count(step => step.IsOpenEnded);
-
-    /// <summary>How many of them are a shopping run.</summary>
-    public int Deliveries => Steps.Count(step => step.IsDelivery);
-
-    /// <summary>Who the chain ends at.</summary>
-    public Engineer? Target => Steps.Count == 0 ? null : Steps[^1].Engineer;
 }
 
 /// <summary>

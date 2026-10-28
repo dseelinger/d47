@@ -134,39 +134,6 @@ public class MaterialTrackerTests
         Assert.Equal(gapLine.Wanted.Count, row.Wanted.Count);
     }
 
-    /// <summary>
-    /// Heat Exchangers' trade down is from Heat Vanes, at the same rate the trade rules give for grade 4
-    /// down to grade 3, not a copied literal.
-    /// </summary>
-    [Fact]
-    public void HeatExchangersTradeDownIsFromHeatVanes()
-    {
-        var report = MaterialTracker.Of(State(), PlanGap.Of([], [], State()));
-
-        var heatExchangers = ShipRows(report).Single(row => row.Material.Symbol == "heatexchangers");
-
-        Assert.NotNull(heatExchangers.TradeDown);
-        Assert.Equal("Heat Vanes", heatExchangers.TradeDown.From.Name);
-        Assert.Equal(EngineeringRules.TradeRate(4, 3, sameLine: true), heatExchangers.TradeDown.Rate);
-    }
-
-    /// <summary>A grade-5 material, an off-line row and every on-foot row have no trade down.</summary>
-    [Fact]
-    public void TopGradeAndOffLineRowsHaveNoTradeDown()
-    {
-        var report = MaterialTracker.Of(State(), PlanGap.Of([], [], State()));
-
-        var protoHeatRadiators = ShipRows(report).Single(row => row.Material.Symbol == "protoheatradiators");
-        Assert.Null(protoHeatRadiators.TradeDown);
-
-        var guardianAndThargoid = report.Ship
-            .Where(card => card.Name is "Guardian" or "Thargoid")
-            .SelectMany(card => card.Rows);
-        Assert.All(guardianAndThargoid, row => Assert.Null(row.TradeDown));
-
-        Assert.All(report.OnFoot.SelectMany(card => card.Rows), row => Assert.Null(row.TradeDown));
-    }
-
     /// <summary>The Raw card's top source is what every one of its 28 rows carries.</summary>
     [Fact]
     public void TheRawCardsTopSourceIsSurfaceProspecting()

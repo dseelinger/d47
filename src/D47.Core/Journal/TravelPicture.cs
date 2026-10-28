@@ -9,7 +9,6 @@ public sealed record TravelPicture(
     IReadOnlyList<StarPosition> Systems,
     int Jumps)
 {
-    public static TravelPicture Empty { get; } = new([], [], 0);
 
     /// <summary>The steps at or after <paramref name="since"/>, or all of them when it is null.</summary>
     public static TravelPicture Of(IReadOnlyList<TravelStep> steps, DateTimeOffset? since)

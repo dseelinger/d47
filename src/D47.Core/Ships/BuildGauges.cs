@@ -87,9 +87,6 @@ public sealed record BuildGauges(PowerGauge? Power, JumpGauge? Jump, int Unmodel
 {
     /// <summary>Nothing to draw, and the reason.</summary>
     public static BuildGauges Nothing(string why) => new(null, null, 0, why);
-
-    /// <summary>Whether anything is worth drawing.</summary>
-    public bool IsEmpty => Power is null && Jump is null;
 }
 
 /// <summary>The arithmetic behind the two gauges (Phase 38, "A build you can watch").</summary>

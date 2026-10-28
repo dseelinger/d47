@@ -82,14 +82,6 @@ public sealed record ModuleStore
             || SnapshotSystem is null
             || !string.Equals(module.StarSystem, SnapshotSystem, StringComparison.OrdinalIgnoreCase))];
 
-    /// <summary>Systems holding at least one stored module, each named once.</summary>
-    public IReadOnlyList<string> Systems =>
-        [.. Modules
-            .Where(module => !module.InTransit)
-            .Select(module => module.StarSystem)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Order(StringComparer.OrdinalIgnoreCase)];
-
     /// <summary>Stored modules whose name contains what was said, case-insensitively.</summary>
     public IReadOnlyList<StoredModule> Matching(string fragment)
     {

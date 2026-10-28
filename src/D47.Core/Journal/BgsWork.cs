@@ -22,13 +22,6 @@ public readonly record struct BgsEntry(
     long Amount,
     long Profit = 0);
 
-/// <summary>The work done for one faction in one system, with a total per kind.</summary>
-public sealed record BgsFactionWork(
-    long SystemAddress,
-    string Faction,
-    IReadOnlyDictionary<BgsWorkKind, long> Totals,
-    long TradeProfit);
-
 /// <summary>The station the Commander is docked at; <c>Faction</c> is null where it has no minor faction.</summary>
 public sealed record BgsStation(long MarketId, long SystemAddress, string? Faction);
 
@@ -56,19 +49,6 @@ public sealed record BgsWork
 
     /// <summary>The start of the period to report: the BGS tick when it is known, otherwise the 24 hours before <paramref name="now"/>.</summary>
     public static DateTimeOffset PeriodStart(DateTimeOffset? tick, DateTimeOffset now) => tick ?? now - TimeSpan.FromHours(24);
-
-    /// <summary>The work at or after <paramref name="from"/>, by system and faction.</summary>
-    public IReadOnlyList<BgsFactionWork> Since(DateTimeOffset from) =>
-    [
-        .. Entries
-            .Where(entry => entry.At >= from)
-            .GroupBy(entry => (entry.SystemAddress, entry.Faction))
-            .Select(group => new BgsFactionWork(
-                group.Key.SystemAddress,
-                group.Key.Faction,
-                group.GroupBy(entry => entry.Kind).ToDictionary(kind => kind.Key, kind => kind.Sum(entry => entry.Amount)),
-                group.Sum(entry => entry.Profit))),
-    ];
 
     public BgsWork Apply(JournalEvent journalEvent)
     {

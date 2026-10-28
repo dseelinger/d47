@@ -19,8 +19,6 @@ public sealed class SamplingStore(string path, IFileSystem files, ILogger<Sampli
 
     private Dictionary<string, OrganicSampling> _byCommander = new(StringComparer.Ordinal);
 
-    public string Path => path;
-
     /// <summary>What was on disk for this Commander, or null if nothing was.</summary>
     public OrganicSampling? For(string frontierId)
     {

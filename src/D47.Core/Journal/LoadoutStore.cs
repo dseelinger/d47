@@ -21,8 +21,6 @@ public sealed class LoadoutStore(string path, IFileSystem files, ILogger<Loadout
 
     private DateTimeOffset? _foldedThrough;
 
-    public string Path => path;
-
     /// <summary>
     /// The journal timestamp this file has already been folded through, or null for a file that
     /// predates the stamp or was never written (#128).

@@ -3,8 +3,6 @@ namespace D47.Core.Journal;
 /// <summary>The colonisation deadlines and the haul figure, as the maintainer checked them.</summary>
 public static class ColonisationRules
 {
-    /// <summary>The date the rules below were last checked against the game.</summary>
-    public const string CheckedOn = "2026-09-27";
 
     /// <summary>From the claim to deploying the beacon.</summary>
     public static readonly TimeSpan BeaconWindow = TimeSpan.FromHours(24);

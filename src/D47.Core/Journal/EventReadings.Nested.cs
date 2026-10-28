@@ -104,7 +104,7 @@ public static partial class EventReadings
                     "Modules" =>
                     [
                         .. raw.Items("Modules")
-                            .Select(module => Value(raw, "Item", module.String("Item"), ModuleField, ReadingTone.Value, "Loadout", partner: false))
+                            .Select(module => Value(raw, "Item", module.String("Item"), ModuleField, ReadingTone.Value, partner: false))
                             .OfType<ReadingValue>(),
                     ],
                     _ => Mechanical(raw, "Loadout", field),

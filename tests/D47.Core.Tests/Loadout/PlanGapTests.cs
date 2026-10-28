@@ -295,25 +295,6 @@ public class PlanGapTests
     }
 
     /// <summary>
-    /// And the fleet-wide line does not say it, which is the ruling rather than an oversight: a
-    /// shortfall can name a dozen demands, and a blueprint on each would double a line that is read
-    /// aloud as often as it is drawn.
-    /// </summary>
-    [Fact]
-    public void TheShortDescriptionIsUnchanged()
-    {
-        var report = PlanGap.Of([Ship()], [], State());
-
-        var demand = report.Ledgers
-            .SelectMany(ledger => ledger.Lines)
-            .SelectMany(line => line.Wanted)
-            .First();
-
-        Assert.DoesNotContain("Dirty Drive Tuning", demand.Describe(), StringComparison.Ordinal);
-        Assert.Contains("Thrusters", demand.Describe(), StringComparison.Ordinal);
-    }
-
-    /// <summary>
     /// A slot planned as a module and nothing else has no blueprint to name, and says the same thing it
     /// always said rather than an empty separator.
     /// </summary>

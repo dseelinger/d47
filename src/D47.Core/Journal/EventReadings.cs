@@ -174,7 +174,7 @@ public static partial class EventReadings
                     : Row(Spaced(baseName), [new ReadingValue("Yes")], name);
 
             case JsonValueKind.String:
-                return Value(raw, baseName, value.GetString(), field, tone, kind) is { } text
+                return Value(raw, baseName, value.GetString(), field, tone) is { } text
                     ? Row(label, [text], baseName)
                     : null;
 
@@ -182,7 +182,7 @@ public static partial class EventReadings
                 return Row(label, [Number(value, field?.Unit ?? FieldUnit.None, tone)], name);
 
             case JsonValueKind.Array:
-                return ArrayRow(raw, value, baseName, label, field, tone, kind);
+                return ArrayRow(raw, value, baseName, label, field, tone);
 
             case JsonValueKind.Object:
                 return NameOf(value) is { } objectName
@@ -198,7 +198,7 @@ public static partial class EventReadings
         new(label, values) { Field = JournalFields.Find(field ?? string.Empty) is null ? null : field };
 
     private static ReadingRow? ArrayRow(
-        JsonElement raw, JsonElement array, string name, string label, JournalField? field, ReadingTone tone, string kind)
+        JsonElement raw, JsonElement array, string name, string label, JournalField? field, ReadingTone tone)
     {
         var items = array.EnumerateArray().ToList();
 
@@ -210,7 +210,7 @@ public static partial class EventReadings
         if (items.All(item => item.ValueKind == JsonValueKind.String))
         {
             var values = items
-                .Select(item => Value(raw, name, item.GetString(), field, tone, kind, partner: false))
+                .Select(item => Value(raw, name, item.GetString(), field, tone, partner: false))
                 .OfType<ReadingValue>()
                 .ToList();
 
@@ -251,7 +251,7 @@ public static partial class EventReadings
     }
 
     private static ReadingValue? Value(
-        JsonElement raw, string name, string? text, JournalField? field, ReadingTone tone, string kind, bool partner = true)
+        JsonElement raw, string name, string? text, JournalField? field, ReadingTone tone, bool partner = true)
     {
         if (Blank(text) is not { } written)
         {
@@ -418,7 +418,7 @@ public static partial class EventReadings
 
         foreach (var property in new[] { "StationGovernment", "StationEconomy" })
         {
-            if (Value(raw, property, raw.String(property), null, ReadingTone.Value, "Docked") is { } value)
+            if (Value(raw, property, raw.String(property), null, ReadingTone.Value) is { } value)
             {
                 runBy.Add(value);
             }

@@ -128,13 +128,8 @@ public sealed record GameStatus
 
     public double? FuelMain { get; init; }
 
-    public double? FuelReservoir { get; init; }
-
     /// <summary>Tonnes in the hold, as of the last write.</summary>
     public double? Cargo { get; init; }
-
-    /// <summary>0 to 1.</summary>
-    public double? Heat { get; init; }
 
     public string? BodyName { get; init; }
 
@@ -150,9 +145,6 @@ public sealed record GameStatus
     public double? Latitude { get; init; }
 
     public double? Longitude { get; init; }
-
-    /// <summary>Metres above the surface, where Elite reports one.</summary>
-    public double? Altitude { get; init; }
 
     /// <summary>
     /// The body's radius in metres, which Elite writes beside the position rather than making d47 go
@@ -251,9 +243,7 @@ public sealed class GameStatusReader(string directory, IFileSystem files, ILogge
                 GuiFocus = (GuiFocus)(root.Int("GuiFocus") ?? 0),
                 Pips = Pips(root),
                 FuelMain = root.Object("Fuel")?.Double("FuelMain"),
-                FuelReservoir = root.Object("Fuel")?.Double("FuelReservoir"),
                 Cargo = root.Double("Cargo"),
-                Heat = root.Double("Temperature"),
                 BodyName = root.String("BodyName"),
                 Destination = Destination(root),
                 Balance = root.Long("Balance"),
@@ -263,7 +253,6 @@ public sealed class GameStatusReader(string directory, IFileSystem files, ILogge
                 // properties.
                 Latitude = root.Double("Latitude"),
                 Longitude = root.Double("Longitude"),
-                Altitude = root.Double("Altitude"),
                 PlanetRadius = root.Double("PlanetRadius"),
                 Heading = root.Double("Heading"),
 

@@ -49,9 +49,6 @@ public sealed record UnlockCandidate
     /// </summary>
     public double Score { get; init; }
 
-    /// <summary>Whether the score is jumps or light years, so the page never labels one as the other.</summary>
-    public bool ScoredInJumps { get; init; }
-
     /// <summary>
     /// The ranking in one sentence — "One step, 84 ly, about 3 jumps, and 4 planned jobs covered."
     /// </summary>
@@ -148,8 +145,6 @@ public sealed record EngineerReport
     public double? JumpRange { get; init; }
 
     public int Unlocked => Directory.Count(entry => entry.Reach == EngineerReach.Unlocked);
-
-    public int WithinReach => Directory.Count(entry => entry.Reach == EngineerReach.WithinReach);
 
     /// <summary>The line at the top of the page: where they stand in the game's own three states.</summary>
     public string Summary()
@@ -346,7 +341,6 @@ public static class UnlockPlanner
             Tier = chain.Steps.Max(step => TierOf(step, evidence, state)),
             Value = value,
             Score = value / (1 + (cost ?? 0)),
-            ScoredInJumps = chain.Jumps is not null,
         };
     }
 
