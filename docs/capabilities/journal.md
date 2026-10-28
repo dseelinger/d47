@@ -645,8 +645,10 @@ entry on the surface decides.
 owns when named — from the loadout last seen for it, dated, rather than refusing (#108):
 
 ```json
-{"type":"object","properties":{"ship":{"type":"string","description":"Which ship, by name or hull. Omit for the one currently flown."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"jump_range":{"type":"boolean","description":"Answer with the unladen jump range alone. Set it only when they asked for the jump range and nothing else about the ship."},"ship":{"type":"string","description":"Which ship, by name or hull. Omit for the one currently flown."}},"required":[],"additionalProperties":false}
 ```
+
+With `jump_range` set, `get_ship` answers with one line, `Unladen jump range is 52.31 ly.`, for the flown ship or the named one. "Jump range", "my jump range" and "what is my jump range" ask it directly. A remembered ship's line carries its as-of date, and a ship with no recorded jump range says it is not known yet.
 
 Spoken, `get_ship` gives the ship's line and metrics, the module count, and the unpowered modules as
 a count with at most three named, then points to Asset Mgmt › Ships for the full loadout. The model

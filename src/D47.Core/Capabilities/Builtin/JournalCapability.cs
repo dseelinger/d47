@@ -87,7 +87,7 @@ public static class JournalCapability
                 new("my loadout", "get_ship"),
 
                 // Narrowed from "jump range", which was the worst keyword in this list (#161).
-                new("my jump range", "get_ship"),
+                new("my jump range", "get_ship") { Arguments = WithJumpRange },
 
                 // The carrier's position and the ship list are two questions on one tool (#406), so each
                 // keyword says which it means rather than leaving the router to invoke with nothing and get
@@ -254,8 +254,16 @@ public static class JournalCapability
                             Type = ToolParameterType.String,
                             Description = "Which ship, by name or hull. Omit for the one currently flown.",
                         },
+                        new ToolParameter
+                        {
+                            Name = "jump_range",
+                            Type = ToolParameterType.Boolean,
+                            Description =
+                                "Answer with the unladen jump range alone. Set it only when they asked "
+                                + "for the jump range and nothing else about the ship.",
+                        },
                     ],
-                    Commands = Asking(Flying),
+                    Commands = [.. Asking(Flying), .. Asking(JumpRange, WithJumpRange)],
                     Handler = (arguments, _) => Task.FromResult(DescribeShip(gameState, arguments)),
                 },
                 new ToolDefinition
@@ -699,6 +707,9 @@ public static class JournalCapability
     private static readonly IReadOnlyDictionary<string, string> NoArguments =
         new Dictionary<string, string>(StringComparer.Ordinal);
 
+    private static readonly IReadOnlyDictionary<string, string> WithJumpRange =
+        new Dictionary<string, string>(StringComparer.Ordinal) { ["jump_range"] = "true" };
+
     private static readonly IReadOnlyDictionary<string, string> WithShips =
         new Dictionary<string, string>(StringComparer.Ordinal) { ["ships"] = "true" };
 
@@ -723,7 +734,11 @@ public static class JournalCapability
     private static readonly string[] Flying =
     [
         "what am i flying", "what ship am i flying", "what am i in", "my ship", "my loadout",
-        "what is my jump range", "what's my jump range", "my jump range",
+    ];
+
+    private static readonly string[] JumpRange =
+    [
+        "what is my jump range", "what's my jump range", "my jump range", "jump range",
     ];
 
     private static readonly string[] Held =
@@ -1001,6 +1016,7 @@ public static class JournalCapability
         var named = arguments.TryGetString("ship", out var spoken) && !string.IsNullOrWhiteSpace(spoken)
             ? spoken.Trim()
             : null;
+        var rangeOnly = arguments.TryGetBoolean("jump_range", out var wantsRange) && wantsRange;
 
         if (named is null)
         {
@@ -1018,7 +1034,9 @@ public static class JournalCapability
             }
 
             var seenAt = active.Ship.IsKnown ? null : active.Loadouts.For(flown.ShipId)?.SeenAt;
-            return Report(active, flown, isFlown: true, seenAt);
+            return rangeOnly
+                ? JumpRangeOnly(flown, named: false, seenAt)
+                : Report(active, flown, isFlown: true, seenAt);
         }
 
         if (Remembered(active, named) is not { } found)
@@ -1027,7 +1045,19 @@ public static class JournalCapability
         }
 
         var isCurrent = active.Ship.IsKnown && active.Ship.ShipId == found.Loadout.ShipId;
-        return Report(active, found.Loadout, isFlown: isCurrent, isCurrent ? null : found.SeenAt);
+        return rangeOnly
+            ? JumpRangeOnly(found.Loadout, named: true, isCurrent ? null : found.SeenAt)
+            : Report(active, found.Loadout, isFlown: isCurrent, isCurrent ? null : found.SeenAt);
+    }
+
+    private static ToolResult JumpRangeOnly(ShipLoadout ship, bool named, DateTimeOffset? seenAt)
+    {
+        var subject = named ? $" of {ship.Describe()}" : "";
+        var content = ship.MaxJumpRange is { } range
+            ? $"Unladen jump range{subject} is {range:0.##} ly{(seenAt is { } seen ? AsOf(seen) : "")}."
+            : $"The jump range{subject} is not known yet.";
+
+        return ship.ShipId is { } shipId ? ToolResult.Ok(content) with { Page = PageRef.Ship(shipId) } : ToolResult.Ok(content);
     }
 
     /// <summary>One ship's report: metrics and the fitted modules, from the live loadout or a remembered

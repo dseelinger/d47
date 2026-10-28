@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Asking "jump range", "my jump range" or "what is my jump range" now answers with the jump range alone, such as "Unladen jump range is 52.31 ly.", instead of the whole ship report and an offer to remember the phrase. "My ship", "my loadout" and "what am I flying" still give the full report.
+
 A story chapter that starts more than 500 light years from Sol, and so has to end 100 to 300 light years nearer Sol, is now offered stations and landable bodies inside that range for its last stop. When the galaxy search finds none within reach, the chapter is not held to the range. A draft that ends outside the range is told which in-range place to move its last objective to.
 
 A stranger on comms keeps talking for as long as you do. They leave when you say goodbye, ask them to go or are rude to them, or when they have said they are busy or about to leave, and no longer make up an interruption to end the talk.
