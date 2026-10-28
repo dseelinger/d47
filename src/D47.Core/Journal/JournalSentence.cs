@@ -20,6 +20,7 @@ public static class JournalSentence
         "SquadronStartup",
         "ModuleInfo",
         "Scanned",
+        "MarketID",
     };
 
     /// <summary>
@@ -226,6 +227,12 @@ public static class JournalSentence
             "ModuleBuyAndStore" => Named(raw, "BuyItem") is { } boughtStored
                 ? $"Bought and stored a {boughtStored}{ModuleCost(raw, "BuyPrice")}"
                 : "Bought and stored a module",
+            "ModuleSwap" => Named(raw, "FromItem") is { } swapped && swapped != "Null"
+                ? $"Moved the {swapped} to another slot"
+                : "Moved a module to another slot",
+            "MassModuleStore" => raw.Items("Items").Count() is > 0 and var stowed
+                ? $"Stored {stowed} modules"
+                : "Stored the listed modules",
             "FetchRemoteModule" => "Sent for a stored module",
             "ShipyardSwap" => Named(raw, "ShipType") is not null
                 ? $"Switched to the {Hull(raw, "ShipType")}"
@@ -369,6 +376,13 @@ public static class JournalSentence
             "CrewAssign" => "Assigned crew",
             "JoinACrew" => "Joined a crew",
             "QuitACrew" => "Left a crew",
+            "CrewMemberJoins" => "A crewmate joined",
+            "CrewMemberQuits" => "A crewmate left",
+            "CrewMemberRoleChange" => Blank(raw.String("Role")) is { } seat
+                ? $"A crewmate took the {seat} seat"
+                : "A crewmate changed seat",
+            "KickCrewMember" => "Removed a crewmate",
+            "EndCrewSession" => "Ended the crew session",
             "WingInvite" => "Wing invitation",
             "WingJoin" => "Joined a wing",
             "WingLeave" => "Left a wing",
@@ -459,10 +473,27 @@ public static class JournalSentence
             "SquadronApplicationApproved" => Named(raw, "SquadronName") is { } approved
                 ? $"Application to {approved} approved"
                 : "Squadron application approved",
+            "InvitedToSquadron" => Named(raw, "SquadronName") is { } invited
+                ? $"Invited to {invited}"
+                : "Invited to a squadron",
             "SquadronCreated" => "Created a squadron",
             "SquadronPromotion" => "Promoted in the squadron",
             "SharedBookmarkToSquadron" => "Shared a bookmark with the squadron",
             "ChangeCrewRole" => "Changed crew role",
+            "ClearImpound" => Named(raw, "ShipType") is { } freed
+                ? $"Released the impounded {freed}"
+                : "Released an impounded ship",
+            "HoloscreenHacked" => Named(raw, "PowerAfter") is { } power
+                ? $"Hacked a holoscreen for {power}"
+                : "Hacked a holoscreen",
+            "SelfDestruct" => "Self-destruct triggered",
+            "VehicleSwitch" => Named(raw, "To") is { } vehicle
+                ? $"Switched to the {vehicle}"
+                : "Switched vehicle",
+            "RequestPowerMicroResources" => "Requested Power materials",
+            "Passengers" => raw.Items("Manifest").Sum(p => p.Int("Count") ?? 0) is > 0 and var aboard
+                ? $"Passenger manifest: {aboard} aboard"
+                : "Passenger manifest updated",
             "RepairDrone" => "A repair limpet went to work",
             "Resupply" => "Resupplied",
 

@@ -14,6 +14,8 @@ Exobiology and Road to Riches stops on the route page show the straight-line dis
 
 The organic sampling callout for the first and second specimen now says how far to go before the next one, such as "Aleoida Gravis, 1 of 3. 2 to go, 150 metres from here."
 
+The Journal File reading now has a line for fifteen more events: crew joining, leaving, changing seat or being removed, the end of a crew session, a module moved between slots, every listed module stored at once, a released impounded ship, a hacked holoscreen, a squadron invitation, the passenger manifest, a self-destruct, a vehicle switch and a Power materials request. The bare `MarketID` event is hidden as noise.
+
 The Narrator now speaks during a lull only while a stock story is running or an adventure is under way. With COVAS aboard and no story it no longer narrates, and About me or a character sheet alone does not count as a story. A story you have switched off no longer offers the Narrator on the comms panel.
 
 The Transcript tab's In Ship page has two checkboxes, **Hide comms traffic** and **Hide invented chatter**. A checked box hides lines of that kind from In Ship, the headset panel and the mini panel; nothing is deleted, and unchecking shows them again. Both start unchecked and are remembered across launches.
