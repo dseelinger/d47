@@ -231,6 +231,26 @@ def black_fault(entry: dict, sheet: tuple, length) -> list:
     return found
 
 
+def found_black(found: list) -> bool:
+    return any(fault.startswith("black") for fault in found)
+
+
+def black_amount(entry: dict, sheet: tuple) -> str:
+    """none, part or most: most when more than half of the sheet's beats lie in a span, as StoryBlack.Amount."""
+    covered = 0
+    for beat in sheet:
+        at = BEATS.index(beat)
+        for span in entry.get("black") or []:
+            if not isinstance(span, dict) or any(span.get(f) is not None and span[f] not in BEATS for f in ("from", "to")):
+                continue
+            start = 0 if span.get("from") is None else BEATS.index(span["from"])
+            end = len(BEATS) if span.get("to") is None else BEATS.index(span["to"])
+            if start <= at < end:
+                covered += 1
+                break
+    return "none" if covered == 0 else "most" if covered * 2 > len(sheet) else "part"
+
+
 def role_fault(sid, speaker: dict) -> list:
     role = speaker.get("role")
     if not text(role):
@@ -343,6 +363,11 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
     found += [f"beat {beat} is not a beat of a {length} story" for beat in BEATS if beat not in sheet and text(beats.get(beat))]
 
     found += black_fault(entry, sheet, length)
+    if "black" in (card or {}):
+        if card["black"] not in ("none", "part", "most"):
+            found.append(f"the card's black is {card['black']!r}, not none, part or most")
+        elif not found_black(found) and card["black"] != black_amount(entry, sheet):
+            found.append(f"the card's black is {card['black']}, but the hidden entry's spans put {black_amount(entry, sheet)} of the story in the black")
 
     scan = entry.get("scan")
     if length in NARRATED and not isinstance(scan, dict):

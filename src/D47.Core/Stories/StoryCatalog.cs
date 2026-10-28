@@ -52,6 +52,12 @@ public sealed record StoryCard
     /// <summary>The key of one of <see cref="StoryPacing.All"/>: how long the story runs.</summary>
     public string? Length { get; init; }
 
+    /// <summary>One of <see cref="StoryBlack.Values"/>: how much of the story is in the black; null on a card published without it.</summary>
+    public string? Black { get; init; }
+
+    /// <summary>How much of the story is in the black; none for a card without the field.</summary>
+    public StoryBlackAmount InTheBlack => StoryBlack.Parse(Black);
+
     /// <summary>The SHA-256 of the story's <c>.sealed</c> file in lower-case hex; null on a card published without it.</summary>
     public string? SealedSha256 { get; init; }
 
@@ -935,6 +941,11 @@ public sealed class StoryCatalog
         {
             yield return $"{card.Id}: {fault}";
         }
+
+        if (card.Black is not null && !StoryBlack.Values.Contains(card.Black, StringComparer.Ordinal))
+        {
+            yield return $"{card.Id}: black is {card.Black}, not one of {string.Join(", ", StoryBlack.Values)}.";
+        }
     }
 
     private static IEnumerable<string> GoalArcFaults(StoryCard card)
@@ -1413,6 +1424,12 @@ public sealed class StoryCatalog
     /// <summary>Where a card names a member that has versions: by token, or by either version's name.</summary>
     private static IEnumerable<string> CardFaults(StoryCard card, StorySecret secret)
     {
+        if (card.Black is not null && StoryBlack.Values.Contains(card.Black, StringComparer.Ordinal)
+            && StoryBlack.Parse(card.Black) != StoryBlack.Amount(secret, card.Pacing))
+        {
+            yield return $"black is {card.Black}, but the hidden entry's spans put {StoryBlack.Values[(int)StoryBlack.Amount(secret, card.Pacing)]} of the story in the black.";
+        }
+
         var expected = secret.Cast
             .Where(speaker => speaker.Primary)
             .SelectMany(speaker => speaker.Versions is { } versions

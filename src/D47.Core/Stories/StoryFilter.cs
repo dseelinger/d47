@@ -21,20 +21,21 @@ public enum StorySort
 
 /// <summary>
 /// Which stock stories the Stories page lists and in what order: any of the levels, a length compared with one of
-/// <see cref="StoryPacing.All"/>, a least star rating, and a sort.
+/// <see cref="StoryPacing.All"/>, a least star rating, a sort, and optionally only stories in the black.
 /// </summary>
 public sealed record StoryFilter(
     [property: JsonPropertyName("level"), JsonConverter(typeof(StoryLevelsConverter))] IReadOnlyList<string>? Levels = null,
     StoryLengthCompare Compare = StoryLengthCompare.Any,
     string? Length = null,
     int? MinStars = null,
-    StorySort Sort = StorySort.Catalogue)
+    StorySort Sort = StorySort.Catalogue,
+    bool InTheBlack = false)
 {
     /// <summary>Whether no level narrows the list: none is set, or every level is.</summary>
     public bool AnyLevel => Levels is not { Count: > 0 } || StoryCard.Levels.All(level => Levels.Contains(level, StringComparer.Ordinal));
 
     /// <summary>Whether the filter keeps every card in catalogue order.</summary>
-    public bool IsDefault => AnyLevel && LengthIndex is null && MinStars is null && Sort == StorySort.Catalogue;
+    public bool IsDefault => AnyLevel && LengthIndex is null && MinStars is null && Sort == StorySort.Catalogue && !InTheBlack;
 
     /// <summary>Whether the card matches ignoring ratings; <see cref="MinStars"/>, if set, then fails every card.</summary>
     public bool Matches(StoryCard card) => Matches(card, StoryRatings.Empty);
@@ -48,6 +49,11 @@ public sealed record StoryFilter(
         ArgumentNullException.ThrowIfNull(ratings);
 
         if (MinStars is { } least && !(ratings.Get(card.Id) is { } rating && rating.Stars >= least))
+        {
+            return false;
+        }
+
+        if (InTheBlack && card.InTheBlack == StoryBlackAmount.None)
         {
             return false;
         }
@@ -78,10 +84,11 @@ public sealed record StoryFilter(
         && Length == other.Length
         && MinStars == other.MinStars
         && Sort == other.Sort
+        && InTheBlack == other.InTheBlack
         && (Levels ?? []).ToHashSet(StringComparer.Ordinal).SetEquals(other.Levels ?? []);
 
     public override int GetHashCode() =>
-        HashCode.Combine(Compare, Length, MinStars, Sort, (Levels ?? []).Distinct(StringComparer.Ordinal).Aggregate(0, (hash, level) => hash ^ StringComparer.Ordinal.GetHashCode(level)));
+        HashCode.Combine(Compare, Length, MinStars, Sort, InTheBlack, (Levels ?? []).Distinct(StringComparer.Ordinal).Aggregate(0, (hash, level) => hash ^ StringComparer.Ordinal.GetHashCode(level)));
 
     /// <summary>The cards in <see cref="Sort"/> order; unrated cards come last, in catalogue order, under <see cref="StorySort.HighestRated"/>.</summary>
     public IEnumerable<StoryCard> Order(IEnumerable<StoryCard> cards, StoryRatings ratings)

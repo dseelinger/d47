@@ -12,7 +12,7 @@ Not part of the build. Writes no file in the checkout.
 The script downloads `index.json` from the release (an empty list if the release holds no story), refuses an id
 already in it unless --replace is given, checks the card and hidden entry with `faults` from seal-stories.py and
 requires a picture for every primary cast member (any other member with no picture file is published without one),
-lists the primary members' picture names in the card's `castPictures`, and builds in the work directory:
+lists the primary members' picture names in the card's `castPictures`, sets the card's `black` from the hidden entry's spans, and builds in the work directory:
 `<id>.sealed`, a 1024 px JPEG `<name>.jpg` and the kept `<name>.original.png` for each picture, and `card.json`,
 whose `sealedSha256` is the SHA-256 of `<id>.sealed` in lower-case hex. An install that already holds the story
 fetches it again when its file's hash differs, so --replace reaches every install; use it only for a change a
@@ -255,6 +255,7 @@ def main() -> None:
         sys.exit(f"{story} is already in the release; pass --replace to publish it again")
 
     sealer = load_sealer()
+    card.pop("black", None)
     problems = [f"{story}: {fault}" for fault in sealer.faults(entry, sealer.persona_ids(), card)]
     sources = {}
     for name, primary in picture_names(entry):
@@ -269,6 +270,7 @@ def main() -> None:
         print("\n".join(problems), file=sys.stderr)
         sys.exit(1)
 
+    card["black"] = sealer.black_amount(entry, sealer.LENGTHS[card["length"]][2])
     card["castPictures"] = [name for name, primary in picture_names(entry) if primary]
     card.pop("number", None)
 

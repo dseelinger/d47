@@ -28,12 +28,14 @@ internal sealed class CatalogueFilters : StackPanel
         Level,
         Compare,
         Length,
+        Black,
         Rating,
         Sort,
     }
 
     private static readonly string[] LevelNames = ["New commander", "Mid-range", "Endgame"];
     private static readonly string[] CompareLabels = ["Any length", "At least", "Exactly", "At most"];
+    private static readonly string[] BlackLabels = ["Anywhere", "In the black"];
     private static readonly string[] RatingLabels = ["Any rating", "4 stars & up", "3 stars & up", "2 stars & up", "1 star & up"];
     private static readonly string[] SortLabels = ["Catalogue order", "Highest rating"];
 
@@ -53,6 +55,7 @@ internal sealed class CatalogueFilters : StackPanel
     private string _length;
     private int? _minStars;
     private StorySort _sort;
+    private bool _black;
     private Kind? _open;
     private bool _syncing;
     private bool _ratingsShown = true;
@@ -64,6 +67,7 @@ internal sealed class CatalogueFilters : StackPanel
         _length = StoryPacing.Find(start.Length)?.Key ?? StoryPacing.OneMonth.Key;
         _minStars = start.MinStars;
         _sort = start.Sort;
+        _black = start.InTheBlack;
 
         var sentence = new WrapPanel { Orientation = Orientation.Horizontal };
         sentence.Children.Add(Words("Show"));
@@ -72,6 +76,8 @@ internal sealed class CatalogueFilters : StackPanel
         sentence.Children.Add(Token(Kind.Compare, "Length"));
         _lengthControls = [Token(Kind.Length, "Story length")];
         sentence.Children.Add(_lengthControls[0]);
+        sentence.Children.Add(Words("set"));
+        sentence.Children.Add(Token(Kind.Black, "Setting"));
         _ratingControls = [Words("with"), Token(Kind.Rating, "Rating"), Words("sorted by"), Token(Kind.Sort, "Sort")];
 
         foreach (var control in _ratingControls)
@@ -113,7 +119,8 @@ internal sealed class CatalogueFilters : StackPanel
         _compare,
         _length,
         _minStars,
-        _sort);
+        _sort,
+        _black);
 
     /// <summary>Whether the rating and sort tokens show: the Story ratings setting.</summary>
     public bool RatingsShown
@@ -149,6 +156,7 @@ internal sealed class CatalogueFilters : StackPanel
         _compare = StoryLengthCompare.Any;
         _minStars = null;
         _sort = StorySort.Catalogue;
+        _black = false;
         _open = null;
         Refresh();
         Changed?.Invoke(this, EventArgs.Empty);
@@ -221,6 +229,7 @@ internal sealed class CatalogueFilters : StackPanel
     private int Selected(Kind kind) => kind switch
     {
         Kind.Compare => (int)_compare,
+        Kind.Black => _black ? 1 : 0,
         Kind.Length => StoryPacing.All.ToList().FindIndex(pacing => pacing.Key == _length),
         Kind.Rating => _minStars is { } stars ? Math.Clamp(5 - stars, 0, RatingLabels.Length - 1) : 0,
         _ => (int)_sort,
@@ -245,6 +254,7 @@ internal sealed class CatalogueFilters : StackPanel
         _values[Kind.Level].Text = LevelText().ToUpperInvariant();
         _values[Kind.Compare].Text = CompareLabels[(int)_compare].ToUpperInvariant();
         _values[Kind.Length].Text = (StoryPacing.Find(_length)?.Name ?? _length).ToUpperInvariant();
+        _values[Kind.Black].Text = BlackLabels[Selected(Kind.Black)].ToUpperInvariant();
         _values[Kind.Rating].Text = RatingLabels[Selected(Kind.Rating)].ToUpperInvariant();
         _values[Kind.Sort].Text = SortLabels[(int)_sort].ToUpperInvariant();
 
@@ -294,6 +304,7 @@ internal sealed class CatalogueFilters : StackPanel
             Kind.Level => LevelPanel(),
             Kind.Compare => OptionsPanel(kind, CompareLabels, "Length", index => _compare = (StoryLengthCompare)index),
             Kind.Length => OptionsPanel(kind, [.. StoryPacing.All.Select(pacing => pacing.Name)], "Story length", index => _length = StoryPacing.All[index].Key),
+            Kind.Black => OptionsPanel(kind, BlackLabels, "Setting", index => _black = index == 1),
             Kind.Rating => OptionsPanel(kind, RatingLabels, "Rating", index => _minStars = index == 0 ? null : 5 - index),
             _ => OptionsPanel(kind, SortLabels, "Sort", index => _sort = (StorySort)index),
         };

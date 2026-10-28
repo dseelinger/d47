@@ -823,6 +823,11 @@ public sealed class StoriesView : UserControl, IPageSummary
 
         page.Children.Add(AdventuresPage.Muted($"{card.Pacing.Name} · {card.LevelGuideline}"));
 
+        if (card.InTheBlack != StoryBlackAmount.None)
+        {
+            page.Children.Add(AdventuresPage.Muted($"{(card.InTheBlack == StoryBlackAmount.Most ? "Most" : "Part")} of this story is set in the black."));
+        }
+
         if (card.Tone is { Length: > 0 } tone)
         {
             page.Children.Add(AdventuresPage.Muted(tone));

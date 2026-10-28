@@ -312,12 +312,16 @@ public class TheStoriesPageFiltersItsListTests
 
         var page = Open(NewPaths());
 
-        Assert.Equal(["Show", "ALL", "stories of", "ANY LENGTH"], Sentence(page.Panel));
+        Assert.Equal(["Show", "ALL", "stories of", "ANY LENGTH", "set", "ANYWHERE"], Sentence(page.Panel));
         Assert.Contains(CatalogueFilters.TokenHint, Drawn(page.Panel));
 
         CatalogueControls.Choose(page.Panel, "Length", 2);
 
-        Assert.Equal(["Show", "ALL", "stories of", "EXACTLY", "1 MONTH"], Sentence(page.Panel));
+        Assert.Equal(["Show", "ALL", "stories of", "EXACTLY", "1 MONTH", "set", "ANYWHERE"], Sentence(page.Panel));
+
+        CatalogueControls.Choose(page.Panel, "Setting", 1);
+
+        Assert.Equal(["Show", "ALL", "stories of", "EXACTLY", "1 MONTH", "set", "IN THE BLACK"], Sentence(page.Panel));
 
         page.Window.Close();
     }
