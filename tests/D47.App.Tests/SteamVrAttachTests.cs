@@ -92,7 +92,7 @@ public class SteamVrLiveTests
                 return "SteamVR is not running, so there is no session to round-trip against.";
             }
 
-            if (!OpenVrBinding.Instance.IsHmdPresent())
+            if (!OpenVrBinding.Instance.IsHmdPresent() || !HeadsetAnswers())
             {
                 return "No headset is switched on.";
             }
@@ -103,6 +103,19 @@ public class SteamVrLiveTests
                 ? "d47 is running; close it to run the live checks."
                 : null;
         }
+    }
+
+    /// <summary>
+    /// False only when SteamVR is up and refuses an attach with Init_HmdNotFound, which IsHmdPresent does
+    /// not rule out. Any other refusal counts as an answer, so Attach still fails on it.
+    /// </summary>
+    private static bool HeadsetAnswers()
+    {
+        var error = EVRInitError.None;
+        OpenVrBinding.Instance.Init(ref error, EVRApplicationType.VRApplication_Overlay);
+        OpenVrBinding.Instance.Shutdown();
+
+        return error != EVRInitError.Init_HmdNotFound;
     }
 
     /// <summary>Skips unless this machine can answer, in the one place that decides it.</summary>

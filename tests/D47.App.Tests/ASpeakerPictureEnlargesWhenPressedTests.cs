@@ -36,7 +36,18 @@ public sealed class ASpeakerPictureEnlargesWhenPressedTests
     private static void PressPicture(Window window, PanelView panel)
     {
         var picture = SpeakerPictureFixture.Pictures(panel).Single();
-        var at = picture.TranslatePoint(new Point(10, 10), window)!.Value;
+        picture.BringIntoView();
+        Dispatcher.UIThread.RunJobs();
+
+        // A short window's transcript can be shorter than the picture, so press the part of it that shows.
+        var scroller = picture.GetVisualAncestors().OfType<ScrollViewer>().First();
+        var drawn = new Rect(picture.TranslatePoint(default, window)!.Value, picture.Bounds.Size);
+        var viewport = new Rect(scroller.TranslatePoint(default, window)!.Value, scroller.Bounds.Size);
+        var shown = drawn.Intersect(viewport);
+
+        Assert.True(shown.Width > 0 && shown.Height > 0, $"the picture at {drawn} is outside the transcript at {viewport}");
+
+        var at = shown.Center;
 
         window.MouseDown(at, MouseButton.Left);
         window.MouseUp(at, MouseButton.Left);
