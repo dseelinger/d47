@@ -515,6 +515,71 @@ public sealed class ShipPlanService(
         }
     }
 
+    /// <summary>
+    /// What a build still needs bought: the hull where the ship is not owned, and each planned module
+    /// neither fitted in its slot nor in module storage. A stored copy covers one slot.
+    /// </summary>
+    public ShipPurchases ToBuy(ShipBuild build)
+    {
+        var storage = state()?.Modules ?? ModuleStore.Empty;
+        var unclaimed = storage.Modules.ToList();
+        var fitted = build.ShipId is { } shipId ? FittedModules(shipId) : [];
+        var items = new List<ShipPurchase>();
+
+        if (!build.IsOwned && OutfittingItem.TryParse(build.HullName, out var hull, out _))
+        {
+            items.Add(new ShipPurchase(hull, build.Hull, null));
+        }
+
+        foreach (var plan in build.Slots)
+        {
+            if (plan.Variant is not { Length: > 0 } && plan.Module is not { Length: > 0 })
+            {
+                continue;
+            }
+
+            var fittedHere = fitted.FirstOrDefault(candidate =>
+                string.Equals(candidate.Slot, plan.Slot, StringComparison.OrdinalIgnoreCase));
+
+            if (fittedHere is not null && IsWhatWasWanted(plan, fittedHere))
+            {
+                continue;
+            }
+
+            var specification = plan.Variant is { Length: > 0 } variant ? EliteSpecifications.Module(variant) : null;
+            var name = specification?.Name ?? plan.Module;
+
+            if (name is not { Length: > 0 })
+            {
+                continue;
+            }
+
+            var wantedClass = specification is { Class: { } size, Rating: { } rating }
+                ? size.ToString(CultureInfo.InvariantCulture) + rating
+                : null;
+
+            var held = unclaimed.FindIndex(stored =>
+                Knowledge.Catalogue.Relax(stored.Name) == Knowledge.Catalogue.Relax(name)
+                && (wantedClass is null || stored.Class is null
+                    || string.Equals(stored.Class, wantedClass, StringComparison.OrdinalIgnoreCase)));
+
+            if (held >= 0)
+            {
+                unclaimed.RemoveAt(held);
+                continue;
+            }
+
+            var display = wantedClass is null ? name : $"{wantedClass} {name}";
+
+            if (OutfittingItem.TryParse(display, out var item, out _))
+            {
+                items.Add(new ShipPurchase(item, plan.Variant ?? specification?.Symbol, plan.Slot));
+            }
+        }
+
+        return new ShipPurchases(items, storage.IsKnown);
+    }
+
     /// <summary>What is fitted on a ship right now, live where it is the one the Commander is aboard and
     /// remembered otherwise.</summary>
     private IReadOnlyList<ShipModule> FittedModules(int shipId)
