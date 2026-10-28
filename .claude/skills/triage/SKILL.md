@@ -9,9 +9,9 @@ Run this in the desktop app. The report is tables, and a terminal does not rende
 
 ## Turn the voice on first
 
-Before the first `gh` call, run `/claude-voice Triage`. There is no issue number to name here — the
-report covers all of them — so the phrase is the bare word. Several of these sessions run at once
-and are told apart by ear.
+Before the first `gh` call, run `/claude-voice Triage session`. There is no issue number to name here —
+the report covers all of them. Keep the second word: the voice reads "Triage" on its own as
+"tree-uh". Several of these sessions run at once and are told apart by ear.
 
 When this session has already turned the voice on or off — `/coordinator` turns it on as
 "Coordinator" before it runs triage — leave the voice and its phrase as they are.
