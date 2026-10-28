@@ -12,9 +12,6 @@ public sealed record ChecklistProject(ChecklistScope Scope, string Key, string W
 /// <summary>The checklist in the order the Commander cares about.</summary>
 public static class ChecklistOrdering
 {
-    /// <summary>How many lines are "the next few things" when the list is said out loud.</summary>
-    public const int Spoken = 3;
-
     /// <summary>A project's key — <c>ship:51</c>, <c>system:sol</c>, <c>planned ship:ship-3</c>, <c>custom</c>.</summary>
     public static string Key(ChecklistScope scope)
     {

@@ -23,7 +23,7 @@ public static class FarmingAdvice
         return material.Category switch
         {
             "Raw" => Raw(material, jumpRange),
-            "Manufactured" => Manufactured(material, jumpRange),
+            "Manufactured" => Manufactured(material),
             "Encoded" => Encoded(material, jumpRange),
             _ => (string.Empty, null),
         };
@@ -43,7 +43,7 @@ public static class FarmingAdvice
         return (report.ToString(), site.System);
     }
 
-    private static (string Report, string? System) Manufactured(MaterialEntry material, double? jumpRange)
+    private static (string Report, string? System) Manufactured(MaterialEntry material)
     {
         var report = new StringBuilder();
 

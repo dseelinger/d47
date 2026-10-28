@@ -37,12 +37,6 @@ public class OnlyLiveProgressIsSentForTheKeysCommanderTests
         public Task<PlanWriteResult> CompleteAsync(string buildId, CancellationToken cancellationToken) =>
             Record($"complete {buildId}");
 
-        public Task<PlanWriteResult> CarrierRegisteredAsync(long marketId, CancellationToken cancellationToken) =>
-            Record($"carrier {marketId}");
-
-        public Task<PlanWriteResult> CarrierMovedAsync(long marketId, IReadOnlyDictionary<string, int> moved, CancellationToken cancellationToken) =>
-            Record($"carrier moved {marketId}");
-
         public TaskCompletionSource? Hold { get; set; }
 
         private async Task<PlanWriteResult> Record(string call)

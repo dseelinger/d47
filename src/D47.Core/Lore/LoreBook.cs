@@ -28,9 +28,6 @@ public sealed class LoreBook(LoreStore store)
         return mine.Length == 0 ? [shipped] : [shipped, .. mine];
     }
 
-    /// <summary>Whether there is anything at all to say about this system.</summary>
-    public bool Knows(long systemAddress) => For(systemAddress).Count > 0;
-
     /// <summary>Records something new.</summary>
     /// <paramref name="corroborated"/>
     /// is what a lookup appeared to support at the time and is a label rather than a verdict — see <see

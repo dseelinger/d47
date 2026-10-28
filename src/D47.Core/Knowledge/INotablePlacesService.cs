@@ -14,8 +14,6 @@ public sealed record NotablePlace(
     long? SystemAddress,
     StarPosition Position)
 {
-    public string? Region { get; init; }
-
     /// <summary>The catalogue's one-line description.</summary>
     public string? Summary { get; init; }
 

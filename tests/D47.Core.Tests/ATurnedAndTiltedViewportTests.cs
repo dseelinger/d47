@@ -135,20 +135,4 @@ public class ATurnedAndTiltedViewportTests
 
         Assert.Equal((extent.X1 - extent.X0) / 2, view.CentreY, 6);
     }
-
-    [Theory]
-    [InlineData(0, 0)]
-    [InlineData(30, 0)]
-    [InlineData(45, 40)]
-    [InlineData(135, 60)]
-    [InlineData(300, 80)]
-    public void ProjectingAPositionAtTheCentresHeightAndBackReturnsItsXAndZ(double heading, double tilt)
-    {
-        var view = new GalaxyViewport(100, -200, 400) { CentreY = 12, Heading = heading, Tilt = tilt };
-        var screen = view.ToScreen(At(150, -120, 12), 800, 600);
-        var back = view.ToGalaxy(screen.X, screen.Y, 800, 600);
-
-        Assert.Equal(150, back.X, 6);
-        Assert.Equal(-120, back.Z, 6);
-    }
 }

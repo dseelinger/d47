@@ -48,12 +48,6 @@ public sealed record OnFootEntry
     /// <summary>The grade 1 price, where a journal was ever seen paying it.</summary>
     public long? Price { get; init; }
 
-    /// <summary>
-    /// Whether this symbol was read out of a real journal, or follows the naming convention and has
-    /// never been seen.
-    /// </summary>
-    public bool SeenInJournal { get; init; }
-
     public bool IsModification =>
         Kind is OnFootKind.SuitModification or OnFootKind.WeaponModification;
 
@@ -85,13 +79,6 @@ public static class OnFootCatalogue
         Journal.JournalJson.Symbol(symbol) is { } folded
             ? Loaded.Value.FirstOrDefault(entry => entry.Symbol == folded)
             : null;
-
-    /// <summary>Every grade of one suit family, lowest first.</summary>
-    public static IReadOnlyList<OnFootEntry> Grades(string family) =>
-        [.. Loaded.Value
-            .Where(entry => entry.Kind == OnFootKind.Suit
-                            && string.Equals(entry.Family, family, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(entry => entry.Grade)];
 
     /// <summary>
     /// What one grade of a suit or weapon costs to buy at grade 1, following a family where the row
@@ -145,9 +132,6 @@ public static class OnFootCatalogue
                 .OrderBy(entry => entry.Grade ?? 0)
                 .FirstOrDefault();
     }
-
-    /// <summary>Equipment names close enough to offer back when nothing matched.</summary>
-    public static IReadOnlyList<string> Near(string spoken) => Catalogue.Near(Equipment, spoken);
 
     /// <summary>What a fitted modification is called, or null when nothing d47 ships joins the spelling.</summary>
     public static string? ModificationName(string? symbol) =>
@@ -231,7 +215,6 @@ public static class OnFootCatalogue
         Grade = Integer(cells, 3),
         Detail = Text(cells, 4),
         Price = Integer(cells, 5),
-        SeenInJournal = Text(cells, 6) == "corpus",
     };
 
     /// <summary>The kinds the generator writes.</summary>

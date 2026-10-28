@@ -238,33 +238,6 @@ public class ChecklistPlanTests
     }
 
     [Fact]
-    public void HaulingComesOffTheDepotRatherThanOutOfATable()
-    {
-        const string depot =
-            """
-            { "timestamp":"2026-08-16T10:00:00Z", "event":"ColonisationConstructionDepot",
-              "MarketID":3960809986, "ConstructionProgress":0.5,
-              "ConstructionComplete":false, "ConstructionFailed":false,
-              "ResourcesRequired":[
-                { "Name":"$aluminium_name;", "Name_Localised":"Aluminium",
-                  "RequiredAmount":500, "ProvidedAmount":200, "Payment":3239 } ] }
-            """;
-
-        var site = State(depot).Colonisation.All.Single();
-
-        var items = ColonisationPlan.Hauling(ChecklistScope.System("Sol"), site);
-        var item = Assert.Single(items);
-
-        Assert.Equal("Aluminium", item.Intent!.Detail);
-        Assert.Equal(500, item.Intent.Quantity);
-
-        // The site itself said so, which is the one half of a colonisation plan a shipped source confirms —
-        // and the source is the Commander's own journal.
-        Assert.Equal(ChecklistProvenance.Asserted, item.Provenance);
-        Assert.Equal(300, site.Resources[0].Remaining);
-    }
-
-    [Fact]
     public void ADepotEventIsASnapshotSoTheLatestOneWinsOutright()
     {
         const string first =

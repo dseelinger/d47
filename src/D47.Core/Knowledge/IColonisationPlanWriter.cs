@@ -14,12 +14,6 @@ public interface IColonisationPlanWriter
 
     /// <summary>POST api/project/{buildId}/complete.</summary>
     Task<PlanWriteResult> CompleteAsync(string buildId, CancellationToken cancellationToken);
-
-    /// <summary>Whether the carrier is on the planner. GET api/FC/{marketId}.</summary>
-    Task<PlanWriteResult> CarrierRegisteredAsync(long marketId, CancellationToken cancellationToken);
-
-    /// <summary>Delta: tonnes into (+) or out of (−) the carrier. PATCH api/FC/{marketId}/cargo.</summary>
-    Task<PlanWriteResult> CarrierMovedAsync(long marketId, IReadOnlyDictionary<string, int> moved, CancellationToken cancellationToken);
 }
 
 public enum PlanWriteOutcome

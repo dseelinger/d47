@@ -9,17 +9,6 @@ public class GalaxyViewportTests
     private static StarPosition At(double x, double z, double y = 0) => new(x, y, z);
 
     [Fact]
-    public void AProjectedPositionReturnsToTheSameGalacticXAndZ()
-    {
-        var view = new GalaxyViewport(100, -200, 400);
-        var screen = view.ToScreen(At(150, -120), 800, 600);
-        var back = view.ToGalaxy(screen.X, screen.Y, 800, 600);
-
-        Assert.Equal(150, back.X, 6);
-        Assert.Equal(-120, back.Z, 6);
-    }
-
-    [Fact]
     public void HeightDoesNotMoveAPositionOnTheScreen()
     {
         var view = new GalaxyViewport(0, 0, 400);

@@ -22,8 +22,6 @@ public sealed class MiningTargetStore(string path, IFileSystem files, ILogger<Mi
 
     private Dictionary<string, MiningTarget> _byCommander = new(StringComparer.Ordinal);
 
-    public string Path => path;
-
     /// <summary>This Commander's target, or null if none is set.</summary>
     public MiningTarget? For(string? frontierId)
     {

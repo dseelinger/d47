@@ -57,39 +57,6 @@ public static class ColonisationPlan
         return [.. items.GroupBy(item => item.Key, StringComparer.OrdinalIgnoreCase).Select(group => group.First())];
     }
 
-    /// <summary>The hauling, taken off a site the Commander has actually visited.</summary>
-    public static IReadOnlyList<ChecklistItem> Hauling(ChecklistScope scope, ConstructionSite site)
-    {
-        var where = site.StationName ?? site.StarSystem ?? site.MarketId.ToString(CultureInfo.InvariantCulture);
-
-        return
-        [
-            .. site.Resources.Select(resource =>
-            {
-                var intent = new ChecklistIntent(ChecklistIntentKind.Commodity, where)
-                {
-                    Detail = resource.Name,
-
-                    // Carried so a person reading the file can see what the site asked for.
-                    Quantity = resource.Required,
-                };
-
-                return new ChecklistItem
-                {
-                    Key = ChecklistKeys.For(intent),
-                    Scope = scope,
-                    Kind = ChecklistItemKind.Derived,
-                    Source = ChecklistSource.ColonisationPlan,
-                    Text = $"{resource.Name} to {where}",
-                    Intent = intent,
-
-                    // Asserted: the site itself said so.
-                    Provenance = ChecklistProvenance.Asserted,
-                };
-            }),
-        ];
-    }
-
     /// <summary>
     /// What a Commander still owes across every site in a system, as of their last visit to each.
     /// </summary>

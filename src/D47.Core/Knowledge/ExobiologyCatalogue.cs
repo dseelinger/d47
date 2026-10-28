@@ -13,9 +13,6 @@ public sealed record ExobiologyEntry
     /// <summary>Taken from the survey, never computed.</summary>
     public required long Value { get; init; }
 
-    /// <summary>How many surveyed bodies the ranges below were learned from.</summary>
-    public required int BodiesSampled { get; init; }
-
     /// <summary>Normalised planet classes this species has been found on.</summary>
     public required IReadOnlyList<string> PlanetTypes { get; init; }
 
@@ -155,7 +152,7 @@ public static class ExobiologyCatalogue
     {
         if (Text(cells, 0) is not { } species
             || Text(cells, 1) is not { } genus
-            || Integer(cells, 3) is not { } sampled
+            || Integer(cells, 3) is null
             || Number(cells, 7) is not { } gravityLow
             || Number(cells, 8) is not { } gravityHigh
             || Number(cells, 9) is not { } temperatureLow
@@ -173,7 +170,6 @@ public static class ExobiologyCatalogue
             Species = species,
             Genus = genus,
             Value = value,
-            BodiesSampled = sampled,
             PlanetTypes = List(cells, 4),
             Atmospheres = List(cells, 5),
             Volcanism = List(cells, 6),

@@ -114,17 +114,6 @@ public class EngineeringRulesTests
         Assert.False(EngineeringRules.IsBeyondCapacity(5, 1, sameLine: false));
     }
 
-    [Fact]
-    public void TheCostOfWhatIsWantedRoundsUpToWholeTrades()
-    {
-        // Trading down returns three at a time, so wanting four costs two trades' worth of input.
-        var down = EngineeringRules.TradeRate(2, 1, sameLine: true)!.Value;
-
-        Assert.Equal(1, down.CostOf(3));
-        Assert.Equal(2, down.CostOf(4));
-        Assert.Equal(0, down.CostOf(0));
-    }
-
     /// <summary>
  /// What d47 says about getting a rank up is true, and it is Frontier's table saying it.
     /// </summary>

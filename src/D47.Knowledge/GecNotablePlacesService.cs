@@ -158,7 +158,6 @@ public sealed class GecNotablePlacesService : INotablePlacesService, IDisposable
 
             places.Add(new NotablePlace(name, Text(entry, "type") ?? "Point of interest", system, Long(entry, "id64"), position)
             {
-                Region = Text(entry, "region"),
                 Summary = Text(entry, "summary"),
                 Rating = Number(entry, "rating"),
             });

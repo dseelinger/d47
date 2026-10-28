@@ -5,8 +5,6 @@ namespace D47.Core.Knowledge;
 /// <summary>What a material trader charges: pay <see cref="Paid"/> to receive <see cref="Received"/>.</summary>
 public readonly record struct MaterialExchange(int Paid, int Received)
 {
-    /// <summary>How many to hand over for <paramref name="wanted"/> units, rounded up.</summary>
-    public int CostOf(int wanted) => wanted <= 0 ? 0 : (int)Math.Ceiling((double)wanted / Received) * Paid;
 }
 
 /// <summary>The handful of fixed numbers Elite applies to engineering, hand-written on purpose.</summary>

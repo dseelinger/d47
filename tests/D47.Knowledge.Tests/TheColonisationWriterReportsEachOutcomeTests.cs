@@ -49,8 +49,6 @@ public class TheColonisationWriterReportsEachOutcomeTests
         await writer.NeedsAsync("b 1", Tonnes, 10, t);
         await writer.ContributeAsync("b 1", "CMDR X", Tonnes, t);
         await writer.CompleteAsync("b 1", t);
-        await writer.CarrierRegisteredAsync(42, t);
-        await writer.CarrierMovedAsync(42, Tonnes, t);
 
         Assert.Equal(
             [
@@ -58,8 +56,6 @@ public class TheColonisationWriterReportsEachOutcomeTests
                 (HttpMethod.Post, "/api/project/b%201"),
                 (HttpMethod.Post, "/api/project/b%201/contribute/CMDR%20X"),
                 (HttpMethod.Post, "/api/project/b%201/complete"),
-                (HttpMethod.Get, "/api/FC/42"),
-                (HttpMethod.Patch, "/api/FC/42/cargo"),
             ],
             fake.Requests.Select(r => (r.Method, r.Path)));
         Assert.All(fake.Requests, r => Assert.Equal(Key, r.Key));

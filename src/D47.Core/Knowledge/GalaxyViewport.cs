@@ -142,21 +142,6 @@ public sealed record GalaxyViewport(double CentreX, double CentreZ, double Light
         return (width / 2 + (at.Across - centre.Across) * scale, height / 2 - (at.Up - centre.Up) * scale);
     }
 
-    /// <summary>The X and Z of the point at the centre's height that draws at the pixel; at tilt 90 that plane is edge-on and only the across offset applies.</summary>
-    public (double X, double Z) ToGalaxy(double x, double y, double width, double height)
-    {
-        var scale = Scale(width, height);
-        var across = (x - width / 2) / scale;
-        var up = -(y - height / 2) / scale;
-        var (r, _) = Axes();
-        var cosTilt = Math.Cos(Tilt * Degrees);
-        var inPlane = cosTilt < 1e-6 ? 0 : up / cosTilt;
-
-        return (
-            CentreX + r.X * across + Math.Sin(Heading * Degrees) * inPlane,
-            CentreZ + r.Z * across + Math.Cos(Heading * Degrees) * inPlane);
-    }
-
     private ((double X, double Y, double Z) R, (double X, double Y, double Z) U) Axes()
     {
         var h = Heading * Degrees;

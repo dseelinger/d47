@@ -30,8 +30,6 @@ public sealed class LoreStore(string path, IFileSystem files, ILogger<LoreStore>
     private string? _seen;
     private readonly FileStamp _stamp = new();
 
-    public string Path => path;
-
     /// <summary>Raised when the contents changed, whoever changed them.</summary>
     public event Action? Changed;
 

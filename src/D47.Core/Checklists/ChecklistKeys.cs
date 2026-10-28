@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text;
 
 namespace D47.Core.Checklists;
 
@@ -105,32 +104,4 @@ public static class ChecklistKeys
         string.IsNullOrWhiteSpace(text)
             ? string.Empty
             : new string([.. text.ToLowerInvariant().Where(char.IsLetterOrDigit)]);
-
-    /// <summary>
-    /// The same reduction with single hyphens kept, for anything a person reads rather than anything
-    /// that has to compare equal.
-    /// </summary>
-    public static string Slug(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return string.Empty;
-        }
-
-        var built = new StringBuilder(text.Length);
-
-        foreach (var character in text.Trim().ToLowerInvariant())
-        {
-            if (char.IsLetterOrDigit(character))
-            {
-                built.Append(character);
-            }
-            else if (built.Length > 0 && built[^1] != '-')
-            {
-                built.Append('-');
-            }
-        }
-
-        return built.ToString().Trim('-');
-    }
 }

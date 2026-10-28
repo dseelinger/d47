@@ -42,12 +42,6 @@ public class PlanWritesAreSentInOrderAndRetriedTests
 
         public Task<PlanWriteResult> CompleteAsync(string buildId, CancellationToken cancellationToken) =>
             Record($"complete {buildId}");
-
-        public Task<PlanWriteResult> CarrierRegisteredAsync(long marketId, CancellationToken cancellationToken) =>
-            Task.FromResult(new PlanWriteResult(PlanWriteOutcome.Sent));
-
-        public Task<PlanWriteResult> CarrierMovedAsync(long marketId, IReadOnlyDictionary<string, int> moved, CancellationToken cancellationToken) =>
-            Task.FromResult(new PlanWriteResult(PlanWriteOutcome.Sent));
     }
 
     private sealed class Service : IColonisationPlanService

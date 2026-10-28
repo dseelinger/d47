@@ -73,15 +73,6 @@ public sealed class RavenColonialPlanWriter : IColonisationPlanWriter, IDisposab
             HttpMethod.Post, $"api/project/{Uri.EscapeDataString(buildId)}/complete", null, cancellationToken)
             .ConfigureAwait(false)).Result;
 
-    public async Task<PlanWriteResult> CarrierRegisteredAsync(long marketId, CancellationToken cancellationToken) =>
-        (await SendAsync(HttpMethod.Get, $"api/FC/{marketId}", null, cancellationToken).ConfigureAwait(false)).Result;
-
-    public async Task<PlanWriteResult> CarrierMovedAsync(
-        long marketId,
-        IReadOnlyDictionary<string, int> moved,
-        CancellationToken cancellationToken) =>
-        (await SendAsync(HttpMethod.Patch, $"api/FC/{marketId}/cargo", Fold(moved), cancellationToken).ConfigureAwait(false)).Result;
-
     private static Dictionary<string, int> Fold(IReadOnlyDictionary<string, int> tonnes)
     {
         var folded = new Dictionary<string, int>();

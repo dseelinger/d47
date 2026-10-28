@@ -52,10 +52,6 @@ public static class RareCatalogue
             : null;
     }
 
-    /// <summary>Names close enough to offer back when nothing matched.</summary>
-    public static IReadOnlyList<string> Near(string spoken) =>
-        Catalogue.Near([.. Loaded.Value.Values.Select(entry => entry.Name)], spoken);
-
     private static IReadOnlyDictionary<string, RareEntry> Load()
     {
         using var stream = typeof(RareCatalogue).GetTypeInfo().Assembly

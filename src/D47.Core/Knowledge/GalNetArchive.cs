@@ -13,8 +13,6 @@ public sealed class GalNetArchive(string path, IFileSystem files, ILogger<GalNet
 
     private Dictionary<string, GalNetArticle>? _articles;
 
-    public string Path => path;
-
     /// <summary>All articles, newest first.</summary>
     public IReadOnlyList<GalNetArticle> All()
     {

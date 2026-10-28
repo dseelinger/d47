@@ -65,17 +65,6 @@ public sealed record StoredRoutePlan
 
     /// <summary>The furthest stop the Commander has reached, as an index into the plan's own stop list.</summary>
     public int? Reached { get; init; }
-
-    /// <summary>Jumps left on a carrier plan after the reached stop; null for any other kind.</summary>
-    [JsonIgnore]
-    public int? CarrierJumpsRemaining => Kind == RoutePlanKind.Carrier ? CarrierStopsAhead().Count() : null;
-
-    /// <summary>Whether the carrier's next stop needs tritium restocked; null with no next stop.</summary>
-    [JsonIgnore]
-    public bool? NextCarrierStopRestocks => CarrierStopsAhead().FirstOrDefault()?.MustRestock;
-
-    private IEnumerable<CarrierWaypoint> CarrierStopsAhead() =>
-        (Carrier?.Waypoints ?? []).Where((waypoint, index) => index > (Reached ?? -1) && waypoint.Distance > 0);
 }
 
 /// <summary>

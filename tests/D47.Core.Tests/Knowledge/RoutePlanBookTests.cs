@@ -156,25 +156,6 @@ public class RoutePlanBookTests : IDisposable
         Assert.Null(book.Last(RoutePlanKind.Jump)?.Reached);
     }
 
-    [Fact]
-    public void AFollowedCarrierPlanSaysHowManyJumpsRemainAndWhetherTheNextStopRestocks()
-    {
-        var book = BookWithCarrierPlan();
-        var plan = book.Last(RoutePlanKind.Carrier)!;
-        Assert.Equal(2, plan.CarrierJumpsRemaining);
-        Assert.True(plan.NextCarrierStopRestocks);
-
-        book.Apply([CarrierLocation(3712682240, "Wolf 359", At.AddMinutes(10))]);
-        plan = book.Last(RoutePlanKind.Carrier)!;
-        Assert.Equal(1, plan.CarrierJumpsRemaining);
-        Assert.False(plan.NextCarrierStopRestocks);
-
-        book.Apply([CarrierLocation(3712682240, "Colonia", At.AddMinutes(20))]);
-        plan = book.Last(RoutePlanKind.Carrier)!;
-        Assert.Equal(0, plan.CarrierJumpsRemaining);
-        Assert.Null(plan.NextCarrierStopRestocks);
-    }
-
     public void Dispose()
     {
         if (Directory.Exists(_folder))

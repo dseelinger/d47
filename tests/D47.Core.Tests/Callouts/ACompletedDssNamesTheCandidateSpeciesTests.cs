@@ -71,7 +71,6 @@ public class ACompletedDssNamesTheCandidateSpeciesTests
         Species = species,
         Genus = genus,
         Value = 1_000_000,
-        BodiesSampled = 1,
         PlanetTypes = [],
         Atmospheres = [],
         Volcanism = [],

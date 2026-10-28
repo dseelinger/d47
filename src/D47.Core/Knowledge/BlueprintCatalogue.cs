@@ -66,9 +66,6 @@ public sealed record Blueprint
 
     public IReadOnlyList<BlueprintEffect> Effects { get; init; } = [];
 
-    /// <summary>coriolis-data's id for the same recipe, where the two sources are joinable.</summary>
-    public string? CoriolisGuid { get; init; }
-
     /// <summary>Frontier's own names for this blueprint — <c>Engine_Dirty</c>, <c>Weapon_LongRange</c>.</summary>
     public IReadOnlyList<string> Symbols { get; init; } = [];
 
@@ -426,7 +423,6 @@ public static class BlueprintCatalogue
         Engineers = Split(cells, 4),
         Ingredients = Ingredients(cells, 5),
         Effects = Effects(cells, 6),
-        CoriolisGuid = Text(cells, 7),
         Symbols = Split(cells, 8),
         ModuleTypes = Split(cells, 9),
     };

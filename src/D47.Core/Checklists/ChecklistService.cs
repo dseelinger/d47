@@ -337,14 +337,6 @@ public sealed class ChecklistService(
         return byItem.Count == 1 ? byItem[0].Slot : spoken;
     }
 
-    /// <summary>The hull to stamp on a ship-scoped item, so a later swap can be called stale.</summary>
-    public string? HullFor(ChecklistScope scope) =>
-        scope.Group == ChecklistGroup.Ship
-        && State?.Ship is { ShipId: { } id, Type: { } type }
-        && scope.Key == id.ToString(System.Globalization.CultureInfo.InvariantCulture)
-            ? type
-            : null;
-
     // ------------------------------------------------------------- reading
 
     /// <summary>Whether this tick's events hold the engineering that finished the item (#446).</summary>

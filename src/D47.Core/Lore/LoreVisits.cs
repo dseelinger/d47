@@ -21,8 +21,6 @@ public sealed class LoreVisits(string path, IFileSystem files, ILogger<LoreVisit
     private Dictionary<long, DateTimeOffset> _spokenAt = [];
     private bool _dirty;
 
-    public string Path => path;
-
     /// <summary>Whether anything has been recorded since the last write.</summary>
     public bool Dirty
     {

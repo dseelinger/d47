@@ -112,8 +112,6 @@ public static class CodexCatalogue
 
     public static CodexTable Table => Loaded.Value;
 
-    public static CodexEntry? Entry(long entryId) => Loaded.Value.Entry(entryId);
-
     /// <summary>The entries reported in the region, most systems first.</summary>
     public static IReadOnlyList<CodexRegionEntry> InRegion(int regionId) => Loaded.Value.InRegion(regionId);
 

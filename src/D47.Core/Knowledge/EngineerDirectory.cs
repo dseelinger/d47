@@ -80,9 +80,6 @@ public sealed record Engineer
     /// <summary>Whether anybody has to recommend them first.</summary>
     public bool NeedsReferral => ReferredBy.Count > 0;
 
-    /// <summary>The best grade they reach on anything, or null when nothing is known of their work.</summary>
-    public int? TopGrade => Specialities.Count == 0 ? null : Specialities.Max(speciality => speciality.MaxGrade);
-
     public string Where => (System, Station) switch
     {
         (null, _) => "somewhere I don't have on record",
