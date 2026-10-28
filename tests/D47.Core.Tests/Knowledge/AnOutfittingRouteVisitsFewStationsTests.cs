@@ -161,6 +161,40 @@ public class AnOutfittingRouteVisitsFewStationsTests
         Assert.Equal(PageKind.Plan, result.Page?.Kind);
         Assert.Equal((long)RoutePlanKind.Outfitting, result.Page?.Id);
         Assert.Equal("Some system", plans.Last(RoutePlanKind.Outfitting)?.Outfitting?.Stops[0].System);
+        Assert.Equal("1 stop for 1 of 2 items", plans.Last(RoutePlanKind.Outfitting)?.Headline);
+        Assert.Null(plans.Last(RoutePlanKind.Outfitting)?.Outfitting?.StorageChecked);
+        Assert.Equal(50, plans.Last(RoutePlanKind.Outfitting)?.Outfitting?.MaxDistance);
+    }
+
+    [Fact]
+    public async Task APlotThatSaysStorageWasNotCheckedKeepsThatOnThePlan()
+    {
+        var install = new MemoryInstall();
+        var settings = TestSurface.For(install).Settings;
+        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
+
+        var plans = new RoutePlanBook(
+            Path.Combine(install.Root, "route-plans.json"), new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
+
+        var registry = CapabilityRegistry.Build(
+        [
+            RouteCapability.Create(
+                null, null, () => null, settings, plans, galaxy: new Outfitters(Station("Some", 5, null, "6A Fuel Scoop"))),
+        ]);
+
+        var result = await registry.InvokeAsync(
+            "plot_outfitting_route",
+            new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["items"] = "6A Fuel Scoop",
+                ["near"] = "Sol",
+                ["storage_checked"] = "false",
+            }),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError, result.Content);
+        Assert.Equal("1 stop for 1 item", plans.Last(RoutePlanKind.Outfitting)?.Headline);
+        Assert.False(plans.Last(RoutePlanKind.Outfitting)?.Outfitting?.StorageChecked);
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Automation;
@@ -1937,6 +1937,11 @@ public sealed class ItemPage : LoadoutPage
             ? HullPicture.For(hull, facts)
             : facts);
 
+        if (roomy && Mode.ToBuy(_item) is { } toBuy)
+        {
+            _list.Children.Add(ToBuyBlock(toBuy));
+        }
+
         if (roomy && Mode.Plan(_item) is { } plan)
         {
             _list.Children.Add(PlanSection.Build(plan));
@@ -1997,6 +2002,125 @@ public sealed class ItemPage : LoadoutPage
             PlansOnDoubleClick(control, row, crumb);
 
             _list.Children.Add(control);
+        }
+    }
+
+    private CancellationTokenSource? _plotting;
+    private string? _plotSaid;
+    private bool _plotFailed;
+
+    /// <summary>The To buy block: the items, and a button that plots a route to buy them (#1827).</summary>
+    private StackPanel ToBuyBlock(LoadoutToBuy toBuy)
+    {
+        var plotting = _plotting is not null;
+        var planRoot = _nav.Roots(PanelTab.Navigation).Any(root => root.Key == RoutingPages.PlanRoot);
+
+        var subhead = LoadoutPages.Muted(toBuy.Subhead.ToUpperInvariant());
+        subhead.FontSize = TypeScale.Meta;
+
+        var summary = new TextBlock { Text = toBuy.Summary, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+        LoadoutPages.Themed(summary, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        var plot = new Button
+        {
+            Name = "PlotToBuy",
+            Content = "Plot a route to buy them",
+            IsEnabled = !plotting && toBuy.Unavailable is null && planRoot,
+            MinHeight = TypeScale.MinimumTarget,
+        };
+
+        ToolTip.SetShowOnDisabled(plot, true);
+        ToolTip.SetTip(plot, toBuy.Unavailable);
+        plot.Click += async (_, _) => await PlotToBuy(toBuy);
+
+        var cancel = new Button { Name = "CancelToBuy", Content = "Cancel", IsVisible = plotting, MinHeight = TypeScale.MinimumTarget };
+        cancel.Click += (_, _) => _plotting?.Cancel();
+
+        var row = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Auto)], ColumnSpacing = Gaps.Tile };
+        Grid.SetColumn(plot, 1);
+        Grid.SetColumn(cancel, 2);
+        row.Children.Add(summary);
+        row.Children.Add(plot);
+        row.Children.Add(cancel);
+
+        var block = new StackPanel { Spacing = 6, Margin = new Thickness(0, 0, 0, 10) };
+        block.Children.Add(ListRow.Head("To buy"));
+        block.Children.Add(subhead);
+        block.Children.Add(row);
+        block.Children.Add(LoadoutPages.Muted(toBuy.Unavailable ?? toBuy.Hint));
+
+        if (!toBuy.StorageChecked)
+        {
+            block.Children.Add(new Notice(NoticeLevel.Warning, inline: true)
+            {
+                Label = "STORAGE NOT CHECKED",
+                Text = "Stored modules are not counted yet. Open module storage at any station and D47 "
+                       + "will take what you have stored off this list.",
+            });
+        }
+
+        if (plotting)
+        {
+            block.Children.Add(LoadoutPages.Muted("Working it out…"));
+        }
+        else if (_plotSaid is { Length: > 0 } said)
+        {
+            var line = LoadoutPages.Muted(said);
+            line.TextWrapping = TextWrapping.Wrap;
+
+            if (_plotFailed)
+            {
+                LoadoutPages.Themed(line, TextBlock.ForegroundProperty, ThemeManager.RedKey);
+            }
+
+            block.Children.Add(line);
+        }
+
+        return block;
+    }
+
+    /// <summary>Plots, then opens the stored plan on Navigation › Plan when the plot stored a new one.</summary>
+    private async Task PlotToBuy(LoadoutToBuy toBuy)
+    {
+        if (_plotting is not null)
+        {
+            return;
+        }
+
+        _plotting = new CancellationTokenSource(TimeSpan.FromSeconds(100));
+        _plotSaid = null;
+        _plotFailed = false;
+        Refresh();
+
+        LoadoutToBuyOutcome? outcome = null;
+
+        try
+        {
+            outcome = await toBuy.Plot(_plotting.Token).ConfigureAwait(true);
+            _plotSaid = outcome.Said;
+            _plotFailed = outcome.IsError;
+        }
+        catch (OperationCanceledException)
+        {
+            _plotSaid = "Stopped.";
+        }
+        finally
+        {
+            _plotting.Dispose();
+            _plotting = null;
+        }
+
+        Refresh();
+
+        if (outcome?.Open is { } crumb)
+        {
+            _nav.Select(PanelTab.Navigation);
+            _nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot);
+
+            if (_nav.TrailOf(PanelTab.Navigation) is not [.., { } last] || last.Key != crumb.Key)
+            {
+                _nav.Drill(PanelTab.Navigation, crumb);
+            }
         }
     }
 

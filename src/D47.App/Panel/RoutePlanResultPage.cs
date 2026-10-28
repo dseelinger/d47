@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -159,10 +160,54 @@ public sealed class RoutePlanResultPage : UserControl
             _stack.Children.Add(note);
         }
 
+        if (plan.Outfitting is { StorageChecked: false })
+        {
+            _stack.Children.Add(new Notice(NoticeLevel.Warning, inline: true)
+            {
+                Label = "STORAGE NOT CHECKED",
+                Text = "Stored modules were not counted, because D47 has not seen your module storage yet. "
+                       + "Open storage at any station, then plot again.",
+                Margin = new Thickness(0, 0, 0, 10),
+            });
+        }
+
         foreach (var row in Rows(plan, here))
         {
             _stack.Children.Add(row);
         }
+
+        if (plan.Outfitting is { NotFound.Count: > 0 } outfitting)
+        {
+            _stack.Children.Add(NotFound(outfitting));
+        }
+    }
+
+    private static Control NotFound(OutfittingRoute route)
+    {
+        var group = new StackPanel { Spacing = 2, Margin = new Thickness(0, 18, 0, 0) };
+
+        group.Children.Add(ListRow.Head("Not found"));
+
+        var reach = route.MaxDistance is { } distance ? $"within {distance:N0} ly of " : "near ";
+        var prose = RoutingKit.Prose($"No station {reach}{route.Reference ?? "the start"} sells these.");
+        prose.Margin = new Thickness(0, 6, 0, 8);
+        group.Children.Add(prose);
+
+        foreach (var item in route.NotFound)
+        {
+            var slab = new Border
+            {
+                MinHeight = TypeScale.MinimumTarget,
+                Padding = new Thickness(12, 0),
+                Child = RoutingKit.Ink(item, TypeScale.Body, ThemeManager.WhiteKey),
+            };
+
+            ((TextBlock)slab.Child).VerticalAlignment = VerticalAlignment.Center;
+            LoadoutPages.Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+            group.Children.Add(slab);
+        }
+
+        return group;
     }
 
     private static string Heading(StoredRoutePlan plan) => plan switch
@@ -176,6 +221,7 @@ public sealed class RoutePlanResultPage : UserControl
         { Trade: { } trade } =>
             $"{Count(trade.Stops.Count, "stop")}, {trade.TotalProfit:N0} credits on {trade.Capital:N0} "
             + $"over {trade.TotalDistance:N0} ly.",
+        { Outfitting: { } outfitting } => $"{plan.Headline}, {outfitting.TotalDistance:N0} ly.",
         { Exobiology: { } exobiology } =>
             $"{Count(exobiology.Stops.Count, "stop")}, {Count(exobiology.TotalJumps, "jump")}, "
             + $"{exobiology.TotalValue:N0} credits of biology.",
@@ -204,6 +250,11 @@ public sealed class RoutePlanResultPage : UserControl
             return plan.CarrierStatsSeenAt is { } read
                 ? $"{when} Tank and hold read from carrier management {read.ToLocalTime():d MMM, HH:mm}."
                 : when;
+        }
+
+        if (plan.Outfitting is not null)
+        {
+            return $"{when} Fewest stations first, nearest stop next. What a station sells is as it was last reported.";
         }
 
         if (plan.Trade is not { } trade)
@@ -236,6 +287,7 @@ public sealed class RoutePlanResultPage : UserControl
             here,
             LegLength(index == 0 ? riches.Start?.Position : riches.Stops[index - 1].Position, stop.Position))),
         { Trade: { } trade } => trade.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
+        { Outfitting: { } outfitting } => outfitting.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
         { Exobiology: { } exobiology } =>
             exobiology.Stops.Select((stop, index) => Stop(
                 stop,
@@ -385,6 +437,23 @@ public sealed class RoutePlanResultPage : UserControl
 
                 lines.Add(line);
             }
+        }
+
+        return RoutingKit.Row(lines, stop.System, _copy);
+    }
+
+    private Control Stop(OutfittingStop stop, RowState state, string? here)
+    {
+        var lines = new List<Control> { Line($"{stop.Station} in {stop.System}", stop.System, state, here) };
+
+        if (stop.Distance is { } distance)
+        {
+            lines.Add(RoutingKit.Values($"{distance:N1} ly", state.Reached));
+        }
+
+        foreach (var item in stop.Items)
+        {
+            lines.Add(RoutingKit.Values($"buy {item}", state.Reached));
         }
 
         return RoutingKit.Row(lines, stop.System, _copy);

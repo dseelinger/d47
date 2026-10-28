@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Presenters;
@@ -738,11 +738,14 @@ public partial class PanelView : UserControl, IPanelTabHost
         ConstructionSurface? construction = null,
 
         // Asset Mgmt › Characters, after Crew.
-        CharactersHost? characters = null)
+        CharactersHost? characters = null,
+
+        // Plots a route to buy what a ship's plan still needs (#1827).
+        OutfittingPlotter? outfitting = null)
     {
         _shipPlans = ships;
         _assets.EnableLoadout(
-            ships, checklists, state, onFoot, modulePower, hullArt, settingsStrip, carrierSettingsStrip, galaxy, talk, status, construction, characters);
+            ships, checklists, state, onFoot, modulePower, hullArt, settingsStrip, carrierSettingsStrip, galaxy, talk, status, construction, characters, outfitting);
     }
 
     private D47.Core.Ships.ShipPlanService? _shipPlans;

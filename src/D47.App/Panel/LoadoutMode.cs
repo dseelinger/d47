@@ -1,4 +1,4 @@
-﻿using D47.Core.Journal;
+using D47.Core.Journal;
 using D47.Core.Loadout;
 
 namespace D47.App.Panel;
@@ -329,6 +329,9 @@ public interface ILoadoutMode
 
     /// <summary>What the item's live plans still need, or null when it has no plan and no delivery.</summary>
     D47.Core.Checklists.PlanShortfall? Plan(string item) => null;
+
+    /// <summary>What the item's plan still needs bought and how to route there, or null when nothing is.</summary>
+    LoadoutToBuy? ToBuy(string item) => null;
 
     /// <summary>The conversation about the item's plan, or null for an item with none (#570).</summary>
     BuildTalkView? Talk(string item) => null;

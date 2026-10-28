@@ -15,6 +15,15 @@ public sealed record OutfittingRoute(IReadOnlyList<OutfittingStop> Stops, IReadO
     /// <summary>The system the route was plotted out from.</summary>
     public string? Reference { get; init; }
 
+    /// <summary>How far, in light years, the search looked; null when not recorded.</summary>
+    public double? MaxDistance { get; init; }
+
+    /// <summary>False when the list was worked out without module storage; null when the plotter did not say.</summary>
+    public bool? StorageChecked { get; init; }
+
+    /// <summary>How many distinct items the route was asked for.</summary>
+    public int Wanted => Stops.Sum(stop => stop.Items.Count) + NotFound.Count;
+
     public double TotalDistance => Stops.Sum(stop => stop.Distance ?? 0);
 }
 

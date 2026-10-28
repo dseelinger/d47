@@ -338,6 +338,12 @@ public static class RouteCapability
                         Description = "Large, or Medium for at least one medium pad.",
                         AllowedValues = StationQuery.MinPads,
                     },
+                    new ToolParameter
+                    {
+                        Name = "storage_checked",
+                        Type = ToolParameterType.Boolean,
+                        Description = "False when the list was worked out without counting stored modules.",
+                    },
                 ],
                 Handler = (arguments, cancellationToken) =>
                     PlotOutfittingAsync(galaxy, commander, settings, plans, now, arguments, cancellationToken),
@@ -1008,7 +1014,11 @@ public static class RouteCapability
                 .FindOutfittersAsync(items, near, maxDistance, pad, cancellationToken)
                 .ConfigureAwait(false);
 
-            var route = OutfittingRoutePlanner.Plan(items, stations, near);
+            var route = OutfittingRoutePlanner.Plan(items, stations, near) with
+            {
+                MaxDistance = maxDistance,
+                StorageChecked = Flag(arguments, "storage_checked"),
+            };
 
             if (route.Stops.Count == 0)
             {
@@ -1016,7 +1026,11 @@ public static class RouteCapability
                     $"No station within {maxDistance:N0} light years of {near} sells {Join(route.NotFound)}.");
             }
 
-            var headline = $"{StopCount(route.Stops.Count)} near {near}";
+            var found = route.Wanted - route.NotFound.Count;
+            var headline = $"{StopCount(route.Stops.Count)} for "
+                           + (route.NotFound.Count == 0
+                               ? route.Wanted == 1 ? "1 item" : $"all {route.Wanted} items"
+                               : $"{found} of {route.Wanted} items");
 
             plans?.Record(route, headline, now?.Invoke() ?? default, active?.Location.StarSystem);
 

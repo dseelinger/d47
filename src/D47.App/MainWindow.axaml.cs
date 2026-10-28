@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
@@ -294,7 +294,14 @@ public partial class MainWindow : Window
                 characters: host.CharactersHost,
                 talk: host.BuildTalk,
                 status: () => host.LiveStatus,
-                construction: Construction);
+                construction: Construction,
+                outfitting: host.Plans is { } planBook
+                    ? new OutfittingPlotter(
+                        host.Capabilities,
+                        planBook,
+                        () => host.Settings.Current.Knowledge.GalaxySearch,
+                        () => host.GameState.Active?.Location.StarSystem)
+                    : null);
 
             // Where the hull art is read from, in the order it is searched.
             ShipArt.Files = host.Files;
@@ -694,7 +701,9 @@ public partial class MainWindow : Window
                 BindCommsChannelKeys();
             }
 
-            if (change.Key == ShipsCapability.HullArtKey || change.Key.StartsWith("speech.", StringComparison.Ordinal))
+            if (change.Key == ShipsCapability.HullArtKey
+                || change.Key == GalaxyCapability.EnabledKey
+                || change.Key.StartsWith("speech.", StringComparison.Ordinal))
             {
                 Panel.InvalidateLoadout();
             }

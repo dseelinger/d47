@@ -20,7 +20,8 @@ public sealed class ShipsMode(
     BuildTalk? talk = null,
     Func<GameStatus>? status = null,
     Func<Task<string?>>? clipboardText = null,
-    Func<string, Task<bool>>? setClipboardText = null) : ILoadoutMode
+    Func<string, Task<bool>>? setClipboardText = null,
+    OutfittingPlotter? outfitting = null) : ILoadoutMode
 {
     /// <summary>A row for a ship the journal reports and nothing has planned for yet.</summary>
     private const string Unplanned = "new:";
@@ -258,6 +259,9 @@ public sealed class ShipsMode(
 
         return shortfall.PlanCount == 0 && shortfall.DeliveryCount == 0 ? null : shortfall;
     }
+
+    public LoadoutToBuy? ToBuy(string item) =>
+        outfitting is not null && Resolve(item) is { } build ? outfitting.For(build, ships.ToBuy(build)) : null;
 
     public BuildTalkView? Talk(string item) =>
         talk is not null && Resolve(item) is { } build

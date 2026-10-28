@@ -173,7 +173,10 @@ public sealed record MiniPanelServices
                 characters: Characters,
                 talk: BuildTalk,
                 status: Routing?.Status,
-                construction: Construction);
+                construction: Construction,
+                outfitting: Routing is { Registry: { } registry, Plans: { } planBook } routing
+                    ? new OutfittingPlotter(registry, planBook, routing.LookupsEnabled ?? (() => false), routing.Here)
+                    : null);
         }
 
         if (StarSystem is not null)

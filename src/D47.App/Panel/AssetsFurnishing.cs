@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
@@ -27,6 +27,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
     private (object?, object?, object?, string?, bool) _inventorySeen;
     private Func<D47.Core.Journal.CommanderGameState?>? _loadoutState;
     private D47.Core.Journal.ShipLoadout? _loadoutSeen;
+    private D47.Core.Journal.ModuleStore? _modulesSeen;
     private D47.Core.Journal.FleetRegistry? _fleetSeen;
     private D47.Core.Journal.CarrierState? _carrierSeen;
     private D47.Core.Journal.CarrierState? _squadronSeen;
@@ -46,11 +47,13 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         D47.Core.Ships.BuildTalk? talk = null,
         Func<D47.Core.Journal.GameStatus>? status = null,
         ConstructionSurface? construction = null,
-        CharactersHost? characters = null)
+        CharactersHost? characters = null,
+        OutfittingPlotter? outfitting = null)
     {
         var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt, talk, status,
             D47.App.Input.DesktopClipboard.ReadTextAsync,
-            D47.App.Input.DesktopClipboard.WriteTextAsync);
+            D47.App.Input.DesktopClipboard.WriteTextAsync,
+            outfitting);
 
         _loadoutMode = shipsMode;
         _loadoutState = state;
@@ -310,6 +313,16 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         if (!ReferenceEquals(fleet, _fleetSeen))
         {
             _fleetSeen = fleet;
+            mode.Invalidate();
+            changed = true;
+        }
+
+        // Module storage decides what a ship's plan still needs bought.
+        var modules = _loadoutState?.Invoke()?.Modules;
+
+        if (!ReferenceEquals(modules, _modulesSeen))
+        {
+            _modulesSeen = modules;
             mode.Invalidate();
             changed = true;
         }
