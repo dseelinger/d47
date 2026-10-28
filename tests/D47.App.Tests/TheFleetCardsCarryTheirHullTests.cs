@@ -324,7 +324,6 @@ public class TheFleetCardsCarryTheirHullTests
         Stocked("corsair.png");
 
         Assert.Null(ShipArt.SpinFile("Corsair"));
-        Assert.False(HullTurntable.Ready("Corsair"));
     }
 
     [AvaloniaFact]
@@ -333,7 +332,6 @@ public class TheFleetCardsCarryTheirHullTests
         Stocked("corsair.png", "corsair.spin.mp4");
 
         Assert.NotNull(ShipArt.SpinFile("Corsair"));
-        Assert.True(HullTurntable.Ready("Corsair"));
     }
 
     /// <summary>The decoder, against a real turntable.</summary>

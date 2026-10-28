@@ -23,9 +23,6 @@ internal static class HullTurntable
     private static string? _wanted;
     private static bool _listening;
 
-    /// <summary>Whether a hull can be turned at all: its turntable is on disk.</summary>
-    internal static bool Ready(string? hull) => ShipArt.SpinFile(hull) is not null;
-
     /// <summary>
     /// Whether a card being built is for the hull that should be turning, so it can pick the rotation
     /// back up.
