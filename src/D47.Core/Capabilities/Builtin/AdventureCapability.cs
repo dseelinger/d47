@@ -26,6 +26,10 @@ public static class AdventureCapability
 
     public const string MarkDoneTool = "mark_objective_done";
 
+    public const string SetCourseTool = "set_course_for_objective";
+
+    public const string CopyObjectiveTool = "copy_objective_system";
+
     public const string MarkDonePhrase = "mark this objective done";
 
     public const string ChangeDraftTool = "change_adventure";
@@ -76,6 +80,12 @@ public static class AdventureCapability
     public sealed class ObjectiveMark
     {
         public Func<string?> Mark { get; set; } = () => NoStory;
+    }
+
+    /// <summary>Names the system of the objective the Commander's story is waiting on, or a refusal. The app sets it once the story exists.</summary>
+    public sealed class ObjectiveCourse
+    {
+        public Func<(string? System, string? Refusal)> Resolve { get; set; } = () => (null, NoStory);
     }
 
     /// <summary>Asks for an adventure, acts on the draft in front of the Commander and opens the entry for a different objective, each returning a refusal or null. The app sets it once the Adventures page exists.</summary>
@@ -241,7 +251,9 @@ public static class AdventureCapability
         AdventureDesk? desk = null,
         StoryRecapper? recapper = null,
         ObjectiveMark? objectiveMark = null,
-        StoryChoice? storyChoice = null) => new()
+        StoryChoice? storyChoice = null,
+        ObjectiveCourse? objectiveCourse = null,
+        NavigationSurface? navigation = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -268,6 +280,8 @@ public static class AdventureCapability
             RefuseBeatPhrase,
             ChangeObjectivePhrase,
             MarkDonePhrase,
+            "set course for my next objective",
+            "copy my next objective to my clipboard",
             "choose option one",
             "ask for a short story",
             "change the short story",
@@ -355,6 +369,8 @@ public static class AdventureCapability
             Desk(ChangeObjectiveTool, "Open the entry where the Commander says what they would rather do instead of the story chapter's current objective; the core then proposes a replacement for them to use, keep or reword.", [ChangeObjectivePhrase, "change the objective"], "What would you rather do?", desk, d => d.ChangeObjective, _ => null),
             Recap(recapper),
             Mark(objectiveMark),
+            SetCourse(objectiveCourse, navigation),
+            CopyObjective(objectiveCourse, navigation),
             Choose(storyChoice),
             Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft short story.", ["change the short story", "change the adventure"], "What should change?", desk, d => d.Change),
             Draft(AcceptDraftTool, "Accept the Commander's draft short story, as the Accept button does.", ["accept the short story", "accept the adventure"], "The short story is accepted.", desk, d => d.Accept),
@@ -438,6 +454,61 @@ public static class AdventureCapability
             (objectiveMark is null ? NoStory : objectiveMark.Mark()) is { } refusal
                 ? ToolResult.Error(refusal)
                 : ToolResult.Ok("That objective is marked done.")),
+    };
+
+    private static readonly string[] ObjectiveNouns = ["next objective", "my next objective", "the next objective"];
+
+    private static ToolDefinition SetCourse(ObjectiveCourse? objectiveCourse, NavigationSurface? navigation) => new()
+    {
+        Name = SetCourseTool,
+        Description =
+            "Set course for the system of the objective the Commander's story is waiting on, by plotting it in the galaxy map: the running story's "
+            + "chapter, or with no story running the one short story under way. The Commander's choice alone.",
+        Commands =
+        [
+            .. ObjectiveNouns.Select(noun => new ToolCommandPhrase($"set course for {noun}", new Dictionary<string, string>(StringComparer.Ordinal))),
+        ],
+        SendsInput = true,
+        Protected = true,
+        Handler = async (_, cancellationToken) =>
+        {
+            var (system, refusal) = (objectiveCourse ?? new ObjectiveCourse()).Resolve();
+
+            return system is null
+                ? ToolResult.Error(refusal ?? NoStory)
+                : await NavigationCapability.Plot(
+                    new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["system"] = system }),
+                    navigation ?? NavigationSurface.Inert,
+                    cancellationToken).ConfigureAwait(false);
+        },
+    };
+
+    private static ToolDefinition CopyObjective(ObjectiveCourse? objectiveCourse, NavigationSurface? navigation) => new()
+    {
+        Name = CopyObjectiveTool,
+        Description =
+            "Put the system of the objective the Commander's story is waiting on on the clipboard: the running story's chapter, or with "
+            + "no story running the one short story under way. The Commander's choice alone.",
+        Commands =
+        [
+            .. from noun in ObjectiveNouns
+               from clipboard in new[] { "the clipboard", "my clipboard", "clipboard" }
+               select new ToolCommandPhrase($"copy {noun} to {clipboard}", new Dictionary<string, string>(StringComparer.Ordinal)),
+        ],
+        Protected = true,
+        Handler = async (_, cancellationToken) =>
+        {
+            var (system, refusal) = (objectiveCourse ?? new ObjectiveCourse()).Resolve();
+
+            if (system is null)
+            {
+                return ToolResult.Error(refusal ?? NoStory);
+            }
+
+            return await (navigation ?? NavigationSurface.Inert).Clipboard.SetTextAsync(system, cancellationToken).ConfigureAwait(false)
+                ? ToolResult.Ok($"{system} is on your clipboard.")
+                : ToolResult.Error("The clipboard could not be written to.");
+        },
     };
 
     private static ToolDefinition Choose(StoryChoice? storyChoice)

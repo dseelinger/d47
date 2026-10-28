@@ -1066,12 +1066,41 @@ public sealed class StoryDirector(
     /// </summary>
     public string? MarkObjectiveDone(string? frontierId, DateTimeOffset now)
     {
+        var (key, refusal) = ObjectiveKey(
+            frontierId,
+            "Your story is paused. Resume it first, or press Mark done on the page of the story you mean.",
+            "Press Mark done on the page of the one you mean.");
+
+        return key is null ? refusal : MarkObjectiveDone(frontierId, key, now);
+    }
+
+    /// <summary>
+    /// The system the objective <see cref="MarkObjectiveDone(string?, DateTimeOffset)"/> would mark is in, or a refusal:
+    /// no story, a paused story, several short stories, or an objective with no place.
+    /// </summary>
+    public (string? System, string? Refusal) ObjectiveSystem(string? frontierId)
+    {
+        var (key, refusal) = ObjectiveKey(
+            frontierId,
+            "Your story is paused. Resume it first.",
+            "Say which one on its page.");
+
+        if (key is null)
+        {
+            return (null, refusal);
+        }
+
+        return book.Standing(frontierId, key) is { } standing && AdventureNudge.Destination(standing) is { } system
+            ? (system, null)
+            : (null, "That objective has no system to go to.");
+    }
+
+    private (string? Key, string? Refusal) ObjectiveKey(string? frontierId, string pausedRefusal, string severalAdvice)
+    {
         if (stories.Current(frontierId) is { CurrentChapter: { } chapter }
             && book.Standing(frontierId, chapter) is { Adventure.IsActive: true, IsDone: false })
         {
-            return IsRunning(frontierId)
-                ? MarkObjectiveDone(frontierId, chapter, now)
-                : "Your story is paused. Resume it first, or press Mark done on the page of the story you mean.";
+            return IsRunning(frontierId) ? (chapter, null) : (null, pausedRefusal);
         }
 
         var shortStories = book.Standings(frontierId)
@@ -1081,12 +1110,12 @@ public sealed class StoryDirector(
 
         return shortStories.Count switch
         {
-            1 => MarkObjectiveDone(frontierId, shortStories[0].Key, now),
-            0 => stories.Current(frontierId) is not { CurrentChapter: not null }
+            1 => (shortStories[0].Key, null),
+            0 => (null, stories.Current(frontierId) is not { CurrentChapter: not null }
                 ? "No story is under way."
-                : IsRunning(frontierId) ? "The story is not waiting on an objective." : "Resume the story first.",
-            _ => $"{string.Join(", ", shortStories.SkipLast(1).Select(adventure => adventure.Name))} and {shortStories[^1].Name} are under way. "
-                 + "Press Mark done on the page of the one you mean.",
+                : IsRunning(frontierId) ? "The story is not waiting on an objective." : "Resume the story first."),
+            _ => (null, $"{string.Join(", ", shortStories.SkipLast(1).Select(adventure => adventure.Name))} and {shortStories[^1].Name} are under way. "
+                 + severalAdvice),
         };
     }
 

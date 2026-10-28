@@ -234,6 +234,9 @@ public static class BuiltinCapabilities
         // Marks the objective a story is waiting on done.
         AdventureCapability.ObjectiveMark? objectiveMark = null,
 
+        // Sets course for, or copies, the system of the objective a story is waiting on.
+        AdventureCapability.ObjectiveCourse? objectiveCourse = null,
+
         // Chooses an option of the choice a story chapter offers.
         AdventureCapability.StoryChoice? storyChoice = null,
 
@@ -386,7 +389,7 @@ public static class BuiltinCapabilities
             colonisationProgress),
 
         // At the end of the run of ledgers, which is where the Commander put the tab itself (Phase 47).
-        AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal, adventureDesk, storyRecapper, objectiveMark, storyChoice),
+        AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal, adventureDesk, storyRecapper, objectiveMark, storyChoice, objectiveCourse, navigation),
 
         SystemNameCapability.Create(() => gameState.Active),
         LoreCapability.Create(

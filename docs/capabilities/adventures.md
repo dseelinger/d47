@@ -1070,6 +1070,32 @@ Mark the objective the Commander's story is waiting on as done, as if the journa
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
+### Setting course for the objective
+
+Say "set course for next objective", "set course for my next objective" or "set course for the next objective" to plot
+to the system the objective names, as "set course for" a system does. Say "copy next objective to clipboard" (also
+"my next objective" or "the next objective", and "to the clipboard" or "to my clipboard") to put the system name on the
+clipboard. Both take the same objective as "mark this objective done": the running story's chapter, or with no story
+running the one short story under way. They refuse when no story is under way, when your story is paused (resume it
+first), when more than one short story is under way (d47 names them), and when the objective has no system, such as a
+rank, bounties or boarding a ship. Nothing is plotted or copied on a refusal. The model is refused these tools.
+
+#### `set_course_for_objective`
+
+Set course for the system of the objective the Commander's story is waiting on, by plotting it in the galaxy map: the running story's chapter, or with no story running the one short story under way. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `copy_objective_system`
+
+Put the system of the objective the Commander's story is waiting on on the clipboard: the running story's chapter, or with no story running the one short story under way. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
 ### Choices
 
 An objective can begin with a choice of two or three options. The ship or a character offers it in the line

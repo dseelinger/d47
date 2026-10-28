@@ -2256,6 +2256,7 @@ public sealed class AppHost : IDisposable
         var beatRefusal = new AdventureCapability.BeatRefusal();
         var objectiveMark = new AdventureCapability.ObjectiveMark();
         var storyChoice = new AdventureCapability.StoryChoice();
+        var objectiveCourse = new AdventureCapability.ObjectiveCourse();
         var adventureDesk = new AdventureCapability.AdventureDesk();
 
         return new ServiceParts
@@ -2325,6 +2326,7 @@ public sealed class AppHost : IDisposable
             SignalIndexStore = signalIndexStore,
             StorySwitch = storySwitch,
             StoryChoice = storyChoice,
+            ObjectiveCourse = objectiveCourse,
             Switches = switches,
             TimersAndAlarms = timersAndAlarms,
             TradePlanner = tradePlanner,
@@ -2866,6 +2868,7 @@ public sealed class AppHost : IDisposable
                 storyRecapper: storyRecapper,
                 objectiveMark: objectiveMark,
                 storyChoice: services.StoryChoice,
+                objectiveCourse: services.ObjectiveCourse,
                 journalReminders: journalReminders,
                 captainsLog: captainsLog,
                 miningTargets: miningTargets,
@@ -3302,6 +3305,7 @@ public sealed class AppHost : IDisposable
         storySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
         beatRefusal.Refuse = cancellationToken => storyDirector.RefuseBeatAsync(gameState.Active?.Identity.FrontierId, cancellationToken);
         objectiveMark.Mark = () => storyDirector.MarkObjectiveDone(gameState.Active?.Identity.FrontierId, DateTimeOffset.Now);
+        services.ObjectiveCourse.Resolve = () => storyDirector.ObjectiveSystem(gameState.Active?.Identity.FrontierId);
         services.StoryChoice.IsOpen = () => storyDirector.ChoiceOpen(gameState.Active?.Identity.FrontierId);
         services.StoryChoice.Choose = option => storyDirector.Choose(gameState.Active?.Identity.FrontierId, option, DateTimeOffset.Now);
         adventureDesk.HasDraft = () => adventureBook.Standings(gameState.Active?.Identity.FrontierId).Any(standing => standing.Adventure.IsDraft);
@@ -4765,6 +4769,8 @@ public sealed class AppHost : IDisposable
         public required D47.Core.Capabilities.Builtin.AdventureCapability.StorySwitch StorySwitch { get; init; }
 
         public required D47.Core.Capabilities.Builtin.AdventureCapability.StoryChoice StoryChoice { get; init; }
+
+        public required D47.Core.Capabilities.Builtin.AdventureCapability.ObjectiveCourse ObjectiveCourse { get; init; }
 
         public required SwitchStore Switches { get; init; }
 
