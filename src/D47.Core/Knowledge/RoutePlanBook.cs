@@ -23,6 +23,9 @@ public enum RoutePlanKind
 
     /// <summary>A fleet carrier's jumps and the tritium they burn.</summary>
     Carrier,
+
+    /// <summary>The stations that sell what a ship plan still needs.</summary>
+    Outfitting,
 }
 
 /// <summary>The last plan of one kind, as it was answered (Phase 37, "One last plan").</summary>
@@ -51,6 +54,8 @@ public sealed record StoredRoutePlan
     public ExobiologyRoute? Exobiology { get; init; }
 
     public CarrierRoute? Carrier { get; init; }
+
+    public OutfittingRoute? Outfitting { get; init; }
 
     /// <summary>The carrier a <see cref="RoutePlanKind.Carrier"/> plan was plotted for.</summary>
     public long? CarrierId { get; init; }
@@ -195,6 +200,25 @@ public sealed class RoutePlanBook(
         });
 
     public void Record(
+        OutfittingRoute route,
+        string headline,
+        DateTimeOffset at,
+        string? currentSystem = null,
+        string? frontierId = null) =>
+        Keep(new StoredRoutePlan
+        {
+            Kind = RoutePlanKind.Outfitting,
+            FrontierId = frontierId,
+            PlottedAt = at,
+            Headline = headline,
+            Outfitting = route,
+            Reached = route.Stops.Count > 0 &&
+                      string.Equals(route.Stops[0].System, currentSystem, StringComparison.OrdinalIgnoreCase)
+                ? 0
+                : null,
+        });
+
+    public void Record(
         CarrierRoute route,
         long? carrierId,
         string headline,
@@ -327,6 +351,7 @@ public sealed class RoutePlanBook(
         RoutePlanKind.Trade => plan.Trade?.Stops.Select(stop => stop.System).ToArray(),
         RoutePlanKind.Exobiology => plan.Exobiology?.Stops.Select(stop => stop.System).ToArray(),
         RoutePlanKind.Carrier => plan.Carrier?.Waypoints.Select(waypoint => waypoint.Name).ToArray(),
+        RoutePlanKind.Outfitting => plan.Outfitting?.Stops.Select(stop => stop.System).ToArray(),
         _ => null,
     };
 

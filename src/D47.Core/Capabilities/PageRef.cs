@@ -9,6 +9,7 @@ public enum PageKind
     System,
     Search,
     CodexEntry,
+    Plan,
 }
 
 /// <summary>What a tool's answer is about, for the panel to open; the App decides how it is drawn.</summary>
@@ -28,4 +29,7 @@ public sealed record PageRef(PageKind Kind, long Id, int? Region = null, string?
 
     /// <summary>One codex entry, by its id and region number; <paramref name="name"/> words its crumb.</summary>
     public static PageRef CodexEntry(long entryId, int? regionId, string name) => new(PageKind.CodexEntry, entryId, regionId, name);
+
+    /// <summary>The stored plan of one kind; <paramref name="headline"/> words its crumb.</summary>
+    public static PageRef Plan(RoutePlanKind kind, string headline) => new(PageKind.Plan, (long)kind, null, headline);
 }

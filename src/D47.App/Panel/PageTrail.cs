@@ -28,6 +28,7 @@ public static class PageTrail
                     entry.IsOwned && (entry.Stored?.ShipId == page.Id || entry.Build?.ShipId == page.Id)) is { } ship
                 => (LoadoutPages.FleetRoot, LoadoutPages.Ship(ship)),
             PageKind.System => (StarSystemPage.RootKey, new NavCrumb(StarSystemPage.RootKey, "System")),
+            PageKind.Plan => (RoutingPages.PlanRoot, RoutingPages.ResultCrumb((RoutePlanKind)page.Id, page.Name ?? "Plan")),
             PageKind.Search => SearchRoot((GalaxySearchKind)page.Id) is { } root ? (root, new NavCrumb(root, "Search")) : null,
             _ => null,
         };

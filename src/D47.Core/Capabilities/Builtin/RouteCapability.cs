@@ -39,7 +39,8 @@ public static class RouteCapability
         Func<DateTimeOffset>? now = null,
         NavigationSurface? navigation = null,
         Checklists.ChecklistService? checklists = null,
-        BestCargoBoard? cargo = null) => new()
+        BestCargoBoard? cargo = null,
+        IGalaxyService? galaxy = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -302,11 +303,52 @@ public static class RouteCapability
             },
             new ToolDefinition
             {
+                Name = "plot_outfitting_route",
+                Description =
+                    "Work out the fewest stations near a system that sell a list of modules and ships "
+                    + "between them, visited nearest-next, with what to buy at each and any item no "
+                    + "station in range sells. Saves the plan to follow stop by stop.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "items",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "Comma-separated: modules by name with an optional size and rating, and ships, "
+                            + "such as \"5A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\".",
+                        Required = true,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "near",
+                        Type = ToolParameterType.String,
+                        Description = "Search out from this system. Defaults to theirs.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "max_distance",
+                        Type = ToolParameterType.Number,
+                        Description = "How far to look, in light years. Default 50.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "min_pad",
+                        Type = ToolParameterType.String,
+                        Description = "Large, or Medium for at least one medium pad.",
+                        AllowedValues = StationQuery.MinPads,
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    PlotOutfittingAsync(galaxy, commander, settings, plans, now, arguments, cancellationToken),
+            },
+            new ToolDefinition
+            {
                 Name = "plot_next_stop",
                 Description =
                     "Plot the next stop on a stored route plan — the Neutron Plotter's waypoints, a "
                     + "Road to Riches loop's stops, a trade run's stops, or an exobiology route's "
-                    + "systems — through the galaxy map. "
+                    + "systems, or an outfitting route's stations — through the galaxy map. "
                     + "Skips a stop whose system is the one the Commander is already in.",
                 Parameters =
                 [
@@ -316,7 +358,7 @@ public static class RouteCapability
                         Type = ToolParameterType.String,
                         Description = "Which stored plan to plot the next stop from.",
                         Required = true,
-                        AllowedValues = ["neutron", "riches", "trade", "exobiology"],
+                        AllowedValues = ["neutron", "riches", "trade", "exobiology", "outfitting"],
                     },
                 ],
                 Commands =
@@ -899,6 +941,110 @@ public static class RouteCapability
         }
     }
 
+    private static async Task<ToolResult> PlotOutfittingAsync(
+        IGalaxyService? galaxy,
+        Func<CommanderGameState?> commander,
+        Configuration.SettingsService settings,
+        RoutePlanBook? plans,
+        Func<DateTimeOffset>? now,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Error(Unavailable);
+        }
+
+        var active = commander();
+
+        var near = arguments.TryGetString("near", out var asked) && !string.IsNullOrWhiteSpace(asked)
+            ? asked.Trim()
+            : active?.Location.StarSystem;
+
+        if (string.IsNullOrWhiteSpace(near))
+        {
+            return ToolResult.Error(
+                "I don't know where the Commander is right now, so I need a system to search out from.");
+        }
+
+        var items = new List<OutfittingItem>();
+
+        foreach (var text in (arguments.TryGetString("items", out var list) ? list : string.Empty)
+                     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!OutfittingItem.TryParse(text, out var item, out var failure))
+            {
+                return ToolResult.Error(failure);
+            }
+
+            if (!items.Contains(item))
+            {
+                items.Add(item);
+            }
+        }
+
+        if (items.Count == 0)
+        {
+            return ToolResult.Error("Say what to look for: modules or ships.");
+        }
+
+        PadSize? pad = null;
+
+        if (arguments.TryGetString("min_pad", out var padText) && !string.IsNullOrWhiteSpace(padText))
+        {
+            if (!StationQuery.MinPads.Contains(padText.Trim(), StringComparer.OrdinalIgnoreCase))
+            {
+                return ToolResult.Error($"'{padText}' is not a pad size to insist on. It is Medium or Large.");
+            }
+
+            pad = Enum.Parse<PadSize>(padText.Trim(), ignoreCase: true);
+        }
+
+        var maxDistance = Number(arguments, "max_distance") is > 0 and var distance ? distance : 50;
+
+        try
+        {
+            var stations = await galaxy
+                .FindOutfittersAsync(items, near, maxDistance, pad, cancellationToken)
+                .ConfigureAwait(false);
+
+            var route = OutfittingRoutePlanner.Plan(items, stations, near);
+
+            if (route.Stops.Count == 0)
+            {
+                return ToolResult.Ok(
+                    $"No station within {maxDistance:N0} light years of {near} sells {Join(route.NotFound)}.");
+            }
+
+            var headline = $"{StopCount(route.Stops.Count)} near {near}";
+
+            plans?.Record(route, headline, now?.Invoke() ?? default, active?.Location.StarSystem);
+
+            var first = route.Stops[0];
+            var said = new StringBuilder($"{StopCount(route.Stops.Count)}. First is {first.Station} in {first.System}");
+
+            if (first.Distance is { } away)
+            {
+                said.Append(CultureInfo.InvariantCulture, $", {away:N0} light years out");
+            }
+
+            said.Append(CultureInfo.InvariantCulture, $", for {Join(first.Items)}.");
+
+            if (route.NotFound.Count > 0)
+            {
+                said.Append(CultureInfo.InvariantCulture, $" Not found: {Join(route.NotFound)}.");
+            }
+
+            return ToolResult.Ok(said.ToString()) with { Page = PageRef.Plan(RoutePlanKind.Outfitting, headline) };
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
+    }
+
+    private static string StopCount(int count) => count == 1 ? "1 stop" : $"{count} stops";
+
     private static async Task<ToolResult> BestCommoditiesForAsync(
         ITradePlanService? trade,
         Func<CommanderGameState?> commander,
@@ -1145,6 +1291,9 @@ public static class RouteCapability
             case "exobiology":
                 kind = RoutePlanKind.Exobiology;
                 return true;
+            case "outfitting":
+                kind = RoutePlanKind.Outfitting;
+                return true;
             default:
                 kind = default;
                 return false;
@@ -1157,6 +1306,7 @@ public static class RouteCapability
         RoutePlanKind.Riches => "Road to Riches",
         RoutePlanKind.Trade => "trade",
         RoutePlanKind.Exobiology => "exobiology",
+        RoutePlanKind.Outfitting => "outfitting",
         _ => "route",
     };
 
@@ -1170,6 +1320,7 @@ public static class RouteCapability
         RoutePlanKind.Riches => plan.Riches?.Stops.Select(s => new PlanStop(s.System, null)).ToArray(),
         RoutePlanKind.Trade => plan.Trade?.Stops.Select(s => new PlanStop(s.System, s.Station)).ToArray(),
         RoutePlanKind.Exobiology => plan.Exobiology?.Stops.Select(s => new PlanStop(s.System, null)).ToArray(),
+        RoutePlanKind.Outfitting => plan.Outfitting?.Stops.Select(s => new PlanStop(s.System, s.Station)).ToArray(),
         _ => null,
     };
 

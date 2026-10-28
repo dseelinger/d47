@@ -307,6 +307,7 @@ public sealed class GalaxyMapPage : UserControl
         RoutePlanKind.Riches => "Road to Riches",
         RoutePlanKind.Trade => "Trade",
         RoutePlanKind.Exobiology => "Exobiology",
+        RoutePlanKind.Outfitting => "Outfitting",
         _ => "Carrier",
     };
 

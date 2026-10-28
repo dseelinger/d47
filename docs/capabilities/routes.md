@@ -245,13 +245,13 @@ A route can be arithmetically perfect against a four-year-old price and worth no
 #### `plot_next_stop`
 
 Plots the next stop on a stored plan — the Neutron Plotter's waypoints, a Road to Riches loop's
-stops, a trade run's stops, or an [exobiology route](exobiology.md)'s systems — through the galaxy
+stops, a trade run's stops, an [exobiology route](exobiology.md)'s systems, or an outfitting route's stations — through the galaxy
 map, the same way `plot_course` does. "Plot next neutron jump", "plot next riches stop", "plot next
 trade stop" and "plot next exobiology stop" reach this with no model involved, through the keyword
 router.
 
 ```json
-{"type":"object","properties":{"kind":{"type":"string","description":"Which stored plan to plot the next stop from.","enum":["neutron","riches","trade","exobiology"]}},"required":["kind"],"additionalProperties":false}
+{"type":"object","properties":{"kind":{"type":"string","description":"Which stored plan to plot the next stop from.","enum":["neutron","riches","trade","exobiology","outfitting"]}},"required":["kind"],"additionalProperties":false}
 ```
 
 The next stop is the first one after the furthest reached (kept by the plan, see
@@ -565,6 +565,22 @@ the plot assumes none and says so.
 
 It refuses rather than guessing: a squadron carrier, a Commander with no carrier, or a carrier whose
 management panel has never been opened gets a sentence saying which, and nothing is recorded.
+
+#### `plot_outfitting_route`
+
+"Plot a route to buy a 6A fuel scoop and a 5A frame shift drive" finds the fewest stations near a
+system that sell the whole list between them, and keeps the result as an outfitting plan that
+`plot_next_stop` follows like a trade run.
+
+```json
+{"type":"object","properties":{"items":{"type":"string","description":"Comma-separated: modules by name with an optional size and rating, and ships, such as \u00225A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\u0022."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"min_pad":{"type":"string","description":"Large, or Medium for at least one medium pad.","enum":["Medium","Large"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."}},"required":["items"],"additionalProperties":false}
+```
+
+The planner takes the station that sells most of what is still needed, the nearer one on a tie, up
+to six stops, then visits them nearest-next from the reference system. An item that no station in
+range sells, or that the six stops had no room for, is named as not found. It does not look for the
+cheapest total, because the station search carries no module prices. The answer gives the number of
+stops, the first stop and what to buy there, and the items not found.
 
 ### Notes for anyone reading the code
 

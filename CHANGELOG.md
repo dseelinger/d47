@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Ask D47 to plot a route to buy several modules or ships, such as "plot a route to buy a 6A fuel scoop and a 5A frame shift drive". It picks the fewest stations near you that sell the list between them, up to six, visits them nearest-next, and says the first stop, what to buy there and any item no station in range sells. "Plot next outfitting stop" is not a phrase yet; ask for the next stop of the outfitting plan.
+
 A stored plan's page on the Navigation tab has a Show on galaxy map tile under its route map, and pressing the map does the same. The Galaxy map then draws that plan in place of the plotted route and names it over the top left of the map as "Jump plan: …", "Road to Riches plan: …", "Exobiology plan: …" or "Carrier plan: …", with a Plotted route tile beside the name that goes back to the plotted route. Both work on the main window and the headset panel. The tile and the pressable map are hidden when the plan has fewer than two placed stops or the shown Commander is off duty.
 
 A story that is set in the black for part or most of its length now says so on its page, under the length and level line: "Part of this story is set in the black." or "Most of this story is set in the black." The Stories tab's filter sentence has a new token, "set ANYWHERE", and choosing IN THE BLACK lists only those stories. Clear filters puts it back. A story shows the line once it is republished.
