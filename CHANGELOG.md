@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+On the Road to Riches and Exobiology result pages, a body line now starts with "Body" and its designation, such as "Body A 6 — Rocky body", instead of repeating the system name before it. A body whose name does not start with the system name is still shown in full.
+
 With Elite behind another window, the arrival honk no longer says "I could not use the discovery scanner on arrival" twice and then "The honk did not take". It presses nothing, tries once more about eight seconds later, and if Elite is still not in front says once: "Cannot honk since Elite is not the active window."
 
 Asking "jump range", "my jump range" or "what is my jump range" now answers with the jump range alone, such as "Unladen jump range is 52.31 ly.", instead of the whole ship report and an offer to remember the phrase. "My ship", "my loadout" and "what am I flying" still give the full report.

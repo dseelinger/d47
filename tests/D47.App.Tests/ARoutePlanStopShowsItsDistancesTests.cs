@@ -112,10 +112,10 @@ public class ARoutePlanStopShowsItsDistancesTests
     [AvaloniaFact]
     public void ABodyShowsItsDistanceFromArrivalWhenKnown()
     {
-        Assert.Contains("Alpha 1 — Rocky body, 698 ls, 1,000 cr", Lines(Riches(null, null, null, 698)));
-        Assert.Contains("Alpha 1 — Rocky body, 1,000 cr", Lines(Riches(null, null, null, null)));
-        Assert.Contains("Alpha 1 — Rocky body, 698 ls, 1,000 cr", Lines(Exobiology(null, null, null, 698, 1_000)));
-        Assert.Contains("Alpha 1 — Rocky body, 1,000 cr", Lines(Exobiology(null, null, null, null, 1_000)));
+        Assert.Contains("Body 1 — Rocky body, 698 ls, 1,000 cr", Lines(Riches(null, null, null, 698)));
+        Assert.Contains("Body 1 — Rocky body, 1,000 cr", Lines(Riches(null, null, null, null)));
+        Assert.Contains("Body 1 — Rocky body, 698 ls, 1,000 cr", Lines(Exobiology(null, null, null, 698, 1_000)));
+        Assert.Contains("Body 1 — Rocky body, 1,000 cr", Lines(Exobiology(null, null, null, null, 1_000)));
     }
 
     [AvaloniaFact]

@@ -280,6 +280,14 @@ public sealed class RoutePlanResultPage : UserControl
         return Joined(values);
     }
 
+    /// <summary>"Body " and the designation when the name is the system name plus a designation; otherwise the full name.</summary>
+    private static string BodyLabel(string system, string name) =>
+        name.Length > system.Length + 1
+        && name.StartsWith(system, StringComparison.Ordinal)
+        && name[system.Length] == ' '
+            ? $"Body {name[(system.Length + 1)..]}"
+            : name;
+
     private Control Stop(RichesStop stop, RowState state, string? here, string? leg)
     {
         var lines = new List<Control>
@@ -292,7 +300,7 @@ public sealed class RoutePlanResultPage : UserControl
         foreach (var body in stop.Bodies.OrderByDescending(body => body.MappingValue ?? 0))
         {
             lines.Add(RoutingKit.Values(
-                $"{body.Name} — {body.Subtype ?? "unknown"}{Away(body.DistanceToArrival)}"
+                $"{BodyLabel(stop.System, body.Name)} — {body.Subtype ?? "unknown"}{Away(body.DistanceToArrival)}"
                 + (body.MappingValue is { } value ? $", {value:N0} cr" : string.Empty),
                 state.Reached));
         }
@@ -311,7 +319,7 @@ public sealed class RoutePlanResultPage : UserControl
         foreach (var body in stop.Bodies.OrderByDescending(body => body.LandmarkValue))
         {
             lines.Add(RoutingKit.Values(
-                $"{body.Name} — {body.Subtype ?? "unknown"}{Away(body.DistanceToArrival)}, {body.LandmarkValue:N0} cr",
+                $"{BodyLabel(stop.System, body.Name)} — {body.Subtype ?? "unknown"}{Away(body.DistanceToArrival)}, {body.LandmarkValue:N0} cr",
                 state.Reached));
 
             foreach (var species in body.Species)
