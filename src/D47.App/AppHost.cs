@@ -1221,6 +1221,10 @@ public sealed class AppHost : IDisposable
                 ? history.Combat?.GetValueOrDefault(fid) ?? CombatRecord.None
                 : null,
 
+            RestoreSurfaceMining = fid => history.State is HistoryState.Done
+                ? history.SurfaceMining?.GetValueOrDefault(fid) ?? SurfaceMiningSites.None
+                : null,
+
             RestoreCreditLedger = fid => history.State is HistoryState.Done
                 ? history.CreditLedgers?.GetValueOrDefault(fid) ?? CreditLedger.None
                 : null,

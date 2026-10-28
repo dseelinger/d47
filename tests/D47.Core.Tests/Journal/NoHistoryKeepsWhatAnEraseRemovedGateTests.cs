@@ -83,6 +83,10 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
         Line(day + "T09:23:00", "\"event\":\"CommitCrime\",\"CrimeType\":\"assault\",\"Faction\":\"Alliance\",\"Fine\":400"),
         Line(day + "T09:24:00", "\"event\":\"WingAdd\",\"Name\":\"CMDR Past\""),
         Line(day + "T09:25:00", "\"event\":\"MissionCompleted\",\"Faction\":\"Party\",\"Name\":\"Mission_Courier\",\"MissionID\":1,\"Reward\":1000"),
+        Line(day + "T09:25:10", "\"event\":\"ApproachBody\",\"StarSystem\":\"Sol\",\"SystemAddress\":1,\"Body\":\"Body 1\",\"BodyID\":1"),
+        Line(day + "T09:25:20", "\"event\":\"LaunchSRV\",\"SRVType\":\"mev_rhino\",\"PlayerControlled\":true"),
+        Line(day + "T09:25:30", "\"event\":\"MiningRefined\",\"Type\":\"$platinum_name;\",\"Type_Localised\":\"Platinum\""),
+        Line(day + "T09:25:40", "\"event\":\"DockSRV\",\"SRVType\":\"mev_rhino\""),
         Line(day + "T09:26:00", "\"event\":\"FSDJump\",\"StarSystem\":\"Sol\",\"SystemAddress\":1,\"StarPos\":[0.0,0.0,0.0],\"JumpDist\":5.0"),
     ];
 

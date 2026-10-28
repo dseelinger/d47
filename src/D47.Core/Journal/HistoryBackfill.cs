@@ -132,6 +132,9 @@ public sealed class HistoryBackfill
     /// <summary>Each Commander's finished mining runs that refined something, oldest first (#610).</summary>
     public IReadOnlyDictionary<string, IReadOnlyList<MiningRun>>? MiningRuns { get; private set; }
 
+    /// <summary>Each Commander's surface mining sites.</summary>
+    public IReadOnlyDictionary<string, SurfaceMiningSites>? SurfaceMining { get; private set; }
+
     /// <summary>Each Commander's merits for their Power over the last week.</summary>
     public IReadOnlyDictionary<string, PowerplayCycleMerits>? CycleMerits { get; private set; }
 
@@ -260,6 +263,14 @@ public sealed class HistoryBackfill
                     FileSystem,
                     Files(),
                     Loggers.CreateLogger(nameof(MiningBackfill)),
+                    cancellation));
+
+            SurfaceMining = Timed(
+                "surface mining backfill",
+                () => SurfaceMiningBackfill.FromHistory(
+                    FileSystem,
+                    Files(),
+                    Loggers.CreateLogger(nameof(SurfaceMiningBackfill)),
                     cancellation));
 
             CycleMerits = Timed(

@@ -110,6 +110,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>The mining run in progress and the last one finished.</summary>
     public MiningRuns Mining { get; private set; } = MiningRuns.None;
 
+    /// <summary>Every body they have refined on from an SRV, from every journal on disk.</summary>
+    public SurfaceMiningSites SurfaceMining { get; internal set; } = SurfaceMiningSites.None;
+
     /// <summary>The Operation run in progress and the last one to end.</summary>
     public OperationRuns Operations { get; private set; } = OperationRuns.None;
 
@@ -225,6 +228,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(CodexLedger), "your codex entries", state => state.CodexLedger),
         new(nameof(Salvage), "your scooped salvage", state => state.Salvage),
         new(nameof(Mining), "your mining runs", state => state.Mining),
+        new(nameof(SurfaceMining), "your surface mining sites", state => state.SurfaceMining),
         new(nameof(Operations), "your Operation runs", state => state.Operations),
         new(nameof(Bodies), "body signals", state => state.Bodies),
         new(nameof(Scans), "body scans", state => state.Scans),
@@ -247,6 +251,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
 
         // Names and positions move the record without changing the kills.
         (CombatRecord a, CombatRecord b) when ReferenceEquals(a.Kills, b.Kills) && a.IsWhole == b.IsWhole => null,
+
+        // Arriving at a body or leaving the SRV changes what the record tracks, not its sites.
+        (SurfaceMiningSites a, SurfaceMiningSites b) when a.SameSites(b) && a.IsWhole == b.IsWhole => null,
 
         // Every event moves the ledger's last time, so only its entries count.
         (CreditLedger a, CreditLedger b) when ReferenceEquals(a.Entries, b.Entries) && a.IsWhole == b.IsWhole => null,
@@ -282,6 +289,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
             Standings = SystemStandings.Empty;
             BgsWork = BgsWork.None;
             Combat = CombatRecord.None with { IsWhole = Combat.IsWhole };
+            SurfaceMining = SurfaceMiningSites.None with { IsWhole = SurfaceMining.IsWhole };
             CreditLedger = CreditLedger.None with { IsWhole = CreditLedger.IsWhole };
             CodexLedger = CodexLedger.None with { IsWhole = CodexLedger.IsWhole, SessionStart = CodexLedger.SessionStart };
             Contributions = EngineerContributions.Empty;
@@ -342,6 +350,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         CodexLedger = CodexLedger.Apply(journalEvent);
         Salvage = Salvage.Apply(journalEvent, Location, Pledge);
         Mining = Mining.Apply(journalEvent);
+        SurfaceMining = SurfaceMining.Apply(journalEvent);
         Operations = Operations.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);
         Scans = Scans.Apply(journalEvent);
