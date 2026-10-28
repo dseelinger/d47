@@ -440,6 +440,10 @@ uses the same rule here as everywhere else:
 - **What it presses.** Shift+Win+D, once, and only when the headset is showing the other view.
   Flip to VR while the headset is already in SteamVR and nothing happens. Between flips nothing is
   touched.
+- **What comes to the front.** After a press to **VR**, Elite is put in front, so keys go to the
+  game. After a press to **Desktop**, Directive 47's main window is put in front, restored first if
+  it was minimised. When nothing was pressed, no window moves. If Windows refuses, Directive 47 says
+  so with the switch's name; Elite not running is silent.
 - **What it needs.** **Let a HOTAS switch change the headset view** turned on, and Virtual Desktop
   streaming. It is off until you turn it on, and the AI cannot turn it on. It is not behind
   *Let D47 press keys in Elite* or *Let a HOTAS switch operate the ship*, and it works at the main

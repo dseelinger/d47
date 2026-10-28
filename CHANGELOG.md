@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A HOTAS switch that changes the headset view now moves keyboard focus with it. After a flip to VR, Elite is put in front; after a flip to Desktop, the Directive 47 window is. A flip that presses nothing moves nothing, and if Windows refuses, D47 says so.
+
 The Checklist's first page now has ADD A LINE beside Suggestions and Activities, so a Commander with no lines can start one from the panel. A line added there goes to Your notes. With nothing on the checklist, the first page says so whatever filter is saved, instead of naming the filter. On All lists, a saved filter that no line has is shown in words, such as "Written down — you say when", not by its key.
 
 Each module tile in Search › Outfitting now shows the module's list price, such as `DETAILED SURFACE SCANNER · 250,000 CR`. When the size, rating or mount leaves several prices, the tile shows the lowest and highest. Ship tiles and modules with no known price stay unpriced.

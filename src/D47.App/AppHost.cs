@@ -327,6 +327,9 @@ public sealed class AppHost : IDisposable
     /// <summary>Whether Elite is running and in front.</summary>
     public IEliteWindow Elite { get; private set; } = null!;
 
+    /// <summary>The main window's handle, set by <c>MainWindow</c> once it has one; 0 before.</summary>
+    public nint MainWindowHandle { get; set; }
+
     /// <summary>What d47 says without being asked (Phase 8).</summary>
     public CalloutEngine Callouts { get; }
 
@@ -2158,7 +2161,13 @@ public sealed class AppHost : IDisposable
         var headsetView = new D47.Vr.VirtualDesktopView();
         var reconciler = new SwitchReconciler(loggerFactory.CreateLogger<SwitchReconciler>(), headsetView);
         var chordSender = new ChordSender(loggerFactory.CreateLogger<ChordSender>());
-        var headsetKey = new HeadsetViewKey(headsetView, loggerFactory.CreateLogger<HeadsetViewKey>(), chordSender);
+        var mainWindowLogger = loggerFactory.CreateLogger<AppHost>();
+        var headsetKey = new HeadsetViewKey(
+            headsetView,
+            loggerFactory.CreateLogger<HeadsetViewKey>(),
+            chordSender,
+            eliteWindow,
+            () => ForegroundWindow.Raise(late.Host?.MainWindowHandle ?? 0, "d47", mainWindowLogger));
 
         // What the tick reads the controllers through, so no tick calls into hid.dll.
         var sampledControllers = new ControllerSampler(

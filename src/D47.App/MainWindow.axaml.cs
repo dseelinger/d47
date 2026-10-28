@@ -618,6 +618,7 @@ public partial class MainWindow : Window
         // every other player.
         if (TryGetPlatformHandle()?.Handle is { } window && window != IntPtr.Zero)
         {
+            _host.MainWindowHandle = window;
             _mediaSession = Media.MediaSession.Attach(
                 window,
                 _host.Music,

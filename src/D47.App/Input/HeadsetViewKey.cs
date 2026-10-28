@@ -1,3 +1,4 @@
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Hotas;
 using D47.Core.Input;
 using D47.Core.Vr;
@@ -11,7 +12,14 @@ namespace D47.App.Input;
 /// checks nothing about Elite.
 /// </summary>
 /// <param name="sender">The sender the shortcut goes through; one is made when none is given.</param>
-public sealed class HeadsetViewKey(IHeadsetViewSource view, ILogger<HeadsetViewKey> logger, ChordSender? sender = null)
+/// <param name="elite">Raised after a press to VR; none when not given.</param>
+/// <param name="raiseMainWindow">Raises d47's main window after a press to Desktop; none when not given.</param>
+public sealed class HeadsetViewKey(
+    IHeadsetViewSource view,
+    ILogger<HeadsetViewKey> logger,
+    ChordSender? sender = null,
+    IEliteWindow? elite = null,
+    Func<FocusResult>? raiseMainWindow = null)
 {
     /// <summary>Virtual Desktop's shortcut.</summary>
     public static readonly KeyChord Shortcut = new("Key_D", ChordModifiers.Shift | ChordModifiers.Win);
@@ -80,6 +88,30 @@ public sealed class HeadsetViewKey(IHeadsetViewSource view, ILogger<HeadsetViewK
             wanted,
             refused ?? "done");
 
-        return refused is null ? null : $"I could not change the headset to {reconcile.Label} from {reconcile.Switch}. {refused}";
+        if (refused is not null)
+        {
+            return $"I could not change the headset to {reconcile.Label} from {reconcile.Switch}. {refused}";
+        }
+
+        return sent ? RaiseFor(wanted, reconcile.Switch) : null;
+    }
+
+    /// <summary>Puts the window for the view just pressed in front; a sentence only when Windows refuses.</summary>
+    private string? RaiseFor(HeadsetView wanted, string switchName)
+    {
+        var vr = wanted == HeadsetView.Vr;
+        var result = vr ? elite?.Raise() : raiseMainWindow?.Invoke();
+
+        logger.LogInformation("Switch {Name} raised {Window}: {Result}", switchName, vr ? "Elite" : "d47", result);
+
+        if (result != FocusResult.Refused)
+        {
+            return null;
+        }
+
+        return vr
+            ? $"I could not bring Elite forward from {switchName}. {FocusCapability.Describe(FocusResult.Refused)}"
+            : $"I could not bring d47 forward from {switchName}. Windows would not let me bring it forward from "
+              + "the background. Its taskbar button should be flashing; click that, or alt-tab.";
     }
 }
