@@ -43,7 +43,7 @@ public sealed class APickedCommandersOwnRecordsReachAChapterTests
             RestoreCredits = credits,
         };
 
-        store.Apply(Event("""{ "timestamp":"2026-10-12T09:00:00Z", "event":"Commander", "FID":"F100", "Name":"TALYN MERIDAN" }"""));
+        store.Apply(Event("""{ "timestamp":"2026-10-12T09:00:00Z", "event":"Commander", "FID":"F100", "Name":"ARLO KESTREL" }"""));
         store.Apply(Event("""{ "timestamp":"2026-10-12T09:00:01Z", "event":"Location", "StarSystem":"Oppi", "SystemAddress":3382387380970, "StarPos":[3.68750,-44.62500,131.00000], "Docked":false }"""));
         store.Pick(new CommanderIdentity(Picked, "JOHN DEPARAGON"));
 

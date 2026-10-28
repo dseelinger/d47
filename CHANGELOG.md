@@ -786,7 +786,7 @@ A stock story chapter that is waiting for you to get a ship that can reach its G
 
 d47 now starts on the Commander who last logged in, even while Elite is at its main menu, so the title bar names them and their Commander pages are filled. Before, until someone logged in the button read `CMDR` and the Commander pages were empty. A Commander you pick on the title bar or the Commanders page stays shown until you pick another or a different Commander logs in to the game, when d47 switches to that Commander. Before, a pick stayed shown whoever logged in. While nobody is logged in, the Route and Position pages say "No Commander is logged in yet" in place of naming another Commander.
 
-When the Commander d47 shows is not the one Elite is running, including before anyone has logged in, the Commander button in the title bar turns grey and reads, for example, `CMDR TALYN MERIDAN · NOT LOGGED IN`. It returns to the accent colour and the plain name once that Commander logs in, or once a different Commander logs in and d47 switches to them. The menu is unchanged. Before, the button looked the same whether or not that Commander was in the game, and only the Route and Position pages said so.
+When the Commander d47 shows is not the one Elite is running, including before anyone has logged in, the Commander button in the title bar turns grey and reads, for example, `CMDR ARLO KESTREL · NOT LOGGED IN`. It returns to the accent colour and the plain name once that Commander logs in, or once a different Commander logs in and d47 switches to them. The menu is unchanged. Before, the button looked the same whether or not that Commander was in the game, and only the Route and Position pages said so.
 
 ## 1.34.1 — Story progress survives a restart
 
