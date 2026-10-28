@@ -8,7 +8,7 @@ namespace D47.Core.Actions;
 /// Fires the discovery scanner on arriving in a system (Phase 10, "TheApp honks when you arrive in a
 /// system").
 /// </summary>
-public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : IAutonomousAction
+public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds, Func<bool> inFront) : IAutonomousAction
 {
     /// <summary>How long the scanner needs to be held to complete its sweep.</summary>
     public static readonly TimeSpan Charge = TimeSpan.FromSeconds(5.3);
@@ -28,6 +28,9 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
     /// <summary>Said when neither hold for an arrival produced an <c>FSSDiscoveryScan</c>.</summary>
     public const string DidNotTake = "The honk did not take";
 
+    /// <summary>Said when Elite was not the window in front on both tries for an arrival.</summary>
+    public const string NotInFront = "Cannot honk since Elite is not the active window.";
+
     private DateTimeOffset? _armedAt;
 
     /// <summary>When d47 pressed the HUD toggle to reach analysis mode, until the status shows it.</summary>
@@ -37,6 +40,9 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
     private DateTimeOffset? _heldAt;
 
     private bool _retried;
+
+    /// <summary>When the try after one skipped because Elite was not in front is due.</summary>
+    private DateTimeOffset? _tryAgainAt;
 
     private bool _scanned;
 
@@ -57,6 +63,7 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
             _armedAt = context.IsPriming ? null : context.Now;
             _switchedAt = null;
             _heldAt = null;
+            _tryAgainAt = null;
         }
 
         if (context.IsPriming)
@@ -83,6 +90,12 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
         {
             _armedAt = null;
             _returnToCombat = false;
+            _tryAgainAt = null;
+            return AutonomousDecision.Nothing;
+        }
+
+        if (context.Now < _tryAgainAt)
+        {
             return AutonomousDecision.Nothing;
         }
 
@@ -94,7 +107,23 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
             return AutonomousDecision.Nothing;
         }
 
+        // Nothing is pressed into another window: the first try waits as long as a missed hold would.
+        if (!inFront())
+        {
+            if (_tryAgainAt is null)
+            {
+                _tryAgainAt = context.Now + Charge + Confirmation;
+                return AutonomousDecision.Nothing;
+            }
+
+            _armedAt = null;
+            _tryAgainAt = null;
+            _returnToCombat = false;
+            return new AutonomousDecision([], NotInFront);
+        }
+
         _armedAt = null;
+        _tryAgainAt = null;
 
         // Carried over a jump made while d47 had switched to analysis mode; used only if this arrival holds.
         var returnToCombat = _returnToCombat;
@@ -196,6 +225,12 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds) : 
         if (context.Now - held < Charge + Confirmation)
         {
             return AutonomousDecision.Nothing;
+        }
+
+        // Also after the retry, whose hold may have been refused for the same reason.
+        if (!inFront())
+        {
+            return Finish(context, NotInFront);
         }
 
         // Read again on this tick: the Commander may have changed HUD mode since the first hold.

@@ -44,7 +44,7 @@ public class CombatModeInSupercruiseSwitchesToHonkTests
 
     private static HonkOnArrival Armed(EliteBinds? binds = null)
     {
-        var honk = new HonkOnArrival(() => true, () => binds ?? Bound);
+        var honk = new HonkOnArrival(() => true, () => binds ?? Bound, () => true);
         honk.Examine(At(StatusFlags.InMainShip | StatusFlags.FsdJump, TimeSpan.Zero, jump: true));
         return honk;
     }

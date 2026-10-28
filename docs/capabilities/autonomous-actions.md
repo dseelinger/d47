@@ -51,7 +51,7 @@ nav_order: 136
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <p class="say">Bring Elite to the front and put the discovery scanner on a key.</p>
-<p class="expect">The honk fires; with Elite behind another window nothing is pressed.</p>
+<p class="expect">The honk fires; with Elite behind another window nothing is pressed, and after a second try D47 says “Cannot honk since Elite is not the active window.”</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Elite must be the window in front, and the discovery scanner must be bound to a key">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Elite must be in front, with the scanner on a key.</text>
@@ -188,6 +188,18 @@ once more. If that also produces no scan, it says so:
 ```text
 The honk did not take
 ```
+
+It presses nothing into another window. If Elite is not the window in front when it is about to
+honk, it waits as long as a missed hold would, about eight seconds, and tries once more from the
+start, switching to analysis mode if it needs to. If Elite is still not in front, it says this
+once and does nothing more for that arrival:
+
+```text
+Cannot honk since Elite is not the active window.
+```
+
+That line is also said in place of "The honk did not take" when a hold produced no scan and
+Elite is not in front by the end of the wait for it.
 
 A honk you make by hand while it is waiting counts, and nothing is repeated. Apart from that one
 retry, it fires once per jump. It never fires for jumps that happened before Directive 47 started, which

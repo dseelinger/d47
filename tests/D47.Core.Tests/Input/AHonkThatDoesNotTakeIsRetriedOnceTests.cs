@@ -53,7 +53,7 @@ public class AHonkThatDoesNotTakeIsRetriedOnceTests
     /// <summary>Jumps, then holds a second later in analysis mode, as every honk in the sample did.</summary>
     private static HonkOnArrival HeldAtOneSecond()
     {
-        var honk = new HonkOnArrival(() => true, () => Bound);
+        var honk = new HonkOnArrival(() => true, () => Bound, () => true);
         honk.Examine(At(Witchspace, 0, "FSDJump"));
         Assert.True(IsHoldOfFire(honk.Examine(At(Analysis, 1))));
         return honk;
@@ -162,7 +162,7 @@ public class AHonkThatDoesNotTakeIsRetriedOnceTests
     [Fact]
     public void ASwitchBackOwedToAnAbandonedArrivalIsNotPaidOnALaterOne()
     {
-        var honk = new HonkOnArrival(() => true, () => Bound);
+        var honk = new HonkOnArrival(() => true, () => Bound, () => true);
         honk.Examine(At(Witchspace, 0, "FSDJump"));
         honk.Examine(At(Combat, 1));
         honk.Examine(At(Analysis, 1.2));
@@ -182,7 +182,7 @@ public class AHonkThatDoesNotTakeIsRetriedOnceTests
     [Fact]
     public void AfterASwitchItStaysInAnalysisModeForTheRetryAndSwitchesBackAtTheEnd()
     {
-        var honk = new HonkOnArrival(() => true, () => Bound);
+        var honk = new HonkOnArrival(() => true, () => Bound, () => true);
         honk.Examine(At(Witchspace, 0, "FSDJump"));
 
         Assert.True(IsTapOfHudMode(honk.Examine(At(Combat, 1))));

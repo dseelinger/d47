@@ -43,7 +43,7 @@ public class HonkOnArrivalTests
         StatusFlags.InMainShip | StatusFlags.AnalysisMode;
 
     private static HonkOnArrival Honk(bool enabled = true, EliteBinds? binds = null) =>
-        new(() => enabled, () => binds ?? Bound);
+        new(() => enabled, () => binds ?? Bound, () => true);
 
     [Fact]
     public void ArrivingInAnalysisModeHoldsTheFireButtonForTheFullCharge()

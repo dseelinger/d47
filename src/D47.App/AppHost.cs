@@ -1550,7 +1550,8 @@ public sealed class AppHost : IDisposable
         var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
             .Add(new HonkOnArrival(
                 () => settings.Current.Actions.HonkOnArrival,
-                () => late.Binds!()));
+                () => late.Binds!(),
+                () => late.Foreground!()));
 
         loadingStores.Dispose();
 
@@ -2136,6 +2137,7 @@ public sealed class AppHost : IDisposable
                 loggerFactory.CreateLogger<AppHost>()));
 
         late.Binds = () => binds.Current;
+        late.Foreground = () => gameInput.IsGameForeground;
 
         // Named copies of the bindings, copied only while Elite is closed.
         var bindingProfiles = new BindingProfiles(
@@ -4444,6 +4446,9 @@ public sealed class AppHost : IDisposable
         /// <summary>The resolved bindings, set by <see cref="ComposeServices"/>.</summary>
         public Func<EliteBinds>? Binds { get; set; }
 
+        /// <summary>Whether Elite is the window in front, set by <see cref="ComposeServices"/>.</summary>
+        public Func<bool>? Foreground { get; set; }
+
         /// <summary>The engineer solver, set by <see cref="ComposeServices"/>.</summary>
         public D47.Core.Engineers.EngineerPlanService? Unlocks { get; set; }
 
@@ -6015,8 +6020,9 @@ public sealed class AppHost : IDisposable
                         _logger.LogInformation(
                             "Autonomous action {Id} finished: {Outcome}", action.Id, result.Outcome);
 
-                        // Nobody asked for this, so nobody is watching for it to fail.
-                        if (!result.Sent)
+                        // Nobody asked for this, so nobody is watching for it to fail. The action says when
+                        // Elite was not in front.
+                        if (!result.Sent && result.Outcome != InjectionOutcome.NotForeground)
                         {
                             // Through SayAsync rather than straight at the synthesiser (remediation.md 17,
                             // item 4).
