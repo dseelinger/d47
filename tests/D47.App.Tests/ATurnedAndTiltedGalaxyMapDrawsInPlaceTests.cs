@@ -172,7 +172,8 @@ public class ATurnedAndTiltedGalaxyMapDrawsInPlaceTests
             frame.SaveCapture("galaxy-map-tilted-90.png");
         }
 
-        Assert.Equal(ThemeManager.BgKey, InkAt(window, Screen(edgeOn, inside)));
+        // The plane line (#1559) passes through this point at tilt 90, so it is not Bg; it must not be ground.
+        Assert.NotEqual(ThemeManager.MapGroundKey, InkAt(window, Screen(edgeOn, inside)));
     }
 
     [AvaloniaFact]

@@ -68,7 +68,8 @@ public sealed record GalaxyMapDrawn(
 /// Commander's travels, the plotted route and the Commander. Geometry is rebuilt when the scene, the viewport or the size changes.
 /// </summary>
 /// <remarks>
-/// On the desktop the wheel zooms one step and a drag pans. A press and release at one point, on the desktop or the
+/// On the desktop the wheel zooms one step, a left drag turns and tilts the map as the hull viewer's does, and a right
+/// or middle drag pans. A left press and release at one point, on the desktop or the
 /// big panel, selects the nearest system drawn whose centre is inside a <see cref="TapSide"/> px square
 /// on the tap, or clears the selection. The selection stays while its system is not drawn.
 /// </remarks>
@@ -86,6 +87,9 @@ public sealed class GalaxyMapView : Control
     private const double Unvisited = 5;
     private const double ScaleInset = 12;
     private const double DragStart = 4;
+    private const double AngleBaseline = 20;
+    private const double PlaneInset = 10;
+    private const double PlaneGap = 6;
     private const double BracketHalf = 12;
     private const double BracketLeg = 6;
     private const double BracketGap = 8;
@@ -137,6 +141,7 @@ public sealed class GalaxyMapView : Control
     private double? _fitInset;
 
     private Point? _pressedAt;
+    private MouseButton _pressedButton;
     private GalaxyViewport? _pressedView;
     private bool _dragging;
 
@@ -537,7 +542,7 @@ public sealed class GalaxyMapView : Control
 
             if (Wide)
             {
-                RegionNames(context, size);
+                RegionNames(context, size, AngleBox());
             }
         }
 
@@ -560,6 +565,11 @@ public sealed class GalaxyMapView : Control
         }
 
         var taken = new List<Rect>();
+
+        if (AngleBox() is { } readout)
+        {
+            taken.Add(readout);
+        }
 
         if (_route.Count > 0)
         {
@@ -620,6 +630,57 @@ public sealed class GalaxyMapView : Control
         {
             ScaleBar(context, size);
         }
+
+        DrawAngles(context, size);
+    }
+
+    /// <summary>"heading 330° · tilt 30°"; the map at rest has no readout.</summary>
+    internal static string AngleWords(double heading, double tilt) =>
+        string.Create(CultureInfo.InvariantCulture, $"heading {heading:0}° · tilt {tilt:0}°");
+
+    private bool Turned => _viewport.Heading != 0 || _viewport.Tilt != 0;
+
+    private TextLayout AngleText() => Text(AngleWords(_viewport.Heading, _viewport.Tilt), 11, ThemeManager.GreyKey, 0, Fonts.MonoFamily);
+
+    /// <summary>Where the angle readout draws: 12 px in from the left with its baseline 20 px down; null at rest.</summary>
+    private Rect? AngleBox()
+    {
+        if (!Turned)
+        {
+            return null;
+        }
+
+        var text = AngleText();
+
+        return new Rect(ScaleInset, AngleBaseline - text.Baseline, text.Width, text.Height);
+    }
+
+    private void DrawAngles(DrawingContext context, Size size)
+    {
+        if (AngleBox() is not { } box)
+        {
+            return;
+        }
+
+        AngleText().Draw(context, box.TopLeft);
+
+        if (!EdgeOn)
+        {
+            return;
+        }
+
+        var y = Math.Round(Screen(new StarPosition(_viewport.CentreX, 0, _viewport.CentreZ)).Y) + 0.5;
+
+        context.DrawLine(new Pen(Brush(ThemeManager.LineKey), 1), new Point(0, y), new Point(size.Width, y));
+
+        var plane = new TextLayout(
+            "GALACTIC PLANE",
+            new Typeface(new FontFamily(Fonts.ChromeFamily), FontStyle.Normal, FontWeight.SemiBold),
+            11,
+            Brush(ThemeManager.GreyKey),
+            letterSpacing: 11 * 0.06);
+
+        plane.Draw(context, new Point(PlaneInset, y - PlaneGap - plane.Height));
     }
 
     private void Ground(DrawingContext context, Size size)
@@ -776,9 +837,15 @@ public sealed class GalaxyMapView : Control
             .Where(label => label.Name is not null && label.At is not null)
             .Select(label => (label.Name!, label.At!.Value))];
 
-    private void RegionNames(DrawingContext context, Size size)
+    private void RegionNames(DrawingContext context, Size size, Rect? readout)
     {
         var taken = new List<Rect>();
+
+        if (readout is { } held)
+        {
+            taken.Add(held);
+        }
+
         var room = new Rect(size).Deflate(EdgeMargin);
 
         foreach (var (name, at) in RegionLabels())
@@ -1049,7 +1116,14 @@ public sealed class GalaxyMapView : Control
     {
         base.OnPointerPressed(e);
 
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        var properties = e.GetCurrentPoint(this).Properties;
+
+        _pressedButton = properties.IsLeftButtonPressed ? MouseButton.Left
+            : properties.IsRightButtonPressed ? MouseButton.Right
+            : properties.IsMiddleButtonPressed ? MouseButton.Middle
+            : MouseButton.None;
+
+        if (_pressedButton == MouseButton.None)
         {
             return;
         }
@@ -1082,7 +1156,9 @@ public sealed class GalaxyMapView : Control
             e.Pointer.Capture(this);
         }
 
-        Move(start.Dragged(moved.X, moved.Y, Bounds.Width, Bounds.Height));
+        Move(_pressedButton == MouseButton.Left
+            ? start.Rotated(moved.X * GalaxyViewport.DegreesPerPixel, -moved.Y * GalaxyViewport.DegreesPerPixel)
+            : start.Dragged(moved.X, moved.Y, Bounds.Width, Bounds.Height));
     }
 
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
@@ -1098,6 +1174,7 @@ public sealed class GalaxyMapView : Control
 
         _pressedAt = null;
         _pressedView = null;
+        _pressedButton = MouseButton.None;
         _dragging = false;
 
         if (tapped && e.InitialPressMouseButton == MouseButton.Left)
@@ -1112,6 +1189,7 @@ public sealed class GalaxyMapView : Control
 
         _pressedAt = null;
         _pressedView = null;
+        _pressedButton = MouseButton.None;
         _dragging = false;
     }
 

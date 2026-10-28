@@ -280,10 +280,17 @@ from journals already on this machine. Nothing is fetched.
   plotted route. HERE needs your position and ROUTE a route with two positioned stops; without
   them the button is greyed.
 - **+** and **−** zoom in steps from 100 ly to 102,400 ly across, and the four arrows move a quarter
-  of the view. On the desktop the mouse wheel and a drag do the same.
+  of the view.
+- The four corner tiles of the arrow pad turn the map 15° anticlockwise or clockwise and tilt it
+  15° down or up, from top-down (0°) to edge-on (90°). The middle tile, Top down, sets the turn and
+  tilt back to 0. A tile that would not move the view is greyed. The map shows "heading … · tilt …"
+  while it is turned or tilted, and at 90° it marks the galactic plane with a line. GALAXY, HERE and
+  ROUTE keep the turn and tilt.
+- On the desktop the mouse wheel zooms, a left drag turns and tilts the map, and a right or middle
+  drag pans it. A left click without a drag selects a system. None of this works on the headset.
 - On the desktop the map has keyboard focus when the page opens and when you click it. The arrow
-  keys pan a quarter of the view, **+** and **−** zoom a step, and **Home** frames HERE. Home does
-  nothing while HERE is greyed.
+  keys pan a quarter of the view, **+** and **−** zoom a step, **[** and **]** turn it, **Page Up**
+  and **Page Down** tilt it, and **Home** is Top down.
 - **30 DAYS**, **1 YEAR** and **ALL** choose how far back the travels go, and the line under the map
   counts the jumps and systems in that range.
 - **TRAVELS**, **ROUTE** and **REGIONS** switch each layer off and on.

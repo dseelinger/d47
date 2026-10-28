@@ -82,6 +82,11 @@ public sealed class GalaxyMapPage : UserControl
     private readonly CheckBox _unvisited;
     private readonly Button _zoomIn = Tile("+", "Zoom in", 20);
     private readonly Button _zoomOut = Tile("−", "Zoom out", 20);
+    private readonly Button _turnLeft = Drawn("Turn anticlockwise", "M11 18.5 A6.5 6.5 0 1 0 4.5 11", "M1.5 10.5 h6 l-3 4.5 z");
+    private readonly Button _turnRight = Drawn("Turn clockwise", "M11 18.5 A6.5 6.5 0 1 1 17.5 11", "M14.5 10.5 h6 l-3 4.5 z");
+    private readonly Button _tiltUp = Drawn("Tilt up", "M3 18 H20 M3 18 L13.3 5.7 M15.9 16.6 A13 13 0 0 0 14.5 11.9", "M12.5 8.9 L16.8 10.7 L12.2 13.1 Z");
+    private readonly Button _tiltDown = Drawn("Tilt down", "M3 18 H20 M3 18 L13.3 5.7 M12 8.7 A13 13 0 0 1 14.9 12.7", "M16.1 16.1 L17.3 11.7 L12.5 13.8 Z");
+    private readonly Button _topDown = Drawn("Top down", "M5 5 h12 v12 H5 z", "M9.5 9.5 h3 v3 h-3 z");
     private readonly TextBlock _system = Chrome(TypeScale.ControlLarge, ThemeManager.CyanKey);
     private readonly TextBlock _dot = Chrome(TypeScale.ControlLarge, ThemeManager.Grey2Key);
     private readonly TextBlock _region = RoutingKit.Tag(string.Empty, ThemeManager.GreyKey);
@@ -181,6 +186,11 @@ public sealed class GalaxyMapPage : UserControl
         _unvisited.IsCheckedChanged += (_, _) => UnvisitedChanged();
         _zoomIn.Click += (_, _) => Step(view => view.ZoomIn());
         _zoomOut.Click += (_, _) => Step(view => view.ZoomOut());
+        _turnLeft.Click += (_, _) => Step(view => view.Turned(-1));
+        _turnRight.Click += (_, _) => Step(view => view.Turned(1));
+        _tiltUp.Click += (_, _) => Step(view => view.Tilted(1));
+        _tiltDown.Click += (_, _) => Step(view => view.Tilted(-1));
+        _topDown.Click += (_, _) => Step(TopDown);
         _map.ViewportChanged += _ => Moved();
         _map.Focusable = !_headset;
         _map.KeyDown += OnMapKeyDown;
@@ -560,11 +570,13 @@ public sealed class GalaxyMapPage : UserControl
 
     private void Frame(int framing)
     {
+        var now = _map.Viewport;
+
         GalaxyViewport? to = framing switch
         {
-            Galaxy => GalaxyViewport.WholeGalaxy,
-            Here when _position is { } at => GalaxyViewport.Around(at),
-            RouteFraming when _routePoints.Count >= 2 => GalaxyViewport.Fitting(_routePoints),
+            Galaxy => GalaxyViewport.WholeGalaxy with { Heading = now.Heading, Tilt = now.Tilt },
+            Here when _position is { } at => GalaxyViewport.Around(at) with { Heading = now.Heading, Tilt = now.Tilt },
+            RouteFraming when _routePoints.Count >= 2 => GalaxyViewport.Fitting(_routePoints, now.Heading, now.Tilt),
             _ => null,
         };
 
@@ -577,7 +589,9 @@ public sealed class GalaxyMapPage : UserControl
         Zoom();
     }
 
-    /// <summary>A zoom or pan press; one that would not move the view does nothing.</summary>
+    private static GalaxyViewport TopDown(GalaxyViewport view) => view with { Heading = 0, Tilt = 0 };
+
+    /// <summary>A zoom, pan, turn or tilt press; one that would not move the view does nothing.</summary>
     private void Step(Func<GalaxyViewport, GalaxyViewport> move)
     {
         var to = move(_map.Viewport);
@@ -618,13 +632,20 @@ public sealed class GalaxyMapPage : UserControl
             case Keys.OemMinus or Keys.Subtract:
                 Step(view => view.ZoomOut());
                 break;
+            case Keys.OemOpenBrackets:
+                Step(view => view.Turned(-1));
+                break;
+            case Keys.OemCloseBrackets:
+                Step(view => view.Turned(1));
+                break;
+            case Keys.PageUp:
+                Step(view => view.Tilted(1));
+                break;
+            case Keys.PageDown:
+                Step(view => view.Tilted(-1));
+                break;
             case Keys.Home:
-                if (_position is not null)
-                {
-                    _framing.SelectedIndex = Here;
-                    Frame(Here);
-                }
-
+                Step(TopDown);
                 break;
             default:
                 return;
@@ -872,6 +893,9 @@ public sealed class GalaxyMapPage : UserControl
     {
         _zoomIn.IsEnabled = _map.Viewport.LightYearsAcross > Closest;
         _zoomOut.IsEnabled = _map.Viewport.LightYearsAcross < Widest;
+        _tiltUp.IsEnabled = _map.Viewport.Tilt < 90;
+        _tiltDown.IsEnabled = _map.Viewport.Tilt > 0;
+        _topDown.IsEnabled = _map.Viewport.Heading != 0 || _map.Viewport.Tilt != 0;
     }
 
     private void Where(string? offDuty, string? here)
@@ -1152,6 +1176,11 @@ public sealed class GalaxyMapPage : UserControl
     {
         var grid = Cells(3, 3);
 
+        Place(grid, _turnLeft, 0, 0);
+        Place(grid, _turnRight, 2, 0);
+        Place(grid, _tiltDown, 0, 2);
+        Place(grid, _tiltUp, 2, 2);
+        Place(grid, _topDown, 1, 1);
         Place(grid, PanTile("▲", "Pan up", 0, 1), 1, 0);
         Place(grid, PanTile("◄", "Pan left", -1, 0), 0, 1);
         Place(grid, PanTile("►", "Pan right", 1, 0), 2, 1);
@@ -1320,6 +1349,21 @@ public sealed class GalaxyMapPage : UserControl
 
         ToolTip.SetTip(button, says);
         AutomationProperties.SetName(button, says);
+
+        return button;
+    }
+
+    /// <summary>A tile drawing a 22 px glyph in the button's foreground: <paramref name="lines"/> stroked 2 px, <paramref name="solid"/> filled.</summary>
+    private static Button Drawn(string says, string lines, string solid)
+    {
+        var button = Tile(string.Empty, says, TypeScale.Body);
+        var stroke = new Avalonia.Controls.Shapes.Path { Data = Geometry.Parse(lines), StrokeThickness = 2, StrokeLineCap = PenLineCap.Round, StrokeJoin = PenLineJoin.Round };
+        var fill = new Avalonia.Controls.Shapes.Path { Data = Geometry.Parse(solid) };
+        var foreground = button.GetObservable(Avalonia.Controls.Primitives.TemplatedControl.ForegroundProperty);
+
+        stroke.Bind(Avalonia.Controls.Shapes.Shape.StrokeProperty, foreground);
+        fill.Bind(Avalonia.Controls.Shapes.Shape.FillProperty, foreground);
+        button.Content = new Avalonia.Controls.Panel { Width = 22, Height = 22, Children = { stroke, fill } };
 
         return button;
     }

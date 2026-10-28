@@ -66,16 +66,17 @@ public class TheGalaxyMapTakesKeysTests
     }
 
     [AvaloniaFact]
-    public void HomeFramesHereAndShowsItInTheSegment()
+    public void HomeIsTopDownAndLeavesTheFramingAlone()
     {
         var page = Opened(out var window);
-        var here = page.Map.Viewport;
 
-        Press(window, Key.Left, PhysicalKey.ArrowLeft);
+        Press(window, Key.OemCloseBrackets, PhysicalKey.BracketRight);
+        Assert.NotEqual(0, page.Map.Viewport.Heading);
+
         Press(window, Key.Home, PhysicalKey.Home);
 
-        Assert.Equal(here, page.Map.Viewport);
-        Assert.Equal(1, page.Framing.SelectedIndex);
+        Assert.Equal(0, page.Map.Viewport.Heading);
+        Assert.Equal(0, page.Map.Viewport.Tilt);
     }
 
     [AvaloniaFact]

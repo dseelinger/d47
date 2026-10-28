@@ -28,7 +28,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
     private static readonly StarPosition Wregoe = new(-40.6, 37.2, 75.3);
 
-    private sealed class Game
+    internal sealed class Game
     {
         public CommanderGameState Commander { get; set; } = Located("Wregoe TC-X b29-0", Wregoe);
 
@@ -117,7 +117,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         }
     }
 
-    private static Game Played(bool folded = true, bool history = true)
+    internal static Game Played(bool folded = true, bool history = true)
     {
         var game = new Game();
 
@@ -204,7 +204,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         return (window, panel, Page(panel));
     }
 
-    private static (OffscreenSurface Surface, PanelView Panel, GalaxyMapPage Page) OnThePanel(Game game)
+    internal static (OffscreenSurface Surface, PanelView Panel, GalaxyMapPage Page) OnThePanel(Game game)
     {
         var panel = Panel(game, headset: true);
         var surface = new OffscreenSurface(panel, new PixelSize(1024, 640));
@@ -215,7 +215,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
     private static GalaxyMapPage Page(Control panel) => panel.GetVisualDescendants().OfType<GalaxyMapPage>().Single();
 
-    private static Button Tile(Control page, string says) =>
+    internal static Button Tile(Control page, string says) =>
         page.GetVisualDescendants().OfType<Button>().Single(button => Avalonia.Automation.AutomationProperties.GetName(button) == says);
 
     private static CheckBox Box(Control page, string label) =>
@@ -224,7 +224,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     private static RadioButton Option(Segment segment, string label) =>
         segment.GetVisualDescendants().OfType<RadioButton>().Single(radio => (radio.Content as string) == label);
 
-    private static bool Tap(OffscreenSurface surface, PanelView panel, Control control)
+    internal static bool Tap(OffscreenSurface surface, PanelView panel, Control control)
     {
         var centre = control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), panel)!.Value;
         var pressed = surface.Click(centre);
