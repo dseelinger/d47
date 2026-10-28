@@ -43,6 +43,7 @@ public static class Situation
         AppendCredits(status, now, lines);
         AppendCarrier(state, lines);
         AppendMissions(state, now, lines);
+        AppendWing(state, now, lines);
         AppendPowerplay(state, now, weekBoundaryDay, weekBoundaryHourUtc, lines);
         AppendSession(state, lines);
 
@@ -381,6 +382,36 @@ public static class Situation
 
             lines.Add(line.ToString());
         }
+    }
+
+    /// <summary>The wing's members, each with when they were last heard from.</summary>
+    private static void AppendWing(CommanderGameState state, DateTimeOffset? now, List<string> lines)
+    {
+        if (state.Wing.IsEmpty)
+        {
+            return;
+        }
+
+        var members = state.Wing.Members.Select(member => member.LastHeard is { } heard
+            ? $"{member.Name} (heard {Ago(heard, now)})"
+            : $"{member.Name} (joined {Ago(member.JoinedAt, now)}, not heard since)");
+
+        lines.Add($"Wing: {string.Join(", ", members)}. Elite records members joining, not leaving.");
+    }
+
+    private static string Ago(DateTimeOffset at, DateTimeOffset? now)
+    {
+        if (now is not { } clock)
+        {
+            return $"at {at:HH:mm} UTC";
+        }
+
+        var elapsed = clock - at;
+
+        return elapsed.TotalMinutes < 1 ? "just now"
+            : elapsed.TotalHours < 1 ? $"{(int)elapsed.TotalMinutes} minute{((int)elapsed.TotalMinutes == 1 ? "" : "s")} ago"
+            : elapsed.TotalDays < 1 ? $"{(int)elapsed.TotalHours} hour{((int)elapsed.TotalHours == 1 ? "" : "s")} ago"
+            : $"{(int)elapsed.TotalDays} day{((int)elapsed.TotalDays == 1 ? "" : "s")} ago";
     }
 
     private static string TimeLeft(TimeSpan left)

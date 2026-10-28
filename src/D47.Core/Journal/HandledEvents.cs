@@ -214,6 +214,7 @@ public static class HandledEvents
         "UpgradeWeapon",
         "WingAdd",
         "WingJoin",
+        "WingLeave",
     ], StringComparer.Ordinal);
 
     /// <summary>
@@ -286,7 +287,6 @@ public static class HandledEvents
         "UseConsumable",
         "VehicleSwitch",
         "WingInvite",
-        "WingLeave",
     ], StringComparer.Ordinal);
 
     /// <summary>All three blocks: whether d47 knows the event at all.</summary>

@@ -45,6 +45,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>The squadron they are in, if any.</summary>
     public SquadronState Squadron { get; private set; } = SquadronState.None;
 
+    /// <summary>The wing they are in, held in memory only.</summary>
+    public WingRoster Wing { get; private set; } = WingRoster.Empty;
+
     /// <summary>Every other ship they own, and where.</summary>
     public FleetRegistry Fleet { get; internal set; } = FleetRegistry.Empty;
 
@@ -200,6 +203,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(Carrier), "your carrier", state => state.Carrier),
         new(nameof(SquadronCarrier), "your squadron's carrier", state => state.SquadronCarrier),
         new(nameof(Squadron), "your squadron", state => state.Squadron),
+        new(nameof(Wing), "your wing", state => state.Wing),
         new(nameof(Fleet), "your stored ships", state => state.Fleet),
         new(nameof(Modules), "your stored modules", state => state.Modules),
         new(nameof(Names), "the place names d47 listens for", state => state.Names),
@@ -249,6 +253,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
 
         // Every event moves LastEventAt, so only the rest of the session counts.
         (SessionSummary a, SessionSummary b) when a with { LastEventAt = b.LastEventAt } == b => null,
+
+        // Hearing from a member changes when they were last heard, not who is in the wing.
+        (WingRoster a, WingRoster b) when a.SameMembers(b) => null,
 
         (CarrierState { CallSign: null }, CarrierState { CallSign: not null }) when part.Name == nameof(Carrier) =>
             new FoldChange(part.Name, "your carrier's callsign", "learned here"),
@@ -307,6 +314,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Carrier = Carrier.Apply(journalEvent);
         SquadronCarrier = SquadronCarrier.Apply(journalEvent);
         Squadron = Squadron.Apply(journalEvent);
+        Wing = Wing.Apply(journalEvent, Identity.Name);
         // After Location, for the reason Colonisation below is: storing a ship happens wherever the Commander
         // is standing, and neither ShipyardSwap nor ShipyardBuy names a place.
         Fleet = Fleet.Apply(journalEvent, Location.StarSystem, Location.StationName);

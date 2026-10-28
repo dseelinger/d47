@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+D47 now keeps track of your wing, so "who is in my wing?" is answered with each member and when they were last heard from. Elite writes nothing when another member leaves, so a member stays listed until you leave the wing or quit to the main menu, and the answer says so.
+
 Say "set course for my next objective" to plot to the system of the objective your story is waiting on, or "copy my next objective to my clipboard" to put that system on the clipboard. They work for a running story chapter or the one short story under way, and say so when the objective has no system.
 
 A story chapter whose draft is objected to after its place checks now gets one more rewrite for that objection, and a sightseeing mission objective is checked as confirming the visit to the sights, not what the passengers made of them.
