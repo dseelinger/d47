@@ -47,15 +47,15 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
     }
 
     [Fact]
-    public async Task ACloudCallSilentForThirtyOneSecondsAfterItsFirstTextIsStopped()
+    public async Task ACloudCallSilentForSixtyOneSecondsAfterItsFirstTextIsStopped()
     {
         var time = new ManualTime();
         var provider = new ClockedLlmProvider(
             time,
             local: false,
             (IReadOnlyList<Step>)[
-                new(TimeSpan.FromSeconds(60), new LlmStreamEvent.TextDelta("{")),
-                new(TimeSpan.FromSeconds(31), new LlmStreamEvent.TextDelta("}")),
+                new(TimeSpan.FromSeconds(30), new LlmStreamEvent.TextDelta("{")),
+                new(TimeSpan.FromSeconds(61), new LlmStreamEvent.TextDelta("}")),
                 new(TimeSpan.Zero, Completed),
             ]);
         var log = new RecordingLogger();
@@ -63,7 +63,7 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
         var outcome = await Generate(provider, log, time);
 
         Assert.True(outcome.Redraftable);
-        Assert.Contains("TimedOut: no text or thinking arrived for 30 s; stopped after 90.0 s", SingleWarning(log));
+        Assert.Contains("TimedOut: no text or thinking arrived for 60 s; stopped after 90.0 s", SingleWarning(log));
     }
 
     [Fact]

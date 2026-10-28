@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Stories and chapters written with GPT-6 Luna now ask it for high effort instead of low, and a story call is stopped after 60 seconds with no output instead of 30. In test runs, Luna wrote three of six chapters at high effort and none of six at low effort.
+
 A short jump range no longer keeps a Guardian beacon out of reach in a story. A ship with a fuel scoop and a laser or railgun gets the beacon chapter whatever its jump range, and the story only says the trip is easier with a longer range. A reach objective already saved with a jump range is met by the next Loadout with a scoop and a weapon.
 
 A system's bodies are found again when one of its rings has no signals on record. The lookup failed for such a system, and a story chapter that named a place in it was not written.

@@ -335,7 +335,7 @@ public sealed class AdventureGenerator(
     public TimeSpan? CallLimit { get; init; }
 
     /// <summary>How long a model call on a provider that is not on this machine may go with no text or thinking arriving.</summary>
-    public TimeSpan SilenceLimit { get; init; } = TimeSpan.FromSeconds(30);
+    public TimeSpan SilenceLimit { get; init; } = TimeSpan.FromSeconds(60);
 
     /// <summary>How long a model call on a provider that is not on this machine may wait for its first text or thinking.</summary>
     public TimeSpan FirstReplyLimit { get; init; } = TimeSpan.FromSeconds(90);

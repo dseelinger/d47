@@ -79,8 +79,8 @@ public sealed class TheCatalogSetsAStoryModelsEffortTests
     }
 
     [Fact]
-    public void TheShippedCatalogNamesLowForLuna() =>
-        Assert.Equal(ThinkingEffort.Low, ModelCatalog.Embedded.TraitsFor("openai", "gpt-6-luna").StoryEffort);
+    public void TheShippedCatalogNamesHighForLuna() =>
+        Assert.Equal(ThinkingEffort.High, ModelCatalog.Embedded.TraitsFor("openai", "gpt-6-luna").StoryEffort);
 
     [Theory]
     [InlineData("""{"storyEffort": "low"}""", ThinkingEffort.Low)]
