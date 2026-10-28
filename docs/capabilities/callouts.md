@@ -1608,7 +1608,8 @@ sounds further off than a hail and has its own row, Overheard chatter, in the au
 [comms channel](comms.md#choose-who-your-comms-key-reaches) until you jump or they sign off, and a
 hail moves the selection to the hailer. What you say on the comms push-to-talk goes to whoever the
 System channel selects, and they reply in the voice you heard them in, knowing what was said in
-their exchange. There is no time limit and no limit on replies. Push-to-talk still goes to your
+their exchange. There is no time limit and no limit on replies: a stranger leaves when you end the
+conversation or when they have a reason to go. Push-to-talk still goes to your
 core, even when you start with their name. A reply that would contradict your ship or claim
 something the game would log — a scan, a fine, a docking decision — is replaced with
 *"Got to go. Vance out."* A stranger who signs off, either way, leaves the System channel.

@@ -309,7 +309,7 @@ public sealed class ChatterLine(
 
     /// <summary>How a stranger ends the conversation, in the words <see cref="NpcsHeardHere.SignsOff"/> reads.</summary>
     private static string SigningOff(string name) =>
-        $"When you are done talking, end your reply with exactly: {NpcsHeardHere.SignOff(name)}";
+        $"Keep talking for as long as the Commander does. Leave only for a reason already in the conversation: the Commander says goodbye, asks you to go or is rude to you; you have said you are busy, late or about to leave; or your personality is curt and the talk has gone on. Never invent an emergency, a scanner contact or an interruption as a reason to leave. When you do leave, end your reply with exactly: {NpcsHeardHere.SignOff(name)}";
 
     private static bool In(Exchange exchange, string? system) =>
         string.Equals(exchange.System, system, StringComparison.OrdinalIgnoreCase);
