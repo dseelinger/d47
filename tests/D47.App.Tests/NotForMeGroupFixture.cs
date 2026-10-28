@@ -161,7 +161,9 @@ internal static class NotForMeGroupFixture
     internal static Button? Pressable(PanelView panel, string label) =>
         panel.GetVisualDescendants().OfType<Button>().FirstOrDefault(button => button.Content as string == label);
 
+    /// <summary>The first text on the page starting with <paramref name="text"/>; the next-objective strip above every tab is not searched.</summary>
     internal static TextBlock? Starting(PanelView panel, string text) =>
         panel.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(block =>
+            !block.GetVisualAncestors().OfType<ObjectiveStrip>().Any() &&
             (block.Text ?? string.Concat(block.Inlines?.OfType<Run>().Select(run => run.Text) ?? [])).StartsWith(text, StringComparison.OrdinalIgnoreCase));
 }
