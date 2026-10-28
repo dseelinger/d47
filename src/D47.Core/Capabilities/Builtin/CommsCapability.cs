@@ -438,6 +438,12 @@ public static class CommsCapability
         // every character is a keybind.
         message = message.ReplaceLineEndings(" ").Trim();
 
+        if (ChatBoxCommands.StartsWithPrefix(message))
+        {
+            return ToolResult.Error(
+                $"A message starting {ChatBoxCommands.Prefix} is a command to D47, not chat, so I will not send it.");
+        }
+
         if (GameActions.Find("comms_panel") is not { } panel)
         {
             return ToolResult.Error("There is no comms action.");

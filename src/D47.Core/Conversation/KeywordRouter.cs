@@ -14,6 +14,9 @@ public enum InputSource
 
     /// <summary>Transcribed from the microphone.</summary>
     Spoken,
+
+    /// <summary>Typed into Elite's chat box.</summary>
+    ChatBox,
 }
 
 public sealed record KeywordMatch(string CapabilityId, string ToolName)
