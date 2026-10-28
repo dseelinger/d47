@@ -742,6 +742,9 @@ public sealed class AppHost : IDisposable
     /// </summary>
     public event Action<string>? Noted;
 
+    /// <summary>Raised on the tick thread with each command the Commander typed into Elite's local chat.</summary>
+    public event Action<string>? ChatBoxCommand;
+
     /// <summary>
     /// Raised true when a core has been chosen and has not yet worked out what to say, and false when
     /// it has (Phase 12, "Anything that might take a moment says it is working").
@@ -4081,6 +4084,20 @@ public sealed class AppHost : IDisposable
             host.PanelRouting.OpenDiscovered(feed.Arrived, context.IsFirst, settings.Current.Ui.OpenNewCodexEntries));
 
         tick.Add("core absences", context => host.Absences.Observe(feed.Arrived, context.IsFirst, host.Personas.Current.Id));
+
+        // After "journal"; a command in the backlog never runs, and the turn is posted, so the tick does not wait.
+        tick.Add("chat-box commands", context =>
+        {
+            if (context.IsFirst)
+            {
+                return;
+            }
+
+            foreach (var command in ChatBoxCommands.Read(feed.Arrived))
+            {
+                host.ChatBoxCommand?.Invoke(command);
+            }
+        });
 
         // A core per ship (Phase 35).
         tick.Add("ship cores", context =>

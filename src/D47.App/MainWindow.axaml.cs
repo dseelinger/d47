@@ -637,6 +637,10 @@ public partial class MainWindow : Window
             _ = AskAsync();
         });
 
+        // A command typed into Elite's local chat, run as a typed turn without taking focus.
+        _host.ChatBoxCommand += command => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => _ = AskAsync(command, InputSource.ChatBox, PttTarget.Core));
+
         // What was heard, where no response is going to carry it — an utterance a chooser took, or one the
         // wake policy reworded on the way in (change-requests.md 31).
         _host.Listener.HeardText += text => Avalonia.Threading.Dispatcher.UIThread.Post(
@@ -1126,11 +1130,11 @@ public partial class MainWindow : Window
         _host.ViewState.Save(_host.ViewState.Load() with { HasAsked = true });
     }
 
-    private async Task AskAsync()
+    private Task AskAsync()
     {
         if (_host is null)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         var input = _model.AskText?.Trim();
@@ -1142,9 +1146,25 @@ public partial class MainWindow : Window
         _spoken = false;
         _spokenTarget = PttTarget.Core;
 
-        if (string.IsNullOrEmpty(input))
+        return AskAsync(input, source, target);
+    }
+
+    /// <summary>Runs <paramref name="input"/> as a turn; a chat-box command leaves the ask box as it was.</summary>
+    private async Task AskAsync(string? input, InputSource source, PttTarget target)
+    {
+        if (_host is null || string.IsNullOrEmpty(input))
         {
             return;
+        }
+
+        var fromBox = source != InputSource.ChatBox;
+
+        void ClearAskBox()
+        {
+            if (fromBox)
+            {
+                _model.AskText = string.Empty;
+            }
         }
 
         // Recorded here rather than in either modality's own path, because this is where typed and spoken
@@ -1154,7 +1174,7 @@ public partial class MainWindow : Window
         // Ahead of navigation, so "back" during a walkthrough means the previous step (#577).
         if (_host.Walk(input) is { } step)
         {
-            _model.AskText = string.Empty;
+            ClearAskBox();
             _model.Append($"\n\n> {input}\n{step}\n");
             return;
         }
@@ -1162,7 +1182,7 @@ public partial class MainWindow : Window
         // Asked before the in-flight gate, never after.
         if (_host.PanelRouting.Navigate(input) is { } moved)
         {
-            _model.AskText = string.Empty;
+            ClearAskBox();
             _model.Append($"\n\n> {input}\n{moved}\n");
             return;
         }
@@ -1170,7 +1190,7 @@ public partial class MainWindow : Window
         // And moving the page rather than the panel (#34).
         if (_host.PanelRouting.Scroll(input) is { } scrolled)
         {
-            _model.AskText = string.Empty;
+            ClearAskBox();
             _model.Append($"\n\n> {input}\n{scrolled}\n");
             return;
         }
@@ -1178,7 +1198,7 @@ public partial class MainWindow : Window
         // And showing where a setting or page is, after the navigation and scroll phrases (#1473).
         if (_host.PanelRouting.Find(input) is { } found)
         {
-            _model.AskText = string.Empty;
+            ClearAskBox();
             _model.Append($"\n\n> {input}\n{found}\n");
             return;
         }
@@ -1192,7 +1212,7 @@ public partial class MainWindow : Window
                 _host.Debrief?.NoteInterrupted();
             }
 
-            _model.AskText = string.Empty;
+            ClearAskBox();
             var stopped = await _host.Capabilities.InvokeAsync(interrupting.ToolName, ToolArguments.Empty);
 
             // Two writes rather than one interpolation, because they are two voices.
@@ -1203,12 +1223,19 @@ public partial class MainWindow : Window
 
         if (_turnInFlight)
         {
+            // Typed and spoken input wait in the box; a chat-box command has nowhere to wait.
+            if (!fromBox)
+            {
+                _model.Append(input, voice: TranscriptVoice.Commander, sourceKey: PanelViewModel.TagFor(target));
+                _model.Mark("Not run: D47 was still answering");
+            }
+
             return;
         }
 
         _turnInFlight = true;
         _model.CanAsk = false;
-        _model.AskText = string.Empty;
+        ClearAskBox();
         _model.Append(input, voice: TranscriptVoice.Commander, sourceKey: PanelViewModel.TagFor(target));
 
         var presenter = new TurnPresenter(_model, _host.ShipPicture, _host.AddressedPicture);

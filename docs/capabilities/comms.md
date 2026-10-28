@@ -218,6 +218,22 @@ Line breaks are flattened to spaces before anything is typed. A newline in the m
 would send the first half early and type the second half into the cockpit, where every character
 is one of your keybinds.
 
+### Give D47 a command from Elite's chat box
+
+With local selected in the comms panel, type `/d47` and a space, then the command:
+
+```text
+/d47 jump range
+```
+
+D47 runs it as if you had typed the words into its Ask box: the answer appears in the panel and is
+spoken. Typing `/l` and a space switches the comms panel to local from another channel. D47 reads
+commands from local chat only. If D47 is still answering, a command other than one that stops the
+answer is not run, and the panel says so.
+
+Local chat is sent like any other local message. In Open and Private Group, players nearby see the
+command. In Solo, nobody does.
+
 ### Ask for your mail
 
 > "read my mail"

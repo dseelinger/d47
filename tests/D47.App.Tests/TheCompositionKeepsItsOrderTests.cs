@@ -17,7 +17,7 @@ public sealed class TheCompositionKeepsItsOrderTests
     private static readonly string[] Registrations =
     [
         "journal", "journal history", "commander pick", "screenshots", "push-to-talk", "default-audio-devices", "macros",
-        "binds", "switches", "reminders", "ships", "own cores", "codex entry page", "core absences", "ship cores", "memory", "goals", "adventures",
+        "binds", "switches", "reminders", "ships", "own cores", "codex entry page", "core absences", "chat-box commands", "ship cores", "memory", "goals", "adventures",
         "callout-drain", "ambience", "bgs-tick", "galnet", "server-status", "colonisation-plans", "colonisation-progress", "voice-scope", "comms-channels", "autonomous-drain", "switch-drain",
     ];
 
