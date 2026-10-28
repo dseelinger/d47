@@ -29,14 +29,29 @@ public sealed class TargetLine(
 
     private readonly Lock _lock = new();
 
+    private string? _conversationWith;
+
+    private List<ConversationMessage> _conversation = [];
+
     private readonly Dictionary<string, string?> _personalities = new(StringComparer.OrdinalIgnoreCase);
 
     public async Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(selected);
 
+        var held = target();
+
+        if (held is not { IsCommander: false, PilotName: { Length: > 0 } })
+        {
+            lock (_lock)
+            {
+                _conversationWith = null;
+                _conversation = [];
+            }
+        }
+
         if (selected is not { Channel: CommsChannel.Target, SubChannel: not null }
-            || target() is not { IsCommander: false, PilotName: { Length: > 0 } name } ship)
+            || held is not { IsCommander: false, PilotName: { Length: > 0 } name } ship)
         {
             return new LineDecision.NotMine();
         }
@@ -57,13 +72,33 @@ public sealed class TargetLine(
                 VoiceRole.Comms,
                 name,
                 Brief(name, ship, personality, SpeakerAccent.Sentence(accentHeardAs?.Invoke(heardAs))),
-                [],
+                Conversation(name),
                 OffersTools: false,
                 Signal: 1,
                 Model: model?.Invoke(),
                 Screen: reply => Screened(reply, name),
                 HeardAs: heardAs),
             question);
+    }
+
+    /// <summary>The conversation held with the targeted pilot, dropped when another pilot or no one is targeted.</summary>
+    private List<ConversationMessage> Conversation(string name)
+    {
+        lock (_lock)
+        {
+            if (!string.Equals(_conversationWith, name, StringComparison.OrdinalIgnoreCase))
+            {
+                _conversationWith = name;
+                _conversation = [];
+            }
+
+            if (_conversation.Count > ExchangeLines.Most)
+            {
+                _conversation.RemoveRange(0, _conversation.Count - ExchangeLines.Most);
+            }
+
+            return _conversation;
+        }
     }
 
     /// <summary>

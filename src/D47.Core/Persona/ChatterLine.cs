@@ -41,6 +41,9 @@ public sealed class ChatterLine(
 
     private long _lines;
 
+    /// <summary>The conversation held with each real comms NPC, in the system it began in.</summary>
+    private readonly Dictionary<string, (string? System, List<ConversationMessage> Messages)> _conversations = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>NPCs whose personality could not be written, so the plain brief is used for the stay.</summary>
     private readonly HashSet<string> _noPersonality = new(StringComparer.OrdinalIgnoreCase);
 
@@ -158,8 +161,8 @@ public sealed class ChatterLine(
     }
 
     /// <summary>
-    /// A real comms NPC answers from its family and personality, in the voice its message was heard in; what it said is
-    /// never held or sent.
+    /// A real comms NPC answers from its family and personality, in the voice its message was heard in. The game's text is
+    /// never held or sent; the conversation with the Commander is held until the NPC signs off or the system changes.
     /// </summary>
     private async Task<LineDecision> RouteCommsNpcAsync(NpcHeard npc, string input, CancellationToken cancellationToken)
     {
@@ -172,6 +175,8 @@ public sealed class ChatterLine(
         var accent = SpeakerAccent.Sentence(heardAs is null ? null : accentHeardAs?.Invoke(heardAs));
 
         var trait = personality is null ? string.Empty : "\nYour personality: " + personality;
+
+        var transcript = Conversation(npc.Name);
 
         var brief = $"""
                      {CannedSpeakers.For(npc.Family ?? string.Empty)}
@@ -189,13 +194,44 @@ public sealed class ChatterLine(
                 VoiceRole.Comms,
                 npc.Name,
                 brief,
-                [],
+                transcript,
                 OffersTools: false,
                 Signal: 1,
                 Model: model?.Invoke(),
                 Screen: reply => Screened(reply, npc.Name, exchange: null),
                 HeardAs: heardAs),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
+    }
+
+    /// <summary>The held conversation with a comms NPC, empty for a new stay and trimmed to the last <see cref="ExchangeLines.Most"/> messages.</summary>
+    private List<ConversationMessage> Conversation(string name)
+    {
+        lock (_lock)
+        {
+            var here = system();
+            var present = roster?.Invoke();
+
+            foreach (var gone in _conversations
+                         .Where(pair => !string.Equals(pair.Value.System, here, StringComparison.OrdinalIgnoreCase)
+                                        || present?.Find(pair.Key) is null)
+                         .Select(pair => pair.Key)
+                         .ToList())
+            {
+                _conversations.Remove(gone);
+            }
+
+            if (!_conversations.TryGetValue(name, out var held))
+            {
+                _conversations[name] = held = (here, []);
+            }
+
+            if (held.Messages.Count > ExchangeLines.Most)
+            {
+                held.Messages.RemoveRange(0, held.Messages.Count - ExchangeLines.Most);
+            }
+
+            return held.Messages;
+        }
     }
 
     /// <summary>The NPC's personality, written once for the stay unless it is already held or could not be written.</summary>
@@ -259,6 +295,7 @@ public sealed class ChatterLine(
             {
                 _heardIn.Remove(name);
                 _heardAt.Remove(name);
+                _conversations.Remove(name);
             }
         }
 

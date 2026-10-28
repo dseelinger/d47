@@ -1024,6 +1024,8 @@ public sealed class TurnLoop(
 
                     var english = screened.Translation is { Length: > 0 } ? screened.Translation : screened.Spoken;
 
+                    HoldSpoken(speaker, unscreenedReply.Result, screened.Spoken.Length > 0 ? screened.Spoken : english);
+
                     result = unscreenedReply.Result with { Text = english };
                     yield return new TurnEvent.Completed(result);
                     continue;
@@ -1039,6 +1041,8 @@ public sealed class TurnLoop(
                 if (turnEvent is TurnEvent.Completed { Result.Outcome: TurnOutcome.Answered or TurnOutcome.Truncated } unscreened)
                 {
                     var said = screen(unscreened.Result.Text);
+
+                    HoldSpoken(speaker, unscreened.Result, said);
 
                     if (thinner is not null)
                     {
@@ -1090,6 +1094,20 @@ public sealed class TurnLoop(
         {
             Record(thinner is null || speaker.ScreenReply is not null ? result.Text : heard.ToString().Trim(), input, speaker.Name);
         }
+    }
+
+    /// <summary>Replaces the model's answer, just committed to the speaker's transcript, with the line that was spoken.</summary>
+    private static void HoldSpoken(Persona.Speaker speaker, TurnResult result, string spoken)
+    {
+        if (result.Outcome != TurnOutcome.Answered
+            || spoken.Length == 0
+            || speaker.Transcript is not { Count: > 0 } transcript
+            || transcript[^1].Role != ConversationRole.Assistant)
+        {
+            return;
+        }
+
+        transcript[^1] = new ConversationMessage(ConversationRole.Assistant, spoken);
     }
 
     /// <summary>How many near misses one offer names.</summary>

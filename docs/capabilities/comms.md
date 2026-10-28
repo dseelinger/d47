@@ -319,7 +319,8 @@ voice and notes you gave them.
 
 **Strangers** are NPCs D47 makes up, such as a pilot on your target or a voice heard on comms in this
 system. D47 writes each one a short personality. Strangers appear on the Target and System
-channels.
+channels. A stranger remembers the conversation until you jump or they sign off, and a target
+pilot remembers it until you target someone else.
 
 ### Range
 

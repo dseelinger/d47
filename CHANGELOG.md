@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A comms NPC and the pilot of your target now remember the conversation. An NPC forgets it when they sign off or you jump, and a target pilot forgets it when you target someone else.
+
 The English for a character who answers in another language is now drawn under the character's reply. It was drawn under the Commander's message.
 
 A stock story's objective on the Stories tab now has a copy glyph after its system name, as a short story's objective does. Pressing it copies the system name.
