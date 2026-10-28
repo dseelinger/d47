@@ -1,21 +1,23 @@
-using System.Globalization;
 using D47.Core.Journal;
 using D47.Core.Persona;
 
 namespace D47.Core.Stories;
 
-/// <summary>The Guardian beacon nearest the Commander, how far it is, and whether the ship they are in can make the trip.</summary>
-public sealed record BeaconReach(long Address, string System, double LightYears, bool InReach, string? Why, bool Unarmed = false, bool Carrier = false)
+/// <summary>
+/// The Guardian beacon nearest the Commander, how far it is, and whether the ship they are in can make the trip.
+/// <paramref name="EasierWith"/> is the jump range that makes the trip easier, set when the ship's is under it.
+/// </summary>
+public sealed record BeaconReach(long Address, string System, double LightYears, bool InReach, string? Why, bool Unarmed = false, bool Carrier = false, double? EasierWith = null)
 {
-    /// <summary>The most jumps a trip to the beacon may take for it to be in reach.</summary>
+    /// <summary>The most jumps a trip to the beacon takes with the jump range <see cref="RangeNeeded"/> gives.</summary>
     public const int MostJumps = 20;
 
-    /// <summary>The most jump range, in light years, a trip to the beacon asks for, however far it is.</summary>
+    /// <summary>The most jump range, in light years, <see cref="RangeNeeded"/> gives for a trip to the beacon, however far it is.</summary>
     public const double MostRangeNeeded = 28;
 
     /// <summary>
-    /// In reach with a laser or railgun fitted and either a fleet carrier or a fuel scoop and a jump range for
-    /// <see cref="MostJumps"/> jumps or fewer. What the journal has not said counts in the Commander's favour.
+    /// In reach with a laser or railgun fitted and either a fleet carrier or a fuel scoop. Jump range never decides it.
+    /// What the journal has not said counts in the Commander's favour.
     /// </summary>
     public static BeaconReach Of(StarPosition? here, ShipLoadout ship, bool carrier)
     {
@@ -34,13 +36,6 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
 
         if (!carrier)
         {
-            var needed = RangeNeeded(lightYears);
-
-            if (ship.MaxJumpRange is { } range && !RangeEnough(range, needed))
-            {
-                parts.Add(Range(ship, needed));
-            }
-
             if (ship.Fitted(ShipLoadout.FuelScoop) is false)
             {
                 parts.Add("no fuel scoop is fitted");
@@ -59,7 +54,10 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
             _ => $"{string.Join(", ", parts.SkipLast(1))} and {parts[^1]}",
         };
 
-        return new BeaconReach(address, system, lightYears, why is null, why, noWeapon, carrier);
+        var needed = RangeNeeded(lightYears);
+        double? easier = !carrier && ship.MaxJumpRange is { } range && !RangeEnough(range, needed) ? needed : null;
+
+        return new BeaconReach(address, system, lightYears, why is null, why, noWeapon, carrier, easier);
     }
 
     /// <summary>
@@ -71,15 +69,14 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
     public static bool RangeEnough(double range, double needed) => range > 0 && range >= needed;
 
     /// <summary>
-    /// Whether the ship has a known jump range of at least <paramref name="needed"/>, a fuel scoop and, when <paramref name="weaponNeeded"/>,
-    /// a laser or railgun fitted; what the journal has not said counts against it.
+    /// Whether the ship has a fuel scoop and, when <paramref name="weaponNeeded"/>, a laser or railgun fitted;
+    /// what the journal has not said counts against it.
     /// </summary>
-    public static bool CanMakeTrip(ShipLoadout ship, double needed, bool weaponNeeded = true)
+    public static bool CanMakeTrip(ShipLoadout ship, bool weaponNeeded = true)
     {
         ArgumentNullException.ThrowIfNull(ship);
 
-        return ship.MaxJumpRange is { } range && RangeEnough(range, needed) && ship.Fitted(ShipLoadout.FuelScoop) is true
-            && (!weaponNeeded || HasWeapon(ship));
+        return ship.Fitted(ShipLoadout.FuelScoop) is true && (!weaponNeeded || HasWeapon(ship));
     }
 
     /// <summary>Whether a laser or railgun is fitted; what the journal has not said counts against it.</summary>
@@ -91,8 +88,4 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
     }
 
     private const string NoWeapon = "no laser or railgun is fitted";
-
-    private static string Range(ShipLoadout ship, double needed) =>
-        $"the ship's jump range of {ship.MaxJumpRange.GetValueOrDefault().ToString("0.0", CultureInfo.InvariantCulture)} light years "
-        + $"is under the {needed.ToString("0.0", CultureInfo.InvariantCulture)} the trip needs";
 }

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A short jump range no longer keeps a Guardian beacon out of reach in a story. A ship with a fuel scoop and a laser or railgun gets the beacon chapter whatever its jump range, and the story only says the trip is easier with a longer range. A reach objective already saved with a jump range is met by the next Loadout with a scoop and a weapon.
+
 A system's bodies are found again when one of its rings has no signals on record. The lookup failed for such a system, and a story chapter that named a place in it was not written.
 
 A story objective at a tourist beacon now names the system, such as "scan a tourist beacon in Sugrivik", instead of a beacon name that could be in another Commander's language. This applies to stories already running too.

@@ -212,7 +212,7 @@ Thirty-nine triggers, and every one is a comparison on a structured field rather
 | Reach a rank | career and a number | any rank word |
 | Board a ship | the hull's type | the ship's name |
 | Scan a Guardian beacon | a data-link scan (its three pylons are charged with laser or railgun fire first) while in a Guardian beacon system's id | the scan's type, or any name |
-| Fit out a ship that can reach the beacon | a `Loadout` whose `MaxJumpRange` is at least the range written into the objective and whose modules include a fuel scoop and a laser or railgun (`hpt_pulselaser`, `hpt_beamlaser` or `hpt_railgun`), or a `CarrierBuy`; a `Loadout` with no `MaxJumpRange` does not count. For a fleet carrier owner the objective names no range and a `Loadout` with a laser or railgun meets it. An `FSDJump`, `Location` or `CarrierJump` into the beacon's system, or a `CarrierBuy`, also meets it, in any ship, unless the ship had no laser or railgun when the chapter was written. Only a chapter whose Guardian beacon is out of reach has one | the ship's hull or name |
+| Fit out a ship that can reach the beacon | a `Loadout` whose modules include a fuel scoop and a laser or railgun (`hpt_pulselaser`, `hpt_beamlaser` or `hpt_railgun`), or a `CarrierBuy`; `MaxJumpRange` is never read, and a range stored in the objective is only the figure in its "easier with" sentence. For a fleet carrier owner a `Loadout` with a laser or railgun meets it. An `FSDJump`, `Location` or `CarrierJump` into the beacon's system, or a `CarrierBuy`, also meets it, in any ship, unless the ship had no laser or railgun when the chapter was written. Only a chapter whose Guardian beacon is out of reach has one | the ship's hull or name |
 | Collect bounties | `Bounty` events | anything else |
 | Earn kill bonds | `FactionKillBond` events, optionally for one `AwardingFaction` | the faction fought |
 | Complete missions | `MissionCompleted` events, optionally for one `Faction` and a mission family that starts the internal `Name`, such as `Mission_Courier` | the mission's title |
@@ -460,11 +460,11 @@ chapter one, which then begins. D47 keeps the Backstory you had before; a Backst
 story's own words counts as none. Edits you make to the Backstory while a story runs are not kept. Act one ends when you scan the Guardian beacon nearest to you with the ship's data-link
 scanner; arriving in the beacon's system is not enough. The beacon's three pylons must be charged by laser
 or railgun fire, all within a few minutes, before the scan opens its core; the objective's hand-off says so. Before each act-one chapter D47 checks whether
-the ship you are in can reach that beacon: it can when a laser or railgun is fitted in any mount and you own a fleet carrier, or the beacon is at
-most 20 jumps away at the ship's maximum jump range, or the ship jumps at least 28 light years, and a fuel scoop is fitted. When it can, the
+the ship you are in can reach that beacon: it can when a laser or railgun is fitted in any mount and either you own a fleet carrier or a fuel scoop is fitted. Jump range
+never decides it; a ship with a short range is told the trip is easier with a longer one. When it can, the
 chapter ends at the beacon. When it cannot, the chapter has no beacon objective, keeps to a session's
 flying, and works toward a ship that can make the trip; the chapter writer is told the beacon, its
-distance, and whether the jump range, the missing fuel scoop, the missing laser or railgun or any of them stand in the way. The chapter's last line is said before
+distance, and whether the missing fuel scoop, the missing laser or railgun or both stand in the way. The chapter's last line is said before
 the core wakes, in the voice that was aboard. Each chapter is a story on this tab. When one finishes, the next is written from it
 and begins. **Switch** abandons the running story and picks another.
 

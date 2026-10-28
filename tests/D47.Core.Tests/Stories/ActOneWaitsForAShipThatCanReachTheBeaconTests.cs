@@ -9,7 +9,7 @@ namespace D47.Core.Tests.Stories;
 
 /// <summary>
 /// An act-one chapter ends at the beacon only when the ship the Commander is in can reach it: a laser or railgun fitted, and a fleet carrier
-/// or twenty jumps or fewer with a fuel scoop, never asking for more than 28 light years. Otherwise the chapter works toward a ship that can.
+/// or a fuel scoop, whatever its jump range. Otherwise the chapter works toward a ship that can; a short range only makes the trip easier.
 /// </summary>
 public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
 {
@@ -21,17 +21,16 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
         Assert.Equal(Beacon, reach.System);
         Assert.Equal(686, reach.LightYears, 0.5);
         Assert.False(reach.InReach);
-        Assert.Contains("jump range of 7.6 light years", reach.Why);
-        Assert.Contains("no fuel scoop", reach.Why);
+        Assert.Equal("no fuel scoop is fitted", reach.Why);
     }
 
     [Fact]
-    public void AScoopAloneIsNotEnoughAtSidewinderRange()
+    public void AScoopAndAWeaponAreEnoughAtSidewinderRange()
     {
         var reach = BeaconReach.Of(BeyondTheBeacon(686), Flying(7.6, scoop: true).Ship, carrier: false);
 
-        Assert.False(reach.InReach);
-        Assert.DoesNotContain("fuel scoop", reach.Why);
+        Assert.True(reach.InReach);
+        Assert.Null(reach.Why);
     }
 
     [Fact]
@@ -43,12 +42,26 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
         Assert.True(BeaconReach.Of(BeyondTheBeacon(686), Flying(28, scoop: true).Ship, carrier: false).InReach);
 
     [Fact]
-    public void JustUnderTwentyEightLightYearsDoesNotReach686AndSaysWhatTheTripNeeds()
+    public void JustUnderTwentyEightLightYearsStillReaches686AndSuggestsTwentyEight()
     {
         var reach = BeaconReach.Of(BeyondTheBeacon(686), Flying(27.9, scoop: true).Ship, carrier: false);
 
-        Assert.False(reach.InReach);
-        Assert.Contains("jump range of 27.9 light years is under the 28.0 the trip needs", reach.Why);
+        Assert.True(reach.InReach);
+        Assert.Null(reach.Why);
+        Assert.Equal(28, reach.EasierWith);
+    }
+
+    [Fact]
+    public void ARangeThatIsEnoughSuggestsNothing() =>
+        Assert.Null(BeaconReach.Of(BeyondTheBeacon(686), Flying(35, scoop: true).Ship, carrier: false).EasierWith);
+
+    [Fact]
+    public void AMissingScoopNeverStatesTheShipsRange()
+    {
+        var reach = BeaconReach.Of(BeyondTheBeacon(686), Flying(7.6, scoop: false, hardpoint: null).Ship, carrier: false);
+
+        Assert.DoesNotContain("jump range", reach.Why);
+        Assert.DoesNotContain("light years", reach.Why);
     }
 
     [Fact]
@@ -86,12 +99,11 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
     }
 
     [Fact]
-    public void AMissingWeaponIsNamedBesideTheRangeAndTheScoop()
+    public void AMissingWeaponIsNamedBesideTheScoop()
     {
         var reach = BeaconReach.Of(BeyondTheBeacon(686), Flying(7.6, scoop: false, hardpoint: null).Ship, carrier: false);
 
-        Assert.Contains("jump range of 7.6 light years", reach.Why);
-        Assert.EndsWith("no fuel scoop is fitted and no laser or railgun is fitted", reach.Why);
+        Assert.Equal("no fuel scoop is fitted and no laser or railgun is fitted", reach.Why);
     }
 
     [Theory]
@@ -138,7 +150,7 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
 
     [Trait("Category", "Integration")]
     [Fact]
-    public async Task ActOneRunsUntilTheShipCanMakeTheTrip()
+    public async Task ActOneRunsUntilTheShipHasAScoopAndAWeapon()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
@@ -167,13 +179,13 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
 
         Assert.Contains($"in {Beacon}, is 686 light years away and out of reach", brief);
         Assert.Contains("no fuel scoop is fitted", brief);
-        Assert.Contains("jump range of 7.6 light years", brief);
+        Assert.DoesNotContain("jump range of", brief);
         Assert.DoesNotContain("its last beat is \"beacon\"", brief);
         Assert.DoesNotContain(Secret.Beats.BreakIntoTwo!, brief);
         Assert.Contains(Secret.Beats.Debate!, brief);
 
         fixtures.Finish("F1", fixtures.Stories.Current("F1")!.CurrentChapter!, Now);
-        ship = Flying(35, scoop: true);
+        ship = Flying(7.6, scoop: true);
 
         Assert.Null(await fixtures.Director.WriteNextAsync("F1", Now.AddDays(1), CancellationToken.None));
 
@@ -183,6 +195,7 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
         var second = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
 
         Assert.Equal(TriggerKind.Beacon, second.Beats[^1].Trigger.Kind);
+        Assert.Equal(28, second.Beats[^1].Trigger.JumpRange);
         Assert.Contains(Secret.Beats.BreakIntoTwo!, fixtures.Provider.Requests[3].Prompt.History[0].Text);
     }
 }

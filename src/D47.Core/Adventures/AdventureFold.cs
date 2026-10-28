@@ -608,7 +608,7 @@ public static class AdventureFold
     private static bool LoadoutMakesTheTrip(AdventureTrigger trigger, Journal.ShipLoadout ship) =>
         trigger.Carrier == true
             ? Stories.BeaconReach.HasWeapon(ship)
-            : trigger.JumpRange is { } needed && Stories.BeaconReach.CanMakeTrip(ship, needed, weaponNeeded: trigger.Unarmed is not null);
+            : Stories.BeaconReach.CanMakeTrip(ship, weaponNeeded: trigger.Unarmed is not null);
 
     private static bool Named(string? wanted, string? actual) =>
         !string.IsNullOrWhiteSpace(wanted) && string.Equals(wanted.Trim(), actual?.Trim(), StringComparison.OrdinalIgnoreCase);

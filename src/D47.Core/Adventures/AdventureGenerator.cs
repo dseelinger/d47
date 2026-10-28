@@ -72,7 +72,7 @@ public sealed record AdventureRewrite(
     int Step = 0);
 
 /// <summary>The Guardian beacon system an act-one chapter ends at.</summary>
-public sealed record AdventureBeacon(long SystemAddress, string System);
+public sealed record AdventureBeacon(long SystemAddress, string System, double? EasierWith = null);
 
 /// <summary>The landable body a story's finale ends on, named in its first finale chapter.</summary>
 public sealed record AdventureDestination(long SystemAddress, string System, int BodyId, string Body)
@@ -88,7 +88,7 @@ public sealed record AdventureDestination(long SystemAddress, string System, int
 }
 
 /// <summary>The Guardian beacon an act-one chapter works toward but cannot reach, and why.</summary>
-public sealed record AdventureBeaconAway(string System, double LightYears, string Why, bool Unarmed = false, bool Carrier = false);
+public sealed record AdventureBeaconAway(string System, double LightYears, string Why, bool Unarmed = false, bool Carrier = false, double? EasierWith = null);
 
 /// <summary>An activity a chapter must contain one beat of; a mission beat matches when its family starts with <see cref="MissionFamily"/>.</summary>
 public sealed record AdventureActivity(string Name, TriggerKind Kind, string? MissionFamily = null)
@@ -2252,7 +2252,7 @@ public sealed class AdventureGenerator(
                 $"This is an act-one chapter, and the Guardian beacon the story needs, in {away.System}, is "
                 + $"{away.LightYears.ToString("0", CultureInfo.InvariantCulture)} light years away and out of reach: {away.Why}. "
                 + "This chapter has no beacon objective and keeps every hop within the reach. It works toward a ship that can make "
-                + "the trip: credits, a better ship, a laser or railgun, a fuel scoop or a longer jump range. Its last objective may be \"reach\", which any ship that can make the trip meets.");
+                + "the trip: credits, a better ship, a laser or railgun or a fuel scoop. Its last objective may be \"reach\", which any ship that can make the trip meets.");
         }
 
         if (story.Beacon is { } beacon)
@@ -2893,7 +2893,7 @@ public sealed class AdventureGenerator(
         if (reachAway is not null)
         {
             text.AppendLine(
-                $"- \"reach\": the Commander's ship can make the trip to the Guardian beacon in {reachAway.System}: any ship with the jump range, a fuel scoop and a laser or railgun, bought or refitted. "
+                $"- \"reach\": the Commander's ship can make the trip to the Guardian beacon in {reachAway.System}: any ship with a fuel scoop and a laser or railgun, bought or refitted. "
                 + "Use it to end this chapter on the ship instead of naming a hull with \"board\". Leave the place to d47.");
         }
 
@@ -3738,7 +3738,7 @@ public sealed class AdventureGenerator(
                 // Placed at the beacon d47 chose, whatever system the model wrote.
                 if (ask.Story?.Beacon is { } beacon && index == beats.Count - 1)
                 {
-                    trigger = new AdventureTrigger { Kind = TriggerKind.Beacon, SystemAddress = beacon.SystemAddress, System = beacon.System };
+                    trigger = new AdventureTrigger { Kind = TriggerKind.Beacon, SystemAddress = beacon.SystemAddress, System = beacon.System, JumpRange = beacon.EasierWith };
                 }
                 else
                 {
@@ -3753,7 +3753,7 @@ public sealed class AdventureGenerator(
                     {
                         Kind = TriggerKind.Reach,
                         System = away.System,
-                        JumpRange = away.Carrier ? null : BeaconReach.RangeNeeded(away.LightYears),
+                        JumpRange = away.Carrier ? null : away.EasierWith,
                         Unarmed = away.Unarmed,
                         Carrier = away.Carrier ? true : null,
                     };

@@ -322,13 +322,6 @@ public static class AdventureValidation
                         problems.AddRange(MissionFamilyProblems(stepWhere, step.Trigger));
                         break;
 
-                    case TriggerKind.Reach:
-                        if (step.Trigger.JumpRange is not > 0 && step.Trigger.Carrier != true)
-                        {
-                            problems.Add($"{stepWhere} waits for a ship that can reach the beacon but names no jump range.");
-                        }
-
-                        break;
                 }
             }
         }

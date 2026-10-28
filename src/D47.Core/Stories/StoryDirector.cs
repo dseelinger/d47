@@ -1725,7 +1725,7 @@ public sealed class StoryDirector(
         var finaleChapter = story.FinaleChapter;
         var stage = finaleChapter is null ? StoryClues.Stage(before) : StoryStage.Finale;
         var beaconBeat = chapter.Beats[^1].Steps[^1].Trigger is { Kind: TriggerKind.Beacon, SystemAddress: { } address } trigger
-            ? new AdventureBeacon(address, trigger.System ?? GuardianCores.Beacons.GetValueOrDefault(address) ?? string.Empty)
+            ? new AdventureBeacon(address, trigger.System ?? GuardianCores.Beacons.GetValueOrDefault(address) ?? string.Empty, trigger.JumpRange)
             : null;
         var reach = story.BeaconScanAt is null && beaconBeat is null
             ? BeaconReach.Of(here(), Game()?.Ship ?? ShipLoadout.Unknown, Game()?.Carrier.Owned == true)
@@ -1767,7 +1767,7 @@ public sealed class StoryDirector(
                 stage,
                 finaleChapter,
                 beaconBeat,
-                reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why, reach.Unarmed, reach.Carrier) : null,
+                reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why, reach.Unarmed, reach.Carrier, reach.EasierWith) : null,
                 reach?.InReach != false,
                 longHaul,
                 slots,
@@ -2880,8 +2880,8 @@ public sealed class StoryDirector(
                 now,
                 stage,
                 finaleChapter,
-                reach is { InReach: true } ? new AdventureBeacon(reach.Address, reach.System) : null,
-                reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why, reach.Unarmed, reach.Carrier) : null,
+                reach is { InReach: true } ? new AdventureBeacon(reach.Address, reach.System, reach.EasierWith) : null,
+                reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why, reach.Unarmed, reach.Carrier, reach.EasierWith) : null,
                 reach?.InReach != false,
                 longHaul,
                 slots,

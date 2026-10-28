@@ -288,7 +288,7 @@ public sealed record AdventureTrigger
     /// <summary>For <see cref="TriggerKind.Codex"/>: true counts only the first time the Commander logs an entry in a region; false or null counts any.</summary>
     public bool? New { get; init; }
 
-    /// <summary>For <see cref="TriggerKind.Reach"/>: the jump range, in light years, the ship needs for the trip.</summary>
+    /// <summary>For <see cref="TriggerKind.Reach"/> and <see cref="TriggerKind.Beacon"/>: the jump range, in light years, that makes the trip easier. Never a condition.</summary>
     public double? JumpRange { get; init; }
 
     /// <summary>For <see cref="TriggerKind.Reach"/>: true when the ship lacked a laser or railgun when the chapter was written, so arriving does not meet it; null on an objective written before the weapon was asked for.</summary>
@@ -342,7 +342,7 @@ public sealed record AdventureTrigger
         TriggerKind.Land or TriggerKind.Scan => SystemAddress is not null && BodyId is not null,
         TriggerKind.Rank => Career is not null && Rank is not null,
         TriggerKind.Board => ShipType is not null,
-        TriggerKind.Reach => JumpRange > 0 || Carrier == true,
+        TriggerKind.Reach => true,
         TriggerKind.Unlock => Knowledge.TechBrokerCatalogue.ForName(Filter) is not null,
         TriggerKind.Pledge => Filter is null || Knowledge.GalaxyFilters.Powers.Contains(Filter),
         TriggerKind.PowerRank => Rank is > 0,
@@ -487,17 +487,22 @@ public sealed record AdventureTrigger
         TriggerKind.Scan =>
             $"Next: {Describe()} — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before.",
         TriggerKind.Beacon =>
-            $"Next: scan the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}. Charge its three pylons with laser or railgun fire, all within a few minutes, then data-link scan the core it opens. It releases an Ancient Key, which needs a cargo scoop or collector limpet and 1 t of free cargo.",
+            $"Next: scan the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}. Charge its three pylons with laser or railgun fire, all within a few minutes, then data-link scan the core it opens. It releases an Ancient Key, which needs a cargo scoop or collector limpet and 1 t of free cargo.{EasierWith()}",
         TriggerKind.Site when Filter == TouristSite => $"Next: {Describe()} with the ship's data-link scanner.",
         TriggerKind.Reach when Carrier == true =>
             $"Next: fit a laser or railgun to the ship you take to the beacon in {System?.Trim() ?? "the Guardian beacon's system"}. Its pylons are charged by weapon fire before it can be scanned.",
         TriggerKind.Reach =>
-            $"Next: {Describe()}: a jump range of at least {JumpRange.GetValueOrDefault().ToString("0.0", CultureInfo.InvariantCulture)} light years"
-            + (Unarmed is null ? " and a fuel scoop." : ", a fuel scoop and a laser or railgun.")
-            + (Unarmed == true ? string.Empty : " Arriving there in any ship also counts."),
+            $"Next: {Describe()}: "
+            + (Unarmed is null ? "a fuel scoop." : "a fuel scoop and a laser or railgun.")
+            + (Unarmed == true ? string.Empty : " Arriving there in any ship also counts.")
+            + EasierWith(),
         _ when IsCounted => $"Next: {Describe()}, counted from now. {Progress(0)}.",
         _ => $"Next: {Describe()}.",
     };
+
+    private string EasierWith() => JumpRange is > 0
+        ? $" It is easier with a jump range of {JumpRange.GetValueOrDefault().ToString("0.0", CultureInfo.InvariantCulture)} light years or more."
+        : string.Empty;
 
     private string Counted(string one, string many) =>
         Count == 1 ? $"one {one}" : $"{(Count ?? 0).ToString(CultureInfo.InvariantCulture)} {many}";

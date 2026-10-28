@@ -5,7 +5,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>
-/// A reach objective is met by a Loadout with the jump range, a fuel scoop and a laser or railgun, by arriving in the beacon's system or by buying
+/// A reach objective is met by a Loadout with a fuel scoop and a laser or railgun, whatever its jump range, by arriving in the beacon's system or by buying
 /// a fleet carrier; arriving and buying do not meet one written for a ship with no laser or railgun.
 /// </summary>
 public sealed class ABeaconReachBeatFiresOnAShipThatCanMakeTheTripTests
@@ -18,8 +18,8 @@ public sealed class ABeaconReachBeatFiresOnAShipThatCanMakeTheTripTests
         $$"""{ "timestamp":"2026-10-14T10:00:00Z", "event":"Loadout", "Ship":"cobra_mk_iii", "ShipID":3{{range}}, "Modules":[{ "Slot":"FrameShiftDrive", "Item":"int_hyperdrive_size4_class5" }{{(scoop ? ", { \"Slot\":\"Slot02\", \"Item\":\"int_fuelscoop_size4_class5\" }" : string.Empty)}}{{(weapon is null ? string.Empty : $", {{ \"Slot\":\"SmallHardpoint1\", \"Item\":\"{weapon}\" }}")}}] }""";
 
     [Fact]
-    public void ALoadoutBelowTheRangeDoesNotFireItEvenWithAScoop() =>
-        Assert.False(Fires(Loadout(", \"MaxJumpRange\":29.9", scoop: true)));
+    public void ALoadoutBelowTheStoredRangeFiresWithAScoopAndAWeapon() =>
+        Assert.True(Fires(Loadout(", \"MaxJumpRange\":7.6", scoop: true)));
 
     [Fact]
     public void ALoadoutAtTheRangeWithNoScoopDoesNotFire() =>
@@ -30,8 +30,8 @@ public sealed class ABeaconReachBeatFiresOnAShipThatCanMakeTheTripTests
         Assert.True(Fires(Loadout(", \"MaxJumpRange\":30.0", scoop: true)));
 
     [Fact]
-    public void ALoadoutWithNoRangeFieldDoesNotFire() =>
-        Assert.False(Fires(Loadout(string.Empty, scoop: true)));
+    public void ALoadoutWithNoRangeFieldFiresWithAScoopAndAWeapon() =>
+        Assert.True(Fires(Loadout(string.Empty, scoop: true)));
 
     [Fact]
     public void BuyingAFleetCarrierFires() =>
@@ -50,8 +50,13 @@ public sealed class ABeaconReachBeatFiresOnAShipThatCanMakeTheTripTests
         Assert.False(Fires("""{ "timestamp":"2026-10-14T10:00:00Z", "event":"FSDJump", "StarSystem":"Col 359 Sector XX-X c4-13", "SystemAddress":2 }"""));
 
     [Fact]
-    public void ABeatWithNoRangeIsNotResolved() =>
-        Assert.False(AdventureFold.Matches(Trigger with { JumpRange = null }, Event(Loadout(", \"MaxJumpRange\":50", scoop: true))));
+    public void ABeatWithNoRangeIsResolvedAndFires()
+    {
+        var none = Trigger with { JumpRange = null };
+
+        Assert.True(none.IsResolved);
+        Assert.True(AdventureFold.Matches(none, Event(Loadout(", \"MaxJumpRange\":3", scoop: true))));
+    }
 
     [Fact]
     public void ALoadoutWithRangeAndAScoopButNoLaserOrRailgunDoesNotFire() =>
@@ -100,20 +105,35 @@ public sealed class ABeaconReachBeatFiresOnAShipThatCanMakeTheTripTests
         Assert.True(AdventureFold.Matches(saved, Event(Loadout(", \"MaxJumpRange\":30.0", scoop: true, weapon: null))));
         Assert.True(AdventureFold.Matches(saved, Event("""{ "timestamp":"2026-10-14T10:00:00Z", "event":"CarrierBuy", "CarrierType":"FleetCarrier" }""")));
         Assert.Equal(
-            "Next: fit out a ship that can reach the beacon in Col 359 Sector XX-X c4-12: a jump range of at least 30.0 light years and a fuel scoop. Arriving there in any ship also counts.",
+            "Next: fit out a ship that can reach the beacon in Col 359 Sector XX-X c4-12: a fuel scoop. Arriving there in any ship also counts. It is easier with a jump range of 30.0 light years or more.",
             saved.HandOff());
     }
 
     [Fact]
     public void TheBeatSaysTheWeaponTheShipNeeds() =>
         Assert.Equal(
-            "Next: fit out a ship that can reach the beacon in Col 359 Sector XX-X c4-12: a jump range of at least 30.0 light years, a fuel scoop and a laser or railgun. Arriving there in any ship also counts.",
+            "Next: fit out a ship that can reach the beacon in Col 359 Sector XX-X c4-12: a fuel scoop and a laser or railgun. Arriving there in any ship also counts. It is easier with a jump range of 30.0 light years or more.",
             Trigger.HandOff());
+
+    [Fact]
+    public void TheBeatSaysNothingOfRangeWhenTheShipsWasEnough() =>
+        Assert.Equal(
+            "Next: fit out a ship that can reach the beacon in Col 359 Sector XX-X c4-12: a fuel scoop and a laser or railgun. Arriving there in any ship also counts.",
+            (Trigger with { JumpRange = null }).HandOff());
+
+    [Fact]
+    public void TheBeaconBeatSaysTheTripIsEasierWithALongerRangeOnlyWhenOneWasStored()
+    {
+        var beacon = new AdventureTrigger { Kind = TriggerKind.Beacon, System = "Col 359 Sector XX-X c4-12", SystemAddress = 1 };
+
+        Assert.DoesNotContain("easier", beacon.HandOff());
+        Assert.EndsWith(" It is easier with a jump range of 28.0 light years or more.", (beacon with { JumpRange = 28 }).HandOff());
+    }
 
     [Fact]
     public void TheBeatForAShipWithNoWeaponDoesNotSayArrivingCounts() =>
         Assert.Equal(
-            "Next: fit out a ship that can reach the beacon in Col 359 Sector XX-X c4-12: a jump range of at least 30.0 light years, a fuel scoop and a laser or railgun.",
+            "Next: fit out a ship that can reach the beacon in Col 359 Sector XX-X c4-12: a fuel scoop and a laser or railgun. It is easier with a jump range of 30.0 light years or more.",
             (Trigger with { Unarmed = true }).HandOff());
 
     [Fact]
