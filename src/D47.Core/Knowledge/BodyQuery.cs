@@ -115,6 +115,9 @@ public sealed record BodyRequest
 
     public string? Material { get; init; }
 
+    /// <summary>A codex entry by name; a colour variant is searched as its species.</summary>
+    public string? CodexEntry { get; init; }
+
     /// <summary>A name from <see cref="SearchSorts.For"/>; null is distance.</summary>
     public string? OrderBy { get; init; }
 
@@ -161,6 +164,9 @@ public sealed record BodyQuery
 
     /// <summary>A surface material to insist on, for the raw half of engineering sourcing.</summary>
     public string? Material { get; init; }
+
+    /// <summary>The species of the codex entry whose landmark the body must carry.</summary>
+    public string? CodexEntry { get; init; }
 
     /// <summary>Named systems to confine the search to, as the index spells them.</summary>
     public IReadOnlyList<string> SystemNames { get; init; } = [];
@@ -284,6 +290,7 @@ public sealed record BodyQuery
             return false;
         }
 
+        var codexEntry = CodexSpecies.Of(request.CodexEntry);
         var arrival = request.MaxArrivalDistance is > 0 ? request.MaxArrivalDistance : null;
 
         if (matchedSubtype is null
@@ -300,12 +307,13 @@ public sealed record BodyQuery
             && temperatureMin is null && temperatureMax is null
             && arrival is null
             && matchedMaterial is null
+            && codexEntry is null
             && criteria.Count == 0)
         {
             failure =
                 "That search has no filters, so it would match every body in the galaxy. Narrow it with a "
                 + "body type, a surface signal, a hotspot material, a ring type, a surface material, volcanism, "
-                + "an atmosphere, or whether it is landable.";
+                + "an atmosphere, a codex entry, or whether it is landable.";
             return false;
         }
 
@@ -332,6 +340,7 @@ public sealed record BodyQuery
             TemperatureMax = temperatureMax,
             MaxArrivalDistance = arrival,
             Material = matchedMaterial,
+            CodexEntry = codexEntry,
             Criteria = criteria,
             OrderByMaterial = orderByMaterial,
             Sort = orderByMaterial ? null : sort,

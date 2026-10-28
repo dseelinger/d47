@@ -263,7 +263,7 @@ public static class EgressDisclosure
                 "spansh.co.uk and api.ardent-insight.com",
                 "System names you ask about, and the filters of a search — an allegiance, a distance, an "
                 + "economy, a minor faction's name, the faction states or governments of a mission type you ask where to find, "
-                + "the modules or ship you want to buy, a body type or a mining material. Where you are goes "
+                + "the modules or ship you want to buy, a body type, a codex entry or a mining material. Where you are goes "
                 + "with it whenever a question is relative to you, because "
                 + "\"the nearest high tech system\" cannot be asked without saying where from. Plotting a "
                 + "route also sends your ship's jump range. Plotting a carrier route sends where it starts and ends "

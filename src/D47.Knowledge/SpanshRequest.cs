@@ -335,6 +335,7 @@ internal static class SpanshRequest
                 writer.WriteEndObject();
             }
 
+            WriteChoice(writer, "landmark_subtype", query.CodexEntry);
             WriteChoice(writer, "volcanism_type", query.Volcanism);
             WriteChoice(writer, "atmosphere", query.Atmosphere);
             WriteChoice(writer, "is_rotational_period_tidally_locked", query.TidallyLocked is true ? "true" : null);

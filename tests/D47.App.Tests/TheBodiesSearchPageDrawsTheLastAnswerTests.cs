@@ -327,6 +327,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
 
         page.Type("near", "Sol");
         page.Type("volcanism", "Water Geysers");
+        page.Type("codex_entry", "Bacterium Cerbrus");
         page.Type("atmosphere", "No atmosphere");
         page.Type("signal_count", "2");
         page.Type("hotspot_count", "3");

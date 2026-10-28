@@ -622,7 +622,7 @@ public static class GalaxyCapability
                 Name = "find_body",
                 Description =
                     "Find the nearest planets, moons or stars matching some criteria — a body type, a "
-                    + "surface signal, a ring to mine, a surface material, volcanism, atmosphere or gravity.",
+                    + "surface signal, a ring to mine, a surface material, a codex entry, volcanism, atmosphere or gravity.",
                 Parameters =
                 [
                     new ToolParameter
@@ -688,6 +688,14 @@ public static class GalaxyCapability
                         Name = "terraformable",
                         Type = ToolParameterType.Boolean,
                         Description = "Only terraforming candidates, which are worth far more to map.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "codex_entry",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "A species or geological feature to find, by its codex name — \"Bacterium Cerbrus\", "
+                            + "\"Fumarole\". A colour variant is searched as its species.",
                     },
                     new ToolParameter
                     {
@@ -2840,6 +2848,7 @@ public static class GalaxyCapability
             ReserveLevel = Text(arguments, "reserve_level"),
             Landable = Flag(arguments, "landable"),
             Terraformable = Flag(arguments, "terraformable"),
+            CodexEntry = Text(arguments, "codex_entry"),
             Volcanism = Text(arguments, "volcanism"),
             Atmosphere = Text(arguments, "atmosphere"),
             TidallyLocked = Flag(arguments, "tidally_locked"),
@@ -3238,7 +3247,8 @@ public static class GalaxyCapability
     {
         if (result.Bodies.Count == 0)
         {
-            return $"Nothing within {query.MaxDistance:N0} light years matches that.";
+            return $"Nothing within {query.MaxDistance:N0} light years matches that"
+                + (query.CodexEntry is { } none ? $", with {none} recorded." : ".");
         }
 
         var report = new StringBuilder();
@@ -3256,6 +3266,11 @@ public static class GalaxyCapability
             report.Append(result.Total == result.Bodies.Count
                 ? $"{GalaxyQuery.SayTotal(result.Total)} bod{(result.Total == 1 ? "y" : "ies")} matched"
                 : $"{GalaxyQuery.SayTotal(result.Total)} bodies matched; {Ranked(query.Sort, result.Bodies.Count)}");
+        }
+
+        if (query.CodexEntry is { } entry)
+        {
+            report.Append($", with {entry} recorded");
         }
 
         if (result.Reference is not null)

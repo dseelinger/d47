@@ -27,6 +27,22 @@ public class ABodySearchReachesInarasFiltersTests
             new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
 
     [Fact]
+    public void ACodexEntryIsALandmarkSubtypeChoice()
+    {
+        var filters = Filters(new() { CodexEntry = "Bacterium Cerbrus" });
+
+        Assert.Equal("{\"value\":[\"Bacterium Cerbrus\"]}", Raw(filters, "landmark_subtype"));
+    }
+
+    [Fact]
+    public void ACodexVariantIsSentAsItsSpecies()
+    {
+        var filters = Filters(new() { CodexEntry = "Frutexa Flammasis - Red" });
+
+        Assert.Equal("{\"value\":[\"Frutexa Flammasis\"]}", Raw(filters, "landmark_subtype"));
+    }
+
+    [Fact]
     public void GravityIsAComparisonBetweenItsBounds()
     {
         var filters = Filters(new() { Gravity = "0-0.1" });

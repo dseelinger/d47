@@ -35,6 +35,7 @@ public sealed class BodySearchPage : GalaxySearchPage
     private readonly CheckBox _landable = Tile("Landable");
     private readonly CheckBox _terraformable = Tile("Terraforming candidate");
     private readonly CheckBox _tidallyLocked = Tile("Tidally locked");
+    private readonly TextBox _codexEntry = Field("codex entry");
     private readonly TextBox _volcanism = Field("volcanism");
     private readonly TextBox _atmosphere = Field("atmosphere");
     private readonly TextBox _gravityFrom = Field("gravity from", mono: true);
@@ -67,6 +68,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         _temperatureReadout = new RangeReadout(_temperatureFrom, _temperatureTo, (min, max) => RangeReadout.Measure(min, max, "Temperature", "K"));
         _signalCount.PlaceholderText = Any;
         _hotspotCount.PlaceholderText = Any;
+        _codexEntry.PlaceholderText = Any;
         _volcanism.PlaceholderText = Any;
         _atmosphere.PlaceholderText = Any;
 
@@ -165,6 +167,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
         Put("signal_count", _signalCount.Text);
         Put("hotspot_count", _hotspotCount.Text);
+        Put("codex_entry", _codexEntry.Text);
         Put("volcanism", _volcanism.Text);
         Put("atmosphere", _atmosphere.Text);
         Put("gravity", Range(_gravityFrom.Text, _gravityTo.Text));
@@ -189,7 +192,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     public override void ClearForm()
     {
-        foreach (var box in (TextBox[])[_near, _volcanism, _atmosphere, _gravityFrom, _gravityTo, _temperatureFrom, _temperatureTo, _fromStar, _signalCount, _hotspotCount])
+        foreach (var box in (TextBox[])[_near, _codexEntry, _volcanism, _atmosphere, _gravityFrom, _gravityTo, _temperatureFrom, _temperatureTo, _fromStar, _signalCount, _hotspotCount])
         {
             box.Text = string.Empty;
         }
@@ -215,6 +218,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         string? Get(string key) => arguments.TryGetValue(key, out var value) ? value : null;
 
         Fill(_near, _nearNames, Get("near") ?? string.Empty);
+        _codexEntry.Text = Get("codex_entry") ?? string.Empty;
         _volcanism.Text = Get("volcanism") ?? string.Empty;
         _atmosphere.Text = Get("atmosphere") ?? string.Empty;
         _signalCount.Text = Get("signal_count") ?? string.Empty;
@@ -266,6 +270,7 @@ public sealed class BodySearchPage : GalaxySearchPage
             ReserveLevel = Get("reserve_level"),
             Landable = Flag("landable"),
             Terraformable = Flag("terraformable"),
+            CodexEntry = Get("codex_entry"),
             Volcanism = Get("volcanism"),
             Atmosphere = Get("atmosphere"),
             TidallyLocked = Flag("tidally_locked"),
@@ -400,6 +405,7 @@ public sealed class BodySearchPage : GalaxySearchPage
             Labelled("Type", _pickers["body_type"].Picker),
             Labelled("Surface material", _pickers["material"].Picker),
             flags,
+            Labelled("Codex entry", _codexEntry),
             Columns2("*,*", Labelled("Volcanism", _volcanism), Labelled("Atmosphere", _atmosphere)),
             Labelled("Gravity in G", Span(_gravityFrom, _gravityTo, _gravityReadout)),
             Labelled("Temperature in K", Span(_temperatureFrom, _temperatureTo, _temperatureReadout)),
@@ -468,6 +474,7 @@ public sealed class BodySearchPage : GalaxySearchPage
     private TextBox TextField(string name) => name switch
     {
         "near" => _near,
+        "codex_entry" => _codexEntry,
         "volcanism" => _volcanism,
         "atmosphere" => _atmosphere,
         "signal_count" => _signalCount,
