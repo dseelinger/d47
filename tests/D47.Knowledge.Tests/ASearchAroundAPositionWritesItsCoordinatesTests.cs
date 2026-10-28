@@ -50,6 +50,24 @@ public class ASearchAroundAPositionWritesItsCoordinatesTests
     }
 
     [Fact]
+    public void AStationSearchWithAPointAndASystemUsesThePoint()
+    {
+        var body = JsonDocument.Parse(SpanshRequest.Stations(StationQuery.Near("Sol", 100, 5) with { ReferencePosition = Point })).RootElement;
+
+        Assert.Equal(400, body.GetProperty("reference_coords").GetProperty("z").GetDouble());
+        Assert.False(body.TryGetProperty("reference_system", out _));
+    }
+
+    [Fact]
+    public void ABodySearchWithAPointAndASystemUsesThePoint()
+    {
+        var body = JsonDocument.Parse(SpanshRequest.Bodies(BodyQuery.LandableNear("Sol", 100, 5) with { ReferencePosition = Point })).RootElement;
+
+        Assert.Equal(400, body.GetProperty("reference_coords").GetProperty("z").GetDouble());
+        Assert.False(body.TryGetProperty("reference_system", out _));
+    }
+
+    [Fact]
     public void ThePointSearchesApplyTheSameClampsAsTheSystemOnes()
     {
         var station = StationQuery.Near(Point, 9999, 99);
