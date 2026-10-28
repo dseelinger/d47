@@ -289,8 +289,6 @@ public interface ILoadoutMode
     /// <summary>The crumb key of this mode's root, and the word the mode control shows.</summary>
     string RootKey { get; }
 
-    string RootWord { get; }
-
     /// <summary>How an item's crumb and a slot's crumb are keyed, so a page rebuilds from a trail.</summary>
     string ItemPrefix { get; }
 

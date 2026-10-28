@@ -184,9 +184,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>The history entry drawn instead of the board's last answer, or null.</summary>
     public string? HistoryId { get; private set; }
 
-    /// <summary>Whether the HISTORY tile can be pressed.</summary>
-    public bool CanOpenHistory => _history.CanOpen;
-
     /// <summary>
     /// Draws <paramref name="entry"/>'s stored answer and arguments until the next answer of this kind lands.
     /// </summary>
@@ -232,9 +229,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     /// <summary>Whether the headset draws the answer view rather than the form view.</summary>
     public bool ShowsAnswer => _showingAnswer ?? false;
-
-    /// <summary>The answer drawn, or null while none is.</summary>
-    public GalaxySearchPosting? Shown { get; private set; }
 
     /// <summary>Whether RUN SEARCH can be pressed.</summary>
     public bool CanRun => _run.IsEnabled;
@@ -629,7 +623,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             : Count(last) == 0 ? GalaxySearchView.NoResults
             : GalaxySearchView.Answer;
 
-        Shown = View is GalaxySearchView.Answer or GalaxySearchView.NoResults ? last : null;
         Sentence = View switch
         {
             GalaxySearchView.LookupsOff => OffSentence,

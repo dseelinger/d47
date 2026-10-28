@@ -141,9 +141,6 @@ public sealed class SignalSearchPage : GalaxySearchPage
     /// <summary>Types into the name field.</summary>
     public void Type(string text) => _name.Text = text;
 
-    /// <summary>Sets the Near field.</summary>
-    public void Near(string system) => _near.Text = system;
-
     public override IReadOnlyDictionary<string, string> FormArguments()
     {
         var arguments = new Dictionary<string, string>(StringComparer.Ordinal);

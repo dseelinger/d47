@@ -27,8 +27,6 @@ public sealed class OnFootMode(
 
     public string RootKey => Root;
 
-    public string RootWord => "Suits";
-
     public string ItemPrefix => KitPrefix;
 
     public string SlotPrefix => KitSlotPrefix;

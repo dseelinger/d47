@@ -81,13 +81,6 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
         }
     }
 
-    /// <summary>Orders the list by <see cref="Sorts"/>[<paramref name="index"/>].</summary>
-    internal void Sort(int index)
-    {
-        _sort.SelectedIndex = Math.Clamp(index, 0, Sorts.Count - 1);
-        Draw();
-    }
-
     /// <summary>
     /// <paramref name="ranked"/> with each band's missions in the order of <see cref="Sorts"/>[<paramref name="sort"/>]:
     /// soonest expiry or highest reward first, those without a figure last, ties in board order. The bands stay as they came.

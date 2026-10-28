@@ -22,7 +22,6 @@ namespace D47.App.Panel;
 /// </summary>
 public sealed class MaterialsPage : UserControl
 {
-    public const string RootKey = LoadoutPages.GapRoot;
 
     /// <summary>The footer's phrase; it carries a <c>get_build_gap</c> keyword.</summary>
     public const string Phrase = "what am I short of";

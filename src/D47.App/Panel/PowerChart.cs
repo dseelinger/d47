@@ -82,9 +82,6 @@ public sealed class PowerChart : Control
         InvalidateVisual();
     }
 
-    /// <summary>The slot under the pointer in the drill-in column, or null.</summary>
-    internal string? Hovered => _hover;
-
     private sealed record Slice(ModuleSpan Span, int Priority, double Bottom, double Top);
 
     private sealed record Bar(ModuleSpan Span, double Bottom, double Height)

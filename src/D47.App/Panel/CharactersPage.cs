@@ -84,7 +84,6 @@ public sealed class CharactersPage : UserControl, IPageSummary
     private readonly ContentControl _sidebar = new();
     private readonly StackPanel _detail = new() { Spacing = 14, MaxWidth = DetailMax, HorizontalAlignment = HorizontalAlignment.Left };
     private readonly Dictionary<CharacterField, string> _errors = [];
-    private readonly HashSet<string> _grabbed = [];
 
     private string? _selected;
     private Draft? _draft;

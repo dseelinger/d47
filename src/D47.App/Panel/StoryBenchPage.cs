@@ -471,11 +471,6 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             : Row(content, first);
     }
 
-    internal static string Describe(BenchSlotSummary slot) =>
-        slot.Title is null
-            ? "No story."
-            : $"{slot.Title} · {slot.Length} · {slot.CluesGiven.ToString(CultureInfo.InvariantCulture)} of {slot.Clues.ToString(CultureInfo.InvariantCulture)} clues given";
-
     /// <summary><see cref="Describe"/> as runs: the title in White, the numbers in mono.</summary>
     internal static InlineCollection DescribeRuns(BenchSlotSummary slot)
     {

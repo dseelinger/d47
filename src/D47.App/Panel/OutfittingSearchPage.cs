@@ -134,9 +134,6 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     /// <summary>The suggestions the add field lists.</summary>
     public SystemNameSuggestions<OutfittingItem> Suggestions => _addNames;
 
-    /// <summary>Sets the Near field.</summary>
-    public void Near(string system) => _near.Text = system;
-
     /// <summary>Sets the landing pad: Any, Medium or Large.</summary>
     public void Pad(string pad) => _pad.SelectedIndex = Math.Max(0, Pads.ToList().FindIndex(known => string.Equals(known, pad, StringComparison.OrdinalIgnoreCase)));
 

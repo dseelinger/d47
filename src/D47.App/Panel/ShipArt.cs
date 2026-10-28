@@ -172,14 +172,6 @@ internal static class ShipArt
         return symbol is null ? null : Find(symbol + ".spin.mp4");
     }
 
-    /// <summary>Whether a hull's 4K picture is on disk, without decoding 33 MB to find out.</summary>
-    internal static bool HasClose4K(string? hull)
-    {
-        var symbol = Symbol(hull);
-
-        return symbol is not null && Find(symbol + ".4k.png") is not null;
-    }
-
     /// <summary>Forgets what has been read, for a hull whose files have just changed on disk.</summary>
     internal static void Forget(string? hull)
     {

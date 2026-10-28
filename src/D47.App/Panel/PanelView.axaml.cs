@@ -576,9 +576,6 @@ public partial class PanelView : UserControl, IPanelTabHost
                 : Theming.ThemeManager.Grey2Key));
     }
 
-    /// <summary>The Settings tab, so a host can hang a tooltip naming the bound gesture on it.</summary>
-    public Control SettingsAffordance => SettingsTab;
-
     /// <summary>
     /// Gives this surface a settings page, built by <paramref name="build"/> the first time it is
     /// selected.

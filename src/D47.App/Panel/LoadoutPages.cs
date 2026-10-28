@@ -693,21 +693,6 @@ public static class LoadoutPages
         return block;
     }
 
-    /// <summary>A detail pane's heading, selectable for the same reason its prose is.</summary>
-    internal static TextBlock Heading(string text)
-    {
-        var block = new SelectableTextBlock
-        {
-            FontWeight = FontWeight.SemiBold,
-            Margin = new Thickness(0, 12, 0, 4),
-        };
-
-        TitleText.Style(block, TypeScale.Body, TitleRank.Row, sentence: true);
-        TitleText.Show(block, text, sentence: true);
-
-        return block;
-    }
-
     /// <summary>
     /// The name atop a slot detail pane, one rank above <see cref="Heading"/> — no top margin, so the
     /// pane does not open with a gap (#249).

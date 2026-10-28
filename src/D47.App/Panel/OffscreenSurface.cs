@@ -57,8 +57,6 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
     /// <summary>Whether something is being chosen from right now.</summary>
     public bool IsChoosing => _over.IsVisible;
 
-    public PixelSize Size => _size;
-
     /// <summary>Changes the pixel size the view is laid out at.</summary>
     public void Resize(PixelSize size)
     {
@@ -254,13 +252,6 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
 
     /// <summary>What the panel says when it refuses a press on a control that opens a window.</summary>
     public const string Refusal = "Not currently supported in VR";
-
-    /// <summary>
-    /// Marks a control this surface must not press: one that opens a window on the desktop, or a modal that
-    /// needs a keyboard the headset does not have. A modal answered by presses and the spelled board opens
-    /// here unmarked (#530).
-    /// </summary>
-    public static void OpensAWindow(Control control) => control.Classes.Add(DesktopOnly);
 
     /// <summary>Whether this is a control a press means something to.</summary>
     private static bool Actionable(Control control) =>

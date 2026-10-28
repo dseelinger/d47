@@ -34,8 +34,6 @@ public sealed class ShipsMode(
 
     public string RootKey => LoadoutPages.FleetRoot;
 
-    public string RootWord => "Ships";
-
     public string ItemPrefix => LoadoutPages.ShipPrefix;
 
     public string SlotPrefix => LoadoutPages.SlotPrefix;
@@ -792,19 +790,6 @@ public sealed class ShipsMode(
         return here is { Length: > 0 } && !string.Equals(here, wanted, StringComparison.OrdinalIgnoreCase)
             ? here
             : null;
-    }
-
-    /// <summary>The fitted module's name, where a plan names a different one and both are worth saying.</summary>
-    private static string? Standing(SlotPlan? plan, ShipModule? module)
-    {
-        if (module is null || Planned(plan) is not { Length: > 0 } wanted)
-        {
-            return null;
-        }
-
-        var here = EliteSpecifications.ModuleName(module.Item) ?? module.Item;
-
-        return string.Equals(here, wanted, StringComparison.OrdinalIgnoreCase) ? null : here;
     }
 
     /// <summary>What the roll actually did, biggest change first, in the shortest form that stays true.</summary>

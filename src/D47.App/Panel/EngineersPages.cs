@@ -391,13 +391,6 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         base.OnAttachedToVisualTree(e);
     }
 
-    /// <summary>Orders the list by <see cref="Sorts"/>[<paramref name="index"/>].</summary>
-    internal void Sort(int index)
-    {
-        _sort.SelectedIndex = Math.Clamp(index, 0, Sorts.Count - 1);
-        Refresh();
-    }
-
     /// <summary>
     /// <paramref name="entries"/> with each reach group in the order of <see cref="Sorts"/>[<paramref name="sort"/>]:
     /// by name, or nearest first with those at no known distance last; ties keep the directory's order.

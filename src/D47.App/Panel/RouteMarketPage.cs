@@ -341,7 +341,7 @@ public sealed class RouteMarketPage : UserControl
                 : best);
 
         header.Show(current);
-        header.Changed += () => SortBy(posting, header.Order, distance, price);
+        header.Changed += () => SortBy(posting, header.Order, distance);
 
         // Inset by a list row's padding, so each header sits over its column.
         var row = layout.Header(header);
@@ -351,7 +351,7 @@ public sealed class RouteMarketPage : UserControl
     }
 
     /// <summary>Asks the same question again, ranked by the pressed column; null is the usual order.</summary>
-    private void SortBy(CommodityPosting posting, SortOrder? order, int distance, int price)
+    private void SortBy(CommodityPosting posting, SortOrder? order, int distance)
     {
         var query = posting.Query;
 
