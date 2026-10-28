@@ -905,6 +905,8 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
         public bool Failing { get; set; }
 
+        public Dictionary<string, string> OnlyNear { get; } = new(StringComparer.OrdinalIgnoreCase);
+
         public static string Near(int index) => $"Wregoe Near {index}";
 
         public static StarPosition NearAt(int index) => new(
@@ -926,6 +928,9 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
             [
                 new SystemSummary { Name = query.ReferenceSystem!, Distance = 0, Position = Wregoe },
                 .. Enumerable.Range(1, 99).Select(index => new SystemSummary { Name = Near(index), SystemAddress = 50_000 + index, Position = NearAt(index) }),
+                .. OnlyNear.TryGetValue(query.ReferenceSystem!, out var only)
+                    ? [new SystemSummary { Name = only, SystemAddress = 60_000, Position = new StarPosition(Wregoe.X + 1, Wregoe.Y, Wregoe.Z) }]
+                    : Array.Empty<SystemSummary>(),
             ];
 
             return Task.FromResult(new GalaxySearchResult(query.ReferenceSystem, 100, systems));
@@ -1123,6 +1128,35 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         Landed(page);
         Landed(page);
 
+        Assert.Equal(2, game.Galaxy.Searches);
+    }
+
+    [AvaloniaFact]
+    public void AnArrivalDropsTheUnvisitedStarsAroundThePreviousSystemAndReturningBringsThemBackWithoutASearch()
+    {
+        var game = Searching();
+        game.Galaxy.OnlyNear["Wregoe TC-X b29-0"] = "Only By Wregoe";
+        game.Galaxy.OnlyNear["Hip 22460"] = "Only By Hip";
+        var (_, _, page) = InWindow(game);
+
+        Landed(page);
+        Assert.Contains("Only By Wregoe", page.Map.UnvisitedDrawn);
+        Assert.DoesNotContain("Only By Hip", page.Map.UnvisitedDrawn);
+
+        game.Commander = Located("Hip 22460", new StarPosition(Wregoe.X - 144, Wregoe.Y, Wregoe.Z + 112));
+        Landed(page);
+        Landed(page);
+
+        Assert.Contains("Only By Hip", page.Map.UnvisitedDrawn);
+        Assert.DoesNotContain("Only By Wregoe", page.Map.UnvisitedDrawn);
+        Assert.Equal(2, game.Galaxy.Searches);
+
+        game.Commander = Located("Wregoe TC-X b29-0", Wregoe);
+        Landed(page);
+        Landed(page);
+
+        Assert.Contains("Only By Wregoe", page.Map.UnvisitedDrawn);
+        Assert.DoesNotContain("Only By Hip", page.Map.UnvisitedDrawn);
         Assert.Equal(2, game.Galaxy.Searches);
     }
 

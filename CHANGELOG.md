@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Galaxy map's Unvisited squares now show only the systems near the Commander's current system. After an arrival, the squares around the previous system are no longer drawn, and they come back, without a new search, when the Commander returns there.
+
 Refining ore in an SRV, such as the Rhino's surface mining, no longer starts a mining run. The mining summary is no longer spoken after surface mining, and surface ore is no longer counted as ring mining.
 
 Stories and chapters written with GPT-6 Luna now ask it for high effort instead of low, and a story call is stopped after 60 seconds with no output instead of 30. In test runs, Luna wrote three of six chapters at high effort and none of six at low effort.

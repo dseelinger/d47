@@ -379,7 +379,7 @@ public sealed class GalaxyMapPage : UserControl
         EnableUnvisited(galaxy is not null && offDuty is null);
 
         var placement = _placement = Place(log, commander, fid, offDuty is not null, galaxy is not null);
-        var unvisited = _unvisited.IsChecked == true ? Unvisited(steps) : [];
+        var unvisited = _unvisited.IsChecked == true ? Unvisited(steps, here) : [];
 
         _unvisitedNames = new HashSet<string>(unvisited.Select(star => star.Name), StringComparer.OrdinalIgnoreCase);
         _placed = placement.Marks;
@@ -461,13 +461,18 @@ public sealed class GalaxyMapPage : UserControl
         _settingUnvisited = false;
     }
 
-    /// <summary>Every system galaxy search has answered with this session that is not in the Commander's travels.</summary>
-    private List<GalaxyMapStar> Unvisited(IReadOnlyList<TravelStep> steps)
+    /// <summary>The systems galaxy search answered near <paramref name="here"/> that are not in the Commander's travels.</summary>
+    private List<GalaxyMapStar> Unvisited(IReadOnlyList<TravelStep> steps, string? here)
     {
+        if (here is null)
+        {
+            return [];
+        }
+
         var addresses = steps.Select(step => step.SystemAddress).ToHashSet();
         var names = steps.Select(step => step.System).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        return [.. _lookups.Nearby()
+        return [.. _lookups.Nearby(here)
             .Where(system => system.Position is not null
                 && !names.Contains(system.Name)
                 && (system.SystemAddress is not { } address || !addresses.Contains(address)))

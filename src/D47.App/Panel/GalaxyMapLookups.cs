@@ -83,15 +83,12 @@ public sealed class GalaxyMapLookups(ILogger? logger = null)
         }
     }
 
-    /// <summary>Every system answered for any reference system so far, once each.</summary>
-    public IReadOnlyList<SystemSummary> Nearby()
+    /// <summary>The systems answered for <paramref name="system"/>; empty until that answer has completed.</summary>
+    public IReadOnlyList<SystemSummary> Nearby(string system)
     {
         lock (_gate)
         {
-            return [.. _nearby.Values
-                .Where(request => request.IsCompletedSuccessfully)
-                .SelectMany(request => request.Result)
-                .DistinctBy(system => system.Name, StringComparer.OrdinalIgnoreCase)];
+            return _nearby.TryGetValue(system, out var request) && request.IsCompletedSuccessfully ? request.Result : [];
         }
     }
 
