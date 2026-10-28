@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter that starts more than 500 light years from Sol, and so has to end 100 to 300 light years nearer Sol, is now offered stations and landable bodies inside that range for its last stop. When the galaxy search finds none within reach, the chapter is not held to the range. A draft that ends outside the range is told which in-range place to move its last objective to.
+
 A stranger on comms keeps talking for as long as you do. They leave when you say goodbye, ask them to go or are rude to them, or when they have said they are busy or about to leave, and no longer make up an interruption to end the talk.
 
 A comms NPC and the pilot of your target now remember the conversation. An NPC forgets it when they sign off or you jump, and a target pilot forgets it when you target someone else.

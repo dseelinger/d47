@@ -448,7 +448,7 @@ public sealed class AdventureGenerator(
         var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
         var notes = new List<string>();
         var notable = ask.Story?.Sights is { Count: > 0 } sights ? sights : await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
-        var candidates = await CandidatesAsync(facts, cancellationToken, notes).ConfigureAwait(false);
+        var candidates = await CandidatesAsync(ask, facts, cancellationToken, notes).ConfigureAwait(false);
 
         if (ask.Rewrite is { } rewrite)
         {
@@ -537,7 +537,7 @@ public sealed class AdventureGenerator(
         var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
         var notes = new List<string>();
         var notable = ask.Story?.Sights is { Count: > 0 } sights ? sights : await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
-        var candidates = await CandidatesAsync(facts, cancellationToken, notes).ConfigureAwait(false);
+        var candidates = await CandidatesAsync(ask, facts, cancellationToken, notes).ConfigureAwait(false);
 
         Enter(ask, WriteStage.Objectives);
         var asked =await AskJsonAsync(
@@ -726,7 +726,7 @@ public sealed class AdventureGenerator(
 
         async Task<Resolved> CheckAsync(ReadAnswer answer)
         {
-            var dryRun = await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, candidates.Sites, cancellationToken).ConfigureAwait(false);
+            var dryRun = await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, candidates.Sites, candidates.InBand, cancellationToken).ConfigureAwait(false);
 
             outage ??= dryRun.Outage;
             return Speakers(dryRun, answer, ask);
@@ -1389,10 +1389,33 @@ public sealed class AdventureGenerator(
         /// <summary>The unvisited Guardian sites, tourist beacons and generation ships within reach.</summary>
         public Sites Sites { get; init; } = Sites.None;
 
+        /// <summary>The places inside the chapter's Sol band, for a chapter held to one.</summary>
+        public InBand InBand { get; init; } = InBand.NotSearched;
+
         public bool IsEmpty => Stations.Count == 0 && Bodies.Count == 0;
     }
 
-    private async Task<Candidates> CandidatesAsync(Facts facts, CancellationToken cancellationToken, List<string> notes)
+    private enum InBandState
+    {
+        /// <summary>No band applies, so nothing was searched.</summary>
+        NotSearched,
+        Listed,
+        NoneFound,
+        Unavailable,
+    }
+
+    /// <summary>The stations and landable bodies inside a chapter's Sol band and within reach of its start.</summary>
+    private sealed record InBand(InBandState State, IReadOnlyList<StationSummary> Stations, IReadOnlyList<BodySummary> Bodies)
+    {
+        public static readonly InBand NotSearched = new(InBandState.NotSearched, [], []);
+
+        /// <summary>Whether the draft is held to the band: false only when the search found no place inside it.</summary>
+        public bool Holds => State != InBandState.NoneFound;
+    }
+
+    private const int InBandPerKind = 5;
+
+    private async Task<Candidates> CandidatesAsync(AdventureAsk ask, Facts facts, CancellationToken cancellationToken, List<string> notes)
     {
         if (galaxy() is not { } search || facts.System is not { } here)
         {
@@ -1401,40 +1424,113 @@ public sealed class AdventureGenerator(
 
         var anarchy = await AnarchyAsync(search, facts, here, cancellationToken, notes).ConfigureAwait(false);
         var sites = await SitesAsync(search, facts, here, cancellationToken, notes).ConfigureAwait(false);
+        var resolver = new AdventureResolver(search, facts.Standings);
+        var nearest = Candidates.None;
 
         try
         {
             var stations = await search.FindStationsAsync(StationQuery.Near(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
             var bodies = await search.FindBodiesAsync(BodyQuery.LandableNear(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
 
-            var resolver = new AdventureResolver(search, facts.Standings);
-            var open = new List<StationSummary>();
-
-            foreach (var station in stations.Stations.Where(station =>
-                         station.IsFixed
-                         && !Closed(station.SystemName, station.SystemAddress, facts)
-                         && (facts.NeedsPad(facts.ThisShipOnly) is not { } pad || station.Admits(pad))
-                         && (facts.ClosedMarketId is null || station.MarketId != facts.ClosedMarketId)))
-            {
-                if (!await resolver.ClosedByWarAsync(station, cancellationToken).ConfigureAwait(false))
-                {
-                    open.Add(station);
-                }
-            }
-
-            return new Candidates(
-                open,
-                [.. bodies.Bodies.Where(body => !Closed(body.SystemName, body.SystemAddress, facts))])
-            {
-                Anarchy = anarchy,
-                Sites = sites,
-            };
+            nearest = new Candidates(
+                await OpenStationsAsync(stations.Stations, facts, resolver, int.MaxValue, cancellationToken).ConfigureAwait(false),
+                OpenBodies(bodies.Bodies, facts, int.MaxValue));
         }
         catch (GalaxyUnavailableException ex)
         {
             notes.Add($"The galaxy search could not list the places within reach ({ex.Message}), so the stops came from the model's own knowledge.");
-            return Candidates.None with { Anarchy = anarchy, Sites = sites };
         }
+
+        return nearest with
+        {
+            Anarchy = anarchy,
+            Sites = sites,
+            InBand = await InBandAsync(search, resolver, ask, facts, cancellationToken, notes).ConfigureAwait(false),
+        };
+    }
+
+    /// <summary>Up to <paramref name="most"/> of <paramref name="stations"/> a new objective may dock at, in their order.</summary>
+    private async Task<IReadOnlyList<StationSummary>> OpenStationsAsync(
+        IEnumerable<StationSummary> stations, Facts facts, AdventureResolver resolver, int most, CancellationToken cancellationToken)
+    {
+        var open = new List<StationSummary>();
+
+        foreach (var station in stations.Where(station =>
+                     station.IsFixed
+                     && !Closed(station.SystemName, station.SystemAddress, facts)
+                     && (facts.NeedsPad(facts.ThisShipOnly) is not { } pad || station.Admits(pad))
+                     && (facts.ClosedMarketId is null || station.MarketId != facts.ClosedMarketId)))
+        {
+            if (open.Count >= most)
+            {
+                break;
+            }
+
+            if (!await resolver.ClosedByWarAsync(station, cancellationToken).ConfigureAwait(false))
+            {
+                open.Add(station);
+            }
+        }
+
+        return open;
+    }
+
+    /// <summary>Up to <paramref name="most"/> of <paramref name="bodies"/> a new objective may land on or scan, in their order.</summary>
+    private IReadOnlyList<BodySummary> OpenBodies(IEnumerable<BodySummary> bodies, Facts facts, int most) =>
+        [.. bodies.Where(body => !Closed(body.SystemName, body.SystemAddress, facts)).Take(most)];
+
+    /// <summary>The point <paramref name="lightYears"/> from <paramref name="start"/> along the line to Sol.</summary>
+    private static StarPosition TowardSol(StarPosition start, double lightYears)
+    {
+        var scale = 1 - (lightYears / start.DistanceTo(StarPosition.Origin));
+
+        return new StarPosition(start.X * scale, start.Y * scale, start.Z * scale);
+    }
+
+    private static bool Inside(StarPosition? position, ChapterBand.Range band) =>
+        position is { } at && at.DistanceTo(StarPosition.Origin) is var fromSol && fromSol >= band.Min && fromSol <= band.Max;
+
+    /// <summary>
+    /// For a chapter held to a Sol band, the open stations and landable bodies inside it: first around the point 150 light years
+    /// nearer Sol within 50, which lies wholly in the band, then, when that leaves nothing, around the point 200 nearer within 100.
+    /// </summary>
+    private async Task<InBand> InBandAsync(
+        IGalaxyService search, AdventureResolver resolver, AdventureAsk ask, Facts facts, CancellationToken cancellationToken, List<string> notes)
+    {
+        if (ChapterBand.Of(facts.Position, ask) is not { } band || facts.Position is not { } start)
+        {
+            return InBand.NotSearched;
+        }
+
+        try
+        {
+            foreach (var (along, radius) in new[] { (150.0, 50.0), (200.0, 100.0) })
+            {
+                var centre = TowardSol(start, along);
+                var stations = await search.FindStationsAsync(StationQuery.Near(centre, radius, 20), cancellationToken).ConfigureAwait(false);
+                var bodies = await search.FindBodiesAsync(BodyQuery.LandableNear(centre, radius, 20), cancellationToken).ConfigureAwait(false);
+
+                var open = await OpenStationsAsync(
+                    stations.Stations.Where(station => Inside(station.Position, band)).OrderBy(station => start.DistanceTo(station.Position!.Value)),
+                    facts, resolver, InBandPerKind, cancellationToken).ConfigureAwait(false);
+                var landable = OpenBodies(
+                    bodies.Bodies.Where(body => Inside(body.Position, band)).OrderBy(body => start.DistanceTo(body.Position!.Value)),
+                    facts, InBandPerKind);
+
+                if (open.Count > 0 || landable.Count > 0)
+                {
+                    return new InBand(InBandState.Listed, open, landable);
+                }
+            }
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            notes.Add($"The galaxy search could not list the places inside the band toward Sol ({ex.Message}), so none was offered and the band still applies.");
+            return new InBand(InBandState.Unavailable, [], []);
+        }
+
+        notes.Add($"No station or landable body between {band.Min:0} and {band.Max:0} light years from Sol was found within reach, so the chapter was not held to that band.");
+        return new InBand(InBandState.NoneFound, [], []);
     }
 
     private async Task<IReadOnlyList<SystemSummary>> AnarchyAsync(
@@ -2270,7 +2366,7 @@ public sealed class AdventureGenerator(
     }
 
     /// <summary>For a chapter starting outside the bubble, how far from Sol its last stop must be; for a chapter in the black, that it may stay far out.</summary>
-    private static void AppendBand(StringBuilder text, AdventureAsk ask, Facts facts)
+    private static void AppendBand(StringBuilder text, AdventureAsk ask, Facts facts, InBand inBand)
     {
         if (ChapterBand.Applies(ask) && ask.Story is { InTheBlack: true })
         {
@@ -2286,11 +2382,81 @@ public sealed class AdventureGenerator(
             return;
         }
 
+        var fromSol = position.DistanceTo(StarPosition.Origin).ToString("0", CultureInfo.InvariantCulture);
+        var min = band.Min.ToString("0", CultureInfo.InvariantCulture);
+        var max = band.Max.ToString("0", CultureInfo.InvariantCulture);
+
+        text.AppendLine();
+
+        if (!inBand.Holds)
+        {
+            text.AppendLine(
+                $"The Commander is {fromSol} light years from Sol, outside the bubble. No station or landable body between {min} and {max} light years "
+                + "from Sol was found within reach, so this chapter is not held to a distance from Sol.");
+            return;
+        }
+
+        text.AppendLine(
+            $"The Commander is {fromSol} light years from Sol, outside the bubble. "
+            + $"The chapter's last stop, the system of its last place objective, must be between {min} "
+            + $"and {max} light years from Sol, so the story works its way back toward populated space."
+            + (inBand.State == InBandState.Listed ? " The places listed as inside the band meet that rule." : ""));
+    }
+
+    /// <summary>The stations and landable bodies inside the chapter's Sol band, one line per system nearest the Commander first.</summary>
+    private static void AppendInBand(StringBuilder text, InBand inBand, AdventureAsk ask, Facts facts)
+    {
+        if (inBand.State != InBandState.Listed || ChapterBand.Of(facts.Position, ask) is not { } band || facts.Position is not { } here)
+        {
+            return;
+        }
+
+        var systems = new Dictionary<string, (StarPosition Position, List<string> Stations, List<string> Bodies)>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var station in inBand.Stations)
+        {
+            Entry(station.SystemName, station.Position!.Value).Stations.Add($"{station.Name} ({PadsOf(station)})");
+        }
+
+        foreach (var body in inBand.Bodies)
+        {
+            Entry(body.SystemName, body.Position!.Value).Bodies.Add(body.Name);
+        }
+
         text.AppendLine();
         text.AppendLine(
-            $"The Commander is {position.DistanceTo(StarPosition.Origin).ToString("0", CultureInfo.InvariantCulture)} light years from Sol, outside the bubble. "
-            + $"The chapter's last stop, the system of its last place objective, must be between {band.Min.ToString("0", CultureInfo.InvariantCulture)} "
-            + $"and {band.Max.ToString("0", CultureInfo.InvariantCulture)} light years from Sol, so the story works its way back toward populated space.");
+            $"Real places inside the band, from the galaxy search: each system is between {band.Min.ToString("0", CultureInfo.InvariantCulture)} and "
+            + $"{band.Max.ToString("0", CultureInfo.InvariantCulture)} light years from Sol, so a last stop at one of them meets the rule. Spelt exactly as they must be named:");
+
+        foreach (var (system, entry) in systems.OrderBy(pair => here.DistanceTo(pair.Value.Position)).ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            text.Append("- ").Append(system)
+                .Append(" (").Append(entry.Position.DistanceTo(StarPosition.Origin).ToString("0", CultureInfo.InvariantCulture)).Append(" ly from Sol, ")
+                .Append(here.DistanceTo(entry.Position).ToString("0", CultureInfo.InvariantCulture)).Append(" ly from the Commander)");
+
+            if (entry.Stations.Count > 0)
+            {
+                text.Append(": stations ").Append(string.Join(", ", entry.Stations));
+            }
+
+            if (entry.Bodies.Count > 0)
+            {
+                text.Append(entry.Stations.Count > 0 ? "; landable bodies " : ": landable bodies ").Append(string.Join(", ", entry.Bodies));
+            }
+
+            text.AppendLine();
+        }
+
+        (StarPosition Position, List<string> Stations, List<string> Bodies) Entry(string system, StarPosition position)
+        {
+            if (!systems.TryGetValue(system, out var entry))
+            {
+                entry = (position, [], []);
+                systems[system] = entry;
+            }
+
+            return entry;
+        }
     }
 
     /// <summary>For a chapter heading home, where it is going and that its last stop must be a reach nearer.</summary>
@@ -2753,6 +2919,7 @@ public sealed class AdventureGenerator(
         }
 
         AppendCandidates(text, candidates);
+        AppendInBand(text, candidates.InBand, ask, facts);
         AppendSites(text, candidates.Sites);
         AppendAnarchy(text, candidates.Anarchy);
 
@@ -2762,7 +2929,7 @@ public sealed class AdventureGenerator(
         }
 
         AppendBarred(text, ask);
-        AppendBand(text, ask, facts);
+        AppendBand(text, ask, facts, candidates.InBand);
         AppendHome(text, ask, facts);
 
         if (ask.Chapter is { } chapter && !IsDrawn(ask.Story))
@@ -3687,6 +3854,7 @@ public sealed class AdventureGenerator(
         AdventureAsk ask,
         bool steerIllegal,
         Sites sites,
+        InBand inBand,
         CancellationToken cancellationToken)
     {
         var resolver = new AdventureResolver(galaxy()!, facts.Standings) { ClosedMarketId = facts.ClosedMarketId, Time = Time };
@@ -3700,6 +3868,9 @@ public sealed class AdventureGenerator(
 
         // The index of the beat that last set the previous system.
         int? lastPlaced = null;
+
+        // The kind of that beat, and the previous system before it.
+        (TriggerKind Kind, string? Before)? lastPlace = null;
 
         void Refuse(int index, string text) => refusals.Add(new Refusal(text, [index]));
 
@@ -3794,6 +3965,7 @@ public sealed class AdventureGenerator(
                     }
                     else
                     {
+                        lastPlace = (site.Kind, previousSystem);
                         previousSystem = site.System;
                         lastPlaced = index;
                         trigger = site;
@@ -4087,6 +4259,7 @@ public sealed class AdventureGenerator(
                     }
                     else
                     {
+                        lastPlace = (place.Kind, previousSystem);
                         previousSystem = place.System;
                         lastPlaced = index;
                         trigger = place;
@@ -4124,10 +4297,17 @@ public sealed class AdventureGenerator(
             refusals.Add(new Refusal(notCloser, lastPlaced is { } placedLast ? [placedLast] : []));
         }
 
-        if (ChapterBand.Of(facts.Position, ask) is { } band
+        if (inBand.Holds
+            && ChapterBand.Of(facts.Position, ask) is { } band
             && await OutsideBandAsync(lastPlaced is null ? null : previousSystem, facts.Position!.Value.DistanceTo(StarPosition.Origin), band, resolver, cancellationToken).ConfigureAwait(false) is { } offBand)
         {
-            refusals.Add(new Refusal(offBand, lastPlaced is { } placedEnd ? [placedEnd] : []));
+            var move = lastPlace is { } end
+                ? await InBandMoveAsync(inBand, end.Kind, end.Before, facts, resolver, cancellationToken).ConfigureAwait(false)
+                : null;
+
+            refusals.Add(new Refusal(
+                move is null ? offBand : $"{offBand} Move objective {offset + lastPlaced!.Value + 1} to {move}; rewrite its lines for that place.",
+                lastPlaced is { } placedEnd ? [placedEnd] : []));
         }
 
         if (HomeLeg.Of(ask) is { } home && facts.Position is { } homeStart
@@ -4349,6 +4529,53 @@ public sealed class AdventureGenerator(
             ? $"The chapter starts {start:0} light years from the finale's destination in {destination.System} and its last stop is {end:0} light years from it; "
               + "its last stop must be closer to the destination than where it starts."
             : null;
+    }
+
+    /// <summary>
+    /// The listed in-band place for an objective of <paramref name="kind"/> nearest <paramref name="before"/>, the stop before it,
+    /// within the reach; null where none is.
+    /// </summary>
+    private static async Task<Replacement?> InBandMoveAsync(
+        InBand inBand, TriggerKind kind, string? before, Facts facts, AdventureResolver resolver, CancellationToken cancellationToken)
+    {
+        IEnumerable<(Replacement Place, StarPosition Position)> offered = kind switch
+        {
+            TriggerKind.Dock => inBand.Stations.Select(station => (new Replacement(station.SystemName, station.Name, null), station.Position!.Value)),
+            TriggerKind.Land or TriggerKind.Scan => inBand.Bodies.Select(body => (new Replacement(body.SystemName, null, body.Name), body.Position!.Value)),
+            TriggerKind.Arrive => inBand.Stations.Select(station => (new Replacement(station.SystemName, null, null), station.Position!.Value))
+                .Concat(inBand.Bodies.Select(body => (new Replacement(body.SystemName, null, null), body.Position!.Value)))
+                .DistinctBy(entry => entry.Item1.System, StringComparer.OrdinalIgnoreCase)
+                .Where(entry => !string.Equals(entry.Item1.System, before, StringComparison.OrdinalIgnoreCase)),
+            _ => [],
+        };
+
+        Replacement? nearest = null;
+        var least = double.MaxValue;
+
+        foreach (var (place, position) in offered)
+        {
+            double? hop;
+
+            try
+            {
+                hop = before is null || string.Equals(before, facts.System, StringComparison.OrdinalIgnoreCase)
+                    ? facts.Position!.Value.DistanceTo(position)
+                    : string.Equals(before, place.System, StringComparison.OrdinalIgnoreCase)
+                        ? 0
+                        : await resolver.DistanceAsync(before, place.System, cancellationToken).ConfigureAwait(false);
+            }
+            catch (GalaxyUnavailableException)
+            {
+                continue;
+            }
+
+            if (hop is { } far && far <= facts.RadiusLightYears && far < least)
+            {
+                (nearest, least) = (place, far);
+            }
+        }
+
+        return nearest;
     }
 
     /// <summary>The refusal for a chapter whose last stop is outside <paramref name="band"/> light years from Sol, or null.</summary>

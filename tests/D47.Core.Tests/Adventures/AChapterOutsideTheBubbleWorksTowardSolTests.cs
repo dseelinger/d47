@@ -28,6 +28,14 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
         ]}
         """;
 
+    private const string Docking = """
+        {"opening": "A road.", "reply": "Here it is.", "beats": [
+          {"title": "The Arrival", "function": "setup", "kind": "dock", "reason": "Someone there knows the way.", "system": "Ossen's Lantern", "station": "Lantern Hub", "body": null, "career": null, "rank": null, "line": "Here."},
+          {"title": "The Turn", "function": "turn", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
+          {"title": "The End", "function": "resolution", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
+        ]}
+        """;
+
     private const string NoPlace = """
         {"opening": "A road.", "reply": "Here it is.", "beats": [
           {"title": "The Turn", "function": "turn", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."}
@@ -144,6 +152,142 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
         Assert.Equal(2, provider.CallCount);
     }
 
+    [Fact]
+    public async Task TheObjectivesPromptListsTheInBandPlacesWithTheirDistancesFromTheirPositions()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+
+        await Generator(provider, new Galaxy(), 588).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
+
+        var brief = provider.Requests[1].Prompt.History[0].Text;
+        Assert.Contains("Real places inside the band, from the galaxy search: each system is between 288 and 488 light years from Sol", brief);
+        Assert.Contains("- Velan's Rest (438 ly from Sol, 150 ly from the Commander): stations Harbour Point (large pad); landable bodies Velan's Rest 2 a", brief);
+        Assert.Contains("The places listed as inside the band meet that rule.", brief);
+    }
+
+    [Fact]
+    public async Task TheInBandSearchIsCentred150LightYearsTowardSolWithin50()
+    {
+        var galaxy = new Galaxy();
+
+        await Generator(new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats)), galaxy, 588).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
+
+        Assert.Equal([(new StarPosition(438, 0, 0), 50.0), (new StarPosition(438, 0, 0), 50.0)], galaxy.Around);
+    }
+
+    [Fact]
+    public async Task APlaceOutsideTheBandOrNotFixedIsNotListedAsInsideIt()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var galaxy = new Galaxy
+        {
+            InBandStations =
+            [
+                Galaxy.HarbourPoint with { Name = "Far Point", SystemName = "Far Reach", Position = new StarPosition(500, 0, 0) },
+                Galaxy.HarbourPoint with { Name = "Fleet Carrier K2X", Type = "Drake-Class Carrier" },
+            ],
+            InBandBodies = [],
+        };
+
+        await Generator(provider, galaxy, 588).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
+
+        var brief = provider.Requests[1].Prompt.History[0].Text;
+        Assert.DoesNotContain("Far Point", brief);
+        Assert.DoesNotContain("K2X", brief);
+        Assert.DoesNotContain("Real places inside the band", brief);
+    }
+
+    [Fact]
+    public async Task WhenTheFirstSearchFindsNothingTheSecondIsCentred200TowardSolWithin100()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var galaxy = new Galaxy { OnlyRadius = 100 };
+
+        await Generator(provider, galaxy, 588).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
+
+        Assert.Equal(
+            [(new StarPosition(438, 0, 0), 50.0), (new StarPosition(438, 0, 0), 50.0), (new StarPosition(388, 0, 0), 100.0), (new StarPosition(388, 0, 0), 100.0)],
+            galaxy.Around);
+        Assert.Contains("- Velan's Rest (438 ly from Sol, 150 ly from the Commander)", provider.Requests[1].Prompt.History[0].Text);
+    }
+
+    [Fact]
+    public async Task WithNoPlaceInsideTheBandTheChapterIsNotHeldToIt()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+
+        var outcome = await Generator(provider, new Galaxy { FromSol = 550, InBandStations = [], InBandBodies = [] }, 588)
+            .GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Contains("No station or landable body between 288 and 488 light years from Sol was found within reach, so this chapter is not held to a distance from Sol.", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains(outcome.Notes, note => note.Contains("so the chapter was not held to that band", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task WhenTheInBandSearchIsDownTheBandStillApplies()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats), Saying(Repairs.Replacing(Beats, 1)), Saying(Repairs.Replacing(Beats, 1)));
+
+        var outcome = await Generator(provider, new Galaxy { FromSol = 550, InBandDown = true }, 588)
+            .GenerateAsync(new AdventureAsk(Reach: AdventureReach.Session, Story: Chapter), Now, CancellationToken.None);
+
+        Assert.False(outcome.Succeeded);
+        Assert.Contains("between 288 and 488 light years from Sol", outcome.Refusal);
+        Assert.DoesNotContain("Move objective", outcome.Refusal);
+        Assert.Contains(outcome.Notes, note => note.Contains("could not list the places inside the band toward Sol", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ABandRefusalOfAnArriveMovesItToAnInBandSystemWithinReach()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats), Saying(Repairs.Replacing(Beats, 1)), Saying(Repairs.Replacing(Beats, 1)));
+
+        var outcome = await Generator(provider, new Galaxy { FromSol = 550 }, 588)
+            .GenerateAsync(new AdventureAsk(Reach: AdventureReach.Session, Story: Chapter), Now, CancellationToken.None);
+
+        Assert.False(outcome.Succeeded);
+        Assert.Contains("its last stop must be between 288 and 488 light years from Sol. Move objective 1 to Velan's Rest; rewrite its lines for that place.", outcome.Refusal);
+    }
+
+    [Fact]
+    public async Task ABandRefusalOfADockMovesItToAnInBandStation()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Docking), Saying(Repairs.Replacing(Docking, 1)), Saying(Repairs.Replacing(Docking, 1)));
+
+        var outcome = await Generator(provider, new Galaxy { FromSol = 550 }, 588)
+            .GenerateAsync(new AdventureAsk(Reach: AdventureReach.Session, Story: Chapter), Now, CancellationToken.None);
+
+        Assert.False(outcome.Succeeded);
+        Assert.Contains("Move objective 1 to Harbour Point in Velan's Rest; rewrite its lines for that place.", outcome.Refusal);
+    }
+
+    [Fact]
+    public async Task ABandRefusalNamesNoPlaceBeyondTheReach()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats), Saying(Repairs.Replacing(Beats, 1)), Saying(Repairs.Replacing(Beats, 1)));
+
+        var outcome = await Generator(provider, new Galaxy { FromSol = 550 }, 588)
+            .GenerateAsync(new AdventureAsk(Reach: AdventureReach.NearHere, Story: Chapter), Now, CancellationToken.None);
+
+        Assert.False(outcome.Succeeded);
+        Assert.Contains("between 288 and 488 light years from Sol", outcome.Refusal);
+        Assert.DoesNotContain("Move objective", outcome.Refusal);
+    }
+
+    [Theory]
+    [InlineData("bubble")]
+    [InlineData("black")]
+    public async Task AChapterInTheBubbleOrInTheBlackMakesNoInBandSearch(string where)
+    {
+        var galaxy = new Galaxy();
+        var ask = new AdventureAsk(Story: where == "black" ? Chapter with { InTheBlack = true } : Chapter);
+
+        await Generator(new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats)), galaxy, where == "black" ? 588 : 300).GenerateAsync(ask, Now, CancellationToken.None);
+
+        Assert.Empty(galaxy.Around);
+    }
+
     private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, double lightYears, TimeProvider? time = null)
     {
         var store = new GameStateStore();
@@ -180,9 +324,55 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
 
     private sealed class Galaxy : IGalaxyService
     {
+        public static readonly StationSummary HarbourPoint = new()
+        {
+            Name = "Harbour Point",
+            SystemName = "Velan's Rest",
+            MarketId = 9001,
+            SystemAddress = 9002,
+            Type = "Coriolis Starport",
+            HasLargePad = true,
+            Distance = 3,
+            Position = new StarPosition(438, 0, 0),
+        };
+
+        private static readonly StationSummary LanternHub = new()
+        {
+            Name = "Lantern Hub",
+            SystemName = "Ossen's Lantern",
+            MarketId = 9003,
+            SystemAddress = AdventureFixtures.Lantern,
+            Type = "Coriolis Starport",
+            HasLargePad = true,
+        };
+
         public double FromSol { get; init; } = 400;
 
         public bool Down { get; init; }
+
+        public IReadOnlyList<StationSummary> InBandStations { get; init; } = [HarbourPoint];
+
+        public IReadOnlyList<BodySummary> InBandBodies { get; init; } =
+        [
+            new() { Name = "Velan's Rest 2 a", SystemName = "Velan's Rest", BodyId = 7, SystemAddress = 9002, IsLandable = true, Distance = 3, Position = new StarPosition(438, 0, 0) },
+        ];
+
+        /// <summary>The only radius a position-centred search finds anything at; null for every radius.</summary>
+        public double? OnlyRadius { get; init; }
+
+        public bool InBandDown { get; init; }
+
+        /// <summary>The centre, rounded, and radius of each position-centred search, in order.</summary>
+        public List<(StarPosition At, double Radius)> Around { get; } = [];
+
+        private bool Answers(StarPosition at, double radius)
+        {
+            Around.Add((new StarPosition(Math.Round(at.X, 6), Math.Round(at.Y, 6), Math.Round(at.Z, 6)), radius));
+
+            return InBandDown
+                ? throw new GalaxyUnavailableException("the search is down")
+                : OnlyRadius is null || OnlyRadius == radius;
+        }
 
         public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
@@ -198,11 +388,21 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
                 ? throw new GalaxyUnavailableException("the service is down")
                 : Task.FromResult<double?>(to == "Sol" ? FromSol : 12);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(new StationSearchResult(query.ReferenceSystem, 0, []));
+        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<StationSummary> found = query.ReferencePosition is { } at
+                ? Answers(at, query.MaxDistance) ? InBandStations : []
+                : query is { StationName: "Lantern Hub" } ? [LanternHub] : [];
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));
+            return Task.FromResult(new StationSearchResult(query.ReferenceSystem, found.Count, found));
+        }
+
+        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<BodySummary> found = query.ReferencePosition is { } at && Answers(at, query.MaxDistance) ? InBandBodies : [];
+
+            return Task.FromResult(new BodySearchResult(query.ReferenceSystem, found.Count, found));
+        }
 
         public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
