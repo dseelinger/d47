@@ -256,6 +256,12 @@ add.
   travels far only at the long-haul reach (#1585), so a story with a span needs a premise and a level that can reach a
   long-haul ship: a story of 3 months or longer for a Commander with the credits or the hull `ChapterFit.IsLongHaul`
   names. Rule 10 still applies in a span: no beat or clue sends the Commander to a permit system.
+  A span may also carry `"toward"`: `Sol`, `Colonia`, `Sagittarius A*` or `Beagle Point`. Once the beacon has been
+  scanned, each chapter in the span travels toward that place, ending at least 1,125 light years nearer it (3,750 with a
+  carrier) or within 1,000 light years of it, so Colonia is about 20 chapters from the bubble without a carrier. After
+  the Commander arrives, the rest of the span plays as a span with no destination. A span with `"toward"` may not
+  reach the finale or, in a story that flies to a real beacon, start before `breakIntoTwo`; a way back is a later span
+  with `"toward": "Sol"`.
 - **An effect on a cast voice** (a weak comms link, static) cannot be expressed until #726 is
   decided. Describe it in `who` and record it on the page as a gap against #726.
 

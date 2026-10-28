@@ -83,29 +83,29 @@ public sealed class AStoryInTheBlackHeadsHomeAfterTwoChangedChaptersTests
         var brief = provider.Requests[1].Prompt.History[0].Text;
         Assert.Contains("3000 light years from Sol", brief);
         Assert.Contains("the story heads home to Sol", brief);
-        Assert.Contains("at least 1500 light years nearer Sol", brief);
+        Assert.Contains("at least 1125 light years nearer Sol", brief);
         Assert.DoesNotContain("outside the bubble", brief);
     }
 
     [Fact]
-    public async Task ALastStopAReachNearerThanTheStartPasses()
+    public async Task ALastStopThreeQuartersOfAReachNearerThanTheStartPasses()
     {
         var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
 
-        var outcome = await Generator(provider, new Galaxy { FromSol = 1500 }, 3000).GenerateAsync(HomeAsk, Now, CancellationToken.None);
+        var outcome = await Generator(provider, new Galaxy { FromSol = 1875 }, 3000).GenerateAsync(HomeAsk, Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
     }
 
     [Fact]
-    public async Task ALastStopLessThanAReachNearerIsRefusedWithTheTarget()
+    public async Task ALastStopLessThanThreeQuartersOfAReachNearerIsRefusedWithTheTarget()
     {
         var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats), Saying(Repairs.Replacing(Beats, 1)), Saying(Repairs.Replacing(Beats, 1)));
 
-        var outcome = await Generator(provider, new Galaxy { FromSol = 1600 }, 3000).GenerateAsync(HomeAsk, Now, CancellationToken.None);
+        var outcome = await Generator(provider, new Galaxy { FromSol = 2000 }, 3000).GenerateAsync(HomeAsk, Now, CancellationToken.None);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("its last stop is 1600 light years from it", outcome.Refusal);
+        Assert.Contains("its last stop is 2000 light years from it", outcome.Refusal);
         Assert.Contains("heading home", outcome.Refusal);
     }
 
@@ -177,7 +177,12 @@ public sealed class AStoryInTheBlackHeadsHomeAfterTwoChangedChaptersTests
             Task.FromResult<double?>(to == "Sol" ? FromSol : 12);
 
         public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(new StationSearchResult(query.ReferenceSystem, 0, []));
+            Task.FromResult(new StationSearchResult(query.ReferenceSystem, 1, [WaypointStation]));
+
+        private static readonly StationSummary WaypointStation = new()
+        {
+            Name = "Halfway House", SystemName = "Waypoint", MarketId = 7, Type = "Coriolis Starport", LargePads = 2, Position = new StarPosition(1725, 0, 0),
+        };
 
         public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));

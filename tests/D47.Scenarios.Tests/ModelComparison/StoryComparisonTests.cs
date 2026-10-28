@@ -144,6 +144,8 @@ public partial class StoryComparisonTests
         {
             "6" => ChapterSixAsk,
             "black" => ChapterAsk with { Story = ChapterAsk.Story! with { InTheBlack = true } },
+            "toward" => ChapterAsk with { Reach = AdventureReach.Anywhere, Story = ChapterAsk.Story! with { InTheBlack = true, Toward = "Colonia" } },
+            "home" => ChapterAsk with { Reach = AdventureReach.Anywhere, Story = ChapterAsk.Story! with { Home = "Sol" } },
             _ => ChapterAsk,
         };
         var signals = Env("D47_COMPARE_SIGNALS") is { } signalsFile ? new SignalIndexFile(signalsFile) : null;

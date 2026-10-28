@@ -2811,6 +2811,8 @@ public sealed class StoryDirector(
         var sinceBeacon = SinceBeacon(frontierId, story) + (replacing ? 0 : 1);
         var beaconChapter = reach is { InReach: true };
         var inTheBlack = StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter));
+        var toward = inTheBlack && story.BeaconScanAt is not null ? StoryBlack.Toward(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter)) : null;
+        var pulled = finaleChapter is null && !beaconChapter && ChapterPull.Pulls(toward, game?.Location.StarPos);
         var home = inTheBlack ? null : HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, replacing ? story.Chapters.SkipLast(1).ToList() : story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
 
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
@@ -2819,6 +2821,7 @@ public sealed class StoryDirector(
         if (story.BeaconScanAt is not null
             && finaleChapter is null
             && home is null
+            && !pulled
             && ChapterFit.IsLongHaul(story.Pacing, game)
             && ChapterDraw.Sightsee(Weights(statistics), previous?.Previous.Sight is not null, ChapterDraw.SightSeed(story.Id, number)))
         {
@@ -2846,7 +2849,7 @@ public sealed class StoryDirector(
                 story.Refused,
                 ChapterFit.IsComfortChapter(sinceBeacon),
                 statistics,
-                FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || home is not null) ? 1 : 0) + (sightseeing ? 1 : 0),
+                FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || home is not null || pulled) ? 1 : 0) + (sightseeing ? 1 : 0),
                 ChapterDraw.Seed(story.Id, number, replacing ? -1 : null),
                 sinceBeacon / ChapterFit.ComfortEvery,
                 stationsInReach,
@@ -2865,12 +2868,12 @@ public sealed class StoryDirector(
         }
 
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
-            && (story.BeaconScanAt is null || finaleChapter is not null || home is not null || ChapterFit.ServesLongHaul(slots, goal?.Objective, sightseeing));
+            && (story.BeaconScanAt is null || finaleChapter is not null || home is not null || pulled || ChapterFit.ServesLongHaul(slots, goal?.Objective, sightseeing));
 
         var opening = Opening(frontierId, story, secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter), game?.Ship.Type);
 
         var ask = new AdventureAsk(
-            longHaul || home is not null ? AdventureReach.Anywhere : AdventureReach.Session,
+            longHaul || home is not null || pulled ? AdventureReach.Anywhere : AdventureReach.Session,
             AdventureLength.Evening,
             Chapter: previous,
             Story: Asked(
@@ -2890,7 +2893,8 @@ public sealed class StoryDirector(
                 goal,
                 game?.Ship.Type,
                 inTheBlack,
-                sightseeing ? sights : null),
+                sightseeing ? sights : null,
+                toward),
             LastDraftRefused: lastDraftRefused,
             Progress: Progress(frontierId),
             Draft: draftNumber,
@@ -2983,7 +2987,8 @@ public sealed class StoryDirector(
         GoalClimbStep? goal = null,
         string? hull = null,
         bool inTheBlack = false,
-        IReadOnlyList<NotablePlace>? sights = null)
+        IReadOnlyList<NotablePlace>? sights = null,
+        string? toward = null)
     {
         var card = catalog().Find(story.Id);
 
@@ -3023,6 +3028,7 @@ public sealed class StoryDirector(
             OnComms = StoryAboard.Seatless(secret, StoryAboard.BySpan(secret, story), StoryAboard.BySpan(secret, story), hull),
             OnCarrier = StoryAboard.OnCarrierBySpan(secret, story),
             InTheBlack = inTheBlack,
+            Toward = toward,
         };
     }
 

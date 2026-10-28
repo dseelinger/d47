@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter that heads home from the black, or that lies in a span of a story that names a destination such as Colonia, now ends at least 1,125 light years nearer it (3,750 with a fleet carrier), or within 1,000 light years of it, and is offered real stations and landable bodies on the way.
+
 On the Search tab's System page, a body you have surface mined from an SRV shows one more fact after its signals, such as "Surface mined: 40 t Platinum, 3 t Silver": the tonnes refined at that body over every run, largest first. A body with more than three commodities names the three largest and then "and 1 more". The headset panel shows it too.
 
 On the Road to Riches and Exobiology result pages, a body line now starts with "Body" and its designation, such as "Body A 6 — Rocky body", instead of repeating the system name before it. A body whose name does not start with the system name is still shown in full.

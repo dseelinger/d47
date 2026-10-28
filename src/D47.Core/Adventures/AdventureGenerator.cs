@@ -146,6 +146,9 @@ public sealed record AdventureStory(
 
     /// <summary>Whether a beat the chapter's stage hands out lies in a span the story marks as in the black, where neither the Sol band nor the home leg applies.</summary>
     public bool InTheBlack { get; init; }
+
+    /// <summary>The destination of the span the chapter lies in, once the beacon has been scanned; null for a chapter outside the black or in a span with none.</summary>
+    public string? Toward { get; init; }
 }
 
 /// <summary>A story's cast member as the chapter writer is told it: the id a line names, the name, and who they are.</summary>
@@ -726,7 +729,7 @@ public sealed class AdventureGenerator(
 
         async Task<Resolved> CheckAsync(ReadAnswer answer)
         {
-            var dryRun = await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, candidates.Sites, candidates.InBand, cancellationToken).ConfigureAwait(false);
+            var dryRun = await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, candidates.Sites, candidates.InBand, candidates.Pull, cancellationToken).ConfigureAwait(false);
 
             outage ??= dryRun.Outage;
             return Speakers(dryRun, answer, ask);
@@ -1392,6 +1395,9 @@ public sealed class AdventureGenerator(
         /// <summary>The places inside the chapter's Sol band, for a chapter held to one.</summary>
         public InBand InBand { get; init; } = InBand.NotSearched;
 
+        /// <summary>The places around the waypoint on the way to the chapter's target, for a chapter that travels.</summary>
+        public PullPlaces Pull { get; init; } = PullPlaces.NotSearched;
+
         public bool IsEmpty => Stations.Count == 0 && Bodies.Count == 0;
     }
 
@@ -1411,6 +1417,15 @@ public sealed class AdventureGenerator(
 
         /// <summary>Whether the draft is held to the band: false only when the search found no place inside it.</summary>
         public bool Holds => State != InBandState.NoneFound;
+    }
+
+    /// <summary>The stations and landable bodies around the waypoint of a travelling chapter.</summary>
+    private sealed record PullPlaces(InBandState State, IReadOnlyList<StationSummary> Stations, IReadOnlyList<BodySummary> Bodies)
+    {
+        public static readonly PullPlaces NotSearched = new(InBandState.NotSearched, [], []);
+
+        /// <summary>Whether the chapter is held to the rule: false when no place was searched for or found.</summary>
+        public bool Holds => State == InBandState.Listed;
     }
 
     private const int InBandPerKind = 5;
@@ -1446,7 +1461,43 @@ public sealed class AdventureGenerator(
             Anarchy = anarchy,
             Sites = sites,
             InBand = await InBandAsync(search, resolver, ask, facts, cancellationToken, notes).ConfigureAwait(false),
+            Pull = await PullAsync(search, resolver, ask, facts, cancellationToken, notes).ConfigureAwait(false),
         };
+    }
+
+    /// <summary>For a chapter that travels, the open stations and landable bodies nearest the waypoint on the way to its target.</summary>
+    private async Task<PullPlaces> PullAsync(
+        IGalaxyService search, AdventureResolver resolver, AdventureAsk ask, Facts facts, CancellationToken cancellationToken, List<string> notes)
+    {
+        if (ChapterPull.Of(ask, facts.Position) is not { Arrived: false } leg || facts.Position is not { } start)
+        {
+            return PullPlaces.NotSearched;
+        }
+
+        var centre = ChapterPull.Waypoint(start, leg.There, facts.RadiusLightYears);
+        var radius = ChapterPull.PlacesWithin * facts.RadiusLightYears;
+
+        try
+        {
+            var stations = await search.FindStationsAsync(StationQuery.Near(centre, radius, ChapterPull.PlacesPerKind), cancellationToken).ConfigureAwait(false);
+            var bodies = await search.FindBodiesAsync(BodyQuery.LandableNear(centre, radius, ChapterPull.PlacesPerKind), cancellationToken).ConfigureAwait(false);
+
+            var open = await OpenStationsAsync(stations.Stations.Where(station => station.Position is not null), facts, resolver, int.MaxValue, cancellationToken).ConfigureAwait(false);
+            var landable = OpenBodies(bodies.Bodies.Where(body => body.Position is not null), facts, int.MaxValue);
+
+            if (open.Count > 0 || landable.Count > 0)
+            {
+                return new PullPlaces(InBandState.Listed, open, landable);
+            }
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            notes.Add($"The galaxy search could not list places on the way to {leg.Target} ({ex.Message}), so none was offered and the chapter was not held to a distance from {leg.Target}.");
+            return new PullPlaces(InBandState.Unavailable, [], []);
+        }
+
+        notes.Add($"No station or landable body was found near the point on the way to {leg.Target}, so the chapter was not held to a distance from {leg.Target}.");
+        return new PullPlaces(InBandState.NoneFound, [], []);
     }
 
     /// <summary>Up to <paramref name="most"/> of <paramref name="stations"/> a new objective may dock at, in their order.</summary>
@@ -2370,6 +2421,17 @@ public sealed class AdventureGenerator(
     {
         if (ChapterBand.Applies(ask) && ask.Story is { InTheBlack: true })
         {
+            if (ChapterPull.Of(ask, facts.Position) is { } leg)
+            {
+                if (!leg.Arrived)
+                {
+                    return;
+                }
+
+                text.AppendLine();
+                text.AppendLine($"The Commander has arrived at {leg.Target}.");
+            }
+
             text.AppendLine();
             text.AppendLine(
                 "This chapter of the story takes place in the black. Its stops may be far from the bubble, "
@@ -2459,20 +2521,86 @@ public sealed class AdventureGenerator(
         }
     }
 
-    /// <summary>For a chapter heading home, where it is going and that its last stop must be a reach nearer.</summary>
-    private static void AppendHome(StringBuilder text, AdventureAsk ask, Facts facts)
+    /// <summary>For a chapter that travels, where it is going and how much nearer its last stop must be.</summary>
+    private static void AppendLeg(StringBuilder text, AdventureAsk ask, Facts facts, PullPlaces places)
     {
-        if (HomeLeg.Of(ask) is not { } target || facts.Position is not { } position || HomeLeg.PositionOf(target) is not { } there)
+        if (ChapterPull.Of(ask, facts.Position) is not { Arrived: false } leg || facts.Position is not { } position)
         {
             return;
         }
 
+        var far = position.DistanceTo(leg.There).ToString("0", CultureInfo.InvariantCulture);
+        var nearer = (ChapterPull.Share * facts.RadiusLightYears).ToString("0", CultureInfo.InvariantCulture);
+        var within = leg.Within.ToString("0", CultureInfo.InvariantCulture);
+
         text.AppendLine();
         text.AppendLine(
-            $"The Commander is {position.DistanceTo(there).ToString("0", CultureInfo.InvariantCulture)} light years from {target} and has turned down the last chapters out here, "
-            + $"so the story heads home to {target}. This chapter travels: its last stop, the system of its last place objective, must be at least "
-            + $"{facts.RadiusLightYears.ToString("0", CultureInfo.InvariantCulture)} light years nearer {target} than where the chapter starts, or within "
-            + $"{HomeLeg.Home.ToString("0", CultureInfo.InvariantCulture)} light years of {target}. Each hop must be within the reach.");
+            leg.Home
+                ? $"The Commander is {far} light years from {leg.Target} and has turned down the last chapters out here, so the story heads home to {leg.Target}."
+                : $"The Commander is {far} light years from {leg.Target}, and this part of the story travels toward {leg.Target}, in the black.");
+        text.AppendLine(
+            $"This chapter travels: its last stop, the system of its last place objective, must be at least {nearer} light years nearer {leg.Target} "
+            + $"than where the chapter starts, or within {within} light years of {leg.Target}. Each hop must be within the reach."
+            + (places.State == InBandState.Listed ? " The places listed on the way to it meet that rule." : ""));
+
+        if (places.State is InBandState.NoneFound or InBandState.Unavailable)
+        {
+            text.AppendLine(
+                $"No station or landable body on the way to {leg.Target} could be listed, so this chapter is not held to a distance from {leg.Target}.");
+        }
+    }
+
+    /// <summary>The stations and landable bodies around the waypoint on the way to the chapter's target, nearest the target first.</summary>
+    private static void AppendPull(StringBuilder text, PullPlaces places, AdventureAsk ask, Facts facts)
+    {
+        if (places.State != InBandState.Listed || ChapterPull.Of(ask, facts.Position) is not { Arrived: false } leg)
+        {
+            return;
+        }
+
+        var systems = new Dictionary<string, (StarPosition Position, List<string> Stations, List<string> Bodies)>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var station in places.Stations)
+        {
+            Entry(station.SystemName, station.Position!.Value).Stations.Add($"{station.Name} ({PadsOf(station)})");
+        }
+
+        foreach (var body in places.Bodies)
+        {
+            Entry(body.SystemName, body.Position!.Value).Bodies.Add(body.Name);
+        }
+
+        text.AppendLine();
+        text.AppendLine($"Real places on the way to {leg.Target}, from the galaxy search. Spelt exactly as they must be named:");
+
+        foreach (var (system, entry) in systems.OrderBy(pair => pair.Value.Position.DistanceTo(leg.There)).ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            text.Append("- ").Append(system)
+                .Append(" (").Append(entry.Position.DistanceTo(leg.There).ToString("0", CultureInfo.InvariantCulture)).Append(" ly from ").Append(leg.Target).Append(')');
+
+            if (entry.Stations.Count > 0)
+            {
+                text.Append(": stations ").Append(string.Join(", ", entry.Stations));
+            }
+
+            if (entry.Bodies.Count > 0)
+            {
+                text.Append(entry.Stations.Count > 0 ? "; landable bodies " : ": landable bodies ").Append(string.Join(", ", entry.Bodies));
+            }
+
+            text.AppendLine();
+        }
+
+        (StarPosition Position, List<string> Stations, List<string> Bodies) Entry(string system, StarPosition position)
+        {
+            if (!systems.TryGetValue(system, out var entry))
+            {
+                entry = (position, [], []);
+                systems[system] = entry;
+            }
+
+            return entry;
+        }
     }
 
     /// <summary>
@@ -2920,6 +3048,7 @@ public sealed class AdventureGenerator(
 
         AppendCandidates(text, candidates);
         AppendInBand(text, candidates.InBand, ask, facts);
+        AppendPull(text, candidates.Pull, ask, facts);
         AppendSites(text, candidates.Sites);
         AppendAnarchy(text, candidates.Anarchy);
 
@@ -2930,7 +3059,7 @@ public sealed class AdventureGenerator(
 
         AppendBarred(text, ask);
         AppendBand(text, ask, facts, candidates.InBand);
-        AppendHome(text, ask, facts);
+        AppendLeg(text, ask, facts, candidates.Pull);
 
         if (ask.Chapter is { } chapter && !IsDrawn(ask.Story))
         {
@@ -3855,6 +3984,7 @@ public sealed class AdventureGenerator(
         bool steerIllegal,
         Sites sites,
         InBand inBand,
+        PullPlaces pull,
         CancellationToken cancellationToken)
     {
         var resolver = new AdventureResolver(galaxy()!, facts.Standings) { ClosedMarketId = facts.ClosedMarketId, Time = Time };
@@ -4310,10 +4440,10 @@ public sealed class AdventureGenerator(
                 lastPlaced is { } placedEnd ? [placedEnd] : []));
         }
 
-        if (HomeLeg.Of(ask) is { } home && facts.Position is { } homeStart
-            && await NotHomeAsync(lastPlaced is null ? null : previousSystem, home, homeStart, facts.RadiusLightYears, resolver, cancellationToken).ConfigureAwait(false) is { } notHome)
+        if (pull.Holds && ChapterPull.Of(ask, facts.Position) is { Arrived: false } leg
+            && await NotPulledAsync(lastPlaced is null ? null : previousSystem, leg, facts.Position!.Value, facts.RadiusLightYears, resolver, cancellationToken).ConfigureAwait(false) is { } notPulled)
         {
-            refusals.Add(new Refusal(notHome, lastPlaced is { } homeEnd ? [homeEnd] : []));
+            refusals.Add(new Refusal(notPulled, lastPlaced is { } pulledEnd ? [pulledEnd] : []));
         }
 
         if (ask.Story?.Beacon is { } last && (beats.Count == 0 || beats[^1].Kind != TriggerKind.Beacon))
@@ -4604,31 +4734,31 @@ public sealed class AdventureGenerator(
             : null;
     }
 
-    /// <summary>The refusal for a chapter heading home whose last stop is less than a reach nearer <paramref name="target"/> and not home, or null.</summary>
-    private static async Task<string?> NotHomeAsync(
-        string? lastStop, string target, StarPosition position, double reach, AdventureResolver resolver, CancellationToken cancellationToken)
+    /// <summary>The refusal for a travelling chapter whose last stop is not far enough toward its target, or null.</summary>
+    private static async Task<string?> NotPulledAsync(
+        string? lastStop, ChapterLeg leg, StarPosition position, double reach, AdventureResolver resolver, CancellationToken cancellationToken)
     {
-        var start = position.DistanceTo(HomeLeg.PositionOf(target)!.Value);
+        var start = position.DistanceTo(leg.There);
         double? end;
 
         try
         {
-            end = lastStop is null ? start : await resolver.DistanceAsync(lastStop, target, cancellationToken).ConfigureAwait(false);
+            end = lastStop is null ? start : await resolver.DistanceAsync(lastStop, leg.Target, cancellationToken).ConfigureAwait(false);
         }
         catch (GalaxyUnavailableException ex)
         {
-            return $"The chapter's last stop could not be measured against {target}: {ex.Message}";
+            return $"The chapter's last stop could not be measured against {leg.Target}: {ex.Message}";
         }
 
         if (end is not { } measured)
         {
-            return $"The chapter's last stop could not be measured against {target}.";
+            return $"The chapter's last stop could not be measured against {leg.Target}.";
         }
 
-        return measured > HomeLeg.Home && measured > start - reach
-            ? $"The chapter starts {start:0} light years from {target} and its last stop is {measured:0} light years from it; "
-              + $"the story is heading home, so its last stop must be at least {reach:0} light years nearer {target} than the start, or within {HomeLeg.Home:0} light years of it."
-            : null;
+        return ChapterPull.Meets(start, measured, reach, leg.Within)
+            ? null
+            : $"The chapter starts {start:0} light years from {leg.Target} and its last stop is {measured:0} light years from it; "
+              + $"the story is {(leg.Home ? "heading home" : $"heading for {leg.Target}")}, so its last stop must be at least {ChapterPull.Share * reach:0} light years nearer {leg.Target} than the start, or within {leg.Within:0} light years of it.";
     }
 
     private static bool IsTravel(TriggerKind kind) => kind is TriggerKind.Arrive or TriggerKind.Dock or TriggerKind.Land or TriggerKind.Scan or TriggerKind.Site;
@@ -4769,7 +4899,7 @@ public sealed class AdventureGenerator(
             return new Facts(
                 state?.Location.StarSystem,
                 state?.Location.StarPos,
-                ask is { Reach: AdventureReach.Anywhere, Story: { LongHaul: true, Home: null } } ? LongHaulLightYears : Radius(ask.Reach, ship.MaxJumpRange, carrier.Owned),
+                ask is { Reach: AdventureReach.Anywhere, Story: { LongHaul: true, Home: null } } && ChapterPull.Of(ask, state?.Location.StarPos) is not { Arrived: false } ? LongHaulLightYears : Radius(ask.Reach, ship.MaxJumpRange, carrier.Owned),
                 ask.Reach,
                 ask.ThisShipOnly,
                 ship,
