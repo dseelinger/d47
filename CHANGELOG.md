@@ -28,6 +28,8 @@ The Galaxy map's Unvisited squares now show only the systems near the Commander'
 
 Refining ore in an SRV, such as the Rhino's surface mining, no longer starts a mining run. The mining summary is no longer spoken after surface mining, and surface ore is no longer counted as ring mining.
 
+Ask "where did I surface mine for platinum" or "list my surface mining sites" and D47 names the bodies where you refined from an SRV: the tonnes refined, the runs, the date of the last run and the latitude and longitude when known. It speaks three sites and counts the rest.
+
 Stories and chapters written with GPT-6 Luna now ask it for high effort instead of low, and a story call is stopped after 60 seconds with no output instead of 30. In test runs, Luna wrote three of six chapters at high effort and none of six at low effort.
 
 A short jump range no longer keeps a Guardian beacon out of reach in a story. A ship with a fuel scoop and a laser or railgun gets the beacon chapter whatever its jump range, and the story only says the trip is easier with a longer range. A reach objective already saved with a jump range is met by the next Loadout with a scoop and a weapon.

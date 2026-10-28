@@ -487,7 +487,9 @@ public static class BuiltinCapabilities
             miningTargets,
             () => gameState.Active?.Identity.FrontierId ?? string.Empty,
             () => history?.State ?? Journal.HistoryState.Done,
-            fid => history?.MiningRuns?.GetValueOrDefault(fid)),
+            fid => history?.MiningRuns?.GetValueOrDefault(fid),
+            () => gameState.Active?.SurfaceMining,
+            now),
         ActivitiesCapability.Create(
             activities,
             () => gameState.Active?.Identity.FrontierId,

@@ -112,6 +112,25 @@ d47 has finished reading your older journals it says so and gives no number.
 
 This needs the language model, since the number of tonnes is in the sentence.
 
+### Surface mining sites
+
+> "where did I surface mine for platinum"
+
+> "list my surface mining sites"
+
+The answer comes from the refining you did in an SRV, such as a Rhino, read from your journals. Each
+site is a body: its name and system, the tonnes refined, the number of runs, the date of the last
+run, and the latitude and longitude where a landing or a login placed you on the body. The tonnes are
+tonnes refined, since ore ejected from the SRV is not kept.
+
+```text
+Arque 4 c in Arque: 40 tonnes of Platinum refined over 2 runs, last on 12 June, near latitude 21.4, longitude -63.8.
+```
+
+With a material, it lists the sites that refined it, the most tonnes first. Without one, it lists every
+site, the most recent first. It speaks three sites and counts the rest: "and 4 more." Until d47 has
+finished reading your older journals it says so and lists nothing.
+
 ### The rest of mining
 
 - **Prospector results** and **Core asteroids** are rows on the [Callouts](callouts.md) page, each
@@ -138,6 +157,12 @@ This needs the language model, since the number of tonnes is in the sentence.
 
 ```json
 {"type":"object","properties":{"material":{"type":"string","description":"The material to mine. Leave out for any.","enum":["Alexandrite","Bauxite","Benitoite","Bertrandite","Bromellite","Cobalt","Coltan","Gallite","Gold","Grandidierite","Haematite","Hydrogen Peroxide","Indite","Lepidolite","Liquid oxygen","Lithium Hydroxide","Low Temperature Diamonds","Methane Clathrate","Methanol Monohydrate Crystals","Monazite","Musgravite","Osmium","Painite","Palladium","Platinum","Praseodymium","Rhodplumsite","Rutile","Samarium","Serendibite","Silver","Tritium","Uraninite","Void Opal","Water"]},"tonnes":{"type":"number","description":"The tonnes to mine."}},"required":["tonnes"],"additionalProperties":false}
+```
+
+#### `list_surface_mining_sites`
+
+```json
+{"type":"object","properties":{"material":{"type":"string","description":"A commodity refined, such as Platinum or Copper. Leave out for every site."}},"required":[],"additionalProperties":false}
 ```
 
 </details>
