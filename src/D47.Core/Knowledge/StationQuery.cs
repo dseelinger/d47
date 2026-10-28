@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using D47.Core.Journal;
 
 namespace D47.Core.Knowledge;
 
@@ -25,6 +26,9 @@ public sealed record StationSummary
 
     /// <summary>Light years from the reference system.</summary>
     public double? Distance { get; init; }
+
+    /// <summary>The system's position; null where the search did not give all three coordinates.</summary>
+    public StarPosition? Position { get; init; }
 
     /// <summary>Light seconds from the system's entry point.</summary>
     public double? DistanceToArrival { get; init; }
@@ -200,6 +204,9 @@ public sealed record StationQuery
     }
 
     public string? ReferenceSystem { get; init; }
+
+    /// <summary>Centres the search on a point instead of <see cref="ReferenceSystem"/>.</summary>
+    public StarPosition? ReferencePosition { get; init; }
 
     /// <summary>Maximum light years from the reference.</summary>
     public double MaxDistance { get; init; } = 50;
@@ -671,6 +678,15 @@ public sealed record StationQuery
     public static StationQuery Near(string referenceSystem, double maxDistance, int size) => new()
     {
         ReferenceSystem = referenceSystem.Trim(),
+        MaxDistance = Math.Clamp(maxDistance, 1, 500),
+        Size = Math.Clamp(size, 1, 20),
+        FixedOnly = true,
+    };
+
+    /// <summary>The fixed, finished stations nearest a point, for proposing real places a story may dock at.</summary>
+    public static StationQuery Near(StarPosition referencePosition, double maxDistance, int size) => new()
+    {
+        ReferencePosition = referencePosition,
         MaxDistance = Math.Clamp(maxDistance, 1, 500),
         Size = Math.Clamp(size, 1, 20),
         FixedOnly = true,

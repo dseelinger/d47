@@ -1,3 +1,5 @@
+using D47.Core.Journal;
+
 namespace D47.Core.Knowledge;
 
 /// <summary>One ring around a body, cut down to what decides where to mine.</summary>
@@ -25,6 +27,9 @@ public sealed record BodySummary
 
     /// <summary>Light years from the query's reference system.</summary>
     public double? Distance { get; init; }
+
+    /// <summary>The system's position; null where the search did not give all three coordinates.</summary>
+    public StarPosition? Position { get; init; }
 
     /// <summary>Light seconds from the system's entry point.</summary>
     public double? DistanceToArrival { get; init; }
@@ -132,6 +137,9 @@ public sealed record BodyQuery
     }
 
     public string? ReferenceSystem { get; init; }
+
+    /// <summary>Centres the search on a point instead of <see cref="ReferenceSystem"/>.</summary>
+    public StarPosition? ReferencePosition { get; init; }
 
     /// <summary>Maximum light years from the reference.</summary>
     public double MaxDistance { get; init; } = 50;
@@ -384,6 +392,16 @@ public sealed record BodyQuery
         new()
         {
             ReferenceSystem = referenceSystem.Trim(),
+            Landable = true,
+            MaxDistance = Math.Clamp(maxDistance, 1, MaxDistanceCeiling),
+            Size = Math.Clamp(size, 1, 20),
+        };
+
+    /// <summary>The landable bodies nearest a point, for proposing real places a story may land on or scan.</summary>
+    public static BodyQuery LandableNear(StarPosition referencePosition, double maxDistance, int size) =>
+        new()
+        {
+            ReferencePosition = referencePosition,
             Landable = true,
             MaxDistance = Math.Clamp(maxDistance, 1, MaxDistanceCeiling),
             Size = Math.Clamp(size, 1, 20),

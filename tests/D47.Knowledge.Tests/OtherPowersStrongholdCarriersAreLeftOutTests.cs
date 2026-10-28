@@ -119,4 +119,18 @@ public class OtherPowersStrongholdCarriersAreLeftOutTests
         Assert.Equal(3, result.LeftOut);
         Assert.True(held.Last!.Size > 1);
     }
+
+    [Fact]
+    public async Task APointSearchAndEachStationsPositionPassThrough()
+    {
+        var held = new Held(Response(
+            """{"name":"Hutton Orbital","system_name":"Alpha Centauri","system_x":3,"system_y":-0.5,"system_z":3.25}"""));
+        var query = StationQuery.Near(new StarPosition(1, 2, 3), 100, 5);
+
+        var result = await new StationPowerFilter(held, () => PowerplayPledge.Unpledged)
+            .FindStationsAsync(query, TestContext.Current.CancellationToken);
+
+        Assert.Equal(new StarPosition(1, 2, 3), held.Last!.ReferencePosition);
+        Assert.Equal(new StarPosition(3, -0.5, 3.25), result.Stations[0].Position);
+    }
 }

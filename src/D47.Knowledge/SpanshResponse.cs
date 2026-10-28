@@ -624,6 +624,11 @@ internal static class SpanshResponse
         };
     }
 
+    private static StarPosition? SystemPosition(JsonElement element) =>
+        Number(element, "system_x") is { } x && Number(element, "system_y") is { } y && Number(element, "system_z") is { } z
+            ? new StarPosition(x, y, z)
+            : null;
+
     private static BodySummary ReadBody(JsonElement element) => new()
     {
         Name = String(element, "name") ?? "an unnamed body",
@@ -631,6 +636,7 @@ internal static class SpanshResponse
         BodyId = Int(element, "body_id"),
         SystemAddress = Integer(element, "system_id64"),
         Distance = Number(element, "distance"),
+        Position = SystemPosition(element),
         DistanceToArrival = Number(element, "distance_to_arrival"),
         Subtype = String(element, "subtype"),
         IsLandable = Boolean(element, "is_landable"),
@@ -717,6 +723,7 @@ internal static class SpanshResponse
         MarketId = Integer(element, "market_id"),
         SystemAddress = Integer(element, "system_id64"),
         Distance = Number(element, "distance"),
+        Position = SystemPosition(element),
         DistanceToArrival = Number(element, "distance_to_arrival"),
         Type = String(element, "type"),
         HasLargePad = Boolean(element, "has_large_pad"),

@@ -2,6 +2,7 @@ using System.Buffers;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 
 namespace D47.Knowledge;
@@ -252,15 +253,28 @@ internal static class SpanshRequest
             writer.WriteNumber("size", query.Size);
             writer.WriteNumber("page", 0);
 
-            if (query.ReferenceSystem is not null)
-            {
-                writer.WriteString("reference_system", query.ReferenceSystem);
-            }
+            WriteReference(writer, query.ReferenceSystem, query.ReferencePosition);
 
             writer.WriteEndObject();
         }
 
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
+    private static void WriteReference(Utf8JsonWriter writer, string? system, StarPosition? position)
+    {
+        if (position is { } point)
+        {
+            writer.WriteStartObject("reference_coords");
+            writer.WriteNumber("x", point.X);
+            writer.WriteNumber("y", point.Y);
+            writer.WriteNumber("z", point.Z);
+            writer.WriteEndObject();
+        }
+        else if (system is not null)
+        {
+            writer.WriteString("reference_system", system);
+        }
     }
 
     /// <summary>The body search body.</summary>
@@ -339,10 +353,7 @@ internal static class SpanshRequest
             writer.WriteNumber("size", query.Size);
             writer.WriteNumber("page", 0);
 
-            if (query.ReferenceSystem is not null)
-            {
-                writer.WriteString("reference_system", query.ReferenceSystem);
-            }
+            WriteReference(writer, query.ReferenceSystem, query.ReferencePosition);
 
             writer.WriteEndObject();
         }
