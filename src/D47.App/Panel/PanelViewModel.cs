@@ -616,27 +616,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         TranscriptAppended?.Invoke();
     }
 
-    /// <summary>Puts the English for the last run's text under it.</summary>
-    public void AppendTranslation(string translation)
-    {
-        string transcript;
-
-        lock (_appendLock)
-        {
-            if (_runs.Count == 0)
-            {
-                return;
-            }
-
-            _runs[^1].Translation.Append(translation);
-            transcript = string.Concat(_runs.Select(Flatten));
-        }
-
-        TranscriptText = transcript;
-
-        TranscriptAppended?.Invoke();
-    }
-
     /// <summary>
     /// Puts a failed turn's words in the conversation, always as a run of its own; a "Settings" link in them
     /// opens <paramref name="settingKey"/>'s row where one is given.

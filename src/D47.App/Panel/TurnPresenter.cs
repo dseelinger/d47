@@ -19,6 +19,9 @@ public sealed class TurnPresenter(PanelViewModel model, string? shipPicture = nu
     /// <summary>The picture name the reply is drawn with.</summary>
     private string? _picture = shipPicture;
 
+    /// <summary>The English for the reply, held until the text it translates arrives.</summary>
+    private string? _translation;
+
     public void On(TurnEvent turnEvent)
     {
         switch (turnEvent)
@@ -38,11 +41,12 @@ public sealed class TurnPresenter(PanelViewModel model, string? shipPicture = nu
                 break;
 
             case TurnEvent.TextDelta text:
-                model.Append(text.Text, speaker: _speaker, picture: _picture);
+                model.Append(text.Text, speaker: _speaker, picture: _picture, translation: _translation);
+                _translation = null;
                 break;
 
             case TurnEvent.Translation translation:
-                model.AppendTranslation(translation.Text);
+                _translation = translation.Text;
                 break;
 
             case TurnEvent.Retrying retry:

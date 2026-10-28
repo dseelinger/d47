@@ -82,6 +82,26 @@ public sealed class EachTurnKeepsThePictureOfWhoSaidItTests
     }
 
     [Fact]
+    public void ATranslationSitsUnderTheReplyNotTheCommandersMessage()
+    {
+        var model = Model();
+        model.Append("Where are you anyway?", voice: TranscriptVoice.Commander);
+
+        var presenter = new TurnPresenter(model, model.ShipPicture, _ => null);
+        presenter.On(new TurnEvent.Addressed(VoiceRole.Comms, "Babalooey", 1, Picture: SpeakerPictures.Character("42febf0f")));
+        presenter.On(new TurnEvent.Translation("Right here."));
+        presenter.On(new TurnEvent.TextDelta("ここにいるよ。"));
+
+        var segments = model.Segments(TranscriptPage.Conversation);
+
+        Assert.Equal(2, segments.Count);
+        Assert.Null(segments[0].Translation);
+        Assert.Equal("Right here.", segments[1].Translation);
+        Assert.Equal("Babalooey", segments[1].Speaker);
+        Assert.Equal("character.42febf0f", segments[1].Picture);
+    }
+
+    [Fact]
     public void InventedCommsCarryNoPicture()
     {
         var model = Model();
