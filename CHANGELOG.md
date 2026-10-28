@@ -164,7 +164,7 @@ Changing the voice of a story character who speaks Japanese offers only provider
 
 A story character who speaks Japanese answers on comms in Japanese, and the voice speaks only that. The English translation goes to the ship's AI and the Story log, and the character's own memory of the exchange keeps both. A reply with no translation, or one the claims check refuses, is not said.
 
-A story character who speaks Japanese also gives clues, reacts, opens the story and reads the beacon scan in Japanese. The voice speaks the Japanese and the transcript shows the English beneath it as a second paragraph, and copying the message copies both. A clue or reaction with no English, or one the claims check refuses, is not said.
+A story character who speaks Japanese also gives clues, reacts, opens the story and reads the beacon scan in Japanese. The voice speaks the Japanese and the transcript shows the English beneath it as a second paragraph in grey at a slightly smaller size, and copying the message copies both. A clue or reaction with no English, or one the claims check refuses, is not said.
 
 In the headset, a line spoken in Japanese is captioned with its English translation, shown for the whole line rather than a sentence at a time.
 

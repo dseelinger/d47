@@ -33,6 +33,9 @@ public static class TypeScale
     /// <summary>Ordinary text.</summary>
     public const double Body = 16;
 
+    /// <summary>The English under a line in another language.</summary>
+    public const double Translation = 15;
+
     /// <summary>The glyph on a glyph button's face.</summary>
     public const double Glyph = 16;
 

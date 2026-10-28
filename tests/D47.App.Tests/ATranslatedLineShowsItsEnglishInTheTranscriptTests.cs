@@ -61,6 +61,13 @@ public class AJapaneseLineIsDrawnWithItsGlyphsTests
         model.Append("\n無事でよかった。\n", sourceKey: "story.clue", translation: "Good to see you made it.");
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
+        var english = Assert.Single(panel.TranscriptRuns, run => run.Text?.Contains("Good to see you made it.") == true);
+        var japanese = Assert.Single(panel.TranscriptRuns, run => run.Text?.Contains("無事でよかった。") == true);
+
+        Assert.Equal(D47.App.Theming.TypeScale.Translation, english.FontSize);
+        Assert.NotNull(english.Foreground);
+        Assert.NotEqual(japanese.FontSize, english.FontSize);
+
         using var frame = window.CaptureRenderedFrame()!;
         frame.SaveCapture("japanese-line-with-translation.png");
 

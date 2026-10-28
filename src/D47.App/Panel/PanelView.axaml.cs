@@ -3608,6 +3608,14 @@ public partial class PanelView : UserControl, IPanelTabHost
                         run.FontWeight = FontWeight.SemiBold;
                     }
 
+                    if (segment.IsTranslation)
+                    {
+                        run.FontSize = Theming.TypeScale.Translation;
+                        run.Bind(
+                            Avalonia.Controls.Documents.TextElement.ForegroundProperty,
+                            this.GetResourceObservable(Theming.ThemeManager.GreyKey));
+                    }
+
                     // Before the search marks, so the current hit's ink is drawn over the link's.
                     if (place is not null)
                     {
@@ -3734,7 +3742,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         if (segment.Translation is { Length: > 0 } english && drawn.Count > 0)
         {
             drawn[^1] = drawn[^1] with { Text = drawn[^1].Text.TrimEnd() };
-            drawn.Add(drawn[^1] with { Text = "\n\n" + english.Trim(), Style = MarkupStyle.None, Direction = null, Provenance = null });
+            drawn.Add(drawn[^1] with { Text = "\n\n" + english.Trim(), Style = MarkupStyle.None, Direction = null, Provenance = null, IsTranslation = true });
         }
 
         return drawn;
@@ -4359,7 +4367,8 @@ internal readonly record struct DrawnSegment(
     IReadOnlyList<string>? Direction = null,
     TurnProvenance? Provenance = null,
     string? Picture = null,
-    string? SettingKey = null);
+    string? SettingKey = null,
+    bool IsTranslation = false);
 
 /// <summary>One side's uninterrupted stretch of the conversation — a bubble's worth.</summary>
 internal sealed record DrawnTurn(
