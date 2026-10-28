@@ -141,8 +141,9 @@ public sealed class ASiteObjectiveFiresOnTheGuardianApproachOrTheTouristScanTest
     public void ASiteIsDescribedAndHandedOffInWords()
     {
         Assert.Equal("fly to the Guardian site on Synuefe XR-H d11-102 A 3 in Synuefe XR-H d11-102", Guardian.Describe());
-        Assert.Equal("scan the tourist beacon Lantern's Rest in Synuefe XR-H d11-102", Tourist.Describe());
-        Assert.Equal("Next: scan the tourist beacon Lantern's Rest in Synuefe XR-H d11-102 with the ship's data-link scanner.", Tourist.HandOff());
+        Assert.Equal("scan a tourist beacon in Synuefe XR-H d11-102", Tourist.Describe());
+        Assert.Equal("Next: scan a tourist beacon in Synuefe XR-H d11-102 with the ship's data-link scanner.", Tourist.HandOff());
+        Assert.Equal("scan a tourist beacon in Synuefe XR-H d11-102", (Tourist with { SiteName = "Balise de visite de Synuefe" }).Describe());
         Assert.StartsWith("Next: fly to the Guardian site", Guardian.HandOff());
         Assert.DoesNotContain("data-link", Guardian.HandOff());
     }

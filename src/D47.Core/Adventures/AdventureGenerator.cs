@@ -1478,7 +1478,7 @@ public sealed class AdventureGenerator(
         public string Listed() => string.Join(
             "; ",
             Guardian.Select(body => $"Guardian site {body.Name} (\"filter\": \"guardian\", \"system\": \"{body.SystemName}\", \"body\": \"{body.Name}\")")
-                .Concat(Tourist.Select(site => $"tourist beacon {site.Name} (\"filter\": \"tourist\", \"system\": \"{site.System}\")"))
+                .Concat(Tourist.Select(site => $"tourist beacon in {site.System} (\"filter\": \"tourist\", \"system\": \"{site.System}\")"))
                 .Concat(Generation.Select(site => $"generation ship {site.Name} (\"filter\": \"generation\", \"system\": \"{site.System}\")")));
     }
 
@@ -1572,7 +1572,7 @@ public sealed class AdventureGenerator(
 
         foreach (var site in sites.Tourist)
         {
-            text.Append("- Tourist beacon: ").Append(site.Name).Append(", in ").Append(site.System);
+            text.Append("- Tourist beacon in ").Append(site.System);
             AppendLightYears(text, site.LightYears);
             text.AppendLine();
         }
@@ -1619,7 +1619,6 @@ public sealed class AdventureGenerator(
                 Filter = AdventureTrigger.TouristSite,
                 SystemAddress = beacon.SystemAddress,
                 System = beacon.System,
-                SiteName = beacon.Name,
             }, null);
         }
 

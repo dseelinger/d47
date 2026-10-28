@@ -379,7 +379,7 @@ public sealed record AdventureTrigger
         {
             GuardianSite => $"fly to the Guardian site on {Body ?? Address(SystemAddress, BodyId)}{In()}",
             GenerationSite => $"drop out at {SiteName?.Trim()}{In()}",
-            _ => $"scan the tourist beacon {SiteName?.Trim()}{In()}",
+            _ => $"scan a tourist beacon{In()}",
         },
         TriggerKind.Bounty => $"collect {Counted("bounty", "bounties")}",
         TriggerKind.Bond => $"earn {Counted("kill bond", "kill bonds")}{For()}",

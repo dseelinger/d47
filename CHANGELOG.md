@@ -10,6 +10,8 @@
 
 A system's bodies are found again when one of its rings has no signals on record. The lookup failed for such a system, and a story chapter that named a place in it was not written.
 
+A story objective at a tourist beacon now names the system, such as "scan a tourist beacon in Sugrivik", instead of a beacon name that could be in another Commander's language. This applies to stories already running too.
+
 A HOTAS switch that changes the headset view now moves keyboard focus with it. After a flip to VR, Elite is put in front; after a flip to Desktop, the Directive 47 window is. A flip that presses nothing moves nothing, and if Windows refuses, D47 says so.
 
 The Checklist's first page now has ADD A LINE beside Suggestions and Activities, so a Commander with no lines can start one from the panel. A line added there goes to Your notes. With nothing on the checklist, the first page says so whatever filter is saved, instead of naming the filter. On All lists, a saved filter that no line has is shown in words, such as "Written down — you say when", not by its key.

@@ -63,7 +63,8 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
 
             Assert.Contains("Sites within reach", instruction);
             Assert.Contains("- Guardian site: Dyson's Hollow 3 b, in Dyson's Hollow (12 ly)", instruction);
-            Assert.Contains("- Tourist beacon: Lantern Watch, in Ossen's Lantern (", instruction);
+            Assert.Contains("- Tourist beacon in Ossen's Lantern (", instruction);
+            Assert.DoesNotContain("Lantern Watch", instruction);
             Assert.DoesNotContain("Too Far", instruction);
         }
 
@@ -148,7 +149,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
         var trigger = outcome.Draft!.Beats[0].Trigger;
         Assert.Equal(AdventureTrigger.TouristSite, trigger.Filter);
         Assert.Equal(AdventureFixtures.Lantern, trigger.SystemAddress);
-        Assert.Equal("Lantern Watch", trigger.SiteName);
+        Assert.Null(trigger.SiteName);
     }
 
     private static readonly string GenerationTsv = string.Join(
