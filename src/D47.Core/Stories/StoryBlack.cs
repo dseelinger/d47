@@ -33,4 +33,33 @@ public static class StoryBlack
             }
         }
     }
+
+    /// <summary>The destination of the span covering the latest of <paramref name="stageBeats"/> that any span covers, or null.</summary>
+    public static string? Toward(StorySecret secret, IReadOnlyList<string> stageBeats)
+    {
+        ArgumentNullException.ThrowIfNull(secret);
+        ArgumentNullException.ThrowIfNull(stageBeats);
+
+        var latest = -1;
+        string? toward = null;
+
+        foreach (var span in (secret.Black ?? []).OfType<StoryBlackSpan>())
+        {
+            var from = span.From is null ? 0 : StoryAboard.Order(span.From);
+            var to = span.To is null ? StoryBeats.Keys.Count : StoryAboard.Order(span.To);
+
+            if (from < 0 || to < 0)
+            {
+                continue;
+            }
+
+            foreach (var at in stageBeats.Select(StoryAboard.Order).Where(at => at > latest && from <= at && at < to))
+            {
+                latest = at;
+                toward = span.Toward;
+            }
+        }
+
+        return toward;
+    }
 }

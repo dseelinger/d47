@@ -186,12 +186,20 @@ def goal_arcs_fault(card: dict) -> list:
     return found
 
 
+def destination_names() -> list:
+    source = (REPO / "src" / "D47.Core" / "Stories" / "StoryDestinations.cs").read_text(encoding="utf-8")
+    return re.findall(r'\["([^"]+)"\] =', source)
+
+
 def black_fault(entry: dict, sheet: tuple, length) -> list:
+    """Spans of the story in the black: {"from", "to"} beats, and optionally "toward", a system named in StoryDestinations.cs.
+
+    A toward is refused on a span that reaches breakIntoThree and on a span that starts before breakIntoTwo in a length that flies to a real beacon."""
     black = entry.get("black")
     if black is None:
         return []
-    if not isinstance(black, list) or any(not isinstance(span, dict) or set(span) - {"from", "to"} for span in black):
-        return ["black is not a list of {\"from\", \"to\"} spans"]
+    if not isinstance(black, list) or any(not isinstance(span, dict) or set(span) - {"from", "to", "toward"} for span in black):
+        return ["black is not a list of {\"from\", \"to\", \"toward\"} spans"]
     found = []
     known = []
     for at, span in enumerate(black):
@@ -209,6 +217,15 @@ def black_fault(entry: dict, sheet: tuple, length) -> list:
         if start >= end:
             found.append(f"{name} ends at or before the beat it starts at")
             continue
+        if span.get("toward") is not None:
+            names = destination_names()
+            toward = span["toward"]
+            if not isinstance(toward, str) or toward.lower() not in (n.lower() for n in names):
+                found.append(f"{name} has toward {span['toward']!r}, which is not one of {', '.join(names)}")
+            if end > BEATS.index("breakIntoThree"):
+                found.append(f"{name} has toward on a span that reaches the finale, which has its own destination")
+            if length not in NARRATED and start < BEATS.index("breakIntoTwo"):
+                found.append(f"{name} has toward on a span that starts before breakIntoTwo, in a {length} story that flies to a real beacon")
         found += [f"{name} overlaps {other}" for other_start, other_end, other in known if start < other_end and other_start < end]
         known.append((start, end, name))
     return found

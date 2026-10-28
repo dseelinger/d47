@@ -387,9 +387,10 @@ public sealed record StorySpeakerAboard(
 
 /// <summary>
 /// A span of a story in the black: from the <see cref="From"/> beat up to, not including, the <see cref="To"/> beat, each a key of
-/// the story length's <see cref="StoryPacing.BeatKeys"/>. Null from is the story's start; null to is its end.
+/// the story length's <see cref="StoryPacing.BeatKeys"/>. Null from is the story's start; null to is its end. Toward, when set,
+/// names a <see cref="StoryDestinations"/> system the chapters in the span travel toward.
 /// </summary>
-public sealed record StoryBlackSpan(string? From, string? To);
+public sealed record StoryBlackSpan(string? From, string? To, string? Toward = null);
 
 /// <summary>Reads a cast member's <c>"aboard"</c> as one span object or a list of them, and writes one span as an object.</summary>
 internal sealed class StorySpeakerAboardConverter : JsonConverter<IReadOnlyList<StorySpeakerAboard>>
@@ -1357,6 +1358,24 @@ public sealed class StoryCatalog
             {
                 yield return $"{name} ends at or before the beat it starts at.";
                 continue;
+            }
+
+            if (span.Toward is { } toward)
+            {
+                if (StoryDestinations.PositionOf(toward) is null)
+                {
+                    yield return $"{name}.toward is {toward}, which is not one of {string.Join(", ", StoryDestinations.Names)}.";
+                }
+
+                if (to > StoryAboard.Order("breakIntoThree"))
+                {
+                    yield return $"{name}.toward is set on a span that reaches the finale, which has its own destination.";
+                }
+
+                if (!pacing.NarratedScan && from < StoryAboard.Order("breakIntoTwo"))
+                {
+                    yield return $"{name}.toward is set on a span that starts before breakIntoTwo, in a {pacing.Name} story that flies to a real beacon.";
+                }
             }
 
             foreach (var other in known.Where(other => from < other.To && other.From < to))
