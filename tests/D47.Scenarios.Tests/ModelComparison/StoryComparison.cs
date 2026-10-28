@@ -141,6 +141,14 @@ public sealed class TimedGalaxy(IGalaxyService inner) : Timed, IGalaxyService
     public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
         TimeAsync(() => inner.FindStationsAsync(query, cancellationToken));
 
+    public Task<IReadOnlyList<OutfitterStation>> FindOutfittersAsync(
+        IReadOnlyList<OutfittingItem> items,
+        string referenceSystem,
+        double maxDistance,
+        PadSize? minPad,
+        CancellationToken cancellationToken) =>
+        TimeAsync(() => inner.FindOutfittersAsync(items, referenceSystem, maxDistance, minPad, cancellationToken));
+
     public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
         TimeAsync(() => inner.FindBodiesAsync(query, cancellationToken));
 

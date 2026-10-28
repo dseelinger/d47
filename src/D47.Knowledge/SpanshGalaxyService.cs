@@ -80,6 +80,56 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         return SpanshResponse.ReadStations(document!);
     }
 
+    public async Task<IReadOnlyList<OutfitterStation>> FindOutfittersAsync(
+        IReadOnlyList<OutfittingItem> items,
+        string referenceSystem,
+        double maxDistance,
+        PadSize? minPad,
+        CancellationToken cancellationToken)
+    {
+        var wanted = items.Distinct().ToList();
+        var byMarket = new Dictionary<long, (StationSummary Station, StationStock Stock, HashSet<OutfittingItem> Asked)>();
+
+        foreach (var item in wanted)
+        {
+            var query = StationQuery.Selling(item, referenceSystem, maxDistance, minPad);
+
+            using var content = new StringContent(SpanshRequest.Stations(query, _now()), Encoding.UTF8, "application/json");
+            using var document = await SendAsync(
+                _logger,
+                token => _http.PostAsync("api/stations/search", content, token),
+                "the station search",
+                cancellationToken).ConfigureAwait(false);
+
+            foreach (var (station, stock) in SpanshResponse.ReadOutfitters(document!))
+            {
+                if (station.MarketId is not { } market)
+                {
+                    continue;
+                }
+
+                if (!byMarket.TryGetValue(market, out var seen))
+                {
+                    seen = (station, stock, []);
+                    byMarket[market] = seen;
+                }
+
+                seen.Asked.Add(item);
+            }
+        }
+
+        return
+        [
+            .. byMarket.Values
+                .Where(found => !MarketSnapshot.IsCarrierType(found.Station.Type ?? string.Empty))
+                .Select(found => new OutfitterStation(
+                    found.Station,
+                    [.. wanted.Where(item => found.Asked.Contains(item) || found.Stock.Sells(item))]))
+                .OrderBy(found => found.Station.Distance ?? double.MaxValue)
+                .ThenBy(found => found.Station.Name, StringComparer.OrdinalIgnoreCase),
+        ];
+    }
+
     public async Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
     {
         using var content = new StringContent(SpanshRequest.Bodies(query), Encoding.UTF8, "application/json");

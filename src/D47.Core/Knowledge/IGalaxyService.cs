@@ -99,6 +99,18 @@ public interface IGalaxyService
     Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken);
 
     /// <summary>
+    /// The stations near a system that sell any of the items, nearest first, each with the items it sells.
+    /// Fleet carriers are left out.
+    /// </summary>
+    Task<IReadOnlyList<OutfitterStation>> FindOutfittersAsync(
+        IReadOnlyList<OutfittingItem> items,
+        string referenceSystem,
+        double maxDistance,
+        PadSize? minPad,
+        CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<OutfitterStation>>([]);
+
+    /// <summary>
     /// Bodies matching some criteria, nearest first — the body and signal half of "Find Nearest".
     /// </summary>
     Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken);

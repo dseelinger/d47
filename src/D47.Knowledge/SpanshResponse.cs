@@ -56,6 +56,33 @@ internal static class SpanshResponse
             stations);
     }
 
+    /// <summary>Each station of a station search answer with the modules and ships it lists.</summary>
+    public static IReadOnlyList<(StationSummary Station, StationStock Stock)> ReadOutfitters(JsonDocument document) =>
+    [
+        .. document.RootElement.Items("results").Select(result => (ReadStation(result), ReadStock(result))),
+    ];
+
+    private static StationStock ReadStock(JsonElement station) =>
+        new(
+            [.. station.Items("modules")
+                .Select(module => String(module, "name") is { } name
+                    ? new StockedModule(name, ModuleClass(module), String(module, "rating"))
+                    : null)
+                .OfType<StockedModule>()],
+            [.. station.Items("ships")
+                .Select(ship => ship.ValueKind == JsonValueKind.String ? ship.GetString() : String(ship, "name"))
+                .OfType<string>()]);
+
+    private static int? ModuleClass(JsonElement module) =>
+        !module.TryGetProperty("class", out var size)
+            ? null
+            : size.ValueKind == JsonValueKind.Number && size.TryGetInt32(out var number)
+                ? number
+                : size.ValueKind == JsonValueKind.String
+                  && int.TryParse(size.GetString(), System.Globalization.CultureInfo.InvariantCulture, out var parsed)
+                    ? parsed
+                    : null;
+
     /// <summary>The markets behind d47's own trade planner (Phase 36).</summary>
     public static IReadOnlyList<MarketSnapshot> ReadMarkets(JsonDocument document)
     {

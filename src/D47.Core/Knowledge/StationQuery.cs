@@ -692,6 +692,23 @@ public sealed record StationQuery
         FixedOnly = true,
     };
 
+    /// <summary>The most stations one item's search asks for.</summary>
+    public const int OutfitterSearchSize = 25;
+
+    /// <summary>The stations near a system that sell one item, carriers left out.</summary>
+    public static StationQuery Selling(OutfittingItem item, string referenceSystem, double maxDistance, PadSize? minPad) => new()
+    {
+        ReferenceSystem = referenceSystem.Trim(),
+        Modules = item.IsShip
+            ? []
+            : [new ModuleRequirement(item.Name, item.Class?.ToString(CultureInfo.InvariantCulture), item.Rating)],
+        Ship = item.IsShip ? item.Name : null,
+        MinPad = minPad,
+        Kinds = [.. Enum.GetValues<StationKind>().Where(kind => kind != StationKind.FleetCarrier)],
+        MaxDistance = Math.Max(maxDistance, 1),
+        Size = OutfitterSearchSize,
+    };
+
     /// <summary>The three kinds of material trader, in the index's own spelling.</summary>
     public static IReadOnlyList<string> TraderTypes { get; } = ["Raw", "Manufactured", "Encoded"];
 

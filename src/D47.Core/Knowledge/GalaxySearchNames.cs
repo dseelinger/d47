@@ -48,6 +48,28 @@ public sealed class GalaxySearchNames(IGalaxyService inner) : IGalaxyService
     public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
         inner.FindStationsAsync(query, cancellationToken);
 
+    public async Task<IReadOnlyList<OutfitterStation>> FindOutfittersAsync(
+        IReadOnlyList<OutfittingItem> items,
+        string referenceSystem,
+        double maxDistance,
+        PadSize? minPad,
+        CancellationToken cancellationToken)
+    {
+        var found = await inner
+            .FindOutfittersAsync(items, referenceSystem, maxDistance, minPad, cancellationToken)
+            .ConfigureAwait(false);
+
+        lock (_gate)
+        {
+            foreach (var outfitter in found)
+            {
+                _names.Add(outfitter.Station.SystemName);
+            }
+        }
+
+        return found;
+    }
+
     public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
         inner.FindBodiesAsync(query, cancellationToken);
 
