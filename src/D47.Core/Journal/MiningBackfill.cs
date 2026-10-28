@@ -34,6 +34,13 @@ public static class MiningBackfill
                     && !line.Contains("\"event\":\"MiningRefined\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Docked\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Died\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"LaunchSRV\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"LaunchVessel\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"DockSRV\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"SRVDestroyed\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"Embark\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"Disembark\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal))
@@ -62,6 +69,11 @@ public static class MiningBackfill
                     if (parsed.String("FID") is { Length: > 0 } fid)
                     {
                         commander = fid;
+
+                        if (parsed.Kind == "LoadGame" && open.TryGetValue(fid, out var resumed))
+                        {
+                            open[fid] = resumed.Apply(parsed);
+                        }
                     }
 
                     continue;

@@ -70,6 +70,17 @@ public sealed record JournalEvent(DateTimeOffset Timestamp, string Kind, JsonEle
     /// <summary><c>LaunchSRV</c>, or a <c>LaunchVessel</c> the Commander flies, such as the Nomad.</summary>
     public bool LaunchesSrv => Kind is "LaunchSRV" || (Kind is "LaunchVessel" && Bool("PlayerControlled"));
 
+    /// <summary>Whether the Commander is in an SRV after this event, or null when the event does not say.</summary>
+    public bool? InSrvAfter => Kind switch
+    {
+        "LaunchSRV" => true,
+        "LaunchVessel" => LaunchesSrv ? true : null,
+        "Embark" => Bool("SRV"),
+        "Location" => Bool("InSRV"),
+        "LoadGame" or "DockSRV" or "SRVDestroyed" or "Died" or "Disembark" => false,
+        _ => null,
+    };
+
     public int? Int(string property) => Raw.Int(property);
 
     public long? Long(string property) => Raw.Long(property);

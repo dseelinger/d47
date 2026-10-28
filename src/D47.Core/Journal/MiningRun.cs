@@ -69,23 +69,31 @@ public sealed record MiningRuns
 
     public MiningRun? Last { get; init; }
 
+    /// <summary>The Commander is in an SRV, where refining is surface mining and not part of a run.</summary>
+    public bool InSrv { get; init; }
+
     public MiningRuns Apply(JournalEvent journalEvent)
     {
+        var state = journalEvent.InSrvAfter is { } inSrv && inSrv != InSrv ? this with { InSrv = inSrv } : this;
+
         switch (journalEvent.Kind)
         {
             case "Docked" or "Died":
-                return Open is null
-                    ? this
-                    : new MiningRuns { Last = Open with { ClosedAt = journalEvent.Timestamp, ClosedBy = journalEvent.Kind }, Open = null };
+                return state.Open is null
+                    ? state
+                    : state with { Last = state.Open with { ClosedAt = journalEvent.Timestamp, ClosedBy = journalEvent.Kind }, Open = null };
+
+            case "MiningRefined" when state.InSrv:
+                return state;
 
             case "ProspectedAsteroid" or "MiningRefined":
-                return With((Open ?? new MiningRun(journalEvent.Timestamp)).Count(journalEvent));
+                return state.With((state.Open ?? new MiningRun(journalEvent.Timestamp)).Count(journalEvent));
 
             case "LaunchDrone" when journalEvent.String("Type") is "Prospector" or "Collection":
-                return With((Open ?? new MiningRun(journalEvent.Timestamp)).Count(journalEvent));
+                return state.With((state.Open ?? new MiningRun(journalEvent.Timestamp)).Count(journalEvent));
 
             default:
-                return this;
+                return state;
         }
     }
 
