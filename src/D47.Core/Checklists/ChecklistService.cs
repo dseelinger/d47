@@ -1111,9 +1111,7 @@ public sealed class ChecklistService(
                 "Can d47 tell when it is done?",
                 live.Select(item => item.Kind),
                 kind => kind.ToString().ToLowerInvariant(),
-                kind => kind == ChecklistItemKind.Derived
-                    ? "Derived — d47 watches for it"
-                    : "Written down — you say when"),
+                Word),
 
             .. Axis(
                 "What wrote it",
@@ -1132,7 +1130,7 @@ public sealed class ChecklistService(
                 "Where it stands",
                 live.Select(item => item.IsComplete),
                 done => done ? "complete" : "open",
-                done => done ? "Finished" : "Still open"),
+                Word),
 
             // **What the engineer in this system can do** (change-requests.md 32), and offered only where
             // there is one.
@@ -1166,6 +1164,32 @@ public sealed class ChecklistService(
                     EngineerFilterKey(engineer.Id), engineer.Name, "Unlocking an engineer")),
         ];
     }
+
+    /// <summary>The word for a Kind, Source or Done filter key, whether or not any line has it; null for any other key.</summary>
+    public static string? FilterWord(string key)
+    {
+        if (Enum.TryParse<ChecklistItemKind>(key, true, out var kind) && Enum.IsDefined(kind))
+        {
+            return Word(kind);
+        }
+
+        if (Enum.TryParse<ChecklistSource>(key, true, out var source) && Enum.IsDefined(source))
+        {
+            return Word(source);
+        }
+
+        return key.ToLowerInvariant() switch
+        {
+            "complete" => Word(true),
+            "open" => Word(false),
+            _ => null,
+        };
+    }
+
+    private static string Word(ChecklistItemKind kind) =>
+        kind == ChecklistItemKind.Derived ? "Derived — d47 watches for it" : "Written down — you say when";
+
+    private static string Word(bool done) => done ? "Finished" : "Still open";
 
     /// <summary>A scope's own word, with its first letter up. "ship" becomes "Ship".</summary>
     private static string Capitalised(ChecklistGroup group)

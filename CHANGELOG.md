@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Checklist's first page now has ADD A LINE beside Suggestions and Activities, so a Commander with no lines can start one from the panel. A line added there goes to Your notes. With nothing on the checklist, the first page says so whatever filter is saved, instead of naming the filter. On All lists, a saved filter that no line has is shown in words, such as "Written down — you say when", not by its key.
+
 Each module tile in Search › Outfitting now shows the module's list price, such as `DETAILED SURFACE SCANNER · 250,000 CR`. When the size, rating or mount leaves several prices, the tile shows the lowest and highest. Ship tiles and modules with no known price stay unpriced.
 
 The Galaxy map page can now be turned and tilted. Four corner tiles in the arrow pad turn it 15° each way and tilt it up and down, and the middle tile, Top down, puts it back. On the desktop, drag with the left button to turn and tilt the map and with the right or middle button to pan it; **[** and **]** turn, **Page Up** and **Page Down** tilt, and **Home** is now Top down instead of framing HERE. GALAXY, HERE and ROUTE keep the angle.

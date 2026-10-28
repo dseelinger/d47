@@ -263,6 +263,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         {
             case Level.Lists:
                 _controls.Children.Add(_arcsToggle);
+                _right.Children.Add(_add);
                 _right.Children.Add(_suggestions);
                 _right.Children.Add(_activities);
                 break;
@@ -501,6 +502,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         // The bar itself is chrome and is never assigned, so an output-only surface's style can hide it.
         _controls.IsVisible = !(_mini && _level == Level.Lists);
         _right.IsVisible = _controls.IsVisible;
+
+        if (_level == Level.Lists)
+        {
+            _add.IsVisible = !goalsMode;
+        }
         _bar.Margin = new Thickness(0, 0, 0, _controls.IsVisible ? 10 : 0);
 
         var list = _level == Level.One ? _checklists.Lists().FirstOrDefault(found => found.Id == _listId) : null;
@@ -592,7 +598,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         if (!keys.Contains(Chosen))
         {
             keys.Add(Chosen);
-            words.Add(Chosen);
+            words.Add(ChecklistService.FilterWord(Chosen) ?? Chosen);
         }
 
         _scopeKeys = keys;
@@ -683,7 +689,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         if (lists.Count == 0)
         {
-            _list.Children.Add(Muted(EmptyMessage()));
+            _list.Children.Add(Muted(
+                "Nothing here yet. Add a line, or say \"add buy limpets to my checklist\", "
+                + "or ask for a build plan, and D47 will propose it."));
             return;
         }
 
@@ -1999,7 +2007,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         // drift apart.
         var scope = Chosen == Everything
             ? null
-            : _checklists.FilterAxes().FirstOrDefault(filter => filter.Key == Chosen)?.Word ?? Chosen;
+            : _checklists.FilterAxes().FirstOrDefault(filter => filter.Key == Chosen)?.Word
+              ?? ChecklistService.FilterWord(Chosen) ?? Chosen;
 
         return (Query.Length > 0, scope) switch
         {
