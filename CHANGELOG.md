@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-Story chapters can now ask for planetary scan jobs.
+Story chapters can now ask for planetary scan jobs and for Hack missions, from a ship or on foot.
 
 The Exobiology and Road to Riches cards on the Plan page now have **Jump range (ly)** and **Farthest from arrival (ls)** fields, and the exobiology plot takes a farthest distance from arrival, so a body past 10,000 ls can be included. Exobiology routes now avoid Thargoid systems. The Exobiology minimum is now labelled **Least a species is worth (cr)**, which is how it is applied: a body is a stop when any of its species clears it.
 

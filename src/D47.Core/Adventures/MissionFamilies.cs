@@ -13,8 +13,6 @@ public static class MissionFamilies
     [
         ("Mission_Massacre_Skimmer", 721),
         ("Mission_Disable", 722),
-        ("Mission_Hack", 723),
-        ("Mission_OnFoot_Hack", 723),
         ("Mission_RS_", 725),
         ("Mission_DS_", 725),
     ];
@@ -49,6 +47,8 @@ public static class MissionFamilies
         "Mission_Assassinate",
         "Mission_OnFoot_Collect",
         "Mission_Scan",
+        "Mission_Hack",
+        "Mission_OnFoot_Hack",
     ];
 
     /// <summary>Whether a mission of this family names a destination when accepted.</summary>

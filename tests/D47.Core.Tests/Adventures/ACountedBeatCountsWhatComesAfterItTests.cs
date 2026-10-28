@@ -133,7 +133,7 @@ public class ACountedBeatCountsWhatComesAfterItTests : IDisposable
     [Theory]
     [InlineData("Mission_Massacre_Skimmer")]
     [InlineData("Mission_RS_Massacre")]
-    [InlineData("Mission_OnFoot_Hack")]
+    [InlineData("Mission_DS_Collect")]
     public void ASetAsideFamilyIsRefused(string family)
     {
         var problem = Assert.Single(AdventureValidation.Problems(
