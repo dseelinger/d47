@@ -24,12 +24,14 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     private readonly bool _headset;
     private readonly PanelNavigator? _nav;
     private readonly Func<string, Task<bool>> _confirm;
+    private readonly Func<BodySearchLink?>? _bodySearch;
     private readonly StackPanel _body = new();
 
     private CodexLedger? _seenLedger;
     private string? _seenSystem;
     private CodexPictureKey? _pending;
     private string? _failure;
+    private bool? _seenLookups;
 
     public CodexEntryPage(
         Func<CommanderGameState?> state,
@@ -40,9 +42,11 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         bool headset = false,
         CodexTable? table = null,
         PanelNavigator? nav = null,
-        Func<string, Task<bool>>? confirm = null)
+        Func<string, Task<bool>>? confirm = null,
+        Func<BodySearchLink?>? bodySearch = null)
     {
         _nav = nav;
+        _bodySearch = bodySearch;
         _confirm = confirm ?? AskAsync;
         _state = state;
         _entryId = entryId;
@@ -68,7 +72,9 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     /// <summary>Redraws when the record or the current system has changed.</summary>
     public bool Tick()
     {
-        if (ReferenceEquals(_state()?.CodexLedger, _seenLedger) && _state()?.Location.StarSystem == _seenSystem)
+        if (ReferenceEquals(_state()?.CodexLedger, _seenLedger)
+            && _state()?.Location.StarSystem == _seenSystem
+            && _bodySearch?.Invoke()?.Enabled() == _seenLookups)
         {
             return false;
         }
@@ -127,6 +133,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         var state = _state();
         _seenLedger = state?.CodexLedger;
         _seenSystem = state?.Location.StarSystem;
+        _seenLookups = _bodySearch?.Invoke()?.Enabled();
 
         var view = CodexModel.EntryPage(
             state?.CodexLedger ?? CodexLedger.None,
@@ -157,6 +164,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     {
         var column = PictureOf(view);
         AddActions(column, view);
+        AddSearch(column);
 
         return column;
     }
@@ -202,6 +210,22 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         column.Children.Add(Hint(_pictures?.StockOn == false ? CodexModel.StockOffText : CodexModel.NoPictureText));
 
         return column;
+    }
+
+    /// <summary>The Search tile: shown for an entry the codex table lists, on the main window and the headset.</summary>
+    private void AddSearch(StackPanel column)
+    {
+        if (_bodySearch?.Invoke() is not { } link || _table.Entry(_entryId) is not { } entry)
+        {
+            return;
+        }
+
+        var enabled = link.Enabled();
+        var button = new Button { Name = "CodexSearch", Content = "Search", IsEnabled = enabled };
+        ToolTip.SetShowOnDisabled(button, true);
+        ToolTip.SetTip(button, enabled ? null : GalaxySearchPage.LookupsOffTip);
+        button.Click += (_, _) => link.Run(new Dictionary<string, string>(StringComparer.Ordinal) { ["codex_entry"] = entry.Name });
+        column.Children.Add(button);
     }
 
     /// <summary>The picture actions: main window only, and only for a region D47 can name.</summary>

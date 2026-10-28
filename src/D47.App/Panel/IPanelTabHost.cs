@@ -37,6 +37,9 @@ internal interface IPanelTabHost
     /// <summary>Which fleet carrier model each carrier is drawn as, or null where the surface keeps none.</summary>
     CarrierHullMemory? CarrierHulls { get; }
 
+    /// <summary>Runs a Search › Bodies search from any tab, or null where this surface has no search.</summary>
+    BodySearchLink? BodySearch { get; }
+
     void Furnish(PanelTab tab, Func<NavCrumb, Control> build, params NavCrumb[] roots);
 
     void Forget(PanelTab tab, Func<string, bool> match);

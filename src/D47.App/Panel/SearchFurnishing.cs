@@ -24,6 +24,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private (long Address, string Id)? _pendingSystem;
     private string? _systemEntry;
     private readonly Dictionary<GalaxySearchKind, SearchHistoryEntry> _pending = [];
+    private IReadOnlyDictionary<string, string>? _pendingBodies;
 
     public void EnableStarSystem(StarSystemSurface surface)
     {
@@ -68,6 +69,19 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         redrawn |= _signals is { } signals && host.Nav.RootKeyOf(PanelTab.Search) == SignalSearchPage.RootKey && signals.Tick();
 
         return redrawn;
+    }
+
+    /// <summary>The way to run a body search from another tab, or null where this surface has no search.</summary>
+    public BodySearchLink? BodySearch =>
+        _surface is { Searches: not null } surface ? new BodySearchLink(surface.LookupsEnabled, SearchBodies) : null;
+
+    private void SearchBodies(IReadOnlyDictionary<string, string> arguments)
+    {
+        _pending.Clear();
+        _pendingSystem = null;
+        _pendingBodies = arguments;
+        host.Nav.Show(BodySearchPage.RootKey);
+        ApplyPending();
     }
 
     public bool OpenSystem(long systemAddress) => _starSystem is { } page && page.OpenSystem(systemAddress);
@@ -222,6 +236,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private void OpenEntry(SearchHistoryEntry entry)
     {
         _pending.Clear();
+        _pendingBodies = null;
         _pendingSystem = null;
 
         if (entry.Tool == "describe_system" && entry.SystemAddress is { } address)
@@ -260,6 +275,12 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         Deliver(GalaxySearchKind.Outfitting, _outfitting);
         Deliver(GalaxySearchKind.Bodies, _bodies);
         Deliver(GalaxySearchKind.Signals, _signals);
+
+        if (_pendingBodies is { } bodies && _bodies is { } page2)
+        {
+            _pendingBodies = null;
+            page2.Run(bodies);
+        }
     }
 
     private void Deliver(GalaxySearchKind kind, GalaxySearchPage? page)

@@ -410,6 +410,8 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     void IPanelTabHost.ShowSearch() => ShowSearch();
 
+    BodySearchLink? IPanelTabHost.BodySearch => _searchFurnishing.BodySearch;
+
     private void OnModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (_bound is null)

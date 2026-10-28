@@ -252,7 +252,10 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     protected virtual string OffSentence => LookupsOffText;
 
     /// <summary>Why the page cannot search, for the RUN SEARCH tooltip.</summary>
-    protected virtual string OffTip => "Turn on “Look things up in the galaxy” in Settings to search.";
+    protected virtual string OffTip => LookupsOffTip;
+
+    /// <summary>The RUN SEARCH tooltip while “Look things up in the galaxy” is off.</summary>
+    public const string LookupsOffTip = "Turn on “Look things up in the galaxy” in Settings to search.";
 
     /// <summary>The label of the box drawn while a search runs.</summary>
     protected virtual string RunningText => "Asking the galaxy search";
@@ -293,6 +296,14 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         Draw();
         return true;
+    }
+
+    /// <summary>Fills the form from <paramref name="arguments"/> and runs them.</summary>
+    public void Run(IReadOnlyDictionary<string, string> arguments)
+    {
+        ResetPick();
+        FillForm(arguments);
+        _ = RunAsync(arguments);
     }
 
     /// <summary>Runs <see cref="Tool"/> with <paramref name="arguments"/> as the Commander; the answer arrives through the board.</summary>
