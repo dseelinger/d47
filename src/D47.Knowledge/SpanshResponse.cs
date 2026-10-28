@@ -429,7 +429,7 @@ internal static class SpanshResponse
                     new RingSummary(String(ring, "name") ?? "an unnamed ring", String(ring, "type"))
                     {
                         Hotspots = [.. DumpSignals(ring).Select(signal => (signal.Key, signal.Value))],
-                        SignalsSeen = Timestamp(ring.Object("signals") ?? default, "updateTime"),
+                        SignalsSeen = ring.Object("signals") is { } signals ? Timestamp(signals, "updateTime") : null,
                     })],
                 MappingValue = id64 is { } key && values.TryGetValue(key, out var mapping) ? mapping : null,
                 Volcanism = String(body, "volcanismType"),

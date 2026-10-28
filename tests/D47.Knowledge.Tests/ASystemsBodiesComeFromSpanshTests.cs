@@ -99,6 +99,28 @@ public class ASystemsBodiesComeFromSpanshTests
     }
 
     [Fact]
+    public async Task ARingWithNoSignalsRecordStillGivesItsBody()
+    {
+        const string unscanned =
+            """
+            {"system":{"id64":2869440816561,"name":"LHS 3593","bodies":[
+              {"bodyId":9,"id64":324262042611492273,"name":"LHS 3593 1","type":"Planet","subType":"Class I gas giant",
+               "rings":[{"name":"LHS 3593 1 A Ring","type":"Icy"}]}
+            ]}}
+            """;
+        using var service = Service(new Answer(path => path.StartsWith("/api/dump/", StringComparison.Ordinal)
+            ? (HttpStatusCode.OK, unscanned)
+            : (HttpStatusCode.NotFound, """{"error":"none"}""")));
+
+        var bodies = await service.SystemBodiesAsync(2869440816561, TestContext.Current.CancellationToken);
+
+        var ring = Assert.Single(Assert.Single(bodies).Rings);
+        Assert.Equal("Icy", ring.Type);
+        Assert.Empty(ring.Hotspots);
+        Assert.Null(ring.SignalsSeen);
+    }
+
+    [Fact]
     public async Task ASystemSpanshDoesNotKnowGivesNoBodies()
     {
         using var service = Service(new Answer(_ => (HttpStatusCode.NotFound, """{"error":"none"}""")));
