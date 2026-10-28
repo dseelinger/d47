@@ -140,7 +140,13 @@ public partial class StoryComparisonTests
             }
         }
 
-        var chapterAsk = Env("D47_COMPARE_CHAPTER") == "6" ? ChapterSixAsk : ChapterAsk;
+        var chapterAsk = Env("D47_COMPARE_CHAPTER") switch
+        {
+            "6" => ChapterSixAsk,
+            "black" => ChapterAsk with { Story = ChapterAsk.Story! with { InTheBlack = true } },
+            _ => ChapterAsk,
+        };
+        var signals = Env("D47_COMPARE_SIGNALS") is { } signalsFile ? new SignalIndexFile(signalsFile) : null;
         var lastRefused = Env("D47_COMPARE_LAST_REFUSED");
 
         var reservations = new CapReservations(() => meter.Spent, cap);
@@ -162,7 +168,7 @@ public partial class StoryComparisonTests
                     Length: Enum.Parse<AdventureLength>(Env("D47_COMPARE_LENGTH") ?? nameof(AdventureLength.Short)),
                     Brief: Env("D47_COMPARE_BRIEF"))) with { LastDraftRefused = lastRefused };
             var record = await WriteOneAsync(
-                meter.View(), model, effort, run, persona, world, new TimedGalaxy(services.Galaxy), new TimedNotablePlaces(notablePlaces), ask, kind, label, drafts);
+                meter.View(), model, effort, run, persona, world, new TimedGalaxy(services.Galaxy), new TimedNotablePlaces(notablePlaces), ask, kind, label, drafts, signals);
 
             lock (writing)
             {
@@ -214,7 +220,8 @@ public partial class StoryComparisonTests
         AdventureAsk ask,
         string kind,
         string label,
-        string? drafts)
+        string? drafts,
+        ISignalIndexSource? signals = null)
     {
 
         var log = new RecordingLogger();
@@ -229,7 +236,8 @@ public partial class StoryComparisonTests
             () => places,
             null,
             null,
-            log)
+            log,
+            signalIndex: () => signals)
         {
             Effort = effort,
 
@@ -241,6 +249,7 @@ public partial class StoryComparisonTests
         var clock = Stopwatch.StartNew();
         AdventureOutcome? outcome = null;
         string? thrown = null;
+        string? stack = null;
 
         try
         {
@@ -249,6 +258,7 @@ public partial class StoryComparisonTests
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             thrown = $"{exception.GetType().Name}: {exception.Message}";
+            stack = exception.ToString();
         }
 
         var total = clock.Elapsed.TotalSeconds;
@@ -280,6 +290,8 @@ public partial class StoryComparisonTests
                 unreadStep = outcome?.UnreadStep,
                 contextMessage = outcome?.ContextMessage,
                 notes = outcome?.Notes,
+                exception = stack,
+                replies = stack is null ? null : metered.Select(request => request.Text).ToList(),
             },
             DraftJson));
         }
@@ -393,6 +405,19 @@ public partial class StoryComparisonTests
             ],
             Core: "archivist",
             CoreIsStock: true));
+
+    /// <summary>A signal index read once from a <c>signals.tsv.gz</c> on disk, such as the installed app's copy.</summary>
+    private sealed class SignalIndexFile(string path) : ISignalIndexSource
+    {
+        private readonly Lazy<SignalIndex> index = new(() =>
+        {
+            using var file = File.OpenRead(path);
+            using var tsv = new System.IO.Compression.GZipStream(file, System.IO.Compression.CompressionMode.Decompress);
+            return SignalIndex.Read(tsv);
+        });
+
+        public Task<SignalIndex?> GetAsync(CancellationToken cancellationToken) => Task.FromResult<SignalIndex?>(index.Value);
+    }
 
     private static readonly JsonSerializerOptions DraftJson = new()
     {
