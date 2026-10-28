@@ -259,7 +259,8 @@ public partial class MainWindow : Window
                             ["option"] = (option + 1).ToString(System.Globalization.CultureInfo.InvariantCulture),
                         }),
                         CancellationToken.None,
-                        ToolCaller.Commander));
+                        ToolCaller.Commander),
+                    () => host.ShipPicture);
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey), desk: host.AdventureDesk);

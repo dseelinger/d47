@@ -154,6 +154,9 @@ internal sealed class StoryRecords(
             Beat = beat,
             Line = line,
             Speaker = voice?.Cast?.Name ?? (voice is { } said ? VoiceRoles.Called(said.Role) : null),
+            Picture = voice?.Cast is not null ? pictureOf(voice.Cast)
+                : voice?.Role == VoiceRole.Narrator ? D47.Core.Interface.SpeakerPictures.Narrator
+                : D47.Core.Interface.SpeakerPictures.Core(personas.Current.Id),
             Title = reached?.Title ?? (beat < 0 ? "Opening" : null),
 
             // Stored rather than derived later: a story edited after a beat has fired would otherwise

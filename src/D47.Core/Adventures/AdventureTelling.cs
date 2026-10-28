@@ -37,6 +37,9 @@ public sealed record AdventureTold
     /// <summary>The name the line was said under, or null for the ship.</summary>
     public string? Speaker { get; init; }
 
+    /// <summary>The picture name of the speaker, as the story's message for the line carries it, or null for none.</summary>
+    public string? Picture { get; init; }
+
     /// <summary>The beat's title, as it was when it fired.</summary>
     public string? Title { get; init; }
 

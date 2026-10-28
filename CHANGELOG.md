@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story's page in the Stories tab now shows the speaker's picture beside each line: the cast member's, the narrator's, or the core's for the ship and for your questions. Pressing a picture opens it full size. A finished story's lines are named by their speaker instead of by an id. Lines recorded before this update have no stored picture and show none.
+
 Each row of a region's Discoveries list now has its own Search tile, which runs the same search as the entry page's Search tile; pressing the rest of the row still opens the entry page. The tile is disabled, with the same reason, while "Look things up in the galaxy" is off.
 
 A codex entry's page now has a Search tile, on the main window and the headset panel. It opens Search › Bodies with Codex entry set to that entry and runs the search from your current system. With "Look things up in the galaxy" off the tile is disabled and says to turn it on.

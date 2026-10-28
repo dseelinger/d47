@@ -41,7 +41,7 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
     {
         AdventuresPage? page = null;
 
-        AdventuresPage Page() => page ??= new AdventuresPage(surface, host.Nav, host.Prompts, settingsStrip?.Invoke(), () => host.Copy);
+        AdventuresPage Page() => page ??= new AdventuresPage(surface, host.Nav, host.Prompts, settingsStrip?.Invoke(), () => host.Copy, host.Portraits);
 
         if (desk is not null)
         {

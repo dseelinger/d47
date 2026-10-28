@@ -566,7 +566,8 @@ A speaker may have a picture, downloaded with the story as `<story-id>.<cast-id>
 `data\stories`; a speaker in two versions has one for each, ending `.for-man.jpg` and `.for-woman.jpg`. A
 speaker marked `primary` is a recurring character named on the story's card, and always has one. A line
 that speaker says is posted to the Story log with the picture, which the message page shows above the text, at
-most 240 px wide. A line from the core or the narrator has none.
+most 240 px wide. A line from the core or the narrator has none. A story's own page shows each line's
+speaker picture beside it, the core's and the narrator's included, and pressing it opens it full size.
 
 While the speaker's line plays, including an answer to you and a message played again from the Story log, the
 avatar shows the picture whole in place of the core aboard: in the main window, on the mini panel, and on both

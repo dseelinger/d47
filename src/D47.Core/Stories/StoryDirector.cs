@@ -397,6 +397,10 @@ public sealed class StoryDirector(
     public StorySpeakerShown? Speaker(string? frontierId, string castId) =>
         stories.Current(frontierId) is { } story ? catalog().Secret(story.Id)?.Speaker(castId, Gender()) : null;
 
+    /// <summary>A cast member of story <paramref name="storyId"/>, current or not, as this Commander meets them, or null.</summary>
+    public StorySpeakerShown? Speaker(string? frontierId, string storyId, string castId) =>
+        catalog().Secret(storyId)?.Speaker(castId, Gender());
+
     public StoryCatalog Catalog => catalog();
 
     /// <summary>The Commander's game state, for whether the ship they are in can reach the beacon.</summary>
