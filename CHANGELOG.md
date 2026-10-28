@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-You can now give D47 a command from Elite's chat box: with local selected, type `/d47` and the command, such as `/d47 jump range`. D47 answers in the panel and out loud, as for a command typed into its Ask box, and leaves its own Ask box as it was. In Open and Private Group, players nearby see the message; in Solo, nobody does.
+You can now give D47 a command from Elite's chat box: with local selected, type `/d47` and the command, such as `/d47 my jump range`. D47 answers in the panel and out loud, as for a command typed into its Ask box, and leaves its own Ask box as it was. In Open and Private Group, players nearby see the message; in Solo, nobody does.
 
 D47 now warns when the canopy breaks, naming how many minutes of oxygen your life support holds, and tells you to repair it if you dock with the canopy still broken.
 

@@ -223,7 +223,7 @@ is one of your keybinds.
 With local selected in the comms panel, type `/d47` and a space, then the command:
 
 ```text
-/d47 jump range
+/d47 my jump range
 ```
 
 D47 runs it as if you had typed the words into its Ask box: the answer appears in the panel and is
