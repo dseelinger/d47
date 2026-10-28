@@ -1223,7 +1223,8 @@ public partial class MainWindow : Window
 
         if (_turnInFlight)
         {
-            // Typed and spoken input wait in the box; a chat-box command has nowhere to wait.
+            // Typed and spoken input stay in the ask box; nothing keeps a chat-box command, so the panel says it
+            // was not run.
             if (!fromBox)
             {
                 _model.Append(input, voice: TranscriptVoice.Commander, sourceKey: PanelViewModel.TagFor(target));
