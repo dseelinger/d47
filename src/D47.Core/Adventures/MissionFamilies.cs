@@ -12,7 +12,7 @@ public static class MissionFamilies
     public static IReadOnlyList<(string Family, int Issue)> SetAside { get; } =
     [
         ("Mission_Massacre_Skimmer", 721),
-        ("Mission_Disable", 722),
+        ("Mission_DisableMegaship", 722),
         ("Mission_RS_", 725),
         ("Mission_DS_", 725),
     ];
@@ -47,6 +47,7 @@ public static class MissionFamilies
         "Mission_Assassinate",
         "Mission_OnFoot_Collect",
         "Mission_Scan",
+        "Mission_Disable",
         "Mission_Hack",
         "Mission_OnFoot_Hack",
     ];
