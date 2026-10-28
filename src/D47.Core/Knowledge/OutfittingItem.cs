@@ -98,6 +98,51 @@ public sealed record OutfittingItem
         return false;
     }
 
+    /// <summary>Lowest and highest list price across the specifications this module matches; null for a ship or when none has a cost.</summary>
+    public (long Low, long High)? PriceRange()
+    {
+        if (IsShip)
+        {
+            return null;
+        }
+
+        var catalogue = Catalogue.Relax(Name);
+        long? low = null;
+        long? high = null;
+
+        foreach (var spec in EliteSpecifications.Modules)
+        {
+            if (spec.Cost is not { } cost
+                || spec.Name.EndsWith("(free)", StringComparison.Ordinal)
+                || (Class is not null && spec.Class != Class)
+                || (Rating is not null && !string.Equals(spec.Rating, Rating, StringComparison.Ordinal))
+                || Catalogue.Relax(Aliases.TryGetValue(spec.Name, out var alias) ? alias : spec.Name) != catalogue)
+            {
+                continue;
+            }
+
+            low = low is { } l ? Math.Min(l, cost) : cost;
+            high = high is { } h ? Math.Max(h, cost) : cost;
+        }
+
+        return low is { } lo && high is { } hi ? (lo, hi) : null;
+    }
+
+    /// <summary>"250,000 CR" or "35,400–132,800 CR"; empty when there is no price.</summary>
+    public string PriceText()
+    {
+        if (PriceRange() is not { } range)
+        {
+            return string.Empty;
+        }
+
+        var low = range.Low.ToString("N0", CultureInfo.InvariantCulture);
+
+        return range.Low == range.High
+            ? $"{low} CR"
+            : $"{low}–{range.High.ToString("N0", CultureInfo.InvariantCulture)} CR";
+    }
+
     /// <summary>Items whose display form, or short form, starts each typed word with a word of it; shortest first.</summary>
     public static IReadOnlyList<OutfittingItem> Suggest(string? typed, int limit = 12)
     {

@@ -354,9 +354,12 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
 
         foreach (var item in _items)
         {
+            var price = item.PriceText();
             var tile = new Button
             {
-                Content = $"{item.Display.ToUpperInvariant()}  ✕",
+                Content = price.Length == 0
+                    ? $"{item.Display.ToUpperInvariant()}  ✕"
+                    : $"{item.Display.ToUpperInvariant()} · {price}  ✕",
                 Height = TypeScale.MinimumTarget,
                 Classes = { ItemClass },
                 Tag = item.Display,
