@@ -653,13 +653,12 @@ public sealed class ShipPlanService(
                    + "on. Buy the ship and I will offer to adopt this plan onto it.";
         }
 
-        // **A plan that names a module and no engineering has nothing to promote** (reported 2026-08-20).
-        // `SlotPlan.Grade` is an int where 0 means "no engineering stated" and `BuildRequest.Grade` is an
-        // int? where a number means a real grade, so a module-only plan arrived at the checklist as *"Grade 0
-        // engineering on LargeHardpoint1"* — which checklist validation then refused, four times over, in red
-        // at the top of the tab.
         var planned = build.Slots
-            .Where(slot => slot.Blueprint is not null || slot.Grade > 0 || slot.Experimental is not null)
+            .Where(slot => slot.Blueprint is not null
+                           || slot.Grade > 0
+                           || slot.Experimental is not null
+                           || slot.Module is { Length: > 0 }
+                           || slot.Variant is { Length: > 0 })
             .ToList();
 
         if (planned.Count == 0)

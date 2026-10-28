@@ -46,7 +46,7 @@ public sealed record SlotPlan(
     /// Whether the module travels with the request (asked for 2026-08-24).
     /// </param>
     public BuildRequest ToRequest() =>
-        new(Slot, Blueprint, Grade > 0 ? Grade : null, Experimental, Module);
+        new(Slot, Blueprint, Grade > 0 ? Grade : null, Experimental, Module, Variant);
 
     /// <summary>One line, as the slot index shows it and as d47 says it.</summary>
     /// <param name="withGrade">

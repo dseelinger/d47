@@ -14,6 +14,8 @@ namespace D47.Core.Checklists;
 /// <param name="Experimental">
 /// An experimental effect, which is its own item on the same slot.
 /// </param>
+/// <param name="Module">The module the plan puts there, by name.</param>
+/// <param name="Variant">The exact module, as the journal's symbol.</param>
 public sealed record BuildRequest(
     string Slot,
     string? Blueprint = null,
@@ -21,7 +23,8 @@ public sealed record BuildRequest(
     string? Experimental = null,
 
     // What the plan means to put there, where it says (asked for 2026-08-24).
-    string? Module = null);
+    string? Module = null,
+    string? Variant = null);
 
 /// <summary>What one ingredient of a plan costs, and how far off the Commander is.</summary>
 /// <param name="Held">What they have now.</param>
@@ -91,7 +94,24 @@ public static class EngineeringPlan
 
             var request = raw with { Slot = canonicalSlot?.Invoke(raw.Slot.Trim()) ?? raw.Slot.Trim() };
 
-            if (request.Blueprint is not null || request.Grade is not null || request.Experimental is null)
+            var namesModule = Blank(request.Module) is not null || Blank(request.Variant) is not null;
+
+            if (namesModule)
+            {
+                items.Add(Item(
+                    scope,
+                    hull,
+                    new ChecklistIntent(ChecklistIntentKind.Module, request.Slot.Trim())
+                    {
+                        Module = Blank(request.Module),
+                        Variant = Blank(request.Variant),
+                    },
+                    $"Buy {ModuleSaid(request)} for {request.Slot.Trim()}"));
+            }
+
+            if (request.Blueprint is not null
+                || request.Grade is not null
+                || (request.Experimental is null && !namesModule))
             {
                 items.Add(Item(
                     scope,
@@ -140,6 +160,11 @@ public static class EngineeringPlan
             // Asserted: a shipped table confirmed the blueprint exists at that grade.
             Provenance = ChecklistProvenance.Asserted,
         };
+
+    private static string ModuleSaid(BuildRequest request) =>
+        Blank(request.Variant) is { } variant && EliteSpecifications.ModuleName(variant) is { Length: > 0 } exact
+            ? exact
+            : Blank(request.Module) ?? "a module";
 
     private static string Say(BuildRequest request)
     {
