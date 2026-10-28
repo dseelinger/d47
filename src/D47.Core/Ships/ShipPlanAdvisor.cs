@@ -145,7 +145,7 @@ public sealed class ShipPlanAdvisor(
             .ToList();
 
         return EngineeringPlan.Cost(
-            EngineeringPlan.Items(build.Scope ?? ChecklistScope.Universal, build.Hull, planned),
+            EngineeringPlan.Items(build.Scope, build.Hull, planned),
             state);
     }
 

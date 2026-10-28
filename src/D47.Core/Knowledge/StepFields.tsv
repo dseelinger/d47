@@ -1332,6 +1332,7 @@ ScanOrganic	Species	string	$Codex_Ent_Bacterial_06_Name;	yes
 ScanOrganic	Species	string	$Codex_Ent_Bacterial_12_Name;	yes
 ScanOrganic	Species	string	$Codex_Ent_Cactoid_01_Name;	yes
 ScanOrganic	Species	string	$Codex_Ent_Clypeus_01_Name;	yes
+ScanOrganic	Species	string	$Codex_Ent_Clypeus_02_Name;	yes
 ScanOrganic	Species	string	$Codex_Ent_Clypeus_03_Name;	yes
 ScanOrganic	Species	string	$Codex_Ent_Conchas_01_Name;	yes
 ScanOrganic	Species	string	$Codex_Ent_Conchas_03_Name;	yes
@@ -1360,6 +1361,7 @@ ScanOrganic	Species	string	$Codex_Ent_Tussocks_04_Name;	yes
 ScanOrganic	Species	string	$Codex_Ent_Tussocks_06_Name;	yes
 ScanOrganic	Species	string	$Codex_Ent_Tussocks_08_Name;	yes
 ScanOrganic	Species	string	$Codex_Ent_Tussocks_11_Name;	yes
+ScanOrganic	Species	string	$Codex_Ent_Tussocks_12_Name;	yes
 ScanOrganic	Variant	string		yes
 ScanOrganic	WasLogged	boolean		yes
 ScanOrganic	WasLogged	boolean	false	yes
@@ -1572,6 +1574,7 @@ ToolRun	Tool	string	control_interface	no
 ToolRun	Tool	string	control_on_foot	no
 ToolRun	Tool	string	control_srv	no
 ToolRun	Tool	string	control_systems	no
+ToolRun	Tool	string	copy_objective_system	no
 ToolRun	Tool	string	copy_to_clipboard	no
 ToolRun	Tool	string	decline_proposal	no
 ToolRun	Tool	string	delete_bookmark	no
@@ -1656,6 +1659,7 @@ ToolRun	Tool	string	list_bookmarks	no
 ToolRun	Tool	string	list_logs	no
 ToolRun	Tool	string	list_macros	no
 ToolRun	Tool	string	list_settings	no
+ToolRun	Tool	string	list_surface_mining_sites	no
 ToolRun	Tool	string	load_binding_profile	no
 ToolRun	Tool	string	look_at_screen	no
 ToolRun	Tool	string	mark_objective_done	no
@@ -1672,6 +1676,7 @@ ToolRun	Tool	string	plot_course	no
 ToolRun	Tool	string	plot_exobiology_route	no
 ToolRun	Tool	string	plot_exploration_route	no
 ToolRun	Tool	string	plot_next_stop	no
+ToolRun	Tool	string	plot_outfitting_route	no
 ToolRun	Tool	string	plot_route	no
 ToolRun	Tool	string	plot_trade_route	no
 ToolRun	Tool	string	promote_on_foot_plan	no
@@ -1699,9 +1704,11 @@ ToolRun	Tool	string	search_galnet	no
 ToolRun	Tool	string	search_outfitting	no
 ToolRun	Tool	string	search_stations	no
 ToolRun	Tool	string	search_systems	no
+ToolRun	Tool	string	select_comms_channel	no
 ToolRun	Tool	string	send_chat_message	no
 ToolRun	Tool	string	set_activity_suggested	no
 ToolRun	Tool	string	set_alarm	no
+ToolRun	Tool	string	set_course_for_objective	no
 ToolRun	Tool	string	set_journal_reminder	no
 ToolRun	Tool	string	set_log_verbosity	no
 ToolRun	Tool	string	set_mining_target	no
@@ -1724,6 +1731,7 @@ ToolRun	Tool	string	write_log	no
 ToolRun	Tool	string	zoom_headset_panel	no
 ChecklistLineAdded	Group	string		no
 ChecklistLineAdded	Group	string	custom	no
+ChecklistLineAdded	Group	string	planned ship	no
 ChecklistLineAdded	Group	string	ship	no
 ChecklistLineAdded	Group	string	suit	no
 ChecklistLineAdded	Group	string	system	no

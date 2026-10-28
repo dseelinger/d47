@@ -753,7 +753,7 @@ public sealed class ChecklistService(
     {
         var state = State;
         var live = Document.Items.Where(item => !item.IsComplete).ToList();
-        var ship = scope is { Group: ChecklistGroup.Ship };
+        var ship = scope is { Group: ChecklistGroup.Ship or ChecklistGroup.Build };
 
         if (scope is not null)
         {
@@ -1216,6 +1216,9 @@ public sealed class ChecklistService(
     private string Heading(ChecklistScope scope) => scope.Group switch
     {
         ChecklistGroup.Ship => ChecklistWording.Where(scope, null, State),
+        ChecklistGroup.Build => Document.Items.FirstOrDefault(item => item.Scope.Same(scope)) is { } line
+            ? ChecklistWording.Where(line, State)
+            : ChecklistWording.Where(scope, null, State),
         ChecklistGroup.System => scope.Key ?? "A system",
         _ => "Everything else",
     };
@@ -1242,6 +1245,7 @@ public sealed class ChecklistService(
     private static string Stale(ChecklistItem item) => item.State switch
     {
         ChecklistState.Done => "done, as of the last time I could see it.",
+        _ when item.Scope.Group == ChecklistGroup.Build => "you have not bought this ship yet.",
         _ => "I cannot see this right now — you are not in that ship, or have not visited that site.",
     };
 
@@ -1325,6 +1329,33 @@ public sealed class ChecklistService(
         }
 
         var change = list.Apply(Fid, Name, document => document.Forget(scope, which));
+
+        if (change.Changed && Selected is { } held && change.Document.Find(held) is null)
+        {
+            Select(null);
+        }
+    }
+
+    /// <summary>
+    /// Removes a planned ship's whole list, and any waiting plan for it, without saying anything.
+    /// </summary>
+    public void ForgetBuild(string buildId)
+    {
+        var scope = ChecklistScope.Build(buildId);
+
+        var waiting = proposals.PendingFor(Fid).Where(proposal => proposal.Scope.Same(scope)).ToList();
+
+        if (waiting.Count > 0)
+        {
+            proposals.Write([.. proposals.Pending.Except(waiting)]);
+        }
+
+        if (!Document.Items.Any(item => item.Scope.Same(scope)))
+        {
+            return;
+        }
+
+        var change = list.Apply(Fid, Name, document => document.RemoveList(scope));
 
         if (change.Changed && Selected is { } held && change.Document.Find(held) is null)
         {

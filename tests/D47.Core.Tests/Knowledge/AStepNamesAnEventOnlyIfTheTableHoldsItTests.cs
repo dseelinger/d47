@@ -115,7 +115,7 @@ public sealed class AStepNamesAnEventOnlyIfTheTableHoldsItTests
         Assert.True(shipped.Exists("ToolRun"));
         Assert.True(shipped.Exists("ChecklistLineAdded"));
         Assert.False(shipped.Exists("ChoiceMade"));
-        Assert.Equal(["custom", "ship", "suit", "system", "weapon"], shipped.ValuesOf("ChecklistLineAdded", "Group"));
+        Assert.Equal(["custom", "planned ship", "ship", "suit", "system", "weapon"], shipped.ValuesOf("ChecklistLineAdded", "Group"));
     }
 
     [Fact]

@@ -236,7 +236,7 @@ def main() -> None:
 
     event_rows.append(["d47", "ChecklistLineAdded", "no", "", "", curated.CHECKLIST_DESCRIPTION])
     field_rows.append(["ChecklistLineAdded", "Group", "string", "", "no"])
-    for group in sorted(groups):
+    for group in sorted(set(groups) | curated.UNNAMED_GROUPS):
         field_rows.append(["ChecklistLineAdded", "Group", "string", group,
                            "yes" if group in curated.DRAWABLE_GROUPS else "no"])
 

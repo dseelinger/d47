@@ -116,6 +116,11 @@ public sealed record ChecklistDocument
                 $"That list already holds {ChecklistLimits.MaxLiveItemsPerScope} open items, which is the most.");
         }
 
+        // A note on a planned ship's list carries the hull and name the list is known by.
+        var planned = scope.Group == ChecklistGroup.Build
+            ? Items.FirstOrDefault(existing => existing.Scope.Same(scope))
+            : null;
+
         var item = new ChecklistItem
         {
             Key = ChecklistKeys.Note(Items.Where(existing => existing.Scope.Same(scope))),
@@ -125,12 +130,16 @@ public sealed record ChecklistDocument
             Provenance = ChecklistProvenance.Attributed,
             Goal = goal,
             Watch = watch,
+            Hull = planned?.Hull,
+            BuildName = planned?.BuildName,
         };
+
+        var where = scope.Group == ChecklistGroup.Build ? ChecklistWording.Where(item, null) : scope.ToString();
 
         return new ChecklistChange(
             this with { Items = [.. Items, item] },
             Changed: true,
-            $"Added \"{trimmed}\" to the {scope} list.")
+            $"Added \"{trimmed}\" to the {where} list.")
         {
             Subject = item.Id,
         };
@@ -294,6 +303,17 @@ public sealed record ChecklistDocument
                 removed == 1 ? "Removed 1 completed item." : $"Removed {removed} completed items.");
     }
 
+    /// <summary>Removes every line in one list, the Commander's own included.</summary>
+    public ChecklistChange RemoveList(ChecklistScope scope)
+    {
+        var kept = Items.Where(item => !item.Scope.Same(scope)).ToList();
+        var removed = Items.Count - kept.Count;
+
+        return removed == 0
+            ? new ChecklistChange(this, Changed: false, "Nothing to remove.")
+            : new ChecklistChange(this with { Items = kept }, Changed: true, $"Removed {removed} items.");
+    }
+
     /// <summary>Removes the derived items in one list that <paramref name="which"/> selects.</summary>
     public ChecklistChange Forget(ChecklistScope scope, Func<ChecklistItem, bool> which)
     {
@@ -419,7 +439,9 @@ public sealed record ChecklistDocument
             }
 
             // The wording is refreshed and nothing else is.
-            kept.Add((existing.Item with { Text = item.Text, Intent = item.Intent, Hull = item.Hull }, existing.Position));
+            kept.Add((
+                existing.Item with { Text = item.Text, Intent = item.Intent, Hull = item.Hull, BuildName = item.BuildName },
+                existing.Position));
         }
 
         var dropped = mine.Count - kept.Count;

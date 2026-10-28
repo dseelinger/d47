@@ -58,12 +58,12 @@ public sealed class ShipDriftWatch(ShipPlanService ships, ChecklistService check
     /// <summary>Raises the question for one ship, or answers null where there is nothing to ask about.</summary>
     private string? Ask(int ship)
     {
-        if (ships.ForShip(ship) is not { } build
-            || build.Scope is not { } scope
-            || Drift(build) is not { } drift)
+        if (ships.ForShip(ship) is not { } build || Drift(build) is not { } drift)
         {
             return null;
         }
+
+        var scope = build.Scope;
 
         // Already declined, and the difference has not moved since.
         if (string.Equals(build.Settled, drift.Fingerprint, StringComparison.Ordinal))
@@ -95,16 +95,14 @@ public sealed class ShipDriftWatch(ShipPlanService ships, ChecklistService check
     /// <summary>Records a no.</summary>
     private void Settle()
     {
-        if (_asked is not { } asked
-            || ships.ForShip(asked.Ship) is not { } build
-            || build.Scope is not { } scope)
+        if (_asked is not { } asked || ships.ForShip(asked.Ship) is not { } build)
         {
             _asked = null;
             return;
         }
 
         if (checklists.Proposals.PendingFor(checklists.Document.CommanderFid)
-            .Any(proposal => proposal.Scope.Same(scope)))
+            .Any(proposal => proposal.Scope.Same(build.Scope)))
         {
             return;
         }
@@ -123,10 +121,12 @@ public sealed class ShipDriftWatch(ShipPlanService ships, ChecklistService check
     /// </summary>
     private Difference? Drift(ShipBuild build)
     {
-        if (build.Scope is not { } scope)
+        if (!build.IsOwned)
         {
             return null;
         }
+
+        var scope = build.Scope;
 
         var planned = build.Slots
             .Where(slot => slot.Blueprint is not null || slot.Grade > 0 || slot.Experimental is not null)

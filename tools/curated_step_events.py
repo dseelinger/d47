@@ -118,5 +118,8 @@ DRAWABLE_TOOLS = {"add_log_entry", "bookmark_destination"}
 # Checklist groups a story may draw as a step. None yet.
 DRAWABLE_GROUPS: set[str] = set()
 
+# Checklist groups d47 writes lines into that add_to_checklist does not take.
+UNNAMED_GROUPS = {"planned ship"}
+
 TOOL_RUN_DESCRIPTION = "A tool of the assistant ran for the Commander."
 CHECKLIST_DESCRIPTION = "A line was added to a checklist."

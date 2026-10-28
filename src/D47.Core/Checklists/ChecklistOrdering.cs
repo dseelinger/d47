@@ -15,7 +15,7 @@ public static class ChecklistOrdering
     /// <summary>How many lines are "the next few things" when the list is said out loud.</summary>
     public const int Spoken = 3;
 
-    /// <summary>A project's key — <c>ship:51</c>, <c>system:sol</c>, <c>custom</c>.</summary>
+    /// <summary>A project's key — <c>ship:51</c>, <c>system:sol</c>, <c>planned ship:ship-3</c>, <c>custom</c>.</summary>
     public static string Key(ChecklistScope scope)
     {
         ArgumentNullException.ThrowIfNull(scope);
@@ -54,6 +54,8 @@ public static class ChecklistOrdering
                 && string.Equals(
                     scope.Key, id.ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal)),
 
+            ChecklistGroup.Build => false,
+
             _ => false,
         };
     }
@@ -78,8 +80,7 @@ public static class ChecklistOrdering
                 continue;
             }
 
-            seen.Add(new ChecklistProject(
-                item.Scope, key, ChecklistWording.Where(item.Scope, item.Hull, state)));
+            seen.Add(new ChecklistProject(item.Scope, key, ChecklistWording.Where(item, state)));
         }
 
         return

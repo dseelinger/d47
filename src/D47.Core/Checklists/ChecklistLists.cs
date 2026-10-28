@@ -14,10 +14,15 @@ public enum ChecklistListGroup
     NothingOpen,
 }
 
-/// <summary>One list of lines: the Commander's notes, an engineer's unlocks, a ship, a system, a suit or a weapon.</summary>
+/// <summary>
+/// One list of lines: the Commander's notes, an engineer's unlocks, a ship, a planned ship, a system, a suit
+/// or a weapon.
+/// </summary>
 /// <param name="Id">Stable across redraws: <c>notes</c>, <c>engineers</c>, or the scope's ordering key.</param>
 /// <param name="IsEngineerUnlocks">Whether this is the derived Universal list of engineer prerequisites.</param>
-/// <param name="Name">The ship's name, the system, the suit or weapon, "Your notes" or "Engineer unlocks".</param>
+/// <param name="Name">
+/// The ship's name, "Python (planned)", the system, the suit or weapon, "Your notes" or "Engineer unlocks".
+/// </param>
 /// <param name="Kind">The line under the name: the hull, "Colonisation", "Suit · G3".</param>
 /// <param name="Open">Lines not yet Done.</param>
 /// <param name="Next">The first open line as said, or null where none is open.</param>
@@ -103,6 +108,7 @@ public static class ChecklistLists
             ChecklistGroup.Universal =>
                 ("Your notes", "Written down · you tick them", ChecklistListGroup.Yours),
             ChecklistGroup.Ship => Ship(first, state),
+            ChecklistGroup.Build => (ChecklistWording.Where(first, state), "Not bought yet", ChecklistListGroup.Ships),
             ChecklistGroup.System => (scope.Key ?? "A system", "Colonisation", ChecklistListGroup.Systems),
             ChecklistGroup.Suit => Suit(scope, state),
             _ => Weapon(scope, state),

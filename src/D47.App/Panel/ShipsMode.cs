@@ -250,12 +250,12 @@ public sealed class ShipsMode(
 
     public D47.Core.Checklists.PlanShortfall? Plan(string item)
     {
-        if (Resolve(item)?.Scope is not { } scope)
+        if (Resolve(item) is not { } build)
         {
             return null;
         }
 
-        var shortfall = checklists.Shortfall(scope);
+        var shortfall = checklists.Shortfall(build.Scope);
 
         return shortfall.PlanCount == 0 && shortfall.DeliveryCount == 0 ? null : shortfall;
     }
@@ -1290,13 +1290,13 @@ public sealed class ShipsMode(
                 LoadoutTone.Engineered));
         }
 
-        if (build.Scope is not { } scope)
+        if (!build.IsOwned)
         {
             return lines;
         }
 
-        lines.Add(Verdict(build, plan, scope));
-        lines.AddRange(Cost(build, plan, scope));
+        lines.Add(Verdict(build, plan, build.Scope));
+        lines.AddRange(Cost(build, plan, build.Scope));
 
         return lines;
     }

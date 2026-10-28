@@ -38,8 +38,14 @@ public static class ChecklistEvaluator
             return null;
         }
 
+        if (item.Scope.Group == ChecklistGroup.Build)
+        {
+            return Planned(intent, state);
+        }
+
         return intent.Kind switch
         {
+            ChecklistIntentKind.Hull => null,
             ChecklistIntentKind.Blueprint => Ship(item, intent, state),
             ChecklistIntentKind.Experimental => Ship(item, intent, state),
             ChecklistIntentKind.Module => Ship(item, intent, state),
@@ -135,6 +141,29 @@ public static class ChecklistEvaluator
         };
     }
 
+    /// <summary>
+    /// A line on a planned ship's list: a module line is bought once a matching module is in storage, and
+    /// nothing else has a ship to be read from.
+    /// </summary>
+    private static ChecklistVerdict? Planned(ChecklistIntent intent, CommanderGameState state)
+    {
+        if (intent.Kind != ChecklistIntentKind.Module || !NamesAModule(intent))
+        {
+            return null;
+        }
+
+        if (state.Modules.Modules.FirstOrDefault(module => Meets(intent, module.Symbol)) is { } stored)
+        {
+            return new ChecklistVerdict(ChecklistState.Done, $"{Describe(stored.Symbol!)} is bought and stored {Where(stored)}.");
+        }
+
+        var planned = intent.Variant is { Length: > 0 } variant ? Describe(variant) : PlannedName(intent);
+
+        return new ChecklistVerdict(
+            ChecklistState.Open,
+            $"{planned} is not bought yet. You can buy it into storage before you buy the ship.");
+    }
+
     /// <summary>Whether a module line names the module it plans, rather than only the slot.</summary>
     private static bool NamesAModule(ChecklistIntent intent) =>
         intent.Variant is { Length: > 0 } || PlannedName(intent) is { Length: > 0 };
@@ -152,12 +181,8 @@ public static class ChecklistEvaluator
 
         if (state.Modules.Modules.FirstOrDefault(module => Meets(intent, module.Symbol)) is { } stored)
         {
-            var where = stored.StationName is { } station
-                ? $"at {station} in {stored.StarSystem}"
-                : $"in {stored.StarSystem}";
-
             return new ChecklistVerdict(
-                ChecklistState.Done, $"{Describe(stored.Symbol!)} is bought and stored {where}.");
+                ChecklistState.Done, $"{Describe(stored.Symbol!)} is bought and stored {Where(stored)}.");
         }
 
         var planned = intent.Variant is { Length: > 0 } variant ? Describe(variant) : PlannedName(intent);
@@ -166,6 +191,9 @@ public static class ChecklistEvaluator
             ? new ChecklistVerdict(ChecklistState.Open, $"{Describe(fitted)} is fitted rather than {planned}.")
             : Empty(intent, loadout);
     }
+
+    private static string Where(StoredModule stored) =>
+        stored.StationName is { } station ? $"at {station} in {stored.StarSystem}" : $"in {stored.StarSystem}";
 
     /// <summary>
     /// Whether a module is the one a line plans: the same symbol where the plan has a variant, else the same

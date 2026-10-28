@@ -19,6 +19,9 @@ public enum ChecklistGroup
 
     /// <summary>One hand weapon, keyed by the journal's <c>SuitModuleID</c>.</summary>
     Weapon,
+
+    /// <summary>A ship the Commander plans and does not own yet, keyed by its build's id.</summary>
+    Build,
 }
 
 /// <summary>Which list an item is in: a group, plus the thing that group is about.</summary>
@@ -42,6 +45,8 @@ public sealed record ChecklistScope(ChecklistGroup Group, string? Key = null)
     public static ChecklistScope Weapon(long moduleId) =>
         new(ChecklistGroup.Weapon, moduleId.ToString(global::System.Globalization.CultureInfo.InvariantCulture));
 
+    public static ChecklistScope Build(string buildId) => new(ChecklistGroup.Build, buildId.Trim());
+
     public bool Same(ChecklistScope other) =>
         Group == other.Group
         && string.Equals(Key ?? string.Empty, other.Key ?? string.Empty, StringComparison.OrdinalIgnoreCase);
@@ -53,6 +58,7 @@ public sealed record ChecklistScope(ChecklistGroup Group, string? Key = null)
         ChecklistGroup.System => Key ?? "a system",
         ChecklistGroup.Suit => $"suit {Key}",
         ChecklistGroup.Weapon => $"weapon {Key}",
+        ChecklistGroup.Build => $"planned ship {Key}",
         _ => Word(Group),
     };
 
@@ -66,6 +72,7 @@ public sealed record ChecklistScope(ChecklistGroup Group, string? Key = null)
         ChecklistGroup.System => "system",
         ChecklistGroup.Suit => "suit",
         ChecklistGroup.Weapon => "weapon",
+        ChecklistGroup.Build => "planned ship",
         _ => "custom",
     };
 }
@@ -195,6 +202,9 @@ public enum ChecklistIntentKind
     /// intent for (#257).
     /// </summary>
     EngineerPrerequisite,
+
+    /// <summary>A hull to buy, by its symbol. Nothing in the journal ticks it on a planned ship's list.</summary>
+    Hull,
 }
 
 /// <summary>A structured intent, which is half of an item's identity.</summary>
@@ -262,6 +272,9 @@ public sealed record ChecklistItem
 
     /// <summary>The hull the ship reported when a ship-scoped item was written.</summary>
     public string? Hull { get; init; }
+
+    /// <summary>The build's name, on a line in a planned ship's list, where the Commander gave it one.</summary>
+    public string? BuildName { get; init; }
 
     /// <summary>
     /// Whether d47 has already said the one thing it can only say once about this item — that nothing

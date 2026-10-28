@@ -398,9 +398,17 @@ public sealed class ShipPlanService(
 
         store.Save([.. store.Builds.Where(other => other.Id != buildId)]);
 
-        if (build.Scope is not { } scope)
+        var scope = build.Scope;
+
+        if (!build.IsOwned)
         {
-            return $"Dropped the plan for a {build.HullName}.";
+            var listed = checklists.Document.Items.Any(item => item.Scope.Same(scope));
+
+            checklists.ForgetBuild(build.Id);
+
+            return listed
+                ? $"Dropped the plan for a {build.HullName}, and its list on the Checklist tab."
+                : $"Dropped the plan for a {build.HullName}.";
         }
 
         var promoted = checklists.Document.Items
@@ -646,12 +654,7 @@ public sealed class ShipPlanService(
             return "There is no such build.";
         }
 
-        if (build.Scope is not { } scope)
-        {
-            // A prospective hull has no ShipID, so there is no list for its items to be in.
-            return $"You do not own that {build.HullName} yet, so there is no ship list to put it "
-                   + "on. Buy the ship and I will offer to adopt this plan onto it.";
-        }
+        var scope = build.Scope;
 
         var planned = build.Slots
             .Where(slot => slot.Blueprint is not null
@@ -666,20 +669,44 @@ public sealed class ShipPlanService(
             return $"Nothing is planned for {build.Describe()} yet.";
         }
 
-        var items = EngineeringPlan.Items(
+        IReadOnlyList<ChecklistItem> items = EngineeringPlan.Items(
             scope,
             build.Hull,
             [.. planned.Select(slot => slot.ToRequest())],
-            checklists.SlotFor);
 
-        return checklists.AdoptPlan(
-            scope,
-            ChecklistSource.EngineeringPlan,
-            items,
+            // The ship being flown names no slot on a hull not bought yet.
+            build.IsOwned ? checklists.SlotFor : null);
 
-            // Every slot this build has an opinion about, so a slot the Commander cleared is dropped from the
-            // list rather than left standing because nothing mentioned it.
-            [.. build.Slots.Select(slot => slot.Slot)]);
+        // Every slot this build has an opinion about, so a slot the Commander cleared is dropped from the
+        // list rather than left standing because nothing mentioned it.
+        IReadOnlyCollection<string> replacing = [.. build.Slots.Select(slot => slot.Slot)];
+
+        if (!build.IsOwned)
+        {
+            items = [HullLine(build), .. items.Select(item => item with { BuildName = build.Name })];
+            replacing = [build.Hull, .. replacing];
+        }
+
+        return checklists.AdoptPlan(scope, ChecklistSource.EngineeringPlan, items, replacing);
+    }
+
+    /// <summary>The first line of a planned ship's list: "Buy a Python".</summary>
+    private static ChecklistItem HullLine(ShipBuild build)
+    {
+        var intent = new ChecklistIntent(ChecklistIntentKind.Hull, build.Hull);
+
+        return new ChecklistItem
+        {
+            Key = ChecklistKeys.For(intent),
+            Scope = build.Scope,
+            Kind = ChecklistItemKind.Derived,
+            Source = ChecklistSource.EngineeringPlan,
+            Text = $"Buy {IndefiniteArticle.With(build.HullName)}",
+            Intent = intent,
+            Hull = build.Hull,
+            BuildName = build.Name,
+            Provenance = ChecklistProvenance.Asserted,
+        };
     }
 
     /// <summary>

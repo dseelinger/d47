@@ -93,6 +93,7 @@ public static class ChecklistKeys
         ChecklistIntentKind.Commodity => "com",
         ChecklistIntentKind.Grade => "grd",
         ChecklistIntentKind.Modification => "fit",
+        ChecklistIntentKind.Hull => "hull",
         _ => "x",
     };
 

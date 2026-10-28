@@ -44,7 +44,7 @@ public class ShipPlanTests
         Assert.NotNull(build);
         Assert.Null(build.ShipId);
         Assert.False(build.IsOwned);
-        Assert.Null(build.Scope);
+        Assert.Equal(ChecklistScope.Build(build.Id), build.Scope);
         Assert.Contains("intended", build.Describe(), StringComparison.Ordinal);
     }
 
@@ -341,11 +341,11 @@ public class ShipPlanTests
     }
 
     /// <summary>
-    /// A prospective hull has no list to be on, and that is said rather than invented: scoping a
-    /// Corsair's hardpoints to the universal list would outlive the decision to buy one.
+    /// A prospective hull is promoted to a list keyed by its build, never the universal list, where its
+    /// lines would outlive the decision to buy one (#1830).
     /// </summary>
     [Fact]
-    public void APlanForAHullYouDoNotOwnCannotBePromoted()
+    public void APlanForAHullYouDoNotOwnGoesOnItsOwnListAndNotTheUniversalOne()
     {
         var install = new MemoryInstall();
         var store = Store(install);
@@ -356,10 +356,11 @@ public class ShipPlanTests
 
         ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
 
-        var said = ships.Promote(build.Id);
+        ships.Promote(build.Id);
 
-        Assert.Contains("do not own", said, StringComparison.Ordinal);
         Assert.Empty(checklists.Proposals.Pending);
+        Assert.NotEmpty(checklists.Document.Items);
+        Assert.All(checklists.Document.Items, item => Assert.Equal(ChecklistScope.Build(build.Id), item.Scope));
     }
 
     /// <summary>Dropping a plan keeps what it already put on the checklist.</summary>

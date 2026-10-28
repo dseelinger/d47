@@ -14,9 +14,12 @@ internal static class FittedModule
     public static ModuleSpecification? Of(ChecklistItem item, CommanderGameState? state) =>
         Fitted(item, state) is { } fitted ? EliteSpecifications.Module(fitted.Item) : null;
 
-    /// <summary>Whether there is anything in this item's slot for an engineer to work on (GitHub issue 41).</summary>
+    /// <summary>
+    /// Whether there is anything in this item's slot for an engineer to work on (GitHub issue 41); never on
+    /// a ship not bought yet.
+    /// </summary>
     public static bool IsFitted(ChecklistItem item, CommanderGameState? state) =>
-        LoadoutFor(item, state) is null || Fitted(item, state) is not null;
+        item.Scope.Group != ChecklistGroup.Build && (LoadoutFor(item, state) is null || Fitted(item, state) is not null);
 
     /// <summary>The module in this item's slot, or null where the slot is empty or the ship unseen.</summary>
     private static ShipModule? Fitted(ChecklistItem item, CommanderGameState? state)
@@ -35,11 +38,11 @@ internal static class FittedModule
     /// <summary>
     /// Which loadout this item's modules are read from: the live one for the ship being flown, and for
     /// a line that is not about a ship in particular because there is nothing better to offer it; the
-    /// remembered one for any other ship.
+    /// remembered one for any other ship; none for a ship not bought yet.
     /// </summary>
     private static ShipLoadout? LoadoutFor(ChecklistItem item, CommanderGameState? state)
     {
-        if (state is null)
+        if (state is null || item.Scope.Group == ChecklistGroup.Build)
         {
             return null;
         }

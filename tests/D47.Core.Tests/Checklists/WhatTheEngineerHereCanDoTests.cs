@@ -62,6 +62,17 @@ public class WhatTheEngineerHereCanDoTests
         Assert.Equal(5, partial.Wanted);
     }
 
+    /// <summary>A ship not bought yet has nothing in its slots to roll, whatever the ship being flown holds (#1830).</summary>
+    [Fact]
+    public void ALineOnAPlannedShipIsNotWorkForTheEngineerHere()
+    {
+        var state = Flying("Laksak", rank: 5).Active!;
+        var planned = Booster("TinyHardpoint5", grade: 3) with { Scope = ChecklistScope.Build("ship-3"), Hull = "python" };
+
+        Assert.Empty(EngineersHere.For([planned], state).SelectMany(here => here.Ready.Concat(here.OutOfRank)));
+        Assert.Empty(EngineersHere.For([planned], state).SelectMany(here => here.Partial));
+    }
+
     /// <summary>Somewhere no engineer is based answers with nothing, rather than with the list.</summary>
     [Fact]
     public void AwayFromAnyEngineerThereIsNothingToSay()

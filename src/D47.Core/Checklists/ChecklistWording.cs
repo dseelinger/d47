@@ -30,12 +30,15 @@ public static class ChecklistWording
             return Invitation(item.Text, intent.Subject);
         }
 
-        if (!ChecklistKeys.SlotShaped(intent.Kind) || item.Scope.Group != ChecklistGroup.Ship)
+        if (!ChecklistKeys.SlotShaped(intent.Kind)
+            || item.Scope.Group is not (ChecklistGroup.Ship or ChecklistGroup.Build))
         {
             return item.Text;
         }
 
-        var said = InSlot(item, intent.Subject, state);
+        var said = item.Scope.Group == ChecklistGroup.Build
+            ? Subject(intent.Subject, item.Hull)
+            : InSlot(item, intent.Subject, state);
 
         // The subject as the plan spelled it, which is what the text was built from.
         return said is null || said == intent.Subject
@@ -78,7 +81,11 @@ public static class ChecklistWording
     {
         var said = Said(item, state);
 
-        return Ship(item.Scope, item.Hull, state) is { } ship ? $"{said} on {ship}" : said;
+        var ship = item.Scope.Group == ChecklistGroup.Build && item.Intent?.Kind != ChecklistIntentKind.Hull
+            ? Planned(item.BuildName, item.Hull)
+            : Ship(item.Scope, item.Hull, state);
+
+        return ship is not null ? $"{said} on {ship}" : said;
     }
 
     /// <summary>
@@ -102,7 +109,9 @@ public static class ChecklistWording
     {
         ArgumentNullException.ThrowIfNull(item);
 
-        return Where(item.Scope, item.Hull, state);
+        return item.Scope.Group == ChecklistGroup.Build
+            ? Planned(item.BuildName, item.Hull)
+            : Where(item.Scope, item.Hull, state);
     }
 
     /// <inheritdoc cref="Where(ChecklistItem, CommanderGameState?)"/>
@@ -110,8 +119,14 @@ public static class ChecklistWording
     {
         ArgumentNullException.ThrowIfNull(scope);
 
-        return Ship(scope, hull, state) ?? scope.ToString();
+        return scope.Group == ChecklistGroup.Build
+            ? Planned(null, hull)
+            : Ship(scope, hull, state) ?? scope.ToString();
     }
+
+    /// <summary>A planned ship's list — "Python (planned)", or the build's name with "(planned)".</summary>
+    public static string Planned(string? name, string? hull) =>
+        $"{NonEmpty(name) ?? HullName(hull) ?? "A ship"} (planned)";
 
     /// <summary>The ship a scope is about — "Flamebrand (Anaconda)" — or null where it is about no ship.</summary>
     public static string? Ship(ChecklistScope scope, string? hull, CommanderGameState? state)
@@ -178,7 +193,9 @@ public static class ChecklistWording
 
         if (!ChecklistKeys.SlotShaped(intent.Kind) || item.Scope.Group != ChecklistGroup.Ship)
         {
-            return intent.Subject;
+            return item.Scope.Group == ChecklistGroup.Build && ChecklistKeys.SlotShaped(intent.Kind)
+                ? Subject(intent.Subject, item.Hull) ?? intent.Subject
+                : intent.Subject;
         }
 
         return InSlot(item, intent.Subject, state) ?? Subject(intent.Subject, item.Hull);

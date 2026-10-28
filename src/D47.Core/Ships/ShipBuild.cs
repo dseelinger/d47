@@ -140,11 +140,10 @@ public sealed record ShipBuild(
     public bool IsOwned => ShipId is not null;
 
     /// <summary>
-    /// Which checklist list this build's items belong in, or null while the hull is only intended —
-    /// which is exactly why promotion of a prospective build has to say so rather than inventing a
-    /// scope.
+    /// Which checklist list this build's items belong in: the ship's own once it is owned, and the
+    /// build's planned-ship list until then.
     /// </summary>
-    public ChecklistScope? Scope => ShipId is { } id ? ChecklistScope.Ship(id) : null;
+    public ChecklistScope Scope => ShipId is { } id ? ChecklistScope.Ship(id) : ChecklistScope.Build(Id);
 
     /// <summary>The plan for one slot, or null where there is none.</summary>
     public SlotPlan? For(string slot) =>
