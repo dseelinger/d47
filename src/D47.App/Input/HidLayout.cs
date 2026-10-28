@@ -121,8 +121,6 @@ internal sealed class HidReports(IReadOnlySet<byte> needed)
 {
     private readonly Dictionary<byte, byte[]> _latest = new();
 
-    public IReadOnlyCollection<byte[]> Latest => _latest.Values;
-
     /// <summary>Keeps a report by its first byte, its report id; true once every needed id has one.</summary>
     public bool Store(byte[] report)
     {

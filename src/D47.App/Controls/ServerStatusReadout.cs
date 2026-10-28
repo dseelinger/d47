@@ -45,12 +45,8 @@ public sealed class ServerStatusReadout : StackPanel
         Children.Add(_word);
     }
 
-    /// <summary>The state shown, or null for not shown.</summary>
-    public ServerState? State { get; private set; }
-
     public void Show(ServerState? state)
     {
-        State = state;
         IsVisible = state is not null;
 
         if (state is not { } shown)

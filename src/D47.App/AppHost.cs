@@ -58,12 +58,10 @@ public sealed class AppHost : IDisposable
         KeywordRouter router,
         TurnCancellation cancellation,
         ILoggerFactory loggerFactory,
-        SerilogVerbosityControl verbosity,
         SettingsService settings,
         SecretStore secrets,
         ViewStateStore viewState,
         GameStateStore gameState,
-        JournalSpine journal,
         TickLoop tick,
         CalloutEngine callouts,
         CapabilityRegistry capabilities,
@@ -88,7 +86,6 @@ public sealed class AppHost : IDisposable
         WasapiMicrophone microphone,
         PushToTalkKey pushToTalk,
         D47.Core.Hotas.BoundButton pushToTalkButton,
-        D47.Core.Hotas.PushToTalkSources pushToTalkSources,
         BindsWatch binds,
         ScancodeInjector gameInput,
         HttpModelStore models,
@@ -136,12 +133,10 @@ public sealed class AppHost : IDisposable
             cast => SpeakerPictures.For(cast),
             storyReaction);
         Records = new StoryRecords(messages, stories, adventures, personas, gameState, cast => SpeakerPictures.For(cast), storyReaction);
-        Verbosity = verbosity;
         Settings = settings;
         Secrets = secrets;
         ViewState = viewState;
         GameState = gameState;
-        Journal = journal;
         Tick = tick;
         Callouts = callouts;
         Capabilities = capabilities;
@@ -175,10 +170,7 @@ public sealed class AppHost : IDisposable
         Music = new AmbientMusic(audio, () => Cues);
         _cues = cues;
         Voice = voice;
-        Listening = gate;
-        Echo = echo;
         _binds = binds;
-        _pushToTalkSources = pushToTalkSources;
         _gameInput = gameInput;
         Models = models;
         Wording = wording;
@@ -290,8 +282,6 @@ public sealed class AppHost : IDisposable
     /// <summary>Plays voices before they are chosen; set once composition has built it.</summary>
     internal VoiceAuditions? Auditions { get; set; }
 
-    public SerilogVerbosityControl Verbosity { get; }
-
     /// <summary>The settings surface.</summary>
     public SettingsService Settings { get; }
 
@@ -301,8 +291,6 @@ public sealed class AppHost : IDisposable
     public ViewStateStore ViewState { get; }
 
     public GameStateStore GameState { get; }
-
-    public JournalSpine Journal { get; }
 
     /// <summary>
     /// The last few thousand journal events, kept so the Transcript can show them
@@ -465,12 +453,6 @@ public sealed class AppHost : IDisposable
     /// <summary>What d47 says of a story's openings, scan and ending.</summary>
     public StoryNarration Narration { get; }
 
-    /// <summary>The gate the microphone feeds.</summary>
-    public ListenGate Listening { get; }
-
-    /// <summary>What removes d47's own voice from what the microphone hears (Phase 13).</summary>
-    public EchoCanceller Echo { get; }
-
     /// <summary>The capture endpoints.</summary>
     public WasapiMicrophone Microphone { get; }
 
@@ -501,14 +483,8 @@ public sealed class AppHost : IDisposable
     /// <summary>The conversation about each build's plan (#570).</summary>
     public BuildTalk BuildTalk { get; private set; } = null!;
 
-    /// <summary>Where the builds are kept, for the panel to follow and for a hand edit to reach.</summary>
-    public ShipBuildStore ShipBuilds { get; private set; } = null!;
-
     /// <summary>The Commander's suit and weapon plans, joined to what they are wearing (Phase 27).</summary>
     public D47.Core.Loadout.OnFootPlanService OnFootPlans { get; private set; } = null!;
-
-    /// <summary>Where those are kept, for the panel to follow and for a hand edit to reach.</summary>
-    public D47.Core.Loadout.OnFootBuildStore OnFootBuilds { get; private set; } = null!;
 
     /// <summary>Which engineer to go and get next, read across both plan stores (Phase 28).</summary>
     public D47.Core.Engineers.EngineerPlanService Unlocks { get; private set; } = null!;
@@ -694,17 +670,6 @@ public sealed class AppHost : IDisposable
     public D47.Core.Knowledge.CommodityBoard Commodities { get; private set; } = new();
 
     /// <summary>
-    /// The Community Goal supply search, saved once and run by voice or from the Navigation tab (#296).
-    /// </summary>
-    public D47.Core.Knowledge.CommunityGoalSearch CommunityGoalSearch { get; private set; } = new();
-
-    /// <summary>
-    /// What the Community Goal commodity has made or lost, per Commander, folded from the journals
-    /// (#296).
-    /// </summary>
-    public D47.Core.Journal.CommodityLedger CommodityLedger { get; private set; } = new();
-
-    /// <summary>
     /// The last shopping list for a construction site (Phase 50), on the same terms as <see
     /// cref="Commodities"/> and for the same reason.
     /// </summary>
@@ -774,9 +739,6 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The Commander's custom Chatterbox voices, listed where a voice is picked and never drawn for anyone else.</summary>
     internal CustomVoices CustomVoices { get; }
-
-    /// <summary>The two of them as one gate.</summary>
-    private readonly D47.Core.Hotas.PushToTalkSources _pushToTalkSources;
 
     /// <summary>
     /// The one thing that presses a key in the game, held only so that shutting down lets go of
@@ -3495,12 +3457,10 @@ public sealed class AppHost : IDisposable
             router,
             cancellation,
             loggerFactory,
-            verbosity,
             settings,
             secrets,
             viewState,
             gameState,
-            journal,
             tick,
             callouts,
             capabilities,
@@ -3525,7 +3485,6 @@ public sealed class AppHost : IDisposable
             microphone,
             pushToTalk,
             pushToTalkButton,
-            sources,
             binds,
             injector,
             models,
@@ -3636,10 +3595,8 @@ public sealed class AppHost : IDisposable
         checklists.Typed += host.AskForWatch;
         host.Ships = shipPlans;
         host.BuildTalk = buildTalk;
-        host.ShipBuilds = shipBuilds;
         host.OnFootPlans = onFootPlans;
         host.Unlocks = unlocks;
-        host.OnFootBuilds = onFootBuilds;
 
         // The Commander switch (Phase 44).
         host.Drift = drift;
@@ -3841,8 +3798,6 @@ public sealed class AppHost : IDisposable
         host.Clipboard = clipboard;
         host.Controllers = controllers;
         host.Commodities = commodityBoard;
-        host.CommunityGoalSearch = communityGoalSearch;
-        host.CommodityLedger = commodityLedger;
         host.Sourcing = sourcingBoard;
         host.Cargo = cargoBoard;
         host.GalaxySearches = galaxySearchBoard;
@@ -6055,7 +6010,6 @@ public sealed class AppHost : IDisposable
             }
         });
     }
-
 
     /// <summary>The last <c>Status.json</c> the tick read.</summary>
     public Core.Journal.GameStatus LiveStatus => Writer.LiveStatus();

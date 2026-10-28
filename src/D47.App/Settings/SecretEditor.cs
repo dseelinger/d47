@@ -143,9 +143,6 @@ public sealed class SecretEditor : UserControl
     /// <summary>Whether the store currently holds a value for this row.</summary>
     public bool IsStored => _settings.HasSecret(_row);
 
-    /// <summary>The last real check, or <see cref="SecretCheck.Untested"/>.</summary>
-    public SecretCheck Result => _result;
-
     /// <summary>Whether the field is showing: no key is stored, or one is being replaced.</summary>
     private bool Entering => !IsStored || _replacing;
 

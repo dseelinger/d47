@@ -512,7 +512,7 @@ public partial class MainWindow : Window
             // And the tab itself, back where it was left (#276).
             Panel.RememberTab(new PanelTabMemory(host.ViewState));
 
-            _placement = WindowPlacementMemory.Attach(this, host.ViewState);
+            WindowPlacementMemory.Attach(this, host.ViewState);
 
             // Read before the first paint for the same reason: the worked example appearing and then
             // vanishing is worse than either state, and it is the Commander who has already asked — the one
@@ -570,9 +570,6 @@ public partial class MainWindow : Window
         D47.Core.Knowledge.GameServerState.Unknown => ServerState.Unknown,
         _ => null,
     };
-
-    /// <summary>What the panel is showing.</summary>
-    public PanelViewModel Model => _model;
 
     protected override async void OnLoaded(RoutedEventArgs e)
     {
@@ -952,9 +949,6 @@ public partial class MainWindow : Window
         dialog.Closed += (_, _) => _find = null;
         _ = dialog.Over(this);
     }
-
-    /// <summary>The rectangle this window remembers.</summary>
-    private WindowPlacementMemory? _placement;
 
     private CommanderSwitcher? _switcher;
 

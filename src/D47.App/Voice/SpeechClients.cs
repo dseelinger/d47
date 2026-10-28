@@ -73,12 +73,6 @@ public sealed class SpeechClients : IDisposable
     /// <summary>How the picker labels one — "Ava — Female, en-US" rather than the raw id.</summary>
     internal string? VoiceNameFor(string id) => VoiceGroups.NameFor(VoicesFor, id);
 
-    /// <summary>
-    /// How a voice is shown to the Commander, wherever one is shown — the row, its tooltip and the
-    /// picker all read this.
-    /// </summary>
-    internal string VoiceLabelFor(string id) => VoiceLabelFor(VoiceGroup.Aboard, id);
-
     /// <summary>What the provider tags one voice's gender as, or null where it says nothing (#146).</summary>
     internal string? VoiceGenderFor(VoiceGroup group, string id) =>
         VoicesFor(group).Voices
@@ -91,7 +85,10 @@ public sealed class SpeechClients : IDisposable
     internal bool VoiceIsCustom(VoiceGroup group, string id) =>
         VoicesFor(group).Voices.Any(voice => voice.Custom && string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase));
 
-    /// <inheritdoc cref="VoiceLabelFor(string)"/>
+    /// <summary>
+    /// How a voice is shown to the Commander, wherever one is shown — the row, its tooltip and the
+    /// picker all read this.
+    /// </summary>
     internal string VoiceLabelFor(VoiceGroup group, string id) =>
         VoicesFor(group).LabelFor(
             id,
@@ -520,7 +517,6 @@ public sealed class SpeechClients : IDisposable
 
         // The local voice (Phase 59).
         TtsProviderCatalog.KokoroId => WithEdgeStandIn(
-            TtsProviderCatalog.KokoroId,
             new KokoroTtsProvider(
                 _files,
                 KokoroFolder(),
@@ -529,7 +525,6 @@ public sealed class SpeechClients : IDisposable
             () => D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder())),
 
         TtsProviderCatalog.ChatterboxId => WithEdgeStandIn(
-            TtsProviderCatalog.ChatterboxId,
             Watched(new ChatterboxTtsProvider(
             _files,
             ChatterboxFolder(),
@@ -550,7 +545,7 @@ public sealed class SpeechClients : IDisposable
         return chatterbox;
     }
 
-    private LocalVoiceWithEdgeStandIn WithEdgeStandIn(string providerId, ITtsProvider local, Func<bool> installed) =>
+    private LocalVoiceWithEdgeStandIn WithEdgeStandIn(ITtsProvider local, Func<bool> installed) =>
         new(
             local,
             new EdgeNeuralTtsProvider(_loggers.CreateLogger<EdgeNeuralTtsProvider>()),

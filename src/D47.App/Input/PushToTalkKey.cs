@@ -23,8 +23,6 @@ public sealed class PushToTalkKey(ILogger<PushToTalkKey> logger)
     /// <summary>The gesture currently bound, for reporting.</summary>
     public string? Gesture { get; private set; }
 
-    public bool IsDown => _wasDown;
-
     /// <summary>Binds a gesture.</summary>
     public bool Bind(string? gesture)
     {

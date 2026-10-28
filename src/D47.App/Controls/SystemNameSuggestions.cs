@@ -84,9 +84,6 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
     /// <summary>The names listed, none while the list is closed.</summary>
     public IReadOnlyList<T> Shown => _shown;
 
-    /// <summary>The highlighted name's place in <see cref="Shown"/>, or -1 for none.</summary>
-    public int Highlighted => _highlighted;
-
     /// <summary>Sets the field's text without asking for names, and closes the list.</summary>
     public void SetText(string text)
     {

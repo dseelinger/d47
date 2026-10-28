@@ -41,9 +41,6 @@ internal sealed class SettingsNav(
     /// <summary>The area holding the open place, or −1 before one is open.</summary>
     public int ActiveArea { get; private set; } = -1;
 
-    public string? ActiveAreaId =>
-        ActiveArea >= 0 && ActiveArea < _areas.Count ? _areas[ActiveArea].Id : null;
-
     public int AreaCount => _areas.Count;
 
     public void Clear()

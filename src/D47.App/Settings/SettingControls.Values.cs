@@ -144,7 +144,7 @@ internal sealed partial class SettingControls
             // One handler with a branch rather than two handlers.
             if (downloads)
             {
-                _ = FetchModelAsync(row, chosen, view, combo, bar, message);
+                _ = FetchModelAsync(row, chosen, view, bar, message);
                 return;
             }
 
@@ -224,7 +224,6 @@ internal sealed partial class SettingControls
         SettingRow row,
         string? chosen,
         TemplatedControl view,
-        IChoiceControl combo,
         ProgressBar bar,
         StatusLine message)
     {
@@ -236,7 +235,7 @@ internal sealed partial class SettingControls
         // A row that carries its own fetch (#139).
         if (row.FetchChoiceAsync is { } fetch)
         {
-            await FetchChoiceAsync(row, chosen, view, combo, bar, message, fetch);
+            await FetchChoiceAsync(row, chosen, view, bar, message, fetch);
             return;
         }
 
@@ -297,7 +296,6 @@ internal sealed partial class SettingControls
         SettingRow row,
         string? chosen,
         TemplatedControl view,
-        IChoiceControl combo,
         ProgressBar bar,
         StatusLine message,
         Func<string?, IProgress<double>, CancellationToken, Task<string?>> fetch)

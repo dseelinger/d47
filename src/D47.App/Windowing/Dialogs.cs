@@ -22,14 +22,6 @@ public static class Dialogs
         return dialog.ShowDialog(owner);
     }
 
-    /// <summary>The same, for a dialog that answers something.</summary>
-    public static Task<TResult> Over<TResult>(this Window dialog, Window owner, string borderKey = ThemeManager.AKey)
-    {
-        Dress(dialog, owner, borderKey);
-
-        return dialog.ShowDialog<TResult>(owner);
-    }
-
     /// <summary>Draws a modal over <paramref name="owner"/>'s content, and waits.</summary>
     public static Task Over(this ModalDialog dialog, Window owner) => ModalHost.For(owner).Show(dialog);
 

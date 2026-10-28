@@ -22,24 +22,6 @@ public static class CardChrome
         track?.Add(background);
     }
 
-    /// <summary>The current row in a list: Tile2 behind a 3px A bar on the leading edge. Wraps the row's existing child behind the bar.</summary>
-    public static void CurrentRow(Border row)
-    {
-        Themed(row, Border.BackgroundProperty, ThemeManager.Tile2Key);
-
-        var bar = new Border { Width = 3 };
-        Themed(bar, Border.BackgroundProperty, ThemeManager.AKey);
-
-        var child = row.Child!;
-        row.Child = null;
-
-        var layout = new DockPanel();
-        DockPanel.SetDock(bar, Dock.Left);
-        layout.Children.Add(bar);
-        layout.Children.Add(child);
-        row.Child = layout;
-    }
-
     private static IDisposable Themed(StyledElement target, AvaloniaProperty property, string key) =>
         target.Bind(property, target.GetResourceObservable(key));
 }

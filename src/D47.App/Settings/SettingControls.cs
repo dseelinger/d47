@@ -68,8 +68,6 @@ internal readonly record struct SettingControl(Control Control, Action Refresh, 
 /// <summary>Builds the control for each settings row.</summary>
 internal sealed partial class SettingControls(SettingRowHost host, SettingServices services)
 {
-    private IBrush? Res(string key) => host.Resources.FindResource(key) as IBrush;
-
     private IDisposable Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, host.Resources.GetResourceObservable(key));
 

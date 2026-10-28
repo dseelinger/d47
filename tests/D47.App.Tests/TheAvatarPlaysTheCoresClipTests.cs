@@ -147,33 +147,6 @@ public class TheAvatarPlaysTheCoresClipTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void AClipRunsOffItsEndAndPlaysAgain()
-    {
-        var path = Place("covas", LoopState.Thinking);
-
-        using var video = D47.App.Media.VideoFrames.Open(path)!;
-        var frame = video.Frame();
-        var first = 0;
-
-        while (video.Next(frame))
-        {
-            first++;
-        }
-
-        Assert.True(first > 1);
-        Assert.True(video.Rewind());
-
-        var second = 0;
-
-        while (video.Next(frame))
-        {
-            second++;
-        }
-
-        Assert.Equal(first, second);
-    }
-
-    [AvaloniaFact]
     public void ClipsOpenedOneAfterAnotherAllPlay()
     {
         var path = Place("covas", LoopState.Thinking);

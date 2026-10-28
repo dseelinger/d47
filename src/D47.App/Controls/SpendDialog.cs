@@ -286,7 +286,7 @@ public sealed class SpendDialog : ModalDialog
         }
 
         var stack = new StackPanel { Spacing = 0 };
-        stack.Children.Add(TableRow(null, [.. windows.Select(w => w.Period.Name)], head: true));
+        stack.Children.Add(TableRow(null, [.. windows.Select(w => w.Period.Name)]));
 
         var total = windows.Select((w, i) => w.Totals.Complete && charged[i].Count == 0
             ? new FigureCell(Dash, ThemeManager.Grey2Key)
@@ -382,7 +382,7 @@ public sealed class SpendDialog : ModalDialog
         return label;
     }
 
-    private static Control TableRow(Control? label, IReadOnlyList<string> heads, bool head) =>
+    private static Control TableRow(Control? label, IReadOnlyList<string> heads) =>
         TableRow(label, [.. heads.Select(text => new FigureCell(text.ToUpperInvariant(), ThemeManager.GreyKey))], head: true);
 
     private static Control TableRow(Control? label, IReadOnlyList<FigureCell> cells, bool rule = false, bool head = false)

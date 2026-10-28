@@ -56,7 +56,6 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     private bool _dirty = true;
     private int _appliedZoom = ZoomLadder.Default;
     private (int Width, int Height) _appliedPixels = PanelResolution.Default;
-    private VrPose _head = VrPose.Origin;
 
     /// <summary>
     /// <param name="settingsPage"> Builds the settings surface for this copy of the panel, or null to
@@ -467,9 +466,6 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         }
     }
 
-    /// <summary>Whether the resize handles are drawn.</summary>
-    public bool HandlesShown => _handlesShown;
-
     private static Border Edge(Avalonia.Layout.HorizontalAlignment across, Avalonia.Layout.VerticalAlignment down) => new()
     {
         HorizontalAlignment = across,
@@ -534,10 +530,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
     public bool IsDirty => _dirty;
 
-    /// <summary>Where the head was when this surface was last served.</summary>
-    public VrPose Head => _head;
-
-    public void Observe(VrPose head) => _head = head;
+    public void Observe(VrPose head)
+    {
+    }
 
     /// <summary>
     /// Which way <c>output-only</c> was last set, so the class is touched when the mode changes and not

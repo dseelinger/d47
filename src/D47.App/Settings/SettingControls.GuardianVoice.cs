@@ -790,12 +790,6 @@ internal sealed partial class SettingControls
             Math.Clamp(level, GuardianVoice.LowestLevel, GuardianVoice.HighestLevel).ToString(CultureInfo.InvariantCulture),
             message);
 
-    /// <summary>Every effect off, default order and levels, basis cleared: <see cref="GuardianPresets.Reset"/>.</summary>
-    private void ResetGuardianVoice() =>
-        host.Settings.Replace(
-            "Guardian voice reset",
-            settings => GuardianPresets.Reset(settings.Speech).Settings is { } speech ? settings with { Speech = speech } : settings);
-
     /// <summary>A 120-wide tile button, the preset row's size for TEST and the preset buttons.</summary>
     private static Button GuardianTileButton(string label) => new()
     {

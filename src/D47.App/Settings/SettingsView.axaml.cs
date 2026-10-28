@@ -279,9 +279,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>A placement group's reset lights while its surface has an anchor.</summary>
     private void OnAnchorsChanged() => Dispatcher.UIThread.Post(Refresh);
 
-    /// <summary>A brush fetched at call time, so state changes pick up the current theme.</summary>
-    private IBrush? Res(string key) => this.FindResource(key) as IBrush;
-
     /// <summary>
     /// The glyph button control theme (#376), shared by every bare-glyph button this view builds.
     /// Resolved from Application.Current rather than <c>this.FindResource</c>: these buttons are
@@ -348,23 +345,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _pageHead = BuildPageHead();
         _emptyBlock = BuildEmptyBlock();
 
-        var owners = new Dictionary<string, CapabilityDescriptor>(StringComparer.Ordinal);
-
-        foreach (var section in settings.Sections)
-        {
-            foreach (var row in section.Rows)
-            {
-                owners.TryAdd(row.Key, section.Capability);
-            }
-        }
-
         foreach (var area in SettingsLayout.Areas)
         {
             nav.AddArea(area);
 
             foreach (var place in area.Places)
             {
-                var (content, rows, foldButton) = BuildPlace(settings, owners, place, _sections.Count);
+                var (content, rows, foldButton) = BuildPlace(settings, place, _sections.Count);
 
                 _sections.Add(
                     new SectionView(
@@ -424,7 +411,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 continue;
             }
 
-            var view = BuildRow(SectionOwning(settings, row), row);
+            var view = BuildRow(row);
             _rows.Add(view);
             content.Children.Add(view.Container);
         }
@@ -491,14 +478,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>Marks the tile on the title line that opens the strip, for a test to find it.</summary>
     public const string TabTileName = "PageSettingsTile";
 
-    /// <summary>The capability a page-level row still belongs to.</summary>
-    private static CapabilityDescriptor SectionOwning(SettingsService settings, SettingRow row) =>
-        settings.Sections.First(section => section.Rows.Any(other => other.Key == row.Key)).Capability;
-
     /// <summary>One <see cref="SettingsLayout"/> place as a page: its groups, in order, and every row they resolve to.</summary>
     private (StackPanel Content, IReadOnlyList<SettingRow> Rows, Button FoldButton) BuildPlace(
         SettingsService settings,
-        IReadOnlyDictionary<string, CapabilityDescriptor> owners,
         SettingsPlace place,
         int index)
     {
@@ -563,7 +545,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                         continue;
                     }
 
-                    var view = BuildRow(owners[row.Key], row, entry.Under) with { Section = index, GroupIndex = groupIndex };
+                    var view = BuildRow(row, entry.Under) with { Section = index, GroupIndex = groupIndex };
 
                     if (!headed && row is { Kind: SettingKind.Hotkey or SettingKind.HotasButton, DrawnElsewhere: false })
                     {
@@ -994,9 +976,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             Scroller.Offset = default;
         }
     }
-
-    /// <summary>The area currently selected, by its id, for a test to read.</summary>
-    internal string? ActiveAreaId => _nav?.ActiveAreaId;
 
     /// <summary>Opens the place the page was left on (#268).</summary>
     private void RestoreSection()
@@ -1629,7 +1608,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     private static TextBlock RowTag(string said) => D47.App.Panel.RoutingKit.Tag(said, ThemeManager.GreyKey);
 
     /// <summary>One row; <paramref name="under"/> indents its caption inside the label column.</summary>
-    private RowView BuildRow(CapabilityDescriptor capability, SettingRow row, bool under = false)
+    private RowView BuildRow(SettingRow row, bool under = false)
     {
         var header = new DockPanel { HorizontalAlignment = HorizontalAlignment.Left };
 

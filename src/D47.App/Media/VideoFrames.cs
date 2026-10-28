@@ -219,29 +219,6 @@ internal sealed class VideoFrames : IDisposable
         }
     }
 
-    /// <summary>Seeks back to the start so <see cref="Next"/> plays the video again.</summary>
-    internal bool Rewind()
-    {
-        try
-        {
-            var none = Guid.Empty;
-            var start = new Position { Type = 20 };
-
-            if (_reader.SetCurrentPosition(ref none, ref start) != 0)
-            {
-                return false;
-            }
-
-            _ended = false;
-
-            return true;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-    }
-
     public void Dispose()
     {
         try
