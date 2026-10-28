@@ -232,6 +232,12 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
     /// <summary>Whether another draft may stand: an internal failure other than the endpoint's context running out.</summary>
     public bool Redraftable => Draft is null && Internal && ContextMessage is null;
 
+    /// <summary>The raw reply the generator could not read; null on success and when nothing came back.</summary>
+    public string? UnreadReply { get; init; }
+
+    /// <summary>The step whose reply is <see cref="UnreadReply"/>.</summary>
+    public string? UnreadStep { get; init; }
+
     /// <summary>The name and spine of a failed draft whose spine was read; null when none was.</summary>
     public AdventureOutline? Outline { get; init; }
 
@@ -963,6 +969,8 @@ public sealed class AdventureGenerator(
         return new AdventureOutcome(null, reply, detail, notes)
         {
             Internal = true,
+            UnreadReply = asked?.Reply.Line,
+            UnreadStep = asked?.Reply.Line is null ? null : asked.Step,
             ContextMessage = asked?.Reply switch
             {
                 { CutOff: { AtContext: true } cutOff } => AdventureOutcome.ContextLimitMessage(cutOff),

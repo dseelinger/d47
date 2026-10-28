@@ -276,6 +276,8 @@ public partial class StoryComparisonTests
                 draft = outcome?.Draft,
                 reply = outcome?.Reply,
                 refusal = outcome?.Refusal,
+                unreadReply = outcome?.UnreadReply,
+                unreadStep = outcome?.UnreadStep,
                 contextMessage = outcome?.ContextMessage,
                 notes = outcome?.Notes,
             },
