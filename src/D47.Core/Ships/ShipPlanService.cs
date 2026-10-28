@@ -713,7 +713,8 @@ public sealed class ShipPlanService(
     /// Watches for the Commander buying — or boarding — a hull they had planned for, and adopts the
     /// plan onto it (Phase 26; the boarding half is remediation.md 17, item 7).
     /// </summary>
-    public IReadOnlyList<string> Observe(IEnumerable<JournalEvent> events)
+    /// <param name="announce">False on the priming tick and while off duty, which leaves the checklist silent.</param>
+    public IReadOnlyList<string> Observe(IEnumerable<JournalEvent> events, bool announce = true)
     {
         // Builds from before the file carried a Commander are claimed by the first one seen — a pre-existing
         // file was written by the installation's one Commander, and leaving them unowned would empty every
@@ -763,14 +764,14 @@ public sealed class ShipPlanService(
                 continue;
             }
 
-            said.Add(Adopt(candidates[0].Id, id));
+            said.Add(Adopt(candidates[0].Id, id, announce));
         }
 
         return said;
     }
 
     /// <summary>Binds a prospective build to a real ship id.</summary>
-    public string Adopt(string buildId, int shipId)
+    public string Adopt(string buildId, int shipId, bool announce = true)
     {
         if (store.Find(buildId) is not { } build)
         {
@@ -782,6 +783,8 @@ public sealed class ShipPlanService(
             return $"Ship {shipId.ToString(CultureInfo.InvariantCulture)} already has a build, and a ship has one.";
         }
 
+        // The list first: a build saved as owned is never offered for adoption again.
+        checklists.Bought(build.Id, shipId, build.Hull, announce);
         Replace(build with { ShipId = shipId });
 
         return $"That {build.HullName} is yours now, and the plan you had for one is pointed at it.";

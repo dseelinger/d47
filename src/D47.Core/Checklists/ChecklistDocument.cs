@@ -314,6 +314,32 @@ public sealed record ChecklistDocument
             : new ChecklistChange(this with { Items = kept }, Changed: true, $"Removed {removed} items.");
     }
 
+    /// <summary>
+    /// Moves every line in one list into another through <see cref="Adopt"/>, so a derived line the target
+    /// already holds is kept over the moved one. <paramref name="moving"/> reshapes each line, or drops it with null.
+    /// </summary>
+    public ChecklistChange MoveList(ChecklistScope from, ChecklistScope to, Func<ChecklistItem, ChecklistItem?> moving)
+    {
+        var leaving = Items.Where(item => item.Scope.Same(from)).ToList();
+
+        if (leaving.Count == 0)
+        {
+            return new ChecklistChange(this, Changed: false, "Nothing to move.");
+        }
+
+        var document = this with { Items = [.. Items.Where(item => !item.Scope.Same(from))] };
+
+        foreach (var item in leaving)
+        {
+            if (moving(item with { Scope = to }) is { } arriving)
+            {
+                document = document.Adopt(arriving);
+            }
+        }
+
+        return new ChecklistChange(document, Changed: true, $"Moved {leaving.Count} items.");
+    }
+
     /// <summary>Removes the derived items in one list that <paramref name="which"/> selects.</summary>
     public ChecklistChange Forget(ChecklistScope scope, Func<ChecklistItem, bool> which)
     {

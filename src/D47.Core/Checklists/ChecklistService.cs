@@ -1363,6 +1363,76 @@ public sealed class ChecklistService(
         }
     }
 
+    /// <summary>Moves a planned ship's list, and any plan waiting for it, onto the ship bought for it, ticking "Buy a Python".</summary>
+    /// <param name="announce">False on the priming tick and while off duty, as for <see cref="Poll"/>.</param>
+    public void Bought(string buildId, int shipId, string hull, bool announce = true)
+    {
+        var from = ChecklistScope.Build(buildId);
+        var to = ChecklistScope.Ship(shipId);
+
+        ChecklistItem Moved(ChecklistItem item) => item with { Scope = to, Hull = hull, BuildName = null };
+
+        var waiting = proposals.PendingFor(Fid).Where(proposal => proposal.Scope.Same(from)).ToList();
+
+        if (waiting.Count > 0)
+        {
+            proposals.Write(
+            [
+                .. proposals.Pending.Select(proposal => waiting.Contains(proposal)
+                    ? proposal with { Scope = to, Items = [.. proposal.Items.Select(Moved)] }
+                    : proposal),
+            ]);
+        }
+
+        var ticked = Document.Items
+            .Where(item => item.Scope.Same(from)
+                           && item.Intent?.Kind == ChecklistIntentKind.Hull
+                           && !item.IsComplete)
+            .ToList();
+
+        var removeFulfilled = RemoveFulfilled;
+        var held = Selected is { } selected && selected.Scope.Same(from) ? Document.Find(selected) : null;
+
+        var change = list.Apply(Fid, Name, document => document.MoveList(from, to, item =>
+        {
+            var moved = Moved(item);
+
+            if (moved.Intent?.Kind != ChecklistIntentKind.Hull)
+            {
+                return moved;
+            }
+
+            return removeFulfilled && moved.Kind == ChecklistItemKind.Derived
+                ? null
+                : moved with { State = ChecklistState.Done };
+        }));
+
+        if (!change.Changed)
+        {
+            return;
+        }
+
+        if (announce && ticked.Count > 0)
+        {
+            lock (_news)
+            {
+                foreach (var item in ticked)
+                {
+                    _news.Enqueue(new ChecklistNews($"checklist.done.{Moved(item).Id}", $"Ticked \"{item.Text}\"."));
+                }
+            }
+        }
+
+        if (held is not null)
+        {
+            // The moved line, which is last in the list where a note took a fresh key.
+            Select(change.Document.Items.LastOrDefault(item => item.Scope.Same(to)
+                                                               && item.Kind == held.Kind
+                                                               && item.Intent == held.Intent
+                                                               && item.Text == held.Text)?.Id);
+        }
+    }
+
     /// <summary>
     /// Adds one item for every unmet prerequisite line of one engineer, in one write — a line already on
     /// the list is not added again, and pressing this with nothing outstanding adds nothing (#257).

@@ -4076,7 +4076,9 @@ public sealed class AppHost : IDisposable
             }
 
             // Both halves of the same offer.
-            foreach (var adopted in shipPlans.Observe(feed.Arrived).Concat(onFootPlans.Observe(feed.Arrived)))
+            var announce = !context.IsFirst && !gameState.IsOffDuty;
+
+            foreach (var adopted in shipPlans.Observe(feed.Arrived, announce).Concat(onFootPlans.Observe(feed.Arrived)))
             {
                 host.Panel.Append($"{adopted}{Environment.NewLine}");
                 _ = host.Voice.AnnounceAsync(adopted);
