@@ -57,15 +57,18 @@ public sealed class TheSystemPageListsItsStationsTests
             Task.FromResult(new PowerplayNeighbourhood(0, []));
     }
 
-    private static StarSystemSurface Surface(Systems systems) =>
-        new(systems, () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Ltt7786 }, () => true);
+    private static StarSystemSurface Surface(Systems systems, Func<long, int, SurfaceMiningSite?>? surfaceMining = null) =>
+        new(systems, () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Ltt7786 }, () => true)
+        {
+            SurfaceMining = surfaceMining,
+        };
 
-    internal static (PanelView Panel, Window Window, Systems Systems) Shown(double width = 1280, double height = 1180)
+    internal static (PanelView Panel, Window Window, Systems Systems) Shown(double width = 1280, double height = 1180, Func<long, int, SurfaceMiningSite?>? surfaceMining = null)
     {
         var systems = new Systems(Ltt7786Profile());
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableSearch();
-        panel.EnableStarSystem(Surface(systems));
+        panel.EnableStarSystem(Surface(systems, surfaceMining));
 
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();

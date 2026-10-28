@@ -6,6 +6,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
 using D47.App.Panel;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Xunit;
 
@@ -44,6 +45,29 @@ public sealed class TheSystemPageDrawsItsBodiesTests
         var moonOfAMoon = slabs.Single(slab => AutomationProperties.GetName(slab) == "LTT 7786 11 b a");
         Assert.Equal(84, moonOfAMoon.Margin.Left);
         Assert.Equal(0, slabs[0].Margin.Left);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ASurfaceMinedBodyDrawsItsTonnesThroughTheSurface()
+    {
+        var mined = Body("LTT 7786 4");
+        var run = new SurfaceMiningRun(DateTimeOffset.UnixEpoch, null)
+        {
+            Refined = System.Collections.Immutable.ImmutableDictionary<string, RefinedMaterial>.Empty
+                .Add("platinum", new RefinedMaterial("platinum", "Platinum", 40)),
+        };
+        var (panel, window, _) = TheSystemPageListsItsStationsTests.Shown(
+            surfaceMining: (address, bodyId) => bodyId == mined.BodyId && address == TheSystemPageListsItsStationsTests.Ltt7786Profile().SystemAddress
+                ? new SurfaceMiningSite(address, bodyId, null, null, [run])
+                : null);
+        TheSystemPageListsItsStationsTests.Section(panel, "Bodies");
+
+        var slabs = Slabs(panel);
+
+        Assert.Contains("Surface mined: 40 t Platinum", Lines(slabs.Single(slab => AutomationProperties.GetName(slab) == "LTT 7786 4")));
+        Assert.Single(slabs, slab => Lines(slab).Any(line => line.StartsWith("Surface mined", StringComparison.Ordinal)));
 
         window.Close();
     }
@@ -109,6 +133,28 @@ public sealed class TheSystemPageDrawsItsBodiesTests
 
         using var small = window.CaptureRenderedFrame()!;
         small.SaveCapture("system-bodies-1024.png");
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ASurfaceMinedBodyIsCaptured()
+    {
+        using var look = AppLook.Put();
+
+        var mined = Body("LTT 7786 4");
+        var run = new SurfaceMiningRun(DateTimeOffset.UnixEpoch, null)
+        {
+            Refined = System.Collections.Immutable.ImmutableDictionary<string, RefinedMaterial>.Empty
+                .Add("platinum", new RefinedMaterial("platinum", "Platinum", 40))
+                .Add("silver", new RefinedMaterial("silver", "Silver", 3)),
+        };
+        var (panel, window, _) = TheSystemPageListsItsStationsTests.Shown(
+            surfaceMining: (address, bodyId) => bodyId == mined.BodyId ? new SurfaceMiningSite(address, bodyId, null, null, [run]) : null);
+        TheSystemPageListsItsStationsTests.Section(panel, "Bodies");
+
+        using var frame = window.CaptureRenderedFrame()!;
+        frame.SaveCapture("system-bodies-surface-mined.png");
 
         window.Close();
     }

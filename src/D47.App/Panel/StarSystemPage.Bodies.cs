@@ -1,9 +1,10 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using D47.App.Theming;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
@@ -44,8 +45,11 @@ public sealed partial class StarSystemPage
         return tree;
     }
 
-    /// <summary>The second line of a body's slab.</summary>
-    public static IReadOnlyList<string> BodyFacts(BodyProfile body)
+    /// <summary>The most commodities the surface-mined fact names.</summary>
+    public const int MostMinedShown = 3;
+
+    /// <summary>The second line of a body's slab, with the Commander's surface mining there when <paramref name="mined"/> is given.</summary>
+    public static IReadOnlyList<string> BodyFacts(BodyProfile body, SurfaceMiningSite? mined = null)
     {
         var facts = new List<string>();
 
@@ -108,7 +112,33 @@ public sealed partial class StarSystemPage
             facts.Add(Counted(count, SignalName(name), "signal"));
         }
 
+        if (MinedFact(mined) is { } fact)
+        {
+            facts.Add(fact);
+        }
+
         return facts;
+    }
+
+    private static string? MinedFact(SurfaceMiningSite? site)
+    {
+        var tonnes = (site?.Runs ?? [])
+            .SelectMany(run => run.Refined.Values)
+            .GroupBy(material => material.Symbol, StringComparer.OrdinalIgnoreCase)
+            .Select(group => (group.First().Name, Tonnes: group.Sum(material => material.Tonnes)))
+            .OrderByDescending(material => material.Tonnes)
+            .ThenBy(material => material.Name, StringComparer.Ordinal)
+            .ToList();
+
+        if (tonnes.Count == 0)
+        {
+            return null;
+        }
+
+        var shown = string.Join(", ", tonnes.Take(MostMinedShown).Select(material => $"{material.Tonnes.ToString(CultureInfo.InvariantCulture)} t {material.Name}"));
+        var more = tonnes.Count - MostMinedShown;
+
+        return $"Surface mined: {shown}{(more > 0 ? $" and {more.ToString(CultureInfo.InvariantCulture)} more" : string.Empty)}";
     }
 
     /// <summary>A ring's line: its type, the body's reserve level and each hotspot.</summary>
@@ -175,13 +205,13 @@ public sealed partial class StarSystemPage
 
         foreach (var level in BodyTree(profile.Bodies))
         {
-            list.Children.Add(BodySlab(level));
+            list.Children.Add(BodySlab(level, _surface.SurfaceMining?.Invoke(profile.SystemAddress, level.Body.BodyId)));
         }
 
         return list;
     }
 
-    private static Border BodySlab(BodyLevel level)
+    private static Border BodySlab(BodyLevel level, SurfaceMiningSite? mined)
     {
         var body = level.Body;
 
@@ -212,7 +242,7 @@ public sealed partial class StarSystemPage
 
         var stack = new StackPanel { Spacing = 5 };
         stack.Children.Add(first);
-        stack.Children.Add(Facts(BodyFacts(body), ThemeManager.GreyKey));
+        stack.Children.Add(Facts(BodyFacts(body, mined), ThemeManager.GreyKey));
 
         foreach (var ring in body.Rings)
         {

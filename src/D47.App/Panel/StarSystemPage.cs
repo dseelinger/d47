@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -31,6 +31,9 @@ public sealed record StarSystemSurface(
 
     /// <summary>How long typing has to stop before names are suggested.</summary>
     public TimeSpan SuggestionPause { get; init; } = NameSuggestions.DefaultPause;
+
+    /// <summary>The Commander's surface mining site on a body, read with the system address and body id.</summary>
+    public Func<long, int, SurfaceMiningSite?>? SurfaceMining { get; init; }
 
     /// <summary>Where dragged table column widths are kept; null draws the tables without drag handles.</summary>
     public ColumnWidthMemory? ColumnWidths { get; init; }

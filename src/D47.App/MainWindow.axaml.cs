@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
@@ -382,6 +382,7 @@ public partial class MainWindow : Window
                     OpenSettings)
                 {
                     ColumnWidths = ((IPanelTabHost)Panel).ColumnWidths,
+                    SurfaceMining = (address, bodyId) => host.GameState.Active?.SurfaceMining.At(address, bodyId),
                     Remember = (name, address) =>
                     {
                         if (host.SearchHistory is { } history)

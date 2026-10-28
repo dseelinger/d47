@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+On the Search tab's System page, a body you have surface mined from an SRV shows one more fact after its signals, such as "Surface mined: 40 t Platinum, 3 t Silver": the tonnes refined at that body over every run, largest first. A body with more than three commodities names the three largest and then "and 1 more". The headset panel shows it too.
+
 On the Road to Riches and Exobiology result pages, a body line now starts with "Body" and its designation, such as "Body A 6 — Rocky body", instead of repeating the system name before it. A body whose name does not start with the system name is still shown in full.
 
 With Elite behind another window, the arrival honk no longer says "I could not use the discovery scanner on arrival" twice and then "The honk did not take". It presses nothing, tries once more about eight seconds later, and if Elite is still not in front says once: "Cannot honk since Elite is not the active window."
