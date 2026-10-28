@@ -148,6 +148,16 @@ Where it is plainly two jobs, split it, file both and say so in one bold line. A
 it is genuinely arguable. Do not decide it silently, and do not split a single job into two to look
 thorough.
 
+End each body with its size on a line of its own, in exactly this form, so `/triage` reads it:
+
+```
+Size: /issue-worker, Sonnet, medium effort.
+```
+
+Choose the model, effort and advisor from the table in `.claude/skills/triage/SKILL.md` under
+**Model and effort**, within its rules: never `sonnet high`, never below `medium` on a change to
+`src/`. Add `, Opus advisor` before the full stop where that table gives one.
+
 ## Everything you file is already eligible
 
 `gh issue create` authenticates as `dseelinger`. What you file cannot be told apart from what the

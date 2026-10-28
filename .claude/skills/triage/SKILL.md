@@ -51,18 +51,31 @@ line `Fixes #N`. An eligible issue with a needed issue that is not done is **wai
 
 ## The size each issue names
 
-/architect and /new-issue end most bodies with a line such as
-`Size: /issue-worker, Opus, medium effort.` Read every eligible issue's line in one more call:
+/architect and /new-issue end each body with a line `Size: /issue-worker, Sonnet, medium effort.`
+Older issues state the size in other forms, all on a line that names `/issue-worker`:
+
+- ``Worked with `/issue-worker`. Sonnet 5.5, medium effort.``
+- ``- `/issue-worker`, Sonnet, low effort.``
+- `- **Skill:** /issue-worker. Opus 5.5, high: …`
+- `Model: Sonnet 5.5, effort high. Skill: /issue-worker.`
+
+Read every issue's size in one more call. It takes the first `Size:` or `/issue-worker` line that
+names a model, and prints the model, the first effort after it, and `opus` where the line names an
+Opus advisor:
 
 ```bash
-gh issue list --state open --limit 300 --json number,body --jq '.[] | select(.body | test("(?m)^Size:")) | "\(.number): \(.body | capture("(?m)^(?<s>Size:.*)$").s)"'
+gh issue list --state open --limit 300 --json number,body --jq '.[] | .number as $n | [.body | scan("(?mi)^.*(?:^[-* ]*Size:|/issue-worker).*$")] | map(select(test("(?i)opus|sonnet|haiku"))) | first // empty | . as $l | capture("(?i)(?<m>opus|sonnet|haiku).*?[^a-z](?<e>xhigh|low|medium|high|max)([^a-z]|$)") | "\($n): \(.m | ascii_downcase) \(.e | ascii_downcase)\(if ($l | test("(?i)opus advisor|advisor[^.]*opus")) then " opus" else "" end)"'
 ```
 
-Where the line names both a model and an effort, that issue's row uses them, whatever **Model and
-effort** below would choose. Lower-case them to the exact tokens (`Opus 5.5` is `opus`,
-`medium effort` is `medium`). The advisor is `opus` only where the line names an Opus advisor, and
-nothing otherwise. Where the line is missing, or names only one of model and effort, size the issue
-from the table.
+An issue that prints nothing is sized from **Model and effort** below. An issue that prints a size
+uses it, unless it breaks one of that section's rules, which win over the issue:
+
+- `sonnet high` becomes `opus high`.
+- `low` becomes `medium` on any issue whose fix changes `src/`. Where the title and labels leave
+  that unclear, assume it does.
+- `haiku` with an advisor loses the advisor.
+
+List each correction under the table (see **Output**), so the maintainer can fix the issue body.
 
 ## Read only what you need
 
@@ -137,8 +150,8 @@ belong elsewhere.
 
 ## Model and effort
 
-An issue's own `Size:` line wins (see **The size each issue names**); this table sizes the issues
-that have none. Emit the exact tokens, so the line can be pasted: `opus` / `sonnet` / `haiku`,
+An issue's own size wins within the rules below (see **The size each issue names**); this table
+sizes the issues that state none. Emit the exact tokens, so the line can be pasted: `opus` / `sonnet` / `haiku`,
 `low` / `medium` / `high` / `xhigh` / `max`, and `opus` or nothing for the advisor.
 
 | Model | Effort | Advisor | When |
@@ -333,6 +346,10 @@ Markdown, and short. Three parts:
    number is a number to go and look up.
 
    Shorten titles to the claim. The full title is one click away.
+
+   Where **The size each issue names** corrected an issue's own size, one line under the table
+   lists each correction: `Resized: [#1687](https://github.com/dseelinger/d47/issues/1687) sonnet low → sonnet medium (changes src/).`
+   Omit the line when nothing was corrected.
 
    In lanes mode the table gains a **Lane** column first, and rows are ordered by lane, then by
    their order within it:

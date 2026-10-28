@@ -34,6 +34,8 @@ the behaviour, and leave the look to the handoff.
 Your output is a **settled decision** and the **build issues it should spawn** — each one small
 enough that an issue worker can take it with a model and an effort, and specific enough that it does
 not come back to you. Say which of them can be done in parallel and which must follow another.
+Each build issue's body ends with a `Size:` line in the form `/new-issue` gives under **Size it
+before filing**.
 
 You file those issues yourself once the plan is settled and the maintainer has acknowledged each
 text (see below).
