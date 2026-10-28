@@ -27,6 +27,7 @@ public sealed class GalaxyMapPage : UserControl
     public const double SwitchRail = 152;
     public const double PadRail = 136;
     private const double LegendBand = 24;
+    private const double PlanBand = 44;
 
     public const string Reading = "Reading your earlier journals. The jumps from this session are drawn now.";
     public const string NoTravels = "No travels to draw yet. Your jumps show here as you make them.";
@@ -101,6 +102,12 @@ public sealed class GalaxyMapPage : UserControl
     private readonly Button _centre = Press(CentreHere, 120);
     private readonly Button _bookmark = Press(Bookmark, 112);
     private readonly Button _clear = Press("✕", TypeScale.MinimumTarget);
+    private readonly Button _plotted = Press("Plotted route", 130);
+    private readonly TextBlock _planKindWord = Chrome(TypeScale.MetaSmall, ThemeManager.GreyKey);
+    private readonly TextBlock _planHeadline = Chrome(14, ThemeManager.WhiteKey);
+    private Border? _planBand;
+    private string _planName = string.Empty;
+    private double _mapWidth;
     private readonly Border _strip = new() { IsVisible = false, Height = TypeScale.MinimumTarget };
     private Control[] _replaced = [];
     private Border? _legendOverlay;
@@ -197,6 +204,7 @@ public sealed class GalaxyMapPage : UserControl
         _map.PointerPressed += (_, _) => _map.Focus();
         _map.Picked += Strip;
         _clear.Click += (_, _) => _map.Clear();
+        _plotted.Click += (_, _) => ShowPlan(null);
         _centre.Click += (_, _) => CentreOnSelected();
         _bookmark.Click += (_, _) => BookmarkSelected();
         _map.Redrawn += Legend;
@@ -273,6 +281,7 @@ public sealed class GalaxyMapPage : UserControl
     public void ShowPlan(RoutePlanKind? kind)
     {
         _planKind = kind;
+        PlanChosen?.Invoke(kind);
         Refresh();
 
         if (_routePoints.Count >= 2 && (kind is null || _planDrawn is not null))
@@ -280,6 +289,67 @@ public sealed class GalaxyMapPage : UserControl
             _framing.SelectedIndex = RouteFraming;
             Frame(RouteFraming);
         }
+    }
+
+    /// <summary>Raised by <see cref="ShowPlan"/> with the kind chosen, or null for the plotted route.</summary>
+    public event Action<RoutePlanKind?>? PlanChosen;
+
+    /// <summary>The name over the map while a stored plan is drawn, as "&lt;kind&gt; plan: &lt;Headline&gt;"; empty otherwise.</summary>
+    internal string PlanName => _planBand is { IsVisible: true } ? _planName : string.Empty;
+
+    internal Control? PlanBandControl => _planBand;
+
+    internal Button PlottedRoute => _plotted;
+
+    private static string PlanKindWord(RoutePlanKind kind) => kind switch
+    {
+        RoutePlanKind.Jump => "Jump",
+        RoutePlanKind.Riches => "Road to Riches",
+        RoutePlanKind.Trade => "Trade",
+        RoutePlanKind.Exobiology => "Exobiology",
+        _ => "Carrier",
+    };
+
+    private void DrawPlanBand(StoredRoutePlan? chosen)
+    {
+        if (_planBand is null)
+        {
+            return;
+        }
+
+        var shown = _planDrawn is { } kind && chosen is not null;
+        _planBand.IsVisible = shown;
+
+        if (!shown)
+        {
+            _planName = string.Empty;
+            return;
+        }
+
+        var word = PlanKindWord(_planDrawn!.Value);
+        _planName = $"{word} plan: {chosen!.Headline}";
+        _planKindWord.Text = $"{word} plan:".ToUpperInvariant();
+        _planHeadline.Text = chosen.Headline;
+        FitHeadline();
+    }
+
+    private void FitHeadline()
+    {
+        _planKindWord.Measure(Size.Infinity);
+        _planHeadline.MaxWidth = Math.Max(0, _mapWidth - 12 - 16 - _planKindWord.DesiredSize.Width - _plotted.Width);
+    }
+
+    private GalaxyViewport? BelowPlanBand(GalaxyViewport? view)
+    {
+        if (view is null || _planBand is not { IsVisible: true })
+        {
+            return view;
+        }
+
+        var side = Math.Min(_map.Bounds.Width, _map.Bounds.Height);
+        side = side > 0 ? side : _headset ? PanelMapHeight : WindowMapHeight;
+
+        return view.Dragged(0, PlanBand / 2, side, side);
     }
 
     private StoredRoutePlan? ChosenPlan() => _planKind is { } kind ? _plans?.Last(kind) : null;
@@ -358,6 +428,7 @@ public sealed class GalaxyMapPage : UserControl
 
         _planSeen = chosen;
         _planDrawn = planned ? _planKind : null;
+        DrawPlanBand(chosen);
 
         _current = here;
         _position = offDuty is null ? commander?.Location.StarPos : null;
@@ -581,7 +652,7 @@ public sealed class GalaxyMapPage : UserControl
         {
             Galaxy => GalaxyViewport.WholeGalaxy with { Heading = now.Heading, Tilt = now.Tilt },
             Here when _position is { } at => GalaxyViewport.Around(at) with { Heading = now.Heading, Tilt = now.Tilt },
-            RouteFraming when _routePoints.Count >= 2 => GalaxyViewport.Fitting(_routePoints, now.Heading, now.Tilt),
+            RouteFraming when _routePoints.Count >= 2 => BelowPlanBand(GalaxyViewport.Fitting(_routePoints, now.Heading, now.Tilt)),
             _ => null,
         };
 
@@ -1146,6 +1217,30 @@ public sealed class GalaxyMapPage : UserControl
         RoutingKit.Themed(frame, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         var grid = new Grid { Children = { _map, frame } };
+
+        _planBand = new Border
+        {
+            IsVisible = false,
+            Height = PlanBand,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            Padding = new Thickness(12, 0, 0, 0),
+            Child = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 8,
+                Children = { _planKindWord, _planHeadline, _plotted },
+            },
+        };
+        _planKindWord.LetterSpacing = TypeScale.MetaSmall * Fonts.ChromeTracking;
+        _planHeadline.TextTrimming = TextTrimming.CharacterEllipsis;
+        RoutingKit.Themed(_planBand, Border.BackgroundProperty, ThemeManager.BgKey);
+        grid.Children.Add(_planBand);
+        grid.SizeChanged += (_, e) =>
+        {
+            _mapWidth = e.NewSize.Width;
+            FitHeadline();
+        };
 
         if (_headset)
         {

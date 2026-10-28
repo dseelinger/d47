@@ -174,11 +174,12 @@ public static class RoutingPages
         RoutingSurface surface,
         PanelNavigator nav,
         PanelPrompts prompts,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        Action<RoutePlanKind>? showOnGalaxyMap = null)
     {
         if (crumb.Key.StartsWith(ResultPrefix, StringComparison.Ordinal))
         {
-            return Result(crumb, surface);
+            return Result(crumb, surface, showOnGalaxyMap);
         }
 
         return crumb.Key switch
@@ -260,7 +261,7 @@ public static class RoutingPages
             ? new BookmarksPage(store, commander, surface.BookmarkPhrasesTaken ?? (() => []), prompts, Copy(surface), surface.Registry)
             : Missing("Bookmarks are not available on this surface.");
 
-    private static Control Result(NavCrumb crumb, RoutingSurface surface)
+    private static Control Result(NavCrumb crumb, RoutingSurface surface, Action<RoutePlanKind>? showOnGalaxyMap)
     {
         if (surface.Plans is not { } plans
             || !Enum.TryParse<RoutePlanKind>(crumb.Key[ResultPrefix.Length..], out var kind)
@@ -271,7 +272,7 @@ public static class RoutingPages
             return Missing("That plan is no longer here. Plot it again.");
         }
 
-        return new RoutePlanResultPage(plan, Copy(surface), plans, surface.Here, surface.OffDuty);
+        return new RoutePlanResultPage(plan, Copy(surface), plans, surface.Here, surface.OffDuty, showOnGalaxyMap);
     }
 
     /// <summary>Copying a system name, wherever one is drawn on this tab.</summary>

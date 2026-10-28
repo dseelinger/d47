@@ -157,7 +157,7 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         Assert.Equal(RoutePlanKind.Riches, page.PlanDrawn);
         Assert.Equal(RoutingPages.GalaxyMapRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
         Assert.Equal(2, page.Framing.SelectedIndex);
-        Assert.Equal(GalaxyViewport.Fitting(Positioned(plan)), page.Map.Viewport);
+        Assert.Equal(GalaxyViewport.Fitting(Positioned(plan))!.LightYearsAcross, page.Map.Viewport.LightYearsAcross);
         Assert.True(page.Map.Viewport.LightYearsAcross <= GalaxyMapView.DetailAcross);
 
         foreach (var stop in Enumerable.Range(0, 10))

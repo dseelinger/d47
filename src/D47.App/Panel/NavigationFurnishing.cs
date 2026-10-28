@@ -158,7 +158,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
 
                 if (crumb.Key == RoutingPages.GalaxyMapRoot && surface.Travel is { } travel)
                 {
-                    return _galaxyMap = new GalaxyMapPage(
+                    var galaxyPage = new GalaxyMapPage(
                         travel,
                         surface.Commander ?? (() => null),
                         surface.Route,
@@ -172,9 +172,19 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                         surface.MapLookups,
                         surface.Plans,
                         _planOnMap);
+
+                    galaxyPage.PlanChosen += kind => _planOnMap = kind;
+
+                    return _galaxyMap = galaxyPage;
                 }
 
-                var page = RoutingPages.Build(crumb, surface, host.Nav, host.Prompts, host.ColumnWidths);
+                var page = RoutingPages.Build(
+                    crumb,
+                    surface,
+                    host.Nav,
+                    host.Prompts,
+                    host.ColumnWidths,
+                    galaxyMap && surface.Travel is not null ? ShowOnGalaxyMap : null);
 
                 // Held onto so the tick can redraw Progress and a plot made elsewhere can redraw Plan.
                 _routeProgress = page as RouteProgressPage ?? _routeProgress;

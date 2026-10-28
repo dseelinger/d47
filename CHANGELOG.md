@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A stored plan's page on the Navigation tab has a Show on galaxy map tile under its route map, and pressing the map does the same. The Galaxy map then draws that plan in place of the plotted route and names it over the top left of the map as "Jump plan: …", "Road to Riches plan: …", "Exobiology plan: …" or "Carrier plan: …", with a Plotted route tile beside the name that goes back to the plotted route. Both work on the main window and the headset panel. The tile and the pressable map are hidden when the plan has fewer than two placed stops or the shown Commander is off duty.
+
 A story that is set in the black for part or most of its length now says so on its page, under the length and level line: "Part of this story is set in the black." or "Most of this story is set in the black." The Stories tab's filter sentence has a new token, "set ANYWHERE", and choosing IN THE BLACK lists only those stories. Clear filters puts it back. A story shows the line once it is republished.
 
 While a story objective is under way, every tab of the full panel, on the desktop window and the headset big panel, shows it on one line under the title rule: NEXT, the objective, its system, a copy glyph for the system, and the story's name at the right. The system is cyan when it is your current system. A paused story reads PAUSED in grey, and while Change objective writes a new one the strip says "Writing a different objective…". On a narrow window the sentence is cut with an ellipsis first and the story's name second. With several short stories under way, or none, there is no strip. The mini panel keeps its own Next row.

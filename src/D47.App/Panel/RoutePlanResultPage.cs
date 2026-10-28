@@ -1,6 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Automation;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Templates;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -20,11 +23,38 @@ public sealed class RoutePlanResultPage : UserControl
     private readonly RoutePlanKind _kind;
     private readonly StackPanel _stack = new() { Spacing = 2 };
 
+    public const string ShowOnGalaxyMapWords = "Show on galaxy map";
+
+    private static readonly Thickness MapMargin = new(14, 14, 0, 0);
+
+    private readonly Action<RoutePlanKind>? _showOnGalaxyMap;
+
     private readonly RouteMapView _map = new()
     {
         IsVisible = false,
         VerticalAlignment = VerticalAlignment.Top,
-        Margin = new Thickness(14, 14, 0, 0),
+        HorizontalAlignment = HorizontalAlignment.Left,
+        Margin = MapMargin,
+    };
+
+    private readonly Button _mapPress = new()
+    {
+        IsVisible = false,
+        Padding = default,
+        Margin = MapMargin,
+        Template = new FuncControlTemplate<Button>((_, _) => new Border { Background = Brushes.Transparent }),
+    };
+
+    private readonly Button _showTile = new()
+    {
+        Content = ShowOnGalaxyMapWords,
+        IsVisible = false,
+        Height = TypeScale.MinimumTarget,
+        Padding = default,
+        Margin = new Thickness(14, 6, 0, 0),
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+        HorizontalContentAlignment = HorizontalAlignment.Center,
+        VerticalContentAlignment = VerticalAlignment.Center,
     };
 
     private StoredRoutePlan? _planSeen;
@@ -35,13 +65,21 @@ public sealed class RoutePlanResultPage : UserControl
         Func<string, Task<bool>>? copy = null,
         RoutePlanBook? plans = null,
         Func<string?>? here = null,
-        Func<string, string?>? offDuty = null)
+        Func<string, string?>? offDuty = null,
+        Action<RoutePlanKind>? showOnGalaxyMap = null)
     {
         _offDuty = offDuty;
         _copy = copy;
         _plans = plans;
         _here = here;
         _kind = plan.Kind;
+        _showOnGalaxyMap = showOnGalaxyMap;
+
+        _mapPress.Cursor = new Cursor(StandardCursorType.Hand);
+        _mapPress.Click += (_, _) => _showOnGalaxyMap?.Invoke(_kind);
+        _showTile.Click += (_, _) => _showOnGalaxyMap?.Invoke(_kind);
+        AutomationProperties.SetName(_mapPress, ShowOnGalaxyMapWords);
+        AutomationProperties.SetName(_showTile, ShowOnGalaxyMapWords);
 
         var list = new ScrollViewer
         {
@@ -51,9 +89,12 @@ public sealed class RoutePlanResultPage : UserControl
             Content = _stack,
         };
 
+        // The press covers the map in its own cell, so the map stays a static child of the page.
+        var picture = new Grid { Children = { _map, _mapPress } };
+        var left = new StackPanel { VerticalAlignment = VerticalAlignment.Top, Children = { picture, _showTile } };
         var body = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Star)] };
         Grid.SetColumn(list, 1);
-        body.Children.Add(_map);
+        body.Children.Add(left);
         body.Children.Add(list);
         Content = body;
 
@@ -90,6 +131,8 @@ public sealed class RoutePlanResultPage : UserControl
 
         _stack.Children.Clear();
         _map.IsVisible = false;
+        _mapPress.IsVisible = false;
+        _showTile.IsVisible = false;
 
         if (offDuty is null
             && RouteMapStop.From(plan) is { } stops
@@ -97,6 +140,10 @@ public sealed class RoutePlanResultPage : UserControl
         {
             _map.Show(stops, RouteMapStop.ReachedIndex(plan), null, null);
             _map.IsVisible = true;
+            _mapPress.IsVisible = true;
+            _mapPress.IsHitTestVisible = _showOnGalaxyMap is not null;
+            _mapPress.Focusable = _showOnGalaxyMap is not null;
+            _showTile.IsVisible = _showOnGalaxyMap is not null;
         }
 
         _stack.Children.Add(RoutingKit.Title(Heading(plan), sentence: true).Row);
