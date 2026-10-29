@@ -219,6 +219,10 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = DeviceKey,
+                Exercise =
+                    "Open Settings › Hearing and sound › Voice Input, group Microphone, and pick a microphone other "
+                    + "than the default. Hold the push-to-talk key and say \"can you hear me\": the reply names that "
+                    + "microphone. Clear the row and the reply names your Windows Default Device again.",
                 Label = "Microphone",
                 Help =
                     "Which input D47 listens on. Leaving this unset follows the Default Device — the one "
@@ -251,6 +255,11 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = PushToTalkKeyKey,
+                Exercise =
+                    "Open Settings › Hearing and sound › Voice Input, group Microphone, press Push-to-talk and give "
+                    + "it a key, then press it again and give it a stick button. Hold the key and say \"what ship am I "
+                    + "in\": D47 answers. Hold the button and ask again: it answers too. Press Unbind and ask again: "
+                    + "D47 never opens the microphone and the key does nothing. Scroll Lock is the default.",
                 Label = "Push-to-talk",
                 Help =
                     "Held, D47 listens — and pressing it shuts D47 up, whether or not you go on to say "
@@ -284,6 +293,12 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = PushToTalkButtonKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Hearing and sound › Voice Input, group Microphone, press Push-to-talk button, "
+                    + "then press a stick or throttle button that springs back. The row shows the button D47 worked "
+                    + "out. Hold it and say \"what ship am I in\": D47 answers, with or without a key set. A switch "
+                    + "that stays where you put it does not work.",
                 Advanced = true,
                 Label = "Push-to-talk button",
                 Help =
@@ -315,6 +330,11 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = CommsPushToTalkKeyKey,
+                Exercise =
+                    "Open Settings › Hearing and sound › Voice Input, group Microphone, press Comms push-to-talk "
+                    + "and give it a key. Hold it and speak to your comms channel selection: what you say goes to "
+                    + "whoever it names, not to D47. While the Push-to-talk key is held this one does nothing, and "
+                    + "the other way round. It is unbound out of the box.",
                 Label = "Comms push-to-talk",
                 Help =
                     "While it is held, what you say is for whoever your comms channel selection names rather "
@@ -345,6 +365,12 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = CommsPushToTalkButtonKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Hearing and sound › Voice Input, group Microphone, press Comms push-to-talk "
+                    + "button, then press a stick or throttle button that springs back. Hold it and speak: what you "
+                    + "say goes to whoever your comms channel selection names. It works beside the key, not instead "
+                    + "of it.",
                 Advanced = true,
                 Label = "Comms push-to-talk button",
                 Help =
@@ -370,6 +396,11 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = CancelHotkeyKey,
+                Exercise =
+                    "Open Settings › Hearing and sound › Voice Input, group Microphone. Cancel is Ctrl+Alt+X out of "
+                    + "the box. Ask a long question, and while D47 is speaking press it, with Elite in the "
+                    + "foreground: speech stops and the turn is abandoned. Rebind it to another key and the new key "
+                    + "does the same.",
                 Label = "Cancel",
                 Help =
                     "Stops D47 talking and abandons the turn it is working on — including a long web " +
@@ -400,6 +431,11 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = CancelButtonKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Hearing and sound › Voice Input, group Microphone, press Cancel button, then "
+                    + "press a stick or throttle button that springs back. While D47 is speaking press that button: "
+                    + "speech stops and the turn is abandoned. It works beside the Cancel key, not instead of it.",
                 Advanced = true,
                 Label = "Cancel button",
                 Help =
@@ -428,6 +464,12 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = ModeKey,
+                Exercise =
+                    "Open Settings › Hearing and sound › Voice Input, group Microphone and set How D47 decides you "
+                    + "are talking to it. With Press to talk (PTT), hold the key to talk. With Toggle on and off, "
+                    + "press it once to start and again to stop. With Listen whenever I speak, just talk and D47 "
+                    + "opens the microphone itself. With Listen when I say its name, say the core's name and then "
+                    + "your request. The key still works in all four.",
                 Label = "How D47 decides you are talking to it",
                 Help =
                     "Hold the key, press it to start and stop, or let D47 open the microphone itself — "
@@ -473,6 +515,12 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = EchoKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Hearing and sound › Voice Input, group Microphone, and leave Cancel D47's own "
+                    + "voice out of the microphone on. On speakers, in Listen whenever I speak, talk over D47 while "
+                    + "it is speaking: it hears you. Turn the row off and hands-free listening goes deaf while D47 "
+                    + "speaks.",
                 Advanced = true,
                 Label = "Cancel D47's own voice out of the microphone",
                 Help =
@@ -489,6 +537,11 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = NoiseKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Hearing and sound › Voice Input, group Microphone, and leave Take the room out "
+                    + "of what D47 hears on. With a fan or a hissing headset, say \"can you hear me\": D47 transcribes "
+                    + "you cleanly. Turn the row off and steady background noise reaches the speech model.",
                 Advanced = true,
                 Label = "Take the room out of what D47 hears",
                 Help =
@@ -504,6 +557,13 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = SensitivityKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Hearing and sound › Voice Input, group Microphone, with How D47 decides you "
+                    + "are talking to it on Listen whenever I speak or Listen when I say its name, and set How much "
+                    + "louder than the room speech has to be to 3: a cough or a keyboard opens the microphone. Set it "
+                    + "to 20: D47 waits until you are clearly talking. The row is absent in the two push-to-talk "
+                    + "modes.",
                 Label = "How much louder than the room speech has to be",
                 Unit = "dB",
                 Help =
@@ -533,6 +593,12 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = SilenceKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Hearing and sound › Voice Input, group Microphone, with a hands-free mode, and "
+                    + "set Quiet that ends a sentence to 300 ms: pausing mid-thought ends your sentence early. Set it "
+                    + "to 2000 ms: every answer waits two seconds after you stop. The row is absent in the two "
+                    + "push-to-talk modes.",
                 Advanced = true,
                 Label = "Quiet that ends a sentence",
                 Unit = "ms",
@@ -563,6 +629,12 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = WakeWordsKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Hearing and sound › Voice Input, group Wake word, with How D47 decides you are "
+                    + "talking to it on Listen when I say its name, and add a spelling the speech model hears your "
+                    + "core's name as. Say that spelling and then your request: D47 answers. Clear the row and it "
+                    + "answers to the core's name. \"D47\" always works. The row is absent in the other modes.",
                 Advanced = true,
                 Label = "What D47 answers to",
                 Help =
@@ -591,6 +663,13 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = WakeWindowKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Hearing and sound › Voice Input, group Wake word, with How D47 decides you are "
+                    + "talking to it on Listen when I say its name, and set How long D47 keeps listening after you "
+                    + "say its name to 12. Say the name alone, wait for the answer, then give the request inside "
+                    + "twelve seconds: D47 takes it. Set it to 0 and the name and request must arrive in one breath. "
+                    + "The row is absent in the other modes.",
                 Advanced = true,
                 Label = "How long D47 keeps listening after you say its name",
                 Unit = "s",
@@ -621,6 +700,13 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = ProviderKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Providers › Speech recognition, group Speech recognition, and pick the local "
+                    + "Whisper provider: say \"can you hear me\" and D47 answers with nothing leaving this computer. "
+                    + "Pick a hosted provider with its API key set and ask again: D47 answers, and the audio goes to "
+                    + "that company. With its key removed D47 says it cannot reach it and does not fall back to the "
+                    + "local model.",
                 Advanced = true,
                 Label = "Hearing provider",
                 Help =
@@ -652,6 +738,34 @@ public static class ListeningCapability
                select new SettingRow
                {
                    Key = KeyRowFor(provider),
+                   Exercise = provider.Id switch
+                   {
+                       SttProviderCatalog.GroqId =>
+                           "With Show every setting on (at the top of the Settings page, or say \"show me every "
+                           + "setting\"), open Settings › Providers › Speech recognition, group Speech recognition, "
+                           + "and pick Groq as the Hearing provider. The Groq API key row appears; paste a key and "
+                           + "say \"can you hear me\": D47 answers. The key shows only as set, never back as text. "
+                           + "Pick another provider and the row disappears.",
+                       SttProviderCatalog.OpenAiId =>
+                           "With Show every setting on (at the top of the Settings page, or say \"show me every "
+                           + "setting\"), open Settings › Providers › Speech recognition, group Speech recognition, "
+                           + "and pick OpenAI as the Hearing provider. The OpenAI API key row appears; with the "
+                           + "key already set for the language model or voice it shows as set. Say \"can you hear "
+                           + "me\": D47 answers. The key is never shown back as text.",
+                       SttProviderCatalog.DeepgramId =>
+                           "With Show every setting on (at the top of the Settings page, or say \"show me every "
+                           + "setting\"), open Settings › Providers › Speech recognition, group Speech recognition, "
+                           + "and pick Deepgram as the Hearing provider. The Deepgram API key row appears; paste a "
+                           + "key and say \"can you hear me\": D47 answers. The key shows only as set, never back "
+                           + "as text. Pick another provider and the row disappears.",
+                       SttProviderCatalog.ElevenLabsId =>
+                           "With Show every setting on (at the top of the Settings page, or say \"show me every "
+                           + "setting\"), open Settings › Providers › Speech recognition, group Speech recognition, "
+                           + "and pick ElevenLabs Scribe as the Hearing provider. The ElevenLabs Scribe API key row "
+                           + "appears; with the ElevenLabs voice key already set it shows as set. Say \"can you hear "
+                           + "me\": D47 answers. The key is never shown back as text.",
+                       _ => null,
+                   },
                    Advanced = true,
                    Label = $"{provider.Name} API key",
                    Help = provider.Id switch
@@ -674,6 +788,12 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = ModelKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Providers › Speech recognition, group Speech recognition, with the local "
+                    + "Whisper provider, and pick a Speech model that is not on disk: D47 asks first, stating the "
+                    + "size and where it comes from, and downloads nothing until you agree. After the download, say "
+                    + "\"can you hear me\": D47 answers using that model. The row is absent with a hosted provider.",
                 Advanced = true,
                 Label = "Speech model",
                 Help =
@@ -747,6 +867,12 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = GpuKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Providers › Speech recognition, group Speech recognition, with the local "
+                    + "Whisper provider, and turn Run the speech model on the GPU on. Say \"can you hear me\": D47 "
+                    + "answers, and a transcription takes about a fifth of the time. With no capable GPU D47 runs on "
+                    + "the CPU and says so. The row is absent with a hosted provider.",
                 Advanced = true,
                 Label = "Run the speech model on the GPU",
 
@@ -768,6 +894,12 @@ public static class ListeningCapability
             new SettingRow
             {
                 Key = PreRollKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Hearing and sound › Voice Input, group Microphone, and set Capture before the "
+                    + "key to 500 ms. Press the push-to-talk key and begin speaking at once: your first syllable is "
+                    + "kept. Set it to 0 and the first syllable is clipped. The row is absent while no key is bound "
+                    + "and the mode is not hands-free.",
                 Advanced = true,
                 Label = "Capture before the key",
                 Unit = "ms",

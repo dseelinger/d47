@@ -180,6 +180,11 @@ public static class CalloutCapability
             new()
             {
                 Key = EnabledKey,
+                Exercise =
+                    "Open Settings › Your core › Callouts, group All callouts, and turn Speak without being asked "
+                    + "off. Fly through a jump and let a warning condition happen, such as low fuel: D47 says nothing "
+                    + "unprompted, and every callout row below disappears. Say \"stop calling things out\" and the row "
+                    + "shows off; say \"start calling things out\" and it shows on.",
                 Label = "Speak without being asked",
                 Help = "Off means D47 only ever answers. Every warning below stops with it.",
                 Kind = SettingKind.Toggle,
@@ -204,6 +209,12 @@ public static class CalloutCapability
         [
             Toggle(
                 DangerKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, and find Danger (on by default). "
+                + "In flight, get interdicted, let your shields drop or run hot: a warning is spoken for each. "
+                + "With the row off the same events are silent. Say \"stop calling out danger\": the row shows off "
+                + "and that is no longer said. Say \"start calling out danger\" and the row shows on. The row is "
+                + "absent while Speak without being asked is off.",
                 "Danger",
                 "Interdiction, hyperdiction, shields down, hull damage, overheating and a full cargo hold.",
                 "danger",
@@ -213,6 +224,13 @@ public static class CalloutCapability
 
             Toggle(
                 FuelKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, and find Fuel and range (on by "
+                + "default). Fly with low fuel, or plot a route longer than the fuel lasts with nowhere to "
+                + "refuel: D47 warns. Start a jump toward a star you cannot scoop while out of range and it warns "
+                + "before the jump. Say \"stop calling out fuel\": the row shows off and that is no longer said. "
+                + "Say \"start calling out fuel\" and the row shows on. The row is absent while Speak without being "
+                + "asked is off.",
                 "Fuel and range",
                 "Low fuel, a route longer than the fuel lasts with nowhere to refuel, and an unscoopable star before a jump out of range.",
                 "fuel",
@@ -222,6 +240,12 @@ public static class CalloutCapability
 
             Toggle(
                 RebuyKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, and find Rebuy cover (on by "
+                + "default). Start a session in a ship whose rebuy is more than your balance: D47 says so once. "
+                + "With the row off nothing is said. Say \"stop calling out rebuy\": the row shows off and that is "
+                + "no longer said. Say \"start calling out rebuy\" and the row shows on. The row is absent while "
+                + "Speak without being asked is off.",
                 "Rebuy cover",
                 "Once, when your balance will not cover the rebuy on the ship you are flying.",
                 "rebuy",
@@ -231,6 +255,12 @@ public static class CalloutCapability
 
             Toggle(
                 RouteKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, and find Route progress (on by "
+                + "default). Plot a route of several jumps and make one: D47 says the jumps remaining and the "
+                + "next system, and warns of a neutron or white dwarf star ahead. Say \"stop calling out route "
+                + "progress\": the row shows off and that is no longer said. Say \"start calling out route "
+                + "progress\" and the row shows on. The row is absent while Speak without being asked is off.",
                 "Route progress",
                 "Jumps remaining, the next system, and neutron or white dwarf hazards ahead.",
                 "route",
@@ -240,6 +270,13 @@ public static class CalloutCapability
 
             Toggle(
                 LongJumpKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, and find Hyperspace tunnel "
+                + "delays (on by default). Start a jump and stay in the hyperspace tunnel past the time set in "
+                + "Hyperspace Tunnel Delay: D47 makes a remark. A jump shorter than that is silent. Say \"stop "
+                + "calling out hyperspace tunnel delays\": the row shows off and that is no longer said. Say "
+                + "\"start calling out hyperspace tunnel delays\" and the row shows on. The row is absent while "
+                + "Speak without being asked is off.",
                 "Hyperspace tunnel delays",
                 "A remark when a hyperspace jump runs longer than usual.",
                 "long-jump",
@@ -249,6 +286,12 @@ public static class CalloutCapability
 
             Toggle(
                 ArrivalKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Arrivals (on by "
+                + "default). Arrive in your home system, a system holding your carrier or stored ships, or one "
+                + "with engineering stations: D47 says so on arrival. Say \"stop calling out arrivals\": the row "
+                + "shows off and that is no longer said. Say \"start calling out arrivals\" and the row shows on. "
+                + "The row is absent while Speak without being asked is off.",
                 "Arrivals",
                 "Your home system, where your carrier is, ships stored here, and stations offering engineering.",
                 "arrival",
@@ -258,6 +301,12 @@ public static class CalloutCapability
 
             Toggle(
                 MaterialsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Mining and materials, group Mining and material callouts, and find "
+                + "Material milestones (on by default). Collect a material you have none of: D47 names it. Keep "
+                + "collecting and it reports progress toward a full stock. Say \"stop calling out materials\": the "
+                + "row shows off and that is no longer said. Say \"start calling out materials\" and the row shows "
+                + "on. The row is absent while Speak without being asked is off.",
                 "Material milestones",
                 "The first unit of a material, and progress towards a full stock where the cap is known.",
                 "materials",
@@ -267,6 +316,13 @@ public static class CalloutCapability
 
             Toggle(
                 EmissionsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Mining and materials, group Mining and material callouts, and find "
+                + "High grade emissions (on by default). Arrive at a system that could be running high grade "
+                + "emissions: D47 names the grade 5 materials and the faction state. It is silent about materials "
+                + "you are full of. Say \"stop calling out high grade emissions\": the row shows off and that is no "
+                + "longer said. Say \"start calling out high grade emissions\" and the row shows on. The row is "
+                + "absent while Speak without being asked is off.",
                 "High grade emissions",
                 "On arriving somewhere that could be running them: which grade 5 materials, from which "
                 + "faction's state. Silent about anything you are already full of.",
@@ -277,6 +333,13 @@ public static class CalloutCapability
 
             Toggle(
                 LimpetsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Mining and materials, group Mining and material callouts, and turn "
+                + "Limpet reminders on (it is off by default). Dock at a station that sells limpets with a big "
+                + "hold and few limpets aboard: D47 reminds you to buy some. It is silent when you already carry "
+                + "enough. Say \"stop calling out limpet reminders\": the row shows off and that is no longer said. "
+                + "Say \"start calling out limpet reminders\" and the row shows on. The row is absent while Speak "
+                + "without being asked is off.",
                 "Limpet reminders",
                 "On docking somewhere that sells limpets, with a big hold and few aboard. Off by default: "
                 + "it is for Commanders who fly limpets.",
@@ -290,6 +353,12 @@ public static class CalloutCapability
 
             Toggle(
                 ProspectorKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Mining and materials, group Mining and material callouts, and find "
+                + "Prospector results (on by default). Fire a prospector limpet at a rock: D47 says what is in it "
+                + "and whether it is the richest of the session. Say \"stop calling out prospector results\": the "
+                + "row shows off and that is no longer said. Say \"start calling out prospector results\" and the "
+                + "row shows on. The row is absent while Speak without being asked is off.",
                 "Prospector results",
                 "What a prospector limpet found in a rock, and whether it is the richest of the session. With a "
                 + "mining target set, only the target material, and whether the rock is above or below it.",
@@ -300,6 +369,12 @@ public static class CalloutCapability
 
             Toggle(
                 CoreAsteroidKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Mining and materials, group Mining and material callouts, and find "
+                + "Core asteroids (on by default). Prospect a core asteroid: D47 says it is a core and what is "
+                + "inside. Say \"stop calling out core asteroids\": the row shows off and that is no longer said. "
+                + "Say \"start calling out core asteroids\" and the row shows on. The row is absent while Speak "
+                + "without being asked is off.",
                 "Core asteroids",
                 "A core asteroid, and what is in it. Separate from prospector results because it is rare.",
                 "core-asteroid",
@@ -309,6 +384,12 @@ public static class CalloutCapability
 
             Toggle(
                 RingHotspotsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Mining and materials, group Mining and material callouts, and find "
+                + "Ring hotspots (on by default). Map a ring with the system map or surface scanner: D47 lists "
+                + "its hotspots, most first. Say \"stop calling out ring hotspots\": the row shows off and that is "
+                + "no longer said. Say \"start calling out ring hotspots\" and the row shows on. The row is absent "
+                + "while Speak without being asked is off.",
                 "Ring hotspots",
                 "When you map a ring, its hotspots, most first. With a mining target set, the target leads, or "
                 + "the line says the ring has none.",
@@ -319,6 +400,13 @@ public static class CalloutCapability
 
             Toggle(
                 MiningSummaryKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Mining and materials, group Mining and material callouts, and find "
+                + "Mining run summary (on by default). Refine cargo in a mining run, then dock: D47 says the "
+                + "tonnes refined, the rate, the materials and the limpets launched. It is silent if nothing was "
+                + "refined. Say \"stop calling out mining run summary\": the row shows off and that is no longer "
+                + "said. Say \"start calling out mining run summary\" and the row shows on. The row is absent while "
+                + "Speak without being asked is off.",
                 "Mining run summary",
                 "When a mining run ends on docking: tonnes refined, the rate, the materials and the limpets "
                 + "launched. Silent when nothing was refined or the run ended in a death.",
@@ -329,6 +417,12 @@ public static class CalloutCapability
 
             Toggle(
                 HoldFullKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Mining and materials, group Mining and material callouts, and find "
+                + "Hold full while mining (on by default). Mine until the hold has no free space: D47 says the "
+                + "hold is full, once per mining run. Say \"stop calling out hold full while mining\": the row "
+                + "shows off and that is no longer said. Say \"start calling out hold full while mining\" and the "
+                + "row shows on. The row is absent while Speak without being asked is off.",
                 "Hold full while mining",
                 "Once per mining run, when the hold has no free space. Silent when no run is open.",
                 "hold-full",
@@ -338,6 +432,14 @@ public static class CalloutCapability
 
             Toggle(
                 UnsoldDataAtRiskKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Unsold data at "
+                + "risk (on by default). Carry unsold scan and biology data worth five million credits or more, "
+                + "then drop into a war zone or a hazardous resource extraction site, or let your hull fall below "
+                + "sixty percent: D47 warns, at most once every thirty minutes for each of the three. Say \"stop "
+                + "calling out unsold data warning\": the row shows off and that is no longer said. Say \"start "
+                + "calling out unsold data warning\" and the row shows on. The row is absent while Speak without "
+                + "being asked is off.",
                 "Unsold data at risk",
                 "On dropping into a war zone or a hazardous resource extraction site, or when your hull falls "
                 + "below sixty percent, while unsold scan and biology data is worth five million credits or more. "
@@ -349,6 +451,13 @@ public static class CalloutCapability
 
             Toggle(
                 OutstandingCrimesKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Unpaid fines and "
+                + "bounties (on by default). Owe fines or bounties to a faction and arrive in a system where it "
+                + "is present: D47 names the largest debt, at most once an hour for each system. Say \"stop "
+                + "calling out unpaid fines warning\": the row shows off and that is no longer said. Say \"start "
+                + "calling out unpaid fines warning\" and the row shows on. The row is absent while Speak without "
+                + "being asked is off.",
                 "Unpaid fines and bounties",
                 "On arriving in a system where a faction you owe fines or bounties is present, on the ship you "
                 + "are flying or on foot. Names the largest debt, at most once an hour for each system.",
@@ -359,6 +468,12 @@ public static class CalloutCapability
 
             Toggle(
                 SamplingKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Sampling progress "
+                + "(on by default). On a planet with biology, take an organic sample: D47 says how many specimens "
+                + "you have taken and how far you moved for the last one. Say \"stop calling out sampling "
+                + "progress\": the row shows off and that is no longer said. Say \"start calling out sampling "
+                + "progress\" and the row shows on. The row is absent while Speak without being asked is off.",
                 "Sampling progress",
                 "How many organic specimens you have taken and how far you moved for the last one.",
                 "sampling",
@@ -368,6 +483,13 @@ public static class CalloutCapability
 
             Toggle(
                 SamplingRangeKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Far enough to "
+                + "sample (on by default). After taking a sample, walk away from every specimen of the set: D47 "
+                + "says when you are far enough to sample again, once per specimen. Say \"stop calling out far "
+                + "enough to sample\": the row shows off and that is no longer said. Say \"start calling out far "
+                + "enough to sample\" and the row shows on. The row is absent while Speak without being asked is "
+                + "off.",
                 "Far enough to sample",
                 "Once per specimen, when you are the genus' sampling distance from every specimen of the set "
                 + "you are taking. Silent without a surface position.",
@@ -378,6 +500,12 @@ public static class CalloutCapability
 
             Toggle(
                 SamplingAbandonedKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Abandoned samples "
+                + "(on by default). Take one or two samples, then sample a different species: D47 says the "
+                + "earlier samples were dropped. Say \"stop calling out abandoned samples\": the row shows off and "
+                + "that is no longer said. Say \"start calling out abandoned samples\" and the row shows on. The "
+                + "row is absent while Speak without being asked is off.",
                 "Abandoned samples",
                 "When a specimen of a different species drops a set of one or two samples you had taken.",
                 "sampling-abandoned",
@@ -387,6 +515,12 @@ public static class CalloutCapability
 
             Toggle(
                 DiscoveryKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Undiscovered "
+                + "systems (on by default). Arrive at a star nobody has sold data on: D47 says the system is "
+                + "undiscovered. Say \"stop calling out undiscovered systems\": the row shows off and that is no "
+                + "longer said. Say \"start calling out undiscovered systems\" and the row shows on. The row is "
+                + "absent while Speak without being asked is off.",
                 "Undiscovered systems",
                 "The arrival star's autoscan, when nobody has sold data on it yet.",
                 "discovery",
@@ -396,6 +530,12 @@ public static class CalloutCapability
 
             Toggle(
                 FootfallKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find First footfall (on "
+                + "by default). Disembark onto a body whose scan shows nobody has walked it: D47 says it is a "
+                + "first footfall, once per body. Say \"stop calling out first footfall\": the row shows off and "
+                + "that is no longer said. Say \"start calling out first footfall\" and the row shows on. The row "
+                + "is absent while Speak without being asked is off.",
                 "First footfall",
                 "The first time you disembark onto a body, once its scan shows nobody has walked it yet.",
                 "footfall",
@@ -405,6 +545,12 @@ public static class CalloutCapability
 
             Toggle(
                 FootfallApproachKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find First footfall on "
+                + "approach (on by default). Approach a body with biological signals that nobody has walked: D47 "
+                + "says so before you land, once per body. Say \"stop calling out first footfall on approach\": the "
+                + "row shows off and that is no longer said. Say \"start calling out first footfall on approach\" "
+                + "and the row shows on. The row is absent while Speak without being asked is off.",
                 "First footfall on approach",
                 "On approaching a body with biological signals whose scan shows nobody has walked it yet. "
                 + "Once per body.",
@@ -415,6 +561,12 @@ public static class CalloutCapability
 
             Toggle(
                 MappingKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Mapped body value "
+                + "(on by default). Finish mapping a body with the surface scanner: D47 says about what the map "
+                + "is worth and the total of mapped bodies not yet sold. Say \"stop calling out mapped bodies\": "
+                + "the row shows off and that is no longer said. Say \"start calling out mapped bodies\" and the "
+                + "row shows on. The row is absent while Speak without being asked is off.",
                 "Mapped body value",
                 "When you finish mapping a body with the surface scanner, about what it is worth and the "
                 + "total of mapped bodies not yet sold.",
@@ -425,6 +577,12 @@ public static class CalloutCapability
 
             Toggle(
                 BodyValueKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Valuable bodies "
+                + "(on by default). Scan a planet that would pay at least the figure in Call out bodies from if "
+                + "mapped efficiently: D47 says so with about what mapping pays. Say \"stop calling out valuable "
+                + "bodies\": the row shows off and that is no longer said. Say \"start calling out valuable bodies\" "
+                + "and the row shows on. The row is absent while Speak without being asked is off.",
                 "Valuable bodies",
                 "A planet worth mapping, said when you first scan it, with about what mapping it pays. "
                 + "The threshold is below.",
@@ -435,6 +593,12 @@ public static class CalloutCapability
 
             Toggle(
                 NotableBodiesKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Notable bodies (on "
+                + "by default). Scan a body with an unusual trait: D47 says the trait. This is the switch for the "
+                + "eight rows under it; with it off they disappear. Say \"stop calling out notable bodies\": the "
+                + "row shows off and that is no longer said. Say \"start calling out notable bodies\" and the row "
+                + "shows on. The row is absent while Speak without being asked is off.",
                 "Notable bodies",
                 "A scanned body's notable traits, said when you scan it or when a later scan completes one.",
                 "notable-bodies",
@@ -444,6 +608,12 @@ public static class CalloutCapability
 
             Toggle(
                 NotableCollidingBinaryKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Colliding binaries "
+                + "(on by default). Scan a pair of bodies whose orbits would touch: D47 says so. Say \"stop "
+                + "calling out colliding binaries\": the row shows off and that is no longer said. Say \"start "
+                + "calling out colliding binaries\" and the row shows on. The row is absent while Speak without "
+                + "being asked is off. The row appears only while Notable bodies is on.",
                 "Colliding binaries",
                 "A pair of bodies whose orbits would touch.",
                 "notable-bodies",
@@ -454,6 +624,12 @@ public static class CalloutCapability
 
             Toggle(
                 NotableShepherdMoonKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Shepherd moons (on "
+                + "by default). Scan a moon orbiting inside its parent's rings: D47 says it is a shepherd moon. "
+                + "Say \"stop calling out shepherd moons\": the row shows off and that is no longer said. Say "
+                + "\"start calling out shepherd moons\" and the row shows on. The row is absent while Speak without "
+                + "being asked is off. The row appears only while Notable bodies is on.",
                 "Shepherd moons",
                 "A moon orbiting inside its parent's rings.",
                 "notable-bodies",
@@ -464,6 +640,12 @@ public static class CalloutCapability
 
             Toggle(
                 NotableNestedMoonKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Moons of moons (on "
+                + "by default). Scan a moon whose parent is itself a moon: D47 says so. Say \"stop calling out "
+                + "moons of moons\": the row shows off and that is no longer said. Say \"start calling out moons of "
+                + "moons\" and the row shows on. The row is absent while Speak without being asked is off. The row "
+                + "appears only while Notable bodies is on.",
                 "Moons of moons",
                 "A moon whose parent is itself a moon.",
                 "notable-bodies",
@@ -474,6 +656,12 @@ public static class CalloutCapability
 
             Toggle(
                 NotableEccentricOrbitKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Eccentric orbits "
+                + "(on by default). Scan a body with an orbital eccentricity of 0.8 or more: D47 says the orbit "
+                + "is eccentric. Say \"stop calling out eccentric orbits\": the row shows off and that is no longer "
+                + "said. Say \"start calling out eccentric orbits\" and the row shows on. The row is absent while "
+                + "Speak without being asked is off. The row appears only while Notable bodies is on.",
                 "Eccentric orbits",
                 "An orbit with an eccentricity of 0.8 or more.",
                 "notable-bodies",
@@ -484,6 +672,12 @@ public static class CalloutCapability
 
             Toggle(
                 NotableFastRotatorKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Fast rotators (on "
+                + "by default). Scan a body that is not tidally locked and turns in under six hours: D47 says it "
+                + "is a fast rotator. Say \"stop calling out fast rotators\": the row shows off and that is no "
+                + "longer said. Say \"start calling out fast rotators\" and the row shows on. The row is absent "
+                + "while Speak without being asked is off. The row appears only while Notable bodies is on.",
                 "Fast rotators",
                 "A body that is not tidally locked and turns in under six hours.",
                 "notable-bodies",
@@ -494,6 +688,12 @@ public static class CalloutCapability
 
             Toggle(
                 NotableWideRingsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Wide rings (on by "
+                + "default). Scan a body with a ring wider than ten times its radius: D47 says the rings are "
+                + "wide. Say \"stop calling out wide rings\": the row shows off and that is no longer said. Say "
+                + "\"start calling out wide rings\" and the row shows on. The row is absent while Speak without "
+                + "being asked is off. The row appears only while Notable bodies is on.",
                 "Wide rings",
                 "A ring wider than ten times the body's radius.",
                 "notable-bodies",
@@ -504,6 +704,13 @@ public static class CalloutCapability
 
             Toggle(
                 NotablePremiumFsdInjectionKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Premium FSD "
+                + "injection materials (on by default). Scan a landable body with five or six of the six "
+                + "materials for the premium FSD injection: D47 says so. Say \"stop calling out premium FSD "
+                + "injection bodies\": the row shows off and that is no longer said. Say \"start calling out "
+                + "premium FSD injection bodies\" and the row shows on. The row is absent while Speak without "
+                + "being asked is off. The row appears only while Notable bodies is on.",
                 "Premium FSD injection materials",
                 "A landable body with five or six of the six materials for the premium FSD injection.",
                 "notable-bodies",
@@ -514,6 +721,13 @@ public static class CalloutCapability
 
             Toggle(
                 NotableLandableAtmosphereKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and turn Landable with an "
+                + "atmosphere on (it is off by default). Scan a landable body with an atmosphere: D47 says so. "
+                + "Say \"stop calling out landable bodies with an atmosphere\": the row shows off and that is no "
+                + "longer said. Say \"start calling out landable bodies with an atmosphere\" and the row shows on. "
+                + "The row is absent while Speak without being asked is off. The row appears only while Notable "
+                + "bodies is on.",
                 "Landable with an atmosphere",
                 "A landable body with an atmosphere. Off until you turn it on.",
                 "notable-bodies",
@@ -525,6 +739,12 @@ public static class CalloutCapability
 
             Toggle(
                 BiologyKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find High-value biology "
+                + "(on by default). Scan a landable body whose biology could reach the figure in Call out biology "
+                + "from: D47 says so. Say \"stop calling out high-value biology\": the row shows off and that is no "
+                + "longer said. Say \"start calling out high-value biology\" and the row shows on. The row is "
+                + "absent while Speak without being asked is off.",
                 "High-value biology",
                 "A landable body whose biology could reach the threshold below, said when you scan it.",
                 "biology",
@@ -534,6 +754,12 @@ public static class CalloutCapability
 
             Toggle(
                 GeologyKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Geology missing "
+                + "from your codex (on by default). Scan a landable body with likely geological features you have "
+                + "not logged in this region: D47 names them. Say \"stop calling out missing geology\": the row "
+                + "shows off and that is no longer said. Say \"start calling out missing geology\" and the row "
+                + "shows on. The row is absent while Speak without being asked is off.",
                 "Geology missing from your codex",
                 "A landable body's likely geological features you have not logged in this region, said when you scan it.",
                 "geology",
@@ -543,6 +769,12 @@ public static class CalloutCapability
 
             Toggle(
                 CodexDiscoveredKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find New codex entries "
+                + "(on by default). Log a new codex entry: D47 says \"Discovered\" and the entry's name. Say \"stop "
+                + "calling out codex discoveries\": the row shows off and that is no longer said. Say \"start "
+                + "calling out codex discoveries\" and the row shows on. The row is absent while Speak without "
+                + "being asked is off.",
                 "New codex entries",
                 "Every new codex entry, said as \"Discovered\" and its name when you log it.",
                 "codex-discovered",
@@ -552,6 +784,12 @@ public static class CalloutCapability
 
             Toggle(
                 RegionFirstKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Possible region "
+                + "firsts (on by default). Log a new organic codex entry that the shipped Canonn table has no "
+                + "report of: D47 says it may be a region first. Say \"stop calling out region firsts\": the row "
+                + "shows off and that is no longer said. Say \"start calling out region firsts\" and the row shows "
+                + "on. The row is absent while Speak without being asked is off.",
                 "Possible region firsts",
                 "A new organic codex entry the Canonn table in this build has no report of, in this region or "
                 + "anywhere, said when you log it.",
@@ -562,6 +800,13 @@ public static class CalloutCapability
 
             Toggle(
                 SurveyedBiologyKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Surveyed biology "
+                + "on arrival (on by default). Arrive in a system where Spansh has surveyed biology reaching the "
+                + "figure in Call out biology from: D47 names the bodies. Say \"stop calling out surveyed "
+                + "biology\": the row shows off and that is no longer said. Say \"start calling out surveyed "
+                + "biology\" and the row shows on. The row is absent while Speak without being asked is off. The "
+                + "row appears only while Look things up in the galaxy is on.",
                 "Surveyed biology on arrival",
                 "On arriving in a system, the bodies Spansh has surveyed biology on that reach the threshold "
                 + "below. Needs galaxy search.",
@@ -573,6 +818,13 @@ public static class CalloutCapability
 
             Toggle(
                 EarlierFindsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Earlier biology "
+                + "finds on mapping (on by default). Map a body with biology that Canonn has earlier finds on: "
+                + "D47 names the variants found there. Say \"stop calling out earlier biology finds\": the row "
+                + "shows off and that is no longer said. Say \"start calling out earlier biology finds\" and the "
+                + "row shows on. The row is absent while Speak without being asked is off. The row appears only "
+                + "while Earlier biology finds from Canonn is on.",
                 "Earlier biology finds on mapping",
                 "On mapping a body with biology, the variants Canonn has earlier finds of there. Needs "
                 + "earlier biology finds from Canonn.",
@@ -584,6 +836,13 @@ public static class CalloutCapability
 
             Toggle(
                 TradingModeKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and turn Trading Mode on (it "
+                + "is off by default). Dock with a route plotted: D47 says the best cargo to buy here for the "
+                + "system at the end of it, using the filters saved on the Trade route page. Say \"stop calling "
+                + "out trading mode\": the row shows off and that is no longer said. Say \"start calling out "
+                + "trading mode\" and the row shows on. The row is absent while Speak without being asked is off. "
+                + "The row appears only while Look things up in the galaxy is on.",
                 "Trading Mode",
                 "Docked with a route plotted, the best cargo to buy here for the system at the end of it. "
                 + "Needs galaxy search, and uses the filters saved on the Trade route page.",
@@ -596,6 +855,12 @@ public static class CalloutCapability
 
             Toggle(
                 AnnouncedAttackKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, and find Announced attacks (on "
+                + "by default). Be threatened by an NPC that says it will interdict you or take your cargo: D47 "
+                + "warns before it acts. Say \"stop calling out announced attacks\": the row shows off and that is "
+                + "no longer said. Say \"start calling out announced attacks\" and the row shows on. The row is "
+                + "absent while Speak without being asked is off.",
                 "Announced attacks",
                 "An NPC saying it is about to interdict you or take your cargo, before it does.",
                 "announced-attack",
@@ -605,6 +870,12 @@ public static class CalloutCapability
 
             Toggle(
                 KillsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, and find Notable kills (on by "
+                + "default). Destroy ships: D47 mentions the first kill of the session, the best reward so far, "
+                + "two kills inside thirty seconds, and every fifth kill. Say \"stop calling out kills\": the row "
+                + "shows off and that is no longer said. Say \"start calling out kills\" and the row shows on. The "
+                + "row is absent while Speak without being asked is off.",
                 "Notable kills",
                 "The first kill of the session, the best reward so far, two kills inside thirty seconds, "
                 + "and every fifth kill.",
@@ -615,6 +886,13 @@ public static class CalloutCapability
 
             Toggle(
                 MetBeforeKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Commanders met "
+                + "before (on by default). Target a Commander you met in an earlier session while not under "
+                + "threat: D47 says when, where and what happened, once per Commander per session. Say \"stop "
+                + "calling out commanders met before\": the row shows off and that is no longer said. Say \"start "
+                + "calling out commanders met before\" and the row shows on. The row is absent while Speak without "
+                + "being asked is off.",
                 "Commanders met before",
                 "A Commander you target who you met in an earlier game session: when, where and what happened, "
                 + "once per Commander per session and never while you are under threat.",
@@ -625,6 +903,12 @@ public static class CalloutCapability
 
             Toggle(
                 RivalTerritoryKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, and find Rival Power territory "
+                + "(on by default). Fly in normal space in a system controlled by a Power other than yours: D47 "
+                + "says it is rival territory. Say \"stop calling out enemy territory\": the row shows off and that "
+                + "is no longer said. Say \"start calling out enemy territory\" and the row shows on. The row is "
+                + "absent while Speak without being asked is off.",
                 "Rival Power territory",
                 "Flying in normal space in a system controlled by a Power other than the one you fly for.",
                 "rival-territory",
@@ -634,6 +918,12 @@ public static class CalloutCapability
 
             Toggle(
                 PowerplayMeritsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, and find Powerplay merits (on by "
+                + "default). Enter normal space in a Powerplay system you can reinforce or undermine: D47 says "
+                + "which way the merit modifier leans. Say \"stop calling out powerplay merits\": the row shows off "
+                + "and that is no longer said. Say \"start calling out powerplay merits\" and the row shows on. The "
+                + "row is absent while Speak without being asked is off.",
                 "Powerplay merits",
                 "Which way the merit modifier leans, on first entering normal space in a Powerplay system you can reinforce or undermine.",
                 "powerplay-merits",
@@ -643,6 +933,12 @@ public static class CalloutCapability
 
             Toggle(
                 PowerplaySalvageKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, and find Powerplay salvage (on "
+                + "by default). Scoop salvage in your Power's system and start a jump away without handing it in: "
+                + "D47 warns before you go. Say \"stop calling out powerplay salvage\": the row shows off and that "
+                + "is no longer said. Say \"start calling out powerplay salvage\" and the row shows on. The row is "
+                + "absent while Speak without being asked is off.",
                 "Powerplay salvage",
                 "A warning before you jump away from your Power's system with salvage you scooped there and have not handed in.",
                 "powerplay-salvage",
@@ -652,6 +948,12 @@ public static class CalloutCapability
 
             Toggle(
                 PowerplayCycleKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Powerplay cycle (on "
+                + "by default). Play until twelve hours before the Powerplay cycle ends: D47 says how many merits "
+                + "you have earned for your Power in it. Say \"stop calling out powerplay cycle\": the row shows "
+                + "off and that is no longer said. Say \"start calling out powerplay cycle\" and the row shows on. "
+                + "The row is absent while Speak without being asked is off.",
                 "Powerplay cycle",
                 "Twelve hours before the Powerplay cycle ends, how many merits you have earned for your Power in it.",
                 "powerplay-cycle",
@@ -661,6 +963,12 @@ public static class CalloutCapability
 
             Toggle(
                 BgsTickKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find BGS tick (on by "
+                + "default). When the BGS ticks while D47 runs, D47 says so. Say \"stop calling out BGS tick\": the "
+                + "row shows off and that is no longer said. Say \"start calling out BGS tick\" and the row shows "
+                + "on. The row is absent while Speak without being asked is off. The row appears only while BGS "
+                + "tick time under Outside sources is on.",
                 "BGS tick",
                 "When the BGS ticks, says so. Needs BGS tick time under Outside sources.",
                 "bgs-tick",
@@ -671,6 +979,12 @@ public static class CalloutCapability
 
             Toggle(
                 GalNetKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find GalNet headlines (on "
+                + "by default). When new GalNet articles arrive, D47 says their headlines. Say \"stop calling out "
+                + "GalNet headlines\": the row shows off and that is no longer said. Say \"start calling out GalNet "
+                + "headlines\" and the row shows on. The row is absent while Speak without being asked is off. The "
+                + "row appears only while GalNet news under Outside sources is on.",
                 "GalNet headlines",
                 "When new GalNet articles arrive, says their headlines. Needs GalNet news under Outside sources.",
                 "galnet",
@@ -681,6 +995,12 @@ public static class CalloutCapability
 
             Toggle(
                 ServerStatusKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Server status (on by "
+                + "default). When Elite's servers go down for maintenance, go offline or come back, D47 says so. "
+                + "Say \"stop calling out Server status\": the row shows off and that is no longer said. Say \"start "
+                + "calling out Server status\" and the row shows on. The row is absent while Speak without being "
+                + "asked is off. The row appears only while Server status under Outside sources is on.",
                 "Server status",
                 "When Elite's servers go down for maintenance, go offline or come back, says so. Needs Server status under Outside sources.",
                 "server-status",
@@ -691,6 +1011,12 @@ public static class CalloutCapability
 
             Toggle(
                 FriendsOnlineKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Friends online (on "
+                + "by default). Have a friend in the game come online: D47 says who. Going offline is not said. "
+                + "Say \"stop calling out friends online\": the row shows off and that is no longer said. Say "
+                + "\"start calling out friends online\" and the row shows on. The row is absent while Speak without "
+                + "being asked is off.",
                 "Friends online",
                 "When a friend comes online, says who. Going offline is not said.",
                 "friends",
@@ -700,6 +1026,12 @@ public static class CalloutCapability
 
             Toggle(
                 WingKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Wing changes (on by "
+                + "default). Join a wing: D47 says who is in it. When a wingmate joins it says who. Leaving is "
+                + "not said. Say \"stop calling out wing changes\": the row shows off and that is no longer said. "
+                + "Say \"start calling out wing changes\" and the row shows on. The row is absent while Speak "
+                + "without being asked is off.",
                 "Wing changes",
                 "When you join a wing, says who is in it, and when a wingmate joins, says who. Leaving is not said.",
                 "wing",
@@ -709,6 +1041,13 @@ public static class CalloutCapability
 
             Toggle(
                 ChecklistKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Checklist changes "
+                + "(on by default). With a checklist plan open, finish what a plan item needs, or let the journal "
+                + "change an item: D47 says the change, the last unit a plan needed, or the line ticked by the "
+                + "event it watches for. Say \"stop calling out checklist changes\": the row shows off and that is "
+                + "no longer said. Say \"start calling out checklist changes\" and the row shows on. The row is "
+                + "absent while Speak without being asked is off.",
                 "Checklist changes",
                 "A plan item the journal has just changed its mind about, the last unit a plan needed, and a line ticked by the event it watches for.",
                 "checklist",
@@ -718,6 +1057,13 @@ public static class CalloutCapability
 
             Toggle(
                 ContinuityKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Picking up where you "
+                + "left off (on by default). Start a session after an earlier one: D47 says how long it has been, "
+                + "where you were and what your plans were waiting on. It is silent when there is nothing to say. "
+                + "Say \"stop calling out where I left off\": the row shows off and that is no longer said. Say "
+                + "\"start calling out where I left off\" and the row shows on. The row is absent while Speak "
+                + "without being asked is off.",
                 "Picking up where you left off",
                 "One line at the start of a session: how long it has been, where you were, and what your "
                 + "plans were waiting on. Silent when there is nothing to say.",
@@ -728,6 +1074,13 @@ public static class CalloutCapability
 
             Toggle(
                 RecapKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Last session recap "
+                + "(on by default). Start a session after an earlier one: after the opening line D47 says where "
+                + "your last session ended, the ship and the most notable thing in it. It is silent with no "
+                + "earlier session. Say \"stop calling out the last session recap\": the row shows off and that is "
+                + "no longer said. Say \"start calling out the last session recap\" and the row shows on. The row "
+                + "is absent while Speak without being asked is off.",
                 "Last session recap",
                 "One line after the opening line: where your last session ended, the ship, and the most "
                 + "notable thing that happened in it. Silent when there was no earlier session.",
@@ -738,6 +1091,12 @@ public static class CalloutCapability
 
             Toggle(
                 AdventureKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Narrator and stories, group Stories, and find Story objectives "
+                + "(on by default). Follow a story and reach the place an objective waits for: D47 says the "
+                + "objective. With the row off the story stays in the conversation and is not read out. Say \"stop "
+                + "calling out the story\": the row shows off and that is no longer said. Say \"start calling out "
+                + "the story\" and the row shows on. The row is absent while Speak without being asked is off.",
                 "Story objectives",
                 "An objective of the story you are following, said when you reach the place it waits for. Off "
                 + "leaves the story in the conversation and stops it being read out.",
@@ -748,6 +1107,14 @@ public static class CalloutCapability
 
             Toggle(
                 BackstoryNudgeKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Narrator and stories, group Stories, and find Backstory "
+                + "reminder (on by default). With a Backstory set, reach a story objective that turns the story: "
+                + "after it D47 says one plain line that your Backstory still describes where the story began and "
+                + "is yours to change. Say \"stop calling out the backstory reminder\": the row shows off and that "
+                + "is no longer said. Say \"start calling out the backstory reminder\" and the row shows on. The "
+                + "row is absent while Speak without being asked is off. The row appears only while Story "
+                + "objectives is on.",
                 "Backstory reminder",
                 "After a story objective that turns the story, one plain line saying your Backstory still "
                 + "describes where it began and is yours to change. Said only when you have a Backstory, and "
@@ -759,6 +1126,12 @@ public static class CalloutCapability
 
             Toggle(
                 CommunityGoalSalesKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Community Goal sales "
+                + "(on by default). Sell the Community Goal commodity: D47 says where that leaves you this "
+                + "session, net of what the cargo cost. Say \"stop calling out community goal sales\": the row "
+                + "shows off and that is no longer said. Say \"start calling out community goal sales\" and the row "
+                + "shows on. The row is absent while Speak without being asked is off.",
                 "Community Goal sales",
                 "After every sale of the Community Goal commodity, where that leaves you this session, "
                 + "net of what the cargo cost. The sale's own figure is on your screen; this is the total.",
@@ -769,6 +1142,12 @@ public static class CalloutCapability
 
             Toggle(
                 CommunityGoalExpiryKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Community Goal "
+                + "expiry (on by default). Play with a joined community goal that has eight hours or less left: "
+                + "D47 says so, once for each goal. Say \"stop calling out community goal expiry\": the row shows "
+                + "off and that is no longer said. Say \"start calling out community goal expiry\" and the row "
+                + "shows on. The row is absent while Speak without being asked is off.",
                 "Community Goal expiry",
                 "When a community goal you have joined has eight hours or less left. Said once for each goal.",
                 "community-goal-expiry",
@@ -778,6 +1157,13 @@ public static class CalloutCapability
 
             Toggle(
                 ColonisationKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Colonisation "
+                + "deadlines (on by default). Claim a system or visit a construction site: D47 says the beacon "
+                + "and primary port deadlines and the squadron rule, reminds you as they near, and says how many "
+                + "trips the remaining tonnes need in this ship. Say \"stop calling out colonisation deadlines\": "
+                + "the row shows off and that is no longer said. Say \"start calling out colonisation deadlines\" "
+                + "and the row shows on. The row is absent while Speak without being asked is off.",
                 "Colonisation deadlines",
                 "At a system claim, the beacon and primary port deadlines and the squadron rule; reminders as they near; "
                 + "and how many trips a construction site's remaining tonnes need in this ship.",
@@ -788,6 +1174,12 @@ public static class CalloutCapability
 
             Toggle(
                 FighterKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Chatter and messages, group Fighter pilot, and find Fighter "
+                + "pilot (on by default). Launch, dock, lose or rebuild a fighter with a hired pilot assigned: "
+                + "the pilot speaks. With no pilot assigned it is silent. Say \"stop calling out the fighter "
+                + "pilot\": the row shows off and that is no longer said. Say \"start calling out the fighter "
+                + "pilot\" and the row shows on. The row is absent while Speak without being asked is off.",
                 "Fighter pilot",
                 "Your active hired pilot says so when the fighter launches, docks, is lost or is rebuilt. Silent with no pilot assigned.",
                 "fighter",
@@ -797,6 +1189,12 @@ public static class CalloutCapability
 
             Toggle(
                 DockingPadKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Landing pad (on by "
+                + "default). Get landing clearance at a Coriolis, Orbis, Ocellus or asteroid base: D47 says where "
+                + "the pad is, as a clock hour and a depth. Say \"stop calling out the landing pad\": the row shows "
+                + "off and that is no longer said. Say \"start calling out the landing pad\" and the row shows on. "
+                + "The row is absent while Speak without being asked is off.",
                 "Landing pad",
                 "Where the granted pad is in a Coriolis, Orbis, Ocellus or asteroid base, as a clock hour and a depth.",
                 "docking",
@@ -806,6 +1204,12 @@ public static class CalloutCapability
 
             Toggle(
                 StationDamageKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Station damage (on "
+                + "by default). Dock at a station that is under attack, damaged, under repairs or abandoned: D47 "
+                + "says so. Say \"stop calling out damaged stations\": the row shows off and that is no longer "
+                + "said. Say \"start calling out damaged stations\" and the row shows on. The row is absent while "
+                + "Speak without being asked is off.",
                 "Station damage",
                 "On docking, when the station is under attack, damaged, under repairs or abandoned.",
                 "station-damage",
@@ -815,6 +1219,12 @@ public static class CalloutCapability
 
             Toggle(
                 CommunityKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Mention the Discord "
+                + "every two weeks (on by default). Play for fourteen days: at a quiet moment D47 says one line "
+                + "pointing at the D47 Discord, once every 14 days. Say \"stop calling out the Discord\": the row "
+                + "shows off and that is no longer said. Say \"start calling out the Discord\" and the row shows "
+                + "on. The row is absent while Speak without being asked is off.",
                 "Mention the Discord every two weeks",
                 "One line pointing at the D47 Discord, said at a quiet moment once every 14 days.",
                 "community",
@@ -824,6 +1234,13 @@ public static class CalloutCapability
 
             Toggle(
                 SessionLengthKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and turn Break reminder on "
+                + "(it is off by default). Set Remind me to take a break after (hours) to 2, then play for two "
+                + "hours: D47 reminds you to take a break, once per session. Say \"stop calling out how long I "
+                + "have been flying\": the row shows off and that is no longer said. Say \"start calling out how "
+                + "long I have been flying\" and the row shows on. The row is absent while Speak without being "
+                + "asked is off.",
                 "Break reminder",
                 "Reminds you to take a break once a session has run as long as you choose. Said once per session. Off by default.",
                 "session-length",
@@ -834,6 +1251,12 @@ public static class CalloutCapability
 
             Toggle(
                 CarrierFuelKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Carrier fuel (on by "
+                + "default). Dock at your own carrier or plot its jump with tritium for less than two full jumps "
+                + "at its current load: D47 warns, once for each reading. Say \"stop calling out carrier fuel\": "
+                + "the row shows off and that is no longer said. Say \"start calling out carrier fuel\" and the row "
+                + "shows on. The row is absent while Speak without being asked is off.",
                 "Carrier fuel",
                 "On docking at your own carrier or plotting its jump, when its tritium is less than two "
                 + "full jumps at its current load. Said once for each reading.",
@@ -844,6 +1267,12 @@ public static class CalloutCapability
 
             Toggle(
                 CarrierUpkeepKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Carrier upkeep (on "
+                + "by default). Dock at your own carrier or plot its jump with a balance covering less than four "
+                + "weeks of upkeep: D47 warns, once for each recorded balance. Say \"stop calling out carrier "
+                + "upkeep\": the row shows off and that is no longer said. Say \"start calling out carrier upkeep\" "
+                + "and the row shows on. The row is absent while Speak without being asked is off.",
                 "Carrier upkeep",
                 "On docking at your own carrier or plotting its jump, when its balance covers less than "
                 + "four weeks of upkeep. Said once for each recorded balance.",
@@ -854,6 +1283,13 @@ public static class CalloutCapability
 
             Toggle(
                 CarrierPayrollKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Chatter and messages, group Carrier captain, and find Carrier "
+                + "payroll (on by default). Dock at your own carrier for the first time after the weekly tick: "
+                + "the carrier captain mentions the week's payroll and the name Elite has on file for them, once "
+                + "each tick week. Say \"stop calling out carrier payroll\": the row shows off and that is no "
+                + "longer said. Say \"start calling out carrier payroll\" and the row shows on. The row is absent "
+                + "while Speak without being asked is off.",
                 "Carrier payroll",
                 "On the first docking at your own carrier after the weekly tick, the captain mentions the "
                 + "week's payroll and the name Elite has on file for them. Said once for each tick week.",
@@ -864,6 +1300,14 @@ public static class CalloutCapability
 
             Toggle(
                 MissionsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Mission hand-ins and "
+                + "expiry (on by default). Dock where a mission hands in, leave with one unclaimed, or wait until "
+                + "an hour and ten minutes before one expires: D47 speaks. Accept a mission whose cargo is more "
+                + "than your hold, or a collect mission whose cargo is sold where you are docked: D47 says so. "
+                + "Say \"stop calling out mission callouts\": the row shows off and that is no longer said. Say "
+                + "\"start calling out mission callouts\" and the row shows on. The row is absent while Speak "
+                + "without being asked is off.",
                 "Mission hand-ins and expiry",
                 "On docking where missions hand in, on leaving with one unclaimed, and an hour and ten "
                 + "minutes before a mission expires. On accepting a mission, when its cargo is more than "
@@ -875,6 +1319,13 @@ public static class CalloutCapability
 
             Toggle(
                 RemindersKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Reminders (on by "
+                + "default). Ask D47 to remind you of a moment in the game, such as \"remind me when I next dock\", "
+                + "then reach it: D47 says the reminder once, ending in your words. With none set nothing is "
+                + "said. Say \"stop calling out reminders\": the row shows off and that is no longer said. Say "
+                + "\"start calling out reminders\" and the row shows on. The row is absent while Speak without "
+                + "being asked is off.",
                 "Reminders",
                 "A reminder you set for a moment in the game — your next docking, a station, a system, your own "
                 + "carrier, an empty or full hold, a full material, your next session — said once when it comes, "
@@ -886,6 +1337,13 @@ public static class CalloutCapability
 
             Toggle(
                 DomainKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Your core's own "
+                + "subject (on by default). Fly with a core that has a subject, such as Quartermaster, Sentinel "
+                + "or Chart, and earn credits: the core occasionally remarks on that subject with a figure from "
+                + "this session. It is silent with personality off. Say \"stop calling out core remarks\": the row "
+                + "shows off and that is no longer said. Say \"start calling out core remarks\" and the row shows "
+                + "on. The row is absent while Speak without being asked is off.",
                 "Your core's own subject",
                 "An occasional remark from the core aboard about the subject it pays attention to, with a "
                 + "figure from this session. Quartermaster says the credits an hour after a sale, a mission "
@@ -898,6 +1356,13 @@ public static class CalloutCapability
 
             Toggle(
                 NotableShipsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Notable ships (on by "
+                + "default). Pass a notable ship, such as a wedding or funeral convoy, nomads, a refugee "
+                + "flotilla, a tour liner, a protester or a training flight: the core remarks, once per kind per "
+                + "session. Say \"stop calling out notable ships\": the row shows off and that is no longer said. "
+                + "Say \"start calling out notable ships\" and the row shows on. The row is absent while Speak "
+                + "without being asked is off.",
                 "Notable ships",
                 "A remark from the core aboard when a notable ship passes: a wedding or funeral convoy, nomads, "
                 + "a refugee flotilla, a tour liner, a protester or propagandist, a training flight. Once per kind per session.",
@@ -908,6 +1373,13 @@ public static class CalloutCapability
 
             Toggle(
                 ShipModesKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Ship modes (on by "
+                + "default). Hold the ship in a mode for a while, such as silent running, flight assist off, "
+                + "hardpoints out with nothing hostile around, the scoop left open or the gear down away from a "
+                + "station: the core remarks, once per mode per session. Say \"stop calling out ship modes\": the "
+                + "row shows off and that is no longer said. Say \"start calling out ship modes\" and the row shows "
+                + "on. The row is absent while Speak without being asked is off.",
                 "Ship modes",
                 "A remark from the core aboard when you hold the ship in a mode for a while: silent running, "
                 + "flight assist off, hardpoints out with nothing hostile around, the cargo scoop left open, "
@@ -919,6 +1391,13 @@ public static class CalloutCapability
 
             Toggle(
                 AmbientKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Chatter and messages, group Chatter, and find Ambient (on by "
+                + "default). Fly quietly for a few minutes: the core or a crew member says an unprompted "
+                + "in-character line. The two rows under this one set the gap between lines. Say \"stop calling "
+                + "out in ship chatter\": the row shows off and that is no longer said. Say \"start calling out in "
+                + "ship chatter\" and the row shows on. The row is absent while Speak without being asked is off. "
+                + "The row appears only while a language model is configured.",
 
                 // Named for who is speaking rather than for what the line is like, on the Commander's
                 // instruction (2026-09-02). "Ambient" described the occasion and left a Commander to work out
@@ -943,6 +1422,13 @@ public static class CalloutCapability
 
             Toggle(
                 NpcChatterKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Chatter and messages, group Chatter, and find NPC chatter (on "
+                + "by default). Fly in a busy system: made-up radio traffic plays on the System comms channel, "
+                + "such as pilots talking to each other or the dock telling somebody off. A hail selects the one "
+                + "who hailed you. Say \"stop calling out npc chatter\": the row shows off and that is no longer "
+                + "said. Say \"start calling out npc chatter\" and the row shows on. The row is absent while Speak "
+                + "without being asked is off. The row appears only while a language model is configured.",
                 "NPC chatter",
                 "Anybody outside your ship. Made-up radio traffic from people who do not exist - "
                 + "passers-by talking to each other, the dock telling somebody off, the occasional "
@@ -961,6 +1447,13 @@ public static class CalloutCapability
 
             Toggle(
                 ScenesKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Chatter and messages, group Chatter, and find Scene chatter (on "
+                + "by default). Be on foot at a settlement or in a fight and do something notable, such as "
+                + "arriving or being found: the people there react on their radio, at most once every 45 seconds. "
+                + "Say \"stop calling out scene chatter\": the row shows off and that is no longer said. Say \"start "
+                + "calling out scene chatter\" and the row shows on. The row is absent while Speak without being "
+                + "asked is off. The row appears only while a language model is configured.",
                 "Scene chatter",
                 "The people of a settlement you are on foot at, or the pilots of a fight you are in, heard on "
                 + "their radio reacting to what just happened: your arrival, being found or interdicted, a killing, "
@@ -975,6 +1468,13 @@ public static class CalloutCapability
 
             Toggle(
                 NarratorKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Narrator and stories, group Narrator, and find Narrator (on by "
+                + "default). Play through a lull outside supercruise and combat, with a character sheet, "
+                + "backstory or scenario written: the Narrator tells your story in the third person. Say \"stop "
+                + "calling out the narrator\": the row shows off and that is no longer said. Say \"start calling "
+                + "out the narrator\" and the row shows on. The row is absent while Speak without being asked is "
+                + "off. The row appears only while a language model is configured.",
                 "Narrator",
                 "A voice of its own that tells your story in the third person during a lull, from your "
                 + "character sheet, your backstory and your scenario. Never in supercruise or during a fight, "
@@ -991,6 +1491,11 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = SessionLengthHoursKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, with Break reminder on, and "
+                + "set Remind me to take a break after (hours) to 2, 3, 4 or 6. After that many hours of one "
+                + "session D47 reminds you to take a break, once. The row is absent while Break reminder is off.",
             Advanced = true,
             Label = "Remind me to take a break after (hours)",
             Help = "How long a session runs before the break reminder is said.",
@@ -1017,6 +1522,12 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = AmbientSecondsKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Chatter and messages, group Chatter, with In Ship chatter on, "
+                + "and set The least time between In Ship chatter (seconds) to 30 and the most to 30. Fly "
+                + "quietly: a chatter line arrives about every thirty seconds. Set it to 0 and the chatter stops. "
+                + "The row is absent without a language model.",
             Advanced = true,
 
             // Reworded twice, and the property name deliberately not either time: for its new sibling (#258),
@@ -1052,6 +1563,12 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = AmbientMaxSecondsKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Chatter and messages, group Chatter, with In Ship chatter on, "
+                + "and set The most time between In Ship chatter (seconds) to 60 with the least at 30. Fly "
+                + "quietly: gaps between chatter lines fall between thirty and sixty seconds and never exceed "
+                + "sixty. The row is absent without a language model.",
             Advanced = true,
             Label = "The most time between In Ship chatter (seconds)",
             Help = "Between two lines from your core or your crew. Equal to the "
@@ -1079,6 +1596,12 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = NpcChatterSecondsKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Chatter and messages, group Chatter, with NPC chatter on, and "
+                + "set The least time between NPC chatter (seconds) to 30 and the most to 30. Fly in a busy "
+                + "system: an exchange arrives about every thirty seconds. Set it to 0 and the chatter stops. The "
+                + "row is absent without a language model.",
             Advanced = true,
             Label = "The least time between NPC chatter (seconds)",
             Help = "Between two exchanges among people outside your ship. Each gap "
@@ -1113,6 +1636,12 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = NpcChatterMaxSecondsKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Chatter and messages, group Chatter, with NPC chatter on, and "
+                + "set The most time between NPC chatter (seconds) to 60 with the least at 30. Fly in a busy "
+                + "system: gaps between exchanges fall between thirty and sixty seconds and never exceed sixty. "
+                + "The row is absent without a language model.",
             Advanced = true,
             Label = "The most time between NPC chatter (seconds)",
             Help = "Between two exchanges among people outside your ship. Equal to "
@@ -1138,6 +1667,11 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = NarratorSecondsKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Narrator and stories, group Narrator, with Narrator on, and set "
+                + "The least time between narrations (seconds) to 60 and the most to 60. In a lull the Narrator "
+                + "speaks about once a minute. Set it to 0 and the Narrator goes silent.",
             Advanced = true,
             Label = "The least time between narrations (seconds)",
             Help = "Each gap lands somewhere between this and the row below; 0 silences the Narrator.",
@@ -1162,6 +1696,12 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = NarratorMaxSecondsKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Narrator and stories, group Narrator, with Narrator on, and set "
+                + "The most time between narrations (seconds) to 120 with the least at 60. In a lull the gaps "
+                + "between narrations fall between one and two minutes. Setting it below the least reads as equal "
+                + "to it.",
             Advanced = true,
             Label = "The most time between narrations (seconds)",
             Help = "Equal to the row above pins a fixed cadence; anything below it reads as equal.",
@@ -1186,6 +1726,11 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = RouteEveryKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, with Route progress on, and set "
+                + "Report route progress every N jumps to 2. Plot a route of six jumps and make them: D47 reports "
+                + "progress after every second jump. Set it to 0 and the progress reports stop.",
             Advanced = true,
             Label = "Report route progress every N jumps",
             Help = "Every 3 is reassuring on a short trip and unbearable on a long one; 0 silences it.",
@@ -1211,6 +1756,12 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = LimpetCargoFloorKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Mining and materials, group Mining and material callouts, with "
+                + "Limpet reminders on, and set Only remind me about limpets above to 64. Dock at a station that "
+                + "sells limpets in a ship with a hold over 64 tonnes and few limpets aboard: D47 reminds you. In "
+                + "a ship with a hold of 64 tonnes or less it is silent.",
             Advanced = true,
             Label = "Only remind me about limpets above",
             Help = "Cargo capacity, in tonnes. Below it you are not running limpets and the reminder is noise.",
@@ -1236,6 +1787,11 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = LimpetPercentKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Mining and materials, group Mining and material callouts, with "
+                + "Limpet reminders on, and set Remind me when limpets are under to 5. In a 256 tonne hold, dock "
+                + "where limpets are sold with 12 limpets aboard: D47 reminds you. With 13 or more it is silent.",
             Advanced = true,
             Label = "Remind me when limpets are under",
 
@@ -1263,6 +1819,11 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = BodyValueThresholdKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, with Valuable bodies on, "
+                + "and set Call out bodies from (credits) to 500000. Scan a planet worth less than that mapped: "
+                + "nothing is said. Scan one worth more: D47 says so with about what mapping pays.",
             Advanced = true,
             Label = "Call out bodies from (credits)",
             Help = "The least a planet would pay if mapped efficiently before it is said when scanned.",
@@ -1290,6 +1851,12 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = BiologyThresholdKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and set Call out biology "
+                + "from (credits) to 10000000. Scan a landable body whose biology could reach less than that: "
+                + "nothing is said. Scan one that could reach more: D47 says so. The row appears while High-value "
+                + "biology or Surveyed biology on arrival is on.",
             Advanced = true,
             Label = "Call out biology from (credits)",
             Help = "The least a body's biology could reach at best, or was surveyed at, before it is said.",
@@ -1318,6 +1885,13 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = TradingModeMinHoldKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, with Trading Mode on, and set "
+                + "Trading Mode requires a cargo capacity of at least (tonnes) to 25. Dock with a route plotted "
+                + "in a ship with 25 or more tonnes free of limpets: D47 names the best cargo to buy. In a ship "
+                + "with less, Trading Mode says nothing. The row appears only while Look things up in the galaxy "
+                + "is on.",
             Advanced = true,
             Label = "Trading Mode requires a cargo capacity of at least (tonnes)",
             Help = "1 to 50: cargo capacity less the limpets aboard. Below this, Trading Mode says nothing.",
@@ -1345,6 +1919,12 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = LongJumpSecondsKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, with Hyperspace tunnel delays "
+                + "on, and set Hyperspace Tunnel Delay (in seconds) to 30. Start a jump and stay in the tunnel "
+                + "past thirty seconds from entering hyperspace: D47 makes a remark. A jump shorter than that is "
+                + "silent.",
             Advanced = true,
             Label = "Hyperspace Tunnel Delay (in seconds)",
             Help = "Measured from entering hyperspace rather than from starting the jump.",
@@ -1374,6 +1954,11 @@ public static class CalloutCapability
         rows.Add(new SettingRow
         {
             Key = HomeSystemKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, with Arrivals on, and enter "
+                + "your home system in Home system. Arrive in that system: D47 names it as home. Clear the row "
+                + "and the home remark stops. The row appears only while Arrivals is on.",
             Advanced = true,
             Label = "Home system",
             Help = "Named for the arrival callout. There is no default — no journal event reports where you call home.",
@@ -1401,6 +1986,7 @@ public static class CalloutCapability
 
     private static SettingRow Toggle(
         string key,
+        string exercise,
         string label,
         string help,
         string anchor,
@@ -1416,6 +2002,7 @@ public static class CalloutCapability
         Func<D47Settings, bool>? appliesWhen = null) => new()
     {
         Key = key,
+        Exercise = exercise,
         Advanced = true,
         Label = label,
         Help = help,
