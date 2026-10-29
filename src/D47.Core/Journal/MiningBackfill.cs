@@ -21,38 +21,18 @@ public static class MiningBackfill
 
         var open = new Dictionary<string, MiningRuns>(StringComparer.Ordinal);
         var finished = new Dictionary<string, List<MiningRun>>(StringComparer.Ordinal);
-        var commander = string.Empty;
 
-        foreach (var file in files)
-        {
-            cancellation.ThrowIfCancellationRequested();
-
-            foreach (var line in JournalLines.Read(fileSystem, file, logger, "mining events", warnIfMissing: true))
+        CommanderEventWalk.Each(
+            fileSystem,
+            files,
+            logger,
+            "mining events",
+            CommanderEventWalk.Events(
+                "LaunchDrone", "ProspectedAsteroid", "MiningRefined", "Docked", "Died", "LaunchSRV", "LaunchVessel",
+                "DockSRV", "SRVDestroyed", "Embark", "Disembark", "Location"),
+            cancellation,
+            (parsed, commander) =>
             {
-                if (!line.Contains("\"event\":\"LaunchDrone\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"ProspectedAsteroid\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"MiningRefined\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Docked\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Died\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"LaunchSRV\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"LaunchVessel\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"DockSRV\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"SRVDestroyed\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Embark\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Disembark\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
-                {
-                    continue;
-                }
-
                 if (parsed.Kind == "NewCommander")
                 {
                     if (parsed.String("FID") is { Length: > 0 } created)
@@ -61,27 +41,24 @@ public static class MiningBackfill
                         _ = finished.Remove(created);
                     }
 
-                    continue;
+                    return;
                 }
 
                 if (parsed.Kind is "Commander" or "LoadGame")
                 {
-                    if (parsed.String("FID") is { Length: > 0 } fid)
+                    if (parsed.Kind == "LoadGame"
+                        && parsed.String("FID") is { Length: > 0 } fid
+                        && open.TryGetValue(fid, out var resumed))
                     {
-                        commander = fid;
-
-                        if (parsed.Kind == "LoadGame" && open.TryGetValue(fid, out var resumed))
-                        {
-                            open[fid] = resumed.Apply(parsed);
-                        }
+                        open[fid] = resumed.Apply(parsed);
                     }
 
-                    continue;
+                    return;
                 }
 
                 if (commander.Length == 0)
                 {
-                    continue;
+                    return;
                 }
 
                 var held = open.TryGetValue(commander, out var existing) ? existing : MiningRuns.None;
@@ -98,8 +75,7 @@ public static class MiningBackfill
                 }
 
                 open[commander] = next;
-            }
-        }
+            });
 
         foreach (var (fid, runs) in finished)
         {

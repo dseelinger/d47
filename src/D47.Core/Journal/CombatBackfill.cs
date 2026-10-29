@@ -6,11 +6,9 @@ namespace D47.Core.Journal;
 /// <summary>Every Commander's kills, recovered from every journal on disk.</summary>
 public static class CombatBackfill
 {
-    private static readonly string[] Kinds =
-    [
-        "Commander", "LoadGame", "NewCommander", "Location", "FSDJump", "CarrierJump", "Loadout", "ShipyardSwap",
-        "LaunchSRV", "LaunchVessel", "DockSRV", "Embark", "Disembark", "Bounty", "FactionKillBond",
-    ];
+    private static readonly string[] Kinds = CommanderEventWalk.Events(
+        "Location", "FSDJump", "CarrierJump", "Loadout", "ShipyardSwap",
+        "LaunchSRV", "LaunchVessel", "DockSRV", "Embark", "Disembark", "Bounty", "FactionKillBond");
 
     /// <summary>Each Commander's kills, keyed by Frontier id, over journals oldest-first.</summary>
     public static IReadOnlyDictionary<string, CombatRecord> FromHistory(
@@ -24,20 +22,16 @@ public static class CombatBackfill
         ArgumentNullException.ThrowIfNull(logger);
 
         var records = new Dictionary<string, CombatRecord>(StringComparer.Ordinal);
-        var commander = string.Empty;
 
-        foreach (var file in files)
-        {
-            cancellation.ThrowIfCancellationRequested();
-
-            foreach (var line in JournalLines.Read(fileSystem, file, logger, "combat kills", warnIfMissing: true))
+        CommanderEventWalk.Each(
+            fileSystem,
+            files,
+            logger,
+            "combat kills",
+            Kinds,
+            cancellation,
+            (parsed, commander) =>
             {
-                if (!Kinds.Any(kind => line.Contains($"\"event\":\"{kind}\"", StringComparison.Ordinal))
-                    || !JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
-                {
-                    continue;
-                }
-
                 // Names the Commander it resets, which is not the one whose session came before it.
                 if (parsed.Kind == "NewCommander")
                 {
@@ -46,20 +40,14 @@ public static class CombatBackfill
                         records.Remove(created);
                     }
 
-                    continue;
-                }
-
-                if (parsed.Kind is "Commander" or "LoadGame" && parsed.String("FID") is { Length: > 0 } fid)
-                {
-                    commander = fid;
+                    return;
                 }
 
                 if (parsed.Kind != "Commander" && commander.Length > 0)
                 {
                     records[commander] = (records.TryGetValue(commander, out var held) ? held : CombatRecord.None).Apply(parsed);
                 }
-            }
-        }
+            });
 
         return records;
     }

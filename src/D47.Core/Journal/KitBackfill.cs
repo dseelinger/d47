@@ -104,7 +104,7 @@ public static class KitBackfill
             ? new Dictionary<string, OwnedKit>(StringComparer.Ordinal)
             : new Dictionary<string, OwnedKit>(stored, StringComparer.Ordinal);
 
-        var commander = string.Empty;
+        var current = string.Empty;
 
         // Every file it was handed.
         for (var i = 0; i < files.Count; i++)
@@ -115,36 +115,27 @@ public static class KitBackfill
             // empty through the first one.
             progress?.Report((double)i / Math.Max(1, files.Count));
 
-            var reader = new JournalReader(files[i], fileSystem, logger);
-
-            while (reader.Poll() is { Count: > 0 } batch)
-            {
-                foreach (var journalEvent in batch)
+            CommanderEventWalk.Poll(
+                new JournalReader(files[i], fileSystem, logger),
+                ref current,
+                (journalEvent, commander) =>
                 {
-                    if (journalEvent.Kind is "Commander" or "LoadGame"
-                        && journalEvent.String("FID") is { Length: > 0 } fid)
-                    {
-                        commander = fid;
-                    }
-
-                    // Comes before the Commander/LoadGame of the session that follows it, so the FID it
-                    // names is read from the event, not from the variable above.
-                    if (journalEvent.Kind == "NewCommander"
-                        && journalEvent.String("FID") is { Length: > 0 } resetFid)
+                    // The FID it names is read from the event: it comes before the Commander/LoadGame of the
+                    // session that follows it.
+                    if (journalEvent.Kind == "NewCommander" && journalEvent.String("FID") is { Length: > 0 } resetFid)
                     {
                         remembered.Remove(resetFid);
-                        continue;
+                        return;
                     }
 
                     if (commander.Length == 0)
                     {
-                        continue;
+                        return;
                     }
 
                     var known = remembered.TryGetValue(commander, out var existing) ? existing : OwnedKit.Empty;
                     remembered[commander] = known.Apply(journalEvent);
-                }
-            }
+                });
         }
 
         foreach (var (fid, kit) in remembered)

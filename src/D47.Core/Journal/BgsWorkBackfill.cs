@@ -7,11 +7,9 @@ namespace D47.Core.Journal;
 /// <summary>The BGS work of the last week, recovered from earlier journals.</summary>
 public static class BgsWorkBackfill
 {
-    private static readonly string[] Kinds =
-    [
-        "Commander", "LoadGame", "NewCommander", "FSDJump", "Location", "CarrierJump", "Docked", "Undocked", "MissionCompleted",
-        "RedeemVoucher", "MarketSell", "SellOrganicData", "SellExplorationData", "MultiSellExplorationData",
-    ];
+    private static readonly string[] Kinds = CommanderEventWalk.Events(
+        "FSDJump", "Location", "CarrierJump", "Docked", "Undocked", "MissionCompleted",
+        "RedeemVoucher", "MarketSell", "SellOrganicData", "SellExplorationData", "MultiSellExplorationData");
 
     /// <summary>
     /// Each Commander's work, keyed by Frontier id, over journals oldest-first. Files written more than a
@@ -31,7 +29,6 @@ public static class BgsWorkBackfill
         var newest = written.Values.Where(time => time is not null).Max();
 
         var work = new Dictionary<string, BgsWork>(StringComparer.Ordinal);
-        var commander = string.Empty;
 
         if (newest is not { } end)
         {
@@ -40,18 +37,15 @@ public static class BgsWorkBackfill
 
         var from = end - BgsTickWatch.MostBehind;
 
-        foreach (var file in files.Where(file => written[file] >= from))
-        {
-            cancellation.ThrowIfCancellationRequested();
-
-            foreach (var line in JournalLines.Read(fileSystem, file, logger, "BGS work", warnIfMissing: true))
+        CommanderEventWalk.Each(
+            fileSystem,
+            [.. files.Where(file => written[file] >= from)],
+            logger,
+            "BGS work",
+            Kinds,
+            cancellation,
+            (parsed, commander) =>
             {
-                if (!Kinds.Any(kind => line.Contains($"\"event\":\"{kind}\"", StringComparison.Ordinal))
-                    || !JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
-                {
-                    continue;
-                }
-
                 if (parsed.Kind == "NewCommander")
                 {
                     if (parsed.String("FID") is { Length: > 0 } created)
@@ -59,25 +53,16 @@ public static class BgsWorkBackfill
                         _ = work.Remove(created);
                     }
 
-                    continue;
+                    return;
                 }
 
-                if (parsed.Kind is "Commander" or "LoadGame")
+                if (parsed.Kind is "Commander" or "LoadGame" || commander.Length == 0)
                 {
-                    if (parsed.String("FID") is { Length: > 0 } fid)
-                    {
-                        commander = fid;
-                    }
-
-                    continue;
+                    return;
                 }
 
-                if (commander.Length > 0)
-                {
-                    work[commander] = (work.TryGetValue(commander, out var held) ? held : BgsWork.None).Apply(parsed);
-                }
-            }
-        }
+                work[commander] = (work.TryGetValue(commander, out var held) ? held : BgsWork.None).Apply(parsed);
+            });
 
         return work
             .Where(pair => pair.Value.IsKnown)

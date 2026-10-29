@@ -272,7 +272,7 @@ public static class LoadoutBackfill
             : new Dictionary<string, ShipLoadouts>(stored, StringComparer.Ordinal);
 
         var flying = new Dictionary<string, ShipLoadout>(StringComparer.Ordinal);
-        var commander = string.Empty;
+        var current = string.Empty;
 
         // Every file it was handed.
         for (var i = 0; i < files.Count; i++)
@@ -283,31 +283,23 @@ public static class LoadoutBackfill
             // empty through the first one.
             progress?.Report((double)i / Math.Max(1, files.Count));
 
-            var reader = new JournalReader(files[i], fileSystem, logger);
-
-            while (reader.Poll() is { Count: > 0 } batch)
-            {
-                foreach (var journalEvent in batch)
+            CommanderEventWalk.Poll(
+                new JournalReader(files[i], fileSystem, logger),
+                ref current,
+                (journalEvent, commander) =>
                 {
-                    if (journalEvent.Kind is "Commander" or "LoadGame"
-                        && journalEvent.String("FID") is { Length: > 0 } fid)
-                    {
-                        commander = fid;
-                    }
-
-                    // Comes before the Commander/LoadGame of the session that follows it, so the FID it
-                    // names is read from the event, not from the variable above.
-                    if (journalEvent.Kind == "NewCommander"
-                        && journalEvent.String("FID") is { Length: > 0 } resetFid)
+                    // The FID it names is read from the event: it comes before the Commander/LoadGame of the
+                    // session that follows it.
+                    if (journalEvent.Kind == "NewCommander" && journalEvent.String("FID") is { Length: > 0 } resetFid)
                     {
                         remembered[resetFid] = ShipLoadouts.NoShips;
                         flying.Remove(resetFid);
-                        continue;
+                        return;
                     }
 
                     if (commander.Length == 0)
                     {
-                        continue;
+                        return;
                     }
 
                     var ship = (flying.TryGetValue(commander, out var held) ? held : ShipLoadout.Unknown)
@@ -322,8 +314,7 @@ public static class LoadoutBackfill
                     remembered[commander] = known
                         .Remember(ship, journalEvent.Timestamp)
                         .Apply(journalEvent);
-                }
-            }
+                });
         }
 
         foreach (var (fid, ships) in remembered)

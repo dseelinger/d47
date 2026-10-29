@@ -42,34 +42,20 @@ public static class CarrierBackfill
         ArgumentNullException.ThrowIfNull(logger);
 
         var folded = new Dictionary<string, CarrierState>(StringComparer.Ordinal);
-        var commander = string.Empty;
-
-        foreach (var file in files)
-        {
-            cancellation.ThrowIfCancellationRequested();
-
-            foreach (var line in JournalLines.Read(fileSystem, file, logger, "carrier events", warnIfMissing: true))
+        // A handful of event names out of the hundreds a journal holds, so the cost is a read of the folder
+        // rather than a replay of it.
+        CommanderEventWalk.Each(
+            fileSystem,
+            files,
+            logger,
+            "carrier events",
+            [
+                "\"event\":\"Carrier",
+                .. CommanderEventWalk.Events("Docked", "Undocked", "CargoTransfer", "MarketBuy", "MarketSell"),
+            ],
+            cancellation,
+            (parsed, commander) =>
             {
-                // The text test, before any JSON is touched: a handful of event names out of the hundreds a
-                // journal holds, so the cost is a read of the folder rather than a replay of it.
-                if (!line.Contains("\"event\":\"Carrier", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Docked\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Undocked\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"CargoTransfer\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"MarketBuy\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"MarketSell\"", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
-                {
-                    continue;
-                }
-
                 if (parsed.Kind == "NewCommander")
                 {
                     if (parsed.String("FID") is { Length: > 0 } created)
@@ -77,29 +63,18 @@ public static class CarrierBackfill
                         _ = folded.Remove(created);
                     }
 
-                    continue;
+                    return;
                 }
 
-                if (parsed.Kind is "Commander" or "LoadGame")
+                if (parsed.Kind is "Commander" or "LoadGame" || commander.Length == 0)
                 {
-                    if (parsed.String("FID") is { Length: > 0 } fid)
-                    {
-                        commander = fid;
-                    }
-
-                    continue;
-                }
-
-                if (commander.Length == 0)
-                {
-                    continue;
+                    return;
                 }
 
                 var held = folded.TryGetValue(commander, out var existing) ? existing : CarrierState.None;
 
                 folded[commander] = held.Apply(parsed);
-            }
-        }
+            });
 
         var carriers = new Dictionary<string, CarrierState>(StringComparer.Ordinal);
 

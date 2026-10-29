@@ -18,28 +18,17 @@ public static class PowerplayCycleBackfill
 
         var pledges = new Dictionary<string, PowerplayPledge>(StringComparer.Ordinal);
         var merits = new Dictionary<string, PowerplayCycleMerits>(StringComparer.Ordinal);
-        var commander = string.Empty;
 
-        foreach (var file in files)
-        {
-            cancellation.ThrowIfCancellationRequested();
-
-            foreach (var line in JournalLines.Read(fileSystem, file, logger, "Powerplay events", warnIfMissing: true))
+        // Powerplay, PowerplayJoin, PowerplayDefect, PowerplayLeave, PowerplayMerits and the rest.
+        CommanderEventWalk.Each(
+            fileSystem,
+            files,
+            logger,
+            "Powerplay events",
+            ["\"event\":\"Powerplay"],
+            cancellation,
+            (parsed, commander) =>
             {
-                // Powerplay, PowerplayJoin, PowerplayDefect, PowerplayLeave, PowerplayMerits and the rest.
-                if (!line.Contains("\"event\":\"Powerplay", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
-                {
-                    continue;
-                }
-
                 if (parsed.Kind == "NewCommander")
                 {
                     if (parsed.String("FID") is { Length: > 0 } created)
@@ -48,22 +37,12 @@ public static class PowerplayCycleBackfill
                         _ = merits.Remove(created);
                     }
 
-                    continue;
+                    return;
                 }
 
-                if (parsed.Kind is "Commander" or "LoadGame")
+                if (parsed.Kind is "Commander" or "LoadGame" || commander.Length == 0)
                 {
-                    if (parsed.String("FID") is { Length: > 0 } fid)
-                    {
-                        commander = fid;
-                    }
-
-                    continue;
-                }
-
-                if (commander.Length == 0)
-                {
-                    continue;
+                    return;
                 }
 
                 var pledge = (pledges.TryGetValue(commander, out var held) ? held : PowerplayPledge.None).Apply(parsed);
@@ -71,8 +50,7 @@ public static class PowerplayCycleBackfill
 
                 merits[commander] = (merits.TryGetValue(commander, out var sum) ? sum : PowerplayCycleMerits.None)
                     .Apply(parsed, pledge);
-            }
-        }
+            });
 
         return merits
             .Where(pair => pair.Value.IsKnown)

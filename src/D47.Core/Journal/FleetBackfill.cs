@@ -96,15 +96,14 @@ public static class FleetBackfill
 
         // Carried across files rather than reset per file, and the reason is the journals rather than a
         // preference: a continuation journal re-emits Fileheader and does not re-emit Commander.
-        var commander = string.Empty;
+        var current = string.Empty;
 
         for (var i = seed; i < files.Count; i++)
         {
-            var reader = new JournalReader(files[i], fileSystem, logger);
-
-            while (reader.Poll() is { Count: > 0 } batch)
-            {
-                foreach (var journalEvent in batch)
+            CommanderEventWalk.Poll(
+                new JournalReader(files[i], fileSystem, logger),
+                ref current,
+                (journalEvent, commander) =>
                 {
                     if (journalEvent.Kind == "NewCommander")
                     {
@@ -113,13 +112,7 @@ public static class FleetBackfill
                             _ = fleets.Remove(created);
                         }
 
-                        continue;
-                    }
-
-                    if (journalEvent.Kind is "Commander" or "LoadGame"
-                        && journalEvent.String("FID") is { Length: > 0 } fid)
-                    {
-                        commander = fid;
+                        return;
                     }
 
                     // Tracked for the same reason CommanderGameState tracks it: storing a ship happens
@@ -128,7 +121,7 @@ public static class FleetBackfill
 
                     if (commander.Length == 0)
                     {
-                        continue;
+                        return;
                     }
 
                     var held = fleets.TryGetValue(commander, out var existing) ? existing : FleetRegistry.Empty;
@@ -139,8 +132,7 @@ public static class FleetBackfill
                     {
                         fleets[commander] = next;
                     }
-                }
-            }
+                });
         }
 
         foreach (var (fid, fleet) in fleets)

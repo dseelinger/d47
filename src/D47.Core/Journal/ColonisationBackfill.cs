@@ -41,36 +41,20 @@ public static class ColonisationBackfill
 
         var sites = new Dictionary<string, ColonisationSites>(StringComparer.Ordinal);
         var locations = new Dictionary<string, JournalLocation>(StringComparer.Ordinal);
-        var commander = string.Empty;
 
-        foreach (var file in files)
-        {
-            cancellation.ThrowIfCancellationRequested();
-
-            foreach (var line in JournalLines.Read(fileSystem, file, logger, "construction sites", warnIfMissing: true))
+        // ColonisationContribution is left out: a running sum folded here and again by the live reader
+        // would count the current journal twice.
+        CommanderEventWalk.Each(
+            fileSystem,
+            files,
+            logger,
+            "construction sites",
+            CommanderEventWalk.Events(
+                "ColonisationConstructionDepot", "ColonisationSystemClaim", "ColonisationBeaconDeployed",
+                "Location", "FSDJump", "CarrierJump", "Docked", "Undocked"),
+            cancellation,
+            (parsed, commander) =>
             {
-                // ColonisationContribution is left out: a running sum folded here and again by the live reader
-                // would count the current journal twice.
-                if (!line.Contains("\"event\":\"ColonisationConstructionDepot\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"ColonisationSystemClaim\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"ColonisationBeaconDeployed\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"FSDJump\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"CarrierJump\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Docked\"", StringComparison.Ordinal)
-                    && !line.Contains("\"event\":\"Undocked\"", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
-                {
-                    continue;
-                }
-
                 if (parsed.Kind == "NewCommander")
                 {
                     if (parsed.String("FID") is { Length: > 0 } created)
@@ -79,22 +63,12 @@ public static class ColonisationBackfill
                         _ = locations.Remove(created);
                     }
 
-                    continue;
+                    return;
                 }
 
-                if (parsed.Kind is "Commander" or "LoadGame")
+                if (parsed.Kind is "Commander" or "LoadGame" || commander.Length == 0)
                 {
-                    if (parsed.String("FID") is { Length: > 0 } fid)
-                    {
-                        commander = fid;
-                    }
-
-                    continue;
-                }
-
-                if (commander.Length == 0)
-                {
-                    continue;
+                    return;
                 }
 
                 var location = (locations.GetValueOrDefault(commander) ?? JournalLocation.Unknown).Apply(parsed);
@@ -102,8 +76,7 @@ public static class ColonisationBackfill
 
                 var held = sites.GetValueOrDefault(commander) ?? ColonisationSites.Empty;
                 sites[commander] = held.Apply(parsed, location.StarSystem, location.StationName);
-            }
-        }
+            });
 
         var found = new Dictionary<string, ColonisationSites>(StringComparer.Ordinal);
 

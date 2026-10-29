@@ -6,7 +6,7 @@ namespace D47.Core.Journal;
 /// <summary>Every Commander's tech broker unlocks, recovered from every journal on disk.</summary>
 public static class TechBrokerBackfill
 {
-    private static readonly string[] Kinds = ["Commander", "LoadGame", "NewCommander", "TechnologyBroker", "Loadout", "StoredModules"];
+    private static readonly string[] Kinds = CommanderEventWalk.Events("TechnologyBroker", "Loadout", "StoredModules");
 
     /// <summary>Each Commander's unlocks, keyed by Frontier id, over journals oldest-first.</summary>
     public static IReadOnlyDictionary<string, TechBrokerUnlocks> FromHistory(
@@ -20,20 +20,16 @@ public static class TechBrokerBackfill
         ArgumentNullException.ThrowIfNull(logger);
 
         var unlocks = new Dictionary<string, TechBrokerUnlocks>(StringComparer.Ordinal);
-        var commander = string.Empty;
 
-        foreach (var file in files)
-        {
-            cancellation.ThrowIfCancellationRequested();
-
-            foreach (var line in JournalLines.Read(fileSystem, file, logger, "tech broker unlocks", warnIfMissing: true))
+        CommanderEventWalk.Each(
+            fileSystem,
+            files,
+            logger,
+            "tech broker unlocks",
+            Kinds,
+            cancellation,
+            (parsed, commander) =>
             {
-                if (!Kinds.Any(kind => line.Contains($"\"event\":\"{kind}\"", StringComparison.Ordinal))
-                    || !JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
-                {
-                    continue;
-                }
-
                 if (parsed.Kind == "NewCommander")
                 {
                     if (parsed.String("FID") is { Length: > 0 } created)
@@ -41,31 +37,21 @@ public static class TechBrokerBackfill
                         _ = unlocks.Remove(created);
                     }
 
-                    continue;
+                    return;
                 }
 
-                if (parsed.Kind is "Commander" or "LoadGame")
+                if (parsed.Kind is "Commander" or "LoadGame" || commander.Length == 0)
                 {
-                    if (parsed.String("FID") is { Length: > 0 } fid)
-                    {
-                        commander = fid;
-                    }
-
-                    continue;
+                    return;
                 }
 
-                if (commander.Length > 0)
+                var now = unlocks.GetValueOrDefault(commander, TechBrokerUnlocks.Empty).Apply(parsed);
+
+                if (now.IsKnown)
                 {
-                    var held = unlocks.GetValueOrDefault(commander, TechBrokerUnlocks.Empty);
-                    var now = held.Apply(parsed);
-
-                    if (now.IsKnown)
-                    {
-                        unlocks[commander] = now;
-                    }
+                    unlocks[commander] = now;
                 }
-            }
-        }
+            });
 
         logger.LogInformation("Tech broker unlocks recovered from history for {Count} Commanders", unlocks.Count);
 
