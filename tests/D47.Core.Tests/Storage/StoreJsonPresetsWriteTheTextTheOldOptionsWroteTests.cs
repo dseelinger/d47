@@ -35,7 +35,7 @@ public sealed class StoreJsonPresetsWriteTheTextTheOldOptionsWroteTests
               ]
             }
             """;
-        Assert.Equal(old, Normalised(JsonSerializer.Serialize(Value, StoreJson.OmittingNulls)));
+        Assert.Equal(Normalised(old), Normalised(JsonSerializer.Serialize(Value, StoreJson.OmittingNulls)));
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public sealed class StoreJsonPresetsWriteTheTextTheOldOptionsWroteTests
               ]
             }
             """;
-        Assert.Equal(old, Normalised(JsonSerializer.Serialize(Value, StoreJson.KeepingNulls)));
+        Assert.Equal(Normalised(old), Normalised(JsonSerializer.Serialize(Value, StoreJson.KeepingNulls)));
     }
 
     [Theory]
