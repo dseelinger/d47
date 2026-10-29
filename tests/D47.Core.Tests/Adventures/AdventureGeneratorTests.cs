@@ -337,7 +337,7 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, new Galaxy(), combat: 13).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("where the Commander is already Elite V; make it another career or another kind of objective", outcome.Refusal);
+        Assert.Contains("where the Commander is already Combat Rank 13 of 13, Elite V; make it another career or another kind of objective", outcome.Refusal);
     }
 
     [Fact]

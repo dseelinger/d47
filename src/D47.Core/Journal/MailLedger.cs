@@ -444,7 +444,7 @@ public sealed class MailLedger
                 {
                     if (journalEvent.Int(ladder) is { } promoted)
                     {
-                        return new Entry(at, Group.Promotion, ladder, promoted, $"{new RankStanding(ladder, promoted).Describe()} {LadderWords(ladder)}");
+                        return new Entry(at, Group.Promotion, ladder, promoted, new RankStanding(ladder, promoted).Say(withPercent: false));
                     }
                 }
 
@@ -485,17 +485,6 @@ public sealed class MailLedger
             ? $"promotions to {names[0]} and {names[1]}"
             : $"promotions to {names[0]}, {names[1]} and {Words(more)} more";
     }
-
-    private static string LadderWords(string ladder) => ladder switch
-    {
-        "Empire" => "in the Imperial Navy",
-        "Federation" => "in the Federal Navy",
-        "Explore" => "in exploration",
-        "Soldier" => "as a mercenary",
-        "Exobiologist" => "in exobiology",
-        "CQC" => "in CQC",
-        _ => "in " + ladder.ToLowerInvariant(),
-    };
 
     private static string Missions(int count) => count == 1 ? "one mission" : $"{Words(count)} missions";
 

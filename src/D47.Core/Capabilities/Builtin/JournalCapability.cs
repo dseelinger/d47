@@ -846,11 +846,8 @@ public static class JournalCapability
     ];
 
     /// <summary>Each rank ladder as the Commander names it, keyed by the journal's own key.</summary>
-    private static readonly (string Key, string Label)[] RankLadders =
-    [
-        ("Combat", "Combat"), ("Trade", "Trade"), ("Explore", "Exploration"), ("Soldier", "Mercenary"),
-        ("Exobiologist", "Exobiologist"), ("CQC", "CQC"), ("Empire", "Imperial Navy"), ("Federation", "Federal Navy"),
-    ];
+    private static readonly string[] RankLadders =
+        ["Combat", "Trade", "Explore", "Soldier", "Exobiologist", "CQC", "Empire", "Federation"];
 
     private static readonly string[] Standing =
     [
@@ -2688,15 +2685,15 @@ public static class JournalCapability
 
         var report = new StringBuilder().AppendLine($"Ranks{AsOf(active.Ranks.TakenAt!.Value)}:");
 
-        foreach (var (key, label) in RankLadders)
+        foreach (var key in RankLadders)
         {
             if (active.Ranks.For(key) is not { } standing)
             {
                 continue;
             }
 
-            report.Append($"  {label}: {standing.Describe()}.");
-            report.AppendLine(standing.NextName() is { } next ? $" Next rank: {next}." : " Top of the ladder.");
+            report.Append($"  {standing.Say()}.");
+            report.AppendLine(standing.SayNext() is { } next ? $" Next rank: {next}." : " Top of the ladder.");
         }
 
         return report.ToString().TrimEnd();
@@ -2711,7 +2708,7 @@ public static class JournalCapability
                 superpower.Name,
                 Reading: active.Reputation.Reading(superpower.Name),
                 Rank: superpower.Navy is { } navy && active.Ranks.For(superpower.Name) is { } rank
-                    ? $"{navy} rank: {rank.Describe()}."
+                    ? $"{rank.Say()}."
                     : null))
             .ToList();
 

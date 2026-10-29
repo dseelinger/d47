@@ -28,10 +28,10 @@ public class ANavalRankGatesAHullTests
     }
 
     [Theory]
-    [InlineData("Imperial Cutter", "Empire rank Duke")]
-    [InlineData("Imperial Clipper", "Empire rank Baron")]
-    [InlineData("Federal Corvette", "Federal navy rank Rear Admiral")]
-    [InlineData("Federal Gunship", "Federal navy rank Ensign")]
+    [InlineData("Imperial Cutter", "Imperial Navy Rank 12 of 14, Duke")]
+    [InlineData("Imperial Clipper", "Imperial Navy Rank 7 of 14, Baron")]
+    [InlineData("Federal Corvette", "Federal Navy Rank 12 of 14, Rear Admiral")]
+    [InlineData("Federal Gunship", "Federal Navy Rank 7 of 14, Ensign")]
     public void ARankGatedShipNamesTheRankInItsGate(string name, string gate)
     {
         var ship = AcquisitionGuide.For(name);

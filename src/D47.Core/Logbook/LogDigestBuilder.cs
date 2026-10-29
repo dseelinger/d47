@@ -817,12 +817,12 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
 
             var earned = ranks
                 .Where(rank => journalEvent.Int(rank) is not null)
-                .Select(rank => $"{rank} rank {journalEvent.Int(rank)!.Value.ToString(CultureInfo.InvariantCulture)}")
+                .Select(rank => new RankStanding(rank, journalEvent.Int(rank)!.Value).Say(withPercent: false))
                 .ToList();
 
             return earned.Count == 0
                 ? "Was promoted."
-                : $"Was promoted: {string.Join(", ", earned)}.";
+                : $"Was promoted: {string.Join("; ", earned)}.";
         }
 
         private static string Death(JournalEvent journalEvent)

@@ -63,15 +63,11 @@ public static class Careers
         : string.Equals(career, "CQC", StringComparison.OrdinalIgnoreCase) ? RankStanding.Elite
         : RankStanding.EliteTop;
 
-    /// <summary>The name of a rank on a ladder: a navy rank by its title, a career rank as <see cref="RankWord"/>.</summary>
-    public static string RankName(string? career, int rank) =>
-        string.Equals(career, Empire, StringComparison.OrdinalIgnoreCase) ? NavalRanks.EmpireName(rank) ?? RankWord(rank)
-        : string.Equals(career, Federation, StringComparison.OrdinalIgnoreCase) ? NavalRanks.FederationName(rank) ?? RankWord(rank)
-        : RankWord(rank);
-
-    /// <summary>A rank in words: "Elite III" from 8 up, otherwise "rank 6".</summary>
-    public static string RankWord(int rank) =>
-        rank >= RankStanding.Elite ? RankStanding.EliteName(rank) : $"rank {rank.ToString(CultureInfo.InvariantCulture)}";
+    /// <summary>A rank in the one spoken form, "Combat Rank 1 of 13, Mostly Harmless"; "rank nothing" when none is given.</summary>
+    public static string RankSaid(string? career, int? rank) =>
+        career is not null && rank is { } number
+            ? new RankStanding(career, number).Say(withPercent: false)
+            : $"{Word(career)} rank nothing";
 
     /// <summary>How a Commander says the career.</summary>
     public static string Word(string? career) => career switch

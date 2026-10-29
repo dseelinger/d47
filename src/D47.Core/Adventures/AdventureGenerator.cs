@@ -2906,7 +2906,7 @@ public sealed class AdventureGenerator(
     /// <summary>A Goals objective as the writer is told it, and as a refusal names it.</summary>
     private static string GoalLine(AdventureTrigger objective) => objective.Kind switch
     {
-        TriggerKind.Rank => $"a \"rank\" objective for {Careers.Word(objective.Career)} rank {objective.Rank?.ToString(CultureInfo.InvariantCulture)}, {Careers.RankName(objective.Career, objective.Rank ?? 0)}",
+        TriggerKind.Rank => $"a \"rank\" objective for {Careers.RankSaid(objective.Career, objective.Rank)}",
         TriggerKind.PowerRank => $"a \"powerrank\" objective for rank {objective.Rank?.ToString(CultureInfo.InvariantCulture)}",
         TriggerKind.Pledge => "a \"pledge\" objective, to any Power the story gives the Commander a reason to serve",
         TriggerKind.Engineer => $"an \"engineer\" objective for {objective.Engineer} at the stage {objective.Stage}",
@@ -4306,12 +4306,12 @@ public sealed class AdventureGenerator(
 
                     if (held >= top)
                     {
-                        Refuse(index, $"{where} asks for a promotion in {Careers.Word(career)}, where the Commander is already {(Careers.IsNavy(career) ? Careers.RankName(career, top) : RankStanding.EliteName(top))}; make it another career or another kind of objective.");
+                        Refuse(index, $"{where} asks for a promotion in {Careers.Word(career)}, where the Commander is already {Careers.RankSaid(career, top)}; make it another career or another kind of objective.");
                     }
                     else if (beat.Rank is not { } rank || rank <= held || rank > top)
                     {
                         Refuse(index, 
-                            $"{where} asks for {Careers.Word(career)} rank {beat.Rank?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; the Commander holds {held}, "
+                            $"{where} asks for {Careers.RankSaid(career, beat.Rank)}; the Commander holds {Careers.RankSaid(career, held)}, "
                             + $"so the objective must name {held + 1}{(held + 1 < top ? $" or {held + 2}" : string.Empty)}.");
                     }
                     else
@@ -4979,9 +4979,7 @@ public sealed class AdventureGenerator(
             {
                 text.AppendLine("- Ranks held: " + string.Join(", ", Ranks.Standings
                     .Where(standing => Careers.Keys.Contains(standing.Career, StringComparer.OrdinalIgnoreCase))
-                    .Select(standing => Careers.IsNavy(standing.Career)
-                        ? $"{Careers.Word(standing.Career)} {Careers.RankName(standing.Career, standing.Rank)}"
-                        : $"{Careers.Word(standing.Career)} {standing.Rank}")) + ".");
+                    .Select(standing => standing.Say(withPercent: false))) + ".");
             }
 
             return text.ToString();

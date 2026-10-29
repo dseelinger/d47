@@ -50,7 +50,7 @@ public static class GoalCatalogue
         {
             Key = RankPrefix + career.Career.ToLowerInvariant(),
             Name = career.Name,
-            Done = $"{career.Career} rank {RankStanding.EliteTop} — Elite V.",
+            Done = $"{new RankStanding(career.Career, RankStanding.EliteTop).Say(withPercent: false)}.",
             Top = "Elite V",
             Helper = career.Helper,
             Ask = AskHow($"gain {career.Ladder} rank"),
@@ -60,7 +60,7 @@ public static class GoalCatalogue
         {
             Key = RankPrefix + navy.Career.ToLowerInvariant(),
             Name = navy.Name,
-            Done = $"{navy.Career} rank {NavyTop} — {navy.Top}.",
+            Done = $"{new RankStanding(navy.Career, NavyTop).Say(withPercent: false)}.",
             Top = navy.Top,
             Ask = AskHow($"gain {navy.Name} rank"),
         }),

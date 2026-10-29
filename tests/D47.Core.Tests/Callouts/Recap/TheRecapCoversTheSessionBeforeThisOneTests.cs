@@ -54,7 +54,7 @@ public sealed class TheRecapCoversTheSessionBeforeThisOneTests
         Assert.NotNull(line);
         Assert.Contains("Garay Terminal, Deciat", line, StringComparison.Ordinal);
         Assert.Contains("Python", line, StringComparison.Ordinal);
-        Assert.Contains("you were promoted", line, StringComparison.Ordinal);
+        Assert.Contains("you were promoted: Combat Rank 5 of 13, Master", line, StringComparison.Ordinal);
         Assert.DoesNotContain("Sol", line, StringComparison.Ordinal);
     }
 

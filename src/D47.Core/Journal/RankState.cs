@@ -1,4 +1,5 @@
 using System.Globalization;
+using D47.Core.Adventures;
 using D47.Core.Knowledge;
 
 namespace D47.Core.Journal;
@@ -38,8 +39,40 @@ public sealed record RankStanding(string Career, int Rank)
         : CareerRankNames.Name(Career, Rank) is { } named
             ? Percent is { } namedPercent ? $"{named}, {namedPercent}% into it" : named
             : Percent is { } numberedPercent
-                ? $"rank {Rank} of {Elite}, {numberedPercent}% into it"
-                : $"rank {Rank} of {Elite}";
+                ? $"rank {Rank}, {numberedPercent}% into it"
+                : $"rank {Rank}";
+
+    /// <summary>"Combat Rank 1 of 13, Mostly Harmless", with ", 40% into it" where the percent is known and not at the top.</summary>
+    public string Say(bool withPercent = true)
+    {
+        var word = Careers.Word(Career);
+
+        if (!IsCareer && Rank == 0)
+        {
+            return $"no {word} rank";
+        }
+
+        var top = Careers.TopRank(Career);
+        var name = !IsCareer ? NavyName() : IsElite ? EliteName(Rank) : CareerRankNames.Name(Career, Rank);
+        var said = $"{word} Rank {Rank.ToString(CultureInfo.InvariantCulture)} of {top.ToString(CultureInfo.InvariantCulture)}";
+
+        if (name is null)
+        {
+            return said;
+        }
+
+        said += ", " + name;
+
+        return withPercent && Percent is { } percent && Rank < top
+            ? $"{said}, {percent.ToString(CultureInfo.InvariantCulture)}% into it"
+            : said;
+    }
+
+    /// <summary>The rank above this one in the <see cref="Say"/> form, or null at the top of the ladder.</summary>
+    public string? SayNext() =>
+        Rank >= 0 && Rank < Careers.TopRank(Career)
+            ? new RankStanding(Career, Rank + 1).Say(withPercent: false)
+            : null;
 
     /// <summary>The top rank of this ladder: Elite V for a career, 14 for a navy.</summary>
     public int Top => IsCareer ? EliteTop : NavyTop;

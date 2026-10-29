@@ -102,7 +102,7 @@ internal static class MissionTypes
         }
 
         return ranks.For(navy) is { Rank: > 0 } standing
-            ? $"You hold {standing.Describe().Split(',')[0]}."
+            ? $"You hold {standing.Say(withPercent: false)}."
             : $"You hold no {navy} rank.";
     }
 

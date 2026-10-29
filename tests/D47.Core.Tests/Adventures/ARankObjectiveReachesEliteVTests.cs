@@ -36,9 +36,9 @@ public sealed class ARankObjectiveReachesEliteVTests
     [Fact]
     public void RanksFromEliteUpAreDescribedByName()
     {
-        Assert.Equal("reach Elite in Combat", new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Combat", Rank = 8 }.Describe());
-        Assert.Equal("reach Elite III in Trade", new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Trade", Rank = 11 }.Describe());
-        Assert.Equal("reach Exploration rank 6", new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Explore", Rank = 6 }.Describe());
+        Assert.Equal("reach Combat Rank 8 of 13, Elite", new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Combat", Rank = 8 }.Describe());
+        Assert.Equal("reach Trade Rank 11 of 13, Elite III", new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Trade", Rank = 11 }.Describe());
+        Assert.Equal("reach Exploration Rank 6 of 13, Ranger", new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Explore", Rank = 6 }.Describe());
     }
 
     [Fact]

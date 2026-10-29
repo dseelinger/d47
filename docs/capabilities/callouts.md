@@ -1185,7 +1185,7 @@ One line after the opening line, about the last complete session: where it ended
 most notable rank, engineer, death, rebuy or interdiction in it.
 
 ```text
-Last session you finished docked at Garay Terminal, Deciat in the Python "Directive", and earlier you were promoted: Combat rank 5.
+Last session you finished docked at Garay Terminal, Deciat in the Python "Directive", and earlier you were promoted: Combat Rank 5 of 13, Master.
 ```
 
 Directive 47 writes that line from the journals of the session before the one in progress — from its

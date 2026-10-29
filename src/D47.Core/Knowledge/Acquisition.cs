@@ -165,9 +165,7 @@ public static class AcquisitionGuide
 
             _ when NavalRanks.Gate(ship.Requirement) is { } gate => new Gating(
                 [AcquisitionMethod.Shipyard],
-                gate.Navy == Navy.Empire
-                    ? $"Empire rank {NavalRanks.EmpireName(gate.Rank)}"
-                    : $"Federal navy rank {NavalRanks.FederationName(gate.Rank)}"),
+                new Journal.RankStanding(gate.Navy == Navy.Empire ? "Empire" : "Federation", gate.Rank).Say(withPercent: false)),
 
             _ => new Gating([AcquisitionMethod.Shipyard], null),
         };

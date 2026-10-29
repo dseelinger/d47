@@ -79,8 +79,8 @@ public class ARankGoalShowsItsLadderAndItsRungTests
     [Fact]
     public void TheNavyGoalsSayTheirTopRank()
     {
-        Assert.Equal("Empire rank 14 — King.", GoalCatalogue.Find("rank.empire")!.Done);
-        Assert.Equal("Federation rank 14 — Admiral.", GoalCatalogue.Find("rank.federation")!.Done);
+        Assert.Equal("Imperial Navy Rank 14 of 14, King.", GoalCatalogue.Find("rank.empire")!.Done);
+        Assert.Equal("Federal Navy Rank 14 of 14, Admiral.", GoalCatalogue.Find("rank.federation")!.Done);
     }
 
     [Fact]

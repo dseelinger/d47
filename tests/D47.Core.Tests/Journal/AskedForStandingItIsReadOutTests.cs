@@ -60,8 +60,8 @@ public class AskedForStandingItIsReadOutTests
         var answer = await AskAsync(Standing());
 
         Assert.Contains("as of 2026-09-23 10:00 UTC", answer, StringComparison.Ordinal);
-        Assert.Contains("Empire: Cordial, 28 of 100. Imperial Navy rank: Outsider, 93% into it.", answer, StringComparison.Ordinal);
-        Assert.Contains("Federation: Cordial, 25 of 100. Federal Navy rank:", answer, StringComparison.Ordinal);
+        Assert.Contains("Empire: Cordial, 28 of 100. Imperial Navy Rank 1 of 14, Outsider, 93% into it.", answer, StringComparison.Ordinal);
+        Assert.Contains("Federation: Cordial, 25 of 100. Federal Navy Rank", answer, StringComparison.Ordinal);
         Assert.Contains("Alliance: Cordial, 11 of 100.", answer, StringComparison.Ordinal);
         Assert.Contains("Independent: Neutral, 0 of 100.", answer, StringComparison.Ordinal);
     }
@@ -74,7 +74,7 @@ public class AskedForStandingItIsReadOutTests
     {
         var answer = await AskAsync(Standing(), asked);
 
-        Assert.Contains("Empire: Cordial, 28 of 100. Imperial Navy rank: Outsider, 93% into it.", answer, StringComparison.Ordinal);
+        Assert.Contains("Empire: Cordial, 28 of 100. Imperial Navy Rank 1 of 14, Outsider, 93% into it.", answer, StringComparison.Ordinal);
         Assert.DoesNotContain("Federation", answer, StringComparison.Ordinal);
     }
 

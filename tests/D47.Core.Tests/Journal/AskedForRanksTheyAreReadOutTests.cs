@@ -40,11 +40,11 @@ public class AskedForRanksTheyAreReadOutTests
 
         var answer = await AskAsync(gameState);
 
-        Assert.Contains("Combat: Competent, 40% into it. Next rank: Expert.", answer, StringComparison.Ordinal);
-        Assert.Contains("Trade:", answer, StringComparison.Ordinal);
-        Assert.Contains("Exploration:", answer, StringComparison.Ordinal);
-        Assert.Contains("Imperial Navy: Outsider, 93% into it.", answer, StringComparison.Ordinal);
-        Assert.Contains("Federal Navy:", answer, StringComparison.Ordinal);
+        Assert.Contains("Combat Rank 3 of 13, Competent, 40% into it. Next rank: Combat Rank 4 of 13, Expert.", answer, StringComparison.Ordinal);
+        Assert.Contains("Trade Rank 4 of 13, Merchant, 20% into it.", answer, StringComparison.Ordinal);
+        Assert.Contains("Exploration Rank 5 of 13, Pathfinder, 30% into it.", answer, StringComparison.Ordinal);
+        Assert.Contains("Imperial Navy Rank 1 of 14, Outsider, 93% into it. Next rank: Imperial Navy Rank 2 of 14, Serf.", answer, StringComparison.Ordinal);
+        Assert.Contains("Federal Navy Rank 2 of 14,", answer, StringComparison.Ordinal);
     }
 
     [Fact]

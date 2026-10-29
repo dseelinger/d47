@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Every rank on a ladder with names is now said the same way: career, number, top and name, such as "Combat Rank 1 of 13, Mostly Harmless", "Exploration Rank 9 of 13, Elite I", "CQC Rank 8 of 8, Elite" and "Imperial Navy Rank 7 of 14, Baron", with ", 40% into it" after the name where the percent is known. The last-session recap, the promotion callout, the ranks answer and its next rank, the courier mission answer, chapter notes, the mail log, adventure rank objectives and their refusals, the ranks the story writer is told, ship rank gates and the finished goal text all use it. Before, each built its own wording, some with no name ("Combat rank 1") and some with no number.
+
 Lines on the Features page that would read the same now name their group first, such as "Thinking bed - Audio mixer - Level" and "Mini panel placement - Headset - Size". Before, the six Audio mixer Level lines, the Headset placement lines and the two Speech Test lines were indistinguishable. The written coverage report uses the same names. Which lines count as tested is unchanged.
 
 The test dialog for the nine tools that have a page now says what to say and what a correct result looks like: describe system, search systems, search stations, search outfitting, find body, find signal, plot route, list bookmarks and the checklist. Before, it said the steps were not written yet. A tool with no steps now fails the build.

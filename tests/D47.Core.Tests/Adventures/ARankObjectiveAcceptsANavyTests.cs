@@ -49,8 +49,8 @@ public sealed class ARankObjectiveAcceptsANavyTests
     [Fact]
     public void ANavyRankIsDescribedByItsTitle()
     {
-        Assert.Equal("reach Baron in the Imperial Navy", new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Empire", Rank = 7 }.Describe());
-        Assert.Equal("reach Admiral in the Federal Navy", new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Federation", Rank = 14 }.Describe());
+        Assert.Equal("reach Imperial Navy Rank 7 of 14, Baron", new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Empire", Rank = 7 }.Describe());
+        Assert.Equal("reach Federal Navy Rank 14 of 14, Admiral", new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Federation", Rank = 14 }.Describe());
     }
 
     [Fact]
@@ -75,6 +75,6 @@ public sealed class ARankObjectiveAcceptsANavyTests
         var outcome = await generator.GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Accepted.AddHours(1), CancellationToken.None);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("where the Commander is already King", outcome.Refusal);
+        Assert.Contains("where the Commander is already Imperial Navy Rank 14 of 14, King", outcome.Refusal);
     }
 }

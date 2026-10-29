@@ -48,12 +48,12 @@ public class TheShipRemarksOnEveryPromotionTests
         var said = Assert.Single(Replay(Promotion("Trade", 12)));
 
         Assert.Equal(VoiceRole.ShipAi, said.Voice);
-        Assert.Equal("Promoted. Trade, Elite IV.", said.Text);
+        Assert.Equal("Promoted. Trade Rank 12 of 13, Elite IV.", said.Text);
     }
 
     [Fact]
     public void ANavyPromotionUsesTheNavalRankName() =>
-        Assert.Equal("Promoted. Empire, Serf.", Assert.Single(Replay(Promotion("Empire", 2))).Text);
+        Assert.Equal("Promoted. Imperial Navy Rank 2 of 14, Serf.", Assert.Single(Replay(Promotion("Empire", 2))).Text);
 
     [Theory]
     [InlineData("Combat")]

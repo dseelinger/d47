@@ -47,7 +47,7 @@ public sealed class AMissionTypeSaysWhereItTurnsUpTests
         var holding = RankState.Empty.Apply(Event("\"Empire\":0,\"Federation\":3"));
         var said = MissionTypes.Describe("courier", holding);
 
-        Assert.Contains("Some need a Federation navy rank. You hold ", said, StringComparison.Ordinal);
+        Assert.Contains("Some need a Federation navy rank. You hold Federal Navy Rank 3 of 14, Midshipman.", said, StringComparison.Ordinal);
         Assert.Contains("Some need an Empire navy rank. You hold no Empire rank.", said, StringComparison.Ordinal);
         Assert.Contains("engineer bases", said, StringComparison.Ordinal);
     }
