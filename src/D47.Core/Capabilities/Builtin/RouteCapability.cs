@@ -68,36 +68,17 @@ public static class RouteCapability
                     + "the galaxy and does not know about neutron boosting.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "to",
-                        Type = ToolParameterType.String,
-                        Description = "The destination system.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "from",
-                        Type = ToolParameterType.String,
-                        Description = "Where to plot from. Defaults to where the Commander is now.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "jump_range",
-                        Type = ToolParameterType.Number,
-                        Description =
-                            "The ship's jump range in light years. Defaults to this ship's, from the "
-                            + "journal. Must be over 10.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "efficiency",
-                        Type = ToolParameterType.Integer,
-                        Description =
-                            "How strictly to hold to the direct line, 1 to 99. Lower finds more neutron "
-                            + "stars and so fewer jumps, at the cost of flying further off course. "
-                            + "Defaults to 60.",
-                    },
+                    ToolParameter.Text("to", "The destination system.", required: true),
+                    ToolParameter.Text("from", "Where to plot from. Defaults to where the Commander is now."),
+                    ToolParameter.Number(
+                        "jump_range",
+                        "The ship's jump range in light years. Defaults to this ship's, from the "
+                        + "journal. Must be over 10."),
+                    ToolParameter.Integer(
+                        "efficiency",
+                        "How strictly to hold to the direct line, 1 to 99. Lower finds more neutron "
+                        + "stars and so fewer jumps, at the cost of flying further off course. "
+                        + "Defaults to 60."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     PlotAsync(routes, commander, settings, plans, now, arguments, cancellationToken),
@@ -113,51 +94,20 @@ public static class RouteCapability
                     + "and mapping, ordered so the trip is short and the payout is high.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "from",
-                        Type = ToolParameterType.String,
-                        Description = "Where to start. Defaults to where the Commander is now.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "jump_range",
-                        Type = ToolParameterType.Number,
-                        Description = "The ship's jump range in light years. Defaults to this ship's.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "radius",
-                        Type = ToolParameterType.Number,
-                        Description = "How far from the start to look, in light years. Defaults to 500.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "stops",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many systems to visit, 1 to 50. Defaults to 10.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "minimum_value",
-                        Type = ToolParameterType.Integer,
-                        Description =
-                            "The least a body must be worth mapping to be worth stopping for, in credits. "
-                            + "Defaults to 500,000.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_distance_to_arrival",
-                        Type = ToolParameterType.Number,
-                        Description =
-                            "How far in-system a body may sit, in light seconds. Defaults to 10,000.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "loop",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Come back to where the route started. Defaults to true.",
-                    },
+                    ToolParameter.Text("from", "Where to start. Defaults to where the Commander is now."),
+                    ToolParameter.Number(
+                        "jump_range",
+                        "The ship's jump range in light years. Defaults to this ship's."),
+                    ToolParameter.Number("radius", "How far from the start to look, in light years. Defaults to 500."),
+                    ToolParameter.Integer("stops", "How many systems to visit, 1 to 50. Defaults to 10."),
+                    ToolParameter.Integer(
+                        "minimum_value",
+                        "The least a body must be worth mapping to be worth stopping for, in credits. "
+                        + "Defaults to 500,000."),
+                    ToolParameter.Number(
+                        "max_distance_to_arrival",
+                        "How far in-system a body may sit, in light seconds. Defaults to 10,000."),
+                    ToolParameter.Flag("loop", "Come back to where the route started. Defaults to true."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     PlotRichesAsync(routes, commander, settings, plans, now, arguments, cancellationToken),
@@ -174,83 +124,38 @@ public static class RouteCapability
                     + "how many credits to trade with; their balance is never used unless they say it.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "capital",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many credits to trade with. Required; never inferred.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "cargo_capacity",
-                        Type = ToolParameterType.Integer,
-                        Description =
-                            "The hold's size in tonnes. Defaults to this ship's, from the journal.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "hops",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many legs to plan, 1 to 10. Defaults to 5.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "loop",
-                        Type = ToolParameterType.Boolean,
-                        Description = "End back where it started. Defaults to false.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_jumps",
-                        Type = ToolParameterType.Integer,
-                        Description = "The most jumps a single leg may take, 1 to 10. Defaults to 2.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "jump_range",
-                        Type = ToolParameterType.Number,
-                        Description =
-                            "This ship's laden jump range in light years — full tank, full hold. Defaults "
-                            + "to this ship's, worked out from the journal.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_station_distance",
-                        Type = ToolParameterType.Number,
-                        Description =
-                            "How far in-system a station may sit, in light seconds. Defaults to 1,000.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "large_pad",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Only stations with a large landing pad.",
-                    },
+                    ToolParameter.Integer(
+                        "capital",
+                        "How many credits to trade with. Required; never inferred.",
+                        required: true),
+                    ToolParameter.Integer(
+                        "cargo_capacity",
+                        "The hold's size in tonnes. Defaults to this ship's, from the journal."),
+                    ToolParameter.Integer("hops", "How many legs to plan, 1 to 10. Defaults to 5."),
+                    ToolParameter.Flag("loop", "End back where it started. Defaults to false."),
+                    ToolParameter.Integer(
+                        "max_jumps",
+                        "The most jumps a single leg may take, 1 to 10. Defaults to 2."),
+                    ToolParameter.Number(
+                        "jump_range",
+                        "This ship's laden jump range in light years — full tank, full hold. Defaults "
+                        + "to this ship's, worked out from the journal."),
+                    ToolParameter.Number(
+                        "max_station_distance",
+                        "How far in-system a station may sit, in light seconds. Defaults to 1,000."),
+                    ToolParameter.Flag("large_pad", "Only stations with a large landing pad."),
                     // Spelled with its unit, matching the commodity search rather than differing from it
                     // (#178).
-                    new ToolParameter
-                    {
-                        Name = "max_price_age_hours",
-                        Type = ToolParameterType.Integer,
-                        Description =
-                            "How stale a reported price may be, in hours; 0 for any age. Defaults to 720, one month.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "planetary",
-                        Type = ToolParameterType.Boolean,
-                        Description =
-                            "Also consider planetary ports, outposts and settlements, not just orbital "
-                            + "stations. Defaults to false.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "avoid_permit_systems",
-                        Type = ToolParameterType.Boolean,
-                        Description =
-                            "Leave out markets in systems that need a permit to enter. Defaults to true.",
-                    },
+                    ToolParameter.Integer(
+                        "max_price_age_hours",
+                        "How stale a reported price may be, in hours; 0 for any age. Defaults to 720, one month."),
+                    ToolParameter.Flag(
+                        "planetary",
+                        "Also consider planetary ports, outposts and settlements, not just orbital "
+                        + "stations. Defaults to false."),
+                    ToolParameter.Flag(
+                        "avoid_permit_systems",
+                        "Leave out markets in systems that need a permit to enter. Defaults to true."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     PlanTradeAsync(trade, commander, settings, plans, now, arguments, cancellationToken),
@@ -267,13 +172,7 @@ public static class RouteCapability
                     + "about any system.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "system",
-                        Type = ToolParameterType.String,
-                        Description = "The system to sell in.",
-                        Required = true,
-                    },
+                    ToolParameter.Text("system", "The system to sell in.", required: true),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     BestCommoditiesForAsync(trade, commander, settings, cargo, now, arguments, cancellationToken),
@@ -290,25 +189,11 @@ public static class RouteCapability
                     + "and its used capacity from the last carrier management reading. Moves nothing.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "to",
-                        Type = ToolParameterType.String,
-                        Description = "The system the carrier should go to.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "from",
-                        Type = ToolParameterType.String,
-                        Description = "Where to plot from. Defaults to where the carrier is now.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "return_trip",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Come back to the start, counting the tritium for both legs. Defaults to true.",
-                    },
+                    ToolParameter.Text("to", "The system the carrier should go to.", required: true),
+                    ToolParameter.Text("from", "Where to plot from. Defaults to where the carrier is now."),
+                    ToolParameter.Flag(
+                        "return_trip",
+                        "Come back to the start, counting the tritium for both legs. Defaults to true."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     PlotCarrierAsync(routes, trade, commander, settings, plans, now, checklists, arguments, cancellationToken),
@@ -325,40 +210,20 @@ public static class RouteCapability
                     + "station in range sells. Saves the plan to follow stop by stop.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "items",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "Comma-separated: modules by name with an optional size and rating, and ships, "
-                            + "such as \"5A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\".",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "near",
-                        Type = ToolParameterType.String,
-                        Description = "Search out from this system. Defaults to theirs.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_distance",
-                        Type = ToolParameterType.Number,
-                        Description = "How far to look, in light years. Default 50.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "min_pad",
-                        Type = ToolParameterType.String,
-                        Description = "Large, or Medium for at least one medium pad.",
-                        AllowedValues = StationQuery.MinPads,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "storage_checked",
-                        Type = ToolParameterType.Boolean,
-                        Description = "False when the list was worked out without counting stored modules.",
-                    },
+                    ToolParameter.Text(
+                        "items",
+                        "Comma-separated: modules by name with an optional size and rating, and ships, "
+                        + "such as \"5A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\".",
+                        required: true),
+                    ToolParameter.Text("near", "Search out from this system. Defaults to theirs."),
+                    ToolParameter.Number("max_distance", "How far to look, in light years. Default 50."),
+                    ToolParameter.OneOf(
+                        "min_pad",
+                        "Large, or Medium for at least one medium pad.",
+                        StationQuery.MinPads),
+                    ToolParameter.Flag(
+                        "storage_checked",
+                        "False when the list was worked out without counting stored modules."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     PlotOutfittingAsync(galaxy, commander, settings, plans, now, arguments, cancellationToken),
@@ -376,14 +241,11 @@ public static class RouteCapability
                     + "Skips a stop whose system is the one the Commander is already in.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "kind",
-                        Type = ToolParameterType.String,
-                        Description = "Which stored plan to plot the next stop from.",
-                        Required = true,
-                        AllowedValues = ["neutron", "riches", "trade", "exobiology", "outfitting"],
-                    },
+                    ToolParameter.OneOf(
+                        "kind",
+                        "Which stored plan to plot the next stop from.",
+                        ["neutron", "riches", "trade", "exobiology", "outfitting"],
+                        required: true),
                 ],
                 Commands =
                 [

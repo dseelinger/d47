@@ -60,45 +60,25 @@ public static class ChecklistCapability
                     + "right now. Filter by group, by name, by state or by kind.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "group",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "Which list: custom, ship, system, suit or weapon. Omitted shows all of "
-                            + "them. With no name, each means the one the Commander is in or carrying "
-                            + "right now.",
-                        AllowedValues = Groups,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A specific ship id, star system, suit id or weapon id, when the group is not "
-                            + "the current one.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "state",
-                        Type = ToolParameterType.String,
-                        Description = "Only the open items, or only the finished ones.",
-                        AllowedValues = ["open", "complete"],
-                    },
-                    new ToolParameter
-                    {
-                        Name = "kind",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "Only the Commander's own lines (authored), only the computed ones (derived), "
-                            + "or one plan's — engineeringPlan, colonisationPlan or onFootPlan.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "here",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Only what an engineer in this system could craft today.",
-                    },
+                    ToolParameter.OneOf(
+                        "group",
+                        "Which list: custom, ship, system, suit or weapon. Omitted shows all of "
+                        + "them. With no name, each means the one the Commander is in or carrying "
+                        + "right now.",
+                        Groups),
+                    ToolParameter.Text(
+                        "name",
+                        "A specific ship id, star system, suit id or weapon id, when the group is not "
+                        + "the current one."),
+                    ToolParameter.OneOf(
+                        "state",
+                        "Only the open items, or only the finished ones.",
+                        ["open", "complete"]),
+                    ToolParameter.Text(
+                        "kind",
+                        "Only the Commander's own lines (authored), only the computed ones (derived), "
+                        + "or one plan's — engineeringPlan, colonisationPlan or onFootPlan."),
+                    ToolParameter.Flag("here", "Only what an engineer in this system could craft today."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(checklists.Report(
                     arguments.TryGetString("group", out var group) ? group : null,
@@ -134,26 +114,9 @@ public static class ChecklistCapability
                     + "agree — D47 cannot write their list itself.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "text",
-                        Type = ToolParameterType.String,
-                        Description = "The line, as the Commander would say it.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "group",
-                        Type = ToolParameterType.String,
-                        Description = "Which list it belongs on. Defaults to custom.",
-                        AllowedValues = Groups,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description = "A specific ship id or star system, when it is not the current one.",
-                    },
+                    ToolParameter.Text("text", "The line, as the Commander would say it.", required: true),
+                    ToolParameter.OneOf("group", "Which list it belongs on. Defaults to custom.", Groups),
+                    ToolParameter.Text("name", "A specific ship id or star system, when it is not the current one."),
                     .. WatchParameters,
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
@@ -179,20 +142,8 @@ public static class ChecklistCapability
                     + "simply stated, so there is nothing there to agree to.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "item",
-                        Type = ToolParameterType.String,
-                        Description = "The line, in enough of its own words to pick it out.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "change",
-                        Type = ToolParameterType.String,
-                        Description = "What to propose.",
-                        AllowedValues = ["done", "open", "remove", "watch"],
-                    },
+                    ToolParameter.Text("item", "The line, in enough of its own words to pick it out.", required: true),
+                    ToolParameter.OneOf("change", "What to propose.", ["done", "open", "remove", "watch"]),
                     .. WatchParameters,
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
@@ -224,45 +175,19 @@ public static class ChecklistCapability
                     + "Commander promotes the build.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "slot",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "The slot or the module — \"MainEngines\", \"thrusters\", \"Slot01_Size4\".",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "blueprint",
-                        Type = ToolParameterType.String,
-                        Description = "A blueprint by name — \"Dirty Drive Tuning\". Omit for any.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "grade",
-                        Type = ToolParameterType.Integer,
-                        Description = "1 to 5. Omit for any grade — that is a wildcard, not an unknown.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "experimental",
-                        Type = ToolParameterType.String,
-                        Description = "An experimental effect, which becomes its own item on the same slot.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "ship",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A ship id, name, or a hull they do not own yet. Omit for the one they fly.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "drop",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Say nothing about this slot. What it already produced is kept.",
-                    },
+                    ToolParameter.Text(
+                        "slot",
+                        "The slot or the module — \"MainEngines\", \"thrusters\", \"Slot01_Size4\".",
+                        required: true),
+                    ToolParameter.Text("blueprint", "A blueprint by name — \"Dirty Drive Tuning\". Omit for any."),
+                    ToolParameter.Integer("grade", "1 to 5. Omit for any grade — that is a wildcard, not an unknown."),
+                    ToolParameter.Text(
+                        "experimental",
+                        "An experimental effect, which becomes its own item on the same slot."),
+                    ToolParameter.Text(
+                        "ship",
+                        "A ship id, name, or a hull they do not own yet. Omit for the one they fly."),
+                    ToolParameter.Flag("drop", "Say nothing about this slot. What it already produced is kept."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Build(checklists, ships, arguments))),
             },
@@ -281,52 +206,27 @@ public static class ChecklistCapability
                     + "Commander promotes it.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "equipment",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "The suit or weapon by name — \"Maverick\", \"Dominator\", \"Karma AR-50\".",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "grade",
-                        Type = ToolParameterType.Integer,
-                        Description =
-                            "The grade to reach, 2 to 5. Omit to leave the grade alone — on foot that "
-                            + "means no upgrade rather than any upgrade.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "modification",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "One modification to fit — \"Night Vision\", \"Magazine Size\". Permanent, so "
-                            + "set them one at a time.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "item",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "The suit or weapon by name. Omit for the suit being worn, or the one "
-                            + "weapon carried.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "weapon",
-                        Type = ToolParameterType.Boolean,
-                        Description = "True when this is about a hand weapon rather than the suit.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "drop",
-                        Type = ToolParameterType.Boolean,
-                        Description =
-                            "Say nothing about this any more. What it already put on the checklist is "
-                            + "kept.",
-                    },
+                    ToolParameter.Text(
+                        "equipment",
+                        "The suit or weapon by name — \"Maverick\", \"Dominator\", \"Karma AR-50\".",
+                        required: true),
+                    ToolParameter.Integer(
+                        "grade",
+                        "The grade to reach, 2 to 5. Omit to leave the grade alone — on foot that "
+                        + "means no upgrade rather than any upgrade."),
+                    ToolParameter.Text(
+                        "modification",
+                        "One modification to fit — \"Night Vision\", \"Magazine Size\". Permanent, so "
+                        + "set them one at a time."),
+                    ToolParameter.Text(
+                        "item",
+                        "The suit or weapon by name. Omit for the suit being worn, or the one "
+                        + "weapon carried."),
+                    ToolParameter.Flag("weapon", "True when this is about a hand weapon rather than the suit."),
+                    ToolParameter.Flag(
+                        "drop",
+                        "Say nothing about this any more. What it already put on the checklist is "
+                        + "kept."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(OnFoot(onFoot, arguments))),
             },
@@ -344,31 +244,10 @@ public static class ChecklistCapability
                     + "the system, or what order to build in — nobody publishes those figures.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "place",
-                        Type = ToolParameterType.String,
-                        Description = "The body or orbital slot the facility goes at.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "facility",
-                        Type = ToolParameterType.String,
-                        Description = "What goes there, in the Commander's words.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "system",
-                        Type = ToolParameterType.String,
-                        Description = "The star system. Omit for the one the Commander is in.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "drop",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Propose that the plan say nothing about this place.",
-                    },
+                    ToolParameter.Text("place", "The body or orbital slot the facility goes at.", required: true),
+                    ToolParameter.Text("facility", "What goes there, in the Commander's words."),
+                    ToolParameter.Text("system", "The star system. Omit for the one the Commander is in."),
+                    ToolParameter.Flag("drop", "Propose that the plan say nothing about this place."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Colonise(checklists, arguments))),
             },
@@ -386,12 +265,7 @@ public static class ChecklistCapability
                 Protected = true,
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "id",
-                        Type = ToolParameterType.String,
-                        Description = "One proposal by id. Omit for everything waiting.",
-                    },
+                    ProposalId,
                 ],
                 Commands = Answers(checklists, Accepting, Confirmations),
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
@@ -410,12 +284,7 @@ public static class ChecklistCapability
                 Protected = true,
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "id",
-                        Type = ToolParameterType.String,
-                        Description = "One proposal by id. Omit for everything waiting.",
-                    },
+                    ProposalId,
                 ],
                 Commands = Answers(checklists, Declining, Refusals),
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
@@ -437,21 +306,11 @@ public static class ChecklistCapability
                 Protected = true,
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "to",
-                        Type = ToolParameterType.String,
-                        Required = true,
-                        Description = "up, down, top or bottom.",
-                        AllowedValues = Ends,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "item",
-                        Type = ToolParameterType.String,
-                        Description = "The line, in enough of its own words to tell it from the others. "
-                                      + "Omit for the selected one.",
-                    },
+                    ToolParameter.OneOf("to", "up, down, top or bottom.", Ends, required: true),
+                    ToolParameter.Text(
+                        "item",
+                        "The line, in enough of its own words to tell it from the others. "
+                        + "Omit for the selected one."),
                 ],
                 Commands = Moves,
                 Handler = (arguments, _) => Task.FromResult(
@@ -475,12 +334,8 @@ public static class ChecklistCapability
         _ => null,
     };
 
-    /// <summary>
-    /// A declared phrase carries the arguments it means, and these mean none — "accept that" answers
-    /// the question d47 just asked, which is every proposal waiting.
-    /// </summary>
-    private static readonly IReadOnlyDictionary<string, string> Nothing =
-        new Dictionary<string, string>(StringComparer.Ordinal);
+    private static readonly ToolParameter ProposalId =
+        ToolParameter.Text("id", "One proposal by id. Omit for everything waiting.");
 
     /// <summary>Words that mean accept whatever else is going on.</summary>
     private static readonly string[] Accepting =
@@ -557,8 +412,8 @@ public static class ChecklistCapability
         IReadOnlyList<string> always,
         IReadOnlyList<string> whileWaiting) =>
     [
-        .. always.Select(phrase => new ToolCommandPhrase(phrase, Nothing)),
-        .. whileWaiting.Select(phrase => new ToolCommandPhrase(phrase, Nothing)
+        .. always.Select(phrase => new ToolCommandPhrase(phrase)),
+        .. whileWaiting.Select(phrase => new ToolCommandPhrase(phrase)
         {
             When = () => checklists.Proposals.PendingFor(checklists.Document.CommanderFid).Count > 0,
         }),
@@ -586,35 +441,19 @@ public static class ChecklistCapability
 
     private static readonly ToolParameter[] WatchParameters =
     [
-        new ToolParameter
-        {
-            Name = "tick_when",
-            Type = ToolParameterType.String,
-            Description =
-                "A journal condition that ticks the line itself once the Commander agrees: dock at a station, "
-                + "arrive in a system, buy or sell a commodity, or set a carrier buy order. Needs subject.",
-            AllowedValues = ["dock", "arrive", "buy", "sell", "buy_order"],
-        },
-        new ToolParameter
-        {
-            Name = "subject",
-            Type = ToolParameterType.String,
-            Description =
-                "What tick_when waits for, as Elite names it: a station for dock, a system for arrive, "
-                + "a commodity for buy, sell and buy_order.",
-        },
-        new ToolParameter
-        {
-            Name = "place",
-            Type = ToolParameterType.String,
-            Description = "The system for dock, the station for buy and sell. Not used by arrive or buy_order.",
-        },
-        new ToolParameter
-        {
-            Name = "quantity",
-            Type = ToolParameterType.Integer,
-            Description = "How many, for buy, sell and buy_order. At least 1.",
-        },
+        ToolParameter.OneOf(
+            "tick_when",
+            "A journal condition that ticks the line itself once the Commander agrees: dock at a station, "
+            + "arrive in a system, buy or sell a commodity, or set a carrier buy order. Needs subject.",
+            ["dock", "arrive", "buy", "sell", "buy_order"]),
+        ToolParameter.Text(
+            "subject",
+            "What tick_when waits for, as Elite names it: a station for dock, a system for arrive, "
+            + "a commodity for buy, sell and buy_order."),
+        ToolParameter.Text(
+            "place",
+            "The system for dock, the station for buy and sell. Not used by arrive or buy_order."),
+        ToolParameter.Integer("quantity", "How many, for buy, sell and buy_order. At least 1."),
     ];
 
     /// <summary>Reads the watch arguments; returns a refusal sentence when they cannot make a watch.</summary>

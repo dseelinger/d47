@@ -254,20 +254,11 @@ public static class JournalCapability
                         + "ship they own to read it from the loadout last seen for it, dated.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "ship",
-                            Type = ToolParameterType.String,
-                            Description = "Which ship, by name or hull. Omit for the one currently flown.",
-                        },
-                        new ToolParameter
-                        {
-                            Name = "jump_range",
-                            Type = ToolParameterType.Boolean,
-                            Description =
-                                "Answer with the unladen jump range alone. Set it only when they asked "
-                                + "for the jump range and nothing else about the ship.",
-                        },
+                        ToolParameter.Text("ship", "Which ship, by name or hull. Omit for the one currently flown."),
+                        ToolParameter.Flag(
+                            "jump_range",
+                            "Answer with the unladen jump range alone. Set it only when they asked "
+                            + "for the jump range and nothing else about the ship."),
                     ],
                     Commands = [.. Asking(Flying), .. Asking(JumpRange, WithJumpRange)],
                     Handler = (arguments, _) => Task.FromResult(DescribeShip(gameState, arguments)),
@@ -284,17 +275,13 @@ public static class JournalCapability
                         + "reported. Set ships to also list the ships they own and where each one is stored.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "ships",
-                            Type = ToolParameterType.Boolean,
-                            Description =
-                                "List the ships the Commander owns and which system each one is stored in. "
-                                + "Set it only when they asked what ships they have or what ships are in a "
-                                + "system. Asking where the carrier is is not that question.",
-                        },
+                        ToolParameter.Flag(
+                            "ships",
+                            "List the ships the Commander owns and which system each one is stored in. "
+                            + "Set it only when they asked what ships they have or what ships are in a "
+                            + "system. Asking where the carrier is is not that question."),
                     ],
-                    Commands = [.. Asking(WhereTheCarrierIs, NoArguments), .. Asking(WhichShips, WithShips)],
+                    Commands = [.. Asking(WhereTheCarrierIs), .. Asking(WhichShips, WithShips)],
                     Handler = (arguments, _) =>
                         Task.FromResult(ToolResult.Ok(DescribeFleet(gameState, arguments, Unread(state())))),
                 },
@@ -311,27 +298,17 @@ public static class JournalCapability
                         + "that ranks or filters their ships.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "min_cargo",
-                            Type = ToolParameterType.Integer,
-                            Description = "List only ships with at least this many tonnes of cargo capacity.",
-                        },
-                        new ToolParameter
-                        {
-                            Name = "order_by",
-                            Type = ToolParameterType.String,
-                            Description = "Rank the ships by this figure, largest first. Listed by name otherwise.",
-                            AllowedValues = ["jump_range", "cargo"],
-                        },
-                        new ToolParameter
-                        {
-                            Name = "mining",
-                            Type = ToolParameterType.Boolean,
-                            Description =
-                                "List only ships fitted for tritium mining — a mining laser or Volley Repeater, "
-                                + "a collector controller and a refinery — each with the modules that show it.",
-                        },
+                        ToolParameter.Integer(
+                            "min_cargo",
+                            "List only ships with at least this many tonnes of cargo capacity."),
+                        ToolParameter.OneOf(
+                            "order_by",
+                            "Rank the ships by this figure, largest first. Listed by name otherwise.",
+                            ["jump_range", "cargo"]),
+                        ToolParameter.Flag(
+                            "mining",
+                            "List only ships fitted for tritium mining — a mining laser or Volley Repeater, "
+                            + "a collector controller and a refinery — each with the modules that show it."),
                     ],
                     Handler = (arguments, _) => Task.FromResult(
                         ToolResult.Ok(DescribeFleetLoadouts(gameState, arguments, Unread(state())))),
@@ -349,14 +326,10 @@ public static class JournalCapability
                         + "they already own — not where a module can be bought.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "module",
-                            Type = ToolParameterType.String,
-                            Description =
-                                "Narrow the list to stored modules whose name contains this — for example "
-                                + "\"shield\" or \"Frame Shift Drive\". Leave it out for the whole store.",
-                        },
+                        ToolParameter.Text(
+                            "module",
+                            "Narrow the list to stored modules whose name contains this — for example "
+                            + "\"shield\" or \"Frame Shift Drive\". Leave it out for the whole store."),
                     ],
                     Handler = (arguments, _) => Task.FromResult(
                         DescribeStoredModules(gameState, arguments)),
@@ -401,18 +374,12 @@ public static class JournalCapability
                         + "influence it produced.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "faction",
-                            Type = ToolParameterType.String,
-                            Description = "Report only the work done for this faction. Omit for every faction.",
-                        },
-                        new ToolParameter
-                        {
-                            Name = "system",
-                            Type = ToolParameterType.String,
-                            Description = "Report only the work done in this system. Omit for every system.",
-                        },
+                        ToolParameter.Text(
+                            "faction",
+                            "Report only the work done for this faction. Omit for every faction."),
+                        ToolParameter.Text(
+                            "system",
+                            "Report only the work done in this system. Omit for every system."),
                     ],
                     Commands = Asking(BgsWorkQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
@@ -431,27 +398,17 @@ public static class JournalCapability
                         + "and combat bonds awarded at the kill, not what was redeemed.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "by",
-                            Type = ToolParameterType.String,
-                            Description = "The grouping to report. Omit for the top entry of each.",
-                            AllowedValues = CombatGroupings,
-                        },
-                        new ToolParameter
-                        {
-                            Name = "period",
-                            Type = ToolParameterType.String,
-                            Description =
-                                "The last day, week (7 days) or month (30 days) before now, or all of the record. Default all.",
-                            AllowedValues = CombatPeriods,
-                        },
-                        new ToolParameter
-                        {
-                            Name = "name",
-                            Type = ToolParameterType.String,
-                            Description = "Report only the entries of the grouping whose name contains this, without regard to case.",
-                        },
+                        ToolParameter.OneOf(
+                            "by",
+                            "The grouping to report. Omit for the top entry of each.",
+                            CombatGroupings),
+                        ToolParameter.OneOf(
+                            "period",
+                            "The last day, week (7 days) or month (30 days) before now, or all of the record. Default all.",
+                            CombatPeriods),
+                        ToolParameter.Text(
+                            "name",
+                            "Report only the entries of the grouping whose name contains this, without regard to case."),
                     ],
                     Commands = Asking(CombatStatsQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
@@ -468,20 +425,13 @@ public static class JournalCapability
                         + "codex, by region and category.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "period",
-                            Type = ToolParameterType.String,
-                            Description =
-                                "Since the last sale of exploration data (trip), since this session began, or all of the record. Default trip.",
-                            AllowedValues = CodexPeriods,
-                        },
-                        new ToolParameter
-                        {
-                            Name = "region",
-                            Type = ToolParameterType.String,
-                            Description = "Report only this codex region, by name, or here for the region the Commander is in.",
-                        },
+                        ToolParameter.OneOf(
+                            "period",
+                            "Since the last sale of exploration data (trip), since this session began, or all of the record. Default trip.",
+                            CodexPeriods),
+                        ToolParameter.Text(
+                            "region",
+                            "Report only this codex region, by name, or here for the region the Commander is in."),
                     ],
                     Commands = Asking(CodexLedgerQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
@@ -499,12 +449,9 @@ public static class JournalCapability
                         + "missing, by subcategory, with the most-reported missing ones named.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "region",
-                            Type = ToolParameterType.String,
-                            Description = "The codex region, by name, or here for the region the Commander is in. Default here.",
-                        },
+                        ToolParameter.Text(
+                            "region",
+                            "The codex region, by name, or here for the region the Commander is in. Default here."),
                     ],
                     Commands = Asking(CodexDiscoveriesQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
@@ -523,14 +470,10 @@ public static class JournalCapability
                         + "the surface decides.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "body",
-                            Type = ToolParameterType.String,
-                            Description =
-                                "The body name, or its short form such as \"7 b\". Leave out for the most recently seen "
-                                + "body that has geological signals.",
-                        },
+                        ToolParameter.Text(
+                            "body",
+                            "The body name, or its short form such as \"7 b\". Leave out for the most recently seen "
+                            + "body that has geological signals."),
                     ],
                     Commands = Asking(BodyGeologyQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
@@ -547,21 +490,14 @@ public static class JournalCapability
                         + "with the current balance. Bounties and combat bonds count when redeemed.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "period",
-                            Type = ToolParameterType.String,
-                            Description =
-                                "The last day, week (7 days) or month (30 days) before now, or all of the record. Default week.",
-                            AllowedValues = CombatPeriods,
-                        },
-                        new ToolParameter
-                        {
-                            Name = "kind",
-                            Type = ToolParameterType.String,
-                            Description = "Report only this kind of transaction.",
-                            AllowedValues = [.. CreditKinds.Select(pair => pair.Name)],
-                        },
+                        ToolParameter.OneOf(
+                            "period",
+                            "The last day, week (7 days) or month (30 days) before now, or all of the record. Default week.",
+                            CombatPeriods),
+                        ToolParameter.OneOf(
+                            "kind",
+                            "Report only this kind of transaction.",
+                            [.. CreditKinds.Select(pair => pair.Name)]),
                     ],
                     Commands = Asking(CreditLedgerQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
@@ -580,14 +516,10 @@ public static class JournalCapability
                         + "exobiology. Set section to one group; omit it to report every section.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "section",
-                            Type = ToolParameterType.String,
-                            Description =
-                                "One section of the career statistics to report. Omit to report every section.",
-                            AllowedValues = StatisticsSections,
-                        },
+                        ToolParameter.OneOf(
+                            "section",
+                            "One section of the career statistics to report. Omit to report every section.",
+                            StatisticsSections),
                     ],
                     Commands = Asking(MercCoins, BankAccount),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeStatistics(gameState, arguments))),
@@ -622,14 +554,10 @@ public static class JournalCapability
                         + "number and the date it was last read.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "faction",
-                            Type = ToolParameterType.String,
-                            Description =
-                                "A superpower or a minor faction, whole or part of its name. Omit for the four "
-                                + "superpowers and both navy ranks.",
-                        },
+                        ToolParameter.Text(
+                            "faction",
+                            "A superpower or a minor faction, whole or part of its name. Omit for the four "
+                            + "superpowers and both navy ranks."),
                     ],
                     Commands = Asking(Standing),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeStanding(gameState, arguments))),
@@ -759,7 +687,7 @@ public static class JournalCapability
 
     /// <summary>The whole question, against the tool that answers it (reported 2026-08-21).</summary>
     private static IReadOnlyList<ToolCommandPhrase> Asking(IReadOnlyList<string> phrases) =>
-        Asking(phrases, NoArguments);
+        [.. phrases.Select(phrase => new ToolCommandPhrase(phrase))];
 
     /// <summary>
     /// The same, for a tool where two groups of phrases mean two different answers — asking where the
@@ -768,9 +696,6 @@ public static class JournalCapability
     private static IReadOnlyList<ToolCommandPhrase> Asking(
         IReadOnlyList<string> phrases, IReadOnlyDictionary<string, string> arguments) =>
         [.. phrases.Select(phrase => new ToolCommandPhrase(phrase, arguments))];
-
-    private static readonly IReadOnlyDictionary<string, string> NoArguments =
-        new Dictionary<string, string>(StringComparer.Ordinal);
 
     private static readonly IReadOnlyDictionary<string, string> WithJumpRange =
         new Dictionary<string, string>(StringComparer.Ordinal) { ["jump_range"] = "true" };
