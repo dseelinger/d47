@@ -153,8 +153,18 @@ public class AModalOpensInTheHeadsetTests
 
     private static List<Button> Openers(SettingsView view) =>
         [.. view.GetVisualDescendants().OfType<Button>()
-            .Where(button => Handlers(button).Any(handler =>
-                Opens.Value.Contains($"{handler.Method.DeclaringType?.Name}.{handler.Method.Name}")))];
+            .Where(button => Handlers(button).Any(OpensAModal))];
+
+    /// <summary>Whether a handler, or a delegate its closure holds for it to run, ends in a dialog.</summary>
+    private static bool OpensAModal(Delegate handler) =>
+        IsOpener(handler)
+        || (handler.Target?.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            .Select(held => held.GetValue(handler.Target))
+            .OfType<Delegate>()
+            .Any(IsOpener) ?? false);
+
+    private static bool IsOpener(Delegate handler) =>
+        Opens.Value.Contains($"{handler.Method.DeclaringType?.Name}.{handler.Method.Name}");
 
     private static string Describe(Button button) =>
         button.Name ?? button.Content as string ?? button.GetType().Name;

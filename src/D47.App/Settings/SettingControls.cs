@@ -292,140 +292,106 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
         return (stack, Refresh);
     }
 
-    /// <summary>A disclosure with the button that clears it.</summary>
-    private (Control, Action) BuildMemories(SettingRow row)
+    /// <summary>An info row with a button under it. <paramref name="open"/> returns false when there was nothing to open.</summary>
+    private (Control, Action) OpenRow(
+        SettingRow row,
+        string name,
+        string label,
+        Func<Button, Task<bool>> open,
+        Action? after = null,
+        bool themeLook = false)
     {
         var (inset, refresh) = BuildInfo(row);
 
-        var open = new Button
+        var button = new Button
         {
-            Name = "OpenMemories",
-            Content = "Open what D47 remembers",
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(8, 4),
+            Name = name,
+            Content = label,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        open.Click += async (_, _) =>
+        if (!themeLook)
+        {
+            button.FontSize = TypeScale.Body;
+            button.Padding = new Thickness(8, 4);
+        }
+
+        button.Click += async (_, _) =>
+        {
+            if (await open(button))
+            {
+                (after ?? refresh)();
+            }
+        };
+
+        return (new StackPanel { Spacing = 8, Children = { inset, button } }, refresh);
+    }
+
+    /// <summary>The Memories summary, plus the way into the book.</summary>
+    private (Control, Action) BuildMemories(SettingRow row) =>
+        OpenRow(row, "OpenMemories", "Open what D47 remembers", async open =>
         {
             if (services.Memories is not { } memories || TopLevel.GetTopLevel(open) is not Window owner)
             {
-                return;
+                return false;
             }
 
             await new Controls.MemoryDialog(memories.Book, memories.Now).Over(owner);
 
-            // The window writes the file; this is what puts the new count on the row without waiting for
-            // something else to notice.
-            refresh();
-        };
-
-        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
-
-        return (stack, refresh);
-    }
+            return true;
+        });
 
     /// <summary>The debrief summary, plus the way into the proposals.</summary>
-    private (Control, Action) BuildDebrief(SettingRow row)
-    {
-        var (inset, refresh) = BuildInfo(row);
-
-        var open = new Button
-        {
-            Name = "OpenDebrief",
-            Content = "Open what D47 has drafted",
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(8, 4),
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        open.Click += async (_, _) =>
+    private (Control, Action) BuildDebrief(SettingRow row) =>
+        OpenRow(row, "OpenDebrief", "Open what D47 has drafted", async open =>
         {
             if (services.Debrief is not { } debrief || open.FindAncestorOfType<Panel.PanelView>() is not { } panel)
             {
-                return;
+                return false;
             }
 
             await panel.Open(new Controls.DebriefPage(debrief.Book, debrief.Now, debrief.Core));
 
-            // The page writes the file; this is what puts the new count on the row without waiting for
-            // something else to notice.
-            refresh();
-        };
+            return true;
+        });
 
-        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
-
-        return (stack, refresh);
-    }
-
-    private (Control, Action) BuildLore(SettingRow row)
-    {
-        var (inset, refresh) = BuildInfo(row);
-
-        var open = new Button
-        {
-            Name = "OpenLore",
-            Content = "Open your notes",
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(8, 4),
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        open.Click += async (_, _) =>
+    private (Control, Action) BuildLore(SettingRow row) =>
+        OpenRow(row, "OpenLore", "Open your notes", async open =>
         {
             if (services.Lore is not { } editing || TopLevel.GetTopLevel(open) is not Window owner)
             {
-                return;
+                return false;
             }
 
             await new Controls.LoreDialog(editing).Over(owner);
 
-            // The window writes the file; this is what puts the new count on the row without waiting for
-            // something else to notice.
-            refresh();
-        };
-
-        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
-
-        return (stack, refresh);
-    }
+            return true;
+        });
 
     /// <summary>The Commander's log, behind a button (Phase 33).</summary>
     private (Control, Action) BuildLogbook(SettingRow row)
     {
-        var (inset, refresh) = BuildInfo(row);
-
-        var open = new Button
-        {
-            Name = "OpenLogbook",
-            Content = "Write up a session",
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(8, 4),
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        open.Click += async (_, _) =>
+        var (control, refresh) = OpenRow(row, "OpenLogbook", "Write up a session", async open =>
         {
             if (services.Logbook is not { } logbook || open.FindAncestorOfType<Panel.PanelView>() is not { } panel)
             {
-                return;
+                return false;
             }
 
             await panel.Open(new Controls.LogbookPage(logbook));
-            refresh();
-        };
 
-        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+            return true;
+        });
 
         if (services.Logbook is { } book)
         {
             void OnChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(refresh);
 
-            stack.AttachedToVisualTree += (_, _) => book.Changed += OnChanged;
-            stack.DetachedFromVisualTree += (_, _) => book.Changed -= OnChanged;
+            control.AttachedToVisualTree += (_, _) => book.Changed += OnChanged;
+            control.DetachedFromVisualTree += (_, _) => book.Changed -= OnChanged;
         }
 
-        return (stack, refresh);
+        return (control, refresh);
     }
 
     /// <summary>The binding profile summary, and one line per saved profile with a Delete button (#80).</summary>
@@ -485,30 +451,17 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
     /// <summary>What the audio recorder holds, the way into reviewing it, and the wipe (#164).</summary>
     private (Control, Action) BuildAudioRecording(SettingRow row)
     {
-        var (inset, refresh) = BuildInfo(row);
-
-        var open = new Button
-        {
-            Name = "OpenAudioRecorder",
-            Content = "Review the recording",
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(8, 4),
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        open.Click += async (_, _) =>
+        var (control, refresh) = OpenRow(row, "OpenAudioRecorder", "Review the recording", async open =>
         {
             if (services.Recording is not { } recording || open.FindAncestorOfType<Panel.PanelView>() is not { } panel)
             {
-                return;
+                return false;
             }
 
             await panel.Open(new Controls.AudioRecorderPage(recording.Log, recording.Now));
 
-            // Keeping a row changes what the summary says, and the page is where keeping happens — so the
-            // row is re-read on the way out rather than left stating what was true when it opened.
-            host.Refresh();
-        };
+            return true;
+        }, host.Refresh);
 
         var wipe = new Button
         {
@@ -523,9 +476,9 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
             host.Refresh();
         };
 
-        var stack = new StackPanel { Spacing = 8, Children = { inset, open, wipe } };
+        ((StackPanel)control).Children.Add(wipe);
 
-        return (stack, refresh);
+        return (control, refresh);
     }
 
     private (Control, Action) BuildPressable(SettingRow row, StatusLine message)
@@ -743,68 +696,44 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
     }
 
     /// <summary>The coverage summary, plus the way into the whole list.</summary>
-    private (Control, Action) BuildCoverage(SettingRow row)
-    {
-        var (inset, refresh) = BuildInfo(row);
-
-        var open = new Button
+    private (Control, Action) BuildCoverage(SettingRow row) =>
+        OpenRow(row, "OpenCoverage", "Show the list", async open =>
         {
-            Name = "OpenCoverage",
-            Content = "Show the list",
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(8, 4),
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        open.Click += async (_, _) =>
-        {
-            if (services.Coverage is not null && open.FindAncestorOfType<Panel.PanelView>() is { } panel)
+            if (services.Coverage is null || open.FindAncestorOfType<Panel.PanelView>() is not { } panel)
             {
-                await panel.Open(new Controls.CoveragePage(services.Coverage()));
+                return false;
             }
-        };
 
-        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+            await panel.Open(new Controls.CoveragePage(services.Coverage()));
 
-        return (stack, refresh);
-    }
+            return true;
+        }, () => { });
 
     /// <summary>The Commander's own cores, plus the way into the editor (remediation.md 11, item 9).</summary>
     private (Control, Action) BuildOwnPersonas(SettingRow row)
     {
-        var (inset, refresh) = BuildInfo(row);
-
-        var open = new Button
-        {
-            Name = "OpenOwnPersonas",
-            Content = OwnButtonLabel(),
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(8, 4),
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        var showSummary = refresh;
-
-        refresh = () =>
-        {
-            showSummary();
-            inset.IsVisible = PersonaCapability.OwnNames().Count == 0;
-            open.Content = OwnButtonLabel();
-        };
-
-        open.Click += async (_, _) =>
+        var (control, showSummary) = OpenRow(row, "OpenOwnPersonas", OwnButtonLabel(), async open =>
         {
             if (services.OwnPersonas is null || open.FindAncestorOfType<Panel.PanelView>() is not { } panel)
             {
-                return;
+                return false;
             }
 
             await panel.Open(new Controls.PersonaPage(services.OwnPersonas));
 
-            host.Refresh();
-        };
+            return true;
+        }, host.Refresh);
 
-        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+        var stack = (StackPanel)control;
+        var inset = stack.Children[0];
+        var open = (Button)stack.Children[1];
+
+        void Refresh()
+        {
+            showSummary();
+            inset.IsVisible = PersonaCapability.OwnNames().Count == 0;
+            open.Content = OwnButtonLabel();
+        }
 
         if (services.OwnPersonas is { } store)
         {
@@ -814,123 +743,58 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
             stack.DetachedFromVisualTree += (_, _) => store.Changed -= OnChanged;
         }
 
-        return (stack, refresh);
+        return (stack, Refresh);
     }
 
     private static string OwnButtonLabel() => PersonaCapability.OwnNames().Count == 0 ? "Write a core" : "Manage";
 
     /// <summary>What Custom voices holds, plus the way into the page.</summary>
-    private (Control, Action) BuildCustomVoices(SettingRow row)
-    {
-        var (inset, refresh) = BuildInfo(row);
-
-        var open = new Button
-        {
-            Name = "OpenCustomVoices",
-            Content = "Custom voices",
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        open.Click += async (_, _) =>
+    private (Control, Action) BuildCustomVoices(SettingRow row) =>
+        OpenRow(row, "OpenCustomVoices", "Custom voices", async open =>
         {
             if (services.CustomVoices is not { } editing || open.FindAncestorOfType<Panel.PanelView>() is not { } panel)
             {
-                return;
+                return false;
             }
 
             await panel.Open(new Controls.CustomVoicesPage(editing));
-            refresh();
-        };
 
-        return (new StackPanel { Spacing = 8, Children = { inset, open } }, refresh);
-    }
+            return true;
+        }, themeLook: true);
 
     /// <summary>The macro summary, plus the way into the editor.</summary>
-    private (Control, Action) BuildMacros(SettingRow row)
-    {
-        var (inset, refresh) = BuildInfo(row);
-
-        var open = new Button
-        {
-            Name = "OpenMacros",
-            Content = "Edit macros",
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(8, 4),
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        open.Click += async (_, _) =>
+    private (Control, Action) BuildMacros(SettingRow row) =>
+        OpenRow(row, "OpenMacros", "Edit macros", async open =>
         {
             if (services.Macros is null || TopLevel.GetTopLevel(open) is not Window owner)
             {
-                return;
+                return false;
             }
 
             await new Controls.MacroDialog(services.Macros) { ReservedPhrases = services.Reserved }.Over(owner);
 
-            // The editor writes the file; this is what puts the new summary on the row without waiting for
-            // something else to notice.
-            refresh();
-        };
-
-        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
-
-        return (stack, refresh);
-    }
+            return true;
+        });
 
     /// <summary>The checklist summary, plus the way into the panel.</summary>
-    private (Control, Action) BuildChecklists(SettingRow row)
-    {
-        var (inset, refresh) = BuildInfo(row);
-
-        // A tab of this panel since Phase 25, rather than a dialog over it: a Window cannot appear in the
-        // headset at all, so the checklist was unreachable there for a Commander wearing one.
-        var open = new Button
+    private (Control, Action) BuildChecklists(SettingRow row) =>
+        OpenRow(row, "OpenChecklist", "Open the checklist", open =>
         {
-            Name = "OpenChecklist",
-            Content = "Open the checklist",
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(8, 4),
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        open.Click += (_, _) =>
-        {
-            // Its own panel, found up the tree rather than handed in.
             if (open.GetSelfAndVisualAncestors().OfType<Panel.PanelView>().FirstOrDefault() is { } panel)
             {
                 panel.Nav.Show("checklist");
             }
 
-            // The tab writes the file; this is what puts the new summary on the row without waiting for
-            // something else to notice.
-            refresh();
-        };
-
-        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
-
-        return (stack, refresh);
-    }
+            return Task.FromResult(true);
+        });
 
     /// <summary>The switch summary, plus the way into the walk.</summary>
-    private (Control, Action) BuildSwitches(SettingRow row)
-    {
-        var (inset, refresh) = BuildInfo(row);
-
-        var open = new Button
-        {
-            Name = "OpenSwitches",
-            Content = "Assign switches",
-            FontSize = TypeScale.Body,
-            Padding = new Thickness(8, 4),
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        open.Click += async (_, _) =>
+    private (Control, Action) BuildSwitches(SettingRow row) =>
+        OpenRow(row, "OpenSwitches", "Assign switches", async open =>
         {
             if (services.Switches is not { } editing || open.FindAncestorOfType<Panel.PanelView>() is not { } panel)
             {
-                return;
+                return false;
             }
 
             await panel.Open(new Controls.SwitchPage(
@@ -943,13 +807,6 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
                 editing.Settings,
                 ((Panel.IPanelTabHost)panel).ColumnWidths));
 
-            // The editor writes the file; this is what puts the new summary on the row without waiting for
-            // something else to notice.
-            refresh();
-        };
-
-        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
-
-        return (stack, refresh);
-    }
+            return true;
+        });
 }
