@@ -121,6 +121,10 @@ public static class VrCapability
             new ToolDefinition
             {
                 Name = "get_headset_status",
+                Exercise =
+                    "Ask D47 whether the headset is connected. The reply says \"Showing in the headset.\" when it "
+                    + "is, or why not; with the overlay setting off it says \"The headset overlays are switched "
+                    + "off.\"",
                 Description =
                     "Report whether D47 is showing in the headset, and if not, why not. "
                     + "Reports only; use show_in_headset to turn it on or off.",
@@ -131,6 +135,9 @@ public static class VrCapability
             new ToolDefinition
             {
                 Name = "show_in_headset",
+                Exercise =
+                    "Say \"headset overlay off\", then \"headset overlay on\". The reply reports the state each "
+                    + "time, and the overlay setting on the Headset page follows.",
                 Description =
                     "Show D47 in the headset, or stop showing it. This is the one that acts; "
                     + "get_headset_status only reports.",
@@ -152,6 +159,10 @@ public static class VrCapability
             new ToolDefinition
             {
                 Name = "move_headset_panel",
+                Exercise =
+                    "With the headset on and a panel showing, say \"move the panel left\". The panel moves 5 cm "
+                    + "to your left; \"turn the panel right\" swings its face 5 degrees. With no headset the reply "
+                    + "says so.",
                 Description =
                     "Move the headset panel a step at a time: left, right, up, down, nearer, further, "
                     + "or turn or tilt it. Acts on whichever panel is on screen, and puts it down in "
@@ -182,6 +193,9 @@ public static class VrCapability
             new ToolDefinition
             {
                 Name = "place_headset_panel_here",
+                Exercise =
+                    "With the headset on, look at a spot and say \"place the panel here\". The reply is \"Put it "
+                    + "where you are looking.\" and the panel sits on your line of sight, facing you.",
                 Description =
                     "Put the headset panel where the Commander is looking: centred on the line the headset "
                     + "faces, as far away as the panel already is, turned to face them. Acts on whichever "
@@ -204,6 +218,9 @@ public static class VrCapability
             new ToolDefinition
             {
                 Name = "restore_headset_panel_position",
+                Exercise =
+                    "With the headset on and the panel moved, say \"reset the panel\". The reply is \"The panel "
+                    + "is back where a fresh install puts it.\" and its size and zoom are unchanged.",
                 Description =
                     "Put the headset panel that is on screen back where a fresh install puts it: "
                     + "forgets where it was placed, sets it world-locked at its default distance, "
@@ -222,6 +239,10 @@ public static class VrCapability
             new ToolDefinition
             {
                 Name = "zoom_headset_panel",
+                Exercise =
+                    "With the headset on, say \"zoom the panel in\", then \"zoom the panel out\", then \"reset "
+                    + "the panel zoom\". Each step makes the panel's content larger, smaller, or back to 100% "
+                    + "without moving its edges.",
                 Description =
                     "Make everything drawn on the headset panel larger or smaller, one step at a time, "
                     + "or put it back to 100%. The panel's edges do not move; the content reflows. "
@@ -244,6 +265,9 @@ public static class VrCapability
             new ToolDefinition
             {
                 Name = "resize_headset_panel",
+                Exercise =
+                    "With the headset on, say \"resize the panel\"; the panel's edges can then be dragged with a "
+                    + "controller. Say \"stop resizing the panel\" to leave the mode.",
                 Description =
                     "Put the headset panel into resize mode, where its edges and corners can be dragged "
                     + "with a motion controller to change its shape, or take it out again.",

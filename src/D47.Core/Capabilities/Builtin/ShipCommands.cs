@@ -37,6 +37,11 @@ public static class ShipCommands
         ActionSurface actions, ShipCommandSurface commands, NavigationSurface navigation, LastFoundSystem lastFound) => new()
     {
         Name = "ship_command",
+        Exercise =
+            "Say \"take us out\" on a landing pad, or \"get clear and jump\" with a system targeted. The "
+            + "ship leaves the pad or boosts clear and engages the drive, and the reply says what was done. "
+            + "Say \"request docking\" near a station for the docking request. The model cannot do this: it "
+            + "is refused if it asks.",
         Description =
             "Compound ship commands: leave the pad, break a mass lock and engage, set a course "
             + "to what a nearest-first search just found and leave the pad, or request docking. "

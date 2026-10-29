@@ -23,6 +23,9 @@ public static class AutonomousCapability
             new ToolDefinition
             {
                 Name = "describe_autonomous_actions",
+                Exercise =
+                    "Ask D47 what it does on its own. The reply lists each autonomous action, such as the arrival "
+                    + "honk, and whether it is switched on.",
                 Description =
                     "Report which autonomous actions exist and which the Commander has switched on. "
                     + "Reports only; it cannot change any of them.",

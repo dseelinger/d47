@@ -58,6 +58,9 @@ public static class SwitchCapability
             new ToolDefinition
             {
                 Name = "report_switches",
+                Exercise =
+                    "Say \"check my switches\". The reply gives where each mapped HOTAS switch is sitting, which "
+                    + "disagree with the game, and any that need reassigning.",
                 Description =
                     "Report the Commander's mapped HOTAS switches: where each one is sitting, which "
                     + "ones currently disagree with the game, and any that need reassigning. Reports "

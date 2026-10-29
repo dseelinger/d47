@@ -30,6 +30,9 @@ public static class MacroCapability
             new ToolDefinition
             {
                 Name = "list_macros",
+                Exercise =
+                    "With at least one macro saved, say \"what macros do I have\". The reply lists each macro "
+                    + "with its steps, and any that were refused.",
                 Description = "Report the Commander's macros, their steps, and any that were refused.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(store))),
             },
@@ -37,6 +40,9 @@ public static class MacroCapability
             new ToolDefinition
             {
                 Name = "run_macro",
+                Exercise =
+                    "With key presses switched on and Elite in front, say the name of a macro you saved. Its ship "
+                    + "actions run in order. A name that is not saved is answered with a refusal.",
                 Description =
                     "Run one of the Commander's own named macros. Only names listed in the current "
                     + "game state exist; anything else comes back saying so.",
@@ -57,6 +63,9 @@ public static class MacroCapability
             new ToolDefinition
             {
                 Name = KeyMacroTool,
+                Exercise =
+                    "Say the name of a macro that presses key chords outside Elite's bindings. The chords are "
+                    + "sent to the window in front. The model cannot do this: it is refused if it asks.",
                 Description =
                     "Run one of the Commander's macros that presses key chords outside Elite's bindings. "
                     + "Only the Commander can run it.",

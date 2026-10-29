@@ -162,6 +162,9 @@ public static class CalloutCapability
             new ToolDefinition
             {
                 Name = "get_callouts",
+                Exercise =
+                    "Ask D47 what it calls out. The reply lists each unprompted announcement and whether it is "
+                    + "on.",
                 Description =
                     "List the things D47 announces without being asked, and whether each one is currently on.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(describe())),

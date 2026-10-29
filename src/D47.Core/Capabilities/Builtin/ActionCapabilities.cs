@@ -236,6 +236,10 @@ public static class ActionCapabilities
                 new ToolDefinition
                 {
                     Name = toolName,
+                    Exercise =
+                        "With key presses switched on and Elite in front, say one of the group's example phrases, "
+                        + $"such as {ExampleList(examples)}. The matching key is pressed and the reply names it. A "
+                        + "phrase for an action the game state does not allow is refused with the reason.",
                     Description =
                         summary
                         + " Only the actions listed as reachable in the current game state will work; "
@@ -290,6 +294,9 @@ public static class ActionCapabilities
                     _ => "toggle",
                 },
             });
+
+    private static string ExampleList(IReadOnlyList<string> examples) =>
+        string.Join(", ", examples.Take(2).Select(example => $"\"{example}\""));
 
     private static async Task<ToolResult> Perform(
         ToolArguments arguments,

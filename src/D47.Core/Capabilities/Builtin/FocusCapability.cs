@@ -70,6 +70,10 @@ public static class FocusCapability
             new ToolDefinition
             {
                 Name = "focus_the_game",
+                Exercise =
+                    "With Elite running behind another window, say \"focus the game\". The reply is \"Elite is in "
+                    + "front.\"; if it already was, \"Elite is already in front.\" The model cannot do this: it is "
+                    + "refused if it asks.",
                 Description =
                     "Bring Elite Dangerous to the foreground. Reachable by spoken phrase only, never by "
                     + "the model.",

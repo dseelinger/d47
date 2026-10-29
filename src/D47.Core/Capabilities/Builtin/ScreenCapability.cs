@@ -70,6 +70,9 @@ public static class ScreenCapability
             new ToolDefinition
             {
                 Name = ToolName,
+                Exercise =
+                    "With Elite showing a scanner or panel, ask D47 \"what does that panel say\". D47 takes a "
+                    + "picture of the screen and reads out what is on it.",
                 Description =
                     "Take a picture of the Commander's screen, or of the headset's view in VR, and read it: the "
                     + "scanner, the HUD, a cockpit panel, comms, a station menu or the galaxy map. Use it only when "
@@ -81,6 +84,9 @@ public static class ScreenCapability
             new ToolDefinition
             {
                 Name = TakePictureToolName,
+                Exercise =
+                    "Say \"take a picture\". The full-size picture is saved to disk with a note of where it was "
+                    + "taken, and the reply says so. The model cannot do this: it is refused if it asks.",
                 Description =
                     "Take a full-size picture of the Commander's screen, or of the headset's view in VR, and keep "
                     + "it on disk with a note of where it was taken. The Commander's own act: not offered to the "

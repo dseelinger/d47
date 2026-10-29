@@ -30,6 +30,9 @@ public static class BindingProfilesCapability
             new ToolDefinition
             {
                 Name = "list_binding_profiles",
+                Exercise =
+                    "Say \"list my binding profiles\". The reply names each saved profile, or says there are "
+                    + "none.",
                 Description = "Report the names of the Commander's saved binding profiles.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Summarise(profiles))),
             },
@@ -37,6 +40,9 @@ public static class BindingProfilesCapability
             new ToolDefinition
             {
                 Name = SaveTool,
+                Exercise =
+                    "With Elite closed, say \"save these bindings as test\". The reply confirms the profile "
+                    + "\"test\"; with Elite running it is refused.",
                 Description =
                     "Save Elite's current control bindings under a name, replacing a profile of that name. "
                     + "Refused while Elite is running.",
@@ -56,6 +62,10 @@ public static class BindingProfilesCapability
             new ToolDefinition
             {
                 Name = LoadTool,
+                Exercise =
+                    "With Elite closed and a profile \"test\" saved, say \"load the test bindings\". The reply "
+                    + "confirms, and the set it replaced is kept as the before-last-load profile. With Elite "
+                    + "running it is refused.",
                 Description =
                     "Copy a saved binding profile back into Elite's bindings folder, keeping the set it "
                     + "replaces as \"" + BindingProfiles.BeforeLastLoad + "\". Elite reads them when it "
