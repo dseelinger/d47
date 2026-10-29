@@ -1,12 +1,7 @@
-using System.Globalization;
-using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
-using Avalonia.Controls.Documents;
 using Avalonia.Layout;
-using Avalonia.Media;
 using D47.App.Controls;
-using D47.App.Theming;
 
 namespace D47.App.Panel;
 
@@ -14,13 +9,13 @@ namespace D47.App.Panel;
 /// The Discoveries page's filter as a sentence of tokens: "Show [status] entries in [category] [sub-category]". A token
 /// opens a Segment of its choices inside the page and closes on the pick; the results line carries Clear filters.
 /// </summary>
-internal sealed class CodexDiscoveryFilters : StackPanel
+internal sealed class CodexDiscoveryFilters : TokenFilterBar<CodexDiscoveryFilters.Kind>
 {
     public const string AllCategories = "All categories";
 
     public const string AllSubCategories = "All sub-categories";
 
-    private enum Kind
+    internal enum Kind
     {
         Status,
         Category,
@@ -29,18 +24,12 @@ internal sealed class CodexDiscoveryFilters : StackPanel
 
     private static readonly string[] StatusLabels = ["Missing", "On record", "All"];
 
-    private readonly Dictionary<Kind, Button> _tokens = [];
-    private readonly Dictionary<Kind, TextBlock> _values = [];
-    private readonly Dictionary<Kind, IDisposable> _inks = [];
-    private readonly Border _panelHost;
-    private readonly TextBlock _count;
-    private readonly Button _clear;
     private IReadOnlyList<string> _categories = [];
     private IReadOnlyList<string> _subCategories = [];
     private CodexDiscoveryFilter _filter = new();
-    private Kind? _open;
 
     public CodexDiscoveryFilters()
+        : base("CodexDiscoveryToken.")
     {
         var sentence = new WrapPanel { Orientation = Orientation.Horizontal };
         sentence.Children.Add(Words("Show"));
@@ -49,34 +38,10 @@ internal sealed class CodexDiscoveryFilters : StackPanel
         sentence.Children.Add(Token(Kind.Category, "Category"));
         sentence.Children.Add(Token(Kind.SubCategory, "Sub-category"));
 
-        var hint = AdventuresPage.Text(CatalogueFilters.TokenHint, TypeScale.Body, ThemeManager.GreyKey);
-        hint.Margin = new Thickness(0, 4, 0, 0);
-
-        _panelHost = new Border { BorderThickness = new Thickness(1), Padding = new Thickness(8), Margin = new Thickness(0, 6, 0, 0), IsVisible = false };
-        _panelHost.Bind(Border.BackgroundProperty, Resource(ThemeManager.BarKey));
-        _panelHost.Bind(Border.BorderBrushProperty, Resource(ThemeManager.AKey));
-
-        _count = new TextBlock { FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
-        _count.Bind(TextBlock.ForegroundProperty, Resource(ThemeManager.GreyKey));
-
-        _clear = new Button { Name = "CodexDiscoveryClear", Content = "Clear filters", Height = TypeScale.MinimumTarget, MinHeight = TypeScale.MinimumTarget, IsVisible = false };
-        _clear.Click += (_, _) => Clear();
-
-        var results = new DockPanel { Margin = new Thickness(0, 10, 0, 6) };
-        DockPanel.SetDock(_clear, Dock.Right);
-        results.Children.Add(_clear);
-        results.Children.Add(_count);
-
-        Children.Add(sentence);
-        Children.Add(hint);
-        Children.Add(_panelHost);
-        Children.Add(results);
+        Assemble(sentence, "CodexDiscoveryClear");
 
         Refresh();
     }
-
-    /// <summary>Raised after the Commander changes the filter.</summary>
-    public event EventHandler? Changed;
 
     public CodexDiscoveryFilter Filter => _filter;
 
@@ -86,117 +51,38 @@ internal sealed class CodexDiscoveryFilters : StackPanel
         _categories = categories;
         _subCategories = subCategories;
 
-        _count.Inlines ??= [];
-        _count.Inlines.Clear();
-        _count.Inlines.Add(Fonts.Mono(shown.ToString(CultureInfo.InvariantCulture)));
-        _count.Inlines.Add(new Run(" of "));
-        _count.Inlines.Add(Fonts.Mono(total.ToString(CultureInfo.InvariantCulture)));
-        _count.Inlines.Add(new Run(" entries"));
+        ShowCount(shown, total, "entries");
 
         Refresh();
     }
 
     private bool SubCategoryShown => _filter.Category is not null && _subCategories.Count > 1;
 
-    private void Clear()
+    protected override void Clear()
     {
         _filter = new CodexDiscoveryFilter();
-        _open = null;
+        Open = null;
         Refresh();
-        Changed?.Invoke(this, EventArgs.Empty);
+        RaiseChanged();
     }
 
-    private static TextBlock Words(string text)
+    protected override void Update()
     {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = Fonts.ProseFamily,
-            FontSize = TypeScale.Sentence,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 8, 0),
-        };
-        block.Bind(TextBlock.ForegroundProperty, Resource(ThemeManager.WhiteKey));
-        return block;
-    }
+        Tokens[Kind.SubCategory].IsVisible = SubCategoryShown;
 
-    private Button Token(Kind kind, string name)
-    {
-        var value = new TextBlock
+        if (Open == Kind.SubCategory && !SubCategoryShown)
         {
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = TypeScale.Section,
-            FontWeight = FontWeight.SemiBold,
-            LetterSpacing = TypeScale.Section * Fonts.ChromeTracking,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        var caret = new TextBlock
-        {
-            Text = "▼",
-            FontSize = TypeScale.Caption,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0, 0, 0),
-        };
-        caret.Bind(TextBlock.ForegroundProperty, value.GetObservable(TextBlock.ForegroundProperty));
-
-        var row = new StackPanel { Orientation = Orientation.Horizontal };
-        row.Children.Add(value);
-        row.Children.Add(caret);
-
-        var button = new Button
-        {
-            Name = "CodexDiscoveryToken." + kind,
-            Content = row,
-            Height = TypeScale.MinimumTarget,
-            MinHeight = TypeScale.MinimumTarget,
-            Padding = new Thickness(12, 0),
-            Margin = new Thickness(0, 2, 8, 2),
-            VerticalAlignment = VerticalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            HorizontalContentAlignment = HorizontalAlignment.Left,
-        };
-        button.Classes.Add(ListRow.Class);
-        button.Classes.Add(CatalogueFilters.TokenClass);
-        AutomationProperties.SetName(button, name);
-        button.Click += (_, _) =>
-        {
-            _open = _open == kind ? null : kind;
-            Refresh();
-        };
-
-        _tokens[kind] = button;
-        _values[kind] = value;
-        return button;
-    }
-
-    private void Refresh()
-    {
-        _tokens[Kind.SubCategory].IsVisible = SubCategoryShown;
-
-        if (_open == Kind.SubCategory && !SubCategoryShown)
-        {
-            _open = null;
+            Open = null;
         }
 
-        _values[Kind.Status].Text = StatusLabels[(int)_filter.Status].ToUpperInvariant();
-        _values[Kind.Category].Text = (_filter.Category ?? AllCategories).ToUpperInvariant();
-        _values[Kind.SubCategory].Text = (_filter.SubCategory ?? AllSubCategories).ToUpperInvariant();
+        Values[Kind.Status].Text = StatusLabels[(int)_filter.Status].ToUpperInvariant();
+        Values[Kind.Category].Text = (_filter.Category ?? AllCategories).ToUpperInvariant();
+        Values[Kind.SubCategory].Text = (_filter.SubCategory ?? AllSubCategories).ToUpperInvariant();
 
-        foreach (var (kind, token) in _tokens)
-        {
-            var open = _open == kind;
-
-            token.Classes.Set(ListRow.SelectedClass, open);
-            _inks.GetValueOrDefault(kind)?.Dispose();
-            _inks[kind] = _values[kind].Bind(TextBlock.ForegroundProperty, Resource(open ? ThemeManager.KnockKey : ThemeManager.AKey));
-        }
-
-        _panelHost.IsVisible = _open is not null;
-        _panelHost.Child = _open is { } opened ? PanelFor(opened) : null;
-        _clear.IsVisible = !_filter.IsDefault;
+        ClearShown = !_filter.IsDefault;
     }
 
-    private Segment PanelFor(Kind kind)
+    protected override Control PanelFor(Kind kind)
     {
         var (options, selected, name) = kind switch
         {
@@ -223,9 +109,9 @@ internal sealed class CodexDiscoveryFilters : StackPanel
                 Kind.Category => _filter with { Category = index == 0 ? null : _categories[index - 1], SubCategory = null },
                 _ => _filter with { SubCategory = index == 0 ? null : _subCategories[index - 1] },
             };
-            _open = null;
+            Open = null;
             Refresh();
-            Changed?.Invoke(this, EventArgs.Empty);
+            RaiseChanged();
         };
 
         return segment;
@@ -248,7 +134,4 @@ internal sealed class CodexDiscoveryFilters : StackPanel
 
         return 0;
     }
-
-    private static IObservable<object?> Resource(string key) =>
-        Application.Current!.Resources.GetResourceObservable(key);
 }

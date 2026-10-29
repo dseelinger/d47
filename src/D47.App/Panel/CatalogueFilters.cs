@@ -1,10 +1,7 @@
-using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
-using Avalonia.Controls.Documents;
 using Avalonia.Layout;
-using Avalonia.Media;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Stories;
@@ -15,15 +12,11 @@ namespace D47.App.Panel;
 /// The Catalogue's filter as a sentence of tokens, the panel of the token pressed opening inside the page under it,
 /// and the results line with Clear filters.
 /// </summary>
-internal sealed class CatalogueFilters : StackPanel
+internal sealed class CatalogueFilters : TokenFilterBar<CatalogueFilters.Kind>
 {
-    public const string TokenClass = "catalogue-token";
-
     public const string LevelHint = "Tick any. With none ticked, every level shows.";
 
-    public const string TokenHint = "Press an orange word to change it.";
-
-    private enum Kind
+    internal enum Kind
     {
         Level,
         Compare,
@@ -39,15 +32,9 @@ internal sealed class CatalogueFilters : StackPanel
     private static readonly string[] RatingLabels = ["Any rating", "4 stars & up", "3 stars & up", "2 stars & up", "1 star & up"];
     private static readonly string[] SortLabels = ["Catalogue order", "Highest rating"];
 
-    private readonly Dictionary<Kind, Button> _tokens = [];
-    private readonly Dictionary<Kind, TextBlock> _values = [];
-    private readonly Dictionary<Kind, IDisposable> _inks = [];
     private readonly Dictionary<Kind, Control> _panels = [];
     private readonly List<CheckBox> _levelBoxes = [];
     private readonly Dictionary<Kind, Segment> _segments = [];
-    private readonly Border _panelHost;
-    private readonly TextBlock _count;
-    private readonly Button _clear;
     private readonly Control[] _lengthControls;
     private readonly Control[] _ratingControls;
     private readonly HashSet<string> _levels;
@@ -56,11 +43,10 @@ internal sealed class CatalogueFilters : StackPanel
     private int? _minStars;
     private StorySort _sort;
     private bool _black;
-    private Kind? _open;
-    private bool _syncing;
     private bool _ratingsShown = true;
 
     public CatalogueFilters(StoryFilter start)
+        : base(null)
     {
         _levels = [.. start.Levels ?? []];
         _compare = start.Compare;
@@ -85,34 +71,10 @@ internal sealed class CatalogueFilters : StackPanel
             sentence.Children.Add(control);
         }
 
-        var hint = AdventuresPage.Text(TokenHint, TypeScale.Body, ThemeManager.GreyKey);
-        hint.Margin = new Thickness(0, 4, 0, 0);
-
-        _panelHost = new Border { BorderThickness = new Thickness(1), Padding = new Thickness(8), Margin = new Thickness(0, 6, 0, 0), IsVisible = false };
-        _panelHost.Bind(Border.BackgroundProperty, Resource(ThemeManager.BarKey));
-        _panelHost.Bind(Border.BorderBrushProperty, Resource(ThemeManager.AKey));
-
-        _count = new TextBlock { FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
-        _count.Bind(TextBlock.ForegroundProperty, Resource(ThemeManager.GreyKey));
-
-        _clear = new Button { Content = "Clear filters", Height = TypeScale.MinimumTarget, MinHeight = TypeScale.MinimumTarget, IsVisible = false };
-        _clear.Click += (_, _) => Clear();
-
-        var results = new DockPanel { Margin = new Thickness(0, 10, 0, 6) };
-        DockPanel.SetDock(_clear, Dock.Right);
-        results.Children.Add(_clear);
-        results.Children.Add(_count);
-
-        Children.Add(sentence);
-        Children.Add(hint);
-        Children.Add(_panelHost);
-        Children.Add(results);
+        Assemble(sentence, null);
 
         Refresh();
     }
-
-    /// <summary>Raised after the Commander changes the filter.</summary>
-    public event EventHandler? Changed;
 
     public StoryFilter Filter => new(
         StoryCard.Levels.Where(_levels.Contains).ToList() is { Count: > 0 } levels ? levels : null,
@@ -141,89 +103,20 @@ internal sealed class CatalogueFilters : StackPanel
     /// <summary>Draws "N of M stories", and Clear filters while <paramref name="filtered"/>.</summary>
     public void ShowResults(int shown, int total, bool filtered)
     {
-        _count.Inlines ??= [];
-        _count.Inlines.Clear();
-        _count.Inlines.Add(Fonts.Mono(shown.ToString(CultureInfo.InvariantCulture)));
-        _count.Inlines.Add(new Run(" of "));
-        _count.Inlines.Add(Fonts.Mono(total.ToString(CultureInfo.InvariantCulture)));
-        _count.Inlines.Add(new Run(" stories"));
-        _clear.IsVisible = filtered;
+        ShowCount(shown, total, "stories");
+        ClearShown = filtered;
     }
 
-    private void Clear()
+    protected override void Clear()
     {
         _levels.Clear();
         _compare = StoryLengthCompare.Any;
         _minStars = null;
         _sort = StorySort.Catalogue;
         _black = false;
-        _open = null;
+        Open = null;
         Refresh();
-        Changed?.Invoke(this, EventArgs.Empty);
-    }
-
-    private static TextBlock Words(string text)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = Fonts.ProseFamily,
-            FontSize = TypeScale.Sentence,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 8, 0),
-        };
-        block.Bind(TextBlock.ForegroundProperty, Resource(ThemeManager.WhiteKey));
-        return block;
-    }
-
-    private Button Token(Kind kind, string name)
-    {
-        var value = new TextBlock
-        {
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = TypeScale.Section,
-            FontWeight = FontWeight.SemiBold,
-            LetterSpacing = TypeScale.Section * Fonts.ChromeTracking,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        var caret = new TextBlock
-        {
-            Text = "▼",
-            FontSize = TypeScale.Caption,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0, 0, 0),
-        };
-        caret.Bind(TextBlock.ForegroundProperty, value.GetObservable(TextBlock.ForegroundProperty));
-
-        var row = new StackPanel { Orientation = Orientation.Horizontal };
-        row.Children.Add(value);
-        row.Children.Add(caret);
-
-        var button = new Button
-        {
-            Content = row,
-            Height = TypeScale.MinimumTarget,
-            MinHeight = TypeScale.MinimumTarget,
-            Padding = new Thickness(12, 0),
-            Margin = new Thickness(0, 2, 8, 2),
-            VerticalAlignment = VerticalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            HorizontalContentAlignment = HorizontalAlignment.Left,
-        };
-        button.Classes.Add(ListRow.Class);
-        button.Classes.Add(TokenClass);
-        AutomationProperties.SetName(button, name);
-        button.Click += (_, _) => Toggle(kind);
-
-        _tokens[kind] = button;
-        _values[kind] = value;
-        return button;
-    }
-
-    private void Toggle(Kind kind)
-    {
-        _open = _open == kind ? null : kind;
-        Refresh();
+        RaiseChanged();
     }
 
     private int Selected(Kind kind) => kind switch
@@ -235,10 +128,8 @@ internal sealed class CatalogueFilters : StackPanel
         _ => (int)_sort,
     };
 
-    private void Refresh()
+    protected override void Update()
     {
-        _syncing = true;
-
         _lengthControls[0].IsVisible = _compare != StoryLengthCompare.Any;
 
         foreach (var control in _ratingControls)
@@ -246,26 +137,17 @@ internal sealed class CatalogueFilters : StackPanel
             control.IsVisible = _ratingsShown;
         }
 
-        if ((!_ratingsShown && _open is Kind.Rating or Kind.Sort) || (_open == Kind.Length && _compare == StoryLengthCompare.Any))
+        if ((!_ratingsShown && Open is Kind.Rating or Kind.Sort) || (Open == Kind.Length && _compare == StoryLengthCompare.Any))
         {
-            _open = null;
+            Open = null;
         }
 
-        _values[Kind.Level].Text = LevelText().ToUpperInvariant();
-        _values[Kind.Compare].Text = CompareLabels[(int)_compare].ToUpperInvariant();
-        _values[Kind.Length].Text = (StoryPacing.Find(_length)?.Name ?? _length).ToUpperInvariant();
-        _values[Kind.Black].Text = BlackLabels[Selected(Kind.Black)].ToUpperInvariant();
-        _values[Kind.Rating].Text = RatingLabels[Selected(Kind.Rating)].ToUpperInvariant();
-        _values[Kind.Sort].Text = SortLabels[(int)_sort].ToUpperInvariant();
-
-        foreach (var (kind, token) in _tokens)
-        {
-            var open = _open == kind;
-
-            token.Classes.Set(ListRow.SelectedClass, open);
-            _inks.GetValueOrDefault(kind)?.Dispose();
-            _inks[kind] = _values[kind].Bind(TextBlock.ForegroundProperty, Resource(open ? ThemeManager.KnockKey : ThemeManager.AKey));
-        }
+        Values[Kind.Level].Text = LevelText().ToUpperInvariant();
+        Values[Kind.Compare].Text = CompareLabels[(int)_compare].ToUpperInvariant();
+        Values[Kind.Length].Text = (StoryPacing.Find(_length)?.Name ?? _length).ToUpperInvariant();
+        Values[Kind.Black].Text = BlackLabels[Selected(Kind.Black)].ToUpperInvariant();
+        Values[Kind.Rating].Text = RatingLabels[Selected(Kind.Rating)].ToUpperInvariant();
+        Values[Kind.Sort].Text = SortLabels[(int)_sort].ToUpperInvariant();
 
         foreach (var (kind, segment) in _segments)
         {
@@ -276,11 +158,6 @@ internal sealed class CatalogueFilters : StackPanel
         {
             _levelBoxes[i].IsChecked = _levels.Contains(StoryCard.Levels[i]);
         }
-
-        _panelHost.IsVisible = _open is not null;
-        _panelHost.Child = _open is { } opened ? PanelFor(opened) : null;
-
-        _syncing = false;
     }
 
     private string LevelText()
@@ -292,7 +169,7 @@ internal sealed class CatalogueFilters : StackPanel
             : string.Join(" and ", ticked.Select(level => LevelNames[StoryCard.Levels.ToList().IndexOf(level)]));
     }
 
-    private Control PanelFor(Kind kind)
+    protected override Control PanelFor(Kind kind)
     {
         if (_panels.TryGetValue(kind, out var built))
         {
@@ -317,15 +194,15 @@ internal sealed class CatalogueFilters : StackPanel
 
         segment.SelectionChanged += (_, _) =>
         {
-            if (_syncing || segment.SelectedIndex < 0)
+            if (Syncing || segment.SelectedIndex < 0)
             {
                 return;
             }
 
             pick(segment.SelectedIndex);
-            _open = null;
+            Open = null;
             Refresh();
-            Changed?.Invoke(this, EventArgs.Empty);
+            RaiseChanged();
         };
 
         _segments[kind] = segment;
@@ -345,7 +222,7 @@ internal sealed class CatalogueFilters : StackPanel
             box.HorizontalAlignment = HorizontalAlignment.Left;
             box.IsCheckedChanged += (_, _) =>
             {
-                if (_syncing)
+                if (Syncing)
                 {
                     return;
                 }
@@ -360,7 +237,7 @@ internal sealed class CatalogueFilters : StackPanel
                 }
 
                 Refresh();
-                Changed?.Invoke(this, EventArgs.Empty);
+                RaiseChanged();
             };
 
             _levelBoxes.Add(box);
@@ -373,7 +250,4 @@ internal sealed class CatalogueFilters : StackPanel
 
         return panel;
     }
-
-    private static IObservable<object?> Resource(string key) =>
-        Application.Current!.Resources.GetResourceObservable(key);
 }
