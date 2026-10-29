@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Coverage page no longer lists settings rows that only show a value, such as About's Build and Attribution, so its count covers only what you can drive. Pressing a row's button now marks that row as exercised, or as failed if the press throws. A row that asks you to press twice is marked on the confirming press. Before, rows with a button stayed at never exercised however often you pressed them.
+
 A rescue objective now says what counts: escape pods, wreckage components and black boxes, scooped at Power Wreckage Signature signal sources (black boxes also at Degraded Emissions) and handed to the Search and Rescue contact at a station. An objective that names one item says only that item. D47 reads the same explanation, so it answers where to find them. Before, the objective said only "hand in one rescue item". A step hand-off also says "Next:" once; it said "Next: Next:".
 
 "Put this build on my checklist" now works for a ship you do not own yet. It puts a list on the Checklist tab named for the planned ship, such as "Python (planned)", or the build's name followed by "(planned)". The list holds a "Buy a Python" line, a line for each module the plan names, and the engineering lines. A module line ticks once a matching module is in your module storage; until then it says you can buy it into storage before you buy the ship. The engineering lines on that list stay open, and the engineer filters do not offer them. The planned ship's page on Asset Mgmt › Ships then shows what the list still needs in materials, as an owned ship's page does. The checklist filter offers "Planned ship". Deleting the plan removes its list. Before, the button said there was no ship list to put the plan on.

@@ -106,6 +106,11 @@ public sealed class CoverageRecorder
             }
         };
 
+        settings.Pressed += pressed => Record(
+            CoverageKind.Setting,
+            pressed.Key,
+            pressed.Succeeded ? CoverageOutcome.Ok : CoverageOutcome.Failed);
+
         _logger.LogInformation("Coverage: {Summary}", Report().Summary);
     }
 

@@ -472,7 +472,7 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
 
         wipe.Click += (_, _) =>
         {
-            row.Press!();
+            RunPress(row);
             host.Refresh();
         };
 
@@ -546,7 +546,7 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
         {
             press.Click += (_, _) =>
             {
-                row.Press!();
+                RunPress(row);
 
                 // The whole surface rather than this row, because a press is not always about the row it is
                 // on: binding a core to a ship changes what the row above says *and* what the list below it
@@ -640,10 +640,26 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
             }
             else
             {
-                row.Press!();
+                RunPress(row);
                 host.Refresh();
             }
         };
+    }
+
+    /// <summary>Runs a row's press and tells the settings service whether it completed.</summary>
+    private void RunPress(SettingRow row)
+    {
+        try
+        {
+            row.Press!();
+        }
+        catch
+        {
+            host.Settings.NotePress(row.Key, false);
+            throw;
+        }
+
+        host.Settings.NotePress(row.Key, true);
     }
 
     /// <summary>Whether a long press is already running.</summary>
@@ -671,7 +687,19 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
         try
         {
             var progress = new Progress<double>(fraction => bar.Value = fraction);
-            var said = await running(progress, CancellationToken.None);
+            string? said;
+
+            try
+            {
+                said = await running(progress, CancellationToken.None);
+            }
+            catch
+            {
+                host.Settings.NotePress(row.Key, false);
+                throw;
+            }
+
+            host.Settings.NotePress(row.Key, true);
 
             if (said is { Length: > 0 })
             {

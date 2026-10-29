@@ -52,6 +52,8 @@ public sealed record SettingsChanged(string Key, D47Settings Settings, SettingsC
 /// <summary>One attempt to set a row, and what came of it — including the attempts that changed nothing.</summary>
 public sealed record SettingApplied(string Key, SettingApplyStatus Status);
 
+public sealed record SettingPressed(string Key, bool Succeeded);
+
 /// <summary>One capability's rows, in the order the capability declared them.</summary>
 public sealed record SettingsSection(CapabilityDescriptor Capability, IReadOnlyList<SettingRow> Rows);
 
@@ -188,6 +190,11 @@ public sealed class SettingsService
 
     /// <summary>Raised after every attempt to set a row, whatever came of it.</summary>
     public event Action<SettingApplied>? Applied;
+
+    /// <summary>Raised when a row's button has run, with whether it completed.</summary>
+    public event Action<SettingPressed>? Pressed;
+
+    public void NotePress(string key, bool succeeded) => Pressed?.Invoke(new SettingPressed(key, succeeded));
 
     public IReadOnlyList<SettingsSection> Sections =>
         _sections ?? throw new InvalidOperationException(

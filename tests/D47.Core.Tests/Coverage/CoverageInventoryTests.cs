@@ -26,8 +26,49 @@ public class CoverageInventoryTests
         Assert.Equal([.. registry.ToolNames.Order()], [.. tools.Order()]);
 
         Assert.Equal(
-            [.. registry.All.SelectMany(c => c.Descriptor.Settings.Select(r => r.Key)).Order()],
+            [.. registry.All
+                .SelectMany(c => c.Descriptor.Settings)
+                .Where(r => r.Kind != SettingKind.Info || r.Press is not null || r.PressAsync is not null)
+                .Select(r => r.Key)
+                .Order()],
             [.. rows.Order()]);
+    }
+
+    [Fact]
+    public void ARowThatOnlyShowsAValueIsLeftOut()
+    {
+        var items = CoverageInventory.Of(CapabilityRegistry.Build(
+        [
+            new CapabilityDescriptor
+            {
+                Id = "probe",
+                Group = "Foundation",
+                Name = "Probe",
+                Summary = "A capability that exists to carry rows.",
+                Settings =
+                [
+                    new SettingRow { Key = "probe.shown", Label = "Shown", Help = "Reads only.", Kind = SettingKind.Info },
+                    new SettingRow
+                    {
+                        Key = "probe.pressed",
+                        Label = "Pressed",
+                        Help = "Has a button.",
+                        Kind = SettingKind.Info,
+                        Press = () => { },
+                    },
+                    new SettingRow
+                    {
+                        Key = "probe.pressedLong",
+                        Label = "Pressed long",
+                        Help = "Has a long button.",
+                        Kind = SettingKind.Info,
+                        PressAsync = (_, _) => Task.FromResult<string?>(null),
+                    },
+                ],
+            },
+        ]));
+
+        Assert.Equal(["probe.pressed", "probe.pressedLong"], items.Select(i => i.Id).Order());
     }
 
     /// <summary>Every line links to its capability's help page, and the id is what builds that URL.</summary>

@@ -28,8 +28,8 @@ public class CoverageRecorderTests
         probe.Recorder.Follow(probe.Registry, probe.Settings);
 
         var before = probe.Recorder.Report();
-        Assert.Equal(4, before.Total);
-        Assert.Equal(4, before.Never);
+        Assert.Equal(6, before.Total);
+        Assert.Equal(6, before.Never);
 
         await probe.Registry.InvokeAsync(
             "probe_tool",
@@ -148,6 +148,21 @@ public class CoverageRecorderTests
             LineFor(probe.Recorder.Report(), CoverageKind.Setting, "probe.protectedRow").Status);
     }
 
+    [Fact]
+    public void ACompletedPressIsRecordedAsOkAndAThrownOneAsFailed()
+    {
+        var probe = new Probe();
+        probe.Recorder.Follow(probe.Registry, probe.Settings);
+
+        probe.Settings.NotePress("probe.button", true);
+        probe.Settings.NotePress("probe.brokenButton", false);
+
+        var report = probe.Recorder.Report();
+
+        Assert.Equal(CoverageOutcome.Ok, LineFor(report, CoverageKind.Setting, "probe.button").Outcome);
+        Assert.Equal(CoverageOutcome.Failed, LineFor(report, CoverageKind.Setting, "probe.brokenButton").Outcome);
+    }
+
     private static CoverageStatus StatusOf(CoverageReport report, string kind, string id) =>
         LineFor(report, kind, id).Status;
 
@@ -205,6 +220,24 @@ public class CoverageRecorderTests
                                 Read = s => s.Ui.Theme,
                                 Write = (s, v) => s with { Ui = s.Ui with { Theme = v ?? "elite" } },
                             },
+                        },
+                        new SettingRow
+                        {
+                            Key = "probe.button",
+                            Label = "A button",
+                            Help = "Pressed rather than set.",
+                            Kind = SettingKind.Info,
+                            Press = () => { },
+                            PressLabel = "Press",
+                        },
+                        new SettingRow
+                        {
+                            Key = "probe.brokenButton",
+                            Label = "A broken button",
+                            Help = "Pressed and throws.",
+                            Kind = SettingKind.Info,
+                            Press = () => throw new InvalidOperationException("jammed"),
+                            PressLabel = "Press",
                         },
                         new SettingRow
                         {

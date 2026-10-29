@@ -28,12 +28,16 @@ public static class CoverageInventory
                 capability.ToolSchemas[tool.Name]))));
 
     private static IEnumerable<CoverageItem> Settings(RegisteredCapability capability) =>
-        capability.Descriptor.Settings.Select(row => new CoverageItem(
+        capability.Descriptor.Settings.Where(Drivable).Select(row => new CoverageItem(
             CoverageKind.Setting,
             row.Key,
             capability.Descriptor.Id,
             $"{capability.Descriptor.Name} - {row.Label}",
             CoverageLedger.Fingerprint(Definition(row))));
+
+    /// <summary>False for a row that only shows a value: no control and no button.</summary>
+    private static bool Drivable(SettingRow row) =>
+        row.Kind != SettingKind.Info || row.Press is not null || row.PressAsync is not null;
 
     /// <summary>What makes a settings row the row it is, for fingerprinting.</summary>
     private static string Definition(SettingRow row) =>
