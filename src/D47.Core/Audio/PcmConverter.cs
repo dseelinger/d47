@@ -29,6 +29,49 @@ public static class PcmConverter
         return new AudioClip(clip.Name, output.ToArray(), AudioFormat.Standard);
     }
 
+    /// <summary>Float samples in -1..1 as 16-bit little-endian PCM, truncating toward zero.</summary>
+    public static byte[] FloatsToPcm16(ReadOnlySpan<float> samples)
+    {
+        var pcm = new byte[samples.Length * 2];
+
+        for (var i = 0; i < samples.Length; i++)
+        {
+            BinaryPrimitives.WriteInt16LittleEndian(
+                pcm.AsSpan(i * 2),
+                (short)(Math.Clamp(samples[i], -1f, 1f) * short.MaxValue));
+        }
+
+        return pcm;
+    }
+
+    /// <summary>16-bit little-endian PCM as floats in -1..1.</summary>
+    public static float[] Pcm16ToFloats(ReadOnlySpan<byte> pcm)
+    {
+        var samples = new float[pcm.Length / 2];
+
+        for (var i = 0; i < samples.Length; i++)
+        {
+            samples[i] = BinaryPrimitives.ReadInt16LittleEndian(pcm[(i * 2)..]) / 32768f;
+        }
+
+        return samples;
+    }
+
+    /// <summary><paramref name="pcm"/> itself when nothing is held, otherwise the held bytes followed by it.</summary>
+    public static ReadOnlySpan<byte> Join(byte[] held, ReadOnlySpan<byte> pcm)
+    {
+        if (held.Length == 0)
+        {
+            return pcm;
+        }
+
+        var joined = new byte[held.Length + pcm.Length];
+
+        held.CopyTo(joined, 0);
+        pcm.CopyTo(joined.AsSpan(held.Length));
+        return joined;
+    }
+
     /// <summary>The stream itself when it is already standard. Takes ownership of <paramref name="source"/>.</summary>
     public static IPcmStream ToStandard(WavPcmStream source) =>
         source.Format == AudioFormat.Standard ? source : new ConvertingPcmStream(source);

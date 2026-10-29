@@ -141,7 +141,7 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
             var samples = Run(session, tokens, style, (float)voice.Rate);
 
             // 24 kHz to the arbiter's 48, the exact doubling both the other local-ish paths use.
-            var pcm = PcmUpsample.Double(ToPcm(samples));
+            var pcm = PcmUpsample.Double(PcmConverter.FloatsToPcm16(samples));
 
             return new AudioClip(text, pcm, AudioFormat.Standard);
         }
@@ -316,22 +316,6 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
         ]);
 
         return [.. results.First().AsEnumerable<float>()];
-    }
-
-    /// <summary>Float samples to the 16-bit PCM everything downstream deals in.</summary>
-    private static byte[] ToPcm(float[] samples)
-    {
-        var pcm = new byte[samples.Length * 2];
-
-        for (var i = 0; i < samples.Length; i++)
-        {
-            var value = (short)(Math.Clamp(samples[i], -1f, 1f) * short.MaxValue);
-
-            pcm[i * 2] = (byte)value;
-            pcm[(i * 2) + 1] = (byte)(value >> 8);
-        }
-
-        return pcm;
     }
 
     /// <summary>Frees the session now if no line is running, otherwise when the last line ends.</summary>

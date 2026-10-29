@@ -13,14 +13,14 @@ namespace D47.Core.Audio;
 /// </summary>
 public static class SpokenNumbers
 {
-    private static readonly string[] Ones =
+    internal static readonly string[] Ones =
     [
         "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
         "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen",
         "eighteen", "nineteen",
     ];
 
-    private static readonly string[] Tens =
+    internal static readonly string[] Tens =
     [
         "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety",
     ];

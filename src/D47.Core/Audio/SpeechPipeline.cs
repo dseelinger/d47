@@ -340,15 +340,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
     {
         try
         {
-            var started = System.Diagnostics.Stopwatch.GetTimestamp();
-
-            var arriving = await _tts
-                .StreamAsync(spoken, _voice, _abandon.Token)
-                .ConfigureAwait(false);
-
-            Record();
-
-            return await ArrivedAsync(sentence, spoken, directed, arriving, started).ConfigureAwait(false);
+            return await StreamAsync(sentence, spoken, directed).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -498,6 +490,20 @@ public sealed class SpeechPipeline : IAsyncDisposable
         return string.IsNullOrEmpty(refused) ? null : refused;
     }
 
+    /// <summary>Streams the sentence from the provider, records it and returns it as it arrives.</summary>
+    private async Task<Spoken> StreamAsync(string sentence, string spoken, string directed)
+    {
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
+
+        var arriving = await _tts
+            .StreamAsync(spoken, _voice, _abandon.Token)
+            .ConfigureAwait(false);
+
+        Record();
+
+        return await ArrivedAsync(sentence, spoken, directed, arriving, started).ConfigureAwait(false);
+    }
+
     /// <summary>The same sentence again with no voice named, so the provider falls back to its own.</summary>
     private async Task<Spoken?> SpeakWithoutAVoiceAsync(
         string sentence,
@@ -506,15 +512,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
     {
         try
         {
-            var started = System.Diagnostics.Stopwatch.GetTimestamp();
-
-            var arriving = await _tts
-                .StreamAsync(spoken, _voice, _abandon.Token)
-                .ConfigureAwait(false);
-
-            Record();
-
-            return await ArrivedAsync(sentence, spoken, directed, arriving, started).ConfigureAwait(false);
+            return await StreamAsync(sentence, spoken, directed).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {

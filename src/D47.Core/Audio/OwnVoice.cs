@@ -86,16 +86,7 @@ public sealed class OwnVoice
 
         var resampled = PcmResample.To(samples, sampleRate, SampleRate);
         var kept = Math.Min(resampled.Length, (int)(MaxLength.TotalSeconds * SampleRate));
-        var pcm = new byte[kept * 2];
-
-        for (var i = 0; i < kept; i++)
-        {
-            var value = (short)(Math.Clamp(resampled[i], -1f, 1f) * short.MaxValue);
-
-            pcm[i * 2] = (byte)value;
-            pcm[(i * 2) + 1] = (byte)(value >> 8);
-        }
-
+        var pcm = PcmConverter.FloatsToPcm16(resampled.AsSpan(0, kept));
         var sealedBytes = _protector.Protect(pcm);
         Array.Clear(pcm);
         Array.Clear(resampled);
@@ -118,12 +109,7 @@ public sealed class OwnVoice
             return null;
         }
 
-        var samples = new float[pcm.Length / 2];
-
-        for (var i = 0; i < samples.Length; i++)
-        {
-            samples[i] = (short)(pcm[i * 2] | (pcm[(i * 2) + 1] << 8)) / 32768f;
-        }
+        var samples = PcmConverter.Pcm16ToFloats(pcm);
 
         Array.Clear(pcm);
         return samples;

@@ -625,7 +625,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private static AudioClip Clip(string text, float[] samples) =>
         samples.Length == 0
             ? new AudioClip(text, ReadOnlyMemory<byte>.Empty, AudioFormat.Standard)
-            : new AudioClip(text, PcmUpsample.Double(ToPcm(samples)), AudioFormat.Standard);
+            : new AudioClip(text, PcmUpsample.Double(PcmConverter.FloatsToPcm16(samples)), AudioFormat.Standard);
 
     private IChatterboxEngine Open()
     {
@@ -785,29 +785,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private static float[] Reference(IFileSystem files, string clipPath)
     {
         var pcm = WavReader.Read(files, clipPath).Pcm.Span;
-        var samples = new float[pcm.Length / 2];
-
-        for (var i = 0; i < samples.Length; i++)
-        {
-            samples[i] = (short)(pcm[i * 2] | (pcm[(i * 2) + 1] << 8)) / 32768f;
-        }
-
-        return samples;
-    }
-
-    private static byte[] ToPcm(float[] samples)
-    {
-        var pcm = new byte[samples.Length * 2];
-
-        for (var i = 0; i < samples.Length; i++)
-        {
-            var value = (short)(Math.Clamp(samples[i], -1f, 1f) * short.MaxValue);
-
-            pcm[i * 2] = (byte)value;
-            pcm[(i * 2) + 1] = (byte)(value >> 8);
-        }
-
-        return pcm;
+        return PcmConverter.Pcm16ToFloats(pcm);
     }
 
     public void Dispose()

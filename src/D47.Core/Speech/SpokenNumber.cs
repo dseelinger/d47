@@ -1,3 +1,5 @@
+using D47.Core.Audio;
+
 namespace D47.Core.Speech;
 
 /// <summary>
@@ -9,17 +11,9 @@ namespace D47.Core.Speech;
 /// </summary>
 public static class SpokenNumber
 {
-    private static readonly string[] Ones =
-    [
-        "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-        "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
-        "seventeen", "eighteen", "nineteen",
-    ];
+    private static readonly string[] Ones = SpokenNumbers.Ones;
 
-    private static readonly string[] Tens =
-    [
-        "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety",
-    ];
+    private static readonly string[] Tens = SpokenNumbers.Tens;
 
     /// <summary>What each number word sounds like.</summary>
     public static readonly IReadOnlyDictionary<string, string> Sounds =

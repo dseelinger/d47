@@ -100,16 +100,7 @@ public static class CovasVoice
                 throw new InvalidOperationException("The reverb has already been finished.");
             }
 
-            var input = pcm;
-
-            if (_held.Length > 0)
-            {
-                var joined = new byte[_held.Length + pcm.Length];
-
-                _held.CopyTo(joined, 0);
-                pcm.CopyTo(joined.AsSpan(_held.Length));
-                input = joined;
-            }
+            var input = PcmConverter.Join(_held, pcm);
             var whole = input.Length - (input.Length % (2 * _rooms.Length));
             var output = new byte[whole];
 

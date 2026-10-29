@@ -192,16 +192,7 @@ public static class RadioVoice
                 throw new InvalidOperationException("The link has already been finished.");
             }
 
-            var input = pcm;
-
-            if (_held.Length > 0)
-            {
-                var joined = new byte[_held.Length + pcm.Length];
-
-                _held.CopyTo(joined, 0);
-                pcm.CopyTo(joined.AsSpan(_held.Length));
-                input = joined;
-            }
+            var input = PcmConverter.Join(_held, pcm);
 
             var whole = input.Length - (input.Length % (2 * _channels));
             var output = new byte[whole];
