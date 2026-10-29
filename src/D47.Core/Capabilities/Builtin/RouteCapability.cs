@@ -311,14 +311,12 @@ public static class RouteCapability
 
         arguments.TryGetString("to", out var to);
 
-        var from = arguments.TryGetString("from", out var explicitFrom) && !string.IsNullOrWhiteSpace(explicitFrom)
-            ? explicitFrom
-            : active?.Location.StarSystem;
+        var from = arguments.Text("from") ?? active?.Location.StarSystem;
 
         if (!RouteQuery.TryParse(
                 from,
                 to,
-                Number(arguments, "jump_range") ?? active?.Ship.MaxJumpRange,
+                arguments.Double("jump_range") ?? active?.Ship.MaxJumpRange,
                 arguments.TryGetInt32("efficiency", out var efficiency) ? efficiency : null,
                 out var query,
                 out var failure))
@@ -422,18 +420,16 @@ public static class RouteCapability
 
         var active = commander();
 
-        var from = arguments.TryGetString("from", out var explicitFrom) && !string.IsNullOrWhiteSpace(explicitFrom)
-            ? explicitFrom
-            : active?.Location.StarSystem;
+        var from = arguments.Text("from") ?? active?.Location.StarSystem;
 
         if (!RichesQuery.TryParse(
                 from,
-                Number(arguments, "jump_range") ?? active?.Ship.MaxJumpRange,
-                Number(arguments, "radius"),
+                arguments.Double("jump_range") ?? active?.Ship.MaxJumpRange,
+                arguments.Double("radius"),
                 arguments.TryGetInt32("stops", out var stops) ? stops : null,
                 arguments.TryGetInt32("minimum_value", out var minimum) ? minimum : null,
-                Number(arguments, "max_distance_to_arrival"),
-                Flag(arguments, "loop"),
+                arguments.Double("max_distance_to_arrival"),
+                arguments.Boolean("loop"),
                 out var query,
                 out var failure))
         {
@@ -553,7 +549,7 @@ public static class RouteCapability
                 commander()?.Carrier ?? CarrierState.None,
                 from,
                 to ?? string.Empty,
-                Flag(arguments, "return_trip") ?? true,
+                arguments.Boolean("return_trip") ?? true,
                 out var query,
                 out var failure))
         {
@@ -755,7 +751,7 @@ public static class RouteCapability
 
         var active = commander();
 
-        var ladenRange = Number(arguments, "jump_range")
+        var ladenRange = arguments.Double("jump_range")
                           ?? ShipGauges.LadenRange(active?.Ship ?? ShipLoadout.Unknown);
 
         // Limpets never sell on a trade route, so they come off the hold with no switch — read from
@@ -778,12 +774,12 @@ public static class RouteCapability
                 arguments.TryGetInt32("hops", out var hops) ? hops : saved.Hops,
                 arguments.TryGetInt32("max_jumps", out var maxJumps) ? maxJumps : saved.MaxJumps,
                 ladenRange,
-                Number(arguments, "max_station_distance") ?? saved.MaxStationDistance,
-                Flag(arguments, "large_pad") ?? saved.LargePadOnly,
+                arguments.Double("max_station_distance") ?? saved.MaxStationDistance,
+                arguments.Boolean("large_pad") ?? saved.LargePadOnly,
                 arguments.TryGetInt32("max_price_age_hours", out var age) ? age : saved.MaxPriceAgeHours,
-                Flag(arguments, "loop") ?? saved.Loop,
-                Flag(arguments, "planetary") ?? saved.Planetary,
-                Flag(arguments, "avoid_permit_systems") ?? saved.AvoidPermitSystems,
+                arguments.Boolean("loop") ?? saved.Loop,
+                arguments.Boolean("planetary") ?? saved.Planetary,
+                arguments.Boolean("avoid_permit_systems") ?? saved.AvoidPermitSystems,
                 out var query,
                 out var failure))
         {
@@ -843,9 +839,7 @@ public static class RouteCapability
 
         var active = commander();
 
-        var near = arguments.TryGetString("near", out var asked) && !string.IsNullOrWhiteSpace(asked)
-            ? asked.Trim()
-            : active?.Location.StarSystem;
+        var near = arguments.Text("near")?.Trim() ?? active?.Location.StarSystem;
 
         if (string.IsNullOrWhiteSpace(near))
         {
@@ -886,7 +880,7 @@ public static class RouteCapability
             pad = Enum.Parse<PadSize>(padText.Trim(), ignoreCase: true);
         }
 
-        var maxDistance = Number(arguments, "max_distance") is > 0 and var distance ? distance : 50;
+        var maxDistance = arguments.Double("max_distance") is > 0 and var distance ? distance : 50;
 
         try
         {
@@ -897,7 +891,7 @@ public static class RouteCapability
             var route = OutfittingRoutePlanner.Plan(items, stations, near) with
             {
                 MaxDistance = maxDistance,
-                StorageChecked = Flag(arguments, "storage_checked"),
+                StorageChecked = arguments.Boolean("storage_checked"),
             };
 
             if (route.Stops.Count == 0)
@@ -1218,12 +1212,4 @@ public static class RouteCapability
         _ => null,
     };
 
-    private static double? Number(ToolArguments arguments, string name) =>
-        arguments.Values.TryGetValue(name, out var raw)
-        && double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
-            ? parsed
-            : null;
-
-    private static bool? Flag(ToolArguments arguments, string name) =>
-        arguments.Values.ContainsKey(name) && arguments.TryGetBoolean(name, out var value) ? value : null;
 }

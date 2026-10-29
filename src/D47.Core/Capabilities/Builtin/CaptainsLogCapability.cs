@@ -198,7 +198,7 @@ public static partial class CaptainsLogCapability
         }
 
         var words = arguments.TryGetString("words", out var asked) ? Words(asked) : [];
-        var system = arguments.TryGetString("system", out var place) && !string.IsNullOrWhiteSpace(place) ? place.Trim() : null;
+        var system = arguments.Text("system")?.Trim();
 
         var matches = store.For(frontierId)
             .Where(entry => (since is null || entry.At >= since) && (before is null || entry.At < before))

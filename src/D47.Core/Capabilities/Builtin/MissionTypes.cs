@@ -53,7 +53,7 @@ internal static class MissionTypes
     {
         var words = names.Select(name => name.Words).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         var groups = names.Select(name => name.Group).Distinct(StringComparer.Ordinal).ToList();
-        var said = new StringBuilder($"{Capitalise(JoinAnd(words))} missions are in the {JoinAnd(groups)} group. ");
+        var said = new StringBuilder($"{SpokenText.Capitalised(JoinAnd(words))} missions are in the {JoinAnd(groups)} group. ");
 
         var states = Distinct(names, name => name.State);
         var governments = Distinct(names, name => name.Government);
@@ -126,8 +126,6 @@ internal static class MissionTypes
             .Order(StringComparer.OrdinalIgnoreCase).ToList();
 
     private static string Fold(string text) => new([.. text.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant)]);
-
-    private static string Capitalise(string text) => char.ToUpperInvariant(text[0]) + text[1..];
 
     public static string JoinAnd(IReadOnlyList<string> items) => items.Count switch
     {

@@ -208,9 +208,7 @@ public static class ExobiologyCapability
             return "No Elite Dangerous journal has been detected yet.";
         }
 
-        var wanted = arguments.TryGetString("body", out var given) && !string.IsNullOrWhiteSpace(given)
-            ? given.Trim()
-            : null;
+        var wanted = arguments.Text("body")?.Trim();
 
         var scans = state.Bodies;
 
@@ -351,9 +349,7 @@ public static class ExobiologyCapability
             return ToolResult.Ok("I do not know which system you are in, so I cannot ask about its bodies.");
         }
 
-        var wanted = arguments.TryGetString("body", out var given) && !string.IsNullOrWhiteSpace(given)
-            ? given.Trim()
-            : null;
+        var wanted = arguments.Text("body")?.Trim();
 
         var name = wanted is not null
             ? state.Bodies.Named(wanted)?.BodyName ?? wanted
@@ -599,21 +595,19 @@ public static class ExobiologyCapability
                 + "scans found.");
         }
 
-        var from = arguments.TryGetString("from", out var given) && !string.IsNullOrWhiteSpace(given)
-            ? given.Trim()
-            : commander()?.Location.StarSystem;
+        var from = arguments.Text("from")?.Trim() ?? commander()?.Location.StarSystem;
 
         if (!ExobiologyQuery.TryParse(
                 from,
 
                 // The ship's own range where the Commander did not say one, exactly as the other plotters do
                 // — a route plotted at a default 50 for a ship that jumps 18 is a route nobody can fly.
-                Number(arguments, "jump_range") ?? commander()?.Ship.MaxJumpRange,
-                Number(arguments, "radius"),
+                arguments.Double("jump_range") ?? commander()?.Ship.MaxJumpRange,
+                arguments.Double("radius"),
                 arguments.TryGetInt32("max_results", out var max) ? max : null,
                 arguments.TryGetInt32("min_value", out var min) ? min : null,
-                Number(arguments, "max_distance_to_arrival"),
-                Flag(arguments, "loop"),
+                arguments.Double("max_distance_to_arrival"),
+                arguments.Boolean("loop"),
                 out var query,
                 out var failure))
         {
@@ -676,15 +670,6 @@ public static class ExobiologyCapability
 
         return ToolResult.Ok(report.ToString().TrimEnd());
     }
-
-    private static double? Number(ToolArguments arguments, string name) =>
-        arguments.Values.TryGetValue(name, out var raw)
-        && double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
-            ? parsed
-            : null;
-
-    private static bool? Flag(ToolArguments arguments, string name) =>
-        arguments.Values.ContainsKey(name) && arguments.TryGetBoolean(name, out var value) ? value : null;
 
     private static string Stamp(DateTimeOffset when) =>
         when.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + " game time";

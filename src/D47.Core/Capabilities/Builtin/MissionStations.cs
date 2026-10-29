@@ -81,9 +81,7 @@ internal static class MissionStations
             return ToolResult.Error(ranks + GalaxyCapability.Unavailable);
         }
 
-        var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
-            ? explicitNear
-            : currentSystem();
+        var near = arguments.Text("near") ?? currentSystem();
 
         double? maxDistance = arguments.TryGetDouble("max_distance", out var asked) ? asked : null;
 

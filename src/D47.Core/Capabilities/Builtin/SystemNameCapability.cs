@@ -62,9 +62,7 @@ public static class SystemNameCapability
 
     private static string Read(CommanderGameState? state, ToolArguments arguments)
     {
-        var spoken = arguments.TryGetString("name", out var given) && !string.IsNullOrWhiteSpace(given)
-            ? given.Trim()
-            : null;
+        var spoken = arguments.Text("name")?.Trim();
 
         // Only the Commander's own system carries a star class, because that is the one d47 watched them
         // arrive at.

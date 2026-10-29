@@ -1003,9 +1003,7 @@ public static class JournalCapability
             return ToolResult.Ok(reason);
         }
 
-        var named = arguments.TryGetString("ship", out var spoken) && !string.IsNullOrWhiteSpace(spoken)
-            ? spoken.Trim()
-            : null;
+        var named = arguments.Text("ship")?.Trim();
         var rangeOnly = arguments.TryGetBoolean("jump_range", out var wantsRange) && wantsRange;
 
         if (named is null)
@@ -1631,9 +1629,7 @@ public static class JournalCapability
                 "I have no module storage list yet — it is written when you dock at a station with outfitting.");
         }
 
-        var wanted = arguments.TryGetString("module", out var fragment) && !string.IsNullOrWhiteSpace(fragment)
-            ? fragment.Trim()
-            : null;
+        var wanted = arguments.Text("module")?.Trim();
 
         var modules = wanted is null ? store.Modules : store.Matching(wanted);
 
@@ -1913,7 +1909,7 @@ public static class JournalCapability
         {
             var total = totals.FirstOrDefault(entry => entry.Kind == only);
             var label = kindName.Replace('_', ' ');
-            var heading = from is null ? $"{Capitalised(label)} on record" : $"{Capitalised(label)} in the last {span}";
+            var heading = from is null ? $"{SpokenText.Capitalised(label)} on record" : $"{SpokenText.Capitalised(label)} in the last {span}";
 
             report = total is null
                 ? $"No {label} credits {(from is null ? "on record" : $"in the last {span}")}."
@@ -2039,7 +2035,7 @@ public static class JournalCapability
 
         var newCount = items.Count(entry => entry.IsNew);
         var logged = items.Select(entry => (entry.EntryId, entry.RegionId)).Distinct().Count();
-        var heading = regionName is null ? Capitalised(covers) : $"In {regionName}, {covers}";
+        var heading = regionName is null ? SpokenText.Capitalised(covers) : $"In {regionName}, {covers}";
         var text = new StringBuilder(
             $"{heading}: {newCount.ToString("N0", CultureInfo.InvariantCulture)} new codex "
             + $"{(newCount == 1 ? "entry" : "entries")}, {logged.ToString("N0", CultureInfo.InvariantCulture)} logged in all.");
@@ -2182,9 +2178,7 @@ public static class JournalCapability
             return "I do not know which Commander is flying yet.";
         }
 
-        var wanted = arguments.TryGetString("body", out var given) && !string.IsNullOrWhiteSpace(given)
-            ? given.Trim()
-            : null;
+        var wanted = arguments.Text("body")?.Trim();
         var body = wanted is not null ? active.Bodies.Named(wanted) : active.Bodies.MostRecentWithGeology;
 
         if (body is null)
@@ -2275,8 +2269,6 @@ public static class JournalCapability
         return $"{heading}: {string.Join(", ", named)}.";
     }
 
-    private static string Capitalised(string text) => char.ToUpperInvariant(text[0]) + text[1..];
-
     private static string CreditTop(string heading, IReadOnlyList<(CreditKind Kind, long Amount)> kinds)
     {
         if (kinds.Count == 0)
@@ -2324,9 +2316,7 @@ public static class JournalCapability
 
         var by = arguments.TryGetString("by", out var grouping) ? grouping.Trim().ToLowerInvariant() : string.Empty;
         var period = arguments.TryGetString("period", out var asked) ? asked.Trim().ToLowerInvariant() : "all";
-        var name = arguments.TryGetString("name", out var fragment) && !string.IsNullOrWhiteSpace(fragment)
-            ? fragment.Trim()
-            : null;
+        var name = arguments.Text("name")?.Trim();
 
         if (by.Length > 0 && !CombatGroupings.Contains(by))
         {
@@ -2497,12 +2487,8 @@ public static class JournalCapability
 
         var from = BgsWork.PeriodStart(tick, now);
         var work = active.BgsWork;
-        var faction = arguments.TryGetString("faction", out var factionAsked) && !string.IsNullOrWhiteSpace(factionAsked)
-            ? factionAsked.Trim()
-            : null;
-        var system = arguments.TryGetString("system", out var systemAsked) && !string.IsNullOrWhiteSpace(systemAsked)
-            ? systemAsked.Trim()
-            : null;
+        var faction = arguments.Text("faction")?.Trim();
+        var system = arguments.Text("system")?.Trim();
 
         var pairs = work.Entries
             .Where(entry => entry.At >= from)
@@ -2630,9 +2616,7 @@ public static class JournalCapability
             return reason;
         }
 
-        var asked = arguments.TryGetString("faction", out var named) && !string.IsNullOrWhiteSpace(named)
-            ? named.Trim()
-            : null;
+        var asked = arguments.Text("faction")?.Trim();
 
         if (asked is null)
         {
@@ -2858,9 +2842,7 @@ public static class JournalCapability
         }
 
         var asOf = AsOf(statistics.TakenAt!.Value);
-        var wanted = arguments.TryGetString("section", out var named) && !string.IsNullOrWhiteSpace(named)
-            ? named.Trim()
-            : null;
+        var wanted = arguments.Text("section")?.Trim();
 
         var report = new StringBuilder();
 

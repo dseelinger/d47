@@ -1051,9 +1051,7 @@ public static class GalaxyCapability
         var (requested, corrected, unknown) =
             ReadFilters(GalaxyFilters.For(GalaxySearchKind.Systems), arguments, known);
 
-        var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
-            ? explicitNear
-            : currentSystem();
+        var near = arguments.Text("near") ?? currentSystem();
 
         if (!arguments.TryGetInt32("limit", out var limit))
         {
@@ -1164,9 +1162,7 @@ public static class GalaxyCapability
         var (requested, corrected, unknown) =
             ReadFilters(GalaxyFilters.For(GalaxySearchKind.Stations), arguments, known);
 
-        var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
-            ? explicitNear
-            : currentSystem();
+        var near = arguments.Text("near") ?? currentSystem();
 
         if (string.IsNullOrWhiteSpace(near))
         {
@@ -1256,9 +1252,7 @@ public static class GalaxyCapability
             return ToolResult.Error(Unavailable);
         }
 
-        var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
-            ? explicitNear
-            : currentSystem();
+        var near = arguments.Text("near") ?? currentSystem();
 
         if (string.IsNullOrWhiteSpace(near))
         {
@@ -1274,7 +1268,7 @@ public static class GalaxyCapability
             MaxDistance = arguments.TryGetDouble("max_distance", out var maxDistance) ? maxDistance : null,
             Size = limit,
             Items = arguments.TryGetString("items", out var items) ? items : null,
-            MinPad = arguments.TryGetString("min_pad", out var pad) && !string.IsNullOrWhiteSpace(pad) ? pad : null,
+            MinPad = arguments.Text("min_pad"),
             MaxStationDistance =
                 arguments.TryGetDouble("max_station_distance", out var furthest) ? furthest : null,
             SurfaceStations = !arguments.TryGetBoolean("surface_stations", out var surface) || surface,
@@ -1395,9 +1389,7 @@ public static class GalaxyCapability
             return ToolResult.Error("No destination system was named.");
         }
 
-        var from = arguments.TryGetString("from", out var explicitFrom) && !string.IsNullOrWhiteSpace(explicitFrom)
-            ? explicitFrom
-            : currentSystem();
+        var from = arguments.Text("from") ?? currentSystem();
 
         if (string.IsNullOrWhiteSpace(from))
         {
@@ -1442,9 +1434,7 @@ public static class GalaxyCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        var named = arguments.TryGetString("system", out var given) && !string.IsNullOrWhiteSpace(given)
-            ? given.Trim()
-            : null;
+        var named = arguments.Text("system")?.Trim();
         var here = currentSystem();
 
         long address;
@@ -1546,9 +1536,7 @@ public static class GalaxyCapability
             : null;
         var own = signals?.Snapshot() ?? [];
 
-        var asked = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
-            ? explicitNear.Trim()
-            : null;
+        var asked = arguments.Text("near")?.Trim();
 
         if (asked is not null
             && currentSystem() is { } where
@@ -1704,9 +1692,7 @@ public static class GalaxyCapability
             return ToolResult.Error(Unavailable);
         }
 
-        var named = arguments.TryGetString("system", out var given) && !string.IsNullOrWhiteSpace(given)
-            ? given.Trim()
-            : null;
+        var named = arguments.Text("system")?.Trim();
 
         try
         {
@@ -1942,9 +1928,7 @@ public static class GalaxyCapability
         arguments.TryGetString("module_class", out var moduleClass);
         arguments.TryGetString("module_rating", out var moduleRating);
 
-        var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
-            ? explicitNear
-            : currentSystem();
+        var near = arguments.Text("near") ?? currentSystem();
 
         if (string.IsNullOrWhiteSpace(near))
         {
@@ -2013,9 +1997,7 @@ public static class GalaxyCapability
                 + "so I cannot price one.");
         }
 
-        var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
-            ? explicitNear
-            : currentSystem();
+        var near = arguments.Text("near") ?? currentSystem();
 
         if (string.IsNullOrWhiteSpace(near))
         {
@@ -2560,9 +2542,7 @@ public static class GalaxyCapability
             return ToolResult.Error(Unavailable);
         }
 
-        var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
-            ? explicitNear
-            : currentSystem();
+        var near = arguments.Text("near") ?? currentSystem();
 
         if (string.IsNullOrWhiteSpace(near))
         {
@@ -2590,20 +2570,20 @@ public static class GalaxyCapability
             RingSignalCount = Count(arguments, "hotspot_count"),
             RingType = Text(arguments, "ring_type"),
             ReserveLevel = Text(arguments, "reserve_level"),
-            Landable = Flag(arguments, "landable"),
-            Terraformable = Flag(arguments, "terraformable"),
+            Landable = arguments.Boolean("landable"),
+            Terraformable = arguments.Boolean("terraformable"),
             CodexEntry = Text(arguments, "codex_entry"),
             Volcanism = Text(arguments, "volcanism"),
             Atmosphere = Text(arguments, "atmosphere"),
-            TidallyLocked = Flag(arguments, "tidally_locked"),
+            TidallyLocked = arguments.Boolean("tidally_locked"),
             Gravity = Text(arguments, "gravity"),
             Temperature = Text(arguments, "temperature"),
-            MaxArrivalDistance = Distance(arguments, "max_arrival_distance"),
+            MaxArrivalDistance = arguments.Double("max_arrival_distance"),
             Material = Text(arguments, "material"),
             OrderBy = Text(arguments, "order_by"),
             Order = Text(arguments, "order"),
             Filters = filters,
-            MaxDistance = Distance(arguments, "max_distance"),
+            MaxDistance = arguments.Double("max_distance"),
             Size = arguments.TryGetInt32("limit", out var limit) ? limit : DefaultLimit,
         };
 
@@ -2616,7 +2596,7 @@ public static class GalaxyCapability
         {
             var result = query.Keep(await galaxy.FindBodiesAsync(query, cancellationToken).ConfigureAwait(false));
 
-            var said = Describe(result, query) + DistanceCapped(Distance(arguments, "max_distance"));
+            var said = Describe(result, query) + DistanceCapped(arguments.Double("max_distance"));
 
             var posting = new GalaxySearchPosting(
                 GalaxySearchKind.Bodies,
@@ -2681,9 +2661,7 @@ public static class GalaxyCapability
             return ToolResult.Ok(said);
         }
 
-        var near2 = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
-            ? explicitNear.Trim()
-            : currentSystem();
+        var near2 = arguments.Text("near")?.Trim() ?? currentSystem();
 
         if (string.IsNullOrWhiteSpace(near2))
         {
@@ -2713,7 +2691,7 @@ public static class GalaxyCapability
         if (acquisition.Methods.Count > 0)
         {
             said.Append(' ')
-                .Append(Capitalised(string.Join(", or ", acquisition.Methods.Select(MethodWords))))
+                .Append(SpokenText.Capitalised(string.Join(", or ", acquisition.Methods.Select(MethodWords))))
                 .Append('.');
         }
 
@@ -2926,9 +2904,6 @@ public static class GalaxyCapability
             : $"Nearest: {result.Stations[0].Name} ({result.Stations[0].SystemName})"
               + (result.Stations[0].Distance is { } distance ? $", {distance:0.#} ly." : ".");
 
-    private static string Capitalised(string text) =>
-        text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
-
     private static string KindWords(AcquisitionKind kind) => kind switch
     {
         AcquisitionKind.Ship => "a ship",
@@ -2970,21 +2945,11 @@ public static class GalaxyCapability
         _ => method.ToString(),
     };
 
-    /// <summary>A boolean argument as three states rather than two.</summary>
-    private static bool? Flag(ToolArguments arguments, string name) =>
-        arguments.Values.ContainsKey(name) && arguments.TryGetBoolean(name, out var value) ? value : null;
-
     private static string? Text(ToolArguments arguments, string name) =>
         arguments.TryGetString(name, out var value) ? value : null;
 
     private static int? Count(ToolArguments arguments, string name) =>
         arguments.TryGetInt32(name, out var value) ? value : null;
-
-    private static double? Distance(ToolArguments arguments, string name) =>
-        arguments.Values.TryGetValue(name, out var raw)
-        && double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
-            ? parsed
-            : null;
 
     /// <summary>Body results as prose, and it reads differently depending on what was asked.</summary>
     internal static string Describe(BodySearchResult result, BodyQuery query)

@@ -403,9 +403,7 @@ public static class ShipsCapability
     /// <summary>The ship a tool call names, through the service's own matcher.</summary>
     private static FleetEntry? Whichever(ShipPlanService ships, ToolArguments arguments)
     {
-        var named = arguments.TryGetString("ship", out var ship) && !string.IsNullOrWhiteSpace(ship)
-            ? ship.Trim()
-            : null;
+        var named = arguments.Text("ship")?.Trim();
 
         return ShipPlanService.Which(ships, named) is { } build ? ships.Entry(build.Id) : null;
     }

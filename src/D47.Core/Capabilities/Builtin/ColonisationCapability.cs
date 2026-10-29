@@ -312,7 +312,7 @@ public static class ColonisationCapability
                 : $"{outstanding.Count} of {site.Resources.Count} commodities outstanding, "
                     + $"{Tonnes(outstanding.Sum(resource => resource.Remaining))} left");
 
-            report.AppendLine($"  {Capitalise(string.Join(", ", line))}.");
+            report.AppendLine($"  {SpokenText.Capitalised(string.Join(", ", line))}.");
             report.AppendLine($"  Seen {Stamp(site.SeenAt)}.");
 
             if (read.For(site) is { } planned)
@@ -372,9 +372,7 @@ public static class ColonisationCapability
             return ToolResult.Ok("No Elite Dangerous journal has been detected yet.");
         }
 
-        var wanted = arguments.TryGetString("site", out var name) && !string.IsNullOrWhiteSpace(name)
-            ? name.Trim()
-            : null;
+        var wanted = arguments.Text("site")?.Trim();
 
         var at = Now(now);
 
@@ -873,9 +871,7 @@ public static class ColonisationCapability
                 + "can turn it on in settings.");
         }
 
-        var near = arguments.TryGetString("near", out var given) && !string.IsNullOrWhiteSpace(given)
-            ? given
-            : commander()?.Location.StarSystem;
+        var near = arguments.Text("near") ?? commander()?.Location.StarSystem;
 
         if (!ColonisationQuery.TryParse(
                 near,
@@ -1218,6 +1214,4 @@ public static class ColonisationCapability
 
     private static string Number(long value) => value.ToString("N0", CultureInfo.InvariantCulture);
 
-    private static string Capitalise(string text) =>
-        text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
 }

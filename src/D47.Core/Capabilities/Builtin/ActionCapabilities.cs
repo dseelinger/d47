@@ -347,7 +347,7 @@ public static class ActionCapabilities
         // The check that makes "gear down" mean down.
         if (action.AlreadyIn(wanted, surface.Status()) == true)
         {
-            return ToolResult.Ok($"{Capitalise(action.Label)} is already {(wanted == DesiredState.On ? "on" : "off")}.");
+            return ToolResult.Ok($"{SpokenText.Capitalised(action.Label)} is already {(wanted == DesiredState.On ? "on" : "off")}.");
         }
 
         var keys = action.HoldFor is { } hold
@@ -404,7 +404,7 @@ public static class ActionCapabilities
             return null;
         }
 
-        var name = Capitalise(action.FocusName ?? "That screen");
+        var name = SpokenText.Capitalised(action.FocusName ?? "That screen");
 
         if (action.RequiresFocus is { } required && status.GuiFocus != required)
         {
@@ -414,6 +414,4 @@ public static class ActionCapabilities
         return action.ExcludesFocus is { } excluded && status.GuiFocus == excluded ? $"{name} is already open." : null;
     }
 
-    private static string Capitalise(string label) =>
-        label.Length == 0 ? label : char.ToUpperInvariant(label[0]) + label[1..];
 }

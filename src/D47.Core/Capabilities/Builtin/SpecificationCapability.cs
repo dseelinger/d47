@@ -82,9 +82,7 @@ public static class SpecificationCapability
 
     private static string DescribeShip(Func<CommanderGameState?> commander, ToolArguments arguments)
     {
-        var asked = arguments.TryGetString("ship", out var spoken) && !string.IsNullOrWhiteSpace(spoken)
-            ? spoken.Trim()
-            : null;
+        var asked = arguments.Text("ship")?.Trim();
 
         // The Loadout's symbol, not its display name: the symbol is what the table is keyed by, and going
         // through the display name would put a round trip through the matcher for a lookup that is already

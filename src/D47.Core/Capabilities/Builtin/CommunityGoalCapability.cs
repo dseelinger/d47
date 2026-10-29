@@ -249,9 +249,7 @@ public static class CommunityGoalCapability
             return ToolResult.Error("No Elite Dangerous journal has been detected yet.");
         }
 
-        var wanted = arguments.TryGetString("name", out var filter) && !string.IsNullOrWhiteSpace(filter)
-            ? filter.Trim()
-            : null;
+        var wanted = arguments.Text("name")?.Trim();
 
         var finished = arguments.TryGetBoolean("include_finished", out var all) && all;
 
@@ -358,7 +356,7 @@ public static class CommunityGoalCapability
             progress.Add("met");
         }
 
-        report.AppendLine($"  {Capitalise(string.Join(", ", progress))}.");
+        report.AppendLine($"  {SpokenText.Capitalised(string.Join(", ", progress))}.");
 
         var standing = new List<string>();
 
@@ -429,9 +427,6 @@ public static class CommunityGoalCapability
     private static string Day(DateTimeOffset when) => when.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     private static string Number(long value) => value.ToString("N0", CultureInfo.InvariantCulture);
-
-    private static string Capitalise(string text) =>
-        text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
 
     private static bool Matches(string title, string? wanted) =>
         wanted is null || title.Contains(wanted, StringComparison.OrdinalIgnoreCase);

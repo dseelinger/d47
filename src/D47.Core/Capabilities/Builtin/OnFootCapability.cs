@@ -219,9 +219,7 @@ public static class OnFootCapability
     private static OnFootBuild? Whichever(OnFootPlanService plans, ToolArguments arguments) =>
         OnFootPlanService.Which(
             plans,
-            arguments.TryGetString("item", out var item) && !string.IsNullOrWhiteSpace(item)
-                ? item.Trim()
-                : null,
+            arguments.Text("item")?.Trim(),
             arguments.TryGetBoolean("weapon", out var weapon) && weapon);
 
     private static ToolResult DescribeLoadout(Func<CommanderGameState?> commander)
@@ -351,7 +349,7 @@ public static class OnFootCapability
             return DescribeModification(active, wanted);
         }
 
-        return DescribeUpgrade(active, Text(arguments, "equipment"), Number(arguments, "grade"));
+        return DescribeUpgrade(active, Text(arguments, "equipment"), arguments.Int32("grade"));
     }
 
     private static string DescribeModification(CommanderGameState? active, string wanted)
@@ -514,7 +512,7 @@ public static class OnFootCapability
                     : $"I have no on-foot material called \"{wanted}\". Did you mean {Join(near)}?";
         }
 
-        var wantedCount = Number(arguments, "wanted") ?? 1;
+        var wantedCount = arguments.Int32("wanted") ?? 1;
 
         if (MicroResourceGuide.For(material.Symbol, commander(), wantedCount) is not { } detail)
         {
@@ -586,9 +584,6 @@ public static class OnFootCapability
 
     private static string? Text(ToolArguments arguments, string name) =>
         arguments.TryGetString(name, out var value) && value.Trim().Length > 0 ? value.Trim() : null;
-
-    private static int? Number(ToolArguments arguments, string name) =>
-        arguments.TryGetInt32(name, out var value) ? value : null;
 
     /// <summary>
     /// Which one is meant, when what was asked names several recipes of one modification that differ

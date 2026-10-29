@@ -520,9 +520,7 @@ public static class ChecklistCapability
             return "I am not tracking ship builds.";
         }
 
-        var named = arguments.TryGetString("ship", out var ship) && !string.IsNullOrWhiteSpace(ship)
-            ? ship.Trim()
-            : null;
+        var named = arguments.Text("ship")?.Trim();
 
         if (Ships.ShipPlanService.Which(ships, named) is not { } build)
         {
@@ -575,9 +573,7 @@ public static class ChecklistCapability
 
         var weapon = arguments.TryGetBoolean("weapon", out var isWeapon) && isWeapon;
 
-        var named = arguments.TryGetString("item", out var item) && !string.IsNullOrWhiteSpace(item)
-            ? item.Trim()
-            : equipment.Trim();
+        var named = arguments.Text("item")?.Trim() ?? equipment.Trim();
 
         if (Loadout.OnFootPlanService.Which(plans, named, weapon) is not { } build)
         {

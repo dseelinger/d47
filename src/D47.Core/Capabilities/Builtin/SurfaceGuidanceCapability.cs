@@ -147,9 +147,7 @@ public static class SurfaceGuidanceCapability
             return ToolResult.Error(NoPosition);
         }
 
-        var name = arguments.TryGetString("name", out var given) && !string.IsNullOrWhiteSpace(given)
-            ? given.Trim()
-            : null;
+        var name = arguments.Text("name")?.Trim();
 
         if (name is not null && Reserved.Contains(name, StringComparer.OrdinalIgnoreCase))
         {
@@ -174,9 +172,7 @@ public static class SurfaceGuidanceCapability
         var valid = marks.Valid(surface);
         var points = Points(commander, valid);
 
-        var to = arguments.TryGetString("to", out var asked) && !string.IsNullOrWhiteSpace(asked)
-            ? asked.Trim()
-            : null;
+        var to = arguments.Text("to")?.Trim();
 
         if (to is not null && NearestWanted(to, points) is { } variant)
         {
@@ -294,7 +290,7 @@ public static class SurfaceGuidanceCapability
 
         foreach (var mark in marks.Reverse())
         {
-            points.Add(new Point(PointKind.Mark, mark.Name, Capitalised(mark.Name), mark.At));
+            points.Add(new Point(PointKind.Mark, mark.Name, SpokenText.Capitalised(mark.Name), mark.At));
         }
 
         if (commander is not null && SetsOnBody(commander) is { } sets)
@@ -388,8 +384,6 @@ public static class SurfaceGuidanceCapability
     }
 
     private static bool Same(string left, string right) => string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
-
-    private static string Capitalised(string text) => char.ToUpperInvariant(text[0]) + text[1..];
 
     private enum PointKind
     {

@@ -87,4 +87,14 @@ public sealed class ToolArguments(IReadOnlyDictionary<string, string> values)
         return Values.TryGetValue(name, out var raw)
                && double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
     }
+
+    /// <summary>The value when present and not whitespace, untrimmed; otherwise null.</summary>
+    public string? Text(string name) =>
+        TryGetString(name, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;
+
+    public int? Int32(string name) => TryGetInt32(name, out var value) ? value : null;
+
+    public double? Double(string name) => TryGetDouble(name, out var value) ? value : null;
+
+    public bool? Boolean(string name) => TryGetBoolean(name, out var value) ? value : null;
 }
