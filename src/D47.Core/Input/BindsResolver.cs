@@ -84,10 +84,6 @@ public static partial class BindsResolver
         return EliteBinds.Parse(fileSystem, file, preset, logger);
     }
 
-    /// <summary>The preset named by the highest-versioned <c>StartPreset.*.start</c>.</summary>
-    public static string? ActivePresetName(IFileSystem fileSystem, string bindingsDirectory, ILogger logger) =>
-        ActivePresetName(fileSystem, bindingsDirectory, logger, out _);
-
     /// <summary>
     /// As above, and reports through <paramref name="locked"/> whether the null means there is no such
     /// file or a file was there and something else had it open.

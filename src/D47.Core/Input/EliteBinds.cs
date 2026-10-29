@@ -132,28 +132,6 @@ public sealed record EliteBinds
             : null;
     }
 
-    /// <summary>Keyboard gestures bound to more than one action, each with the actions that share it.</summary>
-    public IReadOnlyDictionary<string, IReadOnlyList<EliteBinding>> Shared()
-    {
-        var shared = new Dictionary<string, IReadOnlyList<EliteBinding>>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var group in Bindings
-                     .Where(binding => binding.IsKeyboard)
-                     .GroupBy(binding => Normalise(binding.Gesture()), StringComparer.OrdinalIgnoreCase))
-        {
-            var actions = group
-                .DistinctBy(binding => binding.Action, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-
-            if (actions.Length > 1)
-            {
-                shared[group.Key] = actions;
-            }
-        }
-
-        return shared;
-    }
-
     /// <summary>
     /// A gesture reduced to something comparable: modifier aliases folded together, order fixed, case
     /// ignored. "Ctrl+Alt+X" from the settings file and "LeftControl+LeftAlt+X" from the bindings file

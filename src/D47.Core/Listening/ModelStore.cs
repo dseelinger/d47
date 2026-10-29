@@ -56,17 +56,9 @@ public interface IModelStore
     /// <summary>Installed model ids, for the settings row to mark which are ready.</summary>
     IReadOnlyList<string> Installed();
 
-    /// <summary>
-    /// Asks the host what the file actually is — size and published hash — without downloading it.
-    /// </summary>
-    Task<ModelOffer?> DescribeAsync(WhisperModel model, CancellationToken cancellationToken = default);
-
     /// <summary>Downloads a model.</summary>
     Task<ModelInstallResult> InstallAsync(
         WhisperModel model,
         IProgress<ModelProgress>? progress = null,
         CancellationToken cancellationToken = default);
-
-    /// <summary>Removes an installed model.</summary>
-    bool Remove(WhisperModel model);
 }

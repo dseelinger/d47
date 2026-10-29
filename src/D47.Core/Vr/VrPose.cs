@@ -110,13 +110,6 @@ public static class VrPlacementMath
     public static VrPose Carried(Matrix4x4 grabbedOffset, VrPose hand) =>
         VrPose.FromMatrix(grabbedOffset * hand.ToMatrix());
 
-    /// <summary>The compass direction a pose is facing, in radians.</summary>
-    public static float YawOf(VrPose pose)
-    {
-        var forward = Vector3.Transform(-Vector3.UnitZ, pose.Facing);
-        return MathF.Atan2(-forward.X, -forward.Z);
-    }
-
     /// <summary>
     /// The same pose with its roll taken out: same place, same yaw, same pitch, level with the horizon
     /// (#189).

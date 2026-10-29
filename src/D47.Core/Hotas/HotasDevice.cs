@@ -116,13 +116,6 @@ public sealed class FakeHotasReader : IHotasReader
         return this;
     }
 
-    /// <summary>Unplugs everything, which is what a mode change looks like from here.</summary>
-    public FakeHotasReader Gone()
-    {
-        _readings = [];
-        return this;
-    }
-
     public IReadOnlyList<HotasReading> Poll()
     {
         Polls++;

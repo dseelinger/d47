@@ -53,12 +53,6 @@ public sealed class PronunciationOverrides
         _complain = complain;
     }
 
-    /// <summary>How many corrections are live.</summary>
-    public int Count => _entries.Count;
-
-    /// <summary>The file this reads, for the diagnostics page.</summary>
-    public string FilePath => _path;
-
     /// <summary>Re-reads the file if it has changed since the last look.</summary>
     public void Refresh()
     {

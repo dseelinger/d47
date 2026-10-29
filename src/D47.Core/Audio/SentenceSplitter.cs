@@ -17,9 +17,6 @@ public sealed class SentenceSplitter
 
     private readonly StringBuilder _buffer = new();
 
-    /// <summary>Everything not yet emitted.</summary>
-    public int Pending => _buffer.Length;
-
     /// <summary>Adds text and returns whatever sentences that completed.</summary>
     public IReadOnlyList<string> Push(string text)
     {

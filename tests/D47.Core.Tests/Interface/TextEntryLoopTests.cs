@@ -92,17 +92,4 @@ public class TextEntryLoopTests
         Assert.False(string.IsNullOrWhiteSpace(
             TextEntryLoop.Explain(EntryFallback.DidNotResolve, null)));
     }
-
-    /// <summary>
-    /// The readback is the only check left for the failure that cannot be detected, so it has to carry
-    /// both what was heard and what it is for.
-    /// </summary>
-    [Fact]
-    public void TheReadbackNamesTheFieldAndTheValue()
-    {
-        var said = TextEntryLoop.ReadBack("System name", "Shinrarta Dezhra");
-
-        Assert.Contains("System name", said, StringComparison.Ordinal);
-        Assert.Contains("Shinrarta Dezhra", said, StringComparison.Ordinal);
-    }
 }

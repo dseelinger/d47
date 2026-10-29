@@ -27,31 +27,6 @@ public static class PanelResolution
     /// <summary>Every rung, as the strings a choice row offers.</summary>
     public static IReadOnlyList<string> Choices => [.. Steps.Select(Describe)];
 
-    /// <summary>The nearest rung to whatever a file happens to hold, by pixel count.</summary>
-    public static (int Width, int Height) Snap(int width, int height)
-    {
-        var wanted = (long)Math.Max(0, width) * Math.Max(0, height);
-        var nearest = Steps[0];
-
-        foreach (var step in Steps)
-        {
-            var area = (long)step.Width * step.Height;
-
-            if (Math.Abs(area - wanted) < Math.Abs((long)nearest.Width * nearest.Height - wanted))
-            {
-                nearest = step;
-            }
-        }
-
-        return nearest;
-    }
-
-    /// <summary>
-    /// The size a "1280x800" names, or the default when it names nothing — which is what a hand-edited
-    /// file, an older settings revision and an empty string all arrive as.
-    /// </summary>
-    public static (int Width, int Height) Parse(string? value) => Parse(value, Default);
-
     /// <summary>
     /// The size a "1280x800" names, kept to the bounds a resize drag keeps to, or
     /// <paramref name="fallback"/> when it names nothing. A size off the ladder is kept, because a

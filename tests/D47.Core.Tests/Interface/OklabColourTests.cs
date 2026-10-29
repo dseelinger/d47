@@ -53,16 +53,4 @@ public class OklabColourTests
         Assert.Equal(accent.C, swapped.C, 3);
         Assert.Equal(27, swapped.H, 3);
     }
-
-    // Elite's accent held at its own lightness and chroma but turned to 27 degrees falls outside
-    // sRGB: the red channel wants more than full intensity. It must land at 255, not wrap.
-    [Fact]
-    public void OutOfGamutResultsClampInsteadOfWrapping()
-    {
-        var (r, g, b) = OklabMixing.WithHue((0xF5, 0x85, 0x0F), 27);
-
-        Assert.Equal(255, r);
-        Assert.InRange(g, 0, 255);
-        Assert.InRange(b, 0, 255);
-    }
 }

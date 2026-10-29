@@ -42,8 +42,6 @@ public sealed record CaptureResult
     public bool IsCaptured => Stage == CaptureStage.Captured;
 
     public bool IsDeclined => Stage == CaptureStage.Declined;
-
-    public bool IsOver => Stage is CaptureStage.Captured or CaptureStage.Declined;
 }
 
 /// <summary>The walk (Phase 21, "Assign a switch by walking its positions").</summary>
@@ -91,15 +89,7 @@ public sealed class SwitchCapture
 
     private CaptureResult? _final;
 
-    /// <summary>Everything the walk saw, in order.</summary>
-    public IReadOnlyList<CaptureEvent> Report => _report;
-
     public CaptureStage Stage { get; private set; } = CaptureStage.Waiting;
-
-    /// <summary>Positions found so far, so the surface can show the walk filling in as it happens.</summary>
-    public IReadOnlyList<SwitchPosition> Positions => _positions;
-
-    public string DeviceId => _deviceId ?? string.Empty;
 
     /// <summary>One reading of every device.</summary>
     public CaptureResult Poll(DateTimeOffset now, IReadOnlyList<HotasReading> readings)

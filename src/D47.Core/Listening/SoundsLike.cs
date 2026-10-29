@@ -118,22 +118,6 @@ public sealed record SoundsLike
         return this with { Entries = [new SoundsLikeEntry(from, to, at), .. kept] };
     }
 
-    /// <summary>Drops one correction.</summary>
-    public SoundsLike Forget(string heard) =>
-        Token(heard) is not { } from
-            ? this
-            : this with
-            {
-                Entries =
-                [
-                    .. Entries.Where(entry =>
-                        !string.Equals(entry.Heard, from, StringComparison.OrdinalIgnoreCase)),
-                ],
-            };
-
-    /// <summary>Drops the lot.</summary>
-    public SoundsLike ForgetAll() => Empty;
-
     /// <summary>What the settings row says.</summary>
     public string Summarise() =>
         Entries.Count == 0

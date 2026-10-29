@@ -121,40 +121,4 @@ public static class InputSequence
 
         return marked;
     }
-
-    /// <summary>Everything a sequence pressed, so it can be let go of unconditionally.</summary>
-    public static IReadOnlyList<InputStep> ReleaseFor(IEnumerable<InputStep> steps)
-    {
-        var held = new List<InputStep>();
-
-        foreach (var step in steps)
-        {
-            switch (step.Kind)
-            {
-                case InputStepKind.KeyDown:
-                    Hold(new InputStep(InputStepKind.KeyUp, step.Code, step.Extended));
-                    break;
-                case InputStepKind.MouseDown:
-                    Hold(new InputStep(InputStepKind.MouseUp, step.Code));
-                    break;
-                case InputStepKind.KeyUp:
-                    held.RemoveAll(existing => existing.Kind == InputStepKind.KeyUp && existing.Code == step.Code);
-                    break;
-                case InputStepKind.MouseUp:
-                    held.RemoveAll(existing => existing.Kind == InputStepKind.MouseUp && existing.Code == step.Code);
-                    break;
-            }
-        }
-
-        held.Reverse();
-        return held;
-
-        void Hold(InputStep release)
-        {
-            if (!held.Any(existing => existing.Kind == release.Kind && existing.Code == release.Code))
-            {
-                held.Add(release);
-            }
-        }
-    }
 }

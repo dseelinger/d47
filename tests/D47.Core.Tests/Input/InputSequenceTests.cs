@@ -102,31 +102,4 @@ public class InputSequenceTests
 
         Assert.Equal(TimeSpan.FromSeconds(6), steps.Single(step => step.Kind == InputStepKind.Delay).Delay);
     }
-
-    [Fact]
-    public void ReleaseForNamesEverythingLeftDownInReverseOrder()
-    {
-        // A sequence cut off after the key went down: the release has to let go of the key and both
-        // modifiers, newest first.
-        IReadOnlyList<InputStep> partial =
-        [
-            new InputStep(InputStepKind.KeyDown, 0xA2),
-            new InputStep(InputStepKind.KeyDown, 0xA4),
-            new InputStep(InputStepKind.KeyDown, 0x58),
-        ];
-
-        Assert.Equal(
-            [
-                new InputStep(InputStepKind.KeyUp, 0x58),
-                new InputStep(InputStepKind.KeyUp, 0xA4),
-                new InputStep(InputStepKind.KeyUp, 0xA2),
-            ],
-            InputSequence.ReleaseFor(partial));
-    }
-
-    [Fact]
-    public void ReleaseForLeavesOutAnythingAlreadyReleased()
-    {
-        Assert.Empty(InputSequence.ReleaseFor(InputSequence.Tap(Binding("Key_L", "Key_LeftControl"))));
-    }
 }

@@ -43,24 +43,6 @@ public class DirectionReachesOnlyAVoiceThatPerformsItTests
     }
 
     [Fact]
-    public void AVoiceThatPerformsDirectionKeepsIt()
-    {
-        const string Written = "[sighs] Plotting now, Commander.";
-
-        Assert.Equal(Written, AudioTags.For(Written, performed: true));
-        Assert.Equal("Plotting now, Commander.", AudioTags.For(Written, performed: false));
-    }
-
-    [Fact]
-    public void ADescriptiveNoteWithACommaIsKeptWholeByAVoiceThatPerformsIt()
-    {
-        const string Written = "[quietly, urgently] Contact.";
-
-        Assert.Equal(Written, AudioTags.For(Written, performed: true));
-        Assert.Equal("Contact.", AudioTags.For(Written, performed: false));
-    }
-
-    [Fact]
     public void ANoteOfSixtyCharactersIsDirectionAndOneOfSixtyOneIsNot()
     {
         var sixty = new string('a', 60);

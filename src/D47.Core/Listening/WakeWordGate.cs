@@ -65,15 +65,6 @@ public sealed class WakeWordGate
         }
     }
 
-    /// <summary>Shuts the window.</summary>
-    public void Sleep()
-    {
-        lock (_gate)
-        {
-            _awake = null;
-        }
-    }
-
     /// <summary>
     /// Decides whether <paramref name="transcript"/> was addressed to d47, and returns it from the wake
     /// phrase on.

@@ -23,8 +23,6 @@ public sealed record GuiColourMatrix(
             Clamp(rd * BlueFromRed + gd * BlueFromGreen + bd * BlueFromBlue));
     }
 
-    public bool IsIdentity => Equals(Identity);
-
     private static byte Clamp(double value) => (byte)Math.Clamp(Math.Round(value * 255.0), 0, 255);
 }
 

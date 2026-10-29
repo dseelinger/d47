@@ -56,9 +56,6 @@ public static class Caption
     /// <summary>Maximum characters on one line.</summary>
     public const int CharactersPerLine = 42;
 
-    /// <summary>Maximum lines one caption event may occupy.</summary>
-    public const int LinesPerEvent = 3;
-
     /// <summary>How many lines the layer holds at once.</summary>
     public const int WindowLines = 3;
 

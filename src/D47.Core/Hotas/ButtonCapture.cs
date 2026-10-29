@@ -25,7 +25,6 @@ public enum ButtonCaptureStage
 /// <param name="Says">What to show.</param>
 public sealed record ButtonCaptureResult(ButtonCaptureStage Stage, HotasButton? Binding, string Says)
 {
-    public bool IsOver => Stage is ButtonCaptureStage.Captured or ButtonCaptureStage.Declined;
 }
 
 /// <summary>Press the button you want (Phase 53).</summary>

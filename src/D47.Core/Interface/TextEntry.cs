@@ -197,10 +197,4 @@ public static class TextEntryLoop
         EntryFallback.LowConfidence => "I was not sure I heard that correctly.",
         _ => complaint ?? "That did not resolve to anything.",
     };
-
-    /// <summary>
-    /// What d47 says back before the value is committed, which is the only check left for the one
-    /// failure it cannot detect: confident, valid, and still wrong.
-    /// </summary>
-    public static string ReadBack(string title, string value) => $"{title}: {value}. Is that right?";
 }

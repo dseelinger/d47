@@ -58,6 +58,4 @@ public interface IAudioSink
     /// to open or to read.
     /// </summary>
     event Action<long>? Finished;
-
-    IRenderReferenceTap ReferenceTap { get; }
 }

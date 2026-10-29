@@ -358,14 +358,6 @@ public sealed class VoiceCast
     /// <summary>A new system.</summary>
     public void EnteredSystem() => _perSystem.Clear();
 
-    /// <summary>A new session, or a provider change.</summary>
-    public void Reset()
-    {
-        _perSystem.Clear();
-        _lasting.Clear();
-        _roleVoices.Clear();
-    }
-
     /// <summary>How many senders currently hold a voice.</summary>
     public (int Lasting, int PerSystem) Assignments => (_lasting.Count, _perSystem.Count);
 

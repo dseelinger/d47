@@ -33,8 +33,6 @@ public sealed class HeardNamesStore(string path, IFileSystem files, ILogger<Hear
 
     private DateTimeOffset? _foldedThrough;
 
-    public string Path => path;
-
     /// <summary>
     /// How far through the journals the names have been read, or null for a file that was never
     /// written.

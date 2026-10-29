@@ -84,11 +84,4 @@ public static class OklabMixing
             oa.A + ((ob.A - oa.A) * t),
             oa.B + ((ob.B - oa.B) * t)).ToSrgb();
     }
-
-    /// <summary>Keeps <paramref name="colour"/>'s lightness and chroma, substituting its hue for <paramref name="degrees"/>.</summary>
-    public static (byte R, byte G, byte B) WithHue((byte R, byte G, byte B) colour, double degrees)
-    {
-        var oklch = OklabColour.FromSrgb(colour.R, colour.G, colour.B).ToOklch();
-        return OklabColour.FromOklch(oklch with { H = degrees }).ToSrgb();
-    }
 }

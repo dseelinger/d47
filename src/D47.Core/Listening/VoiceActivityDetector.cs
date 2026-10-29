@@ -55,12 +55,6 @@ public sealed class VoiceActivityDetector
     /// <summary>How much has to be loud before the gate opens.</summary>
     public int Onset { get; set; } = 3;
 
-    /// <summary>Whether the detector currently believes somebody is talking.</summary>
-    public bool Speaking => _speaking;
-
-    /// <summary>The most recent frame's level, in dBFS.</summary>
-    public double Level { get; private set; } = SilenceDb;
-
     /// <summary>What the room is currently measured at, in dBFS.</summary>
     public double NoiseFloor => _floorDb;
 
@@ -107,7 +101,6 @@ public sealed class VoiceActivityDetector
         _speechFrames = 0;
         _silenceFrames = 0;
         _speaking = false;
-        Level = SilenceDb;
     }
 
     /// <summary>
@@ -132,8 +125,6 @@ public sealed class VoiceActivityDetector
 
         var rms = Math.Sqrt(sum / frame.Length);
         var db = rms <= 1e-10 ? SilenceDb : Math.Max(SilenceDb, 20 * Math.Log10(rms));
-
-        Level = db;
 
         if (_framesSeen == 0)
         {

@@ -31,32 +31,6 @@ public class PanelResolutionTests
     }
 
     /// <summary>
-    /// Settings are a hand-editable file, so an arbitrary size is something this has to answer for.
-    /// </summary>
-    [Theory]
-    [InlineData(1030, 645, 1024, 640)]
-    [InlineData(1300, 810, 1280, 800)]
-    [InlineData(99999, 99999, 2560, 1600)]
-    [InlineData(0, 0, 800, 500)]
-    [InlineData(-40, -9, 800, 500)]
-    public void AnythingElseSnapsToARung(int width, int height, int wantedWidth, int wantedHeight)
-    {
-        Assert.Equal((wantedWidth, wantedHeight), PanelResolution.Snap(width, height));
-    }
-
-    [Theory]
-    [InlineData("1280x800", 1280, 800)]
-    [InlineData("2560X1600", 2560, 1600)]
-    [InlineData("nonsense", 1024, 640)]
-    [InlineData("1280", 1024, 640)]
-    [InlineData("x800", 1024, 640)]
-    [InlineData(null, 1024, 640)]
-    public void AFileSValueIsReadOrFallsBackToTheDefault(string? value, int width, int height)
-    {
-        Assert.Equal((width, height), PanelResolution.Parse(value));
-    }
-
-    /// <summary>
     /// The settings file is append-only, so a file written before this property existed has to mean
     /// something rather than fail.
     /// </summary>

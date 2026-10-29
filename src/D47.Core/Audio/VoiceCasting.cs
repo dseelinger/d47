@@ -20,9 +20,6 @@ public sealed class VoiceCasting
         return cast;
     }
 
-    /// <summary>Every provider a cast has been made for.</summary>
-    public IReadOnlyCollection<string> Providers => _casts.Keys;
-
     /// <summary>A new system, for all of them.</summary>
     public void EnteredSystem()
     {
@@ -37,7 +34,4 @@ public sealed class VoiceCasting
     /// it.
     /// </summary>
     public void Forget(string providerId) => _casts.Remove(providerId);
-
-    /// <summary>A new session.</summary>
-    public void Reset() => _casts.Clear();
 }

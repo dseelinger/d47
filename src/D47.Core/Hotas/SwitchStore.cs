@@ -53,9 +53,6 @@ public sealed class SwitchStore(string path, IFileSystem files, ILogger<SwitchSt
         }
     }
 
-    public SwitchMapping? Find(string name) =>
-        Switches.FirstOrDefault(mapping => string.Equals(mapping.Name, name, StringComparison.OrdinalIgnoreCase));
-
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
     {

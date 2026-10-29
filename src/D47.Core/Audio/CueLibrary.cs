@@ -396,9 +396,6 @@ public sealed class CueLibrary
     public IReadOnlyList<MusicTrack> Music(string situation) =>
         _music.TryGetValue(situation, out var tracks) ? tracks : [];
 
-    /// <summary>Every situation that actually has something in it.</summary>
-    public IReadOnlyCollection<string> MusicSituations => (IReadOnlyCollection<string>)_music.Keys;
-
     /// <summary>The bed for one turn, picked from the Commander's pool on each call.</summary>
     public AudioClip Bed() => _bedPool?.Next() ?? _bed;
 

@@ -57,9 +57,4 @@ public sealed record ChoiceRequest(
     /// underneath it declares (asked for 2026-08-23).
     /// </summary>
     public string? Help { get; init; }
-
-    /// <summary>Which option a spoken label names, or null when none of them does.</summary>
-    public ChoiceOption? Match(string spoken) =>
-        Options.FirstOrDefault(option =>
-            string.Equals(option.Label, spoken.Trim(), StringComparison.OrdinalIgnoreCase));
 }

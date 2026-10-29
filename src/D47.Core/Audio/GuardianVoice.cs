@@ -651,12 +651,6 @@ public static partial class GuardianVoice
         return 0;
     }
 
-    /// <summary>
-    /// A pitch shift by <paramref name="factor"/> that keeps the duration: a phase vocoder with identity phase
-    /// locking compresses time by the factor, and resampling restores the length.
-    /// </summary>
-    private static double[] Shift(double[] signal, double factor, int rate) => Run(new ShiftStage(factor, rate), signal);
-
     /// <summary>The stage's whole output for the signal pushed as one chunk.</summary>
     private static double[] Run(IGuardianStage stage, double[] signal)
     {
@@ -794,18 +788,6 @@ public static partial class GuardianVoice
         return wet;
     }
 
-    private static double[] Mix(double[] first, double firstGain, double[] second, double secondGain)
-    {
-        var output = new double[first.Length];
-
-        for (var index = 0; index < first.Length; index++)
-        {
-            output[index] = (firstGain * first[index]) + (secondGain * second[index]);
-        }
-
-        return output;
-    }
-
     internal static double[][] Decode(ReadOnlySpan<byte> pcm, int channels, int frames)
     {
         var decoded = new double[channels][];
@@ -862,26 +844,6 @@ public static partial class GuardianVoice
         }
 
         return window;
-    }
-
-    /// <summary>A linearly interpolated read, zero outside the signal.</summary>
-    private static double Read(double[] signal, double position)
-    {
-        if (position < 0 || position > signal.Length - 1)
-        {
-            return 0;
-        }
-
-        var below = (int)position;
-
-        if (below >= signal.Length - 1)
-        {
-            return signal[^1];
-        }
-
-        var fraction = position - below;
-
-        return (signal[below] * (1 - fraction)) + (signal[below + 1] * fraction);
     }
 
     /// <summary>A moving average of <paramref name="source"/> over ±<paramref name="halfWidth"/> bins.</summary>

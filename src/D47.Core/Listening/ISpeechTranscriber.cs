@@ -20,9 +20,6 @@ public sealed record Transcription(string Text)
 /// <summary>Turning an utterance into words.</summary>
 public interface ISpeechTranscriber : IDisposable
 {
-    /// <summary>Which model is loaded, for reporting.</summary>
-    string? Model { get; }
-
     /// <summary>Whether it can transcribe right now.</summary>
     bool IsReady { get; }
 

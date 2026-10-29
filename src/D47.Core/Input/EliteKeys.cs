@@ -37,9 +37,6 @@ public readonly record struct EliteKey(EliteInputKind Kind, uint Code)
 /// </summary>
 public static class EliteKeys
 {
-    /// <summary>The device name Elite writes for a slot with nothing in it.</summary>
-    public const string NoDevice = "{NoDevice}";
-
     private static readonly Dictionary<string, uint> KeyboardCodes = new(StringComparer.OrdinalIgnoreCase)
     {
         // Letters and digits.

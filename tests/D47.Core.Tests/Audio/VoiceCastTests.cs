@@ -176,22 +176,6 @@ public class VoiceCastTests
     }
 
     [Fact]
-    public void AProviderChangeDropsEveryAssignment()
-    {
-        // A voice id belongs to the provider that issued it.
-        var cast = Cast();
-
-        cast.ForSender("Vex", isPlayer: true);
-        cast.ForSender("Pirate Lord", isPlayer: false);
-        cast.Assign(VoiceRole.TowerControl, "voice-c");
-
-        cast.Reset();
-
-        Assert.Equal((0, 0), cast.Assignments);
-        Assert.Equal("ship-ai", cast.For(VoiceRole.TowerControl).VoiceId);
-    }
-
-    [Fact]
     public void TheRateAppliesToEveryoneSpeaking()
     {
         // How fast the Commander likes to be spoken to is a property of the Commander, not of who happens to

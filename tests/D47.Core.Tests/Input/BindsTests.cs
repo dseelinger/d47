@@ -211,24 +211,6 @@ public class BindsTests
     }
 
     [Fact]
-    public void SharedGesturesAreListedWithTheActionsThatShareThem()
-    {
-        StartPreset("StartPreset.4.start", "Custom");
-        Binds(Path.Combine(Bindings, "Custom.4.0.binds"),
-            ("HeadLookToggle", "Key_H", []),
-            ("QuickCommsPanel", "Key_H", []),
-            ("UseBoostJuice", "Key_Tab", []));
-
-        var shared = Resolve().Shared();
-
-        // Elite binds the same key across control modes on purpose, so this reports what is shared and leaves
-        // the judgement to the caller rather than calling it a fault.
-        var entry = Assert.Single(shared);
-        Assert.Equal("h", entry.Key);
-        Assert.Equal(2, entry.Value.Count);
-    }
-
-    [Fact]
     public void AnUnusedKeyCollidesWithNothing()
     {
         StartPreset("StartPreset.4.start", "Custom");

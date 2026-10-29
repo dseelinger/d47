@@ -33,10 +33,6 @@ public static partial class AudioTags
             ? [.. Tag().Matches(sentence).Select(match => match.Groups["tag"].Value)]
             : [];
 
-    /// <summary>The direction kept only if it will be performed, and removed otherwise.</summary>
-    public static string For(string sentence, bool performed) =>
-        performed ? sentence : Strip(sentence);
-
     /// <summary>The direction kept only where <paramref name="performs"/> accepts it, and removed otherwise.</summary>
     public static string For(string sentence, Func<string, bool> performs)
     {

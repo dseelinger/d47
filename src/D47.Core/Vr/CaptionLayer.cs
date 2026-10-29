@@ -15,9 +15,6 @@ public sealed class CaptionLayer
     private bool _quiet;
 
     private DateTimeOffset? _clearAt;
-
-    /// <summary>The last thing said, kept for nothing but the log and the tests.</summary>
-    private string _showing = string.Empty;
     private long? _saying;
 
     /// <summary>Measured speaking speed, characters a second.</summary>
@@ -79,8 +76,6 @@ public sealed class CaptionLayer
         {
             _pending.Enqueue(line);
         }
-
-        _showing = text;
 
         // While the voice is still going there is no clear time.
         _quiet = false;
@@ -169,7 +164,6 @@ public sealed class CaptionLayer
         _advanceAt = null;
         _quiet = false;
         _clearAt = null;
-        _showing = string.Empty;
         _saying = null;
         _sayStartedAt = null;
         Changed?.Invoke();
