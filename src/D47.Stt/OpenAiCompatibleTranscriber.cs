@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -8,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Stt;
 
 /// <summary>A service that serves OpenAI's <c>POST /v1/audio/transcriptions</c>: Groq and OpenAI.</summary>
-public sealed class OpenAiCompatibleTranscriber : ISpeechTranscriber
+public sealed class OpenAiCompatibleTranscriber : HostedSpeechTranscriber
 {
     public const string GroqEndpoint = "https://api.groq.com/openai/v1/audio/transcriptions";
 
@@ -29,12 +28,8 @@ public sealed class OpenAiCompatibleTranscriber : ISpeechTranscriber
 
     internal const int PromptCharacters = PromptTokens * CharactersPerToken;
 
-    private readonly string _provider;
-    private readonly Func<string?> _key;
     private readonly Uri _endpoint;
     private readonly string _model;
-    private readonly ILogger<OpenAiCompatibleTranscriber> _logger;
-    private readonly HttpClient _http;
 
     /// <param name="key">Read at each call and never held.</param>
     public OpenAiCompatibleTranscriber(
@@ -44,125 +39,42 @@ public sealed class OpenAiCompatibleTranscriber : ISpeechTranscriber
         string model,
         ILogger<OpenAiCompatibleTranscriber> logger,
         HttpMessageHandler? handler = null)
+        : base(provider, key, logger, handler)
     {
-        _provider = provider;
-        _key = key;
         _endpoint = new Uri(endpoint);
         _model = model;
-        _logger = logger;
-        _http = handler is null ? new HttpClient() : new HttpClient(handler);
-        _http.Timeout = TimeSpan.FromSeconds(30);
     }
 
-    public string? Model => _model;
+    public override string? Model => _model;
 
-    public bool IsReady => _key() is { Length: > 0 };
-
-    public async Task<Transcription> TranscribeAsync(
+    private protected override HttpRequestMessage Request(
+        string key,
         Utterance utterance,
-        IReadOnlyList<string> properNouns,
-        CancellationToken cancellationToken = default)
+        IReadOnlyList<string> properNouns)
     {
-        if (_key() is not { Length: > 0 } key)
+        var request = new HttpRequestMessage(HttpMethod.Post, _endpoint);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
+
+        var form = new MultipartFormDataContent();
+
+        var file = new ByteArrayContent(HostedTranscription.Wav(utterance));
+        file.Headers.ContentType = new MediaTypeHeaderValue("audio/wav");
+        form.Add(file, "file", "utterance.wav");
+        form.Add(new StringContent(_model), "model");
+        form.Add(new StringContent("en"), "language");
+        form.Add(new StringContent("json"), "response_format");
+
+        if (Prompt(properNouns) is { } prompt)
         {
-            throw new TranscriptionUnavailableException(
-                _provider,
-                TranscriptionFailure.KeyRejected,
-                $"No {_provider} API key is stored. Add one in Settings.");
+            form.Add(new StringContent(prompt), "prompt");
         }
 
-        var stopwatch = Stopwatch.StartNew();
+        request.Content = form;
 
-        try
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Post, _endpoint);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
-
-            using var form = new MultipartFormDataContent();
-
-            var file = new ByteArrayContent(HostedTranscription.Wav(utterance));
-            file.Headers.ContentType = new MediaTypeHeaderValue("audio/wav");
-            form.Add(file, "file", "utterance.wav");
-            form.Add(new StringContent(_model), "model");
-            form.Add(new StringContent("en"), "language");
-            form.Add(new StringContent("json"), "response_format");
-
-            if (Prompt(properNouns) is { } prompt)
-            {
-                form.Add(new StringContent(prompt), "prompt");
-            }
-
-            request.Content = form;
-
-            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
-
-            var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw Refused(response, body);
-            }
-
-            var text = Text(body) ?? throw new TranscriptionUnavailableException(
-                _provider,
-                TranscriptionFailure.Failed,
-                $"{_provider} answered without a transcript.")
-            {
-                Detail = "no transcript came back",
-            };
-
-            _logger.LogInformation(
-                "{Provider} transcribed {Seconds:0.#}s of audio in {Elapsed}ms with {Nouns} name hints",
-                _provider,
-                utterance.Duration.TotalSeconds,
-                stopwatch.ElapsedMilliseconds,
-                properNouns.Count);
-
-            return new Transcription(text.Trim())
-            {
-                Elapsed = stopwatch.Elapsed,
-                Model = _model,
-            };
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (TranscriptionUnavailableException)
-        {
-            throw;
-        }
-        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException)
-        {
-            // An OperationCanceledException not from the caller's token is the client's timeout.
-            _logger.LogWarning("{Provider} could not be reached: {Because}", _provider, ex.Message);
-
-            throw new TranscriptionUnavailableException(
-                _provider,
-                TranscriptionFailure.Unreachable,
-                $"{_provider} could not be reached: {ex.Message}",
-                ex);
-        }
+        return request;
     }
 
-    /// <summary>Classifies a non-success answer, taking the message from <c>error.message</c> only.</summary>
-    private TranscriptionUnavailableException Refused(HttpResponseMessage response, string body)
-    {
-        var said = ErrorMessage(body) ?? response.ReasonPhrase ?? response.StatusCode.ToString();
-
-        var reason = HostedTranscription.Reason(response.StatusCode);
-
-        _logger.LogWarning(
-            "{Provider} refused to transcribe ({Status}): {Because}", _provider, (int)response.StatusCode, said);
-
-        return new TranscriptionUnavailableException(
-            _provider, reason, $"{_provider} could not transcribe: {said}")
-        {
-            Detail = said,
-        };
-    }
-
-    private static string? ErrorMessage(string body)
+    private protected override string? ErrorMessage(string body)
     {
         try
         {
@@ -174,24 +86,6 @@ public sealed class OpenAiCompatibleTranscriber : ISpeechTranscriber
                    && error.TryGetProperty("message", out var message)
                    && message.ValueKind == JsonValueKind.String
                 ? message.GetString()
-                : null;
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
-
-    private static string? Text(string body)
-    {
-        try
-        {
-            using var parsed = JsonDocument.Parse(body);
-
-            return parsed.RootElement.ValueKind == JsonValueKind.Object
-                   && parsed.RootElement.TryGetProperty("text", out var text)
-                   && text.ValueKind == JsonValueKind.String
-                ? text.GetString()
                 : null;
         }
         catch (JsonException)
@@ -234,6 +128,4 @@ public sealed class OpenAiCompatibleTranscriber : ISpeechTranscriber
 
         return prompt.Length == 0 ? null : prompt.ToString();
     }
-
-    public void Dispose() => _http.Dispose();
 }

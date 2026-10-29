@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using D47.Core.Listening;
 
 namespace D47.Stt;
@@ -14,6 +15,25 @@ internal static class HostedTranscription
         HttpStatusCode.TooManyRequests => TranscriptionFailure.RateLimited,
         _ => TranscriptionFailure.Failed,
     };
+
+    /// <summary>The top-level <c>text</c> string of a reply, or null.</summary>
+    public static string? Text(string body)
+    {
+        try
+        {
+            using var parsed = JsonDocument.Parse(body);
+
+            return parsed.RootElement.ValueKind == JsonValueKind.Object
+                   && parsed.RootElement.TryGetProperty("text", out var text)
+                   && text.ValueKind == JsonValueKind.String
+                ? text.GetString()
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 
     /// <summary>The utterance as a 16-bit mono PCM WAV at its own sample rate.</summary>
     public static byte[] Wav(Utterance utterance)
