@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Warden and Sentinel repeat fewer of their own words. Warden no longer leans on "within tolerance" and "sufficient". Sentinel no longer leans on "doctrine" and "emplacement", and outside his introduction he no longer says he has never been in combat. Before, the Narrator picked these words up too.
+
 The hours row under Break reminder in Settings › Callouts now reads "Remind me to take a break after (hours)". Before, it read "…after this many hours".
 
 Resetting a settings group no longer clears text you typed in. Home system, the character sheet, About me and the current scenario stay as they are, and a group with nothing else to reset shows no reset button. Each of those rows still has its own reset button. Before, resetting Exploration callouts forgot your home system.
