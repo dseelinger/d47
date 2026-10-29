@@ -19,6 +19,7 @@ internal static class StoryAnswer
     internal const string BeatsName = "story_beats";
     internal const string ReplacementsName = "story_replacements";
     internal const string FidelityName = "story_fidelity";
+    internal const string HeadingName = "story_heading";
 
     internal static readonly IReadOnlyList<string> SpineFields = ["name", "premise", "want", "stake", "turn", "ending"];
 
@@ -131,15 +132,22 @@ internal static class StoryAnswer
                 ]),
             })]).ToJsonString());
 
-    /// <summary>The answer's JSON shape as the instruction states it.</summary>
+    internal const string HeadingShape = "{\"home\": boolean, \"system\": string|null}";
+
+    /// <summary>The schema of the step that reads where a changed objective asks to go.</summary>
+    internal static LlmResponseSchema HeadingSchema() =>
+        new(HeadingName, Object([("home", new JsonObject { ["type"] = "boolean" }), ("system", Maybe("string"))]).ToJsonString());
+
+    /// <summary>The answer's JSON shape as the instruction states it; <paramref name="heading"/> adds a changed objective's "heading" flag.</summary>
     internal static string BeatsShape(
-        bool speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null, bool aboard = false, StorySwitches? switches = null) =>
+        bool speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null, bool aboard = false, StorySwitches? switches = null, bool heading = false) =>
         "{" + string.Join(", ", SpineFields.Select(field => $"\"{field}\": string"))
         + ", \"opening\": " + OpeningShape(speakers)
         + ", \"reply\": string, \"beats\": [" + BeatShape(speakers, kinds, ships, objective: false, switches) + "]"
         + (destination ? ", " + DestinationShape : string.Empty)
         + (aboard ? ", \"aboard\": [string]" : string.Empty)
-        + (switches is { Opening: true } ? SwitchesShape(switches, "openingBoards", "openingLeaves") : string.Empty) + "}";
+        + (switches is { Opening: true } ? SwitchesShape(switches, "openingBoards", "openingLeaves") : string.Empty)
+        + (heading ? ", \"heading\": boolean" : string.Empty) + "}";
 
     /// <summary>A repair answer's JSON shape: the replacements, and the opening and destination only when they are asked for again.</summary>
     internal static string ReplacementsShape(
@@ -172,8 +180,8 @@ internal static class StoryAnswer
         + "}";
 
     /// <summary>
-    /// The schema of a chapter's answer; a <paramref name="cast"/> with any id adds the "aboard" list of them, and
-    /// <paramref name="switches"/> the boardings and leavings due.
+    /// The schema of a chapter's answer; a <paramref name="cast"/> with any id adds the "aboard" list of them,
+    /// <paramref name="switches"/> the boardings and leavings due, and <paramref name="heading"/> a changed objective's "heading" flag.
     /// </summary>
     internal static LlmResponseSchema BeatsSchema(
         IReadOnlyList<string>? speakers,
@@ -181,7 +189,8 @@ internal static class StoryAnswer
         bool destination,
         IReadOnlyList<string>? ships = null,
         IReadOnlyList<string>? cast = null,
-        StorySwitches? switches = null)
+        StorySwitches? switches = null,
+        bool heading = false)
     {
         var answer = new List<(string, JsonNode)>(SpineFields.Select(field => (field, (JsonNode)Text())))
         {
@@ -203,6 +212,11 @@ internal static class StoryAnswer
         if (switches is { Opening: true })
         {
             answer.AddRange(Switches(switches, "openingBoards", "openingLeaves"));
+        }
+
+        if (heading)
+        {
+            answer.Add(("heading", new JsonObject { ["type"] = "boolean" }));
         }
 
         return new LlmResponseSchema(BeatsName, Object(answer).ToJsonString());

@@ -69,7 +69,17 @@ public sealed record AdventureRewrite(
     long? ClosedMarketId = null,
     string? Remark = null,
     IReadOnlyList<AdventureRemark>? Exchange = null,
-    int Step = 0);
+    int Step = 0)
+{
+    /// <summary>The place the <see cref="Remark"/> asks to travel to, found by the galaxy search; null when it names none or none was found.</summary>
+    public AdventureHeading? Heading { get; init; }
+
+    /// <summary>The system the <see cref="Remark"/> named that the galaxy search does not know; null when it named none or it was found.</summary>
+    public string? Unfound { get; init; }
+}
+
+/// <summary>A system a changed objective may travel toward. <see cref="Home"/> is set when it is Sol or Colonia standing in for a home system the Commander has not set.</summary>
+public sealed record AdventureHeading(string System, long SystemAddress, StarPosition Position, bool Home = false);
 
 /// <summary>The Guardian beacon system an act-one chapter ends at.</summary>
 public sealed record AdventureBeacon(long SystemAddress, string System, double? EasierWith = null);
@@ -285,6 +295,9 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
 
     /// <summary>The finale's destination, when the draft is finale chapter 1.</summary>
     public AdventureDestination? Destination { get; init; }
+
+    /// <summary>The place a changed objective's new objectives travel toward, when the answer said they head for it.</summary>
+    public AdventureHeading? Heading { get; init; }
 }
 
 /// <summary>
@@ -340,6 +353,12 @@ public sealed class AdventureGenerator(
 
     /// <summary>The activities the Commander flying has changed away from often enough to bar them; a short story may not ask for one.</summary>
     public Func<IReadOnlyList<string>>? Barred { get; set; }
+
+    /// <summary>The home system the Commander flying has set, which "home" in a changed objective means; null for none.</summary>
+    public Func<string?>? HomeSystem { get; set; }
+
+    /// <summary>Output ceiling for the step that reads where a changed objective asks to go.</summary>
+    public const int HeadingOutputCeiling = 4000;
 
     /// <summary>Beats per structure.</summary>
     public static (int Beats, string Sheet) Structure(AdventureLength length) => length switch
@@ -442,6 +461,22 @@ public sealed class AdventureGenerator(
         Enter(ask, WriteStage.Places);
         var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
         var notes = new List<string>();
+
+        if (ask.Rewrite is { Remark: { } said } changing && !string.IsNullOrWhiteSpace(said) && ChapterPull.MayHead(ask.Story))
+        {
+            ask = ask with { Rewrite = await HeadingAsync(ask, changing, facts, notes, cancellationToken).ConfigureAwait(false) };
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return AdventureOutcome.Stopped;
+            }
+
+            if (ask.Rewrite.Heading is not null)
+            {
+                facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
         var notable = ask.Story?.Sights is { Count: > 0 } sights ? sights : await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
         var candidates = await CandidatesAsync(ask, facts, cancellationToken, notes).ConfigureAwait(false);
 
@@ -584,6 +619,12 @@ public sealed class AdventureGenerator(
             return Failed(null, "The model's objectives were not something I could read.", notes, started, beatsAsked);
         }
 
+        // Objectives that do not head for the place the Commander asked for are held to no leg.
+        if (ask.Rewrite is { Heading: not null } heading && !read.Heading)
+        {
+            ask = ask with { Rewrite = heading with { Heading = null } };
+        }
+
         Asked? unusedRepair = null;
         var offset = ask.Rewrite?.From ?? 0;
         var passed = new HashSet<int>();
@@ -717,6 +758,7 @@ public sealed class AdventureGenerator(
         return new AdventureOutcome(adventure, read.Reply, null, notes)
         {
             Destination = ask.Story?.FinaleChapter == 1 ? resolved.Destination : null,
+            Heading = ask.Rewrite?.Heading,
         };
 
         async Task<Resolved> CheckAsync(ReadAnswer answer)
@@ -1269,6 +1311,99 @@ public sealed class AdventureGenerator(
             .ToList();
 
         return named.Count == 1 ? named[0] : null;
+    }
+
+    /// <summary>
+    /// The rewrite with the place its remark asks to travel to, found by the galaxy search, or with the system it named that the
+    /// search does not know; unchanged when the remark names no place or the place could not be looked up.
+    /// </summary>
+    private async Task<AdventureRewrite> HeadingAsync(AdventureAsk ask, AdventureRewrite rewrite, Facts facts, List<string> notes, CancellationToken cancellationToken)
+    {
+        var home = HomeSystem?.Invoke() is { } set && !string.IsNullOrWhiteSpace(set) ? set.Trim() : null;
+        var asked = await AskJsonAsync(HeadingStep, HeadingInstruction(rewrite, facts, home), HeadingOutputCeiling, ask.Progress, cancellationToken, ThinkingEffort.Low).ConfigureAwait(false);
+
+        if ((asked.Json is null ? null : ReadHeading(asked.Json)) is not { } read)
+        {
+            logger.LogInformation("Draft {Draft}, heading step not read: {Why}", ask.Draft, asked.Why);
+            return rewrite;
+        }
+
+        var (system, standIn) = read.Home ? (home ?? HomeLeg.TargetFrom(facts.Position), home is null) : (read.System, false);
+
+        if (system is null || galaxy() is not { } search)
+        {
+            return rewrite;
+        }
+
+        try
+        {
+            if (await new AdventureResolver(search, facts.Standings) { Time = Time }.SystemAsync(system, cancellationToken).ConfigureAwait(false) is { } found
+                && await search.PositionAsync(found.Name, cancellationToken).ConfigureAwait(false) is { } position)
+            {
+                logger.LogInformation("Draft {Draft}, the changed objective asks to go to {System}", ask.Draft, found.Name);
+                return rewrite with { Heading = new AdventureHeading(found.Name, found.Address, position, standIn) };
+            }
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            notes.Add($"The galaxy search could not look up {system} ({ex.Message}), so the new objectives were not sent toward it.");
+            return rewrite;
+        }
+
+        logger.LogInformation("Draft {Draft}, the changed objective names {System}, which the galaxy search does not know", ask.Draft, system);
+        return rewrite with { Unfound = system };
+    }
+
+    private static StoryCall HeadingInstruction(AdventureRewrite rewrite, Facts facts, string? home)
+    {
+        var text = new StringBuilder();
+
+        text.AppendLine(
+            "The Commander is flying a story and wants to change the objective they were on. Read what they said and decide whether it "
+            + "asks to travel to a particular place. Do not judge whether going there suits the story; say only where, if anywhere, they ask to go.");
+        text.AppendLine();
+        text.AppendLine("Places they may mean without naming a system:");
+        text.AppendLine(home is null ? "- Home: they have set no home system." : $"- Home: {home}.");
+
+        if (facts.Carrier is { Owned: true, StarSystem: { Length: > 0 } carrier })
+        {
+            text.AppendLine($"- Their fleet carrier: in {carrier}.");
+        }
+
+        text.AppendLine("- Sol: the centre of the bubble, populated space.");
+        text.AppendLine("- Colonia: the settled region 22,000 light years from Sol.");
+        text.AppendLine($"- Where they are now: {facts.System ?? "unknown"}.");
+        AppendExchange(text, rewrite.Exchange, rewrite.Remark);
+        text.AppendLine();
+        text.AppendLine(
+            "Answer with one JSON object and nothing else: " + StoryAnswer.HeadingShape + ". \"home\" is true when they ask to go home. "
+            + "Otherwise \"system\" is the star system they ask to go to, spelt as the game spells it: one they name, or the system of a place above that they mean. "
+            + "\"home\" is false and \"system\" is null when they name no place to go, such as when they ask for less combat or a different activity.");
+
+        return new StoryCall(text.ToString(), StoryAnswer.HeadingSchema());
+    }
+
+    /// <summary>The heading step's answer: the system the remark names and whether it asks to go home; null when it cannot be read.</summary>
+    private static (string? System, bool Home)? ReadHeading(string json)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(json, new JsonDocumentOptions { AllowTrailingCommas = true });
+            var root = document.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            var system = Text(root, "system");
+
+            return (string.IsNullOrWhiteSpace(system) ? null : system.Trim(), root.TryGetProperty("home", out var home) && home.ValueKind == JsonValueKind.True);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     /// <summary>The facts with the light years from the Commander to the story's destination, when it has one and both can be measured.</summary>
@@ -1901,6 +2036,7 @@ public sealed class AdventureGenerator(
     private const string BeatsStep = "beats";
     private const string RepairStep = "replacements";
     private const string FidelityStep = "fidelity";
+    private const string HeadingStep = "heading";
 
     /// <summary>One model call: the step it served, the model asked, the reply, and the JSON object read out of it.</summary>
     private sealed record Asked(string Step, string Model, FlavourReply Reply, string? Json)
@@ -1912,7 +2048,7 @@ public sealed class AdventureGenerator(
                 : $"{Reply.Line.Length} characters came back and could not be read.";
     }
 
-    private async Task<Asked> AskJsonAsync(string step, StoryCall call, int budget, StoryProgress? progress, CancellationToken cancellationToken)
+    private async Task<Asked> AskJsonAsync(string step, StoryCall call, int budget, StoryProgress? progress, CancellationToken cancellationToken, ThinkingEffort? effort = null)
     {
         var asking = provider();
         var chosen = model() ?? asking?.DefaultModel ?? "no model";
@@ -1929,6 +2065,7 @@ public sealed class AdventureGenerator(
             cancellationToken,
             maxOutputTokens: budget,
             effort: Effort
+                ?? effort
                 ?? (asking is null ? null : storyEffort?.Invoke(asking.Id, chosen))
                 ?? ThinkingEffort.Medium,
 
@@ -2526,6 +2663,28 @@ public sealed class AdventureGenerator(
         var within = leg.Within.ToString("0", CultureInfo.InvariantCulture);
 
         text.AppendLine();
+
+        if (leg.Asked)
+        {
+            text.AppendLine(
+                leg.Home
+                    ? $"The Commander has asked to go home and has set no home system, so home is {leg.Target}, the nearer of Sol and Colonia, {far} light years away."
+                    : $"The Commander has asked to go to {leg.Target}, {far} light years away.");
+            text.AppendLine(
+                $"If going there serves this chapter, the new objectives travel toward {leg.Target}: their last stop, the system of the last place objective, "
+                + $"must be at least {nearer} light years nearer {leg.Target} than where the Commander is now, or {Reached(leg)}. Each hop must be within the reach, "
+                + "so the new objectives need not get all the way there."
+                + (places.State == InBandState.Listed ? " The places listed on the way to it meet that rule." : ""));
+            text.AppendLine($"\"heading\" is true when the new objectives travel toward {leg.Target}, and false when you keep the objective or offer something else.");
+
+            if (places.State is InBandState.NoneFound or InBandState.Unavailable)
+            {
+                text.AppendLine($"No station or landable body on the way to {leg.Target} could be listed, so the new objectives are not held to a distance from {leg.Target}.");
+            }
+
+            return;
+        }
+
         text.AppendLine(
             leg.Home
                 ? $"The Commander is {far} light years from {leg.Target} and has turned down the last chapters out here, so the story heads home to {leg.Target}."
@@ -2539,6 +2698,39 @@ public sealed class AdventureGenerator(
         {
             text.AppendLine(
                 $"No station or landable body on the way to {leg.Target} could be listed, so this chapter is not held to a distance from {leg.Target}.");
+        }
+    }
+
+    /// <summary>Where a last stop that has reached <paramref name="leg"/>'s target is: in the system itself, or within the leg's distance of it.</summary>
+    private static string Reached(ChapterLeg leg) =>
+        leg.Within <= 0 ? $"in {leg.Target} itself" : $"within {leg.Within.ToString("0", CultureInfo.InvariantCulture)} light years of {leg.Target}";
+
+    /// <summary>For a changed objective, why it cannot travel to a place the Commander names: the chapter's own destination, or a system the galaxy search does not know.</summary>
+    private static void AppendHeading(StringBuilder text, AdventureAsk ask)
+    {
+        if (ask.Rewrite is not { Remark: { } remark } rewrite || string.IsNullOrWhiteSpace(remark))
+        {
+            return;
+        }
+
+        var bound = ask.Story switch
+        {
+            { Beacon: { } beacon } => $"this chapter must end at the Guardian beacon in {beacon.System}",
+            { FinaleChapter: not null, Destination: { } end } => $"this is a finale chapter, and it must work toward the finale's destination, {end.Body} in {end.System}",
+            { FinaleChapter: not null } => "this is a finale chapter, and it must work toward the place where the finale ends",
+            { InTheBlack: true, Toward: { } toward } => $"this part of the story travels toward {toward}, in the black",
+            _ => null,
+        };
+
+        if (bound is not null)
+        {
+            text.AppendLine();
+            text.AppendLine($"If the Commander asks to go somewhere, the new objectives cannot take them there: {bound}. Say so in the reply, and write the new objectives for what the chapter must do.");
+        }
+        else if (rewrite.Unfound is { } unfound)
+        {
+            text.AppendLine();
+            text.AppendLine($"The Commander asked to go to \"{unfound}\", which the galaxy search does not know as a star system, so no objective can take them there. Say plainly in the reply that the system could not be found.");
         }
     }
 
@@ -3052,6 +3244,7 @@ public sealed class AdventureGenerator(
         AppendBarred(text, ask);
         AppendBand(text, ask, facts, candidates.InBand);
         AppendLeg(text, ask, facts, candidates.Pull);
+        AppendHeading(text, ask);
 
         if (ask.Chapter is { } chapter && !IsDrawn(ask.Story))
         {
@@ -3253,6 +3446,7 @@ public sealed class AdventureGenerator(
         }
 
         var destination = ask.Story is { FinaleChapter: 1, Destination: null };
+        var heading = ChapterPull.Of(ask, facts.Position) is { Asked: true, Arrived: false };
 
         text.AppendLine(
             "An objective may take several steps. Its own kind and fields are the first step; \"then\" lists each further step, in order, "
@@ -3260,7 +3454,7 @@ public sealed class AdventureGenerator(
             + "give an objective as many as the story needs, and an empty \"then\" when it takes one.");
         text.AppendLine();
         text.AppendLine(
-            "Answer with one JSON object and nothing else: " + StoryAnswer.BeatsShape(speakers, kinds, destination, ships.Count > 0 ? ships : null, ask.Story?.Cast is { Count: > 0 }, switches)
+            "Answer with one JSON object and nothing else: " + StoryAnswer.BeatsShape(speakers, kinds, destination, ships.Count > 0 ? ships : null, ask.Story?.Cast is { Count: > 0 }, switches, heading)
             + (changing
                 ? ". \"reply\" is what you say to the Commander, in your own voice, in two or three sentences: why the objective they were on was "
                   + "probably chosen, against what this chapter is for; whether their idea serves that; and, if it does not, what you would do instead "
@@ -3276,7 +3470,8 @@ public sealed class AdventureGenerator(
                 destination,
                 ships.Count > 0 ? ships : null,
                 ask.Story?.Cast is { Count: > 0 } members ? [.. members.Select(member => member.Id)] : null,
-                switches));
+                switches,
+                heading));
     }
 
     /// <summary>The draft's objectives numbered in the chapter, why some cannot stand, and which of them the answer replaces.</summary>
@@ -3645,6 +3840,9 @@ public sealed class AdventureGenerator(
 
         /// <summary>The ids "openingLeaves" lists, as written.</summary>
         public IReadOnlyList<string> OpeningLeaves { get; init; } = [];
+
+        /// <summary>Whether "heading" says a changed objective's new objectives travel toward the place the Commander asked for.</summary>
+        public bool Heading { get; init; }
     }
 
     /// <summary>A place as the model named it.</summary>
@@ -3668,6 +3866,7 @@ public sealed class AdventureGenerator(
                 Aboard = Ids(root, "aboard"),
                 OpeningBoards = Ids(root, "openingBoards"),
                 OpeningLeaves = Ids(root, "openingLeaves"),
+                Heading = root.TryGetProperty("heading", out var heading) && heading.ValueKind == JsonValueKind.True,
             };
         }
         catch (JsonException)
@@ -4750,7 +4949,9 @@ public sealed class AdventureGenerator(
         return ChapterPull.Meets(start, measured, reach, leg.Within)
             ? null
             : $"The chapter starts {start:0} light years from {leg.Target} and its last stop is {measured:0} light years from it; "
-              + $"the story is {(leg.Home ? "heading home" : $"heading for {leg.Target}")}, so its last stop must be at least {ChapterPull.Share * reach:0} light years nearer {leg.Target} than the start, or within {leg.Within:0} light years of it.";
+              + (leg.Asked ? $"the new objectives head for {leg.Target}" : $"the story is {(leg.Home ? "heading home" : $"heading for {leg.Target}")}")
+              + $", so its last stop must be at least {ChapterPull.Share * reach:0} light years nearer {leg.Target} than the start, or "
+              + (leg.Within <= 0 ? $"in {leg.Target} itself." : $"within {leg.Within:0} light years of it.");
     }
 
     private static bool IsTravel(TriggerKind kind) => kind is TriggerKind.Arrive or TriggerKind.Dock or TriggerKind.Land or TriggerKind.Scan or TriggerKind.Site;

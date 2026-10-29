@@ -15,6 +15,8 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
 {
     private const string Courier = "mission:Mission_Courier";
 
+    private const string NoPlace = """{"home": false, "system": null}""";
+
     private const string ABountyAndADock = """
         {"opening": "x", "reply": "A bounty does the same.", "beats": [
           {"title": "Another Way", "function": "midpoint", "kind": "bounty", "count": 2, "line": "Two more."},
@@ -120,7 +122,7 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
 
         await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
 
-        var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
 
         Assert.Contains("no objective may ask for any of them: earn combat kill bonds", prompt);
         Assert.Empty(fixtures.Stories.Current("F1")!.Refused);
@@ -157,7 +159,7 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
     [Fact]
     public async Task NeverAskThisCountsNothing()
     {
-        using var fixtures = AtTheBond();
+        using var fixtures = AtTheBond(ABountyAndADock, NothingObjected);
         var bars = Bars();
         fixtures.Director.Bars = bars;
 
@@ -167,9 +169,12 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
         Assert.Equal(["bond"], fixtures.Stories.Current("F1")!.Refused);
     }
 
-    private static StoryFixtures AtTheBond()
+    /// <summary>A story on chapter two, waiting on the kill bonds; with no answers given, scripted for two changed objectives.</summary>
+    private static StoryFixtures AtTheBond(params string[] answers)
     {
-        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(ABountyAndADock), RoundScriptedLlmProvider.Saying(NothingObjected), RoundScriptedLlmProvider.Saying(ABountyAndADock), RoundScriptedLlmProvider.Saying(NothingObjected)));
+        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
+            (answers.Length > 0 ? answers : [NoPlace, ABountyAndADock, NothingObjected, NoPlace, ABountyAndADock, NothingObjected])
+                .Select(answer => RoundScriptedLlmProvider.Saying(answer)).ToArray()));
 
         fixtures.Stories.Save("F1", new Story
         {

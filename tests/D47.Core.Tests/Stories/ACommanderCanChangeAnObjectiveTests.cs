@@ -13,6 +13,8 @@ public sealed class ACommanderCanChangeAnObjectiveTests
 {
     private const string ChapterKey = "the-hard-way";
 
+    private const string NoPlace = """{"home": false, "system": null}""";
+
     private static readonly DateTimeOffset ChangedAt = Now.AddHours(1);
 
     private const string ABountyAndADock = """
@@ -84,7 +86,7 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     [Fact]
     public async Task ARemarkProducesAProposalAndAReply()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
 
         var outcome = await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
 
@@ -102,11 +104,11 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     [Fact]
     public async Task TheWriterIsToldTheCommanderWantsToChangeTheObjectiveAndNotThatTheyRefusedIt()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
 
         await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
 
-        var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
 
         Assert.Contains("They want to change the objective they were on", prompt);
         Assert.Contains("The objective the Commander wants to change: The Wing", prompt);
@@ -120,12 +122,12 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     [Fact]
     public async Task AFurtherRemarkRevisesWithTheEarlierRoundsInTheExchange()
     {
-        using var fixtures = AtTheBond(ABountyAndADock, NothingObjected, ABountyAgain);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock, NothingObjected, NoPlace, ABountyAgain);
 
         var first = await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
         var second = await fixtures.Director.ReviseObjectiveAsync("F1", "Make it three.", first.Proposal!.Exchange, TestContext.Current.CancellationToken);
 
-        var prompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[4].Prompt.History[0].Text;
 
         Assert.Contains("Commander: I would rather hunt a bounty.", prompt);
         Assert.Contains("You: The bonds were there to put you in a wing.", prompt);
@@ -138,7 +140,7 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     [Fact]
     public async Task ApplyingAProposalReplacesTheCurrentObjectiveAndRemembersNothingAsRefused()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
 
         await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
 
@@ -157,7 +159,7 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     [Fact]
     public async Task ApplyingAProposalRecordsTheChapterAsChanged()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
 
         await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
         Assert.Empty(fixtures.Stories.Current("F1")!.ChangedChapters);
@@ -169,7 +171,7 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     [Fact]
     public async Task DiscardingAProposalRecordsNoChangedChapter()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
 
         await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
         fixtures.Director.DiscardObjective("F1");
@@ -180,7 +182,7 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     [Fact]
     public async Task DiscardingAProposalChangesNothing()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
 
         await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
         fixtures.Director.DiscardObjective("F1");
@@ -195,7 +197,7 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     [Fact]
     public async Task AProposalMadeStaleByAFiredBeatIsRefusedAtApply()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
 
         await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
 
@@ -212,7 +214,7 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     [Fact]
     public async Task AProposalIsRefusedAtApplyWhenTheStoryMovedOn()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
 
         await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
         fixtures.Stories.Update("F1", Id, story => story with { Chapters = [.. story.Chapters, "chapter-three"] });

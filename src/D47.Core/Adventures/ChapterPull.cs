@@ -3,15 +3,18 @@ using D47.Core.Stories;
 
 namespace D47.Core.Adventures;
 
-/// <summary>Where a travelling chapter is going: a span's destination or the way home.</summary>
+/// <summary>Where a travelling chapter is going: a span's destination, the way home, or a place the Commander asked for.</summary>
 /// <param name="Target">The system's name.</param>
 /// <param name="There">The target's position.</param>
-/// <param name="Home">Whether the leg is the way home rather than a span's destination.</param>
+/// <param name="Home">Whether the leg is the way home to Sol or Colonia.</param>
 /// <param name="Arrived">Whether the chapter starts within <see cref="Within"/> light years of the target.</param>
 public sealed record ChapterLeg(string Target, StarPosition There, bool Home, bool Arrived)
 {
     /// <summary>Light years from the target within which a last stop needs no more progress.</summary>
-    public double Within => Home ? HomeLeg.Home : StoryDestinations.Arrived;
+    public double Within { get; init; } = Home ? HomeLeg.Home : StoryDestinations.Arrived;
+
+    /// <summary>Whether the leg is a changed objective's, toward a place the Commander asked for.</summary>
+    public bool Asked { get; init; }
 }
 
 /// <summary>The one rule for a chapter that travels toward a target: how far it must go and where its places are searched.</summary>
@@ -38,6 +41,11 @@ public static class ChapterPull
     {
         ArgumentNullException.ThrowIfNull(ask);
 
+        if (ask.Rewrite?.Heading is { } heading)
+        {
+            return start is { } from ? Toward(heading, from) : null;
+        }
+
         if (ask is not { Story: { Beacon: null, FinaleChapter: null } story, Rewrite: null, Length: not AdventureLength.Short } || start is not { } at)
         {
             return null;
@@ -52,6 +60,20 @@ public static class ChapterPull
             ? new ChapterLeg(toward, there, false, !Pulls(toward, at))
             : null;
     }
+
+    /// <summary>The leg from <paramref name="start"/> toward a changed objective's heading: arrived within 1,000 light years of Sol or Colonia on the way home, otherwise only in the system itself.</summary>
+    public static ChapterLeg Toward(AdventureHeading heading, StarPosition start)
+    {
+        ArgumentNullException.ThrowIfNull(heading);
+
+        var within = heading.Home ? HomeLeg.Home : 0;
+
+        return new ChapterLeg(heading.System, heading.Position, heading.Home, start.DistanceTo(heading.Position) <= within) { Within = within, Asked = true };
+    }
+
+    /// <summary>Whether a changed objective in <paramref name="story"/> may travel toward a place the Commander names: not in a beacon or finale chapter, nor in a span in the black with its own destination.</summary>
+    public static bool MayHead(AdventureStory? story) =>
+        story is null or { Beacon: null, FinaleChapter: null } and not { InTheBlack: true, Toward: not null };
 
     /// <summary>The point <see cref="WaypointAt"/> of <paramref name="reach"/> from <paramref name="start"/> along the line to <paramref name="target"/>, or the target when that is nearer.</summary>
     public static StarPosition Waypoint(StarPosition start, StarPosition target, double reach)

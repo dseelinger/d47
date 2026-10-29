@@ -16,6 +16,8 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
 {
     private const string Key = "the-anchorage-run";
 
+    private const string NoPlace = """{"home": false, "system": null}""";
+
     private static readonly DateTimeOffset ChangedAt = Now.AddHours(1);
 
     private const string ABountyAndADock = """
@@ -69,7 +71,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     [Fact]
     public async Task ARemarkProducesAProposalAndChangesNothing()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
 
         var outcome = await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
 
@@ -92,7 +94,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     [Fact]
     public async Task ApplyingReplacesTheCurrentObjectiveAndThoseAfterIt()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
 
         await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
 
@@ -105,7 +107,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     [Fact]
     public async Task ApplyingAfterTheBeatChangedIsRefusedAndDropsTheProposal()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
 
         await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
 
@@ -122,7 +124,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     [Fact]
     public async Task DiscardingDropsTheProposalAndChangesNothing()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
 
         await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
         fixtures.Director.DiscardAdventureObjective("F1", Key);
@@ -135,7 +137,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     [Fact]
     public async Task AnAppliedChangeCountsTowardTheBarOfTheReplacedActivity()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
         var bars = Bars();
 
         fixtures.Director.Bars = bars;
