@@ -992,7 +992,7 @@ public static class CalloutCapability
         {
             Key = SessionLengthHoursKey,
             Advanced = true,
-            Label = "…after this many hours",
+            Label = "Remind me to take a break after (hours)",
             Help = "How long a session runs before the break reminder is said.",
             Kind = SettingKind.Choice,
             Choices = ["2", "3", "4", "6"],

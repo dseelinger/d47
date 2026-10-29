@@ -111,11 +111,11 @@ public class FindRanksPagesSettingsAndHelpTests
     {
         var (find, settings, _) = Build();
 
-        Assert.DoesNotContain(find.Search("after this many hours"), r => r.Target == "callouts.sessionLengthHours");
+        Assert.DoesNotContain(find.Search("take a break after"), r => r.Target == "callouts.sessionLengthHours");
 
         settings.Apply("callouts.sessionLength", "true", SettingsCaller.Panel);
 
-        Assert.Contains(find.Search("after this many hours"), r => r.Target == "callouts.sessionLengthHours");
+        Assert.Contains(find.Search("take a break after"), r => r.Target == "callouts.sessionLengthHours");
     }
 
     [Fact]
