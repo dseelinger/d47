@@ -19,7 +19,7 @@ public class TheCrewAnswersOnTheIntercomTests
 
     private static readonly ShipCrew Roster = new()
     {
-        Members = [new CrewMember("Vance", CrewId: 1, CombatRank: "Dangerous", Active: true)],
+        Members = [new CrewMember("Vance", CrewId: 1, CombatRank: 6, Active: true)],
     };
 
     private static TurnLoop Build(TestSurface surface, ILlmProvider provider, CommsSelection? selected = null)

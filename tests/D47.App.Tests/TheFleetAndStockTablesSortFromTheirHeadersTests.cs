@@ -67,10 +67,10 @@ public sealed class TheFleetAndStockTablesSortFromTheirHeadersTests
     {
         IReadOnlyList<CrewMember> crew =
         [
-            new("Ada", 1, "Competent"),
-            new("Bo", 2, "Deadly"),
-            new("Cy", 3, "Expert"),
-            new("Di", 4, "Elite"),
+            new("Ada", 1, 3),
+            new("Bo", 2, 7),
+            new("Cy", 3, 4),
+            new("Di", 4, 8),
             new("Ed", 5),
         ];
 

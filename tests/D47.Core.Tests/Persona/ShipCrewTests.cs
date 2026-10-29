@@ -26,17 +26,17 @@ public class ShipCrewTests
         return parsed!;
     }
 
-    private static ShipCrew Hire(ShipCrew crew, string name, long id, string rank = "Competent") =>
+    private static ShipCrew Hire(ShipCrew crew, string name, long id, int rank = 3) =>
         crew.Apply(Event("CrewHire", ("Name", name), ("CrewID", id), ("CombatRank", rank)));
 
     [Fact]
     public void HiringPutsSomebodyOnTheBooks()
     {
-        var crew = Hire(ShipCrew.Empty, "Vance Ilo", 1, "Expert");
+        var crew = Hire(ShipCrew.Empty, "Vance Ilo", 1, 4);
 
         var member = Assert.Single(crew.Members);
         Assert.Equal("Vance Ilo", member.Name);
-        Assert.Equal("Expert", member.CombatRank);
+        Assert.Equal(4, member.CombatRank);
         Assert.False(member.Active);
         Assert.Null(crew.Active);
     }
@@ -103,10 +103,48 @@ public class ShipCrewTests
     [Fact]
     public void ARankChangeUpdatesThemInPlace()
     {
-        var crew = Hire(ShipCrew.Empty, "Vance", 1, "Competent")
-            .Apply(Event("NpcCrewRank", ("Name", "Vance"), ("CrewID", 1L), ("RankCombat", "Deadly")));
+        var crew = Hire(ShipCrew.Empty, "Vance", 1, 3)
+            .Apply(Event("NpcCrewRank", ("NpcCrewName", "Vance"), ("NpcCrewId", 1L), ("RankCombat", 7)));
 
-        Assert.Equal("Deadly", Assert.Single(crew.Members).CombatRank);
+        Assert.Equal(7, Assert.Single(crew.Members).CombatRank);
+    }
+
+    [Fact]
+    public void ARankChangeLeavesEveryoneElseAsTheyWere()
+    {
+        var crew = Hire(Hire(ShipCrew.Empty, "Vance", 1, 2), "Ilse", 2, 4)
+            .Apply(Event("NpcCrewRank", ("NpcCrewName", "Vance"), ("NpcCrewId", 1L), ("RankCombat", 3)));
+
+        Assert.Equal([3, 4], crew.Members.Select(m => m.CombatRank));
+    }
+
+    [Fact]
+    public void ARankChangeForSomebodyNotOnTheRosterChangesNothing()
+    {
+        var hired = Hire(ShipCrew.Empty, "Vance", 1, 2);
+
+        var crew = hired.Apply(Event("NpcCrewRank", ("NpcCrewName", "Nobody"), ("NpcCrewId", 99L), ("RankCombat", 5)));
+
+        Assert.Equal(hired.Members, crew.Members);
+    }
+
+    [Fact]
+    public void ARankAboveEliteIsUnknown()
+    {
+        var crew = Hire(ShipCrew.Empty, "Vance", 1, 9);
+
+        Assert.Null(Assert.Single(crew.Members).CombatRank);
+    }
+
+    [Fact]
+    public void ARankIsSaidWithItsNumberAndNameOutOfEight()
+    {
+        var member = Assert.Single(Hire(ShipCrew.Empty, "Ilse Voss", 7, 2).Members);
+
+        Assert.Equal("Novice", member.CombatRankName);
+        Assert.Equal("Ilse Voss (Combat Rank 2 of 8, Novice)", member.Describe());
+        Assert.Contains("Your combat rating is Combat Rank 2 of 8, Novice.", D47.Core.Persona.CrewAddressing.Brief(member, null));
+        Assert.Equal("Elite", new CrewMember("Ed", 2, 8).CombatRankName);
     }
 
     [Fact]
@@ -126,12 +164,12 @@ public class CrewAddressingTests
     public void ACrewMemberIsBriefedAsAPersonRatherThanAsACore()
     {
         // The crew are human pilots hired at a station.
-        var brief = CrewAddressing.Brief(new CrewMember("Vance", 1, "Expert", Active: true), "Long Way Home");
+        var brief = CrewAddressing.Brief(new CrewMember("Vance", 1, 4, Active: true), "Long Way Home");
 
         Assert.Contains("You are Vance", brief, StringComparison.Ordinal);
         Assert.Contains("human being", brief, StringComparison.Ordinal);
         Assert.Contains("Long Way Home", brief, StringComparison.Ordinal);
-        Assert.Contains("Expert", brief, StringComparison.Ordinal);
+        Assert.Contains("Combat Rank 4 of 8, Expert", brief, StringComparison.Ordinal);
 
         // No Guardian material anywhere in it.
         Assert.DoesNotContain("Guardian", brief, StringComparison.OrdinalIgnoreCase);

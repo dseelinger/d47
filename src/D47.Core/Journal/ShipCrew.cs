@@ -3,7 +3,7 @@ namespace D47.Core.Journal;
 /// <summary>One hired pilot, as the journal reports them (Phase 11, "Ship Crew").</summary>
 /// <param name="Name">Theirs, chosen by the game.</param>
 /// <param name="CrewId">The stable identity.</param>
-/// <param name="CombatRank">As Elite words it: Harmless through Elite.</param>
+/// <param name="CombatRank">0 (Harmless) through 8 (Elite); null where unrecorded.</param>
 /// <param name="Active">Whether they are the one currently in the fighter bay.</param>
 /// <param name="PostedTo">
 /// The ship that was active when they were last assigned, or null if d47 has not seen that happen.
@@ -11,12 +11,22 @@ namespace D47.Core.Journal;
 public sealed record CrewMember(
     string Name,
     long CrewId,
-    string? CombatRank = null,
+    int? CombatRank = null,
     bool Active = false,
     string? PostedTo = null)
 {
+    /// <summary>The highest rank a hired pilot reaches.</summary>
+    public const int RankTop = RankStanding.Elite;
+
+    /// <summary>The rank's name, Harmless through Elite; null where unrecorded.</summary>
+    public string? CombatRankName => CombatRank is { } rank ? (rank == RankTop ? RankStanding.EliteName(rank) : CareerRankNames.Name("Combat", rank)) : null;
+
+    /// <summary>The rank in the one spoken form, "Combat Rank 2 of 8, Novice"; null where unrecorded.</summary>
+    public string? SayRank() => CombatRank is { } rank ? new RankStanding("Combat", rank).Say(withPercent: false, top: RankTop) : null;
+
     /// <summary>What the roster calls them out loud.</summary>
-    public string Describe() => CombatRank is { Length: > 0 } rank ? $"{Name} ({rank})" : Name;
+    public string Describe() => SayRank() is { } rank ? $"{Name} ({rank})" : Name;
+
 }
 
 /// <summary>The Commander's hired NPC pilots, folded from the journal.</summary>
@@ -46,7 +56,7 @@ public sealed record ShipCrew
             Members =
             [
                 .. Members.Where(m => m.CrewId != hired.CrewId),
-                new CrewMember(hired.Name, hired.CrewId, journalEvent.String("CombatRank")),
+                new CrewMember(hired.Name, hired.CrewId, Rank(journalEvent, "CombatRank")),
             ],
         },
 
@@ -71,18 +81,21 @@ public sealed record ShipCrew
             ],
         },
 
-        "NpcCrewRank" when Read(journalEvent) is { } ranked => this with
+        "NpcCrewRank" when journalEvent.Long("NpcCrewId") is { } rankedId => this with
         {
             Members =
             [
-                .. Members.Select(member => member.CrewId == ranked.CrewId
-                    ? member with { CombatRank = journalEvent.String("RankCombat") ?? member.CombatRank }
+                .. Members.Select(member => member.CrewId == rankedId
+                    ? member with { CombatRank = Rank(journalEvent, "RankCombat") ?? member.CombatRank }
                     : member),
             ],
         },
 
         _ => this,
     };
+
+    private static int? Rank(JournalEvent journalEvent, string property) =>
+        journalEvent.Int(property) is >= 0 and <= CrewMember.RankTop and { } rank ? rank : null;
 
     /// <summary>
     /// The name and id every crew event carries, or null when one of them is missing — which is a

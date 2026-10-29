@@ -44,7 +44,7 @@ public sealed class EachHiredPilotKeepsTheirOwnPictureTests
     }
 
     private static string Hire(string name, int id) =>
-        $$"""{"timestamp":"2026-10-05T09:01:00Z","event":"CrewHire","Name":"{{name}}","CrewID":{{id}},"CombatRank":"Dangerous"}""";
+        $$"""{"timestamp":"2026-10-05T09:01:00Z","event":"CrewHire","Name":"{{name}}","CrewID":{{id}},"CombatRank":6}""";
 
     private static void Choose(SpeakerPictures pictures, string name, Color color)
     {

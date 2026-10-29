@@ -17,7 +17,7 @@ public class TheCrewAnswersOnTheIntercomTests
     [
         """{ "timestamp":"2026-09-14T20:00:00Z", "event":"Commander", "FID":"F9000001", "Name":"Scenario" }""",
         """{ "timestamp":"2026-09-14T20:00:01Z", "event":"LoadGame", "FID":"F9000001", "Commander":"Scenario", "Ship":"Asp Explorer", "ShipID":1, "GameMode":"Open", "Credits":100000 }""",
-        """{ "timestamp":"2026-09-14T20:00:02Z", "event":"CrewHire", "Name":"Vance Ilo", "CrewID":1, "CombatRank":"Expert" }""",
+        """{ "timestamp":"2026-09-14T20:00:02Z", "event":"CrewHire", "Name":"Vance Ilo", "CrewID":1, "CombatRank":4 }""",
         """{ "timestamp":"2026-09-14T20:00:03Z", "event":"CrewAssign", "Name":"Vance Ilo", "CrewID":1, "Role":"Active" }""",
     ];
 

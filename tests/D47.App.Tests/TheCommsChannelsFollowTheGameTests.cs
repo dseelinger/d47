@@ -31,7 +31,7 @@ public sealed class TheCommsChannelsFollowTheGameTests
         """{"timestamp":"2026-10-24T09:03:00Z","event":"ShipTargeted","TargetLocked":false}""";
 
     private const string Hired =
-        """{"timestamp":"2026-10-24T09:04:00Z","event":"CrewHire","Name":"Samira Voss","CrewID":1,"CombatRank":"Dangerous"}""";
+        """{"timestamp":"2026-10-24T09:04:00Z","event":"CrewHire","Name":"Samira Voss","CrewID":1,"CombatRank":6}""";
 
     private const string Active =
         """{"timestamp":"2026-10-24T09:04:01Z","event":"CrewAssign","Name":"Samira Voss","CrewID":1,"Role":"Active"}""";

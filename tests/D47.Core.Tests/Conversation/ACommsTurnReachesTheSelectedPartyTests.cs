@@ -27,7 +27,7 @@ public class ACommsTurnReachesTheSelectedPartyTests
         Carrier = new CarrierState { CallSign = "BNH-T2F", Name = "Sacred Fire", StarSystem = "Sol" },
     };
 
-    private static readonly ShipCrew Crew = new() { Members = [new CrewMember("Vance", CrewId: 1, CombatRank: "Dangerous", Active: true)] };
+    private static readonly ShipCrew Crew = new() { Members = [new CrewMember("Vance", CrewId: 1, CombatRank: 6, Active: true)] };
 
     private static readonly TargetedShip Target = new("Cobra Mk III", "Jessa Corvane", "Dangerous", "Federation", "Clean");
 

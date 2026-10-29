@@ -42,8 +42,8 @@ public sealed record RankStanding(string Career, int Rank)
                 ? $"rank {Rank}, {numberedPercent}% into it"
                 : $"rank {Rank}";
 
-    /// <summary>"Combat Rank 1 of 13, Mostly Harmless", with ", 40% into it" where the percent is known and not at the top.</summary>
-    public string Say(bool withPercent = true)
+    /// <summary>"Combat Rank 1 of 13, Mostly Harmless", with ", 40% into it" where the percent is known and not at the top. <paramref name="top"/> replaces the ladder's own top.</summary>
+    public string Say(bool withPercent = true, int? top = null)
     {
         var word = Careers.Word(Career);
 
@@ -52,9 +52,9 @@ public sealed record RankStanding(string Career, int Rank)
             return $"no {word} rank";
         }
 
-        var top = Careers.TopRank(Career);
+        top ??= Careers.TopRank(Career);
         var name = !IsCareer ? NavyName() : IsElite ? EliteName(Rank) : CareerRankNames.Name(Career, Rank);
-        var said = $"{word} Rank {Rank.ToString(CultureInfo.InvariantCulture)} of {top.ToString(CultureInfo.InvariantCulture)}";
+        var said = $"{word} Rank {Rank.ToString(CultureInfo.InvariantCulture)} of {top.Value.ToString(CultureInfo.InvariantCulture)}";
 
         if (name is null)
         {

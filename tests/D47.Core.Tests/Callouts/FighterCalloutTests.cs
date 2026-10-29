@@ -36,7 +36,7 @@ public class TheFighterPilotCallsTheLaunchTests
 
     private static CommanderGameState WithPilot(bool active = true)
     {
-        var hired = Row("CrewHire", ("Name", "Vance Ilo"), ("CrewID", 7), ("CombatRank", "Competent"));
+        var hired = Row("CrewHire", ("Name", "Vance Ilo"), ("CrewID", 7), ("CombatRank", 3));
         var assigned = Row("CrewAssign", ("Name", "Vance Ilo"), ("CrewID", 7), ("Role", active ? "Active" : "OnShoreLeave"));
         var state = new CommanderGameState(new CommanderIdentity("F735466", "TEST"));
         state.Apply(hired);

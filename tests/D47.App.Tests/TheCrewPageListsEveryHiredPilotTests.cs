@@ -28,8 +28,8 @@ public class TheCrewPageListsEveryHiredPilotTests
     [
         """{"timestamp":"2026-10-05T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
         """{"timestamp":"2026-10-05T09:00:01Z","event":"Loadout","Ship":"anaconda","Modules":[],"ShipName":"Sacred Wings","ShipIdent":"SW-01"}""",
-        """{"timestamp":"2026-10-05T09:01:00Z","event":"CrewHire","Name":"Samira Voss","CrewID":1,"CombatRank":"Dangerous"}""",
-        """{"timestamp":"2026-10-05T09:01:01Z","event":"CrewHire","Name":"Oren Make","CrewID":2,"CombatRank":"Master"}""",
+        """{"timestamp":"2026-10-05T09:01:00Z","event":"CrewHire","Name":"Samira Voss","CrewID":1,"CombatRank":6}""",
+        """{"timestamp":"2026-10-05T09:01:01Z","event":"CrewHire","Name":"Oren Make","CrewID":2,"CombatRank":5}""",
         """{"timestamp":"2026-10-05T09:02:00Z","event":"CrewAssign","Name":"Samira Voss","CrewID":1,"Role":"Active"}""",
     ];
 

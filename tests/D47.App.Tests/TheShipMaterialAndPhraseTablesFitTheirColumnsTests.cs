@@ -121,13 +121,13 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
         Assert.NotEmpty(header.Children.OfType<ColumnGrip>());
     }
 
-    private static string Hire(string name, int id, string rank) =>
-        $$"""{"timestamp":"2026-10-05T09:01:00Z","event":"CrewHire","Name":"{{name}}","CrewID":{{id}},"CombatRank":"{{rank}}"}""";
+    private static string Hire(string name, int id, int rank) =>
+        $$"""{"timestamp":"2026-10-05T09:01:00Z","event":"CrewHire","Name":"{{name}}","CrewID":{{id}},"CombatRank":{{rank}}}""";
 
     [AvaloniaFact]
     public void TheCrewFitsItsColumns()
     {
-        var store = Store(Commander, Hire("Samira Voss", 1, "Dangerous"), Hire("Ed", 2, "Elite"));
+        var store = Store(Commander, Hire("Samira Voss", 1, 6), Hire("Ed", 2, 8));
         var window = Show(new CrewPage(() => store.Active));
 
         Fits(window, CrewPage.TableId, 2);
@@ -139,7 +139,7 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
     {
         var memory = Memory();
         memory.Remember(CrewPage.TableId, "CombatRank", 300);
-        var store = Store(Commander, Hire("Samira Voss", 1, "Dangerous"));
+        var store = Store(Commander, Hire("Samira Voss", 1, 6));
         var window = Show(new CrewPage(() => store.Active, columnWidths: memory));
 
         Remembered(window, CrewPage.TableId, "CombatRank", 300);

@@ -38,30 +38,14 @@ public sealed class CrewPage : UserControl
         new("PostedTo", ColumnFit.Fill),
     ];
 
-    private static readonly string[] CombatLadder =
-        ["Harmless", "Mostly Harmless", "Novice", "Competent", "Expert", "Master", "Dangerous", "Deadly", "Elite"];
-
     /// <summary>The table's columns, each sortable from its header.</summary>
     public static readonly IReadOnlyList<SortColumn<CrewMember>> ColumnHeadings =
     [
         SortColumn<CrewMember>.Text("Pilot", member => member.Name),
-        SortColumn<CrewMember>.Figure("Combat rank", member => RankOf(member.CombatRank), SortDirection.Descending),
+        SortColumn<CrewMember>.Figure("Combat rank", member => member.CombatRank, SortDirection.Descending),
         SortColumn<CrewMember>.Figure("Fighter bay", member => (int?)(member.Active ? 1 : 0), SortDirection.Descending),
         SortColumn<CrewMember>.Text("Posted to", member => member.PostedTo),
     ];
-
-    /// <summary>The combat rank's place on the ladder, Harmless lowest; null where it is unrecorded or unknown.</summary>
-    public static int? RankOf(string? combatRank)
-    {
-        if (combatRank is not { Length: > 0 })
-        {
-            return null;
-        }
-
-        var place = Array.FindIndex(CombatLadder, name => combatRank.StartsWith(name, StringComparison.OrdinalIgnoreCase));
-
-        return place < 0 ? null : place;
-    }
 
     private readonly Func<CommanderGameState?> _state;
     private readonly SortHeader<CrewMember> _head = new("CrewHead", ColumnHeadings);
@@ -166,8 +150,8 @@ public sealed class CrewPage : UserControl
         };
         ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
-        var rank = Cell(member.CombatRank is { Length: > 0 } combat ? combat : "—",
-            member.CombatRank is { Length: > 0 } ? ThemeManager.AKey : ThemeManager.GreyKey);
+        var rank = Cell(member.CombatRankName ?? "—",
+            member.CombatRankName is not null ? ThemeManager.AKey : ThemeManager.GreyKey);
         var duty = Cell(Duty(member), member.Active ? ThemeManager.YellowKey : ThemeManager.GreyKey);
         var posted = Cell(Posting(member), member.PostedTo is { Length: > 0 } ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
 
