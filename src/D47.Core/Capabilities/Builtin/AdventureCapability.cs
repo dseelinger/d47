@@ -307,14 +307,9 @@ public static class AdventureCapability
                 Kind = SettingKind.Toggle,
                 DocsAnchor = "download-stock-stories",
                 EgressId = EgressDisclosure.StockStories,
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Ui.StoryDownloads ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Ui = s.Ui with { StoryDownloads = v is not "false" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Ui.StoryDownloads,
+                    (s, on) => s with { Ui = s.Ui with { StoryDownloads = on } }),
             },
             new SettingRow
             {
@@ -328,14 +323,9 @@ public static class AdventureCapability
                 Kind = SettingKind.Toggle,
                 DocsAnchor = "story-ratings",
                 EgressId = EgressDisclosure.StoryRatings,
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Ui.StoryRatings ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Ui = s.Ui with { StoryRatings = v is not "false" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Ui.StoryRatings,
+                    (s, on) => s with { Ui = s.Ui with { StoryRatings = on } }),
             },
             new SettingRow
             {
@@ -348,14 +338,9 @@ public static class AdventureCapability
                     + "Off, no story's cast reacts. Clues and chapter lines are unchanged.",
                 Kind = SettingKind.Toggle,
                 DocsAnchor = "cast-reactions",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Callouts.CastReactions ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Callouts = s.Callouts with { CastReactions = v is not "false" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Callouts.CastReactions,
+                    (s, on) => s with { Callouts = s.Callouts with { CastReactions = on } }),
             },
             .. Ratings.Select(CareerRatingRow),
         ],

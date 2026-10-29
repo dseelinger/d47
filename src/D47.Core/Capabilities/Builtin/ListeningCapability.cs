@@ -482,14 +482,9 @@ public static class ListeningCapability
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "on",
                 DocsAnchor = "echo-cancellation",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Listening.EchoCancellation ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Listening = s.Listening with { EchoCancellation = v is not "false" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Listening.EchoCancellation,
+                    (s, on) => s with { Listening = s.Listening with { EchoCancellation = on } }),
             },
             new SettingRow
             {
@@ -502,14 +497,9 @@ public static class ListeningCapability
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "on",
                 DocsAnchor = "noise-suppression",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Listening.NoiseSuppression ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Listening = s.Listening with { NoiseSuppression = v is not "false" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Listening.NoiseSuppression,
+                    (s, on) => s with { Listening = s.Listening with { NoiseSuppression = on } }),
             },
             new SettingRow
             {
@@ -771,14 +761,9 @@ public static class ListeningCapability
                 DocsAnchor = "gpu",
                 AppliesWhen = s => !SttProviderCatalog.Selected(s.Listening.Provider).Hosted
                                    && s.Listening.Model != WhisperModels.NoneId,
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Listening.UseGpu ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Listening = s.Listening with { UseGpu = v is "true" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Listening.UseGpu,
+                    (s, on) => s with { Listening = s.Listening with { UseGpu = on } }),
             },
             new SettingRow
             {

@@ -276,11 +276,9 @@ public static class VrCapability
                        + "D47 looks for one, does not find one, and says so.",
                 Kind = SettingKind.Toggle,
                 DocsAnchor = "enabled",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Vr.Enabled ? "true" : "false",
-                    Write = (s, v) => s with { Vr = s.Vr with { Enabled = v is not "false" } },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Vr.Enabled,
+                    (s, on) => s with { Vr = s.Vr with { Enabled = on } }),
                 Commands =
                 [
                     new SettingCommandPhrase("headset overlay on", "true"),
@@ -355,11 +353,9 @@ public static class VrCapability
                 Kind = SettingKind.Toggle,
                 DocsAnchor = "controllers",
                 AppliesWhen = s => s.Vr.Enabled,
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Vr.Controllers ? "true" : "false",
-                    Write = (s, v) => s with { Vr = s.Vr with { Controllers = v is not "false" } },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Vr.Controllers,
+                    (s, on) => s with { Vr = s.Vr with { Controllers = on } }),
                 Commands =
                 [
                     new SettingCommandPhrase("motion controllers on", "true"),

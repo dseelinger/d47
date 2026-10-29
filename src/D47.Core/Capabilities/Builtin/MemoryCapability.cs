@@ -195,11 +195,9 @@ public static class MemoryCapability
             new SettingCommandPhrase("stop remembering things about me", "false"),
             new SettingCommandPhrase("start remembering things about me", "true"),
         ],
-        Binding = new SettingBinding
-        {
-            Read = s => s.Memory.Enabled ? "true" : "false",
-            Write = (s, v) => s with { Memory = s.Memory with { Enabled = v is not "false" } },
-        },
+        Binding = SettingBinding.Toggle(
+            s => s.Memory.Enabled,
+            (s, on) => s with { Memory = s.Memory with { Enabled = on } }),
     };
 
     private static SettingRow ExpiryRow() => new()

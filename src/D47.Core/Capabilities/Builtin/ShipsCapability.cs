@@ -228,14 +228,9 @@ public static class ShipsCapability
             Kind = SettingKind.Toggle,
             DocsAnchor = "hull-art",
             EgressId = EgressDisclosure.HullArt,
-            Binding = new SettingBinding
-            {
-                Read = s => s.Ui.HullArt ? "true" : "false",
-                Write = (s, v) => s with
-                {
-                    Ui = s.Ui with { HullArt = v is not "false" },
-                },
-            },
+            Binding = SettingBinding.Toggle(
+                s => s.Ui.HullArt,
+                (s, on) => s with { Ui = s.Ui with { HullArt = on } }),
         },
 
         new SettingRow
@@ -250,14 +245,9 @@ public static class ShipsCapability
                 + "be used, the processor draws and the log says why.",
             Kind = SettingKind.Toggle,
             DocsAnchor = "hull-gpu",
-            Binding = new SettingBinding
-            {
-                Read = s => s.Ui.HullGpu ? "true" : "false",
-                Write = (s, v) => s with
-                {
-                    Ui = s.Ui with { HullGpu = bool.TryParse(v, out var on) && on },
-                },
-            },
+            Binding = SettingBinding.Toggle(
+                s => s.Ui.HullGpu,
+                (s, on) => s with { Ui = s.Ui with { HullGpu = on } }),
         },
     ];
 

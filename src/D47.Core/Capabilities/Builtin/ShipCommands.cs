@@ -263,11 +263,9 @@ public static class ShipCommands
                 new SettingCommandPhrase("you may take us out of stations", "true"),
                 new SettingCommandPhrase("do not take us out of stations", "false"),
             ],
-            Binding = new SettingBinding
-            {
-                Read = s => s.Actions.TakeUsOut ? "true" : "false",
-                Write = (s, v) => s with { Actions = s.Actions with { TakeUsOut = v is not "false" } },
-            },
+            Binding = SettingBinding.Toggle(
+                s => s.Actions.TakeUsOut,
+                (s, on) => s with { Actions = s.Actions with { TakeUsOut = on } }),
         },
 
         new()
@@ -287,11 +285,9 @@ public static class ShipCommands
                 new SettingCommandPhrase("you may separate and engage", "true"),
                 new SettingCommandPhrase("do not separate and engage", "false"),
             ],
-            Binding = new SettingBinding
-            {
-                Read = s => s.Actions.SeparateAndEngage ? "true" : "false",
-                Write = (s, v) => s with { Actions = s.Actions with { SeparateAndEngage = v is not "false" } },
-            },
+            Binding = SettingBinding.Toggle(
+                s => s.Actions.SeparateAndEngage,
+                (s, on) => s with { Actions = s.Actions with { SeparateAndEngage = on } }),
         },
 
         new()
@@ -311,11 +307,9 @@ public static class ShipCommands
                 new SettingCommandPhrase("you may separate and supercruise", "true"),
                 new SettingCommandPhrase("do not separate and supercruise", "false"),
             ],
-            Binding = new SettingBinding
-            {
-                Read = s => s.Actions.SeparateAndSupercruise ? "true" : "false",
-                Write = (s, v) => s with { Actions = s.Actions with { SeparateAndSupercruise = v is not "false" } },
-            },
+            Binding = SettingBinding.Toggle(
+                s => s.Actions.SeparateAndSupercruise,
+                (s, on) => s with { Actions = s.Actions with { SeparateAndSupercruise = on } }),
         },
 
         new()
@@ -336,11 +330,9 @@ public static class ShipCommands
                 new SettingCommandPhrase("you may request docking", "true"),
                 new SettingCommandPhrase("do not request docking", "false"),
             ],
-            Binding = new SettingBinding
-            {
-                Read = s => s.Actions.RequestDocking ? "true" : "false",
-                Write = (s, v) => s with { Actions = s.Actions with { RequestDocking = v is not "false" } },
-            },
+            Binding = SettingBinding.Toggle(
+                s => s.Actions.RequestDocking,
+                (s, on) => s with { Actions = s.Actions with { RequestDocking = on } }),
         },
     ];
 

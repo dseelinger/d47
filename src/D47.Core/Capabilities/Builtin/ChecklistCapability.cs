@@ -687,11 +687,9 @@ public static class ChecklistCapability
         Kind = SettingKind.Toggle,
         DefaultDisplay = "off",
         DocsAnchor = "the-checklist-page",
-        Binding = new SettingBinding
-        {
-            Read = s => s.Checklists.RemoveFulfilled ? "true" : "false",
-            Write = (s, v) => s with { Checklists = s.Checklists with { RemoveFulfilled = v == "true" } },
-        },
+        Binding = SettingBinding.Toggle(
+            s => s.Checklists.RemoveFulfilled,
+            (s, on) => s with { Checklists = s.Checklists with { RemoveFulfilled = on } }),
     };
 
     private static string Summarise(ChecklistService checklists)

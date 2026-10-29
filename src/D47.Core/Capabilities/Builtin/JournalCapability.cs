@@ -163,14 +163,9 @@ public static class JournalCapability
                     Kind = SettingKind.Toggle,
                     DocsAnchor = "codex-pictures",
                     EgressId = EgressDisclosure.CodexPictures,
-                    Binding = new SettingBinding
-                    {
-                        Read = s => s.Ui.CodexPictures ? "true" : "false",
-                        Write = (s, v) => s with
-                        {
-                            Ui = s.Ui with { CodexPictures = v is not "false" },
-                        },
-                    },
+                    Binding = SettingBinding.Toggle(
+                        s => s.Ui.CodexPictures,
+                        (s, on) => s with { Ui = s.Ui with { CodexPictures = on } }),
                 },
                 new SettingRow
                 {
@@ -182,14 +177,9 @@ public static class JournalCapability
                         + "Re-crop, Replace and Remove my picture act on the active Commander's picture only.",
                     Kind = SettingKind.Toggle,
                     DocsAnchor = "share-codex-pictures",
-                    Binding = new SettingBinding
-                    {
-                        Read = s => s.Ui.ShareCodexPictures ? "true" : "false",
-                        Write = (s, v) => s with
-                        {
-                            Ui = s.Ui with { ShareCodexPictures = v is "true" },
-                        },
-                    },
+                    Binding = SettingBinding.Toggle(
+                        s => s.Ui.ShareCodexPictures,
+                        (s, on) => s with { Ui = s.Ui with { ShareCodexPictures = on } }),
                 },
                 new SettingRow
                 {
@@ -200,14 +190,9 @@ public static class JournalCapability
                         + "A page that is open as a dialog, or a keyboard entry, stays where it is.",
                     Kind = SettingKind.Toggle,
                     DocsAnchor = "open-new-codex-entries",
-                    Binding = new SettingBinding
-                    {
-                        Read = s => s.Ui.OpenNewCodexEntries ? "true" : "false",
-                        Write = (s, v) => s with
-                        {
-                            Ui = s.Ui with { OpenNewCodexEntries = v is not "false" },
-                        },
-                    },
+                    Binding = SettingBinding.Toggle(
+                        s => s.Ui.OpenNewCodexEntries,
+                        (s, on) => s with { Ui = s.Ui with { OpenNewCodexEntries = on } }),
                 },
                 new SettingRow
                 {

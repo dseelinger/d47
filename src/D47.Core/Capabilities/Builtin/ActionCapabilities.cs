@@ -390,11 +390,9 @@ public static class ActionCapabilities
             new SettingCommandPhrase("stop pressing keys in elite", "false"),
             new SettingCommandPhrase("do not press keys in elite", "false"),
         ],
-        Binding = new SettingBinding
-        {
-            Read = s => s.Actions.Keyboard ? "true" : "false",
-            Write = (s, v) => s with { Actions = s.Actions with { Keyboard = v is "true" } },
-        },
+        Binding = SettingBinding.Toggle(
+            s => s.Actions.Keyboard,
+            (s, on) => s with { Actions = s.Actions with { Keyboard = on } }),
     };
 
     private static string? FocusRefusal(GameAction action, GameStatus status)

@@ -585,14 +585,9 @@ public static class GalaxyCapability
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 DocsAnchor = "look-things-up-in-the-galaxy",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Knowledge.GalaxySearch ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Knowledge = s.Knowledge with { GalaxySearch = v == "true" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Knowledge.GalaxySearch,
+                    (s, on) => s with { Knowledge = s.Knowledge with { GalaxySearch = on } }),
             },
             new SettingRow
             {
@@ -605,14 +600,9 @@ public static class GalaxyCapability
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 DocsAnchor = "notable-places-for-short-stories",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Knowledge.NotablePlaces ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Knowledge = s.Knowledge with { NotablePlaces = v == "true" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Knowledge.NotablePlaces,
+                    (s, on) => s with { Knowledge = s.Knowledge with { NotablePlaces = on } }),
             },
             new SettingRow
             {
@@ -625,14 +615,9 @@ public static class GalaxyCapability
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 DocsAnchor = "earlier-biology-finds-from-canonn",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Knowledge.CommunityBiology ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Knowledge = s.Knowledge with { CommunityBiology = v == "true" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Knowledge.CommunityBiology,
+                    (s, on) => s with { Knowledge = s.Knowledge with { CommunityBiology = on } }),
             },
             new SettingRow
             {
@@ -645,14 +630,9 @@ public static class GalaxyCapability
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 DocsAnchor = "bgs-tick-time",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Knowledge.BgsTick ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Knowledge = s.Knowledge with { BgsTick = v == "true" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Knowledge.BgsTick,
+                    (s, on) => s with { Knowledge = s.Knowledge with { BgsTick = on } }),
             },
             new SettingRow
             {
@@ -666,14 +646,9 @@ public static class GalaxyCapability
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 DocsAnchor = "galnet-news",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Knowledge.GalNet ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Knowledge = s.Knowledge with { GalNet = v == "true" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Knowledge.GalNet,
+                    (s, on) => s with { Knowledge = s.Knowledge with { GalNet = on } }),
             },
             new SettingRow
             {
@@ -687,14 +662,9 @@ public static class GalaxyCapability
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 DocsAnchor = "server-status",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Knowledge.ServerStatus ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Knowledge = s.Knowledge with { ServerStatus = v == "true" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Knowledge.ServerStatus,
+                    (s, on) => s with { Knowledge = s.Knowledge with { ServerStatus = on } }),
             },
             new SettingRow
             {
@@ -708,14 +678,9 @@ public static class GalaxyCapability
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 DocsAnchor = "signal-index",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Knowledge.SignalIndex ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Knowledge = s.Knowledge with { SignalIndex = v == "true" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Knowledge.SignalIndex,
+                    (s, on) => s with { Knowledge = s.Knowledge with { SignalIndex = on } }),
             },
             new SettingRow
             {
@@ -736,14 +701,9 @@ public static class GalaxyCapability
                 DefaultDisplay = "off",
                 Protected = true,
                 DocsAnchor = "eddn",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Contribution.Eddn ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Contribution = s.Contribution with { Eddn = v == "true" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Contribution.Eddn,
+                    (s, on) => s with { Contribution = s.Contribution with { Eddn = on } }),
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Galaxy search", Order = 47 },

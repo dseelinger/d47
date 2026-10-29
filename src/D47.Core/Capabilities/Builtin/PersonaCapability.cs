@@ -187,14 +187,9 @@ public static class PersonaCapability
             Kind = SettingKind.Toggle,
             DocsAnchor = "avatar-animations",
             EgressId = EgressDisclosure.AvatarClips,
-            Binding = new SettingBinding
-            {
-                Read = s => s.Ui.AvatarClips ? "true" : "false",
-                Write = (s, v) => s with
-                {
-                    Ui = s.Ui with { AvatarClips = v is not "false" },
-                },
-            },
+            Binding = SettingBinding.Toggle(
+                s => s.Ui.AvatarClips,
+                (s, on) => s with { Ui = s.Ui with { AvatarClips = on } }),
         },
         ..ships is null ? Array.Empty<SettingRow>() : ShipCoreRows(host, ships),
     ];

@@ -625,10 +625,8 @@ public static class NavigationCapability
             new SettingCommandPhrase("try to plot courses yourself", "true"),
             new SettingCommandPhrase("stop plotting courses yourself", "false"),
         ],
-        Binding = new SettingBinding
-        {
-            Read = s => s.Actions.AutoPlot ? "true" : "false",
-            Write = (s, v) => s with { Actions = s.Actions with { AutoPlot = v is "true" } },
-        },
+        Binding = SettingBinding.Toggle(
+            s => s.Actions.AutoPlot,
+            (s, on) => s with { Actions = s.Actions with { AutoPlot = on } }),
     };
 }

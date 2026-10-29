@@ -499,10 +499,8 @@ public static class CommsCapability
             new SettingCommandPhrase("let yourself send messages in elite", "true"),
             new SettingCommandPhrase("stop sending messages in elite", "false"),
         ],
-        Binding = new SettingBinding
-        {
-            Read = s => s.Actions.Chat ? "true" : "false",
-            Write = (s, v) => s with { Actions = s.Actions with { Chat = v is "true" } },
-        },
+        Binding = SettingBinding.Toggle(
+            s => s.Actions.Chat,
+            (s, on) => s with { Actions = s.Actions with { Chat = on } }),
     };
 }

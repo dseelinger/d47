@@ -1018,14 +1018,9 @@ public static class SpeechCapability
                 DefaultDisplay = "off",
                 Group = "Other voices",
                 DocsAnchor = "narrator-fourth-wall",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.NarratorFourthWall ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { NarratorFourthWall = v is not "false" and not null },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Speech.NarratorFourthWall,
+                    (s, on) => s with { Speech = s.Speech with { NarratorFourthWall = on } }),
             },
             new SettingRow
             {
@@ -1063,14 +1058,9 @@ public static class SpeechCapability
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 Group = "Other voices",
                 DocsAnchor = "incoming-messages",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.SpeakIncomingMessages ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { SpeakIncomingMessages = v is not "false" and not null },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Speech.SpeakIncomingMessages,
+                    (s, on) => s with { Speech = s.Speech with { SpeakIncomingMessages = on } }),
             },
             new SettingRow
             {
@@ -1111,14 +1101,9 @@ public static class SpeechCapability
                 AppliesWhen = s => s.Speech.Provider != NoneId && s.Speech.SpeakIncomingMessages,
                 Group = "Other voices",
                 DocsAnchor = "incoming-messages",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.SpeakNpcMessages ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { SpeakNpcMessages = v is not "false" and not null },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Speech.SpeakNpcMessages,
+                    (s, on) => s with { Speech = s.Speech with { SpeakNpcMessages = on } }),
             },
             new SettingRow
             {
@@ -1131,14 +1116,9 @@ public static class SpeechCapability
                 AppliesWhen = s => s.Speech.Provider != NoneId && s.Speech.SpeakIncomingMessages,
                 Group = "Other voices",
                 DocsAnchor = "incoming-messages",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.SpeakSystemChat ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { SpeakSystemChat = v is not "false" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Speech.SpeakSystemChat,
+                    (s, on) => s with { Speech = s.Speech with { SpeakSystemChat = on } }),
             },
             new SettingRow
             {
@@ -1151,14 +1131,9 @@ public static class SpeechCapability
                 AppliesWhen = s => s.Speech.Provider != NoneId && s.Speech.SpeakIncomingMessages,
                 Group = "Other voices",
                 DocsAnchor = "incoming-messages",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.SpeakLocalChat ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { SpeakLocalChat = v is not "false" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Speech.SpeakLocalChat,
+                    (s, on) => s with { Speech = s.Speech with { SpeakLocalChat = on } }),
             },
             new SettingRow
             {
@@ -1171,14 +1146,9 @@ public static class SpeechCapability
                 AppliesWhen = s => s.Speech.Provider != NoneId && s.Speech.SpeakIncomingMessages,
                 Group = "Other voices",
                 DocsAnchor = "incoming-messages",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.SpeakWingChat ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { SpeakWingChat = v is not "false" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Speech.SpeakWingChat,
+                    (s, on) => s with { Speech = s.Speech with { SpeakWingChat = on } }),
             },
             new SettingRow
             {
@@ -1191,14 +1161,9 @@ public static class SpeechCapability
                 AppliesWhen = s => s.Speech.Provider != NoneId && s.Speech.SpeakIncomingMessages,
                 Group = "Other voices",
                 DocsAnchor = "incoming-messages",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.SpeakSquadronChat ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { SpeakSquadronChat = v is not "false" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Speech.SpeakSquadronChat,
+                    (s, on) => s with { Speech = s.Speech with { SpeakSquadronChat = on } }),
             },
             new SettingRow
             {
@@ -1211,14 +1176,9 @@ public static class SpeechCapability
                 AppliesWhen = s => s.Speech.Provider != NoneId && s.Speech.SpeakIncomingMessages,
                 Group = "Other voices",
                 DocsAnchor = "incoming-messages",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.SpeakDirectMessages ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Speech = s.Speech with { SpeakDirectMessages = v is not "false" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Speech.SpeakDirectMessages,
+                    (s, on) => s with { Speech = s.Speech with { SpeakDirectMessages = on } }),
             },
             new SettingRow
             {
@@ -1253,11 +1213,9 @@ public static class SpeechCapability
                 Group = "COVAS Voice",
                 DocsAnchor = "covas-voice-reverb",
                 Beside = CovasTestKey,
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.CovasReverb ? "true" : "false",
-                    Write = (s, v) => s with { Speech = s.Speech with { CovasReverb = v is not "false" } },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Speech.CovasReverb,
+                    (s, on) => s with { Speech = s.Speech with { CovasReverb = on } }),
             },
             new SettingRow
             {
@@ -1301,11 +1259,9 @@ public static class SpeechCapability
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "on",
                 DocsAnchor = "cues",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.CuesEnabled ? "true" : "false",
-                    Write = (s, v) => s with { Speech = s.Speech with { CuesEnabled = v != "false" } },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Speech.CuesEnabled,
+                    (s, on) => s with { Speech = s.Speech with { CuesEnabled = on } }),
             },
             new SettingRow
             {
@@ -1317,11 +1273,9 @@ public static class SpeechCapability
                 DefaultDisplay = "on",
                 Group = "While thinking",
                 DocsAnchor = "thinking-bed",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Speech.ThinkingBedEnabled ? "true" : "false",
-                    Write = (s, v) => s with { Speech = s.Speech with { ThinkingBedEnabled = v != "false" } },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Speech.ThinkingBedEnabled,
+                    (s, on) => s with { Speech = s.Speech with { ThinkingBedEnabled = on } }),
             },
             new SettingRow
             {
@@ -1839,11 +1793,9 @@ public static class SpeechCapability
                 Group = "Guardian Voice Effects",
                 DocsAnchor = anchor,
                 DrawnElsewhere = true,
-                Binding = new SettingBinding
-                {
-                    Read = s => StoredGuardianEffect(s, id).Ticked ? "true" : "false",
-                    Write = (s, v) => WithGuardianEffect(s, id, e => e with { Ticked = v is not "false" and not null }),
-                },
+                Binding = SettingBinding.Toggle(
+                    s => StoredGuardianEffect(s, id).Ticked,
+                    (s, on) => WithGuardianEffect(s, id, e => e with { Ticked = on })),
             };
 
             yield return new SettingRow

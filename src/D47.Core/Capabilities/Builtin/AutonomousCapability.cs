@@ -55,11 +55,9 @@ public static class AutonomousCapability
             new SettingCommandPhrase("stop honking on arrival", "false"),
             new SettingCommandPhrase("turn off the arrival honk", "false"),
         ],
-        Binding = new SettingBinding
-        {
-            Read = s => s.Actions.HonkOnArrival ? "true" : "false",
-            Write = (s, v) => s with { Actions = s.Actions with { HonkOnArrival = v is "true" } },
-        },
+        Binding = SettingBinding.Toggle(
+            s => s.Actions.HonkOnArrival,
+            (s, on) => s with { Actions = s.Actions with { HonkOnArrival = on } }),
     };
 
     /// <summary>What the reporting tool says.</summary>

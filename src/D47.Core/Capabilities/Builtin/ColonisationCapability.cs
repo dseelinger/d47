@@ -168,14 +168,9 @@ public static class ColonisationCapability
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 DocsAnchor = "read-colonisation-plans-from-raven-colonial",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Knowledge.ColonisationPlanner ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Knowledge = s.Knowledge with { ColonisationPlanner = v == "true" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Knowledge.ColonisationPlanner,
+                    (s, on) => s with { Knowledge = s.Knowledge with { ColonisationPlanner = on } }),
             },
             new SettingRow
             {
@@ -205,14 +200,9 @@ public static class ColonisationCapability
                 },
                 EgressId = Configuration.EgressDisclosure.ColonisationProgress,
                 DocsAnchor = "send-colonisation-progress-to-raven-colonial",
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Knowledge.ColonisationProgress ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Knowledge = s.Knowledge with { ColonisationProgress = v == "true" },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Knowledge.ColonisationProgress,
+                    (s, on) => s with { Knowledge = s.Knowledge with { ColonisationProgress = on } }),
             },
             new SettingRow
             {

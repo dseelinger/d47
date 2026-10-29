@@ -47,11 +47,9 @@ public static class ScreenshotsCapability
             new SettingCommandPhrase("start converting my screenshots", "true"),
             new SettingCommandPhrase("stop converting my screenshots", "false"),
         ],
-        Binding = new SettingBinding
-        {
-            Read = s => s.Screenshots.Convert ? "true" : "false",
-            Write = (s, v) => s with { Screenshots = s.Screenshots with { Convert = v is not "false" } },
-        },
+        Binding = SettingBinding.Toggle(
+            s => s.Screenshots.Convert,
+            (s, on) => s with { Screenshots = s.Screenshots with { Convert = on } }),
     };
 
     private static SettingRow FolderRow() => new()

@@ -167,11 +167,9 @@ public static class PrivacyCapability
                     new SettingCommandPhrase("start checking for updates", "true"),
                     new SettingCommandPhrase("turn on update checks", "true"),
                 ],
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Updates.CheckOnStartup ? "true" : "false",
-                    Write = (s, v) => s with { Updates = s.Updates with { CheckOnStartup = v is not "false" } },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Updates.CheckOnStartup,
+                    (s, on) => s with { Updates = s.Updates with { CheckOnStartup = on } }),
             },
         };
 
@@ -186,14 +184,9 @@ public static class PrivacyCapability
             Kind = SettingKind.Toggle,
             DocsAnchor = "usage-counts",
             EgressId = EgressDisclosure.UsageCounts,
-            Binding = new SettingBinding
-            {
-                Read = s => s.Usage.Counts ? "true" : "false",
-                Write = (s, v) => s with
-                {
-                    Usage = s.Usage with { Counts = v is not "false" },
-                },
-            },
+            Binding = SettingBinding.Toggle(
+                s => s.Usage.Counts,
+                (s, on) => s with { Usage = s.Usage with { Counts = on } }),
         });
 
         // Emptying the memory store, here rather than in its own section (Phase 31, item 3: "which joins the

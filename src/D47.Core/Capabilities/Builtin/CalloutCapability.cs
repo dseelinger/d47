@@ -194,11 +194,9 @@ public static class CalloutCapability
                     new SettingCommandPhrase("start calling things out", "true"),
                     new SettingCommandPhrase("enable callouts", "true"),
                 ],
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Callouts.Enabled ? "true" : "false",
-                    Write = (s, v) => s with { Callouts = s.Callouts with { Enabled = v is not "false" } },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Callouts.Enabled,
+                    (s, on) => s with { Callouts = s.Callouts with { Enabled = on } }),
             },
         };
 
@@ -1440,11 +1438,7 @@ public static class CalloutCapability
             new SettingCommandPhrase($"start calling out {subject}", "true"),
         ],
         AppliesWhen = s => s.Callouts.Enabled && (appliesWhen?.Invoke(s) ?? true),
-        Binding = new SettingBinding
-        {
-            Read = s => read(s) ? "true" : "false",
-            Write = (s, v) => write(s, v is null ? defaultOn : v is not "false"),
-        },
+        Binding = SettingBinding.Toggle(read, write),
     };
 
     /// <summary>

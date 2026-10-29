@@ -173,14 +173,9 @@ public static class InterfaceCapability
                     new SettingCommandPhrase("show fewer settings", "false"),
                     new SettingCommandPhrase("just the usual settings", "false"),
                 ],
-                Binding = new SettingBinding
-                {
-                    Read = s => s.Ui.ShowEverySetting ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Ui = s.Ui with { ShowEverySetting = bool.TryParse(v, out var show) && show },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Ui.ShowEverySetting,
+                    (s, on) => s with { Ui = s.Ui with { ShowEverySetting = on } }),
             },
 
             // The flat mini panel (Phase 48).
@@ -196,19 +191,9 @@ public static class InterfaceCapability
                 Kind = SettingKind.Toggle,
                 Group = OverlayGroup,
                 DocsAnchor = "overlay",
-                Binding = new SettingBinding
-                {
-                    // "true" and "false", spelled out, because the toggle control compares this string
-                    // ordinally and `bool.ToString()` is "True" (#37).
-                    Read = s => s.Ui.Overlay.Enabled ? "true" : "false",
-                    Write = (s, v) => s with
-                    {
-                        Ui = s.Ui with
-                        {
-                            Overlay = s.Ui.Overlay with { Enabled = bool.TryParse(v, out var on) && on },
-                        },
-                    },
-                },
+                Binding = SettingBinding.Toggle(
+                    s => s.Ui.Overlay.Enabled,
+                    (s, on) => s with { Ui = s.Ui with { Overlay = s.Ui.Overlay with { Enabled = on } } }),
             },
             new SettingRow
             {

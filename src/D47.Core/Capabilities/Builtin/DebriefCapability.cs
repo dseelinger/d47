@@ -59,11 +59,9 @@ public static class DebriefCapability
             new SettingCommandPhrase("stop debriefing me", "false"),
             new SettingCommandPhrase("start debriefing me", "true"),
         ],
-        Binding = new SettingBinding
-        {
-            Read = s => s.Debrief.Enabled ? "true" : "false",
-            Write = (s, v) => s with { Debrief = s.Debrief with { Enabled = v is not "false" } },
-        },
+        Binding = SettingBinding.Toggle(
+            s => s.Debrief.Enabled,
+            (s, on) => s with { Debrief = s.Debrief with { Enabled = on } }),
     };
 
     private static SettingRow DirectionsRow(DebriefBook? book) => new()

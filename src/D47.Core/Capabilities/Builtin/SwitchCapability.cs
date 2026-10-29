@@ -164,11 +164,9 @@ public static class SwitchCapability
             new SettingCommandPhrase("stop reading my switches", "false"),
             new SettingCommandPhrase("ignore my switches", "false"),
         ],
-        Binding = new SettingBinding
-        {
-            Read = s => s.Actions.Switches ? "true" : "false",
-            Write = (s, v) => s with { Actions = s.Actions with { Switches = v is "true" } },
-        },
+        Binding = SettingBinding.Toggle(
+            s => s.Actions.Switches,
+            (s, on) => s with { Actions = s.Actions with { Switches = on } }),
     };
 
     /// <summary>Protected for the same reason, and not behind key injection: its one key goes to Virtual Desktop.</summary>
@@ -188,11 +186,9 @@ public static class SwitchCapability
             new SettingCommandPhrase("let my switches change the headset view", "true"),
             new SettingCommandPhrase("stop my switches changing the headset view", "false"),
         ],
-        Binding = new SettingBinding
-        {
-            Read = s => s.Actions.HeadsetView ? "true" : "false",
-            Write = (s, v) => s with { Actions = s.Actions with { HeadsetView = v is "true" } },
-        },
+        Binding = SettingBinding.Toggle(
+            s => s.Actions.HeadsetView,
+            (s, on) => s with { Actions = s.Actions with { HeadsetView = on } }),
     };
 
     /// <summary>Protected, and not behind key injection: a chord goes to whatever window is in front.</summary>
@@ -213,11 +209,9 @@ public static class SwitchCapability
             new SettingCommandPhrase("let my switches press key chords", "true"),
             new SettingCommandPhrase("stop my switches pressing key chords", "false"),
         ],
-        Binding = new SettingBinding
-        {
-            Read = s => s.Actions.SwitchChords ? "true" : "false",
-            Write = (s, v) => s with { Actions = s.Actions with { SwitchChords = v is "true" } },
-        },
+        Binding = SettingBinding.Toggle(
+            s => s.Actions.SwitchChords,
+            (s, on) => s with { Actions = s.Actions with { SwitchChords = on } }),
     };
 
     /// <summary>A read-only summary that carries the way into the walk.</summary>

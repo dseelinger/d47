@@ -88,6 +88,18 @@ public sealed record SettingBinding
 
     /// <summary>Null for a row that can be shown but not set — <see cref="SettingKind.Info"/>.</summary>
     public Func<D47Settings, string?, D47Settings>? Write { get; init; }
+
+    /// <summary>A two-state row. Reads "true" or "false"; a null write sets the default in <see cref="D47Settings.Defaults"/>.</summary>
+    public static SettingBinding Toggle(Func<D47Settings, bool> read, Func<D47Settings, bool, D47Settings> write) => new()
+    {
+        Read = s => read(s) ? "true" : "false",
+        Write = (s, v) => write(s, v switch
+        {
+            "true" => true,
+            "false" => false,
+            _ => read(D47Settings.Defaults),
+        }),
+    };
 }
 
 /// <summary>A phrase the model-free keyword router accepts for this row, and the value it writes.</summary>

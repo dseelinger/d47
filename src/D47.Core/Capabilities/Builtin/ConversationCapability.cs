@@ -545,11 +545,9 @@ public static class ConversationCapability
                 new SettingCommandPhrase("start fetching model updates", "true"),
                 new SettingCommandPhrase("turn on model updates", "true"),
             ],
-            Binding = new SettingBinding
-            {
-                Read = s => s.Models.RefreshCatalog ? "true" : "false",
-                Write = (s, v) => s with { Models = s.Models with { RefreshCatalog = v is not "false" } },
-            },
+            Binding = SettingBinding.Toggle(
+                s => s.Models.RefreshCatalog,
+                (s, on) => s with { Models = s.Models with { RefreshCatalog = on } }),
         });
 
         // One key row per provider that has one, rather than a single row whose secret name shifts underneath
@@ -598,11 +596,9 @@ public static class ConversationCapability
                 new SettingCommandPhrase("turn personality on", "true"),
                 new SettingCommandPhrase("turn your personality on", "true"),
             ],
-            Binding = new SettingBinding
-            {
-                Read = s => s.Llm.PersonalityEnabled ? "true" : "false",
-                Write = (s, v) => s with { Llm = s.Llm with { PersonalityEnabled = v is not "false" } },
-            },
+            Binding = SettingBinding.Toggle(
+                s => s.Llm.PersonalityEnabled,
+                (s, on) => s with { Llm = s.Llm with { PersonalityEnabled = on } }),
         });
 
         rows.Add(new SettingRow
@@ -619,11 +615,9 @@ public static class ConversationCapability
             Kind = SettingKind.Toggle,
             DefaultDisplay = "off",
             DocsAnchor = "let-the-model-search-the-web",
-            Binding = new SettingBinding
-            {
-                Read = s => s.Llm.WebSearch ? "true" : "false",
-                Write = (s, v) => s with { Llm = s.Llm with { WebSearch = v == "true" } },
-            },
+            Binding = SettingBinding.Toggle(
+                s => s.Llm.WebSearch,
+                (s, on) => s with { Llm = s.Llm with { WebSearch = on } }),
         });
 
         rows.Add(new SettingRow
@@ -651,11 +645,9 @@ public static class ConversationCapability
                 new SettingCommandPhrase("stop looking at my screen", "false"),
             ],
             Note = s => s.Llm.LookAtScreen ? pictureNote?.Invoke() : null,
-            Binding = new SettingBinding
-            {
-                Read = s => s.Llm.LookAtScreen ? "true" : "false",
-                Write = (s, v) => s with { Llm = s.Llm with { LookAtScreen = v == "true" } },
-            },
+            Binding = SettingBinding.Toggle(
+                s => s.Llm.LookAtScreen,
+                (s, on) => s with { Llm = s.Llm with { LookAtScreen = on } }),
         });
 
         // The two halves of a biography, in the order they are read (Phase 43).
