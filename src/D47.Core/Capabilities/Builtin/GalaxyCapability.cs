@@ -147,6 +147,8 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "search_systems",
+                Exercise =
+                    "Ask D47 for systems within twenty light years with a high-security Industrial economy. The reply lists matching systems nearest first, each with its distance; nothing it names fails the filters you gave.",
                 Description =
                     "Find star systems matching some criteria, nearest first unless order_by says otherwise. Filters: "
                     + $"{GalaxyFilters.Names(GalaxySearchKind.Systems)}, and no others. Ranges take one number for an upper "
@@ -169,6 +171,8 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "search_stations",
+                Exercise =
+                    "Ask D47 for the nearest station with a large landing pad and a material trader. The reply names stations nearest first, each with its system and distance from you; a fleet carrier is left out.",
                 Description =
                     "Find stations by type, landing pad, distance from arrival, services, material trader, "
                     + "technology broker, a module or ship sold there, or their system's filters, nearest first unless order_by says otherwise. "
@@ -217,6 +221,8 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "search_outfitting",
+                Exercise =
+                    "Ask D47 where to buy a five A Frame Shift Drive and a six A Fuel Scoop together. The reply names stations that sell both, nearest first, with their systems and distances.",
                 Description =
                     "Find stations that sell several modules, or modules and a ship, at once, nearest first. "
                     + "Every module must be sold at the one station, and a search takes at most one ship. "
@@ -249,6 +255,8 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "find_signal",
+                Exercise =
+                    "Ask D47 for the nearest nav beacon. The reply names the system holding one and its distance in light years; try a Hazardous resource extraction site for a second kind.",
                 Description =
                     "Find the nearest signal of a kind, such as a Hazardous RES, a nav beacon or a memorial, nearest "
                     + "first. Answers from the daily signal index and the Commander's own scans, on this machine.",
@@ -297,6 +305,8 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "describe_system",
+                Exercise =
+                    "Ask D47 to describe Sol. The reply gives its government, allegiance, economy, population and controlling faction, and the System page opens on the panel. Leave the name out to describe the system you are in.",
                 Description =
                     "One star system's government, allegiance, economy, population, controlling faction, "
                     + "Powerplay, main star and stations, as last reported, and opens its page on the panel. "
@@ -425,6 +435,8 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "find_body",
+                Exercise =
+                    "Ask D47 for the nearest Earth-like world. The reply names a body with its system and distance; ask for a body with a biological signal to check the signal filter.",
                 Description =
                     "Find the nearest planets, moons or stars matching some criteria — a body type, a "
                     + "surface signal, a ring to mine, a surface material, a codex entry, volcanism, atmosphere or gravity.",

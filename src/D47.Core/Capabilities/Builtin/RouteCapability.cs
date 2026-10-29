@@ -61,6 +61,8 @@ public static class RouteCapability
             new ToolDefinition
             {
                 Name = "plot_route",
+                Exercise =
+                    "Ask D47 to plot a route to Colonia. The reply gives the number of jumps and the total distance, and the Route page opens on the panel with the waypoints.",
                 AlwaysLoaded = true,
                 Description =
                     "Plot a jump route between two star systems, using neutron star boosts where they "

@@ -53,6 +53,8 @@ public static class ChecklistCapability
             new ToolDefinition
             {
                 Name = "get_checklist",
+                Exercise =
+                    "Say \"read my checklist\". The reply gives open items first, then done items, then any waiting for you to accept; ask for just the ship list to see the group filter.",
                 AlwaysLoaded = true,
                 Description =
                     "Read the Commander's checklist: open items first, then what is done, then anything "

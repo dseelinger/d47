@@ -72,6 +72,8 @@ public static class BookmarksCapability
             new ToolDefinition
             {
                 Name = ListTool,
+                Exercise =
+                    "Say \"list my bookmarks\". The reply names each bookmark with the system it points at; with none saved it says so.",
                 Description = "List the Commander's bookmarks, each with the system it points at.",
                 Commands =
                 [
