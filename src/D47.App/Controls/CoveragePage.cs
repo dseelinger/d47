@@ -24,21 +24,26 @@ public sealed class CoveragePage : DialogPage
     private readonly Func<CoverageReport>? _fresh;
     private readonly ViewStateStore? _store;
     private readonly Action<CoverageItem>? _go;
-    private readonly Func<string, D47.App.Coverage.ToolExercise?>? _exercise;
+    private readonly Func<CoverageItem, D47.App.Coverage.ToolExercise?>? _exercise;
+    private readonly Func<string, bool>? _onPage;
+    private readonly CheckBox _showHidden;
+    private CoverageReport _report;
     private ViewState _view;
 
     /// <param name="clear">When given, each failed row gets a Clear button that calls it.</param>
     /// <param name="fresh">Fetches the report to redraw after a clear.</param>
-    /// <param name="store">When given, which sections are collapsed is remembered across visits.</param>
-    /// <param name="go">When given, each settings row, and each tool row with a page, gets a Go button that calls it.</param>
-    /// <param name="exercise">When given, each tool row without a page gets a Go button that opens the tool's exercise steps.</param>
+    /// <param name="store">When given, collapsed sections and hidden lines are remembered across visits.</param>
+    /// <param name="go">When given, the exercise dialog of a line that has a place gets a GO THERE button that calls it.</param>
+    /// <param name="exercise">The steps the exercise dialog shows for a line.</param>
+    /// <param name="onPage">Whether a settings row is on its page now; null takes every row as on it.</param>
     public CoveragePage(
         CoverageReport report,
         Action<CoverageItem>? clear = null,
         Func<CoverageReport>? fresh = null,
         ViewStateStore? store = null,
         Action<CoverageItem>? go = null,
-        Func<string, D47.App.Coverage.ToolExercise?>? exercise = null)
+        Func<CoverageItem, D47.App.Coverage.ToolExercise?>? exercise = null,
+        Func<string, bool>? onPage = null)
     {
         Title = "Features";
         _clear = clear;
@@ -46,6 +51,8 @@ public sealed class CoveragePage : DialogPage
         _store = store;
         _go = go;
         _exercise = exercise;
+        _onPage = onPage;
+        _report = report;
         _view = store?.Load() ?? new ViewState();
 
         _summary = new SelectableTextBlock
@@ -56,6 +63,12 @@ public sealed class CoveragePage : DialogPage
         };
 
         ThemeInk.Bind(_summary, SelectableTextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        (_showHidden, _) = LabeledCheckBox.Build("Show hidden items");
+        _showHidden.Name = "CoverageShowHidden";
+        _showHidden.MinHeight = TypeScale.MinimumTarget;
+
+        _showHidden.IsCheckedChanged += (_, _) => Fill(_report);
 
         _list = new StackPanel { Spacing = 14 };
         Fill(report);
@@ -70,9 +83,14 @@ public sealed class CoveragePage : DialogPage
 
     private void Fill(CoverageReport report)
     {
-        _summary.Text = report.Summary;
+        _report = report;
+
+        var hidden = report.Lines.Count(Hidden);
+
+        _summary.Text = hidden > 0 ? $"{report.Summary} ({hidden} hidden)" : report.Summary;
         _list.Children.Clear();
         _list.Children.Add(_summary);
+        _list.Children.Add(_showHidden);
 
         // Same order as the written report, and for the same reason: a list that opens with the work is a
         // list that gets used.
@@ -86,6 +104,7 @@ public sealed class CoveragePage : DialogPage
     {
         var lines = report.Lines
             .Where(include)
+            .Where(line => _showHidden.IsChecked == true || !Hidden(line))
             .OrderBy(line => line.Item.Kind, StringComparer.Ordinal)
             .ThenBy(line => line.Item.Id, StringComparer.Ordinal)
             .ToList();
@@ -147,14 +166,33 @@ public sealed class CoveragePage : DialogPage
         _ => "NEVER",
     };
 
+    private bool Hidden(CoverageLine line) => _view.IsHidden(line.Item.Key, line.Item.Fingerprint);
+
+    /// <summary>Whether GO THERE has somewhere to land: a settings row on its page now, or a tool with a page.</summary>
+    private bool HasPlace(CoverageItem item) => item.Kind == CoverageKind.Setting
+        ? _onPage?.Invoke(item.Id) ?? true
+        : D47.App.Coverage.ToolPlaces.For(item.Id) is not null;
+
     private void ShowExercise(CoverageLine line)
     {
-        if (_exercise?.Invoke(line.Item.Id) is not { } tool || TopLevel.GetTopLevel(this) is not Window owner)
+        if (TopLevel.GetTopLevel(this) is not Window owner)
         {
             return;
         }
 
-        _ = new ToolExerciseDialog(tool, MarkOf(line)).Over(owner);
+        var item = line.Item;
+        var steps = _exercise?.Invoke(item) ?? new D47.App.Coverage.ToolExercise(item.Name, item.CapabilityId, string.Empty, null);
+        Action? goThere = _go is { } go && HasPlace(item) ? () => go(item) : null;
+
+        _ = new ToolExerciseDialog(steps, MarkOf(line), goThere, () => Remember(view => view.Hiding(item.Key, item.Fingerprint))).Over(owner);
+    }
+
+    /// <summary>Changes what is stored and redraws, loading fresh first because other writers share the file.</summary>
+    private void Remember(Func<ViewState, ViewState> change)
+    {
+        _view = change(_store?.Load() ?? _view);
+        _store?.Save(_view);
+        Fill(_report);
     }
 
     /// <summary>One line, its state on the status ladder: done is met, failed is an error, the rest not met.</summary>
@@ -209,36 +247,33 @@ public sealed class CoveragePage : DialogPage
             Children = { when, help },
         };
 
-        if (_go is not null && (line.Item.Kind == CoverageKind.Setting || line.Item.Kind == CoverageKind.Tool && D47.App.Coverage.ToolPlaces.For(line.Item.Id) is not null))
+        if (Hidden(line))
         {
-            var go = new Button
+            var unhide = new Button
             {
-                Name = "CoverageGo",
-                Content = "GO",
-                MinHeight = 44,
+                Name = "CoverageUnhide",
+                Content = "UNHIDE",
+                MinHeight = TypeScale.MinimumTarget,
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
-            go.Click += (_, _) => _go(line.Item);
+            unhide.Click += (_, _) => Remember(view => view.Unhiding(line.Item.Key));
 
-            right.Children.Add(go);
+            right.Children.Add(unhide);
         }
 
-        if (_exercise is not null && line.Item.Kind == CoverageKind.Tool && D47.App.Coverage.ToolPlaces.For(line.Item.Id) is null)
+        var go = new Button
         {
-            var go = new Button
-            {
-                Name = "CoverageGo",
-                Content = "GO",
-                MinHeight = 44,
-                MinWidth = 72,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
+            Name = "CoverageGo",
+            Content = "GO",
+            MinHeight = TypeScale.MinimumTarget,
+            MinWidth = 72,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
 
-            go.Click += (_, _) => ShowExercise(line);
+        go.Click += (_, _) => ShowExercise(line);
 
-            right.Children.Add(go);
-        }
+        right.Children.Add(go);
 
         if (line.Failed && _clear is not null && _fresh is not null)
         {

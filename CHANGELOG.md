@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+GO on every line of the Features page now opens a dialog that says how to test that line. Where the line has a row or page to go to, the dialog has a GO THERE button that closes the Features page and lands there, as GO did before. The dialog's HIDE button takes the line off the page, and the summary adds how many lines are hidden. Hidden lines stay hidden after a restart, and a hidden line comes back by itself when the feature changes. The Show hidden items checkbox lists hidden lines again, each with an UNHIDE button. About's Install and Add to Start Menu lines now say when those rows appear: Install only after Check for updates finds a newer release, and Add to Start Menu only while there is no Start Menu shortcut. Before, both sat under Never tested with a GO that led to a row that was not there.
+
 A story's first beacon scan now says "Data link complete. Integrating this system. Directive 47 executing: optimize inferior systems." and then the story core's own introduction, instead of announcing the Guardian cores as a discovery. None of the waking lines mention Settings or the Core and character section any more.
 
 Warden and Sentinel repeat fewer of their own words. Warden no longer leans on "within tolerance" and "sufficient". Sentinel no longer leans on "doctrine" and "emplacement", and outside his introduction he no longer says he has never been in combat. Before, the Narrator picked these words up too.

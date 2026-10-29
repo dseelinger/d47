@@ -215,6 +215,12 @@ public sealed record SettingRow
     public Func<D47Settings, bool>? AppliesWhen { get; init; }
 
     /// <summary>
+    /// Steps for the Commander to exercise the row by hand: what to press or set, and what a correct result
+    /// looks like. A row with <see cref="AppliesWhen"/> says when it appears.
+    /// </summary>
+    public string? Exercise { get; init; }
+
+    /// <summary>
     /// The row stays on the page but its control is greyed out — unlike <see cref="AppliesWhen"/>,
     /// for a setting that still exists and still has a value, just not one that does anything right
     /// now (#378).

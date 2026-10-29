@@ -211,7 +211,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         SystemNameLookup? systemNames = null,
         CustomVoicesEditing? customVoices = null,
         Action<CoverageItem>? clearCoverage = null,
-        Func<string, D47.App.Coverage.ToolExercise?>? toolExercise = null)
+        Func<CoverageItem, D47.App.Coverage.ToolExercise?>? toolExercise = null)
     {
         _settings = settings;
         _viewStateStore = viewState;

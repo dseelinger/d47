@@ -5,14 +5,20 @@ using D47.App.Theming;
 
 namespace D47.App.Controls;
 
-/// <summary>How to exercise a tool that has no page, opened by Go on the Features page.</summary>
+/// <summary>How to exercise a tool or settings row, opened by Go on the Features page.</summary>
 public sealed class ToolExerciseDialog : ModalDialog
 {
     public const string CloseName = "ExerciseClose";
 
-    public const string Unwritten = "Steps for exercising this tool are not written yet.";
+    public const string GoThereName = "ExerciseGoThere";
 
-    public ToolExerciseDialog(ToolExercise tool, string mark)
+    public const string HideName = "ExerciseHide";
+
+    public const string Unwritten = "Steps for exercising this are not written yet.";
+
+    /// <param name="goThere">When given, a GO THERE button closes the dialog and calls it.</param>
+    /// <param name="hide">When given, a HIDE button closes the dialog and calls it.</param>
+    public ToolExerciseDialog(ToolExercise tool, string mark, Action? goThere = null, Action? hide = null)
     {
         Title = tool.Name;
 
@@ -57,8 +63,34 @@ public sealed class ToolExerciseDialog : ModalDialog
         var close = new Button { Name = CloseName, Content = "CLOSE", MinWidth = 76, Height = TypeScale.MinimumTarget };
         close.Click += (_, _) => Close();
 
-        Modal.Apply(this, "Features", tool.Name, body, [close], StatTile.Build(mark, tool.CapabilityName, StatInk.Name));
+        var buttons = new List<Control> { close };
+
+        if (goThere is not null)
+        {
+            buttons.Add(Then(GoThereName, "GO THERE", goThere));
+        }
+
+        if (hide is not null)
+        {
+            buttons.Add(Then(HideName, "HIDE", hide));
+        }
+
+        Modal.Apply(this, "Features", tool.Name, body, buttons, StatTile.Build(mark, tool.CapabilityName, StatInk.Name));
 
         Opened += (_, _) => close.Focus();
+    }
+
+    /// <summary>A button that closes the dialog, then does its action.</summary>
+    private Button Then(string name, string label, Action action)
+    {
+        var button = new Button { Name = name, Content = label, MinWidth = 76, Height = TypeScale.MinimumTarget };
+
+        button.Click += (_, _) =>
+        {
+            Close();
+            action();
+        };
+
+        return button;
     }
 }

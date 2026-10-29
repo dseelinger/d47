@@ -396,7 +396,7 @@ public class AModalOpensInTheHeadsetTests
         var page = new CoveragePage(
             new CoverageLedger().Report(items),
             go: item => { },
-            exercise: id => new D47.App.Coverage.ToolExercise(id, "Probe", "Does a thing.", "Say it and expect an answer."));
+            exercise: item => new D47.App.Coverage.ToolExercise(item.Id, "Probe", "Does a thing.", "Say it and expect an answer."));
 
         var view = (PanelView)typeof(VrPanelSurface)
             .GetField("_view", BindingFlags.Instance | BindingFlags.NonPublic)!

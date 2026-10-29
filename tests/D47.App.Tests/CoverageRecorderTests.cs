@@ -163,6 +163,26 @@ public class CoverageRecorderTests
         Assert.Equal(CoverageOutcome.Failed, LineFor(report, CoverageKind.Setting, "probe.brokenButton").Outcome);
     }
 
+    /// <summary>The exercise lookup finds a settings row by key as well as a tool by name, with the row's help as its description.</summary>
+    [Fact]
+    public void TheExerciseLookupFindsSettingsRowsAsWellAsTools()
+    {
+        var probe = new Probe();
+
+        probe.Recorder.Follow(probe.Registry, probe.Settings);
+
+        var report = probe.Recorder.Report();
+        var row = probe.Recorder.Exercise(LineFor(report, CoverageKind.Setting, "probe.button").Item);
+        var unwritten = probe.Recorder.Exercise(LineFor(report, CoverageKind.Setting, "probe.row").Item);
+        var tool = probe.Recorder.Exercise(LineFor(report, CoverageKind.Tool, "probe_tool").Item);
+
+        Assert.Equal(new ToolExercise("A button", "Probe", "Pressed rather than set.", "Press it and expect nothing to break."), row);
+        Assert.Null(unwritten?.Steps);
+        Assert.Equal("Bound to the theme so applying it goes all the way through.", unwritten?.Description);
+        Assert.Equal(new ToolExercise("probe_tool", "Probe", "Does nothing, observably.", null), tool);
+        Assert.Null(probe.Recorder.Exercise(new CoverageItem(CoverageKind.Setting, "probe.missing", "probe", "Probe - missing", "aaaa")));
+    }
+
     private static CoverageStatus StatusOf(CoverageReport report, string kind, string id) =>
         LineFor(report, kind, id).Status;
 
@@ -229,6 +249,7 @@ public class CoverageRecorderTests
                             Kind = SettingKind.Info,
                             Press = () => { },
                             PressLabel = "Press",
+                            Exercise = "Press it and expect nothing to break.",
                         },
                         new SettingRow
                         {

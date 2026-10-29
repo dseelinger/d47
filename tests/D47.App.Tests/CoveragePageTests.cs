@@ -148,53 +148,240 @@ public class CoveragePageTests
         host.Close();
     }
 
-    /// <summary>A settings line has a 44px Go button that hands its item back; a tool line has none.</summary>
+    /// <summary>
+    /// Every kind of line has one 44px GO, and it opens the exercise dialog rather than navigating: a
+    /// pageless tool, a tool with a page, a settings row on its page and one that is absent.
+    /// </summary>
     [AvaloniaFact]
-    public void ASettingLineHasAGoButtonAndAToolLineHasNone()
+    public void EveryLineHasOneGoAndItOpensTheExerciseDialog()
     {
         Theme();
 
-        var tool = Item("tool");
-        var setting = new CoverageItem(CoverageKind.Setting, "diagnostics.row", "diagnostics", "Probe - row", "aaaa");
-        var report = new CoverageLedger().Report([tool, setting]);
+        var report = new CoverageLedger().Report([Item("tool"), WithPage, Row("diagnostics.row"), Row("diagnostics.absent")]);
         var went = new List<CoverageItem>();
-        var window = new CoveragePage(report, go: went.Add);
-
-        window.Show();
+        var page = new CoveragePage(report, go: went.Add, onPage: key => key != "diagnostics.absent");
+        var window = page.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        var go = Assert.Single(window.GetVisualDescendants().OfType<Button>(), button => button.Name == "CoverageGo");
+        var buttons = Gos(page);
 
-        Assert.Equal(44, go.MinHeight);
+        Assert.Equal(report.Total, buttons.Count);
+        Assert.All(buttons, b => Assert.Equal(TypeScale.MinimumTarget, b.MinHeight));
 
-        go.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        foreach (var go in buttons)
+        {
+            Press(go);
 
-        Assert.Equal([setting], went);
+            var dialog = Assert.Single(window.Modals().OfType<ToolExerciseDialog>());
+
+            Press(DialogButton(dialog, ToolExerciseDialog.CloseName)!);
+        }
+
+        Assert.Empty(went);
+        Assert.Empty(window.Modals());
 
         window.Close();
     }
 
-    /// <summary>A tool line whose tool has a page gets a Go button; one without a page gets none.</summary>
+    /// <summary>
+    /// GO THERE is offered for a tool with a page and a settings row on its page now, and not for a
+    /// pageless tool or an absent conditional row; it is a 44px target and hands its item back.
+    /// </summary>
     [AvaloniaFact]
-    public void AToolLineWithAPageHasAGoButton()
+    public void GoThereIsOfferedOnlyWhereTheLineHasAPlace()
     {
         Theme();
 
-        var withPage = new CoverageItem(CoverageKind.Tool, "search_stations", "galaxy", "Galaxy - search_stations", "aaaa");
-        var report = new CoverageLedger().Report([Item("tool"), withPage]);
+        var pageless = Item("tool");
+        var row = Row("diagnostics.row");
+        var absent = Row("diagnostics.absent");
+        var report = new CoverageLedger().Report([pageless, WithPage, row, absent]);
         var went = new List<CoverageItem>();
-        var window = new CoveragePage(report, go: went.Add);
-
-        window.Show();
+        var page = new CoveragePage(report, go: went.Add, onPage: key => key != absent.Id);
+        var window = page.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        var go = Assert.Single(window.GetVisualDescendants().OfType<Button>(), button => button.Name == "CoverageGo");
+        bool Offers(CoverageItem item)
+        {
+            Press(GoOf(page, item));
 
-        go.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            var dialog = Assert.Single(window.Modals().OfType<ToolExerciseDialog>());
+            var there = DialogButton(dialog, ToolExerciseDialog.GoThereName);
 
-        Assert.Equal([withPage], went);
+            if (there is not null)
+            {
+                Assert.Equal(TypeScale.MinimumTarget, there.Height);
+            }
+
+            Press(DialogButton(dialog, ToolExerciseDialog.CloseName)!);
+
+            return there is not null;
+        }
+
+        Assert.True(Offers(WithPage));
+        Assert.True(Offers(row));
+        Assert.False(Offers(pageless));
+        Assert.False(Offers(absent));
+
+        Press(GoOf(page, row));
+        Press(DialogButton(Assert.Single(window.Modals().OfType<ToolExerciseDialog>()), ToolExerciseDialog.GoThereName)!);
+
+        Assert.Empty(window.Modals());
+        Assert.Equal([row], went);
 
         window.Close();
+    }
+
+    /// <summary>A settings row with no steps written shows its help text and the not-written line.</summary>
+    [AvaloniaFact]
+    public void ASettingsRowWithNoStepsShowsItsHelpAndTheUnwrittenLine()
+    {
+        Theme();
+
+        var row = Row("diagnostics.row");
+        var page = new CoveragePage(
+            new CoverageLedger().Report([row]),
+            exercise: item => new D47.App.Coverage.ToolExercise("A row", "Diagnostics", "What the row is for.", null));
+        var window = page.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Press(GoOf(page, row));
+
+        var dialog = Assert.Single(window.Modals().OfType<ToolExerciseDialog>());
+
+        Assert.Contains(dialog.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "What the row is for.");
+        Assert.Equal(ToolExerciseDialog.Unwritten, dialog.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "ExerciseUnwritten").Text);
+
+        dialog.Close();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        window.Close();
+    }
+
+    /// <summary>
+    /// HIDE takes the line off the page, drops its section's count, and adds "(1 hidden)" to the
+    /// summary, which otherwise stays the report's own.
+    /// </summary>
+    [AvaloniaFact]
+    public void HideTakesTheLineOffThePageAndTheSummarySaysSo()
+    {
+        Theme();
+
+        var report = Report();
+        var summary = report.Summary;
+        var page = new CoveragePage(report);
+        var window = page.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(summary, Summary(page));
+
+        Hide(window, page, Item("untouched"));
+
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "PROBE - UNTOUCHED");
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Button>(), b => b.Name == "CoverageSection_never");
+        Assert.Equal($"{summary} (1 hidden)", Summary(page));
+        Assert.Equal(summary, report.Summary);
+        Assert.Equal(1, report.Never);
+
+        Hide(window, page, Item("worked"));
+
+        Assert.Equal($"{summary} (2 hidden)", Summary(page));
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Button>(), b => b.Name == "CoverageSection_exercised");
+
+        window.Close();
+    }
+
+    /// <summary>
+    /// Show hidden items puts a hidden line back in its section with UNHIDE on the row; UNHIDE makes it
+    /// an ordinary line again.
+    /// </summary>
+    [AvaloniaFact]
+    public void ShowHiddenItemsBringsAHiddenLineBackAndUnhideKeepsIt()
+    {
+        Theme();
+
+        var page = new CoveragePage(Report());
+        var window = page.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Hide(window, page, Item("untouched"));
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Button>(), b => b.Name == "CoverageUnhide");
+
+        var show = page.GetVisualDescendants().OfType<CheckBox>().Single(b => b.Name == "CoverageShowHidden");
+
+        Assert.Equal(TypeScale.MinimumTarget, show.MinHeight);
+
+        show.IsChecked = true;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("▾ NEVER TESTED (1)", Text(Heading(page, "never")));
+
+        var unhide = Assert.Single(page.GetVisualDescendants().OfType<Button>(), b => b.Name == "CoverageUnhide");
+
+        Assert.Equal(TypeScale.MinimumTarget, unhide.MinHeight);
+
+        Press(unhide);
+
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Button>(), b => b.Name == "CoverageUnhide");
+        Assert.Equal(Report().Summary, Summary(page));
+
+        show.IsChecked = false;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("▾ NEVER TESTED (1)", Text(Heading(page, "never")));
+
+        window.Close();
+    }
+
+    /// <summary>A hidden line stays hidden on the next page built over the same store, and nothing else does.</summary>
+    [AvaloniaFact]
+    public void AHiddenLineStaysHiddenOnTheNextVisit()
+    {
+        Theme();
+        var paths = new AppPaths(TempFolders.Create("d47-coverage-hidden"));
+
+        var first = new CoveragePage(Report(), store: Store(paths));
+        var window = first.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        Hide(window, first, Item("untouched"));
+        window.Close();
+
+        var second = new CoveragePage(Report(), store: Store(paths));
+        second.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(second.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "PROBE - UNTOUCHED");
+        Assert.Contains(second.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "PROBE - WORKED");
+
+        second.Close();
+    }
+
+    /// <summary>A line hidden at one fingerprint is shown again once its fingerprint differs, under Changed.</summary>
+    [AvaloniaFact]
+    public void AHiddenLineThatChangesComesBackByItself()
+    {
+        Theme();
+        var paths = new AppPaths(TempFolders.Create("d47-coverage-hidden-changed"));
+        var ledger = new CoverageLedger();
+        var before = Item("moving", "before");
+
+        ledger.Record(before, Monday, CoverageOutcome.Ok);
+
+        var first = new CoveragePage(ledger.Report([before]), store: Store(paths));
+        var window = first.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        Hide(window, first, before);
+        Assert.DoesNotContain(first.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "PROBE - MOVING");
+        window.Close();
+
+        var second = new CoveragePage(ledger.Report([Item("moving", "after")]), store: Store(paths));
+        second.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(second.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "PROBE - MOVING");
+        Assert.Equal("▾ CHANGED SINCE YOU LAST TESTED THEM (1)", Text(Heading(second, "changed")));
+        Assert.DoesNotContain("hidden", Summary(second), StringComparison.Ordinal);
+
+        second.Close();
     }
 
     /// <summary>Go on a tool line with no page opens its exercise steps; with none written, its description and a hint.</summary>
@@ -207,9 +394,9 @@ public class CoveragePageTests
         var unwritten = new CoverageItem(CoverageKind.Tool, "no_steps", "probe", "Probe - no_steps", "aaaa");
         var report = new CoverageLedger().Report([written, unwritten]);
 
-        D47.App.Coverage.ToolExercise? Lookup(string id) => id == "has_steps"
-            ? new D47.App.Coverage.ToolExercise(id, "Probe", "Does a thing.", "Say hello and expect hello back.")
-            : new D47.App.Coverage.ToolExercise(id, "Probe", "Does another thing.", null);
+        D47.App.Coverage.ToolExercise? Lookup(CoverageItem item) => item.Id == "has_steps"
+            ? new D47.App.Coverage.ToolExercise(item.Id, "Probe", "Does a thing.", "Say hello and expect hello back.")
+            : new D47.App.Coverage.ToolExercise(item.Id, "Probe", "Does another thing.", null);
 
         var page = new CoveragePage(report, go: _ => { }, exercise: Lookup);
         var window = page.Show();
@@ -243,9 +430,9 @@ public class CoveragePageTests
         window.Close();
     }
 
-    /// <summary>Go closes the Features page and lands on the setting's row, marked.</summary>
+    /// <summary>GO THERE closes the dialog and the Features page and lands on the setting's row, marked.</summary>
     [AvaloniaFact]
-    public void GoClosesThePageAndLandsOnTheRow()
+    public void GoThereClosesTheDialogAndThePageAndLandsOnTheRow()
     {
         var key = D47.Core.Capabilities.Builtin.SpeechCapability.ChatterboxVoiceKey;
         var item = new CoverageItem(CoverageKind.Setting, key, "speech", "Speech - voice", "aaaa");
@@ -264,11 +451,15 @@ public class CoveragePageTests
         host.View.GetVisualDescendants().OfType<Button>().First(b => b.Name == "OpenCoverage").RaiseEvent(click);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        var go = host.Panel.GetVisualDescendants().OfType<Button>().First(b => b.Name == "CoverageGo");
-        go.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Press(host.Panel.GetVisualDescendants().OfType<Button>().First(b => b.Name == "CoverageGo"));
+
+        var dialog = Assert.Single(host.Window.Modals().OfType<ToolExerciseDialog>());
+
+        Press(DialogButton(dialog, ToolExerciseDialog.GoThereName)!);
         Avalonia.Headless.AvaloniaHeadlessPlatform.ForceRenderTimerTick();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
+        Assert.Empty(host.Window.Modals());
         Assert.DoesNotContain(host.Panel.GetVisualDescendants(), c => c.Name == "CoverageGo");
         Assert.NotNull(host.View.LandedOn);
 
@@ -419,6 +610,71 @@ public class CoveragePageTests
         window.CaptureRenderedFrame()!.SaveCapture("coverage-section-collapsed.png");
         window.Close();
     }
+
+    private static readonly CoverageItem WithPage =
+        new(CoverageKind.Tool, "search_stations", "galaxy", "Galaxy - search_stations", "aaaa");
+
+    private static CoverageItem Row(string key) =>
+        new(CoverageKind.Setting, key, "diagnostics", $"Probe - {key}", "aaaa");
+
+    private static ViewStateStore Store(AppPaths paths) =>
+        new(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance);
+
+    private static List<Avalonia.Controls.Button> Gos(Visual page) =>
+        page.GetVisualDescendants().OfType<Avalonia.Controls.Button>().Where(b => b.Name == "CoverageGo").ToList();
+
+    /// <summary>The GO on the line that names the item.</summary>
+    private static Avalonia.Controls.Button GoOf(Visual page, CoverageItem item) =>
+        Gos(page).Single(go => go.GetVisualAncestors().OfType<DockPanel>().First().GetVisualDescendants()
+            .OfType<TextBlock>().Any(t => t.Text == item.Name.ToUpperInvariant()));
+
+    private static Avalonia.Controls.Button? DialogButton(ToolExerciseDialog dialog, string name) =>
+        dialog.GetVisualDescendants().OfType<Avalonia.Controls.Button>().SingleOrDefault(b => b.Name == name);
+
+    /// <summary>The Features page with a line hidden and Show hidden items on, and the exercise dialog of a row with a place.</summary>
+    [AvaloniaFact]
+    public void TheHiddenLineAndTheDialogRenderToCaptures()
+    {
+        Theme();
+
+        var row = new CoverageItem(CoverageKind.Setting, "about.startMenu", "about", "About - Add to Start Menu", "aaaa");
+        var page = new CoveragePage(
+            new CoverageLedger().Report([row, Item("untouched"), WithPage]),
+            go: _ => { },
+            exercise: item => new D47.App.Coverage.ToolExercise(
+                "Add to Start Menu",
+                "About",
+                "Puts a shortcut where Windows looks for one. Absent once there is one.",
+                item.Id == row.Id ? "The row appears only when there is no Directive 47 shortcut in your Start Menu." : null));
+        var window = page.Show();
+        window.Width = 720;
+        window.Height = 560;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Hide(window, page, Item("untouched"));
+        page.GetVisualDescendants().OfType<CheckBox>().Single(b => b.Name == "CoverageShowHidden").IsChecked = true;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        window.CaptureRenderedFrame()!.SaveCapture("coverage-hidden-shown.png");
+
+        Press(GoOf(page, row));
+        window.CaptureRenderedFrame()!.SaveCapture("coverage-exercise-dialog.png");
+
+        Assert.Single(window.Modals().OfType<ToolExerciseDialog>()).Close();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        window.Close();
+    }
+
+    /// <summary>GO on the item's line, then HIDE in its dialog.</summary>
+    private static void Hide(Window window, Visual page, CoverageItem item)
+    {
+        Press(GoOf(page, item));
+        Press(DialogButton(Assert.Single(window.Modals().OfType<ToolExerciseDialog>()), ToolExerciseDialog.HideName)!);
+        Assert.Empty(window.Modals());
+    }
+
+    private static string? Summary(Visual page) =>
+        page.GetVisualDescendants().OfType<SelectableTextBlock>().Single(t => t.Name == "CoverageSummary").Text;
 
     private static Avalonia.Controls.Button Heading(Visual window, string key) =>
         window.GetVisualDescendants().OfType<Avalonia.Controls.Button>().Single(b => b.Name == $"CoverageSection_{key}");

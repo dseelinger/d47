@@ -180,6 +180,39 @@ public sealed record ViewState
         return next;
     }
 
+    /// <summary>Lines hidden on the Features page, by <c>CoverageItem.Key</c>, each with the item's fingerprint when it was hidden.</summary>
+    public IReadOnlyDictionary<string, string> HiddenCoverage { get; init; } =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>Whether a Features line is hidden: hidden at this fingerprint, so a line that has changed shows again.</summary>
+    public bool IsHidden(string key, string fingerprint) =>
+        HiddenCoverage.TryGetValue(key, out var hidden) && string.Equals(hidden, fingerprint, StringComparison.Ordinal);
+
+    /// <summary>Hides a Features line at its current fingerprint.</summary>
+    public ViewState Hiding(string key, string fingerprint)
+    {
+        var next = new Dictionary<string, string>(HiddenCoverage, StringComparer.Ordinal)
+        {
+            [key] = fingerprint,
+        };
+
+        return this with { HiddenCoverage = next };
+    }
+
+    /// <summary>Shows a hidden Features line again.</summary>
+    public ViewState Unhiding(string key)
+    {
+        if (!HiddenCoverage.ContainsKey(key))
+        {
+            return this;
+        }
+
+        var next = new Dictionary<string, string>(HiddenCoverage, StringComparer.Ordinal);
+        next.Remove(key);
+
+        return this with { HiddenCoverage = next };
+    }
+
     /// <summary>The width in pixels the Commander dragged the Search form to, or null for the default.</summary>
     public double? SearchFormWidth { get; init; }
 

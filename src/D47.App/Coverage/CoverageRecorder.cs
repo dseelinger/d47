@@ -116,11 +116,19 @@ public sealed class CoverageRecorder
         _logger.LogInformation("Coverage: {Summary}", Report().Summary);
     }
 
-    /// <summary>A tool's capability, description and exercise steps, or null for a name that is not registered.</summary>
-    public ToolExercise? Exercise(string tool) =>
-        _registry?.All
+    /// <summary>
+    /// A tool's or settings row's capability, description and exercise steps, or null for an item that is
+    /// not registered. A row's description is its help text.
+    /// </summary>
+    public ToolExercise? Exercise(CoverageItem item) => item.Kind == CoverageKind.Setting
+        ? _registry?.All
+            .SelectMany(capability => capability.Descriptor.Settings.Select(r => (Capability: capability.Descriptor, Row: r)))
+            .Where(found => found.Row.Key == item.Id)
+            .Select(found => new ToolExercise(found.Row.Label, found.Capability.Name, found.Row.Help, found.Row.Exercise))
+            .FirstOrDefault()
+        : _registry?.All
             .SelectMany(capability => capability.Descriptor.Tools.Select(t => (Capability: capability.Descriptor, Tool: t)))
-            .Where(found => found.Tool.Name == tool)
+            .Where(found => found.Tool.Name == item.Id)
             .Select(found => new ToolExercise(found.Tool.Name, found.Capability.Name, found.Tool.Description, found.Tool.Exercise))
             .FirstOrDefault();
 

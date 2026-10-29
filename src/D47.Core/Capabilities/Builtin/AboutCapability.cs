@@ -96,6 +96,10 @@ public static class AboutCapability
                 AppliesWhen = _ => pendingUpdateVersion?.Invoke() is not null,
                 PressLabelFor = () => pendingUpdateVersion?.Invoke() is { } pending ? $"Install {pending}" : "Install",
                 PressAsync = installUpdate,
+                Exercise =
+                    "The row appears only after Check for updates, on the Version row above it, finds a newer "
+                    + "release; on the latest release it stays absent. Press Install and expect d47 to download "
+                    + "the release, close and start again on the new version.",
             });
         }
 
@@ -193,6 +197,11 @@ public static class AboutCapability
                 AppliesWhen = _ => startMenuWanted?.Invoke() ?? true,
                 Press = add,
                 PressLabel = "Add to Start Menu",
+                Exercise =
+                    "The row appears only when there is no Directive 47 shortcut in your Start Menu. Delete the "
+                    + "shortcut (right-click it in the Start Menu, Open file location, delete Directive 47) and "
+                    + "the row comes back. Press Add to Start Menu and expect Directive 47 in the Start Menu "
+                    + "and the row to disappear.",
             });
         }
 

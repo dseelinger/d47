@@ -54,7 +54,7 @@ internal sealed record SettingServices(
     CustomVoicesEditing? CustomVoices = null,
     Action<CoverageItem>? ClearCoverage = null,
     ViewStateStore? ViewState = null,
-    Func<string, D47.App.Coverage.ToolExercise?>? ToolExercise = null);
+    Func<CoverageItem, D47.App.Coverage.ToolExercise?>? ToolExercise = null);
 
 /// <summary>What a system-name box needs: the lookup, whether galaxy search is on, and the pause before asking.</summary>
 public sealed record SystemNameLookup(
@@ -739,7 +739,8 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
                 item => panel.OpenFound(item.Kind == D47.Core.Coverage.CoverageKind.Tool
                     ? new D47.Core.Interface.PanelFindResult(D47.Core.Interface.PanelFindKind.Page, item.Name, string.Empty, D47.App.Coverage.ToolPlaces.For(item.Id) ?? string.Empty, 1)
                     : new D47.Core.Interface.PanelFindResult(D47.Core.Interface.PanelFindKind.SettingRow, item.Name, string.Empty, item.Id, 1)),
-                services.ToolExercise));
+                services.ToolExercise,
+                key => host.Settings.Find(key)?.Applies(host.Settings.Current) ?? false));
 
             return true;
         }, () => { });
