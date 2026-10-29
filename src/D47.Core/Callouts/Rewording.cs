@@ -80,6 +80,13 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
             logger,
             announcement.Key).ConfigureAwait(false);
 
+        if (said is not null
+            && string.Equals(announcement.Key, ContinuityCallout.Key, StringComparison.Ordinal)
+            && !ContinuityCallout.OpensAsAGreeting(said))
+        {
+            said = null;
+        }
+
         if (said is not null)
         {
             return announcement with { Text = said };

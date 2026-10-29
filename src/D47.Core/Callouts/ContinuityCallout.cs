@@ -114,4 +114,10 @@ public sealed class ContinuityCallout : ICallout
         >= 12 and < 18 => "afternoon",
         _ => "evening",
     };
+
+    /// <summary>Whether a reworded greeting opens with "Good" and one of the three times of day.</summary>
+    public static bool OpensAsAGreeting(string line) =>
+        new[] { 6, 12, 18 }
+            .Select(hour => $"Good {TimeOfDay(new DateTimeOffset(2000, 1, 1, hour, 0, 0, TimeSpan.Zero))}")
+            .Any(opening => line.TrimStart().StartsWith(opening, StringComparison.OrdinalIgnoreCase));
 }

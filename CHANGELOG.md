@@ -912,6 +912,8 @@ d47 now starts on the Commander who last logged in, even while Elite is at its m
 
 When the Commander d47 shows is not the one Elite is running, including before anyone has logged in, the Commander button in the title bar turns grey and reads, for example, `CMDR ARLO KESTREL · NOT LOGGED IN`. It returns to the accent colour and the plain name once that Commander logs in, or once a different Commander logs in and d47 switches to them. The menu is unchanged. Before, the button looked the same whether or not that Commander was in the game, and only the Route and Position pages said so.
 
+The opening greeting is now spoken as the greeting alone. Before, the model sometimes said why it had kept or changed the line ahead of "Good evening, Commander." The brief no longer asks it to weigh what is aboard or how the last session ended, and a reworded greeting that does not open with "Good morning", "Good afternoon" or "Good evening" is replaced by the authored line.
+
 ## 1.34.1 — Story progress survives a restart
 
 A story's progress now survives a restart of the game when you are west of UTC. On startup d47 rereads the journals since you accepted the story, but it compared the acceptance time in UTC against journal file names that Elite writes in local time. The session in which you accepted the story could be skipped, along with any objective you met in it. An arrival you had already made had to be made again, and a mission handed in before that second arrival did not count.
