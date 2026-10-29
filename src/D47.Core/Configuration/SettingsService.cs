@@ -321,7 +321,12 @@ public sealed class SettingsService
     public IReadOnlyList<SettingRow> RowsForPlace(string placeId) =>
         [.. EntriesForPlace(placeId).SelectMany(RowsForEntry)];
 
-    /// <summary>Every changed row in one group of a <see cref="SettingsLayout"/> place, put back to its default.</summary>
+    /// <summary>Whether a group reset puts this row back: not a stored key and not text the Commander typed in.</summary>
+    public static bool ResetsWithItsGroup(SettingRow row) =>
+        row is { Kind: not SettingKind.Secret, Binding.Write: not null }
+        && !(row.Kind == SettingKind.Text && row.Scope == SettingScope.Commander);
+
+    /// <summary>Every changed row in one group of a <see cref="SettingsLayout"/> place, put back to its default. Text rows the Commander typed in are left alone.</summary>
     public int ResetGroup(string placeId, int groupIndex, SettingsCaller caller)
     {
         var place = SettingsLayout.Areas
@@ -331,6 +336,7 @@ public sealed class SettingsService
 
         var keys = place.Groups[groupIndex].Entries
             .SelectMany(RowsForEntry)
+            .Where(ResetsWithItsGroup)
             .Select(row => row.Key)
             .Where(IsChanged)
             .ToList();

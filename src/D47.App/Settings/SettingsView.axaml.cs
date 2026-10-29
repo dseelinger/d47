@@ -604,7 +604,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         reset.IsVisible = slot is not null
                           || (_settings is { } settings && group.Entries
                               .SelectMany(settings.RowsForEntry)
-                              .Any(row => row is { Kind: not SettingKind.Secret, Binding.Write: not null }));
+                              .Any(SettingsService.ResetsWithItsGroup));
 
         // A placement group also clears its surface's anchor, through VrHost rather than by writing
         // view-state directly, since VrHost is the anchors' only owner (#162).
