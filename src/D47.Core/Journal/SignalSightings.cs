@@ -66,48 +66,13 @@ public sealed class SignalSightings(IFileSystem fileSystem, ILogger logger)
     /// <summary>Folds live events; a synchronous append with no I/O.</summary>
     public void Apply(IReadOnlyList<JournalEvent> events)
     {
-        ArgumentNullException.ThrowIfNull(events);
-
-        lock (_gate)
-        {
-            foreach (var journalEvent in events)
-            {
-                Fold(journalEvent);
-            }
-        }
+        JournalFold.Apply(_gate, events, Fold);
     }
 
     /// <summary>Folds journal files oldest first, on the calling thread.</summary>
     public void FoldHistory(IReadOnlyList<string> files, CancellationToken cancellation = default)
     {
-        ArgumentNullException.ThrowIfNull(files);
-
-        foreach (var file in files)
-        {
-            cancellation.ThrowIfCancellationRequested();
-
-            Stream? stream;
-
-            try
-            {
-                stream = fileSystem.OpenRead(file);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                logger.LogWarning(ex, "Could not read {File} for signals", file);
-                continue;
-            }
-
-            if (stream is null)
-            {
-                continue;
-            }
-
-            using (stream)
-            {
-                Fold(ReadLines(stream));
-            }
-        }
+        JournalFold.Files(fileSystem, logger, files, "signals", Fold, cancellation);
 
         lock (_gate)
         {
@@ -120,27 +85,9 @@ public sealed class SignalSightings(IFileSystem fileSystem, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(lines);
 
-        var events = new List<JournalEvent>();
-
-        foreach (var line in lines)
-        {
-            if (Relevant(line) && JournalEvent.TryParse(line, logger, out var parsed) && parsed is not null)
-            {
-                events.Add(parsed);
-            }
-        }
+        var events = JournalFold.Parse(lines, Relevant, logger);
 
         Apply([.. OperationMarker.Mark(events)]);
-    }
-
-    private static IEnumerable<string> ReadLines(Stream stream)
-    {
-        using var reader = new StreamReader(stream);
-
-        while (reader.ReadLine() is { } line)
-        {
-            yield return line;
-        }
     }
 
     private static bool Relevant(string line) =>

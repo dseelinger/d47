@@ -322,7 +322,7 @@ public sealed class NavRouteReader(string directory, IFileSystem files, ILogger 
                 {
                     hops.Add(new RouteHop(system, element.String("StarClass"))
                     {
-                        Position = ReadPosition(element),
+                        Position = StarPosition.Read(element) is { } star ? (star.X, star.Y, star.Z) : null,
                     });
                 }
             }
@@ -341,30 +341,5 @@ public sealed class NavRouteReader(string directory, IFileSystem files, ILogger 
             logger.LogDebug(ex, "Could not read NavRoute.json; will retry");
             return false;
         }
-    }
-
-    /// <summary>StarPos is a three-element array.</summary>
-    private static (double X, double Y, double Z)? ReadPosition(JsonElement element)
-    {
-        if (!element.TryGetProperty("StarPos", out var position) ||
-            position.ValueKind != JsonValueKind.Array ||
-            position.GetArrayLength() != 3)
-        {
-            return null;
-        }
-
-        var axes = new double[3];
-
-        for (var index = 0; index < 3; index++)
-        {
-            var axis = position[index];
-
-            if (axis.ValueKind != JsonValueKind.Number || !axis.TryGetDouble(out axes[index]))
-            {
-                return null;
-            }
-        }
-
-        return (axes[0], axes[1], axes[2]);
     }
 }

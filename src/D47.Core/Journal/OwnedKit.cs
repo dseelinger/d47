@@ -105,7 +105,7 @@ public sealed record OwnedKit
         }
 
         var suit = new OwnedSuit(
-            suitId, symbol, GradeFromSymbol(symbol), Modifications(journalEvent.Raw, "SuitMods"), journalEvent.Timestamp);
+            suitId, symbol, GradeFromSymbol(symbol), journalEvent.Raw.Modifications("SuitMods"), journalEvent.Timestamp);
 
         return this with { Suits = With(Suits, suitId, suit) };
     }
@@ -119,7 +119,7 @@ public sealed record OwnedKit
         }
 
         var weapon = new OwnedWeapon(
-            moduleId, symbol, journalEvent.Int("Class"), Modifications(journalEvent.Raw, "WeaponMods"),
+            moduleId, symbol, journalEvent.Int("Class"), journalEvent.Raw.Modifications("WeaponMods"),
             journalEvent.Timestamp);
 
         return this with { Weapons = With(Weapons, moduleId, weapon) };
@@ -176,7 +176,7 @@ public sealed record OwnedKit
         if (!string.Equals(symbol, FlightSuit, StringComparison.Ordinal))
         {
             var suit = new OwnedSuit(
-                suitId, symbol, GradeFromSymbol(symbol), Modifications(journalEvent.Raw, "SuitMods"),
+                suitId, symbol, GradeFromSymbol(symbol), journalEvent.Raw.Modifications("SuitMods"),
                 journalEvent.Timestamp);
 
             kit = kit with { Suits = With(kit.Suits, suitId, suit) };
@@ -191,7 +191,7 @@ public sealed record OwnedKit
             }
 
             var weapon = new OwnedWeapon(
-                moduleId, moduleSymbol, module.Int("Class"), Modifications(module, "WeaponMods"),
+                moduleId, moduleSymbol, module.Int("Class"), module.Modifications("WeaponMods"),
                 journalEvent.Timestamp);
 
             kit = kit with { Weapons = With(kit.Weapons, moduleId, weapon) };
@@ -209,7 +209,7 @@ public sealed record OwnedKit
         }
 
         var weapon = new OwnedWeapon(
-            moduleId, symbol, journalEvent.Int("Class"), Modifications(journalEvent.Raw, "WeaponMods"),
+            moduleId, symbol, journalEvent.Int("Class"), journalEvent.Raw.Modifications("WeaponMods"),
             journalEvent.Timestamp);
 
         return this with { Weapons = With(Weapons, moduleId, weapon) };
@@ -232,12 +232,4 @@ public sealed record OwnedKit
         _ = copy.Remove(key);
         return copy;
     }
-
-    private static IReadOnlyList<FittedModification> Modifications(
-        System.Text.Json.JsonElement element, string property) =>
-        [.. element.Items(property)
-            .Select(entry => entry.GetString())
-            .Select(JournalJson.Symbol)
-            .Where(symbol => symbol is not null)
-            .Select(symbol => new FittedModification(symbol!))];
 }

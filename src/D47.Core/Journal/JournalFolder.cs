@@ -23,4 +23,28 @@ public static class JournalFolder
         files.Enumerate(directory, FilePattern)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .LastOrDefault();
+
+    /// <summary>
+    /// The index of the first file named at or after <paramref name="since"/> in an oldest-first list, or -1
+    /// when every file is older.
+    /// </summary>
+    public static int FirstFileAt(IReadOnlyList<string> files, DateTimeOffset since)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+
+        // Compared as text against the same shape the folder's own ordering already relies on:
+        // Journal.2026-08-22T190000.01.log.
+        var cutoff = "Journal." + since.ToUniversalTime().ToString(
+            "yyyy-MM-dd'T'HHmmss", System.Globalization.CultureInfo.InvariantCulture);
+
+        for (var i = 0; i < files.Count; i++)
+        {
+            if (string.CompareOrdinal(Path.GetFileName(files[i]), cutoff) >= 0)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
 }

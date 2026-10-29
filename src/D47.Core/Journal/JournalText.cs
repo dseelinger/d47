@@ -66,4 +66,24 @@ internal static class JournalText
         raw.String("Message") is { Length: > 1 } key
         && key[0] == '$'
         && raw.String("Message_Localised") is { Length: > 0 };
+
+    /// <summary>Whether the text holds <c>key":value</c> with <paramref name="value"/> as the whole number; the key may be a suffix of a field name.</summary>
+    public static bool MentionsValue(string text, string key, long value)
+    {
+        var needle = key + "\":" + value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        for (var at = text.IndexOf(needle, StringComparison.Ordinal);
+             at >= 0;
+             at = text.IndexOf(needle, at + 1, StringComparison.Ordinal))
+        {
+            var after = at + needle.Length;
+
+            if (after >= text.Length || !char.IsAsciiDigit(text[after]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

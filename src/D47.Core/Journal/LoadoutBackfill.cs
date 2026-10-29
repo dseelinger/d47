@@ -133,7 +133,7 @@ public static class LoadoutBackfill
             }
 
             // Searched as text before any line is parsed, since most files name none of the ships.
-            if (!missing.Any(ship => MentionsShip(text, ship.ShipId)))
+            if (!missing.Any(ship => JournalText.MentionsValue(text, "ShipID", ship.ShipId)))
             {
                 continue;
             }
@@ -193,26 +193,6 @@ public static class LoadoutBackfill
         return earliest;
     }
 
-    /// <summary>Whether the text carries this id as the value of a key ending in <c>ShipID</c>.</summary>
-    private static bool MentionsShip(string text, int shipId)
-    {
-        var needle = "ShipID\":" + shipId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-        for (var at = text.IndexOf(needle, StringComparison.Ordinal);
-             at >= 0;
-             at = text.IndexOf(needle, at + 1, StringComparison.Ordinal))
-        {
-            var after = at + needle.Length;
-
-            if (after >= text.Length || !char.IsAsciiDigit(text[after]))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /// <summary>
     /// Which files the catch-up walks: everything since the file was last folded, and never fewer than
     /// <see cref="MinLookback"/> (#128).
@@ -228,21 +208,7 @@ public static class LoadoutBackfill
             return [.. files.Skip(floor)];
         }
 
-        // Compared as text against the same shape the folder's own ordering already relies on:
-        // Journal.2026-08-22T190000.01.log.
-        var cutoff = "Journal." + stamp.ToUniversalTime().ToString(
-            "yyyy-MM-dd'T'HHmmss", System.Globalization.CultureInfo.InvariantCulture);
-
-        var first = -1;
-
-        for (var i = 0; i < files.Count; i++)
-        {
-            if (string.CompareOrdinal(Path.GetFileName(files[i]), cutoff) >= 0)
-            {
-                first = i;
-                break;
-            }
-        }
+        var first = JournalFolder.FirstFileAt(files, stamp);
 
         // Nothing at or after the stamp means every file predates it, so the newest is the only one that can
         // hold something the file has not already seen.

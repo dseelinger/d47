@@ -216,58 +216,36 @@ public sealed class GameStatusReader(string directory, IFileSystem files, ILogge
     {
         var path = Path.Combine(directory, FileName);
 
-        // Not an error: Elite has never run, or is not running now.
-        if (files.Stat(path) is not { } state || state.Written == _stamp)
+        var status = StampedJson.Read(files, path, ref _stamp, logger, (root, written) => new GameStatus
+        {
+            Flags = (StatusFlags)(root.Long("Flags") ?? 0),
+            Flags2 = (uint)(root.Long("Flags2") ?? 0),
+            GuiFocus = (GuiFocus)(root.Int("GuiFocus") ?? 0),
+            Pips = Pips(root),
+            FuelMain = root.Object("Fuel")?.Double("FuelMain"),
+            Cargo = root.Double("Cargo"),
+            BodyName = root.String("BodyName"),
+            Destination = Destination(root),
+            Balance = root.Long("Balance"),
+            LegalState = root.String("LegalState"),
+
+            // Absent everywhere except near a surface, and absent is not zero — see the remarks on these
+            // properties.
+            Latitude = root.Double("Latitude"),
+            Longitude = root.Double("Longitude"),
+            PlanetRadius = root.Double("PlanetRadius"),
+            Heading = root.Double("Heading"),
+
+            ReadAt = new DateTimeOffset(written, TimeSpan.Zero),
+        });
+
+        if (status is null)
         {
             return false;
         }
 
-        var written = state.Written;
-
-        try
-        {
-            using var stream = files.OpenRead(path);
-
-            if (stream is null)
-            {
-                return false;
-            }
-
-            using var document = JsonDocument.Parse(stream);
-            var root = document.RootElement;
-
-            Current = new GameStatus
-            {
-                Flags = (StatusFlags)(root.Long("Flags") ?? 0),
-                Flags2 = (uint)(root.Long("Flags2") ?? 0),
-                GuiFocus = (GuiFocus)(root.Int("GuiFocus") ?? 0),
-                Pips = Pips(root),
-                FuelMain = root.Object("Fuel")?.Double("FuelMain"),
-                Cargo = root.Double("Cargo"),
-                BodyName = root.String("BodyName"),
-                Destination = Destination(root),
-                Balance = root.Long("Balance"),
-                LegalState = root.String("LegalState"),
-
-                // Absent everywhere except near a surface, and absent is not zero — see the remarks on these
-                // properties.
-                Latitude = root.Double("Latitude"),
-                Longitude = root.Double("Longitude"),
-                PlanetRadius = root.Double("PlanetRadius"),
-                Heading = root.Double("Heading"),
-
-                ReadAt = new DateTimeOffset(written, TimeSpan.Zero),
-            };
-
-            // Only after a successful parse, so a file caught mid-write is retried next tick.
-            _stamp = written;
-            return true;
-        }
-        catch (Exception ex) when (ex is IOException or JsonException)
-        {
-            logger.LogDebug(ex, "Could not read Status.json; will retry");
-            return false;
-        }
+        Current = status;
+        return true;
     }
 
     private static PowerDistribution? Pips(JsonElement root)

@@ -118,7 +118,7 @@ public sealed record OnFootLoadout
             SuitId = journalEvent.Long("SuitID"),
             SuitSymbol = JournalJson.Symbol(symbol),
             LoadoutName = journalEvent.String("LoadoutName"),
-            SuitModifications = Modifications(journalEvent.Raw, "SuitMods"),
+            SuitModifications = journalEvent.Raw.Modifications("SuitMods"),
             Weapons = [.. journalEvent.Items("Modules")
                 .Where(module => module.String("SlotName") is not null
                                  && module.String("ModuleName") is not null)
@@ -128,7 +128,7 @@ public sealed record OnFootLoadout
                 {
                     ModuleId = module.Long("SuitModuleID"),
                     Grade = module.Int("Class"),
-                    Modifications = Modifications(module, "WeaponMods"),
+                    Modifications = module.Modifications("WeaponMods"),
                 })],
         };
     }
@@ -192,7 +192,7 @@ public sealed record OnFootLoadout
         {
             ModuleId = journalEvent.Long("SuitModuleID"),
             Grade = journalEvent.Int("Class"),
-            Modifications = Modifications(journalEvent.Raw, "WeaponMods"),
+            Modifications = journalEvent.Raw.Modifications("WeaponMods"),
         };
 
         return this with
@@ -215,12 +215,4 @@ public sealed record OnFootLoadout
                 weapon.Slot, slot, StringComparison.OrdinalIgnoreCase))],
         };
     }
-
-    private static IReadOnlyList<FittedModification> Modifications(
-        System.Text.Json.JsonElement element, string property) =>
-        [.. element.Items(property)
-            .Select(entry => entry.GetString())
-            .Select(JournalJson.Symbol)
-            .Where(symbol => symbol is not null)
-            .Select(symbol => new FittedModification(symbol!))];
 }

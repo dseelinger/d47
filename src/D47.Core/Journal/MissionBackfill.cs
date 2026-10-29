@@ -94,7 +94,7 @@ public static class MissionBackfill
             }
 
             // Searched as text before any line is parsed, since most files name none of the missions.
-            if (!wanted.Any(id => Mentions(text, id)))
+            if (!wanted.Any(id => JournalText.MentionsValue(text, "\"MissionID", id)))
             {
                 continue;
             }
@@ -209,26 +209,6 @@ public static class MissionBackfill
         }
 
         return events;
-    }
-
-    /// <summary>Whether the text carries this id as a <c>MissionID</c> value.</summary>
-    private static bool Mentions(string text, long id)
-    {
-        var needle = "\"MissionID\":" + id.ToString(CultureInfo.InvariantCulture);
-
-        for (var at = text.IndexOf(needle, StringComparison.Ordinal);
-             at >= 0;
-             at = text.IndexOf(needle, at + 1, StringComparison.Ordinal))
-        {
-            var after = at + needle.Length;
-
-            if (after >= text.Length || !char.IsAsciiDigit(text[after]))
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private static string? ReadAll(IFileSystem files, string path)

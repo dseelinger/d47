@@ -53,26 +53,8 @@ public sealed class CargoManifestReader(string directory, IFileSystem files, ILo
     {
         var path = Path.Combine(directory, ManifestFile);
 
-        // Not an error.
-        if (files.Stat(path) is not { } state || state.Written == _stamp)
+        var hold = StampedJson.Read(files, path, ref _stamp, logger, (root, written) =>
         {
-            return false;
-        }
-
-        var written = state.Written;
-
-        try
-        {
-            using var stream = files.OpenRead(path);
-
-            if (stream is null)
-            {
-                return false;
-            }
-
-            using var document = JsonDocument.Parse(stream);
-
-            var root = document.RootElement;
             var items = new List<CargoItem>();
 
             foreach (var element in root.Items("Inventory"))
@@ -88,25 +70,21 @@ public sealed class CargoManifestReader(string directory, IFileSystem files, ILo
                 });
             }
 
-            // Recorded only after a successful parse, so a file caught mid-write is retried on the next tick
-            // instead of being skipped until Elite happens to touch it again.
-            _stamp = written;
-
-            Current = new CargoHold
+            return new CargoHold
             {
                 Vessel = root.String("Vessel"),
                 Items = items,
                 Count = root.Int("Count") ?? items.Sum(item => item.Count),
                 ReadAt = new DateTimeOffset(written, TimeSpan.Zero),
             };
+        });
 
-            return true;
-        }
-        catch (Exception ex) when (ex is IOException or JsonException)
+        if (hold is null)
         {
-            // Caught mid-write.
-            logger.LogDebug(ex, "Could not read {File}; will retry", ManifestFile);
             return false;
         }
+
+        Current = hold;
+        return true;
     }
 }

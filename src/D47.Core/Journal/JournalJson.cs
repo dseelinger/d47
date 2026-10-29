@@ -106,6 +106,14 @@ public static class JournalJson
         return symbol.Length == 0 ? null : symbol.ToLowerInvariant();
     }
 
+    /// <summary>The modifications named by a string array property, as fitted symbols.</summary>
+    public static IReadOnlyList<FittedModification> Modifications(this JsonElement element, string property) =>
+        [.. element.Items(property)
+            .Select(entry => entry.GetString())
+            .Select(Symbol)
+            .Where(symbol => symbol is not null)
+            .Select(symbol => new FittedModification(symbol!))];
+
     /// <summary>The folded symbol of a property, for joining.</summary>
     public static string? Symbol(this JsonElement element, string property) =>
         Symbol(element.String(property));

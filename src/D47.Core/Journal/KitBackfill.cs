@@ -62,21 +62,7 @@ public static class KitBackfill
             return files;
         }
 
-        // Compared as text against the same shape the folder's own ordering already relies on:
-        // Journal.2026-08-22T190000.01.log.
-        var cutoff = "Journal." + stamp.ToUniversalTime().ToString(
-            "yyyy-MM-dd'T'HHmmss", System.Globalization.CultureInfo.InvariantCulture);
-
-        var first = -1;
-
-        for (var i = 0; i < files.Count; i++)
-        {
-            if (string.CompareOrdinal(Path.GetFileName(files[i]), cutoff) >= 0)
-            {
-                first = i;
-                break;
-            }
-        }
+        var first = JournalFolder.FirstFileAt(files, stamp);
 
         // Nothing at or after the stamp means every file predates it, so the newest is the only one that can
         // hold something the file has not already seen.
