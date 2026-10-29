@@ -39,8 +39,8 @@ public sealed record UnsoldExobiology(IReadOnlyList<HeldAnalysis> Held)
 /// <c>SellOrganicData</c> names its species, the Commander dies, or the Commander resets the total.
 /// </summary>
 public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogger logger)
+    : UnsoldLedger(path, fileSystem, logger, "ExobiologyResetAt", "exobiology", "organic data")
 {
-    private const string ResetProperty = "ExobiologyResetAt";
 
     private static readonly Lazy<IReadOnlyDictionary<string, long>> Values = new(() =>
         ExobiologyCatalogue.All
@@ -60,8 +60,6 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
         public HashSet<DateTimeOffset> Deaths { get; } = [];
     }
 
-    private readonly Lock _gate = new();
-
     private readonly Dictionary<string, Book> _books = new(StringComparer.Ordinal);
 
     /// <summary>Every <c>WasFootfalled</c> a scan has reported, per body, with when it was reported.</summary>
@@ -69,151 +67,18 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
 
     private readonly HashSet<long> _populated = [];
 
-    private readonly Dictionary<string, DateTimeOffset> _resets = new(StringComparer.Ordinal);
-
-    /// <summary>When each Commander last had pilot data erased, from <c>NewCommander</c>; not written to <c>path</c>.</summary>
-    private readonly Dictionary<string, DateTimeOffset> _erases = new(StringComparer.Ordinal);
-
-    private string? _current;
-
-    private bool _historyFolded;
-
-    private int _revision;
-
-    /// <summary>Whether the journals older than this session have been folded in.</summary>
-    public bool HistoryFolded
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _historyFolded;
-            }
-        }
-    }
-
-    /// <summary>Changes whenever events are folded or a reset is made or read.</summary>
-    public int Revision
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _revision;
-            }
-        }
-    }
-
-    /// <summary>When <paramref name="commander"/> last reset the total, or null when never.</summary>
-    public DateTimeOffset? ResetAt(string commander)
-    {
-        lock (_gate)
-        {
-            return _resets.TryGetValue(commander, out var at) ? at : null;
-        }
-    }
-
-    /// <summary>Reads the reset times from <c>path</c>.</summary>
-    public void Load()
-    {
-        if (path is null)
-        {
-            return;
-        }
-
-        try
-        {
-            var resets = UnsoldDataFile.Read(fileSystem, path, ResetProperty);
-
-            lock (_gate)
-            {
-                foreach (var (fid, at) in resets)
-                {
-                    _resets[fid] = at;
-                }
-
-                _revision++;
-            }
-        }
-        catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
-        {
-            logger.LogWarning(ex, "Could not read {Path}; the unsold exobiology total counts from the last sale or death", path);
-        }
-    }
-
-    /// <summary>Folds a tick's events, in order, attributing them to <paramref name="commander"/> until one names another.</summary>
-    public void Apply(IReadOnlyList<JournalEvent> events, string? commander = null)
-    {
-        lock (_gate)
-        {
-            _current ??= commander;
-
-            foreach (var journalEvent in events)
-            {
-                Fold(journalEvent, ref _current);
-            }
-
-            if (events.Count > 0)
-            {
-                _revision++;
-            }
-        }
-    }
-
-    /// <summary>Folds journal files oldest first, on the calling thread; files already folded fold to no change.</summary>
-    public void FoldHistory(IReadOnlyList<string> files, CancellationToken cancellation = default)
-    {
-        ArgumentNullException.ThrowIfNull(files);
-
-        string? commander = null;
-
-        foreach (var file in files)
-        {
-            cancellation.ThrowIfCancellationRequested();
-
-            var events = new List<JournalEvent>();
-
-            foreach (var line in JournalLines.Read(fileSystem, file, logger, "organic data", warnIfMissing: false))
-            {
-                if (Relevant(line) && JournalEvent.TryParse(line, logger, out var parsed) && parsed is not null)
-                {
-                    events.Add(parsed);
-                }
-            }
-
-            lock (_gate)
-            {
-                foreach (var journalEvent in events)
-                {
-                    Fold(journalEvent, ref commander);
-                }
-            }
-        }
-
-        lock (_gate)
-        {
-            _historyFolded = true;
-            _revision++;
-        }
-    }
-
     /// <summary>What <paramref name="commander"/> is carrying unsold, or the Commander last seen where null.</summary>
     public UnsoldExobiology Unsold(string? commander = null)
     {
-        lock (_gate)
+        lock (Gate)
         {
-            if ((string.IsNullOrEmpty(commander) ? _current : commander) is not { } fid
+            if ((string.IsNullOrEmpty(commander) ? Current : commander) is not { } fid
                 || !_books.TryGetValue(fid, out var book))
             {
                 return UnsoldExobiology.Empty;
             }
 
-            var reset = _resets.TryGetValue(fid, out var resetAt) ? resetAt : DateTimeOffset.MinValue;
-
-            if (_erases.TryGetValue(fid, out var erasedAt) && erasedAt > reset)
-            {
-                reset = erasedAt;
-            }
+            var reset = ResetFloor(fid);
 
             // At one timestamp an analysis folds before the sale or death that ends it.
             var timeline = book.Analyses.Values.Select(analysis => (analysis.At, Order: 0, Item: (object)analysis))
@@ -255,41 +120,14 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
             return null;
         }
 
-        lock (_gate)
+        lock (Gate)
         {
             return Priced(analysis);
         }
     }
 
-    /// <summary>Clears <paramref name="commander"/>'s total as of <paramref name="at"/>, and writes the time to <c>path</c>.</summary>
-    public void Reset(string commander, DateTimeOffset at)
-    {
-        Dictionary<string, DateTimeOffset> resets;
-
-        lock (_gate)
-        {
-            _resets[commander] = at;
-            _revision++;
-            resets = new Dictionary<string, DateTimeOffset>(_resets, StringComparer.Ordinal);
-        }
-
-        if (path is null)
-        {
-            return;
-        }
-
-        try
-        {
-            UnsoldDataFile.Write(fileSystem, path, ResetProperty, resets);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            logger.LogWarning(ex, "Could not write {Path}; the reset holds until d47 restarts", path);
-        }
-    }
-
     /// <summary>The text test, before any JSON is touched.</summary>
-    private static bool Relevant(string line) =>
+    protected override bool Relevant(string line) =>
         line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
@@ -302,27 +140,15 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
         || (line.Contains("\"event\":\"Scan\"", StringComparison.Ordinal)
             && line.Contains("\"WasFootfalled\"", StringComparison.Ordinal));
 
-    private void Fold(JournalEvent journalEvent, ref string? commander)
+    protected override void Fold(JournalEvent journalEvent, ref string? commander)
     {
+        if (FoldCommander(journalEvent, ref commander))
+        {
+            return;
+        }
+
         switch (journalEvent.Kind)
         {
-            case "Commander" or "LoadGame":
-                if (journalEvent.String("FID") is { Length: > 0 } fid)
-                {
-                    commander = fid;
-                }
-
-                return;
-
-            case "NewCommander":
-                if (journalEvent.String("FID") is { Length: > 0 } erased
-                    && (!_erases.TryGetValue(erased, out var last) || journalEvent.Timestamp > last))
-                {
-                    _erases[erased] = journalEvent.Timestamp;
-                }
-
-                return;
-
             case "FSDJump" or "Location" or "CarrierJump":
                 if (BodyScans.PopulationOf(journalEvent) is { } entry)
                 {
@@ -426,14 +252,5 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
     private static string Key(DateTimeOffset at, params string?[] parts) =>
         at.ToString("O", CultureInfo.InvariantCulture) + "|" + string.Join('|', parts);
 
-    private Book Open(string commander)
-    {
-        if (!_books.TryGetValue(commander, out var book))
-        {
-            book = new Book();
-            _books[commander] = book;
-        }
-
-        return book;
-    }
+    private Book Open(string commander) => LedgerBooks.Open(_books, commander);
 }

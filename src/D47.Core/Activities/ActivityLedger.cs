@@ -120,15 +120,7 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
         {
             cancellation.ThrowIfCancellationRequested();
 
-            var events = new List<JournalEvent>();
-
-            foreach (var line in JournalLines.Read(fileSystem, file, logger, "activity dates", warnIfMissing: false))
-            {
-                if (Relevant(line) && JournalEvent.TryParse(line, logger, out var parsed) && parsed is not null)
-                {
-                    events.Add(parsed);
-                }
-            }
+            var events = JournalHistory.Parse(fileSystem, file, logger, "activity dates", warnIfMissing: false, Relevant);
 
             lock (_gate)
             {
@@ -433,14 +425,5 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
             ? book
             : null;
 
-    private Book Open(string commander)
-    {
-        if (!_books.TryGetValue(commander, out var book))
-        {
-            book = new Book();
-            _books[commander] = book;
-        }
-
-        return book;
-    }
+    private Book Open(string commander) => LedgerBooks.Open(_books, commander);
 }

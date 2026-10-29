@@ -106,15 +106,7 @@ public sealed class OutstandingCrimes(IFileSystem fileSystem, ILogger logger)
         {
             cancellation.ThrowIfCancellationRequested();
 
-            var events = new List<JournalEvent>();
-
-            foreach (var line in JournalLines.Read(fileSystem, file, logger, "fines and bounties", warnIfMissing: true))
-            {
-                if (Relevant(line) && JournalEvent.TryParse(line, logger, out var parsed) && parsed is not null)
-                {
-                    events.Add(parsed);
-                }
-            }
+            var events = JournalHistory.Parse(fileSystem, file, logger, "fines and bounties", warnIfMissing: true, Relevant);
 
             // Each file starts the occurrence count again, as the live reading does for the file it follows.
             reading.Seen.Clear();
@@ -302,13 +294,7 @@ public sealed class OutstandingCrimes(IFileSystem fileSystem, ILogger logger)
         var seen = reading.Seen.GetValueOrDefault(key);
         reading.Seen[key] = seen + 1;
 
-        if (!_books.TryGetValue(commander, out var book))
-        {
-            book = new Book();
-            _books[commander] = book;
-        }
-
-        book.Entries.TryAdd(key + "|" + seen, entry);
+        LedgerBooks.Open(_books, commander).Entries.TryAdd(key + "|" + seen, entry);
     }
 
     private Entry? EntryOf(JournalEvent journalEvent, int? ship)
