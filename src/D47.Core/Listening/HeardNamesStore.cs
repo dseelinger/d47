@@ -173,13 +173,8 @@ public sealed class HeardNamesStore(string path, IFileSystem files, ILogger<Hear
             ],
         };
 
-        try
+        if (!StoreFiles.TryWriteText(files, path, JsonSerializer.Serialize(document, Json), logger))
         {
-            files.WriteText(path, JsonSerializer.Serialize(document, Json));
-        }
-        catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
-        {
-            logger.LogWarning(ex, "Could not write {Path}", path);
             return;
         }
 

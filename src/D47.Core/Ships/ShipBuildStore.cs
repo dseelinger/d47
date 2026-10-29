@@ -35,8 +35,7 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
     private IReadOnlyList<ShipBuildProblem> _problems = [];
 
     /// <summary>The file's contents as last read.</summary>
-    private string? _seen;
-    private readonly FileStamp _stamp = new();
+    private readonly WatchedTextFile _file = new(files, path, logger, "Could not read the ship build file");
 
     /// <summary>Raised when the set changed, whoever wrote it — the panel, a phrase, an editor.</summary>
     public event Action? Changed;
@@ -97,57 +96,18 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
     }
 
     /// <summary>Re-reads if the file changed.</summary>
-    public bool Poll()
-    {
-        var stamp = files.Stat(path);
-
-        if (_stamp.Matches(stamp))
+    public bool Poll() => _file.Poll(
+        () =>
         {
-            return false;
-        }
-
-        string text;
-
-        try
-        {
-            if (stamp is null)
+            lock (_gate)
             {
-                // Not an error: no builds is the normal state, and will be until somebody plans one.
-                if (_seen is null)
-                {
-                    return false;
-                }
-
-                lock (_gate)
-                {
-                    _builds = [];
-                    _problems = [];
-                    _seen = null;
-                    _stamp.Record(null);
-                }
-
-                Changed?.Invoke();
-                return true;
+                _builds = [];
+                _problems = [];
             }
 
-            var read = files.ReadText(path);
-
-            if (read is null)
-            {
-                return false;
-            }
-
-            text = read;
-            _stamp.Record(stamp);
-        }
-        catch (IOException ex)
-        {
-            logger.LogDebug(ex, "Could not read the ship build file");
-            return false;
-        }
-
-        return !string.Equals(text, _seen, StringComparison.Ordinal) && Reload(text);
-    }
+            Changed?.Invoke();
+        },
+        Reload);
 
     /// <summary>
     /// Writes a new set, and re-reads what landed so the store never believes something the file does
@@ -210,7 +170,7 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
             lock (_gate)
             {
                 _problems = [new ShipBuildProblem(System.IO.Path.GetFileName(path), ex.Message)];
-                _seen = text;
+                _file.Seen(text);
             }
 
             logger.LogWarning(ex, "The ship build file could not be read");
@@ -348,7 +308,7 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
         {
             _builds = builds;
             _problems = problems;
-            _seen = text;
+            _file.Seen(text);
         }
 
         Changed?.Invoke();

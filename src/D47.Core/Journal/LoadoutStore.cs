@@ -15,150 +15,37 @@ public sealed class LoadoutStore(string path, IFileSystem files, ILogger<Loadout
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    private readonly Lock _gate = new();
+    private readonly FoldedCommanderFile<ShipLoadouts, CommanderRecord> _file = new(
+        path,
+        files,
+        logger,
+        Json,
+        record => record.FrontierId,
+        Rehydrate,
+        Dehydrate,
+        (onFile, incoming) => onFile.With(incoming),
+        (read, through) => logger.LogInformation( "Loaded stored loadouts for {Count} Commanders, {Ships} ship(s) in all, folded through {Through:u}", read.Count, read.Values.Sum(ships => ships.Ships.Count), through),
+        ex => logger.LogWarning(ex, "Could not read {Path}; starting with no stored loadouts", path));
 
-    private Dictionary<string, ShipLoadouts> _byCommander = new(StringComparer.Ordinal);
 
-    private DateTimeOffset? _foldedThrough;
-
-    /// <summary>
-    /// The journal timestamp this file has already been folded through, or null for a file that
-    /// predates the stamp or was never written (#128).
-    /// </summary>
-    public DateTimeOffset? FoldedThrough
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _foldedThrough;
-            }
-        }
-    }
+    /// <summary>The journal timestamp this file has already been folded through, or null for a file never written.</summary>
+    public DateTimeOffset? FoldedThrough => _file.FoldedThrough;
 
     /// <summary>What was on disk for this Commander, or null if nothing was.</summary>
-    public ShipLoadouts? For(string frontierId)
-    {
-        lock (_gate)
-        {
-            return _byCommander.GetValueOrDefault(frontierId);
-        }
-    }
+    public ShipLoadouts? For(string frontierId) => _file.TryGet(frontierId, out var kept) ? kept : null;
 
-    /// <summary>
-    /// Everything the file held, for <see cref="LoadoutBackfill"/> to start from rather than rebuild
-    /// over.
-    /// </summary>
-    public IReadOnlyDictionary<string, ShipLoadouts> All
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return new Dictionary<string, ShipLoadouts>(_byCommander, StringComparer.Ordinal);
-            }
-        }
-    }
+    /// <summary>Everything the file held, for the backfill to start from rather than rebuild over.</summary>
+    public IReadOnlyDictionary<string, ShipLoadouts> All => _file.All;
 
     /// <summary>Reads the file.</summary>
-    public void Load()
-    {
-        try
-        {
-            if (files.ReadText(path) is not { } text)
-            {
-                return;
-            }
+    public void Load() => _file.Load();
 
-            var document = JsonSerializer.Deserialize<Document>(text, Json);
-
-            var loaded = new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal);
-
-            foreach (var commander in document?.Commanders ?? [])
-            {
-                if (string.IsNullOrWhiteSpace(commander.FrontierId))
-                {
-                    continue;
-                }
-
-                loaded[commander.FrontierId] = Rehydrate(commander);
-            }
-
-            lock (_gate)
-            {
-                _byCommander = loaded;
-                _foldedThrough = document?.FoldedThrough;
-            }
-
-            logger.LogInformation(
-                "Loaded stored loadouts for {Count} Commanders, {Ships} ship(s) in all, folded through {Through:u}",
-                loaded.Count,
-                loaded.Values.Sum(ships => ships.Ships.Count),
-                document?.FoldedThrough);
-        }
-        catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
-        {
-            // Discarded rather than refused, which is the licence a derived file has and an authored one does
-            // not: the worst this costs is a rebuild from the journals.
-            logger.LogWarning(ex, "Could not read {Path}; starting with no stored loadouts", path);
-        }
-    }
-
-    /// <summary>
-    /// Writes every Commander's ships through <see cref="IFileSystem"/>, and keeps what it wrote so <see
-    /// cref="For"/> and <see cref="All"/> answer with it afterwards. A Commander whose loadouts are not
-    /// <see cref="ShipLoadouts.IsWhole"/> is written over the ships the file held, less the ones they
-    /// forgot, rather than in place of them (#475).
-    /// </summary>
+    /// <summary>Writes every Commander's state, and keeps what it wrote so <see cref="For"/> answers with it afterwards.</summary>
     public void Save(IEnumerable<CommanderGameState> commanders, DateTimeOffset foldedThrough)
     {
         ArgumentNullException.ThrowIfNull(commanders);
 
-        var states = commanders.ToList();
-
-        if (states.Count == 0)
-        {
-            return;
-        }
-
-        Dictionary<string, ShipLoadouts> merged;
-
-        lock (_gate)
-        {
-            merged = new Dictionary<string, ShipLoadouts>(_byCommander, StringComparer.Ordinal);
-        }
-
-        foreach (var commander in states)
-        {
-            var fid = commander.Identity.FrontierId;
-
-            merged[fid] = merged.TryGetValue(fid, out var onFile) ? onFile.With(commander.Loadouts) : commander.Loadouts;
-        }
-
-        // Never backwards.
-        var stamp = _foldedThrough is { } held && held > foldedThrough ? held : foldedThrough;
-
-        var document = new Document
-        {
-            FoldedThrough = stamp,
-            Commanders = [.. merged.Select(entry => Dehydrate(entry.Key, entry.Value))],
-        };
-
-        try
-        {
-            files.WriteText(path, JsonSerializer.Serialize(document, Json));
-        }
-        catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
-        {
-            logger.LogWarning(ex, "Could not write {Path}", path);
-            return;
-        }
-
-        lock (_gate)
-        {
-            _byCommander = merged;
-            _foldedThrough = stamp;
-        }
+        _file.Save(commanders.Select(commander => (commander.Identity.FrontierId, commander.Loadouts)), foldedThrough);
     }
 
     private static ShipLoadouts Rehydrate(CommanderRecord record)
@@ -275,14 +162,6 @@ public sealed class LoadoutStore(string path, IFileSystem files, ILogger<Loadout
                 }),
             ],
     };
-
-    private sealed class Document
-    {
-        /// <summary>See <see cref="FoldedThrough"/>.</summary>
-        public DateTimeOffset? FoldedThrough { get; set; }
-
-        public IReadOnlyList<CommanderRecord> Commanders { get; set; } = [];
-    }
 
     private sealed class CommanderRecord
     {

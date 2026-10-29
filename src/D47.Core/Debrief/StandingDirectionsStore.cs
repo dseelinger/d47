@@ -139,14 +139,7 @@ public sealed class StandingDirectionsStore
 
         lock (_gate)
         {
-            var kept = _byCommander
-                .GetValueOrDefault(commander, [])
-                .Where(existing => !string.Equals(existing.Key, entry.Key, StringComparison.Ordinal));
-
-            _byCommander = new Dictionary<string, IReadOnlyList<StandingDirection>>(_byCommander, StringComparer.Ordinal)
-            {
-                [commander] = [.. kept, entry],
-            };
+            _byCommander = StoreFiles.ReplaceKeyed(_byCommander, commander, entry, existing => existing.Key);
         }
 
         Save();

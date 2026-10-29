@@ -228,13 +228,8 @@ public sealed class BookmarkStore(string path, IFileSystem files, ILogger<Bookma
             ],
         };
 
-        try
+        if (!StoreFiles.TryWriteText(files, path, JsonSerializer.Serialize(document, Json), logger))
         {
-            files.WriteText(path, JsonSerializer.Serialize(document, Json));
-        }
-        catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
-        {
-            logger.LogWarning(ex, "Could not write {Path}", path);
             return;
         }
 

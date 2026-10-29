@@ -30,8 +30,7 @@ public sealed class MemoryStore(string path, IFileSystem files, ILogger<MemorySt
     private IReadOnlyList<MemoryProblem> _problems = [];
 
     /// <summary>The file's contents as last read.</summary>
-    private string? _seen;
-    private readonly FileStamp _stamp = new();
+    private readonly WatchedTextFile _file = new(files, path, logger);
 
     /// <summary>Raised when the contents changed, whoever changed them.</summary>
     public event Action? Changed;
@@ -72,65 +71,23 @@ public sealed class MemoryStore(string path, IFileSystem files, ILogger<MemorySt
     }
 
     /// <summary>Re-reads if the file changed.</summary>
-    public bool Poll()
-    {
-        var stamp = files.Stat(path);
-
-        if (_stamp.Matches(stamp))
+    public bool Poll() => _file.Poll(
+        () =>
         {
-            return false;
-        }
-
-        string text;
-
-        try
-        {
-            if (stamp is null)
+            lock (_gate)
             {
-                // Not an error: an empty store is the normal state of a fresh install.
-                if (_seen is null)
-                {
-                    return false;
-                }
-
-                lock (_gate)
-                {
-                    _byCommander = new Dictionary<string, IReadOnlyList<MemoryEntry>>(StringComparer.Ordinal);
-                    _problems = [];
-                    _seen = null;
-                    _stamp.Record(null);
-                }
-
-                Changed?.Invoke();
-                return true;
+                _byCommander = new Dictionary<string, IReadOnlyList<MemoryEntry>>(StringComparer.Ordinal);
+                _problems = [];
             }
 
-            var read = files.ReadText(path);
-
-            if (read is null)
-            {
-                return false;
-            }
-
-            text = read;
-            _stamp.Record(stamp);
-        }
-        catch (IOException ex)
+            Changed?.Invoke();
+        },
+        text =>
         {
-            // A read that lands mid-write is retried on the next tick rather than reported.
-            logger.LogDebug(ex, "Could not read {Path}", path);
-            return false;
-        }
-
-        if (string.Equals(text, _seen, StringComparison.Ordinal))
-        {
-            return false;
-        }
-
-        Reload(text);
-        Changed?.Invoke();
-        return true;
-    }
+            Reload(text);
+            Changed?.Invoke();
+            return true;
+        });
 
     /// <summary>Writes one entry and saves the file, replacing whatever shared its key.</summary>
     public MemoryEntry Write(string? frontierId, MemoryEntry entry)
@@ -143,14 +100,7 @@ public sealed class MemoryStore(string path, IFileSystem files, ILogger<MemorySt
 
         lock (_gate)
         {
-            var kept = _byCommander
-                .GetValueOrDefault(commander, [])
-                .Where(existing => !string.Equals(existing.Key, entry.Key, StringComparison.Ordinal));
-
-            _byCommander = new Dictionary<string, IReadOnlyList<MemoryEntry>>(_byCommander, StringComparer.Ordinal)
-            {
-                [commander] = [.. kept, entry],
-            };
+            _byCommander = StoreFiles.ReplaceKeyed(_byCommander, commander, entry, existing => existing.Key);
         }
 
         Save();
@@ -288,20 +238,12 @@ public sealed class MemoryStore(string path, IFileSystem files, ILogger<MemorySt
 
         var text = JsonSerializer.Serialize(document, Json);
 
-        try
+        if (StoreFiles.TryWriteText(files, path, text, logger))
         {
-            files.WriteText(path, text);
-
-            // Recorded as seen, so the write this instance just made does not read back as somebody else's
-            // edit on the next poll.
             lock (_gate)
             {
-                _seen = text;
+                _file.Seen(text);
             }
-        }
-        catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
-        {
-            logger.LogWarning(ex, "Could not write {Path}", path);
         }
     }
 
@@ -368,7 +310,7 @@ public sealed class MemoryStore(string path, IFileSystem files, ILogger<MemorySt
             }
 
             _problems = problems;
-            _seen = text;
+            _file.Seen(text);
         }
 
         logger.LogInformation(

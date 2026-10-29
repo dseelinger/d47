@@ -33,8 +33,7 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
     private Dictionary<string, IReadOnlyList<GoalArc>> _authored = new(StringComparer.Ordinal);
     private Dictionary<string, IReadOnlyList<string>> _setAside = new(StringComparer.Ordinal);
     private IReadOnlyList<GoalProblem> _problems = [];
-    private string? _seen;
-    private readonly FileStamp _stamp = new();
+    private readonly WatchedTextFile _file = new(files, path, logger);
 
     public event Action? Changed;
 
@@ -76,65 +75,25 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
         }
     }
 
-    public bool Poll()
-    {
-        var stamp = files.Stat(path);
-
-        if (_stamp.Matches(stamp))
+    public bool Poll() => _file.Poll(
+        () =>
         {
-            return false;
-        }
-
-        string text;
-
-        try
-        {
-            if (stamp is null)
+            lock (_gate)
             {
-                if (_seen is null)
-                {
-                    return false;
-                }
-
-                lock (_gate)
-                {
-                    _mines = new Dictionary<string, GoalMine>(StringComparer.Ordinal);
-                    _authored = new Dictionary<string, IReadOnlyList<GoalArc>>(StringComparer.Ordinal);
-                    _setAside = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
-                    _problems = [];
-                    _seen = null;
-                    _stamp.Record(null);
-                }
-
-                Changed?.Invoke();
-                return true;
+                _mines = new Dictionary<string, GoalMine>(StringComparer.Ordinal);
+                _authored = new Dictionary<string, IReadOnlyList<GoalArc>>(StringComparer.Ordinal);
+                _setAside = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+                _problems = [];
             }
 
-            var read = files.ReadText(path);
-
-            if (read is null)
-            {
-                return false;
-            }
-
-            text = read;
-            _stamp.Record(stamp);
-        }
-        catch (IOException ex)
+            Changed?.Invoke();
+        },
+        text =>
         {
-            logger.LogDebug(ex, "Could not read {Path}", path);
-            return false;
-        }
-
-        if (string.Equals(text, _seen, StringComparison.Ordinal))
-        {
-            return false;
-        }
-
-        Reload(text);
-        Changed?.Invoke();
-        return true;
-    }
+            Reload(text);
+            Changed?.Invoke();
+            return true;
+        });
 
     /// <summary>
     /// Files one walk's conclusions, replacing whatever that Commander had before — because mining is a
@@ -358,7 +317,7 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
 
             lock (_gate)
             {
-                _seen = text;
+                _file.Seen(text);
             }
         }
         catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
@@ -464,7 +423,7 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
             }
 
             _problems = problems;
-            _seen = text;
+            _file.Seen(text);
         }
 
         logger.LogInformation(

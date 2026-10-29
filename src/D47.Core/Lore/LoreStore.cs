@@ -27,8 +27,7 @@ public sealed class LoreStore(string path, IFileSystem files, ILogger<LoreStore>
     private IReadOnlyList<LoreProblem> _problems = [];
 
     /// <summary>The file's contents as last read.</summary>
-    private string? _seen;
-    private readonly FileStamp _stamp = new();
+    private readonly WatchedTextFile _file = new(files, path, logger);
 
     /// <summary>Raised when the contents changed, whoever changed them.</summary>
     public event Action? Changed;
@@ -57,65 +56,23 @@ public sealed class LoreStore(string path, IFileSystem files, ILogger<LoreStore>
     }
 
     /// <summary>Re-reads if the file changed.</summary>
-    public bool Poll()
-    {
-        var stamp = files.Stat(path);
-
-        if (_stamp.Matches(stamp))
+    public bool Poll() => _file.Poll(
+        () =>
         {
-            return false;
-        }
-
-        string text;
-
-        try
-        {
-            if (stamp is null)
+            lock (_gate)
             {
-                // Not an error: an empty book is the normal state, and will be for most Commanders.
-                if (_seen is null)
-                {
-                    return false;
-                }
-
-                lock (_gate)
-                {
-                    _entries = [];
-                    _problems = [];
-                    _seen = null;
-                    _stamp.Record(null);
-                }
-
-                Changed?.Invoke();
-                return true;
+                _entries = [];
+                _problems = [];
             }
 
-            var read = files.ReadText(path);
-
-            if (read is null)
-            {
-                return false;
-            }
-
-            text = read;
-            _stamp.Record(stamp);
-        }
-        catch (IOException ex)
+            Changed?.Invoke();
+        },
+        text =>
         {
-            // A read that lands mid-write is retried on the next tick rather than reported.
-            logger.LogDebug(ex, "Could not read {Path}", path);
-            return false;
-        }
-
-        if (string.Equals(text, _seen, StringComparison.Ordinal))
-        {
-            return false;
-        }
-
-        Reload(text);
-        Changed?.Invoke();
-        return true;
-    }
+            Reload(text);
+            Changed?.Invoke();
+            return true;
+        });
 
     /// <summary>Adds one entry and writes the file.</summary>
     public LoreEntry Add(LoreEntry entry)
@@ -190,20 +147,12 @@ public sealed class LoreStore(string path, IFileSystem files, ILogger<LoreStore>
 
         var text = JsonSerializer.Serialize(document, Json);
 
-        try
+        if (StoreFiles.TryWriteText(files, path, text, logger))
         {
-            files.WriteText(path, text);
-
-            // Recorded as seen, so the write this instance just made does not read back as somebody else's
-            // edit on the next poll.
             lock (_gate)
             {
-                _seen = text;
+                _file.Seen(text);
             }
-        }
-        catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
-        {
-            logger.LogWarning(ex, "Could not write {Path}", path);
         }
     }
 
@@ -259,7 +208,7 @@ public sealed class LoreStore(string path, IFileSystem files, ILogger<LoreStore>
             }
 
             _problems = problems;
-            _seen = text;
+            _file.Seen(text);
         }
 
         logger.LogInformation(

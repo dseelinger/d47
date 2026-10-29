@@ -32,8 +32,7 @@ public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStor
     private IReadOnlyList<AlarmProblem> _problems = [];
 
     /// <summary>The file's contents as last read.</summary>
-    private string? _seen;
-    private readonly FileStamp _stamp = new();
+    private readonly WatchedTextFile _file = new(files, path, logger, "Could not read the alarm file");
 
     /// <summary>Raised when the set changed, whoever wrote it — the panel, a phrase, an editor.</summary>
     public event Action? Changed;
@@ -62,57 +61,18 @@ public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStor
     }
 
     /// <summary>Re-reads if the file changed.</summary>
-    public bool Poll()
-    {
-        var stamp = files.Stat(path);
-
-        if (_stamp.Matches(stamp))
+    public bool Poll() => _file.Poll(
+        () =>
         {
-            return false;
-        }
-
-        string text;
-
-        try
-        {
-            if (stamp is null)
+            lock (_gate)
             {
-                // Not an error: no alarms is the normal state, and will be for most Commanders.
-                if (_seen is null)
-                {
-                    return false;
-                }
-
-                lock (_gate)
-                {
-                    _alarms = [];
-                    _problems = [];
-                    _seen = null;
-                    _stamp.Record(null);
-                }
-
-                Changed?.Invoke();
-                return true;
+                _alarms = [];
+                _problems = [];
             }
 
-            var read = files.ReadText(path);
-
-            if (read is null)
-            {
-                return false;
-            }
-
-            text = read;
-            _stamp.Record(stamp);
-        }
-        catch (IOException ex)
-        {
-            logger.LogDebug(ex, "Could not read the alarm file");
-            return false;
-        }
-
-        return !string.Equals(text, _seen, StringComparison.Ordinal) && Reload(text);
-    }
+            Changed?.Invoke();
+        },
+        Reload);
 
     /// <summary>
     /// Writes a new set, and re-reads what landed so the store never believes something the file does
@@ -161,7 +121,7 @@ public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStor
             lock (_gate)
             {
                 _problems = [new AlarmProblem(System.IO.Path.GetFileName(path), ex.Message)];
-                _seen = text;
+                _file.Seen(text);
             }
 
             logger.LogWarning(ex, "The alarm file could not be read");
@@ -214,7 +174,7 @@ public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStor
         {
             _alarms = alarms;
             _problems = problems;
-            _seen = text;
+            _file.Seen(text);
         }
 
         Changed?.Invoke();

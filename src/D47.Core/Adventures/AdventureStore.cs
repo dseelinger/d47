@@ -33,8 +33,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
     private string _path = initialPath;
     private Dictionary<string, IReadOnlyList<Adventure>> _byCommander = new(StringComparer.Ordinal);
     private IReadOnlyList<AdventureProblem> _problems = [];
-    private string? _seen;
-    private readonly FileStamp _stamp = new();
+    private readonly WatchedTextFile _file = new(files, initialPath, logger);
 
     public string Path
     {
@@ -115,10 +114,10 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                 _path = path;
                 _byCommander = new Dictionary<string, IReadOnlyList<Adventure>>(StringComparer.Ordinal);
                 _problems = [];
-                _seen = null;
             }
 
-            _stamp.Record(null);
+            _file.Path = path;
+            _file.Forget();
             Read();
         }
 
@@ -126,62 +125,20 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
     }
 
     /// <summary>Rereads the file when its stamp moved; true when what it holds changed. Called holding <see cref="_fileGate"/>.</summary>
-    private bool Read()
-    {
-        var path = _path;
-        var stamp = files.Stat(path);
-
-        if (_stamp.Matches(stamp))
+    private bool Read() => _file.Poll(
+        () =>
         {
-            return false;
-        }
-
-        string text;
-
-        try
-        {
-            if (stamp is null)
+            lock (_gate)
             {
-                if (_seen is null)
-                {
-                    return false;
-                }
-
-                lock (_gate)
-                {
-                    _byCommander = new Dictionary<string, IReadOnlyList<Adventure>>(StringComparer.Ordinal);
-                    _problems = [];
-                    _seen = null;
-                    _stamp.Record(null);
-                }
-
-                return true;
+                _byCommander = new Dictionary<string, IReadOnlyList<Adventure>>(StringComparer.Ordinal);
+                _problems = [];
             }
-
-            var read = files.ReadText(path);
-
-            if (read is null)
-            {
-                return false;
-            }
-
-            text = read;
-            _stamp.Record(stamp);
-        }
-        catch (IOException ex)
+        },
+        text =>
         {
-            logger.LogDebug(ex, "Could not read {Path}", path);
-            return false;
-        }
-
-        if (string.Equals(text, _seen, StringComparison.Ordinal))
-        {
-            return false;
-        }
-
-        Reload(path, text);
-        return true;
-    }
+            Reload(_file.Path, text);
+            return true;
+        });
 
     /// <summary>Writes one adventure, adding it or replacing the one with its key.</summary>
     public string? Save(string? frontierId, Adventure adventure)
@@ -323,18 +280,12 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
 
             var text = JsonSerializer.Serialize(document, Json);
 
-            try
+            if (StoreFiles.TryWriteText(files, _path, text, logger))
             {
-                files.WriteText(_path, text);
-
                 lock (_gate)
                 {
-                    _seen = text;
+                    _file.Seen(text);
                 }
-            }
-            catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
-            {
-                logger.LogWarning(ex, "Could not write {Path}", _path);
             }
         }
     }
@@ -386,7 +337,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
             }
 
             _problems = problems;
-            _seen = text;
+            _file.Seen(text);
         }
 
         logger.LogInformation(
