@@ -230,7 +230,8 @@ Frontier ID, no Commander name, no key, no position and nothing from your journa
 the Stories settings turns it off, and nothing is then fetched or sent.
 
 **Usage counts** {#usage-counts} — `d47-usage.dseelinger.workers.dev`. One report a day, sent the first
-time D47 runs after the day ends in UTC: for each tool used that day, its name, whether you or the
+time D47 runs after the day ends in UTC. When the last send was not accepted, the start of D47 also
+sends today's counts so far, and the rest of the day goes after the day ends: for each tool used that day, its name, whether you or the
 language model asked for it, and how many times. Nothing else goes with it: no identifier of any kind,
 nothing you said, no Frontier ID, no Commander name, no key, no position and nothing from your journal.
 The counts not yet sent are in `data\usage-counts.json`. **Usage counts** in the Privacy and egress
@@ -269,7 +270,7 @@ that sentence — a donated journal history is 32.5 MB compressed followed by ab
 no manual route carries that or can be reached by a stranger.
 
 **It is not like usage counts either.** Directive 47 sends one thing without being asked: once a
-day, how many times each tool was used, with no identifier and nothing from your journal
+day (or, after a send that was not accepted, a part day at startup), how many times each tool was used, with no identifier and nothing from your journal
 ([Usage counts](#usage-counts)). It is on by default and **Usage counts** in Privacy settings turns
 it off. A donation is different in kind: it sends nothing at all until you have read a full
 description of it and pressed a button, every time — no standing consent, nothing remembered, no

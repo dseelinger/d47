@@ -17,6 +17,15 @@ public sealed class UsageLedger
     private readonly Dictionary<DateOnly, Dictionary<(string Tool, ToolCaller Caller), int>> _days = [];
     private readonly object _gate = new();
 
+    /// <summary>Whether the last send attempt was accepted. Not accepted until one is.</summary>
+    public bool LastSendAccepted
+    {
+        get { lock (_gate) { return _lastSendAccepted; } }
+        set { lock (_gate) { _lastSendAccepted = value; } }
+    }
+
+    private bool _lastSendAccepted;
+
     public static DateOnly DayOf(DateTimeOffset at) => DateOnly.FromDateTime(at.UtcDateTime);
 
     public void Record(string tool, ToolCaller caller, DateTimeOffset at)
@@ -43,28 +52,64 @@ public sealed class UsageLedger
         }
     }
 
-    /// <summary>The body the usage Worker accepts for one day, or null when the day holds no counts.</summary>
-    public string? Report(DateOnly day)
+    /// <summary>A copy of one day's counts, or null when the day holds none.</summary>
+    public IReadOnlyDictionary<(string Tool, ToolCaller Caller), int>? Counts(DateOnly day)
     {
         lock (_gate)
         {
-            if (!_days.TryGetValue(day, out var counts) || counts.Count == 0)
+            return _days.TryGetValue(day, out var counts) && counts.Count > 0
+                ? new Dictionary<(string Tool, ToolCaller Caller), int>(counts)
+                : null;
+        }
+    }
+
+    /// <summary>The body the usage Worker accepts for one day, or null when the day holds no counts.</summary>
+    public string? Report(DateOnly day) => Counts(day) is { } counts ? Report(day, counts) : null;
+
+    /// <summary>The body for <paramref name="counts"/>, a copy taken with <see cref="Counts"/>.</summary>
+    public static string Report(DateOnly day, IReadOnlyDictionary<(string Tool, ToolCaller Caller), int> counts)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("day", day.ToString(DayFormat, CultureInfo.InvariantCulture));
+            writer.WriteStartArray("uses");
+            WriteUses(writer, counts);
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
+    /// <summary>Takes <paramref name="sent"/> off the day, leaving counts recorded since it was copied.</summary>
+    public void Subtract(DateOnly day, IReadOnlyDictionary<(string Tool, ToolCaller Caller), int> sent)
+    {
+        lock (_gate)
+        {
+            if (!_days.TryGetValue(day, out var counts))
             {
-                return null;
+                return;
             }
 
-            var buffer = new ArrayBufferWriter<byte>();
-            using (var writer = new Utf8JsonWriter(buffer))
+            foreach (var (key, count) in sent)
             {
-                writer.WriteStartObject();
-                writer.WriteString("day", day.ToString(DayFormat, CultureInfo.InvariantCulture));
-                writer.WriteStartArray("uses");
-                WriteUses(writer, counts);
-                writer.WriteEndArray();
-                writer.WriteEndObject();
+                var left = counts.GetValueOrDefault(key) - count;
+                if (left > 0)
+                {
+                    counts[key] = left;
+                }
+                else
+                {
+                    counts.Remove(key);
+                }
             }
 
-            return Encoding.UTF8.GetString(buffer.WrittenSpan);
+            if (counts.Count == 0)
+            {
+                _days.Remove(day);
+            }
         }
     }
 
@@ -93,6 +138,7 @@ public sealed class UsageLedger
         lock (_gate)
         {
             _days.Clear();
+            _lastSendAccepted = false;
         }
     }
 
@@ -104,6 +150,7 @@ public sealed class UsageLedger
             using (var writer = new Utf8JsonWriter(buffer))
             {
                 writer.WriteStartObject();
+                writer.WriteBoolean("accepted", _lastSendAccepted);
                 writer.WriteStartObject("days");
                 foreach (var (day, counts) in _days.OrderBy(pair => pair.Key))
                 {
@@ -134,7 +181,11 @@ public sealed class UsageLedger
                 return ledger;
             }
 
-            var parsed = new UsageLedger();
+            var parsed = new UsageLedger
+            {
+                _lastSendAccepted = document.RootElement.TryGetProperty("accepted", out var accepted)
+                    && accepted.ValueKind == JsonValueKind.True,
+            };
             foreach (var entry in days.EnumerateObject())
             {
                 if (!DateOnly.TryParseExact(entry.Name, DayFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var day)
@@ -176,7 +227,7 @@ public sealed class UsageLedger
         }
     }
 
-    private static void WriteUses(Utf8JsonWriter writer, Dictionary<(string Tool, ToolCaller Caller), int> counts)
+    private static void WriteUses(Utf8JsonWriter writer, IReadOnlyDictionary<(string Tool, ToolCaller Caller), int> counts)
     {
         foreach (var ((tool, caller), count) in counts
             .OrderBy(pair => pair.Key.Tool, StringComparer.Ordinal)

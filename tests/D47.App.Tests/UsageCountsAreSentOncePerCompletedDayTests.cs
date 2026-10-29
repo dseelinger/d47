@@ -165,6 +165,95 @@ public class UsageCountsAreSentOncePerCompletedDayTests
         Assert.Empty(rig.Bodies);
     }
 
+    [Fact]
+    public void AFileWithoutTheRecordIsReadAsNotAccepted()
+    {
+        var rig = new Rig();
+        rig.Files.WriteText(CountsFile, "{\"days\":{}}");
+
+        var reporter = rig.NewReporter();
+
+        Assert.False(reporter.Ledger.LastSendAccepted);
+    }
+
+    [Fact]
+    public async Task StartupAfterAnUnacceptedSendPostsTodayAfterCompletedDaysAndRemovesIt()
+    {
+        var rig = new Rig();
+        await rig.Call("open_tool", ToolCaller.Commander);
+        rig.Now = Tuesday.AddDays(1);
+        await rig.Call("open_tool", ToolCaller.Model);
+
+        await rig.Reporter.SendDueAsync(includeToday: true);
+
+        Assert.Equal(2, rig.Bodies.Count);
+        Assert.Contains("2026-10-20", rig.Bodies[0]);
+        Assert.Contains("2026-10-21", rig.Bodies[1]);
+        Assert.Empty(rig.Reporter.Ledger.CompletedDays(DateOnly.MaxValue));
+    }
+
+    [Fact]
+    public async Task StartupAfterAnAcceptedSendDoesNotPostToday()
+    {
+        var rig = new Rig();
+        await rig.Call("open_tool", ToolCaller.Commander);
+        rig.Now = Tuesday.AddDays(1);
+        await rig.Call("open_tool", ToolCaller.Commander);
+        await rig.Reporter.SendDueAsync(includeToday: true);
+        await rig.Call("open_tool", ToolCaller.Commander);
+        var before = rig.Bodies.Count;
+
+        await rig.Reporter.SendDueAsync(includeToday: true);
+
+        Assert.True(rig.Reporter.Ledger.LastSendAccepted);
+        Assert.Equal(before, rig.Bodies.Count);
+    }
+
+    [Fact]
+    public async Task TheHourlySendNeverPostsToday()
+    {
+        var rig = new Rig();
+        await rig.Call("open_tool", ToolCaller.Commander);
+
+        await rig.Reporter.SendDueAsync();
+
+        Assert.Empty(rig.Bodies);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.BadRequest)]
+    public async Task AFailedOrRefusedSendRecordsNotAcceptedAndAnAcceptedOneRecordsAccepted(HttpStatusCode failure)
+    {
+        var rig = new Rig { Status = HttpStatusCode.NoContent };
+        await rig.Call("open_tool", ToolCaller.Commander);
+        rig.Now = Tuesday.AddDays(1);
+        await rig.Reporter.SendDueAsync();
+        Assert.True(rig.Reporter.Ledger.LastSendAccepted);
+        rig.Reporter.Save();
+        Assert.Contains("\"accepted\":true", rig.Files.ReadText(CountsFile));
+
+        await rig.Call("open_tool", ToolCaller.Commander);
+        rig.Now = Tuesday.AddDays(2);
+        rig.Status = failure;
+        await rig.Reporter.SendDueAsync();
+
+        Assert.False(rig.Reporter.Ledger.LastSendAccepted);
+    }
+
+    [Fact]
+    public async Task OnlyTheCountsSentAreRemovedFromToday()
+    {
+        var rig = new Rig();
+        await rig.Call("open_tool", ToolCaller.Commander);
+        rig.SlowSend = async () => await rig.Call("open_tool", ToolCaller.Commander);
+
+        await rig.Reporter.SendDueAsync(includeToday: true);
+
+        Assert.Contains("\"count\":1", Assert.Single(rig.Bodies));
+        Assert.Contains("\"count\":1", rig.Reporter.Ledger.Report(DateOnly.FromDateTime(Tuesday.UtcDateTime)));
+    }
+
     private sealed class Rig
     {
         private readonly List<string> _bodies = [];
@@ -187,17 +276,24 @@ public class UsageCountsAreSentOncePerCompletedDayTests
                 },
             ]);
 
-            Reporter = new UsageReporter(
-                CountsFile,
-                Files,
-                () => Counts,
-                () => Now,
-                canSend,
-                NullLogger.Instance,
-                new Handler(this),
-                "https://usage.test");
+            _canSend = canSend;
+            Reporter = NewReporter();
             Reporter.Follow(Registry);
         }
+
+        private readonly bool _canSend;
+
+        public Func<Task>? SlowSend { get; set; }
+
+        public UsageReporter NewReporter() => new(
+            CountsFile,
+            Files,
+            () => Counts,
+            () => Now,
+            _canSend,
+            NullLogger.Instance,
+            new Handler(this),
+            "https://usage.test");
 
         public MemoryFileSystem Files { get; } = new();
 
@@ -238,6 +334,11 @@ public class UsageCountsAreSentOncePerCompletedDayTests
                 rig.Formats.Add(request.Headers.GetValues("d47-format").Single());
                 rig.Agents.Add(request.Headers.UserAgent.ToString());
                 rig.Urls.Add(request.RequestUri!.ToString());
+                if (rig.SlowSend is { } slow)
+                {
+                    await slow();
+                }
+
                 await Task.Delay(20, cancellationToken);
 
                 return new HttpResponseMessage(rig.Status);

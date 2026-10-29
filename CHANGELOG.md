@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+After a usage-count send that was not accepted, starting D47 also sends today's counts so far instead of waiting for the day to end in UTC. Once a send is accepted, startup goes back to sending completed days only.
+
 A row in Privacy and egress that sends nothing now shows only its explanation, without the "Name → nothing sent" line above it. Rows that do send keep their "Name → destination" line. Asking D47 what it sends is unchanged.
 
 The Privacy and egress list now shows the Captain's log as sending to a host when speech recognition is hosted or the voice that reads entries back is hosted, and names that host. Before, it said "nothing sent" and that entries were never sent anywhere, while the words went to the provider. With both providers local it still says nothing is sent.

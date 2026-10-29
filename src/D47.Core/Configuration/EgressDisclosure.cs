@@ -569,7 +569,8 @@ public static class EgressDisclosure
                 UsageCounts,
                 NameOf(UsageCounts),
                 UsageCountSettings.Address,
-                "One report a day, sent the first time D47 runs after the day ends in UTC: for each tool used that day, "
+                "One report a day, sent the first time D47 runs after the day ends in UTC, and, when the last send "
+                + "was not accepted, today's counts so far at startup: for each tool used that day, "
                 + "its name, whether you or the language model asked for it, and how many times. Nothing else goes with "
                 + "it: no identifier of any kind, nothing you said, no Frontier ID, no Commander name, no key, no "
                 + "position and nothing from your journal. The counts not yet sent are in data\\usage-counts.json.",

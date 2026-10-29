@@ -10,7 +10,7 @@ namespace D47.App.Usage;
 
 /// <summary>
 /// Counts tool calls into a <see cref="UsageLedger"/> kept in <c>data\usage-counts.json</c> and sends each completed
-/// UTC day once, at startup and hourly. Sends run on the pool; recording only takes a lock.
+/// UTC day once, at startup and hourly. A startup after a send that was not accepted also sends today so far. Sends run on the pool; recording only takes a lock.
 /// </summary>
 public sealed class UsageReporter : IDisposable
 {
@@ -99,8 +99,8 @@ public sealed class UsageReporter : IDisposable
             return;
         }
 
-        _ = Task.Run(Tick);
-        _timer = new Timer(_ => _ = Task.Run(Tick), null, Interval, Interval);
+        _ = Task.Run(() => Tick(includeToday: true));
+        _timer = new Timer(_ => _ = Task.Run(() => Tick(includeToday: false)), null, Interval, Interval);
     }
 
     /// <summary>Empties the ledger and deletes its file.</summary>
@@ -130,8 +130,11 @@ public sealed class UsageReporter : IDisposable
         }
     }
 
-    /// <summary>Sends every completed day not yet accepted, one request at a time.</summary>
-    public async Task SendDueAsync()
+    /// <summary>
+    /// Sends every completed day not yet accepted, one request at a time, then today so far when
+    /// <paramref name="includeToday"/> is set and the last send was not accepted.
+    /// </summary>
+    public async Task SendDueAsync(bool includeToday = false)
     {
         await _sending.WaitAsync().ConfigureAwait(false);
 
@@ -146,15 +149,21 @@ public sealed class UsageReporter : IDisposable
             _ledger.DropOld(today);
             Volatile.Write(ref _dirty, 1);
 
-            foreach (var day in _ledger.CompletedDays(today))
+            var days = _ledger.CompletedDays(today).ToList();
+            if (includeToday && !_ledger.LastSendAccepted)
             {
-                if (_ledger.Report(day) is not { } body)
+                days.Add(today);
+            }
+
+            foreach (var day in days)
+            {
+                if (_ledger.Counts(day) is not { } counts)
                 {
                     _ledger.Remove(day);
                     continue;
                 }
 
-                if (!await SendDayAsync(day, body).ConfigureAwait(false))
+                if (!await SendDayAsync(day, counts).ConfigureAwait(false))
                 {
                     break;
                 }
@@ -174,11 +183,11 @@ public sealed class UsageReporter : IDisposable
         _sending.Dispose();
     }
 
-    private async Task Tick()
+    private async Task Tick(bool includeToday)
     {
         try
         {
-            await SendDueAsync().ConfigureAwait(false);
+            await SendDueAsync(includeToday).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -187,10 +196,12 @@ public sealed class UsageReporter : IDisposable
     }
 
     /// <summary>False when the day should be tried again later and the rest should wait.</summary>
-    private async Task<bool> SendDayAsync(DateOnly day, string body)
+    private async Task<bool> SendDayAsync(DateOnly day, IReadOnlyDictionary<(string Tool, ToolCaller Caller), int> counts)
     {
+        _ledger.LastSendAccepted = false;
         try
         {
+            var body = UsageLedger.Report(day, counts);
             using var request = new HttpRequestMessage(HttpMethod.Post, _address + "/usage")
             {
                 Content = new StringContent(body, Encoding.UTF8, "application/json"),
@@ -202,14 +213,15 @@ public sealed class UsageReporter : IDisposable
 
             if (response.IsSuccessStatusCode)
             {
-                _ledger.Remove(day);
+                _ledger.Subtract(day, counts);
+                _ledger.LastSendAccepted = true;
                 return true;
             }
 
             if (status is >= 400 and < 500)
             {
                 _logger.LogInformation("Usage counts for {Day} were refused: the usage Worker returned {Status}.", day, response.StatusCode);
-                _ledger.Remove(day);
+                _ledger.Subtract(day, counts);
                 return true;
             }
 
