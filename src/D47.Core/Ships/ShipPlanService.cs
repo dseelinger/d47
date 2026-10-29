@@ -16,7 +16,12 @@ namespace D47.Core.Ships;
 /// The journal's record of it, or null for a hull that is only intended.
 /// </param>
 /// <param name="IsActive">Whether this is the ship the Commander is sitting in.</param>
-public sealed record FleetEntry(ShipBuild? Build, StoredShip? Stored, bool IsActive, bool LastFlown = false)
+public sealed record FleetEntry(
+    ShipBuild? Build,
+    StoredShip? Stored,
+    bool IsActive,
+    bool LastFlown = false,
+    int? Outstanding = null)
 {
     /// <summary>
     /// Owned is derived and intended is authored, which is the same rule the checklist already draws
@@ -31,8 +36,8 @@ public sealed record FleetEntry(ShipBuild? Build, StoredShip? Stored, bool IsAct
 
     public string? Name => Stored?.Name ?? Build?.Name;
 
-    /// <summary>How many slots this build has an opinion about.</summary>
-    public int Planned => Build?.Slots.Count ?? 0;
+    /// <summary>How many slots still have work outstanding; every non-empty plan where the fleet did not check.</summary>
+    public int Planned => Outstanding ?? Build?.Slots.Count(slot => !slot.IsEmpty) ?? 0;
 
     /// <summary>Where it is, in one phrase, or what it is waiting on.</summary>
     public string Where()
@@ -120,7 +125,8 @@ public sealed class ShipPlanService(
                 {
                     Here = true,
                 },
-                IsActive: true));
+                IsActive: true,
+                Outstanding: OutstandingFor(build)));
 
             if (build is not null)
             {
@@ -139,7 +145,8 @@ public sealed class ShipPlanService(
                     Here = true,
                 },
                 IsActive: true,
-                LastFlown: true));
+                LastFlown: true,
+                Outstanding: OutstandingFor(build)));
 
             if (build is not null)
             {
@@ -156,7 +163,7 @@ public sealed class ShipPlanService(
 
             var build = builds.FirstOrDefault(candidate => candidate.ShipId == ship.ShipId);
 
-            entries.Add(new FleetEntry(build, ship, IsActive: false));
+            entries.Add(new FleetEntry(build, ship, IsActive: false, Outstanding: OutstandingFor(build)));
 
             if (build is not null)
             {
@@ -169,11 +176,27 @@ public sealed class ShipPlanService(
         {
             if (!claimed.Contains(build.Id))
             {
-                entries.Add(new FleetEntry(build, Stored: null, IsActive: false));
+                entries.Add(new FleetEntry(build, Stored: null, IsActive: false, Outstanding: OutstandingFor(build)));
             }
         }
 
         return entries;
+    }
+
+    /// <summary>The slots of a build whose plan is not yet met by what is fitted; every non-empty plan for a hull not bought.</summary>
+    private int OutstandingFor(ShipBuild? build)
+    {
+        if (build is null)
+        {
+            return 0;
+        }
+
+        var fitted = build.ShipId is { } shipId ? FittedModules(shipId) : [];
+
+        return build.Slots.Count(slot => Outstanding(
+            slot,
+            fitted.FirstOrDefault(candidate =>
+                string.Equals(candidate.Slot, slot.Slot, StringComparison.OrdinalIgnoreCase))));
     }
 
     /// <summary>The entry for one build, or null.</summary>

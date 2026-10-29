@@ -301,8 +301,8 @@ public sealed record ChecklistSettings
     public Dictionary<string, JsonElement>? Extra { get; init; }
 
     /// <summary>Whether a fulfilled derived item, and a ship slot whose plan is met, are removed rather
-    /// than left ticked.</summary>
-    public bool RemoveFulfilled { get; init; }
+    /// than left ticked. On by default.</summary>
+    public bool RemoveFulfilled { get; init; } = true;
 }
 
 /// <summary>

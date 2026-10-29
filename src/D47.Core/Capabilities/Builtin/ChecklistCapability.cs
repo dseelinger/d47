@@ -676,26 +676,26 @@ public static class ChecklistCapability
         Binding = new SettingBinding { Read = _ => Summarise(checklists) },
     };
 
-    /// <summary>Off by default: a derived item removes itself once it is done, and a met slot's plan
+    /// <summary>On by default: a derived item removes itself once it is done, and a met slot's plan
     /// with it (#255).</summary>
     private static readonly SettingRow RemoveFulfilledRow = new()
     {
         Key = RemoveFulfilledKey,
         Exercise =
-            "Open the Checklist tab, settings strip, and find Remove fulfilled items (it is off by default). "
+            "Open the Checklist tab, settings strip, and find Remove fulfilled items (it is on by default). "
             + "Needs a derived item on the list, such as a material a plan needs (say \"plan grade 5 dirty "
             + "drives on the thrusters\" and accept the proposal), and the game or a journal that meets it. "
-            + "With the row off, an item that becomes done stays on the list ticked. Turn the row on: a done "
-            + "derived item is removed from the list instead, and a ship slot whose plan is met loses its plan,"
-            + " so the tick and the plan column both disappear. Items you added yourself (\"add buy limpets to "
+            + "With the row on, a done derived item is removed from the list, and a ship slot whose plan is met "
+            + "loses its plan, so the tick and the plan column both disappear. Turn the row off: an item that "
+            + "becomes done stays on the list ticked. Items you added yourself (\"add buy limpets to "
             + "my checklist\") are untouched either way.",
         Advanced = true,
         Label = "Remove fulfilled items",
-        Help = "Off leaves a done derived item ticked on the list. On, it is removed instead once it is "
-               + "done — and a ship slot whose plan is met loses its plan, so the tick and the plan "
-               + "column both disappear. Your own lines are never affected either way.",
+        Help = "On by default: a done derived item is removed once it is done, and a ship slot whose plan "
+               + "is met loses its plan. Off leaves a done derived item ticked on the list. Your own lines "
+               + "are never affected either way.",
         Kind = SettingKind.Toggle,
-        DefaultDisplay = "off",
+        DefaultDisplay = "on",
         DocsAnchor = "the-checklist-page",
         Binding = SettingBinding.Toggle(
             s => s.Checklists.RemoveFulfilled,

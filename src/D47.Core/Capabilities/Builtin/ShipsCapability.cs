@@ -280,7 +280,7 @@ public static class ShipsCapability
         }
 
         var fleet = ships.Fleet();
-        var planned = fleet.Count(entry => entry.Planned > 0);
+        var planned = fleet.Count(entry => entry.Build is { Slots.Count: > 0 });
         var intended = fleet.Count(entry => !entry.IsOwned);
 
         if (fleet.Count == 0)
@@ -302,7 +302,7 @@ public static class ShipsCapability
         return said;
     }
 
-    private static string Fleet(ShipPlanService? ships)
+    internal static string Fleet(ShipPlanService? ships)
     {
         if (ships is null)
         {
