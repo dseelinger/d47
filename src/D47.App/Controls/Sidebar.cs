@@ -50,7 +50,7 @@ public sealed class Sidebar : Border
         Margin = new Thickness(0, 0, ContentGap, 0);
         Padding = new Thickness(0, 0, 16, 0);
         BorderThickness = new Thickness(0, 0, 1, 0);
-        Themed(this, BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(this, BorderBrushProperty, ThemeManager.Line2Key);
 
         if (note is not null)
         {
@@ -61,7 +61,7 @@ public sealed class Sidebar : Border
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 12),
             };
-            Themed(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             _column.Children.Add(said);
         }
 
@@ -83,7 +83,7 @@ public sealed class Sidebar : Border
                     TextWrapping = TextWrapping.Wrap,
                     Margin = new Thickness(15, 8, 12, 4),
                 };
-                Themed(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+                ThemeInk.Bind(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
                 _column.Children.Add(said);
             }
 
@@ -152,7 +152,7 @@ public sealed class Sidebar : Border
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var heading = new Border
         {
@@ -162,14 +162,11 @@ public sealed class Sidebar : Border
             BorderThickness = new Thickness(3, 0, 0, 0),
             Child = label,
         };
-        Themed(heading, BackgroundProperty, ThemeManager.SlabKey);
-        Themed(heading, BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(heading, BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(heading, BorderBrushProperty, ThemeManager.AKey);
 
         return heading;
     }
-
-    private static IDisposable Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, target.GetResourceObservable(key));
 
     private sealed class Row
     {
@@ -249,23 +246,23 @@ public sealed class Sidebar : Border
 
             if (Item.CountKey is { } countKey)
             {
-                _countInk = Themed(_count, TextBlock.ForegroundProperty, selected ? ThemeManager.BrownKey : countKey);
+                _countInk = ThemeInk.Bind(_count, TextBlock.ForegroundProperty, selected ? ThemeManager.BrownKey : countKey);
             }
 
             if (selected)
             {
-                _fill = Themed(Shape, BackgroundProperty, ThemeManager.AKey);
-                _ink = Themed(_label, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
+                _fill = ThemeInk.Bind(Shape, BackgroundProperty, ThemeManager.AKey);
+                _ink = ThemeInk.Bind(_label, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
             }
             else if (hovered)
             {
-                _fill = Themed(Shape, BackgroundProperty, ThemeManager.Tile2Key);
-                _ink = Themed(_label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+                _fill = ThemeInk.Bind(Shape, BackgroundProperty, ThemeManager.Tile2Key);
+                _ink = ThemeInk.Bind(_label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
             }
             else
             {
                 Shape.Background = Brushes.Transparent;
-                _ink = Themed(_label, TextBlock.ForegroundProperty, ThemeManager.AKey);
+                _ink = ThemeInk.Bind(_label, TextBlock.ForegroundProperty, ThemeManager.AKey);
             }
         }
     }

@@ -282,7 +282,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
     {
         var name = TitleText.Build(group.System, TypeScale.Section, TitleRank.Group);
         name.VerticalAlignment = VerticalAlignment.Center;
-        LoadoutPages.Themed(
+        ThemeInk.Bind(
             name,
             TextBlock.ForegroundProperty,
             group.InCurrentSystem ? ThemeManager.CyanKey
@@ -295,7 +295,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
             FontSize = TypeScale.Small,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        LoadoutPages.Themed(detail, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(detail, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var head = new WrapPanel { ItemSpacing = 12, LineSpacing = 4, Children = { name, detail } };
 
@@ -332,7 +332,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        LoadoutPages.Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var rating = MaterialsPage.Mono(module.Class ?? "—", module.Class is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
         rating.HorizontalAlignment = HorizontalAlignment.Left;
@@ -348,7 +348,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
             Padding = new Thickness(14, 0),
             Child = table.Row([name, rating, cost, time]),
         };
-        LoadoutPages.Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return row;
     }

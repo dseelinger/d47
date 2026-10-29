@@ -173,7 +173,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     {
         var column = new StackPanel { Width = Side, Spacing = 10, VerticalAlignment = VerticalAlignment.Top };
         var square = new Border { Width = Side, Height = Side };
-        RoutingKit.Themed(square, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(square, Border.BackgroundProperty, ThemeManager.SlabKey);
         column.Children.Add(square);
 
         var choice = _pictures is null
@@ -417,7 +417,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
                 },
             },
         };
-        RoutingKit.Themed(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
         CreditsKit.Place(grid, column, tile);
     }
 
@@ -437,7 +437,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         CreditsKit.Place(grid, 2, CreditsKit.Mono(CodexModel.DateTime(row.At), TypeScale.Small, ThemeManager.WhiteKey, right: true));
 
         var border = new Border { MinHeight = TypeScale.MinimumTarget, Padding = new Thickness(14, 6), Child = grid };
-        RoutingKit.Themed(border, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return border;
     }

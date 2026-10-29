@@ -70,7 +70,7 @@ public sealed class MemoryDialog : ModalDialog
                 + "It is also sent to the model with your questions when it is relevant to where you are.",
         };
 
-        Themed(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var body = new StackPanel
         {
@@ -188,6 +188,4 @@ public sealed class MemoryDialog : ModalDialog
             ? [new Run(", "), Fonts.Mono(at.ToLocalTime().ToString("d MMM yyyy", CultureInfo.CurrentCulture))]
             : [];
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

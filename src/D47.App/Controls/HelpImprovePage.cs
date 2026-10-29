@@ -268,11 +268,11 @@ public sealed class HelpImprovePage : DialogPage
 
         Title = "Help improve D47";
 
-        Themed(_preview, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
-        Themed(_corpusPreview, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
-        Themed(_intro, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        Themed(_size, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        Themed(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_preview, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(_corpusPreview, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(_intro, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_size, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         // The history half exists where both of its delegates do — which is every reading the button appears
         // on, since the page it was pressed on stopped deciding that.
@@ -514,7 +514,7 @@ public sealed class HelpImprovePage : DialogPage
     private Border ConsentLine(out TextBlock text)
     {
         var block = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var row = new Border
         {
@@ -524,7 +524,7 @@ public sealed class HelpImprovePage : DialogPage
             Child = block,
         };
 
-        Themed(row, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(row, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         text = block;
         return row;
@@ -578,7 +578,7 @@ public sealed class HelpImprovePage : DialogPage
             },
         };
 
-        Themed(pane, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(pane, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return pane;
     }
@@ -660,7 +660,7 @@ public sealed class HelpImprovePage : DialogPage
 
         // Disposed before rebinding, or the subscriptions stack up and the last to fire decides.
         _sizeColour?.Dispose();
-        _sizeColour = Themed(
+        _sizeColour = ThemeInk.Bind(
             _size,
             TextBlock.ForegroundProperty,
             long_ ? ThemeManager.RedKey : ThemeManager.GreyKey);
@@ -810,7 +810,7 @@ public sealed class HelpImprovePage : DialogPage
             // Rebinding rather than leaving the colour on whatever the last render chose: this line is now an
             // outcome rather than a character count.
             _sizeColour?.Dispose();
-            _sizeColour = Themed(_size, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            _sizeColour = ThemeInk.Bind(_size, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         }
     }
 
@@ -1042,7 +1042,7 @@ public sealed class HelpImprovePage : DialogPage
                 // This line is an outcome now rather than a character count, so it is not left in whatever
                 // colour the last render chose for it.
                 _sizeColour?.Dispose();
-                _sizeColour = Themed(_size, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+                _sizeColour = ThemeInk.Bind(_size, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             }
         }
         catch (OperationCanceledException)
@@ -1103,7 +1103,7 @@ public sealed class HelpImprovePage : DialogPage
             Margin = new Thickness(0, 0, 6, 0),
         };
 
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return new StackPanel
         {
@@ -1113,6 +1113,4 @@ public sealed class HelpImprovePage : DialogPage
         };
     }
 
-    private IDisposable Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, this.GetResourceObservable(key));
 }

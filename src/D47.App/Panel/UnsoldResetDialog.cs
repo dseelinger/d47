@@ -31,7 +31,7 @@ public sealed class UnsoldResetDialog : ModalDialog
         Width = DialogWidth;
 
         var held = new Run(value) { FontFamily = new FontFamily(Fonts.MonoFamily) };
-        Themed(held, TextElement.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(held, TextElement.ForegroundProperty, ThemeManager.AKey);
 
         var question = new TextBlock
         {
@@ -45,7 +45,7 @@ public sealed class UnsoldResetDialog : ModalDialog
                 new Run(" it holds now can't be brought back."),
             },
         };
-        Themed(question, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(question, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var drifted = new TextBlock
         {
@@ -53,7 +53,7 @@ public sealed class UnsoldResetDialog : ModalDialog
             FontSize = TypeScale.Small,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(drifted, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(drifted, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var confirm = new Button
         {
@@ -77,7 +77,7 @@ public sealed class UnsoldResetDialog : ModalDialog
             Margin = new Thickness(14, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         Modal.Apply(
             this,
@@ -109,6 +109,4 @@ public sealed class UnsoldResetDialog : ModalDialog
         Close();
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

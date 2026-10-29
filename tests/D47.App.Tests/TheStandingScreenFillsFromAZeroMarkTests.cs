@@ -139,7 +139,7 @@ public class TheStandingScreenFillsFromAZeroMarkTests
         window.Close();
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void ThePositiveFillRunsRightOfTheMarkAndTheNegativeLeft()
     {
         var positive = Gauge.CentreTrack(0.62);

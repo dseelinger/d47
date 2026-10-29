@@ -73,14 +73,14 @@ public static class PowerplayCloseupView
             mono: true);
 
         var segment = new Border { Height = SegmentHeight, Margin = new Thickness(0, 2, 0, 4) };
-        Themed(segment, Border.BackgroundProperty, held ? ThemeManager.AKey : ThemeManager.TileKey);
+        ThemeInk.Bind(segment, Border.BackgroundProperty, held ? ThemeManager.AKey : ThemeManager.TileKey);
 
         if (next && fill is { } share)
         {
             var part = Math.Clamp(share, 0, 1);
 
             var filled = new Border();
-            Themed(filled, Border.BackgroundProperty, ThemeManager.CyanKey);
+            ThemeInk.Bind(filled, Border.BackgroundProperty, ThemeManager.CyanKey);
 
             segment.Child = new Grid
             {
@@ -104,6 +104,4 @@ public static class PowerplayCloseupView
         return new StackPanel { Children = { number, segment, words } };
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

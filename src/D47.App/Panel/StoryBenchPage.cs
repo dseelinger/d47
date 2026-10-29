@@ -141,7 +141,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     {
         var prose = AdventuresPage.Text(text, TypeScale.ControlLarge);
         var slab = new Border { Padding = new Thickness(14), Child = prose };
-        AdventuresPage.Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
         return slab;
     }
 
@@ -159,7 +159,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         stack.Children.Add(AdventuresPage.Text(WritingNotice, TypeScale.ControlLarge));
 
         var slab = new Border { Padding = new Thickness(14, 12), Child = stack };
-        AdventuresPage.Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
         return slab;
     }
 
@@ -175,14 +175,14 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        AdventuresPage.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
     private static TextBlock Mono(string text, double size, string key)
     {
         var block = new TextBlock { Text = text, FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = size, VerticalAlignment = VerticalAlignment.Center };
-        AdventuresPage.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -207,19 +207,19 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
 
         if (barKey is not null)
         {
-            AdventuresPage.Themed(inner, Border.BorderBrushProperty, barKey);
+            ThemeInk.Bind(inner, Border.BorderBrushProperty, barKey);
         }
 
         if (groundKey is not null)
         {
-            AdventuresPage.Themed(inner, Border.BackgroundProperty, groundKey);
+            ThemeInk.Bind(inner, Border.BackgroundProperty, groundKey);
         }
 
         var outer = new Border { BorderThickness = new Thickness(0, first || ruleKey is null ? 0 : 1, 0, 0), Child = inner };
 
         if (ruleKey is not null)
         {
-            AdventuresPage.Themed(outer, Border.BorderBrushProperty, ruleKey);
+            ThemeInk.Bind(outer, Border.BorderBrushProperty, ruleKey);
         }
 
         return outer;
@@ -371,7 +371,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             var name = ListRow.Name(new TextBlock { Text = ChapterName(checkpoint), VerticalAlignment = VerticalAlignment.Center });
 
             var stage = new TextBlock { FontSize = TypeScale.ControlLarge, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
-            AdventuresPage.Themed(stage, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(stage, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             stage.Inlines = new InlineCollection { new Run(checkpoint.Stage) };
 
             if (checkpoint.Chapter == current)
@@ -430,7 +430,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     {
         var name = ListRow.Name(new TextBlock { Text = slot.Name, TextWrapping = TextWrapping.Wrap });
         var detail = new TextBlock { FontSize = TypeScale.ControlLarge, TextWrapping = TextWrapping.Wrap };
-        AdventuresPage.Themed(detail, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(detail, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         detail.Inlines = DescribeRuns(slot);
 
         var text = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { name, detail } };

@@ -91,7 +91,7 @@ public sealed class LedgersPage : UserControl, IPageSummary
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        LoadoutPages.Themed(description, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(description, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var chevron = new TextBlock
         {
@@ -100,7 +100,7 @@ public sealed class LedgersPage : UserControl, IPageSummary
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        LoadoutPages.Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(chevron, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var cells = new Grid
         {

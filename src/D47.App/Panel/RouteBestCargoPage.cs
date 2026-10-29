@@ -141,7 +141,7 @@ public sealed class RouteBestCargoPage : UserControl
             VerticalContentAlignment = VerticalAlignment.Center,
             InnerLeftContent = Prefix("Sell in"),
         };
-        Themed(_sellIn, TextBox.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(_sellIn, TextBox.ForegroundProperty, ThemeManager.AKey);
         Avalonia.Automation.AutomationProperties.SetName(_sellIn, "Sell in");
 
         if (prefixNames is not null)
@@ -419,7 +419,7 @@ public sealed class RouteBestCargoPage : UserControl
         var location = state?.Location;
 
         var title = TitleText.Build(docked ? location!.StationName! : "Not docked", TypeScale.Title, TitleRank.Screen);
-        Themed(title, TextBlock.ForegroundProperty, docked ? ThemeManager.CyanKey : ThemeManager.GreyKey);
+        ThemeInk.Bind(title, TextBlock.ForegroundProperty, docked ? ThemeManager.CyanKey : ThemeManager.GreyKey);
 
         var heading = new StackPanel { Spacing = 2, Children = { TitleText.Context("Buying at"), title } };
 
@@ -448,7 +448,7 @@ public sealed class RouteBestCargoPage : UserControl
         };
 
         var rule = new Border { Height = 1, Margin = new Thickness(0, 10, 0, 0) };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.AKey);
 
         return new StackPanel { Margin = new Thickness(0, 16, 0, 0), Children = { row, rule } };
     }
@@ -496,7 +496,7 @@ public sealed class RouteBestCargoPage : UserControl
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(line, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         line.Inlines!.Add(new Run("Uses your trade route filters: "));
 
@@ -577,7 +577,7 @@ public sealed class RouteBestCargoPage : UserControl
         }
 
         var rule = new Border { Height = 1, Margin = new Thickness(0, 6, 0, 0) };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.AKey);
 
         return new StackPanel { Margin = new Thickness(0, 24, 0, 6), Children = { row, rule } };
     }
@@ -595,7 +595,7 @@ public sealed class RouteBestCargoPage : UserControl
         heads.Margin = new Thickness(14, 8, 14, 8);
 
         var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Child = heads, Margin = new Thickness(0, 0, 0, 6) };
-        Themed(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         var rows = new StackPanel { Spacing = Gaps.Tile };
         var best = picks.Count > 0 ? Math.Max(1, picks.Max(pick => pick.Total)) : 1;
@@ -620,7 +620,7 @@ public sealed class RouteBestCargoPage : UserControl
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(commodity, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(commodity, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var station = new TextBlock
         {
@@ -630,7 +630,7 @@ public sealed class RouteBestCargoPage : UserControl
             FontWeight = FontWeight.Medium,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(station, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(station, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var profit = Right(Mono(Number(pick.ProfitPerTonne), TypeScale.Small, ThemeManager.AKey));
 
@@ -651,7 +651,7 @@ public sealed class RouteBestCargoPage : UserControl
         var grid = layout.Row([number, Cell(commodity, 1), Cell(station, 2), Cell(profit, 3), Cell(tonnes, 4), Cell(total, 5), Cell(bar, 6)]);
 
         var row = new Border { MinHeight = TypeScale.MinimumTarget, Padding = new Thickness(14, 6), Child = grid };
-        Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return row;
     }
@@ -698,7 +698,7 @@ public sealed class RouteBestCargoPage : UserControl
         }
 
         var border = new Border { BorderThickness = new Thickness(0, 1, 0, 0), Padding = new Thickness(0, 12, 0, 0), Child = grid };
-        Themed(border, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(border, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         return border;
     }
@@ -713,7 +713,7 @@ public sealed class RouteBestCargoPage : UserControl
     private static Border Slab(Control child)
     {
         var slab = new Border { Padding = new Thickness(14, 14), Child = child };
-        Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
         return slab;
     }
 
@@ -764,7 +764,7 @@ public sealed class RouteBestCargoPage : UserControl
             LetterSpacing = size * Fonts.ChromeTracking,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -776,7 +776,7 @@ public sealed class RouteBestCargoPage : UserControl
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = size,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -789,10 +789,8 @@ public sealed class RouteBestCargoPage : UserControl
             FontSize = size,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
-    private static void Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 }

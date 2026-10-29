@@ -348,14 +348,14 @@ public sealed class CharactersPage : UserControl, IPageSummary
     private static TextBlock Plain(string text)
     {
         var block = new TextBlock { Text = text, FontSize = TypeScale.Small, TextWrapping = TextWrapping.Wrap };
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 
     private static TextBlock Channel(string prefix, string channel, string name)
     {
         var block = new TextBlock { FontSize = TypeScale.Small, TextWrapping = TextWrapping.Wrap };
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var channelRun = new Run(channel)
         {
@@ -363,10 +363,10 @@ public sealed class CharactersPage : UserControl, IPageSummary
             FontWeight = FontWeight.SemiBold,
             LetterSpacing = TypeScale.Small * Fonts.ChromeTracking,
         };
-        LoadoutPages.Themed(channelRun, Run.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(channelRun, Run.ForegroundProperty, ThemeManager.AKey);
 
         var nameRun = new Run(name) { FontFamily = new FontFamily(Fonts.ChromeFamily), FontWeight = FontWeight.Medium };
-        LoadoutPages.Themed(nameRun, Run.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(nameRun, Run.ForegroundProperty, ThemeManager.WhiteKey);
 
         block.Inlines!.Add(new Run(prefix));
         block.Inlines.Add(channelRun);
@@ -390,7 +390,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
             Margin = top ? new Thickness(0, 12, 0, 0) : default,
             TextWrapping = TextWrapping.Wrap,
         };
-        LoadoutPages.Themed(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions($"{LabelWidth},*,{TypeScale.MinimumTarget}") };
         grid.Children.Add(text);
@@ -411,7 +411,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
             BorderThickness = new Thickness(0, 1, 0, 0),
             Child = grid,
         };
-        LoadoutPages.Themed(row, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(row, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return row;
     }
@@ -420,7 +420,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
     {
         var line = Plain(text);
         var inset = new Border { Padding = new Thickness(12, 8), Margin = new Thickness(0, 6, 0, 0), Child = line };
-        LoadoutPages.Themed(inset, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(inset, Border.BackgroundProperty, ThemeManager.SlabKey);
         return inset;
     }
 
@@ -480,7 +480,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
     private Control StoryPicture(StoryCastMember member)
     {
         var holder = new Border { Width = PictureSize, Height = PictureSize, HorizontalAlignment = HorizontalAlignment.Left };
-        LoadoutPages.Themed(holder, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(holder, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         if (_portraits?.For(member.Shown.Picture, (int)PictureSize) is { } bitmap)
         {
@@ -570,10 +570,10 @@ public sealed class CharactersPage : UserControl, IPageSummary
     private Control ReadOnly(string text)
     {
         var block = new TextBlock { Text = text, FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var slab = new Border { MinHeight = TypeScale.MinimumTarget, Padding = new Thickness(12, 0), Child = block };
-        LoadoutPages.Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
         return slab;
     }
 
@@ -623,7 +623,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
     private static TextBlock ErrorLine(string message)
     {
         var line = new TextBlock { Text = message, FontSize = TypeScale.FieldMessage, TextWrapping = TextWrapping.Wrap };
-        LoadoutPages.Themed(line, TextBlock.ForegroundProperty, ThemeManager.RedKey);
+        ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.RedKey);
         return line;
     }
 
@@ -847,7 +847,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
 
         var value = new TextBlock { Text = voice, FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
-        LoadoutPages.Themed(value, TextBlock.ForegroundProperty, voice == NoVoice ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
+        ThemeInk.Bind(value, TextBlock.ForegroundProperty, voice == NoVoice ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
         grid.Children.Add(value);
 
         if (provider is not null)
@@ -860,7 +860,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
                 Margin = new Thickness(8, 0),
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            LoadoutPages.Themed(tag, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(tag, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             Grid.SetColumn(tag, 1);
             grid.Children.Add(tag);
         }
@@ -868,7 +868,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
         if (!readOnly)
         {
             var caret = new TextBlock { Text = "›", FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
-            LoadoutPages.Themed(caret, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(caret, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             Grid.SetColumn(caret, 2);
             grid.Children.Add(caret);
         }
@@ -916,7 +916,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
             FontSize = TypeScale.Meta,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
-        LoadoutPages.Themed(count, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(count, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var foot = new DockPanel { LastChildFill = false };
         DockPanel.SetDock(count, Dock.Right);
@@ -1109,7 +1109,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
             FontSize = TypeScale.Meta,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        LoadoutPages.Themed(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         _distanceText = new TextBlock
         {
@@ -1119,7 +1119,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(16, 0, 0, 0),
         };
-        LoadoutPages.Themed(_distanceText, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(_distanceText, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var galaxy = _host.Settings.Current.Knowledge.GalaxySearch;
         var hint = Plain(galaxy
@@ -1135,7 +1135,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
         line.Children.Add(_distanceText);
 
         var strip = new Border { MinHeight = 36, Padding = new Thickness(12, 4), Child = line };
-        LoadoutPages.Themed(strip, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(strip, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         LookUpDistance(_state()?.Location.StarSystem, system);
 
@@ -1157,7 +1157,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
             FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        LoadoutPages.Themed(place, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(place, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         _distanceText = new TextBlock
         {
@@ -1166,7 +1166,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
             FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        LoadoutPages.Themed(_distanceText, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(_distanceText, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         LookUpDistance(_state()?.Location.StarSystem, system);
 
@@ -1246,7 +1246,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
             FontWeight = FontWeight.SemiBold,
             FontSize = TypeScale.ControlLarge,
         };
-        LoadoutPages.Themed(head, TextBlock.ForegroundProperty, ThemeManager.RedKey);
+        ThemeInk.Bind(head, TextBlock.ForegroundProperty, ThemeManager.RedKey);
 
         var words = new TextBlock
         {
@@ -1254,7 +1254,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
             FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
         };
-        LoadoutPages.Themed(words, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(words, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var confirm = Tile("REMOVE", RemoveConfirmName, () =>
         {
@@ -1281,13 +1281,13 @@ public sealed class CharactersPage : UserControl, IPageSummary
         };
 
         var bar = new Border { Width = 3 };
-        LoadoutPages.Themed(bar, Border.BackgroundProperty, ThemeManager.RedKey);
+        ThemeInk.Bind(bar, Border.BackgroundProperty, ThemeManager.RedKey);
 
         var strip = new DockPanel { Children = { bar, inner } };
         DockPanel.SetDock(bar, Dock.Left);
 
         var shell = new Border { Margin = new Thickness(0, 14, 0, 0), Child = strip };
-        LoadoutPages.Themed(shell, Border.BackgroundProperty, ThemeManager.RedGroundKey);
+        ThemeInk.Bind(shell, Border.BackgroundProperty, ThemeManager.RedGroundKey);
 
         return shell;
     }

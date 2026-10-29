@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+﻿﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
@@ -244,7 +244,7 @@ public static class HelpPageView
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            LoadoutPages.Themed(intro, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+            ThemeInk.Bind(intro, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
             stack.Children.Add(intro);
         }
 
@@ -289,7 +289,7 @@ public static class HelpPageView
                 LineHeight = TypeScale.Body * 1.5,
             };
 
-            LoadoutPages.Themed(prose, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(prose, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             step.Children.Add(prose);
         }
 
@@ -316,7 +316,7 @@ public static class HelpPageView
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
-            LoadoutPages.Themed(number, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
+            ThemeInk.Bind(number, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
 
             // 32 px, which is over the 30 px touch floor the checklist settled on — it is not pressable, but
             // a badge smaller than the things beside it reads as an afterthought on a quad a metre away.
@@ -328,7 +328,7 @@ public static class HelpPageView
                 VerticalAlignment = VerticalAlignment.Top,
             };
 
-            LoadoutPages.Themed(badge, Border.BackgroundProperty, ThemeManager.AKey);
+            ThemeInk.Bind(badge, Border.BackgroundProperty, ThemeManager.AKey);
             row.Children.Add(badge);
         }
 
@@ -341,7 +341,7 @@ public static class HelpPageView
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        LoadoutPages.Themed(heading, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(heading, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         row.Children.Add(heading);
 
         return row;
@@ -376,7 +376,7 @@ public static class HelpPageView
             var heading = TitleText.Build(
                 group.Key.Length > 0 ? group.Key : "Elsewhere", TypeScale.Meta, TitleRank.Group);
 
-            LoadoutPages.Themed(heading, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(heading, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             heading.Margin = new Thickness(0, 10, 0, 4);
             block.Children.Add(heading);
 
@@ -490,7 +490,7 @@ public static class HelpPageView
             TextWrapping = TextWrapping.Wrap,
         };
 
-        LoadoutPages.Themed(written, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(written, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         stack.Children.Add(written);
 
         return ListRow.Dress(new Border { Child = stack });
@@ -530,7 +530,7 @@ public static class HelpPageView
             Margin = new Thickness(0, 8, 0, 0),
         };
 
-        LoadoutPages.Themed(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return text;
     }

@@ -144,8 +144,8 @@ public sealed class PowerView : UserControl
             Child = body,
         };
 
-        LoadoutPages.Themed(frame, Border.BackgroundProperty, ThemeManager.BgKey);
-        LoadoutPages.Themed(frame, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(frame, Border.BackgroundProperty, ThemeManager.BgKey);
+        ThemeInk.Bind(frame, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         Chart = null;
 
@@ -306,7 +306,7 @@ public sealed class PowerView : UserControl
 
         var cell = new Border { Padding = new Thickness(centred ? 0 : 12, 0), Child = text };
 
-        LoadoutPages.Themed(cell, Border.BackgroundProperty, ground);
+        ThemeInk.Bind(cell, Border.BackgroundProperty, ground);
 
         return cell;
     }
@@ -412,7 +412,7 @@ public sealed class PowerView : UserControl
                 },
             };
 
-            LoadoutPages.Themed(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
+            ThemeInk.Bind(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
             side.Children.Add(tile);
         }
 
@@ -456,7 +456,7 @@ public sealed class PowerView : UserControl
             },
         };
 
-        LoadoutPages.Themed(label, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(label, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         var (word, ground, ink) = powered
             ? ("ON", ThemeManager.Tile2Key, ThemeManager.AKey)
@@ -471,7 +471,7 @@ public sealed class PowerView : UserControl
 
         var state = new Border { Child = text };
 
-        LoadoutPages.Themed(state, Border.BackgroundProperty, ground);
+        ThemeInk.Bind(state, Border.BackgroundProperty, ground);
 
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,56"), ColumnSpacing = 2, Height = 40 };
 
@@ -597,7 +597,7 @@ public sealed class PowerView : UserControl
 
         var tile = new Border { Padding = new Thickness(12, 10), Child = stack };
 
-        LoadoutPages.Themed(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return tile;
     }
@@ -625,7 +625,7 @@ public sealed class PowerView : UserControl
             Child = row,
         };
 
-        LoadoutPages.Themed(head, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(head, Border.BorderBrushProperty, ThemeManager.AKey);
 
         return head;
     }
@@ -639,7 +639,7 @@ public sealed class PowerView : UserControl
             Child = Chrome(text, 12, ThemeManager.GreyKey, tracking: 1.2),
         };
 
-        LoadoutPages.Themed(head, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(head, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return head;
     }
@@ -648,7 +648,7 @@ public sealed class PowerView : UserControl
     {
         var slab = new Border { Padding = new Thickness(12, 10), Child = Prose(text, 14, ThemeManager.WhiteKey) };
 
-        LoadoutPages.Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return slab;
     }
@@ -665,7 +665,7 @@ public sealed class PowerView : UserControl
             LetterSpacing = tracking,
         };
 
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
         return block;
     }
@@ -679,7 +679,7 @@ public sealed class PowerView : UserControl
             FontSize = size,
         };
 
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
         return block;
     }
@@ -694,7 +694,7 @@ public sealed class PowerView : UserControl
             TextWrapping = TextWrapping.Wrap,
         };
 
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
         return block;
     }

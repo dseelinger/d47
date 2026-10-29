@@ -187,7 +187,7 @@ public sealed class BuildTalkSection : UserControl
         };
 
         var message = Message(body, ThemeManager.CyanKey, commander: true);
-        LoadoutPages.Themed(message, Border.BackgroundProperty, ThemeManager.CyanGroundKey);
+        ThemeInk.Bind(message, Border.BackgroundProperty, ThemeManager.CyanGroundKey);
 
         return message;
     }
@@ -285,7 +285,7 @@ public sealed class BuildTalkSection : UserControl
         }
 
         var bar = new Border { Padding = new Thickness(18, 16, 18, 18), Child = stack };
-        LoadoutPages.Themed(bar, Border.BackgroundProperty, ThemeManager.BarKey);
+        ThemeInk.Bind(bar, Border.BackgroundProperty, ThemeManager.BarKey);
 
         return bar;
     }
@@ -322,8 +322,8 @@ public sealed class BuildTalkSection : UserControl
                 },
             };
 
-            LoadoutPages.Themed(locked, Border.BackgroundProperty, ThemeManager.SlabKey);
-            LoadoutPages.Themed(locked, Border.BorderBrushProperty, ThemeManager.RedKey);
+            ThemeInk.Bind(locked, Border.BackgroundProperty, ThemeManager.SlabKey);
+            ThemeInk.Bind(locked, Border.BorderBrushProperty, ThemeManager.RedKey);
             tiles.Children.Add(locked);
         }
 
@@ -345,7 +345,7 @@ public sealed class BuildTalkSection : UserControl
             Grid.SetColumn(holding, 1);
 
             var tile = new Border { Padding = new Thickness(14, 10), Margin = new Thickness(0, 0, Gaps.Tile, Gaps.Tile), Child = line };
-            LoadoutPages.Themed(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
+            ThemeInk.Bind(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
             materials.Children.Add(tile);
         }
 
@@ -450,7 +450,7 @@ public sealed class BuildTalkSection : UserControl
             Child = grid,
         };
 
-        LoadoutPages.Themed(row, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(row, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         return row;
     }
@@ -483,7 +483,7 @@ public sealed class BuildTalkSection : UserControl
             MaxWidth = 700,
         };
 
-        LoadoutPages.Themed(message, Border.BorderBrushProperty, bar);
+        ThemeInk.Bind(message, Border.BorderBrushProperty, bar);
 
         return message;
     }
@@ -529,7 +529,7 @@ public sealed class BuildTalkSection : UserControl
             Child = content,
         };
 
-        LoadoutPages.Themed(border, Border.BorderBrushProperty, key);
+        ThemeInk.Bind(border, Border.BorderBrushProperty, key);
 
         return border;
     }
@@ -555,7 +555,7 @@ public sealed class BuildTalkSection : UserControl
             TextWrapping = TextWrapping.Wrap,
         };
 
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 

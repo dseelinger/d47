@@ -28,7 +28,7 @@ public sealed class ConfirmDialog : ModalDialog
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var confirm = new Button { Content = confirmLabel, MinWidth = 110 };
         var decline = new Button { Content = declineLabel, MinWidth = 110 };
@@ -48,9 +48,6 @@ public sealed class ConfirmDialog : ModalDialog
 
         Opened += (_, _) => decline.Focus();
     }
-
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 
     private void Answer(bool confirmed)
     {

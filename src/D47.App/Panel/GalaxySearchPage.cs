@@ -625,7 +625,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         grid.Margin = new Thickness(12, 0, 12, 6);
 
         var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Child = grid };
-        Themed(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return rule;
     }
@@ -1051,7 +1051,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 block.Children.Add(Head("Searching", Aside(_running!, null), refresh: null, save: false, disabled: true));
 
                 var asking = new Border { MinHeight = 50, Padding = new Thickness(14, 0), Child = Label(RunningText, width: null) };
-                Themed(asking, Border.BackgroundProperty, ThemeManager.SlabKey);
+                ThemeInk.Bind(asking, Border.BackgroundProperty, ThemeManager.SlabKey);
                 block.Children.Add(asking);
                 break;
 
@@ -1153,7 +1153,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 LetterSpacing = TypeScale.Small * Fonts.ChromeTracking,
                 VerticalAlignment = VerticalAlignment.Bottom,
             };
-            Themed(line, TextBlock.ForegroundProperty, ThemeManager.AKey);
+            ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.AKey);
             line.Inlines!.Add(new Run(words.Lead.ToUpperInvariant()));
 
             var reference = new Run(words.Reference.ToUpperInvariant());
@@ -1225,14 +1225,14 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         Grid.SetColumn(tiles, 1);
 
         var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Padding = new Thickness(0, 0, 0, 6), Child = row };
-        Themed(rule, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.AKey);
 
         return rule;
     }
 
     private Border Footer()
     {
-        Themed(_said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         _said.FontSize = TypeScale.Tip;
         _said.FontFamily = Fonts.ProseFamily;
 
@@ -1245,7 +1245,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             Margin = new Thickness(0, 10, 0, 0),
             Child = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { _said, _stamp } },
         };
-        Themed(border, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(border, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         return border;
     }
@@ -1316,7 +1316,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             block.Width = fixedWidth;
         }
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 
@@ -1331,26 +1331,23 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             LetterSpacing = size * Fonts.ChromeTracking,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
     protected static TextBlock Mono(string text, double size, string key)
     {
         var block = new TextBlock { Text = text, FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = size };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
     protected static TextBlock Prose(string text, double size, string key)
     {
         var block = new TextBlock { Text = text, FontFamily = Fonts.ProseFamily, FontSize = size, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
-
-    protected static void Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 
     protected void RaiseSummaryChanged() => SummaryChanged?.Invoke(this, EventArgs.Empty);
 }

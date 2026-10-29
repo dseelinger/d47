@@ -141,8 +141,8 @@ public sealed class RoutePlanPage : UserControl
     {
         if (ProgressOpen)
         {
-            RoutingKit.Themed(_progress, BackgroundProperty, "D47.A");
-            RoutingKit.Themed(_progress, ForegroundProperty, "D47.Knock");
+            ThemeInk.Bind(_progress, BackgroundProperty, "D47.A");
+            ThemeInk.Bind(_progress, ForegroundProperty, "D47.Knock");
         }
         else
         {

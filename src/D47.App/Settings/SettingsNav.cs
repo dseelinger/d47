@@ -245,9 +245,6 @@ internal sealed class SettingsNav(
 
     private IBrush? Res(string key) => resources.FindResource(key) as IBrush;
 
-    private IDisposable Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, resources.GetResourceObservable(key));
-
     /// <summary>An area's title in the nav; pressing it opens the area's first place.</summary>
     private (Border Item, TextBlock Text, Border Bar) BuildHeading(string title, int areaIndex)
     {
@@ -259,7 +256,7 @@ internal sealed class SettingsNav(
             LetterSpacing = TypeScale.Secondary * Fonts.ChromeTracking,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var bar = new Border
         {
@@ -267,7 +264,7 @@ internal sealed class SettingsNav(
             Margin = new Thickness(0, 4, 8, 4),
             Opacity = 0,
         };
-        Themed(bar, Border.BackgroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(bar, Border.BackgroundProperty, ThemeManager.AKey);
 
         var layout = new DockPanel();
         DockPanel.SetDock(bar, Dock.Left);
@@ -296,7 +293,7 @@ internal sealed class SettingsNav(
             Margin = new Thickness(0, 4),
             Opacity = 0,
         };
-        Themed(bar, Border.BackgroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(bar, Border.BackgroundProperty, ThemeManager.AKey);
 
         var text = new TextBlock
         {
@@ -380,14 +377,14 @@ internal sealed class SettingsNav(
 
         if (active)
         {
-            entry.Fill = Themed(entry.Item, Border.BackgroundProperty, ThemeManager.AKey);
-            entry.Ink = Themed(entry.Text, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
+            entry.Fill = ThemeInk.Bind(entry.Item, Border.BackgroundProperty, ThemeManager.AKey);
+            entry.Ink = ThemeInk.Bind(entry.Text, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
         }
         else
         {
             // No resource for "nothing", so the fill is dropped rather than bound.
             entry.Item.Background = Brushes.Transparent;
-            entry.Ink = Themed(
+            entry.Ink = ThemeInk.Bind(
                 entry.Text,
                 TextBlock.ForegroundProperty,
                 paint == NavPaint.Dim ? ThemeManager.Grey2Key : ThemeManager.GreyKey);
@@ -405,7 +402,7 @@ internal sealed class SettingsNav(
         area.Painted = paint;
 
         area.Ink?.Dispose();
-        area.Ink = Themed(
+        area.Ink = ThemeInk.Bind(
             area.HeadingText,
             TextBlock.ForegroundProperty,
             paint switch
@@ -422,7 +419,7 @@ internal sealed class SettingsNav(
 
         if (paint == NavPaint.Active)
         {
-            area.Fill = Themed(area.Heading, Border.BackgroundProperty, ThemeManager.Tile2Key);
+            area.Fill = ThemeInk.Bind(area.Heading, Border.BackgroundProperty, ThemeManager.Tile2Key);
         }
         else
         {

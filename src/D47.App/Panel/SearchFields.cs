@@ -26,7 +26,7 @@ internal static class SearchText
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(12, 0, 4, 0),
         };
-        Ink(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 
@@ -41,12 +41,10 @@ internal static class SearchText
             TextWrapping = TextWrapping.Wrap,
             IsVisible = text is not null,
         };
-        Ink(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 
-    internal static void Ink(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 }
 
 /// <summary>The line under a pair of range boxes that says what the range will do.</summary>

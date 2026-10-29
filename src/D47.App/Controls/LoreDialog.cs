@@ -78,7 +78,7 @@ public sealed class LoreDialog : ModalDialog
                     : "D47 searches once before storing, and records whether anything backed it up.",
         };
 
-        Themed(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var body = new StackPanel { Spacing = Modal.BlockGap };
 
@@ -207,6 +207,4 @@ public sealed class LoreDialog : ModalDialog
         _ => "your word",
     };
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

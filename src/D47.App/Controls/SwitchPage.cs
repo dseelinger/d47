@@ -1,4 +1,4 @@
-﻿using Avalonia;
+﻿﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Automation;
@@ -195,15 +195,15 @@ public sealed class SwitchPage : DialogPage
             },
         };
 
-        Themed(_walkCard, Border.BackgroundProperty, ThemeManager.SlabKey);
-        Themed(_walkSays, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(_walkCard, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(_walkSays, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         var header = new TextBlock
         {
             Text = $"Saved to {store.Path}. This is the same file you can edit by hand.",
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(header, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(header, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var root = new StackPanel { Spacing = 12, Children = { header, _problems, _walkCard, _list } };
 
@@ -463,7 +463,7 @@ public sealed class SwitchPage : DialogPage
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             _list.Children.Add(empty);
             return;
         }
@@ -500,7 +500,7 @@ public sealed class SwitchPage : DialogPage
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(health, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(health, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var found = new TextBlock
         {
@@ -509,7 +509,7 @@ public sealed class SwitchPage : DialogPage
             IsVisible = false,
         };
 
-        Themed(found, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(found, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var collided = false;
 
@@ -541,7 +541,7 @@ public sealed class SwitchPage : DialogPage
             },
         };
 
-        Themed(card, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(card, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         // Refreshed on every sample, so a device that has just gone away — a 4x32 mode change, an unplugged
         // throttle — says so on this card while the page is still open.
@@ -584,7 +584,7 @@ public sealed class SwitchPage : DialogPage
             if (state?.Collides is not null != collided)
             {
                 collided = !collided;
-                Themed(health, TextBlock.ForegroundProperty, collided ? ThemeManager.RedKey : ThemeManager.GreyKey);
+                ThemeInk.Bind(health, TextBlock.ForegroundProperty, collided ? ThemeManager.RedKey : ThemeManager.GreyKey);
             }
         });
 
@@ -609,7 +609,7 @@ public sealed class SwitchPage : DialogPage
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            Themed(head, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(head, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             cells.Add(head);
         }
 
@@ -626,7 +626,7 @@ public sealed class SwitchPage : DialogPage
             VerticalAlignment = VerticalAlignment.Top,
             IsVisible = false,
         };
-        Themed(bar, Border.BackgroundProperty, ThemeManager.CyanKey);
+        ThemeInk.Bind(bar, Border.BackgroundProperty, ThemeManager.CyanKey);
 
         var label = new TextBlock
         {
@@ -648,7 +648,7 @@ public sealed class SwitchPage : DialogPage
             IsVisible = false,
         };
 
-        Themed(heldWord, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+        ThemeInk.Bind(heldWord, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
 
         var buttonCell = new Grid
         {
@@ -693,7 +693,7 @@ public sealed class SwitchPage : DialogPage
             Margin = new Thickness(8, 0, 0, 0),
         };
 
-        Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(chevron, TextBlock.ForegroundProperty, ThemeManager.AKey);
         DockPanel.SetDock(chevron, Dock.Right);
 
         var pageButton = new Button
@@ -790,7 +790,7 @@ public sealed class SwitchPage : DialogPage
                 ? _pageWords.GetValueOrDefault(position.Destination, position.Destination)
                 : NothingWord;
 
-            Themed(pageWord, TextBlock.ForegroundProperty, position.Destination.Length > 0 ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
+            ThemeInk.Bind(pageWord, TextBlock.ForegroundProperty, position.Destination.Length > 0 ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
         }
 
         action.Picked += (_, id) =>
@@ -893,7 +893,7 @@ public sealed class SwitchPage : DialogPage
             wasHeld = held;
             bar.IsVisible = held;
             heldWord.IsVisible = held;
-            Themed(label, TextBlock.ForegroundProperty, held ? ThemeManager.CyanKey : ThemeManager.GreyKey);
+            ThemeInk.Bind(label, TextBlock.ForegroundProperty, held ? ThemeManager.CyanKey : ThemeManager.GreyKey);
         }
 
         Held(null);
@@ -962,9 +962,6 @@ public sealed class SwitchPage : DialogPage
 
         return wanted;
     }
-
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 
     /// <summary>The editor's working copy.</summary>
     private sealed class MutableSwitch

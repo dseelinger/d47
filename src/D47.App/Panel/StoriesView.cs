@@ -280,7 +280,7 @@ public sealed class StoriesView : UserControl, IPageSummary
         parts.Add(AdventuresPage.RowSecondary($"{card.Pacing.Name} · {card.LevelName} · {card.CoreName}{(finished ? " · Finished" : string.Empty)}"));
 
         var blurb = new ClampedText { FullText = card.Blurb, TextWrapping = Avalonia.Media.TextWrapping.Wrap, FontSize = TypeScale.Tip };
-        AdventuresPage.Themed(blurb, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(blurb, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         parts.Add(blurb);
 
         if (ratings is not null)

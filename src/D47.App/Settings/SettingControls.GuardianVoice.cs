@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿﻿using System.Diagnostics;
 using System.Globalization;
 using D47.Core.Listening;
 using Avalonia;
@@ -169,10 +169,10 @@ internal sealed partial class SettingControls
         _drawnByGroup[SpeechCapability.GuardianTestKey] = test;
 
         var title = new TextBlock { Text = "Effects", FontFamily = Fonts.ProseFamily, FontSize = TypeScale.Secondary };
-        Themed(title, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(title, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var hint = new TextBlock { Text = "Applied top to bottom. Drag to reorder.", FontSize = TypeScale.Meta, VerticalAlignment = VerticalAlignment.Bottom };
-        Themed(hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var head = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { title, hint } };
 
@@ -347,13 +347,13 @@ internal sealed partial class SettingControls
 
             saveAsFill?.Dispose();
             saveAsInk?.Dispose();
-            saveAsFill = nameMode == GuardianNameMode.Create ? Themed(saveAs, Button.BackgroundProperty, ThemeManager.AKey) : null;
-            saveAsInk = nameMode == GuardianNameMode.Create ? Themed(saveAs, Button.ForegroundProperty, ThemeManager.KnockKey) : null;
+            saveAsFill = nameMode == GuardianNameMode.Create ? ThemeInk.Bind(saveAs, Button.BackgroundProperty, ThemeManager.AKey) : null;
+            saveAsInk = nameMode == GuardianNameMode.Create ? ThemeInk.Bind(saveAs, Button.ForegroundProperty, ThemeManager.KnockKey) : null;
 
             renameFill?.Dispose();
             renameInk?.Dispose();
-            renameFill = nameMode == GuardianNameMode.Rename ? Themed(rename, Button.BackgroundProperty, ThemeManager.AKey) : null;
-            renameInk = nameMode == GuardianNameMode.Rename ? Themed(rename, Button.ForegroundProperty, ThemeManager.KnockKey) : null;
+            renameFill = nameMode == GuardianNameMode.Rename ? ThemeInk.Bind(rename, Button.BackgroundProperty, ThemeManager.AKey) : null;
+            renameInk = nameMode == GuardianNameMode.Rename ? ThemeInk.Bind(rename, Button.ForegroundProperty, ThemeManager.KnockKey) : null;
 
             var entries = new List<InlinePickerEntry>();
             entries.AddRange(GuardianPresets.Builtins.Select(builtin =>
@@ -396,7 +396,7 @@ internal sealed partial class SettingControls
                 strip.Level.Muted = !stored.Ticked;
                 strip.Value.Text = SettingsView.GuardianShown(effect, stored.Level);
                 strip.ValueInk?.Dispose();
-                strip.ValueInk = Themed(
+                strip.ValueInk = ThemeInk.Bind(
                     strip.Value, TextBlock.ForegroundProperty, stored.Ticked ? ThemeManager.WhiteKey : ThemeManager.Grey2Key);
             }
         }, under);
@@ -445,7 +445,7 @@ internal sealed partial class SettingControls
             TextAlignment = TextAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(number, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(number, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var (box, label) = LabeledCheckBox.Build(effect.Label);
         label.FontSize = TypeScale.Secondary;
@@ -472,7 +472,7 @@ internal sealed partial class SettingControls
             LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(parameter, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(parameter, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var level = new Level
         {
@@ -512,7 +512,7 @@ internal sealed partial class SettingControls
         };
 
         var valueCell = new Border { Child = value };
-        Themed(valueCell, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(valueCell, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         var stepper = new Grid
         {
@@ -568,7 +568,7 @@ internal sealed partial class SettingControls
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 VerticalContentAlignment = VerticalAlignment.Center,
             };
-            Themed(arrow, Button.BackgroundProperty, ThemeManager.Tile2Key);
+            ThemeInk.Bind(arrow, Button.BackgroundProperty, ThemeManager.Tile2Key);
             AutomationProperties.SetName(arrow, name);
             arrow.Click += (_, _) => WriteGuardianLevel(levelKey, next(), message);
 
@@ -753,7 +753,7 @@ internal sealed partial class SettingControls
     private void PaintGuardianHandle(GuardianStrip strip)
     {
         strip.StripInk?.Dispose();
-        strip.StripInk = Themed(
+        strip.StripInk = ThemeInk.Bind(
             strip.Strip, Border.BackgroundProperty, strip.Dragging ? ThemeManager.Tile2Key : ThemeManager.TileKey);
 
         strip.HandleInk?.Dispose();
@@ -762,11 +762,11 @@ internal sealed partial class SettingControls
 
         if (strip.Dragging)
         {
-            strip.HandleInk = Themed(strip.Handle, Border.BackgroundProperty, ThemeManager.AKey);
+            strip.HandleInk = ThemeInk.Bind(strip.Handle, Border.BackgroundProperty, ThemeManager.AKey);
         }
         else if (strip.Hovered || strip.Handle.IsFocused)
         {
-            strip.HandleInk = Themed(strip.Handle, Border.BackgroundProperty, ThemeManager.Tile2Key);
+            strip.HandleInk = ThemeInk.Bind(strip.Handle, Border.BackgroundProperty, ThemeManager.Tile2Key);
         }
 
         foreach (var ink in strip.DotInks)
@@ -779,7 +779,7 @@ internal sealed partial class SettingControls
         foreach (var dot in strip.Dots)
         {
             strip.DotInks.Add(
-                Themed(dot, Border.BackgroundProperty, strip.Dragging ? ThemeManager.KnockKey : ThemeManager.AKey));
+                ThemeInk.Bind(dot, Border.BackgroundProperty, strip.Dragging ? ThemeManager.KnockKey : ThemeManager.AKey));
         }
     }
 
@@ -814,7 +814,7 @@ internal sealed partial class SettingControls
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         undo = new Button
         {
@@ -839,8 +839,8 @@ internal sealed partial class SettingControls
             IsVisible = false,
             Child = row,
         };
-        Themed(notice, Border.BackgroundProperty, ThemeManager.SlabKey);
-        Themed(notice, Border.BorderBrushProperty, ThemeManager.CyanKey);
+        ThemeInk.Bind(notice, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(notice, Border.BorderBrushProperty, ThemeManager.CyanKey);
 
         return notice;
     }
@@ -859,7 +859,7 @@ internal sealed partial class SettingControls
             VerticalAlignment = VerticalAlignment.Center,
             Width = SettingsView.LabelColumnWidth,
         };
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var field = new TextBox
         {
@@ -940,8 +940,8 @@ internal sealed partial class SettingControls
 
         var label = test.Content;
         test.Content = "Playing";
-        var fill = Themed(test, Button.BackgroundProperty, ThemeManager.AKey);
-        var ink = Themed(test, Button.ForegroundProperty, ThemeManager.KnockKey);
+        var fill = ThemeInk.Bind(test, Button.BackgroundProperty, ThemeManager.AKey);
+        var ink = ThemeInk.Bind(test, Button.ForegroundProperty, ThemeManager.KnockKey);
 
         try
         {

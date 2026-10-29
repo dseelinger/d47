@@ -206,7 +206,7 @@ public sealed class CustomVoicesPage : DialogPage
                 Margin = new Thickness(0, 8, 0, 0),
                 Child = Prose("No other custom voices yet. Add one below.", TypeScale.Secondary, ThemeManager.GreyKey),
             };
-            Ink(empty, Border.BackgroundProperty, ThemeManager.SlabKey);
+            ThemeInk.Bind(empty, Border.BackgroundProperty, ThemeManager.SlabKey);
             _list.Children.Add(empty);
             return;
         }
@@ -229,7 +229,7 @@ public sealed class CustomVoicesPage : DialogPage
     {
         var own = _editing.Own;
         var label = SettingsView.RowLabel("Your voice");
-        Ink(label, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
 
         var says = Prose(own.State(), TypeScale.Secondary, ThemeManager.GreyKey);
         says.VerticalAlignment = VerticalAlignment.Center;
@@ -580,7 +580,7 @@ public sealed class CustomVoicesPage : DialogPage
                 },
             },
         };
-        Ink(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return slab;
     }
@@ -664,8 +664,8 @@ public sealed class CustomVoicesPage : DialogPage
     /// <summary>A tile drawn as the selected one: solid A with Knock ink, held in <paramref name="inks"/>.</summary>
     private static void Selected(Button button, List<IDisposable> inks)
     {
-        inks.Add(Ink(button, BackgroundProperty, ThemeManager.AKey));
-        inks.Add(Ink(button, ForegroundProperty, ThemeManager.KnockKey));
+        inks.Add(ThemeInk.Bind(button, BackgroundProperty, ThemeManager.AKey));
+        inks.Add(ThemeInk.Bind(button, ForegroundProperty, ThemeManager.KnockKey));
     }
 
     private static void Release(List<IDisposable> inks)
@@ -688,14 +688,14 @@ public sealed class CustomVoicesPage : DialogPage
             LineHeight = size * 1.5,
             TextWrapping = TextWrapping.Wrap,
         };
-        Ink(block, TextBlock.ForegroundProperty, ink);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ink);
         return block;
     }
 
     private static TextBlock Mono(string text, string ink)
     {
         var block = new TextBlock { Text = text, FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Small };
-        Ink(block, TextBlock.ForegroundProperty, ink);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ink);
         return block;
     }
 
@@ -709,7 +709,7 @@ public sealed class CustomVoicesPage : DialogPage
             FontWeight = FontWeight.SemiBold,
             LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking,
         };
-        Ink(block, TextBlock.ForegroundProperty, ink);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ink);
         return block;
     }
 
@@ -718,6 +718,4 @@ public sealed class CustomVoicesPage : DialogPage
 
     private static TimeSpan Min(TimeSpan a, TimeSpan b) => a < b ? a : b;
 
-    private static IDisposable Ink(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.GetResourceObservable(key));
 }

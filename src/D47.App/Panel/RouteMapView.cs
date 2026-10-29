@@ -33,7 +33,7 @@ public sealed class RouteMapView : Control
 
         _map.Fit(Inset);
         _map.Redrawn += _ => InvalidateVisual();
-        RoutingKit.Themed(_frame, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(_frame, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         VisualChildren.Add(_map);
         VisualChildren.Add(_frame);

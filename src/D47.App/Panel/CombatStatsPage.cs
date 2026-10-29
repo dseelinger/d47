@@ -449,7 +449,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
     private static Run White(string text)
     {
         var run = Fonts.Mono(text);
-        LoadoutPages.Themed(run, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(run, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
 
         return run;
     }
@@ -486,7 +486,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             Padding = new Thickness(14, 6),
             Child = grid,
         };
-        RoutingKit.Themed(border, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return border;
     }
@@ -540,7 +540,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             TextAlignment = TextAlignment.Right,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
-        RoutingKit.Themed(block, TextBlock.ForegroundProperty, value is null ? ThemeManager.Grey2Key : ThemeManager.AKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, value is null ? ThemeManager.Grey2Key : ThemeManager.AKey);
 
         return block;
     }

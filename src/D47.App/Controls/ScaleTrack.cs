@@ -86,8 +86,8 @@ public sealed class ScaleTrack : ContentControl
     private void Ink()
     {
         var value = Value;
-        Ink(_low, TextBlock.ForegroundProperty, value <= _minimum ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
-        Ink(_high, TextBlock.ForegroundProperty, value >= _maximum ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
+        ThemeInk.Bind(_low, TextBlock.ForegroundProperty, value <= _minimum ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
+        ThemeInk.Bind(_high, TextBlock.ForegroundProperty, value >= _maximum ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
     }
 
     private static TextBlock Word(string text) => new()
@@ -97,6 +97,4 @@ public sealed class ScaleTrack : ContentControl
         VerticalAlignment = VerticalAlignment.Center,
     };
 
-    private static void Ink(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

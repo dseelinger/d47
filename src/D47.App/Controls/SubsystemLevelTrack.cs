@@ -72,7 +72,7 @@ public sealed class SubsystemLevelTrack : ContentControl
             Width = 14,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(chevron, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var heading = new TextBlock
         {
@@ -81,7 +81,7 @@ public sealed class SubsystemLevelTrack : ContentControl
             FontWeight = FontWeight.Medium,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(heading, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(heading, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var (chip, chipText) = BuildChip("NONE");
         _countChip = chipText;
@@ -339,12 +339,12 @@ public sealed class SubsystemLevelTrack : ContentControl
 
         for (var c = 0; c < _nameLabels.Count; c++)
         {
-            Themed(_nameLabels[c], TextBlock.ForegroundProperty, c == defaultIndex ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
+            ThemeInk.Bind(_nameLabels[c], TextBlock.ForegroundProperty, c == defaultIndex ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
         }
 
         for (var c = 0; c < _columnRules.Count; c++)
         {
-            Themed(_columnRules[c], Rectangle.FillProperty, ThemeManager.LineKey);
+            ThemeInk.Bind(_columnRules[c], Rectangle.FillProperty, ThemeManager.LineKey);
             _columnRules[c].Opacity = c == defaultIndex ? 0.35 : 1;
         }
 
@@ -361,7 +361,7 @@ public sealed class SubsystemLevelTrack : ContentControl
                 ownCount++;
             }
 
-            Themed(parts.Name, TextBlock.ForegroundProperty, hasOwn ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
+            ThemeInk.Bind(parts.Name, TextBlock.ForegroundProperty, hasOwn ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
 
             var filledKey = hasOwn ? ThemeManager.AKey : ThemeManager.GreyKey;
 
@@ -372,10 +372,10 @@ public sealed class SubsystemLevelTrack : ContentControl
                 var leftFilled = c >= 1 && c <= activeIndex;
                 var rightFilled = c < activeIndex;
 
-                Themed(cell.Left, Rectangle.FillProperty, leftFilled ? filledKey : ThemeManager.LineKey);
+                ThemeInk.Bind(cell.Left, Rectangle.FillProperty, leftFilled ? filledKey : ThemeManager.LineKey);
                 cell.Left.Opacity = leftFilled ? 1 : 0.3;
 
-                Themed(cell.Right, Rectangle.FillProperty, rightFilled ? filledKey : ThemeManager.LineKey);
+                ThemeInk.Bind(cell.Right, Rectangle.FillProperty, rightFilled ? filledKey : ThemeManager.LineKey);
                 cell.Right.Opacity = rightFilled ? 1 : 0.3;
 
                 var atStop = c == activeIndex;
@@ -386,13 +386,13 @@ public sealed class SubsystemLevelTrack : ContentControl
                     if (hasOwn)
                     {
                         cell.Marker.BorderThickness = new Thickness(0);
-                        Themed(cell.Marker, Border.BackgroundProperty, ThemeManager.AKey);
+                        ThemeInk.Bind(cell.Marker, Border.BackgroundProperty, ThemeManager.AKey);
                     }
                     else
                     {
                         cell.Marker.Background = Brushes.Transparent;
                         cell.Marker.BorderThickness = new Thickness(1.5);
-                        Themed(cell.Marker, Border.BorderBrushProperty, ThemeManager.BlueKey);
+                        ThemeInk.Bind(cell.Marker, Border.BorderBrushProperty, ThemeManager.BlueKey);
                     }
                 }
 
@@ -400,7 +400,7 @@ public sealed class SubsystemLevelTrack : ContentControl
             }
 
             parts.Readout.Content = hasOwn ? StopNames[activeIndex] : "DEFAULT";
-            Themed(parts.Readout, ContentControl.ForegroundProperty, hasOwn ? ThemeManager.AKey : ThemeManager.GreyKey);
+            ThemeInk.Bind(parts.Readout, ContentControl.ForegroundProperty, hasOwn ? ThemeManager.AKey : ThemeManager.GreyKey);
 
             parts.Reset.IsVisible = hasOwn;
         }
@@ -436,11 +436,11 @@ public sealed class SubsystemLevelTrack : ContentControl
         {
             square.Background = Brushes.Transparent;
             square.BorderThickness = new Thickness(1.5);
-            Themed(square, Border.BorderBrushProperty, ThemeManager.BlueKey);
+            ThemeInk.Bind(square, Border.BorderBrushProperty, ThemeManager.BlueKey);
         }
         else
         {
-            Themed(square, Border.BackgroundProperty, ThemeManager.AKey);
+            ThemeInk.Bind(square, Border.BackgroundProperty, ThemeManager.AKey);
         }
 
         label = new TextBlock
@@ -449,7 +449,7 @@ public sealed class SubsystemLevelTrack : ContentControl
             FontSize = TypeScale.Small,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
         stack.Children.Add(square);
@@ -461,14 +461,14 @@ public sealed class SubsystemLevelTrack : ContentControl
     private static (Border Chip, TextBlock Text) BuildChip(string initial)
     {
         var text = new TextBlock { Text = initial, FontSize = TypeScale.Small };
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var chip = new Border
         {
             Padding = new Thickness(6, 1),
             Child = text,
         };
-        Themed(chip, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(chip, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return (chip, text);
     }
@@ -476,6 +476,4 @@ public sealed class SubsystemLevelTrack : ContentControl
     private static LogLevel? ParseLevel(string? value) =>
         Enum.TryParse<LogLevel>(value, ignoreCase: true, out var level) ? level : null;
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

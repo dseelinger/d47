@@ -508,7 +508,7 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        LoadoutPages.Themed(said, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+        ThemeInk.Bind(said, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
 
         var arrow = MaterialsPage.Chrome("›", ThemeManager.GreyKey);
         arrow.HorizontalAlignment = HorizontalAlignment.Center;
@@ -554,7 +554,7 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
     private static Border Slab(Control content, Thickness padding)
     {
         var row = new Border { MinHeight = TypeScale.MinimumTarget, Padding = padding, Child = content };
-        LoadoutPages.Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
         return row;
     }
 
@@ -593,7 +593,7 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
         };
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -618,7 +618,7 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(12, 0, 0, 0),
         };
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         return block;
     }

@@ -195,7 +195,7 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(where, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(where, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var name = new TextBlock
         {
@@ -204,7 +204,7 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         Grid.SetColumn(name, 2);
 
         var figure = new TextBlock
@@ -215,7 +215,7 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
         Grid.SetColumn(figure, 4);
 
         var row = new Border
@@ -234,6 +234,4 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
         return row;
     }
 
-    private static IDisposable Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, target.GetResourceObservable(key));
 }

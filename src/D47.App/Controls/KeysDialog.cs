@@ -58,7 +58,7 @@ public sealed class KeysDialog : ModalDialog
             [change],
             subtitle: "Every key the window answers to, and the key bound to it now.",
             trailing: closes);
-        Themed(this, TemplatedControl.BackgroundProperty, ThemeManager.BarKey);
+        ThemeInk.Bind(this, TemplatedControl.BackgroundProperty, ThemeManager.BarKey);
         Content = layout;
 
         Opened += (_, _) => Focus();
@@ -75,7 +75,7 @@ public sealed class KeysDialog : ModalDialog
             LetterSpacing = TypeScale.Section * Fonts.ChromeTracking,
             VerticalAlignment = VerticalAlignment.Bottom,
         };
-        Themed(title, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(title, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var notes = string.Join(" · ", new[] { group.Where, group.Note }.Where(note => note is { Length: > 0 }));
         var where = Grey(notes, TypeScale.Small);
@@ -91,7 +91,7 @@ public sealed class KeysDialog : ModalDialog
             LetterSpacing = TypeScale.MetaSmall * Fonts.ChromeTracking,
             VerticalAlignment = VerticalAlignment.Bottom,
         };
-        Themed(kind, TextBlock.ForegroundProperty, group.Changeable ? ThemeManager.AKey : ThemeManager.GreyKey);
+        ThemeInk.Bind(kind, TextBlock.ForegroundProperty, group.Changeable ? ThemeManager.AKey : ThemeManager.GreyKey);
 
         var head = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), ColumnSpacing = 12 };
         head.Children.Add(title);
@@ -101,7 +101,7 @@ public sealed class KeysDialog : ModalDialog
         head.Children.Add(kind);
 
         var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Padding = new Thickness(0, 0, 0, 6), Child = head };
-        Themed(rule, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.AKey);
 
         var section = new StackPanel { Name = GroupPrefix + group.Title };
         section.Children.Add(rule);
@@ -123,7 +123,7 @@ public sealed class KeysDialog : ModalDialog
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(action, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(action, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var keys = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
 
@@ -149,7 +149,7 @@ public sealed class KeysDialog : ModalDialog
         row.Children.Add(keys);
 
         var line = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Child = row };
-        Themed(line, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(line, Border.BorderBrushProperty, ThemeManager.Line2Key);
         return line;
     }
 
@@ -162,7 +162,7 @@ public sealed class KeysDialog : ModalDialog
             FontSize = TypeScale.Small,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(label, TextBlock.ForegroundProperty, colour);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, colour);
 
         var chip = new Border
         {
@@ -172,17 +172,15 @@ public sealed class KeysDialog : ModalDialog
             VerticalAlignment = VerticalAlignment.Center,
             Child = label,
         };
-        Themed(chip, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(chip, Border.BackgroundProperty, ThemeManager.SlabKey);
         return chip;
     }
 
     private static TextBlock Grey(string text, double size)
     {
         var block = new TextBlock { Text = text, FontSize = size, VerticalAlignment = VerticalAlignment.Center };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

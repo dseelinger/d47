@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+﻿﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -259,7 +259,7 @@ public sealed partial class StarSystemPage
             Padding = new Thickness(14, 9, 14, 10),
             Child = stack,
         };
-        RoutingKit.Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
         Avalonia.Automation.AutomationProperties.SetName(slab, body.Name);
 
         return slab;

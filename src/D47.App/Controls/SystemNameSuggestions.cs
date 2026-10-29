@@ -62,8 +62,8 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
             IsVisible = false,
             Child = _rows,
         };
-        Ink(List, Border.BackgroundProperty, ThemeManager.BarKey);
-        Ink(List, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(List, Border.BackgroundProperty, ThemeManager.BarKey);
+        ThemeInk.Bind(List, Border.BorderBrushProperty, ThemeManager.AKey);
 
         field.PropertyChanged += (_, e) =>
         {
@@ -233,7 +233,7 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
         // The highlighted row takes the selected row's ink from the button.
         if (!highlighted)
         {
-            _inks.Add(Ink(name, TextBlock.ForegroundProperty, ThemeManager.AKey));
+            _inks.Add(ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.AKey));
         }
 
         Control content = name;
@@ -251,7 +251,7 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
 
             if (!highlighted)
             {
-                _inks.Add(Ink(kind, TextBlock.ForegroundProperty, ThemeManager.GreyKey));
+                _inks.Add(ThemeInk.Bind(kind, TextBlock.ForegroundProperty, ThemeManager.GreyKey));
             }
 
             Grid.SetColumn(kind, 1);
@@ -274,6 +274,4 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
         return row;
     }
 
-    private static IDisposable Ink(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 }

@@ -17,11 +17,9 @@ public static class CardChrome
     {
         border.BorderThickness = default;
 
-        var background = Themed(border, Border.BackgroundProperty, selected ? ThemeManager.AKey : ThemeManager.TileKey);
+        var background = ThemeInk.Bind(border, Border.BackgroundProperty, selected ? ThemeManager.AKey : ThemeManager.TileKey);
 
         track?.Add(background);
     }
 
-    private static IDisposable Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, target.GetResourceObservable(key));
 }

@@ -167,7 +167,7 @@ public sealed class UnsoldPage : UserControl
             HorizontalAlignment = HorizontalAlignment.Right,
             Text = SessionPage.Credits(total),
         };
-        Themed(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         return new StackPanel { Spacing = 2, Children = { name, figure } };
     }
@@ -209,7 +209,7 @@ public sealed class UnsoldPage : UserControl
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var reset = new Button
         {
@@ -233,7 +233,7 @@ public sealed class UnsoldPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(16, 0, 0, 0),
         };
-        Themed(help, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(help, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         Grid.SetColumn(help, 2);
 
         var row = new Grid
@@ -249,7 +249,7 @@ public sealed class UnsoldPage : UserControl
             Margin = new Thickness(0, 10, 0, 0),
             Child = row,
         };
-        Themed(bar, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(bar, Border.BorderBrushProperty, ThemeManager.AKey);
 
         return bar;
     }
@@ -285,10 +285,8 @@ public sealed class UnsoldPage : UserControl
             FontSize = size,
             FontWeight = FontWeight.Medium,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
-    private static void Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, target.GetResourceObservable(key));
 }

@@ -229,7 +229,7 @@ public sealed partial class StarSystemPage
                 Margin = new Thickness(8, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            RoutingKit.Themed(figure, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+            ThemeInk.Bind(figure, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
             var line = new DockPanel();
             DockPanel.SetDock(figure, Dock.Right);
@@ -426,7 +426,7 @@ public sealed partial class StarSystemPage
             Padding = new Thickness(12, 0),
             Child = layout.Row(cells),
         };
-        RoutingKit.Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
         Avalonia.Automation.AutomationProperties.SetName(row, station.Name);
 
         return row;
@@ -450,7 +450,7 @@ public sealed partial class StarSystemPage
             FontWeight = weight,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        RoutingKit.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
         return block;
     }
@@ -463,7 +463,7 @@ public sealed partial class StarSystemPage
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Control,
         };
-        RoutingKit.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
         return block;
     }

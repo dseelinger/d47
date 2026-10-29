@@ -296,7 +296,7 @@ public static class LoadoutPages
             }
             else
             {
-                Themed(mark, TextBlock.ForegroundProperty, markKey);
+                ThemeInk.Bind(mark, TextBlock.ForegroundProperty, markKey);
             }
 
             body.Children.Add(mark);
@@ -518,8 +518,8 @@ public static class LoadoutPages
             Child = text,
         };
 
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
-        Themed(pill, Border.BackgroundProperty, ThemeManager.CyanKey);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
+        ThemeInk.Bind(pill, Border.BackgroundProperty, ThemeManager.CyanKey);
 
         return pill;
     }
@@ -540,7 +540,7 @@ public static class LoadoutPages
             Margin = new Thickness(0, 12, 0, 0),
         };
 
-        Themed(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return said;
     }
@@ -689,7 +689,7 @@ public static class LoadoutPages
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -706,7 +706,7 @@ public static class LoadoutPages
             FontWeight = FontWeight.Bold,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         return block;
     }
@@ -742,7 +742,7 @@ public static class LoadoutPages
     {
         var coin = new Run($" {ShipsMode.Coin}");
 
-        Themed(coin, Run.ForegroundProperty, ThemeManager.RedKey);
+        ThemeInk.Bind(coin, Run.ForegroundProperty, ThemeManager.RedKey);
 
         return coin;
     }
@@ -758,7 +758,7 @@ public static class LoadoutPages
             Margin = new Thickness(0, 0, 0, 8),
         };
 
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var buttons = new StackPanel
         {
@@ -776,7 +776,7 @@ public static class LoadoutPages
             Child = new StackPanel { Children = { text, buttons } },
         };
 
-        Themed(border, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return border;
     }
@@ -854,7 +854,7 @@ public static class LoadoutPages
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
 
-            Themed(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
             Grid.SetColumn(text, 0);
             over.Children.Add(text);
@@ -896,7 +896,7 @@ public static class LoadoutPages
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
 
-            Themed(hairline, Border.BackgroundProperty, ThemeManager.WhiteKey);
+            ThemeInk.Bind(hairline, Border.BackgroundProperty, ThemeManager.WhiteKey);
 
             // **The mark says what it is** (asked 2026-09-01 — *"I can't remember what the white bar on the
             // blue line is for"*).
@@ -932,7 +932,7 @@ public static class LoadoutPages
 
         var background = new Border();
 
-        Themed(background, Border.BackgroundProperty, ThemeManager.TileKey);
+        ThemeInk.Bind(background, Border.BackgroundProperty, ThemeManager.TileKey);
         track.Children.Add(background);
 
         var at = 0.0;
@@ -954,7 +954,7 @@ public static class LoadoutPages
 
             var span = new Border { Margin = new Thickness(1, 0) };
 
-            Themed(span, Border.BackgroundProperty, fillKey);
+            ThemeInk.Bind(span, Border.BackgroundProperty, fillKey);
             Grid.SetColumn(span, 1);
             over.Children.Add(span);
 
@@ -1002,7 +1002,7 @@ public static class LoadoutPages
                 HorizontalAlignment = word == "MW" ? HorizontalAlignment.Right : HorizontalAlignment.Left,
             };
 
-            Themed(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             cells.Add(said);
         }
 
@@ -1092,7 +1092,7 @@ public static class LoadoutPages
             };
 
             // Met, on the status ladder.
-            Themed(tick, TextBlock.ForegroundProperty, ThemeManager.BlueKey);
+            ThemeInk.Bind(tick, TextBlock.ForegroundProperty, ThemeManager.BlueKey);
 
             return tick;
         }
@@ -1340,9 +1340,6 @@ public static class LoadoutPages
                 new Typeface(family, FontStyle.Normal, bold ? FontWeight.Bold : FontWeight.Normal),
                 size,
                 Brushes.Black).Width;
-
-    internal static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 
     /// <summary>Scrolls <paramref name="content"/> vertically, with a gutter so the scrollbar sits clear of it.</summary>
     internal static ScrollViewer Scrolling(Control content) => new()
@@ -1714,7 +1711,7 @@ public sealed class ItemPage : LoadoutPage
         _copy = copy;
         _columnWidths = columnWidths;
 
-        LoadoutPages.Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_summary, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         _heading = TitleText.Block(_title);
         _heading.Margin = new Thickness(0, 0, 0, 10);
@@ -2018,7 +2015,7 @@ public sealed class ItemPage : LoadoutPage
         subhead.FontSize = TypeScale.Meta;
 
         var summary = new TextBlock { Text = toBuy.Summary, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
-        LoadoutPages.Themed(summary, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(summary, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var plot = new Button
         {
@@ -2069,7 +2066,7 @@ public sealed class ItemPage : LoadoutPage
 
             if (_plotFailed)
             {
-                LoadoutPages.Themed(line, TextBlock.ForegroundProperty, ThemeManager.RedKey);
+                ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.RedKey);
             }
 
             block.Children.Add(line);
@@ -2294,8 +2291,8 @@ public sealed class ItemPage : LoadoutPage
                 Child = new TextBlock { FontSize = TypeScale.Secondary },
             };
 
-            LoadoutPages.Themed(_ghost, Border.BackgroundProperty, ThemeManager.AKey);
-            LoadoutPages.Themed(_ghost.Child, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
+            ThemeInk.Bind(_ghost, Border.BackgroundProperty, ThemeManager.AKey);
+            ThemeInk.Bind(_ghost.Child, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
 
             _overlay.Children.Add(_ghost);
         }

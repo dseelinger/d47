@@ -39,7 +39,7 @@ public sealed class AudioRecorderPage : DialogPage
         _summary.Name = "RecordingSummary";
         _summary.FontSize = TypeScale.Body;
         _summary.TextWrapping = TextWrapping.Wrap;
-        Themed(_summary, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_summary, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var folder = new Button
         {
@@ -60,7 +60,7 @@ public sealed class AudioRecorderPage : DialogPage
             Child = _detail,
         };
 
-        Themed(detailBox, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(detailBox, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         _summary.Margin = new Thickness(0, 0, 0, 16);
         DockPanel.SetDock(_summary, Dock.Top);
@@ -262,7 +262,7 @@ public sealed class AudioRecorderPage : DialogPage
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(complaint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(complaint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         keep.Click += (_, _) =>
         {
@@ -345,7 +345,7 @@ public sealed class AudioRecorderPage : DialogPage
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         return block;
     }
@@ -361,7 +361,7 @@ public sealed class AudioRecorderPage : DialogPage
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            Themed(block, TextBlock.ForegroundProperty, key);
+            ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
             return block;
         }
@@ -373,11 +373,9 @@ public sealed class AudioRecorderPage : DialogPage
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(selectableBlock, SelectableTextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(selectableBlock, SelectableTextBlock.ForegroundProperty, key);
 
         return selectableBlock;
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

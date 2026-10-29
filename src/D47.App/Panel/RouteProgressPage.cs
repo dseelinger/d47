@@ -315,7 +315,7 @@ public sealed class RouteProgressPage : UserControl
     private static Run Ink(string text, string key)
     {
         var run = new Run(text);
-        RoutingKit.Themed(run, TextElement.ForegroundProperty, key);
+        ThemeInk.Bind(run, TextElement.ForegroundProperty, key);
 
         return run;
     }

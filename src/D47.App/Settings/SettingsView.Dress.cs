@@ -25,7 +25,7 @@ public partial class SettingsView
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Ink(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         return label;
     }
@@ -67,7 +67,7 @@ public partial class SettingsView
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Ink(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var words = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         words.Children.Add(heading);
@@ -81,7 +81,7 @@ public partial class SettingsView
         line.Children.Add(words);
 
         var rule = new Border { Height = 1 };
-        Ink(rule, Border.BackgroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.AKey);
 
         var head = new StackPanel
         {
@@ -129,7 +129,7 @@ public partial class SettingsView
                 FontWeight = FontWeight.SemiBold,
                 Margin = new Thickness(12, 0, 0, 0),
             };
-            Ink(caption, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(caption, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             Grid.SetColumn(caption, column);
             grid.Children.Add(caption);
         }
@@ -194,7 +194,7 @@ public partial class SettingsView
             BorderThickness = new Thickness(0, 0, 0, 1),
             Child = line,
         };
-        Ink(ruled, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(ruled, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         var bar = new Border
         {
@@ -205,7 +205,7 @@ public partial class SettingsView
 
         if (protectedRow)
         {
-            Ink(bar, Border.BorderBrushProperty, ThemeManager.AKey);
+            ThemeInk.Bind(bar, Border.BorderBrushProperty, ThemeManager.AKey);
         }
 
         return bar;
@@ -218,7 +218,7 @@ public partial class SettingsView
     internal static DockPanel ProtectedLegendLine()
     {
         var bar = new Border { Width = RowBarWidth };
-        Ink(bar, Border.BackgroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(bar, Border.BackgroundProperty, ThemeManager.AKey);
 
         var text = new TextBlock
         {
@@ -228,7 +228,7 @@ public partial class SettingsView
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(RowHorizontalPadding, 0, 0, 0),
         };
-        Ink(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var line = new DockPanel { Name = ProtectedLegendName };
         DockPanel.SetDock(bar, Dock.Left);
@@ -265,7 +265,7 @@ public partial class SettingsView
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0, 0, 0),
         };
-        Ink(chevron, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(chevron, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         state = new TextBlock
         {
@@ -307,7 +307,7 @@ public partial class SettingsView
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center,
         };
-        Ink(button, Button.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(button, Button.BackgroundProperty, ThemeManager.SlabKey);
         AutomationProperties.SetName(button, says);
 
         // The button's own tip, carrying what the column clipped — only while it actually did (#382).
@@ -362,7 +362,7 @@ public partial class SettingsView
                     FontSize = TypeScale.Body,
                     VerticalAlignment = VerticalAlignment.Center,
                 };
-                Ink(absent, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+                ThemeInk.Bind(absent, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
                 Grid.SetColumn(absent, column);
                 grid.Children.Add(absent);
                 continue;
@@ -385,9 +385,6 @@ public partial class SettingsView
 
         return (grid, nameText);
     }
-
-    private static void Ink(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 
     /// <summary>Marks the effects list, for a test to find it.</summary>
     public const string GuardianEffectsName = "GuardianEffects";

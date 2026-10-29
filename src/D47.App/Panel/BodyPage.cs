@@ -329,7 +329,7 @@ public sealed class BodyPage : UserControl
         }
 
         var title = TitleText.Build(BodyName(snapshot) ?? "This body", TypeScale.Title, TitleRank.Screen);
-        Themed(title, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+        ThemeInk.Bind(title, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
 
         _body.Children.Add(TitleText.Block(
             title,
@@ -425,7 +425,7 @@ public sealed class BodyPage : UserControl
                 FontSize = TypeScale.Reading,
                 VerticalAlignment = VerticalAlignment.Bottom,
             };
-            Themed(number, TextBlock.ForegroundProperty, far ? ThemeManager.BlueKey : ThemeManager.WhiteKey);
+            ThemeInk.Bind(number, TextBlock.ForegroundProperty, far ? ThemeManager.BlueKey : ThemeManager.WhiteKey);
 
             var figure = new WrapPanel { Children = { number } };
 
@@ -439,7 +439,7 @@ public sealed class BodyPage : UserControl
                     Margin = new Thickness(12, 0, 0, 6),
                     VerticalAlignment = VerticalAlignment.Bottom,
                 };
-                Themed(of, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+                ThemeInk.Bind(of, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
                 figure.Children.Add(of);
             }
 
@@ -453,7 +453,7 @@ public sealed class BodyPage : UserControl
         else if (distance.OffDuty is null)
         {
             var none = new TextBlock { Text = NoPosition, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-            Themed(none, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+            ThemeInk.Bind(none, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
             block.Children.Add(none);
         }
 
@@ -464,10 +464,10 @@ public sealed class BodyPage : UserControl
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 10, 0, 0),
         };
-        Themed(hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var slab = new Border { Padding = new Thickness(14, 12), Child = block };
-        Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         _distance.Child = new StackPanel { Children = { slab, hint } };
     }
@@ -496,19 +496,19 @@ public sealed class BodyPage : UserControl
         if (row.Label.Length == 0)
         {
             text.Text = row.Text;
-            Themed(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         }
         else
         {
             var label = new Run(row.Label + " · ") { FontFamily = Fonts.ChromeFamily, FontWeight = FontWeight.Bold };
-            Themed(label, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
+            ThemeInk.Bind(label, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
             var value = new Run(row.Text) { FontFamily = new FontFamily(Fonts.MonoFamily) };
-            Themed(value, TextElement.ForegroundProperty, row.Text == NoPositionText ? ThemeManager.GreyKey : ThemeManager.AKey);
+            ThemeInk.Bind(value, TextElement.ForegroundProperty, row.Text == NoPositionText ? ThemeManager.GreyKey : ThemeManager.AKey);
             text.Inlines = [label, value];
         }
 
         var slab = new Border { Height = TypeScale.MinimumTarget, Padding = new Thickness(14, 0), Child = text };
-        Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return slab;
     }
@@ -532,7 +532,7 @@ public sealed class BodyPage : UserControl
             HorizontalAlignment = HorizontalAlignment.Right,
             Text = "~" + SessionPage.Credits(worth),
         };
-        Themed(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         return new StackPanel { Spacing = 2, Children = { name, figure } };
     }
@@ -558,7 +558,7 @@ public sealed class BodyPage : UserControl
         if (others.Count == 0)
         {
             otherLine.Text = signals is null ? "—" : "None";
-            Themed(otherLine, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+            ThemeInk.Bind(otherLine, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         }
         else
         {
@@ -567,9 +567,9 @@ public sealed class BodyPage : UserControl
             for (var i = 0; i < others.Count; i++)
             {
                 var name = new Run((i > 0 ? " · " : string.Empty) + others[i].Type.ToUpperInvariant() + " ");
-                Themed(name, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
+                ThemeInk.Bind(name, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
                 var count = new Run(others[i].Count.ToString(CultureInfo.InvariantCulture));
-                Themed(count, TextElement.ForegroundProperty, ThemeManager.AKey);
+                ThemeInk.Bind(count, TextElement.ForegroundProperty, ThemeManager.AKey);
                 inlines.Add(name);
                 inlines.Add(count);
             }
@@ -655,7 +655,7 @@ public sealed class BodyPage : UserControl
             label.VerticalAlignment = VerticalAlignment.Center;
 
             var cell = new Border { Height = TypeScale.MinimumTarget, Child = label };
-            Themed(cell, Border.BackgroundProperty, ThemeManager.SlabKey);
+            ThemeInk.Bind(cell, Border.BackgroundProperty, ThemeManager.SlabKey);
             Grid.SetColumn(cell, n - 1);
             grid.Children.Add(cell);
         }
@@ -701,7 +701,7 @@ public sealed class BodyPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(kind, TextBlock.ForegroundProperty, speciesKey);
+        ThemeInk.Bind(kind, TextBlock.ForegroundProperty, speciesKey);
         Grid.SetColumn(kind, 1);
 
         var progress = StatTile.Caption(state, stateKey);
@@ -725,13 +725,13 @@ public sealed class BodyPage : UserControl
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            Themed(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
+            ThemeInk.Bind(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
             Grid.SetColumn(figure, 3);
             row.Children.Add(figure);
         }
 
         var slab = new Border { Height = TypeScale.MinimumTarget, Padding = new Thickness(14, 0), Child = row };
-        Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return slab;
     }
@@ -741,6 +741,4 @@ public sealed class BodyPage : UserControl
             .FirstOrDefault(entry => string.Equals(entry.Species, species, StringComparison.OrdinalIgnoreCase))
             ?.Value;
 
-    private static void Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, target.GetResourceObservable(key));
 }

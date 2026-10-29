@@ -63,15 +63,15 @@ internal sealed class CropSurface : Canvas
 
         _frame.Name = "CropFrame";
         _frame.IsHitTestVisible = false;
-        RoutingKit.Themed(_frame, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(_frame, Border.BorderBrushProperty, ThemeManager.AKey);
         Children.Add(_frame);
 
         for (var i = 0; i < _handles.Length; i++)
         {
             var mark = new Border { Width = 12, Height = 12, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
-            RoutingKit.Themed(mark, Border.BackgroundProperty, ThemeManager.AKey);
+            ThemeInk.Bind(mark, Border.BackgroundProperty, ThemeManager.AKey);
             _handles[i] = new Border { Name = "CropHandle." + Corners[i], Width = Handle, Height = Handle, Child = mark, IsHitTestVisible = false };
-            RoutingKit.Themed(_handles[i], Border.BackgroundProperty, ThemeManager.TileKey);
+            ThemeInk.Bind(_handles[i], Border.BackgroundProperty, ThemeManager.TileKey);
             Children.Add(_handles[i]);
         }
 
@@ -179,13 +179,13 @@ internal sealed class CropSurface : Canvas
     /// <summary>Draws the frame in the active ink and the dragged corner as a filled handle, or puts both back.</summary>
     private void Highlight(CropCorner? corner, bool active = true)
     {
-        RoutingKit.Themed(_frame, Border.BorderBrushProperty, active && corner is null ? ThemeManager.CyanKey : ThemeManager.AKey);
+        ThemeInk.Bind(_frame, Border.BorderBrushProperty, active && corner is null ? ThemeManager.CyanKey : ThemeManager.AKey);
 
         for (var i = 0; i < _handles.Length; i++)
         {
             var on = active && corner == Corners[i];
-            RoutingKit.Themed(_handles[i], Border.BackgroundProperty, on ? ThemeManager.AKey : ThemeManager.TileKey);
-            RoutingKit.Themed((Border)_handles[i].Child!, Border.BackgroundProperty, on ? ThemeManager.KnockKey : ThemeManager.AKey);
+            ThemeInk.Bind(_handles[i], Border.BackgroundProperty, on ? ThemeManager.AKey : ThemeManager.TileKey);
+            ThemeInk.Bind((Border)_handles[i].Child!, Border.BackgroundProperty, on ? ThemeManager.KnockKey : ThemeManager.AKey);
         }
     }
 

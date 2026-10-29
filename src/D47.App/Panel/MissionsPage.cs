@@ -247,7 +247,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
             Padding = new Thickness(_gap, 0, 0, 0),
             Child = right,
         };
-        Themed(rule, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.Line2Key);
         Grid.SetColumn(rule, 1);
 
         var panes = new Grid
@@ -470,7 +470,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
                 Padding = new Thickness(14, 12),
                 Child = Prose(NoDetail, TypeScale.Small, ThemeManager.WhiteKey),
             };
-            Themed(strip, Border.BackgroundProperty, ThemeManager.SlabKey);
+            ThemeInk.Bind(strip, Border.BackgroundProperty, ThemeManager.SlabKey);
             detail.Children.Add(strip);
             return detail;
         }
@@ -541,10 +541,10 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
     {
         var time = Fonts.Mono(at.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture));
         time.FontSize = TypeScale.Small;
-        Themed(time, Run.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(time, Run.ForegroundProperty, ThemeManager.AKey);
 
         var age = new Run($" · {Ago(now - at)}");
-        Themed(age, Run.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(age, Run.ForegroundProperty, ThemeManager.GreyKey);
 
         return new TextBlock
         {
@@ -591,7 +591,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
     private static Run Ink(string text, string key)
     {
         var run = new Run(text);
-        Themed(run, Run.ForegroundProperty, key);
+        ThemeInk.Bind(run, Run.ForegroundProperty, key);
         return run;
     }
 
@@ -605,7 +605,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
             FontWeight = FontWeight.SemiBold,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         if (count is { } number)
         {
@@ -630,7 +630,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
                 Children = { Chrome(label, TypeScale.Meta, FontWeight.Medium, Fonts.ChromeTracking, ThemeManager.GreyKey), value },
             },
         };
-        Themed(block, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(block, Border.BackgroundProperty, ThemeManager.SlabKey);
         return block;
     }
 
@@ -695,7 +695,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
                 Mono(Number(cargo.Total)),
             ],
         };
-        Themed(delivered, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(delivered, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var collected = new TextBlock
         {
@@ -705,7 +705,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
             VerticalAlignment = VerticalAlignment.Center,
             Inlines = [new Run("Collected "), Mono(Number(cargo.Collected))],
         };
-        Themed(collected, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(collected, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         DockPanel.SetDock(collected, Dock.Right);
 
         var line = new DockPanel { Children = { collected, delivered } };
@@ -717,14 +717,14 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
             Padding = new Thickness(14, 12),
             Child = new StackPanel { Spacing = 10, Children = { line, gauge } },
         };
-        Themed(strip, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(strip, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return new StackPanel { Children = { head, strip } };
 
         static Run Mono(string text)
         {
             var run = Fonts.Mono(text);
-            Themed(run, Run.ForegroundProperty, ThemeManager.AKey);
+            ThemeInk.Bind(run, Run.ForegroundProperty, ThemeManager.AKey);
             return run;
         }
     }
@@ -740,7 +740,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
             LetterSpacing = size * tracking,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -754,7 +754,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
             HorizontalAlignment = alignment,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -768,10 +768,8 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
             FontWeight = weight,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
-    private static void Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 }

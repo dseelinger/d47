@@ -1,4 +1,4 @@
-﻿﻿using System.Diagnostics;
+﻿﻿﻿using System.Diagnostics;
 using System.Globalization;
 using D47.Core.Listening;
 using Avalonia;
@@ -288,13 +288,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     private static ControlTheme? GlyphButtonTheme =>
         Application.Current!.FindResource("D47.GlyphButton") as ControlTheme;
 
-    /// <summary>
-    /// Binds a brush property to a theme resource, so a theme switch repaints controls built in code
-    /// the same way DynamicResource repaints the ones built in markup.
-    /// </summary>
-    private IDisposable Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, this.GetResourceObservable(key));
-
     private void Build()
     {
         var settings = _settings ?? throw new InvalidOperationException("Attach() has not been called.");
@@ -439,8 +432,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
             if (open)
             {
-                D47.App.Panel.LoadoutPages.Themed(tile, BackgroundProperty, ThemeManager.AKey);
-                D47.App.Panel.LoadoutPages.Themed(tile, ForegroundProperty, ThemeManager.KnockKey);
+                ThemeInk.Bind(tile, BackgroundProperty, ThemeManager.AKey);
+                ThemeInk.Bind(tile, ForegroundProperty, ThemeManager.KnockKey);
             }
             else
             {
@@ -578,7 +571,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             IsVisible = false,
         };
 
-        Themed(foldButton, Button.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(foldButton, Button.ForegroundProperty, ThemeManager.AKey);
 
         foldButton.Click += (_, _) =>
         {
@@ -667,7 +660,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             TextWrapping = TextWrapping.Wrap,
             MaxWidth = 420,
         };
-        Themed(spoken, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(spoken, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         if (!string.IsNullOrWhiteSpace(row.Help))
         {
@@ -697,7 +690,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         if (row.Protected)
         {
-            Themed(bar, Border.BorderBrushProperty, ThemeManager.AKey);
+            ThemeInk.Bind(bar, Border.BorderBrushProperty, ThemeManager.AKey);
         }
 
         var container = new DockPanel { Name = ToggleTileName };
@@ -823,7 +816,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var button = new Button
         {
@@ -882,10 +875,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     private StackPanel BuildEmptyBlock()
     {
         var empty = new TextBlock { FontSize = TypeScale.Body, TextWrapping = TextWrapping.Wrap };
-        Themed(empty, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(empty, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var others = new TextBlock { FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(others, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(others, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         _emptyNote = empty;
         _otherPagesNote = others;
@@ -1162,7 +1155,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 timer.Tick += (_, _) => ClearLanding();
                 timer.Start();
 
-                _landing = (target, property, Themed(target, property, ThemeManager.Tile2Key), timer);
+                _landing = (target, property, ThemeInk.Bind(target, property, ThemeManager.Tile2Key), timer);
             },
             DispatcherPriority.Loaded);
     }
@@ -1599,7 +1592,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             BorderThickness = new Thickness(0, 1, 0, 0),
             Child = child,
         };
-        Themed(row, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(row, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return row;
     }
@@ -1635,7 +1628,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             TextWrapping = TextWrapping.Wrap,
             IsVisible = false,
         };
-        Themed(help, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(help, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var message = new StatusLine { Margin = new Thickness(0, 4, 0, 0) };
 
@@ -1650,7 +1643,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             TextWrapping = TextWrapping.Wrap,
             IsVisible = false,
         };
-        Themed(keyLine, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
+        ThemeInk.Bind(keyLine, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
 
         // A way back from this one row .com/dseelinger/d47/issues/61), on the rows the Commander has actually
         // changed and nowhere else.
@@ -1661,7 +1654,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             TextWrapping = TextWrapping.Wrap,
             MaxWidth = 420,
         };
-        Themed(spoken, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(spoken, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         TextBlock? helpLine = null;
 
@@ -1745,7 +1738,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 TextWrapping = TextWrapping.Wrap,
                 IsVisible = false,
             };
-            Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             caption.Children.Add(note);
 
             var shownBefore = refresh;
@@ -1892,7 +1885,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             Margin = new Thickness(0, 4, 0, 0),
             IsVisible = false,
         };
-        Themed(line, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         label.AttachedToVisualTree += (_, _) =>
         {
@@ -1976,7 +1969,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
-            Themed(glyph, BusyGlyph.StrokeProperty, ThemeManager.AKey);
+            ThemeInk.Bind(glyph, BusyGlyph.StrokeProperty, ThemeManager.AKey);
 
             Grid.SetColumn(glyph, 1);
             grid.Children.Add(glyph);

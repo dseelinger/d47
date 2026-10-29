@@ -1,4 +1,4 @@
-﻿using Avalonia;
+﻿﻿using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -121,7 +121,7 @@ public partial class SettingsView
             Margin = new Thickness(0, 4, 0, 4),
         };
         heading.Classes.Add(MixerHeaderClass);
-        Ink(heading, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(heading, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         Grid.SetColumn(heading, column);
 
         if (!string.IsNullOrWhiteSpace(help))
@@ -141,7 +141,7 @@ public partial class SettingsView
             TextWrapping = TextWrapping.Wrap,
             MaxWidth = 420,
         };
-        Ink(spoken, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(spoken, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         return spoken;
     }

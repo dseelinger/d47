@@ -264,7 +264,7 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
                 },
             },
         };
-        RoutingKit.Themed(cell, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(cell, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return cell;
     }

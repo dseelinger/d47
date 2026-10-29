@@ -292,7 +292,7 @@ public sealed class ComparePage : UserControl
         var block = TitleText.Build(text, TypeScale.Control, TitleRank.Subgroup);
         block.FontFamily = Fonts.ChromeFamily;
         block.VerticalAlignment = VerticalAlignment.Center;
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 
@@ -309,7 +309,7 @@ public sealed class ComparePage : UserControl
             Margin = new Thickness(0, 0, 0, 2),
             Child = grid,
         };
-        LoadoutPages.Themed(head, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(head, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return head;
     }
@@ -321,12 +321,12 @@ public sealed class ComparePage : UserControl
         name.FontFamily = Fonts.ChromeFamily;
         name.FontWeight = FontWeight.SemiBold;
         name.TextTrimming = TextTrimming.CharacterEllipsis;
-        LoadoutPages.Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var hull = TitleText.Build(ship.Hull, TypeScale.MetaSmall, TitleRank.Subgroup);
         hull.FontFamily = Fonts.ChromeFamily;
         hull.TextTrimming = TextTrimming.CharacterEllipsis;
-        LoadoutPages.Themed(hull, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(hull, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var cells = new List<Control>
         {
@@ -343,14 +343,14 @@ public sealed class ComparePage : UserControl
         where.FontFamily = Fonts.ChromeFamily;
         where.FontWeight = FontWeight.Medium;
         where.TextTrimming = TextTrimming.CharacterEllipsis;
-        LoadoutPages.Themed(where, TextBlock.ForegroundProperty, ship.InCurrentSystem ? ThemeManager.CyanKey : ThemeManager.AKey);
+        ThemeInk.Bind(where, TextBlock.ForegroundProperty, ship.InCurrentSystem ? ThemeManager.CyanKey : ThemeManager.AKey);
         cells.Add(Cell(where, left: true));
 
         var grid = _layout.Row(cells);
         grid.Margin = new Thickness(14, 0);
 
         var row = new Border { Height = TypeScale.MinimumTarget, Child = grid };
-        LoadoutPages.Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return row;
     }
@@ -363,7 +363,7 @@ public sealed class ComparePage : UserControl
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Control,
         };
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, text is null ? ThemeManager.GreyKey : key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, text is null ? ThemeManager.GreyKey : key);
         return block;
     }
 

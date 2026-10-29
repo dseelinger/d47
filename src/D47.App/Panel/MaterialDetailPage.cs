@@ -350,7 +350,7 @@ public sealed class MaterialDetailPage : UserControl
     internal static Border Tile(Control child)
     {
         var tile = new Border { Padding = new Thickness(14, 12), Child = child };
-        LoadoutPages.Themed(tile, Border.BackgroundProperty, ThemeManager.TileKey);
+        ThemeInk.Bind(tile, Border.BackgroundProperty, ThemeManager.TileKey);
         return tile;
     }
 
@@ -364,7 +364,7 @@ public sealed class MaterialDetailPage : UserControl
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         return block;
     }
 
@@ -396,14 +396,14 @@ public sealed class MaterialDetailPage : UserControl
     internal static Border Slab(Control child)
     {
         var slab = new Border { Padding = new Thickness(14, 12), Child = child };
-        LoadoutPages.Themed(slab, Border.BackgroundProperty, ThemeManager.TileKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.TileKey);
         return slab;
     }
 
     internal static TextBlock Prose(string text, string key = ThemeManager.WhiteKey)
     {
         var block = new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -433,13 +433,13 @@ public sealed class MaterialDetailPage : UserControl
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
         var title = new Avalonia.Controls.Documents.Run(build.Name);
-        LoadoutPages.Themed(title, Avalonia.Controls.Documents.TextElement.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(title, Avalonia.Controls.Documents.TextElement.ForegroundProperty, ThemeManager.WhiteKey);
         var kind = new Avalonia.Controls.Documents.Run(" · " + MaterialsPage.KindOf(build).ToUpperInvariant())
         {
             FontFamily = Fonts.ChromeFamily,
             FontSize = TypeScale.MetaSmall,
         };
-        LoadoutPages.Themed(kind, Avalonia.Controls.Documents.TextElement.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(kind, Avalonia.Controls.Documents.TextElement.ForegroundProperty, ThemeManager.GreyKey);
         name.Inlines = [title, kind];
 
         var need = MaterialsPage.Mono($"NEED {MaterialsPage.Count(line.Needed)}", ThemeManager.WhiteKey);
@@ -487,7 +487,7 @@ public sealed class MaterialDetailPage : UserControl
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis,
             };
-            LoadoutPages.Themed(where, TextBlock.ForegroundProperty, ThemeManager.AKey);
+            ThemeInk.Bind(where, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
             var note = MaterialsPage.Chrome(
                 places.Kind == MaterialPlaceKind.Body ? $"{_material.Name} · {place.Note}" : place.Note,
@@ -540,7 +540,7 @@ public sealed class MaterialDetailPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        LoadoutPages.Themed(what, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(what, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         return new StackPanel
         {

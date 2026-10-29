@@ -181,7 +181,7 @@ public sealed class CommandersPage : UserControl
             Padding = new Thickness(14, 4, 4, 4),
             Child = Cells(name, ship, location, detected, action),
         };
-        Themed(row, Border.BackgroundProperty, current ? ThemeManager.CyanGroundKey : ThemeManager.SlabKey);
+        ThemeInk.Bind(row, Border.BackgroundProperty, current ? ThemeManager.CyanGroundKey : ThemeManager.SlabKey);
 
         return row;
     }
@@ -204,10 +204,8 @@ public sealed class CommandersPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
-    private static void Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, target.GetResourceObservable(key));
 }

@@ -31,7 +31,7 @@ internal sealed class ObjectiveStrip : UserControl
         Margin = new Thickness(0, 10, 0, 0);
         IsVisible = false;
         AutomationProperties.SetName(this, "Next story objective");
-        AdventuresPage.Themed(this, BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(this, BackgroundProperty, ThemeManager.SlabKey);
 
         Refresh();
     }
@@ -178,7 +178,7 @@ internal sealed class ObjectiveStrip : UserControl
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        AdventuresPage.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
         return block;
     }
@@ -197,7 +197,7 @@ internal sealed class ObjectiveStrip : UserControl
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        AdventuresPage.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
         return block;
     }

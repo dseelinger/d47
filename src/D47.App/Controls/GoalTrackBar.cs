@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+﻿﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -116,7 +116,7 @@ public static class GoalTrackBar
                 HorizontalAlignment = track.StartOf(track.Current) > LabelStartLimit ? HorizontalAlignment.Right : HorizontalAlignment.Left,
             };
 
-            Themed(line, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+            ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
             root.Children.Add(line);
         }
 
@@ -139,7 +139,7 @@ public static class GoalTrackBar
         {
             var held = rank <= benefits.Rank;
             var tick = new Border { Width = 2, Height = held ? TickHeld : TickToCome };
-            Themed(tick, Border.BackgroundProperty, held ? ThemeManager.AKey : ThemeManager.GreyKey);
+            ThemeInk.Bind(tick, Border.BackgroundProperty, held ? ThemeManager.AKey : ThemeManager.GreyKey);
             Canvas.SetTop(tick, TickHeld - tick.Height);
             strip.Children.Add(tick);
             placed.Add((tick, (PowerplayRanks.MeritsNeeded(rank) ?? 0) / whole));
@@ -188,7 +188,7 @@ public static class GoalTrackBar
         GoalChapter? current,
         TextBlock label)
     {
-        Themed(label, TextBlock.ForegroundProperty, chapter == current ? ThemeManager.CyanKey : ThemeManager.GreyKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, chapter == current ? ThemeManager.CyanKey : ThemeManager.GreyKey);
         Grid.SetColumn(label, chapter.First * 2);
         Grid.SetColumnSpan(label, chapter.Count * 2 - 1);
         labels.Children.Add(label);
@@ -221,7 +221,7 @@ public static class GoalTrackBar
     private static Control Swatch(string text, string key, double height)
     {
         var mark = new Border { Width = 2, Height = height, VerticalAlignment = VerticalAlignment.Center };
-        Themed(mark, Border.BackgroundProperty, key);
+        ThemeInk.Bind(mark, Border.BackgroundProperty, key);
 
         return new StackPanel
         {
@@ -244,7 +244,7 @@ public static class GoalTrackBar
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return block;
     }
@@ -290,13 +290,13 @@ public static class GoalTrackBar
         if (index < track.Current)
         {
             var passed = new Border();
-            Themed(passed, Border.BackgroundProperty, ThemeManager.AKey);
+            ThemeInk.Bind(passed, Border.BackgroundProperty, ThemeManager.AKey);
 
             return passed;
         }
 
         var ground = new Border();
-        Themed(ground, Border.BackgroundProperty, ThemeManager.BgKey);
+        ThemeInk.Bind(ground, Border.BackgroundProperty, ThemeManager.BgKey);
 
         if (index > track.Current)
         {
@@ -316,10 +316,10 @@ public static class GoalTrackBar
         };
 
         var filled = new Border();
-        Themed(filled, Border.BackgroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(filled, Border.BackgroundProperty, ThemeManager.AKey);
 
         var marker = new Border();
-        Themed(marker, Border.BackgroundProperty, ThemeManager.CyanKey);
+        ThemeInk.Bind(marker, Border.BackgroundProperty, ThemeManager.CyanKey);
         Grid.SetColumn(marker, 1);
 
         inside.Children.Add(filled);
@@ -345,6 +345,4 @@ public static class GoalTrackBar
         }
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

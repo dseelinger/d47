@@ -127,7 +127,7 @@ public sealed class SessionPage : UserControl
             HorizontalAlignment = HorizontalAlignment.Right,
             Text = "EARNED",
         };
-        Themed(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var figure = new TextBlock
         {
@@ -136,7 +136,7 @@ public sealed class SessionPage : UserControl
             HorizontalAlignment = HorizontalAlignment.Right,
             Text = Credits(total),
         };
-        Themed(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         return new StackPanel { Spacing = 2, Children = { name, figure } };
     }
@@ -150,7 +150,7 @@ public sealed class SessionPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var gauge = Gauge.Track(fill, Gauge.FillKey(GaugeFill.Progress));
         gauge.VerticalAlignment = VerticalAlignment.Center;
@@ -164,7 +164,7 @@ public sealed class SessionPage : UserControl
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(figure, TextBlock.ForegroundProperty, amount == 0 ? ThemeManager.GreyKey : ThemeManager.AKey);
+        ThemeInk.Bind(figure, TextBlock.ForegroundProperty, amount == 0 ? ThemeManager.GreyKey : ThemeManager.AKey);
         Grid.SetColumn(figure, 2);
 
         var row = new Border
@@ -177,11 +177,9 @@ public sealed class SessionPage : UserControl
                 Children = { name, gauge, figure },
             },
         };
-        Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return row;
     }
 
-    private static void Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, target.GetResourceObservable(key));
 }

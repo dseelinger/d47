@@ -338,7 +338,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     {
         var side = TypeScale.MinimumTarget;
         var square = new Border { Width = side, Height = side };
-        RoutingKit.Themed(square, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(square, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         if (_pictures is not null)
         {

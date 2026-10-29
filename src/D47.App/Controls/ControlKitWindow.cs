@@ -53,7 +53,7 @@ public sealed class ControlKitWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ShowInTaskbar = false;
 
-        Themed(this, BackgroundProperty, ThemeManager.BgKey);
+        ThemeInk.Bind(this, BackgroundProperty, ThemeManager.BgKey);
 
         // D47.Tab is scoped to wherever merges PanelTabs.axaml; a desktop-only window carries no merge
         // of it on its own.
@@ -241,8 +241,8 @@ public sealed class ControlKitWindow : Window
         foreach (var key in ThemeManager.Tokens)
         {
             var box = new Border { Width = 72, Height = 72, BorderThickness = new Thickness(1) };
-            Themed(box, Border.BackgroundProperty, key);
-            Themed(box, Border.BorderBrushProperty, ThemeManager.Line2Key);
+            ThemeInk.Bind(box, Border.BackgroundProperty, key);
+            ThemeInk.Bind(box, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
             ramp.Children.Add(new StackPanel { Spacing = 6, Children = { box, Caption(key["D47.".Length..].ToLowerInvariant()) } });
         }
@@ -260,7 +260,7 @@ public sealed class ControlKitWindow : Window
         var head = TitleText.GroupRow(TitleText.Build("Unlock prerequisites", TypeScale.Section, TitleRank.Group));
 
         var ground = new Border { Padding = new Thickness(20), Child = new StackPanel { Spacing = 24, Children = { block, head } } };
-        Themed(ground, Border.BackgroundProperty, ThemeManager.BgKey);
+        ThemeInk.Bind(ground, Border.BackgroundProperty, ThemeManager.BgKey);
 
         return Card(
             "Surfaces",
@@ -276,7 +276,7 @@ public sealed class ControlKitWindow : Window
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Body,
         };
-        Themed(mono, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(mono, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         return Card(
             "TypeScale",
@@ -315,7 +315,7 @@ public sealed class ControlKitWindow : Window
     {
         var (dropdown, value, _) = SettingsView.DropdownTile("Microphone");
         value.Text = "System default · Logi 4K Stream Edition";
-        Themed(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         dropdown.Width = Stepper.MaximumWidth;
 
         var reset = SettingsView.ResetGlyph("KitRowReset", "Reset Push-to-talk");
@@ -373,7 +373,7 @@ public sealed class ControlKitWindow : Window
         }
 
         var level1Strip = new Border { BorderThickness = new Thickness(0, 0, 0, 2), Child = level1 };
-        Themed(level1Strip, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(level1Strip, Border.BorderBrushProperty, ThemeManager.AKey);
 
         var level2 = new TextChoice { ItemsSource = ["Selected", "Rest", "Hover", "Focus", "Disabled"], SelectedIndex = 0 };
         var level2Items = level2.GetLogicalDescendants().OfType<RadioButton>().ToList();
@@ -480,7 +480,7 @@ public sealed class ControlKitWindow : Window
     {
         var (tile, value, status) = SettingsView.DropdownTile("Voice");
         value.Text = "Rachel · ElevenLabs";
-        Themed(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         status.Text = "PAID · KEY STORED";
         status.IsVisible = true;
         status.Bind(TextBlock.ForegroundProperty, Stepper.Ink(ChoiceTone.Yellow));
@@ -488,7 +488,7 @@ public sealed class ControlKitWindow : Window
 
         var (unset, unsetValue, _) = SettingsView.DropdownTile("Output device");
         unsetValue.Text = "(System default)";
-        Themed(unsetValue, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
+        ThemeInk.Bind(unsetValue, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
         unset.Width = Stepper.MaximumWidth;
 
         return Card(
@@ -522,7 +522,7 @@ public sealed class ControlKitWindow : Window
 
         if (key is null)
         {
-            Themed(text, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
+            ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
         }
 
         var wrap = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
@@ -657,7 +657,7 @@ public sealed class ControlKitWindow : Window
                     FontFamily = (FontFamily)Application.Current!.FindResource("D47.Font.Mono")!,
                     FontSize = TypeScale.Small,
                 };
-                Themed(count, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+                ThemeInk.Bind(count, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
                 var clear = new Button
                 {
@@ -876,7 +876,7 @@ public sealed class ControlKitWindow : Window
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Subheading,
         };
-        Themed(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var modal = Modal.Build(
             "Confirm",
@@ -891,13 +891,13 @@ public sealed class ControlKitWindow : Window
             BorderThickness = new Thickness(1),
             Child = modal,
         };
-        Themed(frame, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(frame, Border.BorderBrushProperty, ThemeManager.AKey);
 
         var scrim = new Border { Name = "KitModal", Padding = new Thickness(24, 40), Child = frame };
-        Themed(scrim, Border.BackgroundProperty, ThemeManager.ScrimKey);
+        ThemeInk.Bind(scrim, Border.BackgroundProperty, ThemeManager.ScrimKey);
 
         var ground = new Border { Child = scrim };
-        Themed(ground, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(ground, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return Card(
             "Modal",
@@ -954,7 +954,7 @@ public sealed class ControlKitWindow : Window
         panel.VerticalAlignment = VerticalAlignment.Bottom;
 
         var slice = new Border { Height = FootHeight, ClipToBounds = true, Child = panel };
-        Themed(slice, Border.BackgroundProperty, ThemeManager.BgKey);
+        ThemeInk.Bind(slice, Border.BackgroundProperty, ThemeManager.BgKey);
 
         return slice;
     }
@@ -1004,7 +1004,7 @@ public sealed class ControlKitWindow : Window
             Padding = new Thickness(20, 16),
             Child = new StackPanel { Children = { name, about, content } },
         };
-        Themed(card, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(card, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         return card;
     }
@@ -1045,7 +1045,7 @@ public sealed class ControlKitWindow : Window
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Caption,
         };
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
         return label;
     }
 
@@ -1058,7 +1058,7 @@ public sealed class ControlKitWindow : Window
             FontSize = size,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(block, TextBlock.ForegroundProperty, inkKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, inkKey);
         return block;
     }
 
@@ -1096,7 +1096,5 @@ public sealed class ControlKitWindow : Window
         return control;
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }
 #endif

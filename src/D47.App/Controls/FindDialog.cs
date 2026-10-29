@@ -64,7 +64,7 @@ public sealed class FindDialog : ModalDialog
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 10, 0),
         };
-        Themed(prefix, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(prefix, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var fieldRow = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
         fieldRow.Children.Add(prefix);
@@ -79,7 +79,7 @@ public sealed class FindDialog : ModalDialog
             FontSize = TypeScale.Small,
             IsVisible = false,
         };
-        Themed(_hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         _count.HorizontalAlignment = HorizontalAlignment.Right;
         Grid.SetColumn(_count, 1);
@@ -94,7 +94,7 @@ public sealed class FindDialog : ModalDialog
             Padding = new Thickness(0, 8, 0, 0),
             Child = footerRow,
         };
-        Themed(footer, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(footer, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         var body = new StackPanel
         {
@@ -104,7 +104,7 @@ public sealed class FindDialog : ModalDialog
         };
 
         var surface = new Border { Child = body };
-        Themed(surface, Border.BackgroundProperty, ThemeManager.BarKey);
+        ThemeInk.Bind(surface, Border.BackgroundProperty, ThemeManager.BarKey);
         Content = surface;
 
         Refresh();
@@ -252,10 +252,10 @@ public sealed class FindDialog : ModalDialog
 
             var selected = i == _selected;
 
-            Themed(row, Border.BackgroundProperty, selected ? ThemeManager.AKey : ThemeManager.SlabKey);
-            Themed(title, TextBlock.ForegroundProperty, selected ? ThemeManager.KnockKey : ThemeManager.WhiteKey);
-            Themed(path, TextBlock.ForegroundProperty, selected ? ThemeManager.BrownKey : ThemeManager.AKey);
-            Themed(kind, TextBlock.ForegroundProperty, selected ? ThemeManager.BrownKey : ThemeManager.GreyKey);
+            ThemeInk.Bind(row, Border.BackgroundProperty, selected ? ThemeManager.AKey : ThemeManager.SlabKey);
+            ThemeInk.Bind(title, TextBlock.ForegroundProperty, selected ? ThemeManager.KnockKey : ThemeManager.WhiteKey);
+            ThemeInk.Bind(path, TextBlock.ForegroundProperty, selected ? ThemeManager.BrownKey : ThemeManager.AKey);
+            ThemeInk.Bind(kind, TextBlock.ForegroundProperty, selected ? ThemeManager.BrownKey : ThemeManager.GreyKey);
         }
     }
 
@@ -270,10 +270,8 @@ public sealed class FindDialog : ModalDialog
     private static TextBlock Mono()
     {
         var block = new TextBlock { FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Meta };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

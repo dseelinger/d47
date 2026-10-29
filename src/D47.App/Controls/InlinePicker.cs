@@ -71,7 +71,7 @@ public sealed class InlinePicker : ContentControl
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0, 0, 0),
         };
-        Ink(caret, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(caret, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var layout = new DockPanel();
         DockPanel.SetDock(caret, Dock.Right);
@@ -106,8 +106,8 @@ public sealed class InlinePicker : ContentControl
                 HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
             },
         };
-        Ink(_list, Border.BackgroundProperty, ThemeManager.BarKey);
-        Ink(_list, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(_list, Border.BackgroundProperty, ThemeManager.BarKey);
+        ThemeInk.Bind(_list, Border.BorderBrushProperty, ThemeManager.AKey);
 
         Content = new StackPanel { Children = { _button, _list } };
     }
@@ -124,7 +124,7 @@ public sealed class InlinePicker : ContentControl
 
             if (value)
             {
-                _openInk = Ink(_button, Button.BackgroundProperty, ThemeManager.Tile2Key);
+                _openInk = ThemeInk.Bind(_button, Button.BackgroundProperty, ThemeManager.Tile2Key);
             }
             else
             {
@@ -203,7 +203,7 @@ public sealed class InlinePicker : ContentControl
         // The current option takes the selected row's Knock ink from the button.
         if (!isCurrent)
         {
-            _inks.Add(Ink(text, TextBlock.ForegroundProperty, option.InkKey));
+            _inks.Add(ThemeInk.Bind(text, TextBlock.ForegroundProperty, option.InkKey));
         }
 
         Control content = text;
@@ -223,7 +223,7 @@ public sealed class InlinePicker : ContentControl
 
             if (!isCurrent)
             {
-                _inks.Add(Ink(aside, TextBlock.ForegroundProperty, ThemeManager.GreyKey));
+                _inks.Add(ThemeInk.Bind(aside, TextBlock.ForegroundProperty, ThemeManager.GreyKey));
             }
 
             var row = new DockPanel();
@@ -271,7 +271,7 @@ public sealed class InlinePicker : ContentControl
             LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking,
             Margin = new Thickness(12, 10, 12, 4),
         };
-        _inks.Add(Ink(heading, TextBlock.ForegroundProperty, ThemeManager.GreyKey));
+        _inks.Add(ThemeInk.Bind(heading, TextBlock.ForegroundProperty, ThemeManager.GreyKey));
 
         return heading;
     }
@@ -285,10 +285,10 @@ public sealed class InlinePicker : ContentControl
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        _inks.Add(Ink(words, TextBlock.ForegroundProperty, ThemeManager.GreyKey));
+        _inks.Add(ThemeInk.Bind(words, TextBlock.ForegroundProperty, ThemeManager.GreyKey));
 
         var note = new Border { MinHeight = 36, Padding = new Thickness(12, 6), Child = words };
-        _inks.Add(Ink(note, Border.BackgroundProperty, ThemeManager.SlabKey));
+        _inks.Add(ThemeInk.Bind(note, Border.BackgroundProperty, ThemeManager.SlabKey));
 
         return note;
     }
@@ -296,6 +296,4 @@ public sealed class InlinePicker : ContentControl
     private static IObservable<object?> Resource(string key) =>
         Application.Current!.Resources.GetResourceObservable(key);
 
-    private static IDisposable Ink(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Resource(key));
 }

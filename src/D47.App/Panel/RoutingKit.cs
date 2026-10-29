@@ -108,7 +108,7 @@ internal static class RoutingKit
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
         return block;
     }
@@ -202,7 +202,7 @@ internal static class RoutingKit
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        Themed(tag, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(tag, TextBlock.ForegroundProperty, key);
 
         return tag;
     }
@@ -340,6 +340,4 @@ internal static class RoutingKit
         return body;
     }
 
-    public static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

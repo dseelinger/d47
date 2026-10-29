@@ -54,7 +54,7 @@ public sealed class MacroDialog : ModalDialog
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(header, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(header, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var root = new StackPanel { Spacing = 10, Children = { header, _problems, _list } };
 
@@ -106,7 +106,7 @@ public sealed class MacroDialog : ModalDialog
                 FontSize = TypeScale.Body,
                 TextWrapping = TextWrapping.Wrap,
             };
-            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             _list.Children.Add(empty);
             return;
         }
@@ -168,7 +168,7 @@ public sealed class MacroDialog : ModalDialog
             BorderThickness = new Thickness(0, 1, 0, 0),
             Child = body,
         };
-        Themed(card, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(card, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return card;
     }
@@ -272,9 +272,6 @@ public sealed class MacroDialog : ModalDialog
         macro.Steps.Insert(target, step);
         Rebuild();
     }
-
-    private static void Themed(Avalonia.AvaloniaObject target, Avalonia.AvaloniaProperty property, string key) =>
-        target.Bind(property, Avalonia.Application.Current!.Resources.GetResourceObservable(key));
 
     /// <summary>The editor's working copy.</summary>
     private sealed class MutableMacro

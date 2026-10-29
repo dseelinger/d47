@@ -89,7 +89,7 @@ public sealed class PageFooter : Border
 
         BorderThickness = new Thickness(0, 1, 0, 0);
         Padding = new Thickness(0, 12, 0, 0);
-        Themed(this, BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(this, BorderBrushProperty, ThemeManager.Line2Key);
 
         var said = new TextBlock
         {
@@ -99,7 +99,7 @@ public sealed class PageFooter : Border
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var label = new TextBlock
         {
@@ -110,7 +110,7 @@ public sealed class PageFooter : Border
             LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         _time = new TextBlock
         {
@@ -118,7 +118,7 @@ public sealed class PageFooter : Border
             FontSize = TypeScale.Meta,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(_time, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+        ThemeInk.Bind(_time, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
 
         _stamp = new StackPanel
         {
@@ -161,6 +161,4 @@ public sealed class PageFooter : Border
         _time.Text = at?.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
     }
 
-    private static IDisposable Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, target.GetResourceObservable(key));
 }

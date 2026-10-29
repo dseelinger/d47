@@ -187,13 +187,13 @@ internal sealed class JournalReadingPane : Border
             FontFamily = Mono,
             FontSize = TypeScale.Meta,
         };
-        LoadoutPages.Themed(time, TextElement.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(time, TextElement.ForegroundProperty, ThemeManager.AKey);
 
         var dot = new Run(" · ") { FontFamily = Prose, FontSize = TypeScale.Small };
         _age = new Run(EventReadings.Age(reading.Timestamp, DateTimeOffset.Now)) { FontFamily = Prose, FontSize = TypeScale.Small };
 
         var line = new TextBlock { Name = "ReadingTime", Inlines = [time, dot, _age] };
-        LoadoutPages.Themed(line, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return new StackPanel { Spacing = 6, Children = { headline, line } };
     }
@@ -240,7 +240,7 @@ internal sealed class JournalReadingPane : Border
         });
 
         var strip = new Border { Padding = new Thickness(14, 10), Child = grid };
-        LoadoutPages.Themed(strip, BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(strip, BackgroundProperty, ThemeManager.SlabKey);
 
         return new StackPanel { Children = { strip, below } };
     }
@@ -251,7 +251,7 @@ internal sealed class JournalReadingPane : Border
     private Border MeaningBox(string name, string meaning)
     {
         var named = new Run(name) { FontFamily = Mono, FontSize = TypeScale.Meta };
-        LoadoutPages.Themed(named, TextElement.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(named, TextElement.ForegroundProperty, ThemeManager.AKey);
 
         var tip = Text(string.Empty, Prose, TypeScale.Small, FontWeight.Normal, ThemeManager.WhiteKey);
         tip.LineHeight = TypeScale.Small * 1.45;
@@ -325,7 +325,7 @@ internal sealed class JournalReadingPane : Border
             PlacementMode.BottomEdgeAlignedLeft,
             horizontal: -14,
             vertical: 10,
-            shown => LoadoutPages.Themed(label, TextBlock.ForegroundProperty, shown ? ThemeManager.WhiteKey : ThemeManager.GreyKey),
+            shown => ThemeInk.Bind(label, TextBlock.ForegroundProperty, shown ? ThemeManager.WhiteKey : ThemeManager.GreyKey),
             narrowWidth: box);
     }
 
@@ -437,7 +437,7 @@ internal sealed class JournalReadingPane : Border
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        LoadoutPages.Themed(text, TextBlock.ForegroundProperty, ink);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, ink);
 
         text.Inlines = [.. value.Runs.Select(run => run.Number
             ? new Run(run.Text) { FontFamily = Mono, FontSize = TypeScale.Small, FontWeight = FontWeight.Normal }
@@ -494,7 +494,7 @@ internal sealed class JournalReadingPane : Border
             StrokeOffset = 3,
             StrokeOffsetUnit = TextDecorationUnit.Pixel,
         };
-        LoadoutPages.Themed(line, TextDecoration.StrokeProperty, key);
+        ThemeInk.Bind(line, TextDecoration.StrokeProperty, key);
 
         text.TextDecorations = [line];
 
@@ -572,12 +572,12 @@ internal sealed class JournalReadingPane : Border
             var solid = button.Classes.Contains(":pressed") || button.Classes.Contains(":focus-visible");
             var over = button.Classes.Contains(":pointerover");
 
-            LoadoutPages.Themed(face, BackgroundProperty, solid ? ThemeManager.AKey : over ? ThemeManager.Tile2Key : ThemeManager.TileKey);
-            LoadoutPages.Themed(ink, TextBlock.ForegroundProperty, solid ? ThemeManager.KnockKey : inkKey);
+            ThemeInk.Bind(face, BackgroundProperty, solid ? ThemeManager.AKey : over ? ThemeManager.Tile2Key : ThemeManager.TileKey);
+            ThemeInk.Bind(ink, TextBlock.ForegroundProperty, solid ? ThemeManager.KnockKey : inkKey);
 
             if (glyph is not null)
             {
-                LoadoutPages.Themed(glyph, TextBlock.ForegroundProperty, solid ? ThemeManager.KnockKey : ThemeManager.AKey);
+                ThemeInk.Bind(glyph, TextBlock.ForegroundProperty, solid ? ThemeManager.KnockKey : ThemeManager.AKey);
             }
         }
 
@@ -622,7 +622,7 @@ internal sealed class JournalReadingPane : Border
             Margin = new Thickness(0, 12, 0, 0),
             Name = "ReadingReceipt",
         };
-        LoadoutPages.Themed(body, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(body, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         _watch?.Invoke(body);
 
         var preview = Text(receipt, Prose, TypeScale.Small, FontWeight.Normal, ThemeManager.GreyKey);
@@ -669,7 +669,7 @@ internal sealed class JournalReadingPane : Border
             BorderThickness = new Thickness(0, 0, 0, 1),
             Child = grid,
         };
-        LoadoutPages.Themed(line, BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(line, BorderBrushProperty, ThemeManager.Line2Key);
 
         return line;
     }
@@ -684,7 +684,7 @@ internal sealed class JournalReadingPane : Border
             LineHeight = 18,
             TextWrapping = TextWrapping.Wrap,
         };
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         _watch?.Invoke(block);
 
         return block;
@@ -724,7 +724,7 @@ internal sealed class JournalReadingPane : Border
             BorderThickness = new Thickness(0, 0, 0, 1),
             Child = row,
         };
-        LoadoutPages.Themed(face, BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(face, BorderBrushProperty, ThemeManager.AKey);
 
         var button = new Button
         {
@@ -753,7 +753,7 @@ internal sealed class JournalReadingPane : Border
         {
             if (button.Classes.Contains(":pointerover") || button.Classes.Contains(":focus-visible"))
             {
-                LoadoutPages.Themed(face, BackgroundProperty, ThemeManager.TileKey);
+                ThemeInk.Bind(face, BackgroundProperty, ThemeManager.TileKey);
             }
             else
             {
@@ -787,7 +787,7 @@ internal sealed class JournalReadingPane : Border
             LetterSpacing = 0,
             TextWrapping = TextWrapping.Wrap,
         };
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
         return block;
     }
@@ -802,8 +802,8 @@ internal sealed class JournalReadingPane : Border
             IsHitTestVisible = false,
             Child = child,
         };
-        LoadoutPages.Themed(box, BackgroundProperty, ThemeManager.BgKey);
-        LoadoutPages.Themed(box, BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(box, BackgroundProperty, ThemeManager.BgKey);
+        ThemeInk.Bind(box, BorderBrushProperty, ThemeManager.AKey);
 
         return box;
     }

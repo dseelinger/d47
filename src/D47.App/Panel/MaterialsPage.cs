@@ -512,7 +512,7 @@ public sealed class MaterialsPage : UserControl
             Margin = new Thickness(0, 2, 0, 0),
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        LoadoutPages.Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var place = new TextBlock
         {
@@ -522,7 +522,7 @@ public sealed class MaterialsPage : UserControl
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        LoadoutPages.Themed(place, TextBlock.ForegroundProperty, stop.IsHere ? ThemeManager.CyanKey : ThemeManager.AKey);
+        ThemeInk.Bind(place, TextBlock.ForegroundProperty, stop.IsHere ? ThemeManager.CyanKey : ThemeManager.AKey);
 
         var coordinates = new TextBlock
         {
@@ -532,7 +532,7 @@ public sealed class MaterialsPage : UserControl
             Margin = new Thickness(copy is null ? 6 : 0, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
         };
-        LoadoutPages.Themed(coordinates, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(coordinates, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var where = new StackPanel { Orientation = Orientation.Horizontal, Children = { place } };
 
@@ -579,14 +579,14 @@ public sealed class MaterialsPage : UserControl
             Padding = new Thickness(0, 10, 0, 0),
             Child = facts,
         };
-        LoadoutPages.Themed(rule, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         var card = new Border
         {
             Padding = new Thickness(14, 12),
             Child = new StackPanel { Children = { head, rule } },
         };
-        LoadoutPages.Themed(card, Border.BackgroundProperty, ThemeManager.TileKey);
+        ThemeInk.Bind(card, Border.BackgroundProperty, ThemeManager.TileKey);
 
         return card;
     }
@@ -628,7 +628,7 @@ public sealed class MaterialsPage : UserControl
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 4, 0, 0),
         };
-        LoadoutPages.Themed(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var fact = new StackPanel { Children = { heading, value } };
         Grid.SetColumn(fact, column);
@@ -655,7 +655,7 @@ public sealed class MaterialsPage : UserControl
                 FontSize = TypeScale.MetaSmall,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            LoadoutPages.Themed(figureText, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(figureText, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             heading.Children.Add(figureText);
         }
 
@@ -720,7 +720,7 @@ public sealed class MaterialsPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        LoadoutPages.Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var count = Mono(Count(held), atCap ? ThemeManager.YellowKey : ThemeManager.AKey);
         count.Margin = new Thickness(8, 0, 0, 0);
@@ -738,7 +738,7 @@ public sealed class MaterialsPage : UserControl
                 Margin = new Thickness(8, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            LoadoutPages.Themed(need, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(need, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             Grid.SetColumn(need, 1);
             words.Children.Add(need);
         }
@@ -762,11 +762,11 @@ public sealed class MaterialsPage : UserControl
         };
 
         var ground = new Border();
-        LoadoutPages.Themed(ground, Border.BackgroundProperty, ThemeManager.YellowTrackKey);
+        ThemeInk.Bind(ground, Border.BackgroundProperty, ThemeManager.YellowTrackKey);
         Grid.SetColumnSpan(ground, 2);
 
         var filled = new Border();
-        LoadoutPages.Themed(filled, Border.BackgroundProperty, ThemeManager.YellowKey);
+        ThemeInk.Bind(filled, Border.BackgroundProperty, ThemeManager.YellowKey);
 
         bar.Children.Add(ground);
         bar.Children.Add(filled);
@@ -777,14 +777,14 @@ public sealed class MaterialsPage : UserControl
     /// <summary>Fills a row or tile with <paramref name="restKey"/>, and Tile2 while the pointer is over it or it has keyboard focus.</summary>
     internal static void Hover(Border target, string restKey = ThemeManager.TileKey)
     {
-        var fill = Themed(target, Border.BackgroundProperty, restKey);
+        var fill = ThemeInk.Bind(target, Border.BackgroundProperty, restKey);
         var pointerOver = false;
         var keyboardFocus = false;
 
         void Refresh()
         {
             fill.Dispose();
-            fill = Themed(target, Border.BackgroundProperty, pointerOver || keyboardFocus ? ThemeManager.Tile2Key : restKey);
+            fill = ThemeInk.Bind(target, Border.BackgroundProperty, pointerOver || keyboardFocus ? ThemeManager.Tile2Key : restKey);
         }
 
         target.PointerEntered += (_, _) =>
@@ -832,7 +832,7 @@ public sealed class MaterialsPage : UserControl
             FontSize = TypeScale.Small,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        LoadoutPages.Themed(kind, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(kind, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var head = new WrapPanel { ItemSpacing = 12, LineSpacing = 4, Children = { name, kind } };
 
@@ -872,7 +872,7 @@ public sealed class MaterialsPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        LoadoutPages.Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var ledger = Chrome(LedgerOf(line.Material), ThemeManager.GreyKey);
 
@@ -902,9 +902,6 @@ public sealed class MaterialsPage : UserControl
         return row;
     }
 
-    private static IDisposable Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, target.GetResourceObservable(key));
-
     internal static TextBlock Chrome(string text, string key)
     {
         var block = new TextBlock
@@ -917,7 +914,7 @@ public sealed class MaterialsPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -931,14 +928,14 @@ public sealed class MaterialsPage : UserControl
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
     internal static TextBlock Hint(string text, Thickness margin)
     {
         var hint = new TextBlock { Text = text, FontSize = TypeScale.Small, TextWrapping = TextWrapping.Wrap, Margin = margin };
-        LoadoutPages.Themed(hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return hint;
     }
 
@@ -1113,11 +1110,11 @@ public sealed class MaterialsPage : UserControl
             Child = Modal.Build("Materials", title, content, [LoadoutPages.Press("Close", CloseDetail)]),
         };
 
-        LoadoutPages.Themed(panel, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(panel, Border.BorderBrushProperty, ThemeManager.AKey);
 
         var backdrop = new Border { Name = DetailBackdropName };
 
-        LoadoutPages.Themed(backdrop, Border.BackgroundProperty, ThemeManager.ScrimKey);
+        ThemeInk.Bind(backdrop, Border.BackgroundProperty, ThemeManager.ScrimKey);
 
         backdrop.PointerPressed += (_, e) =>
         {

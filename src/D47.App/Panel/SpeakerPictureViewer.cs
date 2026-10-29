@@ -30,7 +30,7 @@ internal sealed class SpeakerPictureViewer : Grid
             Margin = new Thickness(24, 72),
         });
 
-        LoadoutPages.Themed(this, BackgroundProperty, ThemeManager.BgKey);
+        ThemeInk.Bind(this, BackgroundProperty, ThemeManager.BgKey);
 
         var close = LoadoutPages.Press("Close", Dismiss);
         close.Name = "ClosePicture";

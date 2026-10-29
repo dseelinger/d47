@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+﻿﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -786,7 +786,7 @@ public sealed class GalaxyMapPage : UserControl
         _strip.Padding = new Thickness(12, 0, 0, 0);
         _strip.ClipToBounds = true;
         _strip.Child = row;
-        RoutingKit.Themed(_strip, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(_strip, Border.BackgroundProperty, ThemeManager.SlabKey);
     }
 
     /// <summary>Shows what the selected system is and what can be done with it, and hides what the strip replaces.</summary>
@@ -815,7 +815,7 @@ public sealed class GalaxyMapPage : UserControl
         _stripUnvisited = _unvisitedNames.Contains(star.Name);
         _strip.IsVisible = true;
         _stripName.Text = star.Name.ToUpperInvariant();
-        RoutingKit.Themed(_stripName, TextBlock.ForegroundProperty, _stripCurrent ? ThemeManager.CyanKey : ThemeManager.AKey);
+        ThemeInk.Bind(_stripName, TextBlock.ForegroundProperty, _stripCurrent ? ThemeManager.CyanKey : ThemeManager.AKey);
         _copyHolder.Content = _copy is { } copy ? CopyGlyph.For(star.Name, copy) : null;
 
         _stripFacts.Inlines = [.. Facts(star)];
@@ -885,7 +885,7 @@ public sealed class GalaxyMapPage : UserControl
     private static Run White(string text)
     {
         var run = new Run(text);
-        RoutingKit.Themed(run, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(run, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
 
         return run;
     }
@@ -955,7 +955,7 @@ public sealed class GalaxyMapPage : UserControl
         _stripResult.Text = added
             ? $"Bookmarked {star.Name}."
             : $"{star.Name} is already bookmarked under that name. The Bookmarks page renames it.";
-        RoutingKit.Themed(_stripResult, TextBlock.ForegroundProperty, added ? ThemeManager.BlueKey : ThemeManager.WhiteKey);
+        ThemeInk.Bind(_stripResult, TextBlock.ForegroundProperty, added ? ThemeManager.BlueKey : ThemeManager.WhiteKey);
         _stripResult.IsVisible = true;
         _stripKinds.IsVisible = false;
     }
@@ -1215,7 +1215,7 @@ public sealed class GalaxyMapPage : UserControl
     private Control Framed()
     {
         var frame = new Border { IsHitTestVisible = false, BorderThickness = new Thickness(1) };
-        RoutingKit.Themed(frame, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(frame, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         var grid = new Grid { Children = { _map, frame } };
 
@@ -1235,7 +1235,7 @@ public sealed class GalaxyMapPage : UserControl
         };
         _planKindWord.LetterSpacing = TypeScale.MetaSmall * Fonts.ChromeTracking;
         _planHeadline.TextTrimming = TextTrimming.CharacterEllipsis;
-        RoutingKit.Themed(_planBand, Border.BackgroundProperty, ThemeManager.BgKey);
+        ThemeInk.Bind(_planBand, Border.BackgroundProperty, ThemeManager.BgKey);
         grid.Children.Add(_planBand);
         grid.SizeChanged += (_, e) =>
         {
@@ -1254,7 +1254,7 @@ public sealed class GalaxyMapPage : UserControl
                 Padding = new Thickness(8, 3),
                 Child = _legend,
             };
-            RoutingKit.Themed(_legendOverlay, Border.BackgroundProperty, ThemeManager.BgKey);
+            ThemeInk.Bind(_legendOverlay, Border.BackgroundProperty, ThemeManager.BgKey);
 
             _strip.VerticalAlignment = VerticalAlignment.Bottom;
             grid.Children.Insert(1, _legendOverlay);
@@ -1574,7 +1574,7 @@ public sealed class GalaxyMapPage : UserControl
     private static Run Ink(string text)
     {
         var run = new Run(text);
-        RoutingKit.Themed(run, TextElement.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(run, TextElement.ForegroundProperty, ThemeManager.GreyKey);
 
         return run;
     }

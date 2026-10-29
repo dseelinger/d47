@@ -59,7 +59,7 @@ internal static class CreditsKit
     public static Run White(string text)
     {
         var run = Fonts.Mono(text);
-        LoadoutPages.Themed(run, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(run, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
 
         return run;
     }
@@ -67,7 +67,7 @@ internal static class CreditsKit
     public static Run Colored(string text, string key)
     {
         var run = Fonts.Mono(text);
-        LoadoutPages.Themed(run, TextElement.ForegroundProperty, key);
+        ThemeInk.Bind(run, TextElement.ForegroundProperty, key);
 
         return run;
     }
@@ -81,7 +81,7 @@ internal static class CreditsKit
             FontSize = size,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        RoutingKit.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
         return block;
     }
@@ -107,7 +107,7 @@ internal static class CreditsKit
             Padding = new Thickness(14, 12),
             Child = RoutingKit.Ink(text, TypeScale.ControlLarge, ThemeManager.WhiteKey, wrap: true),
         };
-        RoutingKit.Themed(border, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return border;
     }
@@ -146,7 +146,7 @@ internal static class CreditsKit
     {
         var label = TitleText.Build(text, TypeScale.Meta, TitleRank.Subgroup);
         label.FontFamily = Fonts.ChromeFamily;
-        LoadoutPages.Themed(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return label;
     }

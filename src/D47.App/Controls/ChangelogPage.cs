@@ -29,7 +29,7 @@ public sealed class ChangelogPage : DialogPage
             [TextBlock.TextAlignmentProperty] = TextAlignment.Left,
         };
 
-        Themed(body, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(body, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var close = new Button { Content = "Close", MinWidth = 110 };
 
@@ -40,6 +40,4 @@ public sealed class ChangelogPage : DialogPage
         Opened += (_, _) => close.Focus();
     }
 
-    private IDisposable Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, this.GetResourceObservable(key));
 }

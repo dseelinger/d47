@@ -196,7 +196,7 @@ public sealed partial class StarSystemPage
             FontSize = StatTile.ValueSize,
             FontWeight = FontWeight.Medium,
         };
-        RoutingKit.Themed(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var track = Gauge.Track(progress ?? 0, ThemeManager.AKey);
         track.Margin = new Thickness(0, 4, 0, 0);
@@ -206,7 +206,7 @@ public sealed partial class StarSystemPage
             Padding = new Thickness(14, 10),
             Child = new StackPanel { Spacing = 2, Children = { Caption("Control progress", ThemeManager.GreyKey), figure, track } },
         };
-        RoutingKit.Themed(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return tile;
     }

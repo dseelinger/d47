@@ -384,7 +384,7 @@ public sealed class SetupWizard : ModalDialog
             grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
 
             var segment = new Border { Height = 4 };
-            Themed(segment, Border.BackgroundProperty, i < (int)step
+            ThemeInk.Bind(segment, Border.BackgroundProperty, i < (int)step
                 ? ThemeManager.AKey
                 : i == (int)step ? ThemeManager.CyanKey : ThemeManager.Line2Key);
 
@@ -422,7 +422,7 @@ public sealed class SetupWizard : ModalDialog
                 FontSize = TypeScale.Control,
                 Width = 28,
             };
-            Themed(number, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(number, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
             var name = Chrome(outline[i].Name, ThemeManager.AKey);
             name.Width = 140;
@@ -434,7 +434,7 @@ public sealed class SetupWizard : ModalDialog
             DockPanel.SetDock(name, Dock.Left);
 
             var slab = new Border { Padding = new Thickness(14, 10), Child = row };
-            Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+            ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
             list.Children.Add(slab);
         }
 
@@ -547,8 +547,8 @@ public sealed class SetupWizard : ModalDialog
         // A selected row is filled A, so its words go Knock and its tag Brown.
         var ink = selected ? ThemeManager.KnockKey : ThemeManager.AKey;
 
-        Themed(box, Border.BorderBrushProperty, ink);
-        Themed(box.Child, Border.BackgroundProperty, ink);
+        ThemeInk.Bind(box, Border.BorderBrushProperty, ink);
+        ThemeInk.Bind(box.Child, Border.BackgroundProperty, ink);
 
         var name = Chrome(option.Name, ink);
 
@@ -559,7 +559,7 @@ public sealed class SetupWizard : ModalDialog
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 3, 0, 0),
         };
-        Themed(summary, TextBlock.ForegroundProperty, selected ? ThemeManager.KnockKey : ThemeManager.GreyKey);
+        ThemeInk.Bind(summary, TextBlock.ForegroundProperty, selected ? ThemeManager.KnockKey : ThemeManager.GreyKey);
 
         var tag = new TextBlock
         {
@@ -569,7 +569,7 @@ public sealed class SetupWizard : ModalDialog
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(12, 0, 0, 0),
         };
-        Themed(tag, TextBlock.ForegroundProperty, selected ? ThemeManager.BrownKey : ThemeManager.GreyKey);
+        ThemeInk.Bind(tag, TextBlock.ForegroundProperty, selected ? ThemeManager.BrownKey : ThemeManager.GreyKey);
 
         var words = new StackPanel { Children = { name, summary }, Margin = new Thickness(12, 0, 0, 0) };
 
@@ -802,7 +802,7 @@ public sealed class SetupWizard : ModalDialog
     private Control Ready()
     {
         var dot = new Border { Width = 10, Height = 10, VerticalAlignment = VerticalAlignment.Center };
-        Themed(dot, Border.BackgroundProperty, ThemeManager.CyanKey);
+        ThemeInk.Bind(dot, Border.BackgroundProperty, ThemeManager.CyanKey);
 
         var status = Chrome("PTT ready", ThemeManager.CyanKey);
         status.Margin = new Thickness(14, 0);
@@ -820,7 +820,7 @@ public sealed class SetupWizard : ModalDialog
         DockPanel.SetDock(status, Dock.Left);
 
         var slab = new Border { Padding = new Thickness(14, 12), Child = row };
-        Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return slab;
     }
@@ -912,15 +912,15 @@ public sealed class SetupWizard : ModalDialog
             FontSize = TypeScale.Tip,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(text, TextBlock.ForegroundProperty, waiting ? ThemeManager.CyanKey : bound ? ThemeManager.WhiteKey : ThemeManager.Grey2Key);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, waiting ? ThemeManager.CyanKey : bound ? ThemeManager.WhiteKey : ThemeManager.Grey2Key);
 
         var slab = new Border { Padding = new Thickness(14, 0), MinHeight = TypeScale.MinimumTarget, Child = text };
-        Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         if (waiting)
         {
             slab.BorderThickness = new Thickness(1);
-            Themed(slab, Border.BorderBrushProperty, ThemeManager.CyanKey);
+            ThemeInk.Bind(slab, Border.BorderBrushProperty, ThemeManager.CyanKey);
         }
 
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile, Margin = Gaps.TileBefore };
@@ -1109,7 +1109,7 @@ public sealed class SetupWizard : ModalDialog
         row.Children.Add(name);
 
         var head = new Border { Padding = new Thickness(0, 0, 0, 6), BorderThickness = new Thickness(0, 0, 0, 1), Child = row };
-        Themed(head, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(head, Border.BorderBrushProperty, ThemeManager.AKey);
 
         return head;
     }
@@ -1126,7 +1126,7 @@ public sealed class SetupWizard : ModalDialog
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(block, TextBlock.ForegroundProperty, ink);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ink);
 
         return block;
     }
@@ -1134,7 +1134,7 @@ public sealed class SetupWizard : ModalDialog
     private static TextBlock Lead(string text)
     {
         var block = new TextBlock { Text = text, FontSize = TypeScale.Body, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         return block;
     }
@@ -1142,7 +1142,7 @@ public sealed class SetupWizard : ModalDialog
     private static TextBlock Help(string text)
     {
         var block = new TextBlock { Text = text, FontSize = TypeScale.Tip, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return block;
     }
@@ -1157,7 +1157,7 @@ public sealed class SetupWizard : ModalDialog
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return block;
     }
@@ -1173,6 +1173,4 @@ public sealed class SetupWizard : ModalDialog
         return link;
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

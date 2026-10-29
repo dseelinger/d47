@@ -28,7 +28,7 @@ public static class SortBar
         var label = TitleText.Build("Sort", TypeScale.Control, TitleRank.Subgroup);
         label.FontFamily = Fonts.ChromeFamily;
         label.VerticalAlignment = VerticalAlignment.Center;
-        LoadoutPages.Themed(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         AutomationProperties.SetName(choice, "Sort");
 
         return new StackPanel

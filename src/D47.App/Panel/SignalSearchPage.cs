@@ -266,7 +266,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
         var here = string.Equals(finding.System, _here(), StringComparison.OrdinalIgnoreCase);
         var system = Value(finding.System);
         system.VerticalAlignment = VerticalAlignment.Center;
-        Themed(system, TextBlock.ForegroundProperty, here ? ThemeManager.CyanKey : ThemeManager.AKey);
+        ThemeInk.Bind(system, TextBlock.ForegroundProperty, here ? ThemeManager.CyanKey : ThemeManager.AKey);
 
         var systemCell = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Children = { system } };
 

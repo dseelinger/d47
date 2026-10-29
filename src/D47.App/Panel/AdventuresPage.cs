@@ -816,7 +816,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             var empty = string.IsNullOrWhiteSpace(brief);
 
             briefText.Text = empty ? BriefHint : brief;
-            Themed(briefText, TextBlock.ForegroundProperty, empty ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
+            ThemeInk.Bind(briefText, TextBlock.ForegroundProperty, empty ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
             clearBrief.IsVisible = !empty;
         }
 
@@ -1017,7 +1017,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         page.Children.Add(rows);
 
         var rule = new Border { Height = 1 };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.Line2Key);
         page.Children.Add(rule);
         page.Children.Add(AskRow(null, buttons, null));
 
@@ -1081,7 +1081,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 TextAlignment = TextAlignment.Left,
             };
             name.Padding = new Thickness(0, 13, 0, 0);
-            Themed(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             row.Children.Add(name);
         }
 
@@ -1451,7 +1451,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         }
 
         var system = new Run(text.Substring(at, here!.Length));
-        Themed(system, TextElement.ForegroundProperty, ThemeManager.CyanKey);
+        ThemeInk.Bind(system, TextElement.ForegroundProperty, ThemeManager.CyanKey);
 
         block.Text = null;
         block.Inlines = [new Run(text[..at]), system, new Run(text[(at + here.Length)..])];
@@ -1475,7 +1475,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         if (string.Equals(system, here, StringComparison.OrdinalIgnoreCase))
         {
-            Themed(name, TextElement.ForegroundProperty, ThemeManager.CyanKey);
+            ThemeInk.Bind(name, TextElement.ForegroundProperty, ThemeManager.CyanKey);
         }
 
         var before = Text("", TypeScale.Secondary, ThemeManager.AKey);
@@ -1690,19 +1690,17 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             block.Inlines.Add(new Run(after));
         }
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 
     internal static TextBlock Text(string text, double size, string key = ThemeManager.WhiteKey)
     {
         var block = new TextBlock { Text = text, FontSize = size, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
     internal static TextBlock Muted(string text) => Text(text, TypeScale.Body, ThemeManager.GreyKey);
 
-    internal static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 }

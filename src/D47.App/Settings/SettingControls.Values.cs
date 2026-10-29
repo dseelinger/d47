@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿﻿using System.Diagnostics;
 using System.Globalization;
 using D47.Core.Knowledge;
 using D47.Core.Listening;
@@ -129,7 +129,7 @@ internal sealed partial class SettingControls
             Margin = new Thickness(0, 4, 0, 0),
         };
 
-        Themed(stagedNote, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(stagedNote, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         string? staged = null;
 
@@ -366,7 +366,7 @@ internal sealed partial class SettingControls
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 8, 0),
         };
-        Themed(busy, BusyGlyph.StrokeProperty, ThemeManager.AKey);
+        ThemeInk.Bind(busy, BusyGlyph.StrokeProperty, ThemeManager.AKey);
 
         button.Click += async (_, _) => await ChooseAsync(row, button, busy, message);
 
@@ -395,7 +395,7 @@ internal sealed partial class SettingControls
                     ? name
                     : row.LabelForChoice(current, host.Settings.Current);
 
-            Themed(value, TextBlock.ForegroundProperty, current is null ? ThemeManager.Grey2Key : ThemeManager.WhiteKey);
+            ThemeInk.Bind(value, TextBlock.ForegroundProperty, current is null ? ThemeManager.Grey2Key : ThemeManager.WhiteKey);
 
             statusInk?.Dispose();
             statusInk = null;
@@ -408,7 +408,7 @@ internal sealed partial class SettingControls
 
                 status.Text = bands?.ToUpperInvariant();
                 status.IsVisible = bands is not null;
-                statusInk = Themed(status, TextBlock.ForegroundProperty, ThemeManager.AKey);
+                statusInk = ThemeInk.Bind(status, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
                 state.Text = clip.State.Text.ToUpperInvariant();
                 state.IsVisible = true;
@@ -476,7 +476,7 @@ internal sealed partial class SettingControls
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 12, 0),
             };
-            owner.Themed(_mono, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(_mono, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
             _text = new TextBlock
             {
@@ -486,7 +486,7 @@ internal sealed partial class SettingControls
                 TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            owner.Themed(_text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(_text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
             _fetchNow = new Button { Content = "Fetch now", Margin = new Thickness(12, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
             _fetchNow.Click += (_, _) => Fetch();
@@ -518,7 +518,7 @@ internal sealed partial class SettingControls
                 Child = new Avalonia.Controls.Panel { Children = { _words, _failed } },
                 IsVisible = false,
             };
-            owner.Themed(_line, Border.BorderBrushProperty, ThemeManager.Line2Key);
+            ThemeInk.Bind(_line, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
             // The provider outlives the settings view, so a row off screen stops listening.
             _line.AttachedToVisualTree += (_, _) => Watch();

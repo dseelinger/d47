@@ -97,7 +97,7 @@ public sealed class CodexChoosePage : UserControl, IPageSummary
     {
         var slot = new Image { Width = ThumbnailWidth, Height = ThumbnailHeight, Stretch = Avalonia.Media.Stretch.UniformToFill };
         var thumbnail = new Border { Width = ThumbnailWidth, Height = ThumbnailHeight, ClipToBounds = true, Child = slot };
-        RoutingKit.Themed(thumbnail, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(thumbnail, Border.BackgroundProperty, ThemeManager.SlabKey);
         thumbnails.Add((slot, capture.Path));
 
         var text = new StackPanel

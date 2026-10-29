@@ -762,11 +762,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         if (quiet)
         {
-            Themed(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         }
         else if (list.IsHere)
         {
-            Themed(name, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+            ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
         }
 
         var who = new StackPanel { Spacing = 1, Children = { name } };
@@ -783,7 +783,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
 
-        Themed(next, TextBlock.ForegroundProperty, quiet ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
+        ThemeInk.Bind(next, TextBlock.ForegroundProperty, quiet ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
 
         var row = Pressable(
             Spoken(list),
@@ -792,7 +792,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         if (quiet)
         {
-            Themed(row, TemplatedControl.BackgroundProperty, ThemeManager.SlabKey);
+            ThemeInk.Bind(row, TemplatedControl.BackgroundProperty, ThemeManager.SlabKey);
         }
 
         return row;
@@ -814,7 +814,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         if (list.IsHere)
         {
-            Themed(name, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+            ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
         }
 
         var next = new TextBlock
@@ -825,7 +825,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        Themed(next, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(next, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var count = new TextBlock
         {
@@ -836,7 +836,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        Themed(count, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(count, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("130,*,54"), ColumnSpacing = 10 };
 
@@ -915,13 +915,13 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         };
 
         var opened = new Run($"{open.ToString(CultureInfo.InvariantCulture)} open");
-        Themed(opened, TextElement.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(opened, TextElement.ForegroundProperty, ThemeManager.AKey);
         block.Inlines!.Add(opened);
 
         if (done > 0)
         {
             var closed = new Run($" · {done.ToString(CultureInfo.InvariantCulture)} done");
-            Themed(closed, TextElement.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(closed, TextElement.ForegroundProperty, ThemeManager.GreyKey);
             block.Inlines.Add(closed);
         }
 
@@ -939,7 +939,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             HorizontalAlignment = HorizontalAlignment.Right,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.BlueKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.BlueKey);
         return block;
     }
 
@@ -963,7 +963,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            Themed(line, TextBlock.ForegroundProperty, kindKey ?? ThemeManager.GreyKey);
+            ThemeInk.Bind(line, TextBlock.ForegroundProperty, kindKey ?? ThemeManager.GreyKey);
             text.Children.Add(line);
         }
 
@@ -1235,7 +1235,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         var ground = ListRow.Dress(new Border { Child = body, Padding = new Thickness(12, 10) }, selected: false);
         ground.MinHeight = 0;
-        Themed(ground, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(ground, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         var card = new StackPanel { Spacing = 0, Children = { press, ground } };
         AutomationProperties.SetName(card, standing.Arc.Name);
@@ -1358,7 +1358,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var reading = new TextBlock
         {
@@ -1368,14 +1368,14 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(reading, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(reading, TextBlock.ForegroundProperty, key);
 
         var panel = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 8, 0), Children = { name, reading } };
 
         if (sub.Length > 0)
         {
             var line = new TextBlock { Text = sub, FontSize = TypeScale.Meta, TextWrapping = TextWrapping.Wrap };
-            Themed(line, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             panel.Children.Add(line);
         }
 
@@ -2047,7 +2047,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 
@@ -2072,7 +2072,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         }
 
         var sign = new TextBlock { Text = glyph, Width = 16 };
-        Themed(sign, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(sign, TextBlock.ForegroundProperty, key);
         DockPanel.SetDock(sign, Dock.Left);
 
         return new DockPanel { Children = { sign, name } };
@@ -2091,7 +2091,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        Themed(name, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.AKey);
         DockPanel.SetDock(name, Dock.Left);
 
         var row = new DockPanel { Children = { name } };
@@ -2113,6 +2113,4 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             TextWrapping = TextWrapping.Wrap,
         });
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 }

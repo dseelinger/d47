@@ -61,7 +61,7 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
             },
         };
         AutomationProperties.SetName(_button, "Switch Commander");
-        _buttonForegroundInk = Ink(_button, TemplatedControl.ForegroundProperty, RestingInk());
+        _buttonForegroundInk = ThemeInk.Bind(_button, TemplatedControl.ForegroundProperty, RestingInk());
         _name.Bind(TextBlock.ForegroundProperty, _button.GetObservable(TemplatedControl.ForegroundProperty));
         chevron.Bind(TextBlock.ForegroundProperty, _button.GetObservable(TemplatedControl.ForegroundProperty));
 
@@ -72,8 +72,8 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
             Padding = new Thickness(2),
             Child = _items,
         };
-        Ink(frame, Border.BackgroundProperty, ThemeManager.BarKey);
-        Ink(frame, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(frame, Border.BackgroundProperty, ThemeManager.BarKey);
+        ThemeInk.Bind(frame, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         _menu = new Popup
         {
@@ -135,7 +135,7 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
         var called = shown is null ? "CMDR" : CommanderRoster.Called(shown.Name);
         _name.Text = _roster.IsOffDuty ? called + CommanderRoster.NotLoggedIn : called;
         _buttonForegroundInk?.Dispose();
-        _buttonForegroundInk = Ink(_button, TemplatedControl.ForegroundProperty, _menu.IsOpen ? ThemeManager.KnockKey : RestingInk());
+        _buttonForegroundInk = ThemeInk.Bind(_button, TemplatedControl.ForegroundProperty, _menu.IsOpen ? ThemeManager.KnockKey : RestingInk());
         IsVisible = _roster.CanSwitch;
 
         if (!IsVisible)
@@ -156,13 +156,13 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
 
         if (open)
         {
-            _buttonBackgroundInk = Ink(_button, Button.BackgroundProperty, ThemeManager.AKey);
-            _buttonForegroundInk = Ink(_button, TemplatedControl.ForegroundProperty, ThemeManager.KnockKey);
+            _buttonBackgroundInk = ThemeInk.Bind(_button, Button.BackgroundProperty, ThemeManager.AKey);
+            _buttonForegroundInk = ThemeInk.Bind(_button, TemplatedControl.ForegroundProperty, ThemeManager.KnockKey);
         }
         else
         {
             _button.ClearValue(Button.BackgroundProperty);
-            _buttonForegroundInk = Ink(_button, TemplatedControl.ForegroundProperty, RestingInk());
+            _buttonForegroundInk = ThemeInk.Bind(_button, TemplatedControl.ForegroundProperty, RestingInk());
         }
     }
 
@@ -178,7 +178,7 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
         }
 
         var rule = new Border { Height = 1, Margin = new Thickness(0, 2) };
-        Ink(rule, Border.BackgroundProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.Line2Key);
         _items.Children.Add(rule);
 
         var manage = new Button
@@ -234,7 +234,7 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
 
         if (current)
         {
-            Ink(item, Button.BackgroundProperty, ThemeManager.CyanGroundKey);
+            ThemeInk.Bind(item, Button.BackgroundProperty, ThemeManager.CyanGroundKey);
         }
 
         item.Click += (_, _) =>
@@ -259,10 +259,8 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
             FontSize = TypeScale.Control,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Ink(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
-    private static IDisposable Ink(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, target.GetResourceObservable(key));
 }

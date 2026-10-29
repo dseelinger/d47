@@ -73,7 +73,7 @@ public sealed class SpendDialog : ModalDialog
         // scroller takes the rest.
         MaxHeight = 740;
 
-        Themed(_figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(_figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         Draw();
 
@@ -281,7 +281,7 @@ public sealed class SpendDialog : ModalDialog
         if (charged.All(shares => shares.Count == 0))
         {
             var empty = new TextBlock { Text = "nothing charged yet", FontSize = TypeScale.Secondary };
-            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             return empty;
         }
 
@@ -378,7 +378,7 @@ public sealed class SpendDialog : ModalDialog
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(indent, 0, 0, 0),
         };
-        Themed(label, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, key);
         return label;
     }
 
@@ -412,7 +412,7 @@ public sealed class SpendDialog : ModalDialog
                 TextAlignment = TextAlignment.Right,
                 TextWrapping = head ? TextWrapping.Wrap : TextWrapping.NoWrap,
             };
-            Themed(figure, TextBlock.ForegroundProperty, cell.Key);
+            ThemeInk.Bind(figure, TextBlock.ForegroundProperty, cell.Key);
 
             Control content = figure;
 
@@ -426,7 +426,7 @@ public sealed class SpendDialog : ModalDialog
                     HorizontalAlignment = HorizontalAlignment.Right,
                     TextWrapping = TextWrapping.NoWrap,
                 };
-                Themed(uses, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+                ThemeInk.Bind(uses, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
                 content = new StackPanel { Children = { figure, uses } };
             }
 
@@ -441,7 +441,7 @@ public sealed class SpendDialog : ModalDialog
             BorderThickness = new Thickness(0, rule ? 1 : 0, 0, 0),
             Margin = new Thickness(0, rule ? 6 : 0, 0, 0),
         };
-        Themed(border, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(border, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         return border;
     }
@@ -476,7 +476,7 @@ public sealed class SpendDialog : ModalDialog
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(line, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return line;
     }
@@ -509,7 +509,7 @@ public sealed class SpendDialog : ModalDialog
         };
 
         var label = new TextBlock { Text = caption, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var figure = new TextBlock
         {
@@ -520,7 +520,7 @@ public sealed class SpendDialog : ModalDialog
             TextWrapping = TextWrapping.NoWrap,
             Margin = new Thickness(0, 0, 8, 0),
         };
-        Themed(figure, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(figure, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var behind = new TextBlock
         {
@@ -529,7 +529,7 @@ public sealed class SpendDialog : ModalDialog
             FontFamily = new FontFamily(Fonts.MonoFamily),
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(behind, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(behind, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         Grid.SetColumn(figure, 1);
         Grid.SetColumn(behind, 2);
@@ -541,6 +541,4 @@ public sealed class SpendDialog : ModalDialog
         return grid;
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

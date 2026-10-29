@@ -72,7 +72,7 @@ public sealed class Notice : Border
             LineHeight = TextSize * 1.4,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(_text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(_text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         _detail = new TextBlock
         {
@@ -81,7 +81,7 @@ public sealed class Notice : Border
             TextWrapping = TextWrapping.Wrap,
             IsVisible = false,
         };
-        Themed(_detail, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_detail, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         _actions = new StackPanel
         {
@@ -125,9 +125,9 @@ public sealed class Notice : Border
             var warning = value == NoticeLevel.Warning;
             var ink = warning ? ThemeManager.WarnKey : ThemeManager.RedKey;
 
-            Themed(this, BorderBrushProperty, ink);
-            Themed(this, BackgroundProperty, warning ? ThemeManager.WarnGroundKey : ThemeManager.RedGroundKey);
-            Themed(_label, TextBlock.ForegroundProperty, ink);
+            ThemeInk.Bind(this, BorderBrushProperty, ink);
+            ThemeInk.Bind(this, BackgroundProperty, warning ? ThemeManager.WarnGroundKey : ThemeManager.RedGroundKey);
+            ThemeInk.Bind(_label, TextBlock.ForegroundProperty, ink);
 
             AutomationProperties.SetLiveSetting(this, warning ? AutomationLiveSetting.Polite : AutomationLiveSetting.Assertive);
 
@@ -261,6 +261,4 @@ public sealed class Notice : Border
     private void ShowLabel() =>
         _label.Text = (_labelText ?? (_level == NoticeLevel.Warning ? "Warning" : "Error")).ToUpperInvariant();
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

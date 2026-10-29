@@ -1,4 +1,4 @@
-﻿using Avalonia;
+﻿﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
@@ -47,7 +47,7 @@ public static class StatTile
             FontWeight = FontWeight.Medium,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(figure, TextBlock.ForegroundProperty, InkKey(ink));
+        ThemeInk.Bind(figure, TextBlock.ForegroundProperty, InkKey(ink));
 
         return Tile(label, figure);
     }
@@ -63,7 +63,7 @@ public static class StatTile
             Padding = new Thickness(14, 10),
             Child = new StackPanel { Spacing = 2, Children = { caption, value } },
         };
-        Themed(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return tile;
     }
@@ -79,7 +79,7 @@ public static class StatTile
             LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -106,6 +106,4 @@ public static class StatTile
         _ => ThemeManager.AKey,
     };
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

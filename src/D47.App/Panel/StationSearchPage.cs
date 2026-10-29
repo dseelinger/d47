@@ -426,7 +426,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         name.Text = station.Name;
 
         var systemName = Value(station.SystemName);
-        Themed(systemName, TextBlock.ForegroundProperty, string.Equals(station.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
+        ThemeInk.Bind(systemName, TextBlock.ForegroundProperty, string.Equals(station.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
 
         var system = station.ControllingFaction is { } controlling
             ? station.ReportedState is { } state ? $"{controlling} · {state}" : controlling

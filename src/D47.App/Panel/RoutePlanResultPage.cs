@@ -203,7 +203,7 @@ public sealed class RoutePlanResultPage : UserControl
             };
 
             ((TextBlock)slab.Child).VerticalAlignment = VerticalAlignment.Center;
-            LoadoutPages.Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+            ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
             group.Children.Add(slab);
         }
 

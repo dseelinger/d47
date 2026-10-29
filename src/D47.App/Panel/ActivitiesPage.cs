@@ -154,11 +154,11 @@ public sealed class ActivitiesPage : UserControl
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(since, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(since, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         header.Children.Add(since);
 
         var rule = new Border { Height = 1, Margin = new Thickness(0, 0, 0, 4) };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.AKey);
 
         _page.Children.Add(header);
         _page.Children.Add(rule);
@@ -303,7 +303,7 @@ public sealed class ActivitiesPage : UserControl
         {
             if (e.NavigationMethod is NavigationMethod.Tab or NavigationMethod.Directional)
             {
-                Themed(row, Border.BorderBrushProperty, ThemeManager.CyanKey);
+                ThemeInk.Bind(row, Border.BorderBrushProperty, ThemeManager.CyanKey);
             }
         };
 
@@ -313,7 +313,7 @@ public sealed class ActivitiesPage : UserControl
     }
 
     private static void Inked(TextBlock name, bool suggested) =>
-        Themed(name, TextBlock.ForegroundProperty, suggested ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, suggested ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
 
     private static Control When(DateTimeOffset? at, DateTimeOffset? corpus, DateTimeOffset now)
     {
@@ -344,7 +344,7 @@ public sealed class ActivitiesPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
         return block;
     }
 
@@ -359,7 +359,7 @@ public sealed class ActivitiesPage : UserControl
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 
@@ -369,8 +369,6 @@ public sealed class ActivitiesPage : UserControl
         grid.Children.Add(cell);
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 }
 
 /// <summary>One catalogue activity and when it was last done.</summary>

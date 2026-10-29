@@ -136,7 +136,7 @@ public static class PlanSection
         Place(grid, gauge, 4);
 
         var slab = new Border { Child = grid };
-        LoadoutPages.Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return slab;
     }
@@ -185,7 +185,7 @@ public static class PlanSection
         Place(grid, gives, 1);
 
         var slab = new Border { Child = grid };
-        LoadoutPages.Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return slab;
     }

@@ -48,7 +48,7 @@ public static class Gauge
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 8, 0),
         };
-        Themed(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         DockPanel.SetDock(name, Dock.Left);
 
         var reading = new TextBlock
@@ -61,7 +61,7 @@ public static class Gauge
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(reading, TextBlock.ForegroundProperty, valueKey);
+        ThemeInk.Bind(reading, TextBlock.ForegroundProperty, valueKey);
 
         heading.Children.Add(name);
         heading.Children.Add(reading);
@@ -85,12 +85,12 @@ public static class Gauge
         };
 
         var ground = new Border();
-        Themed(ground, Border.BackgroundProperty, ThemeManager.TileKey);
+        ThemeInk.Bind(ground, Border.BackgroundProperty, ThemeManager.TileKey);
         Grid.SetColumnSpan(ground, 2);
         track.Children.Add(ground);
 
         var filled = new Border();
-        Themed(filled, Border.BackgroundProperty, fillKey);
+        ThemeInk.Bind(filled, Border.BackgroundProperty, fillKey);
         track.Children.Add(filled);
 
         return track;
@@ -130,22 +130,22 @@ public static class Gauge
         };
 
         var ground = new Border { Height = TrackHeight, VerticalAlignment = VerticalAlignment.Center };
-        Themed(ground, Border.BackgroundProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(ground, Border.BackgroundProperty, ThemeManager.Line2Key);
         Grid.SetColumnSpan(ground, 4);
         track.Children.Add(ground);
 
         var negative = new Border { Height = TrackHeight, VerticalAlignment = VerticalAlignment.Center };
-        Themed(negative, Border.BackgroundProperty, ThemeManager.RedKey);
+        ThemeInk.Bind(negative, Border.BackgroundProperty, ThemeManager.RedKey);
         Grid.SetColumn(negative, 1);
         track.Children.Add(negative);
 
         var positive = new Border { Height = TrackHeight, VerticalAlignment = VerticalAlignment.Center };
-        Themed(positive, Border.BackgroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(positive, Border.BackgroundProperty, ThemeManager.AKey);
         Grid.SetColumn(positive, 2);
         track.Children.Add(positive);
 
         var zero = new Border { Width = 1, HorizontalAlignment = HorizontalAlignment.Center };
-        Themed(zero, Border.BackgroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(zero, Border.BackgroundProperty, ThemeManager.GreyKey);
         Grid.SetColumnSpan(zero, 4);
         track.Children.Add(zero);
 
@@ -159,6 +159,4 @@ public static class Gauge
         _ => ThemeManager.AKey,
     };
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

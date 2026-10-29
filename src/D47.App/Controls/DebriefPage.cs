@@ -54,7 +54,7 @@ public sealed class DebriefPage : DialogPage
                 + "session — never in the middle of this one.",
         };
 
-        Themed(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_status, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         _prompt = new SelectableTextBlock
         {
@@ -63,10 +63,10 @@ public sealed class DebriefPage : DialogPage
             FontSize = TypeScale.Secondary,
         };
 
-        Themed(_prompt, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(_prompt, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var promptBox = new Border { Padding = new Thickness(14, 10), Child = _prompt };
-        Themed(promptBox, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(promptBox, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         var body = new StackPanel
         {
@@ -240,7 +240,7 @@ public sealed class DebriefPage : DialogPage
 
         // Ruled rather than a list row: the editor and the buttons are Tile, and vanish on a Tile row.
         var ruled = new Border { Padding = new Thickness(0, 10), BorderThickness = new Thickness(0, 1, 0, 0), Child = stack };
-        Themed(ruled, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(ruled, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return ruled;
     }
@@ -297,10 +297,8 @@ public sealed class DebriefPage : DialogPage
     private static T Ink<T>(T block, string key)
         where T : TextBlock
     {
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

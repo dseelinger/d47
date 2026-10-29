@@ -49,7 +49,7 @@ public sealed class PersonaPage : DialogPage
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(header, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(header, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         // The legend is the key to the marks on the cores below (#253).
         var root = new StackPanel
@@ -100,7 +100,7 @@ public sealed class PersonaPage : DialogPage
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            Themed(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             _list.Children.Add(empty);
 
             return;
@@ -195,13 +195,10 @@ public sealed class PersonaPage : DialogPage
             },
         };
 
-        Themed(card, Border.BorderBrushProperty, ThemeManager.LineKey);
+        ThemeInk.Bind(card, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return card;
     }
-
-    private static void Themed(StyledElement element, AvaloniaProperty property, string key) =>
-        element.Bind(property, Application.Current!.GetResourceObservable(key));
 
     /// <summary>One core while it is being edited.</summary>
     private sealed class Written

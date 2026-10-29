@@ -50,7 +50,7 @@ public static class Modal
         Control? trailing = null)
     {
         var layout = new DockPanel { Name = "Modal" };
-        Themed(layout, Avalonia.Controls.Panel.BackgroundProperty, ThemeManager.BarKey);
+        ThemeInk.Bind(layout, Avalonia.Controls.Panel.BackgroundProperty, ThemeManager.BarKey);
 
         var header = Header(context, title, figure, subtitle, below);
         DockPanel.SetDock(header, Dock.Top);
@@ -86,7 +86,7 @@ public static class Modal
         Control? figure = null,
         bool scrolls = true)
     {
-        Themed(dialog, TemplatedControl.BackgroundProperty, ThemeManager.BarKey);
+        ThemeInk.Bind(dialog, TemplatedControl.BackgroundProperty, ThemeManager.BarKey);
         dialog.Content = Build(context, title, body, buttons, figure, scrolls);
     }
 
@@ -110,7 +110,7 @@ public static class Modal
             FontWeight = FontWeight.Medium,
             LetterSpacing = TypeScale.Control * Fonts.ChromeTracking,
         };
-        Themed(line, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var name = TitleText.Build(title, DialogTitle, TitleRank.Screen);
         name.Name = "ModalTitle";
@@ -133,7 +133,7 @@ public static class Modal
                 FontSize = TypeScale.Secondary,
                 TextWrapping = TextWrapping.Wrap,
             };
-            Themed(under, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(under, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             words.Children.Add(under);
         }
 
@@ -156,7 +156,7 @@ public static class Modal
         top.Children.Add(words);
 
         var rule = new Border { Height = 1 };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.AKey);
 
         return new StackPanel { Children = { top, rule } };
     }
@@ -164,7 +164,7 @@ public static class Modal
     private static Control Footer(IReadOnlyList<Control> buttons, Control? trailing)
     {
         var rule = new Border { Height = 1 };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.Line2Key);
 
         var row = new WrapPanel
         {
@@ -192,6 +192,4 @@ public static class Modal
         return new StackPanel { Children = { rule, line } };
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

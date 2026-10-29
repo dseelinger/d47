@@ -76,7 +76,7 @@ public static class EngineersPages
             TextWrapping = TextWrapping.Wrap,
         };
 
-        LoadoutPages.Themed(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var button = new Button
         {
@@ -173,7 +173,7 @@ public static class EngineersPages
             LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        LoadoutPages.Themed(box, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(box, TextBlock.ForegroundProperty, key);
 
         var said = new SelectableTextBlock
         {
@@ -182,7 +182,7 @@ public static class EngineersPages
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        LoadoutPages.Themed(said, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(said, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var grid = new Grid
         {
@@ -219,7 +219,7 @@ public static class EngineersPages
         }
 
         var tile = new Border { Padding = new Thickness(14, 10), Child = grid };
-        LoadoutPages.Themed(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return tile;
     }
@@ -701,7 +701,7 @@ public sealed class EngineerPage : EngineerPageBase
             if (Here(split.System, here))
             {
                 var system = new Run(split.System);
-                LoadoutPages.Themed(system, Run.ForegroundProperty, ThemeManager.CyanKey);
+                ThemeInk.Bind(system, Run.ForegroundProperty, ThemeManager.CyanKey);
 
                 named.Inlines = [new Run(split.Before), system];
             }
@@ -740,7 +740,7 @@ public sealed class EngineerPage : EngineerPageBase
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         return block;
     }

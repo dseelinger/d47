@@ -165,7 +165,7 @@ public sealed class AdventureMini : UserControl
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        AdventuresPage.Themed(number, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(number, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var text = new TextBlock
         {
@@ -175,7 +175,7 @@ public sealed class AdventureMini : UserControl
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        AdventuresPage.Themed(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("24,*"), ColumnSpacing = 8 };
 

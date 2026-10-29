@@ -64,7 +64,7 @@ public sealed class SaveSearchDialog : ModalDialog
         }
 
         var slab = new Border { Padding = new Thickness(14, 12), Child = runs };
-        Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         var confirm = new Button { Name = ConfirmName, Content = "SAVE", MinWidth = 76, Height = TypeScale.MinimumTarget };
         var cancel = new Button { Name = CancelName, Content = "CANCEL", MinWidth = 76, Height = TypeScale.MinimumTarget };
@@ -114,7 +114,7 @@ public sealed class SaveSearchDialog : ModalDialog
             FontWeight = mono ? FontWeight.Normal : FontWeight.Medium,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(text, TextBlock.ForegroundProperty, grey ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, grey ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
         Grid.SetColumn(text, 1);
 
         return new Grid { ColumnDefinitions = new ColumnDefinitions("150,*"), ColumnSpacing = 12, Children = { Caption(label), text } };
@@ -130,19 +130,17 @@ public sealed class SaveSearchDialog : ModalDialog
             FontWeight = FontWeight.Medium,
             LetterSpacing = TypeScale.Caption * 0.06,
         };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 
     private static TextBlock Small(string text, string key)
     {
         var block = new TextBlock { Text = text, FontSize = TypeScale.FieldMessage, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }
 
 /// <summary>Asks before one of the Commander's own saved searches is forgotten.</summary>

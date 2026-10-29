@@ -164,7 +164,7 @@ public sealed class CrewPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        LoadoutPages.Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var rank = Cell(member.CombatRank is { Length: > 0 } combat ? combat : "—",
             member.CombatRank is { Length: > 0 } ? ThemeManager.AKey : ThemeManager.GreyKey);
@@ -182,7 +182,7 @@ public sealed class CrewPage : UserControl
         }
 
         var row = new Border { Padding = new Thickness(14, 0), Child = content };
-        LoadoutPages.Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return row;
     }

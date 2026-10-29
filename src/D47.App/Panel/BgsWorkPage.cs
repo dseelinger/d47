@@ -427,7 +427,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
             Padding = new Thickness(14, 6),
             Child = grid,
         };
-        RoutingKit.Themed(border, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return border;
     }
@@ -455,7 +455,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
                 TextAlignment = TextAlignment.Right,
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
-            RoutingKit.Themed(block, TextBlock.ForegroundProperty, key);
+            ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
             stack.Children.Add(block);
         }
 

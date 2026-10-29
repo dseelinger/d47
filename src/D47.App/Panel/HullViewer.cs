@@ -601,7 +601,7 @@ internal static class HullMarks
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        LoadoutPages.Themed(words, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(words, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return words;
     }
@@ -619,7 +619,7 @@ internal sealed class HullViewerFull : Grid
         _viewer = new HullViewer(pose) { Fills = true };
 
         Children.Add(_viewer);
-        LoadoutPages.Themed(this, BackgroundProperty, ThemeManager.BgKey);
+        ThemeInk.Bind(this, BackgroundProperty, ThemeManager.BgKey);
 
         var (label, level) = HullMarks.Light(pose);
         level.Width = 240;
@@ -637,7 +637,7 @@ internal sealed class HullViewerFull : Grid
             },
         };
 
-        LoadoutPages.Themed(strip, Border.BackgroundProperty, ThemeManager.BarKey);
+        ThemeInk.Bind(strip, Border.BackgroundProperty, ThemeManager.BarKey);
         Children.Add(strip);
 
         var close = LoadoutPages.Press("Close", Dismiss);
@@ -654,7 +654,7 @@ internal sealed class HullViewerFull : Grid
             LetterSpacing = TypeScale.Subheading * Fonts.ChromeTracking,
         };
 
-        LoadoutPages.Themed(title, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(title, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         Children.Add(new StackPanel
         {

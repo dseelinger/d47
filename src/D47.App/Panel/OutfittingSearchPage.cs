@@ -352,7 +352,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         var here = string.Equals(station.SystemName, _here(), StringComparison.OrdinalIgnoreCase);
         var system = Value(station.SystemName);
         system.VerticalAlignment = VerticalAlignment.Center;
-        Themed(system, TextBlock.ForegroundProperty, here ? ThemeManager.CyanKey : ThemeManager.AKey);
+        ThemeInk.Bind(system, TextBlock.ForegroundProperty, here ? ThemeManager.CyanKey : ThemeManager.AKey);
 
         var systemCell = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Children = { system } };
 

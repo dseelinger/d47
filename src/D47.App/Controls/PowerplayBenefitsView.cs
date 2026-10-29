@@ -133,7 +133,7 @@ public static class PowerplayBenefitsView
                 Margin = new Thickness(0, 10, 0, 0),
             };
 
-            Themed(more, Button.BackgroundProperty, ThemeManager.TileKey);
+            ThemeInk.Bind(more, Button.BackgroundProperty, ThemeManager.TileKey);
             more.Click += (_, _) => onShowAll?.Invoke();
             rows.Children.Add(more);
         }
@@ -159,7 +159,7 @@ public static class PowerplayBenefitsView
         if (row.IsModule || row.Old is null)
         {
             change.Text = row.Change;
-            Themed(change, TextBlock.ForegroundProperty, row.IsModule ? ThemeManager.WhiteKey : ThemeManager.AKey);
+            ThemeInk.Bind(change, TextBlock.ForegroundProperty, row.IsModule ? ThemeManager.WhiteKey : ThemeManager.AKey);
         }
         else
         {
@@ -211,7 +211,7 @@ public static class PowerplayBenefitsView
     private static Control Ruled(Control row)
     {
         var rule = new Border { Child = row, BorderThickness = new Thickness(0, 0, 0, 1) };
-        Themed(rule, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
         return rule;
     }
@@ -220,7 +220,7 @@ public static class PowerplayBenefitsView
     {
         var head = Text(text.ToUpperInvariant(), TypeScale.Meta, ThemeManager.WhiteKey, chrome: true);
         var rule = new Border { Child = head, BorderThickness = new Thickness(0, 0, 0, 1), Padding = new Thickness(0, 0, 0, 4) };
-        Themed(rule, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.AKey);
 
         return rule;
     }
@@ -233,6 +233,4 @@ public static class PowerplayBenefitsView
         return note;
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

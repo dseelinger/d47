@@ -54,7 +54,7 @@ public sealed class SecretEditor : UserControl
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(bullets, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(bullets, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         _masked = new Border
         {
@@ -63,7 +63,7 @@ public sealed class SecretEditor : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             Child = bullets,
         };
-        Themed(_masked, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(_masked, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         _box = new TextBox
         {
@@ -258,7 +258,7 @@ public sealed class SecretEditor : UserControl
         _refused.IsVisible = false;
         _verdict.IsVisible = true;
         _verdict.Text = "Checking…";
-        Themed(_verdict, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_verdict, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         try
         {
@@ -299,7 +299,7 @@ public sealed class SecretEditor : UserControl
         _state.Text = (stored ? "Key stored" : "No key").ToUpperInvariant();
 
         // Yellow for stored and Grey for not, so the two states differ in colour as well as in wording.
-        Themed(
+        ThemeInk.Bind(
             _state,
             TextBlock.ForegroundProperty,
             stored ? ThemeManager.YellowKey : ThemeManager.GreyKey);
@@ -314,7 +314,7 @@ public sealed class SecretEditor : UserControl
 
         _verdict.IsVisible = _result.Verdict == SecretVerdict.Works;
         _verdict.Text = _result.Detail;
-        Themed(_verdict, TextBlock.ForegroundProperty, ThemeManager.BlueKey);
+        ThemeInk.Bind(_verdict, TextBlock.ForegroundProperty, ThemeManager.BlueKey);
 
         _refused.IsVisible = refused;
         _refused.Level = _result.Verdict == SecretVerdict.Unreachable ? NoticeLevel.Warning : NoticeLevel.Error;
@@ -329,6 +329,4 @@ public sealed class SecretEditor : UserControl
         ToolTip.SetTip(_check, _check.IsEnabled ? null : "Paste a key first — there is nothing here to check yet");
     }
 
-    private void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, this.GetResourceObservable(key));
 }

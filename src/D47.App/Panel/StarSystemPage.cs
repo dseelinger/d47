@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+﻿﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -621,7 +621,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
                 FontSize = TypeScale.ControlLarge,
                 FontWeight = FontWeight.Medium,
             };
-            RoutingKit.Themed(name, TextBlock.ForegroundProperty, ThemeManager.AKey);
+            ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
             var option = new Button
             {
@@ -635,8 +635,8 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         }
 
         var box = new Border { Padding = new Thickness(2), BorderThickness = new Thickness(1), Child = list };
-        RoutingKit.Themed(box, Border.BackgroundProperty, ThemeManager.BarKey);
-        RoutingKit.Themed(box, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(box, Border.BackgroundProperty, ThemeManager.BarKey);
+        ThemeInk.Bind(box, Border.BorderBrushProperty, ThemeManager.AKey);
 
         return box;
     }
@@ -647,14 +647,14 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         var ink = _following ? ThemeManager.CyanKey : ThemeManager.AKey;
 
         var context = TitleText.Context(_following ? "Your system · following you" : "Star system");
-        RoutingKit.Themed(context, TextBlock.ForegroundProperty, ink);
+        ThemeInk.Bind(context, TextBlock.ForegroundProperty, ink);
 
         var title = TitleText.Style(
             new SelectableTextBlock { TextWrapping = TextWrapping.Wrap },
             TypeScale.Heading,
             TitleRank.Screen);
         TitleText.Show(title, _opened?.Name ?? string.Empty);
-        RoutingKit.Themed(title, TextBlock.ForegroundProperty, ink);
+        ThemeInk.Bind(title, TextBlock.ForegroundProperty, ink);
 
         return TitleText.Block(title, context, reportedAt is { } at ? Reported(at) : null);
     }
@@ -671,7 +671,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             FontSize = TypeScale.Body,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
-        RoutingKit.Themed(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         return new StackPanel { Spacing = 2, Children = { label, value } };
     }
@@ -764,7 +764,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        RoutingKit.Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         line.Children.Add(name);
 
         var controlling = profile.Factions.FirstOrDefault(faction =>
@@ -780,7 +780,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             Padding = new Thickness(14, 10),
             Child = new StackPanel { Spacing = 2, Children = { Caption("Controlling faction", ThemeManager.GreyKey), line } },
         };
-        RoutingKit.Themed(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return tile;
     }
@@ -866,7 +866,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        RoutingKit.Themed(named, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(named, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         name.Children.Add(named);
 
         if (controls)
@@ -890,11 +890,11 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             BorderThickness = new Thickness(3, 0, 0, 0),
             Child = layout.Row(cells),
         };
-        RoutingKit.Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         if (controls)
         {
-            RoutingKit.Themed(row, Border.BorderBrushProperty, ThemeManager.AKey);
+            ThemeInk.Bind(row, Border.BorderBrushProperty, ThemeManager.AKey);
         }
         else
         {
@@ -928,7 +928,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             FontWeight = FontWeight.Medium,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        RoutingKit.Themed(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         return block;
     }
@@ -949,7 +949,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 10, 0),
         };
-        RoutingKit.Themed(figure, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(figure, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var track = Gauge.Track(influence ?? 0, ThemeManager.AKey);
         track.VerticalAlignment = VerticalAlignment.Center;
@@ -991,7 +991,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             FontSize = TypeScale.Meta,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        RoutingKit.Themed(counted, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(counted, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var line = new DockPanel { MinHeight = 38 };
         DockPanel.SetDock(counted, Dock.Right);
@@ -1008,7 +1008,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         line.Children.Add(new WrapPanel { Orientation = Orientation.Horizontal, Children = { heading, note } });
 
         var rule = new Border { Height = 1, Margin = new Thickness(0, 6, 0, 0) };
-        RoutingKit.Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.AKey);
 
         return new StackPanel { Children = { line, rule } };
     }
@@ -1023,7 +1023,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             FontWeight = FontWeight.Medium,
             LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
         };
-        RoutingKit.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
         return block;
     }
@@ -1040,7 +1040,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(12, 0, 0, 0),
         };
-        RoutingKit.Themed(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         return block;
     }
@@ -1055,7 +1055,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
 
     private static TextBlock Inked(TextBlock block, string key)
     {
-        RoutingKit.Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
 
         return block;
     }

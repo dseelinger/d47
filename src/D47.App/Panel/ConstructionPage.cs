@@ -496,7 +496,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
                 Padding = new Thickness(24, 0, 0, 0),
                 Child = detail,
             };
-            Themed(rule, Border.BorderBrushProperty, ThemeManager.Line2Key);
+            ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.Line2Key);
             Grid.SetColumn(rule, 1);
 
             panes = new Grid
@@ -802,7 +802,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
                 FontWeight = FontWeight.Medium,
                 TextWrapping = TextWrapping.Wrap,
             };
-            Themed(system, TextBlock.ForegroundProperty, Here(systemName, state) ? ThemeManager.CyanKey : ThemeManager.AKey);
+            ThemeInk.Bind(system, TextBlock.ForegroundProperty, Here(systemName, state) ? ThemeManager.CyanKey : ThemeManager.AKey);
             heading.Children.Add(system);
         }
 
@@ -942,7 +942,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var remaining = Figure(Number(need.Remaining), ThemeManager.WhiteKey);
         var hold = Held(need.InHold);
@@ -967,7 +967,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         var grid = table.Row([name, remaining, hold, onCarrier, toBuy, order]);
 
         var row = new Border { MinHeight = 36, Padding = new Thickness(14, 6), Child = grid };
-        Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return row;
 
@@ -1045,7 +1045,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         if (plan.Stops.Count == 0)
         {
             var none = new Border { Padding = new Thickness(14, 10), Child = Prose("No station in range sells any of it.", TypeScale.Small, ThemeManager.WhiteKey) };
-            Themed(none, Border.BackgroundProperty, ThemeManager.SlabKey);
+            ThemeInk.Bind(none, Border.BackgroundProperty, ThemeManager.SlabKey);
             drawn.Children.Add(none);
         }
 
@@ -1088,7 +1088,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             FontWeight = FontWeight.Medium,
             VerticalAlignment = VerticalAlignment.Bottom,
         };
-        Themed(system, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        ThemeInk.Bind(system, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var names = new WrapPanel { ItemSpacing = 12, Children = { station, system } };
 
@@ -1128,7 +1128,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         }
 
         var slab = new Border { Padding = new Thickness(14, 10), Child = lines };
-        Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return slab;
 
@@ -1217,7 +1217,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
                 Children = { Chrome(label, TypeScale.Meta, ThemeManager.GreyKey), value },
             },
         };
-        Themed(block, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(block, Border.BackgroundProperty, ThemeManager.SlabKey);
         return block;
     }
 
@@ -1257,7 +1257,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             LetterSpacing = size * Fonts.ChromeTracking,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -1274,7 +1274,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         };
 
         block.Inlines!.AddRange(runs);
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -1287,7 +1287,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             FontSize = size,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
@@ -1300,10 +1300,8 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             FontSize = size,
             TextWrapping = TextWrapping.Wrap,
         };
-        Themed(block, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 
-    private static void Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 }

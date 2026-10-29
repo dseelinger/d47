@@ -79,7 +79,7 @@ public sealed class LogbookPage : DialogPage
                 + "journals on this machine and spends nothing.",
         };
 
-        Themed(_quote, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(_quote, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         _estimate = new Button { Name = "EstimateLog", Content = "Work out what this would cost", MinWidth = 230 };
         _write = new Button { Name = "WriteLog", Content = "Write it", MinWidth = 130 };
@@ -354,6 +354,4 @@ public sealed class LogbookPage : DialogPage
         return ListRow.Dress(new Border { Child = row });
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

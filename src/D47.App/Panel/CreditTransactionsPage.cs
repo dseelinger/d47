@@ -269,7 +269,7 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
             Margin = new Thickness(0, 0, 0, Gaps.Tile),
             Child = grid,
         };
-        RoutingKit.Themed(border, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return border;
     }

@@ -82,11 +82,11 @@ public sealed class ModalHost : Grid
             frame.Margin = new Thickness(0, Modal.TopOffset - Modal.ScrimPadding, 0, 0);
         }
 
-        Themed(frame, Border.BorderBrushProperty, ThemeManager.AKey);
-        Themed(frame, Border.BackgroundProperty, ThemeManager.BarKey);
+        ThemeInk.Bind(frame, Border.BorderBrushProperty, ThemeManager.AKey);
+        ThemeInk.Bind(frame, Border.BackgroundProperty, ThemeManager.BarKey);
 
         var scrim = new Border { Name = ScrimName, Padding = new Thickness(Modal.ScrimPadding), Child = frame };
-        Themed(scrim, Border.BackgroundProperty, ThemeManager.ScrimKey);
+        ThemeInk.Bind(scrim, Border.BackgroundProperty, ThemeManager.ScrimKey);
         KeyboardNavigation.SetTabNavigation(scrim, KeyboardNavigationMode.Cycle);
 
         scrim.PointerPressed += (_, e) =>
@@ -191,6 +191,4 @@ public sealed class ModalHost : Grid
         }
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }

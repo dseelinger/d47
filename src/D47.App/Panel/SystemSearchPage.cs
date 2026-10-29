@@ -501,7 +501,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
             FontWeight = FontWeight.Medium,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         return block;
     }
 
@@ -514,7 +514,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
             FontSize = TypeScale.Caption,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;
     }
 

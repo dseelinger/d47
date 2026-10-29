@@ -377,7 +377,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         var name = Chrome(body.Name, TypeScale.Secondary, ThemeManager.AKey);
 
         var system = Value(body.SystemName);
-        Themed(system, TextBlock.ForegroundProperty, string.Equals(body.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
+        ThemeInk.Bind(system, TextBlock.ForegroundProperty, string.Equals(body.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
 
         List<Control> cells =
         [

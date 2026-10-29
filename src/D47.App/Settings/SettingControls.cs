@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿﻿using System.Diagnostics;
 using System.Globalization;
 using D47.Core.Listening;
 using Avalonia;
@@ -68,9 +68,6 @@ internal readonly record struct SettingControl(Control Control, Action Refresh, 
 /// <summary>Builds the control for each settings row.</summary>
 internal sealed partial class SettingControls(SettingRowHost host, SettingServices services)
 {
-    private IDisposable Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target.Bind(property, host.Resources.GetResourceObservable(key));
-
     /// <summary>Controls a group's own builder draws for rows that have none of their own, by key.</summary>
     private readonly Dictionary<string, Control> _drawnByGroup = new(StringComparer.Ordinal);
 
@@ -261,10 +258,10 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
             TextWrapping = TextWrapping.Wrap,
             IsVisible = false,
         };
-        Themed(detail, SelectableTextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(detail, SelectableTextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var block = new Border { Padding = new Thickness(14, 10), Child = detail, Classes = { SettingsView.DataBlockClass } };
-        Themed(block, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(block, Border.BackgroundProperty, ThemeManager.SlabKey);
         block[!Visual.IsVisibleProperty] = detail[!Visual.IsVisibleProperty];
 
         var toggle = new Button

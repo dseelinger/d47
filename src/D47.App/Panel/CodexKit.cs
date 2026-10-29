@@ -122,7 +122,7 @@ internal static class CodexKit
                 },
             },
         };
-        RoutingKit.Themed(border, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.SlabKey);
         Grid.SetColumn(border, column);
         strip.Children.Add(border);
     }

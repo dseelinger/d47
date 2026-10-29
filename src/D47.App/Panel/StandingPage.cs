@@ -161,7 +161,7 @@ public sealed class StandingPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var bandText = new TextBlock
         {
@@ -172,7 +172,7 @@ public sealed class StandingPage : UserControl
             LetterSpacing = TypeScale.Control * Fonts.ChromeTracking,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(bandText, TextBlock.ForegroundProperty, hostile ? ThemeManager.RedKey : ThemeManager.AKey);
+        ThemeInk.Bind(bandText, TextBlock.ForegroundProperty, hostile ? ThemeManager.RedKey : ThemeManager.AKey);
         Grid.SetColumn(bandText, 2);
 
         var number = new TextBlock
@@ -183,7 +183,7 @@ public sealed class StandingPage : UserControl
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(number, TextBlock.ForegroundProperty, negative ? ThemeManager.RedKey : ThemeManager.WhiteKey);
+        ThemeInk.Bind(number, TextBlock.ForegroundProperty, negative ? ThemeManager.RedKey : ThemeManager.WhiteKey);
         Grid.SetColumn(number, 4);
 
         var gauge = Gauge.CentreTrack(reading is null ? null : reading.MyReputation / 100);
@@ -202,7 +202,7 @@ public sealed class StandingPage : UserControl
             Padding = new Thickness(14, 0),
             Child = grid,
         };
-        Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return row;
     }
@@ -219,7 +219,7 @@ public sealed class StandingPage : UserControl
             FontWeight = FontWeight.Medium,
             LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
         };
-        Themed(caption, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(caption, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var rank = new TextBlock
         {
@@ -230,7 +230,7 @@ public sealed class StandingPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 12, 0),
         };
-        Themed(rank, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(rank, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var meta = new TextBlock
         {
@@ -241,7 +241,7 @@ public sealed class StandingPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Themed(meta, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(meta, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var line = new DockPanel();
         DockPanel.SetDock(rank, Dock.Left);
@@ -264,7 +264,7 @@ public sealed class StandingPage : UserControl
         }
 
         var cell = new Border { Padding = new Thickness(14, 12), Child = content };
-        Themed(cell, Border.BackgroundProperty, ThemeManager.SlabKey);
+        ThemeInk.Bind(cell, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return cell;
     }
@@ -336,7 +336,7 @@ public sealed class StandingPage : UserControl
             LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        Themed(heading, TextBlock.ForegroundProperty, key);
+        ThemeInk.Bind(heading, TextBlock.ForegroundProperty, key);
 
         var line = new DockPanel { Margin = new Thickness(0, 10, 0, 2) };
 
@@ -349,7 +349,7 @@ public sealed class StandingPage : UserControl
                 FontSize = TypeScale.Meta,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            Themed(away, TextBlock.ForegroundProperty, ThemeManager.AKey);
+            ThemeInk.Bind(away, TextBlock.ForegroundProperty, ThemeManager.AKey);
             DockPanel.SetDock(away, Dock.Right);
             line.Children.Add(away);
         }
@@ -362,7 +362,7 @@ public sealed class StandingPage : UserControl
     private static Control Prose(string text)
     {
         var block = new TextBlock { Text = text, FontSize = TypeScale.Small, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return block;
     }
@@ -392,7 +392,7 @@ public sealed class StandingPage : UserControl
                 TextAlignment = right ? TextAlignment.Right : TextAlignment.Left,
                 Margin = column >= 2 ? new Thickness(12, 0, 0, 0) : default,
             };
-            Themed(block, TextBlock.ForegroundProperty, key);
+            ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
             Grid.SetColumn(block, column);
             grid.Children.Add(block);
 
@@ -415,6 +415,4 @@ public sealed class StandingPage : UserControl
         return grid;
     }
 
-    private static void Themed(StyledElement target, AvaloniaProperty property, string key) =>
-        target.Bind(property, target.GetResourceObservable(key));
 }

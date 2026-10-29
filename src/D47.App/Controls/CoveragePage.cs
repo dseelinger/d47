@@ -27,7 +27,7 @@ public sealed class CoveragePage : DialogPage
             TextWrapping = TextWrapping.Wrap,
         };
 
-        Themed(summary, SelectableTextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(summary, SelectableTextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var list = new StackPanel { Spacing = 14, Children = { summary } };
 
@@ -104,7 +104,7 @@ public sealed class CoveragePage : DialogPage
             FontWeight = line.Failed ? FontWeight.Bold : FontWeight.Normal,
         };
 
-        Themed(mark, TextBlock.ForegroundProperty, brush);
+        ThemeInk.Bind(mark, TextBlock.ForegroundProperty, brush);
 
         var name = ListRow.Name(new TextBlock
         {
@@ -147,6 +147,4 @@ public sealed class CoveragePage : DialogPage
         return ListRow.Dress(row);
     }
 
-    private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
-        target[!property] = new DynamicResourceExtension(key);
 }
