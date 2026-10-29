@@ -354,19 +354,10 @@ public sealed class MaterialDetailPage : UserControl
         return tile;
     }
 
-    internal static TextBlock Value(string text)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = TypeScale.Control,
-            FontWeight = FontWeight.SemiBold,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
-        return block;
-    }
+    internal static TextBlock Value(string text) =>
+        Typeset.Chrome(
+            text, TypeScale.Control, ThemeManager.WhiteKey,
+            weight: FontWeight.SemiBold, trimming: TextTrimming.CharacterEllipsis);
 
     internal static Control Section(string head, string? hint, Control content)
     {
@@ -400,12 +391,8 @@ public sealed class MaterialDetailPage : UserControl
         return slab;
     }
 
-    internal static TextBlock Prose(string text, string key = ThemeManager.WhiteKey)
-    {
-        var block = new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    internal static TextBlock Prose(string text, string key = ThemeManager.WhiteKey) =>
+        Typeset.Text(text, TypeScale.Secondary, key, wrap: true);
 
     /// <summary>A 44px row on Tile, its columns laid out by <paramref name="columns"/>.</summary>
     internal static Border Row(string columns, params Control[] cells)

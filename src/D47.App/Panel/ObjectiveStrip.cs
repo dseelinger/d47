@@ -168,39 +168,13 @@ internal sealed class ObjectiveStrip : UserControl
         return new StripPanel(label, sentence, system, glyph, after, Chrome(text.StoryName, FontWeight.Medium, ThemeManager.GreyKey, trim: true));
     }
 
-    private static TextBlock Prose(string text, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontSize = TypeScale.Description,
-            TextWrapping = TextWrapping.NoWrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
+    private static TextBlock Prose(string text, string key) =>
+        Typeset.Text(text, TypeScale.Description, key, vertical: VerticalAlignment.Center);
 
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-
-        return block;
-    }
-
-    private static TextBlock Chrome(string text, FontWeight weight, string key, bool trim = false)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = TypeScale.Meta,
-            FontWeight = weight,
-            LetterSpacing = TypeScale.Meta * 0.08,
-            TextWrapping = TextWrapping.NoWrap,
-            TextTrimming = trim ? TextTrimming.CharacterEllipsis : TextTrimming.None,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-
-        return block;
-    }
+    private static TextBlock Chrome(string text, FontWeight weight, string key, bool trim = false) =>
+        Typeset.Chrome(
+            text, TypeScale.Meta, key,
+            weight: weight, tracking: TypeScale.Meta * 0.08, trimming: trim ? TextTrimming.CharacterEllipsis : TextTrimming.None, vertical: VerticalAlignment.Center);
 
     /// <summary>
     /// One line: label, sentence, system, glyph, then the story's name at the right. When the line is too long the sentence

@@ -440,33 +440,11 @@ public sealed partial class StarSystemPage
         { } faction => faction,
     };
 
-    private static TextBlock Ellipsed(string text, double size, FontWeight weight, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = size,
-            FontWeight = weight,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
+    private static TextBlock Ellipsed(string text, double size, FontWeight weight, string key) =>
+        Typeset.Chrome(text, size, key, weight: weight, trimming: TextTrimming.CharacterEllipsis);
 
-        return block;
-    }
-
-    private static TextBlock Mono(string text, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Control,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-
-        return block;
-    }
+    private static TextBlock Mono(string text, string key) =>
+        Typeset.Mono(text, TypeScale.Control, key);
 
     private static TextBlock Figure(int count, string key)
     {

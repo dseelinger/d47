@@ -929,19 +929,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     }
 
     /// <summary>A Nothing open row's count: "✓ {n} done" in Blue.</summary>
-    private static TextBlock DoneMark(int done)
-    {
-        var block = new TextBlock
-        {
-            Text = $"✓ {done.ToString(CultureInfo.InvariantCulture)} done",
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Small,
-            HorizontalAlignment = HorizontalAlignment.Right,
-        };
-
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.BlueKey);
-        return block;
-    }
+    private static TextBlock DoneMark(int done) =>
+        Typeset.Mono(
+            $"✓ {done.ToString(CultureInfo.InvariantCulture)} done", TypeScale.Small, ThemeManager.BlueKey,
+            horizontal: HorizontalAlignment.Right);
 
     /// <summary>A list page's title: the name, a line under it, and the counts at the right.</summary>
     private void Heading(string name, string? kind, string? kindKey, int open, int done)
@@ -2038,18 +2029,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         return button;
     }
 
-    private static TextBlock Muted(string text)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontSize = TypeScale.Body,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        return block;
-    }
+    private static TextBlock Muted(string text) =>
+        Typeset.Text(text, TypeScale.Body, ThemeManager.GreyKey, wrap: true);
 
     /// <summary>The status ladder's mark for a line or goal that is met, in Blue.</summary>
     private static readonly (string Glyph, string Key) Met = ("✓", ThemeManager.BlueKey);

@@ -918,20 +918,10 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         return cell;
     }
 
-    private static TextBlock Word(string text)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = TypeScale.ControlLarge,
-            FontWeight = FontWeight.Medium,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
-
-        return block;
-    }
+    private static TextBlock Word(string text) =>
+        Typeset.Chrome(
+            text, TypeScale.ControlLarge, ThemeManager.AKey,
+            weight: FontWeight.Medium, trimming: TextTrimming.CharacterEllipsis);
 
     /// <summary>"27.3%", one decimal, with a gauge of it.</summary>
     public static string InfluenceText(double? influence) =>
@@ -1028,22 +1018,10 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         return block;
     }
 
-    private static TextBlock Prefix(string text)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = TypeScale.Control,
-            FontWeight = FontWeight.SemiBold,
-            LetterSpacing = TypeScale.Control * Fonts.ChromeTracking,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(12, 0, 0, 0),
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
-
-        return block;
-    }
+    private static TextBlock Prefix(string text) =>
+        Typeset.Chrome(
+            text.ToUpperInvariant(), TypeScale.Control, ThemeManager.AKey,
+            weight: FontWeight.SemiBold, tracking: TypeScale.Control * Fonts.ChromeTracking, vertical: VerticalAlignment.Center, margin: new Thickness(12, 0, 0, 0));
 
     private static TextBlock Sentence(string text, string key)
     {

@@ -1246,20 +1246,10 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         return grid;
     }
 
-    private static TextBlock Chrome(string text, double size, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = size,
-            FontWeight = FontWeight.SemiBold,
-            LetterSpacing = size * Fonts.ChromeTracking,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Chrome(string text, double size, string key) =>
+        Typeset.Chrome(
+            text.ToUpperInvariant(), size, key,
+            weight: FontWeight.SemiBold, tracking: size * Fonts.ChromeTracking, wrap: true);
 
     /// <summary>Chrome type at Small, built from runs so a figure among them can be mono.</summary>
     private static TextBlock Runs(string key, IEnumerable<Inline> runs)
@@ -1278,30 +1268,10 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         return block;
     }
 
-    private static TextBlock Mono(string text, double size, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = size,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Mono(string text, double size, string key) =>
+        Typeset.Mono(text, size, key, wrap: true);
 
-    private static TextBlock Prose(string text, double size, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = Fonts.ProseFamily,
-            FontSize = size,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Prose(string text, double size, string key) =>
+        Typeset.Prose(text, size, key, wrap: true);
 
 }

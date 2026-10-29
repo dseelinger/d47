@@ -729,47 +729,13 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
         }
     }
 
-    private static TextBlock Chrome(string text, double size, FontWeight weight, double tracking, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = size,
-            FontWeight = weight,
-            LetterSpacing = size * tracking,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Chrome(string text, double size, FontWeight weight, double tracking, string key) =>
+        Typeset.Chrome(text.ToUpperInvariant(), size, key, weight: weight, tracking: size * tracking, wrap: true);
 
-    private static TextBlock Mono(string text, double size, string key, HorizontalAlignment alignment = HorizontalAlignment.Left)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = size,
-            HorizontalAlignment = alignment,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Mono(string text, double size, string key, HorizontalAlignment alignment = HorizontalAlignment.Left) =>
+        Typeset.Mono(text, size, key, wrap: true, horizontal: alignment);
 
-    private static TextBlock Prose(string text, double size, string key, FontWeight weight = FontWeight.Normal)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = Fonts.ProseFamily,
-            FontSize = size,
-            FontWeight = weight,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Prose(string text, double size, string key, FontWeight weight = FontWeight.Normal) =>
+        Typeset.Prose(text, size, key, weight: weight, wrap: true);
 
 }

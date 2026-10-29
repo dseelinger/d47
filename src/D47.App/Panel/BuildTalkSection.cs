@@ -543,21 +543,10 @@ public sealed class BuildTalkSection : UserControl
 
     private static TextBlock Label(string text, string key = ThemeManager.GreyKey) => Chrome(text, key, TypeScale.Meta);
 
-    private static TextBlock Chrome(string text, string key, double size)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = size,
-            FontWeight = FontWeight.Medium,
-            LetterSpacing = size * Fonts.ChromeTracking,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Chrome(string text, string key, double size) =>
+        Typeset.Chrome(
+            text.ToUpperInvariant(), size, key,
+            weight: FontWeight.Medium, tracking: size * Fonts.ChromeTracking, wrap: true);
 
     private static TextBlock Prose(string text, string key, double size = TypeScale.Body)
     {

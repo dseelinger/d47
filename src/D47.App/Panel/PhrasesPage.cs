@@ -584,18 +584,8 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
         return head;
     }
 
-    private static TextBlock Prose(string text, string key, double size)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontSize = size,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Prose(string text, string key, double size) =>
+        Typeset.Text(text, size, key, wrap: true, vertical: VerticalAlignment.Center);
 
     private static TextBlock Muted(string text, Thickness margin, double size = TypeScale.Tip)
     {
@@ -606,20 +596,8 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
         return block;
     }
 
-    private static TextBlock Prefix(string text)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = TypeScale.Control,
-            FontWeight = FontWeight.SemiBold,
-            LetterSpacing = TypeScale.Control * Fonts.ChromeTracking,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(12, 0, 0, 0),
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
-
-        return block;
-    }
+    private static TextBlock Prefix(string text) =>
+        Typeset.Chrome(
+            text.ToUpperInvariant(), TypeScale.Control, ThemeManager.AKey,
+            weight: FontWeight.SemiBold, tracking: TypeScale.Control * Fonts.ChromeTracking, vertical: VerticalAlignment.Center, margin: new Thickness(12, 0, 0, 0));
 }

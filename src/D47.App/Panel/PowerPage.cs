@@ -654,48 +654,12 @@ public sealed class PowerView : UserControl
     }
 
     private static TextBlock Chrome(
-        string text, double size, string key, FontWeight weight = FontWeight.Normal, double tracking = 0)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = size,
-            FontWeight = weight,
-            LetterSpacing = tracking,
-        };
+        string text, double size, string key, FontWeight weight = FontWeight.Normal, double tracking = 0) =>
+        Typeset.Chrome(text, size, key, weight: weight, tracking: tracking);
 
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
+    private static TextBlock Mono(string text, double size, string key) =>
+        Typeset.Mono(text, size, key);
 
-        return block;
-    }
-
-    private static TextBlock Mono(string text, double size, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = size,
-        };
-
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-
-        return block;
-    }
-
-    private static TextBlock Prose(string text, double size, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.ProseFamily),
-            FontSize = size,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-
-        return block;
-    }
+    private static TextBlock Prose(string text, double size, string key) =>
+        Typeset.Prose(text, size, key, wrap: true);
 }

@@ -1694,12 +1694,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         return block;
     }
 
-    internal static TextBlock Text(string text, double size, string key = ThemeManager.WhiteKey)
-    {
-        var block = new TextBlock { Text = text, FontSize = size, TextWrapping = TextWrapping.Wrap };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    internal static TextBlock Text(string text, double size, string key = ThemeManager.WhiteKey) =>
+        Typeset.Text(text, size, key, wrap: true);
 
     internal static TextBlock Muted(string text) => Text(text, TypeScale.Body, ThemeManager.GreyKey);
 

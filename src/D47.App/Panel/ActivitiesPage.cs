@@ -334,34 +334,11 @@ public sealed class ActivitiesPage : UserControl
     private static string Date(DateTimeOffset at) =>
         GalacticTime.Galactic(at.ToUniversalTime()).ToString("d MMM yyyy", CultureInfo.InvariantCulture);
 
-    private static TextBlock DateText(DateTimeOffset at, double size)
-    {
-        var block = new TextBlock
-        {
-            Text = Date(at),
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = size,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
+    private static TextBlock DateText(DateTimeOffset at, double size) =>
+        Typeset.Mono(Date(at), size, ThemeManager.AKey, vertical: VerticalAlignment.Center);
 
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
-        return block;
-    }
-
-    private static TextBlock Plain(string text, double size)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.ProseFamily),
-            FontSize = size,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        return block;
-    }
+    private static TextBlock Plain(string text, double size) =>
+        Typeset.Prose(text, size, ThemeManager.GreyKey, wrap: true, vertical: VerticalAlignment.Center);
 
     private static void AddCell(Grid grid, Control cell, int column)
     {

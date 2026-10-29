@@ -190,22 +190,10 @@ internal static class RoutingKit
     }
 
     /// <summary>A word on a row, uppercase in the ink <paramref name="key"/> names.</summary>
-    public static TextBlock Tag(string word, string key)
-    {
-        var tag = new TextBlock
-        {
-            Text = word.ToUpperInvariant(),
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = TypeScale.Meta,
-            FontWeight = FontWeight.SemiBold,
-            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        ThemeInk.Bind(tag, TextBlock.ForegroundProperty, key);
-
-        return tag;
-    }
+    public static TextBlock Tag(string word, string key) =>
+        Typeset.Chrome(
+            word.ToUpperInvariant(), TypeScale.Meta, key,
+            weight: FontWeight.SemiBold, tracking: TypeScale.Meta * Fonts.ChromeTracking, vertical: VerticalAlignment.Center);
 
     /// <summary>Buttons in a row that wraps rather than clips.</summary>
     public static WrapPanel Actions(params Control[] buttons)

@@ -753,44 +753,15 @@ public sealed class RouteBestCargoPage : UserControl
         }
     }
 
-    private static TextBlock Chrome(string text, double size, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = size,
-            FontWeight = FontWeight.SemiBold,
-            LetterSpacing = size * Fonts.ChromeTracking,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Chrome(string text, double size, string key) =>
+        Typeset.Chrome(
+            text.ToUpperInvariant(), size, key,
+            weight: FontWeight.SemiBold, tracking: size * Fonts.ChromeTracking, wrap: true);
 
-    private static TextBlock Mono(string text, double size, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = size,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Mono(string text, double size, string key) =>
+        Typeset.Mono(text, size, key);
 
-    private static TextBlock Prose(string text, double size, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = Fonts.ProseFamily,
-            FontSize = size,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Prose(string text, double size, string key) =>
+        Typeset.Prose(text, size, key, wrap: true);
 
 }

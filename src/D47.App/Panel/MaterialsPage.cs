@@ -902,42 +902,18 @@ public sealed class MaterialsPage : UserControl
         return row;
     }
 
-    internal static TextBlock Chrome(string text, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = TypeScale.MetaSmall,
-            FontWeight = FontWeight.Medium,
-            LetterSpacing = TypeScale.MetaSmall * Fonts.ChromeTracking,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    internal static TextBlock Chrome(string text, string key) =>
+        Typeset.Chrome(
+            text.ToUpperInvariant(), TypeScale.MetaSmall, key,
+            weight: FontWeight.Medium, tracking: TypeScale.MetaSmall * Fonts.ChromeTracking, trimming: TextTrimming.CharacterEllipsis, vertical: VerticalAlignment.Center);
 
-    internal static TextBlock Mono(string text, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Control,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    internal static TextBlock Mono(string text, string key) =>
+        Typeset.Mono(
+            text, TypeScale.Control, key,
+            vertical: VerticalAlignment.Center, horizontal: HorizontalAlignment.Right);
 
-    internal static TextBlock Hint(string text, Thickness margin)
-    {
-        var hint = new TextBlock { Text = text, FontSize = TypeScale.Small, TextWrapping = TextWrapping.Wrap, Margin = margin };
-        ThemeInk.Bind(hint, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        return hint;
-    }
+    internal static TextBlock Hint(string text, Thickness margin) =>
+        Typeset.Text(text, TypeScale.Small, ThemeManager.GreyKey, wrap: true, margin: margin);
 
     private List<Control> Notes(GapReport report)
     {

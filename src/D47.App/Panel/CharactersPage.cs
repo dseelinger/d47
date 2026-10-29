@@ -345,12 +345,8 @@ public sealed class CharactersPage : UserControl, IPageSummary
         return TitleText.GroupRow(head);
     }
 
-    private static TextBlock Plain(string text)
-    {
-        var block = new TextBlock { Text = text, FontSize = TypeScale.Small, TextWrapping = TextWrapping.Wrap };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        return block;
-    }
+    private static TextBlock Plain(string text) =>
+        Typeset.Text(text, TypeScale.Small, ThemeManager.GreyKey, wrap: true);
 
     private static TextBlock Channel(string prefix, string channel, string name)
     {
@@ -620,12 +616,8 @@ public sealed class CharactersPage : UserControl, IPageSummary
         return shell;
     }
 
-    private static TextBlock ErrorLine(string message)
-    {
-        var line = new TextBlock { Text = message, FontSize = TypeScale.FieldMessage, TextWrapping = TextWrapping.Wrap };
-        ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.RedKey);
-        return line;
-    }
+    private static TextBlock ErrorLine(string message) =>
+        Typeset.Text(message, TypeScale.FieldMessage, ThemeManager.RedKey, wrap: true);
 
     private void Watch(TextBox box, Action<string> commit, bool keepsReturn)
     {

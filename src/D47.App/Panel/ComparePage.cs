@@ -355,17 +355,8 @@ public sealed class ComparePage : UserControl
         return row;
     }
 
-    private static TextBlock Number(string? text, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text ?? "—",
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Control,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, text is null ? ThemeManager.GreyKey : key);
-        return block;
-    }
+    private static TextBlock Number(string? text, string key) =>
+        Typeset.Mono(text ?? "—", TypeScale.Control, text is null ? ThemeManager.GreyKey : key);
 
     private static Control Cell(Control cell, bool left = false)
     {

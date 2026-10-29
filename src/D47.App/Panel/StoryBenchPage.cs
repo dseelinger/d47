@@ -163,28 +163,13 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         return slab;
     }
 
-    private static TextBlock Chrome(string text, double size, string key, FontWeight weight = FontWeight.Medium)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = size,
-            FontWeight = weight,
-            LetterSpacing = size * Fonts.ChromeTracking,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Chrome(string text, double size, string key, FontWeight weight = FontWeight.Medium) =>
+        Typeset.Chrome(
+            text.ToUpperInvariant(), size, key,
+            weight: weight, tracking: size * Fonts.ChromeTracking, wrap: true, vertical: VerticalAlignment.Center);
 
-    private static TextBlock Mono(string text, double size, string key)
-    {
-        var block = new TextBlock { Text = text, FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = size, VerticalAlignment = VerticalAlignment.Center };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Mono(string text, double size, string key) =>
+        Typeset.Mono(text, size, key, vertical: VerticalAlignment.Center);
 
     private static Button Tile(string name, string label, double width, bool enabled)
     {

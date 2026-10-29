@@ -276,17 +276,7 @@ public sealed class UnsoldPage : UserControl
 
     private static string Number(int n) => n.ToString("N0", CultureInfo.InvariantCulture);
 
-    private static TextBlock Figure(string text, double size, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = size,
-            FontWeight = FontWeight.Medium,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
+    private static TextBlock Figure(string text, double size, string key) =>
+        Typeset.Mono(text, size, key, weight: FontWeight.Medium);
 
 }

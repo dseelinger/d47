@@ -530,20 +530,10 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         return dock;
     }
 
-    private static TextBlock Figure(string text, long? value)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Small,
-            TextAlignment = TextAlignment.Right,
-            HorizontalAlignment = HorizontalAlignment.Right,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, value is null ? ThemeManager.Grey2Key : ThemeManager.AKey);
-
-        return block;
-    }
+    private static TextBlock Figure(string text, long? value) =>
+        Typeset.Mono(
+            text, TypeScale.Small, value is null ? ThemeManager.Grey2Key : ThemeManager.AKey,
+            horizontal: HorizontalAlignment.Right, align: TextAlignment.Right);
 
     private static void Place(Grid grid, int column, Control cell)
     {
