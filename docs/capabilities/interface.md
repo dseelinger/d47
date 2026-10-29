@@ -446,6 +446,11 @@ corner. Drag a corner and both dimensions follow; drag an edge and only that one
 changes over an edge or corner to show it is there, since nothing else marks it. There is a minimum
 size, so a drag that overshoots stops there rather than leaving nothing to grab next time.
 
+**If the strip is lost** — any part of it off every screen, after a drag, a change of resolution or
+scaling, or an unplugged monitor — d47 centres it on the screen Elite is on, and so does this key if
+it is pressed while the strip is lost. A strip wholly on a screen, a second monitor included, is not
+moved.
+
 It comes up for this even if the game is not running, so you can put it where you want it before
 you launch.
 

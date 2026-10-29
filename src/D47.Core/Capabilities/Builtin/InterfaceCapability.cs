@@ -356,7 +356,8 @@ public static class InterfaceCapability
                     "with Show the overlay on, the overlay appears with a border, even when Elite is not in front, "
                         + "and takes the pointer so it can be dragged. Drag it and let go: it stays there, the border goes "
                         + "and the pointer passes through again. Pressing it again with nothing dragged also leaves the "
-                        + "mode.")),
+                        + "mode. If the strip has been lost off every screen, the key brings it back, centred on the "
+                        + "screen Elite is on, with the border up and ready to drag.")),
         ],
     };
 
