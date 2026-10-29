@@ -27,12 +27,6 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
 
     public string Name => "Edge Neural";
 
-    /// <summary>What leaves the machine for this provider.</summary>
-    public const string EgressDisclosure =
-        "The text of every reply D47 speaks is sent to Microsoft's Edge Read Aloud service to be " +
-        "turned into audio. No game state, no journal content and no keys are sent. Selecting no " +
-        "voice provider keeps D47 silent and sends nothing.";
-
     public async Task<VoiceCatalogue> ListVoicesAsync(CancellationToken cancellationToken = default)
     {
         if (_voices is { } cached)

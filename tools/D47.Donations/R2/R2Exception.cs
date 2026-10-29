@@ -10,10 +10,6 @@ namespace D47.Donations.R2;
 public sealed class R2Exception(HttpStatusCode status, string code, string message)
     : Exception($"{(int)status} {code}: {message}")
 {
-    public HttpStatusCode Status { get; } = status;
-
-    public string Code { get; } = code;
-
     public static R2Exception From(HttpStatusCode status, string body)
     {
         try

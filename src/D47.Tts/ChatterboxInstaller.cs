@@ -20,8 +20,6 @@ public sealed class ChatterboxInstaller : IDisposable
         _http = ModelDownload.CreateClient();
     }
 
-    public string Folder => _folder;
-
     public bool IsInstalled => ChatterboxAssets.IsInstalled(_files, _folder);
 
     /// <summary>Every file not already present at its pinned size, reporting against the whole set.</summary>

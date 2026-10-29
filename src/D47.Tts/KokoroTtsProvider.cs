@@ -14,9 +14,6 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
 {
     public const string ProviderId = "kokoro";
 
-    /// <summary>What Kokoro emits, before the arbiter's doubling.</summary>
-    private const int ModelSampleRate = 24_000;
-
     private readonly IFileSystem _files;
     private readonly string _folder;
     private readonly string? _pronunciations;

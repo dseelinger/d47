@@ -44,8 +44,6 @@ public sealed class KokoroInstaller : IDisposable
         _http.DefaultRequestHeaders.UserAgent.ParseAdd("D47");
     }
 
-    public string Folder => _folder;
-
     public bool IsInstalled => KokoroAssets.IsInstalled(_files, _folder);
 
     /// <summary>Everything, in one go, reporting against the whole set rather than per file.</summary>

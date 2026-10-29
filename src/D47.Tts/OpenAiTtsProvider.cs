@@ -266,10 +266,6 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
         return request;
     }
 
-    /// <summary>One character, synthesised and thrown away, to prove a key (Phase 58).</summary>
-    public async Task ProveKeyAsync(CancellationToken cancellationToken = default) =>
-        _ = await SynthesizeAsync(".", new VoiceSelection(Catalogue[0].Id), cancellationToken).ConfigureAwait(false);
-
     /// <summary>What the service said, classified into the two answers a Commander can act on.</summary>
     private async Task<TtsException> DescribeAsync(
         HttpResponseMessage response,

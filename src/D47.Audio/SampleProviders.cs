@@ -58,7 +58,6 @@ internal sealed class TrackedSampleProvider(long id, ISampleProvider source) : I
 
     public bool Paused
     {
-        get => _paused;
         set => _paused = value;
     }
 

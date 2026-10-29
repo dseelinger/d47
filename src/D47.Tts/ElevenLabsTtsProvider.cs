@@ -33,17 +33,6 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     /// <summary>The language a line with none is synthesised as.</summary>
     public const string Language = "en";
 
-    /// <summary>What leaves the machine.</summary>
-    public const string EgressDisclosure =
-        "The text of every line D47 speaks is sent to ElevenLabs to be turned into audio, along " +
-        "with your API key. That includes re-voiced in-game messages when you have turned those " +
-        "on, which are written by other players. No journal content, game state or other keys " +
-        "are sent. Playing a voice's free sample in the voice list fetches it from ElevenLabs or " +
-        "storage.googleapis.com with no key and no text. Each time D47 fetches the voice list, it " +
-        "also asks ElevenLabs for its list of models, with the same key and nothing else. Selecting " +
-        "a different voice provider " +
-        "stops all of it.";
-
     /// <summary>
     /// ElevenLabs accepts a speaking rate between these, and rejects the request outright outside them
     /// rather than clamping. d47's own rate is normalised around 1.0 with a wider range than this, so

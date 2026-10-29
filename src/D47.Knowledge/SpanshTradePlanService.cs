@@ -465,19 +465,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
     private sealed record Sweep(
         IReadOnlyList<MarketSnapshot> Markets,
         (double X, double Y, double Z)? Reference,
-        bool Exhausted)
-    {
-        public static readonly Sweep Nothing = new([], null, true);
-
-        /// <summary>
-        /// How far the sweep actually reached, in light years, or null when it reached the whole radius
-        /// it was asked for.
-        /// </summary>
-        public double? Horizon =>
-            Exhausted || Markets.Count == 0 || Reference is not { } origin
-                ? null
-                : Furthest(Markets, origin);
-    }
+        bool Exhausted);
 
     private sealed record Cached(
         string System,

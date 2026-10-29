@@ -163,6 +163,4 @@ public sealed record FetchedObject(
 {
     /// <summary>The SHA-256 the Worker stored, which is over the decompressed payload.</summary>
     public string? Sha256 => Metadata.GetValueOrDefault("sha256");
-
-    public string? Build => Metadata.GetValueOrDefault("build");
 }

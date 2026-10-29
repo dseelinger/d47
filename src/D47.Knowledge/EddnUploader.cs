@@ -9,8 +9,6 @@ namespace D47.Knowledge;
 /// <summary>Sends EDDN messages from a bounded queue, off the tick.</summary>
 public sealed class EddnUploader : IEddnSink, IDisposable
 {
-    public const string Host = "eddn.edcd.io";
-
     public const string Endpoint = "https://eddn.edcd.io:4430/upload/";
 
     public const int Capacity = 100;
