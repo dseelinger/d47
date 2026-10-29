@@ -216,7 +216,7 @@ internal sealed class StoryFixtures : IDisposable
 
     public IFileSystem Files { get; } = new MemoryFileSystem();
 
-    public StoryFixtures(RoundScriptedLlmProvider provider, StorySecret? secret = null, StoryCard? card = null)
+    public StoryFixtures(RoundScriptedLlmProvider provider, StorySecret? secret = null, StoryCard? card = null, Microsoft.Extensions.Logging.ILogger? logger = null)
     {
         secret ??= Secret;
 
@@ -251,7 +251,7 @@ internal sealed class StoryFixtures : IDisposable
             },
             () => Here,
             backstory => Backstory = backstory,
-            NullLogger.Instance)
+            logger ?? NullLogger.Instance)
         {
             Backstory = () => Backstory,
             Archive = StoryChapterArchive.Open(Files, ArchivePath, NullLogger<StoryChapterArchive>.Instance),

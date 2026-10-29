@@ -51,9 +51,11 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
             "F1");
 
     /// <summary>A short story begun, the Lantern reached and a bounty taken, waiting on three kill bonds.</summary>
-    private static StoryFixtures AtTheBond(params string[] answers)
+    private static StoryFixtures AtTheBond(params string[] answers) => AtTheBond(null, answers);
+
+    private static StoryFixtures AtTheBond(Microsoft.Extensions.Logging.ILogger? logger, params string[] answers)
     {
-        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(answers.Select(answer => RoundScriptedLlmProvider.Saying(answer)).ToArray()));
+        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(answers.Select(answer => RoundScriptedLlmProvider.Saying(answer)).ToArray()), logger: logger);
 
         Assert.Null(fixtures.Book.Write("F1", ShortStory(Key)));
         Assert.Null(fixtures.Book.Begin("F1", Key, Now));
@@ -67,6 +69,28 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
         [.. fixtures.Book.Store.Find("F1", Key)!.Beats.Select(beat => beat.Title)];
 
     private static ActivityBars Bars() => new(null, new MemoryFileSystem(), NullLogger.Instance);
+
+    [Fact]
+    public async Task AShortStorysRemarkIsWrittenToTheLogOnce()
+    {
+        var lines = new List<string>();
+        using var fixtures = AtTheBond(new LogCapture(lines), NoPlace, ABountyAndADock);
+
+        await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, " I would rather hunt a bounty. ", [], TestContext.Current.CancellationToken);
+
+        Assert.Single(lines, line => line.StartsWith("Objective change asked: ", StringComparison.Ordinal));
+        Assert.Contains("Objective change asked: I would rather hunt a bounty.", lines);
+    }
+
+    private sealed class LogCapture(List<string> lines) : Microsoft.Extensions.Logging.ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+            lines.Add(formatter(state, exception));
+    }
 
     [Fact]
     public async Task ARemarkProducesAProposalAndChangesNothing()

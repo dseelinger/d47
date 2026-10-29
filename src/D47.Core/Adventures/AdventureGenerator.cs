@@ -1361,8 +1361,9 @@ public sealed class AdventureGenerator(
                 return rewrite with { Heading = new AdventureHeading(named.Name, named.SystemAddress, named.Position, standIn) { AskedHome = read.Home } };
             }
 
-            if (await new AdventureResolver(search, facts.Standings) { Time = Time }.SystemAsync(system, cancellationToken).ConfigureAwait(false) is { } found
-                && await search.PositionAsync(found.Name, cancellationToken).ConfigureAwait(false) is { } position)
+            // The search answers 400 for a name it has no system for, which SearchAsync reports as an outage; a position lookup reports it as unknown.
+            if (await search.PositionAsync(system, cancellationToken).ConfigureAwait(false) is { } position
+                && await new AdventureResolver(search, facts.Standings) { Time = Time }.SystemAsync(system, cancellationToken).ConfigureAwait(false) is { } found)
             {
                 logger.LogInformation("Draft {Draft}, the changed objective asks to go to {System}", ask.Draft, found.Name);
                 return rewrite with { Heading = new AdventureHeading(found.Name, found.Address, position, standIn) { AskedHome = read.Home } };

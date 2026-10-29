@@ -727,6 +727,22 @@ public class AnIncidentExcerptTests
         Assert.True(with.Tally.MySpeechIncluded);
     }
 
+    /// <summary>A changed-objective remark is the Commander's own words, typed or spoken.</summary>
+    [Fact]
+    public void AnObjectiveChangeRemarkIsHeldBackUntilTheySoSay()
+    {
+        var log = Entries("[12:03:00 INF] D47.Core.Stories.StoryDirector: Objective change asked: take me to Alfi");
+
+        var without = IncidentExcerpt.Take([], log, Window());
+
+        Assert.DoesNotContain(without.Log, line => line.Contains("take me to Alfi"));
+        Assert.Equal(1, without.Tally.MySpeechLines);
+
+        var with = IncidentExcerpt.Take([], log, Window(mySpeech: true));
+
+        Assert.Contains(with.Log, line => line.Contains("take me to Alfi"));
+    }
+
     /// <summary>And there is no switch for this one.</summary>
     [Fact]
     public void SomebodyElsesWordsNeverTravelAtAll()

@@ -168,6 +168,32 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
     }
 
     [Fact]
+    public async Task ASystemTheGalaxySearchAnswersWith400IsSaidToBeUnknown()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying("""{"home": false, "system": "Alfi"}"""), Saying(Beats(heading: false)), Saying(NothingObjected));
+        var galaxy = new Galaxy { ExactCaseOnly = true };
+
+        var outcome = await Generator(provider, galaxy, Here, home: HomeName).GenerateAsync(Changing("Take me to Alfi"), Now, CancellationToken.None);
+
+        var brief = provider.Requests[1].Prompt.History[0].Text;
+        Assert.Contains("The Commander asked to go to \"Alfi\", which the galaxy search does not know as a star system", brief);
+        Assert.DoesNotContain("could not look up", brief);
+        Assert.Null(outcome.Heading);
+    }
+
+    [Fact]
+    public async Task AGalaxySearchThatIsDownIsNotSaidToKnowNoSuchSystem()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying("""{"home": false, "system": "Waypoint"}"""), Saying(Beats(heading: false)), Saying(NothingObjected));
+        var galaxy = new Galaxy { Down = true };
+
+        var outcome = await Generator(provider, galaxy, Here, home: HomeName).GenerateAsync(Changing("Take me to Waypoint"), Now, CancellationToken.None);
+
+        Assert.DoesNotContain("which the galaxy search does not know", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Null(outcome.Heading);
+    }
+
+    [Fact]
     public async Task ARemarkThatNamesNoPlaceRewritesAsBefore()
     {
         var provider = new RoundScriptedLlmProvider(Saying(NoPlace), Saying(Beats(heading: false)), Saying(NothingObjected));
@@ -290,6 +316,9 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
         /// <summary>Refuses a reference system not spelt in its exact case, as the real galaxy search does.</summary>
         public bool ExactCaseOnly { get; init; }
 
+        /// <summary>Fails every position lookup as an outage.</summary>
+        public bool Down { get; init; }
+
         /// <summary>Light years from any stop to the heading's system.</summary>
         public double FromTarget { get; init; } = 900;
 
@@ -323,7 +352,9 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
         }
 
         public Task<StarPosition?> PositionAsync(string system, CancellationToken cancellationToken) =>
-            Task.FromResult<StarPosition?>(Known.TryGetValue(system, out var known) ? known.Position : null);
+            Down
+                ? throw new GalaxyUnavailableException("The galaxy search did not answer.")
+                : Task.FromResult<StarPosition?>(Known.TryGetValue(system, out var known) ? known.Position : null);
 
         public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(to is HomeName or "Colonia" ? FromTarget : 12);

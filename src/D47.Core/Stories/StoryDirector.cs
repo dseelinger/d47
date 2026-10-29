@@ -859,7 +859,9 @@ public sealed class StoryDirector(
 
         try
         {
-            return await ProposeAsync(frontierId, at, remark.Trim(), exchange, cancellationToken).ConfigureAwait(false);
+            var trimmedRemark = remark.Trim();
+            logger.LogInformation("Objective change asked: {Remark}", trimmedRemark);
+            return await ProposeAsync(frontierId, at, trimmedRemark, exchange, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -947,6 +949,7 @@ public sealed class StoryDirector(
             var from = standing.Current;
             var beat = standing.CurrentBeat!;
             var trimmed = remark.Trim();
+            logger.LogInformation("Objective change asked: {Remark}", trimmed);
             var ask = ShortStoryAsk(frontierId, new AdventureRewrite(standing.Adventure, from, Remark: trimmed, Exchange: exchange, Step: standing.CurrentStep), null);
             var outcome = await write(ask, Clock(), cancellationToken).ConfigureAwait(false);
 

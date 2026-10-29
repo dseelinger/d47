@@ -38,11 +38,12 @@ public static partial class LogScrub
     private static readonly HashSet<string> OwnVoices =
         new(Enum.GetNames<VoiceRole>().Append("D47"), StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>The two lines that write down what the Commander said.</summary>
+    /// <summary>The lines that write down what the Commander said or typed.</summary>
     private static readonly string[] CommanderSpeech =
     [
         "Heard: ",
         "Not addressed to me: ",
+        "Objective change asked: ",
     ];
 
     /// <summary>A re-voiced in-game message on its way to being spoken.</summary>

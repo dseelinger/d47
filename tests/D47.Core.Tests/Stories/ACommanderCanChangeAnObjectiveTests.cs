@@ -57,9 +57,11 @@ public sealed class ACommanderCanChangeAnObjectiveTests
             "F1");
 
     /// <summary>A story on chapter two, waiting on the three kill bonds.</summary>
-    private static StoryFixtures AtTheBond(params string[] answers)
+    private static StoryFixtures AtTheBond(params string[] answers) => AtTheBond(null, answers);
+
+    private static StoryFixtures AtTheBond(Microsoft.Extensions.Logging.ILogger? logger, params string[] answers)
     {
-        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(answers.Select(answer => RoundScriptedLlmProvider.Saying(answer)).ToArray()));
+        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(answers.Select(answer => RoundScriptedLlmProvider.Saying(answer)).ToArray()), logger: logger);
 
         fixtures.Stories.Save("F1", new Story
         {
@@ -82,6 +84,28 @@ public sealed class ACommanderCanChangeAnObjectiveTests
 
     private static IReadOnlyList<string> Titles(StoryFixtures fixtures) =>
         [.. fixtures.Book.Store.Find("F1", ChapterKey)!.Beats.Select(beat => beat.Title)];
+
+    [Fact]
+    public async Task ARemarkIsWrittenToTheLogOnce()
+    {
+        var lines = new List<string>();
+        using var fixtures = AtTheBond(new LogCapture(lines), NoPlace, ABountyAndADock);
+
+        await fixtures.Director.ReviseObjectiveAsync("F1", " I would rather hunt a bounty. ", [], TestContext.Current.CancellationToken);
+
+        Assert.Single(lines, line => line.StartsWith("Objective change asked: ", StringComparison.Ordinal));
+        Assert.Contains("Objective change asked: I would rather hunt a bounty.", lines);
+    }
+
+    private sealed class LogCapture(List<string> lines) : Microsoft.Extensions.Logging.ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+            lines.Add(formatter(state, exception));
+    }
 
     [Fact]
     public async Task ARemarkProducesAProposalAndAReply()
