@@ -1351,6 +1351,20 @@ public static class LoadoutPages
         VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
         HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
     };
+
+    /// <summary>A header above a scrolled list; <paramref name="scroll"/> is the scroller around <paramref name="list"/>.</summary>
+    internal static Grid HeaderAndList(StackPanel top, Control list, out ScrollViewer scroll)
+    {
+        scroll = Scrolling(list);
+
+        var grid = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
+        top.Margin = new Thickness(0, 0, 14, 0);
+        grid.Children.Add(top);
+        Grid.SetRow(scroll, 1);
+        grid.Children.Add(scroll);
+
+        return grid;
+    }
 }
 
 /// <summary>A page that redraws itself when its mode changes underneath.</summary>

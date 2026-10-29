@@ -515,25 +515,7 @@ public sealed class CarrierPage : UserControl, IPageChrome
 
         var tile = StatTile.Build(label, value, here ? StatInk.Here : StatInk.Value);
 
-        if (system is not { Length: > 0 } target || _copy is not { } copy || tile.Child is not { } figures)
-        {
-            return tile;
-        }
-
-        tile.Child = null;
-
-        var glyph = CopyGlyph.For(target, copy);
-        glyph.VerticalAlignment = VerticalAlignment.Center;
-        Grid.SetColumn(glyph, 1);
-
-        tile.Child = new Grid
-        {
-            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
-            ColumnSpacing = 6,
-            Children = { figures, glyph },
-        };
-
-        return tile;
+        return CopyGlyph.WithCopy(tile, system, _copy);
     }
 }
 

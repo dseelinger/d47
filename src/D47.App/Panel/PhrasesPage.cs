@@ -204,17 +204,7 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
             },
         };
 
-        var root = new DockPanel { Margin = new Thickness(14) };
-        var footer = new PageFooter(LearnedPhrasesCapability.TeachPhrase, _clock) { Margin = new Thickness(0, 12, 0, 0) };
-        DockPanel.SetDock(footer, Dock.Bottom);
-        root.Children.Add(footer);
-        root.Children.Add(LoadoutPages.Scrolling(new Grid
-        {
-            ColumnDefinitions = [new ColumnDefinition(GridLength.Star) { MaxWidth = 1000 }, new ColumnDefinition(GridLength.Auto)],
-            Children = { body },
-        }));
-
-        Content = root;
+        Content = PageFooter.Shell(body, LearnedPhrasesCapability.TeachPhrase, _clock, 1000);
 
         _store.Changed += Refresh;
 

@@ -32,18 +32,7 @@ public sealed class OnFootDetailPage : UserControl
         _nav = nav;
         _material = material;
 
-        var root = new DockPanel { Margin = new Thickness(14) };
-        var footer = new PageFooter(Phrase(material), clock) { Margin = new Thickness(0, 12, 0, 0) };
-        DockPanel.SetDock(footer, Dock.Bottom);
-        root.Children.Add(footer);
-
-        var columns = new DockPanel();
-        DockPanel.SetDock(_sidebar, Dock.Left);
-        columns.Children.Add(_sidebar);
-        columns.Children.Add(LoadoutPages.Scrolling(_body));
-        root.Children.Add(columns);
-
-        Content = root;
+        Content = PageFooter.Shell(_sidebar, _body, Phrase(material), clock);
     }
 
     /// <summary>The footer's phrase; it is one of <c>find_micro_resource</c>'s examples.</summary>

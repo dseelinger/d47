@@ -57,18 +57,7 @@ public sealed class StandingPage : UserControl
         _pictures = pictures;
         _picture = picture;
 
-        var root = new DockPanel { Margin = new Thickness(14) };
-        var footer = new PageFooter(Phrase, clock) { Margin = new Thickness(0, 12, 0, 0) };
-        DockPanel.SetDock(footer, Dock.Bottom);
-        root.Children.Add(footer);
-        var capped = new Grid
-        {
-            ColumnDefinitions = [new ColumnDefinition(GridLength.Star) { MaxWidth = 900 }, new ColumnDefinition(GridLength.Auto)],
-            Children = { _body },
-        };
-        root.Children.Add(LoadoutPages.Scrolling(capped));
-
-        Content = root;
+        Content = PageFooter.Shell(_body, Phrase, clock, 900);
         Draw();
     }
 

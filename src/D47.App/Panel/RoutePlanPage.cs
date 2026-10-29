@@ -406,35 +406,23 @@ public sealed class RoutePlanPage : UserControl
             actions.Children.Add(show);
         }
 
-        CancellationTokenSource? inFlight = null;
+        object? before = null;
 
-        plot.Click += async (_, _) =>
-        {
-            if (!validate())
+        RoutingKit.RunPlot(
+            plot,
+            cancel,
+            status,
+            Budget,
+            "Plotting… this is a job the service queues, so it can take a moment.",
+            validate,
+            token =>
             {
-                return;
-            }
+                before = _plans.Last(kind);
 
-            inFlight?.Cancel();
-            inFlight = new CancellationTokenSource(Budget);
-
-            plot.IsEnabled = false;
-            cancel.IsVisible = true;
-
-            // A plot is a submitted job rather than a request and a reply, so the surface has to say it is
-            // waiting.
-            RoutingKit.Say(status, "Plotting… this is a job the service queues, so it can take a moment.");
-
-            var before = _plans.Last(kind);
-
-            try
+                return _registry.InvokeAsync(tool, arguments(), token);
+            },
+            _ =>
             {
-                var result = await _registry
-                    .InvokeAsync(tool, arguments(), inFlight.Token)
-                    .ConfigureAwait(true);
-
-                RoutingKit.Say(status, result.Content, result.IsError);
-
                 // A recorded plan is a new record in the book rather than the old one mutated (#200), so
                 // reference identity says whether this call actually plotted something — ToolResult.IsError
                 // does not: "No route from…", nothing worth mapping and an unseen market all come back as Ok
@@ -446,21 +434,7 @@ public sealed class RoutePlanPage : UserControl
                     Refresh();
                     _nav.Drill(RoutingPages.ResultCrumb(kind, after.Headline));
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                RoutingKit.Say(status, "Stopped.");
-            }
-            finally
-            {
-                plot.IsEnabled = true;
-                cancel.IsVisible = false;
-                inFlight?.Dispose();
-                inFlight = null;
-            }
-        };
-
-        cancel.Click += (_, _) => inFlight?.Cancel();
+            });
 
         var body = new StackPanel
         {

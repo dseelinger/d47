@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Journal;
 
 namespace D47.App.Panel;
 
@@ -30,6 +31,27 @@ internal static class CreditsKit
         Height = TypeScale.MinimumTarget,
         VerticalAlignment = VerticalAlignment.Center,
     };
+
+    /// <summary>Sets <paramref name="current"/> to the trimmed <paramref name="query"/>; false when it is unchanged.</summary>
+    public static bool Retarget(string? query, ref string current)
+    {
+        var trimmed = query?.Trim() ?? string.Empty;
+
+        if (trimmed == current)
+        {
+            return false;
+        }
+
+        current = trimmed;
+
+        return true;
+    }
+
+    /// <summary>Whether the ledger, the history walk, the minute or the chosen period differs from what was last drawn.</summary>
+    public static bool Moved(CreditLedger? ledger, CreditLedger? seenLedger, HistoryState history, HistoryState seenHistory, DateTimeOffset now, long seenMinute, CreditsChoice choice, Segment period) =>
+        !(ReferenceEquals(ledger, seenLedger) && history == seenHistory && Minute(now) == seenMinute && choice.Period == period.SelectedIndex);
+
+    public static long Minute(DateTimeOffset now) => now.ToUnixTimeSeconds() / 60;
 
     public static CombatPeriod PeriodOf(Segment segment) =>
         (CombatPeriod)Math.Clamp(segment.SelectedIndex, 0, Periods.Length - 1);

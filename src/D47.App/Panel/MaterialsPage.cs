@@ -125,16 +125,7 @@ public sealed class MaterialsPage : UserControl
         _copy = copy;
         _head.Changed += Refresh;
 
-        var root = new DockPanel { Margin = new Thickness(14) };
-        var footer = new PageFooter(Phrase, clock) { Margin = new Thickness(0, 12, 0, 0) };
-        DockPanel.SetDock(footer, Dock.Bottom);
-        root.Children.Add(footer);
-
-        var columns = new DockPanel();
-        DockPanel.SetDock(_sidebar, Dock.Left);
-        columns.Children.Add(_sidebar);
-        columns.Children.Add(LoadoutPages.Scrolling(_body));
-        root.Children.Add(columns);
+        var root = PageFooter.Shell(_sidebar, _body, Phrase, clock);
 
         _detailLayer.HorizontalAlignment = HorizontalAlignment.Stretch;
         _detailLayer.VerticalAlignment = VerticalAlignment.Stretch;

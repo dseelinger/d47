@@ -29,17 +29,7 @@ public sealed class SessionPage : UserControl
     {
         _state = state;
 
-        var root = new DockPanel { Margin = new Thickness(14) };
-        var footer = new PageFooter(Phrase, clock) { Margin = new Thickness(0, 12, 0, 0) };
-        DockPanel.SetDock(footer, Dock.Bottom);
-        root.Children.Add(footer);
-        root.Children.Add(LoadoutPages.Scrolling(new Grid
-        {
-            ColumnDefinitions = [new ColumnDefinition(GridLength.Star) { MaxWidth = 900 }, new ColumnDefinition(GridLength.Auto)],
-            Children = { _body },
-        }));
-
-        Content = root;
+        Content = PageFooter.Shell(_body, Phrase, clock, 900);
         Draw();
     }
 

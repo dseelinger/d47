@@ -142,47 +142,15 @@ public sealed class RouteMarketPage : UserControl
         var find = new Button { Content = "Find it" };
         var cancel = new Button { Content = "Cancel", IsVisible = false };
 
-        CancellationTokenSource? inFlight = null;
-
-        find.Click += async (_, _) =>
-        {
-            if (!RoutingKit.Filled(_commodity, "Name a commodity first."))
-            {
-                return;
-            }
-
-            inFlight?.Cancel();
-            inFlight = new CancellationTokenSource(Budget);
-
-            find.IsEnabled = false;
-            cancel.IsVisible = true;
-            RoutingKit.Say(_status, "Reading the markets nearby…");
-
-            try
-            {
-                var result = await _registry
-                    .InvokeAsync("find_nearest_station", Arguments(), inFlight.Token)
-                    .ConfigureAwait(true);
-
-                // The sentence stays: it is what the Commander would have been told, and it carries the
-                // caveats the table cannot.
-                RoutingKit.Say(_status, result.Content, result.IsError);
-                Refresh();
-            }
-            catch (OperationCanceledException)
-            {
-                RoutingKit.Say(_status, "Stopped.");
-            }
-            finally
-            {
-                find.IsEnabled = true;
-                cancel.IsVisible = false;
-                inFlight?.Dispose();
-                inFlight = null;
-            }
-        };
-
-        cancel.Click += (_, _) => inFlight?.Cancel();
+        RoutingKit.RunPlot(
+            find,
+            cancel,
+            _status,
+            Budget,
+            "Reading the markets nearby…",
+            () => RoutingKit.Filled(_commodity, "Name a commodity first."),
+            token => _registry.InvokeAsync("find_nearest_station", Arguments(), token),
+            _ => Refresh());
 
         var form = new StackPanel
         {

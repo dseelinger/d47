@@ -48,6 +48,41 @@ public sealed class PageFooter : Border
     private readonly StackPanel _stamp;
     private readonly TextBlock _time;
 
+    /// <summary>A brief page's root: <paramref name="body"/> scrolled above the footer, in a <paramref name="maxWidth"/> column when given.</summary>
+    public static DockPanel Shell(Control body, string phrase, JournalClock clock, double? maxWidth = null) =>
+        Shell(null, body, phrase, clock, maxWidth);
+
+    /// <summary>As above, with <paramref name="sidebar"/> docked to the left of the scrolled body.</summary>
+    public static DockPanel Shell(Control? sidebar, Control body, string phrase, JournalClock clock, double? maxWidth = null)
+    {
+        var root = new DockPanel { Margin = new Thickness(14) };
+        var footer = new PageFooter(phrase, clock) { Margin = new Thickness(0, 12, 0, 0) };
+        DockPanel.SetDock(footer, Dock.Bottom);
+        root.Children.Add(footer);
+
+        var scrolled = D47.App.Panel.LoadoutPages.Scrolling(maxWidth is { } width
+            ? new Grid
+            {
+                ColumnDefinitions = [new ColumnDefinition(GridLength.Star) { MaxWidth = width }, new ColumnDefinition(GridLength.Auto)],
+                Children = { body },
+            }
+            : body);
+
+        if (sidebar is null)
+        {
+            root.Children.Add(scrolled);
+            return root;
+        }
+
+        var columns = new DockPanel();
+        DockPanel.SetDock(sidebar, Dock.Left);
+        columns.Children.Add(sidebar);
+        columns.Children.Add(scrolled);
+        root.Children.Add(columns);
+
+        return root;
+    }
+
     public PageFooter(string phrase, JournalClock clock)
     {
         _clock = clock;

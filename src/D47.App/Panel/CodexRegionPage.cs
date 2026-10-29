@@ -92,21 +92,8 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
             }),
         };
 
-        _scroll = new ScrollViewer
-        {
-            Content = new Border { Padding = new Thickness(0, 0, 14, 0), Child = _list },
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-        };
-
-        var grid = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
-        _top.Margin = new Thickness(0, 0, 14, 0);
-        grid.Children.Add(_top);
-        Grid.SetRow(_scroll, 1);
-        grid.Children.Add(_scroll);
-
         Margin = new Thickness(14);
-        Content = grid;
+        Content = LoadoutPages.HeaderAndList(_top, _list, out _scroll);
         Draw();
     }
 

@@ -34,6 +34,30 @@ public static class CopyGlyph
 
     public static string? GetCopies(Button button) => button.GetValue(CopiesProperty);
 
+    /// <summary>Puts a copy glyph for <paramref name="system"/> beside the tile's figures; the tile is unchanged without a system or a clipboard.</summary>
+    public static Border WithCopy(Border tile, string? system, Func<string, Task<bool>>? copy)
+    {
+        if (system is not { Length: > 0 } target || copy is null || tile.Child is not { } figures)
+        {
+            return tile;
+        }
+
+        tile.Child = null;
+
+        var glyph = For(target, copy);
+        glyph.VerticalAlignment = VerticalAlignment.Center;
+        Grid.SetColumn(glyph, 1);
+
+        tile.Child = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+            ColumnSpacing = 6,
+            Children = { figures, glyph },
+        };
+
+        return tile;
+    }
+
     /// <summary>A copy glyph that copies <paramref name="value"/> through <paramref name="copy"/>.</summary>
     public static Button For(string value, Func<string, Task<bool>> copy)
     {

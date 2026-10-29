@@ -110,13 +110,7 @@ public sealed class ComparePage : UserControl
         };
         _minimum.SelectionChanged += (_, _) => Draw();
 
-        var root = new DockPanel { Margin = new Thickness(14) };
-        var footer = new PageFooter(Phrase, _clock) { Margin = new Thickness(0, 12, 0, 0) };
-        DockPanel.SetDock(footer, Dock.Bottom);
-        root.Children.Add(footer);
-        root.Children.Add(LoadoutPages.Scrolling(_body));
-
-        Content = root;
+        Content = PageFooter.Shell(_body, Phrase, _clock);
         Draw();
     }
 

@@ -164,35 +164,23 @@ public sealed class RouteTradePage : UserControl
             actions.Children.Add(show);
         }
 
-        CancellationTokenSource? inFlight = null;
+        object? before = null;
 
-        plot.Click += async (_, _) =>
-        {
-            if (!RoutingKit.Filled(capital.Box, "Say how many credits to trade with. It is never inferred."))
+        RoutingKit.RunPlot(
+            plot,
+            cancel,
+            status,
+            Budget,
+            "Working it out…",
+            () => RoutingKit.Filled(capital.Box, "Say how many credits to trade with. It is never inferred."),
+            token =>
             {
-                return;
-            }
+                before = _plans.Last(RoutePlanKind.Trade);
 
-            inFlight?.Cancel();
-            inFlight = new CancellationTokenSource(Budget);
-
-            plot.IsEnabled = false;
-            cancel.IsVisible = true;
-            RoutingKit.Say(status, "Working it out…");
-
-            var before = _plans.Last(RoutePlanKind.Trade);
-
-            try
+                return _registry.InvokeAsync("plot_trade_route", Arguments(capital.Text), token);
+            },
+            _ =>
             {
-                var result = await _registry
-                    .InvokeAsync(
-                        "plot_trade_route",
-                        Arguments(capital.Text),
-                        inFlight.Token)
-                    .ConfigureAwait(true);
-
-                RoutingKit.Say(status, result.Content, result.IsError);
-
                 // The book is what the result level draws, and the capability has just written it — so
                 // redrawing the page is what puts "Show most recent" on the card.
                 Refresh();
@@ -201,21 +189,7 @@ public sealed class RouteTradePage : UserControl
                 {
                     _nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Trade, after.Headline));
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                RoutingKit.Say(status, "Stopped.");
-            }
-            finally
-            {
-                plot.IsEnabled = true;
-                cancel.IsVisible = false;
-                inFlight?.Dispose();
-                inFlight = null;
-            }
-        };
-
-        cancel.Click += (_, _) => inFlight?.Cancel();
+            });
 
         return new StackPanel
         {

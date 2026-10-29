@@ -7,6 +7,7 @@ using Avalonia.Reactive;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Capabilities;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
@@ -114,6 +115,52 @@ internal static class RoutingKit
 
     /// <summary>A status line, hidden until <see cref="Say"/> writes to it.</summary>
     public static StatusLine Status() => new();
+
+    /// <summary>
+    /// Wires <paramref name="run"/> and <paramref name="cancel"/> around a tool call: <paramref name="validate"/> gates it,
+    /// <paramref name="working"/> is shown while it runs, the result goes to the status line and then to
+    /// <paramref name="done"/>, and <paramref name="budget"/> bounds it.
+    /// </summary>
+    public static void RunPlot(Button run, Button cancel, StatusLine status, TimeSpan budget, string working, Func<bool> validate, Func<CancellationToken, Task<ToolResult>> call, Action<ToolResult> done)
+    {
+        CancellationTokenSource? inFlight = null;
+
+        run.Click += async (_, _) =>
+        {
+            if (!validate())
+            {
+                return;
+            }
+
+            inFlight?.Cancel();
+            inFlight = new CancellationTokenSource(budget);
+
+            run.IsEnabled = false;
+            cancel.IsVisible = true;
+            Say(status, working);
+
+            try
+            {
+                var result = await call(inFlight.Token).ConfigureAwait(true);
+
+                Say(status, result.Content, result.IsError);
+                done(result);
+            }
+            catch (OperationCanceledException)
+            {
+                Say(status, "Stopped.");
+            }
+            finally
+            {
+                run.IsEnabled = true;
+                cancel.IsVisible = false;
+                inFlight?.Dispose();
+                inFlight = null;
+            }
+        };
+
+        cancel.Click += (_, _) => inFlight?.Cancel();
+    }
 
     /// <summary>Shows <paramref name="text"/> on a status line, as a red notice where it is an error.</summary>
     public static void Say(StatusLine status, string text, bool error = false)

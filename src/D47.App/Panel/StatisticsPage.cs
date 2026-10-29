@@ -34,22 +34,7 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
         _state = state;
         _clearSearch = clearSearch;
 
-        var root = new DockPanel { Margin = new Thickness(14) };
-        var footer = new PageFooter(Phrase, clock) { Margin = new Thickness(0, 12, 0, 0) };
-        DockPanel.SetDock(footer, Dock.Bottom);
-        root.Children.Add(footer);
-
-        var columns = new DockPanel();
-        DockPanel.SetDock(_sidebar, Dock.Left);
-        columns.Children.Add(_sidebar);
-        columns.Children.Add(LoadoutPages.Scrolling(new Grid
-        {
-            ColumnDefinitions = [new ColumnDefinition(GridLength.Star) { MaxWidth = 900 }, new ColumnDefinition(GridLength.Auto)],
-            Children = { _body },
-        }));
-        root.Children.Add(columns);
-
-        Content = root;
+        Content = PageFooter.Shell(_sidebar, _body, Phrase, clock, 900);
         Draw();
     }
 

@@ -111,26 +111,16 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
 
     public void Filter(string? query)
     {
-        var trimmed = query?.Trim() ?? string.Empty;
-
-        if (trimmed == _query)
+        if (CreditsKit.Retarget(query, ref _query))
         {
-            return;
+            Draw();
         }
-
-        _query = trimmed;
-        Draw();
     }
 
     /// <summary>Redraws when the ledger, the history walk, the minute or the period chosen on the other page has changed.</summary>
     public bool Tick()
     {
-        var ledger = _state()?.CreditLedger;
-
-        if (ReferenceEquals(ledger, _seenLedger)
-            && _history() == _seenHistory
-            && Minute(_now()) == _seenMinute
-            && _choice.Period == _period.SelectedIndex)
+        if (!CreditsKit.Moved(_state()?.CreditLedger, _seenLedger, _history(), _seenHistory, _now(), _seenMinute, _choice, _period))
         {
             return false;
         }
@@ -140,8 +130,6 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
 
         return true;
     }
-
-    private static long Minute(DateTimeOffset now) => now.ToUnixTimeSeconds() / 60;
 
     private CombatPeriod Period => CreditsKit.PeriodOf(_period);
 
@@ -172,7 +160,7 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
 
         _seenLedger = _state()?.CreditLedger;
         _seenHistory = _history();
-        _seenMinute = Minute(now);
+        _seenMinute = CreditsKit.Minute(now);
 
         var view = Build();
 
