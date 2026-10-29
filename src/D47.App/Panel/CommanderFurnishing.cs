@@ -67,7 +67,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         host.Nav.Declare(ChecklistRoot, ChecklistPage.AllLists);
     }
 
-    private const string ChecklistRoot = "checklist";
+    internal const string ChecklistRoot = "checklist";
 
     public void EnableMissions(
         Func<D47.Core.Journal.CommanderGameState?> state,

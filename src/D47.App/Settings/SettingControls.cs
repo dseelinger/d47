@@ -1,4 +1,4 @@
-﻿﻿using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using D47.Core.Listening;
 using Avalonia;
@@ -735,7 +735,9 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
             }
 
             await panel.Open(new Controls.CoveragePage(services.Coverage(), services.ClearCoverage, services.Coverage, services.ViewState,
-                item => panel.OpenFound(new D47.Core.Interface.PanelFindResult(D47.Core.Interface.PanelFindKind.SettingRow, item.Name, string.Empty, item.Id, 1))));
+                item => panel.OpenFound(item.Kind == D47.Core.Coverage.CoverageKind.Tool
+                    ? new D47.Core.Interface.PanelFindResult(D47.Core.Interface.PanelFindKind.Page, item.Name, string.Empty, D47.App.Coverage.ToolPlaces.For(item.Id) ?? string.Empty, 1)
+                    : new D47.Core.Interface.PanelFindResult(D47.Core.Interface.PanelFindKind.SettingRow, item.Name, string.Empty, item.Id, 1))));
 
             return true;
         }, () => { });

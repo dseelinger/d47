@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Headless;
@@ -170,6 +170,29 @@ public class CoveragePageTests
         go.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         Assert.Equal([setting], went);
+
+        window.Close();
+    }
+
+    /// <summary>A tool line whose tool has a page gets a Go button; one without a page gets none.</summary>
+    [AvaloniaFact]
+    public void AToolLineWithAPageHasAGoButton()
+    {
+        Theme();
+
+        var withPage = new CoverageItem(CoverageKind.Tool, "search_stations", "galaxy", "Galaxy - search_stations", "aaaa");
+        var report = new CoverageLedger().Report([Item("tool"), withPage]);
+        var went = new List<CoverageItem>();
+        var window = new CoveragePage(report, go: went.Add);
+
+        window.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var go = Assert.Single(window.GetVisualDescendants().OfType<Button>(), button => button.Name == "CoverageGo");
+
+        go.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.Equal([withPage], went);
 
         window.Close();
     }

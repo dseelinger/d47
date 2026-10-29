@@ -28,7 +28,7 @@ public sealed class CoveragePage : DialogPage
     /// <param name="clear">When given, each failed row gets a Clear button that calls it.</param>
     /// <param name="fresh">Fetches the report to redraw after a clear.</param>
     /// <param name="store">When given, which sections are collapsed is remembered across visits.</param>
-    /// <param name="go">When given, each settings row gets a Go button that calls it.</param>
+    /// <param name="go">When given, each settings row, and each tool row with a page, gets a Go button that calls it.</param>
     public CoveragePage(
         CoverageReport report,
         Action<CoverageItem>? clear = null,
@@ -192,7 +192,7 @@ public sealed class CoveragePage : DialogPage
             Children = { when, help },
         };
 
-        if (line.Item.Kind == CoverageKind.Setting && _go is not null)
+        if (_go is not null && (line.Item.Kind == CoverageKind.Setting || line.Item.Kind == CoverageKind.Tool && D47.App.Coverage.ToolPlaces.For(line.Item.Id) is not null))
         {
             var go = new Button
             {
