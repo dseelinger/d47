@@ -12,4 +12,4 @@ enabled = false
 [[d1_databases]]
 binding = "DB"
 database_name = "d47-usage"
-database_id = "REPLACE_WITH_ID_FROM_WRANGLER_D1_CREATE"
+database_id = "f5b91406-e7aa-4f97-83fc-9d39ca809a77"
