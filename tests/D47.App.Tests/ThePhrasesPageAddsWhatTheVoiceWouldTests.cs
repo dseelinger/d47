@@ -128,6 +128,16 @@ public class ThePhrasesPageAddsWhatTheVoiceWouldTests
     }
 
     [AvaloniaFact]
+    public void ThePhrasesRootAnswersToCommands()
+    {
+        using var surface = Open();
+
+        var root = surface.Panel.Nav.Roots(PanelTab.Settings).Single(r => r.Key == PhrasesPage.RootKey);
+
+        Assert.Equal(["commands", "voice commands"], root.Spoken);
+    }
+
+    [AvaloniaFact]
     public void YourPhraseIsDrawnBesideThePhraseItStandsFor()
     {
         using var surface = Open();

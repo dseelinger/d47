@@ -44,6 +44,7 @@ public class FindRanksPagesSettingsAndHelpTests
         var nav = new PanelNavigator();
         nav.Register(PanelTab.Assets, new NavCrumb("ships", "Ships"));
         nav.Register(PanelTab.Assets, new NavCrumb("suits", "Suits"));
+        nav.Register(PanelTab.Settings, new NavCrumb("settings.phrases", "Phrases") { Spoken = ["commands", "voice commands"] });
 
         return (new PanelFind(nav, settings, Words), settings, nav);
     }
@@ -127,6 +128,16 @@ public class FindRanksPagesSettingsAndHelpTests
         nav.SetVisible(PanelTab.Assets, "suits", false);
 
         Assert.DoesNotContain(find.Search("suits"), r => r.Target == "suits");
+    }
+
+    [Theory]
+    [InlineData("commands")]
+    [InlineData("voice commands")]
+    public void SearchingCommandsFindsThePhrasesPageFirst(string query)
+    {
+        var pages = Build().Find.Search(query).Where(r => r.Kind == PanelFindKind.Page).ToList();
+
+        Assert.Equal("settings.phrases", pages[0].Target);
     }
 
     [Fact]

@@ -33,6 +33,7 @@ internal sealed class SettingsFurnishing(IPanelTabHost host)
             roots.Add(new NavCrumb(PhrasesPage.RootKey, PhrasesPage.Word)
             {
                 Help = D47.Core.Capabilities.Builtin.LearnedPhrasesCapability.Id,
+                Spoken = ["commands", "voice commands"],
             });
         }
 
