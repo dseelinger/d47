@@ -8,14 +8,7 @@ namespace D47.Core.Hotas;
 /// <summary>The Commander's switch mappings, in one file beside the executable (Phase 21).</summary>
 public sealed class SwitchStore(string path, IFileSystem files, ILogger<SwitchStore> logger)
 {
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.KeepingNulls;
 
     private readonly Lock _gate = new();
 

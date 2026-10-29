@@ -17,15 +17,7 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
     /// <summary>Bounds how many arcs a person can invent.</summary>
     public const int MaxAuthored = 40;
 
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.OmittingNulls;
 
     private readonly Lock _gate = new();
 

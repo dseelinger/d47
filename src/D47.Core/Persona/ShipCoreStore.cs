@@ -35,14 +35,7 @@ public sealed record ShipCoreProblem(string Where, string Reason);
 /// </summary>
 public sealed class ShipCoreStore(string path, IFileSystem files, ILogger<ShipCoreStore> logger)
 {
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.KeepingNulls;
 
     /// <summary>The most bindings one file may hold.</summary>
     public const int MaxBindings = 128;

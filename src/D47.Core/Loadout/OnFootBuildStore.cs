@@ -16,14 +16,7 @@ public sealed record OnFootBuildProblem(string Where, string Reason);
 /// </summary>
 public sealed class OnFootBuildStore(string path, IFileSystem files, ILogger<OnFootBuildStore> logger)
 {
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.KeepingNulls;
 
     /// <summary>The most builds one file may hold.</summary>
     public const int MaxBuilds = 64;

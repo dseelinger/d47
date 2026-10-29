@@ -11,14 +11,7 @@ public sealed record AlarmProblem(string Where, string Reason);
 /// <summary>The Commander's alarms, in one file beside the executable (Phase 24, "Timers and alarms").</summary>
 public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStore> logger)
 {
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.KeepingNulls;
 
     /// <summary>The longest name an alarm may carry.</summary>
     public const int MaxNameLength = 80;

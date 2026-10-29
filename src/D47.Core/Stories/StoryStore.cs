@@ -11,15 +11,7 @@ namespace D47.Core.Stories;
 /// <summary>The stories each Commander picked — <c>data/story.json</c>. At most one per Commander is current.</summary>
 public sealed class StoryStore
 {
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.OmittingNulls;
 
     private string? _path;
     private readonly ILogger? _logger;

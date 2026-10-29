@@ -8,14 +8,7 @@ namespace D47.Core.Actions;
 /// <summary>The Commander's macros, in one file beside the executable (Phase 10, "Macros").</summary>
 public sealed class MacroStore(string path, IFileSystem files, ILogger<MacroStore> logger)
 {
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.KeepingNulls;
 
     private readonly Lock _gate = new();
 

@@ -11,15 +11,7 @@ public sealed record JournalReminderProblem(string Where, string Reason);
 /// <summary>The Commanders' journal-triggered reminders, per Frontier id, in one file beside the executable.</summary>
 public sealed class JournalReminderStore(string path, IFileSystem files, ILogger<JournalReminderStore> logger)
 {
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.OmittingNulls;
 
     /// <summary>The longest sentence a reminder may carry.</summary>
     public const int MaxSentenceLength = 300;

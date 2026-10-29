@@ -11,15 +11,7 @@ public sealed class StandingDirectionsStore
     /// <summary>The key entries written before the journal has said who is flying are filed under.</summary>
     public const string NoCommander = "";
 
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.OmittingNulls;
 
     private readonly string _path;
     private readonly IFileSystem _files;

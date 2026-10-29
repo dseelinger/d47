@@ -14,15 +14,7 @@ public sealed class MemoryStore(string path, IFileSystem files, ILogger<MemorySt
     /// <summary>The key every entry written without a Commander aboard is filed under.</summary>
     public const string NoCommander = "";
 
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.OmittingNulls;
 
     private readonly Lock _gate = new();
 

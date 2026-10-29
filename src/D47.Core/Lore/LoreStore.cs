@@ -11,15 +11,7 @@ public sealed record LoreProblem(string What, string Why);
 /// <summary>Commander's Lore on disk (Phase 23, "Commander's Lore").</summary>
 public sealed class LoreStore(string path, IFileSystem files, ILogger<LoreStore> logger)
 {
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.OmittingNulls;
 
     private readonly Lock _gate = new();
 

@@ -14,14 +14,7 @@ public sealed record ShipBuildProblem(string Where, string Reason);
 /// </summary>
 public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipBuildStore> logger)
 {
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.KeepingNulls;
 
     /// <summary>The most builds one file may hold.</summary>
     public const int MaxBuilds = 64;

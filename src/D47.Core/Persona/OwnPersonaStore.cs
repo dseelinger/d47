@@ -47,14 +47,7 @@ public sealed record OwnPersonaProblem(string Which, string Reason);
 /// </summary>
 public sealed class OwnPersonaStore(string path, IFileSystem files, ILogger<OwnPersonaStore> logger)
 {
-    private static readonly JsonSerializerOptions Json = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
+    private static readonly JsonSerializerOptions Json = StoreJson.KeepingNulls;
 
     /// <summary>How many a Commander may keep.</summary>
     public const int MaxCores = 12;
