@@ -39,6 +39,18 @@ public static class AutonomousCapability
     private static SettingRow HonkRow() => new()
     {
         Key = HonkKey,
+        Exercise =
+            InterfaceCapability.AdvancedPrefix
+            + "Settings › Acting on the game › What D47 may do, group Permissions, and find Honk on "
+            + "arriving in a system (off by default). Turn it on, or say \"honk when we arrive\" or "
+            + "\"turn on the arrival honk\". Put the discovery scanner in your current fire group, "
+            + "then jump to another system with Elite the window in front: after the jump D47 holds "
+            + "your primary fire button for about five seconds without being asked and the scanner "
+            + "fires, so the system's bodies are counted in the game. In combat mode in supercruise "
+            + "D47 first switches to analysis mode and switches back afterwards. With Elite behind "
+            + "another window it says \"Cannot honk since Elite is not the active window.\"; if the "
+            + "scan does not register it says \"The honk did not take\". \"stop honking on arrival\" "
+            + "and \"turn off the arrival honk\" turn it off, and the next jump presses nothing.",
         Advanced = true,
         Label = "Honk on arriving in a system",
         Help = "Fires the discovery scanner by itself after each jump, by holding your own fire "

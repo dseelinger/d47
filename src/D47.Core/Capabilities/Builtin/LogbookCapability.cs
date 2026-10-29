@@ -146,6 +146,17 @@ public static class LogbookCapability
     private static SettingRow VoiceRow() => new()
     {
         Key = VoiceKey,
+        Exercise =
+            InterfaceCapability.AdvancedPrefix
+            + "Settings › You and your records › Logs and goals, group Log and goals, and find "
+            + "Whose log it is. The choices are \"You write it, in your own words\" (the default), "
+            + "\"D47 writes about you\" and \"You write, D47 chips in\". Saying \"write my logs in my "
+            + "own voice\", \"write my logs yourself\" or \"write my logs with your commentary\" sets "
+            + "each. Choose \"D47 writes about you\", say \"what would a log cost\" and then \"write the "
+            + "log\": the saved log, in data/commander-log, reads as D47 writing about the "
+            + "Commander, not as the Commander in the first person. Writing a log spends model "
+            + "credit, which the estimate states first. With personality switched off the log is "
+            + "written plainly and says so.",
         Advanced = true,
         Label = "Whose log it is",
         Help =
@@ -176,6 +187,14 @@ public static class LogbookCapability
     private static SettingRow RangeRow() => new()
     {
         Key = RangeKey,
+        Exercise =
+            InterfaceCapability.AdvancedPrefix
+            + "Settings › You and your records › Logs and goals, group Log and goals, and find What "
+            + "a log covers. The choices are the last session (the default), today, the last seven "
+            + "days and the last thirty days. Pick one and say \"what would a log cost\": the reply "
+            + "opens \"A log of\" followed by that choice, then says how many things D47 can account "
+            + "for from the journals, and spends nothing. A phrase such as \"write up my week\" "
+            + "overrides the row for that request.",
         Advanced = true,
         Label = "What a log covers",
         Help =
@@ -199,6 +218,14 @@ public static class LogbookCapability
     private static SettingRow LengthRow() => new()
     {
         Key = LengthKey,
+        Exercise =
+            InterfaceCapability.AdvancedPrefix
+            + "Settings › You and your records › Logs and goals, group Log and goals, and find How "
+            + "long a log runs. The choices are \"brief — a few paragraphs\", \"standard — about a "
+            + "page\" (the default) and \"full — the long write-up\". Pick brief and say \"what would a "
+            + "log cost\", then pick full and say it again: the tokens and the price in the reply "
+            + "are higher for full. A written brief log is three or four short paragraphs; a full "
+            + "one is six to ten.",
         Advanced = true,
         Label = "How long a log runs",
         Help =

@@ -588,6 +588,12 @@ public static class GalaxyCapability
             new SettingRow
             {
                 Key = EnabledKey,
+                Exercise =
+                    "Open Settings › Providers › Outside sources, group Outside sources, and leave Look things up in "
+                    + "the galaxy off (the default). Ask D47 to describe Sol: the reply says galaxy search is "
+                    + "switched off and can be turned on in settings. Turn the row on and ask again: the reply gives "
+                    + "its government, allegiance, economy and population, and the System page opens on the panel. "
+                    + "Needs a network connection to spansh.co.uk.",
                 Label = "Look things up in the galaxy",
                 Help =
                     "Lets d47 answer questions about star systems, stations and bodies, and plot routes, "
@@ -604,6 +610,12 @@ public static class GalaxyCapability
             new SettingRow
             {
                 Key = NotablePlacesKey,
+                Exercise =
+                    "Open the Stories tab, settings strip, and turn Notable places for short stories on (it is off by"
+                    + " default). Also turn on Look things up in the galaxy, which a generated short story needs. Ask "
+                    + "D47 for a new short story: its stops are real places and the generation notes do not say the "
+                    + "catalogue could not be read. Needs a network connection to edastro.com. With the row off the "
+                    + "stops come from the galaxy search alone.",
                 Label = "Notable places for short stories",
                 Help =
                     "Lets a generated short story pick its stops from the Galactic Exploration Catalog at "
@@ -619,6 +631,13 @@ public static class GalaxyCapability
             new SettingRow
             {
                 Key = CommunityBiologyKey,
+                Exercise =
+                    "Open Settings › Providers › Outside sources, group Outside sources, and turn Earlier biology "
+                    + "finds from Canonn on (it is off by default). In the game, map a body with biological signals in "
+                    + "a system where other Commanders have logged biology: D47 says \"Commanders have logged earlier "
+                    + "finds on this body\" followed by the variants. The Earlier biology finds on mapping row under "
+                    + "Settings › Your core › Exploring appears only while this row is on. With the row off nothing is "
+                    + "asked or said. Needs a network connection to Canonn.",
                 Label = "Earlier biology finds from Canonn",
                 Help =
                     "Lets d47 ask Canonn which biology other Commanders logged in a system, when you map a body "
@@ -634,6 +653,12 @@ public static class GalaxyCapability
             new SettingRow
             {
                 Key = BgsTickKey,
+                Exercise =
+                    "Open Settings › Providers › Outside sources, group Outside sources, and turn BGS tick time on "
+                    + "(it is off by default). Say \"when was the last tick\": the reply gives the time of the last BGS"
+                    + " tick in UTC and how long ago it was. Right after the row is turned on it may say it has not "
+                    + "read the tick time yet; ask again later. With the row off the reply says BGS tick time is off "
+                    + "and can be turned on under Outside sources. Needs a network connection to tick.infomancer.uk.",
                 Label = "BGS tick time",
                 Help =
                     "Lets d47 ask tick.infomancer.uk when the last BGS tick happened, every ten minutes while "
@@ -649,6 +674,12 @@ public static class GalaxyCapability
             new SettingRow
             {
                 Key = GalNetKey,
+                Exercise =
+                    "Open Settings › Providers › Outside sources, group Outside sources, and turn GalNet news on (it "
+                    + "is off by default). After the fetch, say \"what's on galnet\": the reply names the three newest "
+                    + "articles kept on this PC. Say \"read the latest galnet article\" to hear one in full. Needs a "
+                    + "network connection to cms.zaonce.net; the first fetch also takes up to two years of older "
+                    + "articles, so allow time.",
                 Label = "GalNet news",
                 Help =
                     "Lets d47 fetch GalNet articles from Frontier's server, cms.zaonce.net, at startup and "
@@ -665,6 +696,13 @@ public static class GalaxyCapability
             new SettingRow
             {
                 Key = ServerStatusKey,
+                Exercise =
+                    "Open Settings › Providers › Outside sources, group Outside sources, and turn Server status on "
+                    + "(it is off by default). The title bar shows SERVERS with ONLINE, MAINTENANCE, OFFLINE or "
+                    + "UNKNOWN. Say \"are the servers up\": the reply gives the state and how long ago it was checked; "
+                    + "with the row off it says the setting is off. When the state changes D47 says \"Elite's servers "
+                    + "are down for maintenance\", \"Elite's servers are offline\" or \"Elite's servers are back up\". "
+                    + "Needs a network connection to ed-server-status.orerve.net.",
                 Label = "Server status",
                 Help =
                     "Lets d47 ask ed-server-status.orerve.net whether Elite's servers are up, at startup and "
@@ -681,6 +719,13 @@ public static class GalaxyCapability
             new SettingRow
             {
                 Key = SignalIndexKey,
+                Exercise =
+                    "Open Settings › Providers › Outside sources, group Outside sources, and turn Signal index on (it"
+                    + " is off by default). Ask D47 for the nearest nav beacon: the reply names a system holding one "
+                    + "and its distance in light years, from the downloaded index as well as your own scans. The index "
+                    + "downloads from this project's releases on github.com when the copy on this PC is more than 20 "
+                    + "hours old. With the row off the reply says it searched your own scans only and the signal index "
+                    + "is off in Settings.",
                 Label = "Signal index",
                 Help =
                     "Lets d47 download the daily index of signals other Commanders have scanned, from this "
@@ -697,6 +742,13 @@ public static class GalaxyCapability
             new SettingRow
             {
                 Key = EddnKey,
+                Exercise =
+                    "Open Settings › Providers › Outside sources, group Sharing, and turn Share with EDDN on (it is "
+                    + "off by default; it is a protected setting, so the model cannot change it and the Commander sets "
+                    + "it by hand). In the game, dock at a station and open its market, then check an EDDN listener or "
+                    + "a market site that reads EDDN for your prices. Jumping to a system and scanning also send data. "
+                    + "With the row off nothing is sent. Needs a network connection and a running game; leave it off if"
+                    + " another program already sends your data to EDDN.",
                 Label = "Share with EDDN",
                 Help =
                     "Sends the market prices your game shows you to EDDN, the relay the galaxy sites read, so "

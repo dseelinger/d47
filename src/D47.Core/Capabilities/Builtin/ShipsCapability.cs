@@ -184,6 +184,13 @@ public static class ShipsCapability
         new SettingRow
         {
             Key = RescanKey,
+            Exercise =
+                "Open Asset Mgmt › Ships (the Ships tab), settings strip, and find What is fitted, remembered. It"
+                + " reads how many ships are remembered and how long ago the oldest was last seen, or \"No ship has"
+                + " been seen inside yet. Board one and D47 will remember it.\" when none is. Press Rescan my "
+                + "journals: a progress bar runs for a few seconds, then the row reads again with the ships rebuilt"
+                + " from the journals on disk. Plans, checklist and settings are unchanged. Needs journals on disk "
+                + "for the Commander.",
             Label = "What is fitted, remembered",
             Help =
                 "What each of your ships was last seen carrying, kept in data\\loadouts.json so a "
@@ -214,6 +221,13 @@ public static class ShipsCapability
         new SettingRow
         {
             Key = HullArtKey,
+            Exercise =
+                "Open Asset Mgmt › Ships (the Ships tab), settings strip, and find Hull pictures (on by default)."
+                + " With it on, open a ship's own page for a hull you have not opened before: the large picture, "
+                + "the turntable and the 3D mesh appear after a fetch, and files land in data\\ships. Needs a "
+                + "network connection to GitHub. Turn the row off: fleet cards show no drawing and the ship's page "
+                + "shows no picture, no turntable and no mesh, even for a hull already fetched, and nothing is "
+                + "downloaded. Turn it on again and the files already on disk show without a new fetch.",
             Label = "Hull pictures",
             Help =
                 "Every ship comes with a small drawing on its card, inside the download. The large "
@@ -236,6 +250,12 @@ public static class ShipsCapability
         new SettingRow
         {
             Key = HullGpuKey,
+            Exercise =
+                "Open Asset Mgmt › Ships (the Ships tab), settings strip, and find Hull viewer on the graphics "
+                + "card. Turn it on, then open a ship's page with the turntable and drag the hull to turn it: it "
+                + "draws, best with Elite not running. Off, the processor draws it. Where the graphics card cannot "
+                + "be used, the processor draws and the log file says \"The hull viewer draws on the CPU\" with a "
+                + "reason. Needs a graphics card that supports OpenGL.",
             Label = "Hull viewer on the graphics card",
             Help =
                 "Draws hulls on the graphics card. Best with Elite not running, since the two share it. "

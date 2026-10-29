@@ -161,6 +161,17 @@ public static class LoreCapability
     private static SettingRow RemarksRow() => new()
     {
         Key = RemarksKey,
+        Exercise =
+            InterfaceCapability.AdvancedPrefix
+            + "Settings › Your core › Exploring, group Exploration callouts, and find Remark on "
+            + "arrival. The choices are Never, Remark only and Remark, and look it up (the "
+            + "default). Choose Remark only and jump into Sol with a core aboard: D47 says \"Earth "
+            + "is here. Everywhere else on this list is somewhere humanity got to afterwards.\" at "
+            + "most once in the cooldown. Choose Remark, and look it up: the same remark is "
+            + "followed by a web search and what it found, where searching is on. Choose Never, or "
+            + "say \"stop remarking on systems\": a jump into a system with a story says nothing. "
+            + "\"start remarking on systems\" chooses Remark, and look it up. A system with no "
+            + "shipped note says nothing in any mode.",
         Advanced = true,
         Label = "Remark on arrival",
         Help =
@@ -210,6 +221,13 @@ public static class LoreCapability
     private static SettingRow CooldownDaysRow() => new()
     {
         Key = CooldownDaysKey,
+        Exercise =
+            InterfaceCapability.AdvancedPrefix
+            + "Settings › Your core › Exploring, group Exploration callouts, and find How often a "
+            + "system's lore is worth repeating (days), under Remark on arrival. The row is absent "
+            + "while Remark on arrival is Never. The default is 7. Jump into Sol, hear the remark, "
+            + "jump out and back in: it says nothing for 7 days. Set 0 and repeat: it remarks every "
+            + "time. A negative or non-numeric value falls back to the default.",
         Advanced = true,
         Label = "How often a system's lore is worth repeating (days)",
         Help = "How long a system stays quiet after being remarked on. Lower means a "

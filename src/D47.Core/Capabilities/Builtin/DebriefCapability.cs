@@ -43,6 +43,15 @@ public static class DebriefCapability
     private static SettingRow EnabledRow() => new()
     {
         Key = EnabledKey,
+        Exercise =
+            "Open Settings › You and your records › Memory, notes and debrief, group Memory and "
+            + "debrief, and find Debrief me after a session (on by default). On, correct D47 in a "
+            + "way it recognises, for example \"from now on, give me the distance first\" or \"stop "
+            + "calling it that\", then close D47 and start it again. Standing directions in the same "
+            + "group reads \"... and 1 waiting for you to look at.\" Open it: the page is titled "
+            + "\"What D47 learned from your last session\" and the draft is under Waiting for you. "
+            + "Turn the row off, or say \"stop debriefing me\", repeat the correction and close D47: "
+            + "no new draft is waiting. \"start debriefing me\" turns it on.",
         Label = "Debrief me after a session",
         Help =
             "When you close D47, it reads back what you corrected it on and drafts directions from your "

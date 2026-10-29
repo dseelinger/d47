@@ -152,6 +152,13 @@ public static class AdventureCapability
     private static SettingRow CareerRatingRow(Rating rating) => new()
     {
         Key = RatingKeyPrefix + rating.Key,
+        Exercise =
+            $"Open the Stories tab, settings strip, group {RatingsGroup}, and find {rating.Label} (50 by default, 1 to 100). "
+            + $"Set it to 80: the row reads 80. Say \"set my {rating.Spoken} rating to 80\": the row reads 80. "
+            + $"Say \"rate {rating.Spoken} 30\": the row reads 30. A value outside 1 to 100 is refused with "
+            + $"\"A {rating.Spoken} rating is from 1 to 100.\" A higher rating makes story chapters ask for "
+            + $"{rating.Spoken} more often."
+            + (rating.Note is null ? string.Empty : " " + rating.Note),
         Group = RatingsGroup,
         GroupHelp = "How much you like each kind of play, from 1 to 100. Story chapters ask for the activities you rate higher more often.",
         Label = rating.Label,
@@ -298,6 +305,13 @@ public static class AdventureCapability
             new SettingRow
             {
                 Key = StoryDownloadsKey,
+                Exercise =
+                    "Open the Stories tab, settings strip, and find Download stock stories (on by default). With it "
+                    + "on, open the Stories page: the list of stock stories and their cast pictures appear after a "
+                    + "fetch from GitHub, and opening a story's page fetches its hidden layer and every cast picture "
+                    + "into data\\stories. Needs a network connection to GitHub. Turn it off: nothing is fetched and "
+                    + "the Stories page lists only stories already on disk. Privacy and egress shows the Stock stories "
+                    + "entry as active when on and silent when off.",
                 Label = "Download stock stories",
                 Help =
                     "Stock stories are published as files on a GitHub release, the one the app updates itself from. "
@@ -314,6 +328,11 @@ public static class AdventureCapability
             new SettingRow
             {
                 Key = StoryRatingsKey,
+                Exercise =
+                    "Open the Stories tab, settings strip, and find Story ratings (on by default). With it on, open "
+                    + "the Stories page: each stock story shows its average rating, and rating a story you have picked "
+                    + "sends your stars. Needs a network connection. Turn it off: the Stories page shows no ratings and"
+                    + " nothing is fetched or sent.",
                 Label = "Story ratings",
                 Help =
                     "D47 fetches every stock story's average rating when the Stories page first opens in a session, "
@@ -330,6 +349,12 @@ public static class AdventureCapability
             new SettingRow
             {
                 Key = CastReactionsKey,
+                Exercise =
+                    "Open the Stories tab, settings strip, and find Cast reactions (on by default). Needs a stock "
+                    + "story running, personality on, a language model, and a play session in which something happens, "
+                    + "such as a death, an interdiction, a promotion or your largest sale: the next time you are docked"
+                    + " in your ship, one of the story's main characters says one line about it, at most one a play "
+                    + "session. Turn it off: no cast line is said; clues and chapter lines are unchanged.",
                 Label = "Cast reactions",
                 Help =
                     "While a stock story runs, one of its main characters says one line about something you did, such as "

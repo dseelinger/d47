@@ -179,6 +179,15 @@ public static class MemoryCapability
     private static SettingRow EnabledRow() => new()
     {
         Key = EnabledKey,
+        Exercise =
+            "Open Settings › You and your records › Memory, notes and debrief, group Memory and "
+            + "debrief, and find Remember things about me (on by default). On, say \"remember that I "
+            + "hate mining\": the tool answers \"Written down as\", a key, \"unverified:\" and the fact, "
+            + "and \"what do you remember about me\" then lists it. Turn the row off, or say \"stop "
+            + "remembering things about me\", and ask the same again: the tool answers \"Remembering "
+            + "is switched off, so I am not writing anything down.\" and nothing is added; entries "
+            + "already there are still listed. \"start remembering things about me\" turns it on. The "
+            + "model cannot change the row.",
         Label = "Remember things about me",
         Help =
             "Keep facts between sessions, and send a few of the relevant ones with each question. "
@@ -203,6 +212,19 @@ public static class MemoryCapability
     private static SettingRow ExpiryRow() => new()
     {
         Key = ExpiryKey,
+        Exercise =
+            InterfaceCapability.AdvancedPrefix
+            + "Settings › You and your records › Memory, notes and debrief, group Memory and "
+            + "debrief, and find Forget after. The choices are Never, A month, Three months (the "
+            + "default) and A year. Saying \"never forget anything about me\", \"forget things about "
+            + "me after a month\", \"forget things about me after three months\" or \"forget things "
+            + "about me after a year\" sets each one. To see it act, choose A month and close D47. "
+            + "In memories.json in the data folder (Open data folder under Settings › Privacy and "
+            + "this install › Updates and install) set the added date of an entry you told D47 "
+            + "yourself to more than a month ago, and start D47: the entry is gone from \"what do "
+            + "you remember about me\", and the panel reads \"I have forgotten something you told me, "
+            + "because it was past its expiry:\" followed by the fact. Never expires nothing, and an "
+            + "entry with no added date never expires.",
         Advanced = true,
         Label = "Forget after",
         Help =

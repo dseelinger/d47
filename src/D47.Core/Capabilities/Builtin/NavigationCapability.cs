@@ -609,6 +609,19 @@ public static class NavigationCapability
     private static SettingRow AutoPlotRow() => new()
     {
         Key = AutoPlotKey,
+        Exercise =
+            InterfaceCapability.AdvancedPrefix
+            + "Settings › Acting on the game › What D47 may do, group Permissions, and find Try to "
+            + "plot courses in the galaxy map (off by default; needs Let D47 press keys in Elite "
+            + "on). With it off, ask D47 to plot a course to Sol: the reply is \"Sol is on your "
+            + "clipboard.\", then \"Paste it into the galaxy map's search box to plot it. Automatic "
+            + "plotting is switched off.\" Turn the row on, or say \"try to plot courses yourself\", "
+            + "clear any course to Sol, and ask again with Elite the window in front: D47 says "
+            + "\"Plotting the course to Sol.\", opens the galaxy map, searches for Sol, plots it and "
+            + "closes the map, and the route to Sol shows in the game. If no route appeared D47 "
+            + "says so. Asked again for a course already set, it replies \"The course to Sol is "
+            + "already plotted, so I have left it alone.\" \"stop plotting courses yourself\" turns it "
+            + "off. The model cannot turn it on.",
         Advanced = true,
         Label = "Try to plot courses in the galaxy map",
         Help = "After copying a system name, opens the galaxy map, searches for it, plots to it and "

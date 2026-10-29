@@ -160,6 +160,14 @@ public static class ColonisationCapability
             new SettingRow
             {
                 Key = PlannerKey,
+                Exercise =
+                    "Open Settings › Providers › Outside sources, group Outside sources, and turn Read colonisation "
+                    + "plans from Raven Colonial on (it is off by default). Needs a system with an unfinished "
+                    + "construction site or a claim in your journals. Ask \"what does my construction site still "
+                    + "need\": the answer includes the planner's figures, such as tonnes on linked carriers and the "
+                    + "number of Commanders and carriers on the project. With the row off the answer comes from the "
+                    + "journal and says the plan could not be read. Needs a network connection to Raven Colonial. "
+                    + "Turning this off also greys out Send my colonisation progress.",
                 Label = "Read colonisation plans from Raven Colonial",
                 Help =
                     "Lets d47 read the plan Raven Colonial holds for a system you are building in. The names of "
@@ -175,6 +183,18 @@ public static class ColonisationCapability
             new SettingRow
             {
                 Key = ProgressKey,
+                Exercise =
+                    "Open Settings › Providers › Outside sources, group Sharing, and turn Send my colonisation "
+                    + "progress to Raven Colonial on. It is greyed out while Read colonisation plans from Raven "
+                    + "Colonial is off. It is a protected setting, so the model cannot change it; set it by hand. Needs"
+                    + " a Raven Colonial key (see that row) and a construction site that already has a project on Raven"
+                    + " Colonial. The line under the switch reads one of \"Sending as CMDR <name>\", \"No Raven "
+                    + "Colonial key is set\", \"Raven Colonial refused the key\", \"This key belongs to CMDR <name>, so"
+                    + " nothing is sent for CMDR <shown>\", \"Could not ask Raven Colonial whose key this is at <time> "
+                    + "UTC\" or \"Last write failed at <time> UTC: <reason>\". In the game, with D47 running, deliver "
+                    + "commodities to the depot: the tonnes show on the project on ravencolonial.com. Deliveries made "
+                    + "while D47 was not running are never sent. Leave it off if another app already sends your "
+                    + "progress.",
                 Label = "Send my colonisation progress to Raven Colonial",
                 Help =
                     "Sends what you deliver to a construction site, and what it still needs, to that site's "
@@ -207,6 +227,14 @@ public static class ColonisationCapability
             new SettingRow
             {
                 Key = KeyRow,
+                Exercise =
+                    "Open Settings › Providers › Outside sources, group Sharing, and paste your key into Raven "
+                    + "Colonial key. Get the key from https://ravencolonial.com/user after signing in to Raven "
+                    + "Colonial, so this needs a Raven Colonial account. The row never shows the key back. Each "
+                    + "Commander has their own key: set it while that Commander is shown. With Send my colonisation "
+                    + "progress on, the line under that switch changes to \"Sending as CMDR <name>\" for a valid key, "
+                    + "or \"Raven Colonial refused the key\" for a wrong one. With no key it reads \"No Raven Colonial "
+                    + "key is set\".",
                 Label = "Raven Colonial key",
                 Help =
                     "Get your key from https://ravencolonial.com/user after signing in to Raven Colonial. It is "

@@ -151,6 +151,16 @@ public static class PrivacyCapability
             new()
             {
                 Key = UpdateCheckKey,
+                Exercise =
+                    "Open Settings › Privacy and this install › Updates and install, group This install, "
+                    + "and find Check for updates at startup (on by default). Then open Settings › Privacy "
+                    + "and this install › Privacy and egress, group What leaves this machine: the Update "
+                    + "check entry says one request for the latest release tag is made at startup. Turn the "
+                    + "row off, or say \"stop checking for updates\" or \"turn off update checks\": the entry "
+                    + "now says \"Nothing at startup. Pressing Check for updates in Settings > About still "
+                    + "makes the same request, on demand.\" and a restart makes no request. Pressing Check "
+                    + "for updates on the Version row still checks. \"start checking for updates\" and \"turn "
+                    + "on update checks\" turn it on. The model cannot change the row.",
                 Label = "Check for updates at startup",
                 Help = "One request to GitHub for the latest release tag, made automatically when this is on. "
                     + "Off only stops that automatic request — pressing Check for updates in Settings > About "
@@ -176,6 +186,14 @@ public static class PrivacyCapability
         rows.Add(new SettingRow
         {
             Key = UsageCountsKey,
+            Exercise =
+                "Open Settings › Privacy and this install › Privacy and egress, group What D47 keeps, "
+                + "and find Usage counts (a plain toggle). On, the Usage counts entry under What leaves "
+                + "this machine says \"Once a day, how many times each tool was used, with no "
+                + "identifier.\" Use a tool, then find the counts not yet sent in usage-counts.json in "
+                + "the data folder. Turn the row off: the entry says \"Usage counts are off, so nothing "
+                + "is counted or sent.\" and the counts not yet sent are deleted. Turn it on to put it "
+                + "back.",
             Label = "Usage counts",
             Help =
                 "D47 counts how often each tool is used and sends the counts once a day: the tool's name, whether "

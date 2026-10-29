@@ -271,6 +271,14 @@ public static class VrCapability
             new SettingRow
             {
                 Key = EnabledKey,
+                Exercise =
+                    "Open Settings › Screens › Headset, group Headset overlay, and find Show D47 in the headset (on "
+                    + "by default). With SteamVR running and the headset worn, D47 shows in the headset. The Headset "
+                    + "row reads \"Showing in the headset.\" when it does. Turn the row off, or say \"headset overlay "
+                    + "off\": D47 leaves SteamVR alone, the Headset row reads \"The headset overlays are switched "
+                    + "off.\" and the other headset rows disappear. Turn it on, or say \"headset overlay on\": they "
+                    + "return. With no SteamVR installed the Headset row says \"No SteamVR runtime is installed on this "
+                    + "machine.\" or gives the reason it cannot connect.",
                 Label = "Show D47 in the headset",
                 Help = "Off leaves SteamVR alone entirely. On costs nothing on a machine with no headset — "
                        + "D47 looks for one, does not find one, and says so.",
@@ -288,6 +296,13 @@ public static class VrCapability
             new SettingRow
             {
                 Key = ModeKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Screens › Headset, group Headset overlay, and find Panel content (it appears "
+                    + "while Show D47 in the headset is on). Choose full: the headset panel shows everything the "
+                    + "desktop window does. Choose mini (the default): it shows less, as the same panel and not a "
+                    + "smaller copy. Saying \"full panel\" or \"mini panel\" does the same, and so do \"big panel\" and "
+                    + "\"small panel\". Needs SteamVR and a headset to see the result.",
                 Advanced = true,
                 Label = "Panel content",
                 Help = "Full shows everything the desktop window does. Mini reduces what is on the panel "
@@ -315,6 +330,12 @@ public static class VrCapability
             new SettingRow
             {
                 Key = OpacityKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Screens › Headset, group Headset overlay, and find Panel opacity (it appears "
+                    + "while Show D47 in the headset is on). In the headset set it to 0.3: the cockpit shows through "
+                    + "the panel, the full one and the mini one alike. Set it to 1: the panel is solid. The default is "
+                    + "0.95 and a value below 0.1 becomes 0.1. Needs SteamVR and a headset to see the result.",
                 Advanced = true,
                 Label = "Panel opacity",
                 Help = "How solid the panel is, from 0.1 to 1. One setting for both panels: the mini one "
@@ -344,6 +365,14 @@ public static class VrCapability
             new SettingRow
             {
                 Key = ControllersKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Screens › Headset, group Headset overlay, and find Motion controllers (it "
+                    + "appears while Show D47 in the headset is on; on by default). With it on, the controller's "
+                    + "pointing ray, trigger and grip work on the headset panel. Turn it off, or say \"motion "
+                    + "controllers off\": nothing on the panel can be pressed in the headset and the panel cannot be "
+                    + "grabbed, while saying \"move the panel left\" still moves it. Say \"motion controllers on\" to "
+                    + "turn it back on. Needs SteamVR, a headset and a motion controller.",
                 Advanced = true,
                 Label = "Motion controllers",
                 Help = "Whether D47 uses your motion controllers - the pointing ray, the trigger "
@@ -371,7 +400,13 @@ public static class VrCapability
                 "hotkey-zoom-in",
                 s => s.Hotkeys.ZoomHeadsetIn,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { ZoomHeadsetIn = v } },
-                systemWide: true),
+                systemWide: true,
+                exercise: new(
+                    "Settings › Screens › Headset, group Headset overlay",
+                    "Ctrl+Alt+=",
+                    "the Scale row under Panel you are looking at placement (Advanced) steps up one rung, for example "
+                        + "100% to 110%, and in the headset the text and controls on the panel grow while its edges stay "
+                        + "put. At 300% nothing changes.")),
             .. InterfaceCapability.HotkeyRows(
                 ZoomOutHotkeyKey,
                 ZoomOutButtonKey,
@@ -379,7 +414,13 @@ public static class VrCapability
                 "hotkey-zoom-out",
                 s => s.Hotkeys.ZoomHeadsetOut,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { ZoomHeadsetOut = v } },
-                systemWide: true),
+                systemWide: true,
+                exercise: new(
+                    "Settings › Screens › Headset, group Headset overlay",
+                    "Ctrl+Alt+-",
+                    "the Scale row under Panel you are looking at placement (Advanced) steps down one rung, for "
+                        + "example 100% to 90%, and in the headset the text and controls on the panel shrink while its "
+                        + "edges stay put. At 50% nothing changes.")),
             .. InterfaceCapability.HotkeyRows(
                 ResetZoomHotkeyKey,
                 ResetZoomButtonKey,
@@ -387,7 +428,12 @@ public static class VrCapability
                 "hotkey-zoom-reset",
                 s => s.Hotkeys.ResetHeadsetZoom,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { ResetHeadsetZoom = v } },
-                systemWide: true),
+                systemWide: true,
+                exercise: new(
+                    "Settings › Screens › Headset, group Headset overlay",
+                    "Ctrl+Alt+0",
+                    "the Scale row under Panel you are looking at placement (Advanced) returns to 100%, and in the "
+                        + "headset the panel's content returns to its normal size.")),
             .. InterfaceCapability.HotkeyRows(
                 ResizeHotkeyKey,
                 ResizeButtonKey,
@@ -395,7 +441,15 @@ public static class VrCapability
                 "hotkey-resize",
                 s => s.Hotkeys.ResizeHeadsetPanel,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { ResizeHeadsetPanel = v } },
-                systemWide: true),
+                systemWide: true,
+                exercise: new(
+                    "Settings › Screens › Headset, group Headset overlay",
+                    "Ctrl+Alt+S",
+                    "in the headset, handles appear on the panel's edges so they can be pulled with a controller "
+                        + "trigger. Press it again and the handles go, silently. With motion controllers off, D47 says "
+                        + "aloud \"Resizing by hand needs the motion controllers, and they are switched off. The panel's "
+                        + "size and resolution settings change the same thing.\" With no headset session it says \"There is "
+                        + "no headset session to resize a panel in yet.\"")),
 
             // **The one the Commander means** (#21).
             .. Placement(
@@ -411,6 +465,11 @@ public static class VrCapability
             .. Placement(MiniSlot, "Mini panel", s => s.Vr.Mini, (s, v) => s with { Vr = s.Vr with { Mini = v } }, pageOnly: true),
             CaptionRow(
                 CaptionsEnabledKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Screens › Headset, group Captions, and find Captions (on by default; the group "
+                + "is absent while Show D47 in the headset is off). With it on, what D47 says is also written as a "
+                + "band of text in the headset, up to three lines of 42 characters. Turn it off: nothing is "
+                + "written. Turn it on again: the text returns. Needs SteamVR and a headset, and D47 speaking.",
                 "Captions",
                 "Everything D47 says, written under it in the headset. They place themselves, "
                 + "they clear themselves, and there is nothing to drag them with - a caption you "
@@ -422,6 +481,11 @@ public static class VrCapability
                 "captions"),
             CaptionRow(
                 CaptionLockKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Screens › Headset, group Captions, and find Caption position (the default is "
+                + "head). Choose head: the band follows your view wherever you look. Choose world: the band sits "
+                + "low in the cockpit, between the console and your feet, and stays there while you look around, so "
+                + "you glance down for it. Needs SteamVR, a headset, and D47 speaking.",
                 "Caption position",
                 "Head-locked keeps the band in front of you wherever you look. World-locked puts "
                 + "it in one place low in the cockpit, between the console and your feet, and "
@@ -449,6 +513,10 @@ public static class VrCapability
                 choices: ["head", "world"]),
             CaptionRow(
                 CaptionSizeKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Screens › Headset, group Captions, and find Caption size (the default is "
+                + "medium). Choose small, medium and large in turn: the caption text is drawn smaller, then larger, "
+                + "each time D47 speaks. Needs SteamVR, a headset, and D47 speaking.",
                 "Caption size",
                 "How large the caption text is drawn. Three sizes rather than a number, because "
                 + "a caption is either legible at a glance or it is not.",
@@ -470,6 +538,11 @@ public static class VrCapability
                 choices: [.. Enum.GetNames<CaptionSize>().Select(name => name.ToLowerInvariant())]),
             CaptionRow(
                 CaptionBackgroundKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Screens › Headset, group Captions, and find Caption background (0.6 to 1, "
+                + "default 0.78, steps of 0.02). Set 1: the box behind the text is solid. Set 0.6: it is as "
+                + "see-through as it goes, and a lower value becomes 0.6. Needs SteamVR, a headset, and D47 "
+                + "speaking.",
                 "Caption background",
                 "How solid the box behind the text is, from 0.6 to 1. Not fully solid by default: "
                 + "a caption sits over a starfield and a station's floodlights, and a box you "
@@ -495,6 +568,12 @@ public static class VrCapability
                 step: 0.02),
             CaptionRow(
                 CaptionSpeedKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Screens › Headset, group Captions, and find Reading speed (characters a second; "
+                + "the choices are 12, 17 and 20, default 20). It decides how long a caption stays after the voice "
+                + "stops: its length divided by the speed, held between 5/6 of a second and 7 seconds. For a 100 "
+                + "character reply, 20 keeps it up for about 5 seconds and 12 for the 7-second limit. Needs "
+                + "SteamVR, a headset, and D47 speaking.",
                 "Reading speed",
                 "Characters a second, which decides how long a caption stays up after the voice "
                 + "stops. 20 is the standard's adult rate and 17 its children's rate.",
@@ -549,8 +628,23 @@ public static class VrCapability
               + $"is {(mini ? "mini" : "full")}. The {(mini ? "big panel" : "mini panel")} keeps "
               + $"its own, under vr.{(mini ? PanelSlot : MiniSlot)}.";
 
+        var group = $"{what} placement";
+
+        var surface = current
+            ? "It acts on whichever panel is on screen: the big one while Panel content is full, the mini "
+              + "one while it is mini."
+            : mini
+                ? "It acts on the mini panel alone: set Panel content to mini first (say \"mini panel\")."
+                : "It acts on the big panel alone: set Panel content to full first (say \"full panel\").";
+
+        string Find(string label, string effect) =>
+            InterfaceCapability.AdvancedPrefix + "Settings › Screens › Headset, group " + group + ", and find "
+            + label + " (the group is absent while Show D47 in the headset is off). " + surface + " " + effect
+            + " Needs SteamVR and a headset to see the result.";
+
         SettingRow Row(
             string name,
+            string exercise,
             string label,
             string help,
             SettingKind kind,
@@ -561,6 +655,7 @@ public static class VrCapability
         {
             Step = step,
             Key = $"vr.{slot}.{name}",
+            Exercise = exercise,
             Advanced = true,
             Label = label,
             Help = help + scope,
@@ -582,6 +677,9 @@ public static class VrCapability
 
         yield return Row(
             "lock",
+            Find($"{what} locking",
+                "Choose head: the panel follows your head and stays in view as you turn. Choose world (the "
+                + "default): it stays where it is in the room and does not move when you turn your head."),
             $"{what} locking",
             "Head-locked follows you and is always in view. World-locked stays where you put it, and "
             + "stays there when the cockpit moves out from under it.",
@@ -592,6 +690,10 @@ public static class VrCapability
 
         yield return Row(
             "distance",
+            Find("Distance",
+                "It is metres in front of you and applies to a head-locked panel only (default 1.1, mini panel "
+                + "0.9). Choose head locking first, then set 2: the panel sits further away and looks smaller, "
+                + "because its width is unchanged. A world-locked panel ignores it."),
             "Distance",
             "Metres in front of you. Head-locked only - a surface you have put down is wherever you put it.",
             SettingKind.Number,
@@ -601,6 +703,10 @@ public static class VrCapability
 
         yield return Row(
             "size",
+            Find("Size",
+                "It is the panel's width in metres (default 1.1, mini panel 0.526). Set 2: the panel is wider in "
+                + "the room, its height follows from the resolution's proportions, and the text on it grows with "
+                + "it. Scale does not change."),
             "Size",
             "How big the panel is, in metres across. Height follows from the panel's proportions, because "
             + "SteamVR takes a width and derives the rest. This is the size of the panel itself; to make "
@@ -612,6 +718,9 @@ public static class VrCapability
 
         yield return Row(
             "curve",
+            Find("Curvature",
+                "0 is flat (the default) and 1 is wrapped right around you. Set 0.5: the panel's sides bend "
+                + "towards you. Set 0: it is flat again."),
             "Curvature",
             "0 is flat and 1 is wrapped right around you. This is the whole of curved versus flat: a number "
             + "reaching zero rather than a second mode, because a mode is a thing that can disagree with it.",
@@ -622,6 +731,10 @@ public static class VrCapability
 
         yield return Row(
             "scale",
+            Find("Scale",
+                "Choose 150%: the text and controls on the panel are drawn larger and the layout reflows, while "
+                + "the panel's edges stay put. Choose 100% to put it back. The choices run 50 to 300%, and the "
+                + "headset zoom hotkeys step this row."),
             "Scale",
             "How big everything drawn on the panel is, as a percentage - the text and the controls, without "
             + "the panel's own edges moving. To make the whole panel bigger instead, use size. Distinct "
@@ -637,6 +750,10 @@ public static class VrCapability
 
         yield return Row(
             "resolution",
+            Find("Resolution",
+                "The choices read like 1024x640 (the big panel's default) and 792x280 (the mini panel's default). "
+                + "Choose a larger one: the panel is sharper and holds more layout, and its shape follows the new "
+                + "proportions at the same width. Choose the original to put it back."),
             "Resolution",
             "How many pixels the panel is rendered at, which also sets its shape: the height in the room "
             + "follows from these two numbers and Size. Pixels decide how much the image can hold, Size "
@@ -691,6 +808,7 @@ public static class VrCapability
     /// </summary>
     private static SettingRow CaptionRow(
         string key,
+        string exercise,
         string label,
         string help,
         SettingKind kind,
@@ -701,6 +819,7 @@ public static class VrCapability
         double step = 1) => new()
     {
         Key = key,
+        Exercise = exercise,
         Advanced = true,
         Label = label,
         Help = help,

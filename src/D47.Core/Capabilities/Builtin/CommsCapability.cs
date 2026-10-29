@@ -78,7 +78,16 @@ public static class CommsCapability
                 "channel-keys",
                 s => s.Hotkeys.CommsChannelUp,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { CommsChannelUp = v } },
-                systemWide: true),
+                systemWide: true,
+                exercise: new(
+                    "Settings › Acting on the game › What D47 may do, group Comms channel keys",
+                    "none (unbound)",
+                    "the selection moves to the next open channel in the order Carrier, Target, System, "
+                        + "Story, Crew, Characters, wrapping. Needs two channels open to show a move: Story "
+                        + "while a story runs, Crew while a crew member is active, System after NPCs have been "
+                        + "heard, Carrier when you own one, Target with an NPC ship targeted, Characters when "
+                        + "you have custom characters. D47 says the selection aloud, as \"Carrier, Tower.\" or "
+                        + "\"Story, no one.\", and says \"No comms channel is open.\" when none is.")),
             .. InterfaceCapability.HotkeyRows(
                 ChannelDownHotkeyKey,
                 ChannelDownButtonKey,
@@ -86,7 +95,16 @@ public static class CommsCapability
                 "channel-keys",
                 s => s.Hotkeys.CommsChannelDown,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { CommsChannelDown = v } },
-                systemWide: true),
+                systemWide: true,
+                exercise: new(
+                    "Settings › Acting on the game › What D47 may do, group Comms channel keys",
+                    "none (unbound)",
+                    "the selection moves to the previous open channel in that order, wrapping. Needs two "
+                        + "channels open to show a move: Story while a story runs, Crew while a crew member is "
+                        + "active, System after NPCs have been heard, Carrier when you own one, Target with an "
+                        + "NPC ship targeted, Characters when you have custom characters. D47 says the "
+                        + "selection aloud, as \"Carrier, Tower.\" or \"Story, no one.\", and says \"No comms "
+                        + "channel is open.\" when none is.")),
             .. InterfaceCapability.HotkeyRows(
                 SubChannelUpHotkeyKey,
                 SubChannelUpButtonKey,
@@ -94,7 +112,16 @@ public static class CommsCapability
                 "channel-keys",
                 s => s.Hotkeys.CommsSubChannelUp,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { CommsSubChannelUp = v } },
-                systemWide: true),
+                systemWide: true,
+                exercise: new(
+                    "Settings › Acting on the game › What D47 may do, group Comms channel keys",
+                    "none (unbound)",
+                    "the selection moves to the next party on the current channel, wrapping. Needs two "
+                        + "channels open to show a move: Story while a story runs, Crew while a crew member is "
+                        + "active, System after NPCs have been heard, Carrier when you own one, Target with an "
+                        + "NPC ship targeted, Characters when you have custom characters. D47 says the "
+                        + "selection aloud, as \"Carrier, Tower.\" or \"Story, no one.\", and says \"No comms "
+                        + "channel is open.\" when none is.")),
             .. InterfaceCapability.HotkeyRows(
                 SubChannelDownHotkeyKey,
                 SubChannelDownButtonKey,
@@ -102,7 +129,16 @@ public static class CommsCapability
                 "channel-keys",
                 s => s.Hotkeys.CommsSubChannelDown,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { CommsSubChannelDown = v } },
-                systemWide: true),
+                systemWide: true,
+                exercise: new(
+                    "Settings › Acting on the game › What D47 may do, group Comms channel keys",
+                    "none (unbound)",
+                    "the selection moves to the previous party on the current channel, wrapping. Needs "
+                        + "two channels open to show a move: Story while a story runs, Crew while a crew member "
+                        + "is active, System after NPCs have been heard, Carrier when you own one, Target with "
+                        + "an NPC ship targeted, Characters when you have custom characters. D47 says the "
+                        + "selection aloud, as \"Carrier, Tower.\" or \"Story, no one.\", and says \"No comms "
+                        + "channel is open.\" when none is.")),
         ],
         Tools =
         [
@@ -485,6 +521,18 @@ public static class CommsCapability
     private static SettingRow ChatRow() => new()
     {
         Key = ChatKey,
+        Exercise =
+            InterfaceCapability.AdvancedPrefix
+            + "Settings › Acting on the game › What D47 may do, group Permissions, and find Let D47 "
+            + "send messages in Elite (off by default). With it off, ask D47 to tell your wing "
+            + "\"hello\": the reply is \"Sending messages in Elite is switched off. The Commander can "
+            + "turn it on in settings; it is not something I can turn on for them.\" Turn the row "
+            + "on, or say \"let yourself send messages in elite\", with Let D47 press keys in Elite "
+            + "on as well, and ask again with Elite the window in front: the chat box opens in the "
+            + "game, \"hello\" is typed and sent on the wing channel, and D47 reads the message back "
+            + "to you. With key presses off the reply is \"Pressing keys in Elite is switched off, "
+            + "so I cannot reach the chat box.\" \"stop sending messages in elite\" turns it off. The "
+            + "model cannot turn it on.",
         Advanced = true,
         Label = "Let D47 send messages in Elite",
         Help = "Lets D47 type into Elite's chat on your behalf. Messages go out under your "

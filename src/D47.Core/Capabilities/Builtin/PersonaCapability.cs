@@ -105,6 +105,12 @@ public static class PersonaCapability
         new SettingRow
         {
             Key = PersonaKey,
+            Exercise =
+                "Open Settings › Your core › Core and character, group Core and character, and find Core. Open the "
+                + "list and choose another core: the row shows its name, and the next reply is in that core's voice. "
+                + "A core held back by a running story shows LOCKED and refuses with why. Say \"switch to cora\" "
+                + "(also \"be cora\", \"become cora\", \"persona cora\", \"wake cora\"): the row shows Cora. "
+                + "A name that only sounds like a core, such as \"switch to Quora\", is checked with you first.",
             Label = "Core",
             Help =
                 "Which core answers you. Each keeps its own memory of your conversations. While a story "
@@ -136,6 +142,13 @@ public static class PersonaCapability
         new SettingRow
         {
             Key = IntroductionsKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open Settings › Your core › Core and character, group Core and character, and find "
+                + "Introductions. It reads \"No core has introduced itself yet\" when none has; otherwise "
+                + "\"Every core introduces itself again\" with a count such as \"7 have so far\". Switch to a core "
+                + "you have not used before: it introduces itself and the count goes up by one. Press Forget "
+                + "introductions (red, greyed out while the count is zero): the row reads \"No core has introduced "
+                + "itself yet\". Switch away from the core aboard and back and it introduces itself again.",
             Advanced = true,
             Label = "Introductions",
             Help =
@@ -177,6 +190,13 @@ public static class PersonaCapability
         new SettingRow
         {
             Key = AvatarClipsKey,
+            Exercise =
+                "Open Settings › Your core › Core and character, group Core and character, and find Avatar "
+                + "animations. Ticked, the face on the panel plays a short clip for the core aboard in each state, and "
+                + "clips not yet on disk are downloaded from the GitHub release the app updates from into "
+                + "data\\avatar-clips (watch that folder fill after switching core). Unticked, nothing is "
+                + "downloaded and the avatar draws its own mark for any state with no clip; clips already on disk "
+                + "still play. Needs a network connection to download.",
             Label = "Avatar animations",
             Help =
                 "The face on the panel plays a short clip for the core aboard in each state. D47 fetches "
@@ -203,14 +223,23 @@ public static class PersonaCapability
             "How funny the core may be, from 0 (serious) to 10 (comedian). COVAS ignores it.",
             s => s.CoreHumor,
             (p, v) => p with { CoreHumor = v },
-            [new SettingCommandPhrase("humor on", "3"), new SettingCommandPhrase("humor off", "0")]),
+            [new SettingCommandPhrase("humor on", "3"), new SettingCommandPhrase("humor off", "0")],
+            "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open Settings › Your core › Core and character, group Humor, and find Core humor. Set it to "
+            + "10 and ask several ordinary questions: replies carry jokes on a share of lines set by Core humor "
+            + "frequency, and that row is enabled. Set it to 0: replies are serious and Core humor "
+            + "frequency is greyed out. Say \"humor on\": the row shows 3. Say \"humor off\": it shows 0. "
+            + "Warnings never get humor and COVAS ignores this row."),
         HumorPercent(
             CoreHumorPercentKey,
             "Core humor frequency",
             "The share of the core's lines that get humor. d47 decides line by line.",
             s => s.CoreHumor,
             s => s.CoreHumorPercent,
-            (p, v) => p with { CoreHumorPercent = v }),
+            (p, v) => p with { CoreHumorPercent = v },
+            "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open Settings › Your core › Core and character, group Humor, and find Core humor "
+            + "frequency. It is greyed out while Core humor is 0; set Core humor to 5 first. At 100% every ordinary "
+            + "reply carries humor; at 0% none does; between, that share of lines does, rolled line by line. "
+            + "Warnings never get humor and COVAS ignores it. It has no voice phrase."),
         HumorLevel(
             NpcHumorKey,
             "NPC humor",
@@ -218,28 +247,42 @@ public static class PersonaCapability
             + "(serious) to 10 (comedian).",
             s => s.NpcHumor,
             (p, v) => p with { NpcHumor = v },
-            []),
+            [],
+            "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open Settings › Other voices › Chatter and messages, group How NPCs sound, and find NPC "
+            + "humor. Set it to 10 with NPC humor frequency at 100% and listen to invented radio chatter, hails and "
+            + "the canned lines D47 rewords: they carry jokes. At 0 they are serious and the frequency row is greyed "
+            + "out. Needs the chatter callouts on and a reworded line to be spoken. Warnings never get humor."),
         HumorPercent(
             NpcHumorPercentKey,
             "NPC humor frequency",
             "The share of NPC lines that get humor.",
             s => s.NpcHumor,
             s => s.NpcHumorPercent,
-            (p, v) => p with { NpcHumorPercent = v }),
+            (p, v) => p with { NpcHumorPercent = v },
+            "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open Settings › Other voices › Chatter and messages, group How NPCs sound, and find NPC "
+            + "humor frequency. It is greyed out while NPC humor is 0; set NPC humor to 5 first. At 100% every NPC "
+            + "line carries humor; at 0% none does; between, that share of lines does. It has no voice phrase."),
         HumorLevel(
             CarrierHumorKey,
             "Carrier crew humor",
             "How funny your carrier's captain and tower may be, from 0 (serious) to 10 (comedian).",
             s => s.CarrierHumor,
             (p, v) => p with { CarrierHumor = v },
-            []),
+            [],
+            "Open the Asset Mgmt › Carrier tab and find Carrier crew humor. Set it to 10 with Carrier crew humor "
+            + "frequency at 100% and have your carrier captain or tower speak, such as the payroll callout or a "
+            + "tower exchange: their lines carry jokes. At 0 they are serious and the frequency row is greyed out. "
+            + "Needs a fleet carrier. Warnings never get humor."),
         HumorPercent(
             CarrierHumorPercentKey,
             "Carrier crew humor frequency",
             "The share of the captain's and tower's lines that get humor.",
             s => s.CarrierHumor,
             s => s.CarrierHumorPercent,
-            (p, v) => p with { CarrierHumorPercent = v }),
+            (p, v) => p with { CarrierHumorPercent = v },
+            "Open the Asset Mgmt › Carrier tab and find Carrier crew humor frequency. It is greyed out while "
+            + "Carrier crew humor is 0; set that to 5 first. At 100% every captain and tower line carries humor; "
+            + "at 0% none does; between, that share of lines does. Needs a fleet carrier. It has no voice phrase."),
     ];
 
     private static SettingRow HumorLevel(
@@ -248,9 +291,11 @@ public static class PersonaCapability
         string help,
         Func<PersonaSettings, int> read,
         Func<PersonaSettings, int, PersonaSettings> write,
-        IReadOnlyList<SettingCommandPhrase> commands) => new()
+        IReadOnlyList<SettingCommandPhrase> commands,
+        string exercise) => new()
     {
         Key = key,
+        Exercise = exercise,
         Advanced = true,
         Label = label,
         Help = help + " Warnings never get humor.",
@@ -278,9 +323,11 @@ public static class PersonaCapability
         string help,
         Func<PersonaSettings, int> level,
         Func<PersonaSettings, int> read,
-        Func<PersonaSettings, int, PersonaSettings> write) => new()
+        Func<PersonaSettings, int, PersonaSettings> write,
+        string exercise) => new()
     {
         Key = key,
+        Exercise = exercise,
         Advanced = true,
         Label = label,
         Help = help,
@@ -315,6 +362,12 @@ public static class PersonaCapability
         new SettingRow
         {
             Key = ShipCoreShipKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open Settings › Your core › Core and character, group A core per ship, and find Ship. "
+                + "Open the list: every ship in your fleet is there, each with its bound core or NO CORE, and the "
+                + "ship you are flying reads \"aboard\" in cyan. Choose one and the row below changes its name to "
+                + "\"Core for\" that ship. Needs a fleet read from the journal: dock at a station with a "
+                + "shipyard; before that the row says it has not seen your fleet yet. It has no voice phrase.",
             Advanced = true,
             Label = "Ship",
             Help =
@@ -354,6 +407,13 @@ public static class PersonaCapability
         new SettingRow
         {
             Key = ShipCoreKey,
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open Settings › Your core › Core and character, group A core per ship, and find Core for "
+                + "(the ship chosen in Ship). Choose a core other than the one aboard: the row shows it, and "
+                + "switching to that ship in game puts that core aboard and changes who answers. Choose "
+                + "\"Nobody — whoever is aboard stays aboard\": the binding is dropped and boarding that ship "
+                + "leaves the core aboard as it was. A core a running story holds back refuses with why. Needs "
+                + "two ships in your fleet and a way to board them, such as a shipyard swap. It has no voice phrase.",
             Advanced = true,
             Label = "Core for that ship",
             LabelFor = settings => ShipShown(settings, ships) is var id and not 0

@@ -252,6 +252,15 @@ public static class ConversationCapability
             new()
             {
                 Key = ProviderKey,
+                Exercise =
+                    "Open Settings › Providers › Language model, group Provider and model, and find Provider. Choose "
+                    + "None (local only): D47 answers only what it understands when you type and says so when it "
+                    + "cannot, nothing is sent to a language model, and the Model row disappears. Choose Anthropic: "
+                    + "that provider's API key row appears below. Choosing a provider clears the Endpoint, Model, "
+                    + "Background model and Model for complex tasks rows back to their defaults. Say \"go local only\":"
+                    + " the row shows None (local only). Say \"use anthropic\", \"use openai\" or \"use my own model\":"
+                    + " the row shows Anthropic, OpenAI or OpenAI-compatible endpoint. A real answer needs a key stored"
+                    + " for the chosen provider (or a local server for the OpenAI-compatible endpoint).",
                 Label = "Provider",
                 Help = "Which language model answers. \"None\" keeps every response on this machine.",
                 Kind = SettingKind.Choice,
@@ -303,6 +312,14 @@ public static class ConversationCapability
             new()
             {
                 Key = EndpointKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "Open Settings › Providers › Language model, group Provider and model, and find Endpoint. It "
+                    + "appears only with OpenAI or OpenAI-compatible endpoint chosen as Provider, and is absent for "
+                    + "Anthropic and None (local only). It shows the provider's own address as the default. Type "
+                    + "another address, such as a local server's, and the Model, Background model and Model for complex"
+                    + " tasks rows reset to unset. Clear the field and the provider's own address returns, with the "
+                    + "same reset. Needs a server speaking the same protocol at that address. It has no voice phrase.",
                 Advanced = true,
                 Label = "Endpoint",
                 Help = "Point at something else speaking the same protocol. Clearing it restores the provider's own.",
@@ -326,6 +343,12 @@ public static class ConversationCapability
             new()
             {
                 Key = ModelKey,
+                Exercise =
+                    "Open Settings › Providers › Language model, group Provider and model, and find Model. It is "
+                    + "absent while Provider is None (local only). The default shows the provider's default model. Open"
+                    + " the list and choose another: each entry carries its description and cost, and the row shows the"
+                    + " choice. On OpenAI or the OpenAI-compatible endpoint a model name can also be typed. Clear it to"
+                    + " return to the default. The next answer comes from the chosen model.",
                 Label = "Model",
                 Help = "Which model at that endpoint. Leave it unset to use the provider's default.",
                 Kind = SettingKind.Choice,
@@ -399,6 +422,13 @@ public static class ConversationCapability
             new()
             {
                 Key = BackgroundModelKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "Open Settings › Providers › Language model, group Provider and model, and find Background model."
+                    + " It is absent while Provider is None (local only). The default shows the provider's background "
+                    + "model, or \"(the conversation model)\" where none is named. Choose another model: the row shows "
+                    + "it, and what D47 says unprompted, such as In Ship chatter and the opening brief, is written by "
+                    + "that model. Clear it to return to the default. It has no voice phrase.",
                 Advanced = true,
                 Label = "Background model",
                 Help =
@@ -437,6 +467,13 @@ public static class ConversationCapability
             new()
             {
                 Key = HighModelKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "Open Settings › Providers › Language model, group Provider and model, and find Model for complex"
+                    + " tasks. It is absent while Provider is None (local only). The default shows the provider's high-"
+                    + "effort model, or \"(the conversation model)\" where none is named. Choose another model: the row"
+                    + " shows it, and Talk through this build on a ship's page is answered by that model at high "
+                    + "effort. Clear it to return to the default.",
                 Advanced = true,
                 Label = "Model for complex tasks",
                 Help =
@@ -467,6 +504,12 @@ public static class ConversationCapability
             new()
             {
                 Key = EffortFloorKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "Open Settings › Providers › Language model, group Provider and model, and find Think at least "
+                    + "this hard. It shows \"(gauged per question)\" by default and offers Low, Medium, High, Xhigh and"
+                    + " Max. Choose High: the row reads High. Then open Never think harder than this: its list starts "
+                    + "at High. Clear the row to return to \"(gauged per question)\". It has no voice phrase.",
                 Advanced = true,
                 Label = "Think at least this hard",
                 Help =
@@ -491,6 +534,13 @@ public static class ConversationCapability
             new()
             {
                 Key = EffortCeilingKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "Open Settings › Providers › Language model, group Provider and model, and find Never think "
+                    + "harder than this. It shows \"(gauged per question)\" by default and offers Low, Medium, High, "
+                    + "Xhigh and Max. Choose Medium: the row reads Medium, and the list in Think at least this hard "
+                    + "stops at Medium. Say \"stop thinking so hard\": the row reads Medium. Say \"think as hard as you"
+                    + " like\": the row returns to \"(gauged per question)\".",
                 Advanced = true,
                 Label = "Never think harder than this",
                 Help =
@@ -526,6 +576,13 @@ public static class ConversationCapability
         rows.Add(new SettingRow
         {
             Key = RefreshCatalogKey,
+            Exercise =
+                "Open Settings › Providers › Language model, group Provider and model, and find Fetch model "
+                + "updates (on by default). With it on, D47 requests the published model list at startup and every "
+                + "24 hours, and Privacy and egress shows the Model updates entry as active. Turn it off: that "
+                + "entry reads \"Fetch model updates is off, so nothing is requested\" and D47 uses the model list "
+                + "it already has. Say \"stop fetching model updates\": the row shows off. Say \"start fetching "
+                + "model updates\": the row shows on. Needs a network connection to GitHub to see a fetch.",
             Label = "Fetch model updates",
             Help =
                 "Fetches the published list of models, their defaults and their prices from GitHub at "
@@ -558,6 +615,17 @@ public static class ConversationCapability
             select new SettingRow
             {
                 Key = KeyRowFor(provider),
+                Exercise =
+                    $"Open Settings › Providers › Language model, group Provider and model, set Provider to "
+                    + $"{provider.Name}, and find the API key row for it. "
+                    + "The row is absent for any other provider. It reads No key until one is stored. Paste a key into the "
+                    + "row only and press SAVE: it reads Key stored. Press "
+                    + "VERIFY: a result line says whether the provider accepted the key. Press FORGET KEY and confirm "
+                    + "Delete key: it reads No key again. "
+                    + (provider.KeyOptional
+                        ? "A local server needs no key, so leaving the row empty is a complete setup. "
+                        : "Needs a key from the provider's own account. ")
+                    + "Do not paste a key anywhere but this row.",
                 Label = provider.KeyOptional ? $"{provider.Name} API key (if it wants one)" : $"{provider.Name} API key",
                 Help = provider.KeyOptional
                     ? "Optional — a model running on this machine needs no key, and leaving this empty is a "
@@ -580,6 +648,12 @@ public static class ConversationCapability
         rows.Add(new SettingRow
         {
             Key = "llm.personality",
+            Exercise =
+                "Open Settings › Your core › Core and character, group Core and character, and find Personality "
+                + "(on by default). Turn it off: answers are plain, without the core's character, and the "
+                + "guardrails against invented facts still apply. Say \"personality off\" (or \"turn your "
+                + "personality off\"): the row shows off. Say \"personality on\" (or \"turn your personality on\"):"
+                + " the row shows on. Needs a language model to see the difference.",
             Label = "Personality",
             Help = "Off gives plain answers. The anti-invention guardrails are unaffected either way.",
             Kind = SettingKind.Toggle,
@@ -604,6 +678,14 @@ public static class ConversationCapability
         rows.Add(new SettingRow
         {
             Key = WebSearchKey,
+            Exercise =
+                "Open Settings › Providers › Outside sources, group Outside sources, and find Let the model "
+                + "search the web (off by default). With it off, ask a question that needs current information, "
+                + "such as the latest patch notes: D47 is told to say plainly that it cannot look anything up "
+                + "online. Turn it on with a provider whose endpoint offers search, such as Anthropic, and ask "
+                + "again: the answer is given as something D47 read. With an endpoint that offers no search, D47 "
+                + "still says it cannot look anything up. Needs a language model key; searches are billed by the "
+                + "provider. It has no voice phrase.",
             Label = "Let the model search the web",
             Help =
                 "Lets D47 look something up online when a question needs current information — a "
@@ -623,6 +705,14 @@ public static class ConversationCapability
         rows.Add(new SettingRow
         {
             Key = LookAtScreenKey,
+            Exercise =
+                "Open Settings › Providers › Outside sources, group Outside sources, and find Let the model look "
+                + "at the screen (off by default). Turn it on, with Elite running on a model that reads pictures, "
+                + "and ask about something on screen: D47 takes one picture for that question and answers from it, "
+                + "and the turn's cost includes the picture. With a model that does not read pictures, the row "
+                + "shows a note that it never takes one. Turn it off, or say \"turn off screen pictures\" or \"stop"
+                + " looking at my screen\": no picture is taken. Say \"turn on screen pictures\" or \"allow screen "
+                + "pictures\": the row shows on. Needs a language model key and the game window or headset view.",
             Label = "Let the model look at the screen",
             Help =
                 "Lets D47 take a picture of what you are looking at when you ask about something on screen — "
@@ -654,6 +744,13 @@ public static class ConversationCapability
         rows.Add(new SettingRow
         {
             Key = "llm.characterSheet",
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "Open Settings › You and your records › About you, group About you, and find Character sheet. It "
+                + "shows \"(nothing yet)\" until text is entered. Type a few lines, such as a name, where from and "
+                + "how the Commander speaks: the row keeps them. Ask D47 who you are, or wait for an in-character "
+                + "remark: it uses the sheet. Clear the text to return to \"(nothing yet)\". The text is kept per "
+                + "Commander. Needs a language model to see it used.",
             Advanced = true,
             Label = "Character sheet",
             Help =
@@ -678,6 +775,13 @@ public static class ConversationCapability
         rows.Add(new SettingRow
         {
             Key = "llm.aboutMe",
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "Open Settings › You and your records › About you, group About you, and find Backstory. It shows "
+                + "\"(nothing yet)\" until text is entered. Type a backstory of any length: the row keeps it "
+                + "between sessions. Ask D47 about your Commander's past: it treats the text as true. Clear the "
+                + "text to return to \"(nothing yet)\". The text is kept per Commander. Needs a language model to "
+                + "see it used.",
             Advanced = true,
             Label = "Backstory",
             Help =
@@ -701,6 +805,13 @@ public static class ConversationCapability
         rows.Add(new SettingRow
         {
             Key = "llm.scenario",
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "Open Settings › You and your records › About you, group About you, and find Current scenario. It"
+                + " shows \"(nothing yet)\" until text is entered. Type a situation, such as a secret cargo run: "
+                + "the row keeps it until cleared. Ask D47 about it: whoever Who knows about it allows treats it as"
+                + " true. Clear the text to return to \"(nothing yet)\". The text is kept per Commander. Needs a "
+                + "language model to see it used.",
             Advanced = true,
             Label = "Current scenario",
             Help =
@@ -722,6 +833,14 @@ public static class ConversationCapability
         rows.Add(new SettingRow
         {
             Key = "llm.scenarioAudience",
+            Exercise =
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "Open Settings › You and your records › About you, group About you, and find Who knows about it, "
+                + "shown under Current scenario. It reads Only those aboard by default and offers Aboard and my "
+                + "carrier and Everyone. With a scenario entered, choose Everyone: comms characters can refer to it"
+                + " too. Choose Only those aboard: only the core and crew do, though scene chatter at a settlement "
+                + "or in a ship fight is given the scenario whatever this is set to. The row keeps the choice. "
+                + "Needs a language model to see the difference.",
             Advanced = true,
             Label = "Who knows about it",
             Help =

@@ -249,6 +249,19 @@ public static class ShipCommands
         new()
         {
             Key = LaunchKey,
+            Exercise =
+                InterfaceCapability.AdvancedPrefix
+                + "Settings › Acting on the game › What D47 may do, group Permissions, and find Let D47 "
+                + "take us out of a station (on by default). With the ship docked and Elite the window "
+                + "in front, say \"take us out\": D47 says \"Taking us out.\", walks the left panel to the "
+                + "launch button, the ship launches, and the reply is \"We are away.\" Not docked, the "
+                + "reply is \"You are not docked, so there is nothing to launch from.\" Turn the row off, "
+                + "or say \"do not take us out of stations\", and say it again: the reply is \"Taking us "
+                + "out is switched off. It has its own row in settings, separate from the others, and "
+                + "only the Commander can turn it on.\" and nothing is pressed. \"you may take us out of "
+                + "stations\" turns it on. It also needs Let D47 press keys in Elite on; with that off "
+                + "the reply is \"Pressing keys in Elite is switched off. The Commander can turn it on "
+                + "in settings; it is not something I can turn on for them.\" and nothing is pressed.",
             Advanced = true,
             Label = "Let D47 take us out of a station",
             Help = "Lets \"take us out\" walk the left panel to the launch button. Elite has no launch "
@@ -271,6 +284,21 @@ public static class ShipCommands
         new()
         {
             Key = SeparateEngageKey,
+            Exercise =
+                InterfaceCapability.AdvancedPrefix
+                + "Settings › Acting on the game › What D47 may do, group Permissions, and find Let D47 "
+                + "separate and engage (on by default). Just after leaving a station, mass locked, with "
+                + "a system targeted and Elite the window in front, say \"get clear and jump\" or "
+                + "\"separate and engage\": D47 says \"Acknowledged. Preparing for hyperspace jump.\", goes "
+                + "to full throttle and boosts until the mass lock breaks (at most four boosts and "
+                + "twenty seconds), then engages the drive, and the reply is \"Frame shift drive "
+                + "engaged.\" If the lock does not break it says \"Still mass locked\" and that it has not "
+                + "engaged. Turn the row off, or say \"do not separate and engage\", and say it again: "
+                + "the reply is \"Separate and engage is switched off. It has its own row in settings, "
+                + "separate from the others, and only the Commander can turn it on.\" \"you may separate "
+                + "and engage\" turns it on. It also needs Let D47 press keys in Elite on; with that off "
+                + "the reply is \"Pressing keys in Elite is switched off. The Commander can turn it on "
+                + "in settings; it is not something I can turn on for them.\" and nothing is pressed.",
             Advanced = true,
             Label = "Let D47 separate and engage",
             Help = "Lets \"separate and engage\" go to full throttle and boost until the mass lock "
@@ -293,6 +321,20 @@ public static class ShipCommands
         new()
         {
             Key = SeparateSupercruiseKey,
+            Exercise =
+                InterfaceCapability.AdvancedPrefix
+                + "Settings › Acting on the game › What D47 may do, group Permissions, and find Let D47 "
+                + "separate and supercruise (on by default). Just after leaving a station, mass locked, "
+                + "with Elite the window in front, say \"get clear and supercruise\": D47 says "
+                + "\"Acknowledged. Preparing for supercruise.\", boosts until the mass lock breaks, then "
+                + "engages supercruise, and the reply is \"Supercruise engaged.\" No target is needed. "
+                + "Turn the row off, or say \"do not separate and supercruise\", and say it again: the "
+                + "reply is \"Separate and supercruise is switched off. It has its own row in settings, "
+                + "separate from the others, and only the Commander can turn it on.\" \"you may separate "
+                + "and supercruise\" turns it on. It also needs Let D47 press keys in Elite on; with "
+                + "that off the reply is \"Pressing keys in Elite is switched off. The Commander can "
+                + "turn it on in settings; it is not something I can turn on for them.\" and nothing is "
+                + "pressed.",
             Advanced = true,
             Label = "Let D47 separate and supercruise",
             Help = "The same, ending in supercruise instead of a jump. Its own row because a "
@@ -315,6 +357,21 @@ public static class ShipCommands
         new()
         {
             Key = RequestDockingKey,
+            Exercise =
+                InterfaceCapability.AdvancedPrefix
+                + "Settings › Acting on the game › What D47 may do, group Permissions, and find Let D47 "
+                + "request docking (on by default). In normal space near a station, with the station "
+                + "targeted and Elite the window in front, say \"request docking\": D47 says \"Requesting "
+                + "docking.\", walks the left panel's contacts tab and presses select, and the reply is "
+                + "\"Docking requested.\" with the station granting a pad in the game. If no request went "
+                + "in it says \"I walked the contacts panel and no docking request went in\". With "
+                + "nothing targeted the reply is \"Nothing is selected to dock at. Target the station "
+                + "first.\" Turn the row off, or say \"do not request docking\", and say it again: the "
+                + "reply is \"Requesting docking is switched off. It has its own row in settings, "
+                + "separate from the others, and only the Commander can turn it on.\" \"you may request "
+                + "docking\" turns it on. It also needs Let D47 press keys in Elite on; with that off "
+                + "the reply is \"Pressing keys in Elite is switched off. The Commander can turn it on "
+                + "in settings; it is not something I can turn on for them.\" and nothing is pressed.",
             Advanced = true,
             Label = "Let D47 request docking",
             Help = "Lets \"request docking\" walk the left panel's contacts tab and ask the station for "

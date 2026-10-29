@@ -55,6 +55,13 @@ public static class InterfaceCapability
 
     private const string OverlayGroup = "The overlay";
 
+    /// <summary>The start of a step for a row shown only while Show every setting is on.</summary>
+    internal const string AdvancedPrefix =
+        "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open ";
+
+    /// <summary>Where a hotkey row is, its default key, and what pressing it does.</summary>
+    internal sealed record HotkeyExercise(string Where, string DefaultKey, string Effect);
+
     /// <summary>
     /// <param name="display"> What Elite's display mode is, for the row that says whether the overlay
     /// will be visible at all.
@@ -75,6 +82,12 @@ public static class InterfaceCapability
             new SettingRow
             {
                 Key = ThemeKey,
+                Exercise =
+                    "Open Settings › Screens › Window, group Look and keys, and find Theme. Choose each of Elite, "
+                    + "Dark, Light and My HUD colours in turn: the whole window recolours at once. Elite is amber on "
+                    + "near-black (the default), Dark is neutral dark, Light is neutral light. My HUD colours is Elite "
+                    + "recoloured by the Commander's own HUD colour matrix, so it differs from Elite only when the game "
+                    + "has one set. Choose Elite to put it back.",
                 Label = "Theme",
                 Help = "Colour scheme. \"My HUD colours\" follows your own HUD colour matrix if the game has one.",
                 Kind = SettingKind.Choice,
@@ -90,6 +103,12 @@ public static class InterfaceCapability
             new SettingRow
             {
                 Key = ZoomKey,
+                Exercise =
+                    "Open Settings › Screens › Window, group Look and keys, and find Zoom. Choose 150%: everything in "
+                    + "the window is drawn larger. Choose 50%: everything is drawn smaller. The choices run 50, 67, 75, "
+                    + "80, 90, 100, 110, 125, 150, 175, 200, 250 and 300%. Ctrl with the scroll wheel, Ctrl+plus, "
+                    + "Ctrl+minus and Ctrl+0 in the window step the same row, and the row shows the new level. Choose "
+                    + "100% to put it back.",
                 Label = "Zoom",
                 Help = "How large the panel is drawn. Ctrl and the scroll wheel, Ctrl+plus, "
                        + "Ctrl+minus, and Ctrl+0 for 100% do the same thing from the panel itself.",
@@ -112,6 +131,10 @@ public static class InterfaceCapability
             new SettingRow
             {
                 Key = TabsKey,
+                Exercise =
+                    "Open Settings › Screens › Window, group Look and keys, and find Tabs. Choose Down the left: the "
+                    + "panel's tabs move from a row along the top to a column down the left side, in the window and in "
+                    + "the headset panel alike. Choose Along the top to put them back (the default).",
                 Label = "Tabs",
                 Help = "Where the panel's tabs are drawn: along the top, or down the left-hand side. "
                        + "Applies to the window and the headset panel alike.",
@@ -131,26 +154,45 @@ public static class InterfaceCapability
                 "Open settings",
                 "open-settings",
                 s => s.Hotkeys.OpenSettings,
-                (s, v) => s with { Hotkeys = s.Hotkeys with { OpenSettings = v } }),
+                (s, v) => s with { Hotkeys = s.Hotkeys with { OpenSettings = v } },
+                exercise: new(
+                    "Settings › Screens › Window, group Look and keys",
+                    "Ctrl+,",
+                    "the panel switches to the Settings tab, from whichever tab it was on.")),
             .. HotkeyRows(
                 FocusAskHotkeyKey,
                 FocusAskButtonKey,
                 "Focus the ask box",
                 "focus-ask",
                 s => s.Hotkeys.FocusAsk,
-                (s, v) => s with { Hotkeys = s.Hotkeys with { FocusAsk = v } }),
+                (s, v) => s with { Hotkeys = s.Hotkeys with { FocusAsk = v } },
+                exercise: new(
+                    "Settings › Screens › Window, group Look and keys",
+                    "Ctrl+L",
+                    "the cursor goes to the ask box and any text in it is selected.")),
             .. HotkeyRows(
                 FindHotkeyKey,
                 FindButtonKey,
                 "Find",
                 "find",
                 s => s.Hotkeys.Find,
-                (s, v) => s with { Hotkeys = s.Hotkeys with { Find = v } }),
+                (s, v) => s with { Hotkeys = s.Hotkeys with { Find = v } },
+                exercise: new(
+                    "Settings › Screens › Window, group Look and keys",
+                    "Ctrl+Shift+F",
+                    "a dialog titled Find opens, with a FIND: field that hints \"A page, a setting or a help page\". "
+                        + "Press it again and the dialog closes. Nothing opens while another dialog is open.")),
 
             // Seventy-five knobs is not a welcome (#60).
             new SettingRow
             {
                 Key = ShowEverySettingKey,
+                Exercise =
+                    "At the top of the Settings page find Show every setting (off by default). Turn it on, or say "
+                    + "\"show me every setting\": rows marked advanced appear, for example the hotkey rows under "
+                    + "Settings › Screens › Window. Turn it off, or say \"just the usual settings\": they hide again, "
+                    + "except any you have changed yourself. \"show all the settings\" and \"show the advanced "
+                    + "settings\" turn it on; \"hide the advanced settings\" and \"show fewer settings\" turn it off.",
                 Label = "Show every setting",
                 Help =
                     "Off, D47 shows the settings most Commanders change. Nothing is switched off "
@@ -182,6 +224,13 @@ public static class InterfaceCapability
             new SettingRow
             {
                 Key = OverlayKey,
+                Exercise =
+                    "Open Settings › Screens › Overlay, group Overlay, and turn Show the overlay on. Bring Elite to "
+                    + "the front in borderless or windowed display mode: the mini panel appears pinned over the game, "
+                    + "showing the transcript's last few lines and the story if one is running. It cannot be clicked: "
+                    + "the pointer passes through to the game. Switch to another window and it goes. Turn the row off "
+                    + "and it stays gone with Elite in front. The Elite's display mode row below it says whether the "
+                    + "game's display mode hides it.",
                 Label = "Show the overlay",
                 Help = "Pins the mini panel over the game: the transcript's last few lines, and "
                        + "the story if one is running. It shows itself only while Elite is in "
@@ -198,6 +247,11 @@ public static class InterfaceCapability
             new SettingRow
             {
                 Key = OverlayScaleKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Screens › Overlay, group Overlay, and find Overlay size, under Show the overlay "
+                    + "(the overlay must be on). With Elite in front, choose 200%: the overlay is drawn larger and its "
+                    + "text re-wraps rather than blurring. Choose 50%: it is drawn smaller. Choose 100% to put it back.",
                 Advanced = true,
                 Label = "Overlay size",
                 Help = "How large the overlay is drawn. It re-wraps at each step rather than "
@@ -225,6 +279,11 @@ public static class InterfaceCapability
             new SettingRow
             {
                 Key = OverlayOpacityKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                    + "open Settings › Screens › Overlay, group Overlay, and find Overlay opacity, under Show the "
+                    + "overlay (the overlay must be on). With Elite in front, set it to 0.2: the cockpit shows through "
+                    + "the overlay. Set it to 1: the overlay is solid. A value below 0.2 becomes 0.2. Steps are 0.05.",
                 Advanced = true,
                 Label = "Overlay opacity",
                 Help = "How much cockpit shows through it. 1 is solid.",
@@ -277,7 +336,12 @@ public static class InterfaceCapability
                 "show-overlay",
                 s => s.Hotkeys.ShowOverlay,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { ShowOverlay = v } },
-                systemWide: true),
+                systemWide: true,
+                exercise: new(
+                    "Settings › Screens › Overlay, group Overlay",
+                    "Ctrl+Alt+O",
+                    "the Show the overlay row flips between on and off. With it on and Elite in front, the mini panel "
+                        + "is drawn over the game; with it off the overlay is gone.")),
             .. HotkeyRows(
                 MoveOverlayHotkeyKey,
                 MoveOverlayButtonKey,
@@ -285,7 +349,14 @@ public static class InterfaceCapability
                 "move-overlay",
                 s => s.Hotkeys.MoveOverlay,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { MoveOverlay = v } },
-                systemWide: true),
+                systemWide: true,
+                exercise: new(
+                    "Settings › Screens › Overlay, group Overlay",
+                    "Ctrl+Alt+M",
+                    "with Show the overlay on, the overlay appears with a border, even when Elite is not in front, "
+                        + "and takes the pointer so it can be dragged. Drag it and let go: it stays there, the border goes "
+                        + "and the pointer passes through again. Pressing it again with nothing dragged also leaves the "
+                        + "mode.")),
         ],
     };
 
@@ -308,15 +379,31 @@ public static class InterfaceCapability
         string anchor,
         Func<Configuration.D47Settings, string?> read,
         Func<Configuration.D47Settings, string?, Configuration.D47Settings> write,
-        bool systemWide = false)
+        bool systemWide = false,
+        HotkeyExercise? exercise = null)
     {
         var slot = Hotas.ButtonSlots.All.Single(slot => slot.Key == buttonKey);
+
+        var keyScope = systemWide
+            ? "The key works while Elite has the foreground."
+            : "The key works only while the D47 window has focus.";
+        var buttonScope = systemWide
+            ? "The button works while Elite has the foreground."
+            : "The button works only while the D47 window is active.";
 
         return
         [
             new SettingRow
             {
                 Key = key,
+                Exercise = exercise is null
+                    ? null
+                    : AdvancedPrefix + exercise.Where + ", and find " + label + ". The row shows a key slot (default "
+                      + exercise.DefaultKey + "), a stick slot that stays hidden while no controller is attached and "
+                      + "nothing is bound to it, and the BIND and CLEAR buttons. Press the key: " + exercise.Effect + " "
+                      + keyScope + " To rebind, press BIND: the key slot reads PRESS A KEY…. Press another "
+                      + "combination and the slot shows it in capitals; that combination now does the action and the "
+                      + "old one no longer does. CLEAR empties both slots and the slots read UNBOUND.",
                 Advanced = true,
                 Label = label,
                 Help = "Press a key combination or a stick button to bind it. Bind a key, a stick button, or "
@@ -339,6 +426,14 @@ public static class InterfaceCapability
             new SettingRow
             {
                 Key = buttonKey,
+                Exercise = exercise is null
+                    ? null
+                    : AdvancedPrefix + exercise.Where + ", and find " + label + ". The stick slot of that row is this "
+                      + "setting. It needs a stick or throttle attached; with none, the slot stays hidden until a "
+                      + "button is bound. Press BIND: the stick slot reads PRESS A BUTTON… (OR A BUTTON… while a key is "
+                      + "listened for too). Press a button that springs back and the slot shows its name. Press that "
+                      + "button: " + exercise.Effect + " " + buttonScope + " CLEAR empties the slots and the "
+                      + "button then does nothing.",
                 Advanced = true,
                 Label = label + " button",
                 Help =

@@ -34,6 +34,14 @@ public static class ScreenshotsCapability
     private static SettingRow ConvertRow() => new()
     {
         Key = ConvertKey,
+        Exercise =
+            "Open Settings › You and your records › Logs and goals, group Screenshots, and find "
+            + "Convert Elite's screenshots (on by default). On, take a screenshot in Elite: a JPEG "
+            + "appears in the D47 folder inside Elite's pictures folder (the Saved to row beside it "
+            + "shows the path), named for the local time, the system and the body, such as "
+            + "\"2026-10-29 14-05-09 Sol.jpg\". Elite's own BMP stays. Turn the row off, or say \"stop "
+            + "converting my screenshots\", and take another: no new JPEG appears. \"start converting "
+            + "my screenshots\" turns it on.",
         Label = "Convert Elite's screenshots",
         Help =
             "When you take a screenshot in Elite, D47 saves a JPEG copy named after the time and the place, "

@@ -375,6 +375,19 @@ public static class ActionCapabilities
     private static SettingRow KeyboardActionsRow() => new()
     {
         Key = KeyboardActionsKey,
+        Exercise =
+            InterfaceCapability.AdvancedPrefix
+            + "Settings › Acting on the game › What D47 may do, group Permissions, and find Let D47 "
+            + "press keys in Elite (off by default). With it off, say \"gear down\" with the ship in "
+            + "normal space, docked or landed and the landing gear up: the reply is \"Pressing keys "
+            + "in Elite is switched off. The Commander can turn it on in settings; it is not "
+            + "something I can turn on for them.\" and the gear does not move. Turn the row on, or "
+            + "say \"let yourself press keys in elite\", and say \"gear down\" with Elite the window in "
+            + "front: D47 presses your own landing gear binding, the gear lowers in the game, and "
+            + "the reply is \"Pressed\", the key, \"for the landing gear.\" With another window in "
+            + "front nothing is pressed and the reply is \"Elite is not the window in front.\" \"you "
+            + "may press keys in elite\" also turns it on; \"stop pressing keys in elite\" and \"do not "
+            + "press keys in elite\" turn it off. The model cannot turn it on.",
         Advanced = true,
         Label = "Let D47 press keys in Elite",
         Help = "Lets spoken commands operate the ship by sending your own key bindings to the game. "

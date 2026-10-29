@@ -38,6 +38,31 @@ public static class AudioCapability
         _ => ("Alerts", "The danger callouts, which are the one thing that cuts in mid-sentence."),
     };
 
+    /// <summary>The sound to listen to for a channel, and how to make it play.</summary>
+    private static string Hear(AudioChannel channel) => channel switch
+    {
+        AudioChannel.Bed => "the quiet loop that plays while D47 works on a reply: ask a question that takes a "
+                            + "while to answer, with Thinking bed ticked in the Cues group",
+        AudioChannel.Music => "the ambient music: with Elite's own music volume set to zero (Options, Audio) "
+                              + "and ambient music playing",
+        AudioChannel.Cue => "the short sounds as listening starts, thinking starts and the reply finishes: hold "
+                            + "push-to-talk and ask anything, with Sound cues ticked in the Cues group",
+        AudioChannel.Overheard => "invented radio chatter between other pilots and controllers, which plays on "
+                                  + "its own while you fly with the chatter callouts on (Settings › Other voices › "
+                                  + "Chatter and messages)",
+        AudioChannel.Speech => "D47's spoken replies: ask any question out loud and listen to the answer",
+        _ => "a spoken danger callout: cause one, such as dropping below the fuel warning or being interdicted",
+    };
+
+    private static string Where(AudioChannel channel)
+    {
+        var (name, _) = Describe(channel);
+
+        return "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open Settings › Hearing and sound › Sounds and levels, group Levels (a table with "
+               + "a row per channel and the columns Level, Mute and Duck while D47 speaks), and find the row "
+               + name + ". ";
+    }
+
     private static string Slug(AudioChannel channel) => channel.ToString().ToLowerInvariant();
 
     /// <summary>The drop-in folder row's key.</summary>
@@ -127,6 +152,9 @@ public static class AudioCapability
 
     private const string MusicGroup = "Ambient music";
 
+    private const string ShowMusic = "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                                     + "open Settings › Hearing and sound › Sounds and levels, group Ambient music, ";
+
     /// <summary>What the transport row says: the track, or why there is none.</summary>
     internal static string NowPlaying(MusicState state, bool muted) => state switch
     {
@@ -155,6 +183,13 @@ public static class AudioCapability
         yield return new SettingRow
         {
             Key = NowPlayingKey,
+            Exercise =
+                ShowMusic + "find Now playing. It shows the track's file name while music plays, Paused while "
+                + "paused, Muted while the music channel is muted and Nothing playing otherwise. The button reads "
+                + "Pause while a track plays: press it and the music holds, the row shows Paused and the button "
+                + "reads Resume; press Resume and the track carries on. The button is greyed out when nothing "
+                + "plays or the channel is muted. Saying \"pause the music\" or \"resume the music\" does the "
+                + "same. Needs ambient music playing, which follows what you are doing in game.",
             Advanced = true,
             Label = "Now playing",
             Help = "The track that is playing. Pause holds it where it is; Resume carries on. "
@@ -176,6 +211,10 @@ public static class AudioCapability
         yield return new SettingRow
         {
             Key = NextTrackKey,
+            Exercise =
+                ShowMusic + "find Next track and press Next while music plays: another track from the same "
+                + "folder starts and Now playing shows its file name. The button is greyed out when nothing plays "
+                + "or the channel is muted. Saying \"next track\" does the same. Needs ambient music playing.",
             Advanced = true,
             Label = "Next track",
             Help = "Starts another track from the same folder.",
@@ -220,6 +259,9 @@ public static class AudioCapability
         yield return new SettingRow
         {
             Key = LevelKey(channel),
+            Exercise = Where(channel) + $"Move Level from its current value to 0 and then to 1 while you hear {Hear(channel)}: "
+                       + "it gets quieter to silence at 0 and louder at 1, in steps of 0.05. Set it back "
+                       + "and the original loudness returns.",
             Advanced = true,
             Label = "Level",
             Help = "0 is silent and 1 is full. Muting is separate, so turning something off does not "
@@ -239,6 +281,8 @@ public static class AudioCapability
         yield return new SettingRow
         {
             Key = MuteKey(channel),
+            Exercise = Where(channel) + $"Tick Mute while you hear {Hear(channel)}: it goes silent. Untick it and "
+                       + "it returns at the Level the row had, because Mute does not change the Level.",
             Advanced = true,
             Label = "Mute",
             Help = "Off, without losing the level. A level of zero and a mute sound the same and mean "
@@ -262,6 +306,10 @@ public static class AudioCapability
         yield return new SettingRow
         {
             Key = DuckKey(channel),
+            Exercise = Where(channel) + $"Set Duck while D47 speaks to 0 and have D47 speak a reply while {Hear(channel)} "
+                       + "is playing: it falls silent until the sentence ends, then returns. At 1 it does not "
+                       + "drop at all. Between, it drops to that fraction of its Level while D47 speaks. "
+                       + "The row appears for Thinking bed, Ambient music and Sound cues only.",
             Advanced = true,
             Label = "Duck while D47 speaks",
             Help = "What this drops to while D47 is talking, as a fraction of its level. 1 does not duck "

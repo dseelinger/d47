@@ -209,6 +209,10 @@ public static class DiagnosticsCapability
             new()
             {
                 Key = DefaultLevelKey,
+                Exercise =
+                    "Open the Transcript tab › Log File, where Default log level is the first row (it reads Information "
+                    + "until changed). Pick Debug: the log file in the Logs folder that \"your status\" names gains "
+                    + "Debug lines from loggers that belong to no subsystem. Pick Information to put it back.",
                 Advanced = true,
                 Label = "Default log level",
                 Help = "Applies to any subsystem without its own level below.",
@@ -231,6 +235,12 @@ public static class DiagnosticsCapability
         rows.AddRange(Subsystems.All.Select(subsystem => new SettingRow
         {
             Key = LevelRowFor(subsystem),
+            Exercise =
+                $"Open the Transcript tab › Log File, group Per-subsystem levels, and pick Debug on the "
+                + $"{Subsystems.DisplayName(subsystem)} row. Say \"your status\": the Log levels list shows "
+                + $"{subsystem}: Debug. {SubsystemActivity(subsystem)} Pick Information on the row (or say "
+                + $"\"set {Subsystems.DisplayName(subsystem).ToLowerInvariant()} logging back to information\") and the "
+                + "list shows it at Information again.",
             Advanced = true,
             // Terse on purpose: nine rows each explaining that they are one subsystem's level is nine copies
             // of one sentence.
@@ -307,6 +317,19 @@ public static class DiagnosticsCapability
 
         return rows;
     }
+
+    private static string SubsystemActivity(string subsystem) => subsystem switch
+    {
+        Subsystems.App => "The log file gains Debug lines from the window and panel code (D47.App).",
+        Subsystems.Capabilities => "Ask any question, such as \"your status\": the log file gains Debug lines from capability and tool handling.",
+        Subsystems.Settings => "Change any setting: the log file gains Debug lines from the settings code.",
+        Subsystems.Journal => "Play Elite or open a new journal line: the log file gains Debug lines from journal reading.",
+        Subsystems.Llm => "Ask something no keyword answers: the log file gains Debug lines from the model provider.",
+        Subsystems.Voice => "Speak a question and let D47 answer: the log file gains Debug lines from listening, speech and audio.",
+        Subsystems.Vr => "With SteamVR running: the log file gains Debug lines from the headset overlay.",
+        Subsystems.Input => "Say \"your status\" after sending a key command to the game: the log file gains Debug lines from key injection and HOTAS switches.",
+        _ => string.Empty,
+    };
 
     private static LogLevel? ParseLevel(string? value) =>
         Enum.TryParse<LogLevel>(value, ignoreCase: true, out var level) ? level : null;

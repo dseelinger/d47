@@ -109,6 +109,14 @@ public static class CommunityGoalCapability
             new SettingRow
             {
                 Key = "callouts.weekBoundaryDay",
+                Exercise =
+                    InterfaceCapability.AdvancedPrefix
+                    + "Settings › Your core › Callouts, group Plans and reminders, and find The week turns "
+                    + "on, under the community goal sales row. The choices are the seven days, Thursday by "
+                    + "default. With a community goal commodity searched and one sale of it made this week, "
+                    + "ask \"how have I done this week\": the reply says \"this week, since Thursday's "
+                    + "maintenance\". Choose Friday and ask again: it says \"since Friday's maintenance\", and "
+                    + "sales before that day's turn no longer count.",
                 Advanced = true,
                 Label = "The week turns on",
                 Help =
@@ -135,6 +143,13 @@ public static class CommunityGoalCapability
             new SettingRow
             {
                 Key = "callouts.weekBoundaryHourUtc",
+                Exercise =
+                    InterfaceCapability.AdvancedPrefix
+                    + "Settings › Your core › Callouts, group Plans and reminders, and find ...at this "
+                    + "hour, UTC, under The week turns on. It takes 0 to 23, 7 by default, meaning 07:00 "
+                    + "UTC. Change it and ask \"how have I done this week\": sales made before that hour on "
+                    + "the turning day fall into the previous week. The Powerplay cycle callout, which "
+                    + "speaks in the twelve hours before the turn when you are pledged, moves with it.",
                 Advanced = true,
                 Label = "…at this hour, UTC",
                 Help = "The hour, UTC, the day above turns at. 7 means 07:00 UTC.",

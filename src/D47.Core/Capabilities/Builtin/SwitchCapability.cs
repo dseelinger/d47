@@ -144,6 +144,21 @@ public static class SwitchCapability
     private static SettingRow EnabledRow(Func<bool> keyboardEnabled) => new()
     {
         Key = EnabledKey,
+        Exercise =
+            "With Show every setting on (at the top of the Settings page, or say \"show me every "
+            + "setting\"), the row appears only while Let D47 press keys in Elite is on. To assign a "
+            + "switch (it needs a stick or throttle with a maintained switch), open Settings › "
+            + "Acting on the game › Macros and switches, group Your macros and switches, press "
+            + "Assign switches on Your switches, press Assign a switch, move the switch to each "
+            + "position in turn pausing at each, set what each position does, and press Save. Then "
+            + "open Settings › Acting on the game › What D47 may do, group Permissions, and find "
+            + "Let a HOTAS switch operate the ship (off by default) and turn it on, or say \"let my "
+            + "switches operate the ship\". Set a position to the landing gear, put the gear up in "
+            + "the game, and flip the switch to that position: D47 presses your gear binding and "
+            + "the gear lowers; flip it to a position the game is already in and nothing is "
+            + "pressed. Turn the row off, or say \"stop reading my switches\" or \"ignore my "
+            + "switches\", and flips press nothing. Positions that name a page of D47's own panel "
+            + "work whether the row is on or off.",
         Advanced = true,
         Label = "Let a HOTAS switch operate the ship",
         Help = "When you flip a mapped switch, D47 asks whether Elite is already in the state that "
@@ -173,6 +188,20 @@ public static class SwitchCapability
     private static SettingRow HeadsetViewRow() => new()
     {
         Key = HeadsetViewKey,
+        Exercise =
+            "With Show every setting on (at the top of the Settings page, or say \"show me every "
+            + "setting\"), to assign a switch (it needs a stick or throttle with a maintained "
+            + "switch), open Settings › Acting on the game › Macros and switches, group Your macros "
+            + "and switches, press Assign switches on Your switches, press Assign a switch, move "
+            + "the switch to each position in turn pausing at each, set what each position does, "
+            + "and press Save. Give one position a headset view, and have Virtual Desktop running. "
+            + "Then open Settings › Acting on the game › What D47 may do, group Permissions, and "
+            + "find Let a HOTAS switch change the headset view (off by default) and turn it on, or "
+            + "say \"let my switches change the headset view\". Flip the switch to that position: D47 "
+            + "reads which view Virtual Desktop is showing and presses Shift+Win+D only if it is "
+            + "the other one, so the view changes. Flip to the view already showing and nothing is "
+            + "pressed. Turn the row off, or say \"stop my switches changing the headset view\", and "
+            + "flips press nothing. This row works with Let D47 press keys in Elite off.",
         Advanced = true,
         Label = "Let a HOTAS switch change the headset view",
         Help = "When you flip a switch position that names a headset view, D47 reads which view Virtual "
@@ -195,6 +224,20 @@ public static class SwitchCapability
     private static SettingRow ChordsRow() => new()
     {
         Key = ChordsKey,
+        Exercise =
+            "With Show every setting on (at the top of the Settings page, or say \"show me every "
+            + "setting\"), to assign a switch (it needs a stick or throttle with a maintained "
+            + "switch), open Settings › Acting on the game › Macros and switches, group Your macros "
+            + "and switches, press Assign switches on Your switches, press Assign a switch, move "
+            + "the switch to each position in turn pausing at each, set what each position does, "
+            + "and press Save. Give one position a key chord, such as Ctrl+V. Then open Settings › "
+            + "Acting on the game › What D47 may do, group Permissions, and find Let a HOTAS switch "
+            + "press key chords in any window (off by default) and turn it on, or say \"let my "
+            + "switches press key chords\". Put a text editor in front with text copied, and flip "
+            + "the switch to that position: D47 presses the chord once in the window in front, so "
+            + "the text is pasted, whether Elite is running or not. Every flip into the position "
+            + "presses it again. Turn the row off, or say \"stop my switches pressing key chords\", "
+            + "and flips press nothing. This row works with Let D47 press keys in Elite off.",
         Advanced = true,
         Label = "Let a HOTAS switch press key chords in any window",
         Help = "When you flip a switch into a position that names a key chord, such as Ctrl+V, D47 presses it "

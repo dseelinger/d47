@@ -72,7 +72,15 @@ public static class AboutCapability
                 "Which release this is. A pre-release says so: it is a build offered to nobody "
                 + "automatically, and it is not final.",
                 checkForUpdate,
-                checkForUpdate is null ? null : "Check for updates"),
+                checkForUpdate is null ? null : "Check for updates",
+                exercise:
+                    "Open Settings › Privacy and this install › Updates and install, group This install, "
+                    + "and find Version. The row shows this build's version number; a pre-release says so "
+                    + "after it. Press Check for updates: the result is one of \"D47 <version> is the latest "
+                    + "release.\", \"D47 <version> is available.\" (and an Install row appears under it), "
+                    + "\"This build is not a release, so there is nothing to compare it with.\" or \"Could not "
+                    + "reach GitHub, so D47 does not know whether there is a newer release.\" The button is "
+                    + "absent when the host supplies no update check."),
             Stated(
                 BuildKey,
                 "Build",
@@ -106,6 +114,11 @@ public static class AboutCapability
         rows.Add(new SettingRow
         {
             Key = DataFolderKey,
+            Exercise =
+                "Open Settings › Privacy and this install › Updates and install, group This install, "
+                + "and find Data folder. The row shows the full path of D47's data folder. Press Open "
+                + "data folder: Windows Explorer opens that folder, holding the settings file, "
+                + "secrets.json and view-state.json.",
             Label = "Data folder",
             Help =
                 "Where D47 keeps everything it writes. Settings are saved as you go, to "
@@ -125,6 +138,11 @@ public static class AboutCapability
             rows.Add(new SettingRow
             {
                 Key = ChangelogKey,
+                Exercise =
+                    "Open Settings › Privacy and this install › Updates and install, group This install, "
+                    + "and find What changed. Press Changelog: a page titled \"What changed\" opens in the "
+                    + "panel, listing every release newest first, and reads with no internet. Close returns "
+                    + "to Settings.",
                 Label = "What changed",
                 Help =
                     "Every release, newest first, as it shipped inside this build — so it reads "
@@ -141,6 +159,10 @@ public static class AboutCapability
             rows.Add(new SettingRow
             {
                 Key = ChangelogOnlineKey,
+                Exercise =
+                    "Open Settings › Privacy and this install › Updates and install, group This install, "
+                    + "and find What changed since. Press Open on GitHub: the default browser opens the "
+                    + "CHANGELOG.md page of the dseelinger/d47 repository on GitHub.",
                 Label = "What changed since",
                 Help =
                     "The changelog on the web, which is the only place a release newer than this "
@@ -157,6 +179,11 @@ public static class AboutCapability
             rows.Add(new SettingRow
             {
                 Key = CommunityKey,
+                Exercise =
+                    "Open Settings › Privacy and this install › Updates and install, group This install, "
+                    + "and find Community. Press Open the Discord: the default browser opens D47's "
+                    + "community page at dseelinger.github.io/d47/community.html, which holds the Discord "
+                    + "invite.",
                 Label = "Community",
                 Help =
                     "Where the other Commanders are, and the fastest way to reach a person. "
@@ -173,6 +200,11 @@ public static class AboutCapability
             rows.Add(new SettingRow
             {
                 Key = SetUpKeysKey,
+                Exercise =
+                    "Open Settings › Privacy and this install › Updates and install, group This install, "
+                    + "and find Set up keys. Press Set up keys: the dialog titled \"Set up Directive 47\" "
+                    + "opens at its first step, headed \"Set up · Step 1 of\" and the number of steps. Close "
+                    + "it without changing anything to leave the keys as they are.",
                 Label = "Set up keys",
                 Help = "Walks through the API keys again. Keys get rotated, so this is not only a first-run thing.",
                 Kind = SettingKind.Info,
@@ -234,10 +266,12 @@ public static class AboutCapability
         string anchor,
         string help,
         LongPress? pressAsync = null,
-        string? pressLabel = null) =>
+        string? pressLabel = null,
+        string? exercise = null) =>
         new()
         {
             Key = key,
+            Exercise = exercise,
             Label = label,
             Help = help,
             Kind = SettingKind.Info,

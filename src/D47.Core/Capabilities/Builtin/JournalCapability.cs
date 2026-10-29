@@ -153,6 +153,13 @@ public static class JournalCapability
                 new SettingRow
                 {
                     Key = CodexPicturesKey,
+                    Exercise =
+                        "Open Settings › Providers › Outside sources, group Outside sources, and turn Codex pictures on. "
+                        + "Then open the Commander tab › Codex and drill into an entry that has a stock picture: the "
+                        + "picture appears, and files are kept in data\\codex-pictures. Turn the row off and open an entry "
+                        + "that has no picture on disk: nothing is fetched and the page shows only pictures you saved "
+                        + "yourself, even for stock pictures already on disk. Needs a network connection to GitHub for the "
+                        + "first fetch.",
                     Label = "Codex pictures",
                     Help =
                         "Stock pictures of codex entries are published as files on a GitHub release. "
@@ -170,6 +177,13 @@ public static class JournalCapability
                 new SettingRow
                 {
                     Key = ShareCodexPicturesKey,
+                    Exercise =
+                        "Open Settings › You and your records › Logs and goals, group Codex, and turn Share my codex "
+                        + "pictures with my other Commanders on. Needs two Commanders (two Commander journals) with D47: "
+                        + "save a picture for a codex entry on one Commander with Choose a picture on its Codex entry page,"
+                        + " then switch to the other Commander and open the same entry: the first Commander's picture shows"
+                        + " where the second has none. With the row off the second Commander's page shows no picture. Re-"
+                        + "crop, Replace and Remove my picture change only the active Commander's picture.",
                     Label = "Share my codex pictures with my other Commanders",
                     Help =
                         "Each Commander keeps their own codex pictures. Ticked, every Commander's pictures are one pool: "
@@ -184,6 +198,11 @@ public static class JournalCapability
                 new SettingRow
                 {
                     Key = OpenNewCodexEntriesKey,
+                    Exercise =
+                        "Open Settings › You and your records › Logs and goals, group Codex, and turn Open new codex "
+                        + "entries on. In the game, log a codex entry you have not logged before while D47 is running: the "
+                        + "panel opens that entry's Codex page, in the window and on the headset panel. With the row off "
+                        + "the page stays where it is. A page open as a dialog stays where it is either way.",
                     Label = "Open new codex entries",
                     Help =
                         "When you log a codex entry for the first time, the panel opens that entry's page, in the window and on the headset panel. "
@@ -197,6 +216,14 @@ public static class JournalCapability
                 new SettingRow
                 {
                     Key = CodexPublishTokenKey,
+                    Exercise =
+                        "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                        + "open Settings › You and your records › Logs and goals, group Codex publishing, and paste a fine-"
+                        + "grained GitHub token with contents write on dseelinger/d47-codex-pictures into Codex publish "
+                        + "token. For the stock-picture maintainer only; it needs that GitHub account. The row never shows "
+                        + "the token back. Then open an entry on the Commander tab › Codex page that has a picture you "
+                        + "saved: Publish appears, and Unpublish appears if a stock picture exists. Without a token, and "
+                        + "without D47_CODEX_PUBLISH_TOKEN in the environment, neither shows.",
                     Advanced = true,
                     Label = "Codex publish token",
                     Help =
