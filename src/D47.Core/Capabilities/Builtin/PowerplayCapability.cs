@@ -31,6 +31,9 @@ public static class PowerplayCapability
             new ToolDefinition
             {
                 Name = Tool,
+                Exercise =
+                    "Ask D47 what your next Powerplay rank gives you. The reply lists the perks, rebuy "
+                    + "reduction and modules at that rank and the next perk and module.",
                 Description =
                     "What a Powerplay rank gives: each perk and rebuy reduction held at that rank, the modules "
                     + "unlocked (three named, the rest counted), what the next rank gives, and the next perk and "

@@ -230,6 +230,9 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_location",
+                    Exercise =
+                        "Say \"where am I\". The reply names your current star system and whether you are docked, "
+                        + "in supercruise or on foot, matching the game.",
                     AlwaysLoaded = true,
                     Description =
                         "Report the current Commander's star system, the class of its arrival star, body, docking "
@@ -240,6 +243,9 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_ship",
+                    Exercise =
+                        "Say \"what am I flying\". The reply names the ship and reports its hull, fuel, cargo and "
+                        + "fitted modules. Say \"my jump range\" to hear the unladen jump range alone.",
                     AlwaysLoaded = true,
                     Description =
                         "Report a ship: type, name, hull health, jump range, fuel, cargo held and capacity, "
@@ -269,6 +275,10 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_fleet",
+                    Exercise =
+                        "Say \"where is my carrier\". The reply names the system your fleet carrier is in and when "
+                        + "that was last reported. Say \"my ships\" to also hear which ships you own and where each "
+                        + "is stored.",
                     Description =
                         "Report the Commander's fleet carrier: which system it is in and when that was last "
                         + "reported. Set ships to also list the ships they own and where each one is stored.",
@@ -291,6 +301,9 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_fleet_loadouts",
+                    Exercise =
+                        "Ask D47 which of your ships has the most cargo space. The reply ranks your ships by "
+                        + "cargo capacity, including ones you are not aboard.",
                     Description =
                         "Compare the Commander's ships by what is fitted to each: cargo capacity, maximum "
                         + "jump range, unladen mass, fuel, value and rebuy. Every ship they have been seen "
@@ -326,6 +339,10 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_stored_modules",
+                    Exercise =
+                        "Say \"stored modules\". The reply lists the modules in storage, the system each is in and "
+                        + "the cost of transferring it. Ask whether you have a shield generator in storage to "
+                        + "narrow the list.",
                     Description =
                         "List the modules the Commander has in storage and which system each one is in, "
                         + "with what transferring it would cost. Answered from the journal, so it says what "
@@ -347,6 +364,9 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_materials",
+                    Exercise =
+                        "Say \"my materials\". The reply gives your raw, manufactured and encoded holdings and what "
+                        + "is in your backpack and ship locker.",
                     AlwaysLoaded = true,
                     Description =
                         "Report the Commander's material holdings — raw, manufactured and encoded — and their "
@@ -357,6 +377,10 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_session_summary",
+                    Exercise =
+                        "Say \"how have I done this session\". The reply gives credits earned by source, jumps "
+                        + "made, distance travelled, materials gained and bodies scanned since you entered the "
+                        + "game.",
                     AlwaysLoaded = true,
                     Description =
                         "Report what the Commander has done since entering the game: credits earned by source, "
@@ -367,6 +391,9 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_bgs_work",
+                    Exercise =
+                        "Say \"my BGS work\". The reply lists the work you have done since the last BGS tick, per "
+                        + "system and faction, such as mission influence and vouchers handed in.",
                     Description =
                         "Report the BGS work the Commander has done since the last BGS tick, per system and "
                         + "faction: mission influence marks, bounty and combat bond vouchers, trade sold and its "
@@ -394,6 +421,10 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_combat_stats",
+                    Exercise =
+                        "Say \"my kills\". The reply gives the top entry for each grouping (enemy ship, your ship, "
+                        + "system, faction) with the credits awarded. Ask for combat stats by faction this week to "
+                        + "see one grouping.",
                     Description =
                         "Report the Commander's kills and the credits awarded for them, from every journal on this PC: "
                         + "by enemy ship, by the Commander's own ship, by system and by faction. Credits are the bounties "
@@ -429,6 +460,9 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_codex_ledger",
+                    Exercise =
+                        "Say \"codex ledger\". The reply gives the codex entries you logged since your last sale of "
+                        + "exploration data, how many were new to your codex, by region and category.",
                     Description =
                         "Report the codex entries the Commander logged over a period, how many were new to their "
                         + "codex, by region and category.",
@@ -456,6 +490,10 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_codex_discoveries",
+                    Exercise =
+                        "Say \"codex discoveries\". The reply gives, for the codex region you are in, how many "
+                        + "entries are known, how many you have logged and how many are missing, naming the most- "
+                        + "reported missing ones.",
                     Description =
                         "Report the codex entries known in a region, how many the Commander has logged and how many are "
                         + "missing, by subcategory, with the most-reported missing ones named.",
@@ -475,6 +513,10 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_body_geology",
+                    Exercise =
+                        "With a body targeted that has geological signals, say \"likely geology\". The reply lists "
+                        + "the geological features predicted for that body and whether you have logged each one in "
+                        + "this region.",
                     Description =
                         "Which geological features a body likely has, predicted from its class and volcanism, and whether "
                         + "the Commander has logged each in the codex for this region. A prediction: the codex entry on "
@@ -497,6 +539,9 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_credit_ledger",
+                    Exercise =
+                        "Say \"credit ledger\". The reply gives the credits you earned and spent over the last week "
+                        + "by kind, with your current balance.",
                     Description =
                         "Report the credits the Commander earned and spent, by kind, from every journal on this PC, "
                         + "with the current balance. Bounties and combat bonds count when redeemed.",
@@ -525,6 +570,9 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_commander_statistics",
+                    Exercise =
+                        "Say \"my career statistics\". The reply reports every section of your career statistics. "
+                        + "Say \"how many Merc Coins do I have\" to hear the bank account section alone.",
                     Description =
                         "Report the Commander's career statistics from the journal's Statistics event — bank "
                         + "balance and Merc Coin balance, combat, crime, smuggling, trading, mining, exploration, passengers, search "
@@ -547,6 +595,9 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_crime_status",
+                    Exercise =
+                        "Say \"am I wanted\". The reply gives your legal state and the unpaid fines and bounties "
+                        + "for each faction, largest first.",
                     Description =
                         "Report whether the Commander is wanted and what they owe: their legal state now from "
                         + "the game, whether they are on foot, the unpaid fines and bounties the journal records "
@@ -560,6 +611,10 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_standing",
+                    Exercise =
+                        "Say \"my reputation\". The reply gives your standing with the Empire, Federation, Alliance "
+                        + "and Independents as a band and a number out of 100, and your navy ranks. Say \"my "
+                        + "reputation with the Empire\" for one.",
                     Description =
                         "Report the Commander's reputation with the Empire, Federation, Alliance and "
                         + "Independents as a band and a number out of 100, and their Imperial and Federal navy "
@@ -582,6 +637,9 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_ranks",
+                    Exercise =
+                        "Say \"what are my ranks\". The reply gives your rank in each career and both navies, the "
+                        + "percent of the way to the next rank and the name of that rank.",
                     Description =
                         "Report the Commander's rank and rank progress in every career (Combat, Trade, Exploration, "
                         + "Mercenary, Exobiologist, CQC) and in the Imperial and Federal navies: the current rank, the "
@@ -594,6 +652,9 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = "get_unsold_exploration",
+                    Exercise =
+                        "Say \"unsold exploration\". The reply gives the estimated value of the bodies you have "
+                        + "mapped and not sold, how many there are and how many were mapped efficiently.",
                     Description =
                         "The bodies the Commander has mapped with the surface scanner and not yet sold to "
                         + "Universal Cartographics: an estimate of their total value, how many, and how many "
@@ -605,6 +666,10 @@ public static class JournalCapability
                 new ToolDefinition
                 {
                     Name = ResetExplorationTool,
+                    Exercise =
+                        "Say \"reset unsold exploration\", or press Reset exploration data in the Exploration data "
+                        + "section of the Unsold data page. Then say \"unsold exploration\": the total starts again "
+                        + "from zero.",
                     Description = "Set the Commander's unsold exploration total to zero from now.",
                     Parameters = [],
                     Protected = true,

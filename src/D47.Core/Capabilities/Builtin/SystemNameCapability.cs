@@ -39,6 +39,9 @@ public static class SystemNameCapability
             new ToolDefinition
             {
                 Name = "read_system_name",
+                Exercise =
+                    "Ask D47 to read a generated system name, or leave the name out for your own system. The "
+                    + "reply gives its sector, boxel, mass code and the size of the cube that code implies.",
                 Description =
                     "Decode what a procedurally-generated system name says about the system: its "
                     + "sector, its boxel, the mass code and the size of the cube that code implies. "

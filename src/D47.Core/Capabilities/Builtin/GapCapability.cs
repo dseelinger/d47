@@ -51,6 +51,9 @@ public static class GapCapability
             {
                 Protected = true,
                 Name = "get_build_gap",
+                Exercise =
+                    "Say \"what am I short of\". The reply gives what your ship builds and on-foot plans still "
+                    + "need against what you hold, ledger by ledger and with what each shortfall is for.",
                 Description =
                     "What the Commander's ship builds and on-foot plans still need, netted against what "
                     + "they hold. Ledger by ledger and never totalled together, with what each shortfall "

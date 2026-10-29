@@ -68,6 +68,9 @@ public static class LoreCapability
             new ToolDefinition
             {
                 Name = "get_system_lore",
+                Exercise =
+                    "Ask D47 what it knows about the system you are in. The reply gives the shipped entry and "
+                    + "any notes you added, and says where each came from.",
                 Description =
                     "What D47 knows about the system the Commander is in that is not astrography: the "
                     + "shipped table's entry, plus anything the Commander has had noted about it. Each "
@@ -78,6 +81,9 @@ public static class LoreCapability
             new ToolDefinition
             {
                 Name = "remember_about_system",
+                Exercise =
+                    "Ask D47 to remember a fact about the system you are in. The reply confirms the note, and "
+                    + "it is spoken back, marked unverified, when you next arrive here.",
                 Description =
                     "Note something about the system the Commander is in, kept between sessions and "
                     + "spoken back on a later arrival. Only this system — a note is keyed on the system "

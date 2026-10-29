@@ -22,6 +22,10 @@ public static class ServerStatusCapability
             new ToolDefinition
             {
                 Name = "get_server_status",
+                Exercise =
+                    "Say \"are the servers up\". The reply says whether the game servers are online, in "
+                    + "maintenance, offline or unknown and how long ago that was checked; with the Server "
+                    + "status setting off, it says so.",
                 Description =
                     "Say whether Elite's game servers are online, in maintenance, offline or unknown, and how long ago "
                     + "that was checked. Makes no request; says so when the Server status setting is off.",

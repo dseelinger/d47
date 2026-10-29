@@ -393,6 +393,9 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "distance_between",
+                Exercise =
+                    "Ask D47 how far Sol is from Alpha Centauri. The reply gives the straight-line distance "
+                    + "in light years. Leave out the first system to measure from where you are.",
                 AlwaysLoaded = true,
                 Description =
                     "The straight-line distance in light years between two star systems. "
@@ -448,6 +451,9 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "system_visits",
+                Exercise =
+                    "Ask D47 whether you have been to a system you know you have visited. The reply gives how "
+                    + "many times and the day of your last visit.",
                 AlwaysLoaded = true,
                 Description =
                     "Whether the Commander has been to a star system, how many times, and the day of the last "
@@ -476,6 +482,9 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "find_nearest_station",
+                Exercise =
+                    "Ask D47 where to buy a Frame Shift Drive. The reply names the nearest station selling "
+                    + "one and its distance.",
                 AlwaysLoaded = true,
                 Description =
                     "Find the nearest station selling a named module or ship, or trading a commodity "
@@ -768,6 +777,9 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "how_to_get",
+                Exercise =
+                    "Ask D47 how to get a Krait MkII. The reply gives the method first, then the nearest "
+                    + "place to buy it when buying is the method.",
                 Description =
                     "How to get anything — a ship, module, suit, hand weapon, modification, material, "
                     + "ship-locker item or commodity: the method first, and the nearest place when "
@@ -795,6 +807,9 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = "get_bgs_tick",
+                Exercise =
+                    "Say \"when was the last tick\". The reply gives the time of the last BGS tick in UTC and "
+                    + "how long ago it was.",
                 Description = "When the last BGS tick was, in UTC and as how long ago.",
                 Parameters = [],
                 Commands = [.. BgsTickQuestions.Select(phrase => new ToolCommandPhrase(phrase, NoArguments))],
@@ -807,6 +822,9 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = SuggestHomeSystemTool,
+                Exercise =
+                    "Ask D47 to suggest a home system. The reply names up to three systems, each with a "
+                    + "reason and its two strongest careers, and does not set the home system.",
                 Description =
                     "Suggest up to three systems the Commander could make their home, each with the reason and its two "
                     + "strongest careers. Say the answer; setting the home system is the Commander's own request.",
@@ -817,6 +835,9 @@ public static class GalaxyCapability
             new ToolDefinition
             {
                 Name = SetSquadronFactionTool,
+                Exercise =
+                    "Say \"my squadron's faction is\" followed by the name of a minor faction. The reply says "
+                    + "whether the faction was stored.",
                 Description =
                     "Store the minor faction the Commander says their squadron backs, after checking the galaxy "
                     + "service knows a faction by that name. The Commander's own decision.",

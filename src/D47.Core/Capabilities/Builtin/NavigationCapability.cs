@@ -175,6 +175,9 @@ public static class NavigationCapability
             new ToolDefinition
             {
                 Name = "copy_to_clipboard",
+                Exercise =
+                    "Ask D47 to copy Sol to the clipboard, then paste into a text field. The pasted text is "
+                    + "Sol.",
                 Description =
                     "Put text on the Commander's clipboard so they can paste it into the game or a "
                     + "browser. Use for system names, routes and values they asked for.",
@@ -194,6 +197,9 @@ public static class NavigationCapability
             new ToolDefinition
             {
                 Name = "plot_course",
+                Exercise =
+                    "Ask D47 to plot a course to Sol. Pasting shows Sol, and with key input allowed the "
+                    + "galaxy map plots the course.",
                 Description =
                     "Put a system name on the clipboard and, if the Commander has allowed it, try to "
                     + "plot a course to it in the galaxy map. The plotting attempt is best-effort and "
@@ -215,6 +221,9 @@ public static class NavigationCapability
             new ToolDefinition
             {
                 Name = "spell_system",
+                Exercise =
+                    "Say \"spell a system\". A keyboard opens on the panel; spell a system name and confirm, "
+                    + "and the course is plotted to it.",
                 Description =
                     "Open a keyboard on the panel for the Commander to spell a system name, then plot a course "
                     + "to it.",

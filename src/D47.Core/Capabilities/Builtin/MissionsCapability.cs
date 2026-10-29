@@ -42,6 +42,9 @@ public static class MissionsCapability
             new ToolDefinition
             {
                 Name = Tool,
+                Exercise =
+                    "Say \"read the mission board\". The reply gives up to three accepted missions by urgency "
+                    + "with destination and time left, then a count of the rest and the total reward.",
                 Description =
                     "Read the Commander's accepted missions: up to three, ranked by what can be acted on "
                     + "(expiring within the hour, then handed in at the docked station, then soonest expiry), "
@@ -83,6 +86,9 @@ public static class MissionsCapability
             new ToolDefinition
             {
                 Name = TypesTool,
+                Exercise =
+                    "Say \"what mission types are there\". The reply goes through the types group by group. Ask "
+                    + "where disable missions turn up to hear one type.",
                 Description =
                     "Say which mission types the board has, group by group, or where one type is likeliest to turn up: "
                     + "the faction states, governments and economies its names were recorded under, whether it needs a navy "

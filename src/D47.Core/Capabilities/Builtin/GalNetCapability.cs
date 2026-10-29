@@ -34,6 +34,9 @@ public static class GalNetCapability
             new ToolDefinition
             {
                 Name = "search_galnet",
+                Exercise =
+                    "Say \"what's on galnet\". The reply names the three newest articles kept on this PC. Ask "
+                    + "D47 to search galnet for a word to hear the best matches in full.",
                 Description =
                     "Search the GalNet articles kept on this PC. With no query, names the three newest. "
                     + "With a query, gives the full text of the three best matches and the titles of up to seven more.",
@@ -61,6 +64,9 @@ public static class GalNetCapability
             new ToolDefinition
             {
                 Name = "get_galnet_article",
+                Exercise =
+                    "Say \"read the latest galnet article\". The reply gives its title, in-game date and full "
+                    + "text.",
                 Description =
                     "Give the title, in-game date and full text of one kept GalNet article: the newest, "
                     + "or the one whose title best matches the title given.",

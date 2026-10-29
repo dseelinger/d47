@@ -105,6 +105,9 @@ public static class RouteCapability
             new ToolDefinition
             {
                 Name = "plot_exploration_route",
+                Exercise =
+                    "Ask D47 to plot a Road to Riches loop of five stops. The reply lists the systems to "
+                    + "visit in order.",
                 Description =
                     "Plan a Road to Riches loop: a tour of nearby systems holding bodies worth scanning "
                     + "and mapping, ordered so the trip is short and the payout is high.",
@@ -162,6 +165,9 @@ public static class RouteCapability
             new ToolDefinition
             {
                 Name = "plot_trade_route",
+                Exercise =
+                    "Dock at a station and ask D47 to plot a trade route with five million credits. The reply "
+                    + "lists the legs, what to buy at each station and where to sell it.",
                 Description =
                     "Work out a chain of profitable trade runs from the station the Commander is docked "
                     + "at, holding cargo past a station where a later one pays better. Needs to be told "
@@ -252,6 +258,9 @@ public static class RouteCapability
             new ToolDefinition
             {
                 Name = "best_commodities_for",
+                Exercise =
+                    "Dock at a station and ask D47 what to buy here to sell in Sol. The reply names the "
+                    + "commodities worth carrying there.",
                 Description =
                     "What to buy at the station the Commander is docked at to sell in another system — "
                     + "the same answer Trading Mode gives automatically once a route is plotted, asked "
@@ -272,6 +281,9 @@ public static class RouteCapability
             new ToolDefinition
             {
                 Name = "plot_carrier_route",
+                Exercise =
+                    "Ask D47 to plot your carrier to Sol. The reply gives the jumps, the tritium the journey "
+                    + "burns and where to restock, and the carrier does not move.",
                 Description =
                     "Plot the Commander's own fleet carrier's jumps to a system, with the tritium the whole "
                     + "journey burns and where to restock. Reads the carrier's tank, the tritium in its hold "
@@ -304,6 +316,9 @@ public static class RouteCapability
             new ToolDefinition
             {
                 Name = "plot_outfitting_route",
+                Exercise =
+                    "Ask D47 for the fewest stops near you to buy a 5A Frame Shift Drive and a 6A Fuel Scoop. "
+                    + "The reply lists the stations in visiting order with what to buy at each.",
                 Description =
                     "Work out the fewest stations near a system that sell a list of modules and ships "
                     + "between them, visited nearest-next, with what to buy at each and any item no "
@@ -351,6 +366,9 @@ public static class RouteCapability
             new ToolDefinition
             {
                 Name = "plot_next_stop",
+                Exercise =
+                    "Plot a neutron route, then say \"plot next neutron jump\" with the game running. The next "
+                    + "stop is entered through the galaxy map.",
                 Description =
                     "Plot the next stop on a stored route plan — the Neutron Plotter's waypoints, a "
                     + "Road to Riches loop's stops, a trade run's stops, or an exobiology route's "

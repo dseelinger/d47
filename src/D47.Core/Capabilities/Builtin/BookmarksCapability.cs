@@ -46,6 +46,9 @@ public static class BookmarksCapability
             new ToolDefinition
             {
                 Name = BookmarkTool,
+                Exercise =
+                    "Select a destination in the game and say \"bookmark this\". The reply confirms it was "
+                    + "saved under the destination's own name, and \"list my bookmarks\" shows it.",
                 Description =
                     "Save the current destination (from Status.json) as a bookmark, so 'set course for "
                     + "<name>' returns to it later. Without a name it is saved at once under the "
@@ -87,6 +90,9 @@ public static class BookmarksCapability
             new ToolDefinition
             {
                 Name = RenameTool,
+                Exercise =
+                    "Ask D47 to rename a bookmark, giving its current name and the new one. \"List my "
+                    + "bookmarks\" then shows the new name against the same system.",
                 Description = "Rename an existing bookmark. The system it points at does not change.",
                 Parameters =
                 [
@@ -112,6 +118,9 @@ public static class BookmarksCapability
             new ToolDefinition
             {
                 Name = DeleteTool,
+                Exercise =
+                    "Say \"delete bookmark\" followed by a name from your list. \"List my bookmarks\" no longer "
+                    + "shows it.",
                 Description = "Delete a bookmark by name.",
                 Parameters =
                 [

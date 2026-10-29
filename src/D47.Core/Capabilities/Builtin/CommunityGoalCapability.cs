@@ -52,6 +52,9 @@ public static class CommunityGoalCapability
             new ToolDefinition
             {
                 Name = "get_community_goals",
+                Exercise =
+                    "Ask D47 what community goals are running. The reply lists each goal from the boards at "
+                    + "stations you have docked at, with its tier, contributors and your own contribution.",
                 Description =
                     "Community goals that are running: where each is flown, what tier it has reached, how "
                     + "many Commanders are contributing, and this Commander's own contribution and "
@@ -80,6 +83,9 @@ public static class CommunityGoalCapability
             new ToolDefinition
             {
                 Name = "get_community_goal_earnings",
+                Exercise =
+                    "Say \"how have I done today\". The reply gives what the Community Goal commodity has made "
+                    + "or lost today, net of its cost. Say \"this week\" or \"this session\" for the other ranges.",
                 Description =
                     "What the Community Goal commodity has made or lost, net of what the cargo cost: "
                     + "this session, today, or this week (the Elite week, turning at the weekly server "
