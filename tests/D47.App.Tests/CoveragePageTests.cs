@@ -8,7 +8,9 @@ using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Settings;
 using D47.App.Theming;
+using D47.Core;
 using D47.Core.Configuration;
+using D47.Core.Storage;
 using D47.Core.Coverage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -106,8 +108,8 @@ public class CoveragePageTests
             .Where(text => text.EndsWith(')') && text.Contains(" ("))
             .ToList();
 
-        Assert.Equal("CAME BACK WITH AN ERROR (1)", headings[0]);
-        Assert.Equal("NEVER TESTED (1)", headings[1]);
+        Assert.Equal("▾ CAME BACK WITH AN ERROR (1)", headings[0]);
+        Assert.Equal("▾ NEVER TESTED (1)", headings[1]);
 
         var names = window.GetVisualDescendants()
             .OfType<TextBlock>()
@@ -206,6 +208,95 @@ public class CoveragePageTests
 
         host.Close();
     }
+
+    /// <summary>Pressing a heading hides its rows and nothing else.</summary>
+    [AvaloniaFact]
+    public void PressingASectionHeadingHidesAndShowsItsRows()
+    {
+        var window = Open(Report());
+        var heading = Heading(window, "never");
+
+        Assert.Equal("▾ NEVER TESTED (1)", Text(heading));
+        Assert.True(Mark(window, "NEVER").IsEffectivelyVisible);
+
+        Press(heading);
+        Assert.Equal("▸ NEVER TESTED (1)", Text(heading));
+        Assert.False(Mark(window, "NEVER").IsEffectivelyVisible);
+        Assert.True(Mark(window, "DONE").IsEffectivelyVisible);
+        Assert.Equal("Never tested, collapsed", Avalonia.Automation.AutomationProperties.GetName(heading));
+
+        Press(heading);
+        Assert.True(Mark(window, "NEVER").IsEffectivelyVisible);
+
+        window.Close();
+    }
+
+    /// <summary>The state is read back by the next page built over the same store.</summary>
+    [AvaloniaFact]
+    public void ACollapsedSectionStaysCollapsedOnTheNextVisit()
+    {
+        Theme();
+        var paths = new AppPaths(TempFolders.Create("d47-coverage-sections"));
+        var store = new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance);
+
+        var first = new CoveragePage(Report(), store: store);
+        first.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        Press(Heading(first, "exercised"));
+        first.Close();
+
+        var second = new CoveragePage(Report(), store: new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance));
+        second.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.False(Mark(second, "DONE").IsEffectivelyVisible);
+        Assert.True(Mark(second, "NEVER").IsEffectivelyVisible);
+
+        second.Close();
+    }
+
+    /// <summary>A redraw after Clear keeps each section as it was left.</summary>
+    [AvaloniaFact]
+    public void ClearingARowKeepsTheCollapsedSections()
+    {
+        Theme();
+        var report = Report();
+        var window = new CoveragePage(report, _ => { }, () => report);
+        window.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Press(Heading(window, "exercised"));
+        Press(window.GetVisualDescendants().OfType<Avalonia.Controls.Button>().First(b => b.Name == "CoverageClear"));
+
+        Assert.False(Mark(window, "DONE").IsEffectivelyVisible);
+
+        window.Close();
+    }
+
+    private static void Press(Avalonia.Controls.Button button)
+    {
+        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+    }
+
+    /// <summary>A capture with the Tested section collapsed.</summary>
+    [AvaloniaFact]
+    public void CaptureWithASectionCollapsed()
+    {
+        Theme();
+        var page = new CoveragePage(RealisticReport());
+        var window = new Window { Content = page, Width = 720, Height = 720 };
+        window.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        Press(Heading(page, "never"));
+        window.CaptureRenderedFrame()!.SaveCapture("coverage-section-collapsed.png");
+        window.Close();
+    }
+
+    private static Avalonia.Controls.Button Heading(Visual window, string key) =>
+        window.GetVisualDescendants().OfType<Avalonia.Controls.Button>().Single(b => b.Name == $"CoverageSection_{key}");
+
+    private static string Text(Avalonia.Controls.Button heading) => ((TextBlock)heading.Content!).Text!;
 
     /// <summary>A themed window.</summary>
     private static CoveragePage Open(CoverageReport report)

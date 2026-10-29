@@ -52,7 +52,8 @@ internal sealed record SettingServices(
     Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? DownloadModel,
     SystemNameLookup? SystemNames = null,
     CustomVoicesEditing? CustomVoices = null,
-    Action<CoverageItem>? ClearCoverage = null);
+    Action<CoverageItem>? ClearCoverage = null,
+    ViewStateStore? ViewState = null);
 
 /// <summary>What a system-name box needs: the lookup, whether galaxy search is on, and the pause before asking.</summary>
 public sealed record SystemNameLookup(
@@ -733,7 +734,7 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
                 return false;
             }
 
-            await panel.Open(new Controls.CoveragePage(services.Coverage(), services.ClearCoverage, services.Coverage));
+            await panel.Open(new Controls.CoveragePage(services.Coverage(), services.ClearCoverage, services.Coverage, services.ViewState));
 
             return true;
         }, () => { });

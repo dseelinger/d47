@@ -1,11 +1,13 @@
 using System.Diagnostics;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using D47.App.Theming;
+using D47.Core.Configuration;
 using D47.Core.Coverage;
 
 namespace D47.App.Controls;
@@ -19,14 +21,23 @@ public sealed class CoveragePage : DialogPage
     private readonly StackPanel _list;
     private readonly Action<CoverageItem>? _clear;
     private readonly Func<CoverageReport>? _fresh;
+    private readonly ViewStateStore? _store;
+    private ViewState _view;
 
     /// <param name="clear">When given, each failed row gets a Clear button that calls it.</param>
     /// <param name="fresh">Fetches the report to redraw after a clear.</param>
-    public CoveragePage(CoverageReport report, Action<CoverageItem>? clear = null, Func<CoverageReport>? fresh = null)
+    /// <param name="store">When given, which sections are collapsed is remembered across visits.</param>
+    public CoveragePage(
+        CoverageReport report,
+        Action<CoverageItem>? clear = null,
+        Func<CoverageReport>? fresh = null,
+        ViewStateStore? store = null)
     {
         Title = "Features";
         _clear = clear;
         _fresh = fresh;
+        _store = store;
+        _view = store?.Load() ?? new ViewState();
 
         _summary = new SelectableTextBlock
         {
@@ -56,13 +67,13 @@ public sealed class CoveragePage : DialogPage
 
         // Same order as the written report, and for the same reason: a list that opens with the work is a
         // list that gets used.
-        Section(report, "Came back with an error", line => line.Failed);
-        Section(report, "Never tested", line => !line.Failed && line.Status == CoverageStatus.Never);
-        Section(report, "Changed since you last tested them", line => !line.Failed && line.Status == CoverageStatus.Stale);
-        Section(report, "Tested", line => !line.Failed && line.Status == CoverageStatus.Exercised);
+        Section(report, "failed", "Came back with an error", line => line.Failed);
+        Section(report, "never", "Never tested", line => !line.Failed && line.Status == CoverageStatus.Never);
+        Section(report, "changed", "Changed since you last tested them", line => !line.Failed && line.Status == CoverageStatus.Stale);
+        Section(report, "exercised", "Tested", line => !line.Failed && line.Status == CoverageStatus.Exercised);
     }
 
-    private void Section(CoverageReport report, string heading, Func<CoverageLine, bool> include)
+    private void Section(CoverageReport report, string key, string heading, Func<CoverageLine, bool> include)
     {
         var lines = report.Lines
             .Where(include)
@@ -75,8 +86,8 @@ public sealed class CoveragePage : DialogPage
             return;
         }
 
-        var title = Modal.Section($"{heading} ({lines.Count})");
-
+        var id = $"coverage.{key}";
+        var text = $"{heading} ({lines.Count})";
         var rows = new StackPanel { Spacing = 2 };
 
         foreach (var line in lines)
@@ -84,7 +95,39 @@ public sealed class CoveragePage : DialogPage
             rows.Children.Add(Row(line));
         }
 
-        _list.Children.Add(new StackPanel { Spacing = 8, Children = { title, rows } });
+        var open = _view.IsExpanded(id, startCollapsed: false);
+        rows.IsVisible = open;
+
+        var title = new Button
+        {
+            Name = $"CoverageSection_{key}",
+            MinHeight = 44,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
+        };
+
+        void Show(bool isOpen)
+        {
+            var named = $"{(isOpen ? "▾" : "▸")} {text}";
+            title.Content = TitleText.Build(named, TypeScale.Section, TitleRank.Group);
+            AutomationProperties.SetName(title, $"{heading}, {(isOpen ? "expanded" : "collapsed")}");
+        }
+
+        Show(open);
+
+        title.Click += (_, _) =>
+        {
+            var next = !rows.IsVisible;
+            rows.IsVisible = next;
+            Show(next);
+            _view = (_store?.Load() ?? _view).With(id, next);
+            _store?.Save(_view);
+        };
+
+        _list.Children.Add(new StackPanel { Spacing = 8, Children = { TitleText.GroupRow(title), rows } });
     }
 
     /// <summary>One line, its state on the status ladder: done is met, failed is an error, the rest not met.</summary>

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Each section heading on the Features page can be pressed to collapse or expand its rows. It shows ▾ when open and ▸ when collapsed, and the heading stays visible with its count. Every section starts open, and each keeps the state you left it in when you close the page, reopen it, restart d47 or clear a failed row. Before, a long Tested list pushed the other sections out of reach.
+
 Each row under "Came back with an error" on the Features page has a Clear button. It forgets the failed run, so the row returns to "Never tested" and the counts update at once. Before, a failed row stayed until the same feature ran again and passed.
 
 The record of which features you have tested is now called Features. The Diagnostics row, its page (Settings › Features) and the written report use that name, and say "tested" where they said "exercised". Before, the row said "Exercised by hand" and the page said "Coverage".

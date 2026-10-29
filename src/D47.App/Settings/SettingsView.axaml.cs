@@ -236,7 +236,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 downloadModel,
                 systemNames,
                 customVoices,
-                clearCoverage));
+                clearCoverage,
+                viewState));
 
         Build();
 
