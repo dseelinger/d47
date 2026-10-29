@@ -289,9 +289,9 @@ public static class DiagnosticsCapability
             {
                 Key = CoverageKey,
                 Advanced = true,
-                Label = "Exercised by hand",
+                Label = "Features",
                 Help =
-                    "Which tools and settings rows have actually been driven in the running app, and "
+                    "Which tools and settings rows have been tested in the running app, and "
                     + "which have changed since they last were. Recorded because D47_COVERAGE is set; "
                     + "the full list is written to data/coverage.md.",
                 Kind = SettingKind.Info,

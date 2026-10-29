@@ -79,7 +79,7 @@ public class AWideDialogOpensAsAPageOfThePanelTests
         Press(Named(view, "OpenCoverage"));
 
         Assert.Empty(window.OwnedWindows);
-        Assert.Equal(["Settings", "Coverage"], panel.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Equal(["Settings", "Features"], panel.Nav.Trail.Select(crumb => crumb.Word));
 
         var page = Assert.Single(panel.GetVisualDescendants().OfType<CoveragePage>());
 
@@ -209,7 +209,7 @@ public class AWideDialogOpensAsAPageOfThePanelTests
         Assert.True(surface.Click(at!.Value), "the ray pressed the row");
         Jobs();
 
-        Assert.Equal("Coverage", panel.Nav.Trail[^1].Word);
+        Assert.Equal("Features", panel.Nav.Trail[^1].Word);
         Assert.Empty(((Window)surface.Root).OwnedWindows);
     }
 

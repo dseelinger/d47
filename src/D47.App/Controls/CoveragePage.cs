@@ -10,14 +10,14 @@ using D47.Core.Coverage;
 
 namespace D47.App.Controls;
 
-/// <summary>The whole coverage record, one line per tool and settings row.</summary>
+/// <summary>The Features record, one line per tool and settings row.</summary>
 public sealed class CoveragePage : DialogPage
 {
-    public override string Crumb => "Coverage";
+    public override string Crumb => "Features";
 
     public CoveragePage(CoverageReport report)
     {
-        Title = "Exercised by hand";
+        Title = "Features";
 
         var summary = new SelectableTextBlock
         {
@@ -34,14 +34,14 @@ public sealed class CoveragePage : DialogPage
         // Same order as the written report, and for the same reason: a list that opens with the work is a
         // list that gets used.
         Section(list, report, "Came back with an error", line => line.Failed);
-        Section(list, report, "Never exercised", line => !line.Failed && line.Status == CoverageStatus.Never);
-        Section(list, report, "Changed since you last exercised them", line => !line.Failed && line.Status == CoverageStatus.Stale);
-        Section(list, report, "Exercised", line => !line.Failed && line.Status == CoverageStatus.Exercised);
+        Section(list, report, "Never tested", line => !line.Failed && line.Status == CoverageStatus.Never);
+        Section(list, report, "Changed since you last tested them", line => !line.Failed && line.Status == CoverageStatus.Stale);
+        Section(list, report, "Tested", line => !line.Failed && line.Status == CoverageStatus.Exercised);
 
         var close = new Button { Name = "CoverageClose", Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
 
-        Modal.Apply(this, "Coverage", Title, list, [close]);
+        Modal.Apply(this, "Diagnostics", Title, list, [close]);
 
         Opened += (_, _) => close.Focus();
     }

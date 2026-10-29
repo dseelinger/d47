@@ -107,7 +107,7 @@ public class CoveragePageTests
             .ToList();
 
         Assert.Equal("CAME BACK WITH AN ERROR (1)", headings[0]);
-        Assert.Equal("NEVER EXERCISED (1)", headings[1]);
+        Assert.Equal("NEVER TESTED (1)", headings[1]);
 
         var names = window.GetVisualDescendants()
             .OfType<TextBlock>()

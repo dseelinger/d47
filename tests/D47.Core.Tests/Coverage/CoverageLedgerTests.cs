@@ -87,7 +87,7 @@ public class CoverageLedgerTests
         Assert.Equal(1, report.Exercised);
         Assert.Equal(1, report.Stale);
         Assert.Equal(1, report.Never);
-        Assert.Equal("1 of 3 exercised, 1 changed since, 1 never.", report.Summary);
+        Assert.Equal("1 of 3 tested, 1 changed since, 1 never.", report.Summary);
     }
 
     /// <summary>The report opens with what still needs attention.</summary>
@@ -100,8 +100,8 @@ public class CoverageLedgerTests
         var markdown = ledger.Report([Item("done"), Item("untouched")]).ToMarkdown(Monday);
 
         Assert.True(
-            markdown.IndexOf("Never exercised", StringComparison.Ordinal)
-            < markdown.IndexOf("## Exercised", StringComparison.Ordinal),
+            markdown.IndexOf("Never tested", StringComparison.Ordinal)
+            < markdown.IndexOf("## Tested", StringComparison.Ordinal),
             "the never-exercised section comes first");
     }
 
@@ -183,7 +183,7 @@ public class CoverageLedgerTests
         var report = ledger.Report([Item("worked"), Item("broke"), Item("untouched")]);
 
         Assert.Equal(1, report.Failed);
-        Assert.Equal("2 of 3 exercised, 1 never. 1 came back with an error.", report.Summary);
+        Assert.Equal("2 of 3 tested, 1 never. 1 came back with an error.", report.Summary);
     }
 
     /// <summary>
@@ -202,11 +202,11 @@ public class CoverageLedgerTests
 
         Assert.True(
             markdown.IndexOf("Came back with an error", StringComparison.Ordinal)
-            < markdown.IndexOf("Never exercised", StringComparison.Ordinal),
+            < markdown.IndexOf("Never tested", StringComparison.Ordinal),
             "failures come before things never tried");
 
         Assert.Equal(1, markdown.Split("**broke**").Length - 1);
-        Assert.Contains("## Exercised (1)", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Tested (1)", markdown, StringComparison.Ordinal);
     }
 
     /// <summary>A coverage.json written before outcomes existed has no outcome field.</summary>

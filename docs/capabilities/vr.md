@@ -212,7 +212,7 @@ second time, so the windowed version can never do something the headset version 
 
 **A Settings row that opens a window is refused, and the panel says so.** Some Settings rows open a
 second window over the desktop panel: what Directive 47 remembers, the directions it has drafted,
-your notes, the logbook, the audio recorder, the coverage list, your own ship cores, macros,
+your notes, the logbook, the audio recorder, the Features list, your own ship cores, macros,
 switches, and the arrow that clears a stored key. A window cannot appear in a headset at all, so a
 ray press on one of those says “Not currently supported in VR” over the panel and opens
 nothing. Everything else on the page is pressed as usual.

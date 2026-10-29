@@ -82,7 +82,7 @@ public class CoverageRecorderTests
 
         var report = probe.Files.ReadText(probe.Recorder.ReportPath)!;
 
-        Assert.Contains("What you have actually exercised", report, StringComparison.Ordinal);
+        Assert.Contains("Features you have tested", report, StringComparison.Ordinal);
         Assert.Contains("probe_tool", report, StringComparison.Ordinal);
     }
 

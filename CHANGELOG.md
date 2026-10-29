@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The record of which features you have tested is now called Features. The Diagnostics row, its page (Settings › Features) and the written report use that name, and say "tested" where they said "exercised". Before, the row said "Exercised by hand" and the page said "Coverage".
+
 The next-objective strip under the title rule is no longer shown while the story is paused or switched off. It returns, labelled NEXT, when the story runs again. Before, it showed the objective in grey with the label PAUSED.
 
 Find lists Settings › Phrases when you search "commands" or "voice commands", and saying "open commands" or "show voice commands" opens it.

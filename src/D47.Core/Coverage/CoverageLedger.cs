@@ -79,7 +79,7 @@ public sealed record CoverageReport(IReadOnlyList<CoverageLine> Lines)
     /// <summary>The one-line answer: how much of the app has been driven by hand.</summary>
     public string Summary => Total == 0
         ? "Nothing is registered to cover."
-        : $"{Exercised} of {Total} exercised"
+        : $"{Exercised} of {Total} tested"
           + (Stale > 0 ? $", {Stale} changed since" : string.Empty)
           + (Never > 0 ? $", {Never} never" : string.Empty)
           + "."
@@ -91,16 +91,16 @@ public sealed record CoverageReport(IReadOnlyList<CoverageLine> Lines)
     {
         var text = new StringBuilder();
 
-        text.AppendLine("# What you have actually exercised");
+        text.AppendLine("# Features you have tested");
         text.AppendLine();
         text.AppendLine($"As of {now:yyyy-MM-dd HH:mm}. {Summary}");
         text.AppendLine();
 
         // Failures first, and excluded from the sections below so nothing is listed twice.
         Section(text, "Came back with an error", l => l.Failed);
-        Section(text, "Never exercised", l => !l.Failed && l.Status == CoverageStatus.Never);
-        Section(text, "Changed since you last exercised them", l => !l.Failed && l.Status == CoverageStatus.Stale);
-        Section(text, "Exercised", l => !l.Failed && l.Status == CoverageStatus.Exercised);
+        Section(text, "Never tested", l => !l.Failed && l.Status == CoverageStatus.Never);
+        Section(text, "Changed since you last tested them", l => !l.Failed && l.Status == CoverageStatus.Stale);
+        Section(text, "Tested", l => !l.Failed && l.Status == CoverageStatus.Exercised);
 
         return text.ToString();
     }
