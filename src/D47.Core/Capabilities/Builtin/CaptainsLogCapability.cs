@@ -46,6 +46,10 @@ public static partial class CaptainsLogCapability
             new ToolDefinition
             {
                 Name = AddTool,
+                Exercise =
+                    "Say \"captain's log\" followed by a sentence, such as \"captain's log, the survey went well\". "
+                    + "D47 saves it with the system, body, station and ship you are at. The model cannot do this: it "
+                    + "is refused if it asks.",
                 Description =
                     "Save a log entry in the Commander's own words, with the system, body, station, ship and "
                     + "position known now. The Commander's own act: reached only by saying \"captain's log\", "
@@ -67,6 +71,9 @@ public static partial class CaptainsLogCapability
             new ToolDefinition
             {
                 Name = FindTool,
+                Exercise =
+                    "Say \"read my last log entry\". The reply reads back the newest entry, at most three in full. "
+                    + "The model cannot do this: it is refused if it asks.",
                 Description =
                     "Read the Commander's captain's log entries back, newest first, at most three in full. The "
                     + "Commander's own act: reached only by saying \"read my last log entry\" and the like, not "
@@ -106,6 +113,9 @@ public static partial class CaptainsLogCapability
             new ToolDefinition
             {
                 Name = DeleteTool,
+                Exercise =
+                    "Say \"delete my last log entry\". The newest entry is deleted and the reply says so. The model "
+                    + "cannot do this: it is refused if it asks.",
                 Description =
                     "Delete the Commander's newest captain's log entry. The Commander's own act: reached only by "
                     + "saying \"delete my last log entry\", not offered to the model, and refused if it asks.",
@@ -116,6 +126,9 @@ public static partial class CaptainsLogCapability
             new ToolDefinition
             {
                 Name = ExportTool,
+                Exercise =
+                    "Say \"export my log entries\". D47 writes every entry to a Markdown file, oldest first, and "
+                    + "says how many and where. The model cannot do this: it is refused if it asks.",
                 Description =
                     "Write every captain's log entry of the Commander to a Markdown file, oldest first, and say how "
                     + "many and where. The Commander's own act: reached only by saying \"export my log entries\", "

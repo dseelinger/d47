@@ -47,6 +47,9 @@ public static class GoalsCapability
                 new ToolDefinition
                 {
                     Name = "get_goals",
+                    Exercise =
+                        "Say \"how are my goals going\". The reply gives each long-running goal with how far along "
+                        + "it is, how long it has been running and where the figure came from.",
                     AlwaysLoaded = true,
                     Description =
                         "Read back the Commander's long-running goals: how far along each is, how long it has "
@@ -65,6 +68,10 @@ public static class GoalsCapability
                 new ToolDefinition
                 {
                     Name = "get_goal_step",
+                    Exercise =
+                        "On the Checklist page's goals view, open a goal and press Suggest a line. D47 says what "
+                        + "to do about that goal today and offers it as a checklist line. The model cannot call "
+                        + "it: it is refused if it asks.",
                     Description =
                         "Say what to do about one long-running goal today, and offer it as a checklist line.",
                     Parameters =
@@ -86,6 +93,9 @@ public static class GoalsCapability
                 new ToolDefinition
                 {
                     Name = "remove_goal",
+                    Exercise =
+                        "Say \"remove the trade goal\". The goal leaves the Goals page and the reply says so. The "
+                        + "model cannot do this: it is refused if it asks.",
                     Description = "Take one long-running goal off the Goals page. The Commander's own decision.",
                     Parameters = GoalParameter(),
                     Commands = [.. Phrases("remove")],
@@ -96,6 +106,9 @@ public static class GoalsCapability
                 new ToolDefinition
                 {
                     Name = "recover_goal",
+                    Exercise =
+                        "After removing a goal, say \"recover the trade goal\". The goal is back on the Goals page "
+                        + "and the reply says so. The model cannot do this: it is refused if it asks.",
                     Description = "Put a removed long-running goal back on the Goals page. The Commander's own decision.",
                     Parameters = GoalParameter(),
                     Commands = [.. Phrases("recover")],

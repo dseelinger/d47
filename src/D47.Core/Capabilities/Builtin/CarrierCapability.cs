@@ -29,6 +29,10 @@ public static class CarrierCapability
             new ToolDefinition
             {
                 Name = "describe_carrier",
+                Exercise =
+                    "With a fleet carrier, ask D47 about your carrier. The reply gives its system, any booked jump, "
+                    + "fuel, cargo against capacity, balance, jump range, docking access, and each service with its "
+                    + "state.",
                 Description =
                     "Report the Commander's fleet carrier: the system it is in, a booked jump, fuel, cargo "
                     + "against capacity, balance, jump range, docking access, the decommission flag and every "

@@ -48,6 +48,9 @@ public static class EngineeringCapability
             new ToolDefinition
             {
                 Name = "get_blueprint",
+                Exercise =
+                    "Ask D47 what Dirty Drive Tuning does. The reply gives the effects and materials for each "
+                    + "grade, who offers it and to what grade, and the exact total for a full grade at your rank.",
                 Description =
                     "What a blueprint changes and costs: effects and materials per grade, who offers "
                     + "it and to what grade, the module's experimental effects, and — folding the "
@@ -78,6 +81,10 @@ public static class EngineeringCapability
             new ToolDefinition
             {
                 Name = "get_module_engineering",
+                Exercise =
+                    "With an engineered module fitted, ask D47 how the engineering on your frame shift drive turned "
+                    + "out. The reply gives the blueprint, grade, experimental effect, who crafted it, and what it "
+                    + "changed in real units.",
                 Description =
                     "How a fitted module's engineering turned out: blueprint, grade, experimental "
                     + "effect, who crafted it, whether the grade is finished, and what it changed in real "
@@ -98,6 +105,10 @@ public static class EngineeringCapability
             new ToolDefinition
             {
                 Name = "find_material",
+                Exercise =
+                    "Ask D47 where to find antimony. The reply says where it is found, the nearest landable bodies "
+                    + "carrying it with best share first, what you hold, and what a material trader could turn into "
+                    + "it.",
                 AlwaysLoaded = true,
                 Description =
                     "Where to get an engineering material: where it is found, and — for a raw one — the "
@@ -125,6 +136,9 @@ public static class EngineeringCapability
             new ToolDefinition
             {
                 Name = "find_material_trader",
+                Exercise =
+                    "Ask D47 for the nearest material trader. The reply names the closest one and how far it is. "
+                    + "Ask for the nearest \"raw\" material trader to narrow it to that kind.",
                 Description = "Find the nearest material trader, optionally of one kind.",
                 Parameters =
                 [
@@ -148,6 +162,9 @@ public static class EngineeringCapability
             new ToolDefinition
             {
                 Name = "get_material_farming_route",
+                Exercise =
+                    "Ask D47 for a material farming route. The reply lists the farming sites in travel order from "
+                    + "your position, what to collect at each, and the trades that follow.",
                 Description =
                     "The fastest route through the hand-picked material farming sites: what to collect at "
                     + "each, in travel order from the Commander's position, and the trades that follow. "

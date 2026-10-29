@@ -75,6 +75,9 @@ public static class ColonisationCapability
             new ToolDefinition
             {
                 Name = "get_construction_sites",
+                Exercise =
+                    "Ask D47 about your construction sites. The reply lists each site with where it is, how far "
+                    + "along it is, how many commodities are outstanding, and when the journal last saw it.",
                 Description =
                     "Every construction site this Commander's journal has reported: where it is, how "
                     + "far along it is, how many commodities are still outstanding, and when they last "
@@ -97,6 +100,9 @@ public static class ColonisationCapability
             new ToolDefinition
             {
                 Name = "get_construction_needs",
+                Exercise =
+                    "Ask D47 what a construction site still needs. The reply lists each outstanding commodity with "
+                    + "how much is left, how much is in your hold, and the trips your ship's capacity implies.",
                 Description =
                     "The hauling list for one construction site: every commodity still outstanding, how "
                     + "much is left of each, how much of it is already in the cargo hold, and how many "
@@ -129,6 +135,9 @@ public static class ColonisationCapability
             new ToolDefinition
             {
                 Name = "find_colonisation_candidates",
+                Exercise =
+                    "Ask D47 for colonisation candidates near Sol. The reply lists unpopulated systems in claim "
+                    + "range, best first, with the bodies they hold and the reasons.",
                 Description =
                     "Unpopulated systems within claim range that hold the bodies a colony wants, best "
                     + "colony first with the reasons: how many bodies, of what kinds, how many can be "

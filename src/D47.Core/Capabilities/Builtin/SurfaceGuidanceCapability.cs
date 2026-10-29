@@ -52,6 +52,9 @@ public static class SurfaceGuidanceCapability
             new ToolDefinition
             {
                 Name = MarkTool,
+                Exercise =
+                    "Land or drive on a planet, then say \"mark this spot\". The reply confirms a mark, named "
+                    + "\"mark 1\" if you gave no name. It lasts until you leave the body.",
                 Description =
                     "Save the Commander's live position on this body as a mark. Without a name it is called "
                     + "\"mark 1\", \"mark 2\" and so on. Marks last until the Commander leaves the body.",
@@ -77,6 +80,9 @@ public static class SurfaceGuidanceCapability
             new ToolDefinition
             {
                 Name = BearingTool,
+                Exercise =
+                    "After marking a spot, move away and ask D47 for the bearing to the ship. The reply gives the "
+                    + "bearing and the distance from where you are.",
                 Description =
                     "Give the bearing and distance from the Commander's live position to a saved point on this "
                     + "body: the ship, a mark, or a genus or species being sampled. \"nearest <name>\" gives the "

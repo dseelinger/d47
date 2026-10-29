@@ -45,6 +45,9 @@ public static class OnFootCapability
             new ToolDefinition
             {
                 Name = "get_on_foot_loadout",
+                Exercise =
+                    "Ask D47 what you are wearing on foot. The reply names the suit and its grade, the "
+                    + "modifications fitted and the slots left, and each weapon with its grade and modifications.",
                 Description =
                     "What the Commander is wearing and carrying on foot: the suit and its grade, the "
                     + "modifications fitted to it and how many slots are left, and each weapon with its "
@@ -54,6 +57,10 @@ public static class OnFootCapability
             new ToolDefinition
             {
                 Name = "get_on_foot_engineering",
+                Exercise =
+                    "Ask D47 what the Enhanced Tracking modification costs and who can fit it. The reply gives the "
+                    + "recipe, the engineers and the effect. Ask what it takes to reach grade three on a suit for the "
+                    + "materials and credits.",
                 Description =
                     "What an on-foot modification or grade upgrade costs and who can do it. Give a "
                     + "modification by name for its recipe, engineers and effect; give a suit or weapon "
@@ -90,6 +97,9 @@ public static class OnFootCapability
             new ToolDefinition
             {
                 Name = "find_micro_resource",
+                Exercise =
+                    "Ask D47 where to find a Circuit Board. The reply names the settlement types, buildings and "
+                    + "containers that hold it, how many you have, and what the Bartender asks in other Components.",
                 Description =
                     "Where one on-foot material comes from and what the Bartender will exchange for it: "
                     + "which settlement types, which buildings and which containers hold it, how many the "
@@ -122,6 +132,9 @@ public static class OnFootCapability
             {
                 Protected = true,
                 Name = "get_on_foot_plans",
+                Exercise =
+                    "Say \"what have I planned on foot\". The reply lists each suit and weapon plan, or says there "
+                    + "are none. The model cannot call it: it is refused if it asks.",
                 Description =
                     "Every suit and weapon the Commander is carrying or has planned for, with the grade "
                     + "each is at and how many slots its plan has an opinion about.",
@@ -137,6 +150,9 @@ public static class OnFootCapability
             {
                 Protected = true,
                 Name = "promote_on_foot_plan",
+                Exercise =
+                    "With a suit plan set, say \"put that on my checklist\". D47 proposes it and asks. Accept, and "
+                    + "the plan's steps become checklist lines. The model cannot do this: it is refused if it asks.",
                 Description =
                     "Offer a suit's or weapon's plan to the checklist. It is a proposal: the Commander "
                     + "accepts, and the grade always comes first because a grade 1 item has no "
@@ -155,6 +171,10 @@ public static class OnFootCapability
             {
                 Protected = true,
                 Name = "drop_on_foot_plan",
+                Exercise =
+                    "Open a planned suit on the On foot page and press Drop this plan, then answer Drop it. The "
+                    + "plan is gone, and what it already put on the checklist stays. The model cannot do this: it is "
+                    + "refused if it asks.",
                 Description =
                     "Drop a suit's or weapon's plan. The Commander's own act: not offered to the model, "
                     + "and refused if it asks. What the plan already put on the checklist is kept.",

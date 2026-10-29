@@ -29,6 +29,10 @@ public static class CommanderLogCapability
             new ToolDefinition
             {
                 Name = "get_commander_log",
+                Exercise =
+                    "Say \"have I met this commander\" with another Commander targeted, or ask about one by name. "
+                    + "The reply lists the encounters with when, the system, their ship and what happened, and never "
+                    + "includes message text.",
                 Description =
                     "Encounters with other Commanders, read from the journals: when, the system, their ship "
                     + "where known, and what happened. With a name, that Commander's encounters, newest first. "

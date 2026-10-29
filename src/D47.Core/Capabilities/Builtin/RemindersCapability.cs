@@ -89,6 +89,10 @@ public static class RemindersCapability
             new ToolDefinition
             {
                 Name = SetTool,
+                Exercise =
+                    "Say \"remind me to sell the cargo when I next dock\". D47 confirms the reminder and the moment "
+                    + "it waits for. It is said once, when you dock. The model cannot set one: it is refused if it "
+                    + "asks.",
                 Description =
                     "Store a reminder in the Commander's own words, said once when the journal reaches the "
                     + "trigger. The Commander's own act: reached only by saying \"remind me to\", not offered "
@@ -124,6 +128,9 @@ public static class RemindersCapability
             new ToolDefinition
             {
                 Name = ListTool,
+                Exercise =
+                    "With a reminder set, say \"what reminders do I have\". The reply lists each armed reminder "
+                    + "with the moment it waits for.",
                 Description = "List the journal reminders the Commander has armed, each with the moment it waits for.",
                 Commands =
                 [
@@ -137,6 +144,10 @@ public static class RemindersCapability
             new ToolDefinition
             {
                 Name = CancelTool,
+                Exercise =
+                    "With a reminder set, say \"cancel the reminder to sell the cargo\". The reply says the "
+                    + "reminder is cancelled, and \"what reminders do I have\" no longer lists it. The model cannot "
+                    + "do this: it is refused if it asks.",
                 Description =
                     "Cancel an armed journal reminder by words from its sentence. The Commander's own act: not "
                     + "offered to the model, and refused if it asks.",
@@ -157,6 +168,9 @@ public static class RemindersCapability
             new ToolDefinition
             {
                 Name = AcknowledgeTool,
+                Exercise =
+                    "When a reminder has just gone off, say \"noted\". The reminder is removed. With none just gone "
+                    + "off, the reply is \"No reminder has just gone off.\"",
                 Description =
                     "Remove the journal reminder that has just gone off. The Commander's own answer: reached only "
                     + "by saying \"noted\", not offered to the model, and refused if it asks.",
@@ -168,6 +182,10 @@ public static class RemindersCapability
             new ToolDefinition
             {
                 Name = SnoozeTool,
+                Exercise =
+                    "When a reminder has just gone off, say \"remind me next time\" to arm it again on the same "
+                    + "trigger, or \"remind me next session\" to arm it for the next session. The reply says which. "
+                    + "With none just gone off, the reply is \"No reminder has just gone off.\"",
                 Description =
                     "Arm the journal reminder that has just gone off again, on its own trigger or at the next "
                     + "session. The Commander's own answer: not offered to the model, and refused if it asks.",

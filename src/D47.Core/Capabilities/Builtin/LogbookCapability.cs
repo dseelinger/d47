@@ -49,6 +49,9 @@ public static class LogbookCapability
                 new ToolDefinition
                 {
                     Name = "estimate_log",
+                    Exercise =
+                        "Say \"what would a log cost\". The reply says what the log would cover and what writing it "
+                        + "would cost, and spends nothing. The model cannot do this: it is refused if it asks.",
                     Description =
                         "Work out what a Commander's log would cover and what writing it would cost, and get "
                         + "ready to write it. Spends nothing.",
@@ -78,6 +81,9 @@ public static class LogbookCapability
                 new ToolDefinition
                 {
                     Name = "write_log",
+                    Exercise =
+                        "After \"what would a log cost\", say \"write the log\". D47 writes the Commander's log and "
+                        + "says where it is saved. The model cannot do this: it is refused if it asks.",
                     Description =
                         "Write the log and save it: the one just quoted, or, with no quote, the span the "
                         + "settings name.",
@@ -95,6 +101,9 @@ public static class LogbookCapability
                 new ToolDefinition
                 {
                     Name = "list_logs",
+                    Exercise =
+                        "Say \"what logs have I written\". The reply lists each written log and where it is. The "
+                        + "model cannot do this: it is refused if it asks.",
                     Description = "Read back which Commander's logs have been written, and where they are.",
                     Protected = true,
                     Commands =

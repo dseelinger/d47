@@ -38,6 +38,9 @@ public static class MiningCapability
             new ToolDefinition
             {
                 Name = SetTool,
+                Exercise =
+                    "Say \"mining target platinum\". The reply confirms the target. While it is set, prospector "
+                    + "results name only platinum.",
                 Description =
                     "Set the material the Commander is mining for, and optionally the percentage a "
                     + "prospected rock has to hold. While it is set, prospector results name only that "
@@ -70,6 +73,9 @@ public static class MiningCapability
             new ToolDefinition
             {
                 Name = ClearTool,
+                Exercise =
+                    "With a mining target set, say \"clear the mining target\". The reply confirms it, and "
+                    + "prospector results name every material in the rock again.",
                 Description = "Clear the mining target, so prospector results name every material in the rock again.",
                 Commands =
                 [
@@ -81,6 +87,10 @@ public static class MiningCapability
             new ToolDefinition
             {
                 Name = EstimateTool,
+                Exercise =
+                    "Ask D47 how many limpets it takes to mine two hundred tonnes of platinum. The reply gives "
+                    + "collector and prospector limpet counts from your own past runs, or says there are none to go "
+                    + "on.",
                 Description =
                     "Estimate how many collector and prospector limpets it takes to mine a number of tonnes, "
                     + "from the Commander's own past mining runs. With a material, uses the runs that mined "
@@ -108,6 +118,9 @@ public static class MiningCapability
             new ToolDefinition
             {
                 Name = SitesTool,
+                Exercise =
+                    "Ask D47 where you have surface mined. The reply lists each body with the tonnes refined, the "
+                    + "runs and the last run, latest first. Name a material to list the sites that refined it.",
                 Description =
                     "List the bodies where the Commander surface mined from an SRV, such as with a Rhino: "
                     + "the tonnes refined, the runs, the last run and where on the body. With a material, "

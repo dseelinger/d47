@@ -111,6 +111,10 @@ public static class ChecklistCapability
             new ToolDefinition
             {
                 Name = "get_plan_shortfall",
+                Exercise =
+                    "With an engineering, colonisation or on-foot plan on your checklist, ask D47 what you still "
+                    + "need across your plans. The reply totals the materials you are short of against what you hold, "
+                    + "and names any engineer rank that blocks a grade.",
                 Description =
                     "What every live plan still needs, netted across all of them at once: exact material "
                     + "totals against what the Commander holds, storage caps that force more than one "
@@ -122,6 +126,9 @@ public static class ChecklistCapability
             new ToolDefinition
             {
                 Name = "add_to_checklist",
+                Exercise =
+                    "Say \"add buy a fuel scoop to my checklist\". D47 proposes the line and asks. Say \"yes\" and "
+                    + "the line is on the Custom list; say \"no\" and it is not.",
                 Description =
                     "Propose adding a line in the Commander's own words. It is not added until they "
                     + "agree — D47 cannot write their list itself.",
@@ -161,6 +168,10 @@ public static class ChecklistCapability
             new ToolDefinition
             {
                 Name = "propose_checklist_change",
+                Exercise =
+                    "With a line of your own on the Custom checklist, say \"mark buy a fuel scoop as done\". D47 "
+                    + "proposes the change and asks. Say \"yes\" and the line is ticked; before, nothing changes "
+                    + "until you answer.",
                 Description =
                     "Propose that one of the Commander's own lines is finished, is open again, should "
                     + "go, or should tick itself when a journal condition is met (change \"watch\", with "
@@ -202,6 +213,10 @@ public static class ChecklistCapability
             new ToolDefinition
             {
                 Name = "plan_ship_build",
+                Exercise =
+                    "Ask D47 to plan the frame shift drive slot of the ship you are flying as grade five Dirty "
+                    + "Drive Tuning. The reply says the slot is planned, and the plan appears on that ship's page "
+                    + "under Ships. It does not reach the checklist until you promote it.",
                 Description =
                     "Set what a ship's build wants in one slot: a blueprint, a grade, an experimental "
                     + "effect — any may be left out, and left out means \"any\" rather than "
@@ -255,6 +270,9 @@ public static class ChecklistCapability
             new ToolDefinition
             {
                 Name = "plan_on_foot_build",
+                Exercise =
+                    "Ask D47 to plan your suit at grade three. The reply says the plan is set, and it appears on "
+                    + "the suit's page on the On foot page. It does not reach the checklist until you promote it.",
                 Description =
                     "Set what a suit's or a hand weapon's plan says: a grade to buy at Pioneer Supplies, "
                     + "and modifications to have an engineer fit. The grade always comes first: a grade "
@@ -316,6 +334,9 @@ public static class ChecklistCapability
             new ToolDefinition
             {
                 Name = "plan_colonisation",
+                Exercise =
+                    "In a system you are in, ask D47 to plan a Coriolis starport at orbital slot one. The reply "
+                    + "says the plan holds that place and facility. D47 does not say what the facility costs.",
                 Description =
                     "Propose what a system's construction plan should say about one place — a body or an "
                     + "orbital slot — and what goes there. D47 holds the plan and counts what the depot "
@@ -356,6 +377,9 @@ public static class ChecklistCapability
             new ToolDefinition
             {
                 Name = "accept_proposal",
+                Exercise =
+                    "Ask D47 to add a line to your checklist, then say \"accept that\" while it is proposed. The "
+                    + "line is added and the reply says so. The model cannot do this: it is refused if it asks.",
                 Description =
                     "Accept what D47 proposed for the checklist. The Commander's own act: not offered to "
                     + "the model, and refused if it asks.",
@@ -377,6 +401,10 @@ public static class ChecklistCapability
             new ToolDefinition
             {
                 Name = "decline_proposal",
+                Exercise =
+                    "Ask D47 to add a line to your checklist, then say \"decline it\" while it is proposed. The "
+                    + "proposal is dropped and the line is not added. The model cannot do this: it is refused if it "
+                    + "asks.",
                 Description =
                     "Decline what D47 proposed for the checklist. The Commander's own act, like accepting.",
                 Protected = true,
@@ -399,6 +427,10 @@ public static class ChecklistCapability
             new ToolDefinition
             {
                 Name = "move_checklist_item",
+                Exercise =
+                    "Select a line on the Checklist page and say \"move it to the top\". The line moves to the top "
+                    + "of its list, and the reply says so. \"Move it down\", \"up one\" and \"move it to the bottom\" "
+                    + "work the same way.",
                 Description =
                     "Move a line up, down, to the top or to the bottom of the checklist. The "
                     + "Commander's own act: not offered to the model, and refused if it asks.",

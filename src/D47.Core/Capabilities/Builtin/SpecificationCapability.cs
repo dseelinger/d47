@@ -36,6 +36,9 @@ public static class SpecificationCapability
             new ToolDefinition
             {
                 Name = "get_ship_specification",
+                Exercise =
+                    "Ask D47 for the specification of the Python. The reply gives the pad size, speed and boost, "
+                    + "hull and shield strength, the hardpoint and internal sizes, and the hull cost.",
                 Description =
                     "What a ship can do before it is outfitted: landing pad size, speed and boost, base "
                     + "hull and shield strength, hardpoint and internal compartment sizes, crew seats and "
@@ -57,6 +60,9 @@ public static class SpecificationCapability
             new ToolDefinition
             {
                 Name = "get_module_specification",
+                Exercise =
+                    "Ask D47 what a 5A frame shift drive weighs and costs. The reply gives its mass, power draw and "
+                    + "price. A module name with no size returns the sizes that exist.",
                 Description =
                     "What a module weighs, draws and costs, for a frame shift drive the numbers a jump "
                     + "range is computed from, and for a bulkhead what it adds to the hull and how it "

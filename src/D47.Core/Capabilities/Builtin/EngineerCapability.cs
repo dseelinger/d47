@@ -59,6 +59,9 @@ public static class EngineerCapability
             new ToolDefinition
             {
                 Name = "get_engineer_progress",
+                Exercise =
+                    "Ask D47 how far along you are with the engineers. The reply says which are unlocked and at "
+                    + "what grade, which have invited you, and which you have not met.",
                 AlwaysLoaded = true,
                 Description =
                     "How far along the Commander is with every engineer: which are unlocked and at what "
@@ -69,6 +72,9 @@ public static class EngineerCapability
             new ToolDefinition
             {
                 Name = "find_engineer",
+                Exercise =
+                    "Ask D47 about the engineer Felicity Farseer. The reply says where she works, what she modifies "
+                    + "and to what grade, who must recommend her, and how far along you are with her.",
                 Description =
                     "Look an engineer up by name, find who grades a kind of module, or find who is based "
                     + "in a system. Says where they work, what they modify and to what grade, who has to "
@@ -106,6 +112,9 @@ public static class EngineerCapability
             new ToolDefinition
             {
                 Name = "get_engineer_prerequisites",
+                Exercise =
+                    "Ask D47 what is standing between you and Felicity Farseer. The reply lists the prerequisites "
+                    + "from her unlock chain that are not yet met, each with D47's reading of it.",
                 Description =
                     "What is still standing between the Commander and one engineer: the prerequisites from "
                     + "their unlock chain that are not yet met, each with d47's reading of it.",
@@ -126,6 +135,9 @@ public static class EngineerCapability
             new ToolDefinition
             {
                 Name = "get_engineer_unlock_requirements",
+                Exercise =
+                    "Ask D47 which engineers ask for a rank or a reputation. The reply covers every engineer at "
+                    + "once, with your standing against each step of their unlock chain.",
                 Description =
                     "Every engineer's unlock chain in one call, with the Commander's standing against "
                     + "each step: who refers them, what earns the invitation, what it asks for, and "
@@ -142,6 +154,9 @@ public static class EngineerCapability
             {
                 Protected = true,
                 Name = "get_engineer_route",
+                Exercise =
+                    "Say \"who should I unlock next\". The reply names the next engineers to unlock in order, with "
+                    + "what each asks for. The model cannot call it: it is refused if it asks.",
                 Description =
                     "Which engineer to unlock next, ranked by the trip it takes and how much of what the "
                     + "Commander has planned it covers. Shows its working: the stops, the distance in "

@@ -95,6 +95,10 @@ public static class ShipsCapability
                 // means to do about it.
                 Protected = true,
                 Name = "get_ship_plans",
+                Exercise =
+                    "Say \"what have I planned\". The reply lists each ship build you have planned and what its "
+                    + "slots hold, or says there are none. The model cannot call it: it is refused if it asks. The "
+                    + "model cannot call it: it is refused if it asks.",
                 Description =
                     "Every ship the Commander owns and every hull they intend to buy, with where each "
                     + "one is and how many slots its build has an opinion about.",
@@ -110,6 +114,10 @@ public static class ShipsCapability
             new ToolDefinition
             {
                 Name = "promote_ship_plan",
+                Exercise =
+                    "With a ship build planned, say \"put that on my checklist\". D47 proposes it and asks. Accept, "
+                    + "and each planned slot becomes a checklist line for its blueprint and grade. The model cannot "
+                    + "do this: it is refused if it asks.",
                 Description =
                     "Offer a ship's build to the checklist. It is a proposal: the Commander accepts, and "
                     + "each planned slot becomes a line for its blueprint and grade, plus a second line "
@@ -136,6 +144,9 @@ public static class ShipsCapability
             new ToolDefinition
             {
                 Name = "talk_about_build",
+                Exercise =
+                    "Open a ship's page under Ships and ask D47 to make the build jump further. The reply critiques "
+                    + "the build, and any changes it suggests appear on that page without being applied.",
                 Description =
                     "Pass the Commander's remark about a ship's build to the build adviser: a question about "
                     + "a slot, a request for a critique, or a goal such as making it jump further. It answers "
@@ -158,6 +169,10 @@ public static class ShipsCapability
             new ToolDefinition
             {
                 Name = "drop_ship_plan",
+                Exercise =
+                    "Open a planned ship under Ships and press Drop this ship, then answer Drop it. The plan is "
+                    + "gone, and what it already put on the checklist stays. The button appears only for a planned "
+                    + "hull you do not own. The model cannot do this: it is refused if it asks.",
                 Description =
                     "Drop a ship's build. The Commander's own act: not offered to the model, and refused "
                     + "if it asks. What the plan already put on the checklist is kept.",

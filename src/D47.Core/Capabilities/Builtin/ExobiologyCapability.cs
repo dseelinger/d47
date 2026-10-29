@@ -73,6 +73,10 @@ public static class ExobiologyCapability
             new ToolDefinition
             {
                 Name = "get_body_biology",
+                Exercise =
+                    "In a system where you have scanned a body with a detailed surface scan, ask D47 what biology "
+                    + "is on it. The reply gives the number of biological signals and the genera. A mapped body also "
+                    + "lists the species its conditions allow, with their values.",
                 Description =
                     "What the Commander's own detailed surface scan found on a body: how many "
                     + "biological signals, which genera, and what else is down there. This is the "
@@ -116,6 +120,10 @@ public static class ExobiologyCapability
             new ToolDefinition
             {
                 Name = "get_sampling_progress",
+                Exercise =
+                    "While sampling on a body, say \"how much further\". The reply gives the genus, how many of the "
+                    + "three samples you have taken, and how many metres remain before the next sample is far enough "
+                    + "away.",
                 Description =
                     "What the Commander has sampled on the body they are on: which genus, how many "
                     + "specimens of the three, how far they have moved since the last one, and what "
@@ -138,6 +146,9 @@ public static class ExobiologyCapability
             new ToolDefinition
             {
                 Name = "get_unsold_exobiology",
+                Exercise =
+                    "Ask D47 how much organic data you are carrying. The reply gives the total value, the number of "
+                    + "analyses, and how many carry the first footfall bonus.",
                 Description =
                     "The organic data the Commander has analysed and not yet sold at Vista Genomics: its "
                     + "total value, how many analyses, how many carry the first footfall bonus, and any "
@@ -148,6 +159,10 @@ public static class ExobiologyCapability
             new ToolDefinition
             {
                 Name = ResetTool,
+                Exercise =
+                    "Say \"reset unsold exobiology\", or press Reset organic data on the Unsold data page. The "
+                    + "total goes to zero from now, and the Unsold data page reads \"Counting from zero.\" The model "
+                    + "cannot do this: it is refused if it asks.",
                 Description = "Set the Commander's unsold exobiology total to zero from now.",
                 Parameters = [],
                 Protected = true,
@@ -157,6 +172,9 @@ public static class ExobiologyCapability
             new ToolDefinition
             {
                 Name = "plot_exobiology_route",
+                Exercise =
+                    "Ask D47 to plot an exobiology route with a jump range of forty light years. The reply lists "
+                    + "systems with surveyed biology in order, with the species on each body and its value.",
                 Description =
                     "Plot a circuit through systems with known, already-surveyed biology, with the "
                     + "species on each body and what each is worth. The route avoids Thargoid systems. "

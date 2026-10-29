@@ -48,6 +48,9 @@ public static class ActivitiesCapability
             new ToolDefinition
             {
                 Name = StaleTool,
+                Exercise =
+                    "Ask D47 which activities you have gone longest without. The reply names three, oldest first, "
+                    + "each with how long ago. An activity you switched off is not among them.",
                 Description =
                     "Name the three activities the Commander has gone longest without doing, oldest first, "
                     + "each with how long ago. Activities the Commander switched off are left out.",
@@ -56,6 +59,8 @@ public static class ActivitiesCapability
             new ToolDefinition
             {
                 Name = LastDoneTool,
+                Exercise =
+                    "Say \"when did I last do mining\". The reply gives the date and how long ago.",
                 Description = "Say when the Commander last did one activity, with the date and how long ago.",
                 Parameters = [ActivityParameter()],
                 Commands = [.. LastDonePhrases()],
@@ -64,6 +69,10 @@ public static class ActivitiesCapability
             new ToolDefinition
             {
                 Name = SuggestTool,
+                Exercise =
+                    "Say \"don't suggest mining anymore\". The reply confirms, and mining is no longer suggested; "
+                    + "its date stays on the Activities page. Say \"suggest mining again\" to put it back. The model "
+                    + "cannot do this: it is refused if it asks.",
                 Description =
                     "Stop suggesting one activity, or suggest it again. Its date stays on the Activities page. "
                     + "The Commander's own decision.",

@@ -32,6 +32,10 @@ public static class CommandersCapability
             new ToolDefinition
             {
                 Name = SwitchTool,
+                Exercise =
+                    "With journals from two Commanders present, say \"switch to commander\" followed by the other's "
+                    + "name. D47 switches to that Commander and says so. The model cannot do this: it is refused if "
+                    + "it asks.",
                 Description =
                     "Switch d47 to another Commander found in the journals. Reachable by spoken phrase, "
                     + "the panel or a hotkey, never by the model.",
