@@ -62,20 +62,11 @@ public static class CommunityGoalCapability
                     + "station they have docked at.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description = "Only goals whose title contains this. Leave out for all of them.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "include_finished",
-                        Type = ToolParameterType.Boolean,
-                        Description =
-                            "Also list goals that have already expired, with what they paid out. "
-                            + "Default false — an expired goal cannot be contributed to.",
-                    },
+                    ToolParameter.Text("name", "Only goals whose title contains this. Leave out for all of them."),
+                    ToolParameter.Flag(
+                        "include_finished",
+                        "Also list goals that have already expired, with what they paid out. "
+                            + "Default false — an expired goal cannot be contributed to."),
                 ],
                 Handler = (arguments, _) =>
                     Task.FromResult(Describe(commander, now, arguments)),
@@ -92,13 +83,7 @@ public static class CommunityGoalCapability
                     + "maintenance).",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "range",
-                        Type = ToolParameterType.String,
-                        Description = "Which stretch. Default session.",
-                        AllowedValues = ["session", "today", "week"],
-                    },
+                    ToolParameter.OneOf("range", "Which stretch. Default session.", ["session", "today", "week"]),
                 ],
 
                 // The three questions the issue names, matched whole so none swallows a longer sentence, and

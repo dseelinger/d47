@@ -41,21 +41,14 @@ public static class PowerplayCapability
                     + "Defaults to the pledged Power at the Commander's rank; for another Power it defaults to rank 100.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "power",
-                        Type = ToolParameterType.String,
-                        Description = "The Power to ask about. Defaults to the Power the Commander is pledged to.",
-                        AllowedValues = PowerplayRanks.Powers,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "rank",
-                        Type = ToolParameterType.Integer,
-                        Description =
-                            "A rank from 1 to 100. Defaults to the Commander's rank for their own Power, and to 100 "
-                            + "for any other.",
-                    },
+                    ToolParameter.OneOf(
+                        "power",
+                        "The Power to ask about. Defaults to the Power the Commander is pledged to.",
+                        PowerplayRanks.Powers),
+                    ToolParameter.Integer(
+                        "rank",
+                        "A rank from 1 to 100. Defaults to the Commander's rank for their own Power, and to 100 "
+                            + "for any other."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Answer(state(), arguments)),
             },

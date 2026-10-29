@@ -21,6 +21,28 @@ public sealed record ToolParameter
 
     /// <summary>A closed vocabulary.</summary>
     public IReadOnlyList<string> AllowedValues { get; init; } = [];
+
+    public static ToolParameter Text(string name, string description, bool required = false) =>
+        new() { Name = name, Type = ToolParameterType.String, Description = description, Required = required };
+
+    public static ToolParameter OneOf(string name, string description, IReadOnlyList<string> values, bool required = false) =>
+        new()
+        {
+            Name = name,
+            Type = ToolParameterType.String,
+            Description = description,
+            Required = required,
+            AllowedValues = values,
+        };
+
+    public static ToolParameter Integer(string name, string description, bool required = false) =>
+        new() { Name = name, Type = ToolParameterType.Integer, Description = description, Required = required };
+
+    public static ToolParameter Number(string name, string description, bool required = false) =>
+        new() { Name = name, Type = ToolParameterType.Number, Description = description, Required = required };
+
+    public static ToolParameter Flag(string name, string description, bool required = false) =>
+        new() { Name = name, Type = ToolParameterType.Boolean, Description = description, Required = required };
 }
 
 /// <summary>Who says a tool's result when it is not the ship's AI.</summary>
@@ -73,6 +95,14 @@ public delegate Task<ToolResult> ToolHandler(ToolArguments arguments, Cancellati
 /// </summary>
 public sealed record ToolCommandPhrase(string Phrase, IReadOnlyDictionary<string, string> Arguments)
 {
+    /// <summary>A phrase that carries no arguments.</summary>
+    public ToolCommandPhrase(string phrase)
+        : this(phrase, NoArguments)
+    {
+    }
+
+    private static readonly IReadOnlyDictionary<string, string> NoArguments = new Dictionary<string, string>();
+
     /// <summary>Whether this phrase is live right now.</summary>
     public Func<bool>? When { get; init; }
 }

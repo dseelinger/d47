@@ -100,22 +100,16 @@ public static class DiagnosticsCapability
                         "Change one subsystem's minimum log level. Takes effect immediately, with no restart.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "subsystem",
-                            Type = ToolParameterType.String,
-                            Description = "Which subsystem to change the log level for.",
-                            Required = true,
-                            AllowedValues = Subsystems.All,
-                        },
-                        new ToolParameter
-                        {
-                            Name = "level",
-                            Type = ToolParameterType.String,
-                            Description = "The new minimum level. Trace is the most detailed; None silences the subsystem.",
-                            Required = true,
-                            AllowedValues = LogLevelNames,
-                        },
+                        ToolParameter.OneOf(
+                            "subsystem",
+                            "Which subsystem to change the log level for.",
+                            Subsystems.All,
+                            required: true),
+                        ToolParameter.OneOf(
+                            "level",
+                            "The new minimum level. Trace is the most detailed; None silences the subsystem.",
+                            LogLevelNames,
+                            required: true),
                     ],
                     Handler = (arguments, _) => Task.FromResult(SetVerbosity(arguments, settings)),
                 },

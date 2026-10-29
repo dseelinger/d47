@@ -57,20 +57,17 @@ public static class LogbookCapability
                         + "ready to write it. Spends nothing.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "range",
-                            Type = ToolParameterType.String,
-                            Description = "What span to cover. Omit for whatever the settings say.",
-                            AllowedValues = LogRanges.Ids,
-                        },
+                        ToolParameter.OneOf(
+                            "range",
+                            "What span to cover. Omit for whatever the settings say.",
+                            LogRanges.Ids),
                     ],
                     Protected = true,
                     Commands =
                     [
-                        new ToolCommandPhrase("write my commander's log", new Dictionary<string, string>()),
-                        new ToolCommandPhrase("write up my session", new Dictionary<string, string>()),
-                        new ToolCommandPhrase("what would a log cost", new Dictionary<string, string>()),
+                        new ToolCommandPhrase("write my commander's log"),
+                        new ToolCommandPhrase("write up my session"),
+                        new ToolCommandPhrase("what would a log cost"),
                         new ToolCommandPhrase(
                             "write up my week",
                             new Dictionary<string, string> { ["range"] = "week" }),
@@ -90,9 +87,9 @@ public static class LogbookCapability
                     Protected = true,
                     Commands =
                     [
-                        new ToolCommandPhrase("write the log", new Dictionary<string, string>()),
-                        new ToolCommandPhrase("write it up", new Dictionary<string, string>()),
-                        new ToolCommandPhrase("go ahead and write it", new Dictionary<string, string>()),
+                        new ToolCommandPhrase("write the log"),
+                        new ToolCommandPhrase("write it up"),
+                        new ToolCommandPhrase("go ahead and write it"),
                     ],
                     Handler = async (_, cancellationToken) => await WriteAsync(book, cancellationToken)
                         .ConfigureAwait(false),
@@ -108,8 +105,8 @@ public static class LogbookCapability
                     Protected = true,
                     Commands =
                     [
-                        new ToolCommandPhrase("what logs have I written", new Dictionary<string, string>()),
-                        new ToolCommandPhrase("show me my logs", new Dictionary<string, string>()),
+                        new ToolCommandPhrase("what logs have I written"),
+                        new ToolCommandPhrase("show me my logs"),
                     ],
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(Summarise(book))),
                 },

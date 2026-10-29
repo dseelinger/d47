@@ -119,21 +119,12 @@ public static class CommsCapability
                     + "from another Commander asked for one.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "message",
-                        Type = ToolParameterType.String,
-                        Description = "The message, as the Commander wants it to appear.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "channel",
-                        Type = ToolParameterType.String,
-                        Description = "Who sees it.",
-                        Required = true,
-                        AllowedValues = ["local", "system", "wing", "squadron"],
-                    },
+                    ToolParameter.Text("message", "The message, as the Commander wants it to appear.", required: true),
+                    ToolParameter.OneOf(
+                        "channel",
+                        "Who sees it.",
+                        ["local", "system", "wing", "squadron"],
+                        required: true),
                 ],
                 SendsInput = true,
                 Handler = (arguments, cancellationToken) => Send(arguments, actions, enabled, cancellationToken),
@@ -150,9 +141,9 @@ public static class CommsCapability
                     + "It cannot see the inbox itself.",
                 Commands =
                 [
-                    new ToolCommandPhrase("read my mail", NoArguments),
-                    new ToolCommandPhrase("any mail", NoArguments),
-                    new ToolCommandPhrase("check my messages", NoArguments),
+                    new ToolCommandPhrase("read my mail"),
+                    new ToolCommandPhrase("any mail"),
+                    new ToolCommandPhrase("check my messages"),
                 ],
                 Handler = (_, _) => Task.FromResult(ReadMail(mail, commander?.Invoke())),
             },
@@ -167,10 +158,10 @@ public static class CommsCapability
                     + "Elite does not report most friends leaving, so this is not who is online now.",
                 Commands =
                 [
-                    new ToolCommandPhrase("who's online", NoArguments),
-                    new ToolCommandPhrase("who is online", NoArguments),
-                    new ToolCommandPhrase("which friends are online", NoArguments),
-                    new ToolCommandPhrase("any friends online", NoArguments),
+                    new ToolCommandPhrase("who's online"),
+                    new ToolCommandPhrase("who is online"),
+                    new ToolCommandPhrase("which friends are online"),
+                    new ToolCommandPhrase("any friends online"),
                 ],
                 Handler = (_, _) => Task.FromResult(FriendsOnline(friends, gameRunning)),
             },
@@ -185,20 +176,12 @@ public static class CommsCapability
                     + "the selection.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "channel",
-                        Type = ToolParameterType.String,
-                        Description = "A channel by name, or next, previous or current to move from the one selected.",
-                        Required = true,
-                        AllowedValues = [.. ChannelNames.Values, Next, Previous, Current],
-                    },
-                    new ToolParameter
-                    {
-                        Name = "sub_channel",
-                        Type = ToolParameterType.String,
-                        Description = "Who on the channel, by name, or next or previous.",
-                    },
+                    ToolParameter.OneOf(
+                        "channel",
+                        "A channel by name, or next, previous or current to move from the one selected.",
+                        [.. ChannelNames.Values, Next, Previous, Current],
+                        required: true),
+                    ToolParameter.Text("sub_channel", "Who on the channel, by name, or next or previous."),
                 ],
 
                 // Who the Commander's voice reaches is the Commander's choice alone.
@@ -359,8 +342,6 @@ public static class CommsCapability
             : new(StringComparer.Ordinal) { ["channel"] = channel, ["sub_channel"] = subChannel };
 
     private static bool Same(string left, string right) => string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
-
-    private static readonly IReadOnlyDictionary<string, string> NoArguments = new Dictionary<string, string>();
 
     private static ToolResult FriendsOnline(FriendRoster? friends, Func<bool>? gameRunning)
     {

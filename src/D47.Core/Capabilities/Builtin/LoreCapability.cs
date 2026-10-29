@@ -91,15 +91,11 @@ public static class LoreCapability
                     + "unverified, and read back that way.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "note",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "What is worth remembering, in one or two sentences. Facts about the place, "
+                    ToolParameter.Text(
+                        "note",
+                        "What is worth remembering, in one or two sentences. Facts about the place, "
                             + "not about what the Commander is doing today.",
-                        Required = true,
-                    },
+                        required: true),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Remember(book, here(), now(), arguments)),
             },

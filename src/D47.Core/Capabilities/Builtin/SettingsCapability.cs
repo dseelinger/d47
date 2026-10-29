@@ -52,13 +52,7 @@ public static class SettingsCapability
                     Description = "Report the current value of one setting by key.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "key",
-                            Type = ToolParameterType.String,
-                            Description = "The setting key, as reported by list_settings.",
-                            Required = true,
-                        },
+                        ToolParameter.Text("key", "The setting key, as reported by list_settings.", required: true),
                     ],
                     Handler = (arguments, _) => Task.FromResult(Get(settings, arguments)),
                 },
@@ -75,19 +69,8 @@ public static class SettingsCapability
                         + "those are changed from the settings panel by the Commander.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "key",
-                            Type = ToolParameterType.String,
-                            Description = "The setting key, as reported by list_settings.",
-                            Required = true,
-                        },
-                        new ToolParameter
-                        {
-                            Name = "value",
-                            Type = ToolParameterType.String,
-                            Description = "The new value. Omit it to clear the setting back to its default.",
-                        },
+                        ToolParameter.Text("key", "The setting key, as reported by list_settings.", required: true),
+                        ToolParameter.Text("value", "The new value. Omit it to clear the setting back to its default."),
                     ],
                     Handler = (arguments, _) => Task.FromResult(Set(settings, arguments)),
                 },

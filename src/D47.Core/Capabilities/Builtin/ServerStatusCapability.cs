@@ -7,8 +7,6 @@ public static class ServerStatusCapability
 {
     public const string Id = "server-status";
 
-    private static readonly IReadOnlyDictionary<string, string> NoArguments = new Dictionary<string, string>();
-
     public static CapabilityDescriptor Create(Func<ServerStatusWatch?> watch, Func<bool> enabled, Func<DateTimeOffset> now) => new()
     {
         Id = Id,
@@ -32,9 +30,9 @@ public static class ServerStatusCapability
                 Parameters = [],
                 Commands =
                 [
-                    new ToolCommandPhrase("are the servers up", NoArguments),
-                    new ToolCommandPhrase("is elite down", NoArguments),
-                    new ToolCommandPhrase("server status", NoArguments),
+                    new ToolCommandPhrase("are the servers up"),
+                    new ToolCommandPhrase("is elite down"),
+                    new ToolCommandPhrase("server status"),
                 ],
                 Handler = (_, _) => Task.FromResult(Answer(watch(), enabled(), now())),
             },

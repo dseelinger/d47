@@ -48,13 +48,7 @@ public static class MacroCapability
                     + "game state exist; anything else comes back saying so.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description = "The macro's name, as the Commander wrote it.",
-                        Required = true,
-                    },
+                    ToolParameter.Text("name", "The macro's name, as the Commander wrote it.", required: true),
                 ],
                 SendsInput = true,
                 Handler = (arguments, cancellationToken) => Run(arguments, store, actions, false, cancellationToken),
@@ -71,13 +65,7 @@ public static class MacroCapability
                     + "Only the Commander can run it.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description = "The macro's name, as the Commander wrote it.",
-                        Required = true,
-                    },
+                    ToolParameter.Text("name", "The macro's name, as the Commander wrote it.", required: true),
                 ],
                 SendsInput = true,
                 Protected = true,

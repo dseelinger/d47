@@ -69,8 +69,8 @@ public static class MemoryCapability
                     Protected = true,
                     Commands =
                     [
-                        new ToolCommandPhrase("what do you remember about me", new Dictionary<string, string>()),
-                        new ToolCommandPhrase("what do you know about me", new Dictionary<string, string>()),
+                        new ToolCommandPhrase("what do you remember about me"),
+                        new ToolCommandPhrase("what do you know about me"),
                     ],
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(
                         book is null
@@ -94,13 +94,7 @@ public static class MemoryCapability
                         + "today. Stored as unverified.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "fact",
-                            Type = ToolParameterType.String,
-                            Description = "The fact, in one sentence.",
-                            Required = true,
-                        },
+                        ToolParameter.Text("fact", "The fact, in one sentence.", required: true),
                     ],
                     Handler = (arguments, _) => Task.FromResult(
                         Remember(book, settings.Current.Memory, now(), arguments)),
@@ -116,13 +110,10 @@ public static class MemoryCapability
                     Description = "Forget one thing D47 has written down about the Commander, by its key.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "key",
-                            Type = ToolParameterType.String,
-                            Description = "The key of the entry to forget, as read back by get_memories.",
-                            Required = true,
-                        },
+                        ToolParameter.Text(
+                            "key",
+                            "The key of the entry to forget, as read back by get_memories.",
+                            required: true),
                     ],
 
                     // Protected, and here it is safety rather than room.

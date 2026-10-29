@@ -205,14 +205,10 @@ public static class ListeningCapability
                     + "table, so it can never name a word the keyboard would refuse.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "letter",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "One letter to give the word for. Pass all for the whole alphabet. Left out, "
-                            + "D47 says how spelling by voice works.",
-                    },
+                    ToolParameter.Text(
+                        "letter",
+                        "One letter to give the word for. Pass all for the whole alphabet. Left out, "
+                            + "D47 says how spelling by voice works."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
                     Spelling.Tutor(arguments.TryGetString("letter", out var letter) ? letter : null))),

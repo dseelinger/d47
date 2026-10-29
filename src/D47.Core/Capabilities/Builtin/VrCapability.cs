@@ -96,9 +96,6 @@ public static class VrCapability
         public Func<string, VrResetOutcome> ResetPlacement { get; init; } = _ => VrResetOutcome.ResetNoHeadset;
     }
 
-    private static readonly IReadOnlyDictionary<string, string> Nothing =
-        new Dictionary<string, string>(StringComparer.Ordinal);
-
     /// <summary>The words <c>zoom_headset_panel</c> takes, in order.</summary>
     public static IReadOnlyList<string> ZoomDirections { get; } = ["in", "out", "reset"];
 
@@ -143,13 +140,10 @@ public static class VrCapability
                     + "get_headset_status only reports.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "on",
-                        Type = ToolParameterType.Boolean,
-                        Description = "True to show D47 in the headset, false to leave SteamVR alone.",
-                        Required = true,
-                    },
+                    ToolParameter.Flag(
+                        "on",
+                        "True to show D47 in the headset, false to leave SteamVR alone.",
+                        required: true),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Show(settings, headset, arguments)),
             },
@@ -169,22 +163,15 @@ public static class VrCapability
                     + "front of the Commander first if it was still riding their head.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "direction",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "Which way. turn-left and turn-right swing the face of the panel towards "
+                    ToolParameter.OneOf(
+                        "direction",
+                        "Which way. turn-left and turn-right swing the face of the panel towards "
                             + "that side; tilt-up leans it back to face the Commander.",
-                        Required = true,
-                        AllowedValues = VrNudges.Names,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "steps",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many steps, 1 to 20. One step is 5 cm or 5 degrees. Defaults to one.",
-                    },
+                        VrNudges.Names,
+                        required: true),
+                    ToolParameter.Integer(
+                        "steps",
+                        "How many steps, 1 to 20. One step is 5 cm or 5 degrees. Defaults to one."),
                 ],
                 Commands = [.. NudgePhrases()],
                 Handler = (arguments, _) => Task.FromResult(Move(headset, arguments)),
@@ -202,11 +189,11 @@ public static class VrCapability
                     + "panel is on screen and leaves it world-locked.",
                 Commands =
                 [
-                    new ToolCommandPhrase("place the panel here", Nothing),
-                    new ToolCommandPhrase("put the panel here", Nothing),
-                    new ToolCommandPhrase("place the vr panel here", Nothing),
-                    new ToolCommandPhrase("put the vr panel here", Nothing),
-                    new ToolCommandPhrase("panel here", Nothing),
+                    new ToolCommandPhrase("place the panel here"),
+                    new ToolCommandPhrase("put the panel here"),
+                    new ToolCommandPhrase("place the vr panel here"),
+                    new ToolCommandPhrase("put the vr panel here"),
+                    new ToolCommandPhrase("panel here"),
                 ],
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(headset.PlaceWhereLooking() switch
                 {
@@ -228,9 +215,9 @@ public static class VrCapability
                     + "Size, curvature, scale and resolution are untouched.",
                 Commands =
                 [
-                    new ToolCommandPhrase("reset the panel", Nothing),
-                    new ToolCommandPhrase("reset the vr panel", Nothing),
-                    new ToolCommandPhrase("reset panel position", Nothing),
+                    new ToolCommandPhrase("reset the panel"),
+                    new ToolCommandPhrase("reset the vr panel"),
+                    new ToolCommandPhrase("reset panel position"),
                 ],
                 Handler = (_, _) => Task.FromResult(
                     ToolResult.Ok(DescribeReset(headset.ResetPlacement(CurrentSlot)))),
@@ -249,14 +236,11 @@ public static class VrCapability
                     + "Acts on whichever panel is on screen.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "direction",
-                        Type = ToolParameterType.String,
-                        Description = "in draws it one step larger, out one step smaller, reset at 100%.",
-                        Required = true,
-                        AllowedValues = ZoomDirections,
-                    },
+                    ToolParameter.OneOf(
+                        "direction",
+                        "in draws it one step larger, out one step smaller, reset at 100%.",
+                        ZoomDirections,
+                        required: true),
                 ],
                 Commands = [.. ZoomPhrases()],
                 Handler = (arguments, _) => Task.FromResult(Zoom(settings, arguments)),
@@ -273,13 +257,7 @@ public static class VrCapability
                     + "with a motion controller to change its shape, or take it out again.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "on",
-                        Type = ToolParameterType.Boolean,
-                        Description = "True to enter resize mode, false to leave it.",
-                        Required = true,
-                    },
+                    ToolParameter.Flag("on", "True to enter resize mode, false to leave it.", required: true),
                 ],
                 Commands = [.. ResizePhrases()],
                 Handler = (arguments, _) => Task.FromResult(

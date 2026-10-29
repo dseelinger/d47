@@ -73,14 +73,9 @@ public static class HelpCapability
                 AlwaysLoaded = true,
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "group",
-                        Type = ToolParameterType.String,
-                        // Plain ASCII, no quotes.
-                        Description =
-                            "Optional group name to expand, such as Voice. Omit for the overview.",
-                    },
+                    ToolParameter.Text(
+                        "group",
+                        "Optional group name to expand, such as Voice. Omit for the overview."),
                 ],
                 Handler = (arguments, _) =>
                 {
@@ -102,13 +97,7 @@ public static class HelpCapability
                     + "phrase for something, or that it cannot be done; the phrase book may hold one.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "goal",
-                        Type = ToolParameterType.String,
-                        Description = "What the Commander wants to do, in a few plain words.",
-                        Required = true,
-                    },
+                    ToolParameter.Text("goal", "What the Commander wants to do, in a few plain words.", required: true),
                 ],
                 Handler = (arguments, _) =>
                 {

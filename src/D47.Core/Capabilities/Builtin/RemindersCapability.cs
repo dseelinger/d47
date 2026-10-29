@@ -100,27 +100,16 @@ public static class RemindersCapability
                 Protected = true,
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "sentence",
-                        Type = ToolParameterType.String,
-                        Description = "What to say when it fires, as the Commander said it.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "trigger",
-                        Type = ToolParameterType.String,
-                        Description = "The moment in the game it waits for.",
-                        Required = true,
-                        AllowedValues = [.. TriggerNames.Keys],
-                    },
-                    new ToolParameter
-                    {
-                        Name = "argument",
-                        Type = ToolParameterType.String,
-                        Description = "The station, system or material the trigger names.",
-                    },
+                    ToolParameter.Text(
+                        "sentence",
+                        "What to say when it fires, as the Commander said it.",
+                        required: true),
+                    ToolParameter.OneOf(
+                        "trigger",
+                        "The moment in the game it waits for.",
+                        [.. TriggerNames.Keys],
+                        required: true),
+                    ToolParameter.Text("argument", "The station, system or material the trigger names."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Set(store, frontierId(), now(), arguments)),
             },
@@ -154,13 +143,7 @@ public static class RemindersCapability
                 Protected = true,
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "words",
-                        Type = ToolParameterType.String,
-                        Description = "Words from the sentence of the reminder to cancel.",
-                        Required = true,
-                    },
+                    ToolParameter.Text("words", "Words from the sentence of the reminder to cancel.", required: true),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Cancel(store, frontierId(), arguments)),
             },
@@ -192,13 +175,10 @@ public static class RemindersCapability
                 Protected = true,
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "until",
-                        Type = ToolParameterType.String,
-                        Description = "When it goes off again: the same moment, or the next session.",
-                        AllowedValues = [SameTrigger, "next_session"],
-                    },
+                    ToolParameter.OneOf(
+                        "until",
+                        "When it goes off again: the same moment, or the next session.",
+                        [SameTrigger, "next_session"]),
                 ],
                 Commands =
                 [

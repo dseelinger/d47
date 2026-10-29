@@ -48,13 +48,10 @@ public static class BindingProfilesCapability
                     + "Refused while Elite is running.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description = "What to call the profile: letters, digits, spaces, hyphens and underscores.",
-                        Required = true,
-                    },
+                    ToolParameter.Text(
+                        "name",
+                        "What to call the profile: letters, digits, spaces, hyphens and underscores.",
+                        required: true),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Run(profiles, arguments, (store, name) => store.Save(name))),
             },
@@ -72,13 +69,7 @@ public static class BindingProfilesCapability
                     + "next starts. Refused while Elite is running.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description = "Which saved profile.",
-                        Required = true,
-                    },
+                    ToolParameter.Text("name", "Which saved profile.", required: true),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Run(profiles, arguments, (store, name) => store.Load(name))),
             },

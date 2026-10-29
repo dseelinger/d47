@@ -494,12 +494,9 @@ public static class AdventureCapability
         Description = "Answer the ending of a finished story with one of its options, numbered from one. The Commander's choice alone.",
         Parameters =
         [
-            new ToolParameter
-            {
-                Name = "option",
-                Type = ToolParameterType.Integer,
-                Description = "The option's position in the ending message, from one. Leave out when the ending has one option.",
-            },
+            ToolParameter.Integer(
+                "option",
+                "The option's position in the ending message, from one. Leave out when the ending has one option."),
         ],
         Commands =
         [
@@ -632,13 +629,7 @@ public static class AdventureCapability
                 + "the option asks. The Commander's choice alone.",
             Parameters =
             [
-                new ToolParameter
-                {
-                    Name = "option",
-                    Type = ToolParameterType.Integer,
-                    Description = "The option's number in the offer, from one.",
-                    Required = true,
-                },
+                ToolParameter.Integer("option", "The option's number in the offer, from one.", required: true),
             ],
             Commands =
             [

@@ -14,9 +14,6 @@ public static class EngineerCapability
 {
     public const string Id = "engineers";
 
-    private static readonly IReadOnlyDictionary<string, string> Nothing =
-        new Dictionary<string, string>(StringComparer.Ordinal);
-
     /// <summary>
     /// <param name="unlocks"> The solver, or null under the designer and in tests that are not about it
     /// — the capability still registers, so its documentation page still exists, and the two routing
@@ -83,28 +80,15 @@ public static class EngineerCapability
                     + "them.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "engineer",
-                        Type = ToolParameterType.String,
-                        Description = "An engineer by name — for example \"Farseer\" or \"Hera Tani\".",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "grades",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A kind of module to find engineers for — for example \"Frame Shift Drive\", "
-                            + "\"Thrusters\" or \"Shield Generator\".",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "system",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A system to find the engineer based there, by name — the Commander's "
-                            + "current system when left out.",
-                    },
+                    ToolParameter.Text("engineer", "An engineer by name — for example \"Farseer\" or \"Hera Tani\"."),
+                    ToolParameter.Text(
+                        "grades",
+                        "A kind of module to find engineers for — for example \"Frame Shift Drive\", "
+                            + "\"Thrusters\" or \"Shield Generator\"."),
+                    ToolParameter.Text(
+                        "system",
+                        "A system to find the engineer based there, by name — the Commander's "
+                            + "current system when left out."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Find(commander, arguments)),
             },
@@ -120,13 +104,10 @@ public static class EngineerCapability
                     + "their unlock chain that are not yet met, each with d47's reading of it.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "engineer",
-                        Type = ToolParameterType.String,
-                        Description = "An engineer by name — for example \"Farseer\" or \"Hera Tani\".",
-                        Required = true,
-                    },
+                    ToolParameter.Text(
+                        "engineer",
+                        "An engineer by name — for example \"Farseer\" or \"Hera Tani\".",
+                        required: true),
                 ],
                 Commands = [.. EngineerDirectory.All.SelectMany(PrerequisitePhrases)],
                 Handler = (arguments, _) => Task.FromResult(Prerequisites(commander, arguments)),
@@ -164,9 +145,9 @@ public static class EngineerCapability
                     + "counted in jumps at all.",
                 Commands =
                 [
-                    new ToolCommandPhrase("who should I unlock next", Nothing),
-                    new ToolCommandPhrase("what is the fastest way in", Nothing),
-                    new ToolCommandPhrase("which engineer next", Nothing),
+                    new ToolCommandPhrase("who should I unlock next"),
+                    new ToolCommandPhrase("what is the fastest way in"),
+                    new ToolCommandPhrase("which engineer next"),
                 ],
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(
                     unlocks?.Describe() ?? "No engineer plans are loaded.")),

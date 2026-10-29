@@ -183,13 +183,7 @@ public static class NavigationCapability
                     + "browser. Use for system names, routes and values they asked for.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "text",
-                        Type = ToolParameterType.String,
-                        Description = "What to put on the clipboard.",
-                        Required = true,
-                    },
+                    ToolParameter.Text("text", "What to put on the clipboard.", required: true),
                 ],
                 Handler = (arguments, cancellationToken) => Copy(arguments, surface, cancellationToken),
             },
@@ -206,13 +200,10 @@ public static class NavigationCapability
                     + "is verified afterwards; the clipboard always works.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "system",
-                        Type = ToolParameterType.String,
-                        Description = "The star system to plot to, spelled as the game spells it.",
-                        Required = true,
-                    },
+                    ToolParameter.Text(
+                        "system",
+                        "The star system to plot to, spelled as the game spells it.",
+                        required: true),
                 ],
                 SendsInput = true,
                 Handler = (arguments, cancellationToken) => Plot(arguments, surface, cancellationToken),
@@ -231,9 +222,9 @@ public static class NavigationCapability
                 RefusalExample = "spell a system",
                 Commands =
                 [
-                    new ToolCommandPhrase("spell a system", new Dictionary<string, string>()),
-                    new ToolCommandPhrase("spell the system", new Dictionary<string, string>()),
-                    new ToolCommandPhrase("spell a destination", new Dictionary<string, string>()),
+                    new ToolCommandPhrase("spell a system"),
+                    new ToolCommandPhrase("spell the system"),
+                    new ToolCommandPhrase("spell a destination"),
                 ],
                 Handler = (_, _) => Task.FromResult(SpellASystem(surface)),
             },

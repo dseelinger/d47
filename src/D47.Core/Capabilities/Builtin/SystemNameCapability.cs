@@ -50,13 +50,9 @@ public static class SystemNameCapability
                     + "mass and does not predict payout.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "The system name to read. Leave out for the system the Commander is in.",
-                    },
+                    ToolParameter.Text(
+                        "name",
+                        "The system name to read. Leave out for the system the Commander is in."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Read(commander(), arguments))),
             },

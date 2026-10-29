@@ -58,23 +58,15 @@ public static class EngineeringCapability
                     + "module to list what it can take.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "blueprint",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A blueprint by name — for example \"Increased FSD Range\", \"Dirty Drive "
-                            + "Tuning\" or \"Lightweight\".",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "module",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A kind of module — for example \"Frame Shift Drive\" or \"Power Plant\". "
+                    ToolParameter.Text(
+                        "blueprint",
+                        "A blueprint by name — for example \"Increased FSD Range\", \"Dirty Drive "
+                            + "Tuning\" or \"Lightweight\"."),
+                    ToolParameter.Text(
+                        "module",
+                        "A kind of module — for example \"Frame Shift Drive\" or \"Power Plant\". "
                             + "Alone it lists what that module can take; with a blueprint it says which "
-                            + "of several modules that blueprint is meant for.",
-                    },
+                            + "of several modules that blueprint is meant for."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Blueprints(commander, arguments))),
             },
@@ -91,14 +83,10 @@ public static class EngineeringCapability
                     + "units. Name a slot or module, or omit for every engineered module aboard.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "module",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A fitted module or its slot — for example \"frame shift drive\", "
-                            + "\"MainEngines\" or \"power plant\". Omit for every engineered module.",
-                    },
+                    ToolParameter.Text(
+                        "module",
+                        "A fitted module or its slot — for example \"frame shift drive\", "
+                            + "\"MainEngines\" or \"power plant\". Omit for every engineered module."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Fitted(commander, arguments)),
             },
@@ -116,19 +104,11 @@ public static class EngineeringCapability
                     + "already holds and what a material trader could turn into it.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "material",
-                        Type = ToolParameterType.String,
-                        Description = "The material, by name — \"Yttrium\", \"Imperial Shielding\".",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "near",
-                        Type = ToolParameterType.String,
-                        Description = "Search out from this system. Defaults to the Commander's own.",
-                    },
+                    ToolParameter.Text(
+                        "material",
+                        "The material, by name — \"Yttrium\", \"Imperial Shielding\".",
+                        required: true),
+                    ToolParameter.Text("near", "Search out from this system. Defaults to the Commander's own."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindMaterialAsync(galaxy, commander, clipboard, arguments, cancellationToken),
@@ -142,19 +122,8 @@ public static class EngineeringCapability
                 Description = "Find the nearest material trader, optionally of one kind.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "type",
-                        Type = ToolParameterType.String,
-                        Description = "Which kind of trader.",
-                        AllowedValues = StationQuery.TraderTypes,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "near",
-                        Type = ToolParameterType.String,
-                        Description = "Search out from this system. Defaults to the Commander's own.",
-                    },
+                    ToolParameter.OneOf("type", "Which kind of trader.", StationQuery.TraderTypes),
+                    ToolParameter.Text("near", "Search out from this system. Defaults to the Commander's own."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindTraderAsync(galaxy, commander, clipboard, arguments, cancellationToken),
@@ -171,13 +140,7 @@ public static class EngineeringCapability
                     + "Optional type narrows it to Raw, Manufactured or Encoded.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "type",
-                        Type = ToolParameterType.String,
-                        Description = "Which kind of material to route for.",
-                        AllowedValues = StationQuery.TraderTypes,
-                    },
+                    ToolParameter.OneOf("type", "Which kind of material to route for.", StationQuery.TraderTypes),
                 ],
                 Handler = (arguments, _) => Task.FromResult(FarmingRouteAnswer(commander, arguments)),
             },

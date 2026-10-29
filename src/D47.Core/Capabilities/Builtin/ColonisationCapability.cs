@@ -85,14 +85,10 @@ public static class ColonisationCapability
                     + "the colonisation planner, also the planned and building sites no depot has been seen for.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "include_finished",
-                        Type = ToolParameterType.Boolean,
-                        Description =
-                            "Also list sites that are complete or have failed. Default false — a "
-                            + "finished site cannot be hauled to.",
-                    },
+                    ToolParameter.Flag(
+                        "include_finished",
+                        "Also list sites that are complete or have failed. Default false — a "
+                            + "finished site cannot be hauled to."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SitesAsync(commander(), settings, plans?.Invoke(), arguments, Now(now), cancellationToken),
@@ -113,20 +109,13 @@ public static class ColonisationCapability
                     + "the depot's.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "site",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "The station or system name of the site, or the name or build type of a "
-                            + "planned site. Leave out when only one is under construction.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "where_to_buy",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Also work out which nearby stations between them stock the whole list.",
-                    },
+                    ToolParameter.Text(
+                        "site",
+                        "The station or system name of the site, or the name or build type of a "
+                            + "planned site. Leave out when only one is under construction."),
+                    ToolParameter.Flag(
+                        "where_to_buy",
+                        "Also work out which nearby stations between them stock the whole list."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     NeedsAsync(
@@ -145,54 +134,22 @@ public static class ColonisationCapability
                     + "systems to check in the System Colonisation Contact.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "near",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "Search out from this system. Defaults to where the Commander is, which is "
-                            + "where they would claim from.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "body_type",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A kind of planet the system must hold — for example \"Earth-like world\" "
-                            + "or \"Class I gas giant\".",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "terraformable",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Only systems with at least one terraforming candidate.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "rings",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Only systems with a ringed body in them.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "landable",
-                        Type = ToolParameterType.Integer,
-                        Description = "At least this many bodies that can be landed on.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_distance",
-                        Type = ToolParameterType.Number,
-                        Description =
-                            "How far to look, in light years. Defaults to 15, the furthest a claim "
-                            + "reaches, and capped there.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "limit",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 5. Default 3.",
-                    },
+                    ToolParameter.Text(
+                        "near",
+                        "Search out from this system. Defaults to where the Commander is, which is "
+                            + "where they would claim from."),
+                    ToolParameter.Text(
+                        "body_type",
+                        "A kind of planet the system must hold — for example \"Earth-like world\" "
+                            + "or \"Class I gas giant\"."),
+                    ToolParameter.Flag("terraformable", "Only systems with at least one terraforming candidate."),
+                    ToolParameter.Flag("rings", "Only systems with a ringed body in them."),
+                    ToolParameter.Integer("landable", "At least this many bodies that can be landed on."),
+                    ToolParameter.Number(
+                        "max_distance",
+                        "How far to look, in light years. Defaults to 15, the furthest a claim "
+                            + "reaches, and capped there."),
+                    ToolParameter.Integer("limit", "How many to return, 1 to 5. Default 3."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     CandidatesAsync(galaxy, settings, commander, arguments, cancellationToken),

@@ -16,8 +16,6 @@ public static class GalNetCapability
 
     private const int TitleWeight = 3;
 
-    private static readonly IReadOnlyDictionary<string, string> NoArguments = new Dictionary<string, string>();
-
     private static readonly char[] Separators =
         [' ', '\t', '\r', '\n', ',', '.', ';', ':', '!', '?', '"', '(', ')', '-', '–', '—'];
 
@@ -42,18 +40,13 @@ public static class GalNetCapability
                     + "With a query, gives the full text of the three best matches and the titles of up to seven more.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "query",
-                        Type = ToolParameterType.String,
-                        Description = "Words to look for in the article titles and text.",
-                    },
+                    ToolParameter.Text("query", "Words to look for in the article titles and text."),
                 ],
                 Commands =
                 [
-                    new ToolCommandPhrase("what's on galnet", NoArguments),
-                    new ToolCommandPhrase("galnet headlines", NoArguments),
-                    new ToolCommandPhrase("any galnet news", NoArguments),
+                    new ToolCommandPhrase("what's on galnet"),
+                    new ToolCommandPhrase("galnet headlines"),
+                    new ToolCommandPhrase("any galnet news"),
                 ],
                 Handler = (arguments, _) =>
                 {
@@ -72,18 +65,13 @@ public static class GalNetCapability
                     + "or the one whose title best matches the title given.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "title",
-                        Type = ToolParameterType.String,
-                        Description = "All or part of the article's title.",
-                    },
+                    ToolParameter.Text("title", "All or part of the article's title."),
                 ],
                 Commands =
                 [
-                    new ToolCommandPhrase("read galnet", NoArguments),
-                    new ToolCommandPhrase("read the galnet article", NoArguments),
-                    new ToolCommandPhrase("read the latest galnet article", NoArguments),
+                    new ToolCommandPhrase("read galnet"),
+                    new ToolCommandPhrase("read the galnet article"),
+                    new ToolCommandPhrase("read the latest galnet article"),
                 ],
                 Handler = (arguments, _) =>
                 {

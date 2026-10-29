@@ -8,9 +8,6 @@ public static class UtilitiesCapability
 {
     public const string Id = "utilities";
 
-    private static readonly IReadOnlyDictionary<string, string> Nothing =
-        new Dictionary<string, string>(StringComparer.Ordinal);
-
     /// <param name="timekeeper">
     /// The Commander's timers and alarms, or null under the designer and in tests that are not about
     /// them — the capability still registers, so its documentation page exists, and every tool answers
@@ -51,20 +48,8 @@ public static class UtilitiesCapability
                         + "wall-clock moment.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "name",
-                            Type = ToolParameterType.String,
-                            Description = "What to call it. Said back when it finishes.",
-                            Required = true,
-                        },
-                        new ToolParameter
-                        {
-                            Name = "minutes",
-                            Type = ToolParameterType.Number,
-                            Description = "How long, in minutes.",
-                            Required = true,
-                        },
+                        ToolParameter.Text("name", "What to call it. Said back when it finishes.", required: true),
+                        ToolParameter.Number("minutes", "How long, in minutes.", required: true),
                     ],
                     Handler = (arguments, _) => Task.FromResult(StartTimer(timekeeper, clock, arguments)),
                 },
@@ -83,20 +68,8 @@ public static class UtilitiesCapability
                         + "afterwards rather than sounded late.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "name",
-                            Type = ToolParameterType.String,
-                            Description = "What to call it. Said back when it goes off.",
-                            Required = true,
-                        },
-                        new ToolParameter
-                        {
-                            Name = "at",
-                            Type = ToolParameterType.String,
-                            Description = "Local time for the Commander, as 24-hour HH:mm.",
-                            Required = true,
-                        },
+                        ToolParameter.Text("name", "What to call it. Said back when it goes off.", required: true),
+                        ToolParameter.Text("at", "Local time for the Commander, as 24-hour HH:mm.", required: true),
                     ],
                     Handler = (arguments, _) => Task.FromResult(SetAlarm(timekeeper, clock, where, arguments)),
                 },
@@ -116,20 +89,15 @@ public static class UtilitiesCapability
                     Protected = true,
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "name",
-                            Type = ToolParameterType.String,
-                            Description = "Which one. Omit to cancel everything running.",
-                        },
+                        ToolParameter.Text("name", "Which one. Omit to cancel everything running."),
                     ],
                     Commands =
                     [
-                        new ToolCommandPhrase("cancel the timer", Nothing),
-                        new ToolCommandPhrase("cancel my timer", Nothing),
-                        new ToolCommandPhrase("cancel the alarm", Nothing),
-                        new ToolCommandPhrase("cancel my alarm", Nothing),
-                        new ToolCommandPhrase("stop the timer", Nothing),
+                        new ToolCommandPhrase("cancel the timer"),
+                        new ToolCommandPhrase("cancel my timer"),
+                        new ToolCommandPhrase("cancel the alarm"),
+                        new ToolCommandPhrase("cancel my alarm"),
+                        new ToolCommandPhrase("stop the timer"),
                     ],
                     Handler = (arguments, _) => Task.FromResult(Cancel(timekeeper, arguments)),
                 },

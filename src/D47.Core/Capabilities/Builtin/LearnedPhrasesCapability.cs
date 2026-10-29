@@ -65,20 +65,14 @@ public static class LearnedPhrasesCapability
                     + "wordings. Never callable by the model.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "pattern",
-                        Type = ToolParameterType.String,
-                        Description = "The words to teach, with optional [a|b] groups of alternatives.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "phrase",
-                        Type = ToolParameterType.String,
-                        Description = "The phrase in the phrase book the pattern should run.",
-                        Required = true,
-                    },
+                    ToolParameter.Text(
+                        "pattern",
+                        "The words to teach, with optional [a|b] groups of alternatives.",
+                        required: true),
+                    ToolParameter.Text(
+                        "phrase",
+                        "The phrase in the phrase book the pattern should run.",
+                        required: true),
                 ],
                 Protected = true,
                 Handler = (arguments, _) =>
@@ -98,13 +92,10 @@ public static class LearnedPhrasesCapability
                     + "own \"forget\" phrase reach it.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "said",
-                        Type = ToolParameterType.String,
-                        Description = "The pattern to forget, exactly as it reads on the Phrases page.",
-                        Required = true,
-                    },
+                    ToolParameter.Text(
+                        "said",
+                        "The pattern to forget, exactly as it reads on the Phrases page.",
+                        required: true),
                 ],
 
                 // The Commander's own taught wording is undone the same way it was made: never through the

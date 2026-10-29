@@ -9,9 +9,6 @@ public static class ShipsCapability
 {
     public const string Id = "ships";
 
-    private static readonly IReadOnlyDictionary<string, string> Nothing =
-        new Dictionary<string, string>(StringComparer.Ordinal);
-
     /// <summary>The key of the row that repairs what is remembered (#128).</summary>
     public const string RescanKey = "ships.remembered";
 
@@ -104,9 +101,9 @@ public static class ShipsCapability
                     + "one is and how many slots its build has an opinion about.",
                 Commands =
                 [
-                    new ToolCommandPhrase("what have I planned", Nothing),
-                    new ToolCommandPhrase("read my ship plans", Nothing),
-                    new ToolCommandPhrase("what am I building", Nothing),
+                    new ToolCommandPhrase("what have I planned"),
+                    new ToolCommandPhrase("read my ship plans"),
+                    new ToolCommandPhrase("what am I building"),
                 ],
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Fleet(ships))),
             },
@@ -125,18 +122,15 @@ public static class ShipsCapability
                 Protected = true,
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "ship",
-                        Type = ToolParameterType.String,
-                        Description = "Which ship, by name or hull. Omit for the one the Commander is flying.",
-                    },
+                    ToolParameter.Text(
+                        "ship",
+                        "Which ship, by name or hull. Omit for the one the Commander is flying."),
                 ],
                 Commands =
                 [
-                    new ToolCommandPhrase("put that on my checklist", Nothing),
-                    new ToolCommandPhrase("promote this plan", Nothing),
-                    new ToolCommandPhrase("add this build to my checklist", Nothing),
+                    new ToolCommandPhrase("put that on my checklist"),
+                    new ToolCommandPhrase("promote this plan"),
+                    new ToolCommandPhrase("add this build to my checklist"),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Promote(ships, arguments)),
             },
@@ -154,13 +148,7 @@ public static class ShipsCapability
                     + "that ship's page without applying any.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "remark",
-                        Type = ToolParameterType.String,
-                        Description = "The Commander's words.",
-                        Required = true,
-                    },
+                    ToolParameter.Text("remark", "The Commander's words.", required: true),
                 ],
                 Handler = (arguments, cancellationToken) => TalkAsync(surface?.Talk?.Invoke(), arguments, cancellationToken),
             },
@@ -179,12 +167,9 @@ public static class ShipsCapability
                 Protected = true,
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "ship",
-                        Type = ToolParameterType.String,
-                        Description = "Which ship, by name or hull. Omit for the one the Commander is flying.",
-                    },
+                    ToolParameter.Text(
+                        "ship",
+                        "Which ship, by name or hull. Omit for the one the Commander is flying."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Drop(ships, arguments)),
             },

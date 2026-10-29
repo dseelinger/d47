@@ -68,28 +68,15 @@ public static class OnFootCapability
                     + "Quantities are exact — nothing on foot is rolled.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "modification",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A modification by name — for example \"Night Vision\", \"Magazine Size\" "
-                            + "or \"Quieter Footsteps\".",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "equipment",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A suit or weapon by name — for example \"Maverick\", \"Dominator\" or "
-                            + "\"Karma AR-50\". Defaults to what the Commander is wearing.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "grade",
-                        Type = ToolParameterType.Integer,
-                        Description = "The grade to reach, 2 to 5.",
-                    },
+                    ToolParameter.Text(
+                        "modification",
+                        "A modification by name — for example \"Night Vision\", \"Magazine Size\" "
+                            + "or \"Quieter Footsteps\"."),
+                    ToolParameter.Text(
+                        "equipment",
+                        "A suit or weapon by name — for example \"Maverick\", \"Dominator\" or "
+                            + "\"Karma AR-50\". Defaults to what the Commander is wearing."),
+                    ToolParameter.Integer("grade", "The grade to reach, 2 to 5."),
                 ],
                 Handler = (arguments, _) =>
                     Task.FromResult(ToolResult.Ok(DescribeEngineering(commander, arguments))),
@@ -106,21 +93,14 @@ public static class OnFootCapability
                     + "Commander has, and what trading for it costs in other Components.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "material",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A micro-resource by name — for example \"Graphene\", \"Circuit Board\" "
+                    ToolParameter.Text(
+                        "material",
+                        "A micro-resource by name — for example \"Graphene\", \"Circuit Board\" "
                             + "or \"Opinion Polls\".",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "wanted",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many are wanted, for the trade arithmetic. Defaults to the shortfall.",
-                    },
+                        required: true),
+                    ToolParameter.Integer(
+                        "wanted",
+                        "How many are wanted, for the trade arithmetic. Defaults to the shortfall."),
                 ],
                 Handler = (arguments, _) =>
                     Task.FromResult(ToolResult.Ok(DescribeMaterial(commander, arguments))),
@@ -140,8 +120,8 @@ public static class OnFootCapability
                     + "each is at and how many slots its plan has an opinion about.",
                 Commands =
                 [
-                    new ToolCommandPhrase("what have I planned on foot", Nothing),
-                    new ToolCommandPhrase("read my suit plans", Nothing),
+                    new ToolCommandPhrase("what have I planned on foot"),
+                    new ToolCommandPhrase("read my suit plans"),
                 ],
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Kit(plans))),
             },
@@ -160,8 +140,8 @@ public static class OnFootCapability
                 Parameters = [Which, Weapon],
                 Commands =
                 [
-                    new ToolCommandPhrase("put that on my checklist", Nothing),
-                    new ToolCommandPhrase("promote this suit plan", Nothing),
+                    new ToolCommandPhrase("put that on my checklist"),
+                    new ToolCommandPhrase("promote this suit plan"),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Promote(plans, arguments)),
             },
@@ -185,24 +165,12 @@ public static class OnFootCapability
         Display = new CapabilityDisplay { PanelTitle = "On foot", Order = 57 },
     };
 
-    private static readonly IReadOnlyDictionary<string, string> Nothing =
-        new Dictionary<string, string>(StringComparer.Ordinal);
-
     /// <summary>Which item a plan tool is about.</summary>
-    private static ToolParameter Which => new()
-    {
-        Name = "item",
-        Type = ToolParameterType.String,
-        Description =
-            "The suit or weapon by name. Omit for the suit being worn, or the one weapon carried.",
-    };
+    private static ToolParameter Which =>
+        ToolParameter.Text("item", "The suit or weapon by name. Omit for the suit being worn, or the one weapon carried.");
 
-    private static ToolParameter Weapon => new()
-    {
-        Name = "weapon",
-        Type = ToolParameterType.Boolean,
-        Description = "True when this is about a hand weapon rather than the suit.",
-    };
+    private static ToolParameter Weapon =>
+        ToolParameter.Flag("weapon", "True when this is about a hand weapon rather than the suit.");
 
     private static string Kit(OnFootPlanService? plans)
     {

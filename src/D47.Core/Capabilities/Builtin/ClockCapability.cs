@@ -7,9 +7,6 @@ public static class ClockCapability
 {
     public const string Id = "clock";
 
-    private static readonly IReadOnlyDictionary<string, string> Nothing =
-        new Dictionary<string, string>(StringComparer.Ordinal);
-
     public static CapabilityDescriptor Create(
         Func<DateTimeOffset>? now = null,
         Func<TimeZoneInfo>? zone = null)
@@ -49,12 +46,12 @@ public static class ClockCapability
                     Protected = true,
                     Commands =
                     [
-                        new ToolCommandPhrase("what is the date", Nothing),
-                        new ToolCommandPhrase("what's the date", Nothing),
-                        new ToolCommandPhrase("what is the time", Nothing),
-                        new ToolCommandPhrase("what's the time", Nothing),
-                        new ToolCommandPhrase("what time is it", Nothing),
-                        new ToolCommandPhrase("what day is it", Nothing),
+                        new ToolCommandPhrase("what is the date"),
+                        new ToolCommandPhrase("what's the date"),
+                        new ToolCommandPhrase("what is the time"),
+                        new ToolCommandPhrase("what's the time"),
+                        new ToolCommandPhrase("what time is it"),
+                        new ToolCommandPhrase("what day is it"),
                     ],
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(
                         GalacticTime.Read(clock(), where()).Say())),

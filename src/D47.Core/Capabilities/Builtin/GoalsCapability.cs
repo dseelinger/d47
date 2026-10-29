@@ -56,8 +56,8 @@ public static class GoalsCapability
                         + "been running, and where the figure came from.",
                     Commands =
                     [
-                        new ToolCommandPhrase("how are my goals going", new Dictionary<string, string>()),
-                        new ToolCommandPhrase("what are my goals", new Dictionary<string, string>()),
+                        new ToolCommandPhrase("how are my goals going"),
+                        new ToolCommandPhrase("what are my goals"),
                     ],
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(
                         book is null
@@ -76,13 +76,10 @@ public static class GoalsCapability
                         "Say what to do about one long-running goal today, and offer it as a checklist line.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "goal",
-                            Type = ToolParameterType.String,
-                            Description = "Which goal, by name or key, as read back by get_goals.",
-                            Required = true,
-                        },
+                        ToolParameter.Text(
+                            "goal",
+                            "Which goal, by name or key, as read back by get_goals.",
+                            required: true),
                     ],
 
                     // Protected.
@@ -159,13 +156,7 @@ public static class GoalsCapability
 
     private static IReadOnlyList<ToolParameter> GoalParameter() =>
     [
-        new ToolParameter
-        {
-            Name = "goal",
-            Type = ToolParameterType.String,
-            Description = "Which goal, by name or key.",
-            Required = true,
-        },
+        ToolParameter.Text("goal", "Which goal, by name or key.", required: true),
     ];
 
     private static ToolResult Change(GoalBook? book, ToolArguments arguments, bool remove)

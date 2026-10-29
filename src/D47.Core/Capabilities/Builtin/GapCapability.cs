@@ -16,9 +16,6 @@ public static class GapCapability
 {
     public const string Id = "gap";
 
-    private static readonly IReadOnlyDictionary<string, string> Nothing =
-        new Dictionary<string, string>(StringComparer.Ordinal);
-
     /// <summary>
     /// <param name="ships">The Commander's ship builds, or null where nothing composed them.</param>
     /// <param name="onFoot">Their suit and weapon plans, on the same terms.</param>
@@ -64,27 +61,19 @@ public static class GapCapability
                     // (change-requests.md 37). "What is this shortfall for" is the same question narrowed to
                     // one material, and the narrowed answer is the one with room to name the blueprint -
                     // which the fleet-wide list deliberately does not.
-                    new ToolParameter
-                    {
-                        Name = "material",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "One material, by name or symbol. Narrows the answer to what wants that "
-                            + "one and names the blueprint each demand is for. Omit for everything.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "include_unowned",
-                        Type = ToolParameterType.Boolean,
-                        Description =
-                            "Whether hulls and items they do not own yet are counted. True is the whole "
-                            + "ambition; false is what can be finished now. Defaults to true.",
-                    },
+                    ToolParameter.Text(
+                        "material",
+                        "One material, by name or symbol. Narrows the answer to what wants that "
+                            + "one and names the blueprint each demand is for. Omit for everything."),
+                    ToolParameter.Flag(
+                        "include_unowned",
+                        "Whether hulls and items they do not own yet are counted. True is the whole "
+                            + "ambition; false is what can be finished now. Defaults to true."),
                 ],
                 Commands =
                 [
-                    new ToolCommandPhrase("what am I short of", Nothing),
-                    new ToolCommandPhrase("what do I still have to find", Nothing),
+                    new ToolCommandPhrase("what am I short of"),
+                    new ToolCommandPhrase("what do I still have to find"),
                 ],
                 Handler = (arguments, _) => Task.FromResult(
                     ToolResult.Ok(Report(ships, onFoot, commander, arguments))),

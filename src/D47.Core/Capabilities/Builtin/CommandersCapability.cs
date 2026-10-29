@@ -41,13 +41,7 @@ public static class CommandersCapability
                     + "the panel or a hotkey, never by the model.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "frontier_id",
-                        Type = ToolParameterType.String,
-                        Description = "The Frontier ID of the Commander to switch to.",
-                        Required = true,
-                    },
+                    ToolParameter.Text("frontier_id", "The Frontier ID of the Commander to switch to.", required: true),
                 ],
 
                 // A misheard sentence passed by the model would switch Commanders mid-conversation.

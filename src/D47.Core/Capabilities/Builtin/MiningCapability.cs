@@ -47,20 +47,10 @@ public static class MiningCapability
                     + "material and say whether the rock is above or below the percentage.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "material",
-                        Type = ToolParameterType.String,
-                        Description = "The material to mine.",
-                        Required = true,
-                        AllowedValues = MiningTarget.Materials,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "percent",
-                        Type = ToolParameterType.Number,
-                        Description = "The proportion of the rock, 0 to 100, at or above which it is worth mining. Leave out for any amount.",
-                    },
+                    ToolParameter.OneOf("material", "The material to mine.", MiningTarget.Materials, required: true),
+                    ToolParameter.Number(
+                        "percent",
+                        "The proportion of the rock, 0 to 100, at or above which it is worth mining. Leave out for any amount."),
                 ],
                 Commands =
                 [
@@ -97,20 +87,8 @@ public static class MiningCapability
                     + "mostly that material when there are at least three.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "tonnes",
-                        Type = ToolParameterType.Number,
-                        Description = "The tonnes to mine.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "material",
-                        Type = ToolParameterType.String,
-                        Description = "The material to mine. Leave out for any.",
-                        AllowedValues = MiningTarget.Materials,
-                    },
+                    ToolParameter.Number("tonnes", "The tonnes to mine.", required: true),
+                    ToolParameter.OneOf("material", "The material to mine. Leave out for any.", MiningTarget.Materials),
                 ],
                 Handler = (arguments, _) => Task.FromResult(
                     Estimate(frontierId(), history?.Invoke() ?? HistoryState.Done, pastRuns, arguments)),
@@ -127,12 +105,9 @@ public static class MiningCapability
                     + "the sites that refined it, most tonnes first; without, every site, latest first.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "material",
-                        Type = ToolParameterType.String,
-                        Description = "A commodity refined, such as Platinum or Copper. Leave out for every site.",
-                    },
+                    ToolParameter.Text(
+                        "material",
+                        "A commodity refined, such as Platinum or Copper. Leave out for every site."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(
                     Sites(history?.Invoke() ?? HistoryState.Done, surfaceSites?.Invoke(), now?.Invoke() ?? DateTimeOffset.UtcNow, arguments)),

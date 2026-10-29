@@ -46,14 +46,10 @@ public static class SpecificationCapability
                     + "is flying.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "ship",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "The ship, by name — for example \"Python\" or \"Type-9 Heavy\". Defaults to "
-                            + "the one the Commander is flying.",
-                    },
+                    ToolParameter.Text(
+                        "ship",
+                        "The ship, by name — for example \"Python\" or \"Type-9 Heavy\". Defaults to "
+                            + "the one the Commander is flying."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeShip(commander, arguments))),
             },
@@ -71,26 +67,12 @@ public static class SpecificationCapability
                     + "Composite\".",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "module",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "The module, by name — for example \"Frame Shift Drive\" or \"Power Plant\".",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "size",
-                        Type = ToolParameterType.Integer,
-                        Description = "Module size, 1 to 8.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "rating",
-                        Type = ToolParameterType.String,
-                        Description = "Module rating, A to E.",
-                    },
+                    ToolParameter.Text(
+                        "module",
+                        "The module, by name — for example \"Frame Shift Drive\" or \"Power Plant\".",
+                        required: true),
+                    ToolParameter.Integer("size", "Module size, 1 to 8."),
+                    ToolParameter.Text("rating", "Module rating, A to E."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeModule(arguments))),
             },

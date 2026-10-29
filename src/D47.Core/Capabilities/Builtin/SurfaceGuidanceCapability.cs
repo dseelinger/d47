@@ -60,13 +60,7 @@ public static class SurfaceGuidanceCapability
                     + "\"mark 1\", \"mark 2\" and so on. Marks last until the Commander leaves the body.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description = "What to call the mark. Optional; omit to number it.",
-                        Required = false,
-                    },
+                    ToolParameter.Text("name", "What to call the mark. Optional; omit to number it."),
                 ],
                 Commands =
                 [
@@ -91,15 +85,10 @@ public static class SurfaceGuidanceCapability
                     + "mark, then the last specimen of the newest open set.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "to",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "ship, the name of a mark, a genus or species being sampled, or \"nearest <name>\" for the "
-                            + "nearest earlier find. Optional.",
-                        Required = false,
-                    },
+                    ToolParameter.Text(
+                        "to",
+                        "ship, the name of a mark, a genus or species being sampled, or \"nearest <name>\" for the "
+                            + "nearest earlier find. Optional."),
                 ],
                 Commands =
                 [

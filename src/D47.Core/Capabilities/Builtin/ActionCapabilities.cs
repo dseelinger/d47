@@ -246,24 +246,17 @@ public static class ActionCapabilities
                         + "anything else comes back with the reason it did not.",
                     Parameters =
                     [
-                        new ToolParameter
-                        {
-                            Name = "action",
-                            Type = ToolParameterType.String,
-                            Description = "Which action to perform.",
-                            Required = true,
-                            AllowedValues = [.. actions.Select(action => action.Id)],
-                        },
-                        new ToolParameter
-                        {
-                            Name = "state",
-                            Type = ToolParameterType.String,
-                            Description =
-                                "What to leave it in. Elite binds a single toggle, so asking for "
+                        ToolParameter.OneOf(
+                            "action",
+                            "Which action to perform.",
+                            [.. actions.Select(action => action.Id)],
+                            required: true),
+                        ToolParameter.OneOf(
+                            "state",
+                            "What to leave it in. Elite binds a single toggle, so asking for "
                                 + "\"on\" or \"off\" checks the game's own report first and does "
                                 + "nothing if it is already there. Defaults to toggling.",
-                            AllowedValues = ["on", "off", "toggle"],
-                        },
+                            ["on", "off", "toggle"]),
                     ],
                     Commands = [.. Phrases(actions)],
                     SendsInput = true,

@@ -15,9 +15,6 @@ public static class MissionsCapability
 
     private const int MaxNamed = 3;
 
-    private static readonly IReadOnlyDictionary<string, string> Nothing =
-        new Dictionary<string, string>(StringComparer.Ordinal);
-
     private static readonly IReadOnlyDictionary<string, string> Offered =
         new Dictionary<string, string>(StringComparer.Ordinal) { ["offered"] = "true" };
 
@@ -52,29 +49,21 @@ public static class MissionsCapability
                     + "Set all to list every mission with its faction, cargo, destination, progress, time left and reward.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "offered",
-                        Type = ToolParameterType.Boolean,
-                        Description =
-                            "Set when the Commander asks which missions to take; the answer then says that "
-                            + "missions on offer at a station are not in the journal.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "all",
-                        Type = ToolParameterType.Boolean,
-                        Description =
-                            "Set when the Commander asks about a particular mission, or about more than the three "
-                            + "most urgent; lists every mission, one line each, in the same order.",
-                    },
+                    ToolParameter.Flag(
+                        "offered",
+                        "Set when the Commander asks which missions to take; the answer then says that "
+                            + "missions on offer at a station are not in the journal."),
+                    ToolParameter.Flag(
+                        "all",
+                        "Set when the Commander asks about a particular mission, or about more than the three "
+                            + "most urgent; lists every mission, one line each, in the same order."),
                 ],
                 Commands =
                 [
                     new ToolCommandPhrase("what missions should i take", Offered),
                     new ToolCommandPhrase("which missions should i take", Offered),
                     new ToolCommandPhrase("what missions are on offer", Offered),
-                    new ToolCommandPhrase("read the mission board", Nothing),
+                    new ToolCommandPhrase("read the mission board"),
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
                     Describe(
@@ -96,19 +85,15 @@ public static class MissionsCapability
                     + "These are likely circumstances, never a statement that a board offers the mission.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "mission_type",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "One mission type as spoken, such as disable or planetary scan, or its internal name such as "
-                            + "Mission_Disable. Leave out to list every group with its types.",
-                    },
+                    ToolParameter.Text(
+                        "mission_type",
+                        "One mission type as spoken, such as disable or planetary scan, or its internal name such as "
+                            + "Mission_Disable. Leave out to list every group with its types."),
                 ],
                 Commands =
                 [
-                    new ToolCommandPhrase("what kinds of missions are there", Nothing),
-                    new ToolCommandPhrase("what mission types are there", Nothing),
+                    new ToolCommandPhrase("what kinds of missions are there"),
+                    new ToolCommandPhrase("what mission types are there"),
                 ],
                 Handler = (arguments, _) =>
                 {

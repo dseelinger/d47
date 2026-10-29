@@ -85,14 +85,10 @@ public static class ExobiologyCapability
                     + "value; that is a prediction from the conditions and the sample decides.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "body",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "The body name, or its short form such as \"7 b\". Leave out for the most "
-                            + "recently scanned body that has biology on it.",
-                    },
+                    ToolParameter.Text(
+                        "body",
+                        "The body name, or its short form such as \"7 b\". Leave out for the most "
+                            + "recently scanned body that has biology on it."),
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Body(commander(), arguments))),
             },
@@ -110,14 +106,10 @@ public static class ExobiologyCapability
                     + "biology finds setting.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "body",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "The body name, or its short form such as \"7 b\". Leave out for the body the "
-                            + "Commander is at, or else the most recently scanned body that has biology on it.",
-                    },
+                    ToolParameter.Text(
+                        "body",
+                        "The body name, or its short form such as \"7 b\". Leave out for the body the "
+                            + "Commander is at, or else the most recently scanned body that has biology on it."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     EarlierAsync(commander(), settings, community, earlier, arguments, cancellationToken),
@@ -187,51 +179,18 @@ public static class ExobiologyCapability
                     + "read a system name instead.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "from",
-                        Type = ToolParameterType.String,
-                        Description = "System to start from. Leave out to start where the Commander is.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "jump_range",
-                        Type = ToolParameterType.Number,
-                        Description = "Jump range in light years. Defaults to the ship's own range.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "radius",
-                        Type = ToolParameterType.Number,
-                        Description = "How far from the origin to look, in light years. Defaults to 200.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_results",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many systems to visit. Defaults to 10.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "min_value",
-                        Type = ToolParameterType.Integer,
-                        Description =
-                            "The least a species must be worth to be listed, in credits; a body is a stop "
-                            + "when any of its species clears it. Defaults to 1,000,000.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_distance_to_arrival",
-                        Type = ToolParameterType.Number,
-                        Description =
-                            "How far in-system a body may sit, in light seconds. Defaults to 10,000.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "loop",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Whether the circuit returns to the start. Defaults to true.",
-                    },
+                    ToolParameter.Text("from", "System to start from. Leave out to start where the Commander is."),
+                    ToolParameter.Number("jump_range", "Jump range in light years. Defaults to the ship's own range."),
+                    ToolParameter.Number("radius", "How far from the origin to look, in light years. Defaults to 200."),
+                    ToolParameter.Integer("max_results", "How many systems to visit. Defaults to 10."),
+                    ToolParameter.Integer(
+                        "min_value",
+                        "The least a species must be worth to be listed, in credits; a body is a stop "
+                            + "when any of its species clears it. Defaults to 1,000,000."),
+                    ToolParameter.Number(
+                        "max_distance_to_arrival",
+                        "How far in-system a body may sit, in light seconds. Defaults to 10,000."),
+                    ToolParameter.Flag("loop", "Whether the circuit returns to the start. Defaults to true."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     PlotAsync(routes, commander, settings, plans, now, arguments, cancellationToken),

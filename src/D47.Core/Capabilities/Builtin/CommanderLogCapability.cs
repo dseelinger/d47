@@ -40,14 +40,9 @@ public static class CommanderLogCapability
                     + "Commanders met most recently. Never includes message text.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description = "Who to look up. Leave out for the one just targeted.",
-                    },
+                    ToolParameter.Text("name", "Who to look up. Leave out for the one just targeted."),
                 ],
-                Commands = [new ToolCommandPhrase("have i met this commander", new Dictionary<string, string>())],
+                Commands = [new ToolCommandPhrase("have i met this commander")],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Answer(log, frontierId(), arguments))),
             },
         ],

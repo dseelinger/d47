@@ -33,27 +33,15 @@ internal static class MissionStations
             + "board has the mission.",
         Parameters =
         [
-            new ToolParameter
-            {
-                Name = "mission_type",
-                Type = ToolParameterType.String,
-                Description = "One mission type as spoken, such as disable or courier, or its internal name such as Mission_Disable.",
-                Required = true,
-            },
-            new ToolParameter
-            {
-                Name = "near",
-                Type = ToolParameterType.String,
-                Description = "Search out from this system. Defaults to theirs.",
-            },
-            new ToolParameter
-            {
-                Name = "max_distance",
-                Type = ToolParameterType.Number,
-                Description =
-                    $"How far to look, in light years. Default {MissionStationQuery.DefaultDistance:0}, "
-                    + $"at most {MissionStationQuery.MaxDistanceCeiling:0}.",
-            },
+            ToolParameter.Text(
+                "mission_type",
+                "One mission type as spoken, such as disable or courier, or its internal name such as Mission_Disable.",
+                required: true),
+            ToolParameter.Text("near", "Search out from this system. Defaults to theirs."),
+            ToolParameter.Number(
+                "max_distance",
+                $"How far to look, in light years. Default {MissionStationQuery.DefaultDistance:0}, "
+                    + $"at most {MissionStationQuery.MaxDistanceCeiling:0}."),
         ],
         Handler = (arguments, cancellationToken) =>
             FindAsync(galaxy, currentSystem, settings, gameState?.Invoke(), arguments, cancellationToken),

@@ -55,13 +55,9 @@ public static class BookmarksCapability
                     + "destination's own name, which can be renamed afterwards.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description = "What to call the bookmark. Optional — omit to name it after the destination.",
-                        Required = false,
-                    },
+                    ToolParameter.Text(
+                        "name",
+                        "What to call the bookmark. Optional — omit to name it after the destination."),
                 ],
                 Commands =
                 [
@@ -96,20 +92,8 @@ public static class BookmarksCapability
                 Description = "Rename an existing bookmark. The system it points at does not change.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description = "The bookmark's current name.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "new_name",
-                        Type = ToolParameterType.String,
-                        Description = "The name to give it instead.",
-                        Required = true,
-                    },
+                    ToolParameter.Text("name", "The bookmark's current name.", required: true),
+                    ToolParameter.Text("new_name", "The name to give it instead.", required: true),
                 ],
                 Handler = (arguments, _) =>
                     Task.FromResult(Rename(store, frontierId(), phraseBook(), arguments)),
@@ -124,13 +108,7 @@ public static class BookmarksCapability
                 Description = "Delete a bookmark by name.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "name",
-                        Type = ToolParameterType.String,
-                        Description = "The bookmark's name, exactly as listed.",
-                        Required = true,
-                    },
+                    ToolParameter.Text("name", "The bookmark's name, exactly as listed.", required: true),
                 ],
 
                 // A misheard name passed by the model would delete the wrong bookmark with no way back —

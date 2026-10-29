@@ -57,13 +57,7 @@ public static partial class CaptainsLogCapability
                 Protected = true,
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "text",
-                        Type = ToolParameterType.String,
-                        Description = "The entry, as the Commander said it.",
-                        Required = true,
-                    },
+                    ToolParameter.Text("text", "The entry, as the Commander said it.", required: true),
                 ],
                 Handler = (arguments, _) =>
                     Task.FromResult(Add(store, frontierId(), commander(), status?.Invoke(), now(), arguments)),
@@ -81,31 +75,13 @@ public static partial class CaptainsLogCapability
                 Protected = true,
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "span",
-                        Type = ToolParameterType.String,
-                        Description = "Which entries by time; all when omitted.",
-                        AllowedValues = ["all", "last", "today", "yesterday", "week", "session"],
-                    },
-                    new ToolParameter
-                    {
-                        Name = "system",
-                        Type = ToolParameterType.String,
-                        Description = "Only entries made in this star system.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "words",
-                        Type = ToolParameterType.String,
-                        Description = "Only entries whose text holds every one of these words.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "count_only",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Say how many entries match instead of reading them.",
-                    },
+                    ToolParameter.OneOf(
+                        "span",
+                        "Which entries by time; all when omitted.",
+                        ["all", "last", "today", "yesterday", "week", "session"]),
+                    ToolParameter.Text("system", "Only entries made in this star system."),
+                    ToolParameter.Text("words", "Only entries whose text holds every one of these words."),
+                    ToolParameter.Flag("count_only", "Say how many entries match instead of reading them."),
                 ],
                 Handler = (arguments, _) =>
                     Task.FromResult(Find(store, frontierId(), commander(), now(), arguments)),

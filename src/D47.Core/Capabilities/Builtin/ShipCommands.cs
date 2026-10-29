@@ -50,13 +50,9 @@ public static class ShipCommands
         SendsInput = true,
         Parameters =
         [
-            new ToolParameter
-            {
-                Name = "command",
-                Type = ToolParameterType.String,
-                Description = "Which command to run.",
-                Required = true,
-                AllowedValues =
+            ToolParameter.OneOf(
+                "command",
+                "Which command to run.",
                 [
                     TakeUsOut,
                     SeparateAndEngage,
@@ -65,7 +61,7 @@ public static class ShipCommands
                     RequestDocking,
                     TakeUsIn,
                 ],
-            },
+                required: true),
         ],
         Commands =
         [

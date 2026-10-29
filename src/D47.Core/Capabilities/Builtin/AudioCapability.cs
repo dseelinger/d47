@@ -95,14 +95,7 @@ public static class AudioCapability
                       + "starts another track from the same folder.",
         Parameters =
         [
-            new ToolParameter
-            {
-                Name = "action",
-                Type = ToolParameterType.String,
-                Description = "What to do to the music.",
-                Required = true,
-                AllowedValues = ["pause", "resume", "next"],
-            },
+            ToolParameter.OneOf("action", "What to do to the music.", ["pause", "resume", "next"], required: true),
         ],
         Commands =
         [

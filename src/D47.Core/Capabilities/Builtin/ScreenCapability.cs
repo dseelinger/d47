@@ -48,8 +48,6 @@ public static class ScreenCapability
 
     private const int NamedEntries = 3;
 
-    private static readonly IReadOnlyDictionary<string, string> NoArguments = new Dictionary<string, string>();
-
     /// <param name="capture">What takes the picture, or null where nothing composed one.</param>
     /// <param name="keeping">Where and with what <c>take_picture</c> keeps a picture, or null where it cannot.</param>
     public static CapabilityDescriptor Create(
@@ -95,9 +93,9 @@ public static class ScreenCapability
                 RefusalExample = "take a picture",
                 Commands =
                 [
-                    new ToolCommandPhrase("take a picture", NoArguments),
-                    new ToolCommandPhrase("take a picture of this", NoArguments),
-                    new ToolCommandPhrase("save a picture", NoArguments),
+                    new ToolCommandPhrase("take a picture"),
+                    new ToolCommandPhrase("take a picture of this"),
+                    new ToolCommandPhrase("save a picture"),
                 ],
                 Handler = (_, cancellationToken) => TakeAsync(capture, keeping, cancellationToken),
             },

@@ -79,13 +79,10 @@ public static class ActivitiesCapability
                 Parameters =
                 [
                     ActivityParameter(),
-                    new ToolParameter
-                    {
-                        Name = "suggested",
-                        Type = ToolParameterType.Boolean,
-                        Description = "False to stop suggesting it, true to suggest it again.",
-                        Required = true,
-                    },
+                    ToolParameter.Flag(
+                        "suggested",
+                        "False to stop suggesting it, true to suggest it again.",
+                        required: true),
                 ],
                 Commands = [.. SuggestPhrases()],
                 Protected = true,
@@ -95,13 +92,8 @@ public static class ActivitiesCapability
         ],
     };
 
-    private static ToolParameter ActivityParameter() => new()
-    {
-        Name = "activity",
-        Type = ToolParameterType.String,
-        Description = "Which activity, by name or by what the Commander calls it.",
-        Required = true,
-    };
+    private static ToolParameter ActivityParameter() =>
+        ToolParameter.Text("activity", "Which activity, by name or by what the Commander calls it.", required: true);
 
     private static IEnumerable<ToolCommandPhrase> LastDonePhrases() =>
         from entry in ActivityCatalogue.All
