@@ -22,21 +22,25 @@ public sealed class CoveragePage : DialogPage
     private readonly Action<CoverageItem>? _clear;
     private readonly Func<CoverageReport>? _fresh;
     private readonly ViewStateStore? _store;
+    private readonly Action<CoverageItem>? _go;
     private ViewState _view;
 
     /// <param name="clear">When given, each failed row gets a Clear button that calls it.</param>
     /// <param name="fresh">Fetches the report to redraw after a clear.</param>
     /// <param name="store">When given, which sections are collapsed is remembered across visits.</param>
+    /// <param name="go">When given, each settings row gets a Go button that calls it.</param>
     public CoveragePage(
         CoverageReport report,
         Action<CoverageItem>? clear = null,
         Func<CoverageReport>? fresh = null,
-        ViewStateStore? store = null)
+        ViewStateStore? store = null,
+        Action<CoverageItem>? go = null)
     {
         Title = "Features";
         _clear = clear;
         _fresh = fresh;
         _store = store;
+        _go = go;
         _view = store?.Load() ?? new ViewState();
 
         _summary = new SelectableTextBlock
@@ -187,6 +191,21 @@ public sealed class CoveragePage : DialogPage
             Orientation = Orientation.Horizontal,
             Children = { when, help },
         };
+
+        if (line.Item.Kind == CoverageKind.Setting && _go is not null)
+        {
+            var go = new Button
+            {
+                Name = "CoverageGo",
+                Content = "GO",
+                MinHeight = 44,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            go.Click += (_, _) => _go(line.Item);
+
+            right.Children.Add(go);
+        }
 
         if (line.Failed && _clear is not null && _fresh is not null)
         {

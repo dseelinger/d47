@@ -148,6 +148,32 @@ public class CoveragePageTests
         host.Close();
     }
 
+    /// <summary>A settings line has a 44px Go button that hands its item back; a tool line has none.</summary>
+    [AvaloniaFact]
+    public void ASettingLineHasAGoButtonAndAToolLineHasNone()
+    {
+        Theme();
+
+        var tool = Item("tool");
+        var setting = new CoverageItem(CoverageKind.Setting, "diagnostics.row", "diagnostics", "Probe - row", "aaaa");
+        var report = new CoverageLedger().Report([tool, setting]);
+        var went = new List<CoverageItem>();
+        var window = new CoveragePage(report, go: went.Add);
+
+        window.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var go = Assert.Single(window.GetVisualDescendants().OfType<Button>(), button => button.Name == "CoverageGo");
+
+        Assert.Equal(44, go.MinHeight);
+
+        go.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.Equal([setting], went);
+
+        window.Close();
+    }
+
     /// <summary>Writes a PNG per theme for a human to look at.</summary>
     [AvaloniaFact]
     public void TheListRendersToACaptureAtRealSize()

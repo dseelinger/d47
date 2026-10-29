@@ -734,7 +734,8 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
                 return false;
             }
 
-            await panel.Open(new Controls.CoveragePage(services.Coverage(), services.ClearCoverage, services.Coverage, services.ViewState));
+            await panel.Open(new Controls.CoveragePage(services.Coverage(), services.ClearCoverage, services.Coverage, services.ViewState,
+                item => panel.OpenFound(new D47.Core.Interface.PanelFindResult(D47.Core.Interface.PanelFindKind.SettingRow, item.Name, string.Empty, item.Id, 1))));
 
             return true;
         }, () => { });

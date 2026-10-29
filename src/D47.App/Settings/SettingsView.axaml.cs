@@ -1046,7 +1046,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>Opens the page holding a setting's row, and says whether there is one.</summary>
     internal bool ShowPlaceOf(string key)
     {
-        var index = SectionOf(key);
+        var index = SectionOf(DrawnOn(key));
 
         ShowPlace(index);
 
@@ -1060,6 +1060,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// </summary>
     public void RevealRow(string key)
     {
+        key = DrawnOn(key);
+
         if (_tabPlaceId is not null)
         {
             if (_rows.FirstOrDefault(view => string.Equals(view.Row.Key, key, StringComparison.Ordinal)) is { } onStrip)
@@ -1177,6 +1179,22 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         timer.Stop();
         ink.Dispose();
         target.ClearValue(property);
+    }
+
+    /// <summary>The key of the row whose line draws <paramref name="key"/>, or <paramref name="key"/> when it has its own.</summary>
+    private string DrawnOn(string key)
+    {
+        if (_rows.Any(view => string.Equals(view.Row.Key, key, StringComparison.Ordinal)))
+        {
+            return key;
+        }
+
+        if (key.StartsWith("speech.guardianVoice.", StringComparison.Ordinal))
+        {
+            return D47.Core.Capabilities.Builtin.SpeechCapability.GuardianPresetKey;
+        }
+
+        return _rows.FirstOrDefault(view => view.Row.AlsoBinds == key || view.Row.Beside == key)?.Row.Key ?? key;
     }
 
     private int SectionOf(string key) =>
