@@ -74,13 +74,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
         foreach (var (name, choices) in PickerChoices)
         {
-            var picker = new InlinePicker { Label = name.Replace('_', ' '), ListMaxHeight = 240 };
-            var key = name;
-
-            picker.Picked += (_, id) => Pick(key, id);
-
-            _pickers[name] = (picker, choices);
-            Pick(name, Any);
+            AddPicker(_pickers, _picked, name, choices, several: false);
         }
     }
 
@@ -106,27 +100,7 @@ public sealed class BodySearchPage : GalaxySearchPage
     ];
 
     /// <summary>Sets a dropdown field to <paramref name="value"/>, or to Any for a value it does not offer.</summary>
-    public void Pick(string name, string value)
-    {
-        var (picker, choices) = _pickers[name];
-        var chosen = choices.FirstOrDefault(choice => string.Equals(choice, value, StringComparison.OrdinalIgnoreCase));
-
-        if (chosen is null)
-        {
-            _picked.Remove(name);
-        }
-        else
-        {
-            _picked[name] = chosen;
-        }
-
-        picker.Show(
-            [new InlinePickerOption(Any, Any, ThemeManager.GreyKey), .. choices.Select(choice => new InlinePickerOption(choice, choice, ThemeManager.WhiteKey))],
-            chosen ?? Any,
-            chosen ?? Any,
-            chosen is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey,
-            null);
-    }
+    public void Pick(string name, string value) => ShowPick(_pickers, _picked, name, value, several: false);
 
     /// <summary>The count SHOW UP TO shows.</summary>
     public int Limit
@@ -145,34 +119,21 @@ public sealed class BodySearchPage : GalaxySearchPage
     {
         var arguments = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        void Put(string key, string? value)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                arguments[key] = value.Trim();
-            }
-        }
-
-        Put("near", _near.Text);
-
-        if (_distance.Value is { } distance && distance != DefaultDistance)
-        {
-            arguments["max_distance"] = distance.ToString("0", CultureInfo.InvariantCulture);
-        }
+        PutNear(arguments, _near, _distance, DefaultDistance);
 
         foreach (var (name, value) in _picked)
         {
-            Put(name, value);
+            Put(arguments, name, value);
         }
 
-        Put("signal_count", _signalCount.Text);
-        Put("hotspot_count", _hotspotCount.Text);
-        Put("codex_entry", _codexEntry.Text);
-        Put("volcanism", _volcanism.Text);
-        Put("atmosphere", _atmosphere.Text);
-        Put("gravity", Range(_gravityFrom.Text, _gravityTo.Text));
-        Put("temperature", Range(_temperatureFrom.Text, _temperatureTo.Text));
-        Put("max_arrival_distance", _fromStar.Text);
+        Put(arguments, "signal_count", _signalCount.Text);
+        Put(arguments, "hotspot_count", _hotspotCount.Text);
+        Put(arguments, "codex_entry", _codexEntry.Text);
+        Put(arguments, "volcanism", _volcanism.Text);
+        Put(arguments, "atmosphere", _atmosphere.Text);
+        Put(arguments, "gravity", Range(_gravityFrom.Text, _gravityTo.Text));
+        Put(arguments, "temperature", Range(_temperatureFrom.Text, _temperatureTo.Text));
+        Put(arguments, "max_arrival_distance", _fromStar.Text);
 
         foreach (var name in Flags)
         {
@@ -182,10 +143,7 @@ public sealed class BodySearchPage : GalaxySearchPage
             }
         }
 
-        if (_limit.Value is { } limit && limit != DefaultLimit)
-        {
-            arguments["limit"] = limit.ToString("0", CultureInfo.InvariantCulture);
-        }
+        PutLimit(arguments, _limit, DefaultLimit);
 
         return arguments;
     }
@@ -205,10 +163,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         _distance.Value = DefaultDistance;
         _limit.Value = DefaultLimit;
 
-        foreach (var name in _pickers.Keys)
-        {
-            Pick(name, Any);
-        }
+        ResetPickers(_pickers, _picked, null, several: false);
     }
 
     protected override void FillForm(IReadOnlyDictionary<string, string> arguments)
@@ -232,20 +187,11 @@ public sealed class BodySearchPage : GalaxySearchPage
             FlagField(name).IsChecked = bool.TryParse(Get(name), out var ticked) && ticked;
         }
 
-        if (double.TryParse(Get("max_distance"), NumberStyles.Float, CultureInfo.InvariantCulture, out var distance))
-        {
-            _distance.Value = (decimal)Math.Clamp(distance, 1, BodyQuery.MaxDistanceCeiling);
-        }
+        FillDistance(arguments, _distance, BodyQuery.MaxDistanceCeiling);
 
-        if (int.TryParse(Get("limit"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit))
-        {
-            _limit.Value = Math.Clamp(limit, 1, ShowUpTo.Max);
-        }
+        FillLimit(arguments, _limit);
 
-        foreach (var name in _pickers.Keys)
-        {
-            Pick(name, Get(name) ?? Any);
-        }
+        ResetPickers(_pickers, _picked, arguments, several: false);
     }
 
     protected override bool Refusal(IReadOnlyDictionary<string, string> arguments)
@@ -288,16 +234,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     protected override (string Lead, string Reference)? Aside(IReadOnlyDictionary<string, string> arguments, string? reference)
     {
-        var within = arguments.TryGetValue("max_distance", out var typed)
-                     && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked)
-            ? asked
-            : DefaultDistance;
-
-        var from = reference
-            ?? (arguments.TryGetValue("near", out var near) && near.Trim().Length > 0 ? near.Trim() : null)
-            ?? "your system";
-
-        return ($"WITHIN {within.ToString("0.##", CultureInfo.InvariantCulture)} LY OF ", from);
+        return WithinAside(arguments, reference, DefaultDistance);
     }
 
     protected override int Count(GalaxySearchPosting posting) =>

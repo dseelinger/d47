@@ -152,15 +152,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
             arguments["signal"] = signal;
         }
 
-        if (!string.IsNullOrWhiteSpace(_near.Text))
-        {
-            arguments["near"] = _near.Text.Trim();
-        }
-
-        if (_distance.Value is { } distance && distance != DefaultDistance)
-        {
-            arguments["max_distance"] = distance.ToString("0", CultureInfo.InvariantCulture);
-        }
+        PutNear(arguments, _near, _distance, DefaultDistance);
 
         if (_age.Asked is { } age)
         {
@@ -190,10 +182,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
         Fill(_near, _nearNames, Get("near") ?? string.Empty);
         _age.Set(Get("max_report_age_hours"));
 
-        if (double.TryParse(Get("max_distance"), NumberStyles.Float, CultureInfo.InvariantCulture, out var distance))
-        {
-            _distance.Value = (decimal)Math.Clamp(distance, 1, 99999);
-        }
+        FillDistance(arguments, _distance);
 
         if (Get("signal")?.Trim() is { Length: > 0 } signal)
         {
@@ -212,16 +201,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
 
     protected override (string Lead, string Reference)? Aside(IReadOnlyDictionary<string, string> arguments, string? reference)
     {
-        var within = arguments.TryGetValue("max_distance", out var typed)
-                     && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked)
-            ? asked
-            : DefaultDistance;
-
-        var from = reference
-            ?? (arguments.TryGetValue("near", out var near) && near.Trim().Length > 0 ? near.Trim() : null)
-            ?? "your system";
-
-        return ($"WITHIN {within.ToString("0.##", CultureInfo.InvariantCulture)} LY OF ", from);
+        return WithinAside(arguments, reference, DefaultDistance);
     }
 
     protected override int Count(GalaxySearchPosting posting) =>

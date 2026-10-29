@@ -92,13 +92,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         foreach (var (name, choices) in PickerChoices)
         {
-            var picker = new InlinePicker { Label = name.Replace('_', ' '), ListMaxHeight = 240 };
-            var key = name;
-
-            picker.Picked += (_, id) => Pick(key, id);
-
-            _pickers[name] = (picker, choices);
-            Pick(name, Any);
+            AddPicker(_pickers, _picked, name, choices, several: true);
         }
 
         DrawServices();
@@ -128,35 +122,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     /// Sets a dropdown field to <paramref name="value"/>, or to Any for a value it does not offer. A list of
     /// choices, as a spoken search can give a filter that takes several, is kept as given.
     /// </summary>
-    public void Pick(string name, string value)
-    {
-        var (picker, choices) = _pickers[name];
-        var chosen = choices.FirstOrDefault(choice => string.Equals(choice, value, StringComparison.OrdinalIgnoreCase));
-
-        if (chosen is null
-            && GalaxyFilters.Find(name) is { Several: true }
-            && value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) is { Length: > 1 } several
-            && several.All(part => choices.Contains(part, StringComparer.OrdinalIgnoreCase)))
-        {
-            chosen = string.Join(", ", several);
-        }
-
-        if (chosen is null)
-        {
-            _picked.Remove(name);
-        }
-        else
-        {
-            _picked[name] = chosen;
-        }
-
-        picker.Show(
-            [new InlinePickerOption(Any, Any, ThemeManager.GreyKey), .. choices.Select(choice => new InlinePickerOption(choice, choice, ThemeManager.WhiteKey))],
-            chosen ?? Any,
-            chosen ?? Any,
-            chosen is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey,
-            null);
-    }
+    public void Pick(string name, string value) => ShowPick(_pickers, _picked, name, value, several: true);
 
     /// <summary>The age in hours MAX REPORT AGE shows, 0 for any.</summary>
     public int MaxReportAgeHours
@@ -189,36 +155,23 @@ public sealed class StationSearchPage : GalaxySearchPage
     {
         var arguments = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        void Put(string key, string? value)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                arguments[key] = value.Trim();
-            }
-        }
+        PutNear(arguments, _near, _distance, DefaultDistance);
 
-        Put("near", _near.Text);
-
-        if (_distance.Value is { } distance && distance != DefaultDistance)
-        {
-            arguments["max_distance"] = distance.ToString("0", CultureInfo.InvariantCulture);
-        }
-
-        Put("station_type", string.Join(", ", StationQuery.StationTypes.Where(type => _types[type.Name].IsChecked == true).Select(type => type.Name)));
-        Put("min_pad", Selected(_pad));
-        Put("max_station_distance", _fromStar.Text);
-        Put("services", string.Join(", ", _services));
-        Put("material_trader", Selected(_trader));
-        Put("technology_broker", Selected(_broker));
-        Put("module", _module.Text);
-        Put("ship", _ship.Text);
-        Put("controlling_faction", _controllingFaction.Text);
-        Put("power_state", Selected(_powerState));
-        Put("population", _population.Asked);
+        Put(arguments, "station_type", string.Join(", ", StationQuery.StationTypes.Where(type => _types[type.Name].IsChecked == true).Select(type => type.Name)));
+        Put(arguments, "min_pad", Selected(_pad));
+        Put(arguments, "max_station_distance", _fromStar.Text);
+        Put(arguments, "services", string.Join(", ", _services));
+        Put(arguments, "material_trader", Selected(_trader));
+        Put(arguments, "technology_broker", Selected(_broker));
+        Put(arguments, "module", _module.Text);
+        Put(arguments, "ship", _ship.Text);
+        Put(arguments, "controlling_faction", _controllingFaction.Text);
+        Put(arguments, "power_state", Selected(_powerState));
+        Put(arguments, "population", _population.Asked);
 
         foreach (var (name, value) in _picked)
         {
-            Put(name, value);
+            Put(arguments, name, value);
         }
 
         if (_colonised.IsChecked == true)
@@ -231,10 +184,7 @@ public sealed class StationSearchPage : GalaxySearchPage
             arguments["max_report_age_hours"] = age;
         }
 
-        if (_limit.Value is { } limit && limit != DefaultLimit)
-        {
-            arguments["limit"] = limit.ToString("0", CultureInfo.InvariantCulture);
-        }
+        PutLimit(arguments, _limit, DefaultLimit);
 
         return arguments;
     }
@@ -263,10 +213,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         _colonised.IsChecked = false;
         ChooseServices([]);
 
-        foreach (var name in _pickers.Keys)
-        {
-            Pick(name, Any);
-        }
+        ResetPickers(_pickers, _picked, null, several: true);
     }
 
     protected override void FillForm(IReadOnlyDictionary<string, string> arguments)
@@ -299,20 +246,11 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         ChooseServices([.. Items(Get("services"))]);
 
-        if (double.TryParse(Get("max_distance"), NumberStyles.Float, CultureInfo.InvariantCulture, out var distance))
-        {
-            _distance.Value = (decimal)Math.Clamp(distance, 1, 99999);
-        }
+        FillDistance(arguments, _distance);
 
-        if (int.TryParse(Get("limit"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit))
-        {
-            _limit.Value = Math.Clamp(limit, 1, ShowUpTo.Max);
-        }
+        FillLimit(arguments, _limit);
 
-        foreach (var name in _pickers.Keys)
-        {
-            Pick(name, Get(name) ?? Any);
-        }
+        ResetPickers(_pickers, _picked, arguments, several: true);
     }
 
     protected override bool Refusal(IReadOnlyDictionary<string, string> arguments)
@@ -346,16 +284,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     protected override (string Lead, string Reference)? Aside(IReadOnlyDictionary<string, string> arguments, string? reference)
     {
-        var within = arguments.TryGetValue("max_distance", out var typed)
-                     && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked)
-            ? asked
-            : DefaultDistance;
-
-        var from = reference
-            ?? (arguments.TryGetValue("near", out var near) && near.Trim().Length > 0 ? near.Trim() : null)
-            ?? "your system";
-
-        return ($"WITHIN {within.ToString("0.##", CultureInfo.InvariantCulture)} LY OF ", from);
+        return WithinAside(arguments, reference, DefaultDistance);
     }
 
     protected override int Count(GalaxySearchPosting posting) =>

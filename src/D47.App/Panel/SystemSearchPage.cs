@@ -96,17 +96,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         foreach (var name in (string[])["allegiance", "government", "primary_economy", "security", "state", "faction_state", "faction_government", "power"])
         {
-            var picker = new InlinePicker { Label = name.Replace('_', ' '), ListMaxHeight = 240 };
-            var choices = Choices(name);
-            var key = name;
-
-            picker.Picked += (_, id) =>
-            {
-                Pick(key, id);
-            };
-
-            _pickers[name] = (picker, choices);
-            Pick(name, Any);
+            AddPicker(_pickers, _picked, name, Choices(name), several: true);
         }
     }
 
@@ -123,35 +113,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
     /// Sets a dropdown field to <paramref name="value"/>, or to Any for a value it does not offer. A list of
     /// choices, as a spoken search can give a filter that takes several, is kept as given.
     /// </summary>
-    public void Pick(string name, string value)
-    {
-        var (picker, choices) = _pickers[name];
-        var chosen = choices.FirstOrDefault(choice => string.Equals(choice, value, StringComparison.OrdinalIgnoreCase));
-
-        if (chosen is null
-            && GalaxyFilters.Find(name) is { Several: true }
-            && value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) is { Length: > 1 } several
-            && several.All(part => choices.Contains(part, StringComparer.OrdinalIgnoreCase)))
-        {
-            chosen = string.Join(", ", several);
-        }
-
-        if (chosen is null)
-        {
-            _picked.Remove(name);
-        }
-        else
-        {
-            _picked[name] = chosen;
-        }
-
-        picker.Show(
-            [new InlinePickerOption(Any, Any, ThemeManager.GreyKey), .. choices.Select(choice => new InlinePickerOption(choice, choice, ThemeManager.WhiteKey))],
-            chosen ?? Any,
-            chosen ?? Any,
-            chosen is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey,
-            null);
-    }
+    public void Pick(string name, string value) => ShowPick(_pickers, _picked, name, value, several: true);
 
     /// <summary>The age in hours MAX REPORT AGE shows, 0 for any.</summary>
     public int MaxReportAgeHours
@@ -174,24 +136,16 @@ public sealed class SystemSearchPage : GalaxySearchPage
     {
         var arguments = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        void Put(string key, string? value)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                arguments[key] = value.Trim();
-            }
-        }
-
-        Put("near", _near.Text);
-        Put("distance", Range(_distanceFrom.Text, _distanceTo.Text));
-        Put("population", _population.Asked);
-        Put("controlling_faction", _controllingFaction.Text);
-        Put("faction", _faction.Text);
-        Put("power_state", _powerState.SelectedIndex > 0 ? _powerState.SelectedItem : null);
+        Put(arguments, "near", _near.Text);
+        Put(arguments, "distance", Range(_distanceFrom.Text, _distanceTo.Text));
+        Put(arguments, "population", _population.Asked);
+        Put(arguments, "controlling_faction", _controllingFaction.Text);
+        Put(arguments, "faction", _faction.Text);
+        Put(arguments, "power_state", _powerState.SelectedIndex > 0 ? _powerState.SelectedItem : null);
 
         foreach (var (name, value) in _picked)
         {
-            Put(name, value);
+            Put(arguments, name, value);
         }
 
         if (_colonised.IsChecked == true)
@@ -204,10 +158,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
             arguments["max_report_age_hours"] = age;
         }
 
-        if (_limit.Value is { } limit && limit != DefaultLimit)
-        {
-            arguments["limit"] = limit.ToString("0", CultureInfo.InvariantCulture);
-        }
+        PutLimit(arguments, _limit, DefaultLimit);
 
         return arguments;
     }
@@ -225,10 +176,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         _powerState.SelectedIndex = 0;
         _colonised.IsChecked = false;
 
-        foreach (var name in _pickers.Keys)
-        {
-            Pick(name, Any);
-        }
+        ResetPickers(_pickers, _picked, null, several: true);
     }
 
     protected override void FillForm(IReadOnlyDictionary<string, string> arguments)
@@ -246,15 +194,9 @@ public sealed class SystemSearchPage : GalaxySearchPage
         _colonised.IsChecked = bool.TryParse(Get("colonised"), out var colonised) && colonised;
         _powerState.SelectedIndex = Index(_powerState.ItemsSource, Get("power_state"));
 
-        if (int.TryParse(Get("limit"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit))
-        {
-            _limit.Value = Math.Clamp(limit, 1, ShowUpTo.Max);
-        }
+        FillLimit(arguments, _limit);
 
-        foreach (var name in _pickers.Keys)
-        {
-            Pick(name, Get(name) ?? Any);
-        }
+        ResetPickers(_pickers, _picked, arguments, several: true);
     }
 
     protected override bool Refusal(IReadOnlyDictionary<string, string> arguments)
@@ -275,9 +217,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
             return null;
         }
 
-        var from = reference
-            ?? (arguments.TryGetValue("near", out var near) && near.Trim().Length > 0 ? near.Trim() : null)
-            ?? "your system";
+        var from = AsideFrom(arguments, reference);
 
         var lead = (min, max) switch
         {

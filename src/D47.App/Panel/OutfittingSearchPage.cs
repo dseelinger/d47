@@ -145,24 +145,11 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     {
         var arguments = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        void Put(string key, string? value)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                arguments[key] = value.Trim();
-            }
-        }
+        Put(arguments, "items", string.Join(", ", _items.Select(item => item.Display)));
+        PutNear(arguments, _near, _distance, DefaultDistance);
 
-        Put("items", string.Join(", ", _items.Select(item => item.Display)));
-        Put("near", _near.Text);
-
-        if (_distance.Value is { } distance && distance != DefaultDistance)
-        {
-            arguments["max_distance"] = distance.ToString("0", CultureInfo.InvariantCulture);
-        }
-
-        Put("min_pad", _pad.SelectedIndex > 0 ? Pads[_pad.SelectedIndex] : null);
-        Put("max_station_distance", _fromStar.Text);
+        Put(arguments, "min_pad", _pad.SelectedIndex > 0 ? Pads[_pad.SelectedIndex] : null);
+        Put(arguments, "max_station_distance", _fromStar.Text);
 
         if (_age.Asked is { } age)
         {
@@ -217,10 +204,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
             }
         }
 
-        if (double.TryParse(Get("max_distance"), NumberStyles.Float, CultureInfo.InvariantCulture, out var distance))
-        {
-            _distance.Value = (decimal)Math.Clamp(distance, 1, 99999);
-        }
+        FillDistance(arguments, _distance);
     }
 
     protected override bool Refusal(IReadOnlyDictionary<string, string> arguments)
@@ -240,16 +224,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
 
     protected override (string Lead, string Reference)? Aside(IReadOnlyDictionary<string, string> arguments, string? reference)
     {
-        var within = arguments.TryGetValue("max_distance", out var typed)
-                     && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked)
-            ? asked
-            : DefaultDistance;
-
-        var from = reference
-            ?? (arguments.TryGetValue("near", out var near) && near.Trim().Length > 0 ? near.Trim() : null)
-            ?? "your system";
-
-        return ($"WITHIN {within.ToString("0.##", CultureInfo.InvariantCulture)} LY OF ", from);
+        return WithinAside(arguments, reference, DefaultDistance);
     }
 
     protected override int Count(GalaxySearchPosting posting) =>

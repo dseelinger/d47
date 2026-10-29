@@ -431,6 +431,141 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         }
     }
 
+    /// <summary>Adds <paramref name="value"/>, trimmed, to <paramref name="arguments"/> unless it is blank.</summary>
+    protected static void Put(Dictionary<string, string> arguments, string key, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            arguments[key] = value.Trim();
+        }
+    }
+
+    /// <summary>Adds <c>near</c> and, when it is not the default, <c>max_distance</c>.</summary>
+    protected static void PutNear(Dictionary<string, string> arguments, TextBox near, Amount distance, int defaultDistance)
+    {
+        Put(arguments, "near", near.Text);
+
+        if (distance.Value is { } value && value != defaultDistance)
+        {
+            arguments["max_distance"] = value.ToString("0", CultureInfo.InvariantCulture);
+        }
+    }
+
+    /// <summary>Adds <c>limit</c> when it is not the default.</summary>
+    private protected static void PutLimit(Dictionary<string, string> arguments, ShowUpTo limit, int defaultLimit)
+    {
+        if (limit.Value is { } value && value != defaultLimit)
+        {
+            arguments["limit"] = value.ToString("0", CultureInfo.InvariantCulture);
+        }
+    }
+
+    /// <summary>Sets <paramref name="distance"/> from <c>max_distance</c>, clamped to <paramref name="ceiling"/>, when it is a number.</summary>
+    protected static void FillDistance(IReadOnlyDictionary<string, string> arguments, Amount distance, double ceiling = 99999)
+    {
+        if (arguments.TryGetValue("max_distance", out var typed)
+            && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked))
+        {
+            distance.Value = (decimal)Math.Clamp(asked, 1, ceiling);
+        }
+    }
+
+    /// <summary>Sets <paramref name="limit"/> from <c>limit</c>, clamped, when it is a number.</summary>
+    private protected static void FillLimit(IReadOnlyDictionary<string, string> arguments, ShowUpTo limit)
+    {
+        if (arguments.TryGetValue("limit", out var typed)
+            && int.TryParse(typed, NumberStyles.Integer, CultureInfo.InvariantCulture, out var asked))
+        {
+            limit.Value = Math.Clamp(asked, 1, ShowUpTo.Max);
+        }
+    }
+
+    /// <summary>The “WITHIN n LY OF ” aside, from <c>max_distance</c> or <paramref name="defaultDistance"/>.</summary>
+    protected static (string Lead, string Reference) WithinAside(IReadOnlyDictionary<string, string> arguments, string? reference, int defaultDistance)
+    {
+        var within = arguments.TryGetValue("max_distance", out var typed)
+                     && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked)
+            ? asked
+            : defaultDistance;
+
+        return ($"WITHIN {within.ToString("0.##", CultureInfo.InvariantCulture)} LY OF ", AsideFrom(arguments, reference));
+    }
+
+    /// <summary>The reference an aside measures from: the resolved one, the typed <c>near</c>, or “your system”.</summary>
+    protected static string AsideFrom(IReadOnlyDictionary<string, string> arguments, string? reference) =>
+        reference
+        ?? (arguments.TryGetValue("near", out var near) && near.Trim().Length > 0 ? near.Trim() : null)
+        ?? "your system";
+
+    /// <summary>Makes a dropdown for <paramref name="name"/> and registers it, set to Any.</summary>
+    protected void AddPicker(
+        Dictionary<string, (InlinePicker Picker, IReadOnlyList<string> Choices)> pickers,
+        Dictionary<string, string> picked,
+        string name,
+        IReadOnlyList<string> choices,
+        bool several)
+    {
+        var picker = new InlinePicker { Label = name.Replace('_', ' '), ListMaxHeight = 240 };
+
+        picker.Picked += (_, id) => ShowPick(pickers, picked, name, id, several);
+
+        pickers[name] = (picker, choices);
+        ShowPick(pickers, picked, name, SystemSearchPage.Any, several);
+    }
+
+    /// <summary>
+    /// Sets a dropdown to <paramref name="value"/>, or to Any for a value it does not offer. With
+    /// <paramref name="several"/>, a list of offered choices is kept as given where the filter takes several.
+    /// </summary>
+    protected static void ShowPick(
+        Dictionary<string, (InlinePicker Picker, IReadOnlyList<string> Choices)> pickers,
+        Dictionary<string, string> picked,
+        string name,
+        string value,
+        bool several)
+    {
+        var (picker, choices) = pickers[name];
+        var chosen = choices.FirstOrDefault(choice => string.Equals(choice, value, StringComparison.OrdinalIgnoreCase));
+
+        if (chosen is null
+            && several
+            && GalaxyFilters.Find(name) is { Several: true }
+            && value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) is { Length: > 1 } parts
+            && parts.All(part => choices.Contains(part, StringComparer.OrdinalIgnoreCase)))
+        {
+            chosen = string.Join(", ", parts);
+        }
+
+        if (chosen is null)
+        {
+            picked.Remove(name);
+        }
+        else
+        {
+            picked[name] = chosen;
+        }
+
+        picker.Show(
+            [new InlinePickerOption(SystemSearchPage.Any, SystemSearchPage.Any, ThemeManager.GreyKey), .. choices.Select(choice => new InlinePickerOption(choice, choice, ThemeManager.WhiteKey))],
+            chosen ?? SystemSearchPage.Any,
+            chosen ?? SystemSearchPage.Any,
+            chosen is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey,
+            null);
+    }
+
+    /// <summary>Resets every dropdown to Any, or to the value <paramref name="arguments"/> holds for it.</summary>
+    protected static void ResetPickers(
+        Dictionary<string, (InlinePicker Picker, IReadOnlyList<string> Choices)> pickers,
+        Dictionary<string, string> picked,
+        IReadOnlyDictionary<string, string>? arguments,
+        bool several)
+    {
+        foreach (var name in pickers.Keys)
+        {
+            ShowPick(pickers, picked, name, arguments?.GetValueOrDefault(name) ?? SystemSearchPage.Any, several);
+        }
+    }
+
     /// <summary>The tool arguments the form holds, as given; a field left empty is left out.</summary>
     public abstract IReadOnlyDictionary<string, string> FormArguments();
 
