@@ -5,11 +5,23 @@ namespace D47.Core.Coverage;
 /// <summary>The list of things worth knowing you have exercised, derived from the capability registry.</summary>
 public static class CoverageInventory
 {
-    public static IReadOnlyList<CoverageItem> Of(CapabilityRegistry registry) =>
-    [
-        .. registry.All.SelectMany(Tools),
-        .. registry.All.SelectMany(Settings),
-    ];
+    public static IReadOnlyList<CoverageItem> Of(CapabilityRegistry registry)
+    {
+        var settings = registry.All.SelectMany(Settings).ToList();
+        var shared = settings
+            .GroupBy(s => s.Item.Name, StringComparer.Ordinal)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToHashSet(StringComparer.Ordinal);
+
+        return
+        [
+            .. registry.All.SelectMany(Tools),
+            .. settings.Select(s => shared.Contains(s.Item.Name) && !string.IsNullOrEmpty(s.Group)
+                ? s.Item with { Name = $"{s.Group} - {s.Item.Name}" }
+                : s.Item),
+        ];
+    }
 
     /// <summary>
     /// The canonical schema is guaranteed byte-identical across runs by the prompt-caching invariant,
@@ -27,13 +39,15 @@ public static class CoverageInventory
                 tool.Description,
                 capability.ToolSchemas[tool.Name]))));
 
-    private static IEnumerable<CoverageItem> Settings(RegisteredCapability capability) =>
-        capability.Descriptor.Settings.Where(Drivable).Select(row => new CoverageItem(
-            CoverageKind.Setting,
-            row.Key,
-            capability.Descriptor.Id,
-            $"{capability.Descriptor.Name} - {row.Label}",
-            CoverageLedger.Fingerprint(Definition(row))));
+    private static IEnumerable<(CoverageItem Item, string? Group)> Settings(RegisteredCapability capability) =>
+        capability.Descriptor.Settings.Where(Drivable).Select(row => (
+            new CoverageItem(
+                CoverageKind.Setting,
+                row.Key,
+                capability.Descriptor.Id,
+                $"{capability.Descriptor.Name} - {row.Label}",
+                CoverageLedger.Fingerprint(Definition(row))),
+            row.Group));
 
     /// <summary>False for a row that only shows a value: no control and no button.</summary>
     private static bool Drivable(SettingRow row) =>

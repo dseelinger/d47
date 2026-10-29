@@ -93,6 +93,41 @@ public class CoverageInventoryTests
             item => Assert.Equal(declared[item.Id], item.CapabilityId));
     }
 
+    [Fact]
+    public void RowsThatDifferOnlyByGroupAreNamedWithTheirGroup()
+    {
+        var inventory = CoverageInventory.Of(TestSurface.For(new MemoryInstall()).Registry);
+
+        Assert.Equal(inventory.Count, inventory.Select(i => i.Name).Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal("Thinking bed - Audio mixer - Level", NameOf(inventory, "audio.bed.level"));
+        Assert.Equal("Panel placement - Headset - Size", NameOf(inventory, "vr.panel.size"));
+        Assert.Equal("COVAS Voice - Speech - Test", NameOf(inventory, "speech.covasVoice.test"));
+    }
+
+    [Fact]
+    public void ARowWithAUniqueLabelKeepsItsCapabilityAndLabelName()
+    {
+        var inventory = CoverageInventory.Of(CapabilityRegistry.Build(
+        [
+            new CapabilityDescriptor
+            {
+                Id = "probe",
+                Group = "Foundation",
+                Name = "Probe",
+                Summary = "A capability that exists to carry rows.",
+                Settings =
+                [
+                    new SettingRow { Key = "probe.a", Label = "Only", Help = "x", Kind = SettingKind.Hotkey, Group = "One", Binding = new SettingBinding { Read = _ => null } },
+                ],
+            },
+        ]));
+
+        Assert.Equal("Probe - Only", NameOf(inventory, "probe.a"));
+    }
+
+    private static string NameOf(IReadOnlyList<CoverageItem> inventory, string id) =>
+        inventory.Single(i => i.Id == id).Name;
+
     /// <summary>The capability id is identity, not definition.</summary>
     [Fact]
     public void TheCapabilityIdIsNotPartOfTheFingerprint()

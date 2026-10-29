@@ -357,6 +357,7 @@ public sealed class TestSurface
         Action? onSilence = null) => new()
     {
         Silence = onSilence ?? (() => { }),
+        GuardianTest = _ => Task.FromResult<string?>(null),
         CovasTest = _ => Task.FromResult<string?>(null),
     };
 
