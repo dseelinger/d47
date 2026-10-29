@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The next-objective strip under the title rule is no longer shown while the story is paused or switched off. It returns, labelled NEXT, when the story runs again. Before, it showed the objective in grey with the label PAUSED.
+
 Find lists Settings › Phrases when you search "commands" or "voice commands", and saying "open commands" or "show voice commands" opens it.
 
 After a usage-count send that was not accepted, starting D47 also sends today's counts so far instead of waiting for the day to end in UTC. Once a send is accepted, startup goes back to sending completed days only.
@@ -36,7 +38,7 @@ A stored plan's page on the Navigation tab has a Show on galaxy map tile under i
 
 A story that is set in the black for part or most of its length now says so on its page, under the length and level line: "Part of this story is set in the black." or "Most of this story is set in the black." The Stories tab's filter sentence has a new token, "set ANYWHERE", and choosing IN THE BLACK lists only those stories. Clear filters puts it back. A story shows the line once it is republished.
 
-While a story objective is under way, every tab of the full panel, on the desktop window and the headset big panel, shows it on one line under the title rule: NEXT, the objective, its system, a copy glyph for the system, and the story's name at the right. The system is cyan when it is your current system. A paused story reads PAUSED in grey, and while Change objective writes a new one the strip says "Writing a different objective…". On a narrow window the sentence is cut with an ellipsis first and the story's name second. With several short stories under way, or none, there is no strip. The mini panel keeps its own Next row.
+While a story objective is under way, every tab of the full panel, on the desktop window and the headset big panel, shows it on one line under the title rule: NEXT, the objective, its system, a copy glyph for the system, and the story's name at the right. The system is cyan when it is your current system. While Change objective writes a new one the strip says "Writing a different objective…". On a narrow window the sentence is cut with an ellipsis first and the story's name second. With several short stories under way, or none, there is no strip. The mini panel keeps its own Next row.
 
 A story's page in the Stories tab now shows the speaker's picture beside each line: the cast member's, the narrator's, or the core's for the ship and for your questions. Pressing a picture opens it full size. A finished story's lines are named by their speaker instead of by an id. Lines recorded before this update have no stored picture and show none.
 

@@ -71,13 +71,12 @@ public class TheNextObjectiveStripIsOneLineTests
     }
 
     [Fact]
-    public void APausedStoryReadsPausedInGrey()
+    public void APausedStoryHasNoStrip()
     {
-        var text = ObjectiveStrip.Describe(Shown(Arrive("Shinrarta Dezhra"), paused: true), "Sol", rewriting: false)!;
+        var paused = Shown(Arrive("Shinrarta Dezhra"), paused: true);
 
-        Assert.Equal("PAUSED", text.Label);
-        Assert.True(text.Grey);
-        Assert.Equal("Shinrarta Dezhra", text.CopyValue);
+        Assert.Null(ObjectiveStrip.Describe(paused, "Sol", rewriting: false));
+        Assert.Null(ObjectiveStrip.Describe(paused, "Sol", rewriting: true));
     }
 
     [Fact]

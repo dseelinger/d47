@@ -39,12 +39,12 @@ internal sealed class ObjectiveStrip : UserControl
     /// <summary>The strip's words for <paramref name="shown"/>, or null when it has nothing to say.</summary>
     internal static ObjectiveStripText? Describe(ShownObjective? shown, string? here, bool rewriting)
     {
-        if (shown is null)
+        if (shown is null || shown.Paused)
         {
             return null;
         }
 
-        var label = shown.Paused ? "PAUSED" : "NEXT";
+        const string label = "NEXT";
         var name = shown.StoryName.ToUpperInvariant();
 
         if (rewriting)
@@ -64,7 +64,7 @@ internal sealed class ObjectiveStrip : UserControl
 
         if (AdventuresPage.Naming(sentence, system) is not { } at)
         {
-            return new ObjectiveStripText(label, sentence, null, null, null, false, shown.Paused, name);
+            return new ObjectiveStripText(label, sentence, null, null, null, false, false, name);
         }
 
         var end = at + system!.Length;
@@ -77,7 +77,7 @@ internal sealed class ObjectiveStrip : UserControl
             system,
             after,
             string.Equals(system, here, StringComparison.OrdinalIgnoreCase),
-            shown.Paused,
+            false,
             name);
     }
 
