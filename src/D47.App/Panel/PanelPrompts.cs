@@ -619,6 +619,15 @@ public sealed class PanelPrompts : IHearsText
                 }
             };
 
+            _shown.KeyDown += (_, e) =>
+            {
+                if (e.Key == Avalonia.Input.Key.Enter)
+                {
+                    Commit(_typed);
+                    e.Handled = true;
+                }
+            };
+
             _state = new TextBlock
             {
                 FontSize = TypeScale.Secondary,

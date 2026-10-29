@@ -64,19 +64,30 @@ public sealed class BlockCaret : Control
 
     public override void Render(DrawingContext context)
     {
-        if (!_visible || !IsActive || Target is not { } target || Brush is not { } brush)
+        if (!_visible || !IsActive || Brush is not { } brush || Block is not { } block)
         {
             return;
         }
 
-        if (target.SelectionStart != target.SelectionEnd)
-        {
-            return;
-        }
+        context.FillRectangle(brush, block);
+    }
 
-        var hit = target.TextLayout.HitTestTextPosition(target.CaretIndex);
-        var position = target.TranslatePoint(hit.Position, this) ?? hit.Position;
-        context.FillRectangle(brush, new Rect(position, BlockSize));
+    /// <summary>The block's rectangle, centred on the caret's line; null with no target or a selection.</summary>
+    public Rect? Block
+    {
+        get
+        {
+            if (Target is not { } target || target.SelectionStart != target.SelectionEnd)
+            {
+                return null;
+            }
+
+            var hit = target.TextLayout.HitTestTextPosition(target.CaretIndex);
+            var lineTop = target.TranslatePoint(hit.Position, this) ?? hit.Position;
+            var top = lineTop.Y + ((hit.Height - BlockSize.Height) / 2);
+
+            return new Rect(new Point(lineTop.X, top), BlockSize);
+        }
     }
 
     private void OnTargetChanged(TextPresenter? oldTarget, TextPresenter? newTarget)

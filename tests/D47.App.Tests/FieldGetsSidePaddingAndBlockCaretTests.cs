@@ -62,6 +62,27 @@ public class FieldGetsSidePaddingAndBlockCaretTests
     }
 
     [AvaloniaFact]
+    public void TheBlockCaretIsCentredOnTheLineAtHeadingSize()
+    {
+        var (_, box) = Open();
+
+        box.FontSize = TypeScale.Heading;
+        box.Text = "Alpha";
+        box.CaretIndex = 2;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var presenter = box.GetVisualDescendants().OfType<TextPresenter>().Single();
+        var caret = box.GetVisualDescendants().OfType<BlockCaret>().Single();
+        var hit = presenter.TextLayout.HitTestTextPosition(presenter.CaretIndex);
+        var line = presenter.TranslatePoint(hit.Position, caret)!.Value;
+
+        var block = caret.Block!.Value;
+
+        Assert.Equal(21, block.Height);
+        Assert.Equal(line.Y + (hit.Height / 2), block.Center.Y, 0.01);
+    }
+
+    [AvaloniaFact]
     public void TheBlockCaretIsActiveOnlyWhileTheFieldHasFocus()
     {
         var (_, box) = Open();
