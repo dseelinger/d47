@@ -174,6 +174,38 @@ public class CoveragePageTests
         window.Close();
     }
 
+    /// <summary>Go closes the Features page and lands on the setting's row, marked.</summary>
+    [AvaloniaFact]
+    public void GoClosesThePageAndLandsOnTheRow()
+    {
+        var key = D47.Core.Capabilities.Builtin.SpeechCapability.ChatterboxVoiceKey;
+        var item = new CoverageItem(CoverageKind.Setting, key, "speech", "Speech - voice", "aaaa");
+        var (settings, viewState, paths) = TestSurface.Create(() => "x");
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
+        settings.Apply(D47.Core.Capabilities.Builtin.SpeechCapability.ProviderKey, D47.Core.Audio.TtsProviderCatalog.ChatterboxId, SettingsCaller.Panel);
+
+        var host = SettingsHost.Open(settings, viewState, paths, () => new CoverageLedger().Report([item]));
+
+        host.View.Reveal(D47.Core.Capabilities.Builtin.DiagnosticsCapability.Id);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var click = new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent);
+
+        host.View.GetVisualDescendants().OfType<Button>().First(b => b.Name == "OpenCoverage").RaiseEvent(click);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var go = host.Panel.GetVisualDescendants().OfType<Button>().First(b => b.Name == "CoverageGo");
+        go.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Avalonia.Headless.AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(host.Panel.GetVisualDescendants(), c => c.Name == "CoverageGo");
+        Assert.NotNull(host.View.LandedOn);
+
+        host.Close();
+    }
+
     /// <summary>Writes a PNG per theme for a human to look at.</summary>
     [AvaloniaFact]
     public void TheListRendersToACaptureAtRealSize()

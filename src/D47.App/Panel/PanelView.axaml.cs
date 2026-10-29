@@ -931,9 +931,7 @@ public partial class PanelView : UserControl, IPanelTabHost
             return;
         }
 
-        while (Nav.Modal && GoBack())
-        {
-        }
+        CloseDialogs();
 
         switch (found.Kind)
         {
@@ -969,6 +967,29 @@ public partial class PanelView : UserControl, IPanelTabHost
             : places;
     }
 
+    /// <summary>Leaves every chooser and dialog page on top of the trail.</summary>
+    private void CloseDialogs()
+    {
+        while (Nav.Trail.Count > 0)
+        {
+            var top = Nav.Trail[^1];
+
+            if (_dialogs.TryGetValue(top.Key, out var open))
+            {
+                open.Page.Close();
+
+                if (Nav.Trail.Count > 0 && ReferenceEquals(Nav.Trail[^1], top))
+                {
+                    return;
+                }
+            }
+            else if (!Nav.Modal || !GoBack())
+            {
+                return;
+            }
+        }
+    }
+
     /// <summary>Takes this surface to a place a message names, closing any dialog page first, as <see cref="SettingsJump"/> does.</summary>
     private void OpenPlace(PanelPlace place)
     {
@@ -978,9 +999,7 @@ public partial class PanelView : UserControl, IPanelTabHost
             return;
         }
 
-        while (Nav.Modal && GoBack())
-        {
-        }
+        CloseDialogs();
 
         var tabPlace = place.SettingKey is { } named
             ? D47.Core.Configuration.SettingsLayout.Tabs.FirstOrDefault(
