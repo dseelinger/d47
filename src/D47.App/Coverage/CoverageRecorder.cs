@@ -27,6 +27,7 @@ public sealed class CoverageRecorder
     private readonly CoverageLedger _ledger;
 
     private IReadOnlyList<CoverageItem> _inventory = [];
+    private CapabilityRegistry? _registry;
 
     private CoverageRecorder(
         AppPaths paths,
@@ -89,6 +90,7 @@ public sealed class CoverageRecorder
     /// <summary>Takes the inventory and starts listening.</summary>
     public void Follow(CapabilityRegistry registry, SettingsService settings)
     {
+        _registry = registry;
         _inventory = CoverageInventory.Of(registry);
 
         registry.ToolInvoked += invocation => Record(
@@ -113,6 +115,14 @@ public sealed class CoverageRecorder
 
         _logger.LogInformation("Coverage: {Summary}", Report().Summary);
     }
+
+    /// <summary>A tool's capability, description and exercise steps, or null for a name that is not registered.</summary>
+    public ToolExercise? Exercise(string tool) =>
+        _registry?.All
+            .SelectMany(capability => capability.Descriptor.Tools.Select(t => (Capability: capability.Descriptor, Tool: t)))
+            .Where(found => found.Tool.Name == tool)
+            .Select(found => new ToolExercise(found.Tool.Name, found.Capability.Name, found.Tool.Description, found.Tool.Exercise))
+            .FirstOrDefault();
 
     /// <summary>Where everything stands right now.</summary>
     public CoverageReport Report() => _ledger.Report(_inventory);

@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-Each settings line on the Features page has a GO button beside HELP. It closes the page and lands on that setting's row, unfolded and marked. A button or effect drawn on another row's line lands on that row. A tool line gets a GO button too when one page shows what the tool returns, such as the Search tab's system, station, outfitting, body and signal pages, Navigation's plan and bookmarks, and the checklist. It closes the page and opens that page.
+Each settings line on the Features page has a GO button beside HELP. It closes the page and lands on that setting's row, unfolded and marked. A button or effect drawn on another row's line lands on that row. A tool line gets a GO button too when one page shows what the tool returns, such as the Search tab's system, station, outfitting, body and signal pages, Navigation's plan and bookmarks, and the checklist. It closes the page and opens that page. A tool line with no page gets a GO button too. It opens a dialog with the steps for trying the tool by hand, or, where those are not written yet, what the tool does.
 
 Each section heading on the Features page can be pressed to collapse or expand its rows. It shows ▾ when open and ▸ when collapsed, and the heading stays visible with its count. Every section starts open, and each keeps the state you left it in when you close the page, reopen it, restart d47 or clear a failed row. Before, a long Tested list pushed the other sections out of reach.
 

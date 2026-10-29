@@ -197,6 +197,52 @@ public class CoveragePageTests
         window.Close();
     }
 
+    /// <summary>Go on a tool line with no page opens its exercise steps; with none written, its description and a hint.</summary>
+    [AvaloniaFact]
+    public void GoOnAPagelessToolOpensItsStepsOrItsDescription()
+    {
+        Theme();
+
+        var written = new CoverageItem(CoverageKind.Tool, "has_steps", "probe", "Probe - has_steps", "aaaa");
+        var unwritten = new CoverageItem(CoverageKind.Tool, "no_steps", "probe", "Probe - no_steps", "aaaa");
+        var report = new CoverageLedger().Report([written, unwritten]);
+
+        D47.App.Coverage.ToolExercise? Lookup(string id) => id == "has_steps"
+            ? new D47.App.Coverage.ToolExercise(id, "Probe", "Does a thing.", "Say hello and expect hello back.")
+            : new D47.App.Coverage.ToolExercise(id, "Probe", "Does another thing.", null);
+
+        var page = new CoveragePage(report, go: _ => { }, exercise: Lookup);
+        var window = page.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var buttons = page.GetVisualDescendants().OfType<Button>().Where(b => b.Name == "CoverageGo").ToList();
+
+        Assert.Equal(2, buttons.Count);
+        Assert.All(buttons, b => Assert.Equal(44, b.MinHeight));
+
+        Press(buttons[0]);
+
+        var first = Assert.Single(window.Modals().OfType<ToolExerciseDialog>());
+
+        Assert.Equal("Say hello and expect hello back.", first.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "ExerciseSteps").Text);
+        Assert.DoesNotContain(first.GetVisualDescendants().OfType<TextBlock>(), t => t.Name == "ExerciseUnwritten");
+
+        Press(first.GetVisualDescendants().OfType<Button>().Single(b => b.Name == ToolExerciseDialog.CloseName));
+
+        Assert.DoesNotContain(window.Modals(), m => m is ToolExerciseDialog);
+
+        Press(buttons[1]);
+
+        var second = Assert.Single(window.Modals().OfType<ToolExerciseDialog>());
+
+        Assert.Equal(ToolExerciseDialog.Unwritten, second.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "ExerciseUnwritten").Text);
+        Assert.Contains(second.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "Does another thing.");
+
+        second.Close();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        window.Close();
+    }
+
     /// <summary>Go closes the Features page and lands on the setting's row, marked.</summary>
     [AvaloniaFact]
     public void GoClosesThePageAndLandsOnTheRow()

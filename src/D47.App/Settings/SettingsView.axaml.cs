@@ -210,7 +210,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         D47.Core.Input.BindingProfiles? bindingProfiles = null,
         SystemNameLookup? systemNames = null,
         CustomVoicesEditing? customVoices = null,
-        Action<CoverageItem>? clearCoverage = null)
+        Action<CoverageItem>? clearCoverage = null,
+        Func<string, D47.App.Coverage.ToolExercise?>? toolExercise = null)
     {
         _settings = settings;
         _viewStateStore = viewState;
@@ -237,7 +238,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 systemNames,
                 customVoices,
                 clearCoverage,
-                viewState));
+                viewState,
+                toolExercise));
 
         Build();
 

@@ -1017,7 +1017,8 @@ public partial class MainWindow : Window
                 ? new SystemNameLookup(systems.PrefixNamesAsync, () => _host.Settings.Current.Knowledge.GalaxySearch)
                 : null,
             _host.CustomVoiceEditing,
-            _host.CoverageRecorder is { } clearing ? clearing.Clear : null);
+            _host.CoverageRecorder is { } clearing ? clearing.Clear : null,
+            _host.CoverageRecorder is { } exercising ? exercising.Exercise : null);
     }
 
     public Control BuildSettingsPage()

@@ -379,6 +379,57 @@ public class AModalOpensInTheHeadsetTests
         Assert.Equal(PanelTab.Settings, surface.Nav.Tab);
     }
 
+    /// <summary>
+    /// Go on a Features tool line with no page opens its dialog on the headset's panel, the ray reaches
+    /// Close, and Back closes it and leaves the page where it was scrolled.
+    /// </summary>
+    [AvaloniaFact]
+    public void GoOnAPagelessToolOpensItsDialogInTheHeadset()
+    {
+        var (surface, _, _) = Headset();
+        using var _ = surface;
+
+        var items = Enumerable.Range(0, 40)
+            .Select(i => new CoverageItem(CoverageKind.Tool, $"probe_{i:00}", "probe", $"Probe - probe_{i:00}", "aaaa"))
+            .ToList();
+
+        var page = new CoveragePage(
+            new CoverageLedger().Report(items),
+            go: item => { },
+            exercise: id => new D47.App.Coverage.ToolExercise(id, "Probe", "Does a thing.", "Say it and expect an answer."));
+
+        var view = (PanelView)typeof(VrPanelSurface)
+            .GetField("_view", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .GetValue(surface)!;
+
+        var opening = view.Open(page);
+        Jobs();
+        Render(surface);
+
+        var go = surface.Board.View.GetVisualDescendants().OfType<Button>().Where(b => b.Name == "CoverageGo").ElementAt(30);
+        var body = page.GetVisualDescendants().OfType<ScrollViewer>().First(v => v.Name == "ModalBody");
+
+        Assert.True(Press(surface, go));
+
+        var dialog = Assert.IsType<ToolExerciseDialog>(surface.Modal);
+        var scrolled = body.Offset.Y;
+
+        Assert.True(scrolled > 0);
+        Assert.Contains(dialog, surface.Board.View.GetVisualDescendants());
+
+        Assert.True(Press(surface, InModal(surface, "CLOSE")));
+        Assert.Null(surface.Modal);
+
+        Assert.True(Press(surface, surface.Board.View.GetVisualDescendants().OfType<Button>().Where(b => b.Name == "CoverageGo").ElementAt(30)));
+        Assert.IsType<ToolExerciseDialog>(surface.Modal);
+
+        Assert.True(surface.Back());
+
+        Assert.Null(surface.Modal);
+        Assert.Contains(page, surface.Board.View.GetVisualDescendants());
+        Assert.Equal(scrolled, body.Offset.Y);
+    }
+
     /// <summary>On the desktop the same row opens the modal over the window.</summary>
     [AvaloniaFact]
     public void TheDesktopWindowStillOpensIt()

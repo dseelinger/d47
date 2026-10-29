@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using D47.App.Theming;
+using D47.App.Windowing;
 using D47.Core.Configuration;
 using D47.Core.Coverage;
 
@@ -23,24 +24,28 @@ public sealed class CoveragePage : DialogPage
     private readonly Func<CoverageReport>? _fresh;
     private readonly ViewStateStore? _store;
     private readonly Action<CoverageItem>? _go;
+    private readonly Func<string, D47.App.Coverage.ToolExercise?>? _exercise;
     private ViewState _view;
 
     /// <param name="clear">When given, each failed row gets a Clear button that calls it.</param>
     /// <param name="fresh">Fetches the report to redraw after a clear.</param>
     /// <param name="store">When given, which sections are collapsed is remembered across visits.</param>
     /// <param name="go">When given, each settings row, and each tool row with a page, gets a Go button that calls it.</param>
+    /// <param name="exercise">When given, each tool row without a page gets a Go button that opens the tool's exercise steps.</param>
     public CoveragePage(
         CoverageReport report,
         Action<CoverageItem>? clear = null,
         Func<CoverageReport>? fresh = null,
         ViewStateStore? store = null,
-        Action<CoverageItem>? go = null)
+        Action<CoverageItem>? go = null,
+        Func<string, D47.App.Coverage.ToolExercise?>? exercise = null)
     {
         Title = "Features";
         _clear = clear;
         _fresh = fresh;
         _store = store;
         _go = go;
+        _exercise = exercise;
         _view = store?.Load() ?? new ViewState();
 
         _summary = new SelectableTextBlock
@@ -134,6 +139,24 @@ public sealed class CoveragePage : DialogPage
         _list.Children.Add(new StackPanel { Spacing = 8, Children = { TitleText.GroupRow(title), rows } });
     }
 
+    private static string MarkOf(CoverageLine line) => line switch
+    {
+        { Failed: true } => "FAILED",
+        { Status: CoverageStatus.Exercised } => "DONE",
+        { Status: CoverageStatus.Stale } => "CHANGED",
+        _ => "NEVER",
+    };
+
+    private void ShowExercise(CoverageLine line)
+    {
+        if (_exercise?.Invoke(line.Item.Id) is not { } tool || TopLevel.GetTopLevel(this) is not Window owner)
+        {
+            return;
+        }
+
+        _ = new ToolExerciseDialog(tool, MarkOf(line)).Over(owner);
+    }
+
     /// <summary>One line, its state on the status ladder: done is met, failed is an error, the rest not met.</summary>
     private Control Row(CoverageLine line)
     {
@@ -146,13 +169,7 @@ public sealed class CoveragePage : DialogPage
 
         var mark = new TextBlock
         {
-            Text = line switch
-            {
-                { Failed: true } => "FAILED",
-                { Status: CoverageStatus.Exercised } => "DONE",
-                { Status: CoverageStatus.Stale } => "CHANGED",
-                _ => "NEVER",
-            },
+            Text = MarkOf(line),
             FontFamily = new FontFamily(Fonts.ChromeFamily),
             FontSize = TypeScale.Meta,
             LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
@@ -203,6 +220,22 @@ public sealed class CoveragePage : DialogPage
             };
 
             go.Click += (_, _) => _go(line.Item);
+
+            right.Children.Add(go);
+        }
+
+        if (_exercise is not null && line.Item.Kind == CoverageKind.Tool && D47.App.Coverage.ToolPlaces.For(line.Item.Id) is null)
+        {
+            var go = new Button
+            {
+                Name = "CoverageGo",
+                Content = "GO",
+                MinHeight = 44,
+                MinWidth = 72,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            go.Click += (_, _) => ShowExercise(line);
 
             right.Children.Add(go);
         }
