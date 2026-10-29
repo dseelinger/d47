@@ -561,6 +561,10 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = OutputDeviceKey,
+                Exercise =
+                    "Open Settings › Hearing and sound › Sounds and levels, group Output, and pick a device other than "
+                    + "the default. Say \"what ship am I in\": the reply plays from that device. Clear the row and the reply "
+                    + "returns to your Windows Default Device.",
                 Label = "Output device",
                 Help =
                     "Where D47 speaks. Leaving this unset follows the Default Device — the one Sound "
@@ -586,6 +590,10 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = ProviderKey,
+                Exercise =
+                    "Open Settings › Providers › Speech synthesis, group Provider, pick Edge Neural and ask a question: "
+                    + "the reply is spoken. Pick None and ask again: the reply appears on the panel, nothing is spoken and "
+                    + "the cues still play.",
                 Label = "Voice provider",
                 Help = "Where spoken replies are synthesised. \"None\" leaves D47 silent; cues still play.",
                 Kind = SettingKind.Choice,
@@ -602,6 +610,10 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = VoiceKey,
+                Exercise =
+                    "Open Settings › Your core › Its voice and pick a different Voice, using the audition button to hear "
+                    + "it first. Ask a question: the reply is in that voice. Switch to another core: it keeps its own "
+                    + "voice. The row is absent while the Voice provider is None.",
                 Label = "Voice",
                 Help =
                     "Which voice the core aboard speaks in. Kept per core, so switching core "
@@ -636,6 +648,10 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = RateKey,
+                Exercise =
+                    "Open Settings › Your core › Its voice, set Speaking rate to 1.2 and ask a question: the reply is "
+                    + "about a fifth faster than at 1.0. The row is absent on a provider that cannot change pace, and on "
+                    + "ElevenLabs it appears only with the Flash model.",
                 Label = "Speaking rate",
                 Help = "1.0 is the voice's natural pace. 1.2 is a fifth faster. Remembered per provider.",
                 Kind = SettingKind.Number,
@@ -661,6 +677,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = LocalVoiceKey,
+                Exercise =
+                    "The row appears under Settings › Providers › Speech synthesis, group Provider, when the Voice "
+                    + "provider is Kokoro or another slot uses Kokoro and it is not installed. Press Download it and expect "
+                    + "a progress readout, then the button to disappear. Ask a question: the reply is spoken with no "
+                    + "network.",
                 Label = "Local voice",
                 Help =
                     "Kokoro runs on this computer, so nothing D47 says leaves it — including re-voiced "
@@ -691,6 +712,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = ChatterboxVoiceKey,
+                Exercise =
+                    "The row appears under Settings › Providers › Speech synthesis, group Provider, when the Voice "
+                    + "provider is Chatterbox or another slot uses Chatterbox and it is not installed. Press Download it "
+                    + "and expect a progress readout, then the button to disappear. Ask a question: the reply is spoken in "
+                    + "the chosen Chatterbox voice.",
                 Label = "Chatterbox voice",
                 Help =
                     "Chatterbox runs on this computer's processor, so nothing D47 says through it leaves "
@@ -715,6 +741,12 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = LocalVoiceBuildKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), the "
+                    + "row appears under Settings › Providers › Speech synthesis, group Provider, only once Kokoro is "
+                    + "installed and a slot uses it. Pick another build and expect its disk size and wait to show in the "
+                    + "choice; confirm with Download and use it and expect the new build to replace the old, and a failed "
+                    + "download to leave the old one in place.",
                 Advanced = true,
                 Label = "Local voice model build",
                 Help =
@@ -783,6 +815,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = CharacterPriceKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), set "
+                    + "Voice provider to OpenAI under Settings › Providers › Speech synthesis; the row appears in the What "
+                    + "it costs group. Raise the price, speak a reply and expect Spoken this session to show a higher cost. "
+                    + "The row is absent on free providers and on one billed by the minute.",
                 Advanced = true,
                 Label = "Price per 1,000 characters",
                 Help =
@@ -817,6 +854,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = MinutePriceKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), set "
+                    + "Voice provider to Cartesia under Settings › Providers › Speech synthesis; the row appears in the "
+                    + "What it costs group. Raise the price, speak a reply and expect Spoken this session to show a higher "
+                    + "cost. The row is absent on a provider billed by the character.",
                 Advanced = true,
                 Label = "Price per minute of audio",
                 Help =
@@ -848,6 +890,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpentKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Providers › Speech synthesis, group What it costs. With a paid provider, ask a question "
+                    + "and expect Spoken this session to count the characters of the reply and its cost at the rate above; "
+                    + "before anything is spoken it reads \"Nothing spoken yet.\"",
                 Advanced = true,
                 Label = "Spoken this session",
                 Help =
@@ -868,6 +915,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpentBySlotKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Providers › Speech synthesis, group What it costs. Have the ship, then the Narrator, "
+                    + "speak through a paid provider and expect Spoken by each voice to list each slot with its own "
+                    + "characters.",
                 Advanced = true,
                 Label = "Spoken by each voice",
                 Help =
@@ -886,6 +938,10 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = CarrierCaptainNameKey,
+                Exercise =
+                    "Open the Asset Mgmt › Carrier tab, set Captain name to Reyes and have the carrier captain speak: the "
+                    + "line is addressed as \"Captain Reyes\". Clear it and the line says \"Captain\" alone. The row is absent "
+                    + "while the Voice provider is None.",
                 Advanced = true,
                 Label = "Captain name",
                 Help = "What you call your carrier's captain. Empty leaves the line as \"Captain\" alone.",
@@ -906,6 +962,10 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = CarrierCaptainVoiceKey,
+                Exercise =
+                    "Open the Asset Mgmt › Carrier tab and pick a Carrier captain voice, using the audition button to "
+                    + "hear it; the captain speaks in it. Clear the row and d47 pairs one again. The row is absent while "
+                    + "the Voice provider is None.",
                 Advanced = true,
                 Label = "Carrier captain voice",
                 Help = "Who answers for your fleet carrier. Left empty, d47 pairs one from the carrier's voice list.",
@@ -934,6 +994,10 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = TowerNameKey,
+                Exercise =
+                    "Open the Asset Mgmt › Carrier tab, set Tower name to Harbour Control and have the tower speak: the "
+                    + "line is credited to Harbour Control. Clear it and the line says \"Tower Control\". The row is absent "
+                    + "while the Voice provider is None.",
                 Advanced = true,
                 Label = "Tower name",
                 Help = "What you call the tower. Empty leaves the line as \"Tower Control\".",
@@ -954,6 +1018,10 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = TowerVoiceKey,
+                Exercise =
+                    "Open the Asset Mgmt › Carrier tab and pick a Carrier tower voice different from the captain's, using "
+                    + "the audition button to hear it; the tower speaks in it. The row is absent while the Voice provider "
+                    + "is None.",
                 Advanced = true,
                 Label = "Carrier tower voice",
                 Help = "Who handles arrivals and departures. A different person from the captain.",
@@ -980,6 +1048,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = NarratorVoiceKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Other voices › Narrator and stories and pick a Narrator voice, using the audition button "
+                    + "to hear it. Start a story: the Narrator speaks in it. Clear the row and it takes the first voice "
+                    + "that is not the ship's. The row is absent while the Voice provider is None.",
                 Advanced = true,
                 Label = "Narrator voice",
                 Help = "Who tells your story. From the voices that speak for your ship; left empty, or set to "
@@ -1010,6 +1083,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = NarratorFourthWallKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Other voices › Narrator and stories and tick Break the fourth wall. While a story runs, "
+                    + "speak to the Narrator on the STORY channel and expect it to answer you directly; with it unticked, "
+                    + "it does not answer you.",
                 Advanced = true,
                 Label = "Break the fourth wall",
                 Help = "Lets you talk to the Narrator on the STORY channel, and lets it answer you directly. "
@@ -1025,6 +1103,12 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = ResetVoicesKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Providers › Speech synthesis, group Provider. Press Forget and pair again, confirm, and "
+                    + "expect a progress readout, then the line under the row to say all cores with a voice are on the one "
+                    + "d47 paired them with. Check Its voice: every core has a fresh voice. The row is absent while the "
+                    + "Voice provider is None.",
                 Advanced = true,
                 Label = "Forget every voice and pair again",
                 Help =
@@ -1050,6 +1134,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpeakIncomingKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Other voices › Chatter and messages, group Messages read aloud, and tick Speak incoming "
+                    + "messages; the comms tab rows below appear. Have another player message you in Local chat: the "
+                    + "message is read aloud in a voice of its own. Untick it and the message is silent.",
                 Advanced = true,
                 Label = "Speak incoming messages",
                 Help = "Read in-game chat aloud, each sender in their own voice. Off by default.",
@@ -1065,6 +1154,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = AccentPercentKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Other voices › Chatter and messages, group How NPCs sound, and set the accent share to "
+                    + "100. Dock at a station and expect NPC lines written to suit each voice's accent; at 0 they are "
+                    + "written plainly. The row is absent while the Voice provider is None.",
                 Advanced = true,
                 Label = "How often an accent flavours the words",
                 Help = "The share of NPC lines written to suit the accent of the voice that speaks them. "
@@ -1090,6 +1184,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpeakNpcKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), tick "
+                    + "Speak incoming messages under Settings › Other voices › Chatter and messages first; the row appears "
+                    + "beneath it. Tick Include NPC chatter, request docking and expect the station's replies read aloud; "
+                    + "untick it and they are silent.",
                 Advanced = true,
                 Label = "Include NPC chatter",
                 Help = "Also speak messages from NPCs. A station approach produces a lot of these.",
@@ -1108,6 +1207,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpeakSystemChatKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), tick "
+                    + "Speak incoming messages under Settings › Other voices › Chatter and messages first; the row appears "
+                    + "beneath it. With System chat ticked, a message in the System tab of the comms panel is read aloud; "
+                    + "unticked, it is silent.",
                 Advanced = true,
                 Label = "System chat",
                 Help = "The comms panel's System tab (Elite calls it \"starsystem\" chat) — everyone currently in your system, not just those nearby.",
@@ -1123,6 +1227,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpeakLocalChatKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), tick "
+                    + "Speak incoming messages under Settings › Other voices › Chatter and messages first; the row appears "
+                    + "beneath it. With Local chat ticked, a message in the Local tab of the comms panel is read aloud; "
+                    + "unticked, it is silent.",
                 Advanced = true,
                 Label = "Local chat",
                 Help = "The comms panel's Local tab — anyone physically near you, regardless of system-wide chat.",
@@ -1138,6 +1247,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpeakWingChatKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), tick "
+                    + "Speak incoming messages under Settings › Other voices › Chatter and messages first; the row appears "
+                    + "beneath it. With Wing ticked, a message from a wingmate in the Wing tab is read aloud; unticked, it "
+                    + "is silent.",
                 Advanced = true,
                 Label = "Wing",
                 Help = "The comms panel's Wing tab — your wing's private channel.",
@@ -1153,6 +1267,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpeakSquadronKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), tick "
+                    + "Speak incoming messages under Settings › Other voices › Chatter and messages first; the row appears "
+                    + "beneath it. With Squadron ticked, a message in the Squadron tab is read aloud; unticked, it is "
+                    + "silent.",
                 Advanced = true,
                 Label = "Squadron",
                 Help = "The comms panel's Squadron tab — your squadron's channel, including squadron leadership broadcasts.",
@@ -1168,6 +1287,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = SpeakDirectMessagesKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), tick "
+                    + "Speak incoming messages under Settings › Other voices › Chatter and messages first; the row appears "
+                    + "beneath it. With Direct messages ticked, a message sent to you by name is read aloud; unticked, it "
+                    + "is silent.",
                 Advanced = true,
                 Label = "Direct messages",
                 Help = "The comms panel's Direct Messages tab (Elite calls it \"player\" chat) — a message sent to you by name.",
@@ -1205,6 +1329,10 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = CovasReverbKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), choose "
+                    + "the stock COVAS core, open Settings › Your core › Its voice, group COVAS Voice, and press Test "
+                    + "beside COVAS reverb. Ticked, the line has a short room reverb; unticked, it is dry.",
                 Advanced = true,
                 Label = "COVAS reverb",
                 Help = "A short room reverb on the stock COVAS voice, like the cockpit voice in Elite.",
@@ -1253,6 +1381,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = CuesKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Hearing and sound › Sounds and levels, group Cues. Ticked, hold push-to-talk and expect a "
+                    + "sound as listening starts, another as thinking starts and another as the reply finishes; unticked, "
+                    + "those sounds are silent.",
                 Advanced = true,
                 Label = "Loop-state cues",
                 Help = "A short sound as D47 starts listening, starts thinking, and finishes.",
@@ -1266,6 +1399,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = BedEnabledKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Hearing and sound › Sounds and levels, group Cues. Ticked, ask a question that takes a "
+                    + "while to answer and expect a quiet loop to play until the reply starts; unticked, the wait is "
+                    + "silent.",
                 Advanced = true,
                 Label = "Thinking bed",
                 Help = "A quiet loop while a turn runs, so a slow answer is not silence.",
@@ -1280,6 +1418,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = RetryAttemptsKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Providers › When a turn fails and set Attempts to 1. Break the connection (turn off Wi- "
+                    + "Fi) and ask a question: the turn fails at once with no retry. Set it to 3 and expect two retries "
+                    + "before the failure.",
                 Advanced = true,
                 Label = "Attempts",
                 Kind = SettingKind.Number,
@@ -1299,6 +1442,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = RetryWaitKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Providers › When a turn fails, set Attempts to 3 and Wait between attempts to 5. Break "
+                    + "the connection (turn off Wi-Fi) and ask a question: the first retry follows about five seconds after "
+                    + "the failure.",
                 Advanced = true,
                 Label = "Wait between attempts",
                 Kind = SettingKind.Number,
@@ -1322,6 +1470,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = RetryBackoffKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Providers › When a turn fails, set Attempts to 4 and Wait between attempts to 2, then "
+                    + "break the connection (turn off Wi-Fi) and ask. With sequential the waits grow by two seconds each "
+                    + "time; with logarithmic they grow by less each time.",
                 Advanced = true,
                 Label = "Backoff",
                 Kind = SettingKind.Choice,
@@ -1342,6 +1495,11 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = TurnTimeoutKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Providers › When a turn fails and set Give up after to 5. Ask a question the model takes "
+                    + "longer than five seconds to start answering: the attempt counts as failed and is retried or "
+                    + "reported. At 45 the same question succeeds.",
                 Advanced = true,
                 Label = "Give up after",
                 Kind = SettingKind.Number,
@@ -1388,6 +1546,9 @@ public static class SpeechCapability
             select new SettingRow
             {
                 Key = SlotProviderKey(slot),
+                Exercise =
+                    $"With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open Settings › Providers › Speech synthesis, group Where each voice comes from, and pick a provider for {slot.Name} that differs from the ship's. "
+                    + $"What speaks for {slot.Covers} is then heard in that provider's voice; clear the row and it follows the ship's provider again. The row is absent while the Voice provider is None.",
                 Advanced = true,
                 Label = $"{slot.Name} — provider",
                 Help = SlotHelp(slot),
@@ -1424,6 +1585,9 @@ public static class SpeechCapability
             select new SettingRow
             {
                 Key = KeyRowFor(provider),
+                Exercise =
+                    $"The row appears under Settings › Providers › Speech synthesis, group Provider, while a voice slot uses {provider.Name}. "
+                    + "Paste a valid key and press Verify: the key is accepted and the row never shows it back. Paste a wrong one and expect Verify to say the provider refused it.",
                 Label = $"{provider.Name} API key",
                 Help = "Stored encrypted for this Windows account. Write-only: D47 will never show it back to you.",
                 Kind = SettingKind.Secret,
@@ -1447,6 +1611,10 @@ public static class SpeechCapability
             new SettingRow
             {
                 Key = ElevenLabsModelKey,
+                Exercise =
+                    "The row appears under Settings › Providers › Speech synthesis, group Provider, while a voice slot uses ElevenLabs. "
+                    + "Pick Flash 2.5, ask a question and expect the reply within about a second, with Speaking rate now offered under Its voice. "
+                    + "Pick v4 Turbo and ask again: the reply is slower to start and carries delivery such as a sigh.",
                 Label = "ElevenLabs model",
                 Help =
                     "v4 Turbo, the default, and v3 Conversational perform delivery direction such as "
@@ -1759,6 +1927,9 @@ public static class SpeechCapability
         yield return new SettingRow
         {
             Key = GuardianPresetKey,
+            Exercise =
+                "Open Settings › Your core › Its voice, group Guardian Voice Effects, pick Vocoder and press Test: the line is played through Cylon, Chorus and Reverb, and those three are ticked below. "
+                + "Tick or untick any other effect and the preset reads Custom. Pick Off and Test again: the line is dry. The row is absent while the Voice provider is None.",
             Label = "Preset",
             Help =
                 "A built-in or your own saved combination of ticks, order and levels. Changing any of "
@@ -1785,6 +1956,10 @@ public static class SpeechCapability
             yield return new SettingRow
             {
                 Key = GuardianEffectKey(id),
+                Exercise =
+                    "Open Settings › Your core › Its voice, group Guardian Voice Effects, tick "
+                    + $"{effect.Label}, leave the others off and press Test: the line {Hear(id).Does}. "
+                    + "Untick it and Test again: the line is dry. The row is absent while the Voice provider is None.",
                 Label = effect.Label,
                 Help = $"{effect.Help} Off by default.",
                 Kind = SettingKind.Toggle,
@@ -1801,6 +1976,10 @@ public static class SpeechCapability
             yield return new SettingRow
             {
                 Key = GuardianLevelKey(id),
+                Exercise =
+                    "Open Settings › Your core › Its voice, group Guardian Voice Effects, tick "
+                    + $"{effect.Label}, set its level to 20 and press Test, then set it to 1 and press Test again: at 20 {Hear(id).More}. "
+                    + "The level is kept when the effect is unticked. The row is absent while the Voice provider is None.",
                 Label = $"{effect.Label} level",
                 Help =
                     $"How strong {effect.Label} is, from {GuardianVoice.LowestLevel} to {GuardianVoice.HighestLevel}: "
@@ -1828,6 +2007,9 @@ public static class SpeechCapability
         yield return new SettingRow
         {
             Key = GuardianOrderKey,
+            Exercise =
+                "On the Settings page, in the group Guardian Voice Effects, tick Pitch down and Chorus and press Test. Set Guardian voice order to chorus,pitchDown and Test again: "
+                + "the effects run in that order, so the sound changes, and the field reads back the order you typed. The row is absent while the Voice provider is None.",
             Label = "Guardian voice order",
             Help =
                 "The order the Guardian voice effects run in, first to last, as their ids separated by commas. "
@@ -1846,6 +2028,36 @@ public static class SpeechCapability
             },
         };
     }
+
+    private static (string Does, string More) Hear(string id) => id switch
+    {
+        "stutter" => ("repeats the start of some words two or three times", "more words stutter"),
+        "monotone" => ("holds the voice near one pitch", "the voice flattens further"),
+        "steppedPitch" => ("makes the pitch jump between notes instead of gliding", "the pitch holds longer on each note"),
+        "cylon" => ("gives the voice a buzzing vocoder tone", "more of the buzzing voice replaces the natural one"),
+        "whisper" => ("turns the voice into breath", "more of the output is breath"),
+        "pitchDown" => ("lowers the voice with no change in speed", "the voice is lower"),
+        "octaveDown" => ("adds a copy an octave lower under the voice", "the lower copy is louder"),
+        "chorus" => ("adds several slightly detuned copies of the voice", "the copies are louder"),
+        "hive" => ("adds several pitch-shifted, delayed copies, like a crowd speaking", "each copy is louder"),
+        "flanger" => ("sweeps a whooshing comb through the voice", "the sweep runs faster"),
+        "phaser" => ("sweeps a soft, swirling filter through the voice", "the sweep runs faster"),
+        "wah" => ("makes the tone open and close with the loudness of the speech", "the wah is stronger"),
+        "comb" => ("gives the voice a hollow, metallic ring", "the ring is stronger"),
+        "ringMod" => ("blends in a harsh, rasping robotic tone", "the rasp is stronger"),
+        "deepRingMod" => ("replaces the voice with a deep, rasping ring-modulated one", "the carrier tone changes"),
+        "tremolo" => ("makes the volume pulse", "the pulsing is faster"),
+        "overdrive" => ("distorts the voice by clipping it", "the distortion is heavier"),
+        "bitcrusher" => ("makes the voice grainy and low-fi", "more bits survive, so the voice is cleaner"),
+        "glitch" => ("breaks the voice with short damaged stretches", "the breaks come more often"),
+        "helmet" => ("puts the voice through a comms link, with a click at the start and end", "more of the line is the comms-link version"),
+        "hologram" => ("puts the voice through a weak comms link, losing stretches under static", "the link is stronger and fewer stretches are lost"),
+        "reverseReverb" => ("makes a reverb tail swell into each word", "the reverb is louder"),
+        "shimmer" => ("adds a high octave to the reverb tail", "the high layer is louder"),
+        "reverb" => ("adds a half-second room tail", "the tail is louder"),
+        "respirator" => ("adds a synthesised breath after each sentence", "the breath runs longer"),
+        _ => ("is treated", "the treatment is stronger"),
+    };
 
     private static GuardianVoiceEffect StoredGuardianEffect(D47Settings settings, string id) =>
         GuardianVoice.Effects(settings.Speech.GuardianVoice).First(effect => effect.Id == id);
