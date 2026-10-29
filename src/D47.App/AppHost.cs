@@ -5274,7 +5274,7 @@ public sealed class AppHost : IDisposable
             BoardCore(storyCore.Id, PersonaSwitch.Adopted);
         }
 
-        var line = GuardianCores.Line(waking, storyCore);
+        var line = GuardianCores.Line(waking, storyCore, ShipFacts.Of(GameState.Active));
 
         var storyId = Stories?.Stories.Current(GameState.Active?.Identity.FrontierId)?.Id;
         var from = Personas.Current.Id;

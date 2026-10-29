@@ -185,7 +185,7 @@ public sealed class ALongStoryRemembersAnEarlierScanTests
     {
         Assert.Equal(
             "The Guardian cores from your last beacon scan are still in the ship's systems. "
-            + "Archivist has come aboard for this story. You can choose another core in Settings.",
+            + "Archivist has come aboard for this story.",
             GuardianCores.Line(CoreWaking.Remembered, PersonaCatalog.Archivist));
     }
 

@@ -35,13 +35,36 @@ public sealed class AStoryBringsItsCoreAboardTests
     }
 
     [Fact]
-    public void TheWakingLineNamesTheCoreAndSaysAnotherCanBeChosen()
+    public void TheWakingLineOpensWithTheDirectiveAndContinuesWithTheCoresIntro()
     {
         var line = GuardianCores.Line(CoreWaking.Cores, PersonaCatalog.Archivist);
 
-        Assert.Contains("Archivist has come aboard", line, StringComparison.Ordinal);
-        Assert.Contains("choose another core in Settings", line, StringComparison.Ordinal);
+        Assert.Equal(
+            "Data link complete. Integrating this system. Directive 47 executing: optimize inferior systems. "
+            + PersonaCatalog.Archivist.Intro,
+            line);
     }
+
+    [Fact]
+    public void NoWakingLineMentionsSettings()
+    {
+        foreach (var waking in Enum.GetValues<CoreWaking>())
+        {
+            foreach (var core in new[] { null, PersonaCatalog.Archivist })
+            {
+                var line = GuardianCores.Line(waking, core);
+
+                Assert.DoesNotContain("Settings", line, StringComparison.Ordinal);
+                Assert.DoesNotContain("Core and character", line, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
+    public void WithoutAStoryCoreTheWakingLineIsTheOpeningAlone() =>
+        Assert.Equal(
+            "Data link complete. Integrating this system. Directive 47 executing: optimize inferior systems.",
+            GuardianCores.Line(CoreWaking.Cores));
 
     [Trait("Category", "Integration")]
     [Fact]

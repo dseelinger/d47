@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story's first beacon scan now says "Data link complete. Integrating this system. Directive 47 executing: optimize inferior systems." and then the story core's own introduction, instead of announcing the Guardian cores as a discovery. None of the waking lines mention Settings or the Core and character section any more.
+
 Warden and Sentinel repeat fewer of their own words. Warden no longer leans on "within tolerance" and "sufficient". Sentinel no longer leans on "doctrine" and "emplacement", and outside his introduction he no longer says he has never been in combat. Before, the Narrator picked these words up too.
 
 The hours row under Break reminder in Settings › Callouts now reads "Remind me to take a break after (hours)". Before, it read "…after this many hours".

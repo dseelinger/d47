@@ -480,7 +480,7 @@ d47, is not on record, and no journal history is read for it. A story of 1 month
 scan is on record begins with the scan behind you: no trip, no beacon objective, chapter one in act one,
 and its days counting from the pick. No scan line is said. Once the opening lines, if any, have been said,
 the story's core comes aboard and D47 says "The Guardian cores from your last beacon scan are still in the
-ship's systems. {core} has come aboard for this story. You can choose another core in Settings." The
+ship's systems. {core} has come aboard for this story." The
 chapter writer is told the trip is already behind you, and the story's page leaves out "The beacon".
 A story whose card says it needs its own beacon trip flies to a beacon even with a scan on record, as if none were.
 The Stories page shows a checkbox, "Fly to a Guardian beacon again in my next story", once a scan is on
@@ -495,7 +495,7 @@ does on the Catalogue; that page also has **Story on**, which pauses the story.
 
 Each story is written for one Guardian core, shown on the list and on the story's page as "Core". When
 you scan the story's first Guardian beacon, or at the pick of a story shorter than a month, that core comes aboard in place of the core you had, says
-the waking line, and the Story log says it came aboard and that you can choose another core in Settings. A
+the waking line, and the Story log says it came aboard. A
 core you choose afterwards stays; the story does not bring its own back. Pausing, abandoning or finishing
 the story leaves the core aboard as it is.
 

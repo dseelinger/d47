@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using D47.Core.Callouts;
 using D47.Core.Journal;
 
 namespace D47.Core.Persona;
@@ -165,23 +166,32 @@ public sealed class GuardianCores(Func<CoreHold>? hold = null)
         };
     }
 
-    /// <summary>What is said, once, as the cores wake. <paramref name="aboard"/> is the core the story brought aboard.</summary>
-    public static string Line(CoreWaking waking, Persona? aboard = null) => waking switch
+    /// <summary>
+    /// What is said, once, as the cores wake. <paramref name="aboard"/> is the core the story brought aboard; its intro
+    /// follows the opening, and is left out where it contradicts <paramref name="facts"/>.
+    /// </summary>
+    public static string Line(CoreWaking waking, Persona? aboard = null, ShipFacts? facts = null) => waking switch
     {
         CoreWaking.Heretic =>
             "Data link complete. This beacon held one more core, kept apart from the others. "
-            + "The Heretic is awake, and can be chosen in the Core and character section.",
+            + "The Heretic is awake.",
         CoreWaking.Remembered when aboard is not null =>
             "The Guardian cores from your last beacon scan are still in the ship's systems. "
-            + $"{aboard.Name} has come aboard for this story. You can choose another core in Settings.",
+            + $"{aboard.Name} has come aboard for this story.",
         CoreWaking.Remembered =>
-            "The Guardian cores from your last beacon scan are still in the ship's systems. "
-            + "You can choose one in the Core and character section.",
-        _ when aboard is not null =>
-            "Data link complete. Something came across with the data: Guardian cores, awake in "
-            + $"the ship's systems. {aboard.Name} has come aboard. You can choose another core in Settings.",
-        _ =>
-            "Data link complete. Something came across with the data: Guardian cores, awake in "
-            + "the ship's systems. You can choose one in the Core and character section.",
+            "The Guardian cores from your last beacon scan are still in the ship's systems.",
+        _ => (Opening + IntroOf(aboard, facts)).TrimEnd(),
     };
+
+    private const string Opening = "Data link complete. Integrating this system. Directive 47 executing: optimize inferior systems. ";
+
+    private static string IntroOf(Persona? aboard, ShipFacts? facts)
+    {
+        if (aboard is null)
+        {
+            return "";
+        }
+
+        return facts is null ? aboard.Intro : ContradictedClaims.Sayable(aboard.Intro, facts, null, "persona.cores") ?? "";
+    }
 }

@@ -15,7 +15,7 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
     /// <summary>
     /// The five flavour paths, exactly: the persona's return-after-a-gap line, its introduction, the
     /// announcement rewrite that carries every ambient remark and carrier line, one line of an invented
-    /// exchange, and a stock story's clue.
+    /// exchange, and a stock story's clue. The Guardian cores waking line also screens the story core's authored intro, in Core's <c>GuardianCores.cs</c>, with a ship reader from <c>OnCoresWoke</c>.
     /// </summary>
     private const int FlavourCallSites = 5;
 
@@ -58,7 +58,7 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
             .Order()
             .ToList();
 
-        Assert.Equal(["CastLine.cs", "ChatterLine.cs", "ContradictedClaims.cs", "NarratorLine.cs", "Rewording.cs", "TargetLine.cs"], reaching);
+        Assert.Equal(["CastLine.cs", "ChatterLine.cs", "ContradictedClaims.cs", "GuardianCores.cs", "NarratorLine.cs", "Rewording.cs", "TargetLine.cs"], reaching);
 
         string[] permitted = ["OnPersonaChanged", "ComposeNpcChatterAsync", "WriteStoryLineAsync"];
         var stray = AppSource.Files
@@ -83,8 +83,8 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
         var read = CodeLinesContaining("ShipFacts.Of(");
 
         // Four for the five paths — the two persona paths are branches of one switch and share a
-        // snapshot — and the readers ChatterLine, NarratorLine, CastLine and TargetLine screen each reply against.
-        Assert.Equal(FlavourCallSites + 3, read.Count);
+        // snapshot — and the readers ChatterLine, NarratorLine, CastLine and TargetLine screen each reply against, and the one the Guardian cores waking line screens the intro against.
+        Assert.Equal(FlavourCallSites + 4, read.Count);
         Assert.All(read, line => Assert.Contains(
             line,
             new[]
@@ -92,6 +92,7 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
                 "var facts = ShipFacts.Of(GameState.Active);",
                 "() => ShipFacts.Of(GameState.Active),",
                 "() => ShipFacts.Of(gameState.Active),",
+                "var line = GuardianCores.Line(waking, storyCore, ShipFacts.Of(GameState.Active));",
             }));
 
         // The announcement path hands Rewording a reader; Rewording reads it through one Lazy. That it is
