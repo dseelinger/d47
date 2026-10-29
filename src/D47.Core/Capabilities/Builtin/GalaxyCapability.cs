@@ -153,21 +153,13 @@ public static class GalaxyCapability
                     + "bound (\"20\") or two separated by a dash (\"10-50\").",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "near",
-                        Type = ToolParameterType.String,
-                        Description = "Measure from this system. Defaults to theirs.",
-                    },
+                    ToolParameter.Text(
+                        "near",
+                        "Measure from this system. Defaults to theirs."),
                     .. GalaxyFilters.For(GalaxySearchKind.Systems).Select(Parameter),
                     .. SortParameters(GalaxySearchKind.Systems),
                     ReportAgeParameter,
-                    new ToolParameter
-                    {
-                        Name = "limit",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 100. Default 25.",
-                    },
+                    LimitParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchAsync(
@@ -184,96 +176,38 @@ public static class GalaxyCapability
                     + "use find_nearest_station.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "near",
-                        Type = ToolParameterType.String,
-                        Description = "Search out from this system. Defaults to theirs.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_distance",
-                        Type = ToolParameterType.Number,
-                        Description = "How far to look, in light years. Default 50.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "station_type",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "One or more, comma-separated: "
-                            + $"{string.Join(", ", StationQuery.StationTypes.Select(type => type.Name))}.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "min_pad",
-                        Type = ToolParameterType.String,
-                        Description = "Large, or Medium for at least one medium pad.",
-                        AllowedValues = StationQuery.MinPads,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_station_distance",
-                        Type = ToolParameterType.Number,
-                        Description = "Furthest from the star, in light seconds.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "services",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "Services the station must all have, comma-separated: "
-                            + $"{string.Join(", ", StationQuery.ServiceNames.Select(service => service.Name))}.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "material_trader",
-                        Type = ToolParameterType.String,
-                        Description = "A material trader of this kind.",
-                        AllowedValues = StationQuery.TraderTypes,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "technology_broker",
-                        Type = ToolParameterType.String,
-                        Description = "A technology broker of this kind.",
-                        AllowedValues = StationQuery.BrokerTypes,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "module",
-                        Type = ToolParameterType.String,
-                        Description = "A module sold there, by name.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "module_class",
-                        Type = ToolParameterType.String,
-                        Description = "Module size, 0 to 8.",
-                        AllowedValues = OutfittingCatalogue.Classes,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "module_rating",
-                        Type = ToolParameterType.String,
-                        Description = "Module rating, A to I.",
-                        AllowedValues = OutfittingCatalogue.Ratings,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "ship",
-                        Type = ToolParameterType.String,
-                        Description = "A ship sold there, by name.",
-                    },
+                    NearParameter,
+                    MaxDistanceParameter,
+                    ToolParameter.Text(
+                        "station_type",
+                        "One or more, comma-separated: "
+                            + $"{string.Join(", ", StationQuery.StationTypes.Select(type => type.Name))}."),
+                    MinPadParameter,
+                    MaxStationDistanceParameter,
+                    ToolParameter.Text(
+                        "services",
+                        "Services the station must all have, comma-separated: "
+                            + $"{string.Join(", ", StationQuery.ServiceNames.Select(service => service.Name))}."),
+                    ToolParameter.OneOf(
+                        "material_trader",
+                        "A material trader of this kind.",
+                        StationQuery.TraderTypes),
+                    ToolParameter.OneOf(
+                        "technology_broker",
+                        "A technology broker of this kind.",
+                        StationQuery.BrokerTypes),
+                    ToolParameter.Text(
+                        "module",
+                        "A module sold there, by name."),
+                    ModuleClassParameter,
+                    ModuleRatingParameter,
+                    ToolParameter.Text(
+                        "ship",
+                        "A ship sold there, by name."),
                     .. GalaxyFilters.For(GalaxySearchKind.Stations).Select(Parameter),
                     .. SortParameters(GalaxySearchKind.Stations),
                     ReportAgeParameter,
-                    new ToolParameter
-                    {
-                        Name = "limit",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 100. Default 25.",
-                    },
+                    LimitParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchStationsAsync(
@@ -289,59 +223,23 @@ public static class GalaxyCapability
                     + "Leaves out fleet carriers unless include_carriers is true.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "items",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "Comma-separated: modules by name with an optional size and rating, and at most one ship, "
+                    ToolParameter.Text(
+                        "items",
+                        "Comma-separated: modules by name with an optional size and rating, and at most one ship, "
                             + "such as \"5A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\".",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "near",
-                        Type = ToolParameterType.String,
-                        Description = "Search out from this system. Defaults to theirs.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_distance",
-                        Type = ToolParameterType.Number,
-                        Description = "How far to look, in light years. Default 50.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "min_pad",
-                        Type = ToolParameterType.String,
-                        Description = "Large, or Medium for at least one medium pad.",
-                        AllowedValues = StationQuery.MinPads,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_station_distance",
-                        Type = ToolParameterType.Number,
-                        Description = "Furthest from the star, in light seconds.",
-                    },
+                        required: true),
+                    NearParameter,
+                    MaxDistanceParameter,
+                    MinPadParameter,
+                    MaxStationDistanceParameter,
                     ReportAgeParameter,
-                    new ToolParameter
-                    {
-                        Name = "surface_stations",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Include surface ports and settlements. Default true.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "include_carriers",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Include fleet carriers. Default false.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "limit",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 100. Default 25.",
-                    },
+                    ToolParameter.Flag(
+                        "surface_stations",
+                        "Include surface ports and settlements. Default true."),
+                    ToolParameter.Flag(
+                        "include_carriers",
+                        "Include fleet carriers. Default false."),
+                    LimitParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchOutfittingAsync(
@@ -356,33 +254,16 @@ public static class GalaxyCapability
                     + "first. Answers from the daily signal index and the Commander's own scans, on this machine.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "signal",
-                        Type = ToolParameterType.String,
-                        Description =
-                            $"A kind, one of {SignalSearch.AnyRes}, {string.Join(", ", SignalKind.All.Select(kind => kind.Name))}; "
+                    ToolParameter.Text(
+                        "signal",
+                        $"A kind, one of {SignalSearch.AnyRes}, {string.Join(", ", SignalKind.All.Select(kind => kind.Name))}; "
                             + "or any part of a signal's name such as \"unauthorised\", \"memorial\" or \"Natalie Fraser\".",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "near",
-                        Type = ToolParameterType.String,
-                        Description = "Search out from this system. Defaults to theirs.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_distance",
-                        Type = ToolParameterType.Number,
-                        Description = "How far to look, in light years. Default 100.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "limit",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 100. Default 25.",
-                    },
+                        required: true),
+                    NearParameter,
+                    ToolParameter.Number(
+                        "max_distance",
+                        "How far to look, in light years. Default 100."),
+                    LimitParameter,
                     ReportAgeParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
@@ -402,19 +283,13 @@ public static class GalaxyCapability
                     + "Leave 'from' out to measure from where the Commander is now.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "to",
-                        Type = ToolParameterType.String,
-                        Description = "The system to measure to.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "from",
-                        Type = ToolParameterType.String,
-                        Description = "The system to measure from. Defaults to theirs.",
-                    },
+                    ToolParameter.Text(
+                        "to",
+                        "The system to measure to.",
+                        required: true),
+                    ToolParameter.Text(
+                        "from",
+                        "The system to measure from. Defaults to theirs."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     DistanceAsync(galaxy, currentSystem, settings, heard, arguments, cancellationToken),
@@ -428,12 +303,9 @@ public static class GalaxyCapability
                     + "Leave 'system' out for the one the Commander is in.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "system",
-                        Type = ToolParameterType.String,
-                        Description = "The system to describe. Defaults to theirs.",
-                    },
+                    ToolParameter.Text(
+                        "system",
+                        "The system to describe. Defaults to theirs."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     DescribeSystemAsync(
@@ -461,12 +333,9 @@ public static class GalaxyCapability
                     + "the one the Commander is in.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "system",
-                        Type = ToolParameterType.String,
-                        Description = "The system to check. Defaults to theirs.",
-                    },
+                    ToolParameter.Text(
+                        "system",
+                        "The system to check. Defaults to theirs."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SystemVisitsAsync(
@@ -494,132 +363,59 @@ public static class GalaxyCapability
                 Parameters =
                 [
                     // Three short descriptions on purpose.
-                    new ToolParameter
-                    {
-                        Name = "commodity",
-                        Type = ToolParameterType.String,
-                        Description = "A commodity traded there, by name.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "selling",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Sell it rather than buy it.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "tonnes",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many tonnes, if they said.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "module",
-                        Type = ToolParameterType.String,
-                        Description = "A module to be sold there, by name — \"Frame Shift Drive\".",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "ship",
-                        Type = ToolParameterType.String,
-                        Description = "A ship to be sold there, by name — \"Krait MkII\".",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "module_class",
-                        Type = ToolParameterType.String,
-                        Description = "Module size, 0 to 8.",
-                        AllowedValues = OutfittingCatalogue.Classes,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "module_rating",
-                        Type = ToolParameterType.String,
-                        Description = "Module rating, A to I.",
-                        AllowedValues = OutfittingCatalogue.Ratings,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "near",
-                        Type = ToolParameterType.String,
-                        Description = "Search out from this system. Defaults to theirs.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_distance",
-                        Type = ToolParameterType.Number,
-                        Description = "How far to look, in light years. Default 50.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "large_pad",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Only stations with a large landing pad.",
-                    },
+                    ToolParameter.Text(
+                        "commodity",
+                        "A commodity traded there, by name."),
+                    ToolParameter.Flag(
+                        "selling",
+                        "Sell it rather than buy it."),
+                    ToolParameter.Integer(
+                        "tonnes",
+                        "How many tonnes, if they said."),
+                    ToolParameter.Text(
+                        "module",
+                        "A module to be sold there, by name — \"Frame Shift Drive\"."),
+                    ToolParameter.Text(
+                        "ship",
+                        "A ship to be sold there, by name — \"Krait MkII\"."),
+                    ModuleClassParameter,
+                    ModuleRatingParameter,
+                    NearParameter,
+                    MaxDistanceParameter,
+                    ToolParameter.Flag(
+                        "large_pad",
+                        "Only stations with a large landing pad."),
                     // The commodity half's own two knobs (#157).
-                    new ToolParameter
-                    {
-                        Name = "max_price_age_hours",
-                        Type = ToolParameterType.Integer,
-                        Description =
-                            "How stale a quoted price may be, in hours; 0 for any age. Default 720, one month for "
-                            + "a commodity. For a module or ship, how old the station's report may be; no bound unless given.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "include_carriers",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Also fleet carriers, whose prices are player-set and can move.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "limit",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 100. Default 25.",
-                    },
+                    ToolParameter.Integer(
+                        "max_price_age_hours",
+                        "How stale a quoted price may be, in hours; 0 for any age. Default 720, one month for "
+                            + "a commodity. For a module or ship, how old the station's report may be; no bound unless given."),
+                    ToolParameter.Flag(
+                        "include_carriers",
+                        "Also fleet carriers, whose prices are player-set and can move."),
+                    LimitParameter,
                     // The four INARA has and this did not (#296).
-                    new ToolParameter
-                    {
-                        Name = "max_station_distance",
-                        Type = ToolParameterType.Number,
-                        Description = "Furthest from the star, in light seconds.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "min_supply",
-                        Type = ToolParameterType.Integer,
-                        Description = "Least in stock, or least demand when selling.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "surface_stations",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Also planetary ports and settlements. Default false.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "order_by",
-                        Type = ToolParameterType.String,
-                        Description = "Nearest first, or best price first. Default price.",
-                        AllowedValues = ["distance", "price"],
-                    },
-                    new ToolParameter
-                    {
-                        Name = "order",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "asc or desc, over the whole answer rather than the rows shown. Default is nearest "
+                    MaxStationDistanceParameter,
+                    ToolParameter.Integer(
+                        "min_supply",
+                        "Least in stock, or least demand when selling."),
+                    ToolParameter.Flag(
+                        "surface_stations",
+                        "Also planetary ports and settlements. Default false."),
+                    ToolParameter.OneOf(
+                        "order_by",
+                        "Nearest first, or best price first. Default price.",
+                        ["distance", "price"]),
+                    ToolParameter.OneOf(
+                        "order",
+                        "asc or desc, over the whole answer rather than the rows shown. Default is nearest "
                             + "first for distance and best price first for price: desc for a seller, asc for a buyer.",
-                        AllowedValues = ["asc", "desc"],
-                    },
+                        ["asc", "desc"]),
                     // Carried onto the posting so a page reading the shared CommodityBoard can tell its own
                     // baked question apart from any other (#303).
-                    new ToolParameter
-                    {
-                        Name = "tag",
-                        Type = ToolParameterType.String,
-                        Description = "Internal. Leave unset.",
-                    },
+                    ToolParameter.Text(
+                        "tag",
+                        "Internal. Leave unset."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindStationAsync(
@@ -634,140 +430,69 @@ public static class GalaxyCapability
                     + "surface signal, a ring to mine, a surface material, a codex entry, volcanism, atmosphere or gravity.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "body_type",
-                        Type = ToolParameterType.String,
-
-                        // Two examples rather than four.
-                        Description = "The kind of body, by name — \"Earth-like world\", \"Class I gas giant\".",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "signal",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A signal on the body's surface: \"Biological\", \"Geological\", \"Human\", "
-                            + "\"Guardian\" or \"Thargoid\".",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "signal_count",
-                        Type = ToolParameterType.Integer,
-                        Description =
-                            "Exactly how many of that signal — not a minimum. Omit unless they asked "
-                            + "for a number.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "hotspot",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A mining hotspot material in the body's rings — \"Painite\", \"Void Opal\".",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "hotspot_count",
-                        Type = ToolParameterType.Integer,
-                        Description =
-                            "Exactly how many overlapping hotspots — not a minimum. A triple is 3.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "ring_type",
-                        Type = ToolParameterType.String,
-                        Description = "Ring composition.",
-                        AllowedValues = BodyCatalogue.RingTypes,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "reserve_level",
-                        Type = ToolParameterType.String,
-                        Description = "How rich the rings are.",
-                        AllowedValues = BodyCatalogue.ReserveLevels,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "landable",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Only bodies that can be landed on.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "terraformable",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Only terraforming candidates, which are worth far more to map.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "codex_entry",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "A species or geological feature to find, by its codex name — \"Bacterium Cerbrus\", "
-                            + "\"Fumarole\". A colour variant is searched as its species.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "volcanism",
-                        Type = ToolParameterType.String,
-                        Description = "Volcanism by name — \"Water Geysers\", \"Minor Rocky Magma\".",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "atmosphere",
-                        Type = ToolParameterType.String,
-                        Description = "Atmosphere by name — \"Thin Ammonia\", \"No atmosphere\".",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "tidally_locked",
-                        Type = ToolParameterType.Boolean,
-                        Description = "Only tidally locked bodies.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "gravity",
-                        Type = ToolParameterType.String,
-                        Description = "Surface gravity in g: \"0.5\" is up to, \"0.1-0.5\" between.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "temperature",
-                        Type = ToolParameterType.String,
-                        Description = "Surface temperature in kelvin, as a range like gravity.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_arrival_distance",
-                        Type = ToolParameterType.Number,
-                        Description = "Light seconds from the arrival star, at most.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "material",
-                        Type = ToolParameterType.String,
-                        Description = "A raw surface material the body carries — \"Polonium\".",
-                    },
+                    ToolParameter.Text(
+                        "body_type",
+                        "The kind of body, by name — \"Earth-like world\", \"Class I gas giant\"."),
+                    ToolParameter.Text(
+                        "signal",
+                        "A signal on the body's surface: \"Biological\", \"Geological\", \"Human\", "
+                            + "\"Guardian\" or \"Thargoid\"."),
+                    ToolParameter.Integer(
+                        "signal_count",
+                        "Exactly how many of that signal — not a minimum. Omit unless they asked "
+                            + "for a number."),
+                    ToolParameter.Text(
+                        "hotspot",
+                        "A mining hotspot material in the body's rings — \"Painite\", \"Void Opal\"."),
+                    ToolParameter.Integer(
+                        "hotspot_count",
+                        "Exactly how many overlapping hotspots — not a minimum. A triple is 3."),
+                    ToolParameter.OneOf(
+                        "ring_type",
+                        "Ring composition.",
+                        BodyCatalogue.RingTypes),
+                    ToolParameter.OneOf(
+                        "reserve_level",
+                        "How rich the rings are.",
+                        BodyCatalogue.ReserveLevels),
+                    ToolParameter.Flag(
+                        "landable",
+                        "Only bodies that can be landed on."),
+                    ToolParameter.Flag(
+                        "terraformable",
+                        "Only terraforming candidates, which are worth far more to map."),
+                    ToolParameter.Text(
+                        "codex_entry",
+                        "A species or geological feature to find, by its codex name — \"Bacterium Cerbrus\", "
+                            + "\"Fumarole\". A colour variant is searched as its species."),
+                    ToolParameter.Text(
+                        "volcanism",
+                        "Volcanism by name — \"Water Geysers\", \"Minor Rocky Magma\"."),
+                    ToolParameter.Text(
+                        "atmosphere",
+                        "Atmosphere by name — \"Thin Ammonia\", \"No atmosphere\"."),
+                    ToolParameter.Flag(
+                        "tidally_locked",
+                        "Only tidally locked bodies."),
+                    ToolParameter.Text(
+                        "gravity",
+                        "Surface gravity in g: \"0.5\" is up to, \"0.1-0.5\" between."),
+                    ToolParameter.Text(
+                        "temperature",
+                        "Surface temperature in kelvin, as a range like gravity."),
+                    ToolParameter.Number(
+                        "max_arrival_distance",
+                        "Light seconds from the arrival star, at most."),
+                    ToolParameter.Text(
+                        "material",
+                        "A raw surface material the body carries — \"Polonium\"."),
                     .. SortParameters(GalaxySearchKind.Bodies),
                     .. GalaxyFilters.For(GalaxySearchKind.Bodies).Select(Parameter),
-                    new ToolParameter
-                    {
-                        Name = "near",
-                        Type = ToolParameterType.String,
-                        Description = "Search out from this system. Defaults to theirs.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "max_distance",
-                        Type = ToolParameterType.Number,
-                        Description = "How far to look, in light years. Default 50, at most 1,000.",
-                    },
-                    new ToolParameter
-                    {
-                        Name = "limit",
-                        Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 100. Default 25.",
-                    },
+                    NearParameter,
+                    ToolParameter.Number(
+                        "max_distance",
+                        "How far to look, in light years. Default 50, at most 1,000."),
+                    LimitParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindBodyAsync(
@@ -786,19 +511,11 @@ public static class GalaxyCapability
                     + "buying, mining or trading is the method.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "item",
-                        Type = ToolParameterType.String,
-                        Description = "The thing to get, by name.",
-                        Required = true,
-                    },
-                    new ToolParameter
-                    {
-                        Name = "near",
-                        Type = ToolParameterType.String,
-                        Description = "Search out from this system. Defaults to theirs.",
-                    },
+                    ToolParameter.Text(
+                        "item",
+                        "The thing to get, by name.",
+                        required: true),
+                    NearParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
                     HowToGetAsync(galaxy, trade, currentSystem, settings, gameState, arguments, cancellationToken),
@@ -812,7 +529,7 @@ public static class GalaxyCapability
                     + "how long ago it was.",
                 Description = "When the last BGS tick was, in UTC and as how long ago.",
                 Parameters = [],
-                Commands = [.. BgsTickQuestions.Select(phrase => new ToolCommandPhrase(phrase, NoArguments))],
+                Commands = [.. BgsTickQuestions.Select(phrase => new ToolCommandPhrase(phrase))],
                 Handler = (_, _) => Task.FromResult(
                     ToolResult.Ok(DescribeBgsTick(
                         settings.Current.Knowledge.BgsTick,
@@ -843,13 +560,10 @@ public static class GalaxyCapability
                     + "service knows a faction by that name. The Commander's own decision.",
                 Parameters =
                 [
-                    new ToolParameter
-                    {
-                        Name = "faction",
-                        Type = ToolParameterType.String,
-                        Description = "The minor faction's exact name, as the Commander said it.",
-                        Required = true,
-                    },
+                    ToolParameter.Text(
+                        "faction",
+                        "The minor faction's exact name, as the Commander said it.",
+                        required: true),
                 ],
                 Protected = true,
                 RefusalExample = "my squadron's faction is Hutton Truckers",
@@ -1060,8 +774,20 @@ public static class GalaxyCapability
     /// <summary>Sending market prices to EDDN.</summary>
     public const string EddnKey = "contribution.eddn";
 
-    private static readonly IReadOnlyDictionary<string, string> NoArguments =
-        new Dictionary<string, string>(StringComparer.Ordinal);
+    private static readonly ToolParameter LimitParameter =
+        ToolParameter.Integer("limit", "How many to return, 1 to 100. Default 25.");
+    private static readonly ToolParameter NearParameter =
+        ToolParameter.Text("near", "Search out from this system. Defaults to theirs.");
+    private static readonly ToolParameter MaxDistanceParameter =
+        ToolParameter.Number("max_distance", "How far to look, in light years. Default 50.");
+    private static readonly ToolParameter MinPadParameter =
+        ToolParameter.OneOf("min_pad", "Large, or Medium for at least one medium pad.", StationQuery.MinPads);
+    private static readonly ToolParameter MaxStationDistanceParameter =
+        ToolParameter.Number("max_station_distance", "Furthest from the star, in light seconds.");
+    private static readonly ToolParameter ModuleClassParameter =
+        ToolParameter.OneOf("module_class", "Module size, 0 to 8.", OutfittingCatalogue.Classes);
+    private static readonly ToolParameter ModuleRatingParameter =
+        ToolParameter.OneOf("module_rating", "Module rating, A to I.", OutfittingCatalogue.Ratings);
 
     private static readonly string[] BgsTickQuestions =
     [
@@ -1098,38 +824,35 @@ public static class GalaxyCapability
     /// <summary>The <c>order_by</c> and <c>order</c> parameters of a search of <paramref name="kind"/>.</summary>
     private static IEnumerable<ToolParameter> SortParameters(GalaxySearchKind kind) =>
     [
-        new ToolParameter
-        {
-            Name = "order_by",
-            Type = ToolParameterType.String,
-            Description = kind == GalaxySearchKind.Bodies
+        ToolParameter.OneOf(
+            "order_by",
+            kind == GalaxySearchKind.Bodies
                 ? "What to sort by. Default distance, nearest first. \"material\" keeps the richest in the "
                   + $"material among the {BodyQuery.RichestOf} nearest carrying it, and needs material."
                 : "What to sort by across the whole search, not only the rows shown. Default distance, "
                   + "nearest first.",
-            AllowedValues = [.. SearchSorts.For(kind).Select(field => field.Name)],
-        },
-        new ToolParameter
-        {
-            Name = "order",
-            Type = ToolParameterType.String,
-            Description = "asc or desc. Default is the usual direction for order_by: desc for "
-                          + $"{string.Join(", ", SearchSorts.For(kind).Where(field => field.FirstDescending).Select(field => field.Name))}"
-                          + ", asc for the rest.",
-            AllowedValues = ["asc", "desc"],
-        },
+            [.. SearchSorts.For(kind).Select(field => field.Name)]),
+        ToolParameter.OneOf(
+            "order",
+            "asc or desc. Default is the usual direction for order_by: desc for "
+                + $"{string.Join(", ", SearchSorts.For(kind).Where(field => field.FirstDescending).Select(field => field.Name))}"
+                + ", asc for the rest.",
+            ["asc", "desc"]),
     ];
 
     /// <summary>A filter as a tool parameter.</summary>
-    private static ToolParameter Parameter(GalaxyFilter filter) => new()
+    private static ToolParameter Parameter(GalaxyFilter filter)
     {
-        Name = filter.Name,
-        Type = filter.Kind == GalaxyFilterKind.Flag ? ToolParameterType.Boolean : ToolParameterType.String,
-        Description = filter.Several
+        var description = filter.Several
             ? $"{filter.Description} One or more, comma-separated: {string.Join(", ", filter.Choices)}."
-            : filter.Description,
-        AllowedValues = filter.Kind == GalaxyFilterKind.Choice && !filter.Several ? filter.Choices : [],
-    };
+            : filter.Description;
+        return filter.Kind == GalaxyFilterKind.Flag
+            ? ToolParameter.Flag(filter.Name, description)
+            : ToolParameter.OneOf(
+                filter.Name,
+                description,
+                filter.Kind == GalaxyFilterKind.Choice && !filter.Several ? filter.Choices : []);
+    }
 
     private static async Task<ToolResult> SuggestHomeSystemAsync(
         IGalaxyService? galaxy,
