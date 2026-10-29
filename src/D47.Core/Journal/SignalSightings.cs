@@ -85,20 +85,13 @@ public sealed class SignalSightings(IFileSystem fileSystem, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(lines);
 
-        var events = JournalFold.Parse(lines, Relevant, logger);
+        var events = JournalFold.Parse(lines, Reads.Matches, logger);
 
         Apply([.. OperationMarker.Mark(events)]);
     }
 
-    private static bool Relevant(string line) =>
-        line.Contains("\"event\":\"FSSSignalDiscovered\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"GameModeChange\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Fileheader\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Shutdown\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"FSDJump\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"CarrierJump\"", StringComparison.Ordinal);
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
+        "FSSSignalDiscovered", "LoadGame", "GameModeChange", "Fileheader", "Shutdown", "Location", "FSDJump", "CarrierJump");
 
     private void Fold(JournalEvent journalEvent)
     {

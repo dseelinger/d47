@@ -6,6 +6,10 @@ namespace D47.Core.Journal;
 /// <summary>The construction sites the Commander has docked at, recovered from journals d47 was not running for (#798).</summary>
 public static class ColonisationBackfill
 {
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
+        "ColonisationConstructionDepot", "ColonisationSystemClaim", "ColonisationBeaconDeployed",
+        "Location", "FSDJump", "CarrierJump", "Docked", "Undocked");
+
     /// <summary>Every Commander's sites as their journals last reported them, keyed by Frontier id. Sites only, never contributions.</summary>
     public static IReadOnlyDictionary<string, ColonisationSites> FromHistory(
         IFileSystem fileSystem,
@@ -49,9 +53,7 @@ public static class ColonisationBackfill
             files,
             logger,
             "construction sites",
-            CommanderEventWalk.Events(
-                "ColonisationConstructionDepot", "ColonisationSystemClaim", "ColonisationBeaconDeployed",
-                "Location", "FSDJump", "CarrierJump", "Docked", "Undocked"),
+            Reads,
             cancellation,
             (parsed, commander) =>
             {

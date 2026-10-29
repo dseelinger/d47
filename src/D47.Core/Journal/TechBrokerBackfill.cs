@@ -6,7 +6,7 @@ namespace D47.Core.Journal;
 /// <summary>Every Commander's tech broker unlocks, recovered from every journal on disk.</summary>
 public static class TechBrokerBackfill
 {
-    private static readonly string[] Kinds = CommanderEventWalk.Events("TechnologyBroker", "Loadout", "StoredModules");
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events("TechnologyBroker", "Loadout", "StoredModules");
 
     /// <summary>Each Commander's unlocks, keyed by Frontier id, over journals oldest-first.</summary>
     public static IReadOnlyDictionary<string, TechBrokerUnlocks> FromHistory(
@@ -26,7 +26,7 @@ public static class TechBrokerBackfill
             files,
             logger,
             "tech broker unlocks",
-            Kinds,
+            Reads,
             cancellation,
             (parsed, commander) =>
             {

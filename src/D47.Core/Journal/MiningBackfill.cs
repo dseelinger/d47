@@ -6,6 +6,10 @@ namespace D47.Core.Journal;
 /// <summary>The Commander's finished mining runs, recovered from journals d47 was not running for (#610).</summary>
 public static class MiningBackfill
 {
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
+        "LaunchDrone", "ProspectedAsteroid", "MiningRefined", "Docked", "Died", "LaunchSRV", "LaunchVessel",
+        "DockSRV", "SRVDestroyed", "Embark", "Disembark", "Location");
+
     /// <summary>
     /// Every Commander's finished runs that refined at least one tonne, oldest first, keyed by Frontier id,
     /// over a list of journals oldest-first. A run still open at the last journal is not counted.
@@ -27,9 +31,7 @@ public static class MiningBackfill
             files,
             logger,
             "mining events",
-            CommanderEventWalk.Events(
-                "LaunchDrone", "ProspectedAsteroid", "MiningRefined", "Docked", "Died", "LaunchSRV", "LaunchVessel",
-                "DockSRV", "SRVDestroyed", "Embark", "Disembark", "Location"),
+            Reads,
             cancellation,
             (parsed, commander) =>
             {

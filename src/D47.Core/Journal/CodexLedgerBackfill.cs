@@ -6,6 +6,9 @@ namespace D47.Core.Journal;
 /// <summary>Every Commander's codex entries, recovered from every journal on disk.</summary>
 public static class CodexLedgerBackfill
 {
+    private static readonly JournalLineFilter Reads =
+        JournalLineFilter.Events([.. CodexLedger.Reads, "GameModeChange", "Shutdown"]);
+
     /// <summary>Each Commander's ledger, keyed by Frontier id, over journals oldest-first.</summary>
     public static IReadOnlyDictionary<string, CodexLedger> FromHistory(
         IFileSystem fileSystem,
@@ -21,11 +24,7 @@ public static class CodexLedgerBackfill
             CodexLedger.None,
             (ledger, parsed) => ledger.Apply(parsed),
             Reads,
-            markOperations: true);
-
-    private static bool Reads(string line, ReadOnlySpan<char> kind) =>
-        kind.SequenceEqual("Scan")
-            ? line.Contains("\"PlanetClass\"", StringComparison.Ordinal)
-            : CodexLedger.Reads.GetAlternateLookup<ReadOnlySpan<char>>().Contains(kind)
-                || kind.SequenceEqual("GameModeChange") || kind.SequenceEqual("Shutdown");
+            markOperations: true,
+            line => line.Contains("\"PlanetClass\"", StringComparison.Ordinal)
+                || !line.Contains("\"event\":\"Scan\"", StringComparison.Ordinal));
 }

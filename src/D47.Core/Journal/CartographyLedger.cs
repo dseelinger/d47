@@ -151,18 +151,13 @@ public sealed class CartographyLedger(string? path, IFileSystem fileSystem, ILog
         }
     }
 
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
+        "Commander", "NewCommander", "LoadGame", "Died", "SAAScanComplete", "MultiSellExplorationData",
+        "SellExplorationData", "FSDJump", "Location", "CarrierJump");
+
     /// <summary>The text test, before any JSON is touched.</summary>
     protected override bool Relevant(string line) =>
-        line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Died\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"SAAScanComplete\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"MultiSellExplorationData\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"SellExplorationData\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"FSDJump\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"CarrierJump\"", StringComparison.Ordinal)
+        Reads.Matches(line)
         || (line.Contains("\"event\":\"Scan\"", StringComparison.Ordinal)
             && line.Contains("\"PlanetClass\"", StringComparison.Ordinal));
 

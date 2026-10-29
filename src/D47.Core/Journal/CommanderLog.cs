@@ -42,11 +42,9 @@ public sealed record CommanderMet(string Name, string Key, DateTimeOffset LastSe
 /// </summary>
 public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
 {
-    private static readonly string[] Events =
-    [
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
         "Commander", "NewCommander", "LoadGame", "GameModeChange", "Fileheader", "Shutdown", "Location", "FSDJump", "CarrierJump", "ShipTargeted", "Interdicted",
-        "EscapeInterdiction", "Interdiction", "CrimeVictim", "Died", "PVPKill", "WingJoin", "WingAdd", "ReceiveText",
-    ];
+        "EscapeInterdiction", "Interdiction", "CrimeVictim", "Died", "PVPKill", "WingJoin", "WingAdd", "ReceiveText");
 
     private readonly Lock _gate = new();
 
@@ -172,18 +170,10 @@ public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
         Apply([.. OperationMarker.Mark(events)]);
     }
 
-    private static bool Relevant(string line)
-    {
-        foreach (var name in Events)
-        {
-            if (line.Contains("\"event\":\"" + name + "\"", StringComparison.Ordinal))
-            {
-                return name != "ShipTargeted" || line.Contains("cmdr_decorate", StringComparison.Ordinal);
-            }
-        }
-
-        return false;
-    }
+    private static bool Relevant(string line) =>
+        Reads.Matches(line)
+        && (!line.Contains("\"event\":\"ShipTargeted\"", StringComparison.Ordinal)
+            || line.Contains("cmdr_decorate", StringComparison.Ordinal));
 
     private void Fold(JournalEvent journalEvent)
     {

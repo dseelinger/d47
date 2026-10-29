@@ -67,7 +67,7 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(lines);
 
-        var events = JournalFold.Parse(lines, Relevant, logger);
+        var events = JournalFold.Parse(lines, Reads.Matches, logger);
 
         var fid = string.Empty;
 
@@ -125,16 +125,9 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
         }
     }
 
-    private static bool Relevant(string line) =>
-        line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"GameModeChange\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Fileheader\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Shutdown\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"FSDJump\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"CarrierJump\"", StringComparison.Ordinal);
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
+        "Commander", "NewCommander", "LoadGame", "GameModeChange", "Fileheader", "Shutdown", "Location", "FSDJump",
+        "CarrierJump");
 
     private void Fold(JournalEvent journalEvent, ref string fid)
     {

@@ -12,7 +12,8 @@ namespace D47.Core.Journal;
 /// </summary>
 public static class MissionBackfill
 {
-    private static readonly string[] Relevant = ["\"event\":\"Mission", "\"event\":\"CargoDepot\"", "\"event\":\"Commander\"", "\"event\":\"LoadGame\"", "\"event\":\"NewCommander\""];
+    private static readonly JournalLineFilter Reads =
+        JournalLineFilter.Events("CargoDepot", "Commander", "LoadGame", "NewCommander").OrPrefix("Mission");
 
     public static IReadOnlyDictionary<string, MissionBoard> FromHistory(
         IFileSystem files,
@@ -174,7 +175,7 @@ public static class MissionBackfill
         foreach (var line in text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             // Tested as text first, since most lines are none of these.
-            if (!Relevant.Any(kind => line.Contains(kind, StringComparison.Ordinal)))
+            if (!Reads.Matches(line))
             {
                 continue;
             }

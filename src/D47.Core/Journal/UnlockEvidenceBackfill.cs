@@ -123,21 +123,13 @@ public static class UnlockEvidenceBackfill
         return evidence;
     }
 
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
+        "EngineerContribution", "EngineerProgress", "Docked", "Location", "ApproachSettlement", "MissionCompleted",
+        "SellMicroResources", "Disembark", "Reputation", "NewCommander", "Commander", "LoadGame");
+
     /// <summary>A text test before any JSON is parsed: the few event kinds, and jumps that carry a reputation.</summary>
     private static bool Relevant(string line) =>
-        line.Contains("\"MyReputation\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"EngineerContribution\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"EngineerProgress\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Docked\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"ApproachSettlement\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"MissionCompleted\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"SellMicroResources\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Disembark\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Reputation\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal);
+        Reads.Matches(line) || line.Contains("\"MyReputation\"", StringComparison.Ordinal);
 
     private static UnlockEvidence Held(Dictionary<string, UnlockEvidence> folded, string fid) =>
         folded.TryGetValue(fid, out var held) ? held : UnlockEvidence.Empty;

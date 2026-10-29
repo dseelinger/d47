@@ -106,7 +106,7 @@ public sealed class OutstandingCrimes(IFileSystem fileSystem, ILogger logger)
         {
             cancellation.ThrowIfCancellationRequested();
 
-            var events = JournalHistory.Parse(fileSystem, file, logger, "fines and bounties", warnIfMissing: true, Relevant);
+            var events = JournalHistory.Parse(fileSystem, file, logger, "fines and bounties", warnIfMissing: true, Reads.Matches);
 
             // Each file starts the occurrence count again, as the live reading does for the file it follows.
             reading.Seen.Clear();
@@ -235,19 +235,9 @@ public sealed class OutstandingCrimes(IFileSystem fileSystem, ILogger logger)
         }
     }
 
-    /// <summary>The text test, before any JSON is touched.</summary>
-    private static bool Relevant(string line) =>
-        line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Loadout\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"ShipyardSwap\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"ShipyardNew\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"ShipyardSell\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"CommitCrime\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"PayFines\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"PayBounties\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Died\"", StringComparison.Ordinal);
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
+        "Commander", "NewCommander", "LoadGame", "Loadout", "ShipyardSwap", "ShipyardNew", "ShipyardSell",
+        "CommitCrime", "PayFines", "PayBounties", "Died");
 
     private void Fold(JournalEvent journalEvent, Reading reading)
     {

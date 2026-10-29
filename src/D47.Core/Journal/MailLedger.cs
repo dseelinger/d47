@@ -179,7 +179,7 @@ public sealed class MailLedger
 
             foreach (var line in JournalLines.Read(_files, read[index], _logger, "mail", warnIfMissing: false))
             {
-                if (!Relevant(line) || !JournalEvent.TryParse(line, _logger, out var parsed) || parsed is null)
+                if (!Reads.Matches(line) || !JournalEvent.TryParse(line, _logger, out var parsed) || parsed is null)
                 {
                     continue;
                 }
@@ -507,17 +507,9 @@ public sealed class MailLedger
         _ => string.Join(", ", phrases.Take(phrases.Count - 1)) + ", and " + phrases[^1],
     };
 
-    /// <summary>The text test, before any JSON is touched.</summary>
-    private static bool Relevant(string line) =>
-        line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"MissionCompleted\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"MissionFailed\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"SquadronPromotion\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"CommunityGoalReward\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Promotion\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"PowerplayRank\"", StringComparison.Ordinal);
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
+        "Commander", "NewCommander", "LoadGame", "MissionCompleted", "MissionFailed", "SquadronPromotion",
+        "CommunityGoalReward", "Promotion", "PowerplayRank");
 
     private Dictionary<string, DateTimeOffset> Load()
     {

@@ -126,16 +126,12 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
         }
     }
 
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
+        "Commander", "NewCommander", "LoadGame", "Died", "FSDJump", "Location", "CarrierJump", "SellOrganicData");
+
     /// <summary>The text test, before any JSON is touched.</summary>
     protected override bool Relevant(string line) =>
-        line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Died\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"FSDJump\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"CarrierJump\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"SellOrganicData\"", StringComparison.Ordinal)
+        Reads.Matches(line)
         || line.Contains("\"ScanType\":\"Analyse\"", StringComparison.Ordinal)
         || (line.Contains("\"event\":\"Scan\"", StringComparison.Ordinal)
             && line.Contains("\"WasFootfalled\"", StringComparison.Ordinal));

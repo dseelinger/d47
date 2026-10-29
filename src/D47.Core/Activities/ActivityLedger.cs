@@ -120,7 +120,7 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
         {
             cancellation.ThrowIfCancellationRequested();
 
-            var events = JournalHistory.Parse(fileSystem, file, logger, "activity dates", warnIfMissing: false, Relevant);
+            var events = JournalHistory.Parse(fileSystem, file, logger, "activity dates", warnIfMissing: false, Reads.Matches);
 
             lock (_gate)
             {
@@ -229,29 +229,11 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
         Changed?.Invoke();
     }
 
-    private static bool Relevant(string line) =>
-        line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"MiningRefined\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"AsteroidCracked\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"SAAScanComplete\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"MultiSellExplorationData\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"SellExplorationData\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"Bounty\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"FactionKillBond\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"PowerplayMerits\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"CollectItems\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"SellMicroResources\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"ScanOrganic\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"SellOrganicData\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"MarketBuy\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"EngineerCraft\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"CarrierJumpRequest\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"MissionCompleted\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"SearchAndRescue\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"LaunchFighter\"", StringComparison.Ordinal)
-        || line.Contains("\"event\":\"ColonisationContribution\"", StringComparison.Ordinal);
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
+        "Commander", "NewCommander", "LoadGame", "MiningRefined", "AsteroidCracked", "SAAScanComplete",
+        "MultiSellExplorationData", "SellExplorationData", "Bounty", "FactionKillBond", "PowerplayMerits",
+        "CollectItems", "SellMicroResources", "ScanOrganic", "SellOrganicData", "MarketBuy", "EngineerCraft",
+        "CarrierJumpRequest", "MissionCompleted", "SearchAndRescue", "LaunchFighter", "ColonisationContribution");
 
     private void Fold(JournalEvent journalEvent, ref string? commander)
     {

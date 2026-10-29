@@ -6,6 +6,8 @@ namespace D47.Core.Journal;
 /// <summary>Every Commander's credit transactions, recovered from every journal on disk.</summary>
 public static class CreditLedgerBackfill
 {
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events([.. CreditLedger.Reads]);
+
     /// <summary>Each Commander's ledger, keyed by Frontier id, over journals oldest-first.</summary>
     public static IReadOnlyDictionary<string, CreditLedger> FromHistory(
         IFileSystem fileSystem,
@@ -20,6 +22,6 @@ public static class CreditLedgerBackfill
             "credit transactions",
             CreditLedger.None,
             (ledger, parsed) => ledger.Apply(parsed),
-            (_, kind) => CreditLedger.Reads.GetAlternateLookup<ReadOnlySpan<char>>().Contains(kind),
+            Reads,
             markOperations: false);
 }

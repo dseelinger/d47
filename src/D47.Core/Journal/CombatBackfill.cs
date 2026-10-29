@@ -6,7 +6,7 @@ namespace D47.Core.Journal;
 /// <summary>Every Commander's kills, recovered from every journal on disk.</summary>
 public static class CombatBackfill
 {
-    private static readonly string[] Kinds = CommanderEventWalk.Events(
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
         "Location", "FSDJump", "CarrierJump", "Loadout", "ShipyardSwap",
         "LaunchSRV", "LaunchVessel", "DockSRV", "Embark", "Disembark", "Bounty", "FactionKillBond");
 
@@ -28,7 +28,7 @@ public static class CombatBackfill
             files,
             logger,
             "combat kills",
-            Kinds,
+            Reads,
             cancellation,
             (parsed, commander) =>
             {

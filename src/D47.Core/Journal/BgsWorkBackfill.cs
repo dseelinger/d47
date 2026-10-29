@@ -7,7 +7,7 @@ namespace D47.Core.Journal;
 /// <summary>The BGS work of the last week, recovered from earlier journals.</summary>
 public static class BgsWorkBackfill
 {
-    private static readonly string[] Kinds = CommanderEventWalk.Events(
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
         "FSDJump", "Location", "CarrierJump", "Docked", "Undocked", "MissionCompleted",
         "RedeemVoucher", "MarketSell", "SellOrganicData", "SellExplorationData", "MultiSellExplorationData");
 
@@ -42,7 +42,7 @@ public static class BgsWorkBackfill
             [.. files.Where(file => written[file] >= from)],
             logger,
             "BGS work",
-            Kinds,
+            Reads,
             cancellation,
             (parsed, commander) =>
             {

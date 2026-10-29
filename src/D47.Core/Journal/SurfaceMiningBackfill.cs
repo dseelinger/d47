@@ -6,15 +6,10 @@ namespace D47.Core.Journal;
 /// <summary>Every Commander's surface mining sites, recovered from every journal on disk.</summary>
 public static class SurfaceMiningBackfill
 {
-    private static readonly string[] Kinds =
-    [
-        .. new[]
-        {
-            "Commander", "LoadGame", "NewCommander", "Shutdown", "Location", "ApproachBody", "Touchdown", "LeaveBody",
-            "FSDJump", "CarrierJump", "LaunchSRV", "LaunchVessel", "DockSRV", "SRVDestroyed", "Embark", "Disembark",
-            "Died", "MiningRefined",
-        }.Select(kind => $"\"event\":\"{kind}\""),
-    ];
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
+        "Commander", "LoadGame", "NewCommander", "Shutdown", "Location", "ApproachBody", "Touchdown", "LeaveBody",
+        "FSDJump", "CarrierJump", "LaunchSRV", "LaunchVessel", "DockSRV", "SRVDestroyed", "Embark", "Disembark",
+        "Died", "MiningRefined");
 
     /// <summary>Each Commander's sites, keyed by Frontier id, over journals oldest-first.</summary>
     public static IReadOnlyDictionary<string, SurfaceMiningSites> FromHistory(
@@ -36,7 +31,7 @@ public static class SurfaceMiningBackfill
 
             foreach (var line in JournalLines.Read(fileSystem, file, logger, "surface mining", warnIfMissing: true))
             {
-                if (!Kinds.Any(kind => line.Contains(kind, StringComparison.Ordinal))
+                if (!Reads.Matches(line)
                     || !JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
                 {
                     continue;

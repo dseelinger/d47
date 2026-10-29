@@ -5,16 +5,10 @@ namespace D47.Core.Journal;
 
 internal static class CommanderEventWalk
 {
-    private static readonly string[] Always =
-    [
-        "\"event\":\"NewCommander\"", "\"event\":\"Commander\"", "\"event\":\"LoadGame\"",
-    ];
-
-    /// <summary>The raw-text fragment that matches each of the named events.</summary>
-    public static string[] Events(params string[] kinds) => [.. kinds.Select(kind => $"\"event\":\"{kind}\"")];
+    private static readonly JournalLineFilter Always = JournalLineFilter.Events("NewCommander", "Commander", "LoadGame");
 
     /// <summary>
-    /// Every line whose raw text contains one of the fragments, or names a Commander, parsed in file order and
+    /// Every line the filter matches, or that names a Commander, parsed in file order and
     /// handed to <paramref name="fold"/> with the Commander it belongs to. The Commander is empty until a
     /// <c>Commander</c> or <c>LoadGame</c> names one and carries across files. <c>NewCommander</c> is passed
     /// on with the Commander unchanged.
@@ -24,7 +18,7 @@ internal static class CommanderEventWalk
         IReadOnlyList<string> journals,
         ILogger logger,
         string purpose,
-        IReadOnlyList<string> fragments,
+        JournalLineFilter filter,
         CancellationToken cancellationToken,
         Action<JournalEvent, string> fold)
     {
@@ -36,8 +30,7 @@ internal static class CommanderEventWalk
 
             foreach (var line in JournalLines.Read(files, journal, logger, purpose, warnIfMissing: true))
             {
-                if (!Always.Any(fragment => line.Contains(fragment, StringComparison.Ordinal))
-                    && !fragments.Any(fragment => line.Contains(fragment, StringComparison.Ordinal)))
+                if (!Always.Matches(line) && !filter.Matches(line))
                 {
                     continue;
                 }

@@ -6,6 +6,8 @@ namespace D47.Core.Journal;
 /// <summary>The merits earned for the pledged Power over the last week, recovered from earlier journals.</summary>
 public static class PowerplayCycleBackfill
 {
+    private static readonly JournalLineFilter Reads = JournalLineFilter.Events().OrPrefix("Powerplay");
+
     /// <summary>Each Commander's merits for their Power, keyed by Frontier id, over a list of journals oldest-first.</summary>
     public static IReadOnlyDictionary<string, PowerplayCycleMerits> FromHistory(
         IFileSystem fileSystem,
@@ -25,7 +27,7 @@ public static class PowerplayCycleBackfill
             files,
             logger,
             "Powerplay events",
-            ["\"event\":\"Powerplay"],
+            Reads,
             cancellation,
             (parsed, commander) =>
             {

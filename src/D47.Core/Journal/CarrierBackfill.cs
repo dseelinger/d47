@@ -8,6 +8,9 @@ namespace D47.Core.Journal;
 /// </summary>
 public static class CarrierBackfill
 {
+    private static readonly JournalLineFilter Reads =
+        JournalLineFilter.Events("Docked", "Undocked", "CargoTransfer", "MarketBuy", "MarketSell").OrPrefix("Carrier");
+
     /// <summary>Every Commander's own carrier as their journals last reported it, keyed by Frontier id.</summary>
     public static IReadOnlyDictionary<string, CarrierState> FromHistory(
         IFileSystem fileSystem,
@@ -49,10 +52,7 @@ public static class CarrierBackfill
             files,
             logger,
             "carrier events",
-            [
-                "\"event\":\"Carrier",
-                .. CommanderEventWalk.Events("Docked", "Undocked", "CargoTransfer", "MarketBuy", "MarketSell"),
-            ],
+            Reads,
             cancellation,
             (parsed, commander) =>
             {

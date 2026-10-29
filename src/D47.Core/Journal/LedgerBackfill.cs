@@ -3,13 +3,8 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
 
-/// <summary>Whether a journal line is one a ledger reads, given the event name at the start of the line.</summary>
-internal delegate bool LedgerLine(string line, ReadOnlySpan<char> kind);
-
 internal static class LedgerBackfill
 {
-    private const string EventKey = "\"event\":\"";
-
     /// <summary>Each Commander's ledger, keyed by Frontier id, over journals oldest-first. Legacy files are skipped.</summary>
     public static IReadOnlyDictionary<string, TLedger> FromHistory<TLedger>(
         IFileSystem fileSystem,
@@ -19,8 +14,9 @@ internal static class LedgerBackfill
         string purpose,
         TLedger none,
         Func<TLedger, JournalEvent, TLedger> apply,
-        LedgerLine reads,
-        bool markOperations)
+        JournalLineFilter reads,
+        bool markOperations,
+        Func<string, bool>? alsoRequires = null)
     {
         ArgumentNullException.ThrowIfNull(fileSystem);
         ArgumentNullException.ThrowIfNull(files);
@@ -34,7 +30,7 @@ internal static class LedgerBackfill
             cancellation.ThrowIfCancellationRequested();
 
             var legacy = false;
-            var events = Parsed(fileSystem, file, logger, purpose, reads);
+            var events = Parsed(fileSystem, file, logger, purpose, reads, alsoRequires);
 
             foreach (var parsed in markOperations ? OperationMarker.Mark(events) : events)
             {
@@ -76,22 +72,17 @@ internal static class LedgerBackfill
     }
 
     private static IEnumerable<JournalEvent> Parsed(
-        IFileSystem fileSystem, string file, ILogger logger, string purpose, LedgerLine reads)
+        IFileSystem fileSystem,
+        string file,
+        ILogger logger,
+        string purpose,
+        JournalLineFilter reads,
+        Func<string, bool>? alsoRequires)
     {
         foreach (var line in JournalLines.Read(fileSystem, file, logger, purpose, warnIfMissing: true))
         {
-            var start = line.IndexOf(EventKey, StringComparison.Ordinal);
-
-            if (start < 0)
-            {
-                continue;
-            }
-
-            start += EventKey.Length;
-            var end = line.IndexOf('"', start);
-
-            if (end > start
-                && reads(line, line.AsSpan(start, end - start))
+            if (reads.Matches(line)
+                && (alsoRequires is null || alsoRequires(line))
                 && JournalEvent.TryParse(line, logger, out var parsed) && parsed is not null)
             {
                 yield return parsed;
