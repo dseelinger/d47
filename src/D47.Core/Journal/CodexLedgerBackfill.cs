@@ -74,7 +74,7 @@ public static class CodexLedgerBackfill
 
     private static IEnumerable<JournalEvent> Parsed(IFileSystem fileSystem, string file, ILogger logger)
     {
-        foreach (var line in Lines(fileSystem, file, logger))
+        foreach (var line in JournalLines.Read(fileSystem, file, logger, "codex entries", warnIfMissing: true))
         {
             if (Read(line) && JournalEvent.TryParse(line, logger, out var parsed) && parsed is not null)
             {
@@ -102,30 +102,5 @@ public static class CodexLedgerBackfill
                 ? line.Contains("\"PlanetClass\"", StringComparison.Ordinal)
                 : CodexLedger.Reads.GetAlternateLookup<ReadOnlySpan<char>>().Contains(kind)
                     || kind.SequenceEqual("GameModeChange") || kind.SequenceEqual("Shutdown"));
-    }
-
-    private static IEnumerable<string> Lines(IFileSystem fileSystem, string file, ILogger logger)
-    {
-        Stream stream;
-
-        try
-        {
-            stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            logger.LogWarning(ex, "Could not read {File} for codex entries", file);
-            yield break;
-        }
-
-        using (stream)
-        {
-            using var reader = new StreamReader(stream);
-
-            while (reader.ReadLine() is { } line)
-            {
-                yield return line;
-            }
-        }
     }
 }

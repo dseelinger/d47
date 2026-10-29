@@ -27,7 +27,7 @@ public static class MiningBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            foreach (var line in Lines(fileSystem, file, logger))
+            foreach (var line in JournalLines.Read(fileSystem, file, logger, "mining events", warnIfMissing: true))
             {
                 if (!line.Contains("\"event\":\"LaunchDrone\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"ProspectedAsteroid\"", StringComparison.Ordinal)
@@ -114,30 +114,5 @@ public static class MiningBackfill
             pair => pair.Key,
             pair => (IReadOnlyList<MiningRun>)pair.Value,
             StringComparer.Ordinal);
-    }
-
-    private static IEnumerable<string> Lines(IFileSystem fileSystem, string file, ILogger logger)
-    {
-        Stream stream;
-
-        try
-        {
-            stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            logger.LogWarning(ex, "Could not read {File} for mining events", file);
-            yield break;
-        }
-
-        using (stream)
-        {
-            using var reader = new StreamReader(stream);
-
-            while (reader.ReadLine() is { } line)
-            {
-                yield return line;
-            }
-        }
     }
 }

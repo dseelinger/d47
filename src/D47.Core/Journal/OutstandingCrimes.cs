@@ -108,7 +108,7 @@ public sealed class OutstandingCrimes(IFileSystem fileSystem, ILogger logger)
 
             var events = new List<JournalEvent>();
 
-            foreach (var line in Lines(file))
+            foreach (var line in JournalLines.Read(fileSystem, file, logger, "fines and bounties", warnIfMissing: true))
             {
                 if (Relevant(line) && JournalEvent.TryParse(line, logger, out var parsed) && parsed is not null)
                 {
@@ -362,31 +362,6 @@ public sealed class OutstandingCrimes(IFileSystem fileSystem, ILogger logger)
 
             default:
                 return null;
-        }
-    }
-
-    private IEnumerable<string> Lines(string file)
-    {
-        Stream stream;
-
-        try
-        {
-            stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            logger.LogWarning(ex, "Could not read {File} for fines and bounties", file);
-            yield break;
-        }
-
-        using (stream)
-        {
-            using var reader = new StreamReader(stream);
-
-            while (reader.ReadLine() is { } line)
-            {
-                yield return line;
-            }
         }
     }
 }

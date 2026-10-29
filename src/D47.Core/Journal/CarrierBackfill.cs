@@ -48,7 +48,7 @@ public static class CarrierBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            foreach (var line in Lines(fileSystem, file, logger))
+            foreach (var line in JournalLines.Read(fileSystem, file, logger, "carrier events", warnIfMissing: true))
             {
                 // The text test, before any JSON is touched: a handful of event names out of the hundreds a
                 // journal holds, so the cost is a read of the folder rather than a replay of it.
@@ -128,33 +128,5 @@ public static class CarrierBackfill
         }
 
         return carriers;
-    }
-
-    /// <summary>One journal's lines.</summary>
-    private static IEnumerable<string> Lines(IFileSystem fileSystem, string file, ILogger logger)
-    {
-        Stream stream;
-
-        try
-        {
-            stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            // A journal that cannot be read is one file's worth of history missing, not a reason to start
-            // with no carrier at all.
-            logger.LogWarning(ex, "Could not read {File} for carrier events", file);
-            yield break;
-        }
-
-        using (stream)
-        {
-            using var reader = new StreamReader(stream);
-
-            while (reader.ReadLine() is { } line)
-            {
-                yield return line;
-            }
-        }
     }
 }

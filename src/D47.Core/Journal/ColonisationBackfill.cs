@@ -47,7 +47,7 @@ public static class ColonisationBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            foreach (var line in Lines(fileSystem, file, logger))
+            foreach (var line in JournalLines.Read(fileSystem, file, logger, "construction sites", warnIfMissing: true))
             {
                 // ColonisationContribution is left out: a running sum folded here and again by the live reader
                 // would count the current journal twice.
@@ -123,31 +123,5 @@ public static class ColonisationBackfill
         }
 
         return found;
-    }
-
-    /// <summary>One journal's lines.</summary>
-    private static IEnumerable<string> Lines(IFileSystem fileSystem, string file, ILogger logger)
-    {
-        Stream stream;
-
-        try
-        {
-            stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            logger.LogWarning(ex, "Could not read {File} for construction sites", file);
-            yield break;
-        }
-
-        using (stream)
-        {
-            using var reader = new StreamReader(stream);
-
-            while (reader.ReadLine() is { } line)
-            {
-                yield return line;
-            }
-        }
     }
 }

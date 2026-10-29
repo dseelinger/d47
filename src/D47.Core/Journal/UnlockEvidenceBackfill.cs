@@ -71,7 +71,7 @@ public static class UnlockEvidenceBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            foreach (var line in Lines(fileSystem, file, logger))
+            foreach (var line in JournalLines.Read(fileSystem, file, logger, "unlock evidence", warnIfMissing: true))
             {
                 if (!Relevant(line) || !JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
                 {
@@ -141,30 +141,4 @@ public static class UnlockEvidenceBackfill
 
     private static UnlockEvidence Held(Dictionary<string, UnlockEvidence> folded, string fid) =>
         folded.TryGetValue(fid, out var held) ? held : UnlockEvidence.Empty;
-
-    /// <summary>One journal's lines.</summary>
-    private static IEnumerable<string> Lines(IFileSystem fileSystem, string file, ILogger logger)
-    {
-        Stream stream;
-
-        try
-        {
-            stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            logger.LogWarning(ex, "Could not read {File} for unlock evidence", file);
-            yield break;
-        }
-
-        using (stream)
-        {
-            using var reader = new StreamReader(stream);
-
-            while (reader.ReadLine() is { } line)
-            {
-                yield return line;
-            }
-        }
-    }
 }

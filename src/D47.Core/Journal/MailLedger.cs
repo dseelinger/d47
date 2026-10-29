@@ -177,7 +177,7 @@ public sealed class MailLedger
 
             string? commander = null;
 
-            foreach (var line in Lines(read[index]))
+            foreach (var line in JournalLines.Read(_files, read[index], _logger, "mail", warnIfMissing: false))
             {
                 if (!Relevant(line) || !JournalEvent.TryParse(line, _logger, out var parsed) || parsed is null)
                 {
@@ -535,35 +535,5 @@ public sealed class MailLedger
         }
 
         return new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
-    }
-
-    private IEnumerable<string> Lines(string file)
-    {
-        Stream? stream;
-
-        try
-        {
-            stream = _files.OpenRead(file);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            _logger.LogWarning(ex, "Could not read {File} for mail", file);
-            yield break;
-        }
-
-        if (stream is null)
-        {
-            yield break;
-        }
-
-        using (stream)
-        {
-            using var reader = new StreamReader(stream);
-
-            while (reader.ReadLine() is { } line)
-            {
-                yield return line;
-            }
-        }
     }
 }

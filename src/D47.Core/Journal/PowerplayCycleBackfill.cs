@@ -24,7 +24,7 @@ public static class PowerplayCycleBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            foreach (var line in Lines(fileSystem, file, logger))
+            foreach (var line in JournalLines.Read(fileSystem, file, logger, "Powerplay events", warnIfMissing: true))
             {
                 // Powerplay, PowerplayJoin, PowerplayDefect, PowerplayLeave, PowerplayMerits and the rest.
                 if (!line.Contains("\"event\":\"Powerplay", StringComparison.Ordinal)
@@ -77,30 +77,5 @@ public static class PowerplayCycleBackfill
         return merits
             .Where(pair => pair.Value.IsKnown)
             .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
-    }
-
-    private static IEnumerable<string> Lines(IFileSystem fileSystem, string file, ILogger logger)
-    {
-        Stream stream;
-
-        try
-        {
-            stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            logger.LogWarning(ex, "Could not read {File} for Powerplay events", file);
-            yield break;
-        }
-
-        using (stream)
-        {
-            using var reader = new StreamReader(stream);
-
-            while (reader.ReadLine() is { } line)
-            {
-                yield return line;
-            }
-        }
     }
 }

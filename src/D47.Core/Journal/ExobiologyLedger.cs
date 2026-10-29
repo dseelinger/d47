@@ -173,7 +173,7 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
 
             var events = new List<JournalEvent>();
 
-            foreach (var line in Lines(file))
+            foreach (var line in JournalLines.Read(fileSystem, file, logger, "organic data", warnIfMissing: false))
             {
                 if (Relevant(line) && JournalEvent.TryParse(line, logger, out var parsed) && parsed is not null)
                 {
@@ -435,35 +435,5 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
         }
 
         return book;
-    }
-
-    private IEnumerable<string> Lines(string file)
-    {
-        Stream? stream;
-
-        try
-        {
-            stream = fileSystem.OpenRead(file);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            logger.LogWarning(ex, "Could not read {File} for organic data", file);
-            yield break;
-        }
-
-        if (stream is null)
-        {
-            yield break;
-        }
-
-        using (stream)
-        {
-            using var reader = new StreamReader(stream);
-
-            while (reader.ReadLine() is { } line)
-            {
-                yield return line;
-            }
-        }
     }
 }
