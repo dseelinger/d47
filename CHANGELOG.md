@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A row in Privacy and egress that sends nothing now shows only its explanation, without the "Name → nothing sent" line above it. Rows that do send keep their "Name → destination" line. Asking D47 what it sends is unchanged.
+
 The Privacy and egress list now shows the Captain's log as sending to a host when speech recognition is hosted or the voice that reads entries back is hosted, and names that host. Before, it said "nothing sent" and that entries were never sent anywhere, while the words went to the provider. With both providers local it still says nothing is sent.
 
 The Coverage page no longer lists settings rows that only show a value, such as About's Build and Attribution, so its count covers only what you can drive. Pressing a row's button now marks that row as exercised, or as failed if the press throws. A row that asks you to press twice is marked on the confirming press. Before, rows with a button stayed at never exercised however often you pressed them.

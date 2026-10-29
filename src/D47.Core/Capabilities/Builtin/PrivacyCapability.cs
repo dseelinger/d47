@@ -300,7 +300,7 @@ public static class PrivacyCapability
                 {
                     var entry = EgressDisclosure.Entry(
                         id, s, keyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent(), remoteCharacterSystems());
-                    return $"{entry.Line}\n{entry.Summary}";
+                    return entry.Active ? $"{entry.Line}\n{entry.Summary}" : entry.Summary;
                 },
             },
             DetailBinding = s => EgressDisclosure.Entry(
