@@ -176,11 +176,7 @@ public sealed class KeysDialog : ModalDialog
         return chip;
     }
 
-    private static TextBlock Grey(string text, double size)
-    {
-        var block = new TextBlock { Text = text, FontSize = size, VerticalAlignment = VerticalAlignment.Center };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        return block;
-    }
+    private static TextBlock Grey(string text, double size) =>
+        Typeset.Text(text, size, ThemeManager.GreyKey, vertical: VerticalAlignment.Center);
 
 }

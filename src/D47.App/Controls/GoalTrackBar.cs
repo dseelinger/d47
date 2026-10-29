@@ -231,23 +231,10 @@ public static class GoalTrackBar
         };
     }
 
-    private static TextBlock Chrome(string text, double size)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = size,
-            FontWeight = FontWeight.Medium,
-            LetterSpacing = size * Fonts.ChromeTracking,
-            TextWrapping = TextWrapping.NoWrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-
-        return block;
-    }
+    private static TextBlock Chrome(string text, double size) =>
+        Typeset.Chrome(
+            text.ToUpperInvariant(), size, ThemeManager.GreyKey, FontWeight.Medium, size * Fonts.ChromeTracking,
+            vertical: VerticalAlignment.Center);
 
     private static ColumnDefinitions Columns(GoalTrack track)
     {

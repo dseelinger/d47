@@ -1037,30 +1037,11 @@ public sealed class ControlKitWindow : Window
         new StackPanel { Spacing = 6, Children = { Caption(caption), control } };
 
     /// <summary>A mono caption naming a state, in lower case as the design writes it.</summary>
-    private static TextBlock Caption(string text)
-    {
-        var label = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Caption,
-        };
-        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.Grey2Key);
-        return label;
-    }
+    private static TextBlock Caption(string text) =>
+        Typeset.Mono(text, TypeScale.Caption, ThemeManager.Grey2Key);
 
-    private static TextBlock Prose(string? text, double size, string inkKey)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = Fonts.ProseFamily,
-            FontSize = size,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, inkKey);
-        return block;
-    }
+    private static TextBlock Prose(string text, double size, string inkKey) =>
+        Typeset.Prose(text, size, inkKey, wrap: true);
 
     /// <summary>Fills the column up to <paramref name="width"/>, left-aligned.</summary>
     private static Control Capped(Control control, double width = CappedControlWidth) => new Grid

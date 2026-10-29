@@ -1114,53 +1114,19 @@ public sealed class SetupWizard : ModalDialog
         return head;
     }
 
-    private static TextBlock Chrome(string text, string ink)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = TypeScale.Control,
-            FontWeight = FontWeight.SemiBold,
-            LetterSpacing = TypeScale.Control * Fonts.ChromeTracking,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ink);
+    private static TextBlock Chrome(string text, string ink) =>
+        Typeset.Chrome(
+            text.ToUpperInvariant(), TypeScale.Control, ink, FontWeight.SemiBold, TypeScale.Control * Fonts.ChromeTracking,
+            wrap: true, vertical: VerticalAlignment.Center);
 
-        return block;
-    }
+    private static TextBlock Lead(string text) =>
+        Typeset.Text(text, TypeScale.Body, ThemeManager.WhiteKey, wrap: true);
 
-    private static TextBlock Lead(string text)
-    {
-        var block = new TextBlock { Text = text, FontSize = TypeScale.Body, TextWrapping = TextWrapping.Wrap };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+    private static TextBlock Help(string text) =>
+        Typeset.Text(text, TypeScale.Tip, ThemeManager.GreyKey, wrap: true);
 
-        return block;
-    }
-
-    private static TextBlock Help(string text)
-    {
-        var block = new TextBlock { Text = text, FontSize = TypeScale.Tip, TextWrapping = TextWrapping.Wrap };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-
-        return block;
-    }
-
-    private static TextBlock Mono(string text)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Meta,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-
-        return block;
-    }
+    private static TextBlock Mono(string text) =>
+        Typeset.Mono(text, TypeScale.Meta, ThemeManager.GreyKey, wrap: true, vertical: VerticalAlignment.Center);
 
     private static Control Warning(string text) =>
         new Notice(NoticeLevel.Warning, inline: true) { Name = "SetupCollision", Text = text };

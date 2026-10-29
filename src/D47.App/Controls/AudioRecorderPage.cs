@@ -336,19 +336,8 @@ public sealed class AudioRecorderPage : DialogPage
         }
     }
 
-    private static TextBlock Label(string text)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontSize = TypeScale.Subheading,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
-
-        return block;
-    }
+    private static TextBlock Label(string text) =>
+        Typeset.Text(text, TypeScale.Subheading, ThemeManager.WhiteKey, wrap: true);
 
     private static Control Muted(string text, bool selectable = false, string key = ThemeManager.GreyKey)
     {

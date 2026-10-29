@@ -237,20 +237,7 @@ public sealed class FormField
         return row;
     }
 
-    private static TextBlock Caption(string text, double size, string colourKey)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontSize = size,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-
-        block.Bind(
-            TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(colourKey));
-
-        return block;
-    }
+    private static TextBlock Caption(string text, double size, string colourKey) =>
+        Typeset.Text(
+            text, size, colourKey, vertical: VerticalAlignment.Center, horizontal: HorizontalAlignment.Left);
 }

@@ -15,20 +15,8 @@ namespace D47.App.Settings;
 public partial class SettingsView
 {
     /// <summary>A row's label: prose, white, wrapping.</summary>
-    internal static TextBlock RowLabel(string text)
-    {
-        var label = new TextBlock
-        {
-            Text = text,
-            FontFamily = Fonts.ProseFamily,
-            FontSize = TypeScale.Body,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
-
-        return label;
-    }
+    internal static TextBlock RowLabel(string text) =>
+        Typeset.Prose(text, TypeScale.Body, ThemeManager.WhiteKey, wrap: true, vertical: VerticalAlignment.Center);
 
     /// <summary>The reset glyph a row, a mixer channel and a group head each carry.</summary>
     internal static Button ResetGlyph(string name, string says)

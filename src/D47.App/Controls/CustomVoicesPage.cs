@@ -692,26 +692,12 @@ public sealed class CustomVoicesPage : DialogPage
         return block;
     }
 
-    private static TextBlock Mono(string text, string ink)
-    {
-        var block = new TextBlock { Text = text, FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Small };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ink);
-        return block;
-    }
+    private static TextBlock Mono(string text, string ink) =>
+        Typeset.Mono(text, TypeScale.Small, ink);
 
-    private static TextBlock Chrome(string text, string ink)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = TypeScale.Caption,
-            FontWeight = FontWeight.SemiBold,
-            LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking,
-        };
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ink);
-        return block;
-    }
+    private static TextBlock Chrome(string text, string ink) =>
+        Typeset.Chrome(
+            text.ToUpperInvariant(), TypeScale.Caption, ink, FontWeight.SemiBold, TypeScale.Caption * Fonts.ChromeTracking);
 
     private static string Capital(string word) =>
         word.Length == 0 ? word : char.ToUpperInvariant(word[0]) + word[1..];
