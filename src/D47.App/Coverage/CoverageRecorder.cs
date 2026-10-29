@@ -117,6 +117,9 @@ public sealed class CoverageRecorder
     /// <summary>Where everything stands right now.</summary>
     public CoverageReport Report() => _ledger.Report(_inventory);
 
+    /// <summary>Forgets what was recorded for one item.</summary>
+    public void Clear(CoverageItem item) => _ledger.Remove(item);
+
     /// <summary>Writes the ledger and the readable report.</summary>
     public void Save()
     {

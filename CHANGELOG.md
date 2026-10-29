@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Each row under "Came back with an error" on the Features page has a Clear button. It forgets the failed run, so the row returns to "Never tested" and the counts update at once. Before, a failed row stayed until the same feature ran again and passed.
+
 The record of which features you have tested is now called Features. The Diagnostics row, its page (Settings › Features) and the written report use that name, and say "tested" where they said "exercised". Before, the row said "Exercised by hand" and the page said "Coverage".
 
 The next-objective strip under the title rule is no longer shown while the story is paused or switched off. It returns, labelled NEXT, when the story runs again. Before, it showed the objective in grey with the label PAUSED.

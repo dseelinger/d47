@@ -174,6 +174,18 @@ public sealed class CoverageLedger
         }
     }
 
+    /// <summary>Forgets the mark for <paramref name="item"/>, so it reports as never exercised.</summary>
+    public void Remove(CoverageItem item)
+    {
+        lock (_lock)
+        {
+            if (_marks.Remove(item.Key))
+            {
+                Dirty = true;
+            }
+        }
+    }
+
     /// <summary>Marks the ledger as saved.</summary>
     public void Saved() => Dirty = false;
 

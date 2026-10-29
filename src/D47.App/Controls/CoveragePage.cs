@@ -15,42 +15,54 @@ public sealed class CoveragePage : DialogPage
 {
     public override string Crumb => "Features";
 
-    public CoveragePage(CoverageReport report)
+    private readonly SelectableTextBlock _summary;
+    private readonly StackPanel _list;
+    private readonly Action<CoverageItem>? _clear;
+    private readonly Func<CoverageReport>? _fresh;
+
+    /// <param name="clear">When given, each failed row gets a Clear button that calls it.</param>
+    /// <param name="fresh">Fetches the report to redraw after a clear.</param>
+    public CoveragePage(CoverageReport report, Action<CoverageItem>? clear = null, Func<CoverageReport>? fresh = null)
     {
         Title = "Features";
+        _clear = clear;
+        _fresh = fresh;
 
-        var summary = new SelectableTextBlock
+        _summary = new SelectableTextBlock
         {
             Name = "CoverageSummary",
-            Text = report.Summary,
             FontSize = TypeScale.Body,
             TextWrapping = TextWrapping.Wrap,
         };
 
-        ThemeInk.Bind(summary, SelectableTextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(_summary, SelectableTextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
-        var list = new StackPanel { Spacing = 14, Children = { summary } };
-
-        // Same order as the written report, and for the same reason: a list that opens with the work is a
-        // list that gets used.
-        Section(list, report, "Came back with an error", line => line.Failed);
-        Section(list, report, "Never tested", line => !line.Failed && line.Status == CoverageStatus.Never);
-        Section(list, report, "Changed since you last tested them", line => !line.Failed && line.Status == CoverageStatus.Stale);
-        Section(list, report, "Tested", line => !line.Failed && line.Status == CoverageStatus.Exercised);
+        _list = new StackPanel { Spacing = 14 };
+        Fill(report);
 
         var close = new Button { Name = "CoverageClose", Content = "Close", MinWidth = 110 };
         close.Click += (_, _) => Close();
 
-        Modal.Apply(this, "Diagnostics", Title, list, [close]);
+        Modal.Apply(this, "Diagnostics", Title, _list, [close]);
 
         Opened += (_, _) => close.Focus();
     }
 
-    private static void Section(
-        StackPanel into,
-        CoverageReport report,
-        string heading,
-        Func<CoverageLine, bool> include)
+    private void Fill(CoverageReport report)
+    {
+        _summary.Text = report.Summary;
+        _list.Children.Clear();
+        _list.Children.Add(_summary);
+
+        // Same order as the written report, and for the same reason: a list that opens with the work is a
+        // list that gets used.
+        Section(report, "Came back with an error", line => line.Failed);
+        Section(report, "Never tested", line => !line.Failed && line.Status == CoverageStatus.Never);
+        Section(report, "Changed since you last tested them", line => !line.Failed && line.Status == CoverageStatus.Stale);
+        Section(report, "Tested", line => !line.Failed && line.Status == CoverageStatus.Exercised);
+    }
+
+    private void Section(CoverageReport report, string heading, Func<CoverageLine, bool> include)
     {
         var lines = report.Lines
             .Where(include)
@@ -72,11 +84,11 @@ public sealed class CoveragePage : DialogPage
             rows.Children.Add(Row(line));
         }
 
-        into.Children.Add(new StackPanel { Spacing = 8, Children = { title, rows } });
+        _list.Children.Add(new StackPanel { Spacing = 8, Children = { title, rows } });
     }
 
     /// <summary>One line, its state on the status ladder: done is met, failed is an error, the rest not met.</summary>
-    private static Control Row(CoverageLine line)
+    private Control Row(CoverageLine line)
     {
         var brush = line switch
         {
@@ -126,6 +138,32 @@ public sealed class CoveragePage : DialogPage
         // Every line goes somewhere.
         var help = SiteHelpMark.For(DocsSite.Capability(line.Item.CapabilityId), "CoverageHelp");
 
+        var right = new StackPanel
+        {
+            [DockPanel.DockProperty] = Dock.Right,
+            Orientation = Orientation.Horizontal,
+            Children = { when, help },
+        };
+
+        if (line.Failed && _clear is not null && _fresh is not null)
+        {
+            var clear = new Button
+            {
+                Name = "CoverageClear",
+                Content = "Clear",
+                MinHeight = 44,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            clear.Click += (_, _) =>
+            {
+                _clear(line.Item);
+                Fill(_fresh());
+            };
+
+            right.Children.Insert(0, clear);
+        }
+
         var row = new Border
         {
             Child = new DockPanel
@@ -133,12 +171,7 @@ public sealed class CoveragePage : DialogPage
                 Children =
                 {
                     mark,
-                    new StackPanel
-                    {
-                        [DockPanel.DockProperty] = Dock.Right,
-                        Orientation = Orientation.Horizontal,
-                        Children = { when, help },
-                    },
+                    right,
                     name,
                 },
             },

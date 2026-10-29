@@ -1016,7 +1016,8 @@ public partial class MainWindow : Window
             _host.StarSystems is { } systems
                 ? new SystemNameLookup(systems.PrefixNamesAsync, () => _host.Settings.Current.Knowledge.GalaxySearch)
                 : null,
-            _host.CustomVoiceEditing);
+            _host.CustomVoiceEditing,
+            _host.CoverageRecorder is { } clearing ? clearing.Clear : null);
     }
 
     public Control BuildSettingsPage()

@@ -209,7 +209,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         // At the end, by the same rule (#80).
         D47.Core.Input.BindingProfiles? bindingProfiles = null,
         SystemNameLookup? systemNames = null,
-        CustomVoicesEditing? customVoices = null)
+        CustomVoicesEditing? customVoices = null,
+        Action<CoverageItem>? clearCoverage = null)
     {
         _settings = settings;
         _viewStateStore = viewState;
@@ -234,7 +235,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 reservedPhrases ?? [],
                 downloadModel,
                 systemNames,
-                customVoices));
+                customVoices,
+                clearCoverage));
 
         Build();
 

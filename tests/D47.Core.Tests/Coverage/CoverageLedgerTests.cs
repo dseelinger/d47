@@ -17,6 +17,25 @@ public class CoverageLedgerTests
         new(CoverageKind.Tool, id, "something", $"Something - {id}", fingerprint);
 
     [Fact]
+    public void AFailedMarkRemovedReturnsToNeverWithNoOutcome()
+    {
+        var ledger = new CoverageLedger();
+        var item = Item("get_status");
+
+        ledger.Record(item, Monday, CoverageOutcome.Failed);
+        ledger.Saved();
+
+        ledger.Remove(item);
+
+        var line = ledger.Report([item]).Lines.Single();
+
+        Assert.DoesNotContain(item.Key, ledger.Marks.Keys);
+        Assert.True(ledger.Dirty);
+        Assert.Equal(CoverageStatus.Never, line.Status);
+        Assert.Null(line.Outcome);
+    }
+
+    [Fact]
     public void SomethingNeverRunIsNeverExercised()
     {
         var report = new CoverageLedger().Report([Item("get_status")]);
