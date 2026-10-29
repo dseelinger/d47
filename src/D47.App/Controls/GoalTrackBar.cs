@@ -92,20 +92,10 @@ public static class GoalTrackBar
                 Margin = new Thickness(0, 0, 0, 3),
             };
 
-            Themed(label, TextBlock.ForegroundProperty, chapter == current ? ThemeManager.CyanKey : ThemeManager.GreyKey);
-
-            Grid.SetColumn(label, chapter.First * 2);
-            Grid.SetColumnSpan(label, chapter.Count * 2 - 1);
-            labels.Children.Add(label);
-            drawn.Add((label, chapter.First * 2, (chapter.First + chapter.Count) * 2 - 2, chapter == current));
+            AddChapterLabel(labels, drawn, chapter, current, label);
         }
 
-        for (var index = 0; index < track.Segments.Count; index++)
-        {
-            var segment = Hoverable(track, index, height);
-            Grid.SetColumn(segment, index * 2);
-            segments.Children.Add(segment);
-        }
+        AddSegments(track, segments, height);
 
         labels.SizeChanged += (_, _) => DropLabelsThatDoNotFit(labels, drawn);
 
@@ -178,19 +168,10 @@ public static class GoalTrackBar
                 TextWrapping = TextWrapping.NoWrap,
             };
 
-            Themed(label, TextBlock.ForegroundProperty, chapter == current ? ThemeManager.CyanKey : ThemeManager.GreyKey);
-            Grid.SetColumn(label, chapter.First * 2);
-            Grid.SetColumnSpan(label, chapter.Count * 2 - 1);
-            labels.Children.Add(label);
-            drawn.Add((label, chapter.First * 2, (chapter.First + chapter.Count) * 2 - 2, chapter == current));
+            AddChapterLabel(labels, drawn, chapter, current, label);
         }
 
-        for (var index = 0; index < track.Segments.Count; index++)
-        {
-            var segment = Hoverable(track, index, height);
-            Grid.SetColumn(segment, index * 2);
-            segments.Children.Add(segment);
-        }
+        AddSegments(track, segments, height);
 
         labels.SizeChanged += (_, _) => DropLabelsThatDoNotFit(labels, drawn);
 
@@ -198,6 +179,30 @@ public static class GoalTrackBar
         AutomationProperties.SetName(root, "Progress " + Whole(track));
 
         return root;
+    }
+
+    private static void AddChapterLabel(
+        Grid labels,
+        List<(TextBlock Label, int First, int Last, bool Always)> drawn,
+        GoalChapter chapter,
+        GoalChapter? current,
+        TextBlock label)
+    {
+        Themed(label, TextBlock.ForegroundProperty, chapter == current ? ThemeManager.CyanKey : ThemeManager.GreyKey);
+        Grid.SetColumn(label, chapter.First * 2);
+        Grid.SetColumnSpan(label, chapter.Count * 2 - 1);
+        labels.Children.Add(label);
+        drawn.Add((label, chapter.First * 2, (chapter.First + chapter.Count) * 2 - 2, chapter == current));
+    }
+
+    private static void AddSegments(GoalTrack track, Grid segments, double height)
+    {
+        for (var index = 0; index < track.Segments.Count; index++)
+        {
+            var segment = Hoverable(track, index, height);
+            Grid.SetColumn(segment, index * 2);
+            segments.Children.Add(segment);
+        }
     }
 
     private static Control TitleAndKey()

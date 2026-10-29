@@ -89,26 +89,7 @@ internal sealed class VoiceAuditions
             throw new InvalidOperationException("No voice provider is selected.");
         }
 
-        _audio.DropGroup(Group);
-
-        var key = (provider.Id, $"sample:{voiceId}");
-
-        if (!_auditions.TryGetValue(key, out var clip))
-        {
-            clip = await provider.PreviewAsync(voiceId, cancellationToken).ConfigureAwait(false)
-                   ?? throw new InvalidOperationException($"{provider.Name} has no free sample of that voice.");
-
-            _auditions[key] = clip;
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-
-        _audio.Enqueue(new AudioRequest
-        {
-            Channel = AudioChannel.Speech,
-            Clip = clip,
-            Group = Group,
-        });
+        await PlaySampleAsync(provider, voiceId, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Plays a voice's free sample from <paramref name="providerId"/>, for a story character's picker. Bills nothing.</summary>
@@ -119,6 +100,11 @@ internal sealed class VoiceAuditions
             throw new InvalidOperationException("No voice provider is selected.");
         }
 
+        await PlaySampleAsync(provider, voiceId, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task PlaySampleAsync(ITtsProvider provider, string voiceId, CancellationToken cancellationToken)
+    {
         _audio.DropGroup(Group);
 
         var key = (provider.Id, $"sample:{voiceId}");

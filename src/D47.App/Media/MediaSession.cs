@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using D47.Core.Audio;
+using static D47.App.Interop.WinRtInterop;
 using Microsoft.Extensions.Logging;
 using Windows.Media;
 
@@ -174,13 +175,4 @@ internal sealed class MediaSession : IDisposable
 
         nint GetForWindow(nint window, ref Guid iid);
     }
-
-    [DllImport("combase.dll", ExactSpelling = true, CharSet = CharSet.Unicode)]
-    private static extern int WindowsCreateString(string source, int length, out nint value);
-
-    [DllImport("combase.dll", ExactSpelling = true)]
-    private static extern int WindowsDeleteString(nint value);
-
-    [DllImport("combase.dll", ExactSpelling = true)]
-    private static extern int RoGetActivationFactory(nint className, ref Guid iid, out nint factory);
 }

@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using D47.Core.Input;
 using Microsoft.Extensions.Logging;
+using static D47.App.Input.NativeInput;
 
 namespace D47.App.Input;
 
@@ -12,11 +13,8 @@ public sealed class ScancodeInjector(
     Func<D47.Core.Journal.GameStatus>? status = null,
     IInputStepObserver? observer = null) : IGameInput, IDisposable
 {
-    private const uint InputKeyboard = 1;
     private const uint InputMouse = 0;
 
-    private const uint KeyEventExtendedKey = 0x0001;
-    private const uint KeyEventKeyUp = 0x0002;
     private const uint KeyEventUnicode = 0x0004;
     private const uint KeyEventScancode = 0x0008;
 
@@ -28,8 +26,6 @@ public sealed class ScancodeInjector(
     private const uint MouseEventMiddleUp = 0x0040;
     private const uint MouseEventXDown = 0x0080;
     private const uint MouseEventXUp = 0x0100;
-
-    private const uint MapVirtualKeyToScancode = 0;
 
     /// <summary>The two side buttons, which <c>SendInput</c> distinguishes by this data word.</summary>
     private const uint XButton1 = 0x0001;
@@ -346,7 +342,7 @@ public sealed class ScancodeInjector(
             return true;
         }
 
-        var sent = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Input>());
+        var sent = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<InputEvent>());
 
         if (sent == inputs.Length)
         {
@@ -365,7 +361,7 @@ public sealed class ScancodeInjector(
         return false;
     }
 
-    private static Input[] Compose(InputStep step)
+    private static InputEvent[] Compose(InputStep step)
     {
         switch (step.Kind)
         {
@@ -423,7 +419,7 @@ public sealed class ScancodeInjector(
 
                 // One down/up pair per UTF-16 unit, which keeps surrogate pairs intact without the caller
                 // having to know about them.
-                var inputs = new List<Input>(step.Text.Length * 2);
+                var inputs = new List<InputEvent>(step.Text.Length * 2);
 
                 foreach (var unit in step.Text)
                 {
@@ -439,7 +435,7 @@ public sealed class ScancodeInjector(
         }
     }
 
-    private static Input Keyboard(ushort virtualKey, ushort scancode, uint flags) => new()
+    private static InputEvent Keyboard(ushort virtualKey, ushort scancode, uint flags) => new()
     {
         Type = InputKeyboard,
         Data = new InputUnion
@@ -455,7 +451,7 @@ public sealed class ScancodeInjector(
         },
     };
 
-    private static Input Mouse(uint flags, uint data) => new()
+    private static InputEvent Mouse(uint flags, uint data) => new()
     {
         Type = InputMouse,
         Data = new InputUnion
@@ -478,48 +474,4 @@ public sealed class ScancodeInjector(
         ReleaseAll();
         _sending.Dispose();
     }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct Input
-    {
-        public uint Type;
-        public InputUnion Data;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    private struct InputUnion
-    {
-        [FieldOffset(0)]
-        public MouseInput Mouse;
-
-        [FieldOffset(0)]
-        public KeyboardInput Keyboard;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct MouseInput
-    {
-        public int X;
-        public int Y;
-        public uint Data;
-        public uint Flags;
-        public uint Time;
-        public nint ExtraInfo;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct KeyboardInput
-    {
-        public ushort VirtualKey;
-        public ushort Scancode;
-        public uint Flags;
-        public uint Time;
-        public nint ExtraInfo;
-    }
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern uint SendInput(uint count, Input[] inputs, int size);
-
-    [DllImport("user32.dll")]
-    private static extern uint MapVirtualKey(uint code, uint mapType);
 }

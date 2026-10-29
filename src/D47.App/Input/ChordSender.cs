@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using D47.Core.Input;
 using Microsoft.Extensions.Logging;
+using static D47.App.Input.NativeInput;
 
 namespace D47.App.Input;
 
@@ -10,13 +11,6 @@ namespace D47.App.Input;
 /// </summary>
 public sealed class ChordSender(ILogger logger)
 {
-    private const uint InputKeyboard = 1;
-
-    private const uint KeyEventExtendedKey = 0x0001;
-    private const uint KeyEventKeyUp = 0x0002;
-
-    private const uint MapVirtualKeyToScancode = 0;
-
     private readonly List<InputStep> _recorded = [];
 
     /// <summary>Counts and records presses but never calls <c>SendInput</c>.</summary>
@@ -49,7 +43,7 @@ public sealed class ChordSender(ILogger logger)
             return null;
         }
 
-        var batch = new List<Input>();
+        var batch = new List<InputEvent>();
 
         foreach (var step in steps)
         {
@@ -74,14 +68,14 @@ public sealed class ChordSender(ILogger logger)
     }
 
     /// <summary>Sends the batch and empties it; after a short send, lets go of every key the chord presses.</summary>
-    private bool Flush(List<Input> batch, KeyChord chord, IReadOnlyList<InputStep> steps)
+    private bool Flush(List<InputEvent> batch, KeyChord chord, IReadOnlyList<InputStep> steps)
     {
         if (batch.Count == 0)
         {
             return true;
         }
 
-        var count = SendInput((uint)batch.Count, [.. batch], Marshal.SizeOf<Input>());
+        var count = SendInput((uint)batch.Count, [.. batch], Marshal.SizeOf<InputEvent>());
 
         if (count == batch.Count)
         {
@@ -97,7 +91,7 @@ public sealed class ChordSender(ILogger logger)
             chord.Describe());
 
         // A Windows key left down turns every later keystroke into a shortcut.
-        Input[] up =
+        InputEvent[] up =
         [
             .. steps
                 .Where(step => step.Kind == InputStepKind.KeyDown)
@@ -105,12 +99,12 @@ public sealed class ChordSender(ILogger logger)
                 .Select(step => Key(step with { Kind = InputStepKind.KeyUp })),
         ];
 
-        SendInput((uint)up.Length, up, Marshal.SizeOf<Input>());
+        SendInput((uint)up.Length, up, Marshal.SizeOf<InputEvent>());
 
         return false;
     }
 
-    private static Input Key(InputStep step) => new()
+    private static InputEvent Key(InputStep step) => new()
     {
         Type = InputKeyboard,
         Data = new InputUnion
@@ -125,49 +119,4 @@ public sealed class ChordSender(ILogger logger)
             },
         },
     };
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct Input
-    {
-        public uint Type;
-        public InputUnion Data;
-    }
-
-    /// <summary>The mouse member is never sent; it is here because it sets the union's size.</summary>
-    [StructLayout(LayoutKind.Explicit)]
-    private struct InputUnion
-    {
-        [FieldOffset(0)]
-        public MouseInput Mouse;
-
-        [FieldOffset(0)]
-        public KeyboardInput Keyboard;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct MouseInput
-    {
-        public int X;
-        public int Y;
-        public uint Data;
-        public uint Flags;
-        public uint Time;
-        public nint ExtraInfo;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct KeyboardInput
-    {
-        public ushort VirtualKey;
-        public ushort Scancode;
-        public uint Flags;
-        public uint Time;
-        public nint ExtraInfo;
-    }
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern uint SendInput(uint count, Input[] inputs, int size);
-
-    [DllImport("user32.dll")]
-    private static extern uint MapVirtualKey(uint code, uint mapType);
 }

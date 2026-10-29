@@ -6,6 +6,7 @@ using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using D47.App.Settings;
 using D47.App.Theming;
+using static D47.App.Theming.ThemedText;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Knowledge;
 using D47.Core.Lore;
@@ -205,13 +206,6 @@ public sealed class LoreDialog : ModalDialog
         (_, LoreArrival.Model) => "written by D47 itself, unverified",
         _ => "your word",
     };
-
-    private static TextBlock Muted(string text, string key = ThemeManager.GreyKey)
-    {
-        var block = new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
 
     private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target[!property] = new DynamicResourceExtension(key);

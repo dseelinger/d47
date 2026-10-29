@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using D47.Core.Interface;
+using static D47.App.Interop.WinRtInterop;
 using Microsoft.Extensions.Logging;
 using Windows.Foundation;
 using Windows.Graphics.Capture;
@@ -365,13 +366,4 @@ public sealed class EliteWindowCapture(
 
     [DllImport("d3d11.dll", ExactSpelling = true)]
     private static extern int CreateDirect3D11DeviceFromDXGIDevice(nint dxgiDevice, out nint graphicsDevice);
-
-    [DllImport("combase.dll", ExactSpelling = true, CharSet = CharSet.Unicode)]
-    private static extern int WindowsCreateString(string source, int length, out nint value);
-
-    [DllImport("combase.dll", ExactSpelling = true)]
-    private static extern int WindowsDeleteString(nint value);
-
-    [DllImport("combase.dll", ExactSpelling = true)]
-    private static extern int RoGetActivationFactory(nint className, ref Guid iid, out nint factory);
 }

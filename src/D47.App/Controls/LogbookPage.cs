@@ -8,6 +8,7 @@ using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using D47.App.Theming;
+using static D47.App.Theming.ThemedText;
 using D47.Core.Capabilities;
 using D47.Core.Logbook;
 
@@ -351,13 +352,6 @@ public sealed class LogbookPage : DialogPage
         row.Children.Add(name);
 
         return ListRow.Dress(new Border { Child = row });
-    }
-
-    private static TextBlock Muted(string text, string key = ThemeManager.GreyKey)
-    {
-        var block = new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, key);
-        return block;
     }
 
     private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>

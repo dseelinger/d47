@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using D47.App.Theming;
+using static D47.App.Theming.ThemedText;
 using D47.Core.Capabilities;
 using D47.Core.Debrief;
 using D47.Core.Persona;
@@ -292,13 +293,6 @@ public sealed class DebriefPage : DialogPage
         at is { } when
             ? [new Run(", "), Fonts.Mono(when.ToLocalTime().ToString("d MMM yyyy", CultureInfo.CurrentCulture))]
             : [];
-
-    private static TextBlock Muted(string text, string key = ThemeManager.GreyKey)
-    {
-        var block = new TextBlock { Text = text, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
-        Themed(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
 
     private static T Ink<T>(T block, string key)
         where T : TextBlock

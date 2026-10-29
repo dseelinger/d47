@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using D47.App.Theming;
+using static D47.App.Theming.ThemedText;
 using D47.Core.Knowledge;
 
 namespace D47.App.Controls;
@@ -230,26 +231,6 @@ public static class PowerplayBenefitsView
         note.Margin = new Thickness(0, 4, 0, 2);
 
         return note;
-    }
-
-    private static TextBlock Text(string text, double size, string key, bool mono = false, bool chrome = false)
-    {
-        var block = new TextBlock { Text = text, FontSize = size, TextWrapping = TextWrapping.Wrap };
-
-        if (mono)
-        {
-            block.FontFamily = new FontFamily(Fonts.MonoFamily);
-        }
-        else if (chrome)
-        {
-            block.FontFamily = new FontFamily(Fonts.ChromeFamily);
-            block.FontWeight = FontWeight.Medium;
-            block.LetterSpacing = size * Fonts.ChromeTracking;
-        }
-
-        Themed(block, TextBlock.ForegroundProperty, key);
-
-        return block;
     }
 
     private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
