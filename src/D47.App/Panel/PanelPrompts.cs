@@ -70,6 +70,22 @@ public sealed class PanelPrompts : IHearsText
         Open(request.Key, request.Word, request.Surface == ChoiceSurface.Page, Build, request.Help);
     }
 
+    /// <summary>Asks a keep-or-act question on the layer and calls <paramref name="acted"/> only for the act option.</summary>
+    public static void Confirm(
+        PanelPrompts prompts, string id, string shortLabel, string title, string body,
+        ChoiceOption keep, ChoiceOption act, Action acted)
+    {
+        prompts.Choose(
+            new ChoiceRequest(id, shortLabel, title, body, [keep, act], null, ChoiceSurface.Layer),
+            option =>
+            {
+                if (option.Key == act.Key)
+                {
+                    acted();
+                }
+            });
+    }
+
     /// <summary>Asks the Commander for a value, by voice or by keyboard, and calls back once with it.</summary>
     public void Enter(EntryRequest request, Action<string> done)
     {

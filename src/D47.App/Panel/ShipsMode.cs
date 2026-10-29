@@ -224,15 +224,12 @@ public sealed class ShipsMode(
 
             if (stored.TransferPrice is { } price)
             {
-                lines.Add(new LoadoutLine($"Transferring it here costs {Credits(price)}.")
-                {
-                    Stats = [new("Transfer here", Credits(price))],
-                });
+                lines.Add(Stat($"Transferring it here costs {Credits(price)}.", "Transfer here", Credits(price)));
             }
 
             if (stored.Value is { } worth)
             {
-                lines.Add(new LoadoutLine($"Worth {Credits(worth)}.") { Stats = [new("Value", Credits(worth))] });
+                lines.Add(Stat($"Worth {Credits(worth)}.", "Value", Credits(worth)));
             }
         }
         else if (entry is not null)
@@ -353,26 +350,23 @@ public sealed class ShipsMode(
 
         if (hull.Hardness is { } hardness)
         {
-            lines.Add(new LoadoutLine($"Hardness {hardness.ToString(CultureInfo.InvariantCulture)}.")
-            {
-                Stats = [new("Hardness", hardness.ToString(CultureInfo.InvariantCulture))],
-            });
+            lines.Add(Stat(
+                $"Hardness {hardness.ToString(CultureInfo.InvariantCulture)}.",
+                "Hardness",
+                hardness.ToString(CultureInfo.InvariantCulture)));
         }
 
         if (hull.Crew is > 0 and var seats)
         {
-            lines.Add(new LoadoutLine($"{seats} crew seat{(seats == 1 ? "" : "s")}.")
-            {
-                Stats = [new("Crew seats", seats.ToString(CultureInfo.InvariantCulture))],
-            });
+            lines.Add(Stat(
+                $"{seats} crew seat{(seats == 1 ? "" : "s")}.",
+                "Crew seats",
+                seats.ToString(CultureInfo.InvariantCulture)));
         }
 
         if (hull.Cost is { } cost)
         {
-            lines.Add(new LoadoutLine($"Unfitted, it lists at {Credits(cost)}.")
-            {
-                Stats = [new("List price", Credits(cost))],
-            });
+            lines.Add(Stat($"Unfitted, it lists at {Credits(cost)}.", "List price", Credits(cost)));
         }
 
         return lines;
@@ -408,20 +402,19 @@ public sealed class ShipsMode(
 
         if (loadout.MaxJumpRange is { } range)
         {
-            lines.Add(new LoadoutLine(
+            lines.Add(Stat(
                 $"{range.ToString("N1", CultureInfo.InvariantCulture)} ly a jump with one jump's "
-                + "fuel and an empty hold.")
-            {
-                Stats = [new("Jump range, empty hold", $"{range.ToString("N1", CultureInfo.InvariantCulture)} ly")],
-            });
+                + "fuel and an empty hold.",
+                "Jump range, empty hold",
+                $"{range.ToString("N1", CultureInfo.InvariantCulture)} ly"));
         }
 
         if (loadout.CargoCapacity is { } cargo)
         {
-            lines.Add(new LoadoutLine($"{cargo.ToString(CultureInfo.InvariantCulture)} tonnes of hold.")
-            {
-                Stats = [new("Hold", $"{cargo.ToString(CultureInfo.InvariantCulture)} t")],
-            });
+            lines.Add(Stat(
+                $"{cargo.ToString(CultureInfo.InvariantCulture)} tonnes of hold.",
+                "Hold",
+                $"{cargo.ToString(CultureInfo.InvariantCulture)} t"));
         }
 
         if (loadout.FuelCapacity is { } tank)
@@ -445,36 +438,30 @@ public sealed class ShipsMode(
 
         if (loadout.UnladenMass is { } mass)
         {
-            lines.Add(new LoadoutLine(
-                $"{mass.ToString("N1", CultureInfo.InvariantCulture)} tonnes unladen.")
-            {
-                Stats = [new("Unladen", $"{mass.ToString("N1", CultureInfo.InvariantCulture)} t")],
-            });
+            lines.Add(Stat(
+                $"{mass.ToString("N1", CultureInfo.InvariantCulture)} tonnes unladen.",
+                "Unladen",
+                $"{mass.ToString("N1", CultureInfo.InvariantCulture)} t"));
         }
 
         if (loadout.TotalValue is { } worth)
         {
-            lines.Add(new LoadoutLine($"Worth {Credits(worth)}, ship and modules together.")
-            {
-                Stats = [new("Value with modules", Credits(worth))],
-            });
+            lines.Add(Stat(
+                $"Worth {Credits(worth)}, ship and modules together.", "Value with modules", Credits(worth)));
         }
 
         if (loadout.Rebuy is { } rebuy)
         {
-            lines.Add(new LoadoutLine($"Rebuy is {Credits(rebuy)}.", LoadoutTone.Danger)
-            {
-                Stats = [new("Rebuy", Credits(rebuy))],
-            });
+            lines.Add(Stat($"Rebuy is {Credits(rebuy)}.", "Rebuy", Credits(rebuy), LoadoutTone.Danger));
         }
 
         if (loadout.HullHealth is { } health && health < 100)
         {
-            lines.Add(new LoadoutLine(
-                $"Hull at {health.ToString(CultureInfo.InvariantCulture)}%.", LoadoutTone.Danger)
-            {
-                Stats = [new("Hull integrity", $"{health.ToString(CultureInfo.InvariantCulture)}%")],
-            });
+            lines.Add(Stat(
+                $"Hull at {health.ToString(CultureInfo.InvariantCulture)}%.",
+                "Hull integrity",
+                $"{health.ToString(CultureInfo.InvariantCulture)}%",
+                LoadoutTone.Danger));
         }
 
         // The heading last, and only if anything is under it.
@@ -488,6 +475,9 @@ public sealed class ShipsMode(
         && status?.Invoke() is { IsKnown: true, InShip: true, FuelMain: { } level }
             ? level
             : null;
+
+    private static LoadoutLine Stat(string sentence, string label, string value, LoadoutTone tone = LoadoutTone.Muted) =>
+        new(sentence, tone) { Stats = [new(label, value)] };
 
     /// <summary>Credits, grouped, because a nine-digit number without separators is unreadable.</summary>
     private static string Credits(long amount) =>

@@ -1784,24 +1784,17 @@ public sealed class ItemPage : LoadoutPage
             return;
         }
 
-        _prompts.Choose(
-            new ChoiceRequest(
-                "loadout.drop",
-                "Drop",
-                _drop?.Content as string ?? "Drop this",
-                Mode.Title(_item) is { } what
-                    ? $"{what}. There is no way back from this one."
-                    : "There is no way back from this one.",
-                [new ChoiceOption("keep", "Keep it"), new ChoiceOption("drop", "Drop it")],
-                null,
-                ChoiceSurface.Layer),
-            option =>
-            {
-                if (option.Key == "drop")
-                {
-                    Dropped();
-                }
-            });
+        PanelPrompts.Confirm(
+            _prompts,
+            "loadout.drop",
+            "Drop",
+            _drop?.Content as string ?? "Drop this",
+            Mode.Title(_item) is { } what
+                ? $"{what}. There is no way back from this one."
+                : "There is no way back from this one.",
+            new ChoiceOption("keep", "Keep it"),
+            new ChoiceOption("drop", "Drop it"),
+            Dropped);
     }
 
     /// <summary>Reads the clipboard, asks before replacing a plan, and reports on the summary line.</summary>
@@ -1821,22 +1814,15 @@ public sealed class ItemPage : LoadoutPage
             return;
         }
 
-        _prompts.Choose(
-            new ChoiceRequest(
-                "loadout.import",
-                "Import",
-                "Import from clipboard",
-                question,
-                [new ChoiceOption("keep", "Keep this plan"), new ChoiceOption("replace", "Replace it")],
-                null,
-                ChoiceSurface.Layer),
-            option =>
-            {
-                if (option.Key == "replace")
-                {
-                    Imported(offer);
-                }
-            });
+        PanelPrompts.Confirm(
+            _prompts,
+            "loadout.import",
+            "Import",
+            "Import from clipboard",
+            question,
+            new ChoiceOption("keep", "Keep this plan"),
+            new ChoiceOption("replace", "Replace it"),
+            () => Imported(offer));
     }
 
     private async void ExportToClipboard() => Said(await Mode.Export(_item));

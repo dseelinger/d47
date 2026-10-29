@@ -1727,49 +1727,32 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
                 value => string.IsNullOrWhiteSpace(value)
                     ? EntryVerdict.No("A line with nothing written on it is not a line.")
                     : EntryVerdict.Ok),
-            value =>
-            {
-                var change = _checklists.Reword(item.Id, value);
-
-                if (!change.Changed)
-                {
-                    Say(change.Report);
-                    return;
-                }
-
-                Rebuild();
-            });
+            value => Settle(_checklists.Reword(item.Id, value)));
     }
 
     /// <summary>Takes a line off the list (remediation.md 10, item 14).</summary>
     private void DeleteLine(ChecklistItem item)
     {
-        _prompts.Choose(
-            new ChoiceRequest(
-                "checklist.delete",
-                "Delete",
-                "Delete this line",
-                $"\"{item.Text}\" would come off the list. There is no way back from this one.",
-                [new ChoiceOption("keep", "Keep it"), new ChoiceOption("delete", "Delete it")],
-                null,
-                ChoiceSurface.Layer),
-            option =>
-            {
-                if (option.Key != "delete")
-                {
-                    return;
-                }
+        PanelPrompts.Confirm(
+            _prompts,
+            "checklist.delete",
+            "Delete",
+            "Delete this line",
+            $"\"{item.Text}\" would come off the list. There is no way back from this one.",
+            new ChoiceOption("keep", "Keep it"),
+            new ChoiceOption("delete", "Delete it"),
+            () => Settle(_checklists.Delete(item.Id)));
+    }
 
-                var change = _checklists.Delete(item.Id);
+    private void Settle(ChecklistChange change)
+    {
+        if (!change.Changed)
+        {
+            Say(change.Report);
+            return;
+        }
 
-                if (!change.Changed)
-                {
-                    Say(change.Report);
-                    return;
-                }
-
-                Rebuild();
-            });
+        Rebuild();
     }
 
     /// <summary>
@@ -1796,34 +1779,17 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             ? " would come off your whole checklist, including anything hidden by the current filter or search."
             : $" would come off {list.Name}. Other lists keep theirs.";
 
-        _prompts.Choose(
-            new ChoiceRequest(
-                "checklist.delete-completed",
-                "Delete completed",
-                "Delete completed items",
-                (count == 1 ? "1 completed line" : $"{count} completed lines")
-                + where
-                + " There is no way back from this one.",
-                [new ChoiceOption("keep", "Keep them"), new ChoiceOption("delete", "Delete them")],
-                null,
-                ChoiceSurface.Layer),
-            option =>
-            {
-                if (option.Key != "delete")
-                {
-                    return;
-                }
-
-                var change = list is null ? _checklists.DeleteCompleted() : _checklists.DeleteCompleted(list);
-
-                if (!change.Changed)
-                {
-                    Say(change.Report);
-                    return;
-                }
-
-                Rebuild();
-            });
+        PanelPrompts.Confirm(
+            _prompts,
+            "checklist.delete-completed",
+            "Delete completed",
+            "Delete completed items",
+            (count == 1 ? "1 completed line" : $"{count} completed lines")
+            + where
+            + " There is no way back from this one.",
+            new ChoiceOption("keep", "Keep them"),
+            new ChoiceOption("delete", "Delete them"),
+            () => Settle(list is null ? _checklists.DeleteCompleted() : _checklists.DeleteCompleted(list)));
     }
 
     /// <summary>
@@ -1875,18 +1841,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         };
     }
 
-    private void Moved(ChecklistItem item, ChecklistMove move)
-    {
-        var change = _checklists.Move(item.Id, move);
-
-        if (!change.Changed)
-        {
-            Say(change.Report);
-            return;
-        }
-
-        Rebuild();
-    }
+    private void Moved(ChecklistItem item, ChecklistMove move) => Settle(_checklists.Move(item.Id, move));
 
     /// <summary>The Commander stepped to a scope.</summary>
     private void OnScopeChanged()
@@ -1925,15 +1880,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
                     ? list.Scope
                     : _checklists.ScopeFor(null, null);
 
-                var change = _checklists.AddTyped(scope, value);
-
-                if (!change.Changed)
-                {
-                    Say(change.Report);
-                    return;
-                }
-
-                Rebuild();
+                Settle(_checklists.AddTyped(scope, value));
             });
     }
 
