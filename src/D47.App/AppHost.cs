@@ -1149,6 +1149,8 @@ public sealed class AppHost : IDisposable
             // with eleven ships was shown the one they were sitting in.
             RestoreFleet = fid => history.Fleets?.GetValueOrDefault(fid),
 
+            RestoreLocation = fid => history.Locations?.GetValueOrDefault(fid),
+
             // And Loadout describes one ship, so without this every parked ship's slots read as never seen
             // the moment the Commander swapped out of it.
             RestoreLoadouts = fid => history.Loadouts?.GetValueOrDefault(fid),
@@ -3225,6 +3227,7 @@ public sealed class AppHost : IDisposable
 
         adventureGenerator.Barred = () => stores.ActivityBars.Barred(gameState.Active?.Identity.FrontierId);
         adventureGenerator.HomeSystem = () => settings.Current.Callouts.HomeSystem;
+        adventureGenerator.Systems = () => services.StarSystems;
 
         // After the startup catch-up, so each chapter moved keeps when its beats fired.
         storyDirector.ArchiveChapters();

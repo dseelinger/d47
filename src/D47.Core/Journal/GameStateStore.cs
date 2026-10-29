@@ -94,6 +94,9 @@ public sealed class GameStateStore
     /// </summary>
     public Func<string, FleetRegistry?>? RestoreFleet { get; init; }
 
+    /// <summary>The last location the journals show for a Commander, taken while the live journal has given none.</summary>
+    public Func<string, JournalLocation?>? RestoreLocation { get; init; }
+
     /// <summary>
     /// What this Commander's ships were last seen holding, on the same terms as <see
     /// cref="RestoreFleet"/>.
@@ -203,6 +206,11 @@ public sealed class GameStateStore
             if (!state.Fleet.IsKnown && RestoreFleet?.Invoke(fid) is { IsKnown: true } fleet)
             {
                 state.Fleet = fleet;
+            }
+
+            if (state.Location.StarSystem is null && RestoreLocation?.Invoke(fid) is { StarSystem: not null } location)
+            {
+                state.Location = location;
             }
 
             // A CarrierLocation after LoadGame gives the live state a system but never a callsign. An owned

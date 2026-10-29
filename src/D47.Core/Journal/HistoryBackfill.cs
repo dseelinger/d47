@@ -105,6 +105,9 @@ public sealed class HistoryBackfill
 
     public IReadOnlyDictionary<string, FleetRegistry>? Fleets { get; private set; }
 
+    /// <summary>Each Commander's last known location.</summary>
+    public IReadOnlyDictionary<string, JournalLocation>? Locations { get; private set; }
+
     public IReadOnlyDictionary<string, ShipLoadouts>? Loadouts { get; private set; }
 
     public IReadOnlyDictionary<string, OwnedKit>? Kits { get; private set; }
@@ -178,6 +181,14 @@ public sealed class HistoryBackfill
                     FileSystem,
                     Directory,
                     Loggers.CreateLogger(nameof(FleetBackfill)),
+                    cancellation));
+
+            Locations = Timed(
+                "location backfill",
+                () => LocationBackfill.FromHistory(
+                    FileSystem,
+                    Files(),
+                    Loggers.CreateLogger(nameof(LocationBackfill)),
                     cancellation));
 
             Loadouts = Timed(

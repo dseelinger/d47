@@ -79,7 +79,11 @@ public sealed record AdventureRewrite(
 }
 
 /// <summary>A system a changed objective may travel toward. <see cref="Home"/> is set when it is Sol or Colonia standing in for a home system the Commander has not set.</summary>
-public sealed record AdventureHeading(string System, long SystemAddress, StarPosition Position, bool Home = false);
+public sealed record AdventureHeading(string System, long SystemAddress, StarPosition Position, bool Home = false)
+{
+    /// <summary>Whether the Commander asked to go home, rather than naming the system.</summary>
+    public bool AskedHome { get; init; }
+}
 
 /// <summary>The Guardian beacon system an act-one chapter ends at.</summary>
 public sealed record AdventureBeacon(long SystemAddress, string System, double? EasierWith = null);
@@ -357,6 +361,9 @@ public sealed class AdventureGenerator(
     /// <summary>The home system the Commander flying has set, which "home" in a changed objective means; null for none.</summary>
     public Func<string?>? HomeSystem { get; set; }
 
+    /// <summary>The system name search, which matches a name in any case; null finds a changed objective's destination through the galaxy search alone.</summary>
+    public Func<IStarSystemService?>? Systems { get; set; }
+
     /// <summary>Output ceiling for the step that reads where a changed objective asks to go.</summary>
     public const int HeadingOutputCeiling = 4000;
 
@@ -471,9 +478,14 @@ public sealed class AdventureGenerator(
                 return AdventureOutcome.Stopped;
             }
 
-            if (ask.Rewrite.Heading is not null)
+            if (ask.Rewrite.Heading is { } heading)
             {
                 facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
+
+                if (facts.Position is null)
+                {
+                    logger.LogWarning("Draft {Draft}, the Commander's position is unknown, so the new objectives are not sent toward {System}", ask.Draft, heading.System);
+                }
             }
         }
 
@@ -1329,6 +1341,9 @@ public sealed class AdventureGenerator(
         }
 
         var (system, standIn) = read.Home ? (home ?? HomeLeg.TargetFrom(facts.Position), home is null) : (read.System, false);
+        logger.LogInformation(
+            "Draft {Draft}, heading step answered home {Home}, system {System}; the home system is {HomeSystem}, so the place is {Place}",
+            ask.Draft, read.Home, read.System ?? "none", home ?? "not set", system ?? "none");
 
         if (system is null || galaxy() is not { } search)
         {
@@ -1337,15 +1352,25 @@ public sealed class AdventureGenerator(
 
         try
         {
+            // The galaxy search matches a reference system only in its exact case; a home system is typed in any case.
+            if (Systems?.Invoke() is { } names
+                && (await names.MatchNamesAsync(system, cancellationToken).ConfigureAwait(false))
+                    .FirstOrDefault(match => string.Equals(match.Name, system, StringComparison.OrdinalIgnoreCase)) is { } named)
+            {
+                logger.LogInformation("Draft {Draft}, the changed objective asks to go to {System}", ask.Draft, named.Name);
+                return rewrite with { Heading = new AdventureHeading(named.Name, named.SystemAddress, named.Position, standIn) { AskedHome = read.Home } };
+            }
+
             if (await new AdventureResolver(search, facts.Standings) { Time = Time }.SystemAsync(system, cancellationToken).ConfigureAwait(false) is { } found
                 && await search.PositionAsync(found.Name, cancellationToken).ConfigureAwait(false) is { } position)
             {
                 logger.LogInformation("Draft {Draft}, the changed objective asks to go to {System}", ask.Draft, found.Name);
-                return rewrite with { Heading = new AdventureHeading(found.Name, found.Address, position, standIn) };
+                return rewrite with { Heading = new AdventureHeading(found.Name, found.Address, position, standIn) { AskedHome = read.Home } };
             }
         }
         catch (GalaxyUnavailableException ex)
         {
+            logger.LogWarning("Draft {Draft}, the galaxy search could not look up {System}: {Message}", ask.Draft, system, ex.Message);
             notes.Add($"The galaxy search could not look up {system} ({ex.Message}), so the new objectives were not sent toward it.");
             return rewrite;
         }
@@ -1609,8 +1634,24 @@ public sealed class AdventureGenerator(
             var stations = await search.FindStationsAsync(StationQuery.Near(centre, radius, ChapterPull.PlacesPerKind), cancellationToken).ConfigureAwait(false);
             var bodies = await search.FindBodiesAsync(BodyQuery.LandableNear(centre, radius, ChapterPull.PlacesPerKind), cancellationToken).ConfigureAwait(false);
 
-            var open = await OpenStationsAsync(stations.Stations.Where(station => station.Position is not null), facts, resolver, int.MaxValue, cancellationToken).ConfigureAwait(false);
-            var landable = OpenBodies(bodies.Bodies.Where(body => body.Position is not null), facts, int.MaxValue);
+            var foundStations = stations.Stations.Where(station => station.Position is not null).ToList();
+            var foundBodies = bodies.Bodies.Where(body => body.Position is not null).ToList();
+
+            if (leg is { Asked: true, Home: false })
+            {
+                var there = await search.FindStationsAsync(StationQuery.Near(leg.Target, 1, ChapterPull.PlacesPerKind), cancellationToken).ConfigureAwait(false);
+                var landHere = await search.FindBodiesAsync(BodyQuery.LandableNear(leg.Target, 1, ChapterPull.PlacesPerKind), cancellationToken).ConfigureAwait(false);
+
+                foundStations.AddRange(there.Stations
+                    .Where(station => string.Equals(station.SystemName, leg.Target, StringComparison.OrdinalIgnoreCase) && !foundStations.Any(found => found.MarketId == station.MarketId && found.Name == station.Name))
+                    .Select(station => station with { Position = station.Position ?? leg.There }));
+                foundBodies.AddRange(landHere.Bodies
+                    .Where(body => string.Equals(body.SystemName, leg.Target, StringComparison.OrdinalIgnoreCase) && !foundBodies.Any(found => found.Name == body.Name))
+                    .Select(body => body with { Position = body.Position ?? leg.There }));
+            }
+
+            var open = await OpenStationsAsync(foundStations, facts, resolver, int.MaxValue, cancellationToken).ConfigureAwait(false);
+            var landable = OpenBodies(foundBodies, facts, int.MaxValue);
 
             if (open.Count > 0 || landable.Count > 0)
             {
@@ -2669,15 +2710,23 @@ public sealed class AdventureGenerator(
             text.AppendLine(
                 leg.Home
                     ? $"The Commander has asked to go home and has set no home system, so home is {leg.Target}, the nearer of Sol and Colonia, {far} light years away."
-                    : $"The Commander has asked to go to {leg.Target}, {far} light years away.");
+                    : ask.Rewrite?.Heading is { AskedHome: true }
+                        ? $"The Commander has asked to go home. Their home system is {leg.Target}, {far} light years away: that is the place they mean, not any place in the story."
+                        : $"The Commander has asked to go to {leg.Target}, {far} light years away.");
+            text.AppendLine(leg.Home
+                ? $"The new objectives travel toward {leg.Target}, and the story goes with the Commander: write them so the trip serves this chapter. "
+                  + $"Their last stop, the system of the last place objective, must be at least {nearer} light years nearer {leg.Target} than where the Commander is now, "
+                  + $"or {Reached(leg)}. Each hop must be within the reach, so the new objectives need not get all the way there."
+                  + (places.State == InBandState.Listed ? $" The places listed on the way to {leg.Target} meet that rule." : "")
+                : $"The new objectives take the Commander to {leg.Target}, and the story goes with them: write them so the trip serves this chapter. "
+                  + $"The last place objective must be in {leg.Target} itself: dock, land or scan there, at a place listed in {leg.Target} when there is one. "
+                  + $"Send the Commander straight there: the objective that goes to {leg.Target} takes one step, with an empty \"then\" and no stop on the way, "
+                  + $"and that hop may be longer than the reach. Every other hop must be within the reach.");
             text.AppendLine(
-                $"If going there serves this chapter, the new objectives travel toward {leg.Target}: their last stop, the system of the last place objective, "
-                + $"must be at least {nearer} light years nearer {leg.Target} than where the Commander is now, or {Reached(leg)}. Each hop must be within the reach, "
-                + "so the new objectives need not get all the way there."
-                + (places.State == InBandState.Listed ? " The places listed on the way to it meet that rule." : ""));
-            text.AppendLine($"\"heading\" is true when the new objectives travel toward {leg.Target}, and false when you keep the objective or offer something else.");
+                $"Set \"heading\" to true when they do. Only where travelling toward {leg.Target} would break what this chapter must do, keep the objective or offer "
+                + $"something else, set \"heading\" to false, and say in the reply why the chapter cannot go there now. Never say that {leg.Target} cannot be reached.");
 
-            if (places.State is InBandState.NoneFound or InBandState.Unavailable)
+            if (leg.Home && places.State is InBandState.NoneFound or InBandState.Unavailable)
             {
                 text.AppendLine($"No station or landable body on the way to {leg.Target} could be listed, so the new objectives are not held to a distance from {leg.Target}.");
             }
@@ -2755,7 +2804,7 @@ public sealed class AdventureGenerator(
         }
 
         text.AppendLine();
-        text.AppendLine($"Real places on the way to {leg.Target}, from the galaxy search. Spelt exactly as they must be named:");
+        text.AppendLine($"Real places on the way to {leg.Target}{(leg is { Asked: true, Home: false } ? $" and in {leg.Target}" : "")}, from the galaxy search. Spelt exactly as they must be named:");
 
         foreach (var (system, entry) in systems.OrderBy(pair => pair.Value.Position.DistanceTo(leg.There)).ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
         {
@@ -4187,6 +4236,9 @@ public sealed class AdventureGenerator(
         var previousSystem = facts.System;
         var offset = ask.Rewrite?.From ?? 0;
 
+        // The system a changed objective asked to go to; the hop into it is not held to the reach.
+        var arrivesAt = ChapterPull.Of(ask, facts.Position) is { Asked: true, Home: false, Arrived: false } askedLeg ? askedLeg.Target : null;
+
         // The index of the beat that last set the previous system.
         int? lastPlaced = null;
 
@@ -4566,6 +4618,7 @@ public sealed class AdventureGenerator(
                         Refuse(index, PermitRefusal(where, place.System!, move is null ? null : $"Move objective {offset + index + 1} to {move}; rewrite its lines for that place."));
                     }
                     else if (hop is { } far && far > facts.RadiusLightYears
+                             && !string.Equals(place.System, arrivesAt, StringComparison.OrdinalIgnoreCase)
                              && !(closing && index == beats.Count - 1 && place.Kind == TriggerKind.Land && AdventureValidation.SameBody(place, destination!.Landing())))
                     {
                         Refuse(index, $"{where} is {far:0} light years from the previous stop; the reach is {facts.RadiusLightYears:0}.");
@@ -4631,10 +4684,22 @@ public sealed class AdventureGenerator(
                 lastPlaced is { } placedEnd ? [placedEnd] : []));
         }
 
-        if (pull.Holds && ChapterPull.Of(ask, facts.Position) is { Arrived: false } leg
+        if (ChapterPull.Of(ask, facts.Position) is { Arrived: false } leg && (pull.Holds || leg is { Asked: true, Home: false })
             && await NotPulledAsync(lastPlaced is null ? null : previousSystem, leg, facts.Position!.Value, facts.RadiusLightYears, resolver, cancellationToken).ConfigureAwait(false) is { } notPulled)
         {
             refusals.Add(new Refusal(notPulled, lastPlaced is { } pulledEnd ? [pulledEnd] : []));
+        }
+
+        if (arrivesAt is not null && lastPlaced is { } arrival
+            && string.Equals(beats[arrival].System, arrivesAt, StringComparison.OrdinalIgnoreCase)
+            && Group(beats, arrival)
+                .Where(index => index < arrival && IsTravel(beats[index].Kind) && !string.Equals(beats[index].System, arrivesAt, StringComparison.OrdinalIgnoreCase))
+                .Select(index => (int?)index)
+                .FirstOrDefault() is { } detour)
+        {
+            refusals.Add(new Refusal(
+                $"The objective that ends in {arrivesAt} stops first at {beats[detour].System}; send the Commander straight to {arrivesAt}, in one step with an empty \"then\".",
+                [arrival]));
         }
 
         if (ask.Story?.Beacon is { } last && (beats.Count == 0 || beats[^1].Kind != TriggerKind.Beacon))
@@ -4934,7 +4999,9 @@ public sealed class AdventureGenerator(
 
         try
         {
-            end = lastStop is null ? start : await resolver.DistanceAsync(lastStop, leg.Target, cancellationToken).ConfigureAwait(false);
+            end = lastStop is null ? start
+                : string.Equals(lastStop, leg.Target, StringComparison.OrdinalIgnoreCase) ? 0
+                : await resolver.DistanceAsync(lastStop, leg.Target, cancellationToken).ConfigureAwait(false);
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -4944,6 +5011,13 @@ public sealed class AdventureGenerator(
         if (end is not { } measured)
         {
             return $"The chapter's last stop could not be measured against {leg.Target}.";
+        }
+
+        if (leg is { Asked: true, Home: false })
+        {
+            return measured <= leg.Within
+                ? null
+                : $"The new objectives head for {leg.Target}, and the last stop is {measured:0} light years from it; the last place objective must be in {leg.Target} itself.";
         }
 
         return ChapterPull.Meets(start, measured, reach, leg.Within)

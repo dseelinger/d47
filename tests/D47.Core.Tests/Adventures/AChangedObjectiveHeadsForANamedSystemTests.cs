@@ -27,9 +27,9 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
 
     private const string NothingObjected = """{"objections": []}""";
 
-    private static string Beats(bool heading) => $$"""
+    private static string Beats(bool heading, string system = "Waypoint") => $$"""
         {"opening": "x", "reply": "Home it is.", "heading": {{(heading ? "true" : "false")}}, "beats": [
-          {"title": "The Way Back", "function": "midpoint", "kind": "arrive", "reason": "A courier there flies the home run.", "system": "Waypoint", "station": null, "body": null, "career": null, "rank": null, "line": "Halfway."},
+          {"title": "The Way Back", "function": "midpoint", "kind": "arrive", "reason": "A courier there flies the home run.", "system": "{{system}}", "station": null, "body": null, "career": null, "rank": null, "line": "Halfway."},
           {"title": "The Turn", "function": "all is lost", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
           {"title": "The End", "function": "finale", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
         ]}
@@ -68,9 +68,11 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
         Assert.Contains("The Commander now says: \"I want to go home\"", step);
 
         var brief = provider.Requests[1].Prompt.History[0].Text;
-        Assert.Contains($"The Commander has asked to go to {HomeName}, 1000 light years away.", brief);
-        Assert.Contains($"at least 60 light years nearer {HomeName}", brief);
-        Assert.Contains($"or in {HomeName} itself", brief);
+        Assert.Contains($"The Commander has asked to go home. Their home system is {HomeName}, 1000 light years away: that is the place they mean, not any place in the story.", brief);
+        Assert.Contains($"The last place objective must be in {HomeName} itself", brief);
+        Assert.Contains($"Send the Commander straight there: the objective that goes to {HomeName} takes one step", brief);
+        Assert.Contains($"Never say that {HomeName} cannot be reached.", brief);
+        Assert.DoesNotContain("need not get all the way there", brief);
         Assert.Contains("Halfway House", brief);
         Assert.Contains("\"heading\": boolean", brief);
         Assert.Contains("\"heading\"", provider.Requests[1].ResponseSchema!.SchemaJson);
@@ -78,7 +80,21 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
     }
 
     [Fact]
-    public async Task AHeadingAnswerWhoseLastStopIsNotNearerEnoughIsRefusedThroughRepair()
+    public async Task AHomeSystemTypedInLowerCaseIsFoundInTheGameSpelling()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(GoHome), Saying(Beats(heading: true, HomeName)), Saying(NothingObjected));
+        var generator = Generator(provider, new Galaxy { ExactCaseOnly = true }, Here, home: "tavell's reach");
+        generator.Systems = () => new Names();
+
+        var outcome = await generator.GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
+
+        Assert.Contains($"Their home system is {HomeName}, 1000 light years away", provider.Requests[1].Prompt.History[0].Text);
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Equal(new AdventureHeading(HomeName, AdventureFixtures.Home, HomeAt) { AskedHome = true }, outcome.Heading);
+    }
+
+    [Fact]
+    public async Task AHeadingAnswerThatStopsShortOfTheSystemIsRefusedThroughRepair()
     {
         var provider = new RoundScriptedLlmProvider(
             Saying(GoHome), Saying(Beats(heading: true)), Saying(Repairs.ReplacingAfter(2, Beats(heading: true), 1)), Saying(Repairs.ReplacingAfter(2, Beats(heading: true), 1)));
@@ -86,22 +102,43 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
         var outcome = await Generator(provider, new Galaxy { FromTarget = 990 }, Here, home: HomeName).GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("its last stop is 990 light years from it", outcome.Refusal);
-        Assert.Contains($"the new objectives head for {HomeName}", outcome.Refusal);
-        Assert.Contains($"or in {HomeName} itself", outcome.Refusal);
-        Assert.Contains("its last stop is 990 light years from it", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains($"The new objectives head for {HomeName}, and the last stop is 990 light years from it", outcome.Refusal);
+        Assert.Contains($"the last place objective must be in {HomeName} itself", outcome.Refusal);
+        Assert.Contains("the last stop is 990 light years from it", provider.Requests[2].Prompt.History[0].Text);
         Assert.Null(outcome.Heading);
     }
 
     [Fact]
-    public async Task AHeadingAnswerThatMeetsTheRuleStandsAndReportsTheDestination()
+    public async Task AHeadingAnswerThatEndsInTheSystemStandsHoweverLongTheLastHop()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(GoHome), Saying(Beats(heading: true)), Saying(NothingObjected));
+        var provider = new RoundScriptedLlmProvider(Saying(GoHome), Saying(Beats(heading: true, HomeName)), Saying(NothingObjected));
 
         var outcome = await Generator(provider, new Galaxy { FromTarget = 900 }, Here, home: HomeName).GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(new AdventureHeading(HomeName, AdventureFixtures.Home, HomeAt), outcome.Heading);
+        Assert.Equal(new AdventureHeading(HomeName, AdventureFixtures.Home, HomeAt) { AskedHome = true }, outcome.Heading);
+    }
+
+    private const string ByWayOfAStop = """
+        {"opening": "x", "reply": "Home it is.", "heading": true, "beats": [
+          {"title": "The Way Back", "function": "midpoint", "kind": "arrive", "reason": "A courier there flies the home run.", "system": "Waypoint", "station": null, "body": null, "career": null, "rank": null, "line": "Halfway.",
+           "then": [{"kind": "arrive", "reason": "Home.", "system": "Tavell's Reach", "station": null, "body": null}]},
+          {"title": "The Turn", "function": "all is lost", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
+          {"title": "The End", "function": "finale", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
+        ]}
+        """;
+
+    [Fact]
+    public async Task AnObjectiveThatStopsOnTheWayToTheAskedSystemIsRefusedThroughRepair()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            Saying(GoHome), Saying(ByWayOfAStop), Saying(Repairs.ReplacingAfter(2, ByWayOfAStop, 1)), Saying(Repairs.ReplacingAfter(2, ByWayOfAStop, 1)));
+
+        var outcome = await Generator(provider, new Galaxy { FromTarget = 0 }, Here, home: HomeName).GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
+
+        Assert.False(outcome.Succeeded);
+        Assert.Contains($"The objective that ends in {HomeName} stops first at Waypoint; send the Commander straight to {HomeName}", outcome.Refusal);
+        Assert.Contains($"the objective that goes to {HomeName} takes one step", provider.Requests[1].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -234,8 +271,25 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
 
     private static string Coordinate(double value) => value.ToString(CultureInfo.InvariantCulture);
 
+    /// <summary>A system name search that matches names in any case, as the real one does.</summary>
+    private sealed class Names : IStarSystemService
+    {
+        public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<SystemNameMatch>>(
+                string.Equals(typed, HomeName, StringComparison.OrdinalIgnoreCase) ? [new SystemNameMatch(HomeName, AdventureFixtures.Home, HomeAt)] : []);
+
+        public Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) => throw new NotSupportedException();
+    }
+
     private sealed class Galaxy : IGalaxyService
     {
+        /// <summary>Refuses a reference system not spelt in its exact case, as the real galaxy search does.</summary>
+        public bool ExactCaseOnly { get; init; }
+
         /// <summary>Light years from any stop to the heading's system.</summary>
         public double FromTarget { get; init; } = 900;
 
@@ -256,6 +310,11 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
 
         public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
+            if (ExactCaseOnly && query.ReferenceSystem is { } spelt && !Known.Keys.Contains(spelt, StringComparer.Ordinal))
+            {
+                throw new GalaxyUnavailableException("The galaxy search refused that request.");
+            }
+
             var named = query.ReferenceSystem is { } name && Known.TryGetValue(name, out var known)
                 ? new List<SystemSummary> { new() { Name = Known.Keys.First(key => string.Equals(key, name, StringComparison.OrdinalIgnoreCase)), SystemAddress = known.Address, Government = "Democracy", Distance = 0 } }
                 : [];

@@ -7,7 +7,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
 {
     public CommanderIdentity Identity { get; private set; } = identity;
 
-    public JournalLocation Location { get; private set; } = JournalLocation.Unknown;
+    public JournalLocation Location { get; internal set; } = JournalLocation.Unknown;
 
     /// <summary>The body the Commander is at and where their ship landed on it.</summary>
     public SurfacePoints Surface { get; private set; } = SurfacePoints.None;
