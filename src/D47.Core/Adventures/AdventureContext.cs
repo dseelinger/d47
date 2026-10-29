@@ -107,7 +107,8 @@ public static class AdventureContext
                 var steps = standing.StepsOf(standing.Current).Count;
                 var place = steps > 1 ? $", step {standing.CurrentStep + 1} of {steps}" : string.Empty;
                 var reason = string.IsNullOrWhiteSpace(step.Reason) ? string.Empty : $" Reason: {step.Reason.Trim()}";
-                Line(block, $"Now: {current.Title}{function}{place}", $"waiting to {step.Trigger.Describe()}.{reason}");
+                var how = step.Trigger.Kind is TriggerKind.Rescue ? $" {step.Trigger.RescueHowTo()}" : string.Empty;
+                Line(block, $"Now: {current.Title}{function}{place}", $"waiting to {step.Trigger.Describe()}.{how}{reason}");
             }
 
             Line(block, "Stuck", Stuck(standing, shortStoryByVoice));

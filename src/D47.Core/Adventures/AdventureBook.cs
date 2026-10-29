@@ -54,7 +54,7 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
     public AdventureBeat? Next => IsFailure || IsEnding || IsStep ? null : Adventure.Beats.ElementAtOrDefault(Beat + 1);
 
     /// <summary>Where the Commander goes next, said with the line rather than waited for; after a step, the next step.</summary>
-    public string? HandOff => IsStep ? NextStep is { } step ? $"Next: {step.HandOff()}" : null : Next?.HandOff();
+    public string? HandOff => IsStep ? NextStep?.HandOff() : Next?.HandOff();
 
     /// <summary>Line <paramref name="index"/> and the hand-off together, which is what is said when the ship speaks the last line.</summary>
     public string Spoken(int index)

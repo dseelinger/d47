@@ -496,9 +496,31 @@ public sealed record AdventureTrigger
             + (Unarmed is null ? "a fuel scoop." : "a fuel scoop and a laser or railgun.")
             + (Unarmed == true ? string.Empty : " Arriving there in any ship also counts.")
             + EasierWith(),
+        TriggerKind.Rescue => $"Next: {Describe()}, counted from now. {Progress(0)}. {RescueHowTo()}",
         _ when IsCounted => $"Next: {Describe()}, counted from now. {Progress(0)}.",
         _ => $"Next: {Describe()}.",
     };
+
+    /// <summary>What counts as a rescue item and where it is found and handed in; the filter's item alone when it has one.</summary>
+    public string RescueHowTo()
+    {
+        var item = Journal.JournalJson.Symbol(Filter) ?? string.Empty;
+        var (what, sources) = item switch
+        {
+            _ when item.Contains("blackbox", StringComparison.Ordinal) =>
+                ("Black boxes are", "Power Wreckage Signature or Degraded Emissions"),
+            _ when item.Contains("wreckagecomponents", StringComparison.Ordinal) =>
+                ("Wreckage components are", "Power Wreckage Signature"),
+            _ when item.Contains("occupiedcryopod", StringComparison.Ordinal) =>
+                ("Occupied escape pods are", "Power Wreckage Signature"),
+            _ when item.Contains("damagedescapepod", StringComparison.Ordinal) =>
+                ("Damaged escape pods are", "Power Wreckage Signature, or outside any signal source"),
+            _ => ("Rescue items are escape pods, wreckage components and black boxes, and are",
+                "Power Wreckage Signature, and Degraded Emissions for black boxes"),
+        };
+
+        return $"{what} scooped at signal sources — {sources} — and handed to the Search and Rescue contact at a station, outposts included.";
+    }
 
     private string EasierWith() => JumpRange is > 0
         ? $" It is easier with a jump range of {JumpRange.GetValueOrDefault().ToString("0.0", CultureInfo.InvariantCulture)} light years or more."
