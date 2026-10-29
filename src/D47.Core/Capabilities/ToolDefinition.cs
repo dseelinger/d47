@@ -111,5 +111,8 @@ public sealed record ToolDefinition
     /// <summary>The result carries an <see cref="ToolResult.Image"/>; not offered to a model that cannot read one.</summary>
     public bool ReturnsImage { get; init; }
 
+    /// <summary>Steps for the Commander to exercise the tool by hand: what to say or press, and what a correct result looks like.</summary>
+    public string? Exercise { get; init; }
+
     public required ToolHandler Handler { get; init; }
 }
