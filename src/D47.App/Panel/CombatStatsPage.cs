@@ -185,15 +185,10 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 
     public void Filter(string? query)
     {
-        var trimmed = query?.Trim() ?? string.Empty;
-
-        if (trimmed == _query)
+        if (PageKit.Retarget(query, ref _query))
         {
-            return;
+            Draw();
         }
-
-        _query = trimmed;
-        Draw();
     }
 
     /// <summary>Redraws when the record, the history walk, the current system or the minute has changed.</summary>
@@ -204,7 +199,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         if (ReferenceEquals(state?.Combat, _seenRecord)
             && _history() == _seenHistory
             && state?.Location.SystemAddress == _seenAddress
-            && Minute(_now()) == _seenMinute)
+            && PageKit.Minute(_now()) == _seenMinute)
         {
             return false;
         }
@@ -241,7 +236,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 
     public static string FailedText(DateTimeOffset? since) =>
         "D47 couldn't finish reading your older journals, so these counts start "
-        + (since is { } at ? $"at {Clock(at)} UTC today" : "when D47 began counting")
+        + (since is { } at ? $"at {PageKit.Clock(at)} UTC today" : "when D47 began counting")
         + ". Kills from here on are still counted.";
 
     /// <summary>"35 targets", "1 faction".</summary>
@@ -360,9 +355,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 
     private static string Plural(long count, string unit) => $"{count.ToString("N0", CultureInfo.InvariantCulture)} {unit}{(count == 1 ? string.Empty : "s")}";
 
-    private static string Clock(DateTimeOffset at) => at.UtcDateTime.ToString("HH:mm", CultureInfo.InvariantCulture);
 
-    private static long Minute(DateTimeOffset now) => now.ToUnixTimeSeconds() / 60;
 
     private CombatStatsView Build() =>
         Rows(_state()?.Combat ?? CombatRecord.None, Period, Grouping, _now(), _history());
@@ -375,7 +368,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         _seenRecord = state?.Combat;
         _seenHistory = _history();
         _seenAddress = state?.Location.SystemAddress;
-        _seenMinute = Minute(now);
+        _seenMinute = PageKit.Minute(now);
 
         var view = Build();
         var shown = Matching(view.Rows, _query);

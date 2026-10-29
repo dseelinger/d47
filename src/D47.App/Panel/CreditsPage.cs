@@ -111,7 +111,7 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
 
     public void Filter(string? query)
     {
-        if (CreditsKit.Retarget(query, ref _query))
+        if (PageKit.Retarget(query, ref _query))
         {
             Draw();
         }
@@ -160,7 +160,7 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
 
         _seenLedger = _state()?.CreditLedger;
         _seenHistory = _history();
-        _seenMinute = CreditsKit.Minute(now);
+        _seenMinute = PageKit.Minute(now);
 
         var view = Build();
 

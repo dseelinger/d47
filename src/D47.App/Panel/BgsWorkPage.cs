@@ -125,15 +125,10 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
 
     public void Filter(string? query)
     {
-        var trimmed = query?.Trim() ?? string.Empty;
-
-        if (trimmed == _query)
+        if (PageKit.Retarget(query, ref _query))
         {
-            return;
+            Draw();
         }
-
-        _query = trimmed;
-        Draw();
     }
 
     /// <summary>Redraws when the work, the standings, the tick, the current system or the minute has changed.</summary>
@@ -145,7 +140,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
             && ReferenceEquals(state?.Standings, _seenStandings)
             && _tick() == _seenTick
             && state?.Location.StarSystem == _seenSystem
-            && Minute(_now()) == _seenMinute)
+            && PageKit.Minute(_now()) == _seenMinute)
         {
             return false;
         }
@@ -200,7 +195,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         : "The work you have done for minor factions since the BGS tick.";
 
     public static string EmptyText(DateTimeOffset? tick) => tick is { } at
-        ? $"No BGS work since the tick at {Clock(at)} UTC."
+        ? $"No BGS work since the tick at {PageKit.Clock(at)} UTC."
         : "No BGS work in the last 24 hours.";
 
     public static string NoMatchText(DateTimeOffset? tick) => tick is null
@@ -272,11 +267,9 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
 
     private static string Percent(double share) => (share * 100).ToString("0.0", CultureInfo.InvariantCulture) + "%";
 
-    private static string Clock(DateTimeOffset at) => at.UtcDateTime.ToString("HH:mm", CultureInfo.InvariantCulture);
 
     private static string Plural(long count, string unit) => $"{count} {unit}{(count == 1 ? string.Empty : "s")}";
 
-    private static long Minute(DateTimeOffset now) => now.ToUnixTimeSeconds() / 60;
 
     private void Draw()
     {
@@ -290,7 +283,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         _seenStandings = state?.Standings;
         _seenTick = tick;
         _seenSystem = state?.Location.StarSystem;
-        _seenMinute = Minute(now);
+        _seenMinute = PageKit.Minute(now);
 
         var summary = SummaryText(tick);
 
@@ -347,12 +340,12 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
 
         if (tick is { } at)
         {
-            note.Inlines!.Add(Fonts.Mono($"{Clock(at)} UTC"));
+            note.Inlines!.Add(Fonts.Mono($"{PageKit.Clock(at)} UTC"));
             note.Inlines.Add(new Avalonia.Controls.Documents.Run($" · {Ago(now - at)}.{sort}"));
         }
         else
         {
-            note.Text = $"Since {Clock(BgsWork.PeriodStart(null, now))} UTC yesterday.{sort}";
+            note.Text = $"Since {PageKit.Clock(BgsWork.PeriodStart(null, now))} UTC yesterday.{sort}";
         }
 
         return note;

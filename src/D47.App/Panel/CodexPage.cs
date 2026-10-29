@@ -198,15 +198,10 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     public void Filter(string? query)
     {
-        var trimmed = query?.Trim() ?? string.Empty;
-
-        if (trimmed == _query)
+        if (PageKit.Retarget(query, ref _query))
         {
-            return;
+            Draw();
         }
-
-        _query = trimmed;
-        Draw();
     }
 
     /// <summary>Redraws when the record, the history walk, the minute or the period chosen on the other page has changed.</summary>
@@ -214,7 +209,7 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
     {
         if (ReferenceEquals(_state()?.CodexLedger, _seenLedger)
             && _history() == _seenHistory
-            && Minute(_now()) == _seenMinute
+            && PageKit.Minute(_now()) == _seenMinute
             && _choice.Period == _period.SelectedIndex)
         {
             return false;
@@ -226,7 +221,6 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         return true;
     }
 
-    private static long Minute(DateTimeOffset now) => now.ToUnixTimeSeconds() / 60;
 
     private CodexPeriod Period => CodexKit.PeriodOf(_period);
 
@@ -237,7 +231,7 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
     {
         _seenLedger = _state()?.CodexLedger;
         _seenHistory = _history();
-        _seenMinute = Minute(_now());
+        _seenMinute = PageKit.Minute(_now());
 
         var view = Build();
 

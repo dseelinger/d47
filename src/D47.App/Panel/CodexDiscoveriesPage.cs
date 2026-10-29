@@ -122,15 +122,10 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
 
     public void Filter(string? query)
     {
-        var trimmed = query?.Trim() ?? string.Empty;
-
-        if (trimmed == _query)
+        if (PageKit.Retarget(query, ref _query))
         {
-            return;
+            Draw();
         }
-
-        _query = trimmed;
-        Draw();
     }
 
     /// <summary>Redraws when the record or the history walk has changed.</summary>

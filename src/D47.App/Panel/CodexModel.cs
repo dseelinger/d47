@@ -220,7 +220,7 @@ public static class CodexModel
 
     public static string FailedText(DateTimeOffset? since) =>
         "D47 couldn't finish reading your older journals, so this ledger starts when D47 started"
-        + (since is { } at ? $", at {Clock(at)} UTC today" : string.Empty)
+        + (since is { } at ? $", at {PageKit.Clock(at)} UTC today" : string.Empty)
         + ". Codex entries from here on are still recorded.";
 
     /// <summary>The line under the group head.</summary>
@@ -231,15 +231,15 @@ public static class CodexModel
         switch (period)
         {
             case CodexPeriod.Trip when ledger.TripStart is { } sale:
-                return $"Since you sold exploration data on {Day(sale)} at {Clock(sale)} UTC.";
+                return $"Since you sold exploration data on {Day(sale)} at {PageKit.Clock(sale)} UTC.";
             case CodexPeriod.Trip:
                 return ledger.OnRecordSince is { } start
                     ? $"No sale of exploration data on record, so this trip is everything since {Date(start)}."
                     : "No sale of exploration data on record, so this trip is everything on record.";
             case CodexPeriod.Session when ledger.SessionStart is { } load:
                 return load.UtcDateTime.Date == now.UtcDateTime.Date
-                    ? $"Since you loaded the game at {Clock(load)} UTC today."
-                    : $"Since you loaded the game on {Day(load)} at {Clock(load)} UTC.";
+                    ? $"Since you loaded the game at {PageKit.Clock(load)} UTC today."
+                    : $"Since you loaded the game on {Day(load)} at {PageKit.Clock(load)} UTC.";
             case CodexPeriod.Session:
                 return $"No game load on record, so this session is everything {since}.";
             default:
@@ -649,7 +649,6 @@ public static class CodexModel
     private static string Degrees(double value) =>
         (value < 0 ? Minus : string.Empty) + Math.Abs(value).ToString("0.0000", CultureInfo.InvariantCulture);
 
-    private static string Clock(DateTimeOffset at) => at.UtcDateTime.ToString("HH:mm", CultureInfo.InvariantCulture);
 
     private static string Day(DateTimeOffset at) => at.UtcDateTime.ToString("d MMMM", CultureInfo.InvariantCulture);
 }

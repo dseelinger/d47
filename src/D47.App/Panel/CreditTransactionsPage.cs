@@ -99,7 +99,7 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
 
     public void Filter(string? query)
     {
-        if (CreditsKit.Retarget(query, ref _query))
+        if (PageKit.Retarget(query, ref _query))
         {
             Draw();
         }
@@ -130,7 +130,7 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
 
         _seenLedger = _state()?.CreditLedger;
         _seenHistory = _history();
-        _seenMinute = CreditsKit.Minute(now);
+        _seenMinute = PageKit.Minute(now);
 
         var view = Build();
 

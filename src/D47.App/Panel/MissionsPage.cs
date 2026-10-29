@@ -106,15 +106,10 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
 
     public void Filter(string? query)
     {
-        var trimmed = query?.Trim() ?? string.Empty;
-
-        if (trimmed == _query)
+        if (PageKit.Retarget(query, ref _query))
         {
-            return;
+            Draw();
         }
-
-        _query = trimmed;
-        Draw();
     }
 
     /// <summary>Redraws when the board or the location has changed, or the clock has passed a minute boundary.</summary>
@@ -124,7 +119,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
 
         if (ReferenceEquals(state?.Missions, _seenBoard)
             && ReferenceEquals(state?.Location, _seenLocation)
-            && Minute(_now()) == _seenMinute)
+            && PageKit.Minute(_now()) == _seenMinute)
         {
             return false;
         }
@@ -179,7 +174,6 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
 
     private static string Number(long value) => value.ToString("N0", CultureInfo.InvariantCulture);
 
-    private static long Minute(DateTimeOffset time) => time.UtcTicks / TimeSpan.TicksPerMinute;
 
     private bool Matches(Mission mission) =>
         _query.Length == 0
@@ -195,7 +189,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
 
         _seenBoard = state?.Missions;
         _seenLocation = state?.Location;
-        _seenMinute = Minute(now);
+        _seenMinute = PageKit.Minute(now);
 
         var summary = Summarise(board, location);
 

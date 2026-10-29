@@ -130,7 +130,7 @@ public static class CreditsModel
 
     public static string FailedText(DateTimeOffset? since) =>
         "D47 couldn't finish reading your older journals, so this ledger starts when D47 started"
-        + (since is { } at ? $", at {Clock(at)} UTC today" : string.Empty)
+        + (since is { } at ? $", at {PageKit.Clock(at)} UTC today" : string.Empty)
         + ". Transactions from here on are still recorded.";
 
     /// <summary>"11 kinds", "1 kind".</summary>
@@ -346,5 +346,4 @@ public static class CreditsModel
             count,
             [.. entries.Where(entry => entry.Kind == kind).Select(entry => entry.Event).Distinct(StringComparer.Ordinal)]);
 
-    private static string Clock(DateTimeOffset at) => at.UtcDateTime.ToString("HH:mm", CultureInfo.InvariantCulture);
 }
