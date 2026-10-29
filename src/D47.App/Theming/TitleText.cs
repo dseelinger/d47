@@ -173,6 +173,27 @@ public static class TitleText
         _ => throw new ArgumentOutOfRangeException(nameof(rank)),
     };
 
+    /// <summary>A panel group: the heading and a grey note on one wrapping line, over an accent rule.</summary>
+    public static Control Group(string title, string help)
+    {
+        var heading = Build(title, TypeScale.Secondary, TitleRank.Group);
+        heading.Margin = new Thickness(0, 0, 12, 0);
+        heading.VerticalAlignment = VerticalAlignment.Center;
+
+        var note = new TextBlock
+        {
+            Text = help,
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        note.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.GreyKey));
+
+        var words = new WrapPanel { Children = { heading, note } };
+
+        return new StackPanel { Margin = new Thickness(0, 28, 0, 10), Children = { words, Rule(new Thickness(0, 10, 0, 0)) } };
+    }
+
     /// <summary>Stacks a <see cref="TitleRank.Group"/> heading over a 1px accent rule (#357).</summary>
     public static Control GroupRow(Control heading) => new StackPanel
     {

@@ -405,23 +405,23 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             : $"{shown.Count.ToString("N0", CultureInfo.InvariantCulture)} of {CountText(Grouping, view.Rows.Count)}";
 
         _body.Children.Add(StarSystemPage.GroupHead(PeriodName(Period), Description(view), count));
-        _body.Children.Add(Note(CareerLine, 6));
+        _body.Children.Add(CreditsKit.Note(CareerLine, 6));
 
         if (view.Rows.Count == 0)
         {
-            _body.Children.Add(Message(EmptyText(Period)));
+            _body.Children.Add(CreditsKit.Message(EmptyText(Period)));
             return;
         }
 
         if (shown.Count == 0)
         {
-            _body.Children.Add(Message(NoMatchText));
+            _body.Children.Add(CreditsKit.Message(NoMatchText));
             return;
         }
 
         if (Grouping == CombatGrouping.Faction)
         {
-            _body.Children.Add(Note(FactionLine, 6));
+            _body.Children.Add(CreditsKit.Note(FactionLine, 6));
         }
 
         _body.Children.Add(Table(shown, state?.Location.SystemAddress));
@@ -497,14 +497,14 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 
         if (row.Style == CombatNameStyle.Unnamed)
         {
-            dock.Children.Add(Line(row.Text, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey));
+            dock.Children.Add(CreditsKit.Line(row.Text, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey));
             return dock;
         }
 
         if (row.Style == CombatNameStyle.System)
         {
             var isCurrent = current is { } address && row.SystemAddress == address;
-            dock.Children.Add(Line(row.Text, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey));
+            dock.Children.Add(CreditsKit.Line(row.Text, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey));
             return dock;
         }
 
@@ -517,11 +517,11 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             text = text[..cut];
         }
 
-        dock.Children.Add(Line(text, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey));
+        dock.Children.Add(CreditsKit.Line(text, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey));
 
         if (suffix is not null)
         {
-            var tail = Line(suffix, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey);
+            var tail = CreditsKit.Line(suffix, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey);
             tail.Margin = new Thickness(8, 0, 0, 0);
             tail.VerticalAlignment = VerticalAlignment.Center;
             dock.Children.Add(tail);
@@ -552,38 +552,4 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         grid.Children.Add(cell);
     }
 
-    private static TextBlock Line(string text, string family, double size, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(family),
-            FontSize = size,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
-        RoutingKit.Themed(block, TextBlock.ForegroundProperty, key);
-
-        return block;
-    }
-
-    private static Border Message(string text)
-    {
-        var border = new Border
-        {
-            Margin = new Thickness(0, 10, 0, 0),
-            Padding = new Thickness(14, 12),
-            Child = RoutingKit.Ink(text, TypeScale.ControlLarge, ThemeManager.WhiteKey, wrap: true),
-        };
-        RoutingKit.Themed(border, Border.BackgroundProperty, ThemeManager.SlabKey);
-
-        return border;
-    }
-
-    private static TextBlock Note(string text, double top)
-    {
-        var note = RoutingKit.Ink(text, TypeScale.Small, ThemeManager.GreyKey, wrap: true);
-        note.Margin = new Thickness(0, top, 0, 0);
-
-        return note;
-    }
 }

@@ -326,14 +326,14 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
 
         if (all.Count == 0)
         {
-            _body.Children.Add(Message(EmptyText(tick)));
-            _body.Children.Add(Note(Hint));
+            _body.Children.Add(CreditsKit.Message(EmptyText(tick)));
+            _body.Children.Add(CreditsKit.Note(Hint, 18));
             return;
         }
 
         if (shown.Count == 0)
         {
-            _body.Children.Add(Message(NoMatchText(tick)));
+            _body.Children.Add(CreditsKit.Message(NoMatchText(tick)));
             return;
         }
 
@@ -401,9 +401,9 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
 
         var isCurrent = row.System is not null && string.Equals(row.System, current, StringComparison.OrdinalIgnoreCase);
         var system = row.System is null
-            ? Line(UnnamedSystem, Fonts.ProseFamily, ThemeManager.GreyKey)
-            : Line(row.System, Fonts.ChromeFamily, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey);
-        var faction = Line(row.Faction, Fonts.ProseFamily, ThemeManager.WhiteKey);
+            ? CreditsKit.Line(UnnamedSystem, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey)
+            : CreditsKit.Line(row.System, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey);
+        var faction = CreditsKit.Line(row.Faction, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
 
         Place(grid, 0, new StackPanel { Children = { system, faction } });
         Place(grid, 1, Values((MarksUpText(row.MarksUp), Key(row.MarksUp)), (MarksDownText(row.MarksDown), row.MarksDown is null ? ThemeManager.Grey2Key : ThemeManager.RedKey)));
@@ -462,38 +462,4 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         return stack;
     }
 
-    private static TextBlock Line(string text, string family, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(family),
-            FontSize = TypeScale.ControlLarge,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
-        RoutingKit.Themed(block, TextBlock.ForegroundProperty, key);
-
-        return block;
-    }
-
-    private static Border Message(string text)
-    {
-        var border = new Border
-        {
-            Margin = new Thickness(0, 10, 0, 0),
-            Padding = new Thickness(14, 12),
-            Child = RoutingKit.Ink(text, TypeScale.ControlLarge, ThemeManager.WhiteKey, wrap: true),
-        };
-        RoutingKit.Themed(border, Border.BackgroundProperty, ThemeManager.SlabKey);
-
-        return border;
-    }
-
-    private static TextBlock Note(string text)
-    {
-        var note = RoutingKit.Ink(text, TypeScale.Small, ThemeManager.GreyKey, wrap: true);
-        note.Margin = new Thickness(0, 18, 0, 0);
-
-        return note;
-    }
 }

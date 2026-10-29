@@ -124,7 +124,7 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
         {
             _body.Children.Add(TitleText.Block(
                 TitleText.Build("Career statistics", TypeScale.Title, TitleRank.Screen)));
-            _body.Children.Add(Note("The game has not reported your career statistics yet. It writes them when you log in."));
+            _body.Children.Add(CreditsKit.Note("The game has not reported your career statistics yet. It writes them when you log in.", 18, full: true));
             return;
         }
 
@@ -153,7 +153,7 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
         var grid = StatTile.Grid(tiles, maxColumns: 3);
         grid.Margin = new Thickness(0, 18, 0, 0);
         _body.Children.Add(grid);
-        _body.Children.Add(Note(Hint));
+        _body.Children.Add(CreditsKit.Note(Hint, 18, full: true));
     }
 
     private void DrawMatches()
@@ -180,7 +180,7 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
             }
         }
 
-        _body.Children.Add(rows.Children.Count > 0 ? rows : Note(NoMatch));
+        _body.Children.Add(rows.Children.Count > 0 ? rows : CreditsKit.Note(NoMatch, 18, full: true));
     }
 
     private Border MatchRow(string section, string sectionLabel, string label, string value)
@@ -232,19 +232,6 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
         ListRow.Opens(row, () => Open(section));
 
         return row;
-    }
-
-    private static TextBlock Note(string text)
-    {
-        var note = new TextBlock
-        {
-            Text = text,
-            FontSize = TypeScale.Small,
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 18, 0, 0),
-        };
-        Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        return note;
     }
 
     private static IDisposable Themed(StyledElement target, AvaloniaProperty property, string key) =>

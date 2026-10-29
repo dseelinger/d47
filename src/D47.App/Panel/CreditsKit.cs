@@ -112,10 +112,17 @@ internal static class CreditsKit
         return border;
     }
 
-    public static TextBlock Note(string text, double top)
+    /// <summary>A grey note under <paramref name="top"/> of margin; <paramref name="full"/> wraps at the page width, not <see cref="RoutingKit.ProseWidth"/>.</summary>
+    public static TextBlock Note(string text, double top, bool full = false)
     {
         var note = RoutingKit.Ink(text, TypeScale.Small, ThemeManager.GreyKey, wrap: true);
         note.Margin = new Thickness(0, top, 0, 0);
+
+        if (full)
+        {
+            note.MaxWidth = double.PositiveInfinity;
+            note.HorizontalAlignment = HorizontalAlignment.Stretch;
+        }
 
         return note;
     }

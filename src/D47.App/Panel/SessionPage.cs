@@ -67,7 +67,7 @@ public sealed class SessionPage : UserControl
             _body.Children.Add(TitleText.Block(
                 TitleText.Build("This session", TypeScale.Title, TitleRank.Screen),
                 TitleText.Context("Commander record")));
-            _body.Children.Add(Note(NotStarted));
+            _body.Children.Add(CreditsKit.Note(NotStarted, 18, full: true));
             return;
         }
 
@@ -92,7 +92,7 @@ public sealed class SessionPage : UserControl
         grid.Margin = new Thickness(0, 28, 0, 0);
         _body.Children.Add(grid);
 
-        _body.Children.Add(Group("Earnings by source", "What each kind of work has paid this session."));
+        _body.Children.Add(TitleText.Group("Earnings by source", "What each kind of work has paid this session."));
 
         (string Label, long Amount)[] sources =
         [
@@ -113,7 +113,7 @@ public sealed class SessionPage : UserControl
         }
 
         _body.Children.Add(rows);
-        _body.Children.Add(Note(Hint));
+        _body.Children.Add(CreditsKit.Note(Hint, 18, full: true));
     }
 
     private static Control Earned(long total)
@@ -139,29 +139,6 @@ public sealed class SessionPage : UserControl
         Themed(figure, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         return new StackPanel { Spacing = 2, Children = { name, figure } };
-    }
-
-    private static Control Group(string title, string help)
-    {
-        var heading = TitleText.Build(title, TypeScale.Secondary, TitleRank.Group);
-        heading.Margin = new Thickness(0, 0, 12, 0);
-        heading.VerticalAlignment = VerticalAlignment.Center;
-
-        var note = new TextBlock
-        {
-            Text = help,
-            FontSize = TypeScale.Secondary,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-
-        var words = new WrapPanel { Children = { heading, note } };
-
-        var rule = new Border { Height = 1, Margin = new Thickness(0, 10, 0, 0) };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
-
-        return new StackPanel { Margin = new Thickness(0, 28, 0, 10), Children = { words, rule } };
     }
 
     private static Control SourceRow(string label, long amount, double fill)
@@ -203,19 +180,6 @@ public sealed class SessionPage : UserControl
         Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return row;
-    }
-
-    private static TextBlock Note(string text)
-    {
-        var note = new TextBlock
-        {
-            Text = text,
-            FontSize = TypeScale.Small,
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 18, 0, 0),
-        };
-        Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        return note;
     }
 
     private static void Themed(StyledElement target, AvaloniaProperty property, string key) =>

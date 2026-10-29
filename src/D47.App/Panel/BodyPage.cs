@@ -322,7 +322,7 @@ public sealed class BodyPage : UserControl
             _body.Children.Add(TitleText.Block(
                 TitleText.Build("On this body", TypeScale.Title, TitleRank.Screen),
                 TitleText.Context("On this body · your scan")));
-            _body.Children.Add(Note(Empty));
+            _body.Children.Add(CreditsKit.Note(Empty, 18, full: true));
             _distanceSeen = null;
             _bearingsSeen = [];
             return;
@@ -338,7 +338,7 @@ public sealed class BodyPage : UserControl
 
         _body.Children.Add(Data(snapshot));
 
-        _body.Children.Add(Group(
+        _body.Children.Add(TitleText.Group(
             "Sampling",
             Current(snapshot) is { } genus ? $"{genus.Species ?? genus.Genus} · the one you're sampling now." : Idle));
 
@@ -361,7 +361,7 @@ public sealed class BodyPage : UserControl
         _body.Children.Add(_bearings);
         DrawBearings(snapshot);
 
-        _body.Children.Add(Group("On this body", "Each genus, and what you've finished."));
+        _body.Children.Add(TitleText.Group("On this body", "Each genus, and what you've finished."));
         _body.Children.Add(Genera(snapshot));
     }
 
@@ -386,7 +386,7 @@ public sealed class BodyPage : UserControl
             _body.Children[index] = cells;
         }
 
-        var label = Caption("Distance since the last sample", ThemeManager.GreyKey);
+        var label = StatTile.Caption("Distance since the last sample", ThemeManager.GreyKey);
 
         var (stateText, stateKey) = distance switch
         {
@@ -397,7 +397,7 @@ public sealed class BodyPage : UserControl
             { Metres: { } walked, Colony: { } needed } => ($"Keep walking · {Metres(needed - walked)} to go", ThemeManager.AKey),
         };
 
-        var state = Caption(stateText, stateKey);
+        var state = StatTile.Caption(stateText, stateKey);
         state.HorizontalAlignment = HorizontalAlignment.Right;
         state.FontWeight = FontWeight.SemiBold;
         Grid.SetColumn(state, 1);
@@ -522,7 +522,7 @@ public sealed class BodyPage : UserControl
 
     private static Control WorthIfMapped(long worth)
     {
-        var name = Caption("Unmapped · worth if mapped", ThemeManager.GreyKey);
+        var name = StatTile.Caption("Unmapped · worth if mapped", ThemeManager.GreyKey);
         name.HorizontalAlignment = HorizontalAlignment.Right;
 
         var figure = new TextBlock
@@ -591,7 +591,7 @@ public sealed class BodyPage : UserControl
                 "Genera",
                 genera.Count == 0 ? "Not yet known" : string.Join(" · ", genera.Select(genus => genus.ToUpperInvariant())),
                 StatInk.Name), 0, 1, 2),
-            (Tile("Other signals", otherLine), 1, 0, 2),
+            (StatTile.Tile("Other signals", otherLine), 1, 0, 2),
             (StatTile.Build("Gravity", gravity, StatInk.Number), 1, 2, 1),
         };
 
@@ -649,7 +649,7 @@ public sealed class BodyPage : UserControl
                 : next && ready ? ($"Sample {n} · ready", ThemeManager.CyanKey)
                 : ($"Sample {n}", ThemeManager.GreyKey);
 
-            var label = Caption(text, key);
+            var label = StatTile.Caption(text, key);
             label.FontWeight = FontWeight.SemiBold;
             label.HorizontalAlignment = HorizontalAlignment.Center;
             label.VerticalAlignment = VerticalAlignment.Center;
@@ -683,12 +683,12 @@ public sealed class BodyPage : UserControl
             rows.Children.Add(GenusRow(genus, null, ThemeManager.GreyKey, "Not started", ThemeManager.GreyKey, null));
         }
 
-        return rows.Children.Count > 0 ? rows : Note("No genus is known on this body yet. Map it with the surface scanner, or take a sample.");
+        return rows.Children.Count > 0 ? rows : CreditsKit.Note("No genus is known on this body yet. Map it with the surface scanner, or take a sample.", 18, full: true);
     }
 
     private static Control GenusRow(string genus, string? species, string speciesKey, string state, string stateKey, string? priced)
     {
-        var name = Caption(genus, ThemeManager.WhiteKey);
+        var name = StatTile.Caption(genus, ThemeManager.WhiteKey);
         name.FontWeight = FontWeight.Bold;
         name.VerticalAlignment = VerticalAlignment.Center;
         name.TextTrimming = TextTrimming.CharacterEllipsis;
@@ -704,7 +704,7 @@ public sealed class BodyPage : UserControl
         Themed(kind, TextBlock.ForegroundProperty, speciesKey);
         Grid.SetColumn(kind, 1);
 
-        var progress = Caption(state, stateKey);
+        var progress = StatTile.Caption(state, stateKey);
         progress.FontWeight = FontWeight.SemiBold;
         progress.VerticalAlignment = VerticalAlignment.Center;
         Grid.SetColumn(progress, 2);
@@ -740,72 +740,6 @@ public sealed class BodyPage : UserControl
         ExobiologyCatalogue.All
             .FirstOrDefault(entry => string.Equals(entry.Species, species, StringComparison.OrdinalIgnoreCase))
             ?.Value;
-
-    private static Border Tile(string label, Control value)
-    {
-        var caption = Caption(label, ThemeManager.GreyKey);
-        caption.FontWeight = FontWeight.Medium;
-
-        var tile = new Border
-        {
-            Padding = new Thickness(14, 10),
-            Child = new StackPanel { Spacing = 2, Children = { caption, value } },
-        };
-        Themed(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
-
-        return tile;
-    }
-
-    /// <summary>Upper-case tracked chrome at meta size.</summary>
-    private static TextBlock Caption(string text, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = TypeScale.Meta,
-            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        Themed(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
-
-    private static Control Group(string title, string help)
-    {
-        var heading = TitleText.Build(title, TypeScale.Secondary, TitleRank.Group);
-        heading.Margin = new Thickness(0, 0, 12, 0);
-        heading.VerticalAlignment = VerticalAlignment.Center;
-
-        var note = new TextBlock
-        {
-            Text = help,
-            FontSize = TypeScale.Secondary,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-
-        var words = new WrapPanel { Children = { heading, note } };
-
-        var rule = new Border { Height = 1, Margin = new Thickness(0, 10, 0, 0) };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
-
-        return new StackPanel { Margin = new Thickness(0, 28, 0, 10), Children = { words, rule } };
-    }
-
-    private static TextBlock Note(string text)
-    {
-        var note = new TextBlock
-        {
-            Text = text,
-            FontSize = TypeScale.Small,
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 18, 0, 0),
-        };
-        Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        return note;
-    }
 
     private static void Themed(StyledElement target, AvaloniaProperty property, string key) =>
         target.Bind(property, target.GetResourceObservable(key));

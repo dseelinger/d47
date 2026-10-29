@@ -39,17 +39,6 @@ public static class StatTile
     /// <summary>One tile. It has no border and no hover state.</summary>
     public static Border Build(string label, string value, StatInk ink = StatInk.Value)
     {
-        var caption = new TextBlock
-        {
-            Text = label.ToUpperInvariant(),
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = TypeScale.Meta,
-            FontWeight = FontWeight.Medium,
-            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        Themed(caption, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-
         var figure = new TextBlock
         {
             Text = value,
@@ -60,14 +49,38 @@ public static class StatTile
         };
         Themed(figure, TextBlock.ForegroundProperty, InkKey(ink));
 
+        return Tile(label, figure);
+    }
+
+    /// <summary>A tile around <paramref name="value"/> under an upper-case grey caption.</summary>
+    public static Border Tile(string label, Control value)
+    {
+        var caption = Caption(label, ThemeManager.GreyKey);
+        caption.FontWeight = FontWeight.Medium;
+
         var tile = new Border
         {
             Padding = new Thickness(14, 10),
-            Child = new StackPanel { Spacing = 2, Children = { caption, figure } },
+            Child = new StackPanel { Spacing = 2, Children = { caption, value } },
         };
         Themed(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return tile;
+    }
+
+    /// <summary>Upper-case tracked chrome at meta size.</summary>
+    public static TextBlock Caption(string text, string key)
+    {
+        var block = new TextBlock
+        {
+            Text = text.ToUpperInvariant(),
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontSize = TypeScale.Meta,
+            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
+            TextWrapping = TextWrapping.Wrap,
+        };
+        Themed(block, TextBlock.ForegroundProperty, key);
+        return block;
     }
 
     /// <summary>

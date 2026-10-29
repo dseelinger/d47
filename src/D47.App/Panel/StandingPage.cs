@@ -121,7 +121,7 @@ public sealed class StandingPage : UserControl
             _body.Children.Add(new StackPanel { Spacing = 10, Children = { heading, chooser } });
         }
 
-        _body.Children.Add(Group("Reputation", "Where you stand with each power, from −100 to 100."));
+        _body.Children.Add(TitleText.Group("Reputation", "Where you stand with each power, from −100 to 100."));
 
         var rows = new StackPanel { Spacing = 2 };
 
@@ -132,7 +132,7 @@ public sealed class StandingPage : UserControl
 
         _body.Children.Add(rows);
 
-        _body.Children.Add(Group("Navy ranks", "Your rank in each navy, what it has unlocked and what the next ranks unlock."));
+        _body.Children.Add(TitleText.Group("Navy ranks", "Your rank in each navy, what it has unlocked and what the next ranks unlock."));
 
         var ranks = state?.Ranks ?? RankState.Empty;
         var navies = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 2 };
@@ -143,29 +143,6 @@ public sealed class StandingPage : UserControl
         navies.Children.Add(federal);
 
         _body.Children.Add(navies);
-    }
-
-    private static Control Group(string title, string help)
-    {
-        var heading = TitleText.Build(title, TypeScale.Secondary, TitleRank.Group);
-        heading.Margin = new Thickness(0, 0, 12, 0);
-        heading.VerticalAlignment = VerticalAlignment.Center;
-
-        var note = new TextBlock
-        {
-            Text = help,
-            FontSize = TypeScale.Secondary,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-
-        var words = new WrapPanel { Children = { heading, note } };
-
-        var rule = new Border { Height = 1, Margin = new Thickness(0, 10, 0, 0) };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
-
-        return new StackPanel { Margin = new Thickness(0, 28, 0, 10), Children = { words, rule } };
     }
 
     private static Control ReputationRow(string label, FactionReading? reading)

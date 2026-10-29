@@ -132,7 +132,7 @@ public sealed class UnsoldPage : UserControl
 
         if (figures.Organic is { } organic)
         {
-            _body.Children.Add(Group("Organic data", "Species you have sampled and not yet sold at Vista Genomics."));
+            _body.Children.Add(TitleText.Group("Organic data", "Species you have sampled and not yet sold at Vista Genomics."));
             _body.Children.Add(Data(organic, "Species", "First footfall"));
             _body.Children.Add(ResetRow(
                 organic,
@@ -144,7 +144,7 @@ public sealed class UnsoldPage : UserControl
 
         if (figures.Exploration is { } exploration)
         {
-            _body.Children.Add(Group("Exploration data", "Bodies you have mapped and not yet sold at Universal Cartographics."));
+            _body.Children.Add(TitleText.Group("Exploration data", "Bodies you have mapped and not yet sold at Universal Cartographics."));
             _body.Children.Add(Data(exploration, "Bodies", "Mapped efficiently"));
             _body.Children.Add(ResetRow(
                 exploration,
@@ -157,7 +157,7 @@ public sealed class UnsoldPage : UserControl
 
     private static Control Together(long total)
     {
-        var name = Caption("Together", ThemeManager.GreyKey);
+        var name = StatTile.Caption("Together", ThemeManager.GreyKey);
         name.HorizontalAlignment = HorizontalAlignment.Right;
 
         var figure = new TextBlock
@@ -178,10 +178,10 @@ public sealed class UnsoldPage : UserControl
 
         var tiles = new Control[]
         {
-            Tile("Estimated value", value),
-            Tile(counted, Figure(Number(ledger.Count), StatTile.ValueSize, ThemeManager.AKey)),
-            Tile(marked, Figure(Number(ledger.Marked), StatTile.ValueSize, ThemeManager.AKey)),
-            Tile("No price · not in total", Figure(Number(ledger.Unpriced), StatTile.ValueSize, ThemeManager.WhiteKey)),
+            StatTile.Tile("Estimated value", value),
+            StatTile.Tile(counted, Figure(Number(ledger.Count), StatTile.ValueSize, ThemeManager.AKey)),
+            StatTile.Tile(marked, Figure(Number(ledger.Marked), StatTile.ValueSize, ThemeManager.AKey)),
+            StatTile.Tile("No price · not in total", Figure(Number(ledger.Unpriced), StatTile.ValueSize, ThemeManager.WhiteKey)),
         };
 
         var grid = new Grid
@@ -287,59 +287,6 @@ public sealed class UnsoldPage : UserControl
         };
         Themed(block, TextBlock.ForegroundProperty, key);
         return block;
-    }
-
-    private static Border Tile(string label, Control value)
-    {
-        var caption = Caption(label, ThemeManager.GreyKey);
-        caption.FontWeight = FontWeight.Medium;
-
-        var tile = new Border
-        {
-            Padding = new Thickness(14, 10),
-            Child = new StackPanel { Spacing = 2, Children = { caption, value } },
-        };
-        Themed(tile, Border.BackgroundProperty, ThemeManager.SlabKey);
-
-        return tile;
-    }
-
-    /// <summary>Upper-case tracked chrome at meta size.</summary>
-    private static TextBlock Caption(string text, string key)
-    {
-        var block = new TextBlock
-        {
-            Text = text.ToUpperInvariant(),
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = TypeScale.Meta,
-            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        Themed(block, TextBlock.ForegroundProperty, key);
-        return block;
-    }
-
-    private static Control Group(string title, string help)
-    {
-        var heading = TitleText.Build(title, TypeScale.Secondary, TitleRank.Group);
-        heading.Margin = new Thickness(0, 0, 12, 0);
-        heading.VerticalAlignment = VerticalAlignment.Center;
-
-        var note = new TextBlock
-        {
-            Text = help,
-            FontSize = TypeScale.Secondary,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Themed(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-
-        var words = new WrapPanel { Children = { heading, note } };
-
-        var rule = new Border { Height = 1, Margin = new Thickness(0, 10, 0, 0) };
-        Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
-
-        return new StackPanel { Margin = new Thickness(0, 28, 0, 10), Children = { words, rule } };
     }
 
     private static void Themed(StyledElement target, AvaloniaProperty property, string key) =>
