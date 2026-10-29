@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Privacy and egress list now shows the Captain's log as sending to a host when speech recognition is hosted or the voice that reads entries back is hosted, and names that host. Before, it said "nothing sent" and that entries were never sent anywhere, while the words went to the provider. With both providers local it still says nothing is sent.
+
 The Coverage page no longer lists settings rows that only show a value, such as About's Build and Attribution, so its count covers only what you can drive. Pressing a row's button now marks that row as exercised, or as failed if the press throws. A row that asks you to press twice is marked on the confirming press. Before, rows with a button stayed at never exercised however often you pressed them.
 
 A rescue objective now says what counts: escape pods, wreckage components and black boxes, scooped at Power Wreckage Signature signal sources (black boxes also at Degraded Emissions) and handed to the Search and Rescue contact at a station. An objective that names one item says only that item. D47 reads the same explanation, so it answers where to find them. Before, the objective said only "hand in one rescue item". A step hand-off also says "Next:" once; it said "Next: Next:".

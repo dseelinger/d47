@@ -840,13 +840,37 @@ public static class EgressDisclosure
                 ? $"{speaking.Name}, which runs on this PC"
                 : $"{speaking.Name}, which does not run on this PC";
 
-        return EgressEntry.Silent(
+        var hosts = new List<string>();
+        if (hearing.Hosted)
+        {
+            hosts.Add(hearing.Destination);
+        }
+
+        if (speaking.Speaks && !Audio.TtsProviderCatalog.IsLocal(speaking.Id))
+        {
+            hosts.Add(speaking.Destination);
+        }
+
+        var summary = $"Kept on this PC. Heard by {hearing.Name} as you speak; read back by {(speaking.Speaks ? speaking.Name : "no voice")}.";
+        var passes = $"The words pass through the speech recognition provider selected, {heard}, as you speak them, and through "
+            + $"the text-to-speech provider selected, {read}, when they are read back.";
+
+        if (hosts.Count == 0)
+        {
+            return EgressEntry.Silent(
+                CaptainsLog,
+                NameOf(CaptainsLog),
+                "Log entries are kept in data\\captains-log.json on this PC and never sent anywhere by D47. " + passes,
+                summary: summary);
+        }
+
+        return new EgressEntry(
             CaptainsLog,
             NameOf(CaptainsLog),
-            "Log entries are kept in data\\captains-log.json on this PC and never sent anywhere by D47. The words "
-            + $"pass through the speech recognition provider selected, {heard}, as you speak them, and through "
-            + $"the text-to-speech provider selected, {read}, when they are read back.",
-            summary: $"Kept on this PC. Heard by {hearing.Name} as you speak; read back by {(speaking.Speaks ? speaking.Name : "no voice")}.");
+            string.Join(", ", hosts.Distinct(StringComparer.OrdinalIgnoreCase)),
+            "Log entries are kept in data\\captains-log.json on this PC. " + passes,
+            Active: true,
+            Summary: summary);
     }
 
     /// <summary>The hearing model and the Chatterbox voice model, each fetched once when selected and absent.</summary>
