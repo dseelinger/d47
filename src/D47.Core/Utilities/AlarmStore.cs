@@ -38,8 +38,6 @@ public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStor
     /// <summary>Raised when the set changed, whoever wrote it — the panel, a phrase, an editor.</summary>
     public event Action? Changed;
 
-    public string Path => path;
-
     public IReadOnlyList<Reminder> Alarms
     {
         get

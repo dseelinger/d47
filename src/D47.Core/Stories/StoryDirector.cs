@@ -1667,7 +1667,7 @@ public sealed class StoryDirector(
     {
         try
         {
-            return await RefuseAsync(frontierId, at.Story, at.Standing, at.Beat, closedMarketId, cancellationToken).ConfigureAwait(false);
+            return await RefuseAsync(frontierId, at.Story, at.Standing, closedMarketId, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -1691,7 +1691,7 @@ public sealed class StoryDirector(
     }
 
     private async Task<string?> RefuseAsync(
-        string? frontierId, Story story, AdventureStanding standing, AdventureBeat beat, long? closedMarketId, CancellationToken cancellationToken)
+        string? frontierId, Story story, AdventureStanding standing, long? closedMarketId, CancellationToken cancellationToken)
     {
         if (Hidden(story.Id) is not { } secret)
         {
@@ -1876,7 +1876,7 @@ public sealed class StoryDirector(
                 statistics,
                 FixedPlaces(story, finaleChapter) + others.Count(slot => slot.PlaceBefore) + (sightseeing ? 1 : 0),
                 ChapterDraw.Seed(story.Id, number, rewrite.From),
-                stationsInReach: await StationsInReachAsync(story, game, cancellationToken).ConfigureAwait(false));
+                stationsInReach: await StationsInReachAsync(game, cancellationToken).ConfigureAwait(false));
 
             others.AddRange(redrawn.Take(1));
         }
@@ -1894,7 +1894,7 @@ public sealed class StoryDirector(
     /// Whether a fixed station with a pad for the ship aboard, in a system needing no permit, lies within the chapter's reach.
     /// True when it cannot be told: galaxy search off, no known position, or the query failed.
     /// </summary>
-    private async Task<bool> StationsInReachAsync(Story story, CommanderGameState? game, CancellationToken cancellationToken)
+    private async Task<bool> StationsInReachAsync(CommanderGameState? game, CancellationToken cancellationToken)
     {
         if (Galaxy?.Invoke() is not { } search || game?.Location.StarSystem is not { Length: > 0 } system)
         {
@@ -2694,7 +2694,7 @@ public sealed class StoryDirector(
         {
             var attempt = new Attempt(null);
             var stationsInReach = stories.Current(frontierId) is { BeaconScanAt: not null } running
-                ? await StationsInReachAsync(running, Game(), cancellationToken).ConfigureAwait(false)
+                ? await StationsInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
                 : true;
 
             for (var draft = 1; draft <= Drafts; draft++)

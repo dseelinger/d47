@@ -90,16 +90,8 @@ public sealed record AdventureDestination(long SystemAddress, string System, int
 /// <summary>The Guardian beacon an act-one chapter works toward but cannot reach, and why.</summary>
 public sealed record AdventureBeaconAway(string System, double LightYears, string Why, bool Unarmed = false, bool Carrier = false, double? EasierWith = null);
 
-/// <summary>An activity a chapter must contain one beat of; a mission beat matches when its family starts with <see cref="MissionFamily"/>.</summary>
-public sealed record AdventureActivity(string Name, TriggerKind Kind, string? MissionFamily = null)
-{
-    public bool Matches(TriggerKind kind, string? family) =>
-        kind == Kind
-        && (MissionFamily is null || (family is not null && family.Trim().StartsWith(MissionFamily, StringComparison.OrdinalIgnoreCase)));
-
-    /// <summary>The beat that matches, as the writer is told it.</summary>
-    public string Beat => MissionFamily is null ? $"a \"{Kind.ToString().ToLowerInvariant()}\" objective" : $"a \"mission\" objective whose family starts with {MissionFamily}";
-}
+/// <summary>An activity a chapter must contain one beat of.</summary>
+public sealed record AdventureActivity(string Name, TriggerKind Kind, string? MissionFamily = null);
 
 /// <summary>
 /// The stock story a chapter belongs to: both layers, how long it has run, where it stands in its beat sheet,

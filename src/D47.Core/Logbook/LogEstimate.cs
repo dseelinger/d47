@@ -22,8 +22,6 @@ public sealed record LogEstimate
 
     public required int InputTokens { get; init; }
 
-    public required int OutputTokens { get; init; }
-
     /// <summary>Null where the model has no published price.</summary>
     public decimal? Dollars { get; init; }
 
@@ -59,7 +57,6 @@ public sealed record LogEstimate
             ProviderId = providerId,
             Model = model,
             InputTokens = input,
-            OutputTokens = output,
             Dollars = dollars,
             Local = local,
         };

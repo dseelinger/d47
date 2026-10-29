@@ -17,9 +17,6 @@ public sealed class MemoryObserver(MemoryBook book)
     /// <summary>What they were flying.</summary>
     public const string ShipKey = KeyPrefix + "-ship";
 
-    /// <summary>Both keys, for a caller that needs to tell an observation from a remembered fact.</summary>
-    public static IReadOnlyList<string> Keys { get; } = [WhereKey, ShipKey];
-
     /// <summary>Whether a key is one of this observer's.</summary>
     public static bool IsObservation(string key) =>
         key.StartsWith(KeyPrefix + "-", StringComparison.Ordinal);

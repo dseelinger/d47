@@ -38,9 +38,6 @@ public sealed record GoalTrack
     /// <summary>Where segment <paramref name="index"/> starts, 0 to 1 over the whole goal.</summary>
     public double StartOf(int index) => Segments.Take(index).Sum(segment => segment.Weight) / TotalWeight;
 
-    /// <summary>The share of the whole goal that segment <paramref name="index"/> takes.</summary>
-    public double ShareOf(int index) => Segments[index].Weight / TotalWeight;
-
     public double ShareOf(GoalChapter chapter) =>
         Segments.Skip(chapter.First).Take(chapter.Count).Sum(segment => segment.Weight) / TotalWeight;
 

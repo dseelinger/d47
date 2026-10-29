@@ -73,9 +73,6 @@ public sealed record AdventureWorld
         && journalEvent.Int("BodyID") is { } body
         && Bodies.For(address, body)?.FootfallTakenAt == journalEvent.Timestamp;
 
-    /// <summary>The name of a system the Commander has been in, from its address.</summary>
-    public string? NameOf(long address) => Names.GetValueOrDefault(address);
-
     /// <summary>The address of a system the Commander has been in, from its name.</summary>
     public long? AddressOf(string system) =>
         Names.Where(pair => string.Equals(pair.Value, system, StringComparison.OrdinalIgnoreCase)).Select(pair => (long?)pair.Key).FirstOrDefault();

@@ -108,18 +108,6 @@ public class GoalStoreTests
         Assert.NotNull(store.Author("F1", Authored("mine.one", "One again")));
     }
 
-    [Fact]
-    public void ForgettingRemovesAnAuthoredArcAndReportsWhenThereWasNothingToRemove()
-    {
-        var store = Store();
-
-        store.Author("F1", Authored("mine.one", "One"));
-
-        Assert.True(store.Forget("F1", "mine.one"));
-        Assert.False(store.Forget("F1", "mine.one"));
-        Assert.Empty(store.AuthoredBy("F1"));
-    }
-
     /// <summary>
     /// The file is meant to be hand-editable, so a line that cannot be read back is reported rather
     /// than silently dropped — the contract every store in this repo has.

@@ -151,16 +151,6 @@ public class GoalBookTests : IDisposable
     }
 
     [Fact]
-    public void ABuiltInArcIsRemovedRatherThanDeleted()
-    {
-        var install = new MemoryInstall();
-        var book = Book(install);
-
-        Assert.Contains("removed but not deleted", book.Forget(GoalCatalogue.Ships), StringComparison.Ordinal);
-        Assert.Equal(9, book.Standings.Count);
-    }
-
-    [Fact]
     public void WithNothingMinedTheReadbackSaysSoRatherThanReportingNothing()
     {
         var install = new MemoryInstall();

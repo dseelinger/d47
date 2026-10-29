@@ -36,8 +36,6 @@ public sealed class GoalBook(
 {
     public GoalStore Store => store;
 
-    public string? CommanderId => commander();
-
     /// <summary>The story's standing, or null where there is none to show. Set by the host.</summary>
     public Func<GoalStanding?> Story { get; set; } = () => null;
 
@@ -308,26 +306,6 @@ public sealed class GoalBook(
         return removed
             ? $"Removed: {standing.Arc.Name}. I will not bring it up until you recover it."
             : $"Recovered: {standing.Arc.Name}.";
-    }
-
-    /// <summary>Drops an authored arc for good.</summary>
-    public string Forget(string? key)
-    {
-        if (Find(key) is not { } standing)
-        {
-            return key is { Length: > 0 } named
-                ? $"I have no goal called {named.Trim()}."
-                : "Which goal?";
-        }
-
-        if (standing.Arc.Kind != GoalKind.Authored)
-        {
-            return $"{standing.Arc.Name} is one of mine, so it can be removed but not deleted.";
-        }
-
-        return store.Forget(commander(), standing.Arc.Key)
-            ? $"Forgotten: {standing.Arc.Name}."
-            : $"I could not find {standing.Arc.Name} to forget.";
     }
 
     /// <summary>A career.</summary>

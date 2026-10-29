@@ -36,10 +36,6 @@ public static class GoalEvaluator
         };
     }
 
-    /// <summary>Every built-in arc this state offers, in catalogue order.</summary>
-    public static IReadOnlyList<GoalStanding> All(CommanderGameState? state, GoalMine? mine) =>
-        [.. GoalCatalogue.All(state).Select(arc => Evaluate(arc, state, mine))];
-
     private static double? Rung(RankStanding live) =>
         live.Percent is { } percent && live.Rank < live.Top ? Math.Clamp(percent, 0, 100) / 100.0 : null;
 

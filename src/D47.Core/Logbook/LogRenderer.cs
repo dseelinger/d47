@@ -16,8 +16,6 @@ public sealed record LogWritten
 
     public required LogVoice Used { get; init; }
 
-    public required LogLength Length { get; init; }
-
     public required string ProviderId { get; init; }
 
     public required string Model { get; init; }

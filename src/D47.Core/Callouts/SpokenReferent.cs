@@ -49,9 +49,6 @@ public sealed class SpokenReferent
         return spoken;
     }
 
-    /// <summary>Forgets the referent — a jump, or anything else that changes what "it" would mean.</summary>
-    public void Forget() => _last = null;
-
     /// <summary>The pronoun.</summary>
     private const string Pronoun = "it";
 

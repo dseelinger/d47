@@ -209,8 +209,6 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
 
         public DateTimeOffset First { get; private set; } = DateTimeOffset.MaxValue;
 
-        public IReadOnlyList<LogSource> Sources => _sources;
-
         public void Add(JournalEvent journalEvent)
         {
             Count++;
@@ -317,7 +315,6 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
         private string? _firstSystem;
         private string? _lastSystem;
         private string? _lastStation;
-        private DateTimeOffset _lastAt;
         private string? _ship;
         private LogSource? _lastPlace;
 
@@ -343,8 +340,6 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
 
         public void Apply(JournalEvent journalEvent)
         {
-            _lastAt = journalEvent.Timestamp;
-
             switch (journalEvent.Kind)
             {
                 case "LoadGame":

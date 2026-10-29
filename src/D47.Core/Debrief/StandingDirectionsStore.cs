@@ -45,8 +45,6 @@ public sealed class StandingDirectionsStore
         _logger = logger;
     }
 
-    public string Path => _path;
-
     /// <summary>Raised when the contents changed, whoever changed them.</summary>
     public event Action? Changed;
 
@@ -218,31 +216,6 @@ public sealed class StandingDirectionsStore
         Save();
         Changed?.Invoke();
         return true;
-    }
-
-    /// <summary>Empties the file — every Commander, not just the one flying — and reports how many went.</summary>
-    public int Empty()
-    {
-        Poll();
-
-        int removed;
-
-        lock (_gate)
-        {
-            removed = _byCommander.Sum(pair => pair.Value.Count);
-
-            if (removed == 0 && _problems.Count == 0)
-            {
-                return 0;
-            }
-
-            _byCommander = new Dictionary<string, IReadOnlyList<StandingDirection>>(StringComparer.Ordinal);
-            _problems = [];
-        }
-
-        Save();
-        Changed?.Invoke();
-        return removed;
     }
 
     private void Save()

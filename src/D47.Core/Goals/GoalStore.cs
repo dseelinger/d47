@@ -36,8 +36,6 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
     private string? _seen;
     private readonly FileStamp _stamp = new();
 
-    public string Path => path;
-
     public event Action? Changed;
 
     public IReadOnlyList<GoalProblem> Problems
@@ -224,38 +222,6 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
                     .. existing.Select(other =>
                         string.Equals(other.Key, arc.Key, StringComparison.OrdinalIgnoreCase) ? arc : other),
                 ],
-            };
-        }
-
-        Save();
-        Changed?.Invoke();
-        return true;
-    }
-
-    /// <summary>Drops an authored arc outright.</summary>
-    public bool Forget(string? frontierId, string key)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
-
-        Poll();
-
-        var commander = frontierId ?? NoCommander;
-
-        lock (_gate)
-        {
-            var existing = _authored.GetValueOrDefault(commander, []);
-            var kept = existing
-                .Where(arc => !string.Equals(arc.Key, key.Trim(), StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            if (kept.Count == existing.Count)
-            {
-                return false;
-            }
-
-            _authored = new Dictionary<string, IReadOnlyList<GoalArc>>(_authored, StringComparer.Ordinal)
-            {
-                [commander] = kept,
             };
         }
 

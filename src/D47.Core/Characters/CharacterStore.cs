@@ -34,8 +34,6 @@ public sealed class CharacterStore(string path, IFileSystem files, ILogger<Chara
     /// <summary>Raised when the set changed, whoever wrote it.</summary>
     public event Action? Changed;
 
-    public string Path => path;
-
     /// <summary>Entries that were refused, and why.</summary>
     public IReadOnlyList<CharacterProblem> Problems
     {

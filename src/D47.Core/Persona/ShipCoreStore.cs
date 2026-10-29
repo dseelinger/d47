@@ -59,8 +59,6 @@ public sealed class ShipCoreStore(string path, IFileSystem files, ILogger<ShipCo
     /// <summary>Raised when the set changed, whoever wrote it — the panel, a phrase, an editor.</summary>
     public event Action? Changed;
 
-    public string Path => path;
-
     public IReadOnlyList<ShipCoreBinding> Bindings
     {
         get

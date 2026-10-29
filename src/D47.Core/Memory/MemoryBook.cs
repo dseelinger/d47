@@ -16,9 +16,6 @@ public sealed class MemoryBook(
 
     public MemoryStore Store => store;
 
-    /// <summary>Who the book is pointed at right now, or null before the journal has said.</summary>
-    public string? CommanderId => commander();
-
     /// <summary>Everything remembered about whoever is aboard right now.</summary>
     public IReadOnlyList<MemoryEntry> Mine => store.For(commander());
 

@@ -47,8 +47,6 @@ public sealed class JournalReminderStore(string path, IFileSystem files, ILogger
     /// <summary>Raised when the set changed, whoever changed it.</summary>
     public event Action? Changed;
 
-    public string Path => path;
-
     /// <summary>Reminders that were refused, and why.</summary>
     public IReadOnlyList<JournalReminderProblem> Problems
     {

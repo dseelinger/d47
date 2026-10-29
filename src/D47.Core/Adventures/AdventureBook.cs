@@ -47,13 +47,8 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
     /// <summary>The first line.</summary>
     public string Line => Lines.Count > 0 ? Lines[0].Text : string.Empty;
 
-    public string Title => IsOpening || IsFailure || IsEnding ? Adventure.Name : Adventure.Beats[Beat].Title;
-
     /// <summary>The step this one hands over to, after a step that is not its beat's last.</summary>
     public BeatStep? NextStep => IsStep ? Adventure.Beats[Beat].StepsWith(Chosen).ElementAtOrDefault(Step!.Value + 1) : null;
-
-    /// <summary>Who says <see cref="Line"/>: a story's speaker id, or null for the ship.</summary>
-    public string? Speaker => Lines.Count > 0 ? Lines[0].Speaker : null;
 
     /// <summary>The beat this one hands over to — the first, after the opening — or null after the last.</summary>
     public AdventureBeat? Next => IsFailure || IsEnding || IsStep ? null : Adventure.Beats.ElementAtOrDefault(Beat + 1);

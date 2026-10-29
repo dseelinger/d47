@@ -262,7 +262,6 @@ public sealed class LogbookBook(
             Audit = audit,
             Asked = estimate.Asked,
             Used = estimate.Used,
-            Length = estimate.Length,
             ProviderId = provider.Id,
             Model = estimate.Model,
             WrittenAt = now(),

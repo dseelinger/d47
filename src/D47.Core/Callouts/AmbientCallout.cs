@@ -117,7 +117,4 @@ public sealed class AmbientCallout : ICallout
 
         return Interval + (Longest - Interval) * fraction;
     }
-
-    /// <summary>What the last emitted line was about, so the app can ask the model for one in character.</summary>
-    public AmbientSituation LastSituation => _lastSpoken;
 }

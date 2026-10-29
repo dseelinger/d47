@@ -126,20 +126,6 @@ public class SpokenReferentTests
         Assert.Equal("Fuel is low.", referent.Speak("Fuel is low.", [], Start));
     }
 
-    /// <summary>A jump makes "it" mean something else, so the referent is dropped on request.</summary>
-    [Fact]
-    public void ForgettingMakesTheNextLineSayTheNameAgain()
-    {
-        var referent = new SpokenReferent();
-
-        Say(referent, $"Arrived in {Name}.");
-        referent.Forget();
-
-        Assert.Equal(
-            $"{Name} is unexplored.",
-            Say(referent, $"{Name} is unexplored.", TimeSpan.FromSeconds(5)));
-    }
-
     /// <summary>After a station's name, "it" would point at the station.</summary>
     [Fact]
     public void ASystemAfterAStationKeepsItsName()

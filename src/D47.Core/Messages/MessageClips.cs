@@ -14,8 +14,6 @@ public sealed class MessageClips(IFileSystem files, string folder, ISecretProtec
 
     public const string ProtectedExtension = ".own";
 
-    public string Folder => folder;
-
     public static bool IsProtected(string file) =>
         file.EndsWith(ProtectedExtension, StringComparison.OrdinalIgnoreCase);
 

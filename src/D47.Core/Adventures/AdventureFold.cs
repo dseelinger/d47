@@ -138,8 +138,6 @@ public sealed record AdventureStanding
     /// <summary>Whether the turn (the beat whose function says so) has fired, for the spoiler rule.</summary>
     public bool TurnReached => FunctionReached("midpoint", "turn");
 
-    public bool EndingReached => IsDone;
-
     /// <summary>The labels of the buttons on the reading page, in order. A stock story's chapter has no Remove or Write the next chapter; a short story under way offers Remove only.</summary>
     public IReadOnlyList<string> ReadingButtons()
     {
