@@ -56,6 +56,10 @@ public static class MemoryCapability
                 new ToolDefinition
                 {
                     Name = "get_memories",
+                    Exercise =
+                        "Say \"what do you remember about me\". The reply reads back every entry, "
+                        + "each marked as said by you, noticed by D47, or worked out by D47. The "
+                        + "model cannot do this: it is refused if it asks.",
                     Description =
                         "Read back everything D47 has written down about the Commander, each line saying whether "
                         + "the Commander said it, D47 noticed it, or D47 worked it out for itself.",
@@ -80,6 +84,11 @@ public static class MemoryCapability
                 new ToolDefinition
                 {
                     Name = "remember_about_me",
+                    Exercise =
+                        "Say \"remember that I hate mining\". The reply is \"Written down as\" a key, "
+                        + "\"unverified:\" and the fact, and \"what do you remember about me\" then lists "
+                        + "it. With remembering switched off in Settings it is refused with that "
+                        + "reason.",
                     Description =
                         "Write down one lasting fact or preference about the Commander, not what happened "
                         + "today. Stored as unverified.",
@@ -100,6 +109,10 @@ public static class MemoryCapability
                 new ToolDefinition
                 {
                     Name = "forget_memory",
+                    Exercise =
+                        "No phrase or button calls this tool. The Memory dialog's Forget button "
+                        + "removes the same entry, after which \"what do you remember about me\" no "
+                        + "longer lists it. The model cannot call it: it is refused if it asks.",
                     Description = "Forget one thing D47 has written down about the Commander, by its key.",
                     Parameters =
                     [

@@ -31,6 +31,11 @@ public static class CrewCapability
             new ToolDefinition
             {
                 Name = "describe_crew",
+                Exercise =
+                    "Say \"who is my crew\". After you hire, fire or reassign an NPC pilot this "
+                    + "session, the reply lists each pilot with rank, on or off duty in the fighter "
+                    + "bay, and the ship assigned. Before that it says it has not seen you hire any "
+                    + "crew this session.",
                 Description =
                     "Report the NPC pilots the Commander has hired, their combat ranks, which one is "
                     + "currently assigned to the fighter bay, and which ship each was assigned aboard.",

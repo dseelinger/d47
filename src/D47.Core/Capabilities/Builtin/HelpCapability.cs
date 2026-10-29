@@ -60,6 +60,11 @@ public static class HelpCapability
             new ToolDefinition
             {
                 Name = "get_capabilities",
+                Exercise =
+                    "Ask D47 what it can do in a sentence the phrase book does not catch, such as "
+                    + "\"tell me about the Voice area\". The model calls it: with no area named the "
+                    + "reply is the overview of every area, and with one it is the capabilities in "
+                    + "that area. An area D47 does not have is answered with the list of areas.",
                 Description =
                     "List what D47 can do, from its own capability registry. Use this instead of describing "
                     + "D47's abilities from memory — this is the only accurate source, and anything not "
@@ -86,6 +91,11 @@ public static class HelpCapability
             new ToolDefinition
             {
                 Name = FindPhraseToolName,
+                Exercise =
+                    "Ask D47 what to say for something, such as \"what do I say to pause the music\". "
+                    + "The model searches the phrase book and the reply says what the phrase does and "
+                    + "gives the phrases that reach it, such as 'pause the music'. A goal nothing "
+                    + "matches is answered with \"No phrase matched\" and the goal.",
                 Description =
                     "Find the phrase or phrases that actually reach a goal, from the model-free router's own "
                     + "phrase book — never from memory. Use this before telling the Commander there is no set "
@@ -109,6 +119,10 @@ public static class HelpCapability
             new ToolDefinition
             {
                 Name = DrillToolName,
+                Exercise =
+                    "Say \"what can you do\". The reply names the top-level areas and asks which one; "
+                    + "naming an area goes one level down, until it gives the phrases that run a "
+                    + "capability. The model cannot do this: it is refused if it asks.",
                 Description = "Walk the spoken map of what D47 can do, one level at a time.",
 
                 // Reached only by the Commander: a model asking "what can you do" gets get_capabilities,

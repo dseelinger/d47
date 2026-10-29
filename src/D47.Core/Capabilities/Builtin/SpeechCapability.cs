@@ -531,6 +531,9 @@ public static class SpeechCapability
             new ToolDefinition
             {
                 Name = "stop_speaking",
+                Exercise =
+                    "While D47 is speaking, say \"stop\" or \"be quiet\". Speech and queued audio stop "
+                    + "at once and the reply is \"Stopped.\"",
                 AlwaysLoaded = true,
                 Description =
                     "Immediately stop all speech and audio, discarding anything queued. " +

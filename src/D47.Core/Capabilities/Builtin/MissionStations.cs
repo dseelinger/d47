@@ -21,6 +21,11 @@ internal static class MissionStations
         Func<CommanderGameState?>? gameState) => new()
     {
         Name = Tool,
+        Exercise =
+            "Ask D47 \"where can I find disable missions near here\". The model calls it; no spoken "
+            + "phrase reaches it directly. The reply opens \"The likeliest stations for disable "
+            + "missions within\" a distance of the system and lists up to five stations with their "
+            + "distance. It never says a board has the mission.",
         Description =
             "Find the five stations likeliest to have one mission type on their boards, near a system: ranked by how many "
             + "factions present are in the states or under the governments that type's names were recorded under, and by "

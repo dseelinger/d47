@@ -362,20 +362,129 @@ public static class AdventureCapability
 
         Tools =
         [
-            Switch(PauseTool, "Pause the Commander's running story: no objectives, nudges, clues or story chatter until it is resumed.", false, ["pause the story", "pause my story"], storySwitch),
-            Switch(ResumeTool, "Resume the Commander's running story after a pause.", true, ["resume the story", "resume my story"], storySwitch),
-            Answer(endingAnswer),
-            Refuse(beatRefusal),
-            Desk(ChangeObjectiveTool, "Open the entry where the Commander says what they would rather do instead of the story chapter's current objective; the core then proposes a replacement for them to use, keep or reword.", [ChangeObjectivePhrase, "change the objective"], "What would you rather do?", desk, d => d.ChangeObjective, _ => null),
-            Recap(recapper),
-            Mark(objectiveMark),
-            SetCourse(objectiveCourse, navigation),
-            CopyObjective(objectiveCourse, navigation),
-            Choose(storyChoice),
-            Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft short story.", ["change the short story", "change the adventure"], "What should change?", desk, d => d.Change),
-            Draft(AcceptDraftTool, "Accept the Commander's draft short story, as the Accept button does.", ["accept the short story", "accept the adventure"], "The short story is accepted.", desk, d => d.Accept),
-            Draft(RejectDraftTool, "Reject the Commander's draft short story and remove it, as the Decline button does.", ["reject the short story", "reject the adventure"], "The draft is removed.", desk, d => d.Reject),
-            Desk(AskTool, "Open the Short Story page and the entry for a brief; committing the brief asks for the short story, as Go does.", ["ask for a short story", "ask for an adventure"], "What should it be about?", desk, d => d.Ask, _ => null),
+            Switch(PauseTool, "Pause the Commander's running story: no objectives, nudges, clues or story chatter until it is resumed.", false, ["pause the story", "pause my story"], storySwitch)
+                with
+                {
+                    Exercise =
+                        "With a story running, say \"pause the story\". The reply is \"The story is "
+                        + "paused. Say 'resume the story' when you want it back.\" and no objectives, "
+                        + "nudges or clues come until it is resumed. With no story running it is "
+                        + "refused with \"No story is running.\" The model cannot do this: it is "
+                        + "refused if it asks.",
+                },
+            Switch(ResumeTool, "Resume the Commander's running story after a pause.", true, ["resume the story", "resume my story"], storySwitch)
+                with
+                {
+                    Exercise =
+                        "With a story paused, say \"resume the story\". The reply is \"The story is "
+                        + "back on.\" The model cannot do this: it is refused if it asks.",
+                },
+            Answer(endingAnswer)
+                with
+                {
+                    Exercise =
+                        "When a finished story offers its ending, say \"accept the ending\", or "
+                        + "\"choose ending two\" for the second option. The reply is \"Your answer is "
+                        + "recorded.\" With no ending waiting it is refused with \"No ending is waiting "
+                        + "for an answer.\" The model cannot do this: it is refused if it asks.",
+                },
+            Refuse(beatRefusal)
+                with
+                {
+                    Exercise =
+                        "With a story chapter waiting on an objective, say \"never ask this\". The "
+                        + "objective is replaced and the reply is \"That objective is replaced, and "
+                        + "the story will not ask for it again.\" With no story running it is refused "
+                        + "with \"No story is running.\" The model cannot do this: it is refused if it "
+                        + "asks.",
+                },
+            Desk(ChangeObjectiveTool, "Open the entry where the Commander says what they would rather do instead of the story chapter's current objective; the core then proposes a replacement for them to use, keep or reword.", [ChangeObjectivePhrase, "change the objective"], "What would you rather do?", desk, d => d.ChangeObjective, _ => null)
+                with
+                {
+                    Exercise =
+                        "With a story running, say \"change this objective\". An entry opens asking "
+                        + "\"What would you rather do?\"; say what you would rather do and the core "
+                        + "proposes a replacement for you to use, keep or reword. The model cannot do "
+                        + "this: it is refused if it asks.",
+                },
+            Recap(recapper)
+                with
+                {
+                    Exercise =
+                        "With a story running, say \"where am I up to\". The Narrator speaks what has "
+                        + "happened so far and where the story waits. With no story under way it is "
+                        + "refused with \"No story is under way.\" The model cannot do this: it is "
+                        + "refused if it asks.",
+                },
+            Mark(objectiveMark)
+                with
+                {
+                    Exercise =
+                        "With a story objective waiting, say \"mark this objective done\". The reply "
+                        + "is \"That objective is marked done.\" and the story moves on as if the "
+                        + "journal had shown it. With no story running it is refused with \"No story "
+                        + "is running.\" The model cannot do this: it is refused if it asks.",
+                },
+            SetCourse(objectiveCourse, navigation)
+                with
+                {
+                    Exercise =
+                        "With key presses switched on, Elite in front and a story objective that "
+                        + "names a system, say \"set course for my next objective\". The system is "
+                        + "plotted in the galaxy map. The model cannot do this: it is refused if it "
+                        + "asks.",
+                },
+            CopyObjective(objectiveCourse, navigation)
+                with
+                {
+                    Exercise =
+                        "With a story objective that names a system, say \"copy my next objective to "
+                        + "the clipboard\". The reply is the system's name followed by \"is on your "
+                        + "clipboard.\", and pasting gives that name. The model cannot do this: it is "
+                        + "refused if it asks.",
+                },
+            Choose(storyChoice)
+                with
+                {
+                    Exercise =
+                        "When a story chapter offers options, say \"choose option one\", or two for "
+                        + "the second. The reply carries the story on with that option. The phrase is "
+                        + "live only while an offer is open. The model cannot do this: it is refused "
+                        + "if it asks.",
+                },
+            Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft short story.", ["change the short story", "change the adventure"], "What should change?", desk, d => d.Change)
+                with
+                {
+                    Exercise =
+                        "With a draft short story waiting, say \"change the short story\". An entry "
+                        + "opens asking \"What should change?\" Say the change and the draft is "
+                        + "rewritten. The phrase is live only while a draft exists. The model cannot "
+                        + "do this: it is refused if it asks.",
+                },
+            Draft(AcceptDraftTool, "Accept the Commander's draft short story, as the Accept button does.", ["accept the short story", "accept the adventure"], "The short story is accepted.", desk, d => d.Accept)
+                with
+                {
+                    Exercise =
+                        "With a draft short story waiting, say \"accept the short story\". The reply "
+                        + "is \"The short story is accepted.\" and it is kept as the Accept button "
+                        + "does. The model cannot do this: it is refused if it asks.",
+                },
+            Draft(RejectDraftTool, "Reject the Commander's draft short story and remove it, as the Decline button does.", ["reject the short story", "reject the adventure"], "The draft is removed.", desk, d => d.Reject)
+                with
+                {
+                    Exercise =
+                        "With a draft short story waiting, say \"reject the short story\". The reply "
+                        + "is \"The draft is removed.\" and the draft is gone as the Decline button "
+                        + "does. The model cannot do this: it is refused if it asks.",
+                },
+            Desk(AskTool, "Open the Short Story page and the entry for a brief; committing the brief asks for the short story, as Go does.", ["ask for a short story", "ask for an adventure"], "What should it be about?", desk, d => d.Ask, _ => null)
+                with
+                {
+                    Exercise =
+                        "Say \"ask for a short story\". The Short Story page opens with an entry "
+                        + "asking \"What should it be about?\"; committing the brief asks for the "
+                        + "story, as Go does. The model cannot do this: it is refused if it asks.",
+                },
         ],
     };
 

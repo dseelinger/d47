@@ -41,6 +41,10 @@ public static class UtilitiesCapability
                 new ToolDefinition
                 {
                     Name = "set_timer",
+                    Exercise =
+                        "Say \"set a timer for two minutes called tea\". The reply says \"tea\" is "
+                        + "running and when it ends, and when it finishes D47 says \"tea\". A timer "
+                        + "does not survive D47 restarting.",
                     Description =
                         "Start a countdown that says its own name when it finishes. Minutes, from the "
                         + "moment it is set. Timers do not survive D47 restarting; use an alarm for a "
@@ -68,6 +72,11 @@ public static class UtilitiesCapability
                 new ToolDefinition
                 {
                     Name = "set_alarm",
+                    Exercise =
+                        "Say \"set an alarm called launch for 07:00\" using a time later today or "
+                        + "tomorrow. The reply says \"launch\" is set and for when, and the alarm "
+                        + "sounds then. It survives D47 restarting. A time that is not 24-hour HH:mm "
+                        + "is refused.",
                     Description =
                         "Set an alarm for a wall-clock time today or tomorrow. Alarms survive D47 "
                         + "restarting, and one that came round while D47 was closed is reported "
@@ -96,6 +105,11 @@ public static class UtilitiesCapability
                 new ToolDefinition
                 {
                     Name = "cancel_reminder",
+                    Exercise =
+                        "With a timer or alarm running, say \"cancel the timer\". The reply is "
+                        + "Cancelled followed by its name, or Cancelled and a count when several were "
+                        + "running; with none it is \"Nothing is running.\" The model cannot do this: "
+                        + "it is refused if it asks.",
                     Description =
                         "Cancel a timer or an alarm by name. The Commander's own act: not offered to "
                         + "the model, and refused if it asks.",

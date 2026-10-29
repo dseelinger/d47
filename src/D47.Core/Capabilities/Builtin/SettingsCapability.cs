@@ -29,6 +29,11 @@ public static class SettingsCapability
                 new ToolDefinition
                 {
                     Name = "list_settings",
+                    Exercise =
+                        "Ask D47 \"what settings can you change\". The reply lists each setting the "
+                        + "model may change as key, label and current value, with the allowed choices "
+                        + "under those that have a closed set. Protected settings and secrets are not "
+                        + "listed.",
                     AlwaysLoaded = true,
                     Description =
                         "List the settings that can be changed through a tool call, with their current values. "
@@ -38,6 +43,11 @@ public static class SettingsCapability
                 new ToolDefinition
                 {
                     Name = "get_setting",
+                    Exercise =
+                        "Ask D47 for the value of one setting by a key from \"what settings can you "
+                        + "change\". The reply is the setting's label and value, or says it is unset "
+                        + "and what the default is. A key D47 does not have is answered with \"There "
+                        + "is no setting called\" and the key.",
                     AlwaysLoaded = true,
                     Description = "Report the current value of one setting by key.",
                     Parameters =
@@ -55,6 +65,10 @@ public static class SettingsCapability
                 new ToolDefinition
                 {
                     Name = "set_setting",
+                    Exercise =
+                        "Say \"turn your personality off\". The setting changes at once and the reply "
+                        + "confirms it; say \"turn your personality on\" to put it back. A protected "
+                        + "setting or a secret is refused with \"It lives in the settings panel.\"",
                     AlwaysLoaded = true,
                     Description =
                         "Change one setting. Takes effect immediately. Protected settings and secrets are refused: "

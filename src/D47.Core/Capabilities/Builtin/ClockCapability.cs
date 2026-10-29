@@ -40,6 +40,9 @@ public static class ClockCapability
                 new ToolDefinition
                 {
                     Name = "say_the_time",
+                    Exercise =
+                        "Say \"what time is it\". D47 answers itself with no model turn, giving the "
+                        + "date and time in game time and in your local time.",
                     Description =
                         "The date and time in both worlds. Answered by D47 itself rather than by the "
                         + "model: no turn, no provider, no tokens.",

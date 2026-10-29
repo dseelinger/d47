@@ -34,6 +34,9 @@ public static class LearnedPhrasesCapability
             new ToolDefinition
             {
                 Name = TeachTool,
+                Exercise =
+                    "Say \"teach a phrase\". D47 asks for the words, then the phrase they run, then "
+                    + "confirms. The model cannot do this: it is refused if it asks.",
                 Description =
                     "Start teaching D47 a new wording by voice: it asks for the words, then the phrase they "
                     + "run, then confirms. Never callable by the model.",
@@ -49,6 +52,12 @@ public static class LearnedPhrasesCapability
             new ToolDefinition
             {
                 Name = AddTool,
+                Exercise =
+                    "On Settings › Phrases, type a wording such as \"[please|] drop the wheels\" into "
+                    + "the box, pick the phrase it should run, and press Add. It appears in the list "
+                    + "and saying it runs that phrase. A wording already used by another phrase is "
+                    + "refused with \"Clash · not added\". The model cannot do this: it is refused if "
+                    + "it asks.",
                 Description =
                     "Teach D47 a pattern of words that runs an existing phrase. A pattern is plain words and "
                     + "[a|b|c] groups of alternatives; an empty alternative makes a group optional, as in "
@@ -78,6 +87,11 @@ public static class LearnedPhrasesCapability
             new ToolDefinition
             {
                 Name = ForgetTool,
+                Exercise =
+                    "With a taught phrase on Settings › Phrases, press the ✕ beside it (\"Forget "
+                    + "this phrase\"), or say \"forget\" followed by its wording in quotes. It leaves "
+                    + "the list and its wordings stop running the phrase. The model cannot do this: "
+                    + "it is refused if it asks.",
                 Description =
                     "Forget one pattern the Commander taught D47, as written, with every wording it "
                     + "produced. Never callable by the model — only the panel, a hotkey or the Commander's "

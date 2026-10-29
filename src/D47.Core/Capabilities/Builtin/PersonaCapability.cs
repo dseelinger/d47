@@ -76,6 +76,9 @@ public static class PersonaCapability
             new ToolDefinition
             {
                 Name = "state_identity",
+                Exercise =
+                    "Say \"who are you\". The reply is \"I am\" followed by the name of the active "
+                    + "core.",
                 Description =
                     "Answer who you are. The name of this core, in one "
                     + "sentence, and nothing else — no status, no list of what else is available.",
@@ -84,6 +87,10 @@ public static class PersonaCapability
             new ToolDefinition
             {
                 Name = "describe_persona",
+                Exercise =
+                    "Ask D47 which cores it has available. The model calls it; no spoken phrase "
+                    + "reaches it directly. The reply gives the active core with its tagline, says "
+                    + "whether personality is on, and lists the other cores that are awake.",
                 Description =
                     "Report which core is currently active and which "
                     + "other cores are available to switch to.",

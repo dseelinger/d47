@@ -79,6 +79,11 @@ public static class DiagnosticsCapability
                 new ToolDefinition
                 {
                     Name = "get_app_status",
+                    Exercise =
+                        "Say \"your status\". The reply gives the version, the install folder, the "
+                        + "writable data and logs folders, the pronunciations file, the journal "
+                        + "history state and the log level of every subsystem, and names any feature "
+                        + "paused after repeated failures.",
                     Description =
                         "Report D47's version, where it keeps its writable files, and the current log level of every subsystem.",
                     Handler = (_, _) =>
@@ -87,6 +92,10 @@ public static class DiagnosticsCapability
                 new ToolDefinition
                 {
                     Name = "set_log_verbosity",
+                    Exercise =
+                        "Say \"turn journal logging up to debug\". The reply says that subsystem's "
+                        + "logging is now at Debug, and \"your status\" then shows it at Debug. Say "
+                        + "\"set journal logging back to information\" to put it back.",
                     Description =
                         "Change one subsystem's minimum log level. Takes effect immediately, with no restart.",
                     Parameters =

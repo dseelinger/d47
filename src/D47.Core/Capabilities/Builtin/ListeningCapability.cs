@@ -181,6 +181,11 @@ public static class ListeningCapability
             new ToolDefinition
             {
                 Name = StatusTool,
+                Exercise =
+                    "Say \"can you hear me\". With the microphone capturing and a speech model ready "
+                    + "the reply begins \"Yes\" and names the microphone. Otherwise it begins \"No — not "
+                    + "properly\" and gives each fault: no push-to-talk key set, the microphone not "
+                    + "capturing, no speech model, or a key collision with an Elite binding.",
                 Description =
                     "Report whether D47 can hear the Commander: the microphone in use, whether audio is "
                     + "flowing, the push-to-talk key, who turns speech into words and whether that is ready, "
@@ -190,6 +195,10 @@ public static class ListeningCapability
             new ToolDefinition
             {
                 Name = AlphabetTool,
+                Exercise =
+                    "Say \"what is the word for k\". The reply is the letter and its word. \"The "
+                    + "phonetic alphabet\" gives every letter's word, and \"how do I spell\" explains "
+                    + "spelling a value by voice.",
                 Description =
                     "Report how to spell a value onto D47's drawn keyboard by voice: the shape of it, the "
                     + "whole phonetic alphabet, or the word for one letter. Answered from the parser's own "

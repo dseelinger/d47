@@ -87,6 +87,10 @@ public static class AudioCapability
     private static ToolDefinition ManageMusic(Func<MusicAction, string>? music) => new()
     {
         Name = ManageMusicTool,
+        Exercise =
+            "With ambient music playing, say \"pause the music\" and it holds on the track. \"Resume "
+            + "the music\" restarts it and \"next track\" starts another track from the same folder. The "
+            + "reply says what the music did.",
         Description = "Pauses, resumes or skips D47's ambient music. Pause holds the track where it is; next "
                       + "starts another track from the same folder.",
         Parameters =

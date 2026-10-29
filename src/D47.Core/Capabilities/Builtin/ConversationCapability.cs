@@ -135,6 +135,10 @@ public static class ConversationCapability
                 new ToolDefinition
                 {
                     Name = "cancel_turn",
+                    Exercise =
+                        "While D47 is working on a model reply, say \"never mind\" or \"cancel that\". "
+                        + "Speech stops, the turn is abandoned and the reply is \"Cancelled.\" With "
+                        + "nothing running it is \"Nothing was running to cancel.\"",
                     AlwaysLoaded = true,
                     Description =
                         "Abandon the turn currently running: stop speaking, stop the model, and stop " +
@@ -155,6 +159,11 @@ public static class ConversationCapability
                 new ToolDefinition
                 {
                     Name = "get_model_status",
+                    Exercise =
+                        "Say \"which model are you using\". The reply names the provider, the model, "
+                        + "whether the provider is reachable, whether personality is on, and this "
+                        + "session's response count and cost. A separate background or high model "
+                        + "adds a line.",
                     Description =
                         "Report the selected language model provider and model, whether it is currently reachable, "
                         + "and this session's token spend so far.",

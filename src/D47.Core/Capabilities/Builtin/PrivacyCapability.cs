@@ -116,6 +116,10 @@ public static class PrivacyCapability
                 new ToolDefinition
                 {
                     Name = "get_data_egress",
+                    Exercise =
+                        "Say \"what are you sending\". The reply lists every destination D47 can send "
+                        + "to, whether it is active with the current settings, and exactly what is "
+                        + "sent there.",
                     Description =
                         "List every destination D47 can send to, whether it is active with the current settings, "
                         + "and exactly what is sent there.",

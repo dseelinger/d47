@@ -99,6 +99,11 @@ public static class ExobiologyCapability
             new ToolDefinition
             {
                 Name = EarlierFindsTool,
+                Exercise =
+                    "At a body with biology on it, say \"what has been found on this body\". The "
+                    + "reply lists each biological variant others have logged there and how many "
+                    + "finds of it, most first. With Earlier biology finds off in Settings the reply "
+                    + "says so and names the setting.",
                 Description =
                     "What other Commanders have already logged on a body, from other Commanders' logged finds: each biological "
                     + "variant and how many finds there are of it, most first. Needs the Earlier "
