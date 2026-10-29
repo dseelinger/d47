@@ -318,6 +318,9 @@ public sealed class TestSurface
             // Same story as About (#78): a null one makes the row it guards absent. Null by default so
             // every other test keeps today's row set; a test about the full row set asks for it.
             audioDrops: everyOptionalSurface ? () => "Nothing found in data/audio." : null,
+            controlMusic: everyOptionalSurface ? _ => "Music in a test." : null,
+            musicState: everyOptionalSurface ? () => new D47.Core.Audio.MusicState(null, false, false) : null,
+            watchMusic: everyOptionalSurface ? _ => () => { } : null,
             coverage: everyOptionalSurface ? () => "Nothing exercised yet." : null,
             recording: everyOptionalSurface
                 ? new D47.Core.Diagnostics.Recording.RecordingLog(

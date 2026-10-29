@@ -192,15 +192,15 @@ public class SettingsLayoutTests
             rows.Select(r => r.Key));
     }
 
-    /// <summary>The output device, then every channel's Level and Mute, and Duck for the three that duck; only the device is shown.</summary>
+    /// <summary>The output device, the two music transport rows, then every channel's Level and Mute, and Duck for the three that duck; only the device is shown.</summary>
     [Fact]
-    public void SoundsHoldsTheOutputDeviceAndEighteenAdvancedMixerEntriesTests()
+    public void SoundsHoldsTheOutputDeviceTheMusicRowsAndEighteenAdvancedMixerEntriesTests()
     {
         var surface = Surface();
 
-        Assert.Equal(19, EntryCount("sounds"));
+        Assert.Equal(21, EntryCount("sounds"));
         Assert.Equal(1, ShownCount(surface.Settings, "sounds"));
-        Assert.Equal(19, surface.Settings.RowsForPlace("sounds").Count);
+        Assert.Equal(21, surface.Settings.RowsForPlace("sounds").Count);
     }
 
     [Fact]
