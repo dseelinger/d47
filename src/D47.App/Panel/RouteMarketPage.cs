@@ -218,8 +218,11 @@ public sealed class RouteMarketPage : UserControl
 
         var buying = posting.Query.Side == TradeSide.Buying;
 
+        var named = posting.Query.Wants.Select(want => want.Commodity).ToList();
+        var what = named.Count == 1 ? named[0] : $"{string.Join(", ", named.Take(named.Count - 1))} and {named[^1]}";
+
         var heading = RoutingKit.Ink(
-            $"{(buying ? "Buying" : "Selling")} {posting.Query.Commodity} near {posting.Near}",
+            $"{(buying ? "Buying" : "Selling")} {what} near {posting.Near}",
             TypeScale.Body,
             ThemeManager.AKey,
             wrap: true);
@@ -257,10 +260,15 @@ public sealed class RouteMarketPage : UserControl
             columns.Add(new("Distance"));
         }
 
+        if (Several(posting))
+        {
+            columns.Add(new("Commodity"));
+        }
+
         columns.Add(new("Price"));
         columns.Add(new("Stock"));
 
-        if (posting.Query.Tonnes is not null)
+        if (ByTheTonne(posting))
         {
             columns.Add(new("Load"));
         }
@@ -286,10 +294,15 @@ public sealed class RouteMarketPage : UserControl
             heads.Add(("Distance", SortColumn<object>.Remote("Distance", SortDirection.Ascending)));
         }
 
+        if (Several(posting))
+        {
+            heads.Add(("Commodity", SortColumn<object>.Plain("Commodity")));
+        }
+
         heads.Add((buying ? "Price" : "Pays", SortColumn<object>.Remote(buying ? "Price" : "Pays", best)));
         heads.Add((buying ? "Stock" : "Demand", SortColumn<object>.Plain(buying ? "Stock" : "Demand")));
 
-        if (posting.Query.Tonnes is not null)
+        if (ByTheTonne(posting))
         {
             heads.Add(("The load", SortColumn<object>.Plain("The load")));
         }
@@ -323,9 +336,14 @@ public sealed class RouteMarketPage : UserControl
     {
         var query = posting.Query;
 
+        // Several commodities go back as the list they came from, each with its own tonnage.
         var values = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["commodity"] = query.Commodity,
+            ["commodity"] = Several(posting)
+                ? string.Join(", ", query.Wants.Select(want => want.Tonnes is { } load
+                    ? $"{want.Commodity}: {load.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+                    : want.Commodity))
+                : query.Commodity,
             ["near"] = posting.Near,
             ["max_distance"] = query.MaxDistance.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture),
             ["limit"] = query.Limit.ToString(System.Globalization.CultureInfo.InvariantCulture),
@@ -345,7 +363,7 @@ public sealed class RouteMarketPage : UserControl
             }
         }
 
-        if (query.Tonnes is { } tonnes)
+        if (!Several(posting) && query.Tonnes is { } tonnes)
         {
             values["tonnes"] = tonnes.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
@@ -413,10 +431,22 @@ public sealed class RouteMarketPage : UserControl
             cells.Add(Cell($"{offer.Distance:0.#} ly"));
         }
 
-        cells.Add(Cell($"{offer.UnitPrice:N0}"));
-        cells.Add(Cell($"{(buying ? quote?.Supply ?? 0 : quote?.Demand ?? 0):N0}"));
+        if (Several(posting))
+        {
+            // One line per commodity, read across the three columns.
+            cells.Add(Lines(offer.Lots.Select(lot => lot.Commodity)));
+            cells.Add(Lines(offer.Lots.Select(lot => $"{lot.UnitPrice:N0}")));
+            cells.Add(Lines(offer.Lots.Select(lot => offer.Market.Quote(lot.Commodity) is { } held
+                ? $"{(buying ? held.Supply : held.Demand):N0}"
+                : "?")));
+        }
+        else
+        {
+            cells.Add(Cell($"{offer.UnitPrice:N0}"));
+            cells.Add(Cell($"{(buying ? quote?.Supply ?? 0 : quote?.Demand ?? 0):N0}"));
+        }
 
-        if (posting.Query.Tonnes is not null)
+        if (ByTheTonne(posting))
         {
             cells.Add(Cell($"{offer.Total:N0}"));
         }
@@ -460,6 +490,24 @@ public sealed class RouteMarketPage : UserControl
         cells.Children.Add(name);
 
         return cells;
+    }
+
+    /// <summary>Whether the answer is for several commodities at one station.</summary>
+    private static bool Several(CommodityPosting posting) => posting.Query.More is { Count: > 0 };
+
+    /// <summary>Whether any commodity was asked for by the tonne, so the answer has a load to price.</summary>
+    private static bool ByTheTonne(CommodityPosting posting) => posting.Query.Wants.Any(want => want.Tonnes is not null);
+
+    private static Control Lines(IEnumerable<string> lines)
+    {
+        var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+
+        foreach (var line in lines)
+        {
+            stack.Children.Add(Cell(line));
+        }
+
+        return stack;
     }
 
     private static Control Cell(string text, bool muted = false) =>

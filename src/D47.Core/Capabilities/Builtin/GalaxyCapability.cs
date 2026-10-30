@@ -372,10 +372,10 @@ public static class GalaxyCapability
                     + "something that may not be for sale, use how_to_get.",
                 Parameters =
                 [
-                    // Three short descriptions on purpose.
                     ToolParameter.Text(
                         "commodity",
-                        "A commodity traded there, by name."),
+                        "A commodity traded there, by name. Up to five at one station as a list, each with "
+                        + "optional tonnes after a colon: \"Painite: 40, Gold\"."),
                     ToolParameter.Flag(
                         "selling",
                         "Sell it rather than buy it."),
@@ -1886,23 +1886,39 @@ public static class GalaxyCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
+        // Several commodities at one station come as a list, split first so each name is checked on its own.
+        IReadOnlyList<CommodityWant> wants = [];
+
+        if (arguments.TryGetString("commodity", out var listed) && !string.IsNullOrWhiteSpace(listed))
+        {
+            int? tonnes = arguments.TryGetInt32("tonnes", out var asked) && asked > 0 ? asked : null;
+
+            if (CommodityWant.Parse(listed, tonnes, out var refusal) is not { } read)
+            {
+                return ToolResult.Error(refusal ?? "I could not read that list of commodities.");
+            }
+
+            wants = read;
+        }
+
         // **A material is not cargo, and d47 holds the table that says so** (<a
         // href=".com/dseelinger/d47/issues/54">#54</a>).
-        if (arguments.TryGetString("commodity", out var named)
-            && MaterialCatalogue.Find(named) is
-                { Ledger: not (MaterialLedger.Cargo or MaterialLedger.RareCargo) } material)
+        foreach (var want in wants)
         {
-            return ToolResult.Ok(MaterialSeam.NotThisOne(material, MaterialSeam.MarketTool));
+            if (MaterialCatalogue.Find(want.Commodity) is
+                { Ledger: not (MaterialLedger.Cargo or MaterialLedger.RareCargo) } material)
+            {
+                return ToolResult.Ok(MaterialSeam.NotThisOne(material, MaterialSeam.MarketTool));
+            }
         }
+
+        arguments.TryGetBoolean("selling", out var selling);
 
         // A rare good is sold at one station and nowhere else, so the radius sweep cannot answer for it
         // (#118). The table names the station and the one market's quote gives the quantity.
-        if (arguments.TryGetString("commodity", out var rareNamed)
-            && RareCatalogue.Find(rareNamed) is { } rare)
+        if (wants is [var only] && Rare(only.Commodity) is { } rare)
         {
             var answer = await RareAsync(rare, trade, settings, now, cancellationToken).ConfigureAwait(false);
-
-            arguments.TryGetBoolean("selling", out var selling);
 
             // Where a rare can be sold is a different question, and the index does answer that one.
             if (!selling || galaxy is null || !settings.Current.Knowledge.GalaxySearch)
@@ -1912,23 +1928,40 @@ public static class GalaxyCapability
 
             var sold = await FindCommodityAsync(
                     trade, currentSystem, currentStation, board, now, clipboard, lastFound, arguments,
-                    rare.Name, cancellationToken)
+                    [only with { Commodity = rare.Name }], cancellationToken)
                 .ConfigureAwait(false);
 
             return ToolResult.Ok($"{answer} {sold.Content}");
         }
 
+        // A rare's one station is usually far outside the radius, so a list search would not reach it.
+        if (wants.Count > 1)
+        {
+            if (!selling
+                && wants.Select(want => Rare(want.Commodity)).FirstOrDefault(found => found is not null) is
+                    { } listedRare)
+            {
+                return ToolResult.Ok(
+                    $"{listedRare.Name} is a rare good sold only at {listedRare.Station} in {listedRare.System}, "
+                    + "which a search for several commodities around you does not reach. Ask for it on its own.");
+            }
+
+            wants = [.. wants.Select(want =>
+                Rare(want.Commodity) is { } sold ? want with { Commodity = sold.Name } : want)];
+        }
+
         // A misheard commodity gets the same nearest-name offer ships, engineers and modules already get,
         // checked against the cargo and rare-cargo ledgers only so a material near-miss still falls through
         // to the index below (#117).
-        if (arguments.TryGetString("commodity", out var spokenCommodity)
-            && !string.IsNullOrWhiteSpace(spokenCommodity)
-            && MaterialCatalogue.Find(spokenCommodity) is null
-            && RareCatalogue.Find(spokenCommodity) is null
-            && MaterialCatalogue.Near(spokenCommodity, MaterialLedger.Cargo, MaterialLedger.RareCargo) is
-                { Count: > 0 } nearCommodities)
+        foreach (var want in wants)
         {
-            return ToolResult.Ok(Catalogue.Unknown("commodity", spokenCommodity.Trim(), nearCommodities));
+            if (MaterialCatalogue.Find(want.Commodity) is null
+                && Rare(want.Commodity) is null
+                && MaterialCatalogue.Near(want.Commodity, MaterialLedger.Cargo, MaterialLedger.RareCargo) is
+                    { Count: > 0 } nearCommodities)
+            {
+                return ToolResult.Ok(Catalogue.Unknown("commodity", want.Commodity, nearCommodities));
+            }
         }
 
         if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
@@ -1938,10 +1971,10 @@ public static class GalaxyCapability
 
         // The commodity half is a different source and a different ranking, so it forks here rather than
         // threading a second kind of answer through the module search (Phase 49).
-        if (arguments.TryGetString("commodity", out var commodity) && !string.IsNullOrWhiteSpace(commodity))
+        if (wants.Count > 0)
         {
             return await FindCommodityAsync(
-                trade, currentSystem, currentStation, board, now, clipboard, lastFound, arguments, commodity,
+                trade, currentSystem, currentStation, board, now, clipboard, lastFound, arguments, wants,
                 cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -2000,7 +2033,14 @@ public static class GalaxyCapability
         }
     }
 
-    /// <summary>Where to buy a commodity, or where to dump one (Phase 49).</summary>
+    /// <summary>
+    /// The rare good a name means, unless the name is already an ordinary commodity: "Gold" is Gold, not
+    /// Sothis Crystalline Gold.
+    /// </summary>
+    private static RareEntry? Rare(string commodity) =>
+        MaterialCatalogue.Find(commodity) is { Ledger: MaterialLedger.Cargo } ? null : RareCatalogue.Find(commodity);
+
+    /// <summary>Where to buy a commodity or several at one station, or where to dump them (Phase 49).</summary>
     private static async Task<ToolResult> FindCommodityAsync(
         ITradePlanService? trade,
         Func<string?> currentSystem,
@@ -2010,7 +2050,7 @@ public static class GalaxyCapability
         IClipboard? clipboard,
         Conversation.LastFoundSystem? lastFound,
         ToolArguments arguments,
-        string commodity,
+        IReadOnlyList<CommodityWant> wants,
         CancellationToken cancellationToken)
     {
         if (trade is null)
@@ -2030,8 +2070,6 @@ public static class GalaxyCapability
 
         arguments.TryGetBoolean("large_pad", out var largePad);
         arguments.TryGetBoolean("selling", out var selling);
-
-        int? tonnes = arguments.TryGetInt32("tonnes", out var asked) && asked > 0 ? asked : null;
 
         var limit = Limit(arguments, out var askedLimit);
 
@@ -2089,9 +2127,9 @@ public static class GalaxyCapability
         arguments.TryGetString("tag", out var tag);
 
         var query = new CommodityQuery(
-            commodity.Trim(),
+            wants[0].Commodity.Trim(),
             selling ? TradeSide.Selling : TradeSide.Buying,
-            tonnes,
+            wants[0].Tonnes,
             maxDistance,
             largePad,
             includeCarriers,
@@ -2101,7 +2139,8 @@ public static class GalaxyCapability
             surfaceStations,
             orderBy,
             tag,
-            descending);
+            descending,
+            wants.Count > 1 ? [.. wants.Skip(1)] : null);
 
         try
         {
@@ -2144,7 +2183,9 @@ public static class GalaxyCapability
 
             if (carriersOnly)
             {
-                said = $"No station has it; carriers only, at carrier prices, and those listings move. {said}";
+                said = query.More is { Count: > 0 }
+                    ? $"No station has them all; carriers only, at carrier prices, and those listings move. {said}"
+                    : $"No station has it; carriers only, at carrier prices, and those listings move. {said}";
             }
 
             // Nearest first means the nearest is the answer, and the answer is a place to go (#325) — so the
@@ -2190,17 +2231,21 @@ public static class GalaxyCapability
         int? askedLimit)
     {
         var verb = query.Side == TradeSide.Buying ? "buying" : "selling";
+        var several = query.More is { Count: > 0 };
+        var what = several ? Series([.. query.Wants.Select(want => want.Commodity)]) : query.Commodity;
 
         if (answer.Offers.Count == 0)
         {
             // The radius answered is the radius searched (#156).
-            var nothing = answer.Horizon is null && answer.Complete
-                ? $"Nothing within {query.MaxDistance:0} light years of {near} is {verb} {query.Commodity}"
-                : answer.Considered == 0
-                    ? $"Nothing the market index sent me is {verb} {query.Commodity}"
-                    : $"Nothing in the {answer.Considered} markets I could check is {verb} {query.Commodity}";
+            var nothing = several
+                ? Missing(query, answer, near)
+                : answer.Horizon is null && answer.Complete
+                    ? $"Nothing within {query.MaxDistance:0} light years of {near} is {verb} {query.Commodity}"
+                    : answer.Considered == 0
+                        ? $"Nothing the market index sent me is {verb} {query.Commodity}"
+                        : $"Nothing in the {answer.Considered} markets I could check is {verb} {query.Commodity}";
 
-            if (query.Tonnes is { } wanted)
+            if (!several && query.Tonnes is { } wanted)
             {
                 nothing += $" in {wanted} tonne lots";
             }
@@ -2239,9 +2284,9 @@ public static class GalaxyCapability
 
             // Say where it measured from (#331).
             var nearest = CommunityGoalSearch.Whose(query.Tag) is { } whose
-                ? $"Nearest to {near}, {whose}, for {verb} {query.Commodity}: "
+                ? $"Nearest to {near}, {whose}, for {verb} {what}: "
                   + $"{winner.Market.Station} ({winner.Market.System})"
-                : $"Nearest for {verb} {query.Commodity}, {winner.Market.Station} ({winner.Market.System})";
+                : $"Nearest for {verb} {what}, {winner.Market.Station} ({winner.Market.System})";
 
             if (answer.OriginKnown)
             {
@@ -2279,11 +2324,18 @@ public static class GalaxyCapability
                 line += $", {offer.Distance:0.#} ly";
             }
 
-            line += query.Side == TradeSide.Buying
-                ? $", {offer.UnitPrice:N0} cr a tonne, {offer.Market.Quote(query.Commodity)?.Supply ?? 0:N0} in stock"
-                : $", pays {offer.UnitPrice:N0} cr a tonne, wants {offer.Market.Quote(query.Commodity)?.Demand ?? 0:N0}";
+            if (several)
+            {
+                line += Prices(query, offer);
+            }
+            else
+            {
+                line += query.Side == TradeSide.Buying
+                    ? $", {offer.UnitPrice:N0} cr a tonne, {offer.Market.Quote(query.Commodity)?.Supply ?? 0:N0} in stock"
+                    : $", pays {offer.UnitPrice:N0} cr a tonne, wants {offer.Market.Quote(query.Commodity)?.Demand ?? 0:N0}";
+            }
 
-            if (query.Tonnes is not null)
+            if (query.Wants.Any(want => want.Tonnes is not null))
             {
                 line += $", {offer.Total:N0} cr for the load";
             }
@@ -2303,9 +2355,11 @@ public static class GalaxyCapability
         // The same rule on the way out (#156).
         var reach = answer.Horizon is { } far ? $"{far:0.#}" : $"{query.MaxDistance:0}";
 
-        var heading = query.Tonnes is { } load
-            ? $"{verb} {load} tonnes of {query.Commodity} within {reach} ly of {near}"
-            : $"{verb} {query.Commodity} within {reach} ly of {near}";
+        var heading = several
+            ? $"{verb} {Series([.. query.Wants.Select(Load)])} within {reach} ly of {near}"
+            : query.Tonnes is { } load
+                ? $"{verb} {load} tonnes of {query.Commodity} within {reach} ly of {near}"
+                : $"{verb} {query.Commodity} within {reach} ly of {near}";
 
         var report = $"Best for {heading}: " + string.Join("; ", lines) + ".";
 
@@ -2336,6 +2390,63 @@ public static class GalaxyCapability
 
         return report;
     }
+
+    /// <summary>How many stations had each commodity on its own, and that none had them all.</summary>
+    private static string Missing(CommodityQuery query, CommodityAnswer answer, string near)
+    {
+        var buying = query.Side == TradeSide.Buying;
+
+        var where = answer.Horizon is null && answer.Complete
+            ? $"within {query.MaxDistance:0} light years of {near}"
+            : "in the markets the index sent me";
+
+        var all = query.Wants.Count == 2 ? "both" : $"all {Spoken(query.Wants.Count)}";
+
+        if (answer.Stocked.Count == 0)
+        {
+            return $"No station {(buying ? "sells" : "buys")} "
+                   + $"{Series([.. query.Wants.Select(want => want.Commodity)])} together {where}";
+        }
+
+        var counts = answer.Stocked.Select((stock, at) => stock.Stations switch
+        {
+            0 => $"{(at == 0 ? "no station" : "none")} {(buying ? "sells" : "buys")} {stock.Commodity}",
+            1 => $"{(at == 0 ? "1 station" : "1")} {(buying ? "sells" : "buys")} {stock.Commodity}",
+            var many => $"{many}{(at == 0 ? " stations" : string.Empty)} {(buying ? "sell" : "buy")} {stock.Commodity}",
+        });
+
+        var said = Series([.. counts]);
+
+        return $"{char.ToUpperInvariant(said[0])}{said[1..]}; none {(buying ? "sells" : "buys")} {all} {where}";
+
+        static string Spoken(int count) => count switch
+        {
+            3 => "three",
+            4 => "four",
+            5 => "five",
+            _ => count.ToString(CultureInfo.InvariantCulture),
+        };
+    }
+
+    /// <summary>Every commodity's price at one station.</summary>
+    private static string Prices(CommodityQuery query, CommodityOffer offer)
+    {
+        var priced = offer.Lots.Select(lot => $"{lot.Commodity} {lot.UnitPrice:N0} cr");
+
+        return (query.Side == TradeSide.Buying ? ", " : ", pays ") + string.Join(", ", priced) + " a tonne";
+    }
+
+    /// <summary>One commodity as a heading names it: with its tonnage, where one was given.</summary>
+    private static string Load(CommodityWant want) =>
+        want.Tonnes is { } tonnes ? $"{tonnes} tonnes of {want.Commodity}" : want.Commodity;
+
+    /// <summary>"Gold", "Gold and Painite", "Gold, Painite and Platinum".</summary>
+    private static string Series(IReadOnlyList<string> items) => items.Count switch
+    {
+        0 => string.Empty,
+        1 => items[0],
+        _ => $"{string.Join(", ", items.Take(items.Count - 1))} and {items[^1]}",
+    };
 
     /// <summary>
     /// The knobs the Commander turned, said back to them, and the one that could not be turned as far

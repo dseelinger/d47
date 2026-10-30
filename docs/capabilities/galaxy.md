@@ -769,7 +769,7 @@ Where to buy a named module or ship, nearest first. A rare good is answered from
 since it has one selling station and no other.
 
 ```json
-{"type":"object","properties":{"commodity":{"type":"string","description":"A commodity traded there, by name."},"include_carriers":{"type":"boolean","description":"Also fleet carriers, whose prices are player-set and can move."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"max_price_age_hours":{"type":"integer","description":"How stale a quoted price or station report may be, in hours; 0 for any age. Default 72, three days."},"max_station_distance":{"type":"number","description":"Furthest from the star, in light seconds."},"min_supply":{"type":"integer","description":"Least in stock, or least demand when selling."},"module":{"type":"string","description":"A module to be sold there, by name \u2014 \u0022Frame Shift Drive\u0022."},"module_class":{"type":"string","description":"Module size, 0 to 8.","enum":["0","1","2","3","4","5","6","7","8"]},"module_rating":{"type":"string","description":"Module rating, A to I.","enum":["A","B","C","D","E","F","G","H","I"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"order":{"type":"string","description":"asc or desc, over the whole answer rather than the rows shown. Default is nearest first for distance and best price first for price: desc for a seller, asc for a buyer.","enum":["asc","desc"]},"order_by":{"type":"string","description":"Nearest first, or best price first. Default price.","enum":["distance","price"]},"selling":{"type":"boolean","description":"Sell it rather than buy it."},"ship":{"type":"string","description":"A ship to be sold there, by name \u2014 \u0022Krait MkII\u0022."},"surface_stations":{"type":"boolean","description":"Also planetary ports and settlements. Default false."},"tag":{"type":"string","description":"Internal. Leave unset."},"tonnes":{"type":"integer","description":"How many tonnes, if they said."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"commodity":{"type":"string","description":"A commodity traded there, by name. Up to five at one station as a list, each with optional tonnes after a colon: \u0022Painite: 40, Gold\u0022."},"include_carriers":{"type":"boolean","description":"Also fleet carriers, whose prices are player-set and can move."},"large_pad":{"type":"boolean","description":"Only stations with a large landing pad."},"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"max_price_age_hours":{"type":"integer","description":"How stale a quoted price or station report may be, in hours; 0 for any age. Default 72, three days."},"max_station_distance":{"type":"number","description":"Furthest from the star, in light seconds."},"min_supply":{"type":"integer","description":"Least in stock, or least demand when selling."},"module":{"type":"string","description":"A module to be sold there, by name \u2014 \u0022Frame Shift Drive\u0022."},"module_class":{"type":"string","description":"Module size, 0 to 8.","enum":["0","1","2","3","4","5","6","7","8"]},"module_rating":{"type":"string","description":"Module rating, A to I.","enum":["A","B","C","D","E","F","G","H","I"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"order":{"type":"string","description":"asc or desc, over the whole answer rather than the rows shown. Default is nearest first for distance and best price first for price: desc for a seller, asc for a buyer.","enum":["asc","desc"]},"order_by":{"type":"string","description":"Nearest first, or best price first. Default price.","enum":["distance","price"]},"selling":{"type":"boolean","description":"Sell it rather than buy it."},"ship":{"type":"string","description":"A ship to be sold there, by name \u2014 \u0022Krait MkII\u0022."},"surface_stations":{"type":"boolean","description":"Also planetary ports and settlements. Default false."},"tag":{"type":"string","description":"Internal. Leave unset."},"tonnes":{"type":"integer","description":"How many tonnes, if they said."}},"required":[],"additionalProperties":false}
 ```
 
 **A rare good is answered from its one station, not from a sweep**
@@ -783,6 +783,28 @@ there is no report, or no web access to ask for one, the station is still named 
 said to be unknown. The ship's hold is no part of the answer: what the station is offering is the
 ceiling on a visit, and it is nearly always the smaller of the two. Asking where to *sell* a rare is
 a different question, and the ordinary radius sweep still runs for it.
+
+**Several commodities can be searched at one station.** `commodity` takes a comma-separated list
+of up to five, each with an optional tonnage after a colon: `"Painite: 40, Platinum: 12, Gold"`. The
+colon is the separator because some commodity names contain digits, such as `Hafnium 178`. An item
+without a tonnage takes `tonnes`, if given, and a name listed twice is searched once with its
+tonnages added. The market index is asked once per commodity, and only a station in every reply that
+clears every filter for every commodity is answered. Each station is read out with the price of
+every commodity there:
+
+```text
+Best for buying 40 tonnes of Painite, 12 tonnes of Platinum and Gold within 50 ly of Sol: Ohm Port (Ohm), 12 ly, Painite 51,870 cr, Platinum 37,205 cr, Gold 9,412 cr a tonne, 2,530,672 cr for the load, 410 Ls from the star — reported 2 hours ago.
+```
+
+When no station has them all, the answer says how many had each one:
+
+```text
+12 stations sell Gold and 3 sell Painite; none sells both within 50 light years of Sol.
+```
+
+A rare good in a list is refused when buying, with its one station named, because a radius search
+will not find that station; ask for it on its own. When selling, it is searched like any other commodity. The
+Navigation tab's market table lists every commodity on each station's row, with its price and stock.
 
 **Commodity prices come from a second host** ([#350](https://github.com/dseelinger/d47/issues/350)).
 Everything else on this page is spansh; asking where to buy or sell one named commodity goes to

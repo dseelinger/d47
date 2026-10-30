@@ -651,4 +651,10 @@ public sealed record CommodityAnswer(
     /// covered (#350).
     /// </summary>
     public bool Complete { get; init; } = true;
+
+    /// <summary>
+    /// For each commodity asked for, in order, how many stations could answer for it alone — so an empty
+    /// answer to several can say which one is missing.
+    /// </summary>
+    public IReadOnlyList<(string Commodity, int Stations)> Stocked { get; init; } = [];
 }

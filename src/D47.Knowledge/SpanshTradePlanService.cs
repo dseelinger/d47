@@ -83,16 +83,22 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
     }
 
     /// <summary>
-    /// Where to buy one commodity, or where to dump it (Phase 49), read from a live EDDN-fed index
-    /// since #350.
+    /// Where to buy one commodity or several at one station, or where to dump them (Phase 49), read from a
+    /// live EDDN-fed index since #350: one call per commodity, the replies joined by station.
     /// </summary>
     public async Task<CommodityAnswer> FindCommodityAsync(
         CommoditySearch search,
         CancellationToken cancellationToken)
     {
-        var reply = await _commodities.FindAsync(search, cancellationToken).ConfigureAwait(false);
+        var wants = search.Query.Wants;
 
-        var fetched = reply.Markets;
+        var replies = await Task.WhenAll(wants.Select(want => _commodities.FindAsync(
+                search with { Query = search.Query with { Commodity = want.Commodity, Tonnes = want.Tonnes, More = null } },
+                cancellationToken)))
+            .ConfigureAwait(false);
+
+        var fetched = replies.Length == 1 ? replies[0].Markets : Join(replies);
+        var reference = replies.Select(reply => reply.Reference).FirstOrDefault(at => at is not null);
 
         var origin = fetched.FirstOrDefault(market =>
             string.Equals(market.System, search.System, StringComparison.OrdinalIgnoreCase)
@@ -104,9 +110,9 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
             string.Equals(market.System, search.System, StringComparison.OrdinalIgnoreCase));
 
         // And failing *that*, the coordinates the search itself resolved the reference to (#156).
-        origin ??= Somewhere(search.System, reply.Reference);
+        origin ??= Somewhere(search.System, reference);
 
-        var complete = Reaches(reply);
+        var complete = replies.All(Reaches);
 
         var oldest = Oldest(search.MaxPriceAge);
         var usable = new List<MarketSnapshot>(fetched.Count);
@@ -121,7 +127,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
                 continue;
             }
 
-            usable.Add(Answerable(market, search.Query.Commodity));
+            usable.Add(wants.Aggregate(market, (answerable, want) => Answerable(answerable, want.Commodity)));
         }
 
         return new CommodityAnswer(
@@ -130,9 +136,54 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
             stale,
             origin is not null)
         {
-            Horizon = Covered(reply, search.Query.MaxDistance),
+            // The shortest reach of any reply; null where every one reached the whole radius or cannot say.
+            Horizon = replies.Min(reply => Covered(reply, search.Query.MaxDistance)),
             Complete = complete,
+            Stocked = [.. wants.Select(want =>
+                (want.Commodity, CommodityMarketSearch.Stocking(search.Query, want, usable, origin)))],
         };
+    }
+
+    /// <summary>
+    /// Every station any reply returned, once, with the quotes of every reply that returned it and the oldest
+    /// of their report times.
+    /// </summary>
+    private static List<MarketSnapshot> Join(IReadOnlyList<ArdentCommodityService.Reply> replies)
+    {
+        var joined = new List<MarketSnapshot>();
+
+        // Keyed as IsSamePlaceAs compares, so a thousand rows a reply stays one pass.
+        var places = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var market in replies.SelectMany(reply => reply.Markets))
+        {
+            var place = $"{market.Station}\u0000{market.System}";
+
+            if (!places.TryGetValue(place, out var index))
+            {
+                places[place] = joined.Count;
+                joined.Add(market);
+                continue;
+            }
+
+            var known = joined[index];
+            var quotes = new Dictionary<string, MarketQuote>(known.Quotes, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (commodity, quote) in market.Quotes)
+            {
+                quotes.TryAdd(commodity, quote);
+            }
+
+            joined[index] = known with
+            {
+                Quotes = quotes,
+                UpdatedAt = known.UpdatedAt is { } first && market.UpdatedAt is { } second
+                    ? (first < second ? first : second)
+                    : known.UpdatedAt ?? market.UpdatedAt,
+            };
+        }
+
+        return joined;
     }
 
     /// <summary>The earliest report time a price may carry; a bound of 0 hours admits every price.</summary>

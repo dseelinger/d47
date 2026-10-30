@@ -222,8 +222,8 @@ public class WhereToBuyItTests
     }
 
     /// <summary>
-    /// The load is capped at what the station can do, so a quoted total is one the Commander could
-    /// actually pay rather than one for tonnage that is not there.
+    /// The load is capped at what the station can do, and with no tonnage asked the total is one tonne's
+    /// price, so a quoted total is never for tonnage that is not there.
     /// </summary>
     [Fact]
     public void TheQuotedTotalIsForTonnageTheStationActuallyHas()
@@ -236,7 +236,7 @@ public class WhereToBuyItTests
         var offer = Assert.Single(offers);
 
         Assert.Equal(40, offer.Tonnes);
-        Assert.Equal(20_000, offer.Total);
+        Assert.Equal(500, offer.Total);
     }
 
     /// <summary>
