@@ -1,0 +1,24 @@
+You are checking a draft of a story the Commander will fly in Elite Dangerous. Each objective waits for one event in the Commander's journal, its trigger. When the trigger fires, the objective's lines are spoken as written. Below, each objective has what its trigger confirms, then its lines.
+
+What a line may state as fact: an objective fires when its trigger is seen in the journal, and the trigger sees only what is listed for its kind. Three things are checked: what the Commander did; where the Commander has been and their history with a place; and how a game event went (a mission's target or outcome, a fight, a trade, what a scan or site held). A line may state one of these as fact only where its objective confirms it or the game state given shows it. So a line never states a sum of credits the Commander was paid, a course or jump plotted, or a place, beacon or event the Commander has never visited, scanned or seen. The story's own fiction is not checked: who the cast are, what they say, send, offer, remember or own, documents and records in the story, and events before the story began. Objectives fire in order, so the ending may say where the story stands and recount what any objective confirmed, in that order; it may not say the Commander did something no objective confirms.
+List an objective only where its lines state, as fact, one of the three checked things that its objective does not confirm and the game state below does not show. A line that only sets a scene or a mood states nothing to check.
+
+What is true right now, read from the Commander's journal:
+- Position: Oppi.
+- Reach: near here — about 80 light years, the longest one hop may be. A place farther away is reached over several hops.
+- Ranks held: Combat Rank 1 of 13, Mostly Harmless, Trade Rank 7 of 13, Tycoon, Exploration Rank 5 of 13, Pathfinder, Mercenary Rank 0 of 13, Defenceless, Exobiology Rank 0 of 13, Directionless, CQC Rank 0 of 8, Helpless, Imperial Navy Rank 1 of 14, Outsider, Federal Navy Rank 1 of 14, Recruit.
+
+The story's ending: The column balances.
+
+Objectives:
+1. The Lantern — arrive: Ossen's Lantern
+   Confirms: the ship arrived in that system — not why, what is there, or what the Commander did on the way
+   Lines: "Scoop here."
+2. The Tour — complete one sightseeing mission
+   Confirms: a sightseeing mission was handed in, so its passengers were taken to the sights it listed — not what they made of them
+   Lines: "Take the tourists round."
+3. The Column Will Not Balance (the last objective: its lines are the ending) — rank: Trade 8
+   Confirms: a promotion to at least that rank in that career — not how it was earned
+   Lines: "It balances."
+
+Answer with one JSON object and nothing else: {"objections": [{"objective": number, "quote": string, "kind": "action" | "history" | "event" | "fiction", "reason": string}]}. "objective" is the objective's number; "quote" is the words of its lines that make the statement, copied exactly; "kind" is "action" for what the Commander did, "history" for where the Commander has been or their history with a place, "event" for how a game event went, and "fiction" for anything the cast say, send, offer, remember or own, a record in the story, or an opinion; "reason" is one plain sentence saying what the lines state that the trigger does not confirm. Use an empty list when every objective stands.

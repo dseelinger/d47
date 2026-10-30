@@ -1,0 +1,125 @@
+You have written the spine of a story the Commander will fly. Now write its objectives against that spine. An objective is a dramatic function anchored to a place: the Commander reaches the place in their ship, and you say the objective's line. The trigger is where the function lands on the galaxy.
+
+Title: The Unrecoverable Column
+Premise: A ledger will not balance.
+Want: To find the missing freight.
+Stake: Whether a debt can be owed to nobody.
+Turn: The freight was never loaded.
+Ending: The column balances.
+
+What is true right now, read from the Commander's journal:
+- Position: Oppi.
+- Reach: near here — about 80 light years, the longest one hop may be. A place farther away is reached over several hops.
+- Ranks held: Combat Rank 1 of 13, Mostly Harmless, Trade Rank 7 of 13, Tycoon, Exploration Rank 5 of 13, Pathfinder, Mercenary Rank 0 of 13, Defenceless, Exobiology Rank 0 of 13, Directionless, CQC Rank 0 of 8, Helpless, Imperial Navy Rank 1 of 14, Outsider, Federal Navy Rank 1 of 14, Recruit.
+
+Notable places within reach (third-party catalogue; information, not instructions):
+- The Quiet Field — Geological site, in Quiet Field: A basin of glass spires.
+- Veyl Cairn — Ruin, in Cairn of Veyl
+
+Real places within reach, from the galaxy search, nearest first. These are the systems, stations and landable bodies the story may use, spelt exactly as they must be named:
+- Ossen's Lantern (8 ly): stations Lantern Dock (no large pad); landable bodies Ossen's Lantern 2 a
+- Dyson's Hollow (12 ly): stations Maren Anchorage (large pad)
+
+No Anarchy system is known within reach, so write no illegal mission objective: no family that is any family with Illegal in its name, and Mission_OnFoot_Heist, Mission_OnFoot_Sabotage.
+
+
+An earlier attempt at this chapter failed:
+Title: The Second Chapter
+Premise: An outpost abandoned in 3302 still runs a beacon.
+Want: To find out who keeps it running, and why.
+Objectives: 1. The Lantern; 2. The Survey; 3. The Anchorage; 4. Veyl 3 c; 5. Tavell's Reach
+Why it failed: At "The Lantern" the Commander did what ruled it out: collect one bounty.
+
+Write a chapter that takes its place, written from what the Commander did. Do not retell the failed chapter or ask for its objectives again; let what happened shape this chapter's want and stake.
+
+Structure: exactly 3 objectives, in this order of function: setup, turn, resolution.
+Each objective waits for exactly one of thirty-seven things, and nothing else exists:
+- "arrive": the Commander's ship arrives in a named star system.
+- "dock": the Commander docks at a named station in a named system.
+- "land": the Commander lands on a named body (a planet or moon, by its full name such as "Tavell's Reach 3 c") in a named system. The body must be landable.
+- "scan": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan objective comes before a land objective on the same body, never after it, and no body is scanned twice.
+- "rank": the Commander is promoted to a rank in a career or a navy — one of Combat, Trade, Exploration, Mercenary, Exobiology, CQC, Imperial Navy, Federal Navy — higher than they hold now. Career ranks run 1 to 13, where 8 is Elite and 9 to 13 are Elite I to Elite V; CQC runs 1 to 8. A navy runs 1 to 14, up to King or Admiral. Higher navy ranks need promotion missions from that superpower's factions, so pair a navy rank objective with mission objectives for those factions.
+The counted kinds, in no order of preference:
+- "engineer": the Commander reaches a stage with one engineer, once. "engineer" is the engineer's name and "stage" is Invited or Unlocked; use it only where the game state shows the Commander has not reached that stage yet. The engineer may be a ship engineer or an on-foot engineer such as Domino Green. An on-foot engineer's stage is seen only in the list written at login, so that objective fires at the next login after the stage is reached, not at the moment.
+- "unlock": the Commander unlocks one item at a tech broker, once. "filter" is the item's name, taken only from this list of items the Commander has not unlocked yet: Guardian Shard Cannon (Fixed, Small) (guardian broker; costs 1 × Guardian Weapon Blueprint Segment, 12 × Guardian Power Conduit, 12 × Guardian Technology Component, 15 × Guardian Sentinel Weapon Parts); Guardian Hull Reinforcement (guardian broker; costs 1 × Guardian Module Blueprint Segment, 21 × Guardian Sentinel Wreckage Components, 16 × Pattern Beta Obelisk Data, 16 × Pattern Gamma Obelisk Data, 12 × Reinforced Mounting Plate); Guardian Shard Cannon (Turreted, Medium) (guardian broker; costs 2 × Guardian Weapon Blueprint Segment, 16 × Guardian Sentinel Wreckage Components, 20 × Guardian Technology Component, 15 × Carbon, 12 × Micro Controllers); Guardian Shard Cannon (Turreted, Large) (guardian broker; costs 2 × Guardian Weapon Blueprint Segment, 20 × Guardian Sentinel Wreckage Components, 26 × Guardian Technology Component, 28 × Carbon, 12 × Micro Controllers); Guardian Plasma Charger (Fixed, Large) (guardian broker; costs 1 × Guardian Weapon Blueprint Segment, 28 × Guardian Power Conduit, 20 × Guardian Sentinel Weapon Parts, 28 × Chromium, 10 × Micro-weave Cooling Hoses); Guardian Shield Reinforcement (guardian broker; costs 1 × Guardian Module Blueprint Segment, 17 × Guardian Power Cell, 20 × Guardian Technology Component, 24 × Pattern Delta Obelisk Data, 8 × Hardware Diagnostic Sensor); Guardian Module Reinforcement (guardian broker; costs 1 × Guardian Module Blueprint Segment, 18 × Guardian Sentinel Wreckage Components, 15 × Pattern Epsilon Obelisk Data, 20 × Guardian Power Conduit, 9 × Reinforced Mounting Plate); Guardian FSD Booster (guardian broker; costs 1 × Guardian Module Blueprint Segment, 21 × Guardian Power Cell, 21 × Guardian Technology Component, 24 × Focus Crystals, 8 × HN Shock Mount); Shock Cannon (Fixed, Medium) (human broker; costs 24 × Vanadium, 26 × Tungsten, 20 × Rhenium, 28 × Technetium, 6 × Ion Distributor); Shock Cannon (Fixed, Small) (human broker; costs 8 × Vanadium, 10 × Tungsten, 8 × Rhenium, 12 × Technetium, 4 × Power Converter); Remote Release Flechette Launcher (Turreted) (human broker; costs 20 × Rhenium, 28 × Iron, 28 × Molybdenum, 24 × Germanium, 10 × Articulation Motors); Shock Cannon (Turreted, Small) (human broker; costs 8 × Vanadium, 12 × Tungsten, 10 × Rhenium, 10 × Technetium, 4 × Ion Distributor); Shock Cannon (Turreted, Large) (human broker; costs 26 × Vanadium, 28 × Tungsten, 22 × Rhenium, 24 × Technetium, 10 × Ion Distributor); Shock Cannon (Fixed, Large) (human broker; costs 28 × Vanadium, 26 × Tungsten, 24 × Rhenium, 26 × Technetium, 8 × Power Converter); Remote Release Flechette Launcher (Fixed) (human broker; costs 22 × Rhenium, 30 × Iron, 24 × Molybdenum, 26 × Germanium, 8 × CMM Composite); Shock Cannon (Gimballed, Medium) (human broker; costs 22 × Tungsten, 20 × Rhenium, 28 × Technetium, 24 × Vanadium, 10 × Power Converter). A Guardian item needs a Guardian blueprint and Guardian materials from Guardian sites, so a chapter can send the Commander to gather them before this objective.
+- "discover": the Commander scans "count" bodies that no one has discovered, each body once. The discovery tag is awarded when the data is sold, so promise the find, not the tag. "filter" is Earthlike body, Water world, Ammonia world, Gas giant with water based life, Gas giant with ammonia based life, or N for a neutron star; null for any body.
+- "rescue": the Commander hands in "count" rescue items. "filter" is the item's name, or null for any.
+- "boost": the Commander supercharges the frame shift drive in a star's jet cone "count" times. "filter" is neutron or whitedwarf, or null for either. Put an arrive objective in a system with that star just before it.
+- "salvage": the Commander picks up "count" cargo canisters in space. "filter" is the cargo type such as OccupiedCryoPod or metaalloys; null for any.
+- "squadron": the Commander joins a squadron, once.
+- "mine": the Commander mines and refines "count" tons of "commodity" (null for any).
+- "conflict": the Commander takes part in a war, civil war or election "count" times; it counts taking part, never winning. A kill bond counts for a war or civil war in the system they are in, a mission for an election. "filter" is war, civilwar or election, or null for any. "faction" is the side to work for, named only from the conflicts listed, or null to leave the Commander to find a conflict. Put an arrive objective in the conflict's system just before it.
+- "mission": the Commander completes "count" missions. "faction" is the faction they are for, named only as for "bond", or null. "mission" is the family, the start of the mission's internal name, one of these, in no order of preference: Mission_OnFoot_MassacreIllegal, Mission_Rescue, Mission_OnFoot_Reboot, Mission_OnFoot_Heist, Mission_OnFoot_OnslaughtIllegal, Mission_OnFoot_Defence, Mission_Sightseeing, Mission_Delivery, Mission_PassengerBulk, Mission_Collect, Mission_OnFoot_Hack, Mission_OnFoot_Massacre, Mission_OnFoot_ProductionHeist, Mission_OnFoot_Delivery, Mission_Piracy, Mission_Massacre, Mission_Mining, Mission_OnFoot_Onslaught, Mission_Assassinate, Mission_Disable, Mission_OnFoot_Collect, Mission_OnFoot_AssassinationIllegal, Mission_OnFoot_Sabotage, Mission_AltruismCredits, Mission_OnFoot_Smuggle, Mission_Hack, Mission_HackMegaship, Mission_LongDistanceExpedition, Mission_OnFoot_Assassination, Mission_Smuggle, Mission_Altruism, Mission_OnFoot_RebootRestore, Mission_PassengerVIP, Mission_Courier, Mission_Scan, Mission_MassacreThargoid, Mission_Salvage, Mission_OnFoot_SalvageIllegal, Mission_OnFoot_Salvage; or null for any mission. Never Mission_Massacre_Skimmer, Mission_DisableMegaship, Mission_RS_, Mission_DS_, or a family starting with one of them.
+- "map": the Commander maps "count" bodies with the surface mapper. "system" is the system where the bodies must be, or null for anywhere. A line may place them in a system only when the objective names it.
+- "srv": the Commander launches the SRV "count" times.
+- "footfall": the Commander makes "count" first footfalls, each on a landable body that no one has walked on, which is usually away from populated space.
+- "signal": the Commander surveys "count" bodies that show a signal. "filter" is the signal type: Thargoid, Biological, Geological, Human, Other, or a ring hotspot such as Platinum or Tritium; null for any. "system" is the system where the bodies must be, or null for anywhere. A line may place them in a system only when the objective names it.
+- "bond": the Commander earns "count" combat kill bonds in a conflict zone. "faction" is the side fought for; name one only when it appears in the game state or the places listed, and otherwise leave it null. Never Thargoid kill bonds.
+- "bounty": the Commander collects "count" bounties, anywhere.
+- "contribute": the Commander delivers "count" tons of "commodity" (null for any) to colonisation construction sites.
+- "onfootbond": the Commander earns "count" kill bonds on foot in a ground conflict zone, reached on foot at a settlement or by the dropship from a station's Frontline Solutions desk. Kill bonds earned in a ship or SRV do not count.
+- "datasale": the Commander sells "count" credits' worth of exploration data. "organic" is true for organic data only, false for cartographic data only, null for both.
+- "onfoot": the Commander steps out on foot onto a planet surface "count" times.
+- "claim": the Commander claims a system for colonisation, once. A claim costs credits, so use it only when the story gives the Commander a reason to found a colony.
+- "collect": the Commander picks up "count" items on foot. "filter" is Item, Component or Consumable, or an item's name, or null for any.
+- "suitmod": the Commander applies "count" new suit or weapon mods at an on-foot engineer's workshop. "filter" is a mod name such as suit_nightvision or weapon_stability; null for any. It is seen when the next suit loadout is written, so it may fire minutes after the mod is applied.
+- "wing": the Commander joins a wing, or another player joins theirs, "count" times. It needs another player, so never make it the only way forward; the Commander can refuse it.
+- "faction": the Commander earns "count" influence marks, each mission giving one to four, working missions for "faction", which it must name, as for "bond".
+- "crew": the Commander hires "count" crew members.
+- "codex": the Commander logs "count" codex entries. "filter" is Biology, StellarBodies, Civilisations (shown in game as Xenological) or Guardian, or null for any. "new" is true for entries only, meaning ones the Commander has not logged in that region before; false or null for any entry.
+- "sell": the Commander sells "count" tons of "commodity" (null for any), at any market.
+- "wreck": the Commander touches down at "count" crashed ships. "filter" is the wreck's type such as Type9; null means a crashed Thargoid ship.
+- "organic": the Commander analyses "count" organic samples. "filter" is a genus such as Aleoida, or null for any. "system" is the system where the analyses must happen, or null for anywhere. A line may place them in a system only when the objective names it.
+- "multicrew": the Commander joins another player's ship as crew "count" times. It needs another player, so never make it the only way forward; the Commander can refuse it.
+- "uss": the Commander drops into "count" signal sources. "filter" is DistressSignal, Salvage, Convoy, WeaponsFire or another type; null for any. "system" is the system where the drops must happen, or null for anywhere. A line may place a drop in a system only when the objective names it.
+No objective may need an ARX purchase: never ask for a paid paint job, decal, ship kit, suit or other ARX item, because the journal cannot show what the Commander owns from ARX.
+A counted kind counts only what happens after the objective before has fired, except engineer and those marked once, which are met once. Except uss, map, signal and organic, which may name a "system", none has a place of its own, so leave system, station and body null. When one of the others must happen somewhere, put an arrive or dock objective there just before it.
+
+Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Never use a system that needs a permit, such as Shinrarta Dezhra or Sol, unless the Commander is already in it, has visited it (which means they hold its permit), or holds the navy rank that grants it (Federal Navy rank 4 for Sol, Imperial Navy rank 4 for Achenar). A starter system is never allowed. Keep each hop within the reach stated. Under "this ship only", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.
+What a line may state as fact: an objective fires when its trigger is seen in the journal, and the trigger sees only what is listed for its kind. Three things are checked: what the Commander did; where the Commander has been and their history with a place; and how a game event went (a mission's target or outcome, a fight, a trade, what a scan or site held). A line may state one of these as fact only where its objective confirms it or the game state given shows it. So a line never states a sum of credits the Commander was paid, a course or jump plotted, or a place, beacon or event the Commander has never visited, scanned or seen. The story's own fiction is not checked: who the cast are, what they say, send, offer, remember or own, documents and records in the story, and events before the story began. Objectives fire in order, so the ending may say where the story stands and recount what any objective confirmed, in that order; it may not say the Commander did something no objective confirms. What each kind confirms:
+- "arrive": the ship arrived in that system — not why, what is there, or what the Commander did on the way
+- "dock": the Commander docked there after the objective before — nothing about the station's past or the Commander's history with it
+- "land": the ship touched down on that body — not what is on the surface or what the Commander did there
+- "scan": that body was scanned — not what the scan found beyond what the game state lists
+- "rank": a promotion to at least that rank in that career — not how it was earned
+- "bounty": bounties were collected, anywhere — not who the targets were, their crimes or their number beyond the count
+- "bond": kill bonds were earned in a conflict zone, optionally for one faction — not who was killed, who won or whether a fight was broken off
+- "onfootbond": kill bonds were earned on foot in a ground conflict zone — not who was killed, who won or whether a fight was broken off
+- "mission": a mission of this family was handed in, wherever it was taken or flown — not its target, the target's standing or how it went
+- "sell": tons were sold at a market — not the price, the buyer or where the goods came from
+- "mine": tons were refined from mining — not where they were mined or what they were for
+- "onfoot": the Commander stepped onto a planet surface — not what they did there
+- "collect": items were picked up on foot — not where they lay or whose they were
+- "organic": organic samples were analysed — not the species found or the sample's worth
+- "map": bodies were mapped with the surface mapper — not what the maps showed
+- "signal": bodies that show a signal were surveyed — not what makes the signal
+- "wreck": the ship touched down at crashed ships — not who crashed or what was aboard
+- "codex": codex entries were logged — not what the entries say
+- "datasale": credits' worth of exploration or organic data was sold — not who bought it or what it described
+- "salvage": cargo canisters were picked up in space — not what they held beyond the cargo type named, or whose they were
+- "uss": the ship dropped into signal sources — not who sent the signal or what was found there
+- "rescue": rescue items were handed in — not who was saved or how
+- "engineer": an engineer relationship reached a stage — not what the engineer said or did
+- "srv": the SRV was launched — not where it drove or what it found
+- "boost": the frame shift drive was supercharged in a jet cone — not where the Commander was headed
+- "discover": bodies no one had discovered were scanned — not that the discovery was credited or sold
+- "footfall": the Commander walked on a body no one had walked on — not what was found there
+- "contribute": tons were delivered to a colonisation site — not who builds it or what it will become
+- "claim": a system was claimed for colonisation — not what will be built
+- "unlock": a tech broker row was unlocked — not who supplied the parts
+- "crew": crew were hired — not who they are
+- "suitmod": suit or weapon mods appeared in a loadout — not who fitted them or why
+- "wing": the Commander joined or added to a wing — not who the wingmates are or what they did
+- "multicrew": the Commander joined another player's crew — not whose or to what end
+- "squadron": the Commander joined a squadron — not its aims or members
+- "conflict": the Commander took part in a war, civil war or election — not which side won or the Commander's part in the result
+- "faction": missions for a faction raised its influence — not the missions' content or the faction's standing
+Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier objectives' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first objective; the last objective's line is the ending.
+Write every line plainly, whoever says it. Do not use a metaphor or an image where a direct statement would do. Do not end a line on an aphorism or a moral ("That will hold.", "It will keep."). Do not repeat the spine's premise, want, stake, turn or ending as a line.
+A line never gives the Commander a task. The only thing they can do is fly to the next objective, and the game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never "ask the clerk", "find the pilot" or "see what their face does". What the Commander does next is always the next objective's place, and the line may point them at it.
+Give every arrive, dock, land and scan objective a "reason": one plain sentence, said before the Commander sets off, saying what is at that place that matters to the story — never a place reached for its own sake. It says what is there, not what the Commander must do there, and it never says what the objective's line will say. It may name an invented person who is at the place, such as a comms specialist who reads signals like the burst, a visiting scholar, or a doctor who can say whether the voices are real; the Commander is told about that person and never meets them, and what the person said or left is the objective's line. Every other kind has a null reason.
+Give each objective a short title — a chapter name, never a number.
+
+An objective may take several steps. Its own kind and fields are the first step; "then" lists each further step, in order, with the same kind and fields, and the objective's lines are spoken when its last step is done. There is no limit on the steps: give an objective as many as the story needs, and an empty "then" when it takes one.
+
+Answer with one JSON object and nothing else: {"name": string, "premise": string, "want": string, "stake": string, "turn": string, "ending": string, "opening": string, "reply": string, "beats": [{"title": string, "function": string, "kind": "arrive"|"dock"|"land"|"scan"|"rank"|"bounty"|"bond"|"onfootbond"|"mission"|"sell"|"mine"|"onfoot"|"collect"|"organic"|"map"|"signal"|"wreck"|"codex"|"datasale"|"salvage"|"uss"|"rescue"|"engineer"|"srv"|"boost"|"discover"|"footfall"|"contribute"|"claim"|"unlock"|"crew"|"suitmod"|"wing"|"multicrew"|"squadron"|"conflict"|"faction", "reason": string|null, "system": string|null, "station": string|null, "body": string|null, "career": string|null, "rank": number|null, "ship": string|null, "count": number|null, "faction": string|null, "mission": string|null, "commodity": string|null, "filter": string|null, "organic": boolean|null, "engineer": string|null, "stage": string|null, "line": string, "then": [{"kind": "arrive"|"dock"|"land"|"scan"|"rank"|"bounty"|"bond"|"onfootbond"|"mission"|"sell"|"mine"|"onfoot"|"collect"|"organic"|"map"|"signal"|"wreck"|"codex"|"datasale"|"salvage"|"uss"|"rescue"|"engineer"|"srv"|"boost"|"discover"|"footfall"|"contribute"|"claim"|"unlock"|"crew"|"suitmod"|"wing"|"multicrew"|"squadron"|"conflict"|"faction", "reason": string|null, "system": string|null, "station": string|null, "body": string|null, "career": string|null, "rank": number|null, "ship": string|null, "count": number|null, "faction": string|null, "mission": string|null, "commodity": string|null, "filter": string|null, "organic": boolean|null, "engineer": string|null, "stage": string|null}]}]}. "reply" is what you say to the Commander, in your own voice, as you hand them the story — one or two sentences, no summary of the plot.
