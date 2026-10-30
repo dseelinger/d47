@@ -57,12 +57,6 @@ public class CancelIsItsOwnControlTests
             .Select(chip => (chip.Child as TextBlock)?.Text)
             .ToList();
 
-    private static Button Bind(Grid row) =>
-        row.GetVisualDescendants().OfType<Button>()
-            .First(button => !SettingsView.IsRowChrome(button)
-                             && button.IsEffectivelyVisible
-                             && button.Content as string != "CLEAR");
-
     /// <summary>A press opens the microphone and does nothing else.</summary>
     [Fact]
     public void PressingPushToTalkNoLongerSilencesAnything()

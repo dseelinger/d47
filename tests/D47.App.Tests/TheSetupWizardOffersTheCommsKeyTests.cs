@@ -15,7 +15,7 @@ namespace D47.App.Tests;
 public class TheSetupWizardOffersTheCommsKeyTests
 {
     [AvaloniaFact]
-    public void TheTalkButtonStepOffersToBindTheCommsKey()
+    public void TheTalkButtonStepOffersASlotToBindTheCommsKey()
     {
         var (settings, _, _, _, _) = TestSurface.CreateFull();
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
@@ -28,8 +28,8 @@ public class TheSetupWizardOffersTheCommsKeyTests
 
         var names = wizard.GetVisualDescendants().OfType<Control>().Select(control => control.Name).ToList();
 
-        Assert.Contains("SetupCommsKeyBind", names);
-        Assert.Contains("SetupCommsStickBind", names);
+        Assert.Contains("SetupCommsKeySlot", names);
+        Assert.Contains("SetupCommsStickSlot", names);
         Assert.Contains("SetupCommsKeyChip", names);
 
         using var frame = host.CaptureRenderedFrame()!;

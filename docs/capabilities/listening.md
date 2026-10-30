@@ -315,12 +315,12 @@ words silently.
 What you hold to talk. **Scroll Lock out of the box** — Windows assigns it no shortcut and few games use it, so it
 seldom collides with a key you already use.
 
-**One row, and it takes a key, a stick button, or both.** Press **BIND** and Directive 47
-listens for either at once: press a key and it takes the key, press a button on your stick and it
-works out which one that was.
+**One row, and it takes a key, a stick button, or both.** Click the key slot and press a
+key, or click the stick slot and press a button on your stick; Directive 47 works out which button it
+was. A click anywhere else leaves the slot as it was.
 
-**To have both, bind twice — one gesture each time.** Press **BIND** and give it a key; press it
-again and give it a button. The two are stored separately, so the second does not replace the first,
+**To have both, bind twice — one gesture each time.** Click the key slot and give it a key; click
+the stick slot and give it a button. The two are stored separately, so the second does not replace the first,
 and the row then shows `SCROLL` and `BUTTON 11`. Either one opens the microphone, and the last one you
 let go of closes it — so letting go of the key while your thumb is still on the button does not cut
 you off mid-sentence.
@@ -335,7 +335,7 @@ that cannot be taken the instant they go down, because that is also how a combin
 one and press something else and you get the combination; press one and release it and you get the
 modifier. Scroll Lock, the default, is not a modifier and binds as soon as you press it.
 
-**Unbind clears both.** That is what the word says, and nobody ends up with two by accident.
+**Esc unbinds one slot.** While a slot listens, Esc empties that slot and leaves the other as it was.
 
 There used to be two rows for this. The stick half is [described below](#push-to-talk-button) and
 is unchanged in every respect except that it is no longer a separate question.
@@ -366,7 +366,7 @@ how you talk to it.
 **Not a row of its own any more** — it is the **Push-to-talk** row above. This section is about
 what happens when you press a stick button at it, which is worth reading before you try.
 
-Press **BIND**, then press and release the button you want, and Directive 47 works out
+Click the stick slot, then press and release the button you want, and Directive 47 works out
 which one it was. It is stored separately from your key, so binding a button does not unbind the
 key: you said two things rather than changed your mind about one.
 
@@ -405,7 +405,7 @@ UseBoostJuice. D47 cannot tell whether that is the same controller.
 **Bind a key, a stick button, or one of each.** The button half is what makes this usable in the
 middle of a fight, and it is the only other binding in Directive 47 that takes one — the interface
 hotkeys stay keyboard-only, because you press those sitting at the window. Giving it the same kind
-twice replaces that one; **Unbind** clears both.
+twice replaces that one; **Esc** while a slot listens unbinds that slot.
 
 Claimed system-wide rather than only while Directive 47 has focus, because the moment you want it is
 the moment Elite is in front — so the key half needs a modifier, and a bare letter is refused as you

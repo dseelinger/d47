@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
@@ -672,8 +673,7 @@ public sealed class SetupWizard : ModalDialog
             waitingForStick,
             canBind: _switches is not null,
             bound: button is not null,
-            bind: () => _ = CaptureAsync(ListeningCapability.PushToTalkButtonKey, message),
-            clear: () => Choose(Choices with { TalkButton = null })));
+            bind: () => _ = CaptureAsync(ListeningCapability.PushToTalkButtonKey, message)));
 
         if (button is { } held
             && binds.IsKnown
@@ -708,8 +708,7 @@ public sealed class SetupWizard : ModalDialog
             waitingForKey,
             canBind: true,
             bound: Choices.TalkKey is { Length: > 0 },
-            bind: () => _ = CaptureAsync(ListeningCapability.PushToTalkKeyKey, message),
-            clear: () => Choose(Choices with { TalkKey = null })));
+            bind: () => _ = CaptureAsync(ListeningCapability.PushToTalkKeyKey, message)));
 
         if (Choices.TalkKey is { Length: > 0 } gesture && binds.IsKnown && binds.Using(gesture) is { Count: > 0 } collisions)
         {
@@ -743,8 +742,7 @@ public sealed class SetupWizard : ModalDialog
             waitingForCommsStick,
             canBind: _switches is not null,
             bound: commsButton is not null,
-            bind: () => _ = CaptureAsync(ListeningCapability.CommsPushToTalkButtonKey, message),
-            clear: () => Choose(Choices with { CommsButton = null })));
+            bind: () => _ = CaptureAsync(ListeningCapability.CommsPushToTalkButtonKey, message)));
 
         var waitingForCommsKey = _capturing == ListeningCapability.CommsPushToTalkKeyKey;
 
@@ -756,8 +754,7 @@ public sealed class SetupWizard : ModalDialog
             waitingForCommsKey,
             canBind: true,
             bound: Choices.CommsKey is { Length: > 0 },
-            bind: () => _ = CaptureAsync(ListeningCapability.CommsPushToTalkKeyKey, message),
-            clear: () => Choose(Choices with { CommsKey = null })));
+            bind: () => _ = CaptureAsync(ListeningCapability.CommsPushToTalkKeyKey, message)));
 
         comms.Children.Add(Link("COMMS GUIDE ›", "Opens the comms page in your browser", Guide("capabilities/comms", "choose-who-your-comms-key-reaches")));
 
@@ -902,7 +899,7 @@ public sealed class SetupWizard : ModalDialog
         }
     }
 
-    private Control BindLine(string name, string chip, bool waiting, bool canBind, bool bound, Action bind, Action clear)
+    private Control BindLine(string name, string chip, bool waiting, bool canBind, bool bound, Action bind)
     {
         var text = new TextBlock
         {
@@ -914,43 +911,36 @@ public sealed class SetupWizard : ModalDialog
         };
         ThemeInk.Bind(text, TextBlock.ForegroundProperty, waiting ? ThemeManager.CyanKey : bound ? ThemeManager.WhiteKey : ThemeManager.Grey2Key);
 
-        var slab = new Border { Padding = new Thickness(14, 0), MinHeight = TypeScale.MinimumTarget, Child = text };
+        var slab = new Border
+        {
+            Name = $"{name}Slot",
+            Padding = new Thickness(14, 0),
+            MinHeight = TypeScale.MinimumTarget,
+            Child = text,
+            Classes = { SettingsView.BindingChipClass },
+        };
         ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         if (waiting)
         {
+            slab.Classes.Add(BindCapture.ListeningClass);
             slab.BorderThickness = new Thickness(1);
             ThemeInk.Bind(slab, Border.BorderBrushProperty, ThemeManager.CyanKey);
         }
 
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile, Margin = Gaps.TileBefore };
-
-        if (waiting)
+        if (canBind)
         {
-            var cancel = new Button { Name = $"{name}Cancel", Content = "CANCEL" };
-            cancel.Click += (_, _) =>
+            slab.Cursor = new Cursor(StandardCursorType.Hand);
+            slab.PointerPressed += (_, e) =>
             {
-                CancelCapture();
-                Render();
+                if (e.GetCurrentPoint(slab).Properties.IsLeftButtonPressed)
+                {
+                    bind();
+                }
             };
-            buttons.Children.Add(cancel);
-        }
-        else
-        {
-            var press = new Button { Name = $"{name}Bind", Content = "BIND", IsEnabled = canBind };
-            press.Click += (_, _) => bind();
-
-            var wipe = new Button { Name = $"{name}Clear", Content = "CLEAR", IsEnabled = bound };
-            wipe.Click += (_, _) => clear();
-
-            buttons.Children.Add(press);
-            buttons.Children.Add(wipe);
         }
 
-        var line = new DockPanel { Children = { buttons, slab } };
-        DockPanel.SetDock(buttons, Dock.Right);
-
-        return line;
+        return slab;
     }
 
     private Control ReadyBody()

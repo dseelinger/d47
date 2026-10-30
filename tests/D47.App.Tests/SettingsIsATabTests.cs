@@ -331,12 +331,7 @@ public class SettingsIsATabTests
                 && grid.GetVisualDescendants().OfType<TextBlock>()
                     .Any(text => text.Text == "Push-to-talk"));
 
-        var bind = row.GetVisualDescendants().OfType<Button>()
-            .Where(button => !D47.App.Settings.SettingsView.IsRowChrome(button) && button.IsEffectivelyVisible)
-            .First(button => (button.Content as string) != "CLEAR");
-
-        bind.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        BindSlots.Click(window, BindSlots.Of(row)[0]);
 
         window.KeyPress(Key.F9, RawInputModifiers.None, PhysicalKey.F9, null);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();

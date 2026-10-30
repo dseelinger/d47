@@ -1,14 +1,16 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using D47.App.Controls;
 
 namespace D47.App.Settings;
 
 /// <summary>
 /// Listens for one key gesture or stick button and returns it, without storing it. The settings view and
-/// the setup wizard both bind through this.
+/// the setup wizard both bind through this, one slot at a time.
 /// </summary>
 public static class BindCapture
 {
@@ -19,7 +21,7 @@ public static class BindCapture
 
     /// <summary>
     /// <see cref="RunAsync"/> again after each press <paramref name="refuse"/> gives a reason for, saying the
-    /// reason on <paramref name="message"/>; returns the first press nothing refused, or null on Esc.
+    /// reason on <paramref name="message"/>; returns the first press nothing refused, a null value for Esc, or null for a cancel.
     /// </summary>
     public static async Task<(string Key, string? Value)?> RunUntilFreeAsync(
         TopLevel top,
@@ -49,8 +51,9 @@ public static class BindCapture
     }
 
     /// <summary>
-    /// The setting key that caught and the value to store, or null when Esc or <paramref name="cancel"/>
-    /// ended it. <paramref name="keyKey"/> arms the keyboard and <paramref name="buttonKey"/> the stick;
+    /// The setting key that caught and the value to store. Esc returns the armed slot's key with a null
+    /// value, which unbinds it; a press anywhere else on the page or <paramref name="cancel"/> returns null.
+    /// <paramref name="keyKey"/> arms the keyboard and <paramref name="buttonKey"/> the stick;
     /// <paramref name="bare"/> makes a modifier released on its own a binding.
     /// </summary>
     public static async Task<(string Key, string? Value)?> RunAsync(
@@ -93,8 +96,20 @@ public static class BindCapture
             e.Handled = true;
 
             captured.TrySetResult(decision == KeyDecision.Escape
-                ? null
+                ? (keyKey ?? buttonKey) is { } slotKey ? (slotKey, null) : null
                 : (keyKey!, new KeyGesture(e.Key, e.KeyModifiers).ToString()));
+        }
+
+        // A press on the listening slot is swallowed so the slot does not start a second capture.
+        void OnPointer(object? sender, PointerPressedEventArgs e)
+        {
+            if (e.Source is Visual source
+                && source.GetSelfAndVisualAncestors().OfType<Control>().Any(IsListeningSlot))
+            {
+                e.Handled = true;
+            }
+
+            captured.TrySetResult(null);
         }
 
         void OnKeyUp(object? sender, KeyEventArgs e)
@@ -111,6 +126,7 @@ public static class BindCapture
         // Tunnelling: the gesture belongs to the binding, not to whatever control the click left focused.
         // Attached even when only the stick is armed, so Esc always ends the capture.
         top.AddHandler(InputElement.KeyDownEvent, OnKey, RoutingStrategies.Tunnel, handledEventsToo: true);
+        top.AddHandler(InputElement.PointerPressedEvent, OnPointer, RoutingStrategies.Tunnel, handledEventsToo: true);
 
         if (keys && bare)
         {
@@ -133,6 +149,7 @@ public static class BindCapture
         finally
         {
             top.RemoveHandler(InputElement.KeyDownEvent, OnKey);
+            top.RemoveHandler(InputElement.PointerPressedEvent, OnPointer);
             top.RemoveHandler(InputElement.KeyUpEvent, OnKeyUp);
 
             if (walking is not null)
@@ -142,6 +159,12 @@ public static class BindCapture
             }
         }
     }
+
+    /// <summary>The class a slot wears while it listens.</summary>
+    public const string ListeningClass = "listening";
+
+    private static bool IsListeningSlot(Control control) =>
+        control.Classes.Contains(SettingsView.BindingChipClass) && control.Classes.Contains(ListeningClass);
 
     internal enum KeyDecision { Escape, Gesture, Ignore }
 

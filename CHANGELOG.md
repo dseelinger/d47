@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Key and stick-button bindings now work the way Elite's do. Click a slot and press the key or button; Esc while it listens unbinds that slot and leaves the other slot as it was, and a click anywhere else, or on the slot again, ends the capture with nothing changed. The BIND and CLEAR buttons are gone from every bind row, and CANCEL is gone from the setup wizard, whose push-to-talk and comms lines are slots too. Before, BIND listened for the key and the button together and CLEAR emptied both.
+
 Pressing Enter in a "say it or type it" box now does what Done does: a valid value completes the entry, and a value d47 refuses shows its complaint. The block caret in every text field is now centred on its line; at the larger entry-box size it used to sit high.
 
 The desktop overlay no longer gets lost off screen. When any part of the strip is outside every monitor, after a drag or resize, at startup, when the resolution, scaling or monitor layout changes while d47 runs, or when the strip is shown, d47 centres it on the screen Elite is on and saves that place. A strip larger than the screen is reduced to fit. Pressing Move the overlay (`Ctrl+Alt+M`) on a lost strip also centres it before place mode starts; a strip wholly on a monitor is not moved. Before, only a strip whose top-left corner was off every screen was moved, and only at startup or on a zoom change.

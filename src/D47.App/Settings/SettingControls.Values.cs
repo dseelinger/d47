@@ -818,92 +818,85 @@ internal sealed partial class SettingControls
     }
 
     /// <summary>
-    /// The one bind control (#217): a key slot and a controller button slot at fixed widths, then BIND and
-    /// CLEAR, on one line. An empty slot reads UNBOUND. The button slot stays out of a row that has one
-    /// only while no controller is attached and nothing is bound to it, and its column stays reserved.
-    /// Slots are shown or hidden rather than rebuilt, so a capture in progress keeps its own control.
+    /// The one bind control (#217): a key slot and a controller button slot at fixed widths, on one line.
+    /// Clicking a slot listens for that slot alone; Esc unbinds it and a click elsewhere leaves it. An empty
+    /// slot reads UNBOUND. The button slot stays out of a row that has one only while no controller is
+    /// attached and nothing is bound to it, and its column stays reserved. Slots are shown or hidden rather
+    /// than rebuilt, so a capture in progress keeps its own control.
     /// </summary>
     private (Control, Action) BuildBind(SettingRow row, StatusLine message)
     {
         var slots = row.BoundKeys
-            .Select(key => (Stick: KindOf(key) == SettingKind.HotasButton, Chip: SettingsView.BindingChip()))
+            .Select(key => (Key: key, Stick: KindOf(key) == SettingKind.HotasButton, Chip: SettingsView.BindingChip()))
             .ToList();
 
-        var bind = new Button { Content = "BIND", Width = SettingsView.BindButtonWidth };
-        var clear = new Button { Content = "CLEAR", Width = SettingsView.BindButtonWidth };
-
-        (bool Keys, bool Stick)? listening = null;
+        string? listening = null;
         Action paint = () => { };
-
-        bind.Click += async (_, _) => await CaptureBindAsync(
-            row,
-            bind,
-            message,
-            state =>
-            {
-                listening = state;
-                paint();
-            });
-
-        clear.Click += (_, _) =>
-        {
-            foreach (var key in row.BoundKeys)
-            {
-                host.Apply(key, null, message);
-            }
-        };
 
         var grid = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions(
-                $"{SettingsView.BindSlotWidth},{SettingsView.BindSlotWidth},{SettingsView.BindButtonWidth},{SettingsView.BindButtonWidth}"),
+            ColumnDefinitions = new ColumnDefinitions($"{SettingsView.BindSlotWidth},{SettingsView.BindSlotWidth}"),
             ColumnSpacing = Gaps.Tile,
             HorizontalAlignment = HorizontalAlignment.Left,
-            Width = (2 * SettingsView.BindSlotWidth) + (2 * SettingsView.BindButtonWidth) + (3 * Gaps.Tile),
+            Width = (2 * SettingsView.BindSlotWidth) + Gaps.Tile,
         };
 
-        foreach (var (stick, (chip, text)) in slots)
+        foreach (var (slotKey, stick, (chip, text)) in slots)
         {
             chip.Width = SettingsView.BindSlotWidth;
+            chip.Cursor = new Cursor(StandardCursorType.Hand);
             text.TextTrimming = TextTrimming.CharacterEllipsis;
             Grid.SetColumn(chip, stick ? 1 : 0);
             grid.Children.Add(chip);
-        }
 
-        Grid.SetColumn(bind, 2);
-        Grid.SetColumn(clear, 3);
-        grid.Children.Add(bind);
-        grid.Children.Add(clear);
+            chip.PointerPressed += async (_, e) =>
+            {
+                if (!e.GetCurrentPoint(chip).Properties.IsLeftButtonPressed)
+                {
+                    return;
+                }
+
+                await CaptureBindAsync(
+                    row,
+                    slotKey,
+                    stick,
+                    chip,
+                    message,
+                    heard =>
+                    {
+                        listening = heard ? slotKey : null;
+                        paint();
+                    });
+            };
+        }
 
         paint = () =>
         {
             var said = BoundAs(row);
-            var bound = said.Any(text => text is not null);
-
-            // A row that can only be filled from a controller is dead without one, and saying so beats a
-            // button that does nothing.
-            var dead = row.Kind == SettingKind.HotasButton && services.Switches is null;
 
             for (var i = 0; i < slots.Count; i++)
             {
-                var (stick, (chip, text)) = slots[i];
+                var (slotKey, stick, (chip, text)) = slots[i];
                 var empty = said[i] is null;
-                var heard = listening is { } state && (stick ? state.Stick : state.Keys);
+                var heard = listening == slotKey;
+
+                // A row that can only be filled from a controller is dead without one, and saying so beats a
+                // slot that does nothing.
+                var dead = stick && services.Switches is null;
 
                 chip.IsVisible = !empty
                                  || !stick
                                  || row.Kind == SettingKind.HotasButton
                                  || services.Switches is not null;
 
+                chip.Classes.Set(BindCapture.ListeningClass, heard);
+
                 text.Text = heard
-                    ? (stick ? (listening!.Value.Keys ? "OR A BUTTON…" : "PRESS A BUTTON…") : "PRESS A KEY…")
+                    ? (stick ? "PRESS A BUTTON…" : "PRESS A KEY…")
                     : empty ? (dead ? "NO CONTROLLERS" : "UNBOUND") : said[i]?.ToUpperInvariant();
                 text[!TextBlock.ForegroundProperty] = new DynamicResourceExtension(
                     heard ? ThemeManager.CyanKey : empty ? ThemeManager.Grey2Key : ThemeManager.WhiteKey);
             }
-
-            bind.IsEnabled = !dead;
-            clear.IsEnabled = bound;
         };
 
         return (grid, paint);
@@ -989,39 +982,32 @@ internal sealed partial class SettingControls
         };
     }
 
-    /// <summary>Binds by listening for a gesture, rather than by offering a list of key names.</summary>
+    /// <summary>Binds one slot by listening for a gesture, rather than by offering a list of key names.</summary>
     private async Task CaptureBindAsync(
         SettingRow row,
-        Button button,
+        string slotKey,
+        bool stick,
+        Control slot,
         StatusLine message,
-        Action<(bool Keys, bool Stick)?> listening)
+        Action<bool> listening)
     {
-        if (TopLevel.GetTopLevel(button) is not { } top)
+        if (TopLevel.GetTopLevel(slot) is not { } top || (stick && services.Switches is null))
         {
             return;
         }
 
-        var keys = row.Kind != SettingKind.HotasButton;
-
         // Whether a modifier pressed on its own is a binding here.
-        var bare = keys && !row.SystemWide;
+        var bare = !stick && !row.SystemWide;
 
-        // The stick is armed for a row that is one, or for a row naming one as its other half.
-        var buttonKey = row.Kind == SettingKind.HotasButton
-            ? row.Key
-            : row.BoundKeys.FirstOrDefault(key => KindOf(key) == SettingKind.HotasButton);
-
-        var stick = buttonKey is not null && services.Switches is not null;
-
-        listening((keys, stick));
+        listening(true);
 
         try
         {
             if (await BindCapture.RunUntilFreeAsync(
                     top,
-                    keys ? row.Key : null,
+                    stick ? null : slotKey,
                     bare,
-                    stick ? buttonKey : null,
+                    stick ? slotKey : null,
                     services.Switches,
                     message,
                     (key, value) => HeldMessage(key, value))
@@ -1032,7 +1018,7 @@ internal sealed partial class SettingControls
         }
         finally
         {
-            listening(null);
+            listening(false);
             host.Refresh();
         }
     }

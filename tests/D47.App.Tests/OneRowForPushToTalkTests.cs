@@ -47,15 +47,12 @@ public class OneRowForPushToTalkTests
             .Select(chip => (chip.Child as TextBlock)?.Text)
             .ToList();
 
-    private static Button Bind(Grid row) =>
-        row.GetVisualDescendants().OfType<Button>()
-            .First(button => !SettingsView.IsRowChrome(button)
-                             && button.IsEffectivelyVisible
-                             && button.Content as string != "CLEAR");
+    /// <summary>Click the row's key slot, or its stick slot.</summary>
+    private static void Click(SettingsHost host, Grid row, bool stick = false) =>
+        BindSlots.Click(host.Window, BindSlots.Of(row)[stick ? 1 : 0]);
 
-    private static Button Unbind(Grid row) =>
-        row.GetVisualDescendants().OfType<Button>()
-            .First(button => button.Content as string == "CLEAR" && button.IsEffectivelyVisible);
+    private static void Esc(SettingsHost host) =>
+        BindSlots.Press(host.Window, Avalonia.Input.Key.Escape, Avalonia.Input.PhysicalKey.Escape);
 
     /// <summary>One control says both.</summary>
     [AvaloniaFact]
@@ -111,11 +108,20 @@ public class OneRowForPushToTalkTests
         host.Close();
     }
 
-    /// <summary>Unbind means unbind, which is the ruling the issue left open.</summary>
-    [AvaloniaFact]
-    public void UnbindClearsBothHalves()
+    /// <summary>Esc while a slot listens unbinds that slot and only that slot.</summary>
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EscWhileASlotListensUnbindsThatSlotAlone(bool stick)
     {
-        var (settings, host) = Open();
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
+
+        var host = SettingsHost.Open(settings, viewState, paths, switches: Editing(paths, settings));
 
         settings.Apply(ListeningCapability.PushToTalkKeyKey, "RightShift", SettingsCaller.Panel);
         settings.Apply(ListeningCapability.PushToTalkButtonKey, $"{Stick}#10", SettingsCaller.Panel);
@@ -123,12 +129,69 @@ public class OneRowForPushToTalkTests
 
         var row = Row(host, "Push-to-talk")!;
 
-        Unbind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Click(host, row, stick);
+        Assert.Equal(stick ? "PRESS A BUTTON…" : "PRESS A KEY…", Chips(row)[stick ? 1 : 0]);
+
+        Esc(host);
+
+        Assert.Equal(stick ? "RightShift" : null, settings.Current.Listening.PushToTalkKey);
+        Assert.Equal(stick ? null : $"{Stick}#10", settings.Current.Listening.PushToTalkButton);
+        Assert.Equal(stick ? ["RIGHTSHIFT", "UNBOUND"] : ["UNBOUND", "BUTTON 11"], Chips(row));
+
+        host.Close();
+    }
+
+    /// <summary>A click outside the listening slot, or on it again, ends the capture with nothing changed.</summary>
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AClickElsewhereOrOnTheSlotAgainLeavesBothSlotsAsTheyWere(bool onTheSlot)
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
+
+        var host = SettingsHost.Open(settings, viewState, paths, switches: Editing(paths, settings));
+
+        settings.Apply(ListeningCapability.PushToTalkKeyKey, "RightShift", SettingsCaller.Panel);
+        settings.Apply(ListeningCapability.PushToTalkButtonKey, $"{Stick}#10", SettingsCaller.Panel);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Null(settings.Current.Listening.PushToTalkKey);
-        Assert.Null(settings.Current.Listening.PushToTalkButton);
-        Assert.Equal(["UNBOUND"], Chips(row));
+        var row = Row(host, "Push-to-talk")!;
+
+        Click(host, row);
+        Assert.Equal("PRESS A KEY…", Chips(row)[0]);
+
+        if (onTheSlot)
+        {
+            Click(host, row);
+        }
+        else
+        {
+            BindSlots.Click(host.Window, host.View);
+        }
+
+        Assert.Equal(["RIGHTSHIFT", "BUTTON 11"], Chips(row));
+        Assert.Equal("RightShift", settings.Current.Listening.PushToTalkKey);
+        Assert.Equal($"{Stick}#10", settings.Current.Listening.PushToTalkButton);
+
+        host.Close();
+    }
+
+    /// <summary>A bind row draws its slots and no BIND or CLEAR button.</summary>
+    [AvaloniaFact]
+    public void ARowHasNoBindOrClearButton()
+    {
+        var (_, host) = Open();
+
+        var row = Row(host, "Push-to-talk")!;
+
+        Assert.DoesNotContain(
+            row.GetVisualDescendants().OfType<Button>(),
+            button => button.Content as string is "BIND" or "CLEAR");
 
         host.Close();
     }
@@ -141,8 +204,7 @@ public class OneRowForPushToTalkTests
 
         var row = Row(host, "Push-to-talk")!;
 
-        Bind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Click(host, row);
 
         host.Window.KeyPress(Avalonia.Input.Key.F9, Avalonia.Input.RawInputModifiers.None,
             Avalonia.Input.PhysicalKey.F9, null);
@@ -159,9 +221,9 @@ public class OneRowForPushToTalkTests
 
     /// <summary>Which listeners are armed comes from the row.</summary>
     [AvaloniaTheory]
-    [InlineData(true, new[] { "PRESS A KEY…", "OR A BUTTON…" })]
+    [InlineData(true, new[] { "PRESS A KEY…", "UNBOUND" })]
     [InlineData(false, new[] { "PRESS A KEY…" })]
-    public void TheControlArmsTheStickOnlyWhenThereIsOne(bool controllers, string[] says)
+    public void AClickArmsTheKeySlotAlone(bool controllers, string[] says)
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
@@ -174,13 +236,9 @@ public class OneRowForPushToTalkTests
             settings, viewState, paths, switches: controllers ? Editing(paths, settings) : null);
 
         var row = Row(host, "Push-to-talk")!;
-        var bind = Bind(row);
-
-        bind.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Click(host, row);
 
         Assert.Equal(says, Chips(row));
-        Assert.Equal("BIND", bind.Content as string);
 
         // Escape puts the capture down again, so the page is not left armed behind the test.
         host.Window.KeyPress(Avalonia.Input.Key.Escape, Avalonia.Input.RawInputModifiers.None,
@@ -261,7 +319,7 @@ public class OneRowForPushToTalkTests
         var host = SettingsHost.Open(settings, viewState, paths, switches: Editing(paths, settings));
         var row = Row(host, "Push-to-talk")!;
 
-        Unbind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        settings.Apply(ListeningCapability.PushToTalkKeyKey, null, SettingsCaller.Panel);
         Dispatcher.UIThread.RunJobs();
 
         // The stick half first, as the Commander who asked had it: bound to a button and nothing else.
@@ -292,8 +350,7 @@ public class OneRowForPushToTalkTests
 
         var row = Row(host, "Push-to-talk")!;
 
-        Bind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Click(host, row);
 
         host.Window.KeyPress(key, Avalonia.Input.RawInputModifiers.None, physical, null);
         Dispatcher.UIThread.RunJobs();
@@ -315,8 +372,7 @@ public class OneRowForPushToTalkTests
         var (settings, host) = Open();
         var row = Row(host, "Push-to-talk")!;
 
-        Bind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Click(host, row);
 
         host.Window.KeyPress(Avalonia.Input.Key.LeftCtrl, Avalonia.Input.RawInputModifiers.None,
             Avalonia.Input.PhysicalKey.ControlLeft, null);
@@ -342,8 +398,7 @@ public class OneRowForPushToTalkTests
 
         var row = Row(host, "Show or hide the overlay")!;
 
-        Bind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Click(host, row);
 
         host.Window.KeyPress(Avalonia.Input.Key.RightShift, Avalonia.Input.RawInputModifiers.None,
             Avalonia.Input.PhysicalKey.ShiftRight, null);
@@ -367,8 +422,7 @@ public class OneRowForPushToTalkTests
     private static void Press(
         SettingsHost host, Grid row, Avalonia.Input.Key key, Avalonia.Input.PhysicalKey physical)
     {
-        Bind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Click(host, row);
 
         host.Window.KeyPress(key, Avalonia.Input.RawInputModifiers.None, physical, null);
         Dispatcher.UIThread.RunJobs();

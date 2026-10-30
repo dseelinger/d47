@@ -22,7 +22,7 @@ nav_order: 139
 <p class="intro">Bind the comms key, choose who it reaches, then talk to them. Sending a message other people can read comes after.</p>
 <section>
 <h2><span class="num">1</span> Bind the comms key.</h2>
-<p class="say">In Settings, find Comms push-to-talk, press BIND, then press the key or stick button you want.</p>
+<p class="say">In Settings, find Comms push-to-talk, click its key or stick slot, then press the key or stick button you want.</p>
 <p class="expect">The row shows your key or button. It is unbound until you do this, and the setup wizard offers it on its Talk button step.</p>
 <svg viewBox="0 0 880 136" role="img" aria-label="The comms push-to-talk row with a key bound">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>

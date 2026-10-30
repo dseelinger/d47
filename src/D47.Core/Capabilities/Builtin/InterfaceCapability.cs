@@ -401,15 +401,16 @@ public static class InterfaceCapability
                     ? null
                     : AdvancedPrefix + exercise.Where + ", and find " + label + ". The row shows a key slot (default "
                       + exercise.DefaultKey + "), a stick slot that stays hidden while no controller is attached and "
-                      + "nothing is bound to it, and the BIND and CLEAR buttons. Press the key: " + exercise.Effect + " "
-                      + keyScope + " To rebind, press BIND: the key slot reads PRESS A KEY…. Press another "
+                      + "nothing is bound to it. Press the key: " + exercise.Effect + " "
+                      + keyScope + " To rebind, click the key slot: it reads PRESS A KEY…. Press another "
                       + "combination and the slot shows it in capitals; that combination now does the action and the "
-                      + "old one no longer does. CLEAR empties both slots and the slots read UNBOUND.",
+                      + "old one no longer does. Click the slot and press Esc: the key slot reads UNBOUND and the "
+                      + "stick slot keeps what it had. Click the slot and then click elsewhere: both slots stay as they were.",
                 Advanced = true,
                 Label = label,
-                Help = "Press a key combination or a stick button to bind it. Bind a key, a stick button, or "
-                       + "one of each; giving it the same kind twice replaces that one. Clear removes both and "
-                       + "leaves the action unbound."
+                Help = "Click a slot and press a key combination or a stick button to bind it. Bind a key, a stick "
+                       + "button, or one of each; giving it the same kind twice replaces that one. Esc while a "
+                       + "slot listens unbinds that slot, and a click anywhere else leaves it as it was."
                        + (systemWide
                            ? " Registered system-wide, so the key and the button both work while Elite has the "
                              + "foreground, which is when they are needed."
@@ -431,10 +432,9 @@ public static class InterfaceCapability
                     ? null
                     : AdvancedPrefix + exercise.Where + ", and find " + label + ". The stick slot of that row is this "
                       + "setting. It needs a stick or throttle attached; with none, the slot stays hidden until a "
-                      + "button is bound. Press BIND: the stick slot reads PRESS A BUTTON… (OR A BUTTON… while a key is "
-                      + "listened for too). Press a button that springs back and the slot shows its name. Press that "
-                      + "button: " + exercise.Effect + " " + buttonScope + " CLEAR empties the slots and the "
-                      + "button then does nothing.",
+                      + "button is bound. Click the stick slot: it reads PRESS A BUTTON…. Press a button that springs back and the slot shows its name. Press that "
+                      + "button: " + exercise.Effect + " " + buttonScope + " Click the stick slot and press Esc: "
+                      + "the slot reads UNBOUND and the button then does nothing.",
                 Advanced = true,
                 Label = label + " button",
                 Help =

@@ -36,11 +36,8 @@ public sealed class BindRowsDrawKeyAndButtonSlotsTests
             .Where(chip => chip.Classes.Contains(SettingsView.BindingChipClass) && chip.IsEffectivelyVisible)
             .ToList();
 
-    private static Button Named(Grid row, string name) =>
-        row.GetVisualDescendants().OfType<Button>().First(button => button.Content as string == name);
-
     [AvaloniaFact]
-    public void EveryBindRowHoldsItsSlotsAndButtonsAtTheSameWidthAndPlace()
+    public void EveryBindRowHoldsItsSlotsAtTheSameWidthAndNoButtons()
     {
         var host = Open("voice-input");
         Dispatcher.UIThread.RunJobs();
@@ -48,14 +45,14 @@ public sealed class BindRowsDrawKeyAndButtonSlotsTests
         var row = Row(host, "Push-to-talk");
 
         Assert.All(Chips(row), chip => Assert.Equal(SettingsView.BindSlotWidth, chip.Bounds.Width));
-        Assert.Equal(SettingsView.BindButtonWidth, Named(row, "BIND").Bounds.Width);
-        Assert.Equal(SettingsView.BindButtonWidth, Named(row, "CLEAR").Bounds.Width);
+        Assert.DoesNotContain(
+            row.GetVisualDescendants().OfType<Button>(), button => button.Content as string is "BIND" or "CLEAR");
 
         host.Close();
     }
 
     [AvaloniaFact]
-    public void ARowWithoutControllersPutsBindWhereARowWithOneDoes()
+    public void ARowWithoutControllersKeepsItsKeySlotInTheSameColumn()
     {
         var host = Open("voice-input");
         host.View.ShowPlaceOf(InterfaceCapability.ShowOverlayHotkeyKey);
@@ -67,11 +64,6 @@ public sealed class BindRowsDrawKeyAndButtonSlotsTests
         Assert.Single(chips);
         Assert.Equal(SettingsView.BindSlotWidth, chips[0].Bounds.Width);
 
-        var bindX = Named(overlay, "BIND").TranslatePoint(default, overlay)!.Value.X;
-        var slotsEnd = chips[0].TranslatePoint(default, overlay)!.Value.X + (2 * SettingsView.BindSlotWidth);
-
-        Assert.True(bindX >= slotsEnd, $"BIND at {bindX} overlaps the reserved button slot ending at {slotsEnd}");
-
         host.Close();
     }
 
@@ -82,8 +74,8 @@ public sealed class BindRowsDrawKeyAndButtonSlotsTests
         Dispatcher.UIThread.RunJobs();
 
         var row = Row(host, "Push-to-talk");
-        Named(row, "CLEAR").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        BindSlots.Click(host.Window, Chips(row)[0]);
+        BindSlots.Press(host.Window, Avalonia.Input.Key.Escape, Avalonia.Input.PhysicalKey.Escape);
 
         Assert.Equal(["UNBOUND"], Chips(row).Select(chip => (chip.Child as TextBlock)?.Text));
 

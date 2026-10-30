@@ -84,9 +84,6 @@ public partial class SettingsView
     /// <summary>Width of a bind row's key slot and of its controller button slot.</summary>
     internal const double BindSlotWidth = 180;
 
-    /// <summary>Width of a bind row's BIND and CLEAR buttons.</summary>
-    internal const double BindButtonWidth = 96;
-
     /// <summary>The KEY / CONTROLLER BUTTON captions over a group's bind rows, aligned with their slots.</summary>
     internal static Grid BindColumnHeader()
     {

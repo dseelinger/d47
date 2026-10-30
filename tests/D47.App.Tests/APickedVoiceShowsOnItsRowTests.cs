@@ -108,6 +108,10 @@ public class APickedVoiceShowsOnItsRowTests
     {
         // The full settings page, not the carrier strip: push-to-talk lives there.
         var (settings, viewState, paths) = TestSurface.Create(voices: Voices());
+
+        // The slot is clicked, so it needs the theme's ink to be hit.
+        new D47.App.Theming.ThemeManager(Avalonia.Application.Current!, Microsoft.Extensions.Logging.Abstractions.NullLogger<D47.App.Theming.ThemeManager>.Instance)
+            .FollowSettings(settings);
         viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
 
         var host = SettingsHost.Open(settings, viewState, paths);
@@ -125,9 +129,6 @@ public class APickedVoiceShowsOnItsRowTests
             .Select(chip => (chip.Child as TextBlock)?.Text)
             .First();
 
-        Button Unbind() => row!.GetVisualDescendants().OfType<Button>()
-            .First(button => button.Content as string == "CLEAR" && button.IsEffectivelyVisible);
-
         // Bound, so that clearing it has something visible to undo.
         var key = ListeningCapability.PushToTalkKeyKey;
 
@@ -136,11 +137,12 @@ public class APickedVoiceShowsOnItsRowTests
 
         Assert.NotEqual("UNBOUND", Bound());
 
-        // The app's own unsubscribe.
+        // Listening, then the app's own unsubscribe, then Esc unbinds through the page.
+        BindSlots.Click(host.Window, BindSlots.Of(row!)[0]);
+        Assert.Equal("PRESS A KEY…", Bound());
         DetachOnly(host);
 
-        Unbind().RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        BindSlots.Press(host.Window, Avalonia.Input.Key.Escape, Avalonia.Input.PhysicalKey.Escape);
 
         Assert.Null(settings.Read(key));
         Assert.Equal("UNBOUND", Bound());

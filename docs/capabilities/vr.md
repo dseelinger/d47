@@ -332,9 +332,9 @@ leaving are silent: the handles appearing, or leaving, is the answer. Asking to 
 motion controllers off, or with no headset session, is spoken instead — from inside a headset there
 is no transcript to read it from.
 
-Each of these four headset keys takes a stick or throttle button as well: press **BIND** on the row
+Each of these four headset keys takes a stick or throttle button as well: click the stick slot on the row
 and press the button, and it is bound beside the key rather than in its place. Giving it the same
-kind twice replaces that one, and **CLEAR** removes both. The button works anywhere, as the key does.
+kind twice replaces that one, and **Esc** while a slot listens unbinds that slot. The button works anywhere, as the key does.
 
 ### Zooming it
 

@@ -61,6 +61,15 @@ public class TheSetupWizardSavesOnlyOnStartTests
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
     }
 
+    private static void Slot(Control root, string name)
+    {
+        var slot = root.GetVisualDescendants().OfType<Border>().First(candidate => candidate.Name == name);
+        BindSlots.Click(TopLevel.GetTopLevel(root)!, slot);
+    }
+
+    private static void Esc(Control root) =>
+        BindSlots.Press(TopLevel.GetTopLevel(root)!, Avalonia.Input.Key.Escape, Avalonia.Input.PhysicalKey.Escape);
+
     private static string Text(Control root) => string.Join(
         "\n",
         root.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty));
@@ -154,7 +163,8 @@ public class TheSetupWizardSavesOnlyOnStartTests
         Go(wizard, SetupWizard.Step.Voice);
         Press(wizard, $"SetupOption-{TtsProviderCatalog.KokoroId}");
         Go(wizard, SetupWizard.Step.TalkButton);
-        Press(wizard, "SetupKeyClear");
+        Slot(wizard, "SetupKeySlot");
+        Esc(wizard);
 
         Press(wizard, "SetupSkip");
 

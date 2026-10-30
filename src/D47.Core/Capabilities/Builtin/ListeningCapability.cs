@@ -257,17 +257,17 @@ public static class ListeningCapability
                 Key = PushToTalkKeyKey,
                 Exercise =
                     "Open Settings › Hearing and sound › Voice Input, group Microphone, press Push-to-talk and give "
-                    + "it a key, then press it again and give it a stick button. Hold the key and say \"what ship am I "
-                    + "in\": D47 answers. Hold the button and ask again: it answers too. Press Unbind and ask again: "
+                    + "it a key, then click its stick slot and give it a stick button. Hold the key and say \"what ship am I "
+                    + "in\": D47 answers. Hold the button and ask again: it answers too. Click each slot and press Esc, then ask again: "
                     + "D47 never opens the microphone and the key does nothing. Scroll Lock is the default.",
                 Label = "Push-to-talk",
                 Help =
                     "Held, D47 listens — and pressing it shuts D47 up, whether or not you go on to say "
                     + "anything. Scroll Lock out of the box, a key Windows gives no shortcut and few games use. "
-                    + "Bind a key, a stick button, or one of each — one at a time: press "
-                    + "the control and give it a key, then press it again and give it a button. Giving it the "
-                    + "same kind twice replaces that one. With both set, either opens the microphone. Unbind "
-                    + "clears both, and with neither one D47 never opens the microphone.",
+                    + "Bind a key, a stick button, or one of each — one at a time: click "
+                    + "the key slot and give it a key, then click the stick slot and give it a button. Giving a "
+                    + "slot a second gesture replaces the first. With both set, either opens the microphone. Esc "
+                    + "while a slot listens unbinds that slot, and with neither one D47 never opens the microphone.",
                 Kind = SettingKind.Hotkey,
                 DefaultDisplay = "Scroll",
                 DocsAnchor = "push-to-talk-key",

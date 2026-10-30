@@ -513,7 +513,7 @@ public sealed class ControlKitWindow : Window
 
     private static Control KeyBinding() => Card(
         "KeyBinding",
-        "The bound key in a mono chip, then BIND and CLEAR.",
+        "The bound key in a mono chip. Click it and press a key or button to bind; Esc while it listens unbinds.",
         States(("bound", Binding("BUTTON 11")), ("unbound", Binding(null))));
 
     private static Control Binding(string? key)
@@ -526,9 +526,8 @@ public sealed class ControlKitWindow : Window
         }
 
         var wrap = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
+        chip.Cursor = new Cursor(StandardCursorType.Hand);
         wrap.Children.Add(chip);
-        wrap.Children.Add(new Button { Content = "BIND" });
-        wrap.Children.Add(new Button { Content = "CLEAR", IsEnabled = key is not null });
         return wrap;
     }
 
