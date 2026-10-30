@@ -32,6 +32,7 @@ __pycache__/
 worker/.wrangler/
 ratings-worker/.wrangler/
 usage-worker/.wrangler/
+/.wrangler/
 
 # The last triage's grid, read by the issue launcher. A snapshot of a queue that moves.
 .claude/triage-state.json
