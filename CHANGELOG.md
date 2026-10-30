@@ -8,8 +8,6 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-The arrival honk no longer complains in a system whose layout is already known. When Elite reports every body found, as it does when the automatic scan finds the only body, or when a discovery scan earlier in the session found the whole system, d47 says neither "Cannot honk since Elite is not the active window." nor "The honk did not take", nor any other line about the honk. Lines about the honk now wait until nine seconds after the jump so that report can arrive first. The honk is still pressed.
-
 The help pages no longer point at files that do not exist. Seven pages cited working notes the site never had, and the community page named a contributing guide that was never written; those sentences are gone and the findings they stood on stay. The site no longer publishes the working notes folder.
 
 The help pages now match the settings page. Settings says each group has its own reset, which leaves Home system, the character sheet, About me and the scenario as typed, and the Audio page names the Ambient music group's Now playing and Next track rows. Before, Settings described a reset per section.

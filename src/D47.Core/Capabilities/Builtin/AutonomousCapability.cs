@@ -49,8 +49,7 @@ public static class AutonomousCapability
             + "fires, so the system's bodies are counted in the game. In combat mode in supercruise "
             + "D47 first switches to analysis mode and switches back afterwards. With Elite behind "
             + "another window it says \"Cannot honk since Elite is not the active window.\"; if the "
-            + "scan does not register it says \"The honk did not take\". Neither is said in a system "
-            + "whose every body is already found. \"stop honking on arrival\" "
+            + "scan does not register it says \"The honk did not take\". \"stop honking on arrival\" "
             + "and \"turn off the arrival honk\" turn it off, and the next jump presses nothing.",
         Advanced = true,
         Label = "Honk on arriving in a system",

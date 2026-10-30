@@ -103,9 +103,7 @@ public class CombatModeInSupercruiseSwitchesToHonkTests
         Assert.True(IsTapOf(honk.Examine(At(CombatInSupercruise, TimeSpan.FromSeconds(1))), HudMode));
         Assert.False(honk.Examine(At(CombatInSupercruise, TimeSpan.FromSeconds(2.5))).Acts);
 
-        Assert.Null(honk.Examine(At(CombatInSupercruise, TimeSpan.FromSeconds(3.1))).Say);
-
-        var gaveUp = honk.Examine(At(CombatInSupercruise, HonkOnArrival.Quiet));
+        var gaveUp = honk.Examine(At(CombatInSupercruise, TimeSpan.FromSeconds(3.1)));
 
         Assert.False(gaveUp.Acts);
         Assert.Equal("I could not switch to analysis mode to honk", gaveUp.Say);
@@ -136,9 +134,7 @@ public class CombatModeInSupercruiseSwitchesToHonkTests
     {
         var honk = Armed(new EliteBinds { PresetName = "Test", SourceFile = "Test.binds", Bindings = [Fire] });
 
-        Assert.Null(honk.Examine(At(CombatInSupercruise, TimeSpan.FromSeconds(1))).Say);
-
-        var decision = honk.Examine(At(CombatInSupercruise, HonkOnArrival.Quiet));
+        var decision = honk.Examine(At(CombatInSupercruise, TimeSpan.FromSeconds(1)));
 
         Assert.False(decision.Acts);
         Assert.StartsWith(
