@@ -102,7 +102,7 @@ public class ReadCaptainsLogEntriesBackByVoiceTests
     [Theory]
     [InlineData("read today's log entries", "Colonia route plotted|Scan the beacon at Sol")]
     [InlineData("read yesterday's log entries", "Jameson Memorial is the first stop")]
-    [InlineData("read this week's log entries", "Colonia route plotted|Scan the beacon at Sol|Jameson Memorial|and one more on the Captain's log page")]
+    [InlineData("read this week's log entries", "Colonia route plotted|Scan the beacon at Sol|Jameson Memorial|and one more. Ask for a shorter period, a system or a word to hear them")]
     [InlineData("read this session's log entries", "Colonia route plotted")]
     [InlineData("read log entries from sol", "Colonia route plotted|Scan the beacon at Sol|Refuel at Sol")]
     [InlineData("read log entries in Colonia", "Colonia has a Guardian beacon")]
@@ -135,7 +135,7 @@ public class ReadCaptainsLogEntriesBackByVoiceTests
         var lines = (await bench.SaidAsync("read log entries from sol")).Split('\n');
 
         Assert.Equal(4, lines.Length);
-        Assert.Equal("and one more on the Captain's log page.", lines[^1]);
+        Assert.Equal("and one more. Ask for a shorter period, a system or a word to hear them.", lines[^1]);
         Assert.Contains("More from Sol", lines[0], StringComparison.Ordinal);
     }
 

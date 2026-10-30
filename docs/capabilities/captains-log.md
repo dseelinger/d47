@@ -94,7 +94,7 @@ log for."
 
 These phrases are read without the model, so the words of an entry never leave this PC for a
 provider. Matches are read newest first, at most three, each opened by its date in the game's
-calendar and its system. More than three ends with "and four more on the Captain's log page."
+calendar and its system. More than three ends with "and four more. Ask for a shorter period, a system or a word to hear them."
 
 - "read my last log entry"
 - "read today's log entries", "read yesterday's log entries", "read this week's log entries",

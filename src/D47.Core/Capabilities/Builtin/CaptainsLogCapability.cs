@@ -231,7 +231,7 @@ public static partial class CaptainsLogCapability
 
         if (matches.Count > ReadAloud)
         {
-            lines.Add($"and {Spell(matches.Count - ReadAloud)} more on the Captain's log page.");
+            lines.Add($"and {Spell(matches.Count - ReadAloud)} more. Ask for a shorter period, a system or a word to hear them.");
         }
 
         return ToolResult.Ok(string.Join('\n', lines));
