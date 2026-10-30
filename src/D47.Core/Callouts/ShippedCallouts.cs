@@ -151,7 +151,7 @@ public static class ShippedCallouts
             })
 
             // Phase 41.
-            .Add(new LimpetCallout())
+            .Add(new LimpetCallout(loggers.CreateLogger<LimpetCallout>()))
 
             // Phase 11.
             .Add(new CarrierCallout())

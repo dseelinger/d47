@@ -41,8 +41,13 @@ public class LimpetCalloutTests
     /// <summary>
     /// A Commander in a ship of <paramref name="capacity"/> tonnes carrying <paramref name="limpets"/>.
     /// </summary>
-    private static CommanderGameState Commander(int capacity, int? limpets, string vessel = "Ship")
+    private static CommanderGameState Commander(
+        int capacity, int? limpets, string vessel = "Ship", params string[] fitted)
     {
+        var modules = string.Join(
+            ',',
+            fitted.Select((item, index) => $$"""{"Slot":"Slot{{index:00}}","Item":"{{item}}","On":true}"""));
+
         var files = new MemoryFileSystem();
         const string root = @"C:\d47-test";
 
@@ -51,7 +56,7 @@ public class LimpetCalloutTests
             string.Join(
                 '\n',
                 """{"timestamp":"2026-08-21T17:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
-                $$"""{"timestamp":"2026-08-21T17:00:01Z","event":"Loadout","Ship":"python","ShipID":7,"CargoCapacity":{{capacity}},"Modules":[]}""")
+                $$"""{"timestamp":"2026-08-21T17:00:01Z","event":"Loadout","Ship":"python","ShipID":7,"CargoCapacity":{{capacity}},"Modules":[{{modules}}]}""")
             + "\n");
 
         if (limpets is { } aboard)
@@ -98,6 +103,29 @@ public class LimpetCalloutTests
         var said = Callout().Examine(Context(Commander(256, limpets))).ToList();
 
         Assert.Equal(reminded, said.Count == 1);
+    }
+
+    [Fact]
+    public void AShipWithNoLimpetControllerIsNotReminded()
+    {
+        Assert.Empty(Callout().Examine(Context(
+            Commander(256, 0, "Ship", "int_hyperdrive_size5_class5", "int_cargorack_size6_class1"))));
+    }
+
+    [Theory]
+    [InlineData("int_dronecontrol_collection_size3_class5")]
+    [InlineData("int_dronecontrol_repair_size1_class5")]
+    [InlineData("int_multidronecontrol_mining_size3_class3")]
+    public void AShipWithAnyLimpetControllerIsReminded(string controller)
+    {
+        Assert.Single(Callout().Examine(Context(
+            Commander(256, 0, "Ship", "int_hyperdrive_size5_class5", controller))));
+    }
+
+    [Fact]
+    public void AShipWhoseLoadoutIsUnknownIsStillReminded()
+    {
+        Assert.Single(Callout().Examine(Context(Commander(256, 0))));
     }
 
     /// <summary>And the same count is fine in a small hold and low in a large one.</summary>

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The limpet reminder is no longer given to a ship with no limpet controller fitted. Any controller counts: collector, prospector, repair, recon, research, hatch breaker, fuel transfer, decontamination or a Multi Limpet Controller. Where d47 cannot tell what is fitted, the reminder is given as before.
+
 A non-player sender's voice is now drawn again in each system, so the cruise ship captain no longer sounds the same everywhere. It stays fixed within one system.
 
 The Corsair, Caspian Explorer, Lynx Highliner and Kestrel Mk II now have credit prices in the ship specifications.

@@ -747,6 +747,9 @@ When you dock somewhere that sells limpets, with a big enough hold and few enoug
 No limpets aboard, and this station sells them. You have 256 tonnes to fill.
 ```
 
+The reminder is not given to a ship with no limpet controller fitted, of any kind. Where D47
+cannot tell what is fitted, it is given.
+
 Limpets are bought through **Advanced Maintenance**, not the commodity market — which is why D47
 looks for the station's re-arm service rather than reading its market. Most stations have it; the
 ones that do not are on-foot settlements, small outposts, and carriers whose owner has not fitted

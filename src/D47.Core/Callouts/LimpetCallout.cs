@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Callouts;
 
@@ -6,8 +7,12 @@ namespace D47.Core.Callouts;
 /// A reminder to buy limpets, when docking somewhere that sells them with a big hold and few aboard
 /// (asked for 2026-08-21).
 /// </summary>
-public sealed class LimpetCallout : ICallout
+public sealed class LimpetCallout(ILogger? logger = null) : ICallout
 {
+    private const string Controller = "int_dronecontrol_";
+
+    private const string MultiController = "int_multidronecontrol_";
+
     public string Id => "limpets";
 
     public const string Key = "limpets.low";
@@ -51,6 +56,11 @@ public sealed class LimpetCallout : ICallout
                 continue;
             }
 
+            if (!Launches(state, logger))
+            {
+                continue;
+            }
+
             var held = state.Hold.Of(Limpet);
 
             // Percent of capacity, stated as a multiplication so no rounding is invented: held×100 against
@@ -67,6 +77,15 @@ public sealed class LimpetCallout : ICallout
                 Cooldown = TimeSpan.FromMinutes(20),
             };
         }
+    }
+
+    /// <summary>False only where the loadout shows no limpet controller of any kind; unknown counts as true.</summary>
+    private static bool Launches(CommanderGameState state, ILogger? logger)
+    {
+        const string asking = "a limpet reminder";
+
+        return state.Fitted(Controller, asking, logger) is not false
+            || state.Fitted(MultiController, asking, logger) is not false;
     }
 
     private static bool Sells(JournalEvent journalEvent) =>
