@@ -140,8 +140,10 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             () => state()?.Hold is { IsShip: true } hold ? hold.Of("tritium") : 0,
             () => state()?.Location.StarSystem);
 
-        // No capability page covers the carrier, so the root declares no help.
-        roots.Add(new NavCrumb(LoadoutPages.CarrierRoot, "Carrier"));
+        roots.Add(new NavCrumb(LoadoutPages.CarrierRoot, "Carrier")
+        {
+            Help = D47.Core.Capabilities.Builtin.CarrierCapability.Id,
+        });
 
         // _engineers is read when the first draw opens Materials, not here (#477); Copy and Portraits likewise.
         _loadoutBuild = crumb => LoadoutPages.Build(

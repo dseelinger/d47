@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Help on Asset Mgmt › Carrier now opens the carrier help page. Before, F1 and the help mark opened the help for the Asset Mgmt tab.
+
 Key and stick-button bindings now work the way Elite's do. Click a slot and press the key or button; Esc while it listens unbinds that slot and leaves the other slot as it was, and a click anywhere else, or on the slot again, ends the capture with nothing changed. The BIND and CLEAR buttons are gone from every bind row, and CANCEL is gone from the setup wizard, whose push-to-talk and comms lines are slots too. Before, BIND listened for the key and the button together and CLEAR emptied both.
 
 Binding a key or stick button that another action already holds now asks whether to move it, in Settings and in the setup wizard. Move it takes the binding from the other action and gives it to this one in one save; Keep it changes nothing and the slot listens again. The question says what the other action is left with: unbound, or its key or stick button.
