@@ -33,6 +33,17 @@ public sealed class APathTheHelpCitesMustNameARealPlaceTests
     }
 
     [AvaloniaFact]
+    public void APlaceTitleWithACommaIsReadWhole()
+    {
+        var place = SettingsLayout.Areas.SelectMany(area => area.Places.Select(p => (area, p))).First(pair => pair.p.Title.Contains(','));
+
+        Assert.Null(Failure($"Open Settings › {place.area.Title} › {place.p.Title}, group {place.p.Groups[0].Title}, and find a row."));
+        Assert.Null(Failure($"Open Settings › {place.area.Title} › {place.p.Title}."));
+        Assert.NotNull(Failure($"Open Settings › {place.area.Title} › {place.p.Title}, group Not a group, and find a row."));
+        Assert.NotNull(Failure($"Open Settings › {place.area.Title} › {place.p.Title[..place.p.Title.IndexOf(',')]}."));
+    }
+
+    [AvaloniaFact]
     public void APlantedThirdPartThatIsNotASubPageFails()
     {
         Assert.Null(Failure("See Commander › Ledgers › Codex."));

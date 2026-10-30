@@ -19,130 +19,121 @@ nav_order: 147
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Three steps to something that tracks its own progress.</p>
+<p class="intro">Three steps to goals that track their own progress.</p>
 <section>
-<h2><span class="num">1</span> Say what you are working towards.</h2>
-<p class="say">Say "my goal is to buy a Python", or "I want to unlock all the engineers".</p>
-<p class="expect">D47 adds the goal to the Goals tab.</p>
-<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+<h2><span class="num">1</span> Ask how your goals are going.</h2>
+<p class="say">Say "how are my goals going".</p>
+<p class="expect">D47 reads back each long goal with how far along it is, how long it has been running and where the figure came from. No language model is needed.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question about goals typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">my goal is to buy a Python</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">how are my goals going</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">"I want to unlock all the engineers" — "get me to Elite V in exploration"</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">A goal is the year. Your checklist is the week.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"what are my goals" does the same.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Progress is worked out from your journal, so there is nothing to tell it.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Open the Goals tab and watch it fill in.</h2>
-<p class="say">Open the Goals tab.</p>
-<p class="expect">Each goal shows its progress, worked out from your journal.</p>
-<svg viewBox="0 0 880 246" role="img" aria-label="The Goals tab">
+<h2><span class="num">2</span> Open the goals and give them an age.</h2>
+<p class="say">Open Commander › Checklist, tick Goals, then press Read my journals.</p>
+<p class="expect">Each goal shows its progress. Read my journals reads the journals on your disk once, and every goal then shows how long it has been running. The button is there until that has been done.</p>
+<svg viewBox="0 0 880 246" role="img" aria-label="The Goals view on the Checklist page">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
- <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Goals</text>
- <text x="44" y="92" font-size="16" fill="var(--text)">Buy a Python</text>
- <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">68%</text>
- <text x="44" y="130" font-size="16" fill="var(--text)">Unlock every engineer</text>
- <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">21 of 38</text>
- <text x="44" y="168" font-size="16" fill="var(--text)">Elite V in exploration</text>
- <text x="836" y="168" text-anchor="end" font-size="16" fill="var(--text-muted)">Trailblazer</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">D47 works the progress out of your journal. Nothing to tick.</text>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Goals (10 running)</text>
+ <text x="44" y="92" font-size="16" fill="var(--text)">Elite V in Trade</text>
+ <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">Tycoon · running 400 days</text>
+ <text x="44" y="130" font-size="16" fill="var(--text)">Every engineer unlocked</text>
+ <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">from your journal</text>
+ <text x="44" y="168" font-size="16" fill="var(--text)">The ship collection</text>
+ <text x="836" y="168" text-anchor="end" font-size="16" fill="var(--text-muted)">from your fleet</text>
+ <text x="44" y="212" font-size="15" fill="var(--text-muted)">Open a goal for its next step. Remove takes it off the page.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Take a goal off the page, or bring it back.</h2>
+<p class="say">Say "remove the trade goal", then "recover the trade goal".</p>
+<p class="expect">The goal leaves the Goals view and D47 says so, then comes back. Removed goals wait under Removed until you press Recover.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="Spoken phrases that remove and recover a goal">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">remove the trade goal</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Combat, trade, exploration, mercenary, exobiology, imperial navy, federal navy,</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">powerplay, engineers and ship collection are the names it knows.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Put a goal D47 cannot measure on the checklist instead.</p>
-<p class="expect">The item appears on the Checklist tab, where you tick it by hand.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="A goal you have to update by hand is a goal in the wrong place.">
+<p class="say">Open a career goal and press Ask D47.</p>
+<p class="expect">Rank has no line to put on a list, because it comes from playing the career. Ask D47 sends the question for that ladder as if you had typed it, and the answer appears in the transcript.</p>
+<svg viewBox="0 0 880 152" role="img" aria-label="A career goal offers Ask D47 rather than a checklist line">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A goal you have to update by hand is a goal in the wrong place.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">If D47 cannot see progress in the journal, put it on the checklist instead.</text>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A career goal has no Suggest a line.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Engineers and the ship collection do. Career and Powerplay goals offer Ask D47 instead.</text>
 </svg>
 </section>
 </div></div>
 </details>
 
-<!--
-  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
-  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
-  the nine Palette roles and nothing else.
--->
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Your checklist holds this week. Goals hold this year — and work out their own progress.</p>
+<p class="intro">Your checklist holds this week. Goals hold the months-long campaigns, and work out their own progress.</p>
 <section>
 <h2><span class="num">1</span> Two different questions, kept apart.</h2>
-<svg viewBox="0 0 880 214" role="img" aria-label="The checklist holds what you are doing this week and goals hold what you are doing this year">
- <rect x="20" y="36" width="400" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="220" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text-muted)">YOUR CHECKLIST</text>
- <text x="220" y="110" text-anchor="middle" font-size="17" fill="var(--text)">what you are doing this week</text>
- <text x="220" y="138" text-anchor="middle" font-size="14" fill="var(--text-muted)">lines you wrote, in the order you put them</text>
- <rect x="460" y="36" width="400" height="120" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="660" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">GOALS</text>
- <text x="660" y="110" text-anchor="middle" font-size="17" fill="var(--text)">what you are doing this year</text>
- <text x="660" y="138" text-anchor="middle" font-size="14" fill="var(--text-muted)">ten of them ship, and you can remove any</text>
- <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text-muted)">An arc is a named ambition, a definition of done, and a progress figure nobody typed.</text>
+<svg viewBox="0 0 880 170" role="img" aria-label="The checklist holds what you are doing this week and goals hold what you are doing this year">
+ <rect x="20" y="30" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="220" y="76" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">CHECKLIST</text>
+ <text x="220" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">what you do this week</text>
+ <rect x="460" y="30" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="660" y="76" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">GOALS</text>
+ <text x="660" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">what you work towards for months</text>
 </svg>
+<p class="body">A checklist line is ticked by hand. A goal has a definition of done, such as Elite V in Trade or every engineer unlocked, and no tick box at all.</p>
 </section>
 <section>
-<h2><span class="num">2</span> Progress is read off your journal, never ticked.</h2>
-<svg viewBox="0 0 880 246" role="img" aria-label="Rank, engineers and hulls are read from the journal, so an arc has no tick box at all">
- <rect x="20" y="36" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="145" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR JOURNAL</text>
- <text x="145" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">rank, engineers, hulls</text>
- <line x1="282" y1="86" x2="318" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="332,86 316,78 316,94" fill="var(--accent-muted)"/>
- <rect x="345" y="36" width="250" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="470" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE FIGURE</text>
- <text x="470" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">a fact, not an opinion</text>
- <rect x="640" y="36" width="220" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="750" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NO TICK BOX</text>
- <text x="750" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">and it offers none</text>
- <rect x="20" y="160" width="840" height="54" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="440" y="193" text-anchor="middle" font-size="16" fill="var(--text)">Cannot see it right now? It reports as of when it last could — it never resets to nothing.</text>
- <text x="440" y="238" text-anchor="middle" font-size="15" fill="var(--text-muted)">A goal you invented is yours to call done, like a checklist line you wrote yourself.</text>
+<h2><span class="num">2</span> Progress is read off your journal, never typed.</h2>
+<svg viewBox="0 0 880 170" role="img" aria-label="The journal says a rank and the goal reports it with its name">
+ <rect x="20" y="30" width="250" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="145" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Rank event</text>
+ <text x="145" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">written by Elite</text>
+ <line x1="282" y1="85" x2="302" y2="85" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="316,85 300,77 300,93" fill="var(--accent-muted)"/>
+ <rect x="325" y="30" width="230" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">THE GOAL</text>
+ <text x="440" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">reads it again</text>
+ <line x1="567" y1="85" x2="587" y2="85" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="601,85 585,77 585,93" fill="var(--accent-muted)"/>
+ <rect x="610" y="30" width="250" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="735" y="76" text-anchor="middle" font-size="16" fill="var(--text)">Tycoon, part of</text>
+ <text x="735" y="100" text-anchor="middle" font-size="16" fill="var(--text)">the way to Elite V.</text>
 </svg>
+<p class="body">Your rank, engineers and hulls come from the journal and your fleet. When Elite has said nothing this session, the last figure stands with its date, and never resets to nothing.</p>
 </section>
 <section>
-<h2><span class="num">3</span> The point is the join: what do I do about it today?</h2>
-<svg viewBox="0 0 880 238" role="img" aria-label="An arc names today's concrete step and offers it as a proposal you accept on the checklist">
- <rect x="20" y="40" width="270" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="155" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">EVERY ENGINEER</text>
- <text x="155" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">19 of 53 unlocked</text>
- <line x1="302" y1="90" x2="338" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="352,90 336,82 336,98" fill="var(--accent-muted)"/>
- <rect x="365" y="40" width="270" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="500" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">TODAY’S STEP</text>
- <text x="500" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">the unlock solver answers it</text>
- <line x1="647" y1="90" x2="683" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="697,90 681,82 681,98" fill="var(--accent-muted)"/>
- <rect x="710" y="40" width="150" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="785" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A PROPOSAL</text>
- <text x="785" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">you accept</text>
- <rect x="20" y="164" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Accepting is your act — an arc proposes through the same path everything else does.</text>
- <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">A line that came from an arc says so, so finishing it visibly moves something bigger.</text>
+<h2><span class="num">3</span> A goal names today's step, and you decide whether it goes on the list.</h2>
+<svg viewBox="0 0 880 170" role="img" aria-label="A goal offers a step as a suggestion that you accept on the checklist">
+ <rect x="20" y="30" width="250" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="145" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Every engineer</text>
+ <text x="145" y="100" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">unlocked</text>
+ <line x1="282" y1="85" x2="302" y2="85" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="316,85 300,77 300,93" fill="var(--accent-muted)"/>
+ <rect x="325" y="30" width="230" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">UNLOCK SOLVER</text>
+ <text x="440" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">picks the next engineer</text>
+ <line x1="567" y1="85" x2="587" y2="85" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="601,85 585,77 585,93" fill="var(--accent-muted)"/>
+ <rect x="610" y="30" width="250" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="735" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SUGGESTION</text>
+ <text x="735" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">you accept it</text>
 </svg>
+<p class="body">Suggest a line on a goal puts its step on the Suggestions list. Nothing reaches the checklist until you accept it there. Engineers and the ship collection offer a step this way.</p>
 </section>
 <section>
-<h2><span class="num">4</span> Except the career arcs, which propose nothing and say why.</h2>
-<svg viewBox="0 0 880 236" role="img" aria-label="A career arc reports its rank but proposes no step, because rank is earned by doing the career">
- <rect x="20" y="36" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="220" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">ELITE IN COMBAT</text>
- <text x="220" y="108" text-anchor="middle" font-size="16" fill="var(--text)">Master, 12% into it</text>
- <text x="220" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">proposes nothing</text>
- <rect x="460" y="36" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="660" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">AND SAYS WHY</text>
- <text x="660" y="108" text-anchor="middle" font-size="16" fill="var(--text)">rank is earned by doing the career</text>
- <text x="660" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">there is no route anyone can plot</text>
- <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">Where a tool genuinely helps — a trade route, an exobiology route — it names that instead.</text>
- <text x="440" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">Each rank says its name: Directive 47 says Master rather than rank 5 of 8.</text>
+<h2><span class="num">4</span> Career goals ask a question instead of planning.</h2>
+<svg viewBox="0 0 880 130" role="img" aria-label="The question Ask D47 sends for the Mercenary ladder">
+ <rect x="20" y="24" width="840" height="82" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="72" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">“What's the fastest way to gain Mercenary rank from where I stand? Search the web if you can.”</text>
 </svg>
-</section>
-<section>
-<h2><span class="num">5</span> Your current story is a goal too.</h2>
-<p class="body">The stock story you are running appears beside the others, with its clues given out of the story’s total and its stage and current objective as the note, for example “Bad Guys Close In, clue 11 of 18. Now: kill bonds for LTT 7786 Labour, 3 of 8”. The note says so when the story is paused or switched off, a finished story shows as done, and an abandoned one is not shown. You can remove it like any other goal, but it cannot be written, put on the checklist or ticked: it is worked out from the story itself.</p>
+<p class="body">Rank is earned by playing the career, so there is no route to plot. Ask D47 sends the question for that ladder, built in <code>GoalCatalogue.cs</code>, and the model answers from your rank.</p>
 </section>
 </div></div>
 </details>
@@ -174,7 +165,6 @@ same rule the checklist already draws about derived lines, for the same reason.
 
 Where the journal cannot say, d47 says so rather than guessing:
 
-- **A goal you invented** is yours to call done, like a checklist line you wrote yourself.
 - **An arc d47 cannot currently evaluate reports as of when it last could.** If Elite has not said
   anything about your rank this session, the figure from your journals stands with its date on it.
   It never resets to nothing on the absence of evidence.
@@ -216,6 +206,15 @@ it — *"What's the fastest way to gain Mercenary rank from where I stand? Searc
 can."* — and the answer appears below it in the transcript. The model reads your rank from your
 goals, and searches the web only when web search is on. A finished goal has no button, and the
 button does nothing while d47 is still answering.
+
+### Your story is a goal too
+
+The stock story you are running appears beside the others, with its clues given out of the story's
+total and its stage and current objective as the note, for example "Bad Guys Close In, clue 11 of
+18. Now: kill bonds for LTT 7786 Labour, 3 of 8". The note says so when the story is paused or
+switched off, a finished story shows as done, and an abandoned one is not shown. You can remove it
+like any other goal, but it cannot be put on the checklist or ticked: it is worked out from the
+story itself.
 
 ### Ages come from your journals
 
@@ -269,6 +268,13 @@ What each arc offers:
 
 > what are my goals
 
+> how are my long term goals
+
+To take a goal off the page or bring it back, say "remove" or "recover", then "the", the goal's name
+and "goal": combat, trade, exploration, explorer, mercenary, exobiology, imperial navy, federal navy,
+powerplay, engineers or ship collection. For example "remove the mercenary goal" and "recover the
+mercenary goal". Both answer without the model.
+
 #### `get_goals`
 
 Reads every arc back: how far along each is, how long it has been running, and where the figure came
@@ -282,7 +288,8 @@ going* is a thing you say mid-flight and an arc d47 cannot see is an arc it cann
 #### `get_goal_step`
 
 Says what to do about one arc today, and offers it as a checklist line. Protected — it writes to the
-pending proposals, and writing is yours.
+pending proposals, and writing is yours. No phrase calls it: open a goal on the Checklist page's
+Goals view and press **Suggest a line**.
 
 ```json
 {"type":"object","properties":{"goal":{"type":"string","description":"Which goal, by name or key, as read back by get_goals."}},"required":["goal"],"additionalProperties":false}
@@ -312,7 +319,6 @@ Puts a removed arc back on the page where it was. Protected.
 `data/goals.json`, beside the executable, keyed per Commander on the Frontier id in your journals —
 so two characters on one machine do not report each other's progress.
 
-Three things live in that file and only one of them is d47's. The mined marks are a recomputation
-and are replaced wholesale by the next read. **The goals you wrote and the arcs you removed are
-yours**, are stored separately, and a re-read never touches either. The file is plain JSON and meant
+The mined marks are a recomputation and are replaced wholesale by the next read. **The arcs you
+removed are yours**, are stored separately, and a re-read never touches them. The file is plain JSON and meant
 to be readable; a line d47 cannot parse is reported rather than silently dropped.

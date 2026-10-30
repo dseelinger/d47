@@ -10,8 +10,9 @@ internal sealed class PanelPathChecker(
     private const string SettingsWord = "Settings";
 
     /// <summary>Why the path is not a real place, or null when it is one. The last part may carry words after its title.</summary>
-    public string? Failure(WrittenPath path)
+    public string? Failure(WrittenPath written)
     {
+        var path = Completed(written);
         var (word, first) = FirstPart(path.Parts[0]);
 
         if (word is null)
@@ -28,11 +29,41 @@ internal sealed class PanelPathChecker(
     }
 
     /// <summary>The path as it is checked, with the first part cut to the tab word it ends with.</summary>
-    public string Key(WrittenPath path)
+    public string Key(WrittenPath written)
     {
+        var path = Completed(written);
         var (word, _) = FirstPart(path.Parts[0]);
 
         return word is null ? path.ToString() : new WrittenPath([word, .. path.Parts.Skip(1)], path.Group).ToString();
+    }
+
+    /// <summary>
+    /// A path whose last part stopped at the comma inside a place title, such as "Memory, notes and debrief", read again
+    /// with the whole title, and the group that follows it.
+    /// </summary>
+    private static WrittenPath Completed(WrittenPath path)
+    {
+        var last = path.Parts[^1];
+        var text = last + path.Following;
+
+        var title = SettingsLayout.Areas
+            .SelectMany(area => area.Places)
+            .Select(place => place.Title)
+            .FirstOrDefault(candidate => candidate.Contains(',', StringComparison.Ordinal)
+                && candidate.StartsWith(last, StringComparison.OrdinalIgnoreCase)
+                && text.StartsWith(candidate, StringComparison.OrdinalIgnoreCase));
+
+        if (title is null)
+        {
+            return path;
+        }
+
+        var after = text[title.Length..];
+        var group = after.StartsWith(", group ", StringComparison.Ordinal)
+            ? PanelPathReader.GroupIn(after)
+            : null;
+
+        return new WrittenPath([.. path.Parts.Take(path.Parts.Count - 1), title], group, after);
     }
 
     private (string? Word, string? Part) FirstPart(string written)

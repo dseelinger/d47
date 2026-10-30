@@ -31,9 +31,21 @@ nav_order: 154
 </svg>
 </section>
 <section>
+<h2><span class="num">3</span> Stop it suggesting one.</h2>
+<p class="say">Say "don't suggest bounty hunting anymore".</p>
+<p class="expect">D47 confirms, and bounty hunting is no longer suggested. Its date stays on the Activities page, and "suggest bounty hunting again" puts it back.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a stop-suggesting phrase typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">don't suggest bounty hunting anymore</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or untick Suggest beside it on Commander › Checklist › Activities.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Only you can do this: the model is refused.</text>
+</svg>
+</section>
+<section>
 <h2><span class="num">!</span> Give it time to read your journals.</h2>
 <p class="say">If D47 says it is still reading your journals, ask again in a minute.</p>
-<p class="expect">D47 answers once it has read your older journals.</p>
+<p class="expect">D47 answers once it has read your older journals. An activity with no date in them is never suggested.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The journals are still being read">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what did I last do</text>
@@ -44,7 +56,7 @@ nav_order: 154
 </div></div>
 </details>
 
-<details class="d47-band" open>
+<details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Ask what you have not done in a while and D47 answers from your journals, with no language model.</p>
@@ -60,6 +72,7 @@ nav_order: 154
  <text x="836" y="128" text-anchor="end" font-size="16" fill="var(--text-muted)">a year and one month ago</text>
  <text x="44" y="162" font-size="14" fill="var(--text-muted)">The rest are on the Activities page.</text>
 </svg>
+<p class="body">Each question reads the dates D47 took from your journals and names the three activities you did longest ago, oldest first. No language model is asked.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Switching one off hides the suggestion, not the date.</h2>
@@ -71,6 +84,15 @@ nav_order: 154
  <text x="660" y="62" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">ACTIVITIES PAGE</text>
  <text x="660" y="98" text-anchor="middle" font-size="16" fill="var(--text)">its date stays, from the journals</text>
 </svg>
+<p class="body">The Suggest box beside an activity, or a phrase like "don't suggest bounty hunting anymore", only stops D47 naming it. The last-done date stays on the page, and you can still ask about it.</p>
+</section>
+<section>
+<h2><span class="num">3</span> Until the older journals are read, it says so.</h2>
+<svg viewBox="0 0 880 130" role="img" aria-label="The reply while the journals are still being read">
+ <rect x="20" y="24" width="840" height="82" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="72" text-anchor="middle" font-size="19" font-weight="700" fill="var(--text)">“I'm still reading your journals. Ask again in a minute.”</text>
+</svg>
+<p class="body">D47 reads your older journals once, in the background, to date each activity. Until that finishes it gives this reply, a constant in <code>ActivitiesCapability.cs</code>, instead of a guess.</p>
 </section>
 </div></div>
 </details>
@@ -79,8 +101,8 @@ nav_order: 154
 
 D47 reads the dates of fourteen activities out of your journals: mining, exploration, bounty hunting,
 combat zones, Powerplay, on-foot work, exobiology, trading, engineering, fleet carrier, missions,
-search and rescue, the ship-launched fighter and colonisation. The Activities page, under Checklist,
-lists them all with their dates.
+search and rescue, the ship-launched fighter and colonisation. The Activities page, at Commander › Checklist › Activities,
+lists them all with their dates and a Suggest box for each.
 
 ### What have I not done lately
 

@@ -16,7 +16,12 @@ public partial class EveryHowToPhraseRoutesGateTests
     private static readonly string[] Covered = ["flight-controls", "ship-systems", "panels", "srv", "on-foot-controls"];
 
     /// <summary>Phrases the model answers correctly. Reviewed by hand.</summary>
-    private static readonly (string Page, string Phrase)[] ModelAnswers = [];
+    private static readonly (string Page, string Phrase)[] ModelAnswers =
+    [
+        ("debrief", "from now on, give me the distance first"),
+        ("memory", "remember that I hate mining"),
+        ("screen", "what does that panel say"),
+    ];
 
     /// <summary>Phrases that did not route when this gate landed. An entry stays only with an open issue that will make it route.</summary>
     private static readonly (string Page, string Phrase)[] NotYetReviewed =
@@ -36,13 +41,9 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("checklists", "tick off the fuel scoop"),
         ("checklists", "remove it"),
         ("on-foot", "what does grade 3 on my Maverick cost"),
-        ("captains-log", "captain's log, the Guardian site is two kilometres north of the landing pad"),
-        ("captains-log", "captain's log"),
-        ("captains-log", "Go ahead."),
         ("crew", "who is in my fighter bay"),
         ("crew", "comms Vasquez"),
         ("crew", "how is the fighter holding up"),
-        ("conversation", "what is my current cargo worth"),
         ("engineering", "what does a grade 5 dirty drive cost"),
         ("engineering", "can I afford it"),
         ("characters", "comms Harlan"),
@@ -69,15 +70,9 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("learned-phrases", "drop the wheels"),
         ("learned-phrases", "yes"),
         ("learned-phrases", "cancel"),
-        ("memory", "remember that I fly in open"),
-        ("memory", "call me Commander, not Doug"),
-        ("memory", "forget"),
-        ("memory", "remember"),
         ("focus", "bring Elite back"),
         ("utilities", "set a timer for twenty minutes called fuel scoop"),
         ("routes", "plot a neutron route to Colonia"),
-        ("goals", "my goal is to buy a Python"),
-        ("goals", "I want to unlock all the engineers"),
         ("macros", "docking prep"),
         ("vr", "put the panel down"),
         ("vr", "lock it to my head"),
@@ -87,15 +82,12 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("carrier", "how much fuel have we got"),
         ("commanders", "switch to Kestrel Vane"),
         ("navigation", "plot a route to Shinrarta Dezhra"),
-        ("logbook", "what did I do this week"),
         ("comms", "comms Tower"),
         ("comms", "are you there"),
         ("comms", "tell the wing I am on my way"),
         ("specifications", "what is the Python II like"),
         ("specifications", "how much does a 6A power plant draw"),
         ("specifications", "compare the Krait and the Python"),
-        ("screen", "what's on my scanner"),
-        ("screen", "what does that panel say"),
     ];
 
     public static TheoryData<string> Pages() => [.. PageNames()];
@@ -191,7 +183,11 @@ public partial class EveryHowToPhraseRoutesGateTests
         router.MatchSetting(phrase) is not null
         || router.MatchToolCommand(phrase) is not null
         || router.Match(phrase, InputSource.Spoken) is not null
-        || Walks(phrase);
+        || Walks(phrase)
+        || LogsOrReadsTheCaptainsLog(phrase);
+
+    /// <summary>Whether the turn loop's model-free captain's log grammar takes the phrase, before the router and the model.</summary>
+    private static bool LogsOrReadsTheCaptainsLog(string phrase) => D47.Core.CaptainsLog.CaptainsLogPhrase.Read(phrase) is not null;
 
     /// <summary>Whether a walkthrough starts on the phrase; the app asks it before the router.</summary>
     private static bool Walks(string phrase) => new Walkthrough().Take(phrase, DateTimeOffset.UnixEpoch) is not null;

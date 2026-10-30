@@ -21,43 +21,38 @@ nav_order: 120
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps to choosing who answers you.</p>
 <section>
-<h2><span class="num">1</span> Pick a provider and a model.</h2>
-<p class="say">Pick a provider and a model, or choose none.</p>
-<p class="expect">The provider and model rows show your choice; with none, everything D47 does itself keeps working.</p>
-<svg viewBox="0 0 880 200" role="img" aria-label="The provider and model rows, with a key row under them">
- <rect x="20" y="16" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="46" y="53" font-size="17" fill="var(--text)">Provider</text>
- <rect x="560" y="30" width="278" height="32" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
- <text x="580" y="52" font-size="15" fill="var(--text)">Anthropic</text>
- <text x="822" y="52" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
- <rect x="20" y="88" width="840" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="46" y="125" font-size="17" fill="var(--text)">Model</text>
- <rect x="560" y="102" width="278" height="32" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="580" y="124" font-size="15" fill="var(--text)">claude-opus-5</text>
- <text x="822" y="124" text-anchor="end" font-size="13" fill="var(--text-muted)">▾</text>
- <text x="20" y="186" font-size="16" fill="var(--text-muted)">Choose "none" and D47 still works — everything it does itself keeps working.</text>
+<h2><span class="num">1</span> Pick a provider, or choose none.</h2>
+<p class="say">Say "use anthropic", or "stop using the language model" to choose none.</p>
+<p class="expect">The Provider row under Settings › Providers › Language model shows your choice. With none, everything D47 does itself keeps working.</p>
+<svg viewBox="0 0 880 200" role="img" aria-label="The Provider row, with a model row under it">
+ <rect x="20" y="20" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="46" y="57" font-size="17" font-weight="700" fill="var(--text)">Provider</text>
+ <text x="834" y="57" text-anchor="end" font-size="17" fill="var(--text)">Anthropic</text>
+ <rect x="20" y="100" width="840" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="46" y="137" font-size="17" font-weight="700" fill="var(--text)">Model</text>
+ <text x="20" y="190" font-size="15" fill="var(--text-muted)">"use openai" and "use my local model" pick the others.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Put your key in, and ask something.</h2>
-<p class="say">Put your key in, then ask a question such as "what is my current cargo worth".</p>
-<p class="expect">The key is saved and hidden, and the status line under the answer names the model, the effort and the cost.</p>
+<h2><span class="num">2</span> Put your key in, and ask which model is answering.</h2>
+<p class="say">Paste your key into the API key row, then say "which model are you using".</p>
+<p class="expect">The key is saved and never shown again. D47 answers with the provider, the model, whether the provider is reachable, whether personality is on, and this session's response count and cost.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">what is my current cargo worth</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">which model are you using</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">The key is stored on this machine and never shown again once saved.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">The status line under the answer says the model, the effort and what it cost.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Provider: Anthropic · Model · Availability: Available</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Personality: on · Session so far: responses and cost</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Store a key for any paid provider before your first question.</p>
-<p class="expect">The question is answered; with no key stored D47 says so at the first question.</p>
+<p class="say">Say "which model are you using" before you have stored a key.</p>
+<p class="expect">Availability reads NotConfigured and says no key is stored. Nothing is sent to a provider until you add one.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="No key means no answers, and it says so.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">No key means no answers, and it says so.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A paid provider with no key stored refuses at the first question rather than at setup time.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Store a key for any paid provider before your first question.</text>
 </svg>
 </section>
 </div></div>
@@ -114,25 +109,12 @@ nav_order: 120
 <p class="body">One limitation: whatever the model had already produced before you cancelled was already billed by the provider. Cancelling saves the work that had not happened yet, not the work that had.</p>
 </section>
 <section>
-<h2><span class="num">3</span> Two bills, one answer.</h2>
-<svg viewBox="0 0 880 256" role="img" aria-label="The model billed per token and the voices billed per character add up to one running total">
- <rect x="20" y="30" width="300" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="170" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE MODEL</text>
- <text x="170" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">per token — $0.0412</text>
- <rect x="20" y="136" width="300" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="170" y="172" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE VOICES</text>
- <text x="170" y="202" text-anchor="middle" font-size="15" fill="var(--text-muted)">per character — 1,204</text>
- <line x1="332" y1="75" x2="400" y2="75" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <line x1="332" y1="181" x2="400" y2="181" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <line x1="400" y1="75" x2="400" y2="181" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <line x1="400" y1="128" x2="452" y2="128" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="466,128 450,120 450,136" fill="var(--accent-muted)"/>
- <rect x="478" y="66" width="382" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="669" y="106" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ONE ANSWER</text>
- <text x="669" y="136" text-anchor="middle" font-size="16" fill="var(--text)">to “what has this cost”</text>
- <text x="669" y="166" text-anchor="middle" font-size="15" fill="var(--text-muted)">7 days · 30 days · this week · this month</text>
- <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">A charge it cannot price is kept without a figure, and the total says at least.</text>
+<h2><span class="num">3</span> With no key, it says so instead of going quiet.</h2>
+<svg viewBox="0 0 880 130" role="img" aria-label="The sentence D47 gives when no key is stored">
+ <rect x="20" y="24" width="840" height="82" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="72" text-anchor="middle" font-size="19" font-weight="700" fill="var(--text)">“No Anthropic API key is stored. Add one in Settings.”</text>
 </svg>
+<p class="body">The sentence is built in <code>LlmProviderFactory.cs</code> and names the provider you chose. Without a key the model is off, and the parts of D47 that need no model still work.</p>
 </section>
 
 </div></div>
@@ -168,7 +150,7 @@ Provider: Anthropic
 Model: claude-sonnet-5-5
 Availability: Available
 Personality: on
-Session so far: 3 turn(s), $0.0412
+Session so far: 3 response(s), $0.0412
 Speech so far: 1,204 characters spoken, $0.1204
 ```
 
@@ -193,7 +175,7 @@ On a Sunday, *today* and *this week* start at the same midnight and show the sam
 1st, *today* and *this month* do. On a Sunday the 1st, all three agree — that is right, not a
 fault.
 
-Those four are kept in `data/spend.jsonl`, one line per charge, written as it happens and read
+The charges behind them are kept in `data/spend.jsonl`, one line per charge, written as it happens and read
 back when Directive 47 starts. Both the model and the voices go in it; a total covering only half
 of what you spent would be worse than no total at all.
 
@@ -259,14 +241,12 @@ Provider: Anthropic
 Model: claude-sonnet-5-5
 Availability: NotConfigured — No Anthropic API key is stored. Add one in Settings.
 Personality: on
-Session so far: 0 turn(s), $0.0000
+Session so far: 0 response(s), $0.0000
 ```
 
 ### Writing stories with a model on your own PC
 
-Gemma 4 E4B (Q4_K_M) in LM Studio writes short stories and chapters. It takes about 5 GB of VRAM,
-about 80 seconds for a short story and about two and a half minutes for a chapter. Leave its
-reasoning on.
+Gemma 4 E4B (Q4_K_M) in LM Studio writes short stories and chapters. Leave its reasoning on.
 
 It needs a context of 16,384 tokens or more. LM Studio's default of 8,192 writes nothing. In
 LM Studio, set the model's context length in the loader, tick "Remember settings for" that model so
@@ -329,7 +309,7 @@ local server speaking the same protocol. Anthropic has one address and no reason
 another, so with Anthropic selected there is no row here to worry about.
 
 For the two OpenAI-shaped providers this is the row that matters most. **Include the version
-segment**, the way every OpenAI-compatible client wants it:
+segment**, the way every OpenAI-compatible client expects it:
 
 ```text
 http://127.0.0.1:11434/v1
@@ -556,7 +536,7 @@ Encrypted for your Windows account and kept in `data/secrets.json` beside the ex
 **For the OpenAI-compatible provider the key is optional**, and the row says so. A model running
 on your machine has no account and no key to paste, and leaving the box empty is a complete
 configuration rather than an unfinished one. The row is still there because a gateway speaking the
-same protocol may want one.
+same protocol may need one.
 
 **It is only ever written, never read back.** Directive 47 can tell you whether a key is stored
 and can replace it; nothing — not the panel, not the model, not the logs — can show you the key
@@ -633,7 +613,7 @@ Nothing is demoted on a guess. A refusal that names no field turns nothing off.
 #### The first run {#first-run}
 
 On a fresh install there is no key, so the first thing you would otherwise do is hunt for this row
-in a surface with fourteen sections. Directive 47 offers the two that matter instead — this one,
+in a surface with so many sections. Directive 47 offers the two that matter instead — this one,
 and the voice key as optional — with what each one sends and where.
 
 If you have picked the OpenAI-compatible provider, there may be nothing to offer: a key that is
@@ -651,7 +631,7 @@ those values cannot be decrypted and are reported absent — and the offer appea
 machine that needs it. A flag would have been set on the old machine and would suppress it forever
 on the new one.
 
-Reopen it any time from **About → Set up keys**. Keys get rotated and revoked, so the state that
+Reopen it any time from **Set up keys** under Settings › Privacy and this install › Updates and install. Keys get rotated and revoked, so the state that
 triggers this is one a working install can come back to.
 
 #### Personality {#personality}

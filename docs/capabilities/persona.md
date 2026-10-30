@@ -21,45 +21,50 @@ nav_order: 121
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps to a core that sounds like yours.</p>
 <section>
-<h2><span class="num">1</span> Pick a core.</h2>
-<p class="say">Pick a core, and set the personality switch.</p>
-<p class="expect">The Core page shows your core, and the voice changes to match it.</p>
-<svg viewBox="0 0 880 252" role="img" aria-label="Core">
- <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Core</text>
- <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">Core</text>
- <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">one of eleven</text>
- <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="154" font-size="16" fill="var(--text)">Personality</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">on</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">Eleven Guardian cores. Each one behaves as though the other ten do not exist.</text>
+<h2><span class="num">1</span> Ask who is aboard.</h2>
+<p class="say">Say "who are you".</p>
+<p class="expect">D47 answers "I am" and the name of the core aboard, without asking the language model.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question about the core typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">who are you</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">I am Cora.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">"which core" and "who am I talking to" ask the same.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Bind one to a ship, if you want it to follow the hull.</h2>
-<p class="say">Bind a core to a ship on the Settings tab.</p>
-<p class="expect">The core follows that hull, and the name carries over if Keep the name across a core change is on.</p>
-<svg viewBox="0 0 880 252" role="img" aria-label="Core">
- <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Core</text>
- <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">The ship this core flies</text>
- <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Anaconda — Ptarmigan</text>
- <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="154" font-size="16" fill="var(--text)">Keep the name across a core change</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">on</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">Set on the Settings tab, once per ship. D47 never works one out by watching you.</text>
+<h2><span class="num">2</span> Switch to another core.</h2>
+<p class="say">Say "switch to Cora".</p>
+<p class="expect">The Core row under Settings › Your core › Core and character shows Cora, and the next reply is in her voice. "be Cora", "become Cora", "persona Cora" and "wake Cora" do the same.</p>
+<svg viewBox="0 0 880 152" role="img" aria-label="The Core row showing the core aboard">
+ <rect x="20" y="20" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="46" y="57" font-size="17" font-weight="700" fill="var(--text)">Core</text>
+ <text x="834" y="57" text-anchor="end" font-size="17" fill="var(--text)">Cora</text>
+ <text x="20" y="120" font-size="16" fill="var(--text-muted)">A name that only sounds like a core, such as "Quora", is checked with you first.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Bind one to a ship, if you want it to follow the hull.</h2>
+<p class="say">Open Settings › Your core › Core and character, pick a ship in the Ship row, then pick a core in Core for that ship.</p>
+<p class="expect">Boarding that ship brings the core aboard without a word. A ship with no binding changes nothing.</p>
+<svg viewBox="0 0 880 252" role="img" aria-label="The Ship row and the Core for that ship row">
+ <rect x="20" y="20" width="840" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="46" y="57" font-size="17" font-weight="700" fill="var(--text)">Ship</text>
+ <text x="834" y="57" text-anchor="end" font-size="17" fill="var(--text)">Bad Idea</text>
+ <rect x="20" y="100" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="46" y="137" font-size="17" font-weight="700" fill="var(--text)">Core for that ship</text>
+ <text x="834" y="137" text-anchor="end" font-size="17" fill="var(--text)">Sentinel</text>
+ <text x="20" y="206" font-size="16" fill="var(--text-muted)">Nothing is bound until you say so.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Change the core yourself on the Settings tab.</p>
-<p class="expect">The core changes; asking the AI to change it only tells you which core is running.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="The AI cannot change its own core.">
+<p class="say">Say "switch to Warden" while a stock story is running.</p>
+<p class="expect">The Guardian cores are locked until the story's Guardian beacon is scanned. The Core row shows LOCKED, D47 names the story and says why, and COVAS keeps speaking.</p>
+<svg viewBox="0 0 880 152" role="img" aria-label="A running story locks the Guardian cores.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The AI cannot change its own core.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Nothing the model can call reaches these rows. It can tell you which core is running, and that is all.</text>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A running story locks the Guardian cores.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Your choice is kept, and the core is aboard again as soon as the hold lifts.</text>
 </svg>
 </section>
 </div></div>
@@ -115,6 +120,7 @@ nav_order: 121
  <text x="440" y="200" text-anchor="middle" font-size="15" fill="var(--text-muted)">THE ONE THING THEY ALL SEE</text>
  <text x="440" y="224" text-anchor="middle" font-size="16" fill="var(--text)">your ship — position, hull, cargo, credits, jumps</text>
 </svg>
+<p class="body">Each core keeps its own transcript, and a core you return to picks up where it left off. The one thing all of them read is your ship: position, hull, cargo and credits.</p>
 </section>
 <section>
 <h2><span class="num">3</span> A ship has its own AI core.</h2>
@@ -138,45 +144,16 @@ nav_order: 121
  <text x="440" y="199" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Nothing is bound until you say so.</text>
  <text x="440" y="242" text-anchor="middle" font-size="15" fill="var(--text-muted)">You set it on the Settings tab, once per ship, and Directive 47 keeps it.</text>
 </svg>
+<p class="body">Bind a core to a ship once, in Settings. Boarding that ship brings the core aboard without comment. A core you have never had aboard introduces itself, once.</p>
 </section>
 <section>
-<h2><span class="num">4</span> It only remarks on an absence worth remarking on.</h2>
-<svg viewBox="0 0 880 262" role="img" aria-label="A core away under a month says nothing; one away a month or more is handed what changed">
- <rect x="20" y="44" width="400" height="176" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="220" y="82" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text-muted)">UNDER A MONTH</text>
- <text x="220" y="120" text-anchor="middle" font-size="17" fill="var(--text)">it says nothing at all</text>
- <text x="220" y="156" text-anchor="middle" font-size="15" fill="var(--text-muted)">coming back is the normal case,</text>
- <text x="220" y="184" text-anchor="middle" font-size="15" fill="var(--text-muted)">so it is not an event</text>
- <rect x="460" y="44" width="400" height="176" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="660" y="82" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">A MONTH OR MORE</text>
- <text x="660" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">it is handed what changed while it was away</text>
- <text x="660" y="148" text-anchor="middle" font-size="16" fill="var(--text)">14 hyperspace jumps</text>
- <text x="660" y="174" text-anchor="middle" font-size="16" fill="var(--text)">312 light years covered</text>
- <text x="660" y="200" text-anchor="middle" font-size="16" fill="var(--text)">one interdiction</text>
- <text x="440" y="252" text-anchor="middle" font-size="16" fill="var(--text-muted)">What it does with that is the character — Sentinel demands the combat log.</text>
+<h2><span class="num">4</span> A running story locks the Guardian cores.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="The help line on the Core row about a running story">
+ <rect x="20" y="24" width="840" height="102" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="64" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">“While a story runs, COVAS answers and the Guardian cores</text>
+ <text x="440" y="94" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">are locked until you scan a Guardian beacon.”</text>
 </svg>
-</section>
-<section>
-<h2><span class="num">5</span> Each core is given a voice that suits it.</h2>
-<svg viewBox="0 0 880 226" role="img" aria-label="A language model reads a core's description against the available voices and pairs them once">
- <rect x="20" y="36" width="210" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="125" y="74" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">CORA</text>
- <text x="125" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">clipped, precise, a woman</text>
- <line x1="242" y1="84" x2="284" y2="84" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="298,84 282,76 282,92" fill="var(--accent-muted)"/>
- <rect x="310" y="36" width="250" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="435" y="70" text-anchor="middle" font-size="16" fill="var(--text)">the model reads that</text>
- <text x="435" y="94" text-anchor="middle" font-size="16" fill="var(--text)">against your voice list</text>
- <text x="435" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">a judgement, not a guess</text>
- <line x1="572" y1="84" x2="614" y2="84" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="628,84 612,76 612,92" fill="var(--accent-muted)"/>
- <rect x="640" y="36" width="220" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="750" y="74" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">A VOICE</text>
- <text x="750" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">chosen once, then kept</text>
- <rect x="20" y="156" width="840" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">With no language model, or no voices to choose from, nothing is chosen and the core keeps the voice it has.</text>
-</svg>
-<p class="body">Gender is <em>told</em> to the model rather than left to be inferred, because a voice of the wrong gender is not a near miss — it is a different character reading the lines.</p>
+<p class="body">COVAS speaks while the story's cores sleep, and the Core row shows LOCKED on each held one. Pausing, switching off or abandoning the story gives them back at once. The line is the row's help text in <code>PersonaCapability.cs</code>.</p>
 </section>
 </div></div>
 </details>
@@ -185,7 +162,7 @@ nav_order: 121
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="conversation.html"><span class="ct">Language model →</span><span class="cd">What is behind the words, and what switching coreslity off does not touch.</span></a>
+<a class="card" href="conversation.html"><span class="ct">Language model →</span><span class="cd">What is behind the words, and what switching personality off does not touch.</span></a>
 <a class="card" href="speech.html"><span class="ct">Speech →</span><span class="cd">The Voice row a core's pairing lands on, and how to take it back.</span></a>
 <a class="card" href="settings.html"><span class="ct">Settings →</span><span class="cd">Why the model can rename your core but cannot choose who it is.</span></a>
 </div>
@@ -261,7 +238,7 @@ Or pick one from the settings panel.
 
 ### And you can write your own
 
-Eleven ship. The twelfth onwards is yours: a name, and a paragraph in your own words saying what
+Eleven cores ship with D47. The twelfth onwards is yours: a name, and a paragraph in your own words saying what
 it is like. **Custom cores** under Settings opens the editor, and what you write joins the
 picker underneath the eleven — selectable, bindable to a ship, and paired with a voice exactly
 like the rest of the cast.
@@ -326,10 +303,8 @@ comes aboard.
 happened to be running while you were flying something; a binding that appeared on its own is a
 preference you never stated.
 
-**You set it on the Settings tab**, on the rows under Your core › Core and character. It was also a spoken phrase and a
-`Ctrl+Alt+B` gesture until 0.94.0, and both were retired: it is a thing done once per ship, at the
-desk, and two more roads to it were two more things to keep in step. Settings is desktop-only, so
-this is now a desk job — which is where it was already being done.
+**You set it in Settings**, on the Ship and Core for that ship rows under Settings › Your core › Core and
+character. There is no spoken phrase or key for it: it is done once per ship, at the desk.
 
 **The model cannot bind anything**, and now there is nothing for it to reach. It can tell you what
 a ship flies with, and that is all. A tool that could bind a core to a ship is a tool that changes
@@ -479,7 +454,7 @@ A core introduces itself the first time you ever pick it. After that it is silen
 been off for a month, which is the better arrangement once you have heard the first line — and
 the wrong one when you are working through the cast and want to hear how each of them opens.
 
-**That is remembered between sessions**, so restarting Directive 47 no longer brings the opening
+**That is remembered between sessions**, so restarting Directive 47 does not bring the opening
 lines back. Which cores are spent is kept in `data/view-state.json` beside the rest of how you
 left the panel; it is not part of your settings, and nothing you said to a core is stored with it.
 
@@ -547,8 +522,8 @@ Not reachable by the model — it reports what a binding is and nothing writes o
 
 Whether the face on the panel may fetch the clips of the core aboard. Each core has one short clip
 per state, such as listening or thinking. When the clip for a state is not in `data/avatar-clips`,
-Directive 47 asks for it from the same GitHub release it updates itself from: at most eight requests
-per core per session, and only the id of the core goes with them. Off, nothing is fetched and a
+Directive 47 asks for it from the same GitHub release it updates itself from. A clip is asked for at
+most once per session, whether or not it arrived, and only the id of the core goes with the request. Off, nothing is fetched and a
 state with no clip shows the avatar's own mark; clips already on disk still play.
 
 Not reachable by the model.
@@ -559,7 +534,7 @@ The [conversation](conversation.md) capability has a **Personality** switch. Off
 answers with no core, no flavour and no chatter of either kind.
 
 The anti-invention guardrails are unaffected. They sit *above* the persona in the assembled
-prompt, and there is no code path that can vary them — switching coreslity off truncates a
+prompt, and there is no code path that can vary them — switching personality off truncates a
 later block and cannot reach that one. A guardrail a setting could remove would be a guardrail in
 name only.
 
@@ -576,8 +551,7 @@ Answers "who are you" with the core's name and nothing else — `I am Warden.` T
 
 Listed first on purpose. The keyword router answers with a capability's first tool that needs no
 arguments, and every phrase this capability declares is a question about identity — so this is
-the tool that answers them. It used to be the one below, which meant asking your companion its
-name got a status report and a list of the ten it was not.
+the tool that answers them.
 
 #### `describe_persona`
 

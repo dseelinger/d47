@@ -7,7 +7,7 @@ namespace D47.App.Tests;
 /// The first part is the words before the first separator that a title could start with, the last part runs to
 /// the next punctuation, and the parts between are exact.
 /// </param>
-internal sealed record WrittenPath(IReadOnlyList<string> Parts, string? Group)
+internal sealed record WrittenPath(IReadOnlyList<string> Parts, string? Group, string Following = "")
 {
     public override string ToString() => string.Join(PanelPathReader.Separator, Parts) + (Group is null ? "" : ", group " + Group);
 }
@@ -48,7 +48,7 @@ internal static partial class PanelPathReader
                     var group = Group(run[length..]);
 
                     at = from + length;
-                    paths.Add(new WrittenPath(parts, group));
+                    paths.Add(new WrittenPath(parts, group, run[length..]));
                     break;
                 }
 
@@ -123,6 +123,9 @@ internal static partial class PanelPathReader
         length = end < 0 ? run.Length : end;
         return run[..length].Trim();
     }
+
+    /// <summary>The group named by ", group …" at the start of <paramref name="after"/>, or null.</summary>
+    public static string? GroupIn(string after) => Group(after);
 
     private static string? Group(string after)
     {

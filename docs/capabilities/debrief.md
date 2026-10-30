@@ -22,8 +22,8 @@ nav_order: 145
 <p class="intro">Three steps from telling D47 off to a rule it keeps.</p>
 <section>
 <h2><span class="num">1</span> Say what annoyed you, in your own words.</h2>
-<p class="say">Say what annoyed you in your own words, such as "stop telling me the system name every jump".</p>
-<p class="expect">D47 treats it as feedback and drafts a rule.</p>
+<p class="say">Say "from now on, give me the distance first", then close D47 and start it again.</p>
+<p class="expect">Nothing changes while you talk. When D47 closes it reads the session back, and at the next start the draft is waiting for you.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">stop telling me the system name every jump</text>
@@ -34,27 +34,27 @@ nav_order: 145
 </section>
 <section>
 <h2><span class="num">2</span> Read the rule it drafted, and say yes or no.</h2>
-<p class="say">Read the rule it drafted, then press Keep or Discard.</p>
-<p class="expect">Keep saves the rule; Discard drops it.</p>
-<svg viewBox="0 0 880 220" role="img" aria-label="A drafted rule shown back to the Commander with keep and discard buttons">
+<p class="say">Open Settings › You and your records › Memory, notes and debrief, and press Open what D47 has drafted.</p>
+<p class="expect">The page "What D47 learned from your last session" lists the draft under Waiting for you. Edit the wording, then press Take it, Just for the core aboard, or Discard.</p>
+<svg viewBox="0 0 880 220" role="img" aria-label="A drafted direction shown with Take it and Discard buttons">
  <rect x="20" y="16" width="840" height="188" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="44" y="54" font-size="15" font-weight="700" fill="var(--text-muted)">D47 WOULD REMEMBER</text>
+ <text x="44" y="54" font-size="15" font-weight="700" fill="var(--text-muted)">WAITING FOR YOU</text>
  <text x="44" y="98" font-size="17" fill="var(--text)">"Do not name the system on arrival unless I ask."</text>
  <rect x="44" y="130" width="128" height="38" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="108" y="155" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Keep</text>
+ <text x="108" y="155" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Take it</text>
  <rect x="188" y="130" width="128" height="38" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="252" y="155" text-anchor="middle" font-size="16" fill="var(--text-muted)">Discard</text>
- <text x="360" y="155" font-size="15" fill="var(--text-muted)">Nothing is remembered until you press Keep.</text>
+ <text x="360" y="155" font-size="15" fill="var(--text-muted)">Nothing is in the prompt until you press Take it.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Open the Memory page to see which rules D47 is actually keeping.</p>
-<p class="expect">Only the rules you pressed Keep on are listed.</p>
+<p class="say">Say "stop debriefing me" to stop new drafts.</p>
+<p class="expect">No new draft is waiting after the next close. Directions you already took stay under What you have taken until you press Withdraw. A direction you take reaches the prompt at the start of your next session, not the one you are in.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Nothing is saved without your yes.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Nothing is saved without your yes.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A rule you never confirmed was never written down. Check the Memory page for what it is actually keeping.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A direction you never took is not in the prompt. What you have taken lists the ones that are.</text>
 </svg>
 </section>
 </div></div>
@@ -96,6 +96,7 @@ nav_order: 145
  <text x="755" y="232" text-anchor="middle" font-size="15" fill="var(--text-muted)">A stranger cannot write</text>
  <text x="755" y="254" text-anchor="middle" font-size="15" fill="var(--text-muted)">D47 a new instruction.</text>
 </svg>
+<p class="body">Only your own sentences are read for corrections, such as "stop calling it that". What D47 said and any in-game message are recorded for context and skipped, so another Commander cannot send D47 a new instruction.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Nothing happens until you press the button.</h2>
@@ -111,6 +112,7 @@ nav_order: 145
  <text x="680" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">edit it first if D47 got it slightly wrong</text>
  <text x="680" y="140" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">in the prompt, next session</text>
 </svg>
+<p class="body">A draft is a suggestion in the window. It enters the prompt only after you press Take it, and then at the start of your next session. You can edit the wording first.</p>
 </section>
 <section>
 <h2><span class="num">3</span> Some things it can never write.</h2>
@@ -125,6 +127,16 @@ nav_order: 145
  <text x="440" y="162" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">REFUSED: the safety rules, the tool definitions, the personality pack, your settings</text>
  <text x="440" y="192" text-anchor="middle" font-size="15" fill="var(--text-muted)">Checked on the file name, not on good intentions - so a future change cannot silently widen it.</text>
 </svg>
+<p class="body">The pass may write one file, standing-directions.json. It is refused the safety rules, the tool definitions, the personality pack and your settings, and the check is on the file name.</p>
+</section>
+<section>
+<h2><span class="num">4</span> What you take is shown to the model word for word.</h2>
+<svg viewBox="0 0 880 130" role="img" aria-label="The line that opens the standing directions in the prompt">
+ <rect x="20" y="24" width="840" height="82" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="60" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">“Standing directions from the Commander. They took each of these by hand</text>
+ <text x="440" y="86" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">after a session, in their own words, …”</text>
+</svg>
+<p class="body">That opening is a constant in <code>StandingDirections.cs</code>, and the page's last section shows the whole block as the prompt will carry it.</p>
 </section>
 </div></div>
 </details>
@@ -135,7 +147,7 @@ each one, and what you take arrives at the start of your *next* session.
 
 ## Where it lives
 
-Settings → Debrief → **Open what D47 has drafted**.
+Settings › You and your records › Memory, notes and debrief, group Memory and debrief: press **Open what D47 has drafted** under Standing directions.
 
 There is no voice command and no tool for this. The pass is an offline process — the model
 cannot invoke it, and D47 does not rewrite its own standing instructions while it is talking.
@@ -187,8 +199,8 @@ arrives as a **question** with a suggested answer you can edit, and adopting it 
 
 ## Taking one
 
-Each proposal offers three buttons: take it for every core, take it just for the core aboard, or
-discard it.
+Each proposal offers three buttons: **Take it** for every core, **Just for** the core aboard, or
+**Discard**. A taken direction has a **Withdraw** button.
 
 **Taking it for one core** is how a style note lands. It becomes a line appended to that core's
 block in the prompt — it never edits the persona pack, because that writing lives in two places
@@ -211,10 +223,9 @@ Standing directions from the Commander. They took each of these by hand after a 
 
 ## Why it waits for the next session
 
-Directions sit in the stable part of the prompt, above the cache breakpoint, with about 39,000
-bytes of tool definitions in front of them. Changing a byte up there mid-conversation makes the
-whole thing cold again — measured at 23x the cost. So the block is fixed when a session opens and
-does not move until the next one.
+Directions sit in the stable part of the prompt, above the cache breakpoint. Changing a byte up
+there mid-conversation makes the cached prompt cold again, so the block is fixed when a session
+opens and does not move until the next one.
 
 Taking a direction while D47 is running writes the file and says so. This conversation carries
 what it started with.
@@ -233,7 +244,7 @@ than on good intentions. It cannot write:
 
 ## Switching it off
 
-Settings → Debrief → **Debrief me after a session**, or say *"stop debriefing me"*.
+The **Debrief me after a session** row in the same group, or say *"stop debriefing me"*. *"start debriefing me"* turns it back on.
 
 Off stops the drafting. It does not withdraw anything you have already taken — withdrawing is a
 button beside each one, in the window.

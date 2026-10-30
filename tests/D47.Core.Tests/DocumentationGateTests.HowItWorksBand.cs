@@ -29,13 +29,10 @@ public partial class DocumentationGateTests
         "flight-controls",
         "general-conversation",
         "general-trade-run",
-        "goals",
         "listening",
-        "logbook",
         "lore",
         "navigation",
         "on-foot",
-        "persona",
         "ships",
         "system-names",
         "vr",
@@ -43,7 +40,6 @@ public partial class DocumentationGateTests
 
     private static readonly HashSet<string> PagesWhoseHowItWorksBandCarriesAFigure = new(StringComparer.Ordinal)
     {
-        "goals",
         "specifications",
     };
 

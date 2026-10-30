@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Persona, Activities, Memory, Language model, Goals, Debrief, Commander's log, Look at the screen and Captain's log help pages now match the app. Memory's steps use phrases that work, and say that "remember that…" is filed as unverified and that Forget is a button in the Memory window. Goals says that progress is read from the journal, and that remove and recover are spoken. Debrief's steps follow the real flow: say a correction, close D47, then Take it on the page. The Captain's log page says that its entries are listed under Privacy and egress as sent to a host when speech recognition or the read-back voice is hosted. Several pages gained or shortened a How it works band.
+
 The Settings, Journal, Diagnostics, Help, Privacy and Screenshots help pages now match the app. The Journal page's first step goes to Transcript › Journal File, which lists events as sentences, newest first. Diagnostics asks "your status" for the log folder instead of a phrase that did not work. Settings no longer lists a Guardian theme. Privacy has a How it works band and asks "what are you sending". The Journal page now covers the Combat stats ledger and says that pressing a Codex entry's picture shows it full size.
 
 On the mini panel, the Navigation tab's Galaxy map now shows only the route ahead of you, framed to hold your position and every stop left, with no buttons or switches. It refits after each jump. With no route plotted it says "No route is plotted."; at the end of a stored plan it says "The destination is reached."

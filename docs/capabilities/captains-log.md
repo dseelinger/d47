@@ -7,7 +7,7 @@ nav_order: 159
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Two steps to a log entry in your own words. No AI needed.</p>
+<p class="intro">Three steps to a log entry in your own words, and back again. No AI needed.</p>
 <section>
 <h2><span class="num">1</span> Say "captain's log", then the entry.</h2>
 <p class="say">Say "captain's log, the Guardian site is two kilometres north of the landing pad".</p>
@@ -22,13 +22,24 @@ nav_order: 159
 </section>
 <section>
 <h2><span class="num">2</span> Or say the phrase alone, then the entry.</h2>
-<p class="say">Say "captain's log", wait for "Go ahead.", then say the entry.</p>
-<p class="expect">The next thing you say is kept word for word, even a command. "Cancel" or "never mind" saves nothing and D47 says "Not logged."; two minutes of silence drops the opening.</p>
+<p class="say">Say "captain's log", then say the entry after D47 answers.</p>
+<p class="expect">D47 answers "Go ahead." and keeps your next sentence word for word, even a command. "Cancel" or "never mind" saves nothing and D47 says "Not logged."; two minutes of silence drops the opening.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The opening phrase alone holds the next utterance">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">captain's log</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">The next utterance is the entry.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">D47 answers "Go ahead." The next utterance is the entry.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Read your entries back.</h2>
+<p class="say">Say "read my last log entry".</p>
+<p class="expect">D47 reads the newest entry without asking the model, opened by its date in the game's calendar and its system. "how many log entries" counts them.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="Phrases that read log entries back">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">read my last log entry</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"read today's log entries" — "read log entries about Colonia" — "how many log entries"</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Only these phrases read entries. The model cannot.</text>
 </svg>
 </section>
 </div></div>
@@ -49,6 +60,15 @@ nav_order: 159
  <text x="660" y="104" text-anchor="middle" font-size="16" fill="var(--text-muted)">with system, body and ship</text>
  <text x="440" y="176" text-anchor="middle" font-size="16" fill="var(--text-muted)">The AI never sees an entry, and is refused if it tries to write one.</text>
 </svg>
+<p class="body">The phrase "captain's log" is matched before the model is asked. The rest of the sentence is saved as heard, stamped with the time and whichever of system, body, station, ship and position the game state knows.</p>
+</section>
+<section>
+<h2><span class="num">2</span> Nothing is logged without a Commander.</h2>
+<svg viewBox="0 0 880 130" role="img" aria-label="The reply when nobody is flying">
+ <rect x="20" y="24" width="840" height="82" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="72" text-anchor="middle" font-size="19" font-weight="700" fill="var(--text)">“Nobody is flying, so there is nobody to log for.”</text>
+</svg>
+<p class="body">Entries are kept per Commander. With nobody flying there is nobody to file one under, so D47 saves nothing and says that sentence, a constant in <code>CaptainsLogCapability.cs</code>.</p>
 </section>
 </div></div>
 </details>
@@ -98,10 +118,12 @@ D47 says so.
 
 ### Where the words go
 
-D47 sends entries nowhere. The words pass through the speech recognition provider you have
-selected as you speak them, and through the text-to-speech provider you have selected when D47
-speaks "Logged.". The **Privacy and egress** section names both, and says whether each runs on
-this PC.
+Entries are kept in `data\captains-log.json` on this PC and D47 sends them nowhere. The words pass
+through the speech recognition provider you have selected as you speak them, and through the
+text-to-speech provider you have selected when D47 speaks "Logged.". When speech recognition is
+hosted, or the voice that reads entries back is hosted, **Privacy and egress** lists the Captain's
+log as sending to that host and names it. When both run on this PC the entry says nothing leaves
+it.
 
 ### Only you write them
 

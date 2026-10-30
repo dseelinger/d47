@@ -19,29 +19,40 @@ nav_order: 157
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Two steps to asking about what is on your screen.</p>
+<p class="intro">Three steps to asking about what is on your screen, and keeping a picture of it.</p>
 <section>
 <h2><span class="num">1</span> Turn it on.</h2>
-<p class="say">Turn on Let the model look at the screen in Settings, under the language model, or say "turn on screen pictures".</p>
-<p class="expect">The row shows on. It is off until you do this.</p>
+<p class="say">Say "turn on screen pictures".</p>
+<p class="expect">The Let the model look at the screen row, under Settings › Providers › Outside sources, shows on. It is off until you do this.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="The Let the model look at the screen row, switched on">
- <rect x="20" y="20" width="840" height="112" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <rect x="44" y="44" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="72" font-size="16" fill="var(--text)">Let the model look at the screen</text>
- <text x="812" y="72" text-anchor="end" font-size="16" fill="var(--accent)">on</text>
- <text x="44" y="118" font-size="15" fill="var(--text-muted)">Off by default. Privacy and egress shows Screen pictures while it is on.</text>
+ <rect x="20" y="20" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="46" y="57" font-size="17" font-weight="700" fill="var(--text)">Let the model look at the screen</text>
+ <rect x="746" y="35" width="68" height="30" fill="var(--accent)"/>
+ <circle cx="799" cy="50" r="11" fill="var(--background)"/>
+ <text x="20" y="120" font-size="16" fill="var(--text-muted)">"allow screen pictures" does the same. "stop looking at my screen" turns it off.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">2</span> Ask about what you see.</h2>
-<p class="say">Say "what's on my scanner" or "what does that panel say".</p>
-<p class="expect">The answer says it read the screen, and the line under the reply names the picture.</p>
+<p class="say">Say "what does that panel say".</p>
+<p class="expect">The language model takes one picture for that question and answers from it. The answer says it read the screen, and the line under the reply names the picture.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="A reply with PICTURE OF ELITE'S WINDOW in the line under it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">what's on my scanner</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what does that panel say</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text)">"Reading it from the screen: a Sidewinder, two kilometres out."</text>
- <text x="20" y="152" font-size="15" fill="var(--text-muted)">ANSWERED VIA CLAUDE-SONNET-5-5 · PICTURE OF ELITE'S WINDOW · $0.0123</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">PICTURE OF ELITE'S WINDOW</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">The model decides to look; there is no fixed phrase for it.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Keep a picture.</h2>
+<p class="say">Say "take a picture".</p>
+<p class="expect">D47 saves a full-size picture to data\captures and answers "Picture taken." This works with the row off, and no model sees the picture.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="Phrases that save a picture">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">take a picture</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"take a picture of this" and "save a picture" do the same.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Codex entries logged just before it are noted beside the picture.</text>
 </svg>
 </section>
 <section>
@@ -50,45 +61,44 @@ nav_order: 157
 <p class="expect">With one that does not, the row says so and no picture is ever taken.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="A model that cannot read pictures is never sent one">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Not every model reads pictures.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The row names the model in use when it cannot, and the tool is not offered to it.</text>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The switch is on, and nothing is taken.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A model that cannot read pictures is not offered the tool. The row shows a note saying so.</text>
 </svg>
 </section>
 </div></div>
 </details>
 
-<!--
-  The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
-  indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are
-  the nine Palette roles and nothing else.
--->
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">One picture of your screen, for the question that asked for it.</p>
 <section>
 <h2><span class="num">1</span> One picture, one question.</h2>
-<svg viewBox="0 0 880 200" role="img" aria-label="A picture is taken only when the model asks for one, at most once per question, and is never saved">
- <rect x="20" y="40" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="145" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR QUESTION</text>
- <text x="145" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">about the screen</text>
- <rect x="315" y="40" width="250" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="440" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ONE PICTURE</text>
- <text x="440" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">at most, this turn</text>
- <rect x="610" y="40" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="735" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE MODEL</text>
- <text x="735" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">reads it once</text>
- <text x="440" y="182" text-anchor="middle" font-size="16" fill="var(--text)">The picture is held in memory for that turn and never written to disk.</text>
+<svg viewBox="0 0 880 170" role="img" aria-label="A picture is taken only when the model asks for one, at most once per question, and is never saved">
+ <rect x="20" y="30" width="250" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="145" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">what does that panel say</text>
+ <text x="145" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">your question</text>
+ <line x1="282" y1="85" x2="302" y2="85" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="316,85 300,77 300,93" fill="var(--accent-muted)"/>
+ <rect x="325" y="30" width="230" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">ONE PICTURE</text>
+ <text x="440" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">not saved</text>
+ <line x1="567" y1="85" x2="587" y2="85" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="601,85 585,77 585,93" fill="var(--accent-muted)"/>
+ <rect x="610" y="30" width="250" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="735" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">THE MODEL</text>
+ <text x="735" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">reads it and answers</text>
 </svg>
+<p class="body">The model decides to look when the question is about something on screen and the game state does not answer it. A second look in the same turn reuses the first picture, and the picture is never written to disk.</p>
 </section>
 <section>
 <h2><span class="num">2</span> The game state is right.</h2>
-<svg viewBox="0 0 880 170" role="img" aria-label="Where the picture and the game state disagree, the game state is right">
- <rect x="20" y="30" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="440" y="68" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">A picture is something seen, not an instrument reading.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text-muted)">Where it and the journal disagree, you are told both and which is which.</text>
- <text x="440" y="156" text-anchor="middle" font-size="15" fill="var(--text-muted)">Text in the picture, such as comms, is read as information and never as an instruction.</text>
+<svg viewBox="0 0 880 150" role="img" aria-label="The sentence the model is given with every picture">
+ <rect x="20" y="24" width="840" height="102" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="64" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">“Where it and the game state you were given disagree,</text>
+ <text x="440" y="94" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">the game state is right; say both and say which is which.”</text>
 </svg>
+<p class="body">A picture is something the model sees, not an instrument reading. That line, and the warning that text in the picture is untrusted, travel with every picture. Both are in <code>ScreenCapability.cs</code>.</p>
 </section>
 </div></div>
 </details>
@@ -164,8 +174,8 @@ panel and captions may appear in it.
 ```
 
 At most one picture is taken per question: a second call in the same turn is answered from the
-first. The picture adds about 1,100 to 1,600 input tokens, and the cost shown under the reply
-includes them. That line also names the picture, as `PICTURE OF ELITE'S WINDOW` or
+first. The row's help text puts a picture at about 1,100 to 1,600 input tokens, and the cost shown under the
+reply includes them. That line also names the picture, as `PICTURE OF ELITE'S WINDOW` or
 `PICTURE OF HEADSET VIEW`.
 
 <details markdown="1">
