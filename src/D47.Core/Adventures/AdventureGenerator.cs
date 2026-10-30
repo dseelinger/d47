@@ -3344,6 +3344,7 @@ public sealed class AdventureGenerator(
         {
             "- \"bounty\": the Commander collects \"count\" bounties, anywhere.",
             "- \"bond\": the Commander earns \"count\" combat kill bonds in a conflict zone. \"faction\" is the side fought for; name one only when it appears in the game state or the places listed, and otherwise leave it null. Never Thargoid kill bonds.",
+            "- \"onfootbond\": the Commander earns \"count\" kill bonds on foot in a ground conflict zone, reached on foot at a settlement or by the dropship from a station's Frontline Solutions desk. Kill bonds earned in a ship or SRV do not count.",
             "- \"mission\": the Commander completes \"count\" missions. \"faction\" is the faction they are for, named only as for \"bond\", or null. "
                 + "\"mission\" is the family, the start of the mission's internal name, one of these, in no order of preference: "
                 + string.Join(", ", Shuffled(MissionFamilies.Offered, name)) + "; or null for any mission. Never "
@@ -3616,6 +3617,7 @@ public sealed class AdventureGenerator(
         36 => "thirty-six",
         37 => "thirty-seven",
         38 => "thirty-eight",
+        39 => "thirty-nine",
         _ => count.ToString(CultureInfo.InvariantCulture),
     };
 

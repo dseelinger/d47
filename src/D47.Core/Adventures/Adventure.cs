@@ -183,6 +183,9 @@ public enum TriggerKind
 
     /// <summary>The Commander saves their own picture for an entry first logged, in that region, after the step appeared. Counted; one picture is one.</summary>
     NewCodexPicture,
+
+    /// <summary><c>FactionKillBond</c> events earned on foot, from a <c>Disembark</c> or <c>DropshipDeploy</c> until the next <c>Embark</c>.</summary>
+    OnFootBond,
 }
 
 /// <summary>One field of an event and the value it has to hold.</summary>
@@ -379,6 +382,7 @@ public sealed record AdventureTrigger
         },
         TriggerKind.Bounty => $"collect {Counted("bounty", "bounties")}",
         TriggerKind.Bond => $"earn {Counted("kill bond", "kill bonds")}{For()}",
+        TriggerKind.OnFootBond => $"earn {Counted("kill bond", "kill bonds")} on foot",
         TriggerKind.Mission => $"complete {Counted(Missions(one: true), Missions(one: false))}{For()}",
         TriggerKind.Sell => $"sell {Tons()} of {CommodityWord()}{At()}",
         TriggerKind.Mine => $"refine {Tons()} of {CommodityWord()}",
@@ -439,6 +443,7 @@ public sealed record AdventureTrigger
         {
             TriggerKind.Bounty => $"Bounties: {of}",
             TriggerKind.Bond => $"Kill bonds{For()}: {of}",
+            TriggerKind.OnFootBond => $"Kill bonds on foot: {of}",
             TriggerKind.Mission => $"{Capital(Missions(one: false))}{For()}: {of}",
             TriggerKind.Sell => $"{Capital(CommodityWord())} sold{At()}: {of} t",
             TriggerKind.OnFoot => $"Surface disembarks: {of}",

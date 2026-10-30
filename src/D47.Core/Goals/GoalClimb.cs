@@ -104,7 +104,7 @@ public static class GoalClimb
             "Trade" => row.Kind == TriggerKind.Sell || row is { Kind: TriggerKind.Mission, Career: Career.Trading },
             "Explore" => row.Kind is TriggerKind.Discover or TriggerKind.Map or TriggerKind.Footfall || row is { Kind: TriggerKind.DataSale, Organic: false },
             "Exobiologist" => row.Kind == TriggerKind.Organic || row is { Kind: TriggerKind.DataSale, Organic: true },
-            "Soldier" => IsMission(row, SoldierMissions),
+            "Soldier" => row.Kind == TriggerKind.OnFootBond || IsMission(row, SoldierMissions),
             Careers.Empire or Careers.Federation => row.Kind == TriggerKind.Mission,
             _ => false,
         };

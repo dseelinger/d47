@@ -201,7 +201,7 @@ Open the Short Story page and the entry for a brief; committing the brief asks f
 
 ### What an objective can be
 
-Thirty-nine triggers, and every one is a comparison on a structured field rather than on a name:
+Forty triggers, and every one is a comparison on a structured field rather than on a name:
 
 | Trigger | Matched on | Never on |
 |---|---|---|
@@ -215,6 +215,7 @@ Thirty-nine triggers, and every one is a comparison on a structured field rather
 | Fit out a ship that can reach the beacon | a `Loadout` whose modules include a fuel scoop and a laser or railgun (`hpt_pulselaser`, `hpt_beamlaser` or `hpt_railgun`), or a `CarrierBuy`; `MaxJumpRange` is never read, and a range stored in the objective is only the figure in its "easier with" sentence. For a fleet carrier owner a `Loadout` with a laser or railgun meets it. An `FSDJump`, `Location` or `CarrierJump` into the beacon's system, or a `CarrierBuy`, also meets it, in any ship, unless the ship had no laser or railgun when the chapter was written. Only a chapter whose Guardian beacon is out of reach has one | the ship's hull or name |
 | Collect bounties | `Bounty` events | anything else |
 | Earn kill bonds | `FactionKillBond` events, optionally for one `AwardingFaction` | the faction fought |
+| Earn kill bonds on foot | `FactionKillBond` events while the Commander is on foot: after a `Disembark` or a `DropshipDeploy`, or a `Location` or `CarrierJump` with `OnFoot` true, and before the next `Embark` | a kill bond earned in a ship or SRV |
 | Complete missions | `MissionCompleted` events, optionally for one `Faction` and a mission family that starts the internal `Name`, such as `Mission_Courier` | the mission's title |
 | Sell tons | `Count` in `MarketSell`, optionally of one `Type` or at one `MarketID` | the commodity's display name |
 | Refine tons | one ton per `MiningRefined`, optionally of one `Type` | the commodity's display name |
@@ -851,7 +852,7 @@ replaced in a rewrite, so the same inputs give the same activities.
 
 | Career | Kinds | Mission families |
 | --- | --- | --- |
-| Combat | bounty, bond, conflict | Massacre, Assassinate, OnFoot_Massacre, OnFoot_Onslaught, OnFoot_Assassination, OnFoot_Defence |
+| Combat | bounty, bond, onfootbond, conflict | Massacre, Assassinate, OnFoot_Massacre, OnFoot_Onslaught, OnFoot_Assassination, OnFoot_Defence |
 | Trading | sell | Courier, Delivery, Collect, OnFoot_Delivery, OnFoot_Collect |
 | Mining | mine | Mining |
 | Exploration | map, signal, codex, newcodexpicture, codexpicture, wreck, uss, srv, datasale (cartographic) | none |
@@ -872,10 +873,10 @@ An activity is excluded unless the ship aboard and the Commander pass its gate:
 | `int_buggybay` | srv |
 | `int_passengercabin` or `int_mkii_passengercabin` | the Passengers families |
 | Cargo capacity above zero | sell, salvage, Delivery, Collect, Mining, Smuggle, Piracy |
-| Odyssey | every OnFoot family, organic, and the Exobiology data sale |
+| Odyssey | every OnFoot family, onfootbond, organic, and the Exobiology data sale |
 | Combat rank 3 and three engineered modules | bond, conflict, Massacre, Assassinate |
 | Mercenary rank 2 | the OnFoot combat families |
-| A station within reach | bounty, bond, conflict, sell, both data sales, rescue, every Mission family |
+| A station within reach | bounty, bond, onfootbond, conflict, sell, both data sales, rescue, every Mission family |
 
 The station gate is checked once per chapter, before the draw. `StoryDirector` asks the galaxy search for fixed stations
 within the chapter's reach of the Commander's system (300 light years or more, or the long-haul reach) and counts one that
@@ -925,8 +926,8 @@ arc first on the Goals page. While d47 knows you are not pledged to a Power, the
 - A career or navy further from it: the drawn activities are only ones that earn that rank. Combat: bounties, bonds,
   conflicts, and massacre and assassination missions. Trade: selling cargo and trade missions. Exploration:
   cartographic data sales, discoveries, mapping and first footfalls. Exobiology: organic samples and organic data
-  sales. Mercenary: on-foot massacre, onslaught, assassination and defence missions. A navy: missions, and the writer is
-  told they are for that superpower's factions.
+  sales. Mercenary: kill bonds earned on foot, and on-foot massacre, onslaught, assassination and defence missions.
+  A navy: missions, and the writer is told they are for that superpower's factions.
 - Powerplay: a pledge objective while you are unpledged, otherwise an objective for the next Powerplay rank.
 - Engineers: an objective to reach the next stage with the first engineer on the unlock route.
 - Ships: an objective to board the cheapest hull you do not own.

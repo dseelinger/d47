@@ -16,6 +16,7 @@ internal static class TriggerConfirms
         [TriggerKind.Beacon] = "data was scanned from a Guardian beacon in that system — not what the data says",
         [TriggerKind.Bounty] = "bounties were collected, anywhere — not who the targets were, their crimes or their number beyond the count",
         [TriggerKind.Bond] = "kill bonds were earned in a conflict zone, optionally for one faction — not who was killed, who won or whether a fight was broken off",
+        [TriggerKind.OnFootBond] = "kill bonds were earned on foot in a ground conflict zone — not who was killed, who won or whether a fight was broken off",
         [TriggerKind.Mission] = "a mission of this family was handed in, wherever it was taken or flown — not its target, the target's standing or how it went",
         [TriggerKind.Sell] = "tons were sold at a market — not the price, the buyer or where the goods came from",
         [TriggerKind.Mine] = "tons were refined from mining — not where they were mined or what they were for",

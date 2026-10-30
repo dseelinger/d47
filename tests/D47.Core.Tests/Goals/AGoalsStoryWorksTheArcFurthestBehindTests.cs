@@ -191,9 +191,28 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     }
 
     [Fact]
-    public void AMercenaryArcTheCommanderCannotBeDrawnForIsPassedOver()
+    public void AMercenaryArcAtRankZeroIsDrawnOnFootKillBonds()
     {
         var step = GoalClimb.Next(Standings(0.5, Rank("rank.soldier", 0, 0.1), At("rank.trade", 0.2)), State(), null);
+
+        Assert.Equal("rank.soldier", step?.Key);
+        Assert.Equal("Soldier", step?.Draw);
+        Assert.Null(step?.Objective);
+
+        foreach (var chapter in Enumerable.Range(1, 40))
+        {
+            Assert.All(Draw(step!, ChapterDraw.Seed("the-test-story", chapter)), slot => Assert.Equal(TriggerKind.OnFootBond, slot.Kind));
+        }
+    }
+
+    [Fact]
+    public void AMercenaryArcTheCommanderCannotBeDrawnForIsPassedOver()
+    {
+        var state = State();
+        var held = ChapterActivities.Held(state.Ranks, state.Ship, odyssey: true);
+
+        var step = GoalClimb.Next(
+            Standings(0.5, Rank("rank.soldier", 0, 0.1), At("rank.trade", 0.2)), state, null, row => row.Kind != TriggerKind.OnFootBond && ChapterActivities.Passes(row, held));
 
         Assert.Equal("rank.trade", step?.Key);
     }
@@ -234,6 +253,9 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     [InlineData("Combat", TriggerKind.Mission, "Mission_Massacre", null, true)]
     [InlineData("Combat", TriggerKind.Mission, "Mission_OnFoot_Massacre", null, false)]
     [InlineData("Soldier", TriggerKind.Mission, "Mission_OnFoot_Massacre", null, true)]
+    [InlineData("Soldier", TriggerKind.OnFootBond, null, null, true)]
+    [InlineData("Soldier", TriggerKind.Bond, null, null, false)]
+    [InlineData("Combat", TriggerKind.OnFootBond, null, null, false)]
     [InlineData("Trade", TriggerKind.Mission, "Mission_Courier", null, true)]
     [InlineData("Explore", TriggerKind.Signal, null, null, false)]
     [InlineData("Explore", TriggerKind.DataSale, null, false, true)]

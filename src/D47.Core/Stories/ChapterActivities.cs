@@ -140,9 +140,9 @@ public static class ChapterActivities
             && (row.Family is null || string.Equals(row.Family, family?.Trim(), StringComparison.OrdinalIgnoreCase))
             && (row.Organic is null || organic is null || row.Organic == organic));
 
-    /// <summary>Whether the row can only be done at a station or in a populated system: bounty, bond, conflict, sell, data sale, rescue and every mission.</summary>
+    /// <summary>Whether the row can only be done at a station or in a populated system: bounty, both bonds, conflict, sell, data sale, rescue and every mission.</summary>
     public static bool NeedsStation(DrawableActivity activity) =>
-        activity.Kind is TriggerKind.Bounty or TriggerKind.Bond or TriggerKind.Conflict or TriggerKind.Sell
+        activity.Kind is TriggerKind.Bounty or TriggerKind.Bond or TriggerKind.OnFootBond or TriggerKind.Conflict or TriggerKind.Sell
             or TriggerKind.DataSale or TriggerKind.Rescue or TriggerKind.Mission;
 
     /// <summary>Whether every gate named in a step event row's <c>needs</c> is in <paramref name="held"/>; a name that is no gate is never held.</summary>
@@ -160,6 +160,7 @@ public static class ChapterActivities
         [
             new(TriggerKind.Bounty, null, Career.Combat, ActivityGate.None, 3, 8),
             new(TriggerKind.Bond, null, Career.Combat, ActivityGate.Danger, 5, 15),
+            new(TriggerKind.OnFootBond, null, Career.Combat, ActivityGate.Odyssey, 5, 15),
             new(TriggerKind.Conflict, null, Career.Combat, ActivityGate.Danger, 1, 2, PlaceBefore: true),
             new(TriggerKind.Sell, null, Career.Trading, ActivityGate.Cargo, 10, 40),
             new(TriggerKind.Mine, null, Career.Mining, ActivityGate.MiningKit | ActivityGate.Cargo, 10, 40),

@@ -903,12 +903,14 @@ public static class AdventureFold
         && (standing.Current > from || (standing.Current == from && standing.CurrentStep >= standing.Adventure.RewrittenStep));
 
     private static bool IsWatched(TriggerKind kind) =>
-        kind is TriggerKind.SuitMod or TriggerKind.Livery or TriggerKind.CarrierJump or TriggerKind.Discover or TriggerKind.Footfall;
+        kind is TriggerKind.SuitMod or TriggerKind.Livery or TriggerKind.CarrierJump or TriggerKind.Discover or TriggerKind.Footfall or TriggerKind.OnFootBond;
 
-    private static int Gained(AdventureTrigger trigger, JournalEvent journalEvent, AdventureObservation observation, AdventureWorld? world) =>
-        trigger.Kind == TriggerKind.Footfall
-            ? world?.IsFirstFootfall(journalEvent) == true ? 1 : 0
-            : IsWatched(trigger.Kind) ? AdventureWatch.Amount(trigger, observation) : 0;
+    private static int Gained(AdventureTrigger trigger, JournalEvent journalEvent, AdventureObservation observation, AdventureWorld? world) => trigger.Kind switch
+    {
+        TriggerKind.Footfall => world?.IsFirstFootfall(journalEvent) == true ? 1 : 0,
+        TriggerKind.OnFootBond => journalEvent.Kind is "FactionKillBond" && world?.IsOnFoot == true ? 1 : 0,
+        _ => IsWatched(trigger.Kind) ? AdventureWatch.Amount(trigger, observation) : 0,
+    };
 
     /// <summary>The first of the step's <c>failsOn</c> triggers this event would count toward, as evaluated with a count of one.</summary>
     private static AdventureTrigger? FailedOn(BeatStep beat, AdventureStanding standing, JournalEvent journalEvent, AdventureObservation observation, AdventureWorld? world)

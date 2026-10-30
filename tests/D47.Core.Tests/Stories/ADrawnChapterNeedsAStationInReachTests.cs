@@ -15,7 +15,7 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
     private const int Seeds = 1000;
 
     private static readonly TriggerKind[] NeedStation =
-        [TriggerKind.Bounty, TriggerKind.Bond, TriggerKind.Conflict, TriggerKind.Sell, TriggerKind.DataSale, TriggerKind.Rescue, TriggerKind.Mission];
+        [TriggerKind.Bounty, TriggerKind.Bond, TriggerKind.OnFootBond, TriggerKind.Conflict, TriggerKind.Sell, TriggerKind.DataSale, TriggerKind.Rescue, TriggerKind.Mission];
 
     private static readonly ShipLoadout Ship = new() { Type = "cobramkiii", CargoCapacity = 64 };
 

@@ -189,6 +189,13 @@ public sealed class ChapterActivitiesAreDrawnFromAWeightedTableTests
     }
 
     [Fact]
+    public void OnFootKillBondsNeedOnlyOdysseyWhileShipKillBondsStillNeedDanger()
+    {
+        Assert.Equal(new DrawableActivity(TriggerKind.OnFootBond, null, Career.Combat, ActivityGate.Odyssey, 5, 15), ChapterActivities.Find(TriggerKind.OnFootBond, null, null));
+        Assert.Equal(new DrawableActivity(TriggerKind.Bond, null, Career.Combat, ActivityGate.Danger, 5, 15), ChapterActivities.Find(TriggerKind.Bond, null, null));
+    }
+
+    [Fact]
     public void NothingThatIsNeverDrawnIsInTheTable()
     {
         Assert.DoesNotContain(ChapterActivities.All, row => Banned.Contains(row.Family) || MissionFamilies.IsSetAside(row.Family));

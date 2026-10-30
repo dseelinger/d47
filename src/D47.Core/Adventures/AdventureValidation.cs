@@ -93,7 +93,7 @@ public static class AdventureValidation
         ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine",
          "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew", "suitmod", "livery",
          "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost", "discover", "footfall", "contribute", "claim", "unlock", "pledge", "powerrank", "site",
-         "missiontaken", "missiondestination", "missioncomplete", "missionabandon", "choice", "event", "codexpicture", "newcodexpicture"];
+         "missiontaken", "missiondestination", "missioncomplete", "missionabandon", "choice", "event", "codexpicture", "newcodexpicture", "onfootbond"];
 
     /// <summary>The stars a boost beat may be limited to.</summary>
     public static IReadOnlyList<string> CodexFilters { get; } = ["Biology", "StellarBodies", "Civilisations", "Guardian"];

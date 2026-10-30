@@ -26,7 +26,7 @@ internal static class StoryAnswer
     /// <summary>Kinds offered in every story.</summary>
     private static readonly string[] AlwaysKinds =
     [
-        "arrive", "dock", "land", "scan", "rank", "bounty", "bond", "mission", "sell", "mine", "onfoot", "collect",
+        "arrive", "dock", "land", "scan", "rank", "bounty", "bond", "onfootbond", "mission", "sell", "mine", "onfoot", "collect",
         "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "boost", "discover", "footfall", "contribute", "claim", "unlock", "crew",
         "suitmod", "conflict", "faction",
     ];
@@ -34,7 +34,7 @@ internal static class StoryAnswer
     /// <summary>The kinds a drawn chapter offers only for the activities drawn; the others stand for places and milestones.</summary>
     private static readonly HashSet<string> DrawnKinds = new(StringComparer.Ordinal)
     {
-        "bounty", "bond", "mission", "sell", "mine", "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale",
+        "bounty", "bond", "onfootbond", "mission", "sell", "mine", "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale",
         "salvage", "uss", "rescue", "srv", "boost", "discover", "footfall", "contribute", "suitmod", "conflict", "faction",
     };
 

@@ -106,6 +106,7 @@ public static class RefusedActivities
     {
         TriggerKind.Bounty => "collect bounties",
         TriggerKind.Bond => "earn combat kill bonds",
+        TriggerKind.OnFootBond => "earn kill bonds on foot",
         TriggerKind.Mission => "complete missions",
         TriggerKind.Sell => "sell cargo",
         TriggerKind.Mine => "mine and refine",

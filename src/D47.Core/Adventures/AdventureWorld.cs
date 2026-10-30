@@ -40,13 +40,23 @@ public sealed record AdventureWorld
     /// <summary>Every body scanned, and where a first footfall was taken.</summary>
     public BodyScans Bodies { get; init; } = BodyScans.Empty;
 
+    /// <summary>Whether the Commander is on foot: from a <c>Disembark</c> or <c>DropshipDeploy</c> to the next <c>Embark</c>, or as a system entry's <c>OnFoot</c> says.</summary>
+    public bool IsOnFoot { get; init; }
+
     public AdventureWorld Apply(JournalEvent journalEvent)
     {
         ArgumentNullException.ThrowIfNull(journalEvent);
 
-        if (journalEvent.Kind is "Scan" or "Disembark")
+        switch (journalEvent.Kind)
         {
-            return this with { Bodies = Bodies.Apply(journalEvent) };
+            case "Disembark":
+                return this with { Bodies = Bodies.Apply(journalEvent), IsOnFoot = true };
+            case "Scan":
+                return this with { Bodies = Bodies.Apply(journalEvent) };
+            case "DropshipDeploy":
+                return this with { IsOnFoot = true };
+            case "Embark":
+                return this with { IsOnFoot = false };
         }
 
         if (!BodyScans.IsSystemEntry(journalEvent))
@@ -54,7 +64,7 @@ public sealed record AdventureWorld
             return this;
         }
 
-        var withBodies = this with { Bodies = Bodies.Apply(journalEvent) };
+        var withBodies = this with { Bodies = Bodies.Apply(journalEvent), IsOnFoot = journalEvent.Bool("OnFoot") };
 
         if (journalEvent.String("StarSystem") is not { Length: > 0 } name)
         {
