@@ -15,6 +15,9 @@ public sealed record ChapterLeg(string Target, StarPosition There, bool Home, bo
 
     /// <summary>Whether the leg is a changed objective's, toward a place the Commander asked for.</summary>
     public bool Asked { get; init; }
+
+    /// <summary>Whether the leg is a place the Commander asked for in an earlier chapter, still not reached.</summary>
+    public bool Chosen { get; init; }
 }
 
 /// <summary>The one rule for a chapter that travels toward a target: how far it must go and where its places are searched.</summary>
@@ -49,6 +52,11 @@ public static class ChapterPull
         if (ask is not { Story: { Beacon: null, FinaleChapter: null } story, Rewrite: null, Length: not AdventureLength.Short } || start is not { } at)
         {
             return null;
+        }
+
+        if (story.Chosen is { } chosen)
+        {
+            return Toward(chosen, at) with { Asked = false, Chosen = true };
         }
 
         if (HomeLeg.Of(ask) is { } home && HomeLeg.PositionOf(home) is { } homeAt)

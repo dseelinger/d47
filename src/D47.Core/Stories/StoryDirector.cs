@@ -47,6 +47,9 @@ public sealed record ObjectiveProposal(
     IReadOnlyList<AdventureRemark> Exchange,
     int Step = 0)
 {
+    /// <summary>The place the new objectives travel toward, when the Commander named one; saved on the story once the proposal is applied.</summary>
+    public AdventureHeading? Heading { get; init; }
+
     /// <summary>The trigger of the step the Commander is on.</summary>
     public AdventureTrigger Trigger => Current.Steps[Math.Min(Step, Current.Steps.Count - 1)].Trigger;
 
@@ -1260,7 +1263,7 @@ public sealed class StoryDirector(
                 return new ObjectiveProposalOutcome(null, "The story changed while the objective was being written.");
             }
 
-            var proposal = target.Proposal(draft, outcome.Reply ?? string.Empty, [.. exchange, new AdventureRemark(trimmed, outcome.Reply)]);
+            var proposal = target.Proposal(draft, outcome.Reply ?? string.Empty, [.. exchange, new AdventureRemark(trimmed, outcome.Reply)]) with { Heading = outcome.Heading };
             target.Hold(proposal);
             return new ObjectiveProposalOutcome(proposal, null);
         }
@@ -1522,9 +1525,11 @@ public sealed class StoryDirector(
                 return refusal;
             }
 
-            if (!_still.ChangedChapters.Contains(proposal.ChapterKey))
+            var changed = _still.ChangedChapters.Contains(proposal.ChapterKey) ? _still.ChangedChapters : [.. _still.ChangedChapters, proposal.ChapterKey];
+
+            if (changed != _still.ChangedChapters || proposal.Heading is not null)
             {
-                Director.Stories.Save(FrontierId, _still with { ChangedChapters = [.. _still.ChangedChapters, proposal.ChapterKey] });
+                Director.Stories.Save(FrontierId, _still with { ChangedChapters = changed, ChosenDestination = proposal.Heading ?? _still.ChosenDestination });
             }
 
             Director.Logger.LogInformation("{Title}: beat {Beat} of {Chapter} was changed by the Commander", _still.Title, proposal.From + 1, proposal.Draft.Name);
@@ -2733,13 +2738,24 @@ public sealed class StoryDirector(
         var toward = inTheBlack && story.BeaconScanAt is not null ? StoryBlack.Toward(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter)) : null;
         var pulled = finaleChapter is null && !beaconChapter && ChapterPull.Pulls(toward, game?.Location.StarPos);
         var home = inTheBlack ? null : HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, replacing ? story.Chapters.SkipLast(1).ToList() : story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
+        var chosen = story.ChosenDestination;
+        var ordinary = finaleChapter is null && !beaconChapter && toward is null;
+
+        if (chosen is not null && Reached(chosen, game))
+        {
+            chosen = null;
+        }
+
+        var heading = ordinary ? chosen : null;
+        var homeLeg = heading is null ? home : null;
 
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
         IReadOnlyList<NotablePlace> sights = [];
 
         if (story.BeaconScanAt is not null
             && finaleChapter is null
-            && home is null
+            && homeLeg is null
+            && heading is null
             && !pulled
             && ChapterFit.IsLongHaul(story.Pacing, game)
             && ChapterDraw.Sightsee(Weights(statistics), previous?.Previous.Sight is not null, ChapterDraw.SightSeed(story.Id, number)))
@@ -2768,7 +2784,7 @@ public sealed class StoryDirector(
                 story.Refused,
                 ChapterFit.IsComfortChapter(sinceBeacon),
                 statistics,
-                FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || home is not null || pulled) ? 1 : 0) + (sightseeing ? 1 : 0),
+                FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || homeLeg is not null || heading is not null || pulled) ? 1 : 0) + (sightseeing ? 1 : 0),
                 ChapterDraw.Seed(story.Id, number, replacing ? -1 : null),
                 sinceBeacon / ChapterFit.ComfortEvery,
                 stationsInReach,
@@ -2785,12 +2801,12 @@ public sealed class StoryDirector(
         goals = GoalClimb.Worked(goals, slots);
 
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
-            && (story.BeaconScanAt is null || finaleChapter is not null || home is not null || pulled || ChapterFit.ServesLongHaul(slots, [.. goals.Select(goal => goal.Objective).OfType<AdventureTrigger>()], sightseeing));
+            && (story.BeaconScanAt is null || finaleChapter is not null || homeLeg is not null || heading is not null || pulled || ChapterFit.ServesLongHaul(slots, [.. goals.Select(goal => goal.Objective).OfType<AdventureTrigger>()], sightseeing));
 
         var opening = Opening(frontierId, story, secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter), game?.Ship.Type);
 
         var ask = new AdventureAsk(
-            longHaul || home is not null || pulled ? AdventureReach.Anywhere : AdventureReach.Session,
+            longHaul || homeLeg is not null || heading is not null || pulled ? AdventureReach.Anywhere : AdventureReach.Session,
             AdventureLength.Evening,
             Chapter: previous,
             Story: Asked(
@@ -2806,12 +2822,13 @@ public sealed class StoryDirector(
                 longHaul,
                 slots,
                 finaleChapter > 1 ? story.FinaleDestination : null,
-                home,
+                homeLeg,
                 goals.Count > 0 ? goals : null,
                 game?.Ship.Type,
                 inTheBlack,
                 sightseeing ? sights : null,
-                toward),
+                toward,
+                heading),
             LastDraftRefused: lastDraftRefused,
             Progress: Progress(frontierId),
             Draft: draftNumber,
@@ -2854,6 +2871,7 @@ public sealed class StoryDirector(
             FinaleFrom = finaleFrom,
             FinaleDestination = finaleChapter == 1 ? outcome.Destination : still.FinaleDestination,
             HomeTarget = home,
+            ChosenDestination = chosen,
         });
         logger.LogInformation("{Title}: chapter {Number}, {Name}, begins", story.Title, number, draft.Name);
 
@@ -2905,7 +2923,8 @@ public sealed class StoryDirector(
         string? hull = null,
         bool inTheBlack = false,
         IReadOnlyList<NotablePlace>? sights = null,
-        string? toward = null)
+        string? toward = null,
+        AdventureHeading? chosen = null)
     {
         var card = catalog().Find(story.Id);
 
@@ -2946,8 +2965,14 @@ public sealed class StoryDirector(
             OnCarrier = StoryAboard.OnCarrierBySpan(secret, story),
             InTheBlack = inTheBlack,
             Toward = toward,
+            Chosen = chosen,
         };
     }
+
+    /// <summary>Whether the Commander is in <paramref name="chosen"/>'s system, or on the way home within <see cref="HomeLeg.Home"/> of Sol or Colonia.</summary>
+    private static bool Reached(AdventureHeading chosen, CommanderGameState? game) =>
+        game?.Location is { } location
+        && (location.SystemAddress == chosen.SystemAddress || (chosen.Home && location.StarPos is { } at && at.DistanceTo(chosen.Position) <= HomeLeg.Home));
 
     private bool FinaleDue(Story story, DateTimeOffset now) =>
         StoryClues.FinaleDue(story, now, story.GoalsAtPick is not null && GoalClimb.AllDone(GoalsOf(story.Id)));

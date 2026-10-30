@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A destination you name when you change a story objective now carries into the chapters after it, until you get there. Before, it applied only to the rest of the current chapter, and the next chapter was written as if you had never asked. Those chapters head toward it instead of toward Sol or Colonia, and it is cleared once the journal shows you in that system. A beacon chapter, a finale chapter and a stretch of the story with its own destination leave it alone and keep it for the next ordinary chapter.
+
 A story chapter or short story that asks for kill bonds earned on foot now sends the Commander to the Frontline Solutions desk of a station in a system at war. Before, it could dock the Commander at a station with no desk, or in a system with no ground conflict to go to.
 
 The Stories tab on the mini panel now shows what to do next, then what was said. Under the story's name and step comes the next objective, or the chapter's writing progress, or a line saying the chapter could not be written, the story is paused or switched off, or the chapter has ended. Below that is the story's log, newest first, drawn as the chapter's page draws it with each speaker and picture; say "page down" to read older entries. The Story on box, the premise, the Done line and the quoted last line are no longer on the mini panel. The progress bar now appears and clears as a chapter is written, with no tab switch needed.

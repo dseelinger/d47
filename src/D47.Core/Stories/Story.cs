@@ -144,6 +144,9 @@ public sealed record Story
     /// <summary>The system, Sol or Colonia, the story's chapters head for after changed chapters in the black; null when none.</summary>
     public string? HomeTarget { get; init; }
 
+    /// <summary>The system the Commander named when changing an objective, which later chapters travel toward until they arrive; null when none.</summary>
+    public AdventureHeading? ChosenDestination { get; init; }
+
     /// <summary>The stretches the Commander had the story switched off, oldest first. The last is open while it is off.</summary>
     public IReadOnlyList<StoryOffSpan> OffSpans { get; init; } = [];
 

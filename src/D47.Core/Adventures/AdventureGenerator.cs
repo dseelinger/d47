@@ -155,6 +155,9 @@ public sealed record AdventureStory(
 
     /// <summary>The destination of the span the chapter lies in, once the beacon has been scanned; null for a chapter outside the black or in a span with none.</summary>
     public string? Toward { get; init; }
+
+    /// <summary>The system the Commander named when changing an objective and has not reached; null when none or when the chapter has a purpose of its own.</summary>
+    public AdventureHeading? Chosen { get; init; }
 }
 
 /// <summary>A story's cast member as the chapter writer is told it: the id a line names, the name, and who they are.</summary>
@@ -2787,7 +2790,6 @@ public sealed class AdventureGenerator(
 
         var far = position.DistanceTo(leg.There).ToString("0", CultureInfo.InvariantCulture);
         var nearer = (ChapterPull.Share * facts.RadiusLightYears).ToString("0", CultureInfo.InvariantCulture);
-        var within = leg.Within.ToString("0", CultureInfo.InvariantCulture);
 
         text.AppendLine();
 
@@ -2821,12 +2823,14 @@ public sealed class AdventureGenerator(
         }
 
         text.AppendLine(
-            leg.Home
+            leg.Chosen
+                ? $"The Commander asked to head for {leg.Target}, {far} light years away, and has not got there. This chapter travels toward it."
+            : leg.Home
                 ? $"The Commander is {far} light years from {leg.Target} and has turned down the last chapters out here, so the story heads home to {leg.Target}."
                 : $"The Commander is {far} light years from {leg.Target}, and this part of the story travels toward {leg.Target}, in the black.");
         text.AppendLine(
             $"This chapter travels: its last stop, the system of its last place objective, must be at least {nearer} light years nearer {leg.Target} "
-            + $"than where the chapter starts, or within {within} light years of {leg.Target}. Each hop must be within the reach."
+            + $"than where the chapter starts, or {Reached(leg)}. Each hop must be within the reach."
             + (places.State == InBandState.Listed ? " The places listed on the way to it meet that rule." : ""));
 
         if (places.State is InBandState.NoneFound or InBandState.Unavailable)
@@ -5045,7 +5049,7 @@ public sealed class AdventureGenerator(
         return ChapterPull.Meets(start, measured, reach, leg.Within)
             ? null
             : $"The chapter starts {start:0} light years from {leg.Target} and its last stop is {measured:0} light years from it; "
-              + (leg.Asked ? $"the new objectives head for {leg.Target}" : $"the story is {(leg.Home ? "heading home" : $"heading for {leg.Target}")}")
+              + (leg.Asked ? $"the new objectives head for {leg.Target}" : leg.Chosen ? $"the Commander asked to head for {leg.Target}" : $"the story is {(leg.Home ? "heading home" : $"heading for {leg.Target}")}")
               + $", so its last stop must be at least {ChapterPull.Share * reach:0} light years nearer {leg.Target} than the start, or "
               + (leg.Within <= 0 ? $"in {leg.Target} itself." : $"within {leg.Within:0} light years of it.");
     }
