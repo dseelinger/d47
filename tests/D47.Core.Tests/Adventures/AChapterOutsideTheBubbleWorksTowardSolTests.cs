@@ -322,7 +322,7 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
         };
     }
 
-    private sealed class Galaxy : IGalaxyService
+    internal sealed class Galaxy : IGalaxyService
     {
         public static readonly StationSummary HarbourPoint = new()
         {

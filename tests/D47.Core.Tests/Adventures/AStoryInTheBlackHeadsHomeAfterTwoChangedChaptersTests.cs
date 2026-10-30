@@ -160,7 +160,7 @@ public sealed class AStoryInTheBlackHeadsHomeAfterTwoChangedChaptersTests
             NullLogger.Instance);
     }
 
-    private sealed class Galaxy : IGalaxyService
+    internal sealed class Galaxy : IGalaxyService
     {
         public double FromSol { get; init; } = 1400;
 
