@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
@@ -142,7 +142,7 @@ public class SetCourseForMyCarrierTests
         var handIn = new HandInOffer();
         handIn.Open(1, "Sol");
 
-        return [.. Commands(Parked), .. CommunityGoalCourse.Phrases(lastFound), .. handIn.Phrases()];
+        return [.. Commands(Parked), .. CommunityGoalCourse.Phrases(lastFound), .. handIn.Phrases(), .. HomeCourse.Phrases(() => "Kestrel Reach")];
     }
 
     /// <summary>

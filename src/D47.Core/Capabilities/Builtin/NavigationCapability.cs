@@ -34,6 +34,9 @@ public sealed record NavigationSurface
     /// </summary>
     public required Func<bool, CancellationToken, Task<bool?>> AwaitGalaxyMap { get; init; }
 
+    /// <summary>The flying Commander's home system, or null where none is set.</summary>
+    public Func<string?> HomeSystem { get; init; } = () => null;
+
     /// <summary>Opens a keyboard entry for a system to plot, holding the given text; null where nothing can.</summary>
     public Action<string>? SpellSystem { get; init; }
 
@@ -273,6 +276,16 @@ public static class NavigationCapability
         }
 
         system = system.Trim();
+
+        if (HomeCourse.IsHome(system))
+        {
+            if (surface.HomeSystem() is not { } home || string.IsNullOrWhiteSpace(home))
+            {
+                return ToolResult.Error(HomeCourse.NotSet);
+            }
+
+            system = home.Trim();
+        }
 
         // Unconditionally first.
         if (!await surface.Clipboard.SetTextAsync(system, cancellationToken).ConfigureAwait(false))

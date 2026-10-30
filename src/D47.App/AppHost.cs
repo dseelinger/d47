@@ -2598,6 +2598,7 @@ public sealed class AppHost : IDisposable
                     Clipboard = clipboard,
                     Actions = actionSurface,
                     AutoPlotEnabled = () => settings.Current.Actions.AutoPlot,
+                    HomeSystem = () => settings.Current.Callouts.HomeSystem,
                     SpellSystem = initial => late.Host?.SpellSystem(initial),
                     OfferSpelling = system => late.Host?.OfferSpelling(system),
                     WatchRoute = () => new Input.RoutePlotWatch(
@@ -2926,6 +2927,7 @@ public sealed class AppHost : IDisposable
                 // out-match the "my carrier" keyword that was answering it with a position report
                 // (change-requests.md 31).
                 .Concat(CarrierCourse.Phrases(() => gameState.Active?.Carrier))
+                .Concat(HomeCourse.Phrases(() => settings.Current.Callouts.HomeSystem))
 
                 // And "what is Conductive Polymers for", one phrase per material something planned actually
                 // wants (change-requests.md 37).

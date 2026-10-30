@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+"Set course for home" now plots a course to your home system, the one set under Home system in Settings, Exploring. It also covers "take me home", "navigate home", "route home" and similar phrasings, and no longer plots a system named "home". With no home system set, D47 says so and plots nothing. A bookmark can no longer be named "home".
+
 A line D47 asks a model to write is no longer spoken if the model answers with its reasoning instead: commentary ahead of a delivery tag, a quotation of the line it was given, or a repeat of its instructions. The authored line is spoken instead, or nothing when there is none.
 
 Station notices and docking refusals are no longer given a joke when D47 rewords them. They are still reworded, always as plain notices.

@@ -88,6 +88,7 @@ public static class BookmarkValidation
         var reserved = taken
             .Select(KeywordRouter.Utterance)
             .Concat(CarrierCourse.CourseSpellings.Select(KeywordRouter.Utterance))
+            .Concat(HomeCourse.CourseSpellings.Select(KeywordRouter.Utterance))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (var spelling in BookmarkCourse.Spellings(trimmed))
