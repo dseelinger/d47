@@ -1111,6 +1111,10 @@ public sealed class AppHost : IDisposable
             files,
             loggerFactory.CreateLogger<D47.Core.Journal.TravelLog>());
 
+        var fullyFound = new D47.Core.Journal.FullyFoundSystems(
+            files,
+            loggerFactory.CreateLogger<D47.Core.Journal.FullyFoundSystems>());
+
         var history = new HistoryBackfill
         {
             Directory = journalDirectory,
@@ -1134,6 +1138,7 @@ public sealed class AppHost : IDisposable
             MetCommanders = commanderLog,
             Erases = commanderErases,
             Travel = travelLog,
+            FullyFound = fullyFound,
             Step = StartupTimer.Step,
         };
 
@@ -1519,7 +1524,8 @@ public sealed class AppHost : IDisposable
             .Add(new HonkOnArrival(
                 () => settings.Current.Actions.HonkOnArrival,
                 () => late.Binds!(),
-                () => late.Foreground!()));
+                () => late.Foreground!(),
+                address => gameState.Active is { Identity.FrontierId: { } fid } && fullyFound.Contains(fid, address)));
 
         loadingStores.Dispose();
 
@@ -1574,6 +1580,7 @@ public sealed class AppHost : IDisposable
             Friends = friends,
             CommsChannels = commsChannels,
             TravelLog = travelLog,
+            FullyFound = fullyFound,
             MemoryBook = memoryBook,
             MemoryObserver = memoryObserver,
             MessageStore = messageStore,
@@ -1717,6 +1724,7 @@ public sealed class AppHost : IDisposable
             stores.Friends.Apply(events);
             stores.CommanderLog.Apply(events);
             stores.TravelLog.Apply(events);
+            stores.FullyFound.Apply(events);
 
             if (!context.IsFirst)
             {
@@ -4576,6 +4584,8 @@ public sealed class AppHost : IDisposable
         public required D47.Core.Conversation.CommsChannels CommsChannels { get; init; }
 
         public required D47.Core.Journal.TravelLog TravelLog { get; init; }
+
+        public required D47.Core.Journal.FullyFoundSystems FullyFound { get; init; }
 
         public required D47.Core.Knowledge.MarketBook MarketBook { get; init; }
 

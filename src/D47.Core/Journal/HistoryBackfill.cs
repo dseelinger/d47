@@ -83,6 +83,9 @@ public sealed class HistoryBackfill
     /// <summary>Each Commander's arrivals, folded the same way.</summary>
     public TravelLog? Travel { get; init; }
 
+    /// <summary>The systems each Commander has found whole, folded the same way.</summary>
+    public FullyFoundSystems? FullyFound { get; init; }
+
     /// <summary>Times one fold, where the caller measures the steps of startup.</summary>
     public Func<string, IDisposable>? Step { get; init; }
 
@@ -409,6 +412,15 @@ public sealed class HistoryBackfill
                 Timed("travel backfill", () =>
                 {
                     travel.FoldHistory(Files(), cancellation);
+                    return true;
+                });
+            }
+
+            if (FullyFound is { } fullyFound)
+            {
+                Timed("fully found systems backfill", () =>
+                {
+                    fullyFound.FoldHistory(Files(), cancellation);
                     return true;
                 });
             }

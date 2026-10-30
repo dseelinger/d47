@@ -50,7 +50,8 @@ public class AHonkWhereEveryBodyIsFoundSaysNothingTests
         return new(now, priming, null, new GameStatus { Flags = flags, ReadAt = now }, NavRoute.None, events);
     }
 
-    private HonkOnArrival Honk() => new(() => true, () => Bound, () => _inFront);
+    private HonkOnArrival Honk(Func<long, bool>? foundWhole = null) =>
+        new(() => true, () => Bound, () => _inFront, foundWhole);
 
     /// <summary>Every line the honk says from <paramref name="from"/> to a minute after the jump.</summary>
     private static List<string> SaidFrom(HonkOnArrival honk, double from, params (double At, JournalEvent Event)[] events)
@@ -127,6 +128,36 @@ public class AHonkWhereEveryBodyIsFoundSaysNothingTests
         _inFront = true;
         var honk = Honk();
         honk.Examine(At(Witchspace, 0, events: [JumpTo(0, Here), AllFound(0, Here)]));
+
+        var decision = honk.Examine(At(Analysis, 1));
+
+        Assert.True(decision.Steps.SequenceEqual(InputSequence.Hold(Fire, HonkOnArrival.Charge)));
+    }
+
+    [Fact]
+    public void ASystemAJournalShowsFoundWholeSaysNothing()
+    {
+        var honk = Honk(address => address == Here);
+        honk.Examine(At(Witchspace, 0, events: JumpTo(0, Here)));
+
+        Assert.Empty(SaidFrom(honk, 1));
+    }
+
+    [Fact]
+    public void ASystemNoJournalShowsFoundWholeKeepsItsLines()
+    {
+        var honk = Honk(address => address == Elsewhere);
+        honk.Examine(At(Witchspace, 0, events: JumpTo(0, Here)));
+
+        Assert.Equal([HonkOnArrival.NotInFront], SaidFrom(honk, 1));
+    }
+
+    [Fact]
+    public void ASystemAJournalShowsFoundWholeIsStillHonked()
+    {
+        _inFront = true;
+        var honk = Honk(address => address == Here);
+        honk.Examine(At(Witchspace, 0, events: JumpTo(0, Here)));
 
         var decision = honk.Examine(At(Analysis, 1));
 

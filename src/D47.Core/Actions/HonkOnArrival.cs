@@ -8,7 +8,11 @@ namespace D47.Core.Actions;
 /// Fires the discovery scanner on arriving in a system (Phase 10, "TheApp honks when you arrive in a
 /// system").
 /// </summary>
-public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds, Func<bool> inFront) : IAutonomousAction
+public sealed class HonkOnArrival(
+    Func<bool> enabled,
+    Func<EliteBinds> binds,
+    Func<bool> inFront,
+    Func<long, bool>? foundWhole = null) : IAutonomousAction
 {
     /// <summary>How long the scanner needs to be held to complete its sweep.</summary>
     public static readonly TimeSpan Charge = TimeSpan.FromSeconds(5.3);
@@ -72,7 +76,10 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds, Fu
 
     public bool IsEnabled => enabled();
 
-    /// <summary>Nothing is said for an arrival in a system whose every body is already found.</summary>
+    /// <summary>
+    /// Nothing is said for an arrival in a system whose every body is already found, in this run or, through
+    /// <c>foundWhole</c>, in any journal.
+    /// </summary>
     public AutonomousDecision Examine(CalloutContext context)
     {
         var decision = Decide(context);
@@ -88,7 +95,7 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds, Fu
             decision = new AutonomousDecision(decision.Steps);
         }
 
-        var known = _arrivedIn is { } here && _complete.Contains(here);
+        var known = _arrivedIn is { } here && (_complete.Contains(here) || foundWhole?.Invoke(here) == true);
 
         if (_pending is { } line && (known || context.Now - _jumpedAt >= Quiet))
         {

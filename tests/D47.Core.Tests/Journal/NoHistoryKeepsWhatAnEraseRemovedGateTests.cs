@@ -87,6 +87,7 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
         Line(day + "T09:25:20", "\"event\":\"LaunchSRV\",\"SRVType\":\"mev_rhino\",\"PlayerControlled\":true"),
         Line(day + "T09:25:30", "\"event\":\"MiningRefined\",\"Type\":\"$platinum_name;\",\"Type_Localised\":\"Platinum\""),
         Line(day + "T09:25:40", "\"event\":\"DockSRV\",\"SRVType\":\"mev_rhino\""),
+        Line(day + "T09:25:50", "\"event\":\"FSSAllBodiesFound\",\"SystemAddress\":1,\"SystemName\":\"Sol\",\"Count\":8"),
         Line(day + "T09:26:00", "\"event\":\"FSDJump\",\"StarSystem\":\"Sol\",\"SystemAddress\":1,\"StarPos\":[0.0,0.0,0.0],\"JumpDist\":5.0"),
     ];
 
@@ -112,6 +113,7 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
         var signals = new SignalSightings(fileSystem, logger);
         var met = new CommanderLog(fileSystem, logger);
         var travel = new TravelLog(fileSystem, logger);
+        var fullyFound = new FullyFoundSystems(fileSystem, logger);
 
         var backfill = new HistoryBackfill
         {
@@ -126,6 +128,7 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
             Signals = signals,
             MetCommanders = met,
             Travel = travel,
+            FullyFound = fullyFound,
         };
 
         backfill.Run(TestContext.Current.CancellationToken);
@@ -140,6 +143,7 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
             [nameof(HistoryBackfill.Mail)] = () => mail.Compose(F),
             [nameof(HistoryBackfill.MetCommanders)] = () => Snapshot(met.Met(F)),
             [nameof(HistoryBackfill.Travel)] = () => Snapshot(travel.Steps(F)),
+            [nameof(HistoryBackfill.FullyFound)] = () => fullyFound.Count(F).ToString(),
         };
 
         return new Run(backfill, ledgers);
