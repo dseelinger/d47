@@ -113,7 +113,7 @@ public sealed class StoryReactionCallout(NearbyFight fight) : ICallout
     {
         ArgumentNullException.ThrowIfNull(due);
 
-        return $"{KeyPrefix}{due.StoryId}.{due.Session.ToString(CultureInfo.InvariantCulture)}";
+        return CalloutKey.Join(KeyPrefix, due.StoryId, due.Session);
     }
 
     /// <summary>The key of a reaction spoken by the cast member <paramref name="castId"/>.</summary>
@@ -145,14 +145,10 @@ public sealed class StoryReactionCallout(NearbyFight fight) : ICallout
             : null;
     }
 
-    private static StoryReactionDue? Split(string rest)
-    {
-        var dot = rest.LastIndexOf('.');
-
-        return dot > 0 && int.TryParse(rest[(dot + 1)..], NumberStyles.None, CultureInfo.InvariantCulture, out var session)
-            ? new StoryReactionDue(rest[..dot], session)
+    private static StoryReactionDue? Split(string rest) =>
+        CalloutKey.Split(rest, string.Empty, NumberStyles.None) is var (storyId, session)
+            ? new StoryReactionDue(storyId, session)
             : null;
-    }
 
     private void Note(StoryReactionWindow window, IReadOnlyList<JournalEvent> events)
     {

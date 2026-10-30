@@ -63,22 +63,14 @@ public sealed class StoryClueCallout(NearbyFight fight) : ICallout
     {
         ArgumentNullException.ThrowIfNull(due);
 
-        return $"{KeyPrefix}{due.StoryId}.{due.Index.ToString(CultureInfo.InvariantCulture)}";
+        return CalloutKey.Join(KeyPrefix, due.StoryId, due.Index);
     }
 
     /// <summary>The clue a key names, or null when it is not a clue key.</summary>
     public static StoryClueDue? Parse(string? key)
     {
-        if (key is null || !key.StartsWith(KeyPrefix, StringComparison.Ordinal))
-        {
-            return null;
-        }
-
-        var rest = key[KeyPrefix.Length..];
-        var dot = rest.LastIndexOf('.');
-
-        return dot > 0 && int.TryParse(rest[(dot + 1)..], NumberStyles.None, CultureInfo.InvariantCulture, out var index)
-            ? new StoryClueDue(rest[..dot], index)
+        return CalloutKey.Split(key, KeyPrefix, NumberStyles.None) is var (storyId, index)
+            ? new StoryClueDue(storyId, index)
             : null;
     }
 }

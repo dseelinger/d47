@@ -1,3 +1,4 @@
+using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
@@ -66,18 +67,20 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
     /// <summary>The announcement key of line <paramref name="index"/>: <see cref="Key"/> for the first, its own family for the rest.</summary>
     public string LineKey(int index) => index == 0
         ? Key
-        : $"{AdventureCallout.LinePrefix}{Adventure.Key}.{Beat.ToString(System.Globalization.CultureInfo.InvariantCulture)}.{index.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        : CalloutKey.Join(AdventureCallout.LinePrefix, Adventure.Key, Beat, index);
 
     /// <summary>
     /// Stable per adventure and beat, so the engine's cooldown keys on the beat and not the text.
     /// </summary>
     public string Key => IsStep
-        ? $"{AdventureCallout.StepPrefix}{Adventure.Key}.{Beat.ToString(System.Globalization.CultureInfo.InvariantCulture)}.{Step!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+        ? CalloutKey.Join(AdventureCallout.StepPrefix, Adventure.Key, Beat, Step!.Value)
         : IsFailure
         ? $"{AdventureCallout.FailedPrefix}{Adventure.Key}"
         : IsEnding
         ? $"{AdventureCallout.EndedPrefix}{Adventure.Key}"
-        : $"{AdventureCallout.KeyPrefix}{Adventure.Key}.{(IsOpening ? "opening" : Beat.ToString(System.Globalization.CultureInfo.InvariantCulture))}";
+        : IsOpening
+        ? $"{AdventureCallout.KeyPrefix}{Adventure.Key}.{AdventureCallout.Opening}"
+        : CalloutKey.Join(AdventureCallout.KeyPrefix, Adventure.Key, Beat);
 }
 
 /// <summary>The Commander's adventures, read as one thing (Phase 47).</summary>

@@ -15,6 +15,9 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
     public const string KeyPrefix = "adventure.";
 
+    /// <summary>The last part of the opening's key, where a beat's key has its index.</summary>
+    public const string Opening = "opening";
+
     /// <summary>
     /// The short acknowledgement's own prefix, and it is deliberately not <see cref="KeyPrefix"/>
     /// (asked for 2026-08-22).
@@ -98,32 +101,15 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
     /// <returns>The adventure's key and the beat index, with <c>-1</c> for the opening.</returns>
     public static (string Key, int Beat)? Reached(string? announcementKey)
     {
-        if (announcementKey is null || !announcementKey.StartsWith(KeyPrefix, StringComparison.Ordinal))
-        {
-            return null;
-        }
-
-        var rest = announcementKey[KeyPrefix.Length..];
-
         // From the right: an adventure's key is the Commander's or a model's and may hold a dot, and the part
         // after the last one is always the beat.
-        var dot = rest.LastIndexOf('.');
-
-        if (dot <= 0)
+        if (CalloutKey.Split(announcementKey, KeyPrefix, System.Globalization.NumberStyles.Integer) is var (story, beat))
         {
-            return null;
+            return (story, beat);
         }
 
-        var story = rest[..dot];
-        var tail = rest[(dot + 1)..];
-
-        if (string.Equals(tail, "opening", StringComparison.Ordinal))
-        {
-            return (story, -1);
-        }
-
-        return int.TryParse(tail, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var beat)
-            ? (story, beat)
+        return CalloutKey.Cut(announcementKey, KeyPrefix) is var (opened, Opening)
+            ? (opened, -1)
             : null;
     }
 
@@ -138,40 +124,20 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
             return (key, beat, 0);
         }
 
-        if (announcementKey is null || !announcementKey.StartsWith(LinePrefix, StringComparison.Ordinal))
-        {
-            return null;
-        }
-
-        var rest = announcementKey[LinePrefix.Length..];
-        var lineDot = rest.LastIndexOf('.');
-        var beatDot = lineDot > 0 ? rest.LastIndexOf('.', lineDot - 1) : -1;
-
-        return beatDot > 0
-               && int.TryParse(rest[(beatDot + 1)..lineDot], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var index)
-               && int.TryParse(rest[(lineDot + 1)..], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var line)
-            ? (rest[..beatDot], index, line)
+        return CalloutKey.Split(announcementKey, LinePrefix, System.Globalization.NumberStyles.Integer) is var (head, line)
+               && CalloutKey.Split(head, string.Empty, System.Globalization.NumberStyles.Integer) is var (story, index)
+            ? (story, index, line)
             : null;
     }
 
     /// <summary>The announcement key of the offer of the choice that begins beat <paramref name="beat"/> of story <paramref name="key"/>.</summary>
     public static string OfferKey(string key, int beat) =>
-        $"{OfferPrefix}{key}.{beat.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        CalloutKey.Join(OfferPrefix, key, beat);
 
     /// <summary>Which story and which beat's choice an offer announcement is, or null for anything else.</summary>
     public static (string Key, int Beat)? Offer(string? announcementKey)
     {
-        if (announcementKey is null || !announcementKey.StartsWith(OfferPrefix, StringComparison.Ordinal))
-        {
-            return null;
-        }
-
-        var rest = announcementKey[OfferPrefix.Length..];
-        var dot = rest.LastIndexOf('.');
-
-        return dot > 0 && int.TryParse(rest[(dot + 1)..], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var beat)
-            ? (rest[..dot], beat)
-            : null;
+        return CalloutKey.Split(announcementKey, OfferPrefix, System.Globalization.NumberStyles.Integer);
     }
 
     /// <summary>
