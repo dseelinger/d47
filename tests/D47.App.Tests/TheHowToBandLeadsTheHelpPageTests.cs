@@ -81,7 +81,6 @@ public class TheHowToBandLeadsTheHelpPageTests
     [InlineData("about")]
     [InlineData("bookmarks")]
     [InlineData("learned-phrases")]
-    [InlineData("privacy")]
     public void APageWithOnlyTheHowToBandDrawsOnlyThatHead(string id)
     {
         var (window, page) = Open(id);

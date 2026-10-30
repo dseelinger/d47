@@ -37,25 +37,25 @@ nav_order: 102
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Open the Journal page to watch events arrive.</h2>
-<p class="say">Open the Journal page.</p>
-<p class="expect">Events such as FSDJump, Docked and MaterialCollected appear as the game writes them, newest last.</p>
-<svg viewBox="0 0 880 246" role="img" aria-label="The Journal tab">
+<h2><span class="num">2</span> Step the Transcript readings to Journal File.</h2>
+<p class="say">Open the Transcript tab and step the readings to Journal File.</p>
+<p class="expect">Each event the game writes appears as a sentence, newest first. The Raw switch shows the event names, such as FSDJump and Docked.</p>
+<svg viewBox="0 0 880 246" role="img" aria-label="The Journal File reading">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
- <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Journal</text>
- <text x="44" y="92" font-size="16" fill="var(--text)">FSDJump — Kuwemaki</text>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Journal File</text>
+ <text x="44" y="92" font-size="16" fill="var(--text)">Jumped to Kuwemaki</text>
  <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">19:31:04</text>
- <text x="44" y="130" font-size="16" fill="var(--text)">Docked — Jameson Memorial</text>
+ <text x="44" y="130" font-size="16" fill="var(--text)">Docked at Jameson Memorial</text>
  <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">19:22:47</text>
- <text x="44" y="168" font-size="16" fill="var(--text)">MaterialCollected — Iron</text>
+ <text x="44" y="168" font-size="16" fill="var(--text)">Collected Iron</text>
  <text x="836" y="168" text-anchor="end" font-size="16" fill="var(--text-muted)">19:18:02</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">Newest last, in the game's own vocabulary.</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">Newest first. The Raw switch shows the game's own event names.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Check the Journal page when a figure looks out of date.</p>
+<p class="say">Check Journal File when a figure looks out of date.</p>
 <p class="expect">If the event is not listed, Elite never wrote it, which is why the figure is stale.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="It only knows what the game has written down.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
@@ -113,7 +113,7 @@ nav_order: 102
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">That rides with every question, so “what should I do about this” has something to work with.</text>
  <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">It states only what the journal reported, and leaves a line out entirely rather than saying “unknown”.</text>
 </svg>
-<p class="body">Two Commanders on one machine stay separate: location, ship, carrier, fleet, materials and session totals are kept per Commander and never merged. And an event Directive 47 does not recognise is skipped and noted rather than breaking the read — an invented figure in your game state is worse than a missing one.</p>
+<p class="body">An event Directive 47 does not recognise is skipped and noted, so the read never breaks. Each Commander's state is kept separate.</p>
 </section>
 </div></div>
 </details>
@@ -151,19 +151,16 @@ from a model that will produce a plausible one.
 > "how much exploration data am I carrying"
 > "reset unsold exploration"
 
-**Every one of those reaches the thing it names.** This capability has six answers and used to be
-reached as a whole, with the first of the six taken by default — which is *where you are*. So
-"where is my fleet carrier" was answered with where **you** were standing, under your own name,
-with your own route attached, and so was every other question here.
+**Every one of those reaches the thing it names.** "Where is my fleet carrier" is answered with
+the carrier's system, not with where you are standing.
 
 **"My jump range" means yours, and only yours.** Ask about a ship — *"what's the Cobra Mk III's
-jump range?"* — and this capability does not answer at all; the question goes to the model, which
-has the specification tables and knows about hulls you do not own. It used to be caught here and
-answered with your docking bay.
+jump range?"* — and this capability does not answer; the question goes to the model, which has the
+specification tables and knows about hulls you do not own.
 
 ### What it can tell you
 
-**What an event changed.** Selecting an event on the Journal page shows a band titled WHAT THIS
+**What an event changed.** Selecting an event on the Journal File reading (Transcript › Journal File) shows a band titled WHAT THIS
 CHANGED, between What this means and Every field, saying what d47 took from it. "Nothing in d47's
 picture changed." is a normal answer: most events carry nothing d47 keeps. An event that never
 reached the Commander's state has no band.
@@ -494,6 +491,21 @@ recognise is skipped and noted rather than breaking the read, and a field that i
 changed shape reads as absent rather than as zero — an invented figure in your game state is
 worse than a missing one.
 
+### Combat stats {#combat-stats}
+
+The Combat stats ledger (Commander › Ledgers › Combat stats) lists your kills and the credits they were
+awarded, counted from the journals on this PC. Choose a period (24 hours, 7 days, 30 days or Everything) and a grouping (Enemy ship,
+Own ship, System or Faction). Press a column heading to sort, and the panel search narrows the rows by name.
+
+Kills in conflict zones carry no ship type, so they are grouped as "In conflict zones, ship type not recorded".
+Under Faction, a kill counts the faction whose ship you destroyed, and its credits count the faction that paid;
+a kill that paid several factions is split among them.
+
+While D47 is still reading your older journals the page says "D47 is reading your journals for past kills.
+The counts appear here when it finishes." If that reading failed, **History not finished** gives the time the
+counts start at. These counts come from the journals, not from Elite's own career figures, which are on
+Commander › Statistics, and count vouchers claimed.
+
 ### Codex pictures {#codex-pictures}
 
 Stock pictures of codex entries are published as files on a GitHub release. Directive 47 fetches the list
@@ -503,8 +515,8 @@ else is sent: no key, no Commander name, no position and nothing else from your 
 
 Pictures you save yourself are kept in the same folder and never leave this PC.
 
-To make your own, say "take a picture" in game, then open the entry's page in the main window (Commander,
-Ledgers, Codex, the region, the entry) and press **Choose a picture**. The captures are listed newest first,
+To make your own, say "take a picture" in game, then open the entry's page in the main window (Commander › Ledgers › Codex, then the
+region and the entry) and press **Choose a picture**. The captures are listed newest first,
 those taken with this entry ahead of the rest. Press one to crop it: drag inside the square to move it and
 drag a corner to resize it. The square stays inside the capture and is never smaller than 384 pixels of it.
 **Save** keeps a 768 by 768 picture, the capture it was cut from and the square, in `data\codex-pictures\local\<Frontier ID>`;
@@ -514,6 +526,9 @@ With a picture of your own for the region, the entry's page also offers **Re-cro
 capture with the saved square, and **Replace**. **Use the stock picture**, or **Remove my picture** when there
 is no stock one, deletes your picture and its capture. These are in the main window only; the big panel shows
 the picture and none of them. An entry in a region D47 cannot name has none of them.
+
+Pressing the picture on an entry's page shows it full size over the window, as a speaker picture does.
+**Close** or Esc puts it away. The family placeholder opens nothing.
 
 **Codex pictures** in the settings turns it off. Nothing is fetched and a codex page shows only the
 pictures you saved yourself, even for stock pictures already on disk, which are kept.
@@ -533,7 +548,7 @@ act on the active Commander's picture only. Stock pictures are shared either way
 ### Open new codex entries {#open-new-codex-entries}
 
 When you log a codex entry for the first time, the panel opens that entry's page, in the window and on the
-headset panel: Commander › Ledgers › Codex › the region › the entry. It is on by default. A surface showing a
+headset panel, under Commander › Ledgers › Codex, in the region and then the entry. It is on by default. A surface showing a
 dialog page or a keyboard entry stays where it is, and the others still move. When several entries are
 logged at once, the last one's page is shown. Entries replayed from the journal when D47 starts open nothing.
 

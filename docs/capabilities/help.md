@@ -19,23 +19,23 @@ nav_order: 100
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Three steps to finding out what something does.</p>
+<p class="intro">Three steps to finding out what D47 does.</p>
 <section>
 <h2><span class="num">1</span> Ask, in the words you already have.</h2>
-<p class="say">Say "what can you do about engineering" or "how does the checklist work".</p>
-<p class="expect">D47 answers from the help pages, which are the same as the site.</p>
+<p class="say">Say "what can you do", then name an area, or say "show me how the checklist works".</p>
+<p class="expect">D47 names its areas and asks which one, and naming one goes a level down. The second phrase starts the checklist's steps, as step 3 describes.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">what can you do about engineering</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what can you do</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">"how does the checklist work" — "what is the gap page"</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">It answers from these pages, so the app and the site cannot disagree.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"show me how the checklist works" — "how do I plot a course"</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">It answers from its own list of capabilities, with no model.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">2</span> Or press HELP on any card.</h2>
 <p class="say">Press HELP on a settings card.</p>
-<p class="expect">The help page opens at that exact row, not at the top of the page. F1 does what HELP does, and F1 again closes help.</p>
+<p class="expect">The help page opens at that card's section. F1 does what HELP does, and F1 again closes help.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Any settings card">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Any settings card</text>
@@ -44,13 +44,13 @@ nav_order: 100
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Scroll</text>
  <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">HELP</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">opens this page at that row</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">HELP takes you to the section for that exact row, not to the top of a page.</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">opens help for this card</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">HELP takes you to the section for that card, not to the top of a page.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">3</span> Ask to be walked through a feature.</h2>
-<p class="say">Say "walk me through engineers", then "next" after each step.</p>
+<p class="say">Say "walk me through engineers", then say next after each step.</p>
 <p class="expect">D47 says the page title, the number of steps and step one, then each step as you ask for it.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="A walkthrough, one step at a time">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
@@ -62,8 +62,8 @@ nav_order: 100
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Ask the language model about Elite itself, such as what a Guardian beacon does.</p>
-<p class="expect">You get an answer about the game; Help covers only D47.</p>
+<p class="say">Ask about Elite itself, such as what a Guardian beacon does.</p>
+<p class="expect">The language model answers about the game. Help covers only D47.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Help is about the page, not the subject.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Help is about the page, not the subject.</text>
@@ -84,9 +84,9 @@ nav_order: 100
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">How to ask what something does, and where the answer comes from.</p>
+<p class="intro">You ask what something does, and the answer comes from D47's own list of capabilities.</p>
 <section>
-<h2><span class="num">1</span> Two ways to ask, and both mean “this page”.</h2>
+<h2><span class="num">1</span> Pressing the mark and saying help both open this page's help.</h2>
 <svg viewBox="0 0 880 254" role="img" aria-label="The mark in the corner and the spoken word both open help for the page you are on">
  <rect x="20" y="26" width="390" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="120" cy="82" r="26" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
@@ -103,7 +103,7 @@ nav_order: 100
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> It sits on top, and “back” puts it away.</h2>
+<h2><span class="num">2</span> Help sits over the page, and back returns to it.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="Help covers the page and back returns to exactly where you were">
  <rect x="20" y="30" width="300" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="170" y="80" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">the page</text>
@@ -122,7 +122,7 @@ nav_order: 100
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> The pictures are here. The detail is on the site.</h2>
+<h2><span class="num">3</span> The pictures are in the panel and the detail is on the site.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="The panel draws the illustrated half and the website carries the reference half">
  <rect x="20" y="26" width="400" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="68" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">IN HERE</text>
@@ -135,7 +135,20 @@ nav_order: 100
  <text x="440" y="200" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Every page in here ends with a way through to its long form.</text>
  <text x="440" y="230" text-anchor="middle" font-size="16" fill="var(--text-muted)">Not every page has pictures yet. The list below is the ones that do.</text>
 </svg>
-<p class="body">And a page nobody has illustrated yet still has its mark: pressing it, or saying so, brings you here instead — one level broader than you asked for, rather than nothing at all.</p>
+<p class="body">A page with no pictures yet still has its mark. Pressing it, or saying so, opens this page instead.</p>
+</section>
+<section>
+<h2><span class="num">4</span> What D47 can do is read from the registry, not the model.</h2>
+<svg viewBox="0 0 880 200" role="img" aria-label="Saying what can you do gets an answer built from the capability registry">
+ <rect x="20" y="24" width="300" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="170" y="57" text-anchor="middle" font-size="17" fill="var(--text)">“what can you do”</text>
+ <line x1="332" y1="50" x2="388" y2="50" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="402,50 386,42 386,58" fill="var(--accent-muted)"/>
+ <rect x="414" y="24" width="446" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="637" y="57" text-anchor="middle" font-size="16" fill="var(--text)">“6 areas: Flying, Trading and goals, … Which one?”</text>
+ <text x="440" y="124" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">The list is built from the capabilities that exist, so it cannot name one that does not.</text>
+ <text x="440" y="156" text-anchor="middle" font-size="16" fill="var(--text-muted)">Name an area and it goes one level down, until it gives the phrases that run a feature.</text>
+</svg>
 </section>
 </div></div>
 </details>
@@ -316,13 +329,8 @@ and their declared example phrasings. The optional area name expands one of them
 {"type":"object","properties":{"group":{"type":"string","description":"Optional group name to expand, such as Voice. Omit for the overview."}},"required":[],"additionalProperties":false}
 ```
 
-The keyword router only routes to a tool with no *required* parameters, because it deliberately
-does not extract argument values from free text — a router that guesses at arguments is one that
-calls the right tool with the wrong ones. The router originally refused any tool with parameters
-at all, which made "what can you do" match nothing: the one capability whose entire purpose is
-being answerable without the model was unreachable without it, purely for offering a refinement
-it does not need. The rule is now "no required parameters", and the router invokes with empty
-arguments.
+The keyword router only routes to a tool with no *required* parameters, because it does not extract
+argument values from free text. It invokes such a tool with empty arguments.
 
 #### `find_phrase`
 

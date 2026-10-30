@@ -19,23 +19,23 @@ nav_order: 151
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Three steps to changing something without opening a menu.</p>
+<p class="intro">Three steps to changing a setting without opening a menu.</p>
 <section>
 <h2><span class="num">1</span> Just ask.</h2>
-<p class="say">Say "turn your personality off" or "set the speech volume to sixty".</p>
-<p class="expect">D47 says what it changed, and from what to what.</p>
+<p class="say">Say "turn your personality off", then "turn your personality on".</p>
+<p class="expect">D47 confirms each change in a sentence, such as "Personality is now off." and then "Personality is now on."</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">turn your personality off</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">"set the speech volume to sixty" — "use the small speech model"</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">It says what it changed, and from what to what.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"turn your personality on" puts it back.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">It confirms the new value in a sentence.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">2</span> Or find it on the Settings tab.</h2>
 <p class="say">Open the Settings tab and type a word or a key into Search.</p>
-<p class="expect">The rows whose label or key match are shown; Show every setting reveals the advanced ones.</p>
+<p class="expect">The rows whose label or key match are shown. Turn on Show every setting to include the advanced rows.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Settings">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Settings</text>
@@ -69,20 +69,20 @@ nav_order: 151
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Changing things by asking — and the handful D47 will not change however nicely you ask.</p>
+<p class="intro">You can change settings by asking, except the protected ones, which only you can change.</p>
 <section>
-<h2><span class="num">1</span> Some settings have a safety catch.</h2>
+<h2><span class="num">1</span> Protected settings refuse the AI.</h2>
 <svg viewBox="0 0 880 208" role="img" aria-label="Some settings are protected: Directive 47's AI cannot change them, and you still can">
  <rect x="20" y="20" width="840" height="120" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">Some settings are protected.</text>
  <text x="440" y="96" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">D47's AI cannot change them — and asking it to will not either.</text>
- <text x="440" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">It is a safety catch, and it is there for you.</text>
+ <text x="440" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">They are protected so a hostile message cannot change them.</text>
  <text x="440" y="176" text-anchor="middle" font-size="15" fill="var(--text-muted)">You can still change any of them yourself: on this page, with a hotkey, or by saying so.</text>
 </svg>
 
 </section>
 <section>
-<h2><span class="num">2</span> Most settings apply to the installed app. A few belong to each of your CMDRs.</h2>
+<h2><span class="num">2</span> Most settings belong to the install, a few to each Commander.</h2>
 <svg viewBox="0 0 880 264" role="img" aria-label="Installation settings are shared; per-Commander settings are separate for each pilot">
  <rect x="20" y="24" width="410" height="150" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="225" y="64" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">THE APP</text>
@@ -99,7 +99,7 @@ nav_order: 151
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> A value it does not know is answered, not ignored.</h2>
+<h2><span class="num">3</span> A value it does not accept is answered with the valid ones.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="An unrecognised value is met with the list of valid ones">
  <rect x="20" y="24" width="340" height="70" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="190" y="66" text-anchor="middle" font-size="17" fill="var(--text)">“use the chatty theme”</text>
@@ -107,12 +107,12 @@ nav_order: 151
  <polygon points="412,59 396,51 396,67" fill="var(--accent-muted)"/>
  <rect x="424" y="24" width="436" height="70" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="642" y="52" text-anchor="middle" font-size="16" fill="var(--text)">“'chatty' is not a valid Theme. Expected one of:</text>
- <text x="642" y="78" text-anchor="middle" font-size="16" fill="var(--text)">elite, dark, light, guardian, elite-palette.”</text>
+ <text x="642" y="78" text-anchor="middle" font-size="16" fill="var(--text)">elite, dark, light, elite-palette.”</text>
  <text x="440" y="146" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Never silently ignored, and never guessed at.</text>
  <text x="440" y="178" text-anchor="middle" font-size="16" fill="var(--text-muted)">TRUE, on and True are one answer rather than three. Clearing a row puts back its default —</text>
  <text x="440" y="204" text-anchor="middle" font-size="16" fill="var(--text-muted)">which is the greyed-out value the box has been showing you all along.</text>
 </svg>
-<p class="body">Everything here is changeable from the settings panel with no file to hand-edit, and every change takes effect at once — there is no save button and no restart.</p>
+<p class="body">Every change takes effect at once, with no save button and no restart.</p>
 </section>
 </div></div>
 </details>
@@ -159,14 +159,14 @@ Carrier, and Notable places for short stories on Stories.
 
 > "what can you change"
 > "what theme are you using"
-> "switch to the guardian theme"
+> "switch to the dark theme"
 > "turn journal logging up to debug"
 
 Say a value it does not offer and it tells you the ones it does, rather than silently ignoring
 you:
 
 ```text
-'chatty' is not a valid Theme. Expected one of: elite, dark, light, guardian, elite-palette.
+'chatty' is not a valid Theme. Expected one of: elite, dark, light, elite-palette.
 ```
 
 Clearing a setting is always allowed and puts it back to its default — which is the greyed-out
@@ -185,8 +185,7 @@ language model.
 | Check for updates at startup | It decides whether anything leaves at all |
 | Every hotkey | Rebinding one hands out a way in |
 
-The reason is worth a sentence, because everything here follows from it. Directive 47 reads text nobody
-here wrote: journal entries carrying another Commander's chosen ship name, in-game messages from
+Directive 47 reads text nobody here wrote: journal entries carrying another Commander's chosen ship name, in-game messages from
 anyone in range, and later web results. **Anything the model can be asked to do, a hostile
 message can try to make it do.** A guard the model can switch off is not a guard, so the rows
 that decide what leaves your machine are not on its list at all.
@@ -194,7 +193,7 @@ that decide what leaves your machine are not on its list at all.
 Ask anyway and you get a straight answer rather than a pretence that the setting does not exist:
 
 ```text
-'Provider' is protected. It can be changed from the settings panel, but not by me.
+'<row label>' is not something I can change. It lives in the settings panel.
 ```
 
 ### Some rows are the Commander's, not the installation's
@@ -209,7 +208,7 @@ and [who knows about it](conversation.md#who-knows-about-it), your
 [core-binding rows](persona.md#core-for-this-ship) are pointed at. Each Commander sees their own
 value there, and a second Commander on the same machine never sees the first one's story.
 
-How it works, because it affects what you see in the file:
+In the file:
 
 - A per-Commander row reads the installation's value until that Commander sets their own. The
   installation's value is whatever was there before anyone logged in — including everything in a
@@ -239,7 +238,7 @@ three.
 | Text, or a key to press | Anything |
 | A key or password | Only ever written, never read back |
 
-Most choices are closed — a theme is one of five. A few are deliberately open: the model name is
+Most choices are closed — a theme is one of four. A few are deliberately open: the model name is
 one, because an endpoint Directive 47 has never seen still has models it knows nothing about.
 
 <details markdown="1">
@@ -275,8 +274,6 @@ reason to know the name of.
 logging.default — Default log level: Information
 logging.subsystems.journal — Journal log level: (default)
     one of: Trace, Debug, Information, Warning, Error, Critical, None
-llm.model — Model: (default: claude-opus-5)
-    one of: claude-opus-5, claude-opus-5-5, claude-sonnet-5-5, claude-sonnet-5, claude-haiku-4-5, claude-fable-5
 llm.personality — Personality: true
 ui.theme — Theme: elite
 ```

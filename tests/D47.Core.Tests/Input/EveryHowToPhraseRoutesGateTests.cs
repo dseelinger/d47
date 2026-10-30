@@ -51,14 +51,11 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("powerplay", "what does my next Powerplay rank give me"),
         ("powerplay", "what would Edmund Mahon give me"),
         ("ships", "what do I still need for the Ptarmigan"),
-        ("privacy", "what have you sent anywhere"),
         ("exobiology", "what biology is on this body"),
         ("listening", "alpha bravo seven done"),
         ("binding-profiles", "save these bindings as sim pit"),
         ("binding-profiles", "load the sim pit bindings"),
         ("gap", "what am I missing"),
-        ("settings", "set the speech volume to sixty"),
-        ("diagnostics", "where are your logs"),
         ("surface-guidance", "which way to mark 1"),
         ("reminders", "remind me to buy limpets when I next dock"),
         ("reminders", "noted"),
@@ -77,7 +74,6 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("memory", "forget"),
         ("memory", "remember"),
         ("focus", "bring Elite back"),
-        ("screenshots", "Saved to"),
         ("utilities", "set a timer for twenty minutes called fuel scoop"),
         ("routes", "plot a neutron route to Colonia"),
         ("goals", "my goal is to buy a Python"),
@@ -87,9 +83,6 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("vr", "lock it to my head"),
         ("vr", "move it left"),
         ("vr", "bring it nearer"),
-        ("help", "how does the checklist work"),
-        ("help", "walk me through engineers"),
-        ("help", "next"),
         ("carrier", "comms captain"),
         ("carrier", "how much fuel have we got"),
         ("commanders", "switch to Kestrel Vane"),
@@ -197,7 +190,11 @@ public partial class EveryHowToPhraseRoutesGateTests
     private static bool Routes(KeywordRouter router, string phrase) =>
         router.MatchSetting(phrase) is not null
         || router.MatchToolCommand(phrase) is not null
-        || router.Match(phrase, InputSource.Spoken) is not null;
+        || router.Match(phrase, InputSource.Spoken) is not null
+        || Walks(phrase);
+
+    /// <summary>Whether a walkthrough starts on the phrase; the app asks it before the router.</summary>
+    private static bool Walks(string phrase) => new Walkthrough().Take(phrase, DateTimeOffset.UnixEpoch) is not null;
 
     /// <summary>The quoted phrases in the how-to band's Say lines.</summary>
     private static List<string> Quoted(string page)

@@ -21,8 +21,8 @@ nav_order: 150
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps to knowing exactly what leaves your machine.</p>
 <section>
-<h2><span class="num">1</span> Read the destinations. There is one row per place.</h2>
-<p class="say">Open the Privacy page and read each destination.</p>
+<h2><span class="num">1</span> Read the destinations, one row per place.</h2>
+<p class="say">Open Settings › Privacy and this install › Privacy and egress, group What leaves this machine, and read each row.</p>
 <p class="expect">Each row names what is sent, to whom, and whether it is on right now.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Privacy">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
@@ -41,30 +41,30 @@ nav_order: 150
 </section>
 <section>
 <h2><span class="num">2</span> Turn off anything you do not want.</h2>
-<p class="say">Turn off Let D47 search the web and Check for updates at startup, and set the model to none.</p>
-<p class="expect">Nothing leaves the machine.</p>
+<p class="say">Say "turn off update checks".</p>
+<p class="expect">D47 says Check for updates at startup is now off, and the update check row reads "Nothing at startup."</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Privacy">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Privacy</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 search the web</text>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Check for updates at startup</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text-muted)">off</text>
  <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="154" font-size="16" fill="var(--text)">Check for updates at startup</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">on</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">With the model set to none and these off, nothing leaves this machine at all.</text>
+ <text x="68" y="154" font-size="16" fill="var(--text)">Provider</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">none sends nothing to a model</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">The model and web search rows are in the Providers area of Settings.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> Check what it actually did.</h2>
-<p class="say">Say "what have you sent anywhere".</p>
-<p class="expect">The Log File reading lists each request with its destination.</p>
+<h2><span class="num">3</span> Ask what is being sent.</h2>
+<p class="say">Say "what are you sending".</p>
+<p class="expect">The reply lists every destination, whether it is active with your settings now, and what is sent there.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">what have you sent anywhere</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what are you sending</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">The Log File reading logs every request, with the destination.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">Nothing is summarised for you — the log is the evidence.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"what leaves this machine" asks the same thing.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">The answer is computed from your settings as they are now.</text>
 </svg>
 </section>
 <section>
@@ -75,6 +75,50 @@ nav_order: 150
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Your microphone is not a destination.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Speech is transcribed on this machine by Whisper. The audio never leaves it, whatever the model setting is.</text>
+</svg>
+</section>
+</div></div>
+</details>
+
+<details class="d47-band">
+<summary>How it works</summary>
+<div class="d47-eli5"><div class="d47-frame">
+<p class="intro">D47 works out what it sends from your settings each time you ask, so the answer is never stale.</p>
+<section>
+<h2><span class="num">1</span> The answer is computed from your settings when you ask.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="Your settings go into the egress report, which lists each destination">
+ <rect x="20" y="30" width="250" height="70" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="145" y="72" text-anchor="middle" font-size="17" fill="var(--text)">YOUR SETTINGS</text>
+ <line x1="282" y1="65" x2="338" y2="65" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="352,65 336,57 336,73" fill="var(--accent-muted)"/>
+ <rect x="364" y="30" width="250" height="70" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="489" y="72" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE EGRESS REPORT</text>
+ <line x1="626" y1="65" x2="682" y2="65" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="696,65 680,57 680,73" fill="var(--accent-muted)"/>
+ <rect x="708" y="30" width="152" height="70" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="784" y="72" text-anchor="middle" font-size="17" fill="var(--text)">ONE ROW EACH</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Each row says where, what is sent and whether it is on.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="A destination row names the place and what is sent, or says nothing is sent">
+ <rect x="20" y="24" width="840" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="62" font-size="17" font-weight="700" fill="var(--text)">Language model → Anthropic</text>
+ <text x="44" y="92" font-size="15" fill="var(--text-muted)">Your question, the reply so far and the game state go with each turn.</text>
+ <text x="44" y="114" font-size="15" fill="var(--text-muted)">Provider none, or a key missing: the row says nothing is sent.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> A switch you turn off changes the next answer.</h2>
+<svg viewBox="0 0 880 170" role="img" aria-label="Turning off update checks changes the update check row to say nothing at startup">
+ <rect x="20" y="24" width="300" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="170" y="57" text-anchor="middle" font-size="17" fill="var(--text)">“turn off update checks”</text>
+ <line x1="332" y1="50" x2="388" y2="50" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="402,50 386,42 386,58" fill="var(--accent-muted)"/>
+ <rect x="414" y="24" width="446" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="637" y="57" text-anchor="middle" font-size="16" fill="var(--text)">“Nothing at startup.”</text>
+ <text x="440" y="124" text-anchor="middle" font-size="16" fill="var(--text-muted)">Pressing Check for updates in Settings > About still makes the request on demand.</text>
+ <text x="440" y="150" text-anchor="middle" font-size="16" fill="var(--text-muted)">Only the automatic request stops.</text>
 </svg>
 </section>
 </div></div>
@@ -124,9 +168,8 @@ chosen and has none stored — selected-but-inert sends nothing.
 
 **And inactive when the endpoint is on this machine.** If you have pointed the OpenAI-compatible
 provider at a loopback address, this row says that nothing leaves the machine at all and names the
-address so you can check it. That is the first time the accurate answer to *what is leaving* has
-been *nothing* — and it is a property of that address in these settings right now, not a promise
-about Directive 47. The judgement is deliberately literal: the address is read, never resolved, so
+address so you can check it. That answer is a property of that address in these settings right now,
+not a promise about Directive 47. The judgement is deliberately literal: the address is read, never resolved, so
 a hostname that happens to point at your machine today is treated as remote and disclosed in full.
 Being wrong in that direction is the only safe way to be wrong here.
 
@@ -136,13 +179,9 @@ information, the language-model endpoint runs the search and reads the pages —
 xAI when the endpoint is `https://api.x.ai/v1`, in which case the row names `api.x.ai`; Directive 47 only ever sees the
 reply. It is listed separately even though it adds no new address, because "your provider gets
 your question" and "your provider will go and fetch pages about it" are not the same disclosure,
-and organising this list by host rather than by what is done would have hidden the second behind
-the first. Off by default, and inactive whenever no model is usable — **and inactive on an
-endpoint that offers no search**, which a custom endpoint generally is. Until v0.26.1 that last
-case read as active and went on to describe pages being fetched and a penny being billed, none of
-which could happen there. Claiming a transfer that cannot occur is the safe direction to be wrong
-in and is still wrong: a disclosure is only worth reading if it describes this machine, these
-settings, right now.
+and a list by host alone would hide the second behind the first. Off by default, and inactive whenever no model is usable — **and inactive on an
+endpoint that offers no search**, which a custom endpoint generally is. A disclosure describes this
+machine and these settings right now, so it does not claim a transfer that cannot occur.
 
 **Screen pictures** — the language-model endpoint again. When the
 [look at the screen row](conversation.md#let-the-model-look-at-the-screen) is on and you ask about

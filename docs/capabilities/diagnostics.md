@@ -21,8 +21,8 @@ nav_order: 101
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Two steps to the page that still answers when nothing else does.</p>
 <section>
-<h2><span class="num">1</span> On the Transcript page, step the readings to Log File.</h2>
-<p class="say">On the Transcript page, step the readings to Log File.</p>
+<h2><span class="num">1</span> Step the Transcript readings to Log File.</h2>
+<p class="say">Open the Transcript tab and step the readings to Log File.</p>
 <p class="expect">You see the journal folder, the capability count and the audio device, with the newest log line last.</p>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Transcript readings stepper showing Log File, and the log below it">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
@@ -37,15 +37,15 @@ nav_order: 101
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Ask where the log file is, and open it.</h2>
-<p class="say">Say "where are your logs", then open the folder from the same page.</p>
-<p class="expect">D47 names the folder, which is data\logs beside the executable.</p>
+<h2><span class="num">2</span> Ask for the status to find the log folder.</h2>
+<p class="say">Say "your status".</p>
+<p class="expect">D47 reads out its version and each folder it writes to. The Logs line is data\logs beside the executable.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">where are your logs</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">your status</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">It answers with the folder, and you can open it from the same page.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">Logs live beside the executable in data\logs, never in AppData.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It answers with the version and the folders, Logs among them.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Logs live in data\logs beside the executable.</text>
 </svg>
 </section>
 <section>
@@ -75,9 +75,9 @@ nav_order: 101
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">The page that still answers when nothing else does — what happened, where it is written down, and how loud.</p>
+<p class="intro">Diagnostics answers without the game, a model or a microphone: what happened, where it is written, and how loud.</p>
 <section>
-<h2><span class="num">1</span> Two files, and they are not the same thing.</h2>
+<h2><span class="num">1</span> The Log File and the Journal File are different files.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="The Log File reading is what Directive 47 wrote; the Journal File reading is what the game wrote">
  <rect x="20" y="30" width="410" height="150" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="225" y="70" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">LOG FILE</text>
@@ -90,11 +90,11 @@ nav_order: 101
  <text x="655" y="128" text-anchor="middle" font-size="15" fill="var(--text-muted)">docking, jumping, damage,</text>
  <text x="655" y="152" text-anchor="middle" font-size="15" fill="var(--text-muted)">the things that happened</text>
  <text x="440" y="216" text-anchor="middle" font-size="15" fill="var(--text-muted)">"Why will it not start" is the left one. "What did the game just do" is the right one.</text>
- <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">Both are files, so clearing is refused on the log — that control would be offering to delete it.</text>
+ <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">The Log File reading has no clear control, so the log cannot be deleted from it.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> It answers with nothing else working.</h2>
+<h2><span class="num">2</span> It answers with nothing else running.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="Diagnostics needs no game, no model, no microphone and no headset to answer">
  <rect x="20" y="30" width="200" height="82" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="120" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text-muted)">NO GAME</text>
@@ -110,11 +110,11 @@ nav_order: 101
  <text x="761" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">every time</text>
  <rect x="20" y="132" width="840" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="162" text-anchor="middle" font-size="16" fill="var(--text)">Ask "what's your status" and it names the version and every folder it writes to.</text>
- <text x="440" y="188" text-anchor="middle" font-size="15" fill="var(--text-muted)">Those paths are what a bug report needs, which is why they come back without being asked for separately.</text>
+ <text x="440" y="188" text-anchor="middle" font-size="15" fill="var(--text-muted)">Those paths are what a bug report needs.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> Turn up one part, not the whole thing.</h2>
+<h2><span class="num">3</span> Each part of the app has its own log level.</h2>
 <svg viewBox="0 0 880 258" role="img" aria-label="Eight parts of the application each carry their own log level, changed by voice and taking effect on the next line">
  <rect x="20" y="30" width="200" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="120" y="62" text-anchor="middle" font-size="15" fill="var(--text-muted)">App</text>
@@ -133,10 +133,10 @@ nav_order: 101
  <rect x="662" y="94" width="198" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="761" y="126" text-anchor="middle" font-size="15" fill="var(--text-muted)">Input</text>
  <rect x="20" y="166" width="840" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">"Turn journal logging up to debug" — in effect on the next line written, with no restart.</text>
- <text x="440" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">Name a part that does not exist and it lists the ones that do, rather than doing nothing silently.</text>
+ <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">“Turn journal logging up to debug” → “Journal logging is now at Debug.”</text>
+ <text x="440" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">It takes effect on the next line written. A part that does not exist is answered with the real ones.</text>
 </svg>
-<p class="body">Trace grows a log file fast. Turn the part back down once you have what you came for — the row and the spoken phrase are the same change, and both survive a restart.</p>
+<p class="body">Trace grows the log quickly, so turn the part back down afterwards. The row and the spoken phrase make the same change, and both survive a restart.</p>
 </section>
 </div></div>
 </details>
@@ -173,6 +173,7 @@ Directive 47 0.1.0
 Installed at: C:\Tools\d47
 Writable data: C:\Tools\d47\data
 Logs: C:\Tools\d47\data\logs
+Pronunciations: C:\Tools\d47\data\pronunciations.json (none written yet)
 Log levels:
   App: Information
   Capabilities: Information
@@ -184,7 +185,7 @@ Log levels:
   Input: Information
 ```
 
-The version, where everything writable lives, and how loud each part of the app currently is.
+The version, where everything writable lives, the pronunciations file, and how loud each part of the app currently is. A line for the journal history appears while older journals are read.
 The paths are the useful part when you are looking for a log to send with a bug report.
 
 ### Turning the detail up
@@ -195,7 +196,7 @@ no restart, and nothing to reload:
 > "turn journal logging up to debug"
 
 ```text
-Journal logging is now at Trace.
+Journal logging is now at Debug.
 ```
 
 Ask for a part that does not exist and you are told what does, rather than nothing happening:

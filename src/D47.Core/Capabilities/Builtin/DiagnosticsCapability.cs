@@ -210,7 +210,7 @@ public static class DiagnosticsCapability
             {
                 Key = DefaultLevelKey,
                 Exercise =
-                    "Open the Transcript tab › Log File, where Default log level is the first row (it reads Information "
+                    "Open Transcript › Log File, where Default log level is the first row (it reads Information "
                     + "until changed). Pick Debug: the log file in the Logs folder that \"your status\" names gains "
                     + "Debug lines from loggers that belong to no subsystem. Pick Information to put it back.",
                 Advanced = true,
@@ -236,7 +236,7 @@ public static class DiagnosticsCapability
         {
             Key = LevelRowFor(subsystem),
             Exercise =
-                $"Open the Transcript tab › Log File, group Per-subsystem levels, and pick Debug on the "
+                $"Open Transcript › Log File, and under Per-subsystem override pick Debug on the "
                 + $"{Subsystems.DisplayName(subsystem)} row. Say \"your status\": the Log levels list shows "
                 + $"{subsystem}: Debug. {SubsystemActivity(subsystem)} Pick Information on the row (or say "
                 + $"\"set {Subsystems.DisplayName(subsystem).ToLowerInvariant()} logging back to information\") and the "

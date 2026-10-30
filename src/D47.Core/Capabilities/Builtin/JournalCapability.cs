@@ -155,7 +155,7 @@ public static class JournalCapability
                     Key = CodexPicturesKey,
                     Exercise =
                         "Open Settings › Providers › Outside sources, group Outside sources, and turn Codex pictures on. "
-                        + "Then open the Commander tab › Codex and drill into an entry that has a stock picture: the "
+                        + "Then open Commander › Ledgers › Codex and drill into an entry that has a stock picture: the "
                         + "picture appears, and files are kept in data\\codex-pictures. Turn the row off and open an entry "
                         + "that has no picture on disk: nothing is fetched and the page shows only pictures you saved "
                         + "yourself, even for stock pictures already on disk. Needs a network connection to GitHub for the "
@@ -221,7 +221,7 @@ public static class JournalCapability
                         + "open Settings › You and your records › Logs and goals, group Codex publishing, and paste a fine-"
                         + "grained GitHub token with contents write on dseelinger/d47-codex-pictures into Codex publish "
                         + "token. For the stock-picture maintainer only; it needs that GitHub account. The row never shows "
-                        + "the token back. Then open an entry on the Commander tab › Codex page that has a picture you "
+                        + "the token back. Then open an entry under Commander › Ledgers › Codex that has a picture you "
                         + "saved: Publish appears, and Unpublish appears if a stock picture exists. Without a token, and "
                         + "without D47_CODEX_PUBLISH_TOKEN in the environment, neither shows.",
                     Advanced = true,
