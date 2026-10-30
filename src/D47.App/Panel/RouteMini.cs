@@ -8,19 +8,25 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>The last neutron plot, on the mini panel (#197).</summary>
+/// <summary>The Plan root's plan on the mini panel (#197, #1926).</summary>
 public sealed class RouteMini : UserControl
 {
-    private readonly RoutePlanBook _plans;
+    private readonly Func<StoredRoutePlan?> _plan;
     private readonly Func<NavRoute> _route;
     private readonly Func<string?> _here;
     private readonly Func<string, string?>? _offDuty;
     private readonly StackPanel _body = new() { Spacing = 2 };
 
-    public RouteMini(RoutePlanBook plans, Func<NavRoute> route, Func<string?> here, Func<string, string?>? offDuty = null)
+    /// <param name="plan">The plan to draw; the last Jump plan when null.</param>
+    public RouteMini(
+        RoutePlanBook plans,
+        Func<NavRoute> route,
+        Func<string?> here,
+        Func<string, string?>? offDuty = null,
+        Func<StoredRoutePlan?>? plan = null)
     {
         _offDuty = offDuty;
-        _plans = plans;
+        _plan = plan ?? (() => plans.Last(RoutePlanKind.Jump));
         _route = route;
         _here = here;
 
@@ -45,6 +51,8 @@ public sealed class RouteMini : UserControl
     /// <summary>The final waypoint is behind the Commander.</summary>
     private const int Arrived = -2;
 
+    private readonly record struct Stop(string System, string Values, bool Neutron = false, string? Restock = null);
+
     private void Fill()
     {
         _body.Children.Clear();
@@ -55,28 +63,68 @@ public sealed class RouteMini : UserControl
             return;
         }
 
-        if (_plans.Last(RoutePlanKind.Jump) is not { Jump: { } jump })
+        if (_plan() is not { } plan || Stops(plan) is not { Count: > 0 } stops)
         {
-            _body.Children.Add(Muted("No neutron route is plotted."));
+            _body.Children.Add(Muted("No plan is plotted."));
             return;
         }
 
-        var title = TitleText.Build(jump.Origin, TypeScale.Heading, TitleRank.Screen, sentence: true);
-        title.Margin = new Thickness(0, 0, 0, 4);
-        _body.Children.Add(title);
+        _body.Children.Add(Title(plan));
 
         var here = _here();
-        var next = NextWaypoint(jump, _route(), here);
+        var next = plan.Jump is { } jump
+            ? NextWaypoint(jump, _route(), here)
+            : plan.Reached is { } reached ? (reached + 1 >= stops.Count ? Arrived : reached + 1) : 0;
 
         if (next == Arrived)
         {
             _body.Children.Add(Muted("The destination is reached."));
         }
 
-        for (var index = 0; index < jump.Waypoints.Count; index++)
+        for (var index = 0; index < stops.Count; index++)
         {
-            _body.Children.Add(Row(jump.Waypoints[index], index == next, here));
+            _body.Children.Add(Row(stops[index], index == next, here));
         }
+    }
+
+    private static Control Title(StoredRoutePlan plan)
+    {
+        var word = RoutingKit.Ink($"{GalaxyMapPage.PlanKindWord(plan.Kind)} plan:".ToUpperInvariant(), TypeScale.MetaSmall, ThemeManager.GreyKey);
+        var headline = RoutingKit.Ink(plan.Headline, 14, ThemeManager.WhiteKey);
+        headline.TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis;
+
+        return new StackPanel { Margin = new Thickness(0, 0, 0, 4), Children = { word, headline } };
+    }
+
+    private static string Jumps(int count) => count == 1 ? "1 jump" : $"{count} jumps";
+
+    private static List<Stop>? Stops(StoredRoutePlan plan) => plan switch
+    {
+        { Jump: { } jump } => [.. jump.Waypoints.Select(waypoint => new Stop(waypoint.System, JumpValues(waypoint), waypoint.IsNeutron))],
+        { Riches: { } riches } => [.. riches.Stops.Select(stop => new Stop(stop.System, Jumps(stop.Jumps)))],
+        { Exobiology: { } exobiology } => [.. exobiology.Stops.Select(stop => new Stop(stop.System, Jumps(stop.Jumps)))],
+        { Carrier: { } carrier } => [.. carrier.Waypoints.Select(waypoint => new Stop(
+            waypoint.Name,
+            waypoint.Distance > 0 ? $"{waypoint.Distance:N1} ly" : "start",
+            Restock: waypoint.MustRestock ? $"restock {waypoint.RestockAmount:N0} t" : null))],
+        _ => null,
+    };
+
+    private static string JumpValues(RouteWaypoint waypoint)
+    {
+        var values = new List<string> { Jumps(waypoint.Jumps) };
+
+        if (waypoint.DistanceJumped is { } jumped)
+        {
+            values.Add($"{jumped:N0} ly");
+        }
+
+        if (waypoint.DistanceLeftToReport is { } left)
+        {
+            values.Add($"{left:N0} ly left");
+        }
+
+        return string.Join(" · ", values);
     }
 
     /// <summary>Which waypoint the Commander is headed to next (#197).</summary>
@@ -115,25 +163,18 @@ public sealed class RouteMini : UserControl
         return None;
     }
 
-    private static Control Row(RouteWaypoint waypoint, bool isNext, string? here)
+    private static Control Row(Stop stop, bool isNext, string? here)
     {
-        var values = new List<string> { waypoint.Jumps == 1 ? "1 jump" : $"{waypoint.Jumps} jumps" };
-
-        if (waypoint.DistanceJumped is { } jumped)
-        {
-            values.Add($"{jumped:N0} ly");
-        }
-
-        if (waypoint.DistanceLeftToReport is { } left)
-        {
-            values.Add($"{left:N0} ly left");
-        }
-
         var tags = new List<Control>();
 
-        if (waypoint.IsNeutron)
+        if (stop.Neutron)
         {
             tags.Add(RoutingKit.Tag("neutron", ThemeManager.AKey));
+        }
+
+        if (stop.Restock is { } restock)
+        {
+            tags.Add(RoutingKit.Tag(restock, ThemeManager.AKey));
         }
 
         if (isNext)
@@ -143,10 +184,10 @@ public sealed class RouteMini : UserControl
 
         var row = RoutingKit.Row(
             [
-                RoutingKit.Named(waypoint.System, RoutingKit.SystemKey(waypoint.System, here), [.. tags]),
-                RoutingKit.Values(string.Join(" · ", values)),
+                RoutingKit.Named(stop.System, RoutingKit.SystemKey(stop.System, here), [.. tags]),
+                RoutingKit.Values(stop.Values),
             ],
-            waypoint.System,
+            stop.System,
             copy: null);
 
         row.Padding = new Thickness(10, 4);

@@ -134,6 +134,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         _commander = new CommanderFurnishing(this);
         _assets = new AssetsFurnishing(this, PlanCarrierRoute);
         _navigation = new NavigationFurnishing(this, _carrierRoute);
+        _navigation.PlanRootMiniChanged += () => Dispatcher.UIThread.Post(ApplyChrome);
         InitializeComponent();
         _selecting = new TranscriptSelection(
             Bubbles,
@@ -2267,7 +2268,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         Control? miniControl = Tab switch
         {
             PanelTab.Stories => _stories.Mini,
-            PanelTab.Navigation when Nav.RootKeyOf(Tab) == RoutingPages.PlanRoot => _navigation.Mini,
+            PanelTab.Navigation when Nav.RootKeyOf(Tab) == RoutingPages.PlanRoot => _navigation.PlanRootMini,
             PanelTab.Navigation when Nav.RootKeyOf(Tab) == RoutingPages.GalaxyMapRoot => _navigation.GalaxyMini,
             _ => null,
         };

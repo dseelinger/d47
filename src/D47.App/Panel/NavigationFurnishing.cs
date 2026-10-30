@@ -16,7 +16,17 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
     private RouteBestCargoPage? _bestCargo;
     private GalaxyMapPage? _galaxyMap;
     private RoutePlanKind? _planOnMap;
-    
+
+    private static readonly RoutePlanKind[] PlanPageKinds = [RoutePlanKind.Jump, RoutePlanKind.Riches, RoutePlanKind.Exobiology, RoutePlanKind.Carrier];
+
+    private RoutePlanBook? _book;
+    private Func<DateTimeOffset> _now = () => DateTimeOffset.Now;
+    private DateTimeOffset _runStart;
+    private RoutePlanKind? _inPlay;
+    private DateTimeOffset _inPlaySince = DateTimeOffset.MinValue;
+    private GalaxyMapMini? _planStandIn;
+    private string? _trailTop;
+
     private Func<D47.Core.Journal.NavRoute>? _routeState;
     private Func<string?>? _routeHere;
     private Func<string, string?>? _routeOffDuty;
@@ -31,6 +41,12 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
 
     /// <summary>Mini's reading of the Galaxy map root; null until a host furnishes travels.</summary>
     public GalaxyMapMini? GalaxyMini { get; private set; }
+
+    /// <summary>The control the mini panel draws for the Plan root: the plan in play, else Elite's plotted route.</summary>
+    public Control? PlanRootMini => InPlay() is not null || _planStandIn is null ? Mini : _planStandIn;
+
+    /// <summary>Raised when <see cref="PlanRootMini"/> may have changed; may come from any thread.</summary>
+    public event Action? PlanRootMiniChanged;
 
     /// <summary>
     /// Gives this surface the Navigation tab (Phase 37): where the Commander is going. Progress is a level
@@ -138,7 +154,10 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         // Mini's own reading of the Plan root, wherever there is a book to read it from (#197).
         if (surface.Plans is { } miniPlans)
         {
-            Mini = new RouteMini(miniPlans, surface.Route, surface.Here, surface.OffDuty);
+            _book = miniPlans;
+            _now = surface.Now;
+            _runStart = _now();
+            Mini = new RouteMini(miniPlans, surface.Route, surface.Here, surface.OffDuty, InPlay);
         }
 
         if (galaxyMap && surface.Travel is not null)
@@ -151,6 +170,13 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                 surface.Here,
                 surface.OffDuty,
                 () => _planOnMap is { } kind ? stored?.Last(kind) : null);
+
+            _planStandIn = new GalaxyMapMini(
+                surface.Commander ?? (() => null),
+                surface.Route,
+                surface.Here,
+                surface.OffDuty,
+                () => null);
         }
 
         host.Furnish(
@@ -212,6 +238,8 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
             },
             [.. roots]);
 
+        host.Nav.Changed += (_, _) => NavigationMoved();
+
         if (plan && progress)
         {
             host.Nav.Declare(RoutingPages.PlanRoot, RoutingPages.ProgressCrumb);
@@ -233,12 +261,79 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         {
             plans.Changed += () =>
             {
+                Replotted();
                 _routePlan?.Refresh();
                 _routeTrade?.Refresh();
                 Mini?.Refresh();
                 _routeResult?.Refresh();
             };
         }
+    }
+
+    private StoredRoutePlan? InPlay() => _inPlay is { } kind ? _book?.Last(kind) : null;
+
+    /// <summary>Takes the newest Plan-page plan plotted since this run began, when it is newer than the one in play.</summary>
+    private void Replotted()
+    {
+        if (_book is not { } book)
+        {
+            return;
+        }
+
+        StoredRoutePlan? newest = null;
+
+        foreach (var kind in PlanPageKinds)
+        {
+            if (book.Last(kind) is { } plan
+                && plan.PlottedAt >= _runStart
+                && plan.PlottedAt > _inPlaySince
+                && (newest is null || plan.PlottedAt > newest.PlottedAt))
+            {
+                newest = plan;
+            }
+        }
+
+        if (newest is not null)
+        {
+            _inPlay = newest.Kind;
+            _inPlaySince = newest.PlottedAt;
+            Mini?.Refresh();
+            PlanRootMiniChanged?.Invoke();
+        }
+    }
+
+    /// <summary>A plan's result page coming to the top of the Navigation trail puts that plan in play.</summary>
+    private void NavigationMoved()
+    {
+        var trail = host.Nav.TrailOf(PanelTab.Navigation);
+        var top = trail.Count > 0 ? trail[^1].Key : null;
+
+        if (top == _trailTop)
+        {
+            return;
+        }
+
+        _trailTop = top;
+
+        if (top is not null
+            && top.StartsWith(RoutingPages.ResultPrefix, StringComparison.Ordinal)
+            && Enum.TryParse<RoutePlanKind>(top[RoutingPages.ResultPrefix.Length..], out var kind))
+        {
+            Opened(kind);
+        }
+    }
+
+    private void Opened(RoutePlanKind kind)
+    {
+        if (!PlanPageKinds.Contains(kind) || _book?.Last(kind) is null)
+        {
+            return;
+        }
+
+        _inPlay = kind;
+        _inPlaySince = _now();
+        Mini?.Refresh();
+        PlanRootMiniChanged?.Invoke();
     }
 
     /// <summary>Opens the Galaxy map root on the last plan of <paramref name="kind"/>.</summary>
@@ -267,6 +362,8 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         body |= _galaxyMap is { } map && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.GalaxyMapRoot && map.Tick();
 
         body |= GalaxyMini is { } mini && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.GalaxyMapRoot && mini.Tick();
+
+        body |= _planStandIn is { } standIn && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.PlanRoot && InPlay() is null && standIn.Tick();
 
         var route = _routeState?.Invoke();
         var here = _routeHere?.Invoke();

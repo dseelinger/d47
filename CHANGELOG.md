@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The mini panel's Plan page now shows the plan you plotted or opened since d47 started: its kind and headline, then one row per stop. A plan saved in an earlier run is not shown until you open it with Show most recent. With no plan in play, the mini panel shows the route plotted in Elite's galaxy map, or "No route is plotted."
+
 Reading more than three Captain's log entries aloud now ends with "and N more. Ask for a shorter period, a system or a word to hear them." It no longer sends you to a Captain's log page, which the app does not have.
 
 A Goals story that lists the Mercenary arc now gives it chapters below Mercenary rank 2. A new story objective, kill bonds earned on foot, counts only bonds earned after you step out of the ship or SRV, or after the dropship deploys you into a ground conflict zone, until you board again. It needs Odyssey and no combat rank, so a chapter can ask for it from Mercenary rank 0, and it is drawn in other chapters as a Combat activity.

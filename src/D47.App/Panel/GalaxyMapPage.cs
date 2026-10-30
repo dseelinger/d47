@@ -301,7 +301,7 @@ public sealed class GalaxyMapPage : UserControl
 
     internal Button PlottedRoute => _plotted;
 
-    private static string PlanKindWord(RoutePlanKind kind) => kind switch
+    internal static string PlanKindWord(RoutePlanKind kind) => kind switch
     {
         RoutePlanKind.Jump => "Jump",
         RoutePlanKind.Riches => "Road to Riches",
