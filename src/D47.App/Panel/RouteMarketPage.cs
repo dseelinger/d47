@@ -59,7 +59,7 @@ public sealed class RouteMarketPage : UserControl
     /// this page.
     /// </summary>
     private readonly CheckBox _surfaceStations;
-    private readonly MaxReportAge _age = new(720);
+    private readonly MaxReportAge _age = new(72);
 
     private readonly StatusLine _status;
 

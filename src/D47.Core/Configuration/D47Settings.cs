@@ -325,7 +325,7 @@ public sealed record TradeSettings
     public double MaxStationDistance { get; init; } = 1_000;
 
     /// <summary>How stale a reported price may be, in hours; 0 is no bound.</summary>
-    public int MaxPriceAgeHours { get; init; } = 720;
+    public int MaxPriceAgeHours { get; init; } = 72;
 
     /// <summary>End back where the route started.</summary>
     public bool Loop { get; init; }

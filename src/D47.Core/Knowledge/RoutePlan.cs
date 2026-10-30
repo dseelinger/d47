@@ -411,7 +411,7 @@ public sealed record TradeQuery
     public bool LargePadOnly { get; init; }
 
     /// <summary>How stale a reported price may be, in hours; 0 is no bound.</summary>
-    public int MaxPriceAge { get; init; } = 720;
+    public int MaxPriceAge { get; init; } = 72;
 
     /// <summary>Whether the sweep includes surface stations — planetary ports, outposts, settlements (#310).</summary>
     public bool Planetary { get; init; }
@@ -484,7 +484,7 @@ public sealed record TradeQuery
             LadenRange = ladenRange.Value,
             MaxSystemDistance = Math.Clamp(maxSystemDistance ?? 1_000, 1, 1_000_000),
             LargePadOnly = largePadOnly,
-            MaxPriceAge = Math.Clamp(maxPriceAge ?? 720, 0, 8_760),
+            MaxPriceAge = Math.Clamp(maxPriceAge ?? 72, 0, 8_760),
             Loop = loop ?? false,
             Planetary = planetary ?? false,
             AvoidPermitSystems = avoidPermitSystems ?? true,
@@ -547,7 +547,7 @@ public sealed record BestCargoSearch
     public int Hold { get; init; }
 
     /// <summary>How stale a reported price may be, in hours; 0 is no bound.</summary>
-    public int MaxPriceAge { get; init; } = 720;
+    public int MaxPriceAge { get; init; } = 72;
 
     public bool LargePadOnly { get; init; }
 
@@ -596,7 +596,7 @@ public sealed record SourcingSearch(
     double MaxDistance = 50,
     bool LargePadOnly = false,
     int MaxStops = 6,
-    int MaxPriceAge = 720);
+    int MaxPriceAge = 72);
 
 /// <summary>The covering plan, and what a Commander is owed alongside it.</summary>
 /// <param name="Plan">The stops, best first, and what could not be priced or filled.</param>
@@ -621,7 +621,7 @@ public sealed record CommoditySearch(
     string System,
     string? Station,
     CommodityQuery Query,
-    int MaxPriceAge = 720);
+    int MaxPriceAge = 72);
 
 /// <summary>What came back, and what a Commander is owed alongside it.</summary>
 /// <param name="Offers">The ranking, best first.</param>

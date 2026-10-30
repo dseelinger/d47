@@ -52,7 +52,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     private readonly SystemNameSuggestions<string>? _controllingFactionNames;
     private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 99999, Step = 10, Format = "#,0" };
     private readonly ShowUpTo _limit = new();
-    private readonly MaxReportAge _age = new();
+    private readonly MaxReportAge _age = new(72);
     private readonly Dictionary<string, CheckBox> _types = StationQuery.StationTypes.ToDictionary(type => type.Name, type => Tile(type.Name), StringComparer.Ordinal);
     private readonly Stepper _pad = Choice(StationQuery.MinPads);
     private readonly TextBox _fromStar = Field("from the star at most", mono: true);

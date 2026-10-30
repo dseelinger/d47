@@ -64,7 +64,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     private readonly TextBox _fromStar = Field("from the star at most", mono: true);
     private readonly CheckBox _surface = LabeledCheckBox.Caps("Surface stations");
     private readonly CheckBox _carriers = LabeledCheckBox.Caps("Fleet carriers");
-    private readonly MaxReportAge _age = new();
+    private readonly MaxReportAge _age = new(72);
 
     private IReadOnlyList<OutfittingItem> _items = [];
 

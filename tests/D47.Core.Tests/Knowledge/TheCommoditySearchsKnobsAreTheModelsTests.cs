@@ -223,7 +223,7 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
             new CommodityAnswer([new CommodityOffer(Coleman, 444, 5229, 11.0)], 30, 0, true));
 
         Assert.Equal(50, search.Query.MaxDistance);
-        Assert.Equal(720, search.MaxPriceAge);
+        Assert.Equal(72, search.MaxPriceAge);
         Assert.False(search.Query.IncludeCarriers);
         Assert.False(search.Query.LargePadOnly);
         Assert.Null(search.Query.Tonnes);

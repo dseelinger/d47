@@ -150,7 +150,7 @@ public static class RouteCapability
                     // (#178).
                     ToolParameter.Integer(
                         "max_price_age_hours",
-                        "How stale a reported price may be, in hours; 0 for any age. Defaults to 720, one month."),
+                        "How stale a reported price may be, in hours; 0 for any age. Defaults to 72, three days."),
                     ToolParameter.Flag(
                         "planetary",
                         "Also consider planetary ports, outposts and settlements, not just orbital "

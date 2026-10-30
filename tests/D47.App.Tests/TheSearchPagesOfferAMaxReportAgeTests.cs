@@ -134,9 +134,27 @@ public sealed class TheSearchPagesOfferAMaxReportAgeTests
 
     [AvaloniaTheory]
     [MemberData(nameof(Pages))]
-    public void AnyIsLeftOut(GalaxySearchKind kind, string root, object result)
+    public void AnyIsLeftOutWhereAnyIsTheStartingAge(GalaxySearchKind kind, string root, object result)
     {
-        Assert.DoesNotContain("max_report_age_hours", Filled(kind, root, result, "0").Keys);
+        var arguments = Filled(kind, root, result, "0");
+
+        if (kind is GalaxySearchKind.Stations or GalaxySearchKind.Outfitting)
+        {
+            Assert.Equal("0", arguments["max_report_age_hours"]);
+        }
+        else
+        {
+            Assert.DoesNotContain("max_report_age_hours", arguments.Keys);
+        }
+    }
+
+    [AvaloniaFact]
+    public void TheStartingAgeIsLeftOutOfTheArguments()
+    {
+        Assert.Null(new MaxReportAge(72).Asked);
+        Assert.Equal("0", new MaxReportAge(72) { Value = MaxReportAge.Any }.Asked);
+        Assert.Null(new MaxReportAge().Asked);
+        Assert.Equal("72", new MaxReportAge { Value = 72 }.Asked);
     }
 
     [Theory]

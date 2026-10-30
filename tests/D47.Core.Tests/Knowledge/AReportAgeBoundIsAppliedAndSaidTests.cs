@@ -79,7 +79,7 @@ public class AReportAgeBoundIsAppliedAndSaidTests
     [Theory]
     [InlineData("search_stations", "station_type", "Starport", "max_report_age_hours")]
     [InlineData("find_nearest_station", "module", "Frame Shift Drive", "max_price_age_hours")]
-    public async Task ZeroOrNoAgeSendsNoBound(string tool, string key, string value, string age)
+    public async Task ZeroAgeSendsNoBound(string tool, string key, string value, string age)
     {
         var (registry, galaxy) = Build();
 
@@ -87,10 +87,20 @@ public class AReportAgeBoundIsAppliedAndSaidTests
 
         Assert.Null(galaxy.LastQuery!.MaxReportAgeHours);
         Assert.DoesNotContain("Only reports", result.Content, StringComparison.Ordinal);
+    }
 
-        await Ask(registry, tool, (key, value));
+    [Theory]
+    [InlineData("search_stations", "station_type", "Starport")]
+    [InlineData("search_outfitting", "items", "Fuel Scoop")]
+    [InlineData("find_nearest_station", "module", "Frame Shift Drive")]
+    public async Task NoAgeSearchesThreeDaysAndSaysSo(string tool, string key, string value)
+    {
+        var (registry, galaxy) = Build();
 
-        Assert.Null(galaxy.LastQuery.MaxReportAgeHours);
+        var result = await Ask(registry, tool, (key, value));
+
+        Assert.Equal(72, galaxy.LastQuery!.MaxReportAgeHours);
+        Assert.Contains("Only reports from the last 3 days were considered.", result.Content, StringComparison.Ordinal);
     }
 
     [Fact]

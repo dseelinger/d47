@@ -47,7 +47,7 @@ public static class GalaxyCapability
     /// How stale a quoted price may be when nobody said, in hours — one month, the bound the trade
     /// planner already uses.
     /// </summary>
-    private const int DefaultPriceAgeHours = 720;
+    private const int DefaultPriceAgeHours = 72;
 
     /// <summary>
     /// The oldest price the search will consider, a year, matching <see cref="TradeQuery"/>'s own
@@ -210,7 +210,7 @@ public static class GalaxyCapability
                         "A ship sold there, by name."),
                     .. GalaxyFilters.For(GalaxySearchKind.Stations).Select(Parameter),
                     .. SortParameters(GalaxySearchKind.Stations),
-                    ReportAgeParameter,
+                    StationReportAgeParameter,
                     LimitParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
@@ -238,7 +238,7 @@ public static class GalaxyCapability
                     MaxDistanceParameter,
                     MinPadParameter,
                     MaxStationDistanceParameter,
-                    ReportAgeParameter,
+                    StationReportAgeParameter,
                     ToolParameter.Flag(
                         "surface_stations",
                         "Include surface ports and settlements. Default true."),
@@ -398,8 +398,7 @@ public static class GalaxyCapability
                     // The commodity half's own two knobs (#157).
                     ToolParameter.Integer(
                         "max_price_age_hours",
-                        "How stale a quoted price may be, in hours; 0 for any age. Default 720, one month for "
-                            + "a commodity. For a module or ship, how old the station's report may be; no bound unless given."),
+                        "How stale a quoted price or station report may be, in hours; 0 for any age. Default 72, three days."),
                     ToolParameter.Flag(
                         "include_carriers",
                         "Also fleet carriers, whose prices are player-set and can move."),
@@ -1217,7 +1216,7 @@ public static class GalaxyCapability
             Filters = requested,
         };
 
-        if (ReportAge(arguments, "max_report_age_hours", out var reportAge) is { } badAge)
+        if (ReportAge(arguments, "max_report_age_hours", out var reportAge, DefaultPriceAgeHours) is { } badAge)
         {
             return ToolResult.Error(badAge);
         }
@@ -1299,7 +1298,7 @@ public static class GalaxyCapability
             IncludeCarriers = arguments.TryGetBoolean("include_carriers", out var carriers) && carriers,
         };
 
-        if (ReportAge(arguments, "max_report_age_hours", out var reportAge) is { } badAge)
+        if (ReportAge(arguments, "max_report_age_hours", out var reportAge, DefaultPriceAgeHours) is { } badAge)
         {
             return ToolResult.Error(badAge);
         }
@@ -1973,7 +1972,7 @@ public static class GalaxyCapability
 
         var limit = Limit(arguments, out var askedLimit);
 
-        if (ReportAge(arguments, "max_price_age_hours", out var reportAge) is { } badAge)
+        if (ReportAge(arguments, "max_price_age_hours", out var reportAge, DefaultPriceAgeHours) is { } badAge)
         {
             return ToolResult.Error(badAge);
         }
@@ -2421,12 +2420,28 @@ public static class GalaxyCapability
         Description = "Leave out reports older than this many hours, 1 to 8,760. Absent or 0 means any age.",
     };
 
-    /// <summary>Reads a report age: null hours for none, or an error sentence when out of range.</summary>
-    private static string? ReportAge(ToolArguments arguments, string name, out int? hours)
+    private static readonly ToolParameter StationReportAgeParameter = new()
+    {
+        Name = "max_report_age_hours",
+        Type = ToolParameterType.Integer,
+        Description = "Leave out reports older than this many hours, 1 to 8,760. Default 72, three days; 0 means any age.",
+    };
+
+    /// <summary>
+    /// Reads a report age: null hours for none, or an error sentence when out of range. An absent argument
+    /// is <paramref name="whenAbsent"/> hours; 0 is any age.
+    /// </summary>
+    private static string? ReportAge(ToolArguments arguments, string name, out int? hours, int? whenAbsent = null)
     {
         hours = null;
 
-        if (!arguments.TryGetInt32(name, out var asked) || asked == 0)
+        if (!arguments.TryGetInt32(name, out var asked))
+        {
+            hours = whenAbsent;
+            return null;
+        }
+
+        if (asked == 0)
         {
             return null;
         }

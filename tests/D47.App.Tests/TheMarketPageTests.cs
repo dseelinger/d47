@@ -326,6 +326,6 @@ public class TheMarketPageTests
         Assert.True(sent!.TryGetString("surface_stations", out var value));
         Assert.Equal("true", value);
         Assert.True(sent.TryGetInt32("max_price_age_hours", out var age));
-        Assert.Equal(720, age);
+        Assert.Equal(72, age);
     }
 }

@@ -90,7 +90,7 @@ card on it is still called Trade run, the same name the tool's answer and this p
 | **Hops** | How many buy-and-sell legs | 5 | Yes |
 | **Most jumps per leg** | The furthest one hop may reach, in jumps | 2 | Yes |
 | **Max distance from star (ls)** | How far in-system a station may sit | 1,000 | Yes |
-| **Max price age (hours)** | How stale a reported price may be | 720 | Yes |
+| **Max price age (hours)** | How stale a reported price may be | 72 | Yes |
 | **End where it started** | Whether the circuit closes | Off | Yes |
 | **Large pads only** | Skip stations your ship cannot land at | Off | Yes |
 | **Planetary ports** | Also search surface stations | Off | Yes |

@@ -234,8 +234,8 @@ internal sealed class MaxReportAge
     public void Set(string? hours) =>
         Value = int.TryParse(hours, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed) ? parsed : _default;
 
-    /// <summary>The argument to send, or null when the age is Any.</summary>
-    public string? Asked => _value == Any ? null : _value.ToString(CultureInfo.InvariantCulture);
+    /// <summary>The argument to send, or null when the age is the page's starting age.</summary>
+    public string? Asked => _value == _default ? null : _value.ToString(CultureInfo.InvariantCulture);
 
     internal static string Label(int hours) =>
         Choices.FirstOrDefault(choice => choice.Hours == hours) is { Label: { } label }

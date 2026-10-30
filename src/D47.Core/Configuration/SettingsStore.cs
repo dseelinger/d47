@@ -79,6 +79,7 @@ public sealed class SettingsStore(AppPaths paths, IFileSystem files, ILogger<Set
         Collect(settings, string.Empty, kept, bags);
 
         var stamp = false;
+        var previousVersion = settings.LastVersion;
 
         if (published is { } running && settings.LastVersion != running.ToString())
         {
@@ -253,6 +254,20 @@ public sealed class SettingsStore(AppPaths paths, IFileSystem files, ILogger<Set
             }
         }
 
+        if (stamp
+            && published is { } now
+            && !StalenessDefaultShipped.IsNewerThan(now)
+            && (!ReleaseVersion.TryParse(previousVersion, out var before) || StalenessDefaultShipped.IsNewerThan(before))
+            && settings.Trade.MaxPriceAgeHours == WhatPriceAgeUsedToDefaultTo)
+        {
+            settings = settings with { Trade = settings.Trade with { MaxPriceAgeHours = new TradeSettings().MaxPriceAgeHours } };
+
+            logger.LogInformation(
+                "The default price age is now three days; {Old} hours became {New}",
+                WhatPriceAgeUsedToDefaultTo,
+                settings.Trade.MaxPriceAgeHours);
+        }
+
         if (stamp)
         {
             Save(settings);
@@ -263,6 +278,10 @@ public sealed class SettingsStore(AppPaths paths, IFileSystem files, ILogger<Set
     }
 
     /// <summary>Drops the core nickname keys, which no build reads, so they are not named as unknown.</summary>
+    private static readonly ReleaseVersion StalenessDefaultShipped = new(1, 59, 1);
+
+    private const int WhatPriceAgeUsedToDefaultTo = 720;
+
     private static PersonaSettings WithoutShipName(PersonaSettings persona)
     {
         if (persona.Extra is not { Count: > 0 } extra)
