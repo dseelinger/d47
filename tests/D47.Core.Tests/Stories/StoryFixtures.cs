@@ -299,9 +299,13 @@ internal sealed class StoryFixtures : IDisposable
     {
         var outcome = await writing.ConfigureAwait(false);
         LastRefusal = outcome.Refusal;
+        WhileWriting?.Invoke();
 
         return outcome;
     }
+
+    /// <summary>Run after each write and before the director sees its outcome, as if the game moved on during it.</summary>
+    public Action? WhileWriting { get; set; }
 
     /// <summary>Whether the next write throws rather than reaching the model.</summary>
     public bool Throws { get; set; }

@@ -259,4 +259,58 @@ public sealed class ACommanderCanChangeAnObjectiveTests
         Assert.Null(fixtures.Director.Proposal("F1"));
         Assert.False(fixtures.Director.IsRewriting("F1"));
     }
+
+    [Fact]
+    public async Task ApplyingAfterTheStoryMovedOnSaysTheStoryChangedAndDropsTheProposal()
+    {
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
+
+        await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
+        fixtures.Stories.Update("F1", Id, story => story with { Chapters = [.. story.Chapters, "chapter-three"] });
+
+        Assert.Equal("The story changed while the objective was being written.", fixtures.Director.ApplyObjective("F1"));
+        Assert.Null(fixtures.Director.Proposal("F1"));
+    }
+
+    [Fact]
+    public async Task ApplyingAfterTheBeatFiredSaysTheStoryMovedOn()
+    {
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
+
+        await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
+
+        Bond(fixtures, 20);
+        Bond(fixtures, 21);
+        Bond(fixtures, 22);
+
+        Assert.Equal("The story has moved on from that objective.", fixtures.Director.ApplyObjective("F1"));
+    }
+
+    [Fact]
+    public async Task AStoryThatMovedOnWhileTheProposalWasWrittenHoldsNone()
+    {
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
+        fixtures.WhileWriting = () => fixtures.Stories.Update("F1", Id, story => story with { Chapters = [.. story.Chapters, "chapter-three"] });
+
+        var outcome = await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
+
+        Assert.Equal("The story changed while the objective was being written.", outcome.Refusal);
+        Assert.Null(fixtures.Director.Proposal("F1"));
+        Assert.Equal(["The Lantern", "First Blood", "The Wing", "Home"], Titles(fixtures));
+        Assert.False(fixtures.Director.IsRewriting("F1"));
+    }
+
+    [Fact]
+    public async Task AStoryThatMovedOnWhileTheRefusalWasWrittenKeepsItsObjective()
+    {
+        using var fixtures = AtTheBond(ABountyAndADock);
+        fixtures.WhileWriting = () => fixtures.Stories.Update("F1", Id, story => story with { Chapters = [.. story.Chapters, "chapter-three"] });
+
+        Assert.Equal(
+            "The story changed while the objective was being written.",
+            await fixtures.Director.RefuseBeatAsync("F1", TestContext.Current.CancellationToken));
+        Assert.Equal(["The Lantern", "First Blood", "The Wing", "Home"], Titles(fixtures));
+        Assert.Empty(fixtures.Stories.Current("F1")!.Refused);
+        Assert.False(fixtures.Director.IsRewriting("F1"));
+    }
 }

@@ -808,267 +808,50 @@ public sealed class StoryDirector(
     /// Replaces the beat the running story's chapter is waiting on, and every beat after it, with new ones, and remembers
     /// the activity as refused for the rest of the story. Returns a refusal or null; on a refusal the chapter is as it was.
     /// </summary>
-    public async Task<string?> RefuseBeatAsync(string? frontierId, CancellationToken cancellationToken)
-    {
-        if (!TryRewritable(frontierId, out var at, out var refusal))
-        {
-            return refusal;
-        }
-
-        if (!Claim(frontierId))
-        {
-            return "A different objective is already being written.";
-        }
-
-        return await RewriteAsync(frontierId, at, closedMarketId: null, cancellationToken).ConfigureAwait(false);
-    }
+    public Task<string?> RefuseBeatAsync(string? frontierId, CancellationToken cancellationToken) =>
+        RefuseObjectiveAsync(new ChapterObjective(this, frontierId), cancellationToken);
 
     /// <summary>The proposal held for this Commander, or null.</summary>
-    public ObjectiveProposal? Proposal(string? frontierId)
-    {
-        lock (_gate)
-        {
-            return _proposals.GetValueOrDefault(frontierId ?? AdventureStore.NoCommander);
-        }
-    }
+    public ObjectiveProposal? Proposal(string? frontierId) => new ChapterObjective(this, frontierId).Held;
 
     /// <summary>
     /// Has the current objective and the ones after it written again from the Commander's remark, and holds the result as
     /// the Commander's proposal, replacing any held one. <paramref name="exchange"/> is the earlier rounds, which
     /// <see cref="ObjectiveProposal.Exchange"/> of the held proposal carries. Changes nothing in the chapter.
     /// </summary>
-    public async Task<ObjectiveProposalOutcome> ReviseObjectiveAsync(
-        string? frontierId, string remark, IReadOnlyList<AdventureRemark> exchange, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(exchange);
-
-        if (string.IsNullOrWhiteSpace(remark))
-        {
-            return new ObjectiveProposalOutcome(null, "Say what you would rather do.");
-        }
-
-        if (!TryRewritable(frontierId, out var at, out var refusal))
-        {
-            return new ObjectiveProposalOutcome(null, refusal);
-        }
-
-        if (!Claim(frontierId))
-        {
-            return new ObjectiveProposalOutcome(null, "A different objective is already being written.");
-        }
-
-        try
-        {
-            var trimmedRemark = remark.Trim();
-            logger.LogInformation("Objective change asked: {Remark}", trimmedRemark);
-            return await ProposeAsync(frontierId, at, trimmedRemark, exchange, cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Writing a proposed objective failed");
-            return new ObjectiveProposalOutcome(null, "The objective could not be written. Say it again and I will try a new draft.");
-        }
-        finally
-        {
-            Release(frontierId);
-        }
-    }
+    public Task<ObjectiveProposalOutcome> ReviseObjectiveAsync(
+        string? frontierId, string remark, IReadOnlyList<AdventureRemark> exchange, CancellationToken cancellationToken) =>
+        ReviseAsync(new ChapterObjective(this, frontierId), remark, exchange, cancellationToken);
 
     /// <summary>Replaces the current objective and the ones after it with the held proposal. Returns a refusal or null; the refused proposal is dropped.</summary>
-    public string? ApplyObjective(string? frontierId)
-    {
-        if (Proposal(frontierId) is not { } proposal)
-        {
-            return "There is no change to apply.";
-        }
-
-        if (Switching)
-        {
-            return Swapping;
-        }
-
-        if (IsWriting(frontierId) || IsRewriting(frontierId))
-        {
-            return "An objective is being written.";
-        }
-
-        var refusal = ApplyHeld(frontierId, proposal);
-
-        if (refusal is not null)
-        {
-            DiscardObjective(frontierId);
-        }
-
-        return refusal;
-    }
+    public string? ApplyObjective(string? frontierId) => Apply(new ChapterObjective(this, frontierId));
 
     /// <summary>Drops the held proposal.</summary>
-    public void DiscardObjective(string? frontierId)
-    {
-        lock (_gate)
-        {
-            _proposals.Remove(frontierId ?? AdventureStore.NoCommander);
-        }
-    }
+    public void DiscardObjective(string? frontierId) => new ChapterObjective(this, frontierId).Discard();
 
     /// <summary>The proposal held for this Commander's short story, or null.</summary>
-    public ObjectiveProposal? AdventureProposal(string? frontierId, string key)
-    {
-        lock (_gate)
-        {
-            return _adventureProposals.GetValueOrDefault(AdventureClaim(frontierId, key));
-        }
-    }
+    public ObjectiveProposal? AdventureProposal(string? frontierId, string key) => new ShortStoryObjective(this, frontierId, key).Held;
 
     /// <summary>
     /// Has the current objective of the active short story <paramref name="key"/> and the ones after it written again from the
     /// Commander's remark, and holds the result as that story's proposal. Changes nothing in the adventure.
     /// </summary>
-    public async Task<ObjectiveProposalOutcome> ReviseAdventureObjectiveAsync(
-        string? frontierId, string key, string remark, IReadOnlyList<AdventureRemark> exchange, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(exchange);
-
-        if (string.IsNullOrWhiteSpace(remark))
-        {
-            return new ObjectiveProposalOutcome(null, "Say what you would rather do.");
-        }
-
-        if (!TryRewritableAdventure(frontierId, key, out var standing, out var refusal))
-        {
-            return new ObjectiveProposalOutcome(null, refusal);
-        }
-
-        if (!ClaimShortStory(frontierId, key))
-        {
-            return new ObjectiveProposalOutcome(null, "A different objective is already being written.");
-        }
-
-        try
-        {
-            var from = standing.Current;
-            var beat = standing.CurrentBeat!;
-            var trimmed = remark.Trim();
-            logger.LogInformation("Objective change asked: {Remark}", trimmed);
-            var ask = ShortStoryAsk(frontierId, new AdventureRewrite(standing.Adventure, from, Remark: trimmed, Exchange: exchange, Step: standing.CurrentStep), null);
-            var outcome = await write(ask, Clock(), cancellationToken).ConfigureAwait(false);
-
-            if (outcome.Draft is not { } draft)
-            {
-                return new ObjectiveProposalOutcome(null, outcome.Message ?? "Nothing came back.");
-            }
-
-            if (!StillWaitingOn(frontierId, key, from))
-            {
-                return new ObjectiveProposalOutcome(null, "The story changed while the objective was being written.");
-            }
-
-            var proposal = new ObjectiveProposal(
-                null, null, null, key, from, beat, draft, outcome.Reply ?? string.Empty, [.. exchange, new AdventureRemark(trimmed, outcome.Reply)], standing.CurrentStep);
-
-            lock (_gate)
-            {
-                _adventureProposals[AdventureClaim(frontierId, key)] = proposal;
-            }
-
-            return new ObjectiveProposalOutcome(proposal, null);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Writing a proposed objective for a short story failed");
-            return new ObjectiveProposalOutcome(null, "The objective could not be written. Say it again and I will try a new draft.");
-        }
-        finally
-        {
-            ReleaseShortStory(frontierId, key);
-        }
-    }
+    public Task<ObjectiveProposalOutcome> ReviseAdventureObjectiveAsync(
+        string? frontierId, string key, string remark, IReadOnlyList<AdventureRemark> exchange, CancellationToken cancellationToken) =>
+        ReviseAsync(new ShortStoryObjective(this, frontierId, key), remark, exchange, cancellationToken);
 
     /// <summary>Replaces the current objective of a short story and the ones after it with the held proposal. Returns a refusal or null; the refused proposal is dropped.</summary>
-    public string? ApplyAdventureObjective(string? frontierId, string key)
-    {
-        if (AdventureProposal(frontierId, key) is not { } proposal)
-        {
-            return "There is no change to apply.";
-        }
-
-        if (Switching)
-        {
-            return Swapping;
-        }
-
-        if (IsRewriting(frontierId))
-        {
-            return "An objective is being written.";
-        }
-
-        var refusal = ApplyHeldAdventure(frontierId, proposal);
-
-        if (refusal is not null)
-        {
-            DiscardAdventureObjective(frontierId, key);
-        }
-
-        return refusal;
-    }
+    public string? ApplyAdventureObjective(string? frontierId, string key) => Apply(new ShortStoryObjective(this, frontierId, key));
 
     /// <summary>Drops the proposal held for a short story.</summary>
-    public void DiscardAdventureObjective(string? frontierId, string key)
-    {
-        lock (_gate)
-        {
-            _adventureProposals.Remove(AdventureClaim(frontierId, key));
-        }
-    }
+    public void DiscardAdventureObjective(string? frontierId, string key) => new ShortStoryObjective(this, frontierId, key).Discard();
 
     /// <summary>
     /// Replaces the current objective of a short story and the ones after it with new ones that do not ask for the replaced
     /// activity. Returns a refusal or null; on a refusal the adventure is as it was.
     /// </summary>
-    public async Task<string?> RefuseAdventureBeatAsync(string? frontierId, string key, CancellationToken cancellationToken)
-    {
-        if (!TryRewritableAdventure(frontierId, key, out var standing, out var refusal))
-        {
-            return refusal;
-        }
-
-        if (!ClaimShortStory(frontierId, key))
-        {
-            return "A different objective is already being written.";
-        }
-
-        try
-        {
-            var from = standing.Current;
-            var trigger = standing.CurrentTrigger!;
-            var barred = Bars?.Barred(frontierId) ?? [];
-            var replaced = RefusedActivities.Key(trigger);
-            var ask = ShortStoryAsk(frontierId, new AdventureRewrite(standing.Adventure, from, Step: standing.CurrentStep), replaced is null ? barred : [.. barred.Union([replaced])]);
-            var outcome = await write(ask, Clock(), cancellationToken).ConfigureAwait(false);
-
-            if (outcome.Draft is not { } draft)
-            {
-                return outcome.Message ?? "Nothing came back.";
-            }
-
-            if (Replace(frontierId, key, standing, draft) is { } replacement)
-            {
-                return replacement;
-            }
-
-            logger.LogInformation("{Adventure}: beat {Beat} was replaced, refused", standing.Adventure.Name, from + 1);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Writing a replacement beat for a short story failed");
-            return "The objective could not be written. Write it again and I will try a new draft.";
-        }
-        finally
-        {
-            ReleaseShortStory(frontierId, key);
-        }
-    }
+    public Task<string?> RefuseAdventureBeatAsync(string? frontierId, string key, CancellationToken cancellationToken) =>
+        RefuseObjectiveAsync(new ShortStoryObjective(this, frontierId, key), cancellationToken);
 
     /// <summary>
     /// Fires the beat the running story's chapter is waiting on as if the journal had shown it; with no story running, the
@@ -1256,32 +1039,6 @@ public sealed class StoryDirector(
         return null;
     }
 
-    private string? ApplyHeldAdventure(string? frontierId, ObjectiveProposal proposal)
-    {
-        if (!StillWaitingOn(frontierId, proposal.ChapterKey, proposal.From)
-            || book.Standing(frontierId, proposal.ChapterKey) is not { CurrentBeat: { } beat, CurrentTrigger: { } trigger } waiting
-            || waiting.CurrentStep != proposal.Step
-            || beat.Title != proposal.Current.Title
-            || trigger.Describe() != proposal.Trigger.Describe())
-        {
-            return "The story has moved on from that objective.";
-        }
-
-        if (Replace(frontierId, proposal.ChapterKey, waiting, proposal.Draft) is { } refusal)
-        {
-            return refusal;
-        }
-
-        if (RefusedActivities.Key(proposal.Trigger) is { } replaced)
-        {
-            Bars?.Count(frontierId, replaced);
-        }
-
-        DiscardAdventureObjective(frontierId, proposal.ChapterKey);
-        logger.LogInformation("{Adventure}: beat {Beat} was changed by the Commander", proposal.Draft.Name, proposal.From + 1);
-        return null;
-    }
-
     /// <summary>Replaces what <paramref name="standing"/> waits on from <paramref name="draft"/>: its current step when the beat has several, otherwise the beat and those after it.</summary>
     private string? Replace(string? frontierId, string key, AdventureStanding standing, Adventure draft)
     {
@@ -1291,57 +1048,6 @@ public sealed class StoryDirector(
         return standing.CurrentBeat is { Steps.Count: > 1 } && draft.Beats.ElementAtOrDefault(from)?.Steps.FirstOrDefault() is { } step
             ? book.ReplaceStep(frontierId, key, from, standing.CurrentStep, step, Clock(), draft.Sight, setSight)
             : book.ReplaceBeats(frontierId, key, from, [.. draft.Beats.Skip(from)], Clock(), draft.Sight, setSight);
-    }
-
-    private bool StillWaitingOn(string? frontierId, string key, int from) =>
-        book.Standing(frontierId, key) is { Adventure.IsActive: true, IsDone: false } standing && standing.Current == from;
-
-    private AdventureAsk ShortStoryAsk(string? frontierId, AdventureRewrite rewrite, IReadOnlyList<string>? barred) => new(
-        AdventureReach.Session,
-        Chapter: rewrite.Chapter.Follows is { } follows ? book.ChapterOf(frontierId, follows) : null,
-        Rewrite: rewrite,
-        Barred: barred);
-
-    /// <summary>The standing of the short story <paramref name="key"/> when its current objective can be written again, or the refusal saying why not.</summary>
-    private bool TryRewritableAdventure(string? frontierId, string key, [NotNullWhen(true)] out AdventureStanding? standing, [NotNullWhen(false)] out string? refusal)
-    {
-        standing = book.Standing(frontierId, key);
-        refusal = null;
-
-        if (standing is null)
-        {
-            refusal = "There is no such story.";
-        }
-        else if (standing.Adventure.StoryId is not null)
-        {
-            refusal = "That is a chapter of a story. Change its objective from the story.";
-        }
-        else if (!standing.Adventure.IsBegun)
-        {
-            refusal = "That story has not begun.";
-        }
-        else if (standing.Adventure.IsAbandoned)
-        {
-            refusal = "That story was abandoned.";
-        }
-        else if (standing.Adventure.IsFailed)
-        {
-            refusal = "That story failed.";
-        }
-        else if (standing.IsDone || standing.CurrentBeat is null)
-        {
-            refusal = "That story is done.";
-        }
-        else if (standing.InChoice)
-        {
-            refusal = AdventureStanding.ChoiceRefusal;
-        }
-        else
-        {
-            return true;
-        }
-
-        return false;
     }
 
     private bool ClaimShortStory(string? frontierId, string key)
@@ -1360,115 +1066,9 @@ public sealed class StoryDirector(
         return true;
     }
 
-    private void ReleaseShortStory(string? frontierId, string key)
-    {
-        lock (_gate)
-        {
-            _rewritingAdventures.Remove(AdventureClaim(frontierId, key));
-        }
-
-        Release(frontierId);
-    }
-
-    private async Task<ObjectiveProposalOutcome> ProposeAsync(
-        string? frontierId, BeatAt at, string remark, IReadOnlyList<AdventureRemark> exchange, CancellationToken cancellationToken)
-    {
-        if (Hidden(at.Story.Id) is not { } secret)
-        {
-            return new ObjectiveProposalOutcome(null, $"The hidden layer of {at.Story.Title} is missing from this build.");
-        }
-
-        var chapter = at.Standing.Adventure;
-        var from = at.Standing.Current;
-        var now = Clock();
-        var ask = await RewriteAskAsync(frontierId, at.Story, secret, chapter, new AdventureRewrite(chapter, from, Remark: remark, Exchange: exchange, Step: at.Standing.CurrentStep), now, cancellationToken).ConfigureAwait(false);
-        var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
-
-        if (outcome.Draft is not { } draft)
-        {
-            return new ObjectiveProposalOutcome(null, outcome.Message ?? "Nothing came back.");
-        }
-
-        if (!Unchanged(frontierId, at.Story))
-        {
-            return new ObjectiveProposalOutcome(null, "The story changed while the objective was being written.");
-        }
-
-        var proposal = new ObjectiveProposal(
-            at.Story.Id,
-            at.Story.PickedAt,
-            at.Story.Chapters.Count,
-            chapter.Key,
-            from,
-            at.Beat,
-            draft,
-            outcome.Reply ?? string.Empty,
-            [.. exchange, new AdventureRemark(remark, outcome.Reply)]);
-
-        lock (_gate)
-        {
-            _proposals[frontierId ?? AdventureStore.NoCommander] = proposal;
-        }
-
-        return new ObjectiveProposalOutcome(proposal, null);
-    }
-
-    private string? ApplyHeld(string? frontierId, ObjectiveProposal proposal)
-    {
-        if (stories.Current(frontierId) is not { State: StoryState.Running } still
-            || still.Id != proposal.StoryId
-            || still.PickedAt != proposal.PickedAt
-            || still.Chapters.Count != proposal.Chapters
-            || still.CurrentChapter != proposal.ChapterKey)
-        {
-            return "The story changed while the objective was being written.";
-        }
-
-        if (book.Standing(frontierId, proposal.ChapterKey) is not { IsDone: false } standing
-            || standing.Current != proposal.From
-            || standing.CurrentBeat is not { } beat
-            || standing.CurrentStep != proposal.Step
-            || beat.Title != proposal.Current.Title
-            || standing.CurrentTrigger!.Describe() != proposal.Trigger.Describe())
-        {
-            return "The story has moved on from that objective.";
-        }
-
-        if (Hidden(still.Id) is not { } secret)
-        {
-            return $"The hidden layer of {still.Title} is missing from this build.";
-        }
-
-        var draft = StoryIntroductions.Introduce(proposal.Draft, still, secret, Gender(), proposal.From);
-
-        if (Replace(frontierId, proposal.ChapterKey, standing, draft) is { } refusal)
-        {
-            return refusal;
-        }
-
-        if (!still.ChangedChapters.Contains(proposal.ChapterKey))
-        {
-            stories.Save(frontierId, still with { ChangedChapters = [.. still.ChangedChapters, proposal.ChapterKey] });
-        }
-
-        if (RefusedActivities.Key(proposal.Trigger) is { } replaced)
-        {
-            Bars?.Count(frontierId, replaced);
-        }
-
-        DiscardObjective(frontierId);
-        logger.LogInformation("{Title}: beat {Beat} of {Chapter} was changed by the Commander", still.Title, proposal.From + 1, proposal.Draft.Name);
-        return null;
-    }
-
     /// <summary>The story with the Commander's barred activities added to what the story refused. Not saved.</summary>
     private Story WithBar(string? frontierId, Story story) =>
         Bars?.Barred(frontierId) is { Count: > 0 } barred ? story with { Refused = [.. story.Refused.Union(barred)] } : story;
-
-    private bool Unchanged(string? frontierId, Story story) =>
-        stories.Current(frontierId) is { State: StoryState.Running } still
-        && still.PickedAt == story.PickedAt
-        && still.Chapters.Count == story.Chapters.Count;
 
     /// <summary>
     /// When the journal says the station the current beat docks at has its docks offline, says so through
@@ -1489,14 +1089,16 @@ public sealed class StoryDirector(
         var work = new List<Func<Task<string?>>>();
         string? station = null;
 
-        if (TryRewritable(frontierId, out var at, out _)
-            && journalEvent.Timestamp >= at.Story.PickedAt
-            && at.Standing.CurrentTrigger is { Kind: TriggerKind.Dock } trigger
+        var chapter = new ChapterObjective(this, frontierId);
+
+        if (chapter.Unrewritable() is null
+            && journalEvent.Timestamp >= chapter.Story.PickedAt
+            && chapter.Standing.CurrentTrigger is { Kind: TriggerKind.Dock } trigger
             && trigger.MarketId == market
-            && Claim(frontierId))
+            && chapter.Claim())
         {
             station = trigger.Station;
-            work.Add(() => HandOffAfter(frontierId, at.Standing.Adventure.Key, RewriteAsync(frontierId, at, market, CancellationToken.None)));
+            work.Add(() => HandOffAfter(frontierId, chapter.Standing.Adventure.Key, RewriteObjectiveAsync(chapter, market, CancellationToken.None)));
         }
 
         foreach (var standing in book.Active(frontierId))
@@ -1505,10 +1107,11 @@ public sealed class StoryDirector(
                 && journalEvent.Timestamp >= accepted
                 && standing.CurrentTrigger is { Kind: TriggerKind.Dock } beat
                 && beat.MarketId == market
-                && ClaimAdventure(frontierId, adventure.Key))
+                && new ShortStoryObjective(this, frontierId, adventure.Key, standing) is var target
+                && target.Claim())
             {
                 station ??= beat.Station;
-                work.Add(() => HandOffAfter(frontierId, adventure.Key, RewriteAdventureAsync(frontierId, standing, market)));
+                work.Add(() => HandOffAfter(frontierId, adventure.Key, RewriteObjectiveAsync(target, market, CancellationToken.None)));
             }
         }
 
@@ -1559,96 +1162,8 @@ public sealed class StoryDirector(
 
     private static string AdventureClaim(string? frontierId, string key) => $"{frontierId ?? AdventureStore.NoCommander}\n{key}";
 
-    /// <summary>Writes the beats of an adventure outside a story again from its current beat, avoiding the closed station, and releases the claim.</summary>
-    private async Task<string?> RewriteAdventureAsync(string? frontierId, AdventureStanding standing, long closedMarketId)
-    {
-        var adventure = standing.Adventure;
-        var from = standing.Current;
-
-        try
-        {
-            var ask = new AdventureAsk(
-                AdventureReach.Session,
-                Chapter: adventure.Follows is { } follows ? book.ChapterOf(frontierId, follows) : null,
-                Rewrite: new AdventureRewrite(adventure, from, closedMarketId, Step: standing.CurrentStep));
-
-            var outcome = await write(ask, Clock(), CancellationToken.None).ConfigureAwait(false);
-
-            if (outcome.Draft is not { } draft)
-            {
-                return outcome.Message ?? "Nothing came back.";
-            }
-
-            if (Replace(frontierId, adventure.Key, standing, draft) is { } refusal)
-            {
-                return refusal;
-            }
-
-            logger.LogInformation("{Adventure}: beat {Beat} was replaced, its docks offline", adventure.Name, from + 1);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "{Adventure}: the replacement beat could not be written", adventure.Name);
-            return "The objective could not be written.";
-        }
-        finally
-        {
-            lock (_gate)
-            {
-                _rewritingAdventures.Remove(AdventureClaim(frontierId, adventure.Key));
-            }
-        }
-    }
-
     /// <summary>Raised with a line to say unprompted: a dock beat's station has its docks offline, then the beat that replaces it.</summary>
     public event Action<string>? Says;
-
-    private sealed record BeatAt(Story Story, AdventureStanding Standing, AdventureBeat Beat);
-
-    /// <summary>The running story's current beat when it can be written again, or the refusal saying why not.</summary>
-    private bool TryRewritable(string? frontierId, [NotNullWhen(true)] out BeatAt? at, [NotNullWhen(false)] out string? refusal)
-    {
-        at = null;
-        refusal = null;
-
-        if (stories.Current(frontierId) is not { } story)
-        {
-            refusal = "No story is running.";
-        }
-        else if (story.State != StoryState.Running)
-        {
-            refusal = "Resume the story first.";
-        }
-        else if (WithoutOdyssey(frontierId))
-        {
-            refusal = NeedsOdyssey;
-        }
-        else if (story.CurrentChapter is not { } key || book.Standing(frontierId, key) is not { Adventure.IsActive: true, IsDone: false } standing
-                 || standing.CurrentBeat is not { } beat)
-        {
-            refusal = "The story is not waiting on an objective.";
-        }
-        else if (standing.InChoice)
-        {
-            refusal = AdventureStanding.ChoiceRefusal;
-        }
-        else if (!standing.IsRefusable)
-        {
-            refusal = "The Guardian beacon scan ends act one, so that objective cannot be swapped.";
-        }
-        else if (IsWriting(frontierId))
-        {
-            refusal = "A chapter is being written.";
-        }
-        else
-        {
-            at = new BeatAt(story, standing, beat);
-            return true;
-        }
-
-        return false;
-    }
 
     /// <summary>Marks a replacement beat as being written; false when one already is.</summary>
     private bool Claim(string? frontierId)
@@ -1665,24 +1180,6 @@ public sealed class StoryDirector(
         return true;
     }
 
-    /// <summary>Writes the replacement a <see cref="Claim"/> was taken for, and releases the claim.</summary>
-    private async Task<string?> RewriteAsync(string? frontierId, BeatAt at, long? closedMarketId, CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await RefuseAsync(frontierId, at.Story, at.Standing, closedMarketId, cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Writing a replacement beat failed");
-            return "The objective could not be written. Write it again and I will try a new draft.";
-        }
-        finally
-        {
-            Release(frontierId);
-        }
-    }
-
     private void Release(string? frontierId)
     {
         lock (_gate)
@@ -1693,52 +1190,486 @@ public sealed class StoryDirector(
         WritingChanged?.Invoke();
     }
 
-    private async Task<string?> RefuseAsync(
-        string? frontierId, Story story, AdventureStanding standing, long? closedMarketId, CancellationToken cancellationToken)
+    private async Task<string?> RefuseObjectiveAsync(ObjectiveTarget target, CancellationToken cancellationToken)
     {
-        if (Hidden(story.Id) is not { } secret)
-        {
-            return $"The hidden layer of {story.Title} is missing from this build.";
-        }
-
-        var chapter = standing.Adventure;
-        var from = standing.Current;
-        var refusedKey = closedMarketId is null && standing.CurrentTrigger is { } refusedTrigger ? RefusedActivities.Key(refusedTrigger) : null;
-        var refused = refusedKey is null || story.Refused.Contains(refusedKey) ? story.Refused : [.. story.Refused, refusedKey];
-        var now = Clock();
-        var ask = await RewriteAskAsync(frontierId, story with { Refused = refused }, secret, chapter, new AdventureRewrite(chapter, from, closedMarketId, Step: standing.CurrentStep), now, cancellationToken).ConfigureAwait(false);
-
-        var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
-
-        if (outcome.Draft is not { } draft)
-        {
-            return outcome.Message ?? "Nothing came back.";
-        }
-
-        if (stories.Current(frontierId) is not { State: StoryState.Running } still
-            || still.PickedAt != story.PickedAt
-            || still.Chapters.Count != story.Chapters.Count)
-        {
-            return "The story changed while the objective was being written.";
-        }
-
-        draft = StoryIntroductions.Introduce(draft, still, secret, Gender(), from);
-
-        if (Replace(frontierId, chapter.Key, standing, draft) is { } refusal)
+        if (target.Unrewritable() is { } refusal)
         {
             return refusal;
         }
 
-        stories.Update(frontierId, story.Id, current =>
-            refusedKey is null || current.Refused.Contains(refusedKey) ? current : current with { Refused = [.. current.Refused, refusedKey] });
+        if (!target.Claim())
+        {
+            return "A different objective is already being written.";
+        }
 
-        logger.LogInformation(
-            "{Title}: beat {Beat} of {Chapter} was replaced, {Why}",
-            story.Title,
-            from + 1,
-            chapter.Name,
-            closedMarketId is null ? "refused" : "its docks offline");
+        return await RewriteObjectiveAsync(target, closedMarketId: null, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Writes the replacement a claim on <paramref name="target"/> was taken for, avoiding the closed station when
+    /// <paramref name="closedMarketId"/> is set and otherwise refusing the current activity, and releases the claim.
+    /// </summary>
+    private async Task<string?> RewriteObjectiveAsync(ObjectiveTarget target, long? closedMarketId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var standing = target.Standing;
+            var now = Clock();
+            var (ask, missing) = await target.AskAsync(
+                new AdventureRewrite(standing.Adventure, standing.Current, closedMarketId, Step: standing.CurrentStep), closedMarketId is null, now, cancellationToken).ConfigureAwait(false);
+
+            if (ask is null)
+            {
+                return missing;
+            }
+
+            var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
+            return outcome.Draft is { } draft ? target.Replace(draft, closedMarketId) : outcome.Message ?? "Nothing came back.";
+        }
+        catch (Exception ex)
+        {
+            return target.WriteFailed(ex);
+        }
+        finally
+        {
+            target.Release();
+        }
+    }
+
+    private async Task<ObjectiveProposalOutcome> ReviseAsync(
+        ObjectiveTarget target, string remark, IReadOnlyList<AdventureRemark> exchange, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(exchange);
+
+        if (string.IsNullOrWhiteSpace(remark))
+        {
+            return new ObjectiveProposalOutcome(null, "Say what you would rather do.");
+        }
+
+        if (target.Unrewritable() is { } refusal)
+        {
+            return new ObjectiveProposalOutcome(null, refusal);
+        }
+
+        if (!target.Claim())
+        {
+            return new ObjectiveProposalOutcome(null, "A different objective is already being written.");
+        }
+
+        try
+        {
+            var standing = target.Standing;
+            var trimmed = remark.Trim();
+            logger.LogInformation("Objective change asked: {Remark}", trimmed);
+            var now = Clock();
+            var (ask, missing) = await target.AskAsync(
+                new AdventureRewrite(standing.Adventure, standing.Current, Remark: trimmed, Exchange: exchange, Step: standing.CurrentStep), false, now, cancellationToken).ConfigureAwait(false);
+
+            if (ask is null)
+            {
+                return new ObjectiveProposalOutcome(null, missing);
+            }
+
+            var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
+
+            if (outcome.Draft is not { } draft)
+            {
+                return new ObjectiveProposalOutcome(null, outcome.Message ?? "Nothing came back.");
+            }
+
+            if (!target.Unchanged())
+            {
+                return new ObjectiveProposalOutcome(null, "The story changed while the objective was being written.");
+            }
+
+            var proposal = target.Proposal(draft, outcome.Reply ?? string.Empty, [.. exchange, new AdventureRemark(trimmed, outcome.Reply)]);
+            target.Hold(proposal);
+            return new ObjectiveProposalOutcome(proposal, null);
+        }
+        catch (Exception ex)
+        {
+            target.ReviseFailed(ex);
+            return new ObjectiveProposalOutcome(null, "The objective could not be written. Say it again and I will try a new draft.");
+        }
+        finally
+        {
+            target.Release();
+        }
+    }
+
+    private string? Apply(ObjectiveTarget target)
+    {
+        if (target.Held is not { } proposal)
+        {
+            return "There is no change to apply.";
+        }
+
+        if (Switching)
+        {
+            return Swapping;
+        }
+
+        if (target.Writing)
+        {
+            return "An objective is being written.";
+        }
+
+        var refusal = target.Changed(proposal) ?? ApplyHeld(target, proposal);
+
+        if (refusal is not null)
+        {
+            target.Discard();
+        }
+
+        return refusal;
+    }
+
+    private string? ApplyHeld(ObjectiveTarget target, ObjectiveProposal proposal)
+    {
+        if (book.Standing(target.FrontierId, proposal.ChapterKey) is not { IsDone: false, CurrentBeat: { } beat, CurrentTrigger: { } trigger } standing
+            || standing.Current != proposal.From
+            || standing.CurrentStep != proposal.Step
+            || beat.Title != proposal.Current.Title
+            || trigger.Describe() != proposal.Trigger.Describe())
+        {
+            return "The story has moved on from that objective.";
+        }
+
+        if (target.ReplaceHeld(proposal, standing) is { } refusal)
+        {
+            return refusal;
+        }
+
+        if (RefusedActivities.Key(proposal.Trigger) is { } replaced)
+        {
+            Bars?.Count(target.FrontierId, replaced);
+        }
+
+        target.Discard();
         return null;
+    }
+
+    private ILogger Logger => logger;
+
+    /// <summary>The chapter or short story whose current objective is changed.</summary>
+    private abstract class ObjectiveTarget(
+        StoryDirector director, string? frontierId, Dictionary<string, ObjectiveProposal> proposals, string heldKey, AdventureStanding? standing = null)
+    {
+        protected const string WriteAgain = "The objective could not be written. Write it again and I will try a new draft.";
+
+        protected StoryDirector Director => director;
+
+        public string? FrontierId => frontierId;
+
+        protected string HeldKey => heldKey;
+
+        /// <summary>The standing of the objective; set by <see cref="Unrewritable"/>.</summary>
+        public AdventureStanding Standing { get; protected set; } = standing!;
+
+        /// <summary>The activity the current objective asks for, or null.</summary>
+        protected string? RefusedKey => Standing.CurrentTrigger is { } trigger ? RefusedActivities.Key(trigger) : null;
+
+        public ObjectiveProposal? Held
+        {
+            get
+            {
+                lock (director._gate)
+                {
+                    return proposals.GetValueOrDefault(heldKey);
+                }
+            }
+        }
+
+        public void Hold(ObjectiveProposal proposal)
+        {
+            lock (director._gate)
+            {
+                proposals[heldKey] = proposal;
+            }
+        }
+
+        public void Discard()
+        {
+            lock (director._gate)
+            {
+                proposals.Remove(heldKey);
+            }
+        }
+
+        /// <summary>Whether something is being written that an apply would race.</summary>
+        public abstract bool Writing { get; }
+
+        /// <summary>Why the current objective cannot be written again, or null with <see cref="Standing"/> set.</summary>
+        public abstract string? Unrewritable();
+
+        public abstract bool Claim();
+
+        public abstract void Release();
+
+        /// <summary>The ask that writes <paramref name="rewrite"/>, barring the current activity when <paramref name="refusing"/>, or the refusal saying why there is none.</summary>
+        public abstract Task<(AdventureAsk? Ask, string? Refusal)> AskAsync(AdventureRewrite rewrite, bool refusing, DateTimeOffset now, CancellationToken cancellationToken);
+
+        /// <summary>Replaces the objective with a rewrite's draft. Returns a refusal or null.</summary>
+        public abstract string? Replace(Adventure draft, long? closedMarketId);
+
+        /// <summary>Logs a failed rewrite and returns what to say.</summary>
+        public abstract string WriteFailed(Exception exception);
+
+        /// <summary>Whether the objective a revision was written for is still the one to change.</summary>
+        public abstract bool Unchanged();
+
+        public abstract ObjectiveProposal Proposal(Adventure draft, string reply, IReadOnlyList<AdventureRemark> exchange);
+
+        public abstract void ReviseFailed(Exception exception);
+
+        /// <summary>Why <paramref name="proposal"/> no longer applies before its standing is checked, or null.</summary>
+        public abstract string? Changed(ObjectiveProposal proposal);
+
+        /// <summary>Replaces the objective with the held proposal's draft. Returns a refusal or null.</summary>
+        public abstract string? ReplaceHeld(ObjectiveProposal proposal, AdventureStanding standing);
+    }
+
+    /// <summary>The running story's chapter.</summary>
+    private sealed class ChapterObjective(StoryDirector director, string? frontierId)
+        : ObjectiveTarget(director, frontierId, director._proposals, frontierId ?? AdventureStore.NoCommander)
+    {
+        private Story _story = null!;
+        private Story _still = null!;
+        private StorySecret _secret = null!;
+
+        /// <summary>The running story, as <see cref="Unrewritable"/> found it.</summary>
+        public Story Story => _story;
+
+        public override bool Writing => Director.IsWriting(FrontierId) || Director.IsRewriting(FrontierId);
+
+        public override string? Unrewritable()
+        {
+            var story = Director.Stories.Current(FrontierId);
+            var standing = story?.CurrentChapter is { } key ? Director.Book.Standing(FrontierId, key) : null;
+            (_story, Standing) = (story!, standing!);
+
+            return story is null ? "No story is running."
+                : story.State != StoryState.Running ? "Resume the story first."
+                : Director.WithoutOdyssey(FrontierId) ? NeedsOdyssey
+                : standing is not { Adventure.IsActive: true, IsDone: false, CurrentBeat: not null } ? "The story is not waiting on an objective."
+                : standing.InChoice ? AdventureStanding.ChoiceRefusal
+                : !standing.IsRefusable ? "The Guardian beacon scan ends act one, so that objective cannot be swapped."
+                : Director.IsWriting(FrontierId) ? "A chapter is being written."
+                : null;
+        }
+
+        public override bool Claim() => Director.Claim(FrontierId);
+
+        public override void Release() => Director.Release(FrontierId);
+
+        public override async Task<(AdventureAsk? Ask, string? Refusal)> AskAsync(
+            AdventureRewrite rewrite, bool refusing, DateTimeOffset now, CancellationToken cancellationToken)
+        {
+            if (Director.Hidden(_story.Id) is not { } secret)
+            {
+                return (null, $"The hidden layer of {_story.Title} is missing from this build.");
+            }
+
+            _secret = secret;
+            var refused = !refusing || RefusedKey is not { } key || _story.Refused.Contains(key) ? _story.Refused : [.. _story.Refused, key];
+            return (await Director.RewriteAskAsync(FrontierId, _story with { Refused = refused }, secret, Standing.Adventure, rewrite, now, cancellationToken).ConfigureAwait(false), null);
+        }
+
+        public override string? Replace(Adventure draft, long? closedMarketId)
+        {
+            if (Director.Stories.Current(FrontierId) is not { } still || !Matches(still))
+            {
+                return "The story changed while the objective was being written.";
+            }
+
+            var chapter = Standing.Adventure;
+            var from = Standing.Current;
+
+            if (Director.Replace(FrontierId, chapter.Key, Standing, StoryIntroductions.Introduce(draft, still, _secret, Director.Gender(), from)) is { } refusal)
+            {
+                return refusal;
+            }
+
+            var refusedKey = closedMarketId is null ? RefusedKey : null;
+            Director.Stories.Update(FrontierId, _story.Id, current =>
+                refusedKey is null || current.Refused.Contains(refusedKey) ? current : current with { Refused = [.. current.Refused, refusedKey] });
+
+            Director.Logger.LogInformation(
+                "{Title}: beat {Beat} of {Chapter} was replaced, {Why}", _story.Title, from + 1, chapter.Name, closedMarketId is null ? "refused" : "its docks offline");
+            return null;
+        }
+
+        public override string WriteFailed(Exception exception)
+        {
+            Director.Logger.LogError(exception, "Writing a replacement beat failed");
+            return WriteAgain;
+        }
+
+        public override bool Unchanged() => Director.Stories.Current(FrontierId) is { } still && Matches(still);
+
+        private bool Matches(Story still) =>
+            still.State == StoryState.Running && still.PickedAt == _story.PickedAt && still.Chapters.Count == _story.Chapters.Count;
+
+        public override ObjectiveProposal Proposal(Adventure draft, string reply, IReadOnlyList<AdventureRemark> exchange) =>
+            new(_story.Id, _story.PickedAt, _story.Chapters.Count, Standing.Adventure.Key, Standing.Current, Standing.CurrentBeat!, draft, reply, exchange);
+
+        public override void ReviseFailed(Exception exception) => Director.Logger.LogError(exception, "Writing a proposed objective failed");
+
+        public override string? Changed(ObjectiveProposal proposal)
+        {
+            if (Director.Stories.Current(FrontierId) is not { State: StoryState.Running } still
+                || still.Id != proposal.StoryId
+                || still.PickedAt != proposal.PickedAt
+                || still.Chapters.Count != proposal.Chapters
+                || still.CurrentChapter != proposal.ChapterKey)
+            {
+                return "The story changed while the objective was being written.";
+            }
+
+            _still = still;
+            return null;
+        }
+
+        public override string? ReplaceHeld(ObjectiveProposal proposal, AdventureStanding standing)
+        {
+            if (Director.Hidden(_still.Id) is not { } secret)
+            {
+                return $"The hidden layer of {_still.Title} is missing from this build.";
+            }
+
+            var draft = StoryIntroductions.Introduce(proposal.Draft, _still, secret, Director.Gender(), proposal.From);
+
+            if (Director.Replace(FrontierId, proposal.ChapterKey, standing, draft) is { } refusal)
+            {
+                return refusal;
+            }
+
+            if (!_still.ChangedChapters.Contains(proposal.ChapterKey))
+            {
+                Director.Stories.Save(FrontierId, _still with { ChangedChapters = [.. _still.ChangedChapters, proposal.ChapterKey] });
+            }
+
+            Director.Logger.LogInformation("{Title}: beat {Beat} of {Chapter} was changed by the Commander", _still.Title, proposal.From + 1, proposal.Draft.Name);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// A short story, the adventure outside a story named by its key. With <paramref name="docked"/>, the standing of its dock
+    /// beat whose docks are offline: only the adventure is claimed, and a failed write is a warning.
+    /// </summary>
+    private sealed class ShortStoryObjective(StoryDirector director, string? frontierId, string key, AdventureStanding? docked = null)
+        : ObjectiveTarget(director, frontierId, director._adventureProposals, AdventureClaim(frontierId, key), docked)
+    {
+        private readonly bool _docksOffline = docked is not null;
+
+        public override bool Writing => Director.IsRewriting(FrontierId);
+
+        public override string? Unrewritable()
+        {
+            var standing = Director.Book.Standing(FrontierId, key);
+            Standing = standing!;
+
+            return standing switch
+            {
+                null => "There is no such story.",
+                { Adventure.StoryId: not null } => "That is a chapter of a story. Change its objective from the story.",
+                { Adventure.IsBegun: false } => "That story has not begun.",
+                { Adventure.IsAbandoned: true } => "That story was abandoned.",
+                { Adventure.IsFailed: true } => "That story failed.",
+                { IsDone: true } or { CurrentBeat: null } => "That story is done.",
+                { InChoice: true } => AdventureStanding.ChoiceRefusal,
+                _ => null,
+            };
+        }
+
+        public override bool Claim() => _docksOffline ? Director.ClaimAdventure(FrontierId, key) : Director.ClaimShortStory(FrontierId, key);
+
+        public override void Release()
+        {
+            lock (Director._gate)
+            {
+                Director._rewritingAdventures.Remove(HeldKey);
+            }
+
+            if (!_docksOffline)
+            {
+                Director.Release(FrontierId);
+            }
+        }
+
+        public override Task<(AdventureAsk? Ask, string? Refusal)> AskAsync(
+            AdventureRewrite rewrite, bool refusing, DateTimeOffset now, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<string>? barred = refusing ? Director.Bars?.Barred(FrontierId) ?? [] : null;
+
+            if (barred is not null && RefusedKey is { } replaced)
+            {
+                barred = [.. barred.Union([replaced])];
+            }
+
+            var ask = new AdventureAsk(
+                AdventureReach.Session,
+                Chapter: rewrite.Chapter.Follows is { } follows ? Director.Book.ChapterOf(FrontierId, follows) : null,
+                Rewrite: rewrite,
+                Barred: barred);
+            return Task.FromResult<(AdventureAsk?, string?)>((ask, null));
+        }
+
+        public override string? Replace(Adventure draft, long? closedMarketId)
+        {
+            if (Director.Replace(FrontierId, key, Standing, draft) is { } refusal)
+            {
+                return refusal;
+            }
+
+            if (closedMarketId is null)
+            {
+                Director.Logger.LogInformation("{Adventure}: beat {Beat} was replaced, refused", Standing.Adventure.Name, Standing.Current + 1);
+            }
+            else
+            {
+                Director.Logger.LogInformation("{Adventure}: beat {Beat} was replaced, its docks offline", Standing.Adventure.Name, Standing.Current + 1);
+            }
+
+            return null;
+        }
+
+        public override string WriteFailed(Exception exception)
+        {
+            if (_docksOffline)
+            {
+                Director.Logger.LogWarning(exception, "{Adventure}: the replacement beat could not be written", Standing.Adventure.Name);
+                return "The objective could not be written.";
+            }
+
+            Director.Logger.LogError(exception, "Writing a replacement beat for a short story failed");
+            return WriteAgain;
+        }
+
+        public override bool Unchanged() => WaitingOn(Standing.Current);
+
+        public override ObjectiveProposal Proposal(Adventure draft, string reply, IReadOnlyList<AdventureRemark> exchange) =>
+            new(null, null, null, key, Standing.Current, Standing.CurrentBeat!, draft, reply, exchange, Standing.CurrentStep);
+
+        public override void ReviseFailed(Exception exception) => Director.Logger.LogError(exception, "Writing a proposed objective for a short story failed");
+
+        public override string? Changed(ObjectiveProposal proposal) =>
+            WaitingOn(proposal.From) ? null : "The story has moved on from that objective.";
+
+        public override string? ReplaceHeld(ObjectiveProposal proposal, AdventureStanding standing)
+        {
+            if (Director.Replace(FrontierId, key, standing, proposal.Draft) is { } refusal)
+            {
+                return refusal;
+            }
+
+            Director.Logger.LogInformation("{Adventure}: beat {Beat} was changed by the Commander", proposal.Draft.Name, proposal.From + 1);
+            return null;
+        }
+
+        private bool WaitingOn(int from) =>
+            Director.Book.Standing(FrontierId, key) is { Adventure.IsActive: true, IsDone: false } standing && standing.Current == from;
     }
 
     /// <summary>The ask that writes the beats of the story's chapter from <paramref name="rewrite"/>'s index on again.</summary>

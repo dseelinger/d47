@@ -304,4 +304,24 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
         Assert.Equal("Nothing came back.", await first);
         Assert.False(director.IsRewriting("F1"));
     }
+
+    [Fact]
+    public async Task AStoryThatMovedOnWhileTheProposalWasWrittenHoldsNone()
+    {
+        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
+        fixtures.WhileWriting = () =>
+        {
+            for (var minute = 3; minute < 6; minute++)
+            {
+                Bond(fixtures, minute);
+            }
+        };
+
+        var outcome = await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
+
+        Assert.Equal("The story changed while the objective was being written.", outcome.Refusal);
+        Assert.Null(fixtures.Director.AdventureProposal("F1", Key));
+        Assert.Equal(["The Lantern", "First Blood", "The Wing", "Home"], Titles(fixtures));
+        Assert.False(fixtures.Director.IsRewriting("F1"));
+    }
 }
