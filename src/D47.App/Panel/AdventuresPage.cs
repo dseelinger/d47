@@ -11,6 +11,7 @@ using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Adventures;
 using D47.Core.Interface;
+using D47.Core.Stories;
 
 namespace D47.App.Panel;
 
@@ -427,7 +428,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
             if (standing.IsDone && adventure.Beats.Count > 0)
             {
-                page.Children.Add(Muted("The end."));
+                page.Children.Add(Muted(EndLine(_surface, adventure)));
             }
 
             page.Children.Add(ReadingBar(standing));
@@ -454,6 +455,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             if (_surface.Stories is { } writer)
             {
                 writer.WritingChanged += Follow;
+                writer.Stories.Changed += Follow;
             }
 
             Fill();
@@ -466,6 +468,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             if (_surface.Stories is { } writer)
             {
                 writer.WritingChanged -= Follow;
+                writer.Stories.Changed -= Follow;
             }
         };
 
@@ -1588,5 +1591,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         Typeset.Text(text, size, key, wrap: true);
 
     internal static TextBlock Muted(string text) => Text(text, TypeScale.Body, ThemeManager.GreyKey);
+
+    /// <summary>The line under a finished chapter: the end of its story, or of the chapter.</summary>
+    internal static string EndLine(AdventureSurface surface, Adventure chapter) =>
+        ChapterEnd.Line(chapter.StoryId is { } id ? surface.Stories?.Stories.Find(surface.Commander(), id) : null, chapter.Key);
 
 }

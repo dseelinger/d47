@@ -181,7 +181,7 @@ public sealed class AdventureMini : UserControl
 
         if (standing.IsDone)
         {
-            _body.Children.Add(AdventuresPage.Muted("The end."));
+            _body.Children.Add(AdventuresPage.Muted(AdventuresPage.EndLine(_surface, standing.Adventure)));
         }
     }
 

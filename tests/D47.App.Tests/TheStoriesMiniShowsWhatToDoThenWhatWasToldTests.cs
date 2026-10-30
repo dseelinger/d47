@@ -213,7 +213,7 @@ public class TheStoriesMiniShowsWhatToDoThenWhatWasToldTests
     }
 
     [AvaloniaFact]
-    public void ADoneChapterSaysTheEnd()
+    public void ADoneChapterOfARunningStorySaysEndOfChapter()
     {
         var mini = Open();
 
@@ -224,7 +224,8 @@ public class TheStoriesMiniShowsWhatToDoThenWhatWasToldTests
 
         mini.Surface.Book.Observe(jump!, "F1");
 
-        Assert.True(Until(() => Shows(mini, "The end.")));
+        Assert.True(Until(() => Shows(mini, "End of chapter.")));
+        Assert.False(Shows(mini, "The end."));
         Assert.Null(Block(mini, said => said.StartsWith("Next: ", StringComparison.Ordinal)));
 
         mini.Window.Close();
