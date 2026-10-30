@@ -195,6 +195,12 @@ public static class FirstRun
             if (settings.Find(key)?.Binding is { Write: { } write } binding
                 && !string.Equals(binding.Read(draft), value, StringComparison.Ordinal))
             {
+                if (value is { Length: > 0 } && settings.MoveOf(key, value, draft) is { } move
+                    && settings.Find(move.HolderKey)?.Binding is { Write: { } clear })
+                {
+                    draft = clear(draft, null);
+                }
+
                 draft = write(draft, value);
             }
         }
@@ -205,6 +211,10 @@ public static class FirstRun
     private static bool IsListeningKey(string key) =>
         key is ListeningCapability.ProviderKey or ListeningCapability.PushToTalkKeyKey
             or ListeningCapability.PushToTalkButtonKey or ListeningCapability.ModeKey
+            or ListeningCapability.CommsPushToTalkKeyKey or ListeningCapability.CommsPushToTalkButtonKey;
+
+    private static bool IsBinding(string key) =>
+        key is ListeningCapability.PushToTalkKeyKey or ListeningCapability.PushToTalkButtonKey
             or ListeningCapability.CommsPushToTalkKeyKey or ListeningCapability.CommsPushToTalkButtonKey;
 
     private static (string Key, string? Value)[] Changes(SetupChoices choices) =>
@@ -226,7 +236,9 @@ public static class FirstRun
 
         return [.. Changes(effective)
             .Where(change => microphone || !IsListeningKey(change.Key))
-            .Select(change => settings.Apply(change.Key, change.Value, SettingsCaller.Panel))
+            .Select(change => change.Value is { Length: > 0 } && IsBinding(change.Key)
+                ? settings.Move(change.Key, change.Value, SettingsCaller.Panel)
+                : settings.Apply(change.Key, change.Value, SettingsCaller.Panel))
             .Where(result => !result.Ok)];
     }
 }

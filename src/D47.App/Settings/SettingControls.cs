@@ -34,7 +34,8 @@ internal sealed record SettingRowHost(
     Control Resources,
     Func<bool> Refreshing,
     Func<string, string?, StatusLine, bool> Apply,
-    Action Refresh);
+    Action Refresh,
+    Func<string, string, StatusLine, bool> Move);
 
 internal sealed record SettingServices(
     Func<CoverageReport>? Coverage,

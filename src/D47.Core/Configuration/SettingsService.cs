@@ -52,6 +52,9 @@ public sealed record SettingsChanged(string Key, D47Settings Settings, SettingsC
 /// <summary>One attempt to set a row, and what came of it — including the attempts that changed nothing.</summary>
 public sealed record SettingApplied(string Key, SettingApplyStatus Status);
 
+/// <summary>A binding another action holds: the question to ask, what the holder is left with, and why it cannot be done.</summary>
+public sealed record BindingMove(string Key, string HolderKey, string Question, string Consequence, string? Refusal);
+
 public sealed record SettingPressed(string Key, bool Succeeded);
 
 /// <summary>One capability's rows, in the order the capability declared them.</summary>
@@ -523,28 +526,9 @@ public sealed class SettingsService
             return ApplySecret(row, requested, caller);
         }
 
-        if (!TryNormalise(row, requested, out var normalised))
+        if (Invalid(row, value, requested, out var normalised) is { } invalid)
         {
-            return new SettingApplyResult(
-                SettingApplyStatus.Rejected,
-                row.ChoicesFor(Current) is { Count: > 0 } choices
-                    ? $"'{value}' is not a valid {row.Label}. Expected one of: {string.Join(", ", choices)}."
-                    : $"'{value}' is not a valid {row.Label}.");
-        }
-
-        if (normalised is not null && row.Refuses?.Invoke(Current, normalised) is { } refused)
-        {
-            return new SettingApplyResult(SettingApplyStatus.Rejected, refused);
-        }
-
-        // Said here rather than discovered later.
-        if (row.Kind == SettingKind.Hotkey && row.SystemWide
-            && normalised is { Length: > 0 } gesture && !gesture.Contains('+'))
-        {
-            return new SettingApplyResult(
-                SettingApplyStatus.Rejected,
-                $"{row.Label} works everywhere, so it needs a modifier — try Ctrl, Alt or Shift with "
-                + "it. On its own, that key would stop working in every other application, Elite included.");
+            return invalid;
         }
 
         if (string.Equals(row.Binding!.Read(Current), normalised, StringComparison.Ordinal))
@@ -588,8 +572,41 @@ public sealed class SettingsService
         return new SettingApplyResult(SettingApplyStatus.Applied, $"{row.Label} is now {Described(row, normalised)}.");
     }
 
+    /// <summary>The refusal for a value the row cannot take, or null with the stored form in <paramref name="normalised"/>.</summary>
+    private SettingApplyResult? Invalid(SettingRow row, string? value, string? requested, out string? normalised)
+    {
+        if (!TryNormalise(row, requested, out normalised))
+        {
+            return new SettingApplyResult(
+                SettingApplyStatus.Rejected,
+                row.ChoicesFor(Current) is { Count: > 0 } choices
+                    ? $"'{value}' is not a valid {row.Label}. Expected one of: {string.Join(", ", choices)}."
+                    : $"'{value}' is not a valid {row.Label}.");
+        }
+
+        if (normalised is not null && row.Refuses?.Invoke(Current, normalised) is { } refused)
+        {
+            return new SettingApplyResult(SettingApplyStatus.Rejected, refused);
+        }
+
+        // Said here rather than discovered later.
+        if (row.Kind == SettingKind.Hotkey && row.SystemWide
+            && normalised is { Length: > 0 } gesture && !gesture.Contains('+'))
+        {
+            return new SettingApplyResult(
+                SettingApplyStatus.Rejected,
+                $"{row.Label} works everywhere, so it needs a modifier — try Ctrl, Alt or Shift with "
+                + "it. On its own, that key would stop working in every other application, Elite included.");
+        }
+
+        return null;
+    }
+
     /// <summary>The Hotkey or HotasButton row other than <paramref name="key"/> that holds <paramref name="value"/>, or null.</summary>
-    public SettingRow? HeldBy(string key, string value)
+    public SettingRow? HeldBy(string key, string value) => HeldBy(key, value, Current);
+
+    /// <summary><see cref="HeldBy(string, string)"/> against <paramref name="state"/> rather than the saved settings.</summary>
+    public SettingRow? HeldBy(string key, string value, D47Settings state)
     {
         if (Find(key) is not { Kind: SettingKind.Hotkey or SettingKind.HotasButton } row
             || string.IsNullOrWhiteSpace(value))
@@ -602,13 +619,111 @@ public sealed class SettingsService
             .FirstOrDefault(other =>
                 other.Kind == row.Kind
                 && !string.Equals(other.Key, row.Key, StringComparison.OrdinalIgnoreCase)
-                && other.Binding?.Read(Current) is { Length: > 0 } held
+                && other.Binding?.Read(state) is { Length: > 0 } held
                 && SameBinding(row.Kind, held, value));
     }
 
+    /// <summary>
+    /// What binding <paramref name="value"/> to <paramref name="key"/> would take from another action, or null
+    /// when no other action holds it, against <paramref name="state"/> (the saved settings by default).
+    /// </summary>
+    public BindingMove? MoveOf(string key, string value, D47Settings? state = null)
+    {
+        var at = state ?? Current;
+
+        if (Find(key) is not { } row || HeldBy(key, value, at) is not { } holder)
+        {
+            return null;
+        }
+
+        var holderAction = ActionLabel(holder);
+        var keeps = HalfOf(holder) is { } half && half.Binding?.Read(at) is { Length: > 0 }
+            ? $"{holderAction} keeps its {(half.Kind == SettingKind.HotasButton ? "stick button" : "key")}."
+            : $"{holderAction} will be unbound.";
+
+        return new BindingMove(
+            row.Key,
+            holder.Key,
+            $"{AlreadyBound(holder, row, value, holderAction)} Move it to {ActionLabel(row)}?",
+            keeps,
+            Invalid(row, value, value, out _)?.Message);
+    }
+
+    /// <summary>
+    /// Binds <paramref name="value"/> to <paramref name="key"/> and clears it from the action that holds it, in
+    /// one save. Nothing is written when the new row refuses the value.
+    /// </summary>
+    public SettingApplyResult Move(string key, string value, SettingsCaller caller)
+    {
+        if (caller == SettingsCaller.Model || Find(key) is not { Kind: SettingKind.Hotkey or SettingKind.HotasButton } row
+            || HeldBy(key, value) is not { } holder)
+        {
+            return Apply(key, value, caller);
+        }
+
+        var result = MoveCore(row, holder, value);
+
+        Applied?.Invoke(new SettingApplied(row.Key, result.Status));
+
+        if (result.Ok)
+        {
+            Applied?.Invoke(new SettingApplied(holder.Key, SettingApplyStatus.Applied));
+        }
+
+        return result;
+    }
+
+    private SettingApplyResult MoveCore(SettingRow row, SettingRow holder, string value)
+    {
+        if (!row.Applies(Current))
+        {
+            return new SettingApplyResult(
+                SettingApplyStatus.Rejected, $"'{row.Label}' does not apply with the current selection.");
+        }
+
+        if (Invalid(row, value, value, out var normalised) is { } invalid)
+        {
+            return invalid;
+        }
+
+        var next = row.Binding!.Write!(holder.Binding!.Write!(Current, null), normalised);
+
+        try
+        {
+            Persist(next);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogError(ex, "Could not persist a move of {Key} to {To}", holder.Key, row.Key);
+            return new SettingApplyResult(
+                SettingApplyStatus.Failed, $"{row.Label} could not be saved: {ex.Message}");
+        }
+
+        _logger.LogInformation("Panel moved {Value} from {From} to {To}", Describe(normalised), holder.Key, row.Key);
+        Changed?.Invoke(new SettingsChanged(holder.Key, Current, SettingsCaller.Panel));
+        Changed?.Invoke(new SettingsChanged(row.Key, Current, SettingsCaller.Panel));
+
+        return _loadFailed
+            ? new SettingApplyResult(SettingApplyStatus.Failed, NotRemembered($"{row.Label} is now {Described(row, normalised)}"))
+            : new SettingApplyResult(SettingApplyStatus.Applied, $"{row.Label} is now {Described(row, normalised)}.");
+    }
+
+    /// <summary>The row whose control draws this one as its other half, or the row this one draws, or null.</summary>
+    private SettingRow? HalfOf(SettingRow row) =>
+        row.AlsoBinds is { } also
+            ? Find(also)
+            : Sections.SelectMany(section => section.Rows).FirstOrDefault(other => other.AlsoBinds == row.Key);
+
+    /// <summary>The action a binding row belongs to: the key row's label for a stick button drawn beside it.</summary>
+    private string ActionLabel(SettingRow row) =>
+        Sections.SelectMany(section => section.Rows).FirstOrDefault(other => other.AlsoBinds == row.Key)?.Label ?? row.Label;
+
     /// <summary>"Ctrl+L is already bound to Focus the ask box."</summary>
     public string AlreadyBound(SettingRow holder, SettingRow row, string value) =>
-        $"{Described(row, value)} is already bound to {holder.Label}.";
+        AlreadyBound(holder, row, value, holder.Label);
+
+    private string AlreadyBound(SettingRow holder, SettingRow row, string value, string holderLabel) =>
+        $"{Described(row, value)} is already bound to {holderLabel}.";
 
     private static bool SameBinding(SettingKind kind, string a, string b)
     {

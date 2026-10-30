@@ -20,8 +20,8 @@ public static class BindCapture
     public static bool IsListeningToTheStick => _stickCaptures > 0;
 
     /// <summary>
-    /// <see cref="RunAsync"/> again after each press <paramref name="refuse"/> gives a reason for, saying the
-    /// reason on <paramref name="message"/>; returns the first press nothing refused, a null value for Esc, or null for a cancel.
+    /// <see cref="RunAsync"/> again after each press <paramref name="refuse"/> gives a reason for (it may await a
+    /// question first; nothing listens while it does), saying the reason on <paramref name="message"/>; returns the first press nothing refused, a null value for Esc, or null for a cancel.
     /// </summary>
     public static async Task<(string Key, string? Value)?> RunUntilFreeAsync(
         TopLevel top,
@@ -30,7 +30,7 @@ public static class BindCapture
         string? buttonKey,
         SwitchEditing? switches,
         StatusLine message,
-        Func<string, string, string?> refuse,
+        Func<string, string, Task<string?>> refuse,
         CancellationToken cancel = default)
     {
         string? notice = null;
@@ -40,7 +40,7 @@ public static class BindCapture
             var caught = await RunAsync(top, keyKey, bare, buttonKey, switches, message, cancel, notice);
 
             if (caught is not { Value: { Length: > 0 } value } pressed
-                || refuse(pressed.Key, value) is not { } reason)
+                || await refuse(pressed.Key, value) is not { } reason)
             {
                 return caught;
             }

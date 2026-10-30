@@ -40,7 +40,7 @@ public class OnePressRunsAtATimeTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
 
         var controls = new SettingControls(
-            new SettingRowHost(settings, new UserControl(), () => false, (_, _, _) => true, () => { }),
+            new SettingRowHost(settings, new UserControl(), () => false, (_, _, _) => true, () => { }, (_, _, _) => true),
             new SettingServices(null, null, null, null, null, null, null, null, null, null, null, [], null));
 
         var message = new StatusLine();

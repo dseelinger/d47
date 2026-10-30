@@ -1001,6 +1001,8 @@ internal sealed partial class SettingControls
 
         listening(true);
 
+        string? moving = null;
+
         try
         {
             if (await BindCapture.RunUntilFreeAsync(
@@ -1010,10 +1012,22 @@ internal sealed partial class SettingControls
                     stick ? slotKey : null,
                     services.Switches,
                     message,
-                    (key, value) => HeldMessage(key, value))
+                    async (key, value) =>
+                    {
+                        var reason = await HeldMessageAsync(top, key, value);
+                        moving = reason is null && host.Settings.MoveOf(key, value) is { Refusal: null } ? key : null;
+                        return reason;
+                    })
                 is { } caught)
             {
-                host.Apply(caught.Key, caught.Value, message);
+                if (caught.Value is { Length: > 0 } && caught.Key == moving)
+                {
+                    host.Move(caught.Key, caught.Value, message);
+                }
+                else
+                {
+                    host.Apply(caught.Key, caught.Value, message);
+                }
             }
         }
         finally
@@ -1023,8 +1037,20 @@ internal sealed partial class SettingControls
         }
     }
 
-    private string? HeldMessage(string key, string value) =>
-        host.Settings.HeldBy(key, value) is { } holder && host.Settings.Find(key) is { } bound
-            ? $"{host.Settings.AlreadyBound(holder, bound, value)} Press another, or Esc."
-            : null;
+    /// <summary>Null when nothing holds the press or the Commander agreed to move it; otherwise the line to listen again under.</summary>
+    private async Task<string?> HeldMessageAsync(TopLevel top, string key, string value)
+    {
+        if (host.Settings.MoveOf(key, value) is not { Refusal: null } move)
+        {
+            return null;
+        }
+
+        return top is Window owner && await new ConfirmDialog(
+                "Move this binding?",
+                $"{move.Question}\n{move.Consequence}",
+                confirmLabel: "Move it",
+                declineLabel: "Keep it").AskAsync(owner)
+            ? null
+            : $"{host.Settings.AlreadyBound(host.Settings.Find(move.HolderKey)!, host.Settings.Find(key)!, value)} Press another, or Esc.";
+    }
 }

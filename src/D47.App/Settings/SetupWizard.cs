@@ -844,6 +844,8 @@ public sealed class SetupWizard : ModalDialog
 
         var stick = key is ListeningCapability.PushToTalkButtonKey or ListeningCapability.CommsPushToTalkButtonKey;
 
+        BindingMove? moved = null;
+
         var caught = await BindCapture.RunUntilFreeAsync(
             top,
             stick ? null : key,
@@ -851,9 +853,27 @@ public sealed class SetupWizard : ModalDialog
             stick ? key : null,
             _switches,
             message,
-            (bound, value) => _settings.HeldBy(bound, value) is { } holder && _settings.Find(bound) is { } row
-                ? $"{_settings.AlreadyBound(holder, row, value)} Press another, or Esc."
-                : null,
+            async (bound, value) =>
+            {
+                moved = null;
+
+                if (_settings.MoveOf(bound, value, FirstRun.Draft(_settings, Choices)) is not { Refusal: null } move)
+                {
+                    return null;
+                }
+
+                if (top is Window owner && await new ConfirmDialog(
+                        "Move this binding?",
+                        $"{move.Question}\n{move.Consequence}",
+                        confirmLabel: "Move it",
+                        declineLabel: "Keep it").AskAsync(owner))
+                {
+                    moved = move;
+                    return null;
+                }
+
+                return $"{_settings.AlreadyBound(_settings.Find(move.HolderKey)!, _settings.Find(bound)!, value)} Press another, or Esc.";
+            },
             cancel.Token);
 
         if (!ReferenceEquals(_capture, cancel))
@@ -871,12 +891,22 @@ public sealed class SetupWizard : ModalDialog
         }
         else
         {
-            Choose(key switch
+            var next = key switch
             {
                 ListeningCapability.PushToTalkButtonKey => Choices with { TalkButton = pressed.Value },
                 ListeningCapability.CommsPushToTalkButtonKey => Choices with { CommsButton = pressed.Value },
                 ListeningCapability.CommsPushToTalkKeyKey => Choices with { CommsKey = pressed.Value },
                 _ => Choices with { TalkKey = pressed.Value },
+            };
+
+            // A holder the wizard does not show is cleared when the wizard saves.
+            Choose(moved?.HolderKey switch
+            {
+                ListeningCapability.PushToTalkKeyKey => next with { TalkKey = null },
+                ListeningCapability.PushToTalkButtonKey => next with { TalkButton = null },
+                ListeningCapability.CommsPushToTalkKeyKey => next with { CommsKey = null },
+                ListeningCapability.CommsPushToTalkButtonKey => next with { CommsButton = null },
+                _ => next,
             });
         }
     }

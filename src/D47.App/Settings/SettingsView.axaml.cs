@@ -220,7 +220,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _vrHost = vrHost;
 
         _controls = new SettingControls(
-            new SettingRowHost(settings, this, () => _refreshing, Apply, Refresh),
+            new SettingRowHost(settings, this, () => _refreshing, Apply, Refresh, Move),
             new SettingServices(
                 coverage,
                 macros,
@@ -2082,14 +2082,25 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// By key rather than by row, because one control can hold two of them (#217) and the message line,
     /// the redraw and the refusal are the same for both halves.
     /// </summary>
-    private bool Apply(string key, string? value, StatusLine message)
+    private bool Apply(string key, string? value, StatusLine message) =>
+        Save(key, value, message, (settings, k, v) => settings.Apply(k, v, SettingsCaller.Panel));
+
+    /// <summary>Binds a press another action holds and clears it from that action, in one save.</summary>
+    private bool Move(string key, string value, StatusLine message) =>
+        Save(key, value, message, (settings, k, v) => settings.Move(k, v!, SettingsCaller.Panel));
+
+    private bool Save(
+        string key,
+        string? value,
+        StatusLine message,
+        Func<SettingsService, string, string?, SettingApplyResult> save)
     {
         if (_settings is null)
         {
             return false;
         }
 
-        var result = _settings.Apply(key, value, SettingsCaller.Panel);
+        var result = save(_settings, key, value);
 
         // Only failures are worth *saying*.
         if (result.Ok)

@@ -43,7 +43,8 @@ public class ARefreshWritesNothingBackTests
                     applied++;
                     return true;
                 },
-                () => { }),
+                () => { },
+                (_, _, _) => true),
             new SettingServices(null, null, null, null, null, null, null, null, null, null, null, [], null));
 
         var rows = new[]
