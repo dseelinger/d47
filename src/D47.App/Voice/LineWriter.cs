@@ -573,7 +573,8 @@ internal sealed class LineWriter
             facts,
             contradiction => AskScreenedAsync($"{instruction} {contradiction.Correction}"),
             _logger,
-            key).ConfigureAwait(false) is { } screened && spoken is not null
+            key,
+            instruction).ConfigureAwait(false) is { } screened && spoken is not null
             ? (spoken, language is null ? null : screened)
             : null;
     }

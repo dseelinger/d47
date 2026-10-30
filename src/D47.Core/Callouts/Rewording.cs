@@ -78,7 +78,8 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
                 (await ask(brief, $"{brief.Instruction} {contradiction.Correction}", budget.Token)
                     .ConfigureAwait(false)).Line,
             logger,
-            announcement.Key).ConfigureAwait(false);
+            announcement.Key,
+            $"{brief.Speaker} {brief.Instruction}").ConfigureAwait(false);
 
         if (said is not null
             && string.Equals(announcement.Key, ContinuityCallout.Key, StringComparison.Ordinal)

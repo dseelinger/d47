@@ -412,11 +412,12 @@ public static class ContradictedClaims
         ShipFacts facts,
         Func<Contradiction, Task<string?>> again,
         ILogger? logger,
-        string what)
+        string what,
+        string? prompt = null)
     {
         ArgumentNullException.ThrowIfNull(again);
 
-        if (!FlavourBriefs.MayBeSpoken(line))
+        if (!FlavourBriefs.MayBeSpoken(line, prompt))
         {
             return null;
         }
@@ -430,7 +431,7 @@ public static class ContradictedClaims
 
         var retry = await again(contradiction).ConfigureAwait(false);
 
-        if (!FlavourBriefs.MayBeSpoken(retry))
+        if (!FlavourBriefs.MayBeSpoken(retry, prompt))
         {
             return null;
         }

@@ -5411,7 +5411,8 @@ public sealed class AppHost : IDisposable
                                facts,
                                contradiction => AskAsync($"{instruction} {contradiction.Correction}"),
                                _logger,
-                               "persona.return").ConfigureAwait(false)
+                               "persona.return",
+                               instruction).ConfigureAwait(false)
                            ?? ContradictedClaims.Sayable(
                                change.Current.Return, facts, _logger, "persona.return");
                 }
@@ -5445,7 +5446,8 @@ public sealed class AppHost : IDisposable
                                facts,
                                contradiction => AskAsync($"{brief.Instruction} {contradiction.Correction}"),
                                _logger,
-                               "persona.intro").ConfigureAwait(false)
+                               "persona.intro",
+                               brief.Instruction).ConfigureAwait(false)
                            ?? ContradictedClaims.Sayable(
                                change.Current.Intro, facts, _logger, "persona.intro");
                 }

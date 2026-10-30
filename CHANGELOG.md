@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A line D47 asks a model to write is no longer spoken if the model answers with its reasoning instead: commentary ahead of a delivery tag, a quotation of the line it was given, or a repeat of its instructions. The authored line is spoken instead, or nothing when there is none.
+
 Station notices and docking refusals are no longer given a joke when D47 rewords them. They are still reworded, always as plain notices.
 
 D47 now says a mission concludes at a station, or that a hand-in is unclaimed when you undock, only when it can be handed in. A cargo mission waits until the cargo it still owes is in your hold. A kill, salvage or on-foot mission waits until the game redirects it. The Missions page counts and marks only those missions as handing in here.

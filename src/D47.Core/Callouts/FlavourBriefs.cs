@@ -741,9 +741,11 @@ public static class FlavourBriefs
     ];
 
     /// <summary>Whether a model's answer to a rewording brief may be spoken (GitHub issue 46).</summary>
-    public static bool MayBeSpoken(string? line) =>
+    /// <param name="prompt">What the model was told, when the caller has it; the reply may not quote or repeat it.</param>
+    public static bool MayBeSpoken(string? line, string? prompt = null) =>
         !string.IsNullOrWhiteSpace(line)
-        && !TalkingAboutItself.Any(said => line.Contains(said, StringComparison.OrdinalIgnoreCase));
+        && !TalkingAboutItself.Any(said => line.Contains(said, StringComparison.OrdinalIgnoreCase))
+        && !ModelReasoning.Shows(line, prompt);
 
     /// <summary>Which situation an ambient announcement was about, from its key.</summary>
     public static AmbientSituation SituationOf(string key) =>
