@@ -201,6 +201,11 @@ Cannot honk since Elite is not the active window.
 That line is also said in place of "The honk did not take" when a hold produced no scan and
 Elite is not in front by the end of the wait for it.
 
+It says nothing about the honk when the system's layout is already known: when Elite reports
+every body found, as it does when the automatic scan on arrival finds the only body, or when a
+discovery scan earlier in the session found the whole system. To leave time for that report, any
+line about the honk waits until nine seconds after the jump. The honk itself is still pressed.
+
 A honk you make by hand while it is waiting counts, and nothing is repeated. Apart from that one
 retry, it fires once per jump. It never fires for jumps that happened before Directive 47 started, which
 would otherwise mean a honk for every system you visited that afternoon.

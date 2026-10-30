@@ -31,6 +31,23 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds, Fu
     /// <summary>Said when Elite was not the window in front on both tries for an arrival.</summary>
     public const string NotInFront = "Cannot honk since Elite is not the active window.";
 
+    /// <summary>
+    /// How long after the jump a line is held back, so an autoscan that finds every body arrives first and
+    /// withholds it.
+    /// </summary>
+    public static readonly TimeSpan Quiet = TimeSpan.FromSeconds(9);
+
+    /// <summary>Systems whose every body has been found, by <c>SystemAddress</c>; filled while priming too.</summary>
+    private readonly HashSet<long> _complete = [];
+
+    /// <summary>The system of the latest jump.</summary>
+    private long? _arrivedIn;
+
+    private DateTimeOffset? _jumpedAt;
+
+    /// <summary>A line for this arrival waiting out <see cref="Quiet"/>.</summary>
+    private string? _pending;
+
     private DateTimeOffset? _armedAt;
 
     /// <summary>When d47 pressed the HUD toggle to reach analysis mode, until the status shows it.</summary>
@@ -55,15 +72,59 @@ public sealed class HonkOnArrival(Func<bool> enabled, Func<EliteBinds> binds, Fu
 
     public bool IsEnabled => enabled();
 
+    /// <summary>Nothing is said for an arrival in a system whose every body is already found.</summary>
     public AutonomousDecision Examine(CalloutContext context)
     {
-        // Folded even while priming, and then discarded, so a backlog of this afternoon's jumps arms nothing.
-        if (context.Events.Any(e => e.Kind is "FSDJump"))
+        var decision = Decide(context);
+
+        if (context.IsPriming)
         {
-            _armedAt = context.IsPriming ? null : context.Now;
-            _switchedAt = null;
-            _heldAt = null;
-            _tryAgainAt = null;
+            return decision;
+        }
+
+        if (decision.Say is { } say)
+        {
+            _pending = say;
+            decision = new AutonomousDecision(decision.Steps);
+        }
+
+        var known = _arrivedIn is { } here && _complete.Contains(here);
+
+        if (_pending is { } line && (known || context.Now - _jumpedAt >= Quiet))
+        {
+            _pending = null;
+            return known ? decision : new AutonomousDecision(decision.Steps, line);
+        }
+
+        return decision;
+    }
+
+    private AutonomousDecision Decide(CalloutContext context)
+    {
+        // Folded even while priming, and then discarded, so a backlog of this afternoon's jumps arms nothing.
+        foreach (var journalEvent in context.Events)
+        {
+            switch (journalEvent.Kind)
+            {
+                case "FSDJump":
+                    _armedAt = context.IsPriming ? null : context.Now;
+                    _jumpedAt = context.Now;
+                    _arrivedIn = journalEvent.Long("SystemAddress");
+                    _pending = null;
+                    _switchedAt = null;
+                    _heldAt = null;
+                    _tryAgainAt = null;
+                    break;
+
+                case "FSSAllBodiesFound":
+                case "FSSDiscoveryScan" when journalEvent.Double("Progress") >= 1:
+                    if (journalEvent.Long("SystemAddress") is { } address)
+                    {
+                        _complete.Add(address);
+                    }
+
+                    break;
+            }
         }
 
         if (context.IsPriming)
