@@ -1780,9 +1780,9 @@ public sealed class StoryDirector(
         var slots = afterBeacon
             ? await RewriteSlotsAsync(story, chapter, rewrite, game, previous, number, finaleChapter, sightseeing, cancellationToken).ConfigureAwait(false)
             : null;
-        var rank = chapter.Beats.SelectMany(beat => beat.Steps).Select(step => step.Trigger).FirstOrDefault(trigger => trigger.Kind == TriggerKind.Rank);
+        var ranks = chapter.Beats.SelectMany(beat => beat.Steps).Select(step => step.Trigger).Where(trigger => trigger.Kind == TriggerKind.Rank).ToList();
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
-            && (!afterBeacon || finaleChapter is not null || ChapterFit.ServesLongHaul(slots, rank, sightseeing));
+            && (!afterBeacon || finaleChapter is not null || ChapterFit.ServesLongHaul(slots, ranks, sightseeing));
 
         return new AdventureAsk(
             longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
@@ -2860,13 +2860,13 @@ public sealed class StoryDirector(
         }
 
         var sightseeing = sights.Count > 0;
-        var goal = story.BeaconScanAt is not null && finaleChapter is null && catalog().Find(story.Id) is { Goals: true } goalsCard
-            ? GoalClimb.Next(
+        IReadOnlyList<GoalClimbStep> goals = story.BeaconScanAt is not null && finaleChapter is null && catalog().Find(story.Id) is { Goals: true } goalsCard
+            ? GoalClimb.Steps(
                 GoalClimb.Listed(GoalClimb.Standings(game, Mine?.Invoke()), goalsCard.GoalArcs),
                 game,
                 Engineers?.Invoke(),
                 row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused))
-            : null;
+            : [];
         var slots = story.BeaconScanAt is null
             ? null
             : ChapterDraw.Draw(
@@ -2885,19 +2885,16 @@ public sealed class StoryDirector(
                 NeverCompleted(),
                 Tools is null ? null : StepEventCatalogue.Default,
                 Tools?.Invoke(),
-                goal?.Objective is null ? ChapterDraw.Slots : ChapterDraw.Slots - 1,
-                goal?.Draw is null ? null : goal.Earns) is { Count: > 0 } drawn
+                GoalClimb.Slots(goals),
+                GoalClimb.Limits(goals)) is { Count: > 0 } drawn
                 ? drawn
                 : null;
 
         // A limited draw that fell back to the whole table works no arc.
-        if (goal?.Draw is not null && slots?.Any(slot => ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic) is { } row && goal.Earns(row)) != true)
-        {
-            goal = null;
-        }
+        goals = GoalClimb.Worked(goals, slots);
 
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
-            && (story.BeaconScanAt is null || finaleChapter is not null || home is not null || pulled || ChapterFit.ServesLongHaul(slots, goal?.Objective, sightseeing));
+            && (story.BeaconScanAt is null || finaleChapter is not null || home is not null || pulled || ChapterFit.ServesLongHaul(slots, [.. goals.Select(goal => goal.Objective).OfType<AdventureTrigger>()], sightseeing));
 
         var opening = Opening(frontierId, story, secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter), game?.Ship.Type);
 
@@ -2919,7 +2916,7 @@ public sealed class StoryDirector(
                 slots,
                 finaleChapter > 1 ? story.FinaleDestination : null,
                 home,
-                goal,
+                goals.Count > 0 ? goals : null,
                 game?.Ship.Type,
                 inTheBlack,
                 sightseeing ? sights : null,
@@ -3013,7 +3010,7 @@ public sealed class StoryDirector(
         IReadOnlyList<DrawnActivity>? slots,
         AdventureDestination? destination,
         string? home = null,
-        GoalClimbStep? goal = null,
+        IReadOnlyList<GoalClimbStep>? goals = null,
         string? hull = null,
         bool inTheBlack = false,
         IReadOnlyList<NotablePlace>? sights = null,
@@ -3049,7 +3046,7 @@ public sealed class StoryDirector(
             Aboard()?.Stock == true,
             home,
             story.BeaconsRemembered > 0,
-            goal,
+            goals,
             StoryAboard.BySpan(secret, story),
             StoryAboard.Due(secret, story, StoryClues.BeatKeys(story.Pacing, stage, beaconInReach, finaleChapter), hull),
             sights)

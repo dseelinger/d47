@@ -97,7 +97,7 @@ public sealed record StoryCard
     /// <summary>Why this Commander goes to a Guardian beacon.</summary>
     public string? Beacon { get; init; }
 
-    /// <summary>Whether this is a Goals story: each chapter between the beacon scan and the finale works the Goals arc furthest behind.</summary>
+    /// <summary>Whether this is a Goals story: each chapter between the beacon scan and the finale works the two Goals arcs furthest behind, or one when only one can give a step.</summary>
     public bool Goals { get; init; }
 
     /// <summary>The <see cref="GoalCatalogue"/> arc keys a Goals story works, or null for every arc.</summary>

@@ -21,11 +21,14 @@ public sealed record GoalClimbStep(string Key, string Name)
     public bool Earns(DrawableActivity row) => Draw is { } ladder && GoalClimb.Earns(ladder, row);
 }
 
-/// <summary>Picks the unfinished Goals arc that is furthest behind, so a Goals story's chapters raise the arcs together.</summary>
+/// <summary>Picks the unfinished Goals arcs that are furthest behind, so a Goals story's chapters raise the arcs together.</summary>
 public static class GoalClimb
 {
     /// <summary>The share of a rank from which a chapter asks for the promotion rather than the activities that earn it.</summary>
     public const double PromotionNear = 0.75;
+
+    /// <summary>The most arcs one chapter works.</summary>
+    public const int MostSteps = 2;
 
     private static readonly string[] CombatMissions = ["Mission_Massacre", "Mission_Assassinate"];
 
@@ -78,7 +81,71 @@ public static class GoalClimb
     }
 
     /// <summary>The same choice over <paramref name="standings"/>, which are in catalogue order.</summary>
-    public static GoalClimbStep? Next(IReadOnlyList<GoalStanding> standings, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool>? drawable = null)
+    public static GoalClimbStep? Next(IReadOnlyList<GoalStanding> standings, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool>? drawable = null) =>
+        Ranked(standings, state, engineers, drawable).FirstOrDefault();
+
+    /// <summary>The steps for the first <see cref="MostSteps"/> arcs, each a different arc, in the order <see cref="Next"/> ranks them.</summary>
+    public static IReadOnlyList<GoalClimbStep> Steps(IReadOnlyList<GoalStanding> standings, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool>? drawable = null) =>
+        [.. Ranked(standings, state, engineers, drawable).Take(MostSteps)];
+
+    /// <summary>How many activities a chapter with these steps draws: <see cref="ChapterDraw.Slots"/>, less one for each objective.</summary>
+    public static int Slots(IReadOnlyList<GoalClimbStep> steps)
+    {
+        ArgumentNullException.ThrowIfNull(steps);
+
+        return ChapterDraw.Slots - steps.Count(step => step.Objective is not null);
+    }
+
+    /// <summary>
+    /// The limit of each drawn slot, by index, for <see cref="ChapterDraw.Draw"/>. A lone draw step limits every slot; with two
+    /// steps the first limits two and the second one. An objective step limits none, and the slots past the list are unlimited.
+    /// </summary>
+    public static IReadOnlyList<Func<DrawableActivity, bool>> Limits(IReadOnlyList<GoalClimbStep> steps)
+    {
+        ArgumentNullException.ThrowIfNull(steps);
+
+        return [.. steps.SelectMany((step, index) => Enumerable.Repeat<Func<DrawableActivity, bool>>(step.Earns, Share(steps, index)))];
+    }
+
+    /// <summary>
+    /// The step each drawn slot is credited to, by index: the first step whose rows include it and whose share of the
+    /// <see cref="Limits"/> is not used up, else the first step whose rows include it; null for a slot no step's rows include.
+    /// </summary>
+    public static IReadOnlyList<GoalClimbStep?> Credited(IReadOnlyList<GoalClimbStep> steps, IReadOnlyList<DrawnActivity>? slots)
+    {
+        ArgumentNullException.ThrowIfNull(steps);
+
+        var left = steps.Select((_, index) => Share(steps, index)).ToArray();
+
+        return [.. (slots ?? []).Select(slot =>
+        {
+            var row = ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic);
+            var index = row is null ? -1 : Enumerable.Range(0, steps.Count).FirstOrDefault(index => left[index] > 0 && steps[index].Earns(row), -1) is var shared and >= 0
+                ? shared
+                : Enumerable.Range(0, steps.Count).FirstOrDefault(index => steps[index].Earns(row), -1);
+
+            if (index < 0)
+            {
+                return null;
+            }
+
+            left[index] = Math.Max(0, left[index] - 1);
+            return steps[index];
+        })];
+    }
+
+    /// <summary>The steps the drawn slots work: an objective step, or a draw step one of whose rows was drawn.</summary>
+    public static IReadOnlyList<GoalClimbStep> Worked(IReadOnlyList<GoalClimbStep> steps, IReadOnlyList<DrawnActivity>? slots)
+    {
+        ArgumentNullException.ThrowIfNull(steps);
+
+        return [.. steps.Where(step => step.Draw is null || slots?.Any(slot => ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic) is { } row && step.Earns(row)) == true)];
+    }
+
+    private static int Share(IReadOnlyList<GoalClimbStep> steps, int index) =>
+        steps[index].Draw is null ? 0 : steps.Count == 1 ? ChapterDraw.Slots : index == 0 ? ChapterDraw.Slots - 1 : 1;
+
+    private static IEnumerable<GoalClimbStep> Ranked(IReadOnlyList<GoalStanding> standings, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool>? drawable)
     {
         ArgumentNullException.ThrowIfNull(standings);
 
@@ -90,7 +157,7 @@ public static class GoalClimb
             .Where(standing => !standing.IsDone)
             .OrderBy(standing => unpledged && standing.Arc.Key == GoalCatalogue.Powerplay ? -1 : standing.Fraction ?? 0)
             .Select(standing => Step(standing, state, engineers, drawable))
-            .FirstOrDefault(step => step is not null);
+            .OfType<GoalClimbStep>();
     }
 
     /// <summary>Whether a drawn row earns rank on the ladder with this journal key.</summary>

@@ -42,11 +42,11 @@ public sealed class ALongHaulChapterMustServeItTests
     [InlineData("Combat", false)]
     [InlineData("Trade", false)]
     public void OnlyAnExplorationOrExobiologyRankObjectiveServesALongHaul(string career, bool expected) =>
-        Assert.Equal(expected, ChapterFit.ServesLongHaul([Slot(TriggerKind.Srv)], Rank(career)));
+        Assert.Equal(expected, ChapterFit.ServesLongHaul([Slot(TriggerKind.Srv)], [Rank(career)]));
 
     [Fact]
     public void AnObjectiveThatIsNotARankDoesNot() =>
-        Assert.False(ChapterFit.ServesLongHaul(null, new AdventureTrigger { Kind = TriggerKind.PowerRank, Rank = 3 }));
+        Assert.False(ChapterFit.ServesLongHaul(null, [new AdventureTrigger { Kind = TriggerKind.PowerRank, Rank = 3 }]));
 
     /// <summary>Fixtures for a three-month story whose Commander scanned a beacon in an earlier story, so chapter one is the first after the scan.</summary>
     private static StoryFixtures AfterTheScan(bool goals)
@@ -82,7 +82,7 @@ public sealed class ALongHaulChapterMustServeItTests
 
         var ask = Assert.Single(fixtures.Asks);
 
-        Assert.Equal("Combat", ask.Story!.Goal?.Draw);
+        Assert.Equal("Combat", ask.Story!.Goals?[0].Draw);
         Assert.Equal(AdventureReach.Session, ask.Reach);
         Assert.False(ask.Story.LongHaul);
     }
@@ -96,7 +96,7 @@ public sealed class ALongHaulChapterMustServeItTests
         await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         var ask = Assert.Single(fixtures.Asks);
-        var serves = ChapterFit.ServesLongHaul(ask.Story!.Slots, ask.Story.Goal?.Objective);
+        var serves = ChapterFit.ServesLongHaul(ask.Story!.Slots, ask.Story.Goals?.Select(goal => goal.Objective).OfType<AdventureTrigger>().ToList());
 
         Assert.Equal(serves ? AdventureReach.Anywhere : AdventureReach.Session, ask.Reach);
         Assert.Equal(serves, ask.Story.LongHaul);

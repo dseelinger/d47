@@ -243,7 +243,7 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     {
         var plain = ChapterDraw.Draw(CareerWeights.Even, RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0, 11u);
         var limited = ChapterDraw.Draw(
-            CareerWeights.Even, RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0, 11u, limit: _ => false);
+            CareerWeights.Even, RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0, 11u, limits: [_ => false, _ => false, _ => false]);
 
         Assert.Equal(plain, limited);
     }
@@ -282,5 +282,5 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
             seed,
             events: StepEventCatalogue.Default,
             tools: [new DrawableTool("plot_trade_route", "plot a trade route")],
-            limit: step.Earns);
+            limits: GoalClimb.Limits([step]));
 }

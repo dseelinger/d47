@@ -10,6 +10,8 @@
 
 You can now ask where to buy or sell up to five commodities at one station, such as "where can I buy painite, platinum and gold". D47 names only stations that trade every one of them, with each one's price there. If no station has them all, it says how many stations had each one. In the Navigation tab's Commodity box, type the list with commas, and a tonnage after a colon where you want one: "Painite: 40, Platinum: 12, Gold". The market table then lists every commodity on each station's row, with its price and stock. Asking where to buy Gold now searches the markets for Gold instead of answering with the rare Sothis Crystalline Gold.
 
+A Goals story chapter now works the two Goals arcs furthest behind instead of one. The arc furthest behind gets two of the chapter's three activities and the other arc gets one, and the story gives you one reason for both. An arc close to its next rank is given that rank as an objective instead, as before. When only one arc can be worked, the chapter works that arc as before.
+
 "Set course for home" now plots a course to your home system, the one set under Home system in Settings, Exploring. It also covers "take me home", "navigate home", "route home" and similar phrasings, and no longer plots a system named "home". With no home system set, D47 says so and plots nothing. A bookmark can no longer be named "home".
 
 A line D47 asks a model to write is no longer spoken if the model answers with its reasoning instead: commentary ahead of a delivery tag, a quotation of the line it was given, or a repeat of its instructions. The authored line is spoken instead, or nothing when there is none.

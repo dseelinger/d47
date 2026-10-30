@@ -37,7 +37,7 @@ public sealed class AGoalsStoryChapterHoldsItsGoalsStepTests
             new AdventureAsk(
                 AdventureReach.Session,
                 AdventureLength.Short,
-                Story: new AdventureStory(Id, Card.Title, Card.Describe(), Secret.Secret, 3, 10, 5, Goal: goal)),
+                Story: new AdventureStory(Id, Card.Title, Card.Describe(), Secret.Secret, 3, 10, 5, Goals: [goal])),
             Now,
             CancellationToken.None);
 
@@ -65,13 +65,13 @@ public sealed class AGoalsStoryChapterHoldsItsGoalsStepTests
 
         if (!goals)
         {
-            Assert.Null(story.Goal);
+            Assert.Null(story.Goals);
             return;
         }
 
-        // Every arc is unknown to a state with no ranks read, so the first in the catalogue is worked.
-        Assert.Equal("rank.combat", story.Goal?.Key);
-        Assert.Equal("Combat", story.Goal?.Draw);
-        Assert.All(story.Slots!, slot => Assert.True(story.Goal!.Earns(ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic)!)));
+        // Every arc is unknown to a state with no ranks read, so the first two in the catalogue are worked.
+        Assert.Equal(["rank.combat", "rank.trade"], story.Goals!.Select(goal => goal.Key));
+        // Bounties are the only Combat row this Commander can be drawn, so the first arc's second slot goes to the second arc.
+        Assert.Equal(["Combat", "Trade", "Trade"], story.Slots!.Select(slot => story.Goals!.First(goal => goal.Earns(ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic)!)).Draw));
     }
 }

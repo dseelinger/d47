@@ -97,8 +97,9 @@ public static class ChapterDraw
     /// is how many place objectives the chapter already must have. A comfort chapter's first slot is the least-done activity that
     /// passes the gates, counting ties from row <paramref name="comfortFirst"/>; a mission family in <paramref name="neverCompleted"/>
     /// that passes the gates takes that slot first. With <paramref name="stationsInReach"/> false, rows that need a station are
-    /// never drawn. With <paramref name="limit"/>, only rows it accepts are drawn
-    /// and no event slot is drawn, unless it leaves no row the gates allow, when the whole table is drawn from as usual.
+    /// never drawn. <paramref name="limits"/> holds each slot's limit by index: a limited slot draws only rows its limit accepts,
+    /// unless that leaves no row the gates allow, when it draws from the whole table. A slot whose rows are all drawn takes the
+    /// first later slot's rows that are not. No event slot is drawn while a limit holds.
     /// </summary>
     public static IReadOnlyList<DrawnActivity> Draw(
         CareerWeights weights,
@@ -117,7 +118,7 @@ public static class ChapterDraw
         StepEventCatalogue? events = null,
         IReadOnlyList<DrawableTool>? tools = null,
         int slots = Slots,
-        Func<DrawableActivity, bool>? limit = null)
+        IReadOnlyList<Func<DrawableActivity, bool>>? limits = null)
     {
         ArgumentNullException.ThrowIfNull(weights);
         ArgumentNullException.ThrowIfNull(ship);
@@ -125,16 +126,12 @@ public static class ChapterDraw
         ArgumentNullException.ThrowIfNull(statistics);
 
         var held = ChapterActivities.Held(ranks, ship, odyssey);
-        var eligible = ChapterActivities.All.Where(row => Drawable(row, held, stationsInReach, refused)).ToList();
-
-        if (limit is not null && eligible.Where(limit).ToList() is { Count: > 0 } limited)
-        {
-            eligible = limited;
-        }
-        else
-        {
-            limit = null;
-        }
+        var all = ChapterActivities.All.Where(row => Drawable(row, held, stationsInReach, refused)).ToList();
+        var pools = Enumerable.Range(0, Math.Max(1, slots))
+            .Select(slot => limits?.ElementAtOrDefault(slot) is { } limit && all.Where(limit).ToList() is { Count: > 0 } limited ? limited : all)
+            .ToList();
+        var limitHolds = pools.Any(pool => !ReferenceEquals(pool, all));
+        var eligible = pools[0];
 
         var random = new Random32(seed);
         var drawn = new List<DrawableActivity>();
@@ -164,13 +161,15 @@ public static class ChapterDraw
             }
         }
 
-        while (drawn.Count < slots)
+        for (var index = drawn.Count; index < slots; index++)
         {
-            var open = eligible.Where(row => !drawn.Contains(row) && (!row.PlaceBefore || places < room)).ToList();
+            var open = pools.Skip(index)
+                .Select(pool => pool.Where(row => !drawn.Contains(row) && (!row.PlaceBefore || places < room)).ToList())
+                .FirstOrDefault(rows => rows.Count > 0) ?? [];
 
             if (open.Count == 0)
             {
-                break;
+                continue;
             }
 
             var fresh = open.Where(row => drawn.All(done => done.Career != row.Career)).ToList();
@@ -182,7 +181,7 @@ public static class ChapterDraw
 
         var result = drawn.Select(row => new DrawnActivity(row.Kind, row.Family, Count(row, ship, random)) { Organic = row.Organic, PlaceBefore = row.PlaceBefore }).ToList();
 
-        if (limit is null && events is not null && random.NextDouble() < EventShare
+        if (!limitHolds && events is not null && random.NextDouble() < EventShare
             && DrawEvent(events, tools ?? [], held, refused, recent, weights, [.. drawn.Take(Math.Min(drawn.Count, slots - 1))], random) is { } slot)
         {
             if (result.Count >= slots)

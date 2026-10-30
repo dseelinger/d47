@@ -139,7 +139,7 @@ public sealed record AdventureStory(
     bool CoreIsStock = false,
     string? Home = null,
     bool Remembered = false,
-    GoalClimbStep? Goal = null,
+    IReadOnlyList<GoalClimbStep>? Goals = null,
     IReadOnlyList<string>? Aboard = null,
     IReadOnlyList<Stories.StorySwitch>? Due = null,
     IReadOnlyList<NotablePlace>? Sights = null)
@@ -3126,14 +3126,26 @@ public sealed class AdventureGenerator(
             }
         }
 
-        if (story.Goal is { } goal)
+        if (story.Goals is { Count: > 0 } goals)
         {
             text.AppendLine();
-            text.AppendLine(goal.Objective is { } objective
-                ? $"This chapter's Goals objective works the Commander's goal \"{goal.Name}\", and the chapter must contain it: {GoalLine(objective)}. Its want and its turn give the Commander a reason for it."
-                : Careers.IsNavy(goal.Draw)
-                    ? $"The drawn activities work the Commander's goal \"{goal.Name}\": the missions are for factions of the {(goal.Draw == Careers.Empire ? "Empire" : "Federation")}, which is what earns {Careers.Word(goal.Draw)} rank, so the story gives the Commander a reason to work for them."
-                    : $"The drawn activities work the Commander's goal \"{goal.Name}\".");
+
+            foreach (var goal in goals)
+            {
+                var drawn = goals.Count > 1 && Earning(goal, goals, story.Slots) is { Length: > 0 } earning ? $"The drawn activities to {earning}" : "The drawn activities";
+
+                text.AppendLine(goal.Objective is { } objective
+                    ? $"This chapter's Goals objective works the Commander's goal \"{goal.Name}\", and the chapter must contain it: {GoalLine(objective)}. Its want and its turn give the Commander a reason for it."
+                    : Careers.IsNavy(goal.Draw)
+                        ? $"{drawn} work the Commander's goal \"{goal.Name}\": the missions are for factions of the {(goal.Draw == Careers.Empire ? "Empire" : "Federation")}, which is what earns {Careers.Word(goal.Draw)} rank, so the story gives the Commander a reason to work for them."
+                        : $"{drawn} work the Commander's goal \"{goal.Name}\".");
+            }
+
+            if (goals.Count > 1)
+            {
+                text.AppendLine(
+                    $"The chapter works both goals, \"{goals[0].Name}\" and \"{goals[1].Name}\", in one story line: its want and its turn give the Commander one reason for both.");
+            }
         }
 
         if (story.Refused is { Count: > 0 } refused)
@@ -3144,6 +3156,15 @@ public sealed class AdventureGenerator(
                 + string.Join("; ", refused.Select(RefusedActivities.Phrase)) + ".");
         }
     }
+
+    /// <summary>The phrases of the drawn slots credited to <paramref name="goal"/>, joined with "and".</summary>
+    private static string Earning(GoalClimbStep goal, IReadOnlyList<GoalClimbStep> goals, IReadOnlyList<DrawnActivity>? slots) =>
+        string.Join(" and ", (slots ?? [])
+            .Zip(GoalClimb.Credited(goals, slots))
+            .Where(pair => pair.Second == goal)
+            .Select(pair => RefusedActivities.Phrase(pair.First.Kind, pair.First.Family))
+            .OfType<string>()
+            .Distinct(StringComparer.Ordinal));
 
     /// <summary>A Goals objective as the writer is told it, and as a refusal names it.</summary>
     private static string GoalLine(AdventureTrigger objective) => objective.Kind switch
@@ -4735,10 +4756,12 @@ public sealed class AdventureGenerator(
                 []));
         }
 
-        if (ask.Story?.Goal?.Objective is { } goal
-            && !beats.Any(beat => MeetsGoal(goal, beat.Kind, Careers.Match(beat.Career), beat.Rank, beat.Engineer, beat.Stage, EliteSpecifications.HullSymbol(beat.Ship) ?? facts.HullNamed(beat.Ship))))
+        foreach (var goal in ask.Story?.Goals?.Select(step => step.Objective).OfType<AdventureTrigger>() ?? [])
         {
-            refusals.Add(new Refusal($"This is a Goals chapter and has no objective for its Goals step: {GoalLine(goal)}.", []));
+            if (!beats.Any(beat => MeetsGoal(goal, beat.Kind, Careers.Match(beat.Career), beat.Rank, beat.Engineer, beat.Stage, EliteSpecifications.HullSymbol(beat.Ship) ?? facts.HullNamed(beat.Ship))))
+            {
+                refusals.Add(new Refusal($"This is a Goals chapter and has no objective for its Goals step: {GoalLine(goal)}.", []));
+            }
         }
 
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))

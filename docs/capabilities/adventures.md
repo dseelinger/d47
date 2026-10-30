@@ -916,11 +916,14 @@ nothing extra is stored.
 ### A Goals story {#goals-stories}
 
 A stock story whose card sets `"goals": true` is a Goals story. Each of its chapters after the beacon scan and before the
-finale works one of your Goals arcs: the unfinished one with the lowest share of its whole, so the arcs rise together.
+finale works two of your Goals arcs: the unfinished ones with the lowest share of their whole, so the arcs rise together.
 Powerplay runs to rank 100 and a career to Elite V, so at Powerplay rank 20 and Combat rank 6 the Powerplay arc is
 further behind and is worked first. An arc whose progress d47 cannot read counts as not started, and a tie goes to the
 arc first on the Goals page. While d47 knows you are not pledged to a Power, the pledge comes before every other arc.
-`GoalClimb.Next` makes the choice and gives the chapter one step for the arc:
+`GoalClimb.Steps` makes the choice and gives the chapter one step for each of the first two arcs that can give one, or
+for one arc when only one can. The arc furthest behind takes two of the chapter's three drawn activities and the
+second takes one; a lone arc takes all three. When only one activity can be drawn for the first arc, the second arc
+takes its other place. Each step is one of these:
 
 - A career or navy within a quarter of its next rank: an objective for that rank.
 - A career or navy further from it: the drawn activities are only ones that earn that rank. Combat: bounties, bonds,
@@ -935,7 +938,8 @@ arc first on the Goals page. While d47 knows you are not pledged to a Power, the
 An arc is passed over for the next one when it has no step to give now: a pledge while d47 has not read whether you
 are pledged, a hull your credits do not cover, no engineer on the route, or a career none of whose activities can be
 drawn, given your ranks, your ship and the activities the story has refused. An objective step takes the place of one drawn activity, and a chapter without that
-objective is refused like a chapter missing a drawn activity. A rewritten chapter carries no Goals step.
+objective is refused like a chapter missing a drawn activity. With two steps the writer is told both goals and asked
+for one story line that gives you a reason for both. A rewritten chapter carries no Goals step.
 
 A Goals story's clues follow your Goals progress as well as their days. Overall progress is the mean share done of
 every built-in Goals arc, with an arc d47 cannot read counted as 0. Powerplay counts while you are unpledged, and so
