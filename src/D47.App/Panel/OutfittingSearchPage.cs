@@ -327,11 +327,18 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         foreach (var item in _items)
         {
             var price = item.PriceText();
+            var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+            content.Children.Add(Chrome(item.Display, TypeScale.Control, ThemeManager.AKey));
+            if (price.Length > 0)
+            {
+                content.Children.Add(Chrome("·", TypeScale.Control, ThemeManager.AKey));
+                content.Children.Add(Mono(price, TypeScale.Control, ThemeManager.WhiteKey));
+            }
+            content.Children.Add(Chrome("✕", TypeScale.Control, ThemeManager.AKey));
+
             var tile = new Button
             {
-                Content = price.Length == 0
-                    ? $"{item.Display.ToUpperInvariant()}  ✕"
-                    : $"{item.Display.ToUpperInvariant()} · {price}  ✕",
+                Content = content,
                 Height = TypeScale.MinimumTarget,
                 Classes = { ItemClass },
                 Tag = item.Display,

@@ -28,6 +28,8 @@ The optional API key row in the Language model settings now reads "(if it needs 
 
 Reading more than three Captain's log entries aloud now ends with "and N more. Ask for a shorter period, a system or a word to hear them." It no longer sends you to a Captain's log page, which the app does not have.
 
+The price on each module tile in Search › Outfitting is now set in the monospace figure face, as the other figures on the page are. The module name stays in the chrome face.
+
 A Goals story that lists the Mercenary arc now gives it chapters below Mercenary rank 2. A new story objective, kill bonds earned on foot, counts only bonds earned after you step out of the ship or SRV, or after the dropship deploys you into a ground conflict zone, until you board again. It needs Odyssey and no combat rank, so a chapter can ask for it from Mercenary rank 0, and it is drawn in other chapters as a Combat activity.
 
 The Persona, Activities, Memory, Language model, Goals, Debrief, Commander's log, Look at the screen and Captain's log help pages now match the app. Memory's steps use phrases that work, and say that "remember that…" is filed as unverified and that Forget is a button in the Memory window. Goals says that progress is read from the journal, and that remove and recover are spoken. Debrief's steps follow the real flow: say a correction, close D47, then Take it on the page. The Captain's log page says that its entries are listed under Privacy and egress as sent to a host when speech recognition or the read-back voice is hosted. Several pages gained or shortened a How it works band.

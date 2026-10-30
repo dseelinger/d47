@@ -2,10 +2,12 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Panel;
+using D47.App.Theming;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -476,6 +478,23 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
         }
 
         headsetWindow.Close();
+    }
+
+    [AvaloniaFact]
+    public void ATilesPriceIsSetInMonoType()
+    {
+        var (panel, window) = Shown(new World());
+        var page = Page(panel);
+
+        Choose(page, "6a fuel scoop", "6A Fuel Scoop");
+
+        var price = OutfittingItem.Suggest("6a fuel scoop", int.MaxValue).First(item => item.Display == "6A Fuel Scoop").PriceText();
+        Assert.NotEmpty(price);
+
+        var priceBlock = Tiles(panel).Single().GetVisualDescendants().OfType<TextBlock>().Single(text => text.Text == price);
+        Assert.Equal(new FontFamily(Fonts.MonoFamily), priceBlock.FontFamily);
+
+        window.Close();
     }
 
     [AvaloniaFact]
