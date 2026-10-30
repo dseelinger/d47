@@ -14,13 +14,16 @@ Run from the repo root, with the Bash tool:
 
 | Argument | Command |
 | --- | --- |
-| *(none)* | `cmd.exe //c 'tools\deck\spawn.cmd' Claude claude.cmd` |
-| `triage` | `cmd.exe //c 'tools\deck\spawn.cmd' Triage triage.cmd` |
-| `triage lanes` | `cmd.exe //c 'tools\deck\spawn.cmd' Triage triage.cmd lanes` |
-| `triage overnight` | `cmd.exe //c 'tools\deck\spawn.cmd' Triage triage.cmd overnight` |
-| `architect` | `cmd.exe //c 'tools\deck\spawn.cmd' Architect architect.cmd` |
-| `issue <N>` or `issue <lane>` | `cmd.exe //c 'tools\deck\spawn.cmd' Issue issue-worker.cmd <N>` |
-| `pre-release` | `cmd.exe //c 'tools\deck\spawn.cmd' Pre-release pre-release.cmd` |
+| *(none)* | `cmd.exe //c "tools\\deck\\spawn.cmd" Claude claude.cmd` |
+| `triage` | `cmd.exe //c "tools\\deck\\spawn.cmd" Triage triage.cmd` |
+| `triage lanes` | `cmd.exe //c "tools\\deck\\spawn.cmd" Triage triage.cmd lanes` |
+| `triage overnight` | `cmd.exe //c "tools\\deck\\spawn.cmd" Triage triage.cmd overnight` |
+| `architect` | `cmd.exe //c "tools\\deck\\spawn.cmd" Architect architect.cmd` |
+| `issue <N>` or `issue <lane>` | `cmd.exe //c "tools\\deck\\spawn.cmd" Issue issue-worker.cmd <N>` |
+| `pre-release` | `cmd.exe //c "tools\\deck\\spawn.cmd" Pre-release pre-release.cmd` |
+
+The path is double-quoted with doubled backslashes because `.claude/hooks/shell-guard.py` refuses
+a single backslash after `tools`; Bash passes it to cmd as `tools\deck\spawn.cmd`.
 
 `spawn.cmd` clears this session's `CLAUDE*` variables and opens the launcher in a new console, so
 the new session is separate and registers with Remote Control on its own. It returns at once.
