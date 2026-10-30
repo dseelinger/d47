@@ -67,7 +67,7 @@ nav_order: 151
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Changing things by asking — and the handful D47 will not change however nicely you ask.</p>
 <section>

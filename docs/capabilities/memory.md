@@ -68,7 +68,7 @@ nav_order: 144
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">A small file of facts about you, where every one of them says where it came from.</p>
 <section>

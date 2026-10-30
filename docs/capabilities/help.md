@@ -82,7 +82,7 @@ nav_order: 100
   page that has a band, so nothing here should try to list them by hand.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">How to ask what something does, and where the answer comes from.</p>
 <section>

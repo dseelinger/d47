@@ -67,7 +67,7 @@ nav_order: 137
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Putting a system name where you can use it, and — if you let it — driving the map itself.</p>
 <section>

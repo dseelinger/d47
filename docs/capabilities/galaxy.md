@@ -67,7 +67,7 @@ nav_order: 105
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Looking things up in the galaxy — the first thing D47 does that needs the internet.</p>
 <section>

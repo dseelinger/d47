@@ -126,7 +126,7 @@ nav_order: 141
 </details>
 
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <!--
   The ELI5 band. Rules in the comment on engineers.md: no blank lines, never four spaces of
   indent, well-formed XML with no HTML entities, nothing below font-size 14, and colours are

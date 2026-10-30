@@ -70,7 +70,7 @@ nav_order: 116
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">What a system's own name says about it — read off the string, four thousand light years from anything.</p>
 <section>

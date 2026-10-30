@@ -47,7 +47,7 @@ nav_order: 155
 </details>
 
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Changing the Commander d47 shows, without the mouse.</p>
 <section>

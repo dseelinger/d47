@@ -67,7 +67,7 @@ nav_order: 111
   font-size 14. Colours are the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">One list of everything you are working on, and one place it can be changed.</p>
 <section>

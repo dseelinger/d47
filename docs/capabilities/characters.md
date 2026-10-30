@@ -27,7 +27,7 @@ nav_order: 164
 </details>
 
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">One page for everyone you can talk to, with the same controls for each.</p>
 <section>

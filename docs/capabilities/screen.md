@@ -63,7 +63,7 @@ nav_order: 157
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">One picture of your screen, for the question that asked for it.</p>
 <section>

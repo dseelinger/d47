@@ -67,7 +67,7 @@ nav_order: 136
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Things Directive 47 does to your ship without being asked. There is one so far, and it is off.</p>
 <section>

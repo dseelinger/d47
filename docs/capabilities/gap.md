@@ -70,7 +70,7 @@ nav_order: 113
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">What everything you have planned needs that you are not carrying, ledger by ledger.</p>
 <section>

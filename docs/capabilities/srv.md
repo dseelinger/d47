@@ -76,7 +76,7 @@ nav_order: 133
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">The switches on the buggy — turret, handbrake, drive assist — and getting your ship back.</p>
 <section>

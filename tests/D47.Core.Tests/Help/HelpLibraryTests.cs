@@ -51,9 +51,9 @@ public class HelpLibraryTests
         Assert.Equal("Two lists.", article.Sections[0].Heading);
         Assert.All(article.Sections, section => Assert.NotNull(section.Figure));
 
-        // The last step is the only one carrying prose, and it is the argument for the tab.
+        // The last step is the only one carrying prose, and it quotes the line the Route summary speaks.
         Assert.Null(article.Sections[0].Body);
-        Assert.Contains("oracle", article.Sections[3].Body);
+        Assert.Contains("planned jobs covered.", article.Sections[3].Body);
     }
 
     /// <summary>A figure keeps its own coordinate space and its shapes in paint order.</summary>

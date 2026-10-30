@@ -71,7 +71,7 @@ nav_order: 121
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Eleven Guardian cores. You pick one, and it does not know the other ten are there.</p>
 <section>

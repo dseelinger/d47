@@ -86,7 +86,7 @@ nav_order: 139
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Typing a message into Elite's chat — the one thing Directive 47 does that other people can see.</p>
 <section>

@@ -45,7 +45,7 @@ nav_order: 154
 </details>
 
 <details class="d47-band" open>
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Ask what you have not done in a while and D47 answers from your journals, with no language model.</p>
 <section>

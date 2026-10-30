@@ -67,7 +67,7 @@ nav_order: 129
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Bringing Elite back to the front, so flight commands work again.</p>
 <section>

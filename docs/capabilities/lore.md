@@ -63,7 +63,7 @@ nav_order: 117
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Some systems mean more than their astrography. It ships knowing about twenty, and keeps whatever you tell it about the rest.</p>
 <section>

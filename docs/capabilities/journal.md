@@ -72,7 +72,7 @@ nav_order: 102
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Everything Directive 47 knows about your game, read straight from the files Elite already writes.</p>
 <section>

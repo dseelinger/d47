@@ -66,7 +66,7 @@ nav_order: 114
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">What your build still needs, what you are already carrying, and how many runs are left.</p>
 <section>

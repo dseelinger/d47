@@ -76,7 +76,7 @@ nav_order: 131
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Moving power around, and the two panic buttons: silent running and heat sinks.</p>
 <section>

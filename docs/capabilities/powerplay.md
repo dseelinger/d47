@@ -36,7 +36,7 @@ nav_order: 149
 </details>
 
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">One table of ranks, read three ways: what you hold, what is next, what is far off.</p>
 <section>

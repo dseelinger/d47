@@ -56,6 +56,63 @@ nav_order: 153
 </div></div>
 </details>
 
+<details class="d47-band">
+<summary>How it works</summary>
+<div class="d47-eli5"><div class="d47-frame">
+<p class="intro">D47 reads each prospector result from the journal and says only what matches your target.</p>
+<section>
+<h2><span class="num">1</span> A target is one material and an optional percentage.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="A mining target is a material and an optional percentage, kept until cleared">
+ <rect x="20" y="24" width="400" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="220" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">MATERIAL</text>
+ <text x="220" y="92" text-anchor="middle" font-size="15" fill="var(--text-muted)">such as platinum</text>
+ <rect x="460" y="24" width="400" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="660" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">PERCENTAGE</text>
+ <text x="660" y="92" text-anchor="middle" font-size="15" fill="var(--text-muted)">optional</text>
+</svg>
+<p class="body">The target is saved per Commander and stays set across restarts until you clear it.</p>
+</section>
+<section>
+<h2><span class="num">2</span> Each prospector result is judged against the target.</h2>
+<svg viewBox="0 0 880 250" role="img" aria-label="One prospected rock holds platinum at a share above the target, so the line says above your target">
+ <rect x="20" y="30" width="250" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="145" y="68" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">PROSPECTOR</text>
+ <text x="145" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">Platinum 31%</text>
+ <text x="145" y="122" text-anchor="middle" font-size="15" fill="var(--text-muted)">Tritium 12%</text>
+ <line x1="282" y1="90" x2="302" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="316,90 300,82 300,98" fill="var(--accent-muted)"/>
+ <rect x="325" y="30" width="230" height="120" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="68" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">TARGET</text>
+ <text x="440" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">platinum, above 25%</text>
+ <line x1="567" y1="90" x2="587" y2="90" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="601,90 585,82 585,98" fill="var(--accent-muted)"/>
+ <rect x="610" y="30" width="250" height="120" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="735" y="76" text-anchor="middle" font-size="16" fill="var(--text)">Platinum, 31%.</text>
+ <text x="735" y="104" text-anchor="middle" font-size="16" fill="var(--accent)">Above your target.</text>
+ <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text)">Rocks with no platinum get “No platinum.” and no more.</text>
+</svg>
+<p class="body">D47 finds the target in the rock's material list and compares its share with your percentage. A rock without the material gets a short no.</p>
+</section>
+<section>
+<h2><span class="num">3</span> Without a target, the richest material leads.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="With no target set, every material in the rock is named, richest first">
+ <rect x="20" y="24" width="840" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="62" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Tritium, 23.5%, plus Liquid oxygen at 5.1%.</text>
+ <text x="440" y="92" text-anchor="middle" font-size="15" fill="var(--text-muted)">richest first, then the others</text>
+</svg>
+<p class="body">Elite's own Material Content grade is not repeated, because it describes engineering-material fragments and not the commodity you refine.</p>
+</section>
+<section>
+<h2><span class="num">4</span> The line is built from the rock.</h2>
+<svg viewBox="0 0 880 130" role="img" aria-label="The line spoken for a rock that holds the target below its percentage">
+ <rect x="20" y="24" width="840" height="82" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="72" text-anchor="middle" font-size="19" font-weight="700" fill="var(--text)">“Platinum, 18%. Below your target.”</text>
+</svg>
+<p class="body">The material and share come from the journal. The words after them are literal text in <code>MiningCallout.cs</code>: <code>Above your target</code> or <code>Below your target</code>.</p>
+</section>
+</div></div>
+</details>
+
 ## The details
 
 A mining target is one material and, optionally, a percentage. While one is set, the

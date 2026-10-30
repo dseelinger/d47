@@ -108,7 +108,7 @@ nav_order: 124
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Whisper turns your voice into words, on your own machine unless you choose a hosted provider — and how it decides you were talking to it.</p>
 <section>

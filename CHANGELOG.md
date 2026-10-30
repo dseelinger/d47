@@ -10,6 +10,8 @@
 
 On the mini panel, the Navigation tab's Galaxy map now shows only the route ahead of you, framed to hold your position and every stop left, with no buttons or switches. It refits after each jump. With no route plotted it says "No route is plotted."; at the end of a stored plan it says "The destination is reached."
 
+The second band on each help page is now called "How it works" instead of "Why it works this way". The Callouts and Engineers bands were rewritten to explain the mechanism, and Mining has a band for the first time.
+
 The star system page (Search › System) now has a copy glyph beside the system's name. Pressing it copies the name, for a system you opened and for your own system while the page follows you.
 
 An outfitting route now leaves out stations whose outfitting was last reported more than three days ago. The route's result page (Navigation › Plan) shows that limit in a "Max report age" picker with a Search button beside it, which plots the same items again with the age you pick. Each stop shows "outfitting reported" and its date, or "report date unknown". Asking D47 to plot an outfitting route takes a report age too; 0 hours means any age.

@@ -81,7 +81,7 @@ nav_order: 106
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">A neutron route, a Road to Riches loop, or a trade run that does not have to empty the hold.</p>
 <section>

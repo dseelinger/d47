@@ -64,7 +64,7 @@ nav_order: 132
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Opening the cockpit panels and walking around them, for when both hands are busy.</p>
 <section>

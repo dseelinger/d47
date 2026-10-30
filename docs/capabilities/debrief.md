@@ -66,7 +66,7 @@ nav_order: 145
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">D47 reads back what you told it off, drafts it as a rule in your own words, and waits for you to say yes.</p>
 <section>

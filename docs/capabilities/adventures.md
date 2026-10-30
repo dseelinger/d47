@@ -71,7 +71,7 @@ nav_order: 115
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">A story you fly, told by the core, moved along by your own journal.</p>
 <section>

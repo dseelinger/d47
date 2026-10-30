@@ -27,7 +27,7 @@ nav_order: 161
 </details>
 
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">D47 saves a small copy of each screenshot and leaves Elite's alone.</p>
 <section>

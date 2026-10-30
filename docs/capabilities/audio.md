@@ -76,7 +76,7 @@ nav_order: 123
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">How loud each kind of sound is, and how far it drops out of the way while Directive 47 speaks.</p>
 <section>

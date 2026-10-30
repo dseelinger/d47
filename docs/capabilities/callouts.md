@@ -70,70 +70,64 @@ nav_order: 126
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">The things Directive 47 says without being asked, and what earns the right to interrupt.</p>
+<p class="intro">D47 reads Elite's journal and message ids, decides what is worth saying, and speaks it without waiting for the language model.</p>
 <section>
-<h2><span class="num">1</span> NPCs announce themselves. It listens.</h2>
-<svg viewBox="0 0 880 246" role="img" aria-label="An attack warning arrives a median of six seconds before the first shot and is right 88% of the time">
- <rect x="20" y="44" width="300" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="170" y="80" text-anchor="middle" font-size="16" fill="var(--text)">“Pirate lining up an</text>
- <text x="170" y="104" text-anchor="middle" font-size="16" fill="var(--text)">interdiction. Boost or</text>
- <text x="170" y="128" text-anchor="middle" font-size="16" fill="var(--text)">high-wake now.”</text>
- <text x="425" y="72" text-anchor="middle" font-size="16" font-weight="700" fill="var(--accent)">a median of six seconds</text>
- <line x1="336" y1="96" x2="500" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="514,96 498,88 498,104" fill="var(--accent-muted)"/>
- <rect x="530" y="44" width="330" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="695" y="88" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">THE FIRST SHOT</text>
- <text x="695" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">and the line was right 88% of the time</text>
- <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">They say what they are about to do before they do it, and there is still time to act.</text>
- <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">A cargo demand gives eight seconds and is right 67% — each situation gets its own sentence and sound.</text>
+<h2><span class="num">1</span> An NPC message id picks the warning.</h2>
+<svg viewBox="0 0 880 200" role="img" aria-label="A message id from Elite is looked up in a fixed list and becomes one fixed sentence">
+ <rect x="20" y="30" width="250" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="145" y="72" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Pirate_StartInterdiction</text>
+ <text x="145" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">the id Elite writes</text>
+ <line x1="282" y1="85" x2="302" y2="85" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="316,85 300,77 300,93" fill="var(--accent-muted)"/>
+ <rect x="325" y="30" width="230" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="72" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">FIXED LIST</text>
+ <text x="440" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">NPC chatter only</text>
+ <line x1="567" y1="85" x2="587" y2="85" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="601,85 585,77 585,93" fill="var(--accent-muted)"/>
+ <rect x="610" y="30" width="250" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="735" y="72" text-anchor="middle" font-size="16" fill="var(--text)">Pirate lining up</text>
+ <text x="735" y="96" text-anchor="middle" font-size="16" fill="var(--text)">an interdiction.</text>
+ <text x="735" y="124" text-anchor="middle" font-size="15" fill="var(--accent)">spoken with its alarm</text>
+ <text x="440" y="180" text-anchor="middle" font-size="15" fill="var(--text-muted)">The words in the message are never read.</text>
 </svg>
+<p class="body">Each id on the list has one sentence and one alarm. The message text is never repeated, shown or sent to a model, because anyone in range can write in-game chat.</p>
 </section>
 <section>
-<h2><span class="num">2</span> It matches on the message id, never on the words.</h2>
-<svg viewBox="0 0 880 252" role="img" aria-label="Matching on hostile-sounding text fires thousands of false alarms, while matching on Elite's message ids does not">
- <rect x="20" y="40" width="400" height="124" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">MATCHING ON THE WORDS</text>
- <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text)">2,399 firings to catch</text>
- <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text)">30 real attacks</text>
- <rect x="460" y="40" width="400" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">MATCHING ON THE ID</text>
- <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">a fixed list, NPC chatter only</text>
- <text x="660" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">and nothing the message says is</text>
- <text x="660" y="156" text-anchor="middle" font-size="14" fill="var(--text-muted)">repeated, shown, or sent to a model</text>
- <text x="440" y="210" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A hundred false alarms per real event is a warning you switch off within the hour — and then do not have when it matters.</text>
- <text x="440" y="242" text-anchor="middle" font-size="15" fill="var(--text-muted)">In-game chat is written by anyone in range, so matching on the text is matching on a string somebody else chose.</text>
+<h2><span class="num">2</span> Danger and fuel interrupt. Routine lines wait.</h2>
+<svg viewBox="0 0 880 170" role="img" aria-label="Danger and fuel speak over whatever is being said; routine lines like a core asteroid wait">
+ <rect x="20" y="30" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="220" y="70" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">URGENT CUTS IN</text>
+ <text x="220" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">danger and fuel</text>
+ <text x="220" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">over whatever is being said</text>
+ <rect x="460" y="30" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="660" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ROUTINE WAITS ITS TURN</text>
+ <text x="660" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">a core asteroid</text>
+ <text x="660" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">after the current line</text>
 </svg>
+<p class="body">Every callout is urgent or routine. An urgent one speaks over the current line. A routine one waits. Each event is said once, when it happens, not again while the condition lasts.</p>
 </section>
 <section>
-<h2><span class="num">3</span> Urgent cuts in. Everything else waits its turn.</h2>
-<svg viewBox="0 0 880 232" role="img" aria-label="Danger and fuel speak over whatever is being said; routine lines like a core asteroid wait">
- <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="220" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">URGENT CUTS IN</text>
- <text x="220" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">danger and fuel</text>
- <text x="220" y="136" text-anchor="middle" font-size="14" fill="var(--text-muted)">over whatever is being said</text>
- <rect x="460" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="660" y="80" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ROUTINE WAITS ITS TURN</text>
- <text x="660" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">a core asteroid is exciting</text>
- <text x="660" y="136" text-anchor="middle" font-size="14" fill="var(--text-muted)">and is not a safety matter</text>
- <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Announcing a core across a hull warning would be the priority exactly backwards.</text>
+<h2><span class="num">3</span> The model can read the list but not change it.</h2>
+<svg viewBox="0 0 880 170" role="img" aria-label="The model can ask what is switched on but cannot switch a warning off">
+ <rect x="20" y="30" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="220" y="70" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">IT CAN BE ASKED</text>
+ <text x="220" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">what it is watching for</text>
+ <rect x="460" y="30" width="400" height="110" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
+ <text x="660" y="70" text-anchor="middle" font-size="15" font-weight="800" fill="var(--danger)">IT CANNOT SWITCH ONE OFF</text>
+ <text x="660" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">only you can</text>
+ <text x="660" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">panel, key or spoken phrase</text>
 </svg>
-<p class="body">A warning arriving after Directive 47 has finished reading you a commodity list has arrived too late to be one. And a thing is said <em>once</em> as it happens: your shields going down is news; your shields still being down half a second later is not.</p>
+<p class="body">Switching a callout off is a protected action. The panel, a key and a spoken phrase can do it. A model request cannot, so in-game chat cannot talk a warning off.</p>
 </section>
 <section>
-<h2><span class="num">4</span> The model may ask what it is watching for. It may not switch one off.</h2>
-<svg viewBox="0 0 880 226" role="img" aria-label="Warnings are readable by the model but only changeable from the panel, a key or a spoken phrase">
- <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="220" y="80" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">IT CAN BE ASKED</text>
- <text x="220" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">what it is watching for</text>
- <rect x="460" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="660" y="80" text-anchor="middle" font-size="15" font-weight="800" fill="var(--danger)">IT CANNOT SWITCH ONE OFF</text>
- <text x="660" y="112" text-anchor="middle" font-size="14" fill="var(--text-muted)">not by anything the model calls</text>
- <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">Directive 47 reads in-game messages from anyone in range.</text>
- <text x="440" y="220" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A model that could disable the interdiction warning could be told to by the pirate.</text>
+<h2><span class="num">4</span> What you hear is a fixed sentence.</h2>
+<svg viewBox="0 0 880 130" role="img" aria-label="The sentence spoken for an interdiction announcement">
+ <rect x="20" y="24" width="840" height="82" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="72" text-anchor="middle" font-size="19" font-weight="700" fill="var(--text)">“Pirate lining up an interdiction. Boost or high-wake now.”</text>
 </svg>
-<p class="body">One measured refusal worth knowing: Directive 47 never repeats Elite's own <code>Material Content</code> grade while prospecting. Across 1,633 prospects, <code>Low</code> and <code>High</code> rocks have the same distribution — and <strong>45% of the rocks holding a material at 40% or more are graded <code>Low</code></strong>. Passing that on would fly you past the best rock in the cluster.</p>
+<p class="body">That sentence is a constant in <code>AnnouncedAttackCallout.cs</code>. Which id arrived decides which sentence is spoken.</p>
 </section>
 </div></div>
 </details>
@@ -227,7 +221,7 @@ while there is still time to act:
 Pirate lining up an interdiction. Boost or high-wake now.
 ```
 
-Across 912 real journals, that line came a **median of six seconds** before the first shot and was
+Across 912 real journals (the figures are recorded in a comment in `AnnouncedAttackCallout.cs`), that line came a **median of six seconds** before the first shot and was
 right **88%** of the time. A pirate demanding cargo gives eight seconds and is right 67%. Each
 situation gets its own sentence and its own sound, so you can tell an interdiction from a cargo
 demand from somebody who is here for you before the sentence has finished.
@@ -250,7 +244,7 @@ say, and inventing a reason is the one thing it must not do.
 
 **Directive 47 matches on Elite's message ids, never on the words.** That is not tidiness — it is
 the difference between a useful warning and an unusable one. The obvious approach, warning about
-anything that *sounds* hostile, was measured: one such message fires 2,399 times to catch 30 real
+anything that *sounds* hostile, was measured (`Phase15WarningTests` names the two worst): one such message fires 2,399 times to catch 30 real
 attacks, and another is wrong 48 times out of 48. A hundred false alarms per real event is a
 warning you switch off within the hour and then do not have when it matters.
 

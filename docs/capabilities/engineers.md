@@ -92,7 +92,7 @@ nav_order: 108
   the panel those same role names resolve against the Commander's live theme instead.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Who can improve your ship, where they are, and who to go and get next.</p>
 <section>
@@ -121,7 +121,7 @@ nav_order: 108
  <rect x="40" y="196" width="800" height="68" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="72" y="238" font-size="21" font-weight="800" fill="var(--text-muted)">NEEDS A REFERRAL</text>
  <text x="808" y="238" text-anchor="end" font-size="16" fill="var(--text-muted)">somebody else has to introduce them</text>
- <text x="440" y="290" text-anchor="middle" font-size="16" fill="var(--text-muted)">Alphabetical order would answer that question for nobody.</text>
+ <text x="440" y="290" text-anchor="middle" font-size="16" fill="var(--text-muted)">Each engineer sits in the first band that fits.</text>
 </svg>
 </section>
 <section>
@@ -169,7 +169,7 @@ nav_order: 108
  <text x="440" y="252" text-anchor="middle" font-size="16" fill="var(--text-muted)">Easiest to reach first, then the most planned jobs per jump.</text>
  <text x="440" y="278" text-anchor="middle" font-size="16" fill="var(--text-muted)">Counted in jumps, at your ship's range, from where you are standing.</text>
 </svg>
-<p class="body">Every step of the working is on the page on purpose. A ranking you cannot inspect is an oracle — and when it is wrong, or when you would simply rather go somewhere else, you could not tell a bad answer from a bug.</p>
+<p class="body">Route counts each unlock in jumps at your ship's range, then ranks by planned jobs covered per jump. It shows every step, and the summary line reads <code>3 steps, 84 ly, about 18 jumps, and 2 planned jobs covered.</code></p>
 </section>
 </div></div>
 </details>

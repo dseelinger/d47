@@ -63,7 +63,7 @@ nav_order: 109
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">What a blueprint costs, what it costs you, and how your own craft actually went.</p>
 <section>

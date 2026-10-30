@@ -73,7 +73,7 @@ nav_order: 101
   reading — and with what it is not — rather than with the settings rows.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">The page that still answers when nothing else does — what happened, where it is written down, and how loud.</p>
 <section>

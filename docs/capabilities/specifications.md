@@ -70,7 +70,7 @@ nav_order: 107
   the nine Palette roles and nothing else.
 -->
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">What a hull or a module can do, before anybody buys one. Nothing here touches the network.</p>
 <section>

@@ -30,7 +30,7 @@ nav_order: 156
 </details>
 
 <details class="d47-band">
-<summary>Why it works this way</summary>
+<summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">A named copy of Elite's binding files.</p>
 <section>
