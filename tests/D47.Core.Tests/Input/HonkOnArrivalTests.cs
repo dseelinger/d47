@@ -42,6 +42,9 @@ public class HonkOnArrivalTests
     private static readonly StatusFlags Dropped =
         StatusFlags.InMainShip | StatusFlags.AnalysisMode;
 
+    /// <summary>A line is held until <see cref="HonkOnArrival.Quiet"/> after the jump.</summary>
+    private static readonly DateTimeOffset AfterQuiet = DateTimeOffset.UnixEpoch + HonkOnArrival.Quiet;
+
     private static HonkOnArrival Honk(bool enabled = true, EliteBinds? binds = null) =>
         new(() => enabled, () => binds ?? Bound, () => true);
 
@@ -125,7 +128,9 @@ public class HonkOnArrivalTests
         var honk = Honk();
         honk.Examine(Context(Status(StatusFlags.InMainShip | StatusFlags.FsdJump), events: Jump()));
 
-        var decision = honk.Examine(Context(Status(StatusFlags.InMainShip)));
+        Assert.Null(honk.Examine(Context(Status(StatusFlags.InMainShip))).Say);
+
+        var decision = honk.Examine(Context(Status(StatusFlags.InMainShip), now: AfterQuiet));
 
         Assert.False(decision.Acts);
         Assert.Equal(
@@ -146,7 +151,9 @@ public class HonkOnArrivalTests
         var honk = Honk(binds: stick);
         honk.Examine(Context(Status(StatusFlags.InMainShip | StatusFlags.FsdJump), events: Jump()));
 
-        var decision = honk.Examine(Context(Status(Arrived)));
+        Assert.Null(honk.Examine(Context(Status(Arrived))).Say);
+
+        var decision = honk.Examine(Context(Status(Arrived), now: AfterQuiet));
 
         Assert.False(decision.Acts);
         Assert.Contains("joystick", decision.Say ?? string.Empty, StringComparison.OrdinalIgnoreCase);
