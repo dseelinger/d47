@@ -125,7 +125,7 @@ public sealed class PanelFind(
 
         foreach (var id in HelpLibrary.Pages)
         {
-            if (HelpLibrary.For(id) is { } article)
+            if (HelpLibrary.Lead(id) is { } article)
             {
                 yield return new Candidate(new PanelFindResult(PanelFindKind.HelpPage, article.Title, "Help", id, 0), order++, [], null);
             }

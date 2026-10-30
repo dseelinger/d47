@@ -15,7 +15,14 @@ public sealed class HelpFigureView : Control
 {
     private readonly HelpFigure _figure;
 
-    public HelpFigureView(HelpFigure figure) => _figure = figure;
+    private readonly bool _onPlate;
+
+    /// <param name="onPlate">Drawn on a slab plate, where the SurfaceAlt role resolves to the window ground.</param>
+    public HelpFigureView(HelpFigure figure, bool onPlate = false)
+    {
+        _figure = figure;
+        _onPlate = onPlate;
+    }
 
     protected override Size MeasureOverride(Size available)
     {
@@ -181,7 +188,7 @@ public sealed class HelpFigureView : Control
         {
             HelpColour.Background => ThemeManager.BgKey,
             HelpColour.Surface => ThemeManager.BarKey,
-            HelpColour.SurfaceAlt => ThemeManager.SlabKey,
+            HelpColour.SurfaceAlt => _onPlate ? ThemeManager.BgKey : ThemeManager.SlabKey,
             HelpColour.Border => ThemeManager.Line2Key,
             HelpColour.Text => ThemeManager.WhiteKey,
             HelpColour.TextMuted => ThemeManager.GreyKey,
@@ -197,7 +204,7 @@ public sealed class HelpFigureView : Control
     }
 }
 
-/// <summary>A whole help band as a panel page: the intro, then the numbered steps with their pictures.</summary>
+/// <summary>A help page in the panel: the how-to band's steps, then the How it works band's plates.</summary>
 public static class HelpPageView
 {
     /// <summary>How a help level is keyed.</summary>
@@ -207,10 +214,9 @@ public static class HelpPageView
     public static NavCrumb Crumb(string capabilityId) => HelpLevel.For(capabilityId);
 
     /// <summary>Whether there is anything to show for this capability.</summary>
-    public static bool Exists(string? capabilityId) =>
-        capabilityId is { Length: > 0 } id && HelpLibrary.For(id) is not null;
+    public static bool Exists(string? capabilityId) => HelpLibrary.Has(capabilityId);
 
-    /// <summary>Draws the band a help crumb names, or says plainly that there is not one yet.</summary>
+    /// <summary>Draws the page a help crumb names, or says plainly that there is not one yet.</summary>
     /// <param name="openUrl">How this surface reaches the web, or null where it cannot.</param>
     /// <param name="openSettings">
     /// How this surface reaches a settings section, or null where it has no Settings tab — which the
@@ -221,44 +227,56 @@ public static class HelpPageView
     {
         var id = HelpLevel.CapabilityOf(crumb);
 
-        return HelpLibrary.For(id) is { } article
-            ? Build(article, nav, openUrl, openSettings)
-            : Missing(id);
+        var howTo = HelpLibrary.HowTo(id);
+        var works = HelpLibrary.For(id);
+
+        return howTo is null && works is null
+            ? Missing(id)
+            : Build(howTo, works, nav, openUrl, openSettings);
     }
 
+    /// <summary>A page with a How it works band and no how-to band.</summary>
     public static Control Build(
-        HelpArticle article, PanelNavigator nav, Action<string>? openUrl, Action<string>? openSettings = null)
-    {
-        var stack = new StackPanel { Spacing = 26, Margin = new Thickness(0, 4, 0, 24) };
+        HelpArticle article, PanelNavigator nav, Action<string>? openUrl, Action<string>? openSettings = null) =>
+        Build(null, article, nav, openUrl, openSettings);
 
-        var (title, _) = RoutingKit.Title(article.Title);
+    /// <summary>The title, the how-to band, the How it works band, then where to go next; a missing band is left out.</summary>
+    public static Control Build(
+        HelpArticle? howTo,
+        HelpArticle? works,
+        PanelNavigator nav,
+        Action<string>? openUrl,
+        Action<string>? openSettings = null)
+    {
+        var lead = howTo ?? works ?? throw new ArgumentException("A help page needs at least one band.");
+
+        var stack = new StackPanel { Margin = new Thickness(0, 4, 0, 24) };
+
+        var (title, _) = RoutingKit.Title(lead.Title);
+        title.Margin = new Thickness(0, 0, 0, 24);
         stack.Children.Add(title);
 
-        if (article.Intro.Length > 0)
+        if (Drawn(howTo) is { } steps)
         {
-            var intro = new TextBlock
-            {
-                Text = article.Intro,
-                FontSize = TypeScale.Subheading + 2,
-                FontWeight = FontWeight.SemiBold,
-                TextWrapping = TextWrapping.Wrap,
-            };
-
-            ThemeInk.Bind(intro, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
-            stack.Children.Add(intro);
+            stack.Children.Add(StarSystemPage.GroupHead(
+                "How to use it", "What to do, in order, and what happens when you do."));
+            stack.Children.Add(HowToBand(steps));
         }
 
-        foreach (var section in article.Sections)
+        if (Drawn(works) is { } plates)
         {
-            stack.Children.Add(Step(section));
+            stack.Children.Add(StarSystemPage.GroupHead(
+                "How it works", "Why it behaves the way it does. Nothing here to do."));
+            stack.Children.Add(HowItWorksBand(plates));
         }
 
-        if (Everything(article, nav) is { } index)
+        if (Everything(lead, nav) is { } index)
         {
             stack.Children.Add(index);
         }
 
-        stack.Children.Add(Next(article, nav, openUrl, openSettings));
+        var links = works is { Links.Count: > 0 } ? works.Links : howTo?.Links ?? [];
+        stack.Children.Add(Next(lead.CapabilityId, links, nav, openUrl, openSettings));
 
         return new ScrollViewer
         {
@@ -268,42 +286,169 @@ public static class HelpPageView
         };
     }
 
-    private static Control Step(HelpSection section)
+    /// <summary>The band, when it has anything to draw.</summary>
+    private static HelpArticle? Drawn(HelpArticle? band) =>
+        band is { } article && (article.Intro.Length > 0 || article.Sections.Count > 0) ? article : null;
+
+    private static StackPanel HowToBand(HelpArticle band)
     {
-        var step = new StackPanel { Spacing = 12 };
+        var block = new StackPanel { Spacing = 40, Margin = new Thickness(0, 22, 0, 64) };
+
+        if (band.Intro.Length > 0)
+        {
+            block.Children.Add(Typeset.Prose(band.Intro, TypeScale.Figure, ThemeManager.WhiteKey, FontWeight.Bold, wrap: true));
+        }
+
+        foreach (var section in band.Sections)
+        {
+            block.Children.Add(Step(section));
+        }
+
+        return block;
+    }
+
+    private static StackPanel HowItWorksBand(HelpArticle band)
+    {
+        var block = new StackPanel { Spacing = 2, Margin = new Thickness(0, 22, 0, 64) };
+
+        if (band.Intro.Length > 0)
+        {
+            block.Children.Add(Typeset.Prose(
+                band.Intro, TypeScale.Figure, ThemeManager.GreyKey, wrap: true, margin: new Thickness(0, 0, 0, 20)));
+        }
+
+        foreach (var section in band.Sections)
+        {
+            block.Children.Add(Plate(section));
+        }
+
+        return block;
+    }
+
+    /// <summary>A how-to step on the window ground: badge and heading, the YOU and THEN rows, the figure.</summary>
+    private static StackPanel Step(HelpSection section)
+    {
+        var step = new StackPanel();
 
         step.Children.Add(Heading(section));
 
+        if (section.Say is { Length: > 0 } || section.Expect is { Length: > 0 })
+        {
+            var lines = new StackPanel { Spacing = 2, Margin = new Thickness(0, 12, 0, 0) };
+
+            if (section.Say is { Length: > 0 } say)
+            {
+                lines.Children.Add(Line("You", say, ThemeManager.CyanKey, ThemeManager.CyanGroundKey, ThemeManager.CyanKey));
+            }
+
+            if (section.Expect is { Length: > 0 } expect)
+            {
+                lines.Children.Add(Line("Then", expect, ThemeManager.GreyKey, ThemeManager.SlabKey, rule: null));
+            }
+
+            step.Children.Add(lines);
+        }
+
         if (section.Figure is { } figure)
         {
-            step.Children.Add(new HelpFigureView(figure));
+            step.Children.Add(new HelpFigureView(figure) { Margin = new Thickness(0, 12, 0, 0) });
         }
 
         if (section.Body is { Length: > 0 } body)
         {
-            var prose = new TextBlock
-            {
-                Text = body,
-                FontSize = TypeScale.Body,
-                TextWrapping = TextWrapping.Wrap,
-                LineHeight = TypeScale.Body * 1.5,
-            };
-
-            ThemeInk.Bind(prose, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-            step.Children.Add(prose);
+            step.Children.Add(Body(body, new Thickness(0, 12, 0, 0)));
         }
 
         return step;
     }
 
-    private static Control Heading(HelpSection section)
+    /// <summary>One YOU or THEN row: a 64 px label column and the line, behind a 3 px left rule.</summary>
+    private static Border Line(string label, string text, string labelKey, string groundKey, string? rule)
     {
-        var row = new StackPanel
+        const double LabelSize = 12;
+
+        var tag = Typeset.Chrome(
+            label.ToUpperInvariant(), LabelSize, labelKey, FontWeight.SemiBold, tracking: LabelSize * 0.08,
+            vertical: VerticalAlignment.Top, margin: new Thickness(0, 5, 0, 0));
+
+        var words = Typeset.Prose(text, TypeScale.Body, ThemeManager.WhiteKey, wrap: true);
+        words.LineHeight = TypeScale.Body * 1.5;
+        Grid.SetColumn(words, 2);
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("64,12,*") };
+        grid.Children.Add(tag);
+        grid.Children.Add(words);
+
+        var row = new Border
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 12,
-            VerticalAlignment = VerticalAlignment.Center,
+            Padding = new Thickness(13, 11, 16, 11),
+            BorderThickness = new Thickness(3, 0, 0, 0),
+            BorderBrush = Brushes.Transparent,
+            Child = grid,
         };
+
+        ThemeInk.Bind(row, Border.BackgroundProperty, groundKey);
+
+        if (rule is not null)
+        {
+            ThemeInk.Bind(row, Border.BorderBrushProperty, rule);
+        }
+
+        return row;
+    }
+
+    /// <summary>A How it works plate: a slab panel holding a two-digit number, the heading, the figure and the body.</summary>
+    private static Border Plate(HelpSection section)
+    {
+        var plate = new StackPanel { Spacing = 14 };
+
+        var head = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
+
+        if (section.Number.Length > 0)
+        {
+            head.Children.Add(Typeset.Mono(
+                int.TryParse(section.Number, NumberStyles.None, CultureInfo.InvariantCulture, out var number)
+                    ? number.ToString("00", CultureInfo.InvariantCulture)
+                    : section.Number,
+                TypeScale.Translation,
+                ThemeManager.GreyKey,
+                vertical: VerticalAlignment.Top,
+                margin: new Thickness(0, 2, 14, 0)));
+        }
+
+        var heading = Typeset.Prose(section.Heading, TypeScale.Figure, ThemeManager.WhiteKey, FontWeight.Bold, wrap: true);
+        Grid.SetColumn(heading, 1);
+        head.Children.Add(heading);
+        plate.Children.Add(head);
+
+        if (section.Figure is { } figure)
+        {
+            plate.Children.Add(new HelpFigureView(figure, onPlate: true));
+        }
+
+        if (section.Body is { Length: > 0 } body)
+        {
+            plate.Children.Add(Body(body, default));
+        }
+
+        var panel = new Border { Padding = new Thickness(24, 20, 24, 24), Child = plate };
+        ThemeInk.Bind(panel, Border.BackgroundProperty, ThemeManager.SlabKey);
+
+        return panel;
+    }
+
+    private static TextBlock Body(string text, Thickness margin)
+    {
+        var prose = Typeset.Prose(text, TypeScale.Body, ThemeManager.GreyKey, wrap: true, margin: margin);
+        prose.LineHeight = TypeScale.Body * 1.5;
+
+        return prose;
+    }
+
+    /// <summary>The step's badge and heading; a step numbered <c>!</c> takes the warning badge.</summary>
+    private static Grid Heading(HelpSection section)
+    {
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
 
         if (section.Number.Length > 0)
         {
@@ -326,22 +471,17 @@ public static class HelpPageView
                 Height = 32,
                 Child = number,
                 VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(0, 0, 12, 0),
             };
 
-            ThemeInk.Bind(badge, Border.BackgroundProperty, ThemeManager.AKey);
+            ThemeInk.Bind(badge, Border.BackgroundProperty, section.Number == "!" ? ThemeManager.WarnKey : ThemeManager.AKey);
             row.Children.Add(badge);
         }
 
-        var heading = new TextBlock
-        {
-            Text = section.Heading,
-            FontSize = TypeScale.Heading,
-            FontWeight = FontWeight.Bold,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        ThemeInk.Bind(heading, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        var heading = Typeset.Prose(
+            section.Heading, TypeScale.Figure + 1, ThemeManager.WhiteKey, FontWeight.Bold, wrap: true,
+            vertical: VerticalAlignment.Center);
+        Grid.SetColumn(heading, 1);
         row.Children.Add(heading);
 
         return row;
@@ -357,7 +497,7 @@ public static class HelpPageView
 
         var pages = HelpLibrary.Pages
             .Where(id => !string.Equals(id, HelpLevel.Index, StringComparison.Ordinal))
-            .Select(HelpLibrary.For)
+            .Select(HelpLibrary.Lead)
             .OfType<HelpArticle>()
             .OrderBy(page => page.NavOrder)
             .ToList();
@@ -383,22 +523,28 @@ public static class HelpPageView
             foreach (var page in group)
             {
                 var id = page.CapabilityId;
-                block.Children.Add(Pressable(page.Title, page.Intro, () => nav.Take(Crumb(id))));
+                block.Children.Add(Pressable(page.Title, HelpLibrary.IndexLine(id), () => nav.Take(Crumb(id))));
             }
         }
 
         return block;
     }
 
-    /// <summary>Where to go next: what the band names, and then the page it is the short form of.</summary>
-    private static Control Next(
-        HelpArticle article, PanelNavigator nav, Action<string>? openUrl, Action<string>? openSettings)
+    /// <summary>Where to go next: what the bands name, and then the page they are the short form of.</summary>
+    private static StackPanel Next(
+        string capabilityId,
+        IReadOnlyList<HelpLink> links,
+        PanelNavigator nav,
+        Action<string>? openUrl,
+        Action<string>? openSettings)
     {
-        var block = new StackPanel { Spacing = 2, Margin = new Thickness(0, 18, 0, 0) };
+        var block = new StackPanel { Spacing = 2 };
 
-        block.Children.Add(LoadoutPages.Section("Where to go next"));
+        var head = StarSystemPage.GroupHead("Where to go next", "Pages that pick up where this one stops.");
+        head.Margin = new Thickness(0, 0, 0, 12);
+        block.Children.Add(head);
 
-        foreach (var link in article.Links)
+        foreach (var link in links)
         {
             block.Children.Add(Card(link, nav, openUrl, openSettings));
         }
@@ -412,7 +558,7 @@ public static class HelpPageView
                 // cannot be pressed and is drawn as a bare address.
                 Title = "More details online",
                 Blurb = "Everything this leaves out: the detail, the tables and the working.",
-                Href = DocsSite.Page(article.CapabilityId),
+                Href = DocsSite.Page(capabilityId),
             },
             nav,
             openUrl,
@@ -519,7 +665,7 @@ public static class HelpPageView
         return stack;
     }
 
-    /// <summary>A capability whose page has no band yet.</summary>
+    /// <summary>A capability whose page has neither band yet.</summary>
     private static Control Missing(string id)
     {
         var text = new TextBlock

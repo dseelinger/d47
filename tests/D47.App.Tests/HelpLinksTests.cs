@@ -87,7 +87,7 @@ public class HelpLinksTests
 
         // Whichever page still has none, asked of the library rather than named here — naming one makes this
         // test go red the day somebody writes that band, which is backwards.
-        var bandless = HelpLibrary.Pages.First(id => HelpLibrary.For(id) is null);
+        var bandless = HelpLibrary.Pages.First(id => !HelpLibrary.Has(id));
 
         var (window, page) = Open(
             Article(new HelpLink { Title = "Elsewhere", Article = bandless }),
@@ -96,7 +96,7 @@ public class HelpLinksTests
 
         Press(page, "ELSEWHERE").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
-        Assert.Equal([DocsSite.Capability(bandless)], opened);
+        Assert.Equal([DocsSite.Page(bandless)], opened);
 
         window.Close();
     }
@@ -191,7 +191,7 @@ public class HelpLinksTests
 
         // A root that claims help for a page nobody has illustrated — asked of the library rather than named
         // here, for the reason the sibling test above gives.
-        var bandless = HelpLibrary.Pages.First(id => HelpLibrary.For(id) is null);
+        var bandless = HelpLibrary.Pages.First(id => !HelpLibrary.Has(id));
 
         nav.Register(PanelTab.Assets, new NavCrumb("clocks", "Clocks") { Help = bandless });
         nav.Select(PanelTab.Assets);

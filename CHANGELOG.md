@@ -12,6 +12,8 @@ On the mini panel, the Navigation tab's Galaxy map now shows only the route ahea
 
 The second band on each help page is now called "How it works" instead of "Why it works this way". The Callouts and Engineers bands were rewritten to explain the mechanism, and Mining has a band for the first time.
 
+The in-app Help page now opens with "How to use it": each step shows what to do on a YOU line and what happens on a THEN line, followed by its picture. "How it works" follows, its points drawn as numbered panels, then "Where to go next". About, Bookmarks, Learned phrases and Privacy, which have only the how-to steps, now open in Help, appear in the Help index and in Find, instead of saying there is no short-form help for them yet. The headset panel shows the same page.
+
 The star system page (Search › System) now has a copy glyph beside the system's name. Pressing it copies the name, for a system you opened and for your own system while the page follows you.
 
 An outfitting route now leaves out stations whose outfitting was last reported more than three days ago. The route's result page (Navigation › Plan) shows that limit in a "Max report age" picker with a Search button beside it, which plots the same items again with the age you pick. Each stop shows "outfitting reported" and its date, or "report date unknown". Asking D47 to plot an outfitting route takes a report age too; 0 hours means any age.

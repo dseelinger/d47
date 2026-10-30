@@ -44,9 +44,9 @@ public static class HelpLevel
         return here is not null && nav.Take(For(here));
     }
 
-    /// <summary>That page, if this build carries a band for it.</summary>
+    /// <summary>That page, if this build carries either band for it.</summary>
     private static string? Reachable(string? capabilityId) =>
-        capabilityId is { Length: > 0 } id && HelpLibrary.For(id) is not null ? id : null;
+        HelpLibrary.Has(capabilityId) ? capabilityId : null;
 
     /// <summary>Whether help itself is what has the panel — as opposed to a chooser, which may.</summary>
     public static bool Showing(PanelNavigator nav) =>

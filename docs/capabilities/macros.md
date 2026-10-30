@@ -11,7 +11,7 @@ nav_order: 140
   The class is d47-howto rather than d47-eli5, and the class decides behaviour, not just
   appearance. HelpLibrary.Band takes the first d47-eli5 div in the file, so a second band under
   that class would silently become what the in-app panel draws on this page. The docs site styles
-  the two identically (main.scss extends one from the other); the app sees only the one below.
+  the two identically (main.scss extends one from the other); the app draws this band first and the How it works band after it.
 
   And no rationale in here. Every "because" belongs in the band below. Keeping the two apart is
   the reason there are two of them, and it is the first rule here that will be forgotten.

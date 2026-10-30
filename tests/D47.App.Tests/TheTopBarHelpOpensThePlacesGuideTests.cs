@@ -122,7 +122,7 @@ public class TheTopBarHelpOpensThePlacesGuideTests
     public void APlaceWithNoBandOpensTheSettingsGuide()
     {
         var bandless = SettingsLayout.Areas.SelectMany(a => a.Places)
-            .FirstOrDefault(place => HelpLibrary.For(place.DocsCapabilityId) is null);
+            .FirstOrDefault(place => !HelpLibrary.Has(place.DocsCapabilityId));
 
         // Only meaningful while some place names a guide with no band.
         if (bandless is null)

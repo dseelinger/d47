@@ -4,7 +4,7 @@ using System.Xml.Linq;
 
 namespace D47.Core.Help;
 
-/// <summary>Reads the ELI5 band out of a shipped documentation page (asked for 2026-08-22).</summary>
+/// <summary>Reads the How to use it and How it works bands out of a shipped documentation page.</summary>
 public static class HelpLibrary
 {
     /// <summary>Where the csproj puts the pages.</summary>
@@ -17,9 +17,28 @@ public static class HelpLibrary
 
     private static readonly ConcurrentDictionary<string, HelpArticle?> Cache = new(StringComparer.Ordinal);
 
-    /// <summary>The band for a capability, or null when that page has none yet.</summary>
+    private static readonly ConcurrentDictionary<string, HelpArticle?> HowToCache = new(StringComparer.Ordinal);
+
+    /// <summary>The How it works band for a capability, or null when that page has none.</summary>
     public static HelpArticle? For(string capabilityId) =>
         Cache.GetOrAdd(capabilityId, static id => Parse(PageFor(id), id));
+
+    /// <summary>The How to use it band for a capability, or null when that page has none.</summary>
+    public static HelpArticle? HowTo(string capabilityId) =>
+        HowToCache.GetOrAdd(capabilityId, static id => ParseHowTo(PageFor(id), id));
+
+    /// <summary>Whether the app has a help page for this capability: true when either band is present.</summary>
+    public static bool Has(string? capabilityId) =>
+        capabilityId is { Length: > 0 } id && (HowTo(id) is not null || For(id) is not null);
+
+    /// <summary>The band a page's title, group and index line come from: the how-to band, else How it works.</summary>
+    public static HelpArticle? Lead(string capabilityId) => HowTo(capabilityId) ?? For(capabilityId);
+
+    /// <summary>The line a page is listed with: the how-to intro, falling back to the How it works intro.</summary>
+    public static string IndexLine(string capabilityId) =>
+        HowTo(capabilityId) is { Intro.Length: > 0 } howTo
+            ? howTo.Intro
+            : For(capabilityId)?.Intro ?? string.Empty;
 
     /// <summary>Every capability whose page carries a band, for the tests that sweep them.</summary>
     public static IReadOnlyList<string> Pages =>
@@ -85,16 +104,19 @@ public static class HelpLibrary
             // (#229).
             Links = Links(frame, capabilityId) is { Count: > 0 } inBand
                 ? inBand
-                : Feet(markdown, capabilityId),
+                : Feet(markdown, capabilityId, opener),
         };
     }
 
-    /// <summary>The cards from the foot of a page, when they are not inside the band.</summary>
-    private static IReadOnlyList<HelpLink> Feet(string markdown, string owner)
+    /// <summary>
+    /// The cards from the last <c>d47-eli5</c> div on a page, when they are not inside the band. Read for the
+    /// How it works band, that div must be a second one.
+    /// </summary>
+    private static IReadOnlyList<HelpLink> Feet(string markdown, string owner, string opener)
     {
         var at = markdown.LastIndexOf(BandOpen, StringComparison.Ordinal);
 
-        if (at < 0 || at == markdown.IndexOf(BandOpen, StringComparison.Ordinal))
+        if (at < 0 || (opener == BandOpen && at == markdown.IndexOf(BandOpen, StringComparison.Ordinal)))
         {
             return [];
         }

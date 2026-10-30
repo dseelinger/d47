@@ -199,9 +199,9 @@ public class HelpInTheHeadsetTests
         panel.Dispose();
     }
 
-    /// <summary>The band is drawn, all four figures of it, and every one has real bounds.</summary>
+    /// <summary>Both bands are drawn, every figure of them, and every one has real bounds.</summary>
     [AvaloniaFact]
-    public void TheBandDrawsItsFourFiguresOnTheQuad()
+    public void BothBandsDrawEveryFigureOnTheQuad()
     {
         var (panel, view, _) = Headset();
 
@@ -211,7 +211,7 @@ public class HelpInTheHeadsetTests
 
         var figures = view.GetVisualDescendants().OfType<HelpFigureView>().ToList();
 
-        Assert.Equal(4, figures.Count);
+        Assert.Equal(EngineersFigures().Count, figures.Count);
 
         foreach (var figure in figures)
         {
@@ -231,6 +231,13 @@ public class HelpInTheHeadsetTests
         panel.Dispose();
     }
 
+    /// <summary>The engineers page's figures in the order the page draws them: the how-to band's, then How it works'.</summary>
+    private static List<HelpFigure> EngineersFigures() =>
+        [.. (HelpLibrary.HowTo("engineers")?.Sections ?? [])
+            .Concat(HelpLibrary.For("engineers")?.Sections ?? [])
+            .Select(section => section.Figure)
+            .OfType<HelpFigure>()];
+
     /// <summary>The reason the figures are drawn rather than written.</summary>
     [AvaloniaFact]
     public void NothingInTheBandIsDrawnBelowTheReadingFloor()
@@ -241,16 +248,15 @@ public class HelpInTheHeadsetTests
         panel.Press(u, v);
         Serve(panel);
 
-        var article = HelpLibrary.For("engineers")!;
+        var authored = EngineersFigures();
         var figures = view.GetVisualDescendants().OfType<HelpFigureView>().ToList();
 
         // Counted before the zip below, which pairs two sequences and would sail through with nothing to say
         // if the page had drawn none of them.
-        Assert.Equal(4, figures.Count);
+        Assert.NotEmpty(authored);
+        Assert.Equal(authored.Count, figures.Count);
 
-        var drawn = article.Sections
-            .Select(section => section.Figure)
-            .OfType<HelpFigure>()
+        var drawn = authored
             .Zip(figures, (figure, control) => (Figure: figure, Scale: control.Bounds.Width / figure.Width));
 
         foreach (var (figure, scale) in drawn)
@@ -362,7 +368,7 @@ public class HelpInTheHeadsetTests
         {
             var target = link.Article!;
 
-            if (HelpLibrary.For(target) is not null)
+            if (HelpLibrary.Has(target))
             {
                 Assert.DoesNotContain(D47.App.DocsSite.Capability(target), shown);
 
@@ -395,7 +401,7 @@ public class HelpInTheHeadsetTests
         Serve(panel);
 
         Assert.True(view.Nav.Modal);
-        Assert.Equal(4, view.GetVisualDescendants().OfType<HelpFigureView>().Count());
+        Assert.Equal(EngineersFigures().Count, view.GetVisualDescendants().OfType<HelpFigureView>().Count());
 
         // And out again by the same word that leaves any other level.
         Assert.Equal("Back to Engineers.", PanelPhrases.Apply("back", panel.Nav));
