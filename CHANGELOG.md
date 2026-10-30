@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story objective to complete or take a mission now says what that kind of mission involves: whether it is flown or done on foot, what to do and where to hand it in. The line appears in the next-objective hand-off and in what the persona knows, and "What mission types are there" for one type includes it after the group.
+
 The mini panel's Plan page now shows the plan you plotted or opened since d47 started: its kind and headline, then one row per stop. A plan saved in an earlier run is not shown until you open it with Show most recent. With no plan in play, the mini panel shows the route plotted in Elite's galaxy map, or "No route is plotted."
 
 The optional API key row in the Language model settings now reads "(if it needs one)" instead of "(if it wants one)".

@@ -498,9 +498,14 @@ public sealed record AdventureTrigger
             + (Unarmed == true ? string.Empty : " Arriving there in any ship also counts.")
             + EasierWith(),
         TriggerKind.Rescue => $"Next: {Describe()}, counted from now. {Progress(0)}. {RescueHowTo()}",
+        TriggerKind.Mission or TriggerKind.MissionTaken => WithHowTo(IsCounted
+            ? $"Next: {Describe()}, counted from now. {Progress(0)}."
+            : $"Next: {Describe()}."),
         _ when IsCounted => $"Next: {Describe()}, counted from now. {Progress(0)}.",
         _ => $"Next: {Describe()}.",
     };
+
+    private string WithHowTo(string next) => MissionHowTo.For(MissionFamily) is { } line ? $"{next} {line}" : next;
 
     /// <summary>What counts as a rescue item and where it is found and handed in; the filter's item alone when it has one.</summary>
     public string RescueHowTo()

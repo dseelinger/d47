@@ -1,4 +1,5 @@
 using System.Text;
+using D47.Core.Adventures;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -54,6 +55,11 @@ internal static class MissionTypes
         var words = names.Select(name => name.Words).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         var groups = names.Select(name => name.Group).Distinct(StringComparer.Ordinal).ToList();
         var said = new StringBuilder($"{SpokenText.Capitalised(JoinAnd(words))} missions are in the {JoinAnd(groups)} group. ");
+
+        if (names.Select(name => name.Family).Distinct(StringComparer.Ordinal).ToList() is [var family] && MissionHowTo.For(family) is { } howTo)
+        {
+            said.Append(howTo).Append(' ');
+        }
 
         var states = Distinct(names, name => name.State);
         var governments = Distinct(names, name => name.Government);

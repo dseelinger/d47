@@ -107,7 +107,12 @@ public static class AdventureContext
                 var steps = standing.StepsOf(standing.Current).Count;
                 var place = steps > 1 ? $", step {standing.CurrentStep + 1} of {steps}" : string.Empty;
                 var reason = string.IsNullOrWhiteSpace(step.Reason) ? string.Empty : $" Reason: {step.Reason.Trim()}";
-                var how = step.Trigger.Kind is TriggerKind.Rescue ? $" {step.Trigger.RescueHowTo()}" : string.Empty;
+                var how = step.Trigger.Kind switch
+                {
+                    TriggerKind.Rescue => $" {step.Trigger.RescueHowTo()}",
+                    TriggerKind.Mission or TriggerKind.MissionTaken when MissionHowTo.For(step.Trigger.MissionFamily) is { } line => $" {line}",
+                    _ => string.Empty,
+                };
                 Line(block, $"Now: {current.Title}{function}{place}", $"waiting to {step.Trigger.Describe()}.{how}{reason}");
             }
 

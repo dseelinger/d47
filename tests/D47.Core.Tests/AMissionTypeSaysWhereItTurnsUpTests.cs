@@ -1,4 +1,5 @@
 using System.Text.Json;
+using D47.Core.Adventures;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
 using Xunit;
@@ -56,6 +57,20 @@ public sealed class AMissionTypeSaysWhereItTurnsUpTests
     public void RanksNotYetSeenAreSaidToBeUnknown()
     {
         Assert.Contains("I do not know your ranks yet.", MissionTypes.Describe("courier", RankState.Empty), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ACollectMissionSaysWhatTheCommanderDoesAfterItsGroup()
+    {
+        var said = MissionTypes.Describe("collect", null);
+
+        Assert.Contains("group. " + MissionHowTo.For("Mission_Collect"), said, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFamilyWithNoLineIsAnsweredAsBefore()
+    {
+        Assert.DoesNotContain("are flown", MissionTypes.Describe("disable", null), StringComparison.Ordinal);
     }
 
     [Fact]
