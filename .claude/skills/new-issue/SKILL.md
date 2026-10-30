@@ -56,6 +56,13 @@ The same applies to the tables under `src/D47.Core/Knowledge/`. Read the row, do
 `NarratedOnly` is what it can say a sentence about and nothing more. A request that needs a
 `NarratedOnly` event needs new state, and that changes the size of the job.
 
+When the issue changes anything a Commander reads, presses or says — a label, a tab or page name, a
+settings path, a group, a spoken phrase, a default, a behaviour a page describes — grep `docs/` and
+the `Exercise` strings for the current text. List every hit as a line under "Accepted when", by file
+and line, saying what it becomes. With no hits, write "docs/: no page names this" so the check shows.
+The phrase and path gates catch renamed phrases and places, not a page describing behaviour that
+changed.
+
 ## Search the open issues before drafting
 
 Before drafting anything, search the open issues for the same work. Search by the terms in the
@@ -208,7 +215,8 @@ if you want it checked.
 - **A grounding paragraph** naming the code this rests on, with paths and symbols you have read.
   This is the part that stops it coming back.
 - **`### What is wanted`** — the decision, in the maintainer's terms.
-- **`### Accepted when`** — statements that can be checked, not intentions.
+- **`### Accepted when`** — statements that can be checked, not intentions. Includes the `docs/`
+  lines, by file and line, or "docs/: no page names this".
 - **`### Notes for the build`** — the two or three things you found that would otherwise stall a
   worker: a property that does not exist yet, a constant that has to be added, a place the page
   will get long. Only what you verified.
