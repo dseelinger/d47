@@ -82,8 +82,20 @@ public class TheMarketPageTests
     private static string[] TextOf(PanelView panel) =>
         [.. panel.GetVisualDescendants()
             .OfType<TextBlock>()
-            .Select(block => block.Text ?? string.Empty)
+            .Select(block => block.Inlines is { Count: > 0 } inlines
+                ? string.Concat(inlines.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text))
+                : block.Text ?? string.Empty)
             .Where(text => text.Length > 0)];
+
+    private static RouteMarketPage Page(PanelView panel) =>
+        panel.GetVisualDescendants().OfType<RouteMarketPage>().Single();
+
+    private static void Find(PanelView panel)
+    {
+        panel.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Find it"))
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+    }
 
     /// <summary>Every offer row carries a copy glyph for the system it names (#157).</summary>
     [AvaloniaFact]
@@ -214,11 +226,12 @@ public class TheMarketPageTests
 
         var drawn = TextOf(panel);
 
-        Assert.Contains("WHERE TO BUY IT", drawn);
+        Assert.Contains("COMMODITIES", drawn);
+        Assert.Contains("THE MARKET", drawn);
         Assert.DoesNotContain("Price", drawn);
     }
 
-    /// <summary><c>Build()</c> clears and redraws the page after every Find, but the commodity and tonnes boxes are <c>readonly</c> fields: a second wrap finds them still parented to the first container and Avalonia refuses.</summary>
+    /// <summary><c>Build()</c> clears and redraws the page after every Find, but the add field, the Tonnes box and the tiles are <c>readonly</c> fields: a second placing finds them still parented to the first container and Avalonia refuses.</summary>
     [AvaloniaFact]
     public void FindingASecondTimeDoesNotCrashThePage()
     {
@@ -227,23 +240,29 @@ public class TheMarketPageTests
         panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
-        var commodity = panel.GetVisualDescendants()
-            .OfType<TextBox>()
-            .Single(box => box.PlaceholderText == "which one");
+        Page(panel).Add("Tritium", 700);
 
-        // Find() is rebuilt fresh by every Build(), so it is re-queried each time — the readonly fields
-        // (_commodity among them) are the ones the fix has to keep working across rebuilds.
-        commodity.Text = "Tritium";
-        panel.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Find it"))
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        // Find it is rebuilt by every Build(), so Find() looks it up again each time.
+        Find(panel);
+
+        // Reaching here at all is the assertion: a control left in the discarded form throws InvalidOperationException.
+        Find(panel);
+
+        Assert.Equal([new CommodityWant("Tritium", 700)], Page(panel).Items);
+    }
+
+    /// <summary>With no tiles there is nothing to search for, and the status line says what to do.</summary>
+    [AvaloniaFact]
+    public void FindingWithNoCommodityAsksForOneFirst()
+    {
+        var panel = Furnished(new CommodityBoard());
+
+        panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
-        // Reaching here at all is the assertion: before the fix, the second Build() throws
-        // InvalidOperationException from inside Labelled() and takes the process down with it.
-        commodity.Text = "Tritium";
-        panel.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Find it"))
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Find(panel);
+
+        Assert.Contains(RouteMarketPage.NoneText, TextOf(panel));
     }
 
     /// <summary><c>surface_stations</c> defaults to false for every search, so this page needs a way to turn it back on: a commodity sold only at a Planetary Port would otherwise be unreachable from here.</summary>
@@ -314,13 +333,10 @@ public class TheMarketPageTests
         panel.Tab = PanelTab.Navigation;
         Dispatcher.UIThread.RunJobs();
 
-        panel.GetVisualDescendants().OfType<TextBox>().Single(box => box.PlaceholderText == "which one").Text
-            = "Tritium";
+        Page(panel).Add("Tritium", null);
         CheckBoxes.Single(panel, "Include surface stations").IsChecked = true;
 
-        panel.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Find it"))
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        Find(panel);
 
         Assert.NotNull(sent);
         Assert.True(sent!.TryGetString("surface_stations", out var value));

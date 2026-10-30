@@ -288,7 +288,9 @@ public class TheRoutingTabIsInTheHeadsetTests
         Assert.True(Press(panel, find!));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(FieldMessages(panel), text => text.Contains("Name a commodity first", StringComparison.Ordinal));
+        Assert.Contains(
+            panel.Board.View.GetVisualDescendants().OfType<D47.App.Controls.StatusLine>(),
+            status => status.Failed && status.Text == RouteMarketPage.NoneText);
     }
 
     /// <summary>

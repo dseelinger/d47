@@ -1,5 +1,7 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -23,45 +25,68 @@ public sealed class RouteMarketPage : UserControl
 
     public const string TableId = "Route.Market";
 
+    public const string AddName = "AddCommodity";
+
+    public const string TonnesName = "CommodityTonnes";
+
+    public const string FullName = "CommoditiesFull";
+
+    /// <summary>Marks an added commodity's tile; pressing it removes the commodity.</summary>
+    public const string ItemClass = "commodity-tile";
+
+    public const string FullText = "Five commodities is the most. Remove one to add another.";
+
+    public const string HelpText =
+        "Add each commodity with the tonnes you need; a station has to trade every one. Leave tonnes blank for any amount.";
+
+    public const string NoneText = "Add a commodity first.";
+
     private const double CopyGap = 6;
+
+    /// <summary>Every name a market trades, ordinary and rare.</summary>
+    private static readonly Lazy<IReadOnlyList<string>> Commodities = new(() =>
+        [.. MaterialCatalogue.All
+            .Where(entry => entry.Ledger is MaterialLedger.Cargo or MaterialLedger.RareCargo)
+            .Select(entry => entry.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)]);
 
     private readonly CapabilityRegistry _registry;
     private readonly CommodityBoard _board;
     private readonly Func<bool> _lookupsEnabled;
     private readonly Action? _openSettings;
     private readonly Func<string, Task<bool>>? _copy;
+    private readonly Func<string?> _here;
 
     private readonly StackPanel _body = new() { Spacing = 12 };
 
-    private readonly TextBox _commodity = new()
+    private readonly TextBox _add = new() { Name = AddName, PlaceholderText = "Type a commodity" };
+
+    private readonly SystemNameSuggestions<string> _names;
+
+    private readonly Amount _tonnes = new()
     {
-        // An example where a default goes, on a required field (#253) — see the survey in the issue: Tritium
-        // sat in the same grey and the same slot as the numbers that genuinely are what happens if you type
-        // nothing.
-        PlaceholderText = "which one",
-        Width = 190,
-        HorizontalAlignment = HorizontalAlignment.Left,
+        Name = TonnesName,
+        Width = 160,
+        Minimum = 1,
+        Maximum = 99999,
+        Step = 10,
+        Format = "#,0",
+        Placeholder = "Any",
     };
 
-    private readonly TextBox _tonnes = new()
-    {
-        PlaceholderText = "how many",
-        Width = 120,
-        HorizontalAlignment = HorizontalAlignment.Left,
-    };
+    private readonly TextBlock _full = RoutingKit.Prose(FullText);
+    private readonly WrapPanel _tiles = new() { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
 
     private readonly CheckBox _selling;
     private readonly CheckBox _largePad;
 
-    /// <summary>
-    /// Opts back into surface stations (#309): #296 defaulted <c>surface_stations</c> to false for
-    /// every search, so a commodity only available at a Planetary Port was otherwise unreachable from
-    /// this page.
-    /// </summary>
+    /// <summary>Opts back into surface stations, which <c>surface_stations</c> leaves out by default (#309).</summary>
     private readonly CheckBox _surfaceStations;
     private readonly MaxReportAge _age = new(72);
 
     private readonly StatusLine _status;
+
+    private IReadOnlyList<CommodityWant> _items = [];
 
     private bool _sorting;
 
@@ -74,7 +99,9 @@ public sealed class RouteMarketPage : UserControl
         Func<bool> lookupsEnabled,
         Action? openSettings = null,
         Func<string, Task<bool>>? copy = null,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        Func<string?>? here = null,
+        TimeSpan? suggestionPause = null)
     {
         _columnWidths = columnWidths;
         _registry = registry;
@@ -82,12 +109,34 @@ public sealed class RouteMarketPage : UserControl
         _lookupsEnabled = lookupsEnabled;
         _openSettings = openSettings;
         _copy = copy;
+        _here = here ?? (() => null);
 
         _selling = RoutingKit.Switch("Selling it, not buying");
         _largePad = RoutingKit.Switch("Large pad only");
         _surfaceStations = RoutingKit.Switch("Include surface stations");
 
         _status = RoutingKit.Status();
+
+        SystemNameSuggestions<string>? names = null;
+        names = new SystemNameSuggestions<string>(
+            _add,
+            (typed, _) => Task.FromResult(Offer(typed)),
+            name => name,
+            () => true,
+            name =>
+            {
+                names!.SetText(string.Empty);
+                Add(name, _tonnes.Value is { } tonnes && tonnes >= 1 ? (int)tonnes : null);
+                _tonnes.Value = null;
+            },
+            suggestionPause);
+        _names = names;
+
+        _full.Name = FullName;
+        Avalonia.Automation.AutomationProperties.SetName(_tonnes, "Tonnes");
+        FormField.Announce(_add, "Add a commodity", FieldNeed.Optional);
+
+        DrawItems();
 
         Content = new ScrollViewer
         {
@@ -98,6 +147,72 @@ public sealed class RouteMarketPage : UserControl
         };
 
         Build();
+    }
+
+    /// <summary>The commodities the form asks for, in the order added.</summary>
+    public IReadOnlyList<CommodityWant> Items => _items;
+
+    /// <summary>The suggestions the add field lists.</summary>
+    public SystemNameSuggestions<string> Suggestions => _names;
+
+    /// <summary>Types into the add field.</summary>
+    public void Type(string text) => _add.Text = text;
+
+    /// <summary>Sets the Tonnes box; null is any amount.</summary>
+    public void Weigh(int? tonnes) => _tonnes.Value = tonnes;
+
+    /// <summary>Adds a commodity as picking a suggestion does; one already added, or a sixth, is left out.</summary>
+    public void Add(string commodity, int? tonnes)
+    {
+        if (_items.Count >= CommodityWant.Most
+            || _items.Any(kept => string.Equals(kept.Commodity, commodity, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        _items = [.. _items, new CommodityWant(commodity, tonnes)];
+        DrawItems();
+    }
+
+    /// <summary>Removes a commodity, as its tile does.</summary>
+    public void Remove(string commodity)
+    {
+        _items = [.. _items.Where(kept => !string.Equals(kept.Commodity, commodity, StringComparison.OrdinalIgnoreCase))];
+        DrawItems();
+    }
+
+    /// <summary>The list <c>commodity</c> takes: <c>"Gold: 20, Silver"</c>.</summary>
+    public static string Listed(IEnumerable<CommodityWant> wants) =>
+        string.Join(", ", wants.Select(want => want.Tonnes is { } load
+            ? $"{want.Commodity}: {load.ToString(CultureInfo.InvariantCulture)}"
+            : want.Commodity));
+
+    /// <summary>What Find it sends to <c>find_nearest_station</c>.</summary>
+    public ToolArguments FormArguments()
+    {
+        var values = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["commodity"] = Listed(_items),
+        };
+
+        if (_selling.IsChecked == true)
+        {
+            values["selling"] = "true";
+        }
+
+        if (_largePad.IsChecked == true)
+        {
+            values["large_pad"] = "true";
+        }
+
+        if (_surfaceStations.IsChecked == true)
+        {
+            values["surface_stations"] = "true";
+        }
+
+        values["max_price_age_hours"] = _age.Value.ToString(CultureInfo.InvariantCulture);
+
+        return new ToolArguments(values);
     }
 
     /// <summary>Redraws, after a search or after the setting behind the page moved.</summary>
@@ -127,12 +242,12 @@ public sealed class RouteMarketPage : UserControl
 
     private Control SearchCard()
     {
-        // _commodity, _tonnes, _selling and _largePad are readonly fields, built once and reused across every
-        // Build() — Labelled() wraps the two boxes in a fresh StackPanel each call, and the switches join a
-        // fresh form StackPanel directly, so a second call finds each one still parented to the wrapper
-        // Build() just discarded.
-        Detach(_commodity);
+        // Every control kept in a field is placed again by each Build(), so it leaves the panel the last one put it in.
+        Detach(_add);
+        Detach(_names.List);
         Detach(_tonnes);
+        Detach(_full);
+        Detach(_tiles);
         Detach(_selling);
         Detach(_largePad);
         Detach(_surfaceStations);
@@ -148,64 +263,141 @@ public sealed class RouteMarketPage : UserControl
             _status,
             Budget,
             "Reading the markets nearby…",
-            () => RoutingKit.Filled(_commodity, "Name a commodity first."),
-            token => _registry.InvokeAsync("find_nearest_station", Arguments(), token),
+            Chosen,
+            token => _registry.InvokeAsync("find_nearest_station", FormArguments(), token),
             _ => Refresh());
 
-        var form = new StackPanel
+        var add = new StackPanel { Spacing = 3 };
+        add.Children.Add(FormField.Label("Add a commodity", FieldNeed.Optional));
+        add.Children.Add(_add);
+        add.Children.Add(_names.List);
+
+        var tonnes = Labelled("Tonnes", _tonnes);
+        Grid.SetColumn(tonnes, 1);
+
+        // The add field takes the width the Tonnes box leaves, up to a limit.
+        var fields = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Star) { MaxWidth = 560 }, new ColumnDefinition(GridLength.Auto)],
+            ColumnSpacing = 12,
+            Children = { add, tonnes },
+        };
+
+        var commodities = new StackPanel
         {
             Spacing = 8,
             Children =
             {
-                RoutingKit.Section("Where to buy it"),
-                RoutingKit.Fields(
-                    Labelled("Commodity", _commodity, D47.App.Controls.FieldNeed.Required),
-                    Labelled("Tonnes", _tonnes)),
-                D47.App.Controls.FormField.Legend(required: true),
+                RoutingKit.Section("Commodities"),
+                fields,
+                _full,
+                _tiles,
+                RoutingKit.Prose(HelpText),
+            },
+        };
+
+        var market = new StackPanel
+        {
+            Spacing = 8,
+            Children =
+            {
+                RoutingKit.Section("The market"),
                 RoutingKit.Fields(Labelled("Max price age", _age.Picker)),
                 RoutingKit.Fields(_selling, _largePad, _surfaceStations),
-                RoutingKit.Prose(
-                    "Say the tonnage and stations that cannot fill the whole load drop out, and a "
-                    + "bigger load is worth a longer trip. Leave it blank to rank on price alone."),
                 RoutingKit.Actions(find, cancel),
                 _status,
             },
         };
 
-        return form;
+        return new StackPanel { Spacing = 14, Children = { commodities, market } };
     }
 
-    private ToolArguments Arguments()
+    /// <summary>Whether there is anything to search for; says so on the status line when not.</summary>
+    private bool Chosen()
     {
-        var values = new Dictionary<string, string>(StringComparer.Ordinal)
+        if (_items.Count > 0)
         {
-            ["commodity"] = _commodity.Text!.Trim(),
-        };
-
-        if (!string.IsNullOrWhiteSpace(_tonnes.Text))
-        {
-            values["tonnes"] = _tonnes.Text!.Replace(",", string.Empty).Trim();
+            return true;
         }
 
-        if (_selling.IsChecked == true)
-        {
-            values["selling"] = "true";
-        }
+        RoutingKit.Say(_status, NoneText, error: true);
 
-        if (_largePad.IsChecked == true)
-        {
-            values["large_pad"] = "true";
-        }
-
-        if (_surfaceStations.IsChecked == true)
-        {
-            values["surface_stations"] = "true";
-        }
-
-        values["max_price_age_hours"] = _age.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-        return new ToolArguments(values);
+        return false;
     }
+
+    /// <summary>The market names for what is typed, shortest first: every typed word starts a word of the name.</summary>
+    private IReadOnlyList<string> Offer(string typed)
+    {
+        var words = typed.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (words.Length == 0)
+        {
+            return [];
+        }
+
+        var kept = _items;
+
+        return
+        [
+            .. Commodities.Value
+                .Where(name => kept.All(item => !string.Equals(item.Commodity, name, StringComparison.OrdinalIgnoreCase)))
+                .Where(name => words.All(word => name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Any(known => known.StartsWith(word, StringComparison.OrdinalIgnoreCase))))
+                .OrderBy(name => name.Length)
+                .ThenBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .Take(NameSuggestions.Most),
+        ];
+    }
+
+    private void DrawItems()
+    {
+        var full = _items.Count >= CommodityWant.Most;
+
+        _add.IsEnabled = !full;
+        _tonnes.IsEnabled = !full;
+        _full.IsVisible = full;
+
+        if (full)
+        {
+            _names.Close();
+        }
+
+        _tiles.Children.Clear();
+
+        foreach (var item in _items)
+        {
+            var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+            content.Children.Add(Chrome(item.Commodity));
+
+            if (item.Tonnes is { } load)
+            {
+                content.Children.Add(Chrome("·"));
+                content.Children.Add(Typeset.Mono($"{load.ToString("N0", CultureInfo.InvariantCulture)} T", TypeScale.Control, ThemeManager.WhiteKey, vertical: VerticalAlignment.Center));
+            }
+
+            content.Children.Add(Chrome("✕"));
+
+            var tile = new Button
+            {
+                Content = content,
+                Height = TypeScale.MinimumTarget,
+                Classes = { ItemClass },
+                Tag = item.Commodity,
+            };
+            Avalonia.Automation.AutomationProperties.SetName(tile, $"Remove {item.Commodity}");
+
+            var kept = item.Commodity;
+            tile.Click += (_, _) => Remove(kept);
+            _tiles.Children.Add(tile);
+        }
+
+        _tiles.IsVisible = _items.Count > 0;
+    }
+
+    private static TextBlock Chrome(string text) =>
+        Typeset.Chrome(
+            text.ToUpperInvariant(), TypeScale.Control, ThemeManager.AKey,
+            weight: FontWeight.SemiBold, tracking: TypeScale.Control * Fonts.ChromeTracking, vertical: VerticalAlignment.Center);
 
     private void DrawResults()
     {
@@ -227,23 +419,20 @@ public sealed class RouteMarketPage : UserControl
             ThemeManager.AKey,
             wrap: true);
 
+        var heads = Heads(posting);
         var rows = new StackPanel { Spacing = 2 };
-        var layout = new TableLayout(TableId, ColumnsOf(posting), _columnWidths, 10);
+        var layout = new TableLayout(TableId, [.. heads.Select(head => head.Column)], _columnWidths, 10);
 
-        rows.Children.Add(HeaderRow(posting, layout));
+        rows.Children.Add(HeaderRow(posting, layout, heads));
 
         foreach (var offer in posting.Answer.Offers)
         {
             rows.Children.Add(OfferRow(offer, posting, layout));
         }
 
-        var table = rows;
+        var stack = new StackPanel { Spacing = 10, Children = { RoutingKit.Section("What came back"), heading, rows } };
 
-        var stack = new StackPanel { Spacing = 10, Children = { RoutingKit.Section("What came back"), heading, table } };
-
-        // The date on the answer itself, which is a different caveat from the date on each price and a
-        // Commander needs both: a twenty-minute-old answer quoting six-hour-old prices is two kinds of stale
-        // at once.
+        // The date on the answer itself, which is a different caveat from the date on each price.
         stack.Children.Add(RoutingKit.Prose(
             $"Searched {Ago(DateTimeOffset.UtcNow - posting.AskedAt)}. Prices are reported by other "
             + "Commanders; supply moves fastest of all."));
@@ -251,68 +440,62 @@ public sealed class RouteMarketPage : UserControl
         _results.Children.Add(stack);
     }
 
-    private static List<TableColumn> ColumnsOf(CommodityPosting posting)
-    {
-        List<TableColumn> columns = [new("Station", ColumnFit.Fill) { Min = 160 }];
+    /// <summary>One column of the answer table: its layout, its header, and whether its figures sit right.</summary>
+    private sealed record Head(TableColumn Column, SortColumn<object> Sort, bool Right);
 
-        if (posting.Answer.OriginKnown)
-        {
-            columns.Add(new("Distance"));
-        }
-
-        if (Several(posting))
-        {
-            columns.Add(new("Commodity"));
-        }
-
-        columns.Add(new("Price"));
-        columns.Add(new("Stock"));
-
-        if (ByTheTonne(posting))
-        {
-            columns.Add(new("Load"));
-        }
-
-        columns.Add(new("Priced"));
-
-        return columns;
-    }
-
-    /// <summary>The distance and price columns sort the whole answer, so a press asks again; the rest are plain labels.</summary>
-    private Control HeaderRow(CommodityPosting posting, TableLayout layout)
+    private static List<Head> Heads(CommodityPosting posting)
     {
         var buying = posting.Query.Side == TradeSide.Buying;
         var best = buying ? SortDirection.Ascending : SortDirection.Descending;
 
-        List<(string Label, SortColumn<object> Column)> heads =
-        [
-            ("Station", SortColumn<object>.Plain("Station")),
-        ];
+        List<Head> heads = [new(new("Station", ColumnFit.Fill) { Min = 160 }, SortColumn<object>.Plain("Station"), false)];
 
         if (posting.Answer.OriginKnown)
         {
-            heads.Add(("Distance", SortColumn<object>.Remote("Distance", SortDirection.Ascending)));
+            heads.Add(new(new("Distance"), SortColumn<object>.Remote("Distance", SortDirection.Ascending), true));
         }
 
         if (Several(posting))
         {
-            heads.Add(("Commodity", SortColumn<object>.Plain("Commodity")));
+            var second = buying ? "Price / stock" : "Pays / demand";
+
+            foreach (var want in posting.Query.Wants)
+            {
+                heads.Add(new(new(want.Commodity), SortColumn<object>.Plain(want.Commodity) with { Second = second }, true));
+            }
+
+            heads.Add(new(
+                new("Total"),
+                SortColumn<object>.Remote("Total", best) with
+                {
+                    Second = posting.Query.Wants.Any(want => want.Tonnes is null) ? "1 T where blank" : null,
+                },
+                true));
         }
-
-        heads.Add((buying ? "Price" : "Pays", SortColumn<object>.Remote(buying ? "Price" : "Pays", best)));
-        heads.Add((buying ? "Stock" : "Demand", SortColumn<object>.Plain(buying ? "Stock" : "Demand")));
-
-        if (ByTheTonne(posting))
+        else
         {
-            heads.Add(("The load", SortColumn<object>.Plain("The load")));
+            heads.Add(new(new("Price"), SortColumn<object>.Remote(buying ? "Price" : "Pays", best), true));
+            heads.Add(new(new("Stock"), SortColumn<object>.Plain(buying ? "Stock" : "Demand"), true));
+
+            if (ByTheTonne(posting))
+            {
+                heads.Add(new(new("Load"), SortColumn<object>.Plain("The load"), true));
+            }
         }
 
-        heads.Add(("Priced", SortColumn<object>.Plain("Priced")));
+        heads.Add(new(new("Priced"), SortColumn<object>.Plain("Priced"), true));
 
-        var columns = heads.Select(head => head.Column).ToList();
-        var header = new SortHeader<object>(HeadName, columns);
-        var distance = heads.FindIndex(head => head.Label == "Distance");
-        var price = heads.FindIndex(head => head.Label is "Price" or "Pays");
+        return heads;
+    }
+
+    /// <summary>The distance and price or total columns sort the whole answer, so a press asks again; the rest are plain labels.</summary>
+    private Control HeaderRow(CommodityPosting posting, TableLayout layout, List<Head> heads)
+    {
+        var best = posting.Query.Side == TradeSide.Buying ? SortDirection.Ascending : SortDirection.Descending;
+
+        var header = new SortHeader<object>(HeadName, [.. heads.Select(head => head.Sort)]);
+        var distance = heads.FindIndex(head => head.Sort.Label == "Distance");
+        var price = heads.FindIndex(head => head.Sort.Label is "Price" or "Pays" or "Total");
 
         // Ranked by the usual order until a column is pressed, so a first press reverses it.
         var current = posting.Query.OrderBy == CommodityOrder.Distance && distance >= 0
@@ -325,7 +508,7 @@ public sealed class RouteMarketPage : UserControl
         header.Changed += () => SortBy(posting, header.Order, distance);
 
         // Inset by a list row's padding, so each header sits over its column.
-        var row = layout.Header(header);
+        var row = layout.Header(header, [.. heads.Select(head => head.Right ? HorizontalAlignment.Right : HorizontalAlignment.Left)]);
         row.Margin = new Thickness(12, 0);
 
         return row;
@@ -336,17 +519,12 @@ public sealed class RouteMarketPage : UserControl
     {
         var query = posting.Query;
 
-        // Several commodities go back as the list they came from, each with its own tonnage.
         var values = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["commodity"] = Several(posting)
-                ? string.Join(", ", query.Wants.Select(want => want.Tonnes is { } load
-                    ? $"{want.Commodity}: {load.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
-                    : want.Commodity))
-                : query.Commodity,
+            ["commodity"] = Listed(query.Wants),
             ["near"] = posting.Near,
-            ["max_distance"] = query.MaxDistance.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture),
-            ["limit"] = query.Limit.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["max_distance"] = query.MaxDistance.ToString("0.##", CultureInfo.InvariantCulture),
+            ["limit"] = query.Limit.ToString(CultureInfo.InvariantCulture),
         };
 
         foreach (var (key, on) in new (string, bool)[]
@@ -363,19 +541,14 @@ public sealed class RouteMarketPage : UserControl
             }
         }
 
-        if (!Several(posting) && query.Tonnes is { } tonnes)
-        {
-            values["tonnes"] = tonnes.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        }
-
         if (query.MaxStationDistance is { } lightSeconds)
         {
-            values["max_station_distance"] = lightSeconds.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            values["max_station_distance"] = lightSeconds.ToString("0.##", CultureInfo.InvariantCulture);
         }
 
         if (query.MinAvailable is { } least)
         {
-            values["min_supply"] = least.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            values["min_supply"] = least.ToString(CultureInfo.InvariantCulture);
         }
 
         if (query.Tag is { } tag)
@@ -423,44 +596,61 @@ public sealed class RouteMarketPage : UserControl
     private Control OfferRow(CommodityOffer offer, CommodityPosting posting, TableLayout layout)
     {
         var buying = posting.Query.Side == TradeSide.Buying;
-        var quote = offer.Market.Quote(posting.Query.Commodity);
         List<Control> cells = [StationCell(offer.Market.Station, offer.Market.System)];
 
         if (posting.Answer.OriginKnown)
         {
-            cells.Add(Cell($"{offer.Distance:0.#} ly"));
+            cells.Add(Figure($"{offer.Distance.ToString("0.#", CultureInfo.InvariantCulture)} ly"));
         }
 
         if (Several(posting))
         {
-            // One line per commodity, read across the three columns.
-            cells.Add(Lines(offer.Lots.Select(lot => lot.Commodity)));
-            cells.Add(Lines(offer.Lots.Select(lot => $"{lot.UnitPrice:N0}")));
-            cells.Add(Lines(offer.Lots.Select(lot => offer.Market.Quote(lot.Commodity) is { } held
-                ? $"{(buying ? held.Supply : held.Demand):N0}"
-                : "?")));
+            foreach (var lot in offer.Lots)
+            {
+                var held = offer.Market.Quote(lot.Commodity);
+                var stock = held is null ? "?" : Count(buying ? held.Supply : held.Demand);
+
+                cells.Add(new StackPanel
+                {
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    Spacing = 1,
+                    Children = { Figure(Count(lot.UnitPrice)), Figure(stock, ThemeManager.GreyKey, TypeScale.Caption) },
+                });
+            }
+
+            cells.Add(Figure(Count(offer.Total)));
         }
         else
         {
-            cells.Add(Cell($"{offer.UnitPrice:N0}"));
-            cells.Add(Cell($"{(buying ? quote?.Supply ?? 0 : quote?.Demand ?? 0):N0}"));
+            var quote = offer.Market.Quote(posting.Query.Commodity);
+
+            cells.Add(Figure(Count(offer.UnitPrice)));
+            cells.Add(Figure(Count(buying ? quote?.Supply ?? 0 : quote?.Demand ?? 0)));
+
+            if (ByTheTonne(posting))
+            {
+                cells.Add(Figure(Count(offer.Total)));
+            }
         }
 
-        if (ByTheTonne(posting))
-        {
-            cells.Add(Cell($"{offer.Total:N0}"));
-        }
-
-        // The Commander's own reading is named as theirs, because it is the one figure here with no caveat on
-        // it.
-        cells.Add(Cell(
+        // The Commander's own reading is named as theirs, because it is the one figure here with no caveat on it.
+        var priced = RoutingKit.Ink(
             offer.Market.UpdatedAt is { } when
                 ? $"{(offer.IsTheirs ? "you saw it " : string.Empty)}{Ago(DateTimeOffset.UtcNow - when)}"
                 : "undated",
-            offer.IsTheirs ? ThemeManager.CyanKey : ThemeManager.GreyKey));
+            TypeScale.Secondary,
+            offer.IsTheirs ? ThemeManager.CyanKey : ThemeManager.GreyKey);
+        priced.TextTrimming = TextTrimming.CharacterEllipsis;
+        priced.VerticalAlignment = VerticalAlignment.Center;
+        priced.HorizontalAlignment = HorizontalAlignment.Right;
+        priced.TextAlignment = TextAlignment.Right;
+        cells.Add(priced);
 
         return ListRow.Dress(new Border { Child = layout.Row(cells) });
     }
+
+    private static string Count(long figure) => figure.ToString("N0", CultureInfo.InvariantCulture);
 
     private static string Ago(TimeSpan old) => old switch
     {
@@ -470,7 +660,7 @@ public sealed class RouteMarketPage : UserControl
         _ => $"{old.TotalDays / 7:0} weeks ago",
     };
 
-    /// <summary>The Station column: the name, and a copy glyph for the system it names (#157).</summary>
+    /// <summary>The Station column: the station in White, its system in A or Cyan where the Commander is, and a copy glyph for the system (#157).</summary>
     private Control StationCell(string station, string system)
     {
         // The name takes what the copy glyph leaves, so a long one trims rather than running under it.
@@ -478,7 +668,7 @@ public sealed class RouteMarketPage : UserControl
 
         if (_copy is { } copy)
         {
-            var glyph = D47.App.Controls.CopyGlyph.For(system, copy);
+            var glyph = CopyGlyph.For(system, copy);
             glyph.VerticalAlignment = VerticalAlignment.Center;
             glyph.Margin = new Thickness(CopyGap, 0, 0, 0);
 
@@ -486,8 +676,18 @@ public sealed class RouteMarketPage : UserControl
             cells.Children.Add(glyph);
         }
 
-        var name = Cell($"{station} ({system})", ThemeManager.WhiteKey);
-        cells.Children.Add(name);
+        var name = new Run(station);
+        var place = new Run($" ({system})");
+        ThemeInk.Bind(name, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(place, TextElement.ForegroundProperty, RoutingKit.SystemKey(system, _here()));
+
+        cells.Children.Add(new TextBlock
+        {
+            FontSize = TypeScale.Secondary,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center,
+            Inlines = [name, place],
+        });
 
         return cells;
     }
@@ -498,30 +698,14 @@ public sealed class RouteMarketPage : UserControl
     /// <summary>Whether any commodity was asked for by the tonne, so the answer has a load to price.</summary>
     private static bool ByTheTonne(CommodityPosting posting) => posting.Query.Wants.Any(want => want.Tonnes is not null);
 
-    private static Control Lines(IEnumerable<string> lines)
-    {
-        var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-
-        foreach (var line in lines)
-        {
-            stack.Children.Add(Cell(line));
-        }
-
-        return stack;
-    }
-
-    private static Control Cell(string text, bool muted = false) =>
-        Cell(text, muted ? ThemeManager.GreyKey : ThemeManager.AKey);
-
-    private static Control Cell(string text, string key)
-    {
-        var block = RoutingKit.Ink(text, TypeScale.Secondary, key);
-
-        block.TextTrimming = TextTrimming.CharacterEllipsis;
-        block.VerticalAlignment = VerticalAlignment.Center;
-
-        return block;
-    }
+    /// <summary>A figure in mono, right-aligned in its column.</summary>
+    private static TextBlock Figure(string text, string key = ThemeManager.AKey, double size = TypeScale.Secondary) =>
+        Typeset.Mono(
+            text, size, key,
+            trimming: TextTrimming.CharacterEllipsis,
+            vertical: VerticalAlignment.Center,
+            horizontal: HorizontalAlignment.Right,
+            align: TextAlignment.Right);
 
     /// <summary>Removes a control from whatever panel currently holds it, if any.</summary>
     private static void Detach(Control control)
@@ -532,20 +716,12 @@ public sealed class RouteMarketPage : UserControl
         }
     }
 
-    private static Control Labelled(
-        string label,
-        Control box,
-        D47.App.Controls.FieldNeed need = D47.App.Controls.FieldNeed.Optional)
+    private static Control Labelled(string label, Control box)
     {
         var stack = new StackPanel { Spacing = 3 };
 
-        stack.Children.Add(D47.App.Controls.FormField.Label(label, need));
+        stack.Children.Add(FormField.Label(label, FieldNeed.Optional));
         stack.Children.Add(box);
-
-        if (box is TextBox typed)
-        {
-            D47.App.Controls.FormField.Announce(typed, label, need);
-        }
 
         return stack;
     }

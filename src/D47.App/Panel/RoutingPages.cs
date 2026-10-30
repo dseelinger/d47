@@ -223,7 +223,9 @@ public static class RoutingPages
                 surface.LookupsEnabled ?? (() => false),
                 surface.OpenSettings,
                 Copy(surface),
-                columnWidths)
+                columnWidths,
+                surface.Here,
+                surface.SuggestionPause)
             : Missing("Market lookups are not available on this surface.");
 
     private static Control BestCargo(RoutingSurface surface, PanelNavigator nav, ColumnWidthMemory? columnWidths) =>

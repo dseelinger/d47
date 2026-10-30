@@ -803,8 +803,9 @@ When no station has them all, the answer says how many had each one:
 ```
 
 A rare good in a list is refused when buying, with its one station named, because a radius search
-will not find that station; ask for it on its own. When selling, it is searched like any other commodity. The
-Navigation tab's market table lists every commodity on each station's row, with its price and stock.
+will not find that station; ask for it on its own. When selling, it is searched like any other commodity. On
+the Navigation tab's Market page, each commodity is added from a type-ahead as a tile with its tonnes, up to
+five. The market table gives each commodity a column with its price over its stock, then the total.
 
 **Commodity prices come from a second host** ([#350](https://github.com/dseelinger/d47/issues/350)).
 Everything else on this page is spansh; asking where to buy or sell one named commodity goes to

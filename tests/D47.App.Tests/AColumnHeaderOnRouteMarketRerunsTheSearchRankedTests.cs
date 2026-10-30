@@ -67,7 +67,7 @@ public sealed class AColumnHeaderOnRouteMarketRerunsTheSearchRankedTests
         public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
-    private static (PanelView Panel, Window Window, Trade Trade) Furnished(TradeSide side = TradeSide.Buying)
+    private static (PanelView Panel, Window Window, Trade Trade) Furnished(TradeSide side = TradeSide.Buying, int? tonnes = null)
     {
         var settings = TestSurface.Settings();
         settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
@@ -76,7 +76,7 @@ public sealed class AColumnHeaderOnRouteMarketRerunsTheSearchRankedTests
         var board = new CommodityBoard();
         var registry = CapabilityRegistry.Build([GalaxyCapability.Create(new NoGalaxy(), () => "Sol", settings, trade, board: board)]);
 
-        var query = new CommodityQuery("Tritium", side, MaxDistance: 100);
+        var query = new CommodityQuery("Tritium", side, Tonnes: tonnes, MaxDistance: 100);
         var origin = Market("Home", 0, 0);
         board.Post(new CommodityPosting(
             query,
@@ -160,6 +160,18 @@ public sealed class AColumnHeaderOnRouteMarketRerunsTheSearchRankedTests
         Assert.False(trade.Asked[^1].Descending);
         Assert.True(trade.Asked[^1].Reversed);
         Assert.True(trade.Asked[^1].Side == TradeSide.Selling);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PressingAHeaderAsksAgainForTheCommodityWithItsTonnage()
+    {
+        var (panel, window, trade) = Furnished(tonnes: 700);
+
+        Press(panel, "MarketHead.Distance");
+
+        Assert.Equal([new CommodityWant("Tritium", 700)], trade.Asked[^1].Wants);
 
         window.Close();
     }
