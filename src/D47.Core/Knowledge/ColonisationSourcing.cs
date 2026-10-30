@@ -58,11 +58,27 @@ public sealed record SourcingPlan(
     public bool IsComplete => Unpriced.Count == 0 && Shortfalls.Count == 0;
 }
 
-/// <summary>Where to buy everything one construction site still needs (Phase 50).</summary>
+/// <summary>One commodity to buy and how many tonnes of it.</summary>
+/// <param name="Name">The spelling shown to a Commander.</param>
+/// <param name="Symbol">The folded symbol, or null to fold the name.</param>
+/// <param name="Tonnes">Tonnes still to buy; zero or less is skipped.</param>
+public sealed record SourcingNeed(string Name, string? Symbol, int Tonnes);
+
+/// <summary>How stations that clear the same number of commodities are ordered.</summary>
+public enum SourcingRank
+{
+    /// <summary>Coverage, then total cost, then distance.</summary>
+    Cheapest,
+
+    /// <summary>Coverage, then distance, then total cost.</summary>
+    Nearest,
+}
+
+/// <summary>Where to buy a list of commodities, such as what one construction site still needs (Phase 50).</summary>
 public static class ColonisationSourcing
 {
     /// <summary>Builds a plan.</summary>
-    /// <param name="outstanding">What the site still needs.</param>
+    /// <param name="outstanding">What is still to buy.</param>
     /// <param name="markets">
     /// Everything in range, already aged out by whoever knew the time.
     /// </param>
@@ -71,18 +87,20 @@ public static class ColonisationSourcing
     /// <param name="maxStops">
     /// A ceiling on stations, so an answer stays one a Commander can act on.
     /// </param>
+    /// <param name="rank">How equally covering stations are ordered.</param>
     public static SourcingPlan Plan(
-        IReadOnlyList<ConstructionResource> outstanding,
+        IReadOnlyList<SourcingNeed> outstanding,
         IReadOnlyList<MarketSnapshot> markets,
         MarketSnapshot? origin,
         bool largePadOnly = false,
-        int maxStops = 6)
+        int maxStops = 6,
+        SourcingRank rank = SourcingRank.Cheapest)
     {
         var wanted = new Dictionary<string, Want>(StringComparer.Ordinal);
 
         foreach (var resource in outstanding)
         {
-            if (resource.Remaining <= 0)
+            if (resource.Tonnes <= 0)
             {
                 continue;
             }
@@ -95,7 +113,7 @@ public static class ColonisationSourcing
                 continue;
             }
 
-            wanted[symbol] = new Want(symbol, resource.Name, resource.Remaining);
+            wanted[symbol] = new Want(symbol, resource.Name, resource.Tonnes);
         }
 
         if (wanted.Count == 0)
@@ -113,7 +131,7 @@ public static class ColonisationSourcing
 
         while (outstandingBySymbol.Count > 0 && stops.Count < maxStops)
         {
-            var best = Best(usable, outstandingBySymbol, wanted, origin, stops);
+            var best = Best(usable, outstandingBySymbol, wanted, origin, stops, rank);
 
             if (best is null)
             {
@@ -166,7 +184,8 @@ public static class ColonisationSourcing
         IReadOnlyDictionary<string, int> left,
         IReadOnlyDictionary<string, Want> wanted,
         MarketSnapshot? origin,
-        IReadOnlyList<SourcingStop> already)
+        IReadOnlyList<SourcingStop> already,
+        SourcingRank rank)
     {
         SourcingStop? best = null;
 
@@ -202,7 +221,7 @@ public static class ColonisationSourcing
 
             var stop = new SourcingStop(market, lots, origin?.DistanceTo(market) ?? 0);
 
-            if (best is null || Better(stop, best))
+            if (best is null || Better(stop, best, rank))
             {
                 best = stop;
             }
@@ -210,12 +229,21 @@ public static class ColonisationSourcing
 
         return best;
 
-        static bool Better(SourcingStop candidate, SourcingStop incumbent) =>
-            candidate.Covers != incumbent.Covers
-                ? candidate.Covers > incumbent.Covers
+        static bool Better(SourcingStop candidate, SourcingStop incumbent, SourcingRank rank)
+        {
+            if (candidate.Covers != incumbent.Covers)
+            {
+                return candidate.Covers > incumbent.Covers;
+            }
+
+            return rank == SourcingRank.Nearest
+                ? candidate.Distance != incumbent.Distance
+                    ? candidate.Distance < incumbent.Distance
+                    : candidate.Total < incumbent.Total
                 : candidate.Total != incumbent.Total
                     ? candidate.Total < incumbent.Total
                     : candidate.Distance < incumbent.Distance;
+        }
     }
 
     /// <summary>A market's quote for one outstanding row.</summary>

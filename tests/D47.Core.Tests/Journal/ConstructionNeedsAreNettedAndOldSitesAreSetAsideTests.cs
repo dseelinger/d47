@@ -220,6 +220,6 @@ public class ConstructionNeedsAreNettedAndOldSitesAreSetAsideTests
         var asked = Assert.Single(trade.Last!.Outstanding);
 
         Assert.Equal("steel", asked.Symbol);
-        Assert.Equal(200, asked.Remaining);
+        Assert.Equal(200, asked.Tonnes);
     }
 }

@@ -7,8 +7,8 @@ namespace D47.Core.Tests.Knowledge;
 /// <summary>Everything one build still needs, and where to buy it.</summary>
 public class ColonisationSourcingTests
 {
-    private static ConstructionResource Needs(string name, int required, int provided = 0, string? symbol = null) =>
-        new(name, required, provided) { Symbol = symbol ?? JournalJson.Symbol(name) };
+    private static SourcingNeed Needs(string name, int required, int provided = 0, string? symbol = null) =>
+        new(name, symbol ?? JournalJson.Symbol(name), Math.Max(0, required - provided));
 
     private static MarketSnapshot Market(
         string station,
@@ -177,6 +177,36 @@ public class ColonisationSourcingTests
         Assert.Equal("Near", Assert.Single(plan.Stops).Market.Station);
     }
 
+    [Fact]
+    public void NearestPrefersTheNearerStationEvenWhenTheFartherIsCheaper()
+    {
+        var plan = ColonisationSourcing.Plan(
+            [Needs("Steel", 10)],
+            [
+                Market("Far and cheap", x: 40, quotes: [("Steel", 100, 100)]),
+                Market("Near and dear", x: 2, quotes: [("Steel", 900, 100)]),
+            ],
+            Origin(),
+            rank: SourcingRank.Nearest);
+
+        Assert.Equal("Near and dear", Assert.Single(plan.Stops).Market.Station);
+    }
+
+    [Fact]
+    public void CheapestPrefersTheCheaperStationEvenWhenTheFartherIsDearer()
+    {
+        var plan = ColonisationSourcing.Plan(
+            [Needs("Steel", 10)],
+            [
+                Market("Far and cheap", x: 40, quotes: [("Steel", 100, 100)]),
+                Market("Near and dear", x: 2, quotes: [("Steel", 900, 100)]),
+            ],
+            Origin(),
+            rank: SourcingRank.Cheapest);
+
+        Assert.Equal("Far and cheap", Assert.Single(plan.Stops).Market.Station);
+    }
+
     /// <summary>
     /// The quantity is the site's remaining need rather than its requirement, and it is capped at what
     /// the station actually holds — a plan promising tonnage that is not there is the arithmetic lying
@@ -290,7 +320,7 @@ public class ColonisationSourcingTests
     public void ARowWithNoSymbolStillJoinsOnItsFoldedName()
     {
         var plan = ColonisationSourcing.Plan(
-            [new ConstructionResource("Steel", 10, 0)],
+            [new SourcingNeed("Steel", null, 10)],
             [Market("Somewhere", quotes: [("Steel", 500, 1000)])],
             Origin());
 

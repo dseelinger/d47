@@ -99,9 +99,8 @@ public sealed record ConstructionNeeds(
         ];
     }
 
-    /// <summary>The row a sourcing search asks for: <see cref="ToBuy"/> still required, none provided.</summary>
-    public ConstructionResource ToSource() =>
-        Resource with { Required = ToBuy, Provided = 0 };
+    /// <summary>The need a sourcing search asks for: <see cref="ToBuy"/> tonnes.</summary>
+    public Knowledge.SourcingNeed ToSource() => new(Resource.Name, Resource.Symbol, ToBuy);
 }
 
 /// <summary>A system the Commander claimed at the colonisation contact.</summary>

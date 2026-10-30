@@ -592,7 +592,7 @@ public sealed record StationQuote(
 public sealed record SourcingSearch(
     string System,
     string? Station,
-    IReadOnlyList<Journal.ConstructionResource> Outstanding,
+    IReadOnlyList<SourcingNeed> Outstanding,
     double MaxDistance = 50,
     bool LargePadOnly = false,
     int MaxStops = 6,

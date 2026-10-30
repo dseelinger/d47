@@ -208,8 +208,8 @@ public class WhereToBuyTheWholeBuildTests
         var (said, trade, _) = await AskAsync(install);
 
         Assert.NotNull(trade.Last);
-        Assert.Equal(400, trade.Last.Outstanding.Single(row => row.Name == "Aluminium").Remaining);
-        Assert.Equal(300, trade.Last.Outstanding.Single(row => row.Name == "Steel").Remaining);
+        Assert.Equal(400, trade.Last.Outstanding.Single(row => row.Name == "Aluminium").Tonnes);
+        Assert.Equal(300, trade.Last.Outstanding.Single(row => row.Name == "Steel").Tonnes);
 
         Assert.Contains("400 tonnes left", said, StringComparison.Ordinal);
         Assert.Contains("300 tonnes left", said, StringComparison.Ordinal);

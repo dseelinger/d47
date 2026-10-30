@@ -647,7 +647,7 @@ public class ArdentCommodityRequestTests
         await service.PlanAsync(trade, TestContext.Current.CancellationToken);
 
         await service.SourceConstructionAsync(
-            new SourcingSearch("Ega", null, [new D47.Core.Journal.ConstructionResource("Steel", 200, 0)]),
+            new SourcingSearch("Ega", null, [new D47.Core.Knowledge.SourcingNeed("Steel", null, 200)]),
             TestContext.Current.CancellationToken);
 
         Assert.NotEmpty(stations.Requests);
@@ -751,7 +751,7 @@ public class ArdentCommodityRequestTests
         using var service = Book(commodities, book);
 
         var answer = await service.SourceConstructionAsync(
-            new SourcingSearch("Ega", null, [new D47.Core.Journal.ConstructionResource("Steel", 200, 0)]),
+            new SourcingSearch("Ega", null, [new D47.Core.Knowledge.SourcingNeed("Steel", null, 200)]),
             TestContext.Current.CancellationToken);
 
         // The station search answered with nothing, so the one market considered is theirs.
