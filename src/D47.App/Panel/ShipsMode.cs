@@ -173,8 +173,35 @@ public sealed class ShipsMode(
                     ? EntryVerdict.No($"I do not know a ship called “{value}”.")
                     : EntryVerdict.Ok,
                 Hulls,
-                "Plan this hull"),
+                "Plan this hull")
+            {
+                Columns = HullColumns,
+            },
             hull => done(intend(hull)));
+
+    /// <summary>The hull picker's columns: the hull, its landing pad size, and its price.</summary>
+    internal static IReadOnlyList<EntryColumn> HullColumns { get; } =
+    [
+        new("Ship", hull => hull),
+        new("Size", hull => PadWord(EliteSpecifications.Ship(hull)?.Pad), hull => PadRank(EliteSpecifications.Ship(hull)?.Pad)),
+        new("Price", hull => BgsWorkPage.Credits(EliteSpecifications.Ship(hull)?.Cost), hull => EliteSpecifications.Ship(hull)?.Cost, Right: true),
+    ];
+
+    private static string PadWord(string? pad) => PadRank(pad) switch
+    {
+        1 => "Small",
+        2 => "Medium",
+        3 => "Large",
+        _ => "—",
+    };
+
+    private static long? PadRank(string? pad) => pad?.ToLowerInvariant() switch
+    {
+        "small" => 1,
+        "medium" => 2,
+        "large" => 3,
+        _ => null,
+    };
 
     /// <summary>
     /// Every hull the specification table can measure, alphabetically — the list the picker offers and,

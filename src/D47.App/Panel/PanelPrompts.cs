@@ -872,6 +872,9 @@ public sealed class PanelPrompts : IHearsText
         private readonly TextBlock _empty;
         private readonly Button _commit;
         private readonly TextBlock _state;
+        private readonly SortHeader<string>? _sort;
+        private readonly TableLayout? _table;
+        private readonly Border? _header;
 
         public PickPage(PanelPrompts host, EntryRequest request, Action<string> done)
         {
@@ -890,9 +893,25 @@ public sealed class PanelPrompts : IHearsText
 
             AutomationProperties.SetName(_filter, "Filter");
 
+            if (request.Columns is { Count: > 0 } columns)
+            {
+                _sort = new SortHeader<string>("PickHead", PickTable.SortColumns(columns), new SortOrder(0, SortDirection.Ascending));
+                _table = new TableLayout(
+                    "Pick",
+                    [.. columns.Select((column, i) => new TableColumn(column.Label, i == 0 ? ColumnFit.Fill : ColumnFit.Content))],
+                    spacing: 16);
+                _header = new Border { Margin = new Thickness(12, 0, 12, 2) };
+                _sort.Changed += () =>
+                {
+                    DrawHeader();
+                    Narrow();
+                };
+                DrawHeader();
+            }
+
             _list = new ListBox
             {
-                ItemsSource = _suggestions,
+                ItemsSource = Shown(),
                 SelectionMode = SelectionMode.Single,
                 FontSize = TypeScale.Body,
                 MinWidth = 300,
@@ -901,7 +920,8 @@ public sealed class PanelPrompts : IHearsText
                 // panel is never told its viewport and realizes no rows there.
                 ItemsPanel = new Avalonia.Controls.Templates.FuncTemplate<Avalonia.Controls.Panel?>(() => new StackPanel()),
 
-                ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((value, _) => Row(value, request)),
+                ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((value, _) =>
+                    _table is null ? Row(value, request) : TableRow(value)),
 
                 // Opens on what was already said or typed, and on nothing otherwise.
                 SelectedItem = _suggestions.FirstOrDefault(value =>
@@ -909,6 +929,13 @@ public sealed class PanelPrompts : IHearsText
             };
 
             AutomationProperties.SetName(_list, request.Word);
+
+            // The rows take the list's width, as the header does, so both lay out the same columns.
+            if (_table is not null)
+            {
+                ScrollViewer.SetHorizontalScrollBarVisibility(_list, ScrollBarVisibility.Disabled);
+                _list.LayoutUpdated += (_, _) => FitHeader();
+            }
 
             _empty = Muted("Nothing matches that. Clear the filter, or say it.");
             _empty.IsVisible = false;
@@ -972,6 +999,13 @@ public sealed class PanelPrompts : IHearsText
             DockPanel.SetDock(footer, Dock.Bottom);
 
             body.Children.Add(_filter);
+
+            if (_header is not null)
+            {
+                DockPanel.SetDock(_header, Dock.Top);
+                body.Children.Add(_header);
+            }
+
             body.Children.Add(footer);
             body.Children.Add(new Avalonia.Controls.Panel { Children = { _list, _empty } });
 
@@ -1039,15 +1073,74 @@ public sealed class PanelPrompts : IHearsText
             return stack;
         }
 
-        /// <summary>Shows only the suggestions holding the filter's text, keeping the highlight where it is still shown.</summary>
-        private void Narrow()
+        /// <summary>The header row, redrawn so the sorted column's arrow follows the sort.</summary>
+        private void DrawHeader()
+        {
+            var grid = _table!.Header(_sort!, [.. _request.Columns!.Select(column => column.Right ? HorizontalAlignment.Right : HorizontalAlignment.Left)]);
+            grid.MinHeight = TypeScale.MinimumTarget;
+            _header!.Child = grid;
+        }
+
+        /// <summary>Narrows the header by the list's scroll bar, so its columns stand over the rows' columns.</summary>
+        private void FitHeader()
+        {
+            if (_list.Scroll is not { } scroll || _list.Bounds.Width <= 0 || scroll.Viewport.Width <= 0)
+            {
+                return;
+            }
+
+            var right = 12 + Math.Max(0, _list.Bounds.Width - scroll.Viewport.Width);
+
+            if (Math.Abs(_header!.Margin.Right - right) > 0.5)
+            {
+                _header.Margin = new Thickness(12, 0, right, 2);
+            }
+        }
+
+        /// <summary>A suggestion as a table row: the first column drawn as <see cref="Row"/> draws it, the rest one cell each.</summary>
+        private Control TableRow(string? value)
+        {
+            var columns = _request.Columns!;
+            var cells = new List<Control> { Row(value, _request) };
+
+            foreach (var column in columns.Skip(1))
+            {
+                var text = value is null ? string.Empty : column.Text(value);
+
+                cells.Add(column.Right
+                    ? ListRow.NameInk(new TextBlock
+                    {
+                        Text = text,
+                        FontFamily = new FontFamily(Fonts.MonoFamily),
+                        FontSize = TypeScale.Body,
+                        TextAlignment = TextAlignment.Right,
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        VerticalAlignment = VerticalAlignment.Center,
+                    })
+                    : ListRow.Aside(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center }));
+            }
+
+            return _table!.Row(cells);
+        }
+
+        /// <summary>The suggestions holding the filter's text, in the header's sort.</summary>
+        private IReadOnlyList<string> Shown()
         {
             var query = _filter.Text?.Trim() ?? string.Empty;
-            var kept = _list.SelectedItem as string;
+            var columns = _request.Columns ?? [];
 
             var shown = query.Length == 0
                 ? _suggestions
-                : _suggestions.Where(value => value.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+                : _suggestions.Where(value => PickTable.Matches(value, query, columns)).ToList();
+
+            return _sort?.Sort(shown) ?? shown;
+        }
+
+        /// <summary>Shows only the suggestions holding the filter's text, keeping the highlight where it is still shown.</summary>
+        private void Narrow()
+        {
+            var kept = _list.SelectedItem as string;
+            var shown = Shown();
 
             _list.ItemsSource = shown;
 
@@ -1103,6 +1196,23 @@ public sealed class PanelPrompts : IHearsText
             _host.Attend(null);
             _done(value);
         }
+    }
+
+    /// <summary>The sort and filter of a picker drawn as a table, over its suggestions.</summary>
+    internal static class PickTable
+    {
+        /// <summary>A sort column per entry column: by figure where it has one, smallest first, otherwise A–Z.</summary>
+        public static IReadOnlyList<SortColumn<string>> SortColumns(IReadOnlyList<EntryColumn> columns) =>
+        [
+            .. columns.Select(column => column.Figure is { } figure
+                ? SortColumn<string>.Figure(column.Label, figure, SortDirection.Ascending)
+                : SortColumn<string>.Text(column.Label, column.Text)),
+        ];
+
+        /// <summary>Whether <paramref name="query"/> is in the suggestion or in any column's text for it.</summary>
+        public static bool Matches(string value, string query, IReadOnlyList<EntryColumn> columns) =>
+            value.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || columns.Any(column => column.Text(value).Contains(query, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>

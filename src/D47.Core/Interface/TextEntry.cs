@@ -79,7 +79,23 @@ public sealed record EntryRequest(
 
     /// <summary>Opens with the keys drawn, so what is heard is spelled onto them.</summary>
     public bool Spelled { get; init; }
+
+    /// <summary>
+    /// Draws <see cref="Suggestions"/> as a table with these columns, sortable by a header press and filtered
+    /// across every column's text. The suggestions are given in the first column's order, A–Z. Null draws
+    /// the plain list.
+    /// </summary>
+    public IReadOnlyList<EntryColumn>? Columns { get; init; }
 }
+
+/// <summary>One column of a picker drawn as a table, read per suggestion.</summary>
+/// <param name="Label">The header.</param>
+/// <param name="Text">What the column shows for a suggestion.</param>
+/// <param name="Figure">
+/// What the column sorts on, smallest first, with a null figure last either way; null sorts on <paramref name="Text"/>.
+/// </param>
+/// <param name="Right">Right-aligned, in mono numbers.</param>
+public sealed record EntryColumn(string Label, Func<string, string> Text, Func<string, long?>? Figure = null, bool Right = false);
 
 /// <summary>One value offered as a button: what it says, and what pressing it commits.</summary>
 public sealed record EntryButton(string Label, string Value)

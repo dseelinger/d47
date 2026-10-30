@@ -1,5 +1,6 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -221,5 +222,70 @@ public class AHullIsPickedRatherThanGuessedTests
         Assert.DoesNotContain(
             panel.GetVisualDescendants().OfType<TextBlock>(),
             block => block.Text?.Contains("not in your fleet", StringComparison.OrdinalIgnoreCase) == true);
+    }
+
+    /// <summary>The picker is drawn as a table of ship, size and price.</summary>
+    [AvaloniaFact]
+    public void TheHullsAreDrawnAsATable()
+    {
+        using var look = AppLook.Put();
+        var (panel, _, pick) = Asking();
+
+        var names = panel.GetVisualDescendants().OfType<Control>().Select(control => control.Name).ToHashSet();
+
+        Assert.Contains("PickHead.Ship", names);
+        Assert.Contains("PickHead.Size", names);
+        Assert.Contains("PickHead.Price", names);
+
+        var row = pick.ContainerFromIndex(0)!.GetVisualDescendants().OfType<D47.App.Theming.TableGrid>().Single();
+
+        Assert.Equal(3, row.Children.Count);
+
+        using var frame = ((Window)TopLevel.GetTopLevel(panel)!).CaptureRenderedFrame()!;
+        frame.SaveCapture("hull-picker.png");
+    }
+
+    /// <summary>Pressing Price sorts cheapest first, keeps the highlight, and plans nothing.</summary>
+    [AvaloniaFact]
+    public void PressingPriceSortsCheapestFirstAndPlansNothing()
+    {
+        using var look = AppLook.Put();
+        var (panel, ships, pick) = Asking();
+
+        pick.SelectedItem = "Anaconda";
+        Dispatcher.UIThread.RunJobs();
+
+        panel.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "PickHead.Price")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var offered = Offered(pick);
+        var prices = offered.Select(hull => EliteSpecifications.Ship(hull)!.Cost).ToList();
+        var priced = prices.TakeWhile(cost => cost is not null).ToList();
+
+        Assert.Equal("Sidewinder", offered[0]);
+        Assert.Equal(priced.Order(), priced);
+        Assert.All(prices.Skip(priced.Count), cost => Assert.Null(cost));
+        Assert.Equal("Anaconda", pick.SelectedItem);
+        Assert.Empty(ships.Store.Builds);
+        Assert.True(panel.Nav.Modal);
+
+        using var frame = ((Window)TopLevel.GetTopLevel(panel)!).CaptureRenderedFrame()!;
+        frame.SaveCapture("hull-picker-by-price.png");
+    }
+
+    /// <summary>Typing a pad size narrows the list to hulls of that size.</summary>
+    [AvaloniaFact]
+    public void TypingASizeNarrowsToThatSize()
+    {
+        var (panel, _, pick) = Asking();
+
+        Filter(panel).Text = "small";
+        Dispatcher.UIThread.RunJobs();
+
+        var offered = Offered(pick);
+
+        Assert.Contains("Sidewinder", offered);
+        Assert.DoesNotContain("Anaconda", offered);
     }
 }
