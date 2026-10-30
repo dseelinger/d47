@@ -9,6 +9,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Capabilities;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -22,6 +23,12 @@ public sealed class RoutePlanResultPage : UserControl
     private readonly Func<string?>? _here;
     private readonly Func<string, string?>? _offDuty;
     private readonly RoutePlanKind _kind;
+    private readonly OutfittingPlotter? _plotter;
+    private readonly MaxReportAge _age = new();
+    private readonly StackPanel _searchBar;
+    private readonly Button _search = new() { Content = "Search" };
+    private readonly Button _stop = new() { Content = "Cancel", IsVisible = false };
+    private readonly StatusLine _searchStatus = RoutingKit.Status();
     private readonly StackPanel _stack = new() { Spacing = 2 };
 
     public const string ShowOnGalaxyMapWords = "Show on galaxy map";
@@ -59,6 +66,7 @@ public sealed class RoutePlanResultPage : UserControl
     };
 
     private StoredRoutePlan? _planSeen;
+    private DateTimeOffset? _ageShownFor;
     private string? _offDutySeen;
 
     public RoutePlanResultPage(
@@ -67,8 +75,16 @@ public sealed class RoutePlanResultPage : UserControl
         RoutePlanBook? plans = null,
         Func<string?>? here = null,
         Func<string, string?>? offDuty = null,
-        Action<RoutePlanKind>? showOnGalaxyMap = null)
+        Action<RoutePlanKind>? showOnGalaxyMap = null,
+        OutfittingPlotter? outfittingPlotter = null)
     {
+        _plotter = outfittingPlotter;
+        _searchBar = new StackPanel
+        {
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 0, 10),
+            Children = { _age.Field("Max report age"), RoutingKit.Actions(_search, _stop), _searchStatus },
+        };
         _offDuty = offDuty;
         _copy = copy;
         _plans = plans;
@@ -98,6 +114,16 @@ public sealed class RoutePlanResultPage : UserControl
         body.Children.Add(left);
         body.Children.Add(list);
         Content = body;
+
+        RoutingKit.RunPlot(
+            _search,
+            _stop,
+            _searchStatus,
+            TimeSpan.FromSeconds(70),
+            "Searching…",
+            () => _planSeen?.Outfitting is not null && _plotter?.LookupsEnabled() == true,
+            token => _plotter!.Replot(_planSeen!.Outfitting!, _age.Value, token),
+            _ => { });
 
         Draw(plan);
     }
@@ -160,6 +186,24 @@ public sealed class RoutePlanResultPage : UserControl
             _stack.Children.Add(note);
         }
 
+        if (plan.Outfitting is { } searched && _plotter is not null)
+        {
+            if (_ageShownFor != plan.PlottedAt)
+            {
+                _age.Value = searched.MaxReportAgeHours ?? MaxReportAge.Any;
+                _ageShownFor = plan.PlottedAt;
+                _searchStatus.Clear();
+            }
+
+            var enabled = _plotter.LookupsEnabled();
+
+            _search.IsEnabled = enabled && !_stop.IsVisible;
+            ToolTip.SetShowOnDisabled(_search, true);
+            ToolTip.SetTip(_search, enabled ? null : OutfittingPlotter.SwitchedOff);
+
+            _stack.Children.Add(_searchBar);
+        }
+
         if (plan.Outfitting is { StorageChecked: false })
         {
             _stack.Children.Add(new Notice(NoticeLevel.Warning, inline: true)
@@ -189,7 +233,8 @@ public sealed class RoutePlanResultPage : UserControl
         group.Children.Add(ListRow.Head("Not found"));
 
         var reach = route.MaxDistance is { } distance ? $"within {distance:N0} ly of " : "near ";
-        var prose = RoutingKit.Prose($"No station {reach}{route.Reference ?? "the start"} sells these.");
+        var recent = route.MaxReportAgeHours is { } hours ? $" reported in the last {MaxReportAge.Label(hours)}" : string.Empty;
+        var prose = RoutingKit.Prose($"No station {reach}{route.Reference ?? "the start"}{recent} sells these.");
         prose.Margin = new Thickness(0, 6, 0, 8);
         group.Children.Add(prose);
 
@@ -455,6 +500,11 @@ public sealed class RoutePlanResultPage : UserControl
         {
             lines.Add(RoutingKit.Values($"buy {item}", state.Reached));
         }
+
+        lines.Add(Caveat(
+            stop.StockLastSeen is { } seen
+                ? $"outfitting reported {seen.ToLocalTime():d MMM yyyy}"
+                : "report date unknown"));
 
         return RoutingKit.Row(lines, stop.System, _copy);
     }

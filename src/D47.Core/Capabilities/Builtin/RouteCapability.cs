@@ -226,6 +226,7 @@ public static class RouteCapability
                     ToolParameter.Flag(
                         "storage_checked",
                         "False when the list was worked out without counting stored modules."),
+                    GalaxyCapability.StationReportAgeParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
                     PlotOutfittingAsync(galaxy, commander, settings, plans, now, arguments, cancellationToken),
@@ -884,22 +885,34 @@ public static class RouteCapability
 
         var maxDistance = arguments.Double("max_distance") is > 0 and var distance ? distance : 50;
 
+        if (GalaxyCapability.ReportAge(
+                arguments,
+                "max_report_age_hours",
+                out var reportAge,
+                GalaxyCapability.DefaultPriceAgeHours) is { } badAge)
+        {
+            return ToolResult.Error(badAge);
+        }
+
         try
         {
             var stations = await galaxy
-                .FindOutfittersAsync(items, near, maxDistance, pad, cancellationToken)
+                .FindOutfittersAsync(items, near, maxDistance, pad, reportAge, cancellationToken)
                 .ConfigureAwait(false);
 
             var route = OutfittingRoutePlanner.Plan(items, stations, near) with
             {
                 MaxDistance = maxDistance,
                 StorageChecked = arguments.Boolean("storage_checked"),
+                MaxReportAgeHours = reportAge,
+                MinPad = pad,
             };
 
             if (route.Stops.Count == 0)
             {
                 return ToolResult.Ok(
-                    $"No station within {maxDistance:N0} light years of {near} sells {Join(route.NotFound)}.");
+                    $"No station within {maxDistance:N0} light years of {near} sells {Join(route.NotFound)}."
+                    + GalaxyCapability.ReportAgeSaid(reportAge));
             }
 
             var found = route.Wanted - route.NotFound.Count;

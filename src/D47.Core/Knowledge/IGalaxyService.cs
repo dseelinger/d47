@@ -100,13 +100,15 @@ public interface IGalaxyService
 
     /// <summary>
     /// The stations near a system that sell any of the items, nearest first, each with the items it sells.
-    /// Fleet carriers are left out.
+    /// Fleet carriers are left out. Stock reported longer ago than <paramref name="maxReportAgeHours"/> is
+    /// left out; null means any age.
     /// </summary>
     Task<IReadOnlyList<OutfitterStation>> FindOutfittersAsync(
         IReadOnlyList<OutfittingItem> items,
         string referenceSystem,
         double maxDistance,
         PadSize? minPad,
+        int? maxReportAgeHours,
         CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<OutfitterStation>>([]);
 

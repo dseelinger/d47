@@ -24,6 +24,9 @@ public sealed record OutfittingPlotter(
     /// <summary>The tool's search radius when the call names none.</summary>
     private const int Radius = 50;
 
+    /// <summary>The oldest report, in hours, a first plot accepts.</summary>
+    public const int FirstPlotReportAgeHours = 72;
+
     /// <summary>The to-buy block for a build, or null when it needs nothing bought.</summary>
     public LoadoutToBuy? For(ShipBuild build, ShipPurchases purchases)
     {
@@ -61,6 +64,7 @@ public sealed record OutfittingPlotter(
                             ["items"] = string.Join(", ", kinds),
                             ["max_distance"] = Radius.ToString(System.Globalization.CultureInfo.InvariantCulture),
                             ["storage_checked"] = purchases.StorageChecked ? "true" : "false",
+                            ["max_report_age_hours"] = FirstPlotReportAgeHours.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         }),
                         cancellationToken)
                     .ConfigureAwait(true);
@@ -74,6 +78,42 @@ public sealed record OutfittingPlotter(
                         ? RoutingPages.ResultCrumb(RoutePlanKind.Outfitting, after.Headline)
                         : null);
             });
+    }
+
+    /// <summary>Plots <paramref name="route"/> again with the same items, start, radius, pad and storage flag.</summary>
+    /// <param name="reportAgeHours">The oldest report accepted; 0 for any age.</param>
+    public Task<ToolResult> Replot(OutfittingRoute route, int reportAgeHours, CancellationToken cancellationToken)
+    {
+        var items = route.Stops.SelectMany(stop => stop.Items).Concat(route.NotFound).Distinct(StringComparer.Ordinal);
+        var invariant = System.Globalization.CultureInfo.InvariantCulture;
+
+        var arguments = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["items"] = string.Join(", ", items),
+            ["max_report_age_hours"] = reportAgeHours.ToString(invariant),
+        };
+
+        if (route.Reference is { Length: > 0 } reference)
+        {
+            arguments["near"] = reference;
+        }
+
+        if (route.MaxDistance is { } distance)
+        {
+            arguments["max_distance"] = distance.ToString(invariant);
+        }
+
+        if (route.MinPad is { } pad)
+        {
+            arguments["min_pad"] = pad.ToString();
+        }
+
+        if (route.StorageChecked is { } storage)
+        {
+            arguments["storage_checked"] = storage ? "true" : "false";
+        }
+
+        return Registry.InvokeAsync("plot_outfitting_route", new ToolArguments(arguments), cancellationToken);
     }
 
     /// <summary>"6 items to buy: A, 2 × B, C and 2 more."</summary>

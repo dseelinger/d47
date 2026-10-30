@@ -7,6 +7,9 @@ namespace D47.Core.Knowledge;
 public sealed record OutfittingStop(string System, string Station, double? Distance, IReadOnlyList<string> Items)
 {
     public StarPosition? Position { get; init; }
+
+    /// <summary>When the station's outfitting or shipyard was last reported; null when Spansh gave none.</summary>
+    public DateTimeOffset? StockLastSeen { get; init; }
 }
 
 /// <summary>The stations that between them sell what a Commander asked for.</summary>
@@ -20,6 +23,12 @@ public sealed record OutfittingRoute(IReadOnlyList<OutfittingStop> Stops, IReadO
 
     /// <summary>False when the list was worked out without module storage; null when the plotter did not say.</summary>
     public bool? StorageChecked { get; init; }
+
+    /// <summary>The oldest report, in hours, the search accepted; null for any age or a plan stored without it.</summary>
+    public int? MaxReportAgeHours { get; init; }
+
+    /// <summary>The pad size the search insisted on; null for none.</summary>
+    public PadSize? MinPad { get; init; }
 
     /// <summary>How many distinct items the route was asked for.</summary>
     public int Wanted => Stops.Sum(stop => stop.Items.Count) + NotFound.Count;
@@ -93,6 +102,7 @@ public static class OutfittingRoutePlanner
                 [.. next.Buys.Select(item => item.Display)])
             {
                 Position = summary.Position,
+                StockLastSeen = summary.StockLastSeen,
             });
 
             here = summary.Position ?? here;

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+An outfitting route now leaves out stations whose outfitting was last reported more than three days ago. The route's result page (Navigation › Plan) shows that limit in a "Max report age" picker with a Search button beside it, which plots the same items again with the age you pick. Each stop shows "outfitting reported" and its date, or "report date unknown". Asking D47 to plot an outfitting route takes a report age too; 0 hours means any age.
+
 Price and report searches now leave out data older than three days unless you ask otherwise. This covers commodity prices, the trade route pages, and the station, outfitting and module or ship searches, which also open on "3 days". Ask for 0 hours, or pick Any, to search any age. System and signal searches still search any age. A saved trade price age of 30 days is changed to 3 days once, on upgrade; any other saved age is kept.
 
 The limpet reminder is no longer given to a ship with no limpet controller fitted. Any controller counts: collector, prospector, repair, recon, research, hatch breaker, fuel transfer, decontamination or a Multi Limpet Controller. Where d47 cannot tell what is fitted, the reminder is given as before.

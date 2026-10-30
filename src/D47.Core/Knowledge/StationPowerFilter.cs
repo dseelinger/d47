@@ -59,8 +59,9 @@ public sealed class StationPowerFilter(IGalaxyService inner, Func<PowerplayPledg
         string referenceSystem,
         double maxDistance,
         PadSize? minPad,
+        int? maxReportAgeHours,
         CancellationToken cancellationToken) =>
-        inner.FindOutfittersAsync(items, referenceSystem, maxDistance, minPad, cancellationToken);
+        inner.FindOutfittersAsync(items, referenceSystem, maxDistance, minPad, maxReportAgeHours, cancellationToken);
 
     public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
         inner.FindBodiesAsync(query, cancellationToken);

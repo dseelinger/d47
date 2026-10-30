@@ -47,7 +47,7 @@ public static class GalaxyCapability
     /// How stale a quoted price may be when nobody said, in hours — one month, the bound the trade
     /// planner already uses.
     /// </summary>
-    private const int DefaultPriceAgeHours = 72;
+    internal const int DefaultPriceAgeHours = 72;
 
     /// <summary>
     /// The oldest price the search will consider, a year, matching <see cref="TradeQuery"/>'s own
@@ -2420,7 +2420,7 @@ public static class GalaxyCapability
         Description = "Leave out reports older than this many hours, 1 to 8,760. Absent or 0 means any age.",
     };
 
-    private static readonly ToolParameter StationReportAgeParameter = new()
+    internal static readonly ToolParameter StationReportAgeParameter = new()
     {
         Name = "max_report_age_hours",
         Type = ToolParameterType.Integer,
@@ -2431,7 +2431,7 @@ public static class GalaxyCapability
     /// Reads a report age: null hours for none, or an error sentence when out of range. An absent argument
     /// is <paramref name="whenAbsent"/> hours; 0 is any age.
     /// </summary>
-    private static string? ReportAge(ToolArguments arguments, string name, out int? hours, int? whenAbsent = null)
+    internal static string? ReportAge(ToolArguments arguments, string name, out int? hours, int? whenAbsent = null)
     {
         hours = null;
 
@@ -2456,7 +2456,7 @@ public static class GalaxyCapability
     }
 
     /// <summary>The sentence naming the report age bound, or nothing where none applied.</summary>
-    private static string ReportAgeSaid(int? hours) =>
+    internal static string ReportAgeSaid(int? hours) =>
         hours is { } bound ? $" Only reports from the last {Span(bound)} were considered." : string.Empty;
 
     /// <summary>A stretch of hours in the words a Commander would use for it.</summary>

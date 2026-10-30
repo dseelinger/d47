@@ -85,6 +85,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         string referenceSystem,
         double maxDistance,
         PadSize? minPad,
+        int? maxReportAgeHours,
         CancellationToken cancellationToken)
     {
         var wanted = items.Distinct().ToList();
@@ -92,7 +93,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
 
         foreach (var item in wanted)
         {
-            var query = StationQuery.Selling(item, referenceSystem, maxDistance, minPad);
+            var query = StationQuery.Selling(item, referenceSystem, maxDistance, minPad, maxReportAgeHours);
 
             using var content = new StringContent(SpanshRequest.Stations(query, _now()), Encoding.UTF8, "application/json");
             using var document = await SendAsync(

@@ -28,10 +28,13 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
     {
         public List<(IReadOnlyList<OutfittingItem> Items, string Near)> Asked { get; } = [];
 
+        public List<int?> Ages { get; } = [];
+
         public Task<IReadOnlyList<OutfitterStation>> FindOutfittersAsync(
-            IReadOnlyList<OutfittingItem> items, string referenceSystem, double maxDistance, PadSize? minPad, CancellationToken cancellationToken)
+            IReadOnlyList<OutfittingItem> items, string referenceSystem, double maxDistance, PadSize? minPad, int? maxReportAgeHours, CancellationToken cancellationToken)
         {
             Asked.Add((items, referenceSystem));
+            Ages.Add(maxReportAgeHours);
 
             Assert.True(OutfittingItem.TryParse("6A Fuel Scoop", out var scoop, out _));
 
@@ -63,7 +66,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
     }
 
     private sealed record Bench(
-        ItemPage Page, PanelNavigator Nav, Outfitters Galaxy, RoutePlanBook Plans, string BuildId, ShipsMode Mode);
+        ItemPage Page, PanelNavigator Nav, Outfitters Galaxy, RoutePlanBook Plans, string BuildId, ShipsMode Mode, OutfittingPlotter Plotter);
 
     private static Bench Set(bool lookups, bool twoScoops = false)
     {
@@ -115,7 +118,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         var plotter = new OutfittingPlotter(registry, plans, () => lookups, () => game.Active?.Location.StarSystem);
         var mode = new ShipsMode(ships, checklists, () => game.Active, outfitting: plotter);
 
-        return new Bench(new ItemPage(mode, nav, build.Id), nav, galaxy, plans, build.Id, mode);
+        return new Bench(new ItemPage(mode, nav, build.Id), nav, galaxy, plans, build.Id, mode, plotter);
     }
 
     private static Button Plot(Control root) =>
@@ -170,6 +173,8 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
             [RoutingPages.PlanRoot, RoutingPages.ResultPrefix + RoutePlanKind.Outfitting],
             bench.Nav.TrailOf(PanelTab.Navigation).Select(crumb => crumb.Key));
         Assert.False(bench.Plans.Last(RoutePlanKind.Outfitting)!.Outfitting!.StorageChecked);
+        Assert.Equal([72], bench.Galaxy.Ages);
+        Assert.Equal(72, bench.Plans.Last(RoutePlanKind.Outfitting)!.Outfitting!.MaxReportAgeHours);
     }
 
     [AvaloniaFact]
@@ -245,6 +250,160 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
 
         using var frame = window.CaptureRenderedFrame()!;
         frame.SaveCapture("outfitting-result.png");
+    }
+
+    private static OutfittingRoute SeedRoute(int? age) => new(
+        [new OutfittingStop("Eravate", "Ackerman Market", 12.4, ["6A Fuel Scoop"])
+        {
+            StockLastSeen = new DateTimeOffset(2026, 10, 12, 8, 0, 0, TimeSpan.Zero),
+        }],
+        ["1H Guardian FSD Booster"])
+    {
+        Reference = "LHS 3447",
+        MaxDistance = 50,
+        MaxReportAgeHours = age,
+        StorageChecked = true,
+    };
+
+    private static List<string> Texts(Control root) =>
+        [.. root.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
+
+    private static string PickerValue(Control root) =>
+        string.Concat(root.GetVisualDescendants().OfType<D47.App.Controls.InlinePicker>().Single()
+            .GetVisualDescendants().OfType<TextBlock>().Single(block => block.Name == "InlinePickerValue")
+            .Inlines!.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text));
+
+    private static Button? SearchButton(Control root) =>
+        root.GetVisualDescendants().OfType<Button>().SingleOrDefault(button => button.Content as string == "Search");
+
+    private static void Click(Button button) => button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+    private static RoutePlanResultPage ResultPage(Bench bench) =>
+        new(bench.Plans.Last(RoutePlanKind.Outfitting)!, plans: bench.Plans, outfittingPlotter: bench.Plotter);
+
+    [AvaloniaFact]
+    public void TheOutfittingResultShowsItsAgeASearchButtonAndEachStopsReportDate()
+    {
+        using var kit = AppLook.ControlKit();
+        var bench = Set(lookups: true);
+        bench.Plans.Record(SeedRoute(72), "1 stop for 1 of 2 items", new DateTimeOffset(2026, 10, 28, 19, 42, 0, TimeSpan.Zero));
+
+        var page = ResultPage(bench);
+        var window = Show(page);
+
+        using (var frame = window.CaptureRenderedFrame()!)
+        {
+            frame.SaveCapture("outfitting-result-with-search.png");
+        }
+
+        var texts = Texts(page);
+
+        Assert.NotNull(SearchButton(page));
+        Assert.Equal("3 days", PickerValue(page));
+        Assert.Contains("outfitting reported 12 Oct 2026", texts);
+        Assert.Contains("No station within 50 ly of LHS 3447 reported in the last 3 days sells these.", texts);
+    }
+
+    [AvaloniaFact]
+    public void AStopWithNoReportDateSaysSo()
+    {
+        using var kit = AppLook.ControlKit();
+        var bench = Set(lookups: true);
+        var route = new OutfittingRoute([new OutfittingStop("Eravate", "Ackerman Market", 12.4, ["6A Fuel Scoop"])], []);
+        bench.Plans.Record(route, "1 stop", default);
+
+        var page = ResultPage(bench);
+        Show(page);
+
+        Assert.Contains("report date unknown", Texts(page));
+    }
+
+    [AvaloniaFact]
+    public void AnOutfittingPlanStoredWithNoAgeShowsAnyInThePicker()
+    {
+        using var kit = AppLook.ControlKit();
+        var bench = Set(lookups: true);
+        bench.Plans.Record(SeedRoute(null), "1 stop", default);
+
+        var page = ResultPage(bench);
+        Show(page);
+
+        Assert.Equal("Any", PickerValue(page));
+    }
+
+    [AvaloniaFact]
+    public void OtherKindsOfPlanShowNeitherThePickerNorSearch()
+    {
+        using var kit = AppLook.ControlKit();
+        var bench = Set(lookups: true);
+        var plan = new StoredRoutePlan { Kind = RoutePlanKind.Trade, Headline = "Trade" };
+
+        var page = new RoutePlanResultPage(plan, plans: bench.Plans, outfittingPlotter: bench.Plotter);
+        Show(page);
+
+        Assert.Null(SearchButton(page));
+        Assert.Empty(page.GetVisualDescendants().OfType<D47.App.Controls.InlinePicker>());
+    }
+
+    [AvaloniaFact]
+    public async Task SearchPlotsTheSamePlanAgainWithThePickedAgeAndRedraws()
+    {
+        using var kit = AppLook.ControlKit();
+        var bench = Set(lookups: true);
+        bench.Plans.Record(SeedRoute(72), "old", new DateTimeOffset(2026, 10, 28, 19, 42, 0, TimeSpan.Zero));
+        var before = bench.Plans.Last(RoutePlanKind.Outfitting);
+
+        var page = ResultPage(bench);
+        Show(page);
+
+        var picker = page.GetVisualDescendants().OfType<D47.App.Controls.InlinePicker>().Single();
+        Click(picker.GetVisualDescendants().OfType<Button>().Single(button => button.Name == D47.App.Controls.InlinePicker.ButtonName));
+        Dispatcher.UIThread.RunJobs();
+        Click(picker.GetVisualDescendants().OfType<Button>().Single(button =>
+            button.Classes.Contains(D47.App.Controls.InlinePicker.OptionClass)
+            && Avalonia.Automation.AutomationProperties.GetName(button) == "Any"));
+        Click(SearchButton(page)!);
+
+        for (var wait = 0; wait < 200 && bench.Galaxy.Ages.Count == 0; wait++)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal<int?[]>([null], [.. bench.Galaxy.Ages]);
+
+        Assert.True(page.Refresh());
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("report date unknown", Texts(page));
+        Assert.DoesNotContain("outfitting reported 12 Oct 2026", Texts(page));
+        Assert.Equal("Any", PickerValue(page));
+
+        var asked = Assert.Single(bench.Galaxy.Asked);
+        Assert.Equal("LHS 3447", asked.Near);
+        Assert.Equal(["6A Fuel Scoop", "1H Guardian FSD Booster"], asked.Items.Select(item => item.Display));
+
+        var after = bench.Plans.Last(RoutePlanKind.Outfitting);
+        Assert.NotSame(before, after);
+        Assert.Null(after!.Outfitting!.MaxReportAgeHours);
+        Assert.Equal(50, after.Outfitting.MaxDistance);
+        Assert.True(after.Outfitting.StorageChecked);
+    }
+
+    [AvaloniaFact]
+    public void WithLookupsOffSearchIsDisabledAndSaysWhy()
+    {
+        using var kit = AppLook.ControlKit();
+        var bench = Set(lookups: false);
+        bench.Plans.Record(SeedRoute(72), "old", default);
+
+        var page = ResultPage(bench);
+        Show(page);
+
+        var search = SearchButton(page)!;
+
+        Assert.False(search.IsEnabled);
+        Assert.Equal(OutfittingPlotter.SwitchedOff, ToolTip.GetTip(search));
     }
 
     [Fact]

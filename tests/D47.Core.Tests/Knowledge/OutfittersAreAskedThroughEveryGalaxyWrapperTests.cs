@@ -14,6 +14,7 @@ public class OutfittersAreAskedThroughEveryGalaxyWrapperTests
             string referenceSystem,
             double maxDistance,
             PadSize? minPad,
+            int? maxReportAgeHours,
             CancellationToken cancellationToken)
         {
             Asked.Add($"{string.Join("+", items)} near {referenceSystem} within {maxDistance} on {minPad}");
@@ -47,7 +48,7 @@ public class OutfittersAreAskedThroughEveryGalaxyWrapperTests
         var names = new GalaxySearchNames(new StationPowerFilter(inner, () => null));
 
         var found = await ((IGalaxyService)names).FindOutfittersAsync(
-            [scoop], "Sol", 30, PadSize.Medium, TestContext.Current.CancellationToken);
+            [scoop], "Sol", 30, PadSize.Medium, null, TestContext.Current.CancellationToken);
 
         Assert.Equal("Galileo", Assert.Single(found).Station.Name);
         Assert.Equal(["Fuel Scoop near Sol within 30 on Medium"], inner.Asked);

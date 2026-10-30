@@ -696,9 +696,10 @@ public sealed record StationQuery
     public const int OutfitterSearchSize = 25;
 
     /// <summary>The stations near a system that sell one item, carriers left out.</summary>
-    public static StationQuery Selling(OutfittingItem item, string referenceSystem, double maxDistance, PadSize? minPad) => new()
+    public static StationQuery Selling(OutfittingItem item, string referenceSystem, double maxDistance, PadSize? minPad, int? maxReportAgeHours) => new()
     {
         ReferenceSystem = referenceSystem.Trim(),
+        MaxReportAgeHours = maxReportAgeHours,
         Modules = item.IsShip
             ? []
             : [new ModuleRequirement(item.Name, item.Class?.ToString(CultureInfo.InvariantCulture), item.Rating)],

@@ -272,7 +272,11 @@ public static class RoutingPages
             return Missing("That plan is no longer here. Plot it again.");
         }
 
-        return new RoutePlanResultPage(plan, Copy(surface), plans, surface.Here, surface.OffDuty, showOnGalaxyMap);
+        var plotter = surface.Registry is { } registry
+            ? new OutfittingPlotter(registry, plans, surface.LookupsEnabled ?? (() => false), surface.Here)
+            : null;
+
+        return new RoutePlanResultPage(plan, Copy(surface), plans, surface.Here, surface.OffDuty, showOnGalaxyMap, plotter);
     }
 
     /// <summary>Copying a system name, wherever one is drawn on this tab.</summary>

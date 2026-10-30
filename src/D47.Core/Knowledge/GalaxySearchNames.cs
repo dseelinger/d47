@@ -53,10 +53,11 @@ public sealed class GalaxySearchNames(IGalaxyService inner) : IGalaxyService
         string referenceSystem,
         double maxDistance,
         PadSize? minPad,
+        int? maxReportAgeHours,
         CancellationToken cancellationToken)
     {
         var found = await inner
-            .FindOutfittersAsync(items, referenceSystem, maxDistance, minPad, cancellationToken)
+            .FindOutfittersAsync(items, referenceSystem, maxDistance, minPad, maxReportAgeHours, cancellationToken)
             .ConfigureAwait(false);
 
         lock (_gate)

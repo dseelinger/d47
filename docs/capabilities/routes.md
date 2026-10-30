@@ -573,7 +573,7 @@ system that sell the whole list between them, and keeps the result as an outfitt
 `plot_next_stop` follows like a trade run.
 
 ```json
-{"type":"object","properties":{"items":{"type":"string","description":"Comma-separated: modules by name with an optional size and rating, and ships, such as \u00225A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\u0022."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"min_pad":{"type":"string","description":"Large, or Medium for at least one medium pad.","enum":["Medium","Large"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"storage_checked":{"type":"boolean","description":"False when the list was worked out without counting stored modules."}},"required":["items"],"additionalProperties":false}
+{"type":"object","properties":{"items":{"type":"string","description":"Comma-separated: modules by name with an optional size and rating, and ships, such as \u00225A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\u0022."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"max_report_age_hours":{"type":"integer","description":"Leave out reports older than this many hours, 1 to 8,760. Default 72, three days; 0 means any age."},"min_pad":{"type":"string","description":"Large, or Medium for at least one medium pad.","enum":["Medium","Large"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"storage_checked":{"type":"boolean","description":"False when the list was worked out without counting stored modules."}},"required":["items"],"additionalProperties":false}
 ```
 
 The planner takes the station that sells most of what is still needed, the nearer one on a tie, up
@@ -581,6 +581,10 @@ to six stops, then visits them nearest-next from the reference system. An item t
 range sells, or that the six stops had no room for, is named as not found. A ship's To buy tile passes `storage_checked` as false when module storage has not been seen, and the stored plan then carries a "Storage not checked" notice. It does not look for the
 cheapest total, because the station search carries no module prices. The answer gives the number of
 stops, the first stop and what to buy there, and the items not found.
+
+Only stock reported within `max_report_age_hours` counts, three days when the argument is left out. The
+stored plan keeps the age, the pad size and each stop's report date, and Navigation › Plan shows the
+age beside a Search button that plots the same list again with another age.
 
 ### Notes for anyone reading the code
 
