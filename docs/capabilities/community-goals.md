@@ -303,5 +303,3 @@ a goal before d47 was watching is not a Commander who has not joined it.
 
 `TierReached` is written as the string `"Tier 3"` and only once the first success tier is met, so
 "no tier reached yet" is a fact rather than a gap.
-
-Findings behind all of this are in [docs/spikes/community-goals.md](../spikes/community-goals.md).

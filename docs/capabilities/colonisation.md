@@ -506,8 +506,7 @@ the shown Commander's key, the Commander name and the figures above while it is 
 the [checklist](checklists.md), beside your ship builds, because a colonisation build is the same
 shape of long-lived intent as an engineering one. There is also no costed facility table anywhere in
 d47: the figures exist only inside GPL-3.0 source or an unlicensed community spreadsheet, so there is
-no licence-clean route to them. See
-[the colonisation spike](https://github.com/dseelinger/d47/blob/main/docs/spikes/colonisation-sources.md).
+no licence-clean route to them.
 
 **Predicting a site's manifest before you have seen it** is the same problem, and for the same
 reason. A site tells d47 what it wants; d47 does not guess.

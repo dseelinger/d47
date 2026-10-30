@@ -271,7 +271,7 @@ charges:
 Measured against the game itself: 78 ingredient comparisons against the `Resources` list on 16 real
 upgrade events, and a zero-remainder cover of 41 material lines across four `ShipLocker` deltas,
 each corroborating the other's leftovers. Every quantity in both tables was observed; nothing is
-extrapolated. See [the finding](https://github.com/dseelinger/d47/blob/main/docs/spikes/journal-corpus-on-foot.md).
+extrapolated.
 
 Shipping the published figures would have quoted you two to three times the real cost of everything
 on foot — and it would have looked right, because it is what every other tool says.

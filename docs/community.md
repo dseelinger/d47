@@ -67,5 +67,5 @@ Fixes and features live in [GitHub Issues](https://github.com/dseelinger/d47/iss
 public and readable by anyone. You are welcome to read it, and you never have to use it — a
 report in Discord reaches the same place, and reaches a person on the way.
 
-If you want to **contribute code**, [CONTRIBUTING.md](https://github.com/dseelinger/d47/blob/main/CONTRIBUTING.md)
-is written for you and Issues is the right front door.
+If you want to **contribute code**, [Issues](https://github.com/dseelinger/d47/issues)
+is the right front door.

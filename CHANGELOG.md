@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The help pages no longer point at files that do not exist. Seven pages cited working notes the site never had, and the community page named a contributing guide that was never written; those sentences are gone and the findings they stood on stay. The site no longer publishes the working notes folder.
+
 The help pages now match the settings page. Settings says each group has its own reset, which leaves Home system, the character sheet, About me and the scenario as typed, and the Audio page names the Ambient music group's Now playing and Next track rows. Before, Settings described a reset per section.
 
 Help on Asset Mgmt › Carrier now opens the carrier help page. Before, F1 and the help mark opened the help for the Asset Mgmt tab.

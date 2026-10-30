@@ -207,8 +207,7 @@ public static class TtsProviderCatalog
         // Thirteen built-ins and no voices endpoint, so the list needs no key and proves nothing about one.
         VoicesAreStatic = true,
 
-        // Measured 2026-08-26 across the documented range, and honoured
-        // (docs/spikes/openai-tts-language-and-speed.md §3).
+        // Measured 2026-08-26 across the documented range, and honoured.
         MinimumRate = 0.25,
         MaximumRate = 4.0,
 
@@ -236,8 +235,7 @@ public static class TtsProviderCatalog
                  + "messages when you have turned those on, which are written by other players. "
                  + "No journal content, game state or other keys are sent.",
 
-        // Opaque, the way ElevenLabs' are: measured 2026-08-26 across all 924
-        // (docs/spikes/cartesia-voices-and-speed.md §1).
+        // Opaque, the way ElevenLabs' are: measured 2026-08-26 across all 924.
         VoiceIdsAreOpaque = true,
 
         // It takes a `language` field and holds it, so unlike OpenAI it is eligible for the four slots

@@ -274,8 +274,7 @@ for three reasons that no amount of further care fixes at this sample size:
   agrees with it for that reason alone.
 
 So D47 says what the letter means and stops. Shipping a heuristic here would send you a very long
-way in the wrong direction with D47 sounding certain. See
-[the exobiology spike](https://github.com/dseelinger/d47/blob/main/docs/spikes/exobiology-sources.md).
+way in the wrong direction with D47 sounding certain.
 
 ### The star
 

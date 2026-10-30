@@ -499,8 +499,7 @@ delivered with the same confidence as a correct one, so `Blueprint.TotalFor` ret
 for anything that is not a modification and the rank paragraph never appears for one.
 
 **The trade rate is not this capability's business yet.** Netting a shortfall through a material
-trader arrives with the sourcing tools, and it must never cross ledgers or types — see
-[the plan](../plans/phase-14-102-engineering.md) Step 9.
+trader arrives with the sourcing tools, and it must never cross ledgers or types.
 
 **The engineer chosen for the rank paragraph is the highest-ranked one who offers the top grade**,
 not the nearest and not the first. Where nobody unlocked can reach it, an outstanding invitation is

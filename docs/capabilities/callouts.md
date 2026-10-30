@@ -1885,9 +1885,4 @@ asserts the shipped set matches the enum, so a member added without a clip fails
 than going wrong as silence. That matters more here than it does for the loop states, because a
 warning that did not fire and a warning whose cue would not load sound identical.
 
-The measurements behind both Phase 15 warnings — every id group's follow-through rate and lead
-time, the groups measured and deliberately not shipped, and what the journal does and does not
-report about Powerplay — are in
-[docs/spikes/journal-corpus-warnings.md](../spikes/journal-corpus-warnings.md).
-
 </details>

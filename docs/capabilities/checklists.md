@@ -501,7 +501,7 @@ item *unverified* rather than guessing. It says that once per item, not every ti
 
 Two ways round it: name the blueprint the way the journal does, or read the verdict — "at grade 5
 and finished" is a fact either way. An **experimental effect** has no such problem: Elite localises
-that one, so it is checked exactly. See `docs/spikes/blueprint-name-join.md`.
+that one, so it is checked exactly.
 
 ### What a plan costs
 
@@ -542,7 +542,6 @@ behaves, both measured over 6,330 events:
 system, or what order to build in. No licence-clean source publishes those figures — Frontier's own
 guide states every mechanic and publishes not one number, and every machine-readable rendering of
 them sits inside GPL-3.0 source. It holds the plan and counts what the depot says you still owe.
-See `docs/spikes/colonisation-sources.md`.
 
 It also cannot tell you a system is unclaimed. A claim lasts 24 hours and lives on Frontier's
 servers, so no crowd-fed index holds it.

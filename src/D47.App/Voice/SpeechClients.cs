@@ -95,8 +95,7 @@ public sealed class SpeechClients : IDisposable
             TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(_settings.Current.Speech, group)));
 
     /// <summary>
-    /// Why the voice picker has nothing in it, when it has nothing in it (Phase 19;
-    /// docs/spikes/elevenlabs-voice-sources.md §3).
+    /// Why the voice picker has nothing in it, when it has nothing in it.
     /// </summary>
     internal string? WhyNoVoices(VoiceGroup group = VoiceGroup.Aboard)
     {

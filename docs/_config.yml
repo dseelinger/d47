@@ -29,3 +29,6 @@ defaults:
       path: ""
     values:
       layout: default
+
+exclude:
+  - spikes
