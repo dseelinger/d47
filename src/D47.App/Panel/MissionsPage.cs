@@ -41,6 +41,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
 
     private MissionBoard? _seenBoard;
     private JournalLocation? _seenLocation;
+    private CargoHold? _seenHold;
     private long _seenMinute;
     private long? _selected;
     private string _query = string.Empty;
@@ -119,6 +120,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
 
         if (ReferenceEquals(state?.Missions, _seenBoard)
             && ReferenceEquals(state?.Location, _seenLocation)
+            && ReferenceEquals(state?.Hold, _seenHold)
             && PageKit.Minute(_now()) == _seenMinute)
         {
             return false;
@@ -129,7 +131,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
     }
 
     /// <summary>The header line: the count, how many hand in here, and the reward total.</summary>
-    public static string Summarise(MissionBoard board, JournalLocation location)
+    public static string Summarise(MissionBoard board, JournalLocation location, CargoHold hold)
     {
         var count = board.Missions.Count;
 
@@ -139,7 +141,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
         }
 
         var said = count == 1 ? "1 mission." : $"{Number(count)} missions.";
-        var here = board.Missions.Count(mission => MissionBoard.HandsInHere(mission, location));
+        var here = location.Docked ? MissionReadiness.ReadyAt(board, location.StationName, hold).Count : 0;
 
         if (here > 0)
         {
@@ -189,9 +191,10 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
 
         _seenBoard = state?.Missions;
         _seenLocation = state?.Location;
+        _seenHold = state?.Hold;
         _seenMinute = PageKit.Minute(now);
 
-        var summary = Summarise(board, location);
+        var summary = Summarise(board, location, state?.Hold ?? CargoHold.Empty);
 
         if (summary != Summary)
         {
@@ -492,7 +495,12 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
 
         if (MissionBoard.HandsInHere(mission, location))
         {
-            return Chrome("Hand in here", TypeScale.Small, FontWeight.SemiBold, Fonts.ChromeTracking, ThemeManager.CyanKey);
+            var state = _state();
+
+            return MissionReadiness.ReadyAt(state?.Missions ?? MissionBoard.Empty, location.StationName, state?.Hold ?? CargoHold.Empty)
+                .Any(ready => ready.Id == mission.Id)
+                ? Chrome("Hand in here", TypeScale.Small, FontWeight.SemiBold, Fonts.ChromeTracking, ThemeManager.CyanKey)
+                : null;
         }
 
         if (mission.DestinationSystem is not { Length: > 0 } system)

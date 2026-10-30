@@ -1410,6 +1410,14 @@ so. An hour before a mission expires, and again ten minutes before, it names the
 Two missions conclude here. 2.9 million waiting.
 ```
 
+A mission counts as handing in only when it can be handed in now. A courier or passenger mission is
+ready on arrival. A cargo mission (collect, delivery, altruism, mining, piracy, smuggle) waits until
+the ship's hold holds the commodity still owed in full, shared out across missions for the same
+commodity soonest expiry first; a part load, an unknown hold or the SRV's manifest is not ready. Any
+other mission, such as a kill, salvage or on-foot mission, waits until the game redirects it, which
+it does when the work is done. A mission that is not ready is not counted, so with none ready, docking
+and undocking say nothing.
+
 Docking anywhere else says nothing, and neither does a mission you have already handed in. Each
 expiry warning is said once per mission. A mission already inside the hour when D47 starts gets no
 hour warning, and gets the ten-minute one only if that mark passed less than a minute ago. The

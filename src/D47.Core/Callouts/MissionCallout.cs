@@ -69,6 +69,7 @@ public sealed class MissionCallout : ICallout
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var board = context.State?.Missions ?? MissionBoard.Empty;
+        var hold = context.State?.Hold ?? CargoHold.Empty;
 
         while (_trips.TryDequeue(out var trip))
         {
@@ -114,11 +115,11 @@ public sealed class MissionCallout : ICallout
                     yield return accepted;
                     break;
 
-                case "Docked" when HandIns(board, station) is { Count: > 0 } here:
+                case "Docked" when HandIns(board, station, hold) is { Count: > 0 } here:
                     yield return new Announcement(HandInKey, HandInSentence(here));
                     break;
 
-                case "Undocked" when HandIns(board, station).Count > 0:
+                case "Undocked" when HandIns(board, station, hold).Count > 0:
                     yield return new Announcement(UnclaimedKey, $"You're leaving with a hand-in unclaimed at {station}.");
                     break;
             }
@@ -347,10 +348,8 @@ public sealed class MissionCallout : ICallout
         return nearest;
     }
 
-    private static IReadOnlyList<Mission> HandIns(MissionBoard board, string? station) =>
-        station is { Length: > 0 }
-            ? [.. board.Missions.Where(mission => string.Equals(mission.DestinationStation, station, StringComparison.OrdinalIgnoreCase))]
-            : [];
+    private static IReadOnlyList<Mission> HandIns(MissionBoard board, string? station, CargoHold hold) =>
+        MissionReadiness.ReadyAt(board, station, hold);
 
     private static string HandInSentence(IReadOnlyList<Mission> missions)
     {

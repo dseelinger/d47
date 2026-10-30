@@ -208,7 +208,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
     {
         var (window, panel) = Open(State(Board));
 
-        Assert.Equal("6 missions. 2 hand in here. At least 19,550,500 credits in rewards.", Page(panel).Summary);
+        Assert.Equal("6 missions. 1 hands in here. At least 19,550,500 credits in rewards.", Page(panel).Summary);
 
         window.Close();
     }
