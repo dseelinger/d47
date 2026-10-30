@@ -380,6 +380,12 @@ these keys.
 - Pause lasts until you resume or restart D47. It is not the **Mute** setting, which is saved and
   unchanged by these keys.
 
+The same controls are on the page. With Show every setting on, open Settings › Hearing and sound ›
+Sounds and levels; the **Ambient music** group, above Levels, holds two rows. **Now playing** shows the
+track's file name, or Paused, Muted or Nothing playing, and its button reads Pause while a track plays and
+Resume while paused. **Next track** has a Next button that starts another track from the same folder. Both
+buttons are greyed out when nothing plays or the music is muted.
+
 Windows sends the media keys to whichever media session was used last. With Spotify or another
 player also open, the keys may go to that player instead.
 

@@ -146,8 +146,10 @@ holds a few sections, and each section is one card. The nav down the side lists 
 their sections beneath them, and marks the section at the top of the page as you scroll.
 
 A section is about one job rather than one part of Directive 47, so it can hold rows from several:
-*Its name* has both the ship's name and the wake words. A section's reset puts back only that
-section's rows, and its **?** opens the page for the part of Directive 47 it is mostly about.
+*Its name* has both the ship's name and the wake words. Each group inside a section has its own reset, shown as "Reset <group title>", which puts back that
+group's rows and nothing outside it; a group with nothing it could put back shows no reset. A group's reset
+leaves Home system, the character sheet, About me and the scenario as you typed them, and each of those still
+has its own reset. A section's **?** opens the page for the part of Directive 47 it is mostly about.
 
 A few rows are on the tab they concern instead, under **Page settings**: Rescan my
 journals and Hull pictures on Asset Mgmt › Ships, the captain and tower's names and voices, and the carrier's humor, on Asset Mgmt ›

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The help pages now match the settings page. Settings says each group has its own reset, which leaves Home system, the character sheet, About me and the scenario as typed, and the Audio page names the Ambient music group's Now playing and Next track rows. Before, Settings described a reset per section.
+
 Help on Asset Mgmt › Carrier now opens the carrier help page. Before, F1 and the help mark opened the help for the Asset Mgmt tab.
 
 Key and stick-button bindings now work the way Elite's do. Click a slot and press the key or button; Esc while it listens unbinds that slot and leaves the other slot as it was, and a click anywhere else, or on the slot again, ends the capture with nothing changed. The BIND and CLEAR buttons are gone from every bind row, and CANCEL is gone from the setup wizard, whose push-to-talk and comms lines are slots too. Before, BIND listened for the key and the button together and CLEAR emptied both.
