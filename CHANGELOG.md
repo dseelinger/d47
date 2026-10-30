@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Stories tab on the mini panel now shows what to do next, then what was said. Under the story's name and step comes the next objective, or the chapter's writing progress, or a line saying the chapter could not be written, the story is paused or switched off, or the story has ended. Below that is the story's log, newest first, drawn as the chapter's page draws it with each speaker and picture; say "page down" to read older entries. The Story on box, the premise, the Done line and the quoted last line are no longer on the mini panel. The progress bar now appears and clears as a chapter is written, with no tab switch needed.
+
 Saying "story tab", "story" or "show the story" now opens the Stories tab, in the window, the overlay and the headset. Before, it reached the model, which said it could not open the tab.
 
 The Audio mixer, Speech, Listening and Learned phrases help pages now match the code. Steps that quoted phrases that do not work or described controls that are not there are replaced with ones that exist, each page's How it works band fits the band limits, and Learned phrases has a How it works band. The model can no longer change an Audio mixer level, mute or duck through the settings tool, so it cannot turn its own voice or the danger callouts down. Those rows are changed from the Settings tab.

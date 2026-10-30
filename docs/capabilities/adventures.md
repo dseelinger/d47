@@ -1137,7 +1137,7 @@ Choose one of the options a story chapter offers, by the number the offer gave i
 
 ### Pausing the story
 
-Clear **Story on**, on the Stories page, on the chapter's page or on the mini panel, or say "pause the story", and the
+Clear **Story on**, on the Stories page or on the chapter's page, or say "pause the story", and the
 running stock story goes quiet until you switch it on again. While it is off no objective is said, no
 nudge or clue is owed, nothing from the story is posted to the Story log, missions get no story aside, and the
 hidden layer is left out of every prompt, so the Narrator, the core aboard and chatter do not hint at it. The clue clock stops.

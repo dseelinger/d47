@@ -259,6 +259,7 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
     [InlineData("AdventureMini.cs")]
     [InlineData("AdventureSurface.cs")]
     [InlineData("AdventureThinking.cs")]
+    [InlineData("ToldEntries.cs")]
     [Trait("Category", "Gate")]
     public void TheAdventuresSourceDrawsOnlyInTheNewTokens(string file)
     {

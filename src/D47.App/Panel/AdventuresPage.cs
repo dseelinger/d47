@@ -48,7 +48,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
     private readonly Func<Func<string, Task<bool>>?>? _copy;
-    private readonly SpeakerPortraits? _portraits;
+    private readonly ToldEntries _entries;
 
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly Notice _problems = new() { IsVisible = false };
@@ -73,7 +73,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         Func<Func<string, Task<bool>>?>? copy = null, SpeakerPortraits? portraits = null)
     {
         _copy = copy;
-        _portraits = portraits;
+        _entries = new ToldEntries(surface, () => portraits);
         BarTool = PageChrome.ToolOf(settingsStrip);
         _surface = surface;
         _nav = nav;
@@ -415,7 +415,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 page.Children.Add(Text(spine.Premise, TypeScale.Body));
             }
 
-            Told(page, standing, Here(), speaker => SpeakerName(adventure.StoryId, speaker), Copy());
+            Told(page, standing, Here(), speaker => _entries.SpeakerName(adventure.StoryId, speaker), Copy());
 
             // The wait, drawn (asked for 2026-08-22).
             if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
@@ -1524,52 +1524,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     internal static string Sentence(string phrase) =>
         phrase.Length == 0 ? phrase : char.ToUpperInvariant(phrase[0]) + phrase[1..] + ".";
 
-    /// <summary>The name a story speaker id is shown under: the cast member's, "Narrator", or null for the ship.</summary>
-    private string? SpeakerName(string? storyId, string? speaker) => speaker switch
-    {
-        null or D47.Core.Stories.StorySpeaker.Ship => null,
-        D47.Core.Stories.StorySpeaker.Narrator => D47.Core.Audio.VoiceRoles.Called(D47.Core.Audio.VoiceRole.Narrator),
-        _ => (storyId is null ? null : _surface.Stories?.Speaker(_surface.Commander(), storyId, speaker))?.Name ?? speaker,
-    };
-
-    /// <summary>The picture a story speaker id is shown with: the Narrator's, the core's for the ship, or the cast member's.</summary>
-    private string? PictureOf(string? storyId, string? speaker) => speaker switch
-    {
-        null or D47.Core.Stories.StorySpeaker.Ship => _surface.ShipPicture?.Invoke(),
-        D47.Core.Stories.StorySpeaker.Narrator => D47.Core.Interface.SpeakerPictures.Narrator,
-        _ => storyId is null ? null : _surface.Pictures?.For(_surface.Stories?.Speaker(_surface.Commander(), storyId, speaker)),
-    };
-
-    /// <summary><paramref name="line"/> with its speaker's picture to the left, top-aligned; the line alone when the picture has no file.</summary>
-    private Control Pictured(Control line, string? picture)
-    {
-        if (_portraits?.For(picture) is not { } bitmap)
-        {
-            return line;
-        }
-
-        var image = new Image
-        {
-            Name = "SpeakerPicture",
-            Source = bitmap,
-            Width = SpeakerPortraits.Size,
-            Height = SpeakerPortraits.Size,
-            Stretch = Stretch.UniformToFill,
-            VerticalAlignment = VerticalAlignment.Top,
-            ClipToBounds = true,
-            Margin = new Thickness(0, 0, PanelView.PictureGap, 0),
-        };
-
-        SpeakerPictureViewer.Enlarges(image, _portraits.Pictures, picture);
-
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
-        Grid.SetColumn(line, 1);
-        row.Children.Add(image);
-        row.Children.Add(line);
-        return row;
-    }
-
-    /// <summary>What has actually been said about this story (asked for 2026-08-22).</summary>
+    /// <summary>What has actually been said about this story (asked for 2026-08-22), oldest first.</summary>
     private void Told(StackPanel page, AdventureStanding standing, string? here, Func<string?, string?> named, Func<string, Task<bool>>? copy)
     {
         var adventure = standing.Adventure;
@@ -1582,57 +1537,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         foreach (var told in adventure.Told)
         {
-            var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 8, 0, 0) };
-
-            if (told.Kind == AdventureToldKind.Beat && told.Line > 0)
-            {
-                stack.Margin = new Thickness(0, 4, 0, 0);
-            }
-            else if (told.Kind == AdventureToldKind.Beat)
-            {
-                var heading = told.Title is { Length: > 0 } title ? title : adventure.Name;
-
-                stack.Children.Add(Stamped($"{heading} — ", told.At));
-
-                if (told.Trigger is { Length: > 0 } trigger)
-                {
-                    var system = told.Beat >= 0 && told.Beat < adventure.Beats.Count ? adventure.Beats[told.Beat].Steps[^1].Trigger.System : null;
-                    stack.Children.Add(Trigger(Sentence(trigger), here, system, copy));
-                }
-            }
-            else if (told.Kind == AdventureToldKind.Nudge)
-            {
-                stack.Children.Add(Stamped("Narrator — ", told.At));
-            }
-            else
-            {
-                // The Commander's own words above the answer, so an aside reads as an exchange rather than as
-                // a paragraph of story that arrived from nowhere.
-                stack.Children.Add(
-                    told.Asked is { Length: > 0 } asked
-                        ? Stamped("You asked, ", told.At, $" — “{asked}”")
-                        : Stamped("Aside — ", told.At));
-            }
-
-            var column = new StackPanel { Spacing = 2 };
-
-            if (told.Kind == AdventureToldKind.Beat && told.Speaker is { Length: > 0 } speaker)
-            {
-                column.Children.Add(Text(speaker, TypeScale.Small, ThemeManager.GreyKey));
-            }
-
-            column.Children.Add(Text(told.Text, TypeScale.Body));
-
-            stack.Children.Add(Pictured(
-                column,
-                told.Kind switch
-                {
-                    AdventureToldKind.Beat => told.Picture,
-                    AdventureToldKind.Nudge => D47.Core.Interface.SpeakerPictures.Narrator,
-                    _ => _surface.ShipPicture?.Invoke(),
-                }));
-
-            page.Children.Add(stack);
+            page.Children.Add(_entries.Entry(adventure, told, here, copy));
         }
     }
 
@@ -1659,7 +1564,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         for (var index = 0; index < shown && index < adventure.Beats.Count; index++)
         {
             var beat = adventure.Beats[index];
-            page.Children.Add(Labelled(Stamped($"{beat.Title} — ", standing.Fired[index]), null));
+            page.Children.Add(Labelled(ToldEntries.Stamped($"{beat.Title} — ", standing.Fired[index]), null));
 
             foreach (var line in beat.Lines)
             {
@@ -1669,7 +1574,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     }
 
     private Control Spoken(Adventure adventure, AdventureLine line, Func<string?, string?> named) =>
-        Pictured(named(line.Speaker) is { } name ? Labelled(name, line.Text) : Text(line.Text, TypeScale.Body), PictureOf(adventure.StoryId, line.Speaker));
+        _entries.Pictured(named(line.Speaker) is { } name ? Labelled(name, line.Text) : Text(line.Text, TypeScale.Body), _entries.PictureOf(adventure.StoryId, line.Speaker));
 
     private static Button Action(string label, System.Action act, bool destructive = false)
     {
@@ -1677,21 +1582,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         button.Classes.Set("destructive", destructive);
         button.Click += (_, _) => act();
         return button;
-    }
-
-    /// <summary>A grey caption with its local time in mono between <paramref name="before"/> and <paramref name="after"/>.</summary>
-    private static TextBlock Stamped(string before, DateTimeOffset at, string after = "")
-    {
-        var block = new TextBlock { FontSize = TypeScale.Small, TextWrapping = TextWrapping.Wrap };
-        block.Inlines = [new Run(before), Fonts.Mono(at.ToLocalTime().ToString("d MMM HH:mm", CultureInfo.CurrentCulture))];
-
-        if (after.Length > 0)
-        {
-            block.Inlines.Add(new Run(after));
-        }
-
-        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        return block;
     }
 
     internal static TextBlock Text(string text, double size, string key = ThemeManager.WhiteKey) =>

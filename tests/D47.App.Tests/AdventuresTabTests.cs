@@ -504,8 +504,8 @@ public class AdventuresTabTests
     }
 
     /// <summary>
- /// Mini reads the tab the panel is on: the story, how far through, what was
-    /// just done, what to do next, and the last thing the ship's AI said about it.
+    /// Mini reads the tab the panel is on: the title line, what to do next, then what was told, newest first;
+    /// the premise, the Done row and a quoted last line are not drawn.
     /// </summary>
     [AvaloniaFact]
     public void TheMiniPanelShowsTheStoryAtAGlance()
@@ -514,18 +514,34 @@ public class AdventuresTabTests
 
         Arrive(book);
         book.Told("F1", "the-lantern-route", Beat("The lantern is still turning."));
+        book.Told("F1", "the-lantern-route", new AdventureTold
+        {
+            Kind = AdventureToldKind.Aside,
+            Asked = "Who keeps the lantern lit?",
+            Text = "Nobody I can name yet.",
+            At = Now.AddMinutes(5),
+        });
 
         panel.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();
 
         var drawn = Visible(panel);
 
-        Assert.Contains(drawn, text => text.Contains("THE LANTERN ROUTE"));
-        Assert.Contains(drawn, text => text.Contains("Step 2 of 2"));
-        Assert.Contains(drawn, text => text.Contains("An outpost abandoned in 3302"));
-        Assert.Contains(drawn, text => text.Contains("Done: Arrive at Ossen's Lantern."));
-        Assert.Contains(drawn, text => text.Contains("Next: Dock at Maren Anchorage in Dyson's Hollow."));
-        Assert.Contains(drawn, text => text.Contains("The lantern is still turning."));
+        Assert.Contains(drawn, text => text == "THE LANTERN ROUTE ·\u00A0Step\u00A02\u00A0of\u00A02");
+
+        var title = Top(panel, "THE LANTERN ROUTE ·\u00A0Step\u00A02\u00A0of\u00A02");
+        var next = Top(panel, "Next: Dock at Maren Anchorage in Dyson's Hollow.");
+        var newest = Top(panel, "Nobody I can name yet.");
+        var older = Top(panel, "The lantern is still turning.");
+
+        Assert.True(title < next, "the title line is above the objective");
+        Assert.True(next < newest, "the objective is above the newest told entry");
+        Assert.True(newest < older, "the newest told entry is above the older one");
+
+        Assert.DoesNotContain(drawn, text => text.Contains("An outpost abandoned in 3302"));
+        Assert.DoesNotContain(drawn, text => text.StartsWith("Done:", StringComparison.Ordinal));
+        Assert.DoesNotContain(drawn, text => text.StartsWith('“'));
+        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<CheckBox>(), box => box.IsEffectivelyVisible);
 
         // The spine's turn and its ending are withheld on every surface, this one included.
         Assert.DoesNotContain(drawn, text => text.Contains("Forty kilometres"));
@@ -534,6 +550,12 @@ public class AdventuresTabTests
         // And the tab strip is still not there.
         Assert.DoesNotContain(drawn, text => text == "Adventures");
     }
+
+    /// <summary>The top of the one visible block reading <paramref name="text"/>, in the panel's coordinates.</summary>
+    private static double Top(PanelView panel, string text) =>
+        panel.GetVisualDescendants().OfType<TextBlock>()
+            .Single(block => block.IsEffectivelyVisible && Said(block) == text)
+            .TranslatePoint(default, panel)!.Value.Y;
 
     /// <summary>
     /// Mini with no story under way says so, rather than drawing an empty pane that reads as a panel

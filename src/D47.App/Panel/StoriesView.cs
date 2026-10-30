@@ -698,34 +698,37 @@ public sealed class StoriesView : UserControl, IPageSummary
     internal static string RefusedLine(Story story) =>
         "Refused: " + string.Join(", ", story.Refused.Select(D47.Core.Adventures.RefusedActivities.Phrase)) + ".";
 
-    private string Standing(Story story, string? commander)
+    private string Standing(Story story, string? commander) => "Your story — " + StandingOf(_director, story, commander).Clause;
+
+    /// <summary>Where <paramref name="story"/> stands for <paramref name="commander"/>, in the order a write in flight outranks the story's own state.</summary>
+    internal static StoryStanding StandingOf(StoryDirector director, Story story, string? commander)
     {
         var told = story.Chapters.Count;
         var next = (told + 1).ToString(CultureInfo.InvariantCulture);
 
-        if (_director.IsWriting(commander))
+        if (director.IsWriting(commander))
         {
-            return $"Your story — writing chapter {next}…";
+            return new StoryStanding(StoryStandingKind.Writing, $"writing chapter {next}…");
         }
 
-        if (_director.IsRewriting(commander))
+        if (director.IsRewriting(commander))
         {
-            return "Your story — writing a different objective…";
+            return new StoryStanding(StoryStandingKind.Rewriting, "writing a different objective…");
         }
 
-        if (_director.WriteFailed(commander))
+        if (director.WriteFailed(commander))
         {
-            return $"Your story — chapter {next} could not be written.";
+            return new StoryStanding(StoryStandingKind.Failed, $"chapter {next} could not be written.");
         }
 
         if (story.IsOff)
         {
-            return "Your story — switched off. No objectives, nudges or clues until you switch it on.";
+            return new StoryStanding(StoryStandingKind.Off, "switched off. No objectives, nudges or clues until you switch it on.");
         }
 
         return story.State == StoryState.Paused
-            ? $"Your story — paused, chapter {told.ToString(CultureInfo.InvariantCulture)} was abandoned."
-            : $"Your story — chapter {told.ToString(CultureInfo.InvariantCulture)} under way.";
+            ? new StoryStanding(StoryStandingKind.Paused, $"paused, chapter {told.ToString(CultureInfo.InvariantCulture)} was abandoned.")
+            : new StoryStanding(StoryStandingKind.UnderWay, $"chapter {told.ToString(CultureInfo.InvariantCulture)} under way.");
     }
 
     private Control BuildReading(string id)
@@ -1344,4 +1347,21 @@ public sealed class StoriesView : UserControl, IPageSummary
         button.Click += (_, _) => act();
         return button;
     }
+}
+
+internal enum StoryStandingKind
+{
+    Writing,
+    Rewriting,
+    Failed,
+    Off,
+    Paused,
+    UnderWay,
+}
+
+/// <summary>A story's standing and the clause that says it, lower case, for a prefix to lead into.</summary>
+internal readonly record struct StoryStanding(StoryStandingKind Kind, string Clause)
+{
+    /// <summary>The clause as a sentence of its own.</summary>
+    public string Sentence => char.ToUpperInvariant(Clause[0]) + Clause[1..];
 }

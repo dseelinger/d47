@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Automation;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
@@ -11,15 +12,17 @@ using D47.Core.Adventures;
 
 namespace D47.App.Panel;
 
-/// <summary>The story, on the mini panel (asked for 2026-08-22).</summary>
+/// <summary>The story on the mini panel: the title line, what to do next, then what was told, newest first.</summary>
 public sealed class AdventureMini : UserControl
 {
     private readonly AdventureSurface _surface;
+    private readonly Func<SpeakerPortraits?> _portraits;
     private readonly StackPanel _body = new() { Spacing = 3 };
 
-    public AdventureMini(AdventureSurface surface)
+    public AdventureMini(AdventureSurface surface, Func<SpeakerPortraits?>? portraits = null)
     {
         _surface = surface;
+        _portraits = portraits ?? (() => null);
 
         Content = new ScrollViewer
         {
@@ -46,6 +49,7 @@ public sealed class AdventureMini : UserControl
         if (_surface.Stories is { } stories)
         {
             stories.Stories.Changed += OnChanged;
+            stories.WritingChanged += OnChanged;
         }
 
         Fill();
@@ -65,6 +69,7 @@ public sealed class AdventureMini : UserControl
         if (_surface.Stories is { } stories)
         {
             stories.Stories.Changed -= OnChanged;
+            stories.WritingChanged -= OnChanged;
         }
     }
 
@@ -75,59 +80,108 @@ public sealed class AdventureMini : UserControl
         _body.Children.Clear();
 
         var commander = _surface.Commander();
-        var active = _surface.Book.Active(commander);
+        var director = _surface.Stories;
+        var story = director?.Stories.Current(commander);
 
-        if (_surface.Stories is { } director && director.Stories.Current(commander) is { } story)
-        {
-            _body.Children.Add(StoriesView.StoryOnBox(_surface, director, story, commander));
-        }
+        // A stock story's current chapter is shown whether or not it is still under way: while the next one is
+        // written, after it was abandoned and once it is done.
+        var standing = story?.CurrentChapter is { } key ? _surface.Book.Standing(commander, key) : null;
+        standing ??= _surface.Book.Active(commander).FirstOrDefault();
 
-        if (active.Count == 0)
+        if (story is null && standing is null)
         {
             _body.Children.Add(AdventuresPage.Muted("No story under way."));
             return;
         }
 
-        // The one being flown.
-        var standing = active[0];
+        _body.Children.Add(TitleLine(standing?.Adventure.Name ?? story!.Title, standing?.Step()));
+
+        AddObjective(director, story, standing, commander);
+
+        if (standing is null)
+        {
+            return;
+        }
+
         var adventure = standing.Adventure;
-
-        _body.Children.Add(TitleText.Build(adventure.Name, TypeScale.Heading, TitleRank.Screen));
-
-        if (standing.Step() is { } step)
-        {
-            _body.Children.Add(AdventuresPage.Text(step, TypeScale.Small, ThemeManager.AKey));
-        }
-
-        // The short description: the premise, which is the one sentence the whole story was built out of.
-        if (AdventuresPage.ShowsSpine(adventure) && adventure.Spine?.Premise is { Length: > 0 } premise)
-        {
-            _body.Children.Add(AdventuresPage.Text(premise, TypeScale.Secondary));
-        }
-
-        var here = _surface.State()?.Location?.StarSystem;
-
-        if (standing.LastTrigger() is { } done)
-        {
-            _body.Children.Add(Row("Done", done, here));
-        }
-
-        if (standing.NextTrigger() is { } next)
-        {
-            _body.Children.Add(Row("Next", next, here));
-        }
-
-        AddChoice(standing);
-
-        if (standing.LastSaid() is { } said)
-        {
-            _body.Children.Add(AdventuresPage.Text(
-                $"“{Shorten(said.Text)}”", TypeScale.Secondary, ThemeManager.GreyKey));
-        }
 
         if (_surface.Book.IsStirring(commander, adventure.Key))
         {
             _body.Children.Add(new AdventureThinking());
+        }
+
+        var entries = new ToldEntries(_surface, _portraits);
+        var here = _surface.State()?.Location?.StarSystem;
+
+        for (var index = adventure.Told.Count - 1; index >= 0; index--)
+        {
+            _body.Children.Add(entries.Entry(adventure, adventure.Told[index], here, copy: null));
+        }
+    }
+
+    /// <summary>The story's name and its step as one wrapping line.</summary>
+    private static TextBlock TitleLine(string name, string? step)
+    {
+        var line = TitleText.Build(name, TypeScale.Heading, TitleRank.Screen);
+        line.TextWrapping = TextWrapping.Wrap;
+
+        if (step is null)
+        {
+            return line;
+        }
+
+        // Non-breaking, so the dot and the step wrap to the next line whole.
+        var at = new Run($" ·\u00A0{step.Replace(' ', '\u00A0')}") { FontFamily = new FontFamily(Fonts.ProseFamily), FontSize = TypeScale.Small, FontWeight = FontWeight.Normal };
+        ThemeInk.Bind(at, TextElement.ForegroundProperty, ThemeManager.AKey);
+
+        line.Inlines = [new Run(line.Text), at];
+        return line;
+    }
+
+    /// <summary>What to do next, or why there is nothing to do: a write in flight or failed, the story off or paused, a choice, or the end.</summary>
+    private void AddObjective(D47.Core.Stories.StoryDirector? director, D47.Core.Stories.Story? story, AdventureStanding? standing, string? commander)
+    {
+        if (director is not null && story is not null)
+        {
+            var shown = StoriesView.StandingOf(director, story, commander);
+
+            switch (shown.Kind)
+            {
+                case StoryStandingKind.Writing when director.Progress(commander) is { } writing:
+                    var progress = new WriteProgressBar("Writing the chapter", () => director.Progress(commander));
+                    progress.Show(writing);
+                    _body.Children.Add(progress);
+                    return;
+
+                case StoryStandingKind.UnderWay:
+                    break;
+
+                default:
+                    _body.Children.Add(AdventuresPage.Text(shown.Sentence, TypeScale.Secondary, ThemeManager.GreyKey));
+                    return;
+            }
+        }
+        else if (director?.IsRewriting(commander) == true)
+        {
+            _body.Children.Add(AdventuresPage.Text("Writing a different objective…", TypeScale.Secondary, ThemeManager.GreyKey));
+            return;
+        }
+
+        if (standing is null)
+        {
+            return;
+        }
+
+        if (standing.NextTrigger() is { } next)
+        {
+            _body.Children.Add(Row("Next", next, _surface.State()?.Location?.StarSystem));
+        }
+
+        AddChoice(standing);
+
+        if (standing.IsDone)
+        {
+            _body.Children.Add(AdventuresPage.Muted("The end."));
         }
     }
 
@@ -194,14 +248,4 @@ public sealed class AdventureMini : UserControl
     /// <summary>A trigger with its word in front, both in A so the pair reads as one.</summary>
     private static Control Row(string label, string trigger, string? here) =>
         AdventuresPage.Trigger($"{label}: {AdventuresPage.Sentence(trigger)}", here);
-
-    /// <summary>The last line, trimmed to what mini can hold.</summary>
-    private static string Shorten(string text)
-    {
-        const int Most = 180;
-
-        var line = text.Trim();
-
-        return line.Length <= Most ? line : line[..Most].TrimEnd() + "…";
-    }
 }
