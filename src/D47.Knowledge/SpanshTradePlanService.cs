@@ -239,7 +239,24 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
         // Unfiltered, and #156 leaves it that way on purpose: a build asks about twenty commodities at once,
         // so there is no single one to narrow the sweep by.
         var fetched = (await SweepAsync(search.System, search.MaxDistance, cancellationToken)
-            .ConfigureAwait(false)).Markets;
+            .ConfigureAwait(false)).Markets.ToList();
+        var positions = new Dictionary<string, (double X, double Y, double Z)>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var around in (search.AlsoAround ?? []).Where(system =>
+                     !string.Equals(system, search.System, StringComparison.OrdinalIgnoreCase)))
+        {
+            var more = (await SweepAsync(around, search.MaxDistance, cancellationToken).ConfigureAwait(false)).Markets;
+
+            fetched.AddRange(more.Where(market => !fetched.Any(seen => seen.IsSamePlaceAs(market.Station, market.System))));
+        }
+
+        foreach (var system in (search.AlsoAround ?? []).Prepend(search.System))
+        {
+            if (fetched.FirstOrDefault(market => string.Equals(market.System, system, StringComparison.OrdinalIgnoreCase)) is { } there)
+            {
+                positions[system] = (there.X, there.Y, there.Z);
+            }
+        }
 
         var origin = fetched.FirstOrDefault(market =>
             string.Equals(market.System, search.System, StringComparison.OrdinalIgnoreCase)
@@ -271,10 +288,12 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
                 usable,
                 origin,
                 search.LargePadOnly,
-                search.MaxStops),
+                search.MaxStops,
+                search.Rank),
             usable.Count + stale,
             stale,
-            origin is not null);
+            origin is not null,
+            positions);
     }
 
     /// <summary>The sweep with the Commander's own markets folded in, newer wins.</summary>

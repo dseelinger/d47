@@ -469,7 +469,7 @@ public static class BuiltinCapabilities
             backfillGoals ?? (() => null),
             now ?? (() => DateTimeOffset.MinValue)),
 
-        MissionsCapability.Create(() => gameState.Active, now ?? (() => DateTimeOffset.MinValue)),
+        MissionsCapability.Create(() => gameState.Active, now ?? (() => DateTimeOffset.MinValue), trade, settings),
 
         PowerplayCapability.Create(() => gameState.Active),
 

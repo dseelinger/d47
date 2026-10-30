@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text;
+using D47.Core.Configuration;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -18,7 +20,14 @@ public static class MissionsCapability
     private static readonly IReadOnlyDictionary<string, string> Offered =
         new Dictionary<string, string>(StringComparer.Ordinal) { ["offered"] = "true" };
 
-    public static CapabilityDescriptor Create(Func<CommanderGameState?> state, Func<DateTimeOffset> now) => new()
+    private static readonly IReadOnlyDictionary<string, string> Sourcing =
+        new Dictionary<string, string>(StringComparer.Ordinal) { ["where_to_buy"] = "true" };
+
+    public static CapabilityDescriptor Create(
+        Func<CommanderGameState?> state,
+        Func<DateTimeOffset> now,
+        ITradePlanService? trade = null,
+        SettingsService? settings = null) => new()
     {
         Id = Id,
         Group = "Ship",
@@ -46,7 +55,8 @@ public static class MissionsCapability
                     "Read the Commander's accepted missions: up to three, ranked by what can be acted on "
                     + "(expiring within the hour, then handed in at the docked station, then soonest expiry), "
                     + "each with its destination and time left, then a count of the rest and the total reward. "
-                    + "Set all to list every mission with its faction, cargo, destination, progress, time left and reward.",
+                    + "Set all to list every mission with its faction, cargo, destination, progress, time left and reward. "
+                    + "Set where_to_buy to say where to buy the cargo of the collect missions, in flying order, ending at the hand-in stations.",
                 Parameters =
                 [
                     ToolParameter.Flag(
@@ -57,6 +67,10 @@ public static class MissionsCapability
                         "all",
                         "Set when the Commander asks about a particular mission, or about more than the three "
                             + "most urgent; lists every mission, one line each, in the same order."),
+                    ToolParameter.Flag(
+                        "where_to_buy",
+                        "Set when the Commander asks where to source the cargo for their collect missions; "
+                            + "the answer is the buy stops in order, then the hand-in stations."),
                 ],
                 Commands =
                 [
@@ -64,13 +78,16 @@ public static class MissionsCapability
                     new ToolCommandPhrase("which missions should i take", Offered),
                     new ToolCommandPhrase("what missions are on offer", Offered),
                     new ToolCommandPhrase("read the mission board"),
+                    new ToolCommandPhrase("where do i source my missions", Sourcing),
                 ],
-                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
-                    Describe(
-                        state(),
-                        now(),
-                        arguments.TryGetBoolean("offered", out var offered) && offered,
-                        arguments.TryGetBoolean("all", out var all) && all))),
+                Handler = async (arguments, cancellationToken) =>
+                    arguments.TryGetBoolean("where_to_buy", out var sourcing) && sourcing
+                        ? ToolResult.Ok(await MissionSourcing.AnswerAsync(state(), trade, settings, cancellationToken).ConfigureAwait(false))
+                        : ToolResult.Ok(Describe(
+                            state(),
+                            now(),
+                            arguments.TryGetBoolean("offered", out var offered) && offered,
+                            arguments.TryGetBoolean("all", out var all) && all)),
             },
             new ToolDefinition
             {

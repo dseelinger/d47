@@ -596,18 +596,22 @@ public sealed record SourcingSearch(
     double MaxDistance = 50,
     bool LargePadOnly = false,
     int MaxStops = 6,
-    int MaxPriceAge = 72);
+    int MaxPriceAge = 72,
+    SourcingRank Rank = SourcingRank.Cheapest,
+    IReadOnlyList<string>? AlsoAround = null);
 
 /// <summary>The covering plan, and what a Commander is owed alongside it.</summary>
 /// <param name="Plan">The stops, best first, and what could not be priced or filled.</param>
 /// <param name="Considered">How many markets the sweep returned at all.</param>
 /// <param name="DroppedAsStale">How many carried a price older than the bound.</param>
 /// <param name="OriginKnown">Whether the sweep found the reference system at all.</param>
+/// <param name="SystemPositions">Galactic coordinates of each searched system a market was found in.</param>
 public sealed record SourcingAnswer(
     SourcingPlan Plan,
     int Considered,
     int DroppedAsStale,
-    bool OriginKnown)
+    bool OriginKnown,
+    IReadOnlyDictionary<string, (double X, double Y, double Z)>? SystemPositions = null)
 {
     public static readonly SourcingAnswer Empty = new(SourcingPlan.Empty, 0, 0, false);
 }

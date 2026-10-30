@@ -138,10 +138,11 @@ after you accept them." and then reads your board.
 
 Reads the Commander's accepted missions: up to three, ranked by what can be acted on, each with its
 destination and time left, then a count of the rest and the total reward. With `all` set it lists every
-mission, one line each, with its faction, cargo, destination, progress, time left and reward.
+mission, one line each, with its faction, cargo, destination, progress, time left and reward. With
+`where_to_buy` set it says where to buy the cargo of the collect missions: the buy stops in flying order with what to buy at each, then the hand-in stations, the total light years, what could not be found, and how many full loads it is.
 
 ```json
-{"type":"object","properties":{"all":{"type":"boolean","description":"Set when the Commander asks about a particular mission, or about more than the three most urgent; lists every mission, one line each, in the same order."},"offered":{"type":"boolean","description":"Set when the Commander asks which missions to take; the answer then says that missions on offer at a station are not in the journal."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"all":{"type":"boolean","description":"Set when the Commander asks about a particular mission, or about more than the three most urgent; lists every mission, one line each, in the same order."},"offered":{"type":"boolean","description":"Set when the Commander asks which missions to take; the answer then says that missions on offer at a station are not in the journal."},"where_to_buy":{"type":"boolean","description":"Set when the Commander asks where to source the cargo for their collect missions; the answer is the buy stops in order, then the hand-in stations."}},"required":[],"additionalProperties":false}
 ```
 
 #### `get_mission_types`
