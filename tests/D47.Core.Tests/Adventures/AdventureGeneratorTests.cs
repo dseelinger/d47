@@ -64,7 +64,7 @@ public sealed class AdventureGeneratorTests
         Assert.True(beats.IndexOf("- Ossen's Lantern (8 ly)", StringComparison.Ordinal) < beats.IndexOf("- Dyson's Hollow (12 ly)", StringComparison.Ordinal));
 
         // The lists were asked for within the reach, and the bodies had to be landable.
-        var stations = Assert.Single(galaxy.StationQueries, query => query.MaxDistance > 1);
+        var stations = Assert.Single(galaxy.StationQueries, query => query.MaxDistance > 1 && query.Services.Count == 0);
         Assert.Equal("Oppi", stations.ReferenceSystem);
         Assert.Equal(80, stations.MaxDistance);
         var bodies = Assert.Single(galaxy.BodyQueries, query => query.SystemNames.Count == 0 && query.Signal is null);

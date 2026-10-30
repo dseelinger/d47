@@ -145,6 +145,9 @@ public static class ChapterActivities
         activity.Kind is TriggerKind.Bounty or TriggerKind.Bond or TriggerKind.OnFootBond or TriggerKind.Conflict or TriggerKind.Sell
             or TriggerKind.DataSale or TriggerKind.Rescue or TriggerKind.Mission;
 
+    /// <summary>Whether the row can only be done after docking at a station with Frontline Solutions in a system at war: the on-foot bond.</summary>
+    public static bool NeedsFrontline(DrawableActivity activity) => activity.Kind == TriggerKind.OnFootBond;
+
     /// <summary>Whether every gate named in a step event row's <c>needs</c> is in <paramref name="held"/>; a name that is no gate is never held.</summary>
     public static bool Passes(IReadOnlyList<string> needs, ActivityGate held) =>
         needs.All(name => Enum.TryParse<ActivityGate>(name, out var gate) && gate != ActivityGate.None && Enum.IsDefined(gate) && (gate & ~held) == ActivityGate.None);
@@ -160,7 +163,7 @@ public static class ChapterActivities
         [
             new(TriggerKind.Bounty, null, Career.Combat, ActivityGate.None, 3, 8),
             new(TriggerKind.Bond, null, Career.Combat, ActivityGate.Danger, 5, 15),
-            new(TriggerKind.OnFootBond, null, Career.Combat, ActivityGate.Odyssey, 5, 15),
+            new(TriggerKind.OnFootBond, null, Career.Combat, ActivityGate.Odyssey, 5, 15, PlaceBefore: true),
             new(TriggerKind.Conflict, null, Career.Combat, ActivityGate.Danger, 1, 2, PlaceBefore: true),
             new(TriggerKind.Sell, null, Career.Trading, ActivityGate.Cargo, 10, 40),
             new(TriggerKind.Mine, null, Career.Mining, ActivityGate.MiningKit | ActivityGate.Cargo, 10, 40),

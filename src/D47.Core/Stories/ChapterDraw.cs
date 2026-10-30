@@ -97,7 +97,7 @@ public static class ChapterDraw
     /// is how many place objectives the chapter already must have. A comfort chapter's first slot is the least-done activity that
     /// passes the gates, counting ties from row <paramref name="comfortFirst"/>; a mission family in <paramref name="neverCompleted"/>
     /// that passes the gates takes that slot first. With <paramref name="stationsInReach"/> false, rows that need a station are
-    /// never drawn. <paramref name="limits"/> holds each slot's limit by index: a limited slot draws only rows its limit accepts,
+    /// never drawn, and with <paramref name="frontlineInReach"/> false, so is the on-foot bond row. <paramref name="limits"/> holds each slot's limit by index: a limited slot draws only rows its limit accepts,
     /// unless that leaves no row the gates allow, when it draws from the whole table. A slot whose rows are all drawn takes the
     /// first later slot's rows that are not. No event slot is drawn while a limit holds.
     /// </summary>
@@ -118,7 +118,8 @@ public static class ChapterDraw
         StepEventCatalogue? events = null,
         IReadOnlyList<DrawableTool>? tools = null,
         int slots = Slots,
-        IReadOnlyList<Func<DrawableActivity, bool>>? limits = null)
+        IReadOnlyList<Func<DrawableActivity, bool>>? limits = null,
+        bool frontlineInReach = true)
     {
         ArgumentNullException.ThrowIfNull(weights);
         ArgumentNullException.ThrowIfNull(ship);
@@ -126,7 +127,7 @@ public static class ChapterDraw
         ArgumentNullException.ThrowIfNull(statistics);
 
         var held = ChapterActivities.Held(ranks, ship, odyssey);
-        var all = ChapterActivities.All.Where(row => Drawable(row, held, stationsInReach, refused)).ToList();
+        var all = ChapterActivities.All.Where(row => Drawable(row, held, stationsInReach, refused, frontlineInReach)).ToList();
         var pools = Enumerable.Range(0, Math.Max(1, slots))
             .Select(slot => limits?.ElementAtOrDefault(slot) is { } limit && all.Where(limit).ToList() is { Count: > 0 } limited ? limited : all)
             .ToList();
@@ -195,12 +196,12 @@ public static class ChapterDraw
         return result;
     }
 
-    /// <summary>Whether <see cref="Draw"/> may draw <paramref name="row"/>: its gates are held, it needs no station out of reach, and it is not refused.</summary>
-    public static bool Drawable(DrawableActivity row, ActivityGate held, bool stationsInReach, IReadOnlyList<string>? refused)
+    /// <summary>Whether <see cref="Draw"/> may draw <paramref name="row"/>: its gates are held, it needs no station out of reach, it needs no Frontline Solutions station out of reach, and it is not refused.</summary>
+    public static bool Drawable(DrawableActivity row, ActivityGate held, bool stationsInReach, IReadOnlyList<string>? refused, bool frontlineInReach = true)
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        return ChapterActivities.Passes(row, held) && (stationsInReach || !ChapterActivities.NeedsStation(row)) && !RefusedActivities.Refuses(refused, row.Kind, row.Family);
+        return ChapterActivities.Passes(row, held) && (stationsInReach || !ChapterActivities.NeedsStation(row)) && (frontlineInReach || !ChapterActivities.NeedsFrontline(row)) && !RefusedActivities.Refuses(refused, row.Kind, row.Family);
     }
 
     /// <summary>One event slot from the drawable events whose gates are held and which are not refused, or null when none is left.</summary>

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter or short story that asks for kill bonds earned on foot now sends the Commander to the Frontline Solutions desk of a station in a system at war. Before, it could dock the Commander at a station with no desk, or in a system with no ground conflict to go to.
+
 The Stories tab on the mini panel now shows what to do next, then what was said. Under the story's name and step comes the next objective, or the chapter's writing progress, or a line saying the chapter could not be written, the story is paused or switched off, or the chapter has ended. Below that is the story's log, newest first, drawn as the chapter's page draws it with each speaker and picture; say "page down" to read older entries. The Story on box, the premise, the Done line and the quoted last line are no longer on the mini panel. The progress bar now appears and clears as a chapter is written, with no tab switch needed.
 
 A finished chapter now ends with "End of chapter." on its page and on the mini panel. Only the last chapter of a finished story ends with "The end.". Before, every finished chapter said "The end.".

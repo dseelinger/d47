@@ -1879,7 +1879,8 @@ public sealed class StoryDirector(
                 statistics,
                 FixedPlaces(story, finaleChapter) + others.Count(slot => slot.PlaceBefore) + (sightseeing ? 1 : 0),
                 ChapterDraw.Seed(story.Id, number, rewrite.From),
-                stationsInReach: await StationsInReachAsync(game, cancellationToken).ConfigureAwait(false));
+                stationsInReach: await StationsInReachAsync(game, cancellationToken).ConfigureAwait(false),
+                frontlineInReach: await FrontlineInReachAsync(game, cancellationToken).ConfigureAwait(false));
 
             others.AddRange(redrawn.Take(1));
         }
@@ -1920,6 +1921,44 @@ public sealed class StoryDirector(
         {
             logger.LogWarning(ex, "The galaxy search could not list the stations within reach of a story chapter, so its activities are not gated on them");
             return true;
+        }
+    }
+
+    /// <summary>
+    /// Whether an open fixed station with Frontline Solutions, in a system at war, lies within the chapter's reach.
+    /// False when it cannot be told: galaxy search off, no known position, or the query failed.
+    /// </summary>
+    private async Task<bool> FrontlineInReachAsync(CommanderGameState? game, CancellationToken cancellationToken)
+    {
+        if (Galaxy?.Invoke() is not { } search || game?.Location.StarSystem is not { Length: > 0 } system)
+        {
+            return false;
+        }
+
+        var ship = game.Ship;
+        PadSize? pad = Enum.TryParse<PadSize>(EliteSpecifications.Ship(ship.Type)?.Pad, ignoreCase: true, out var size) ? size : null;
+        var resolver = new AdventureResolver(search, game.Standings);
+
+        try
+        {
+            var radius = AdventureGenerator.Radius(AdventureReach.Session, ship.MaxJumpRange, game.Carrier.Owned);
+            var found = await search.FindStationsAsync(AdventureResolver.FrontlineNear(system, radius, 20), cancellationToken).ConfigureAwait(false);
+
+            foreach (var station in found.Stations.Where(station =>
+                         station.IsFixed && !PermitSystemTable.Locked(station.SystemName) && (pad is not { } needed || station.Admits(needed))))
+            {
+                if (await resolver.FrontlineAtWarAsync(station, cancellationToken).ConfigureAwait(false))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "The galaxy search could not list the Frontline Solutions stations within reach of a story chapter, so on-foot kill bonds are not drawn");
+            return false;
         }
     }
 
@@ -2699,6 +2738,9 @@ public sealed class StoryDirector(
             var stationsInReach = stories.Current(frontierId) is { BeaconScanAt: not null } running
                 ? await StationsInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
                 : true;
+            var frontlineInReach = stories.Current(frontierId) is { BeaconScanAt: not null }
+                ? await FrontlineInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
+                : true;
 
             for (var draft = 1; draft <= Drafts; draft++)
             {
@@ -2712,7 +2754,7 @@ public sealed class StoryDirector(
                 // A throw counts as a failure, so the tick does not start another paid write on every pass.
                 try
                 {
-                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, draft == 2 ? attempt.Outline : null, stationsInReach, cancellationToken).ConfigureAwait(false);
+                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, draft == 2 ? attempt.Outline : null, stationsInReach, frontlineInReach, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -2789,7 +2831,7 @@ public sealed class StoryDirector(
     private sealed record Attempt(string? Refusal, bool Retry = false, string? Detail = null, AdventureOutline? Outline = null);
 
     private async Task<Attempt> WriteAsync(
-        string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, AdventureOutline? outline, bool stationsInReach, CancellationToken cancellationToken)
+        string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, AdventureOutline? outline, bool stationsInReach, bool frontlineInReach, CancellationToken cancellationToken)
     {
         if (stories.Current(frontierId) is not { State: StoryState.Running } story)
         {
@@ -2865,7 +2907,7 @@ public sealed class StoryDirector(
                 GoalClimb.Listed(GoalClimb.Standings(game, Mine?.Invoke()), goalsCard.GoalArcs),
                 game,
                 Engineers?.Invoke(),
-                row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused))
+                row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused, frontlineInReach))
             : [];
         var slots = story.BeaconScanAt is null
             ? null
@@ -2886,7 +2928,8 @@ public sealed class StoryDirector(
                 Tools is null ? null : StepEventCatalogue.Default,
                 Tools?.Invoke(),
                 GoalClimb.Slots(goals),
-                GoalClimb.Limits(goals)) is { Count: > 0 } drawn
+                GoalClimb.Limits(goals),
+                frontlineInReach) is { Count: > 0 } drawn
                 ? drawn
                 : null;
 

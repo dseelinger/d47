@@ -114,6 +114,37 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
         return known && record.AtWar;
     }
 
+    /// <summary>The galaxy search's spelling of the on-foot conflict desk.</summary>
+    public const string FrontlineSolutions = "Frontline Solutions";
+
+    /// <summary>The search for stations near a system that have Frontline Solutions.</summary>
+    public static StationQuery FrontlineNear(string system, double lightYears, int size) =>
+        StationQuery.Near(system, lightYears, size) with { Services = [FrontlineSolutions] };
+
+    /// <summary>Whether the galaxy search lists Frontline Solutions at the station.</summary>
+    public static bool HasFrontlineSolutions(StationSummary station) =>
+        station.Services.Contains(FrontlineSolutions, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Whether the station has Frontline Solutions and its system is at war or civil war.</summary>
+    public async Task<bool> FrontlineAtWarAsync(StationSummary station, CancellationToken cancellationToken) =>
+        HasFrontlineSolutions(station) && await AtWarAsync(station.SystemName, cancellationToken).ConfigureAwait(false);
+
+    /// <summary>The fixed station a dock trigger names, as the galaxy search lists it, or null where it lists none.</summary>
+    public async Task<StationSummary?> StationOfAsync(AdventureTrigger dock, CancellationToken cancellationToken)
+    {
+        if (dock.System is not { Length: > 0 } system || dock.Station is not { Length: > 0 } name)
+        {
+            return null;
+        }
+
+        var found = await CallAsync(() => galaxy.FindStationsAsync(StationQuery.Within(system, name), cancellationToken), cancellationToken).ConfigureAwait(false);
+
+        return found.Stations.FirstOrDefault(station =>
+            station.IsFixed
+            && string.Equals(station.SystemName, system, StringComparison.OrdinalIgnoreCase)
+            && (dock.MarketId is null ? string.Equals(station.Name, name, StringComparison.OrdinalIgnoreCase) : station.MarketId == dock.MarketId));
+    }
+
     private static bool IsSettlement(StationSummary station) =>
         string.Equals(station.Type, "Settlement", StringComparison.OrdinalIgnoreCase);
 

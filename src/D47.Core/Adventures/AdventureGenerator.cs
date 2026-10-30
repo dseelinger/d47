@@ -1542,6 +1542,9 @@ public sealed class AdventureGenerator(
         /// <summary>Up to five Anarchy systems within reach, nearest first.</summary>
         public IReadOnlyList<SystemSummary> Anarchy { get; init; } = [];
 
+        /// <summary>Up to five open stations within reach with Frontline Solutions in a system at war, nearest first.</summary>
+        public IReadOnlyList<StationSummary> Frontline { get; init; } = [];
+
         /// <summary>The unvisited Guardian sites, tourist beacons and generation ships within reach.</summary>
         public Sites Sites { get; init; } = Sites.None;
 
@@ -1593,6 +1596,7 @@ public sealed class AdventureGenerator(
         var anarchy = await AnarchyAsync(search, facts, here, cancellationToken, notes).ConfigureAwait(false);
         var sites = await SitesAsync(search, facts, here, cancellationToken, notes).ConfigureAwait(false);
         var resolver = new AdventureResolver(search, facts.Standings);
+        var frontline = await FrontlineAsync(search, facts, here, resolver, cancellationToken, notes).ConfigureAwait(false);
         var nearest = Candidates.None;
 
         try
@@ -1612,6 +1616,7 @@ public sealed class AdventureGenerator(
         return nearest with
         {
             Anarchy = anarchy,
+            Frontline = frontline,
             Sites = sites,
             InBand = await InBandAsync(search, resolver, ask, facts, cancellationToken, notes).ConfigureAwait(false),
             Pull = await PullAsync(search, resolver, ask, facts, cancellationToken, notes).ConfigureAwait(false),
@@ -1751,6 +1756,38 @@ public sealed class AdventureGenerator(
 
         notes.Add($"No station or landable body between {band.Min:0} and {band.Max:0} light years from Sol was found within reach, so the chapter was not held to that band.");
         return new InBand(InBandState.NoneFound, [], []);
+    }
+
+    /// <summary>Up to five open stations within reach that have Frontline Solutions in a system at war, nearest first.</summary>
+    private async Task<IReadOnlyList<StationSummary>> FrontlineAsync(
+        IGalaxyService search, Facts facts, string here, AdventureResolver resolver, CancellationToken cancellationToken, List<string> notes)
+    {
+        try
+        {
+            var found = await search.FindStationsAsync(AdventureResolver.FrontlineNear(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
+            var open = await OpenStationsAsync(found.Stations.Where(AdventureResolver.HasFrontlineSolutions), facts, resolver, int.MaxValue, cancellationToken).ConfigureAwait(false);
+            var listed = new List<StationSummary>();
+
+            foreach (var station in open)
+            {
+                if (listed.Count >= 5)
+                {
+                    break;
+                }
+
+                if (await resolver.FrontlineAtWarAsync(station, cancellationToken).ConfigureAwait(false))
+                {
+                    listed.Add(station);
+                }
+            }
+
+            return listed;
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            notes.Add($"The galaxy search could not list Frontline Solutions stations ({ex.Message}), so the story avoids kill bonds on foot.");
+            return [];
+        }
     }
 
     private async Task<IReadOnlyList<SystemSummary>> AnarchyAsync(
@@ -1995,6 +2032,41 @@ public sealed class AdventureGenerator(
             + "whose target settlement is run by an Anarchy faction or, for a ship mission, whose target is in an Anarchy system. "
             + "An Anarchy-run target reports no crime, but an Anarchy system can hold settlements owned by lawful factions, so the line asks "
             + "for the target to be checked and does not insist.");
+    }
+
+    /// <summary>The Frontline Solutions stations in systems at war and the rule for on-foot kill bond beats, or the instruction to write none.</summary>
+    private static void AppendFrontline(StringBuilder text, IReadOnlyList<StationSummary> frontline, bool drawn)
+    {
+        text.AppendLine();
+
+        if (frontline.Count == 0)
+        {
+            if (drawn)
+            {
+                return;
+            }
+
+            text.AppendLine("No station with Frontline Solutions in a system at war is known within reach, so write no \"onfootbond\" objective.");
+            return;
+        }
+
+        text.AppendLine("Stations with Frontline Solutions in a system at war, within reach, from the galaxy search, nearest first:");
+
+        foreach (var station in frontline)
+        {
+            text.Append("- ").Append(station.Name).Append(" in ").Append(station.SystemName);
+
+            if (station.Distance is { } distance)
+            {
+                text.Append(" (").Append(distance.ToString("0", CultureInfo.InvariantCulture)).Append(" ly)");
+            }
+
+            text.AppendLine();
+        }
+
+        text.AppendLine(
+            "An \"onfootbond\" objective must come directly after a \"dock\" objective at one of these stations, and its line sends the Commander "
+            + "to the Frontline Solutions desk there to take the dropship to the ground conflict zone.");
     }
 
     private static string PadsOf(StationSummary station) =>
@@ -3202,7 +3274,11 @@ public sealed class AdventureGenerator(
             _ => $"count {count}",
         };
 
-        return $"{phrase}: {objective}, {amount}{(slot.PlaceBefore ? ", with an arrive or dock objective just before it" : string.Empty)}";
+        var before = slot.Kind == TriggerKind.OnFootBond
+            ? ", with a dock objective just before it, at one of the Frontline Solutions stations listed"
+            : slot.PlaceBefore ? ", with an arrive or dock objective just before it" : string.Empty;
+
+        return $"{phrase}: {objective}, {amount}{before}";
     }
 
     /// <summary>An event slot as the writer is told it: the event, what it means, the field test in words and the count.</summary>
@@ -3306,6 +3382,7 @@ public sealed class AdventureGenerator(
         AppendPull(text, candidates.Pull, ask, facts);
         AppendSites(text, candidates.Sites);
         AppendAnarchy(text, candidates.Anarchy);
+        AppendFrontline(text, candidates.Frontline, ask.Story?.Slots?.Any(slot => slot.Kind == TriggerKind.OnFootBond) == true);
 
         if (ask.Story is { } story)
         {
@@ -3346,6 +3423,13 @@ public sealed class AdventureGenerator(
         var kinds = StoryAnswer.Kinds(
             team, beacon is not null, reachAway is not null, ships.Count > 0, !candidates.Sites.IsEmpty, ask.Story?.Slots is { Count: > 0 } drawn ? [.. drawn.Select(slot => slot.Kind)] : null);
 
+        var offerOnFootBond = candidates.Frontline.Count > 0 || ask.Story?.Slots?.Any(slot => slot.Kind == TriggerKind.OnFootBond) == true;
+
+        if (!offerOnFootBond)
+        {
+            kinds = [.. kinds.Where(kind => kind != "onfootbond")];
+        }
+
         text.AppendLine($"Each objective waits for exactly one of {Number(kinds.Count)} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
@@ -3365,7 +3449,7 @@ public sealed class AdventureGenerator(
         {
             "- \"bounty\": the Commander collects \"count\" bounties, anywhere.",
             "- \"bond\": the Commander earns \"count\" combat kill bonds in a conflict zone. \"faction\" is the side fought for; name one only when it appears in the game state or the places listed, and otherwise leave it null. Never Thargoid kill bonds.",
-            "- \"onfootbond\": the Commander earns \"count\" kill bonds on foot in a ground conflict zone, reached on foot at a settlement or by the dropship from a station's Frontline Solutions desk. Kill bonds earned in a ship or SRV do not count.",
+            "- \"onfootbond\": the Commander earns \"count\" kill bonds on foot in a ground conflict zone, reached by the dropship from the Frontline Solutions desk of the station the objective before it docked at. Kill bonds earned in a ship or SRV do not count.",
             "- \"mission\": the Commander completes \"count\" missions. \"faction\" is the faction they are for, named only as for \"bond\", or null. "
                 + "\"mission\" is the family, the start of the mission's internal name, one of these, in no order of preference: "
                 + string.Join(", ", Shuffled(MissionFamilies.Offered, name)) + "; or null for any mission. Never "
@@ -3425,7 +3509,7 @@ public sealed class AdventureGenerator(
         {
             text.AppendLine("The counted kinds, in no order of preference:");
 
-            foreach (var line in Shuffled(counted.Where(line => !StoryAnswer.PictureKinds.Contains(KindOf(line))).ToList(), name))
+            foreach (var line in Shuffled(counted.Where(line => !StoryAnswer.PictureKinds.Contains(KindOf(line)) && (offerOnFootBond || KindOf(line) != "onfootbond")).ToList(), name))
             {
                 text.AppendLine(line);
             }
@@ -4526,6 +4610,13 @@ public sealed class AdventureGenerator(
                 }
 
                 if (problems.Count == 0
+                    && beat.Kind == TriggerKind.OnFootBond
+                    && await OnFootBondOutsideFrontlineAsync(where, stoodBefore, resolver, cancellationToken).ConfigureAwait(false) is { } apart)
+                {
+                    problems.Add(apart);
+                }
+
+                if (problems.Count == 0
                     && steerIllegal
                     && beat.Kind == TriggerKind.Mission
                     && MissionFamilies.IsIllegal(counted.MissionFamily)
@@ -5122,6 +5213,34 @@ public sealed class AdventureGenerator(
             var government = await resolver.GovernmentAsync(system, cancellationToken).ConfigureAwait(false);
 
             return IsAnarchy(government) ? null : $"{rule} {system} is not an Anarchy system.";
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return $"{where} could not be checked: {ex.Message}";
+        }
+    }
+
+    /// <summary>The refusal for an on-foot kill bond beat that does not directly follow a dock at a Frontline Solutions station in a system at war, or null.</summary>
+    private static async Task<string?> OnFootBondOutsideFrontlineAsync(
+        string where, AdventureTrigger? before, AdventureResolver resolver, CancellationToken cancellationToken)
+    {
+        var rule = $"{where} is a kill bond earned on foot, which has to come directly after a dock objective at a station with Frontline Solutions in a system at war, "
+                   + "because the dropship from that desk is the way to a ground conflict zone.";
+
+        if (before is not { Kind: TriggerKind.Dock, System: { } system, Station: { } name })
+        {
+            return $"{rule} The objective before it is not a dock.";
+        }
+
+        try
+        {
+            if (await resolver.StationOfAsync(before, cancellationToken).ConfigureAwait(false) is not { } station
+                || !AdventureResolver.HasFrontlineSolutions(station))
+            {
+                return $"{rule} {name} has no Frontline Solutions in the galaxy search.";
+            }
+
+            return await resolver.AtWarAsync(system, cancellationToken).ConfigureAwait(false) ? null : $"{rule} {system} is not at war.";
         }
         catch (GalaxyUnavailableException ex)
         {

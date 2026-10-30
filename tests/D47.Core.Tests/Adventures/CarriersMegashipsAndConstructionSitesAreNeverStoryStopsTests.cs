@@ -86,7 +86,7 @@ public sealed class CarriersMegashipsAndConstructionSitesAreNeverStoryStopsTests
             }
         }
 
-        Assert.True(Assert.Single(galaxy.StationQueries, query => query.MaxDistance > 1).FixedOnly);
+        Assert.True(Assert.Single(galaxy.StationQueries, query => query.MaxDistance > 1 && query.Services.Count == 0).FixedOnly);
     }
 
     private static StationSummary Station(string name, string? type) => new()
