@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The idle remark about shields holding their charge is no longer said while your shields are down or your ship has none, and the one about the docking computer is no longer said unless one is fitted. Another remark from the same group is said in its place.
+
 Saying "where do I source my missions" now says where to buy the cargo of your accepted collect missions. It lists the buy stops in flying order with what to buy at each, then the hand-in stations, the total light years, what could not be found, and how many full loads it is when the cargo is more than your hold.
 
 A story objective to complete or take a mission now says what that kind of mission involves: whether it is flown or done on foot, what to do and where to hand it in. The line appears in the next-objective hand-off and in what the persona knows, and "What mission types are there" for one type includes it after the group.

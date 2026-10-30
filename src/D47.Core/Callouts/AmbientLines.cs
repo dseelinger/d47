@@ -104,6 +104,45 @@ public static class AmbientLines
         return lines.Count == 0 ? null : lines[Math.Abs(index) % lines.Count];
     }
 
+    /// <summary>
+    /// <see cref="Pick(AmbientSituation, int)"/>, skipping forward past a line the ship makes false: the
+    /// shields line unless shields are up, the docking computer line unless one is fitted.
+    /// </summary>
+    public static string? Pick(AmbientSituation situation, int index, GameStatus status, ShipLoadout? ship)
+    {
+        var lines = For(situation);
+
+        if (lines.Count == 0)
+        {
+            return null;
+        }
+
+        var start = Math.Abs(index) % lines.Count;
+
+        for (var offset = 0; offset < lines.Count; offset++)
+        {
+            var line = lines[(start + offset) % lines.Count];
+
+            if (line == ShieldsLine && !status.ShieldsUp)
+            {
+                continue;
+            }
+
+            if (line == DockingComputerLine && ship?.Fitted(ShipLoadout.DockingComputer) != true)
+            {
+                continue;
+            }
+
+            return line;
+        }
+
+        return null;
+    }
+
+    private const string ShieldsLine = "Shields are holding their charge. They have nothing to hold it against.";
+
+    private const string DockingComputerLine = "Docking computer has nothing to do. Neither, for the moment, do I.";
+
     private static readonly string[] Docked =
     [
         "Station power is carrying the ship. The reactor is idling for the first time in a while.",
@@ -115,7 +154,7 @@ public static class AmbientLines
         "Everything that was warm is cooling. That is the whole of the report.",
         "The ship is secure. Whatever comes next can wait until you are ready for it.",
         "No drift, no heat, no traffic. It is quiet in here.",
-        "Docking computer has nothing to do. Neither, for the moment, do I.",
+        DockingComputerLine,
     ];
 
     private static readonly string[] Landed =
@@ -159,7 +198,7 @@ public static class AmbientLines
         "Sensors are clear at this range. Not that range is much, down here.",
         "The hull is taking the usual small impacts. Nothing worth logging.",
         "Everything within reach is either rock or somebody else's problem.",
-        "Shields are holding their charge. They have nothing to hold it against.",
+        ShieldsLine,
         "Manoeuvring thrusters are doing more work than the main drive right now.",
         "Space here is not empty. It is only nearly empty, which is a different thing.",
         "The ship handles the way its mass says it should. It always does.",

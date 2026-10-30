@@ -77,7 +77,7 @@ public sealed class AmbientCallout : ICallout
             yield break;
         }
 
-        if (AmbientLines.Pick(situation, _picks) is not { } line)
+        if (AmbientLines.Pick(situation, _picks, context.Status, context.State?.Ship) is not { } line)
         {
             yield break;
         }

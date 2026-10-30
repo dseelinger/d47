@@ -196,6 +196,60 @@ public class AmbientCalloutTests
             AmbientLines.Pick(AmbientSituation.Docked, 4));
     }
 
+    private const string ShieldsLine = "Shields are holding their charge. They have nothing to hold it against.";
+
+    private const string DockingComputerLine = "Docking computer has nothing to do. Neither, for the moment, do I.";
+
+    private static readonly GameStatus ShieldsDown = In(StatusFlags.InMainShip);
+
+    private static readonly GameStatus ShieldsUp = In(StatusFlags.InMainShip | StatusFlags.ShieldsUp);
+
+    private static ShipLoadout Ship(params string[] items) => new()
+    {
+        Type = "python",
+        Modules = [.. items.Select(item => new ShipModule("Slot", item, true, null, null))],
+    };
+
+    private static IEnumerable<string?> Cycle(AmbientSituation situation, GameStatus status, ShipLoadout? ship) =>
+        Enumerable.Range(0, 10).Select(i => AmbientLines.Pick(situation, i, status, ship));
+
+    [Fact]
+    public void TheShieldsLineIsNotSaidWhileShieldsAreDownAndTheNextLineTakesItsPlace()
+    {
+        var lines = AmbientLines.For(AmbientSituation.NormalSpace);
+        var index = lines.ToList().IndexOf(ShieldsLine);
+        var cycle = Cycle(AmbientSituation.NormalSpace, ShieldsDown, null).ToArray();
+
+        Assert.DoesNotContain(ShieldsLine, cycle);
+        Assert.Equal(lines[index + 1], cycle[index]);
+    }
+
+    [Fact]
+    public void TheShieldsLineCanBeSaidWhileShieldsAreUp()
+    {
+        Assert.Contains(ShieldsLine, Cycle(AmbientSituation.NormalSpace, ShieldsUp, null));
+    }
+
+    [Fact]
+    public void TheDockingComputerLineIsNotSaidWithoutOneFittedOrWithAnUnknownLoadout()
+    {
+        var docked = In(StatusFlags.Docked | StatusFlags.InMainShip);
+
+        Assert.DoesNotContain(DockingComputerLine, Cycle(AmbientSituation.Docked, docked, Ship("int_shieldgenerator_size3_class2")));
+        Assert.DoesNotContain(DockingComputerLine, Cycle(AmbientSituation.Docked, docked, ShipLoadout.Unknown));
+        Assert.DoesNotContain(DockingComputerLine, Cycle(AmbientSituation.Docked, docked, null));
+    }
+
+    [Theory]
+    [InlineData("int_dockingcomputer_standard")]
+    [InlineData("int_dockingcomputer_advanced")]
+    public void TheDockingComputerLineCanBeSaidWithOneFitted(string item)
+    {
+        var docked = In(StatusFlags.Docked | StatusFlags.InMainShip);
+
+        Assert.Contains(DockingComputerLine, Cycle(AmbientSituation.Docked, docked, Ship(item)));
+    }
+
     /// <summary>
  /// The gap between remarks varies inside [Interval, Longest] rather than ticking — and
     /// deterministically, off the pick counter, because a recorded session has to replay to the same
