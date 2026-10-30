@@ -683,7 +683,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>A three-waypoint Jump plan, recorded into the given book (#197).</summary>
-    private static void RecordJumpPlan(RoutePlanBook plans) =>
+    private static void RecordJumpPlan(RoutePlanBook plans, DateTimeOffset? at = null) =>
         plans.Record(
             new PlottedRoute(
                 "Sol",
@@ -696,11 +696,18 @@ public class TheRoutingTabTests
                     new RouteWaypoint("Colonia", 1, 0, IsNeutron: false),
                 ]),
             "Sol to Colonia",
-            new DateTimeOffset(2026, 9, 1, 9, 0, 0, TimeSpan.Zero));
+            at ?? new DateTimeOffset(2026, 9, 1, 9, 0, 0, TimeSpan.Zero));
+
+    /// <summary>Plots the Jump plan into a panel already open, so it is this run's plan (#1926).</summary>
+    private static void PlotJumpPlan(RoutePlanBook plans)
+    {
+        RecordJumpPlan(plans, DateTimeOffset.Now);
+        Dispatcher.UIThread.RunJobs();
+    }
 
     /// <summary>
-    /// Mini's Plan root shows the stored plan as a list of waypoints, not the three planner forms
-    /// (#197).
+    /// Mini's Plan root shows this run's plan as a list of waypoints, not the three planner forms
+    /// (#197, #1926).
     /// </summary>
     [Trait("Category", "Integration")]
     [AvaloniaFact]
@@ -711,13 +718,12 @@ public class TheRoutingTabTests
         try
         {
             var plans = Book(folder);
-            RecordJumpPlan(plans);
-
             var panel = MiniOnPlan(NavRoute.None, plans);
+            PlotJumpPlan(plans);
 
             var drawn = TextOf(panel).ToArray();
 
-            Assert.Contains("Sol", drawn);
+            Assert.Contains("Sol to Colonia", drawn);
             Assert.Contains("Waypoint 0", drawn);
             Assert.Contains("Waypoint 1", drawn);
             Assert.Contains("Colonia", drawn);
@@ -732,7 +738,7 @@ public class TheRoutingTabTests
         }
     }
 
-    /// <summary>With no stored plan, mini says so rather than drawing the forms (#197).</summary>
+    /// <summary>With no plan plotted, mini says so rather than drawing the forms (#197, #1926).</summary>
     [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MiniWithNoStoredPlanSaysSo()
@@ -745,7 +751,7 @@ public class TheRoutingTabTests
 
             var drawn = TextOf(panel).ToArray();
 
-            Assert.Contains(drawn, text => text.Contains("No neutron route is plotted", StringComparison.Ordinal));
+            Assert.Contains(drawn, text => text.Contains("No plan is plotted", StringComparison.Ordinal));
             Assert.DoesNotContain("Neutron Plotter", drawn);
         }
         finally
@@ -764,10 +770,9 @@ public class TheRoutingTabTests
         try
         {
             var plans = Book(folder);
-            RecordJumpPlan(plans);
-
             var route = Route(Hop("Sol"), Hop("Waypoint 0", 10));
             var panel = MiniOnPlan(route, plans, here: "Waypoint 1");
+            PlotJumpPlan(plans);
 
             var drawn = TextOf(panel).ToArray();
 
@@ -798,9 +803,8 @@ public class TheRoutingTabTests
         try
         {
             var plans = Book(folder);
-            RecordJumpPlan(plans);
-
             var panel = MiniOnPlan(NavRoute.None, plans, here: "Waypoint 0");
+            PlotJumpPlan(plans);
 
             var next = panel.GetVisualDescendants()
                 .OfType<Border>()
@@ -827,9 +831,8 @@ public class TheRoutingTabTests
         try
         {
             var plans = Book(folder);
-            RecordJumpPlan(plans);
-
             var panel = MiniOnPlan(NavRoute.None, plans, here: "Colonia");
+            PlotJumpPlan(plans);
 
             var drawn = TextOf(panel).ToArray();
 
@@ -852,9 +855,8 @@ public class TheRoutingTabTests
         try
         {
             var plans = Book(folder);
-            RecordJumpPlan(plans);
-
             var panel = MiniOnPlan(NavRoute.None, plans, here: "Shinrarta Dezhra");
+            PlotJumpPlan(plans);
 
             var drawn = TextOf(panel).ToArray();
 
@@ -867,7 +869,7 @@ public class TheRoutingTabTests
         }
     }
 
-    /// <summary>Galaxy search being off does not hide a plan already stored (#197).</summary>
+    /// <summary>Galaxy search being off does not hide this run's plan (#197, #1926).</summary>
     [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MiniShowsAStoredPlanEvenWithGalaxySearchOff()
@@ -877,14 +879,13 @@ public class TheRoutingTabTests
         try
         {
             var plans = Book(folder);
-            RecordJumpPlan(plans);
-
             var panel = FullyFurnished(NavRoute.None, plans, lookups: false);
 
             panel.Tab = PanelTab.Navigation;
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             panel.Mode = PanelMode.Mini;
             Dispatcher.UIThread.RunJobs();
+            PlotJumpPlan(plans);
 
             Assert.Contains("Waypoint 0", TextOf(panel));
         }
@@ -904,8 +905,6 @@ public class TheRoutingTabTests
         try
         {
             var plans = Book(folder);
-            RecordJumpPlan(plans);
-
             var here = "Waypoint 0";
             var panel = new PanelView { DataContext = new PanelViewModel() };
 
@@ -920,6 +919,7 @@ public class TheRoutingTabTests
             panel.Nav.SelectRoot(RoutingPages.PlanRoot);
             panel.Mode = PanelMode.Mini;
             Dispatcher.UIThread.RunJobs();
+            PlotJumpPlan(plans);
 
             Assert.Equal(1, TextOf(panel).Count(text => text == "NEXT"));
 

@@ -273,7 +273,7 @@ public static class StoryClues
         Instruction =
             $"Say one line to the Commander as {name}, in {name}'s own words, carrying a clue to the hidden story as a "
             + "detail they could miss. Hint at what it points to; never state it. One to three sentences. Do not give "
-            + $"advice. The clue: {clue}",
+            + $"advice. The clue: \"{clue}\"",
         NeedsPersona = false,
         NeedsGameState = true,
         NeedsAboutMe = false,
@@ -288,14 +288,14 @@ public static class StoryClues
             Instruction =
                 FlavourBriefs.Narration.Instruction
                 + " Let this narration carry a clue to the hidden story, as a detail the Commander could miss. "
-                + $"Hint at what it points to; never state it. The clue: {clue}",
+                + $"Hint at what it points to; never state it. The clue: \"{clue}\"",
         }
         : new FlavourBrief
         {
             Instruction =
                 "Pass the Commander a clue to the hidden story, in your own voice, as something they could miss. "
                 + "Hint at what it points to; never state it. One to three sentences. Do not ask a question and do "
-                + $"not give advice. The clue: {clue}",
+                + $"not give advice. The clue: \"{clue}\"",
             NeedsPersona = true,
             NeedsGameState = true,
             NeedsAboutMe = true,

@@ -1,6 +1,7 @@
 using D47.Core.Callouts;
 using D47.Core.Audio;
 using D47.Core.Conversation;
+using D47.Core.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -66,6 +67,24 @@ public class AModelsReasoningIsNeverSpokenTests
     public void ADeliveryTagInsideALineIsSaid()
     {
         Assert.True(FlavourBriefs.MayBeSpoken("Hold on, Commander. [sighs] Fine, you may dock."));
+    }
+
+    [Theory]
+    [InlineData("cast")]
+    [InlineData("narrated")]
+    [InlineData("crew")]
+    public void AClueLineThatEchoesTheClueIsSaid(string speaker)
+    {
+        const string clue = "Bay four was never empty.";
+
+        var brief = speaker switch
+        {
+            "cast" => StoryClues.Speaking(clue, "Ren", "A tired dock hand."),
+            "narrated" => StoryClues.Speaking(clue, narrated: true),
+            _ => StoryClues.Speaking(clue, narrated: false),
+        };
+
+        Assert.True(FlavourBriefs.MayBeSpoken("Bay four was never empty, you know.", brief.Instruction));
     }
 
     [Fact]
