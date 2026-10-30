@@ -88,7 +88,7 @@ public static class FlavourBriefs
                 : null;
     }
 
-    /// <summary>Whose humor settings a briefed line follows, or null for a warning, which never gets any.</summary>
+    /// <summary>Whose humor settings a briefed line follows, or null for a warning, a station notice or a docking refusal, which never get any.</summary>
     public static HumorGroup? HumorGroupOf(Announcement announcement, FlavourBrief brief)
     {
         ArgumentNullException.ThrowIfNull(announcement);
@@ -101,8 +101,19 @@ public static class FlavourBriefs
             return null;
         }
 
+        if (IsProceduralNotice(announcement.Key))
+        {
+            return null;
+        }
+
         return brief.NeedsPersona ? HumorGroup.Cores : Humor.GroupOf(announcement.Voice);
     }
+
+    private static bool IsProceduralNotice(string key) =>
+        key.StartsWith(IncomingMessages.CannedKeyPrefix, StringComparison.Ordinal)
+        && key[IncomingMessages.CannedKeyPrefix.Length..] is { } family
+        && (string.Equals(family, CannedSpeakers.StationFamily, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(family, CannedSpeakers.DockingFailedFamily, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The brief for one announcement, or null when it is to be said exactly as written.</summary>
     /// <param name="personalityEnabled">Personality off silences all of it.</param>

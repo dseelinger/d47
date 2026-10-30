@@ -6,6 +6,10 @@ namespace D47.Core.Callouts;
 /// </summary>
 public static class CannedSpeakers
 {
+    public const string StationFamily = "STATION";
+
+    public const string DockingFailedFamily = "DockingFailed";
+
     private const string Rules = " One short sentence. Never mention being an AI.";
 
     /// <summary>The speaker for a family with no entry of its own.</summary>
@@ -14,13 +18,13 @@ public static class CannedSpeakers
 
     private static readonly Dictionary<string, string> ByFamily = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["STATION"] =
+        [StationFamily] =
             "You are a starport's traffic control, issuing a routine notice to a pilot nearby. Not a "
             + "character: clipped and procedural." + Rules,
         ["DockingChatter"] =
             "You are a starport's traffic controller speaking to a pilot who has just arrived. Courteous "
             + "and routine." + Rules,
-        ["DockingFailed"] =
+        [DockingFailedFamily] =
             "You are a starport's traffic control, refusing or setting conditions on a docking request. "
             + "Procedural and firm." + Rules,
         ["Trader"] =

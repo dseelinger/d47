@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Station notices and docking refusals are no longer given a joke when D47 rewords them. They are still reworded, always as plain notices.
+
 D47 now says a mission concludes at a station, or that a hand-in is unclaimed when you undock, only when it can be handed in. A cargo mission waits until the cargo it still owes is in your hold. A kill, salvage or on-foot mission waits until the game redirects it. The Missions page counts and marks only those missions as handing in here.
 
 The idle remark about shields holding their charge is no longer said while your shields are down or your ship has none, and the one about the docking computer is no longer said unless one is fitted. Another remark from the same group is said in its place.
