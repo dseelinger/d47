@@ -68,7 +68,7 @@ public sealed class MailCountsWhatWasNotAlreadySaidTests : IDisposable
         var history = Ledger();
         Walk(history, [Journal("100000", Commander(Doug, "10:00:00"), Promotion("10:05:00"))]);
 
-        Assert.Contains("a promotion to Elite in trade", history.Compose(Doug), StringComparison.Ordinal);
+        Assert.Contains("a promotion to Trade Rank 8 of 13, Elite", history.Compose(Doug), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public sealed class MailCountsWhatWasNotAlreadySaidTests : IDisposable
         Walk(ledger, []);
         ledger.Fold([Parse(Promotion("10:05:00"))], live: true, Doug, announced: false);
 
-        Assert.Contains("a promotion to Elite in trade", ledger.Compose(Doug), StringComparison.Ordinal);
+        Assert.Contains("a promotion to Trade Rank 8 of 13, Elite", ledger.Compose(Doug), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public sealed class MailCountsWhatWasNotAlreadySaidTests : IDisposable
 
         Assert.Equal(
             "I can't read the inbox itself, but since you last asked: one mission completed and one failed, "
-            + "a promotion to Elite in trade, and three more notices. The comms panel has the true count.",
+            + "a promotion to Trade Rank 8 of 13, Elite, and three more notices. The comms panel has the true count.",
             ledger.Compose(Doug));
     }
 
