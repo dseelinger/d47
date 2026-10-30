@@ -626,7 +626,7 @@ public static class ConversationCapability
                         ? "A local server needs no key, so leaving the row empty is a complete setup. "
                         : "Needs a key from the provider's own account. ")
                     + "Do not paste a key anywhere but this row.",
-                Label = provider.KeyOptional ? $"{provider.Name} API key (if it wants one)" : $"{provider.Name} API key",
+                Label = provider.KeyOptional ? $"{provider.Name} API key (if it needs one)" : $"{provider.Name} API key",
                 Help = provider.KeyOptional
                     ? "Optional — a model running on this machine needs no key, and leaving this empty is a "
                       + "complete configuration. Fill it in only if the endpoint asks for one. Stored encrypted "
