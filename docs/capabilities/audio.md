@@ -21,50 +21,49 @@ nav_order: 123
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps to a mix you can hear over the ship.</p>
 <section>
-<h2><span class="num">1</span> Open the Audio mixer and move the five sliders.</h2>
-<p class="say">Open the Audio mixer and move the five sliders for speech, cues, music, ambience and alerts.</p>
-<p class="expect">Each slider shows its percentage, and the change is audible while something is playing.</p>
-<svg viewBox="0 0 880 268" role="img" aria-label="The five volume sliders: speech, cues, music, ambience and alerts">
- <rect x="20" y="16" width="840" height="236" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Audio mixer</text>
- <text x="44" y="98" font-size="16" fill="var(--text)">Speech</text>
- <rect x="180" y="86" width="560" height="8" fill="var(--border)"/>
- <rect x="180" y="86" width="440" height="8" fill="var(--accent)"/>
- <circle cx="620" cy="90" r="11" fill="var(--accent)"/>
- <text x="770" y="98" font-size="15" fill="var(--text-muted)">80%</text>
- <text x="44" y="142" font-size="16" fill="var(--text)">Cues</text>
- <rect x="180" y="130" width="560" height="8" fill="var(--border)"/>
- <rect x="180" y="130" width="336" height="8" fill="var(--accent)"/>
- <circle cx="516" cy="134" r="11" fill="var(--accent)"/>
- <text x="770" y="142" font-size="15" fill="var(--text-muted)">60%</text>
- <text x="44" y="186" font-size="16" fill="var(--text)">Music</text>
- <rect x="180" y="174" width="560" height="8" fill="var(--border)"/>
- <rect x="180" y="174" width="224" height="8" fill="var(--accent)"/>
- <circle cx="404" cy="178" r="11" fill="var(--accent)"/>
- <text x="770" y="186" font-size="15" fill="var(--text-muted)">40%</text>
- <text x="44" y="230" font-size="15" fill="var(--text-muted)">Ambience and Alerts sit below these two.</text>
+<h2><span class="num">1</span> Set a level on the mixer.</h2>
+<p class="say">Turn on Show every setting, open Settings › Hearing and sound › Sounds and levels, and move Level on the Speech row.</p>
+<p class="expect">The value changes in steps of 0.05, and what is playing gets louder or quieter at once.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The Levels group with a row per channel and a Level value">
+ <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="44" y="53" font-size="17" font-weight="700" fill="var(--text)">Speech</text>
+ <text x="836" y="53" text-anchor="end" font-size="17" fill="var(--text)">Level 1</text>
+ <rect x="20" y="84" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="44" y="117" font-size="17" font-weight="700" fill="var(--text)">Sound cues</text>
+ <text x="836" y="117" text-anchor="end" font-size="17" fill="var(--text)">Level 1</text>
+ <text x="20" y="166" font-size="16" fill="var(--text-muted)">Mute is its own tick, so the level survives it.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Set how far everything else drops while D47 talks.</h2>
-<p class="say">Set how far everything else drops while D47 talks.</p>
-<p class="expect">The duck slider shows a value in decibels, and other audio dips while D47 speaks.</p>
-<svg viewBox="0 0 880 156" role="img" aria-label="The ducking row, which lowers every other category while Directive 47 speaks">
- <rect x="20" y="20" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">Duck everything else while D47 speaks</text>
- <text x="836" y="57" text-anchor="end" font-size="16" fill="var(--accent)">-12 dB</text>
- <text x="20" y="124" font-size="16" fill="var(--text-muted)">Move a slider while something is playing and you hear the change as you make it.</text>
- <text x="20" y="148" font-size="16" fill="var(--text-muted)">Nothing has to be re-triggered to audition it.</text>
+<h2><span class="num">2</span> Set how far music drops while D47 talks.</h2>
+<p class="say">On the Ambient music row, set Duck while D47 speaks to 0.</p>
+<p class="expect">The music goes silent until D47 finishes the sentence. At 1 it does not drop at all.</p>
+<svg viewBox="0 0 880 150" role="img" aria-label="The Duck while D47 speaks value on the Ambient music row">
+ <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="44" y="53" font-size="17" font-weight="700" fill="var(--text)">Ambient music</text>
+ <text x="836" y="53" text-anchor="end" font-size="17" fill="var(--text)">Duck while D47 speaks 0</text>
+ <text x="20" y="112" font-size="16" fill="var(--text-muted)">Thinking bed and Sound cues have a Duck value too.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Move the slider yourself, or use the Windows mixer, to change the volume.</p>
-<p class="expect">The level changes; asking the AI to turn itself down changes nothing.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="The mixer is unreachable by the model, so asking it to turn something down does nothing">
- <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The AI cannot touch the mixer.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Asking it to turn itself down does nothing. Move the slider, or use your Windows mixer.</text>
+<h2><span class="num">3</span> Pause the music by voice.</h2>
+<p class="say">With music playing, say "pause the music", then "resume the music" or "next track".</p>
+<p class="expect">Pause holds the track, resume carries on, and next track starts another from the same folder.</p>
+<svg viewBox="0 0 880 140" role="img" aria-label="The ask row with a music command typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">pause the music</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Needs Elite running and a file in a music folder.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> No music plays until you add some.</h2>
+<p class="say">Put an audio file in data/audio/music/general, with Elite running.</p>
+<p class="expect">The file plays, quietly. D47 ships with no music of its own.</p>
+<svg viewBox="0 0 880 150" role="img" aria-label="A file in the general music folder">
+ <rect x="20" y="24" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">data/audio/music/general</text>
+ <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">any .mp3, .m4a, .aac, .wma, .flac or .wav file</text>
 </svg>
 </section>
 </div></div>
@@ -78,85 +77,53 @@ nav_order: 123
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">How loud each kind of sound is, and how far it drops out of the way while Directive 47 speaks.</p>
+<p class="intro">Every sound D47 makes belongs to one of six categories, each with its own level, mute and duck.</p>
 <section>
-<h2><span class="num">1</span> Six categories, and everything audible is one of them.</h2>
-<svg viewBox="0 0 880 252" role="img" aria-label="Speech, alerts, sound cues, the thinking bed and ambient music, each with its own level and mute">
- <rect x="21" y="40" width="158" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="100" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">SPEECH</text>
- <text x="100" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">everything it</text>
- <text x="100" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">says out loud</text>
- <rect x="191" y="40" width="158" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="270" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">ALERTS</text>
- <text x="270" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">the one thing that</text>
- <text x="270" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">cuts in mid-sentence</text>
- <rect x="361" y="40" width="158" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">SOUND CUES</text>
- <text x="440" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">listening, thinking,</text>
- <text x="440" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">answering</text>
- <rect x="531" y="40" width="158" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="610" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">THINKING BED</text>
- <text x="610" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">the loop under</text>
- <text x="610" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">a running turn</text>
- <rect x="701" y="40" width="158" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="780" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">AMBIENCE</text>
- <text x="780" y="106" text-anchor="middle" font-size="14" fill="var(--text-muted)">follows what</text>
- <text x="780" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">you are doing</text>
- <text x="440" y="186" text-anchor="middle" font-size="16" fill="var(--text)">Everything audible goes through one queue, and belongs to exactly one of these.</text>
- <text x="440" y="218" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Each has a Level and a Mute, and they are separate on purpose.</text>
- <text x="440" y="246" text-anchor="middle" font-size="15" fill="var(--text-muted)">A level of zero and a mute sound identical and mean different things.</text>
+<h2><span class="num">1</span> Each category has a level and a mute.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="Six categories: speech, alerts, overheard chatter, sound cues, thinking bed and ambient music">
+ <rect x="20" y="24" width="840" height="46" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="53" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">SPEECH   ALERTS   OVERHEARD CHATTER</text>
+ <rect x="20" y="80" width="840" height="46" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="109" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">SOUND CUES   THINKING BED   AMBIENT MUSIC</text>
 </svg>
+<p class="body">Each has a Level from 0 to 1 and a Mute. Muting keeps the level, so unmuting returns to the loudness you had.</p>
 </section>
 <section>
-<h2><span class="num">2</span> Ducking is a fraction, not a second level.</h2>
-<svg viewBox="0 0 880 236" role="img" aria-label="The duck value is a fraction of a category's own level, so lowering the level lowers its ducked form too">
- <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">DUCK IS A FRACTION</text>
- <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">of that category’s own level</text>
- <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">not a level of its own</text>
- <rect x="460" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SO TURNING MUSIC DOWN</text>
- <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">takes its ducked form</text>
- <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">down with it</text>
- <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">1 does not duck at all. 0 goes silent until the sentence ends.</text>
- <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">The bed sits at 0.35 — audible enough to prove the turn is running, quiet enough not to compete.</text>
+<h2><span class="num">2</span> While D47 speaks, three categories drop.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="Duck is the fraction of its level a category drops to while D47 speaks">
+ <rect x="20" y="24" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">Duck while D47 speaks</text>
+ <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">thinking bed, sound cues, ambient music</text>
 </svg>
-<p class="body">Speech and alerts have no duck row, because there is nothing for them to duck under. A row that does not apply is absent rather than greyed out. And moving a level re-levels whatever is playing at that moment, because setting a level by ear is the only way to set one.</p>
+<p class="body">Each of those has a Duck value: the fraction of its level it drops to. 1 never drops. 0 is silent until the sentence ends.</p>
 </section>
 <section>
-<h2><span class="num">3</span> Ambience follows the music Elite is playing.</h2>
-<svg viewBox="0 0 880 252" role="img" aria-label="Elite's music track picks the folder; an empty folder falls back to the Status.json situation, then general">
- <rect x="21" y="40" width="250" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="146" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">Elite's music track</text>
- <text x="146" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">combat-dogfight, galaxy-map…</text>
- <rect x="315" y="40" width="250" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">where you are</text>
- <text x="440" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">docked, supercruise, on-foot…</text>
- <rect x="609" y="40" width="250" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="734" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">general</text>
- <text x="734" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">the last fallback</text>
- <text x="293" y="90" text-anchor="middle" font-size="18" fill="var(--text-muted)">→</text>
- <text x="587" y="90" text-anchor="middle" font-size="18" fill="var(--text-muted)">→</text>
- <rect x="20" y="150" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2.5"/>
- <text x="440" y="182" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">an empty folder changes nothing</text>
- <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">Set Elite's music volume to zero (Options, Audio) to hear yours instead of the game's.</text>
+<h2><span class="num">3</span> Docking changes the music.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="Elite writes a Music event naming Starport, and D47 plays from the docked folder">
+ <rect x="20" y="24" width="250" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="145" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">Music: Starport</text>
+ <text x="145" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">from Elite</text>
+ <line x1="282" y1="69" x2="296" y2="69" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="310,69 294,61 294,77" fill="var(--accent-muted)"/>
+ <rect x="320" y="24" width="250" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="445" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">music/docked</text>
+ <text x="445" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">one file, shuffled</text>
+ <line x1="582" y1="69" x2="596" y2="69" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="610,69 594,61 594,77" fill="var(--accent-muted)"/>
+ <rect x="620" y="24" width="240" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="740" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">Level and Duck</text>
+ <text x="740" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">as set</text>
 </svg>
-<p class="body">Directive 47 ships with no music of its own — drop your own <code>.mp3</code>, <code>.m4a</code>, <code>.flac</code> or <code>.wav</code> files into <code>data/audio</code> and they are picked up while it runs. Tracks shuffle within a folder and the whole folder plays before any repeats, because you did not number your files. Ambience plays only while Elite is running, and stops within a few seconds of the game closing.</p>
+<p class="body">When you dock, Elite writes a Music event naming Starport. D47 stops the old track and plays one from music/docked, at the music Level, dropping to its Duck while D47 speaks.</p>
 </section>
 <section>
-<h2><span class="num">4</span> No tool sets a level or a mute.</h2>
-<svg viewBox="0 0 880 226" role="img" aria-label="The model cannot lower Directive 47's own voice or the danger callouts, though you still can">
- <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">IT CANNOT TURN DOWN</text>
- <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text)">its own voice</text>
- <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text)">or the danger callouts</text>
- <rect x="460" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="660" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOU STILL CAN</text>
- <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">by voice, through the router</text>
- <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">and from the Settings tab</text>
- <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Those are the two things that would make it harder to hear exactly when hearing it matters.</text>
+<h2><span class="num">4</span> Pause, resume and next control the music only.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="One tool controls the ambient music and nothing else">
+ <rect x="20" y="24" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">manage_music</text>
+ <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">pause, resume, next</text>
 </svg>
-<p class="body">“By voice” never silently means “by the language model”. Every row here is reachable through the model-free keyword router, which is a different path with a different caller. The one tool, <code>manage_music</code>, only pauses, resumes and skips the ambient music.</p>
+<p class="body">The tool is declared as <code>Pauses, resumes or skips D47's ambient music.</code> Levels and mutes are separate rows.</p>
 </section>
 </div></div>
 </details>
@@ -188,17 +155,16 @@ of these:
 | **Alerts** | The danger callouts — interdiction, shields down, low fuel. The one thing that cuts in mid-sentence. |
 | **Overheard chatter** | Invented radio traffic between other pilots and controllers, not meant for you. |
 | **Sound cues** | The short markers for listening, thinking and answering. |
-| **Thinking bed** | The loop that plays underneath a turn while D47 works. |
+| **Thinking bed** | The loop that plays underneath a response while D47 works. |
 | **Ambient music** | The background layer that follows what you are doing. |
 
-Each has a **Level** from 0 to 1 and a **Mute**. They are separate on purpose: a level of zero
-and a mute sound identical and mean different things, and flicking the mute back should not cost
-you the level you had it at.
+Each has a **Level** from 0 to 1 and a **Mute**. A level of zero and a mute sound the same, but
+unmuting returns to the level the row had.
 
 ### What silences what
 
 Ranking decides who goes next, not who gets cut off. Something already playing is normally left to
-finish, and there are exactly three exceptions:
+finish. Three things cut it, and a new turn also drops what the previous turn had left to say:
 
 | What arrives | What it cuts | What it leaves alone |
 |---|---|---|
@@ -206,41 +172,32 @@ finish, and there are exactly three exceptions:
 | **You starting to talk to it** | Invented NPC chatter, playing or queued | Everything else, including the sound cue |
 | **"Stop"** | Everything audible, including the alert | Nothing |
 
-The middle row is the narrow one, and it fires when you open the microphone rather than when the
-answer arrives. Transcription and the model together take several seconds, and a four-line exchange
-finishes inside them, so waiting for the answer would mean hearing the whole exchange out anyway.
-
-It stays shut until the loop goes quiet again, rather than only cutting what was audible at that
-moment. An exchange is written and voiced ahead of what you are hearing, so the next speaker is
-already on their way when the first is cut off, and would otherwise arrive a second later.
+The middle row fires when the microphone opens, and also when a turn starts without you having
+spoken, rather than when the answer arrives. It stays shut until the loop goes quiet again, so
+chatter that is written ahead of what you are hearing is cut too.
 
 It reaches invented chatter and nothing else: a message the game sent you, a callout you switched
-on, and a sound cue are all left where they are. And it is only ever you who does it — an
-unprompted line of Directive 47's own queues up behind the chatter like anything else, because
-nobody was waiting on it.
+on, and a sound cue are all left where they are. An unprompted line of Directive 47's own queues up
+behind the chatter like anything else.
 
-The sound cue is the reason the rule is written this way. A cue is a fifth of a second and it plays
-immediately before the sentence it introduces, so anything allowed to cut in on rank alone would
-truncate the cue that announced it, every single turn.
+A sound cue is not cut by rank. A shipped cue runs from about 0.1 to 0.5 seconds and plays
+immediately before the sentence it introduces.
 
 ### Ducking
 
-Speech and alerts are what everything else gets out of the way of, so the other three carry a
-**Duck while D47 speaks** number as well. It is a fraction of that category's level rather than a
+Speech, alerts and overheard chatter are what everything else ducks under, so the thinking bed,
+the sound cues and ambient music carry a **Duck while D47 speaks** number as well. It is a fraction of that category's level rather than a
 level of its own — turn music down and its ducked form goes down with it.
 
 `1` does not duck at all. `0` goes silent until the sentence ends. Out of the box the thinking
-bed sits at `0.35`, which is enough to stay audible as evidence the turn is still running and
-quiet enough not to compete with the words, and music sits at `0.2`.
+bed sits at `0.35`, the sound cues at `1`, and music at `0.2`.
 
-Speech and alerts have no duck row, because there is nothing for them to duck under. A row that
-does not apply is absent rather than greyed out.
+Speech, alerts and overheard chatter have no duck row. A row that does not apply is absent rather
+than greyed out.
 
 ### What you hear if you never touch it
 
-The defaults are what D47 sounded like before there was a mixer, with one addition: ambient music
-arrives at half level and ducking to a fifth, because a background layer that turns up at full
-volume is one you switch off rather than turn down.
+Ambient music and overheard chatter arrive at half level, and music ducks to `0.2`.
 
 ```json
 {
@@ -253,20 +210,19 @@ volume is one you switch off rather than turn down.
 }
 ```
 
-That block is the `audio` section of `data/settings.json`. You never have to edit it — every
-value has a row — but it is a plain file and it reads the way the rows do.
+That block is the `audio` section of `data/settings.json`. Every level and mute has a row; a duck
+value has a row only for the thinking bed, music and sound cues.
 
 ### It takes effect while you are listening to it
 
 Moving a level re-levels whatever is playing at that moment rather than waiting for the next
-clip. Turn the bed down while a turn is running and it goes quiet under your hand, which is the
-only way to set a level by ear.
+clip.
 
 ### Your own sounds
 
 Drop audio files into `data/audio` beside the executable. `.mp3`, `.m4a`, `.aac`, `.wma`,
 `.flac` and `.wav` are read, at any sample rate and channel count; D47 converts them to 48 kHz
-mono as it loads them. The folders are made for you on first run, and **Open audio folder** on
+mono as it loads them. The folders are created at startup whenever they are missing, and **Open audio folder** on
 the **Your own audio** row opens `data\audio` in Explorer:
 
 ```text
@@ -300,15 +256,15 @@ cues/listening: 5 files
 alerts/under-fire: 1 file
 music/combat-dogfight: 12 files
 Ignored: klaxon.wav is directly in alerts; put it in a folder such as alerts/under-fire.
-Ignored: notes.txt is not an audio format D47 reads.
+Ignored: cues/listening/notes.txt is not an audio format D47 reads.
 Skipped: engine-room: Windows has no decoder for this file. On a Windows N edition, install the Media Feature Pack.
 ```
 
 ### Ambience
 
 `music/<situation>/` is a background layer of its own, with its own level and its own
-ducking, separate from the cues and the thinking bed. Elite writes a `Music` event naming the
-situation it is scoring, and D47 plays from the folder for that track:
+ducking, separate from the cues and the thinking bed. Elite writes a `Music` event naming its
+track, and D47 maps that track to a folder:
 
 | Folder | Elite track | Without a track, from Status.json |
 |---|---|---|
@@ -324,7 +280,7 @@ situation it is scoring, and D47 plays from the folder for that track:
 | `scanner` | `SystemAndSurfaceScanner` |  |
 | `codex` | `Codex` |  |
 | `combat-dogfight` | `Combat_Dogfight` |  |
-| `combat-large` | `Combat_LargeDogFight` |  |
+| `combat-large` | `Combat_LargeDogFight`, `CombatLargeDogFight` |  |
 | `combat-srv` | `Combat_SRV` |  |
 | `combat-unknown` | `Combat_Unknown` |  |
 | `interdiction` | `Interdiction` |  |
@@ -350,26 +306,21 @@ To hear this music rather than Elite's, set Elite's music volume to zero (Option
 
 Ambience plays only while Elite is running. D47 checks for the game's window every two seconds:
 when the game closes, crashed or not, the track stops, and when it starts again the music picks up
-for the situation it is in, unless you paused or muted it. Until Elite's window appears, which is a
-few seconds after launch, nothing plays.
+for the situation it is in, unless you paused or muted it. Until Elite is detected, nothing plays.
 
-Tracks are shuffled within a folder and the whole folder plays before any of them repeats — you
-did not number your files, and hearing the same one every time you dock is what happens if D47
-plays them in name order. Two seconds of silence separate a track that ends from the next one,
-the pause a CD puts between tracks. A situation with nothing in it falls back to `general`; `general` with
+Tracks are shuffled within a folder and the whole folder plays before any of them repeats. Two
+seconds of silence separate a track that ends from the next one. A situation with nothing in it falls back to `general`; `general` with
 nothing in it is quiet, which is what every Commander gets until they drop something in. D47
 ships with no music of its own.
 
-Changing situation stops the old track rather than letting it play out: arriving at a station is
-the moment the docking music is wanted, not thirty seconds later. Muting the category stops it,
-and unmuting starts one — a switch whose effect waits for the next time you dock is a switch that
-reads as broken.
+Changing situation stops the old track rather than letting it play out. Muting the category stops
+it, and unmuting starts one.
 
 ### Pause, resume and next track
 
 The keyboard's play/pause and next-track keys control the ambient music. D47 registers as a Windows
-media session, so it also appears in the volume flyout with the current track's file name and
-working buttons. Nothing else D47 plays — speech, cues, alerts or the thinking bed — answers to
+media session, so it also appears in the volume flyout with the current track's file name, minus its
+extension, and working buttons. Nothing else D47 plays — speech, cues, alerts or the thinking bed — answers to
 these keys.
 
 - **Pause** holds the track where it is. **Resume** continues it from that point.
@@ -396,11 +347,9 @@ The same three actions work by voice — "pause the music", "resume the music", 
 {"type":"object","properties":{"action":{"type":"string","description":"What to do to the music.","enum":["pause","resume","next"]}},"required":["action"],"additionalProperties":false}
 ```
 
-### Not reachable by the model
+### Who can change a level
 
-No tool sets a level or a mute; `manage_music` only pauses, resumes and skips the music.
-Directive 47 cannot turn its own voice down, and it cannot turn the danger callouts down either — those are the two things that would make it harder to hear exactly when
-hearing it matters, and no request needs them.
-
-Every row is still reachable by voice, through the model-free keyword router, and from the
-Settings tab. "By voice" never silently means "by the language model".
+`manage_music` pauses, resumes and skips the music and sets no level or mute. The Level, Mute and
+Duck rows are not protected, so the model's `set_setting` tool can change them by key, such as
+`audio.speech.level`, as well as the Settings tab. No row declares a keyword-router phrase, so no
+fixed spoken command sets one.

@@ -23,9 +23,12 @@ internal sealed class PanelPathChecker(
         var parts = new List<string> { first! };
         parts.AddRange(path.Parts.Skip(1));
 
-        return string.Equals(word, SettingsWord, StringComparison.Ordinal)
-            ? SettingsFailure(parts[1..], path.Group)
-            : TabFailure(word, parts, path.Group);
+        if (string.Equals(word, SettingsWord, StringComparison.Ordinal))
+        {
+            return IsASettingsRoot(parts, path.Group) ? null : SettingsFailure(parts[1..], path.Group);
+        }
+
+        return TabFailure(word, parts, path.Group);
     }
 
     /// <summary>The path as it is checked, with the first part cut to the tab word it ends with.</summary>
@@ -65,6 +68,12 @@ internal sealed class PanelPathChecker(
 
         return new WrittenPath([.. path.Parts.Take(path.Parts.Count - 1), title], group, after);
     }
+
+    /// <summary>Whether the path is "Settings › root", a root of the Settings tab other than the settings page.</summary>
+    private bool IsASettingsRoot(IReadOnlyList<string> parts, string? group) =>
+        group is null
+        && parts.Count == 2
+        && destinations.Any(d => d.Tab == PanelTab.Settings && d.SubPage is null && Called(parts[1], d.Root, last: true));
 
     private (string? Word, string? Part) FirstPart(string written)
     {

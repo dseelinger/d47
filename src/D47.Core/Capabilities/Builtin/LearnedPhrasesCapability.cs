@@ -53,8 +53,8 @@ public static class LearnedPhrasesCapability
             {
                 Name = AddTool,
                 Exercise =
-                    "On Settings › Phrases, type a wording such as \"[please|] drop the wheels\" into "
-                    + "the box, pick the phrase it should run, and press Add. It appears in the list "
+                    "On Settings › Phrases, type a wording such as \"[please|] wheels out\" into "
+                    + "the box, pick \"gear down\" as the phrase it should run, and press Add. It appears in the list "
                     + "and saying it runs that phrase. A wording already used by another phrase is "
                     + "refused with \"Clash · not added\". The model cannot do this: it is refused if "
                     + "it asks.",

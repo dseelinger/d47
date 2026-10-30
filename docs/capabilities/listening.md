@@ -19,81 +19,60 @@ nav_order: 124
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Three steps to being heard.</p>
+<p class="intro">Four steps to being heard.</p>
 <section>
-<h2><span class="num">1</span> Pick a microphone and a speech model.</h2>
-<p class="say">Pick a microphone and a speech model on the Listening page.</p>
-<p class="expect">The model downloads once, and nothing is transcribed until it is on disk.</p>
-<svg viewBox="0 0 880 252" role="img" aria-label="Listening">
- <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Listening</text>
- <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">Microphone</text>
- <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text-muted)">whatever Windows is using</text>
- <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="154" font-size="16" fill="var(--text)">Speech model</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">small.en — downloaded once</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">The model is a download. Nothing is transcribed until one is on disk.</text>
+<h2><span class="num">1</span> Pick a microphone.</h2>
+<p class="say">Open Settings › Hearing and sound › Voice Input, group Microphone, and pick a Microphone.</p>
+<p class="expect">The row shows the device. Left unset it follows your Windows Default Device.</p>
+<svg viewBox="0 0 880 150" role="img" aria-label="The Microphone row">
+ <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="44" y="53" font-size="17" font-weight="700" fill="var(--text)">Microphone</text>
+ <text x="836" y="53" text-anchor="end" font-size="17" fill="var(--text)">(the system default)</text>
+ <text x="20" y="112" font-size="16" fill="var(--text-muted)">Pick the real device, not a virtual one.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Hold push-to-talk and speak.</h2>
-<p class="say">Hold the push-to-talk key and speak.</p>
-<p class="expect">D47 transcribes what you said when you let go; Cancel stops the turn.</p>
-<svg viewBox="0 0 880 252" role="img" aria-label="Push-to-talk">
- <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Push-to-talk</text>
- <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">Push-to-talk</text>
- <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Scroll</text>
- <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="154" font-size="16" fill="var(--text)">Cancel</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">Ctrl+Alt+X</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">Bind a key, a stick button, or one of each. Cancel is the row underneath.</text>
-</svg>
-</section>
-<section>
-<h2><span class="num">3</span> Check it heard you.</h2>
-<p class="say">Say "can you hear me".</p>
-<p class="expect">D47 reports the device, the level and what it last transcribed, and names a silent device.</p>
-<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
+<h2><span class="num">2</span> Hold push-to-talk and ask.</h2>
+<p class="say">Hold Scroll Lock, the default Push-to-talk key, and say "can you hear me".</p>
+<p class="expect">The reply begins "Yes" and names the microphone. If it begins "No — not properly", it lists each fault.</p>
+<svg viewBox="0 0 880 140" role="img" aria-label="The ask row with a hearing check typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">can you hear me</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">It reports the device, the level and what it last transcribed.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">A silent device is named rather than reported as a quiet Commander.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Cancel, Ctrl+Alt+X by default, stops the turn.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">4</span> Spell a value onto a keyboard.</h2>
-<p class="say">Open a keyboard prompt and spell a value, such as "alpha bravo seven done".</p>
-<p class="expect">Each key you say is pressed, and anything else lands whole.</p>
-<svg viewBox="0 0 880 252" role="img" aria-label="Saying alpha bravo seven done onto a drawn keyboard">
- <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">System name</text>
- <rect x="44" y="70" width="792" height="46" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="101" font-size="18" fill="var(--text)">ab7</text>
- <text x="68" y="152" font-size="16" fill="var(--text-muted)">you said</text>
- <text x="180" y="152" font-size="16" font-weight="700" fill="var(--text)">alpha bravo seven done</text>
- <rect x="44" y="172" width="120" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="104" y="200" text-anchor="middle" font-size="15" fill="var(--text)">delete</text>
- <rect x="176" y="172" width="120" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="236" y="200" text-anchor="middle" font-size="15" fill="var(--text)">clear</text>
- <rect x="308" y="172" width="120" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="368" y="200" text-anchor="middle" font-size="15" fill="var(--text)">cancel</text>
- <rect x="440" y="172" width="120" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="500" y="200" text-anchor="middle" font-size="15" fill="var(--text)">done</text>
- <text x="588" y="200" font-size="15" fill="var(--text-muted)">Say a key and it is pressed. Say anything else and it lands whole.</text>
+<h2><span class="num">3</span> Change when D47 listens.</h2>
+<p class="say">Say "listen for your name", then "only listen when I hold the key".</p>
+<p class="expect">The row How D47 decides you are talking to it reads Listen when I say its name, then Press to talk (PTT).</p>
+<svg viewBox="0 0 880 150" role="img" aria-label="The How D47 decides you are talking to it row">
+ <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="44" y="53" font-size="17" font-weight="700" fill="var(--text)">How D47 decides you are talking to it</text>
+ <text x="836" y="53" text-anchor="end" font-size="17" fill="var(--text)">Press to talk (PTT)</text>
+ <text x="20" y="112" font-size="16" fill="var(--text-muted)">"listen whenever I speak" is the third value.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Choose your real microphone instead of the Windows default.</p>
-<p class="expect">The level meter moves when you speak; a virtual device from VR or streaming software sends silence.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="Windows picks the default microphone, and it is often wrong.">
- <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Windows picks the default microphone, and it is often wrong.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A virtual endpoint from VR or streaming software looks like a working mic and sends digital silence.</text>
+<h2><span class="num">4</span> Ask for the word behind a letter.</h2>
+<p class="say">Say "what is the word for k".</p>
+<p class="expect">D47 answers "K is kilo." Those words are what you say to spell a value onto the drawn keyboard.</p>
+<svg viewBox="0 0 880 140" role="img" aria-label="The ask row with a spelling question typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what is the word for k</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"the phonetic alphabet" gives every letter's word.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">!</span> You are not heard.</h2>
+<p class="say">Check the Microphone row names your real microphone, not a virtual device from VR or streaming software.</p>
+<p class="expect">Then "can you hear me" answers Yes and names that device.</p>
+<svg viewBox="0 0 880 150" role="img" aria-label="A virtual device in the Microphone row">
+ <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="44" y="53" font-size="17" font-weight="700" fill="var(--text)">Microphone</text>
+ <text x="836" y="53" text-anchor="end" font-size="17" fill="var(--text)">a virtual device</text>
+ <text x="20" y="112" font-size="16" fill="var(--text-muted)">It can be capturing and still send silence.</text>
 </svg>
 </section>
 </div></div>
@@ -110,90 +89,53 @@ nav_order: 124
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Whisper turns your voice into words, on your own machine unless you choose a hosted provider — and how it decides you were talking to it.</p>
+<p class="intro">Your voice becomes text on this computer unless you choose a hosted provider, and one setting decides when the microphone opens.</p>
 <section>
-<h2><span class="num">1</span> Four ways to open the microphone, and two of them change what is kept.</h2>
-<svg viewBox="0 0 880 296" role="img" aria-label="Four listening modes: hold a key, toggle a key, listen whenever anyone speaks, or listen when you say its name">
- <rect x="20" y="30" width="410" height="102" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="225" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">HOLD THE KEY</text>
- <text x="225" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">speak, let go. The shipped default,</text>
- <text x="225" y="118" text-anchor="middle" font-size="15" fill="var(--text-muted)">and nothing is kept unless you held it</text>
- <rect x="450" y="30" width="410" height="102" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="655" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">TOGGLE THE KEY</text>
- <text x="655" y="96" text-anchor="middle" font-size="15" fill="var(--text-muted)">press once to start, again to stop.</text>
- <text x="655" y="118" text-anchor="middle" font-size="15" fill="var(--text-muted)">Same rule, no finger held down</text>
- <rect x="20" y="152" width="410" height="102" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="225" y="188" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WHENEVER I SPEAK</text>
- <text x="225" y="218" text-anchor="middle" font-size="15" fill="var(--text-muted)">every stretch of speech in the room</text>
- <text x="225" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">is transcribed to find out if it was for it</text>
- <rect x="450" y="152" width="410" height="102" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="655" y="188" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WHEN I SAY ITS NAME</text>
- <text x="655" y="218" text-anchor="middle" font-size="15" fill="var(--text-muted)">the same, and then thrown away</text>
- <text x="655" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">unless it is followed by a request</text>
- <text x="440" y="280" text-anchor="middle" font-size="15" font-weight="700" fill="var(--danger)">The bottom two are off out of the box.</text>
+<h2><span class="num">1</span> One setting decides when the microphone opens.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="Four values: press to talk, toggle, listen whenever I speak, and listen for its name">
+ <rect x="20" y="24" width="840" height="46" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="53" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">PRESS TO TALK   TOGGLE</text>
+ <rect x="20" y="80" width="840" height="46" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="109" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">WHENEVER I SPEAK   ITS NAME</text>
 </svg>
-<p class="body">The key works in all four. A policy that decides for itself is not a reason to take away the one that does not.</p>
+<p class="body">The row How D47 decides you are talking to it takes one of four values. Press to talk is the default, and it opens the microphone only while the key is held.</p>
 </section>
 <section>
-<h2><span class="num">2</span> One download, and then nothing about your speech goes anywhere, unless you choose a hosted provider.</h2>
-<svg viewBox="0 0 880 236" role="img" aria-label="The speech model is downloaded once from huggingface.co; after that audio and transcripts stay on your machine">
- <rect x="20" y="34" width="250" height="104" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="145" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ONCE</text>
- <text x="145" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">the speech-to-text model, from</text>
- <text x="145" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">huggingface.co</text>
- <line x1="282" y1="86" x2="318" y2="86" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="332,86 316,78 316,94" fill="var(--accent-muted)"/>
- <rect x="342" y="34" width="518" height="104" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="601" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">EVER AFTER</text>
- <text x="601" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">your voice becomes words on this computer.</text>
- <text x="601" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">No audio and no transcript leaves it.</text>
- <rect x="20" y="158" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">A hosted provider needs no model here, and the audio goes to that company with your key.</text>
+<h2><span class="num">2</span> Speech becomes words on this computer.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="A local speech model, or a hosted provider">
+ <rect x="20" y="24" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">HEARING PROVIDER</text>
+ <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">this computer by default; Groq, OpenAI, Deepgram or ElevenLabs if chosen</text>
 </svg>
+<p class="body">A speech model runs locally after one download. The Hearing provider row can send your audio to a hosted provider instead, and the row says what that sends.</p>
 </section>
 <section>
-<h2><span class="num">3</span> Elite might already be using that key.</h2>
-<svg viewBox="0 0 880 244" role="img" aria-label="A keyboard key bound in both Elite and Directive 47 simply does nothing in one of them, with no error anywhere">
- <rect x="20" y="34" width="250" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="145" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ONE KEYBOARD KEY</text>
- <text x="145" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">bound in both places</text>
- <line x1="282" y1="82" x2="318" y2="82" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="332,82 316,74 316,90" fill="var(--accent-muted)"/>
- <rect x="342" y="34" width="250" height="96" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="467" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ONE LOSES</text>
- <text x="467" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">and no error, anywhere</text>
- <line x1="604" y1="82" x2="640" y2="82" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="654,82 638,74 638,90" fill="var(--accent-muted)"/>
- <rect x="664" y="34" width="196" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="762" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SO IT SAYS SO</text>
- <text x="762" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">by name, before you fly</text>
- <rect x="20" y="152" width="840" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="182" text-anchor="middle" font-size="16" fill="var(--text)">Directive 47 reads your Elite bindings and never writes them.</text>
- <text x="440" y="208" text-anchor="middle" font-size="15" fill="var(--text-muted)">It will tell you which Elite action you clashed with. Which of the two to move is your call.</text>
+<h2><span class="num">3</span> You hold the key and speak.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="Key held, words transcribed, text handled as if typed">
+ <rect x="20" y="24" width="250" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="145" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">Hold Scroll Lock</text>
+ <text x="145" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">say it</text>
+ <line x1="282" y1="69" x2="296" y2="69" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="310,69 294,61 294,77" fill="var(--accent-muted)"/>
+ <rect x="320" y="24" width="250" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="445" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">Transcript</text>
+ <text x="445" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">can you hear me</text>
+ <line x1="582" y1="69" x2="596" y2="69" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="610,69 594,61 594,77" fill="var(--accent-muted)"/>
+ <rect x="620" y="24" width="240" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="740" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">Answer</text>
+ <text x="740" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">Yes, and the device</text>
 </svg>
+<p class="body">D47 transcribes what you said when you let go and handles the text as if you had typed it. The status tool then answers from the live microphone state.</p>
 </section>
 <section>
-<h2><span class="num">4</span> Five things can stop it hearing you.</h2>
-<svg viewBox="0 0 880 232" role="img" aria-label="Five separate reasons speech might not reach Directive 47, all reported together in one answer">
- <rect x="20" y="30" width="164" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="102" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">NO KEY</text>
- <text x="102" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">bound</text>
- <rect x="196" y="30" width="164" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="278" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">NO MIC</text>
- <text x="278" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">chosen</text>
- <rect x="372" y="30" width="164" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="454" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">MIC GONE</text>
- <text x="454" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">unplugged</text>
- <rect x="548" y="30" width="164" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="630" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">KEY CLASH</text>
- <text x="630" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">with Elite</text>
- <rect x="724" y="30" width="136" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="792" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">NO MODEL</text>
- <text x="792" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">yet</text>
- <rect x="20" y="138" width="840" height="72" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="440" y="170" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ASK "CAN YOU HEAR ME"</text>
- <text x="440" y="196" text-anchor="middle" font-size="15" fill="var(--text-muted)">All five are tested and tell you the result.</text>
+<h2><span class="num">4</span> Not being heard has a named cause.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="The status tool reports the microphone, the key, the model and any clash with Elite">
+ <rect x="20" y="24" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">listening status</text>
+ <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">microphone, key, model, key clash</text>
 </svg>
+<p class="body">The status tool is declared as <code>Report whether D47 can hear the Commander</code>, and it lists each fault it finds.</p>
 </section>
 </div></div>
 </details>
@@ -227,20 +169,16 @@ a model running on your own computer. The model file itself is downloaded once, 
 > "is my push to talk key bound twice"
 
 ```text
-Microphone: Yeti Nano, capturing.
-Gate: hands free, opening when you say my name.
-Right now: the microphone is open and I am waiting to hear you start.
-Push-to-talk: CapsLock (hold).
+No — not properly.
+The microphone is not capturing. <the reason D47 recorded>
 Warning: CapsLock is also bound in Elite (KeyboardMouseOnly) to HeadLookToggle. One of the two
 will not work, and neither will say so — pick another key for one of them.
-I answer to: D47.
-Echo cancellation: running, so you can talk over me.
-Transcription: base.en loaded.
 ```
 
-Everything comes back together on purpose. "It cannot hear me" has five possible causes — no key
-bound, no microphone, the microphone gone, the key clashing with Elite, or no speech model — and
-you should not have to guess which.
+When nothing is wrong the reply begins "Yes" and names the microphone, for example
+`Yes — I just heard you, on Yeti Nano.` The reply checks four faults together: no push-to-talk key
+or button set, a microphone that is not capturing, no speech model, and a key or button that
+clashes with an Elite binding.
 
 ### Getting set up
 
@@ -287,13 +225,9 @@ binds a button of that number on one of them to ShipSpotLightToggle. I cannot te
 the device the button is on. If the microphone will not open, this is the first thing to check.
 ```
 
-When **nothing** is found, it says so plainly: no button of that number is bound on that
-controller in your preset.
-
 **Your bindings are never written to.** Directive 47 only ever reads them.
 
-If it has not managed to read them, it says nothing rather than giving you an all-clear — never
-having looked is not the same as having looked and found nothing.
+Only a clash is reported. When none is found, the reply says nothing about bindings.
 
 ### Settings
 
@@ -337,22 +271,16 @@ modifier. Scroll Lock, the default, is not a modifier and binds as soon as you p
 
 **Esc unbinds one slot.** While a slot listens, Esc empties that slot and leaves the other as it was.
 
-There used to be two rows for this. The stick half is [described below](#push-to-talk-button) and
-is unchanged in every respect except that it is no longer a separate question.
+The stick half is [described below](#push-to-talk-button).
 
 Clear the row and Directive 47 never opens the microphone — unless you have also put
 [the row below](#mode) into one of its hands-free settings, which is the reason for those and
 the only case where an unbound key still leaves a live microphone.
 
-Clearing it was the old default, and it meant a voice companion that could not hear anything until
-you found this row.
-
 In the two key-driven settings, nothing is kept unless the key is held.
 
-**Pressing it does not silence Directive 47**, and that is deliberate. It did for one release, and
-the cost was that every tap meant as *be quiet* also recorded a second of your quiet room — which a
-speech model does not transcribe as nothing. Interrupting has its own control now: **Cancel**, the
-row directly below this one, which stops the voice and abandons the turn.
+**Pressing it does not silence Directive 47.** Interrupting is **Cancel**, the row directly below
+this one, which stops the voice and abandons the turn.
 
 Unlike the stop key, this one does not need a modifier — a bare key is the normal arrangement for
 push-to-talk, which is exactly why the collision check above matters. If Scroll Lock is bound to
@@ -363,8 +291,8 @@ how you talk to it.
 
 #### The stick half {#push-to-talk-button}
 
-**Not a row of its own any more** — it is the **Push-to-talk** row above. This section is about
-what happens when you press a stick button at it, which is worth reading before you try.
+It is part of the **Push-to-talk** row above. This section is about what happens when you press a
+stick button at it.
 
 Click the stick slot, then press and release the button you want, and Directive 47 works out
 which one it was. It is stored separately from your key, so binding a button does not unbind the
@@ -372,9 +300,7 @@ key: you said two things rather than changed your mind about one.
 
 **It has to be a button that springs back.** A switch that stays where you put it would hold the
 microphone open until you moved it again, so the capture declines one and says why. Those belong
-on the [switch panel](switches.html) instead, which is the other half of the same hardware — Phase
-21 turned away every springing button because a switch needs a *position* to mean anything, and
-this feature is that decision read the other way round.
+on the [switch panel](switches.html) instead.
 
 **If the controller is not there when D47 starts**, it says so and your key carries on working. A
 stick that is asleep is one of the ways "D47 cannot hear me" happens with no reason attached.
@@ -386,8 +312,9 @@ say is that a button of that number is spoken for somewhere — worth saying on 
 button is usually already used:
 
 ```text
-Push-to-talk button 24 may collide: Elite (Custom) binds a button of that number to
-UseBoostJuice. D47 cannot tell whether that is the same controller.
+Warning: button 24 may collide. Elite (Custom) binds a button of that number to UseBoostJuice, and
+I cannot tell whether that is the same controller. If the microphone will not open, this is the
+first thing to check.
 ```
 
 **The model cannot change this one either**, for the same reason.
@@ -411,11 +338,7 @@ Claimed system-wide rather than only while Directive 47 has focus, because the m
 the moment Elite is in front — so the key half needs a modifier, and a bare letter is refused as you
 press it. The stick half has no such rule.
 
-**Push-to-talk does not do this**, and for one release it did. Pressing push-to-talk used to silence
-Directive 47 as well as open the microphone, which sounds tidier than it was: every tap meant as
-*be quiet* also recorded a second of your quiet room, and a speech model handed a second of silence
-does not return nothing — it invents a sentence, and Directive 47 answered it. Push-to-talk is
-push-to-talk again, and interrupting is this.
+**Push-to-talk does not do this.** It opens the microphone and does not silence Directive 47.
 
 **The model cannot change this row.** It can be changed from the panel or by voice — but not by
 anything the model calls. A model able to unbind the one control that outranks it has removed the
@@ -452,11 +375,10 @@ take away the one that does not.
 | **Listen whenever I speak** | Directive 47 opens the microphone itself when it hears somebody start talking, and closes it when they stop. |
 | **Listen when I say its name** | The same, except what you said is thrown away unless you addressed it by name. |
 
-**What the last two actually mean.** The microphone was already open — it always is, so the
-pre-roll has something in it — but until now nothing was ever *kept* unless you were holding the
-key. In the two hands-free settings, every stretch of speech in the room is captured and
-transcribed before Directive 47 can decide whether it was meant for it. That is a real change and
-it is why these are off out of the box.
+**What the last two actually mean.** The microphone is always open, so the
+pre-roll has something in it, but nothing is *kept* unless the key is held. In the two hands-free
+settings, every stretch of speech in the room is captured and
+transcribed before Directive 47 can decide whether it was meant for it. They are off out of the box.
 
 What does not change: **none of it is written to disk, and with the local speech model none of it
 leaves your machine.** With a [hosted provider](#provider), every one of those stretches is sent to
@@ -468,8 +390,7 @@ The cost is CPU. Everything said near you is transcribed and then mostly thrown 
 on one of the smaller models unless you have cycles to spare.
 
 **The model cannot change this row.** A model that could put Directive 47 into continuous
-listening could start capturing on your machine — and anything the model can call, a hostile
-in-game message can try to invoke. You can still say *"listen for your name"* or *"stop listening
+listening could start capturing on your machine. You can still say *"listen for your name"* or *"stop listening
 all the time"*, which go through the keyword router rather than through the model.
 
 #### How much louder than the room speech has to be {#sensitivity}
@@ -485,9 +406,7 @@ talking. **9 dB** out of the box.
 #### Quiet that ends a sentence {#silence}
 
 How long you have to stop talking before Directive 47 decides you have finished. **700 ms** out of
-the box, which is deliberately generous: people pause mid-sentence to look at something, and an
-utterance cut at the first gap reaches the model as half a question. Being wrong the other way
-costs a little dead air on the end of the clip, which the speech model ignores.
+the box.
 
 #### What D47 answers to {#wake-words}
 
@@ -521,13 +440,10 @@ Set it to zero if you would rather the name and the request always arrived in th
 On, in every setting rather than only the hands-free ones — holding the key while a callout is
 being read out otherwise transcribes the callout.
 
-On speakers, this is what lets you **talk over Directive 47**. Measured against a simulated room,
-it removes upwards of 25 dB of its own voice while leaving yours essentially intact.
+On speakers, this is what lets you **talk over Directive 47**.
 
 If it cannot start — the native library missing, usually — it says so and the microphone keeps
-working. Hands-free listening then goes deaf while Directive 47 is speaking, rather than risk the
-loop where it hears itself, transcribes itself and answers itself. Ask *"can you hear me"* and it
-will tell you which of the two you are in.
+working. Hands-free listening then goes deaf while Directive 47 is speaking.
 
 On headphones none of this matters much, because there is no echo to cancel.
 
@@ -551,8 +467,8 @@ before Directive 47 was willing to call the sound speech.
 Proper nouns are where speech recognition fails hardest and least visibly. A misheard system name
 does not come back as an error or as a low-confidence marker — it comes back as a plausible English
 word, and the answer is confidently about the wrong place. Directive 47 already biases the
-transcriber towards the names around you, but that list holds sixty and the galaxy holds four
-hundred billion, so a name you have not been near lately cannot be on it.
+transcriber towards the names around you, but that list holds up to 240 names, 60 of them from your
+journal, so a name you have not been near lately cannot be on it.
 
 **So there is a recovery.** Ask about a system it cannot find and it will not shrug politely: it
 looks through the places *you* have actually been — every system, station and faction in your own
@@ -561,12 +477,9 @@ when you say which. Nothing is sent anywhere to do it; those names came off your
 
 **What it remembers is the word, not the answer.** Correct it once about *Eurebia* and it has
 learned that word, so *"the Eurybia Blue Mafia"* comes out right too, and so does every other
-sentence containing it. An alias against the system would have fixed one question.
-
+sentence containing it.
 **It only ever learns when you correct it**, and it refuses to learn a word that already means
-something — a place you have visited, or a phrase Directive 47 answers to. A wrong entry here would
-be permanent, invisible and would silently rewrite everything you said afterwards, which is a worse
-failure than the mishearing it came from. It is also spoken input only: if you *type* a name, that
+something — a place you have visited, or a phrase Directive 47 answers to. It is also spoken input only: if you *type* a name, that
 is what you meant.
 
 This row lists what it has learned, and **Forget them all** clears the lot. Everything here stays on
@@ -588,9 +501,7 @@ not addressed to Directive 47. No journal files, game state or other keys are se
 [Privacy](privacy.md#egress-stt) section shows the same thing, computed from your settings.
 
 **If the service cannot be reached, it says so and does nothing else.** There is no fallback to a
-local model: keeping one loaded would bring back the memory cost a hosted provider exists to remove,
-and the smallest model mishears often enough that a misheard command could act on the ship. What
-you hear instead:
+local model. What you hear instead:
 
 | What went wrong | What Directive 47 says |
 |---|---|
@@ -625,119 +536,84 @@ Which Whisper model turns your speech into words. The row marks which are alread
 what the others would cost to fetch, so you can see which choices are already paid for.
 
 **Base (English only)** is what a fresh install has selected. Tiny is cheaper and is offered, but
-it mis-hears the words Directive 47 acts on — over a recorded corpus it heard *"Cancel that"* as
-*"Cancer that"*, and "cancel that" is one of the phrases that interrupts it, so the model saved
-you 67 MB and cost you the way to shut it up.
+it mis-hears the words Directive 47 acts on.
 
-**Every model here is English-only.** The multilingual ones were withdrawn: Directive 47 asks
-Whisper for English on every clip, so they cost the same download and gave back a model worse at
-the one language they were being asked for. If your settings still name one, you get its English
-twin automatically and nothing is lost.
+**Every model here is English-only.** If your settings still name a multilingual one, you get its
+English twin automatically.
 
 **What a bigger model costs is time per *sentence*, not time per second of audio.** Whisper reads
 your speech in 30-second windows and pays for the whole window whether you filled it or not, so a
-two-second question and a twenty-second one cost the same — and the model you picked is what sets
-that figure:
+two-second question and a twenty-second one cost the same. Anything over 30 seconds in one breath
+costs another window. That is the whole delay between you letting go of the key and Directive 47
+starting to think, so if it feels slow to answer, this row is the first place to look.
 
-| Model | On the CPU | On the GPU | Video memory |
-|---|---|---|---|
-| Tiny (English only) | about 0.2 s | about 0.13 s | about 100 MB |
-| Base (English only) | about 0.3 s | about 0.12 s | about 140 MB |
-| Small (English only) | about 1.0 s | about 0.17 s | about 470 MB |
-| Medium (English only) | about 3.0 s | about 0.33 s | about 1,460 MB |
+**Medium is the most accurate and effectively needs a GPU.** On the CPU it is slow, and the GPU is
+faster for every model.
 
-Measured on a 24-core desktop with an RTX 5080; a smaller machine is proportionally slower, and
-anything over 30 seconds in one breath costs another window. That is the whole delay between you
-letting go of the key and Directive 47 starting to think — so if it feels slow to answer, this row
-is the first place to look.
+**The device never changes the words.** Running on the GPU is a speed and memory choice only.
 
-**Medium is the most accurate and effectively wants a GPU.** It was the only model that heard
-*"Deciat"* every time it was said, where the others offered "DCI" and "DC at" — proper nouns are
-where the difference shows, and they are most of what you say to a ship's computer. Three seconds
-a sentence on the CPU is the price without one.
-
-**The device never changes the words.** Running on the GPU is a speed and memory choice only:
-across a 37-clip corpus, every English model produced byte-identical transcripts on CPU and GPU.
-
-**Choosing a model downloads it.** Selecting one you do not have starts the transfer there and
-then, with the size and progress on the row; the same thing happens at startup for a model that
-is selected and missing. The choice is the go-ahead — the size is on the row before you make it,
-and `huggingface.co` is listed under [Privacy](privacy.md) for as long as a model is selected.
+**Choosing a model that is not on disk asks first.** The confirmation reads "Download N MB and use
+it" and nothing downloads until you agree. A model that is selected and missing is fetched at
+startup. `huggingface.co` is listed under [Privacy](privacy.md) for as long as a model is
+selected.
 
 **Directive 47 knows what each model file should be.** The SHA-256 of every model it offers is
 written into the build, and a download that does not match it is discarded rather than loaded.
 That is worth one sentence about what it actually buys: those values were read from
 `huggingface.co` once, on a stated date, and pinning them does not make that first read
-trustworthy — it means the file *changing* afterwards becomes visible, where before the expected
-hash and the bytes came from the same place. The model is loaded and run on your machine, so it
-is worth checking.
+trustworthy — it means the file *changing* afterwards becomes visible.
 
 `none` stays a real choice. Pick it and Directive 47 hears you and says plainly that it cannot
 turn what it heard into words.
 
 #### Running on the GPU {#gpu}
 
-Off by default, and **about five times faster** when you turn it on. Measured on an RTX 5080 with
-Small (English only): **190 ms against 920 ms** for the same sentence.
+Off by default, and faster when you turn it on.
 
-It costs video memory, which is the part worth thinking about, because that memory comes out of
-whatever else wants the card. It is close to the size of the model file, because the weights are
-almost all of it:
+It costs video memory, which comes out of whatever else uses the card. It is close to the size of
+the model file:
 
 | Model | Video memory |
 |---|---|
 | Tiny (English only) | about 100 MB |
 | Base (English only) | about 150 MB |
 | Small (English only) | about 470 MB |
-
 **In VR that trade is a real one.** Your GPU is already the scarce thing there, and taking memory
 and time from the game shows up as dropped frames rather than as anything that looks like a
-speech problem — a symptom nowhere near its cause. That is why this is off out of the box rather
-than on. On the desktop window, with headroom to spare, it is close to free.
+speech problem. On the desktop window, with headroom to spare, it is close to free.
 
 **If your machine has no GPU D47 can use, it runs on the CPU and says so** — in the log, and in
 what it reports about itself. It does not fail, and it does not claim a device it is not using.
 
 The switch takes effect immediately, both ways: turn it off and the video memory is handed back.
 
-> **This did not work before [#187](https://github.com/dseelinger/d47/issues/187).** The toggle
-> shipped for months with no GPU code behind it at all — the CPU runtime accepted the request,
-> loaded without error, and the log read *"on the GPU"* because it was repeating the request back
-> rather than reporting what happened. If you turned it on and noticed nothing, that is why.
-> D47 now uses Vulkan, which works on AMD and Intel cards as well as NVIDIA.
+D47 uses Vulkan, which works on AMD and Intel cards as well as NVIDIA.
 
 ### Seeing that the microphone is open {#indicator}
 
-Bottom left of the panel, on the desktop **and** in the headset, in mini as well as full. Three
-states:
+Bottom left of the panel, on the desktop **and** in the headset, in mini as well as full. Some
+of its states:
 
 | | |
 |---|---|
-| **PTT Ready** | Push-to-talk at rest. Audio runs into the half-second ring and is overwritten, and nothing is kept. |
-| **Listening...** | Hands free. Directive 47 is deciding for itself when to listen. |
+| **PTT READY** | Push-to-talk at rest. Audio runs into the half-second ring and is overwritten, and nothing is kept. |
+| **LISTENING** | Hands free. Directive 47 is deciding for itself when to listen. |
 | **MIC ON** *(filled, ringed)* | The gate is open. What is arriving now will be transcribed. |
-
-The first two name the mode because the state only happens in that mode: at rest is
-push-to-talk, hands free is not. The open gate is reached both ways — a held key and a gate
-Directive 47 opened for itself are the same fact about the microphone — so it says neither.
 
 Filled or hollow is the state, not only the colour — a glance reads a shape first, and a difference
 that is only colour is not a difference for everybody. Hover it for the gesture, or the name, that
 would open the gate.
 
-Nothing is drawn when no device is open at all.
+When no device is open it reads **MIC OFF**, hollow and red. While the speech model loads it
+reads **LOADING MODEL**.
 
 ### Downloading a model {#download}
 
-A selected model that is not on disk is fetched — at startup, or the moment you choose it. There
-is no prompt to answer: the selection is the go-ahead, the size is on the row before you make the
-choice, and the shipped default is the smallest model in the list.
+A selected model that is not on disk is fetched at startup, or after you agree to the
+confirmation when you choose it. The shipped default is Base (English only).
 
-The download is checked against the checksum `huggingface.co` publishes for the file, as it
-arrives, and thrown away rather than kept if it does not match: a file that fails its checksum is
-either a broken transfer or something that should not be loaded, and both answers are the same.
-The size Directive 47 reports is the one the host actually gave, not a figure written into the
-app that would go stale the first time a model was republished.
+The download is checked against the pinned checksum once it has finished, and is deleted if it
+does not match. The row shows the size written into the app.
 
 If the download fails — no network, the host refusing — the selection stays where it is and
 Directive 47 says it has no speech model loaded when you ask. It tries again the next time it
@@ -756,9 +632,7 @@ That types `ab7` and presses Done, in one breath. **Done is a key**, so an utter
 value and commit it together. So are `delete`, `clear` and `cancel`.
 
 The words are the NATO alphabet, which is the one spelling alphabet a Commander in Elite already
-knows. It is also the one Whisper transcribes reliably: single letters come back as "bee", "sea"
-and "you", while "bravo", "charlie" and "uniform" are long, distinct, ordinary English.
-
+knows.
 | Letter | Word | Letter | Word |
 |---|---|---|---|
 | A | alpha | N | november |
@@ -804,8 +678,7 @@ Ask if you forget:
 K is kilo.
 ```
 
-Those are answered from the same table the keyboard parses, so Directive 47 cannot teach you a
-word the keyboard would refuse.
+Those are answered from the same table the keyboard parses.
 
 ### It knows what things are called
 
@@ -814,30 +687,27 @@ the body, your next jump, your ship and its type, your carrier, the route ahead,
 
 This matters more than it sounds. **Proper nouns are where speech recognition fails hardest and
 least visibly.** A misheard system name does not come back as an error — it comes back as a
-plausible English phrase. "Shinrarta Dezhra" becomes "shin arta desha", everything proceeds
-confidently about the wrong system, and nothing anywhere reports a problem.
+plausible English phrase. Everything proceeds confidently about the wrong system, and nothing anywhere reports a problem.
 
 The names come from your journal. Nothing is looked up.
 
 ### What happens to what you say
 
-Spoken and typed questions run exactly the same path, so "where am I" means the same thing
-however you said it.
+Spoken and typed questions run the same path, so "where am I" means the same thing however you
+said it. The exceptions are phrases that are spoken only, such as "can you hear me".
 
 Nothing captured is written to disk. Audio sits in a small buffer and is
-overwritten within about half a second unless the gate is open — because you are holding the key,
-or because Directive 47 heard somebody start talking. Only that stretch goes any further. With the
+overwritten within about half a second unless the gate is open (the key is held, or Directive 47
+heard somebody start talking). Only that stretch goes any further. With the
 local speech model, "further" means a model on your own machine. With a
 [hosted provider](#provider), it means that stretch is sent to Groq, OpenAI, Deepgram or ElevenLabs with your key.
 
 A few small kindnesses:
 
-- A press shorter than a quarter of a second is treated as a mis-press. Transcribing 80
-  milliseconds of room tone produces a confident wrong word, which is worse than nothing.
+- A press shorter than a quarter of a second is treated as a mis-press.
 - If your microphone is unplugged mid-sentence, what was captured is dropped rather than
-  transcribed — half a sentence you did not finish is worse than none.
-- A key stuck down stops at 60 seconds and **keeps** the audio. You said something; better late
-  than lost.
+  transcribed.
+- A key stuck down stops at 60 seconds and **keeps** the audio.
 - Hands free, a stretch that turns out to have been somebody else talking is dropped without
   reaching the transcript, the panel or the log.
 
@@ -854,8 +724,7 @@ Read-only. Takes no arguments.
 
 #### `get_spelling_alphabet`
 
-Read-only, and answered from the parser's own table rather than by the model, so it can never name
-a word the keyboard would refuse.
+Read-only, and answered from the parser's own table rather than by the model.
 
 ```json
 {"type":"object","properties":{"letter":{"type":"string","description":"One letter to give the word for. Pass all for the whole alphabet. Left out, D47 says how spelling by voice works."}},"required":[],"additionalProperties":false}
@@ -863,30 +732,21 @@ a word the keyboard would refuse.
 
 **One gate policy over a continuous stream.** The microphone runs whenever D47 runs, into a small
 ring buffer; the gate decides which part of that stream was speech addressed to D47. It also means
-the key-down path awaits nothing — opening a WASAPI capture device takes tens of milliseconds.
+the key-down path awaits nothing.
 
-Phase 13 is what that sentence was written for, and it held. Voice activity is a detector on the
-same `Write` path opening the same gate; the wake word does not touch the gate at all, because it
-decides about *words* rather than about audio — the detector segments the stream, Whisper turns a
-segment into text, and `WakeWordGate` decides whether that text was addressed to D47. So the wake
-word is a settings row rather than a second model to ship, a second download, and a fixed
-vocabulary chosen at build time that could never be the name the Commander gave their core.
-Its cost is stated rather than hidden: everything said in the room is transcribed before it can be
-discarded.
+Voice activity is a detector on the same `Write` path opening the same gate; the wake word does
+not touch the gate at all, because it decides about *words* rather than about audio — the detector
+segments the stream, Whisper turns a segment into text, and `WakeWordGate` decides whether that
+text was addressed to D47. Everything said in the room is transcribed before it can be discarded.
 
 **The detector decides on the audio thread and the tick thread acts on it.** Opening the gate
 plays a cue and closing it hands an utterance to a transcriber, and neither belongs on a real-time
 callback. The cost is up to one tick at each end — which the pre-roll already covers at the front
 and the 700 ms hangover dwarfs at the back.
 
-**AEC3 consumes the arbiter's render reference tap, not a loopback capture.** The tap has existed
-since Phase 5 with nothing subscribed to it, precisely so this could be one subscription rather
-than surgery on the component every voice path depends on. A loopback capture
-would be a second WASAPI stream, on a device that may not be the one D47 is rendering to, arriving
-late with a clock of its own. Both directions are re-framed to the 10 ms the module takes, and the
+**AEC3 consumes the arbiter's render reference tap, not a loopback capture.** Both directions are re-framed to the 10 ms the module takes, and the
 remainder is carried rather than padded — padding tells the canceller the Commander stopped
-talking, mid-word, several times a second. Measured against a simulated room with a 60 ms path:
-upwards of 25 dB removed, and the near end kept within a few dB during double-talk. A *harmonic*
+talking, mid-word, several times a second. A *harmonic*
 far end defeats the delay estimator entirely, which is worth knowing before writing a test with a
 sine wave in it.
 
@@ -894,13 +754,8 @@ Whether the canceller is running is read from the canceller, never from the row 
 that boolean is what decides whether hands-free listening stays open while D47 speaks, and one
 that was asked for and failed to load its native library must not be believed in.
 
-**Why the key is polled rather than hooked.** `RegisterHotKey`, which the silence key uses,
-delivers `WM_HOTKEY` on press only; push-to-talk is defined by its release edge, so it is not a
-candidate. A `WH_KEYBOARD_LL` hook has both edges and is forbidden — a global input chokepoint
-means a stall in D47 is a stall in the Commander's controls mid-fight. Raw Input with
-`RIDEV_INPUTSINK` works and is not a hook, but delivers *every keystroke on the system* to D47's
-window, including passwords typed elsewhere; rejected on privacy. `GetAsyncKeyState` polled from
-the tick loop reads exactly the one bound virtual-key code and never the keyboard.
+**The key is read by polling.** `GetAsyncKeyState` polled from the tick loop reads exactly the one
+bound virtual-key code and never the keyboard.
 
 Its cost is latency — 10 Hz sampling means a key-down is seen up to 100 ms late, which is why the
 tick runs at the top of the 4–10 Hz band. The pre-roll absorbs it: the gate opens *retroactively*
@@ -910,16 +765,14 @@ part of the utterance. The edge is computed against the previous sample rather t
 
 **Binds resolution has three traps.** The active preset is named in `StartPreset.<major>.start`
 and must not be assumed to be `Custom` — parsing `Custom.*.binds` on a machine running
-`KeyboardMouseOnly` reports the wrong keys with total confidence. Shipped presets live in the
+`KeyboardMouseOnly` reports the wrong keys. Shipped presets live in the
 game install directory rather than the user profile, so a Commander who never customised their
 controls has no file under `Options\Bindings\` at all. Version suffixes compare numerically per
 segment, so `4.10` sorts above `4.2`. Gestures are normalised before comparing, so `Ctrl+Alt+X`
 and `LeftControl+LeftAlt+X` are the same key.
 
-The fetch is started from the composition root rather than the settings panel, so it happens
-however the model came to be selected — the panel, the keyword router, or a hand-edited settings
-file — and one at a time, since listening settings are applied on every change. The download is
-hashed as it lands and the write is atomic; a half-downloaded model under its real name loads and then fails
+The fetch is started from the composition root and runs one at a time, since listening settings are applied on every change. The download is
+hashed after it lands and the write is atomic; a half-downloaded model under its real name loads and then fails
 mid-transcription. Transcription runs on the thread pool, never the audio thread. A transcript
 that is entirely a bracketed annotation — `[BLANK_AUDIO]`, `(wind blowing)` — is treated as
 silence. Rebinding while the key is held forces a release first, or the gate stays open with

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Audio mixer, Speech, Listening and Learned phrases help pages now match the code. Steps that quoted phrases that do not work or described controls that are not there are replaced with ones that exist, each page's How it works band fits the band limits, and Learned phrases has a How it works band. The Audio mixer page now says the model can change a level, mute or duck through the settings tool, which is how it behaves.
+
 You can now ask where to buy or sell up to five commodities at one station, such as "where can I buy painite, platinum and gold". D47 names only stations that trade every one of them, with each one's price there. If no station has them all, it says how many stations had each one. On the Navigation tab's Market page, type a commodity and pick it from the list to add it as a tile, with the tonnes in the Tonnes box beside it; leave Tonnes blank for any amount. Press a tile to remove it. The market table then gives each commodity its own column, with its price over its stock, and a Total column. Every figure in the market table is now in the monospaced face and right-aligned, and a station's system is in cyan when it is the system you are in. Asking where to buy Gold now searches the markets for Gold instead of answering with the rare Sothis Crystalline Gold.
 
 A Goals story chapter now works the two Goals arcs furthest behind instead of one. The arc furthest behind gets two of the chapter's three activities and the other arc gets one, and the story gives you one reason for both. An arc close to its next rank is given that rank as an objective instead, as before. When only one arc can be worked, the chapter works that arc as before.

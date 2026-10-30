@@ -19,8 +19,6 @@ public sealed class EveryPanelPathTheHelpCitesIsARealPlaceTests
         ("capabilities/adventures.md", "Providers › Speech synthesis appear while a downloaded story's cast needs them and the model is not downloaded"),
         ("capabilities/crew.md", "Fleet › Crew has Change picture and Use the default"),
         ("capabilities/interface.md", "Settings › Your core › In flight › Flight callouts › Fuel and range"),
-        ("capabilities/speech.md", "Your core › Its voice page each effect is one line"),
-        ("exercise:learned-phrases", "Settings › Phrases"),
     ];
 
     [AvaloniaFact]

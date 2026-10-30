@@ -53,7 +53,6 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("powerplay", "what would Edmund Mahon give me"),
         ("ships", "what do I still need for the Ptarmigan"),
         ("exobiology", "what biology is on this body"),
-        ("listening", "alpha bravo seven done"),
         ("binding-profiles", "save these bindings as sim pit"),
         ("binding-profiles", "load the sim pit bindings"),
         ("gap", "what am I missing"),
@@ -66,10 +65,6 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("reminders", "in twenty minutes"),
         ("galaxy", "where is the nearest material trader"),
         ("galaxy", "find me a neutron star"),
-        ("learned-phrases", "wheels out"),
-        ("learned-phrases", "drop the wheels"),
-        ("learned-phrases", "yes"),
-        ("learned-phrases", "cancel"),
         ("focus", "bring Elite back"),
         ("utilities", "set a timer for twenty minutes called fuel scoop"),
         ("routes", "plot a neutron route to Colonia"),
@@ -109,7 +104,7 @@ public partial class EveryHowToPhraseRoutesGateTests
         var router = Router();
         var listed = Listed();
         var unlisted = Quoted(page)
-            .Where(phrase => !Routes(router, phrase) && !listed.Contains((page, phrase)))
+            .Where(phrase => !Routes(router, phrase) && !AnswersAnExchange(page, phrase) && !listed.Contains((page, phrase)))
             .ToList();
 
         Assert.True(unlisted.Count == 0, $"{page}.md quotes phrases that reach the model: {string.Join(", ", unlisted.Select(p => $"\"{p}\""))}");
@@ -185,6 +180,10 @@ public partial class EveryHowToPhraseRoutesGateTests
         || router.Match(phrase, InputSource.Spoken) is not null
         || Walks(phrase)
         || LogsOrReadsTheCaptainsLog(phrase);
+
+    /// <summary>Whether the phrase is a reply the turn loop takes while a teaching exchange is open, before the router and the model.</summary>
+    private static bool AnswersAnExchange(string page, string phrase) =>
+        page == "learned-phrases" && phrase.ToUpperInvariant() is "YES" or "CANCEL";
 
     /// <summary>Whether the turn loop's model-free captain's log grammar takes the phrase, before the router and the model.</summary>
     private static bool LogsOrReadsTheCaptainsLog(string phrase) => D47.Core.CaptainsLog.CaptainsLogPhrase.Read(phrase) is not null;

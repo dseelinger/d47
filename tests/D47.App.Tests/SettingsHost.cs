@@ -59,7 +59,10 @@ internal sealed class SettingsHost
         // At the end, by the same rule.
         D47.Core.Input.BindingProfiles? bindingProfiles = null,
         bool headset = false,
-        D47.App.Settings.CustomVoicesEditing? customVoices = null)
+        D47.App.Settings.CustomVoicesEditing? customVoices = null,
+
+        // At the end, by the same rule.
+        Func<D47.App.Panel.PhrasesPage>? phrases = null)
     {
         // The whole page, for every test that is about a row rather than about the
         // fold.com/dseelinger/d47/issues/60).
@@ -94,7 +97,7 @@ internal sealed class SettingsHost
                 bindingProfiles: bindingProfiles,
                 customVoices: customVoices);
             return view;
-        });
+        }, phrases: phrases);
 
         panel.EnableSearch();
         panel.Tab = PanelTab.Settings;

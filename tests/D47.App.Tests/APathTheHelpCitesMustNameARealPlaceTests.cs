@@ -49,4 +49,11 @@ public sealed class APathTheHelpCitesMustNameARealPlaceTests
         Assert.Null(Failure("See Commander › Ledgers › Codex."));
         Assert.NotNull(Failure("See Commander › Ledgers › Not a page."));
     }
+
+    [AvaloniaFact]
+    public void ARootOfTheSettingsTabIsAPlace()
+    {
+        Assert.Null(Failure("Open Settings › Phrases."));
+        Assert.NotNull(Failure("Open Settings › Phrasebook."));
+    }
 }

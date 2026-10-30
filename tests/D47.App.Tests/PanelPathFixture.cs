@@ -6,6 +6,7 @@ using D47.Core;
 using D47.Core.Adventures;
 using D47.Core.Capabilities;
 using D47.Core.Characters;
+using D47.Core.Conversation;
 using D47.Core.Checklists;
 using D47.Core.Engineers;
 using D47.Core.Loadout;
@@ -32,7 +33,14 @@ internal sealed class PanelPathFixture : IDisposable
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(TestSurface.Settings().Current.Ui.Theme);
 
         var (settings, viewState, paths) = TestSurface.Create();
-        var host = SettingsHost.Open(settings, viewState, paths);
+        var (_, _, _, registry, _) = TestSurface.CreateFull(coverage: () => "x");
+        var phrases = new LearnedPhrasesStore(
+            Path.Combine(TestSurface.MemoryFolder("d47-panel-paths-phrases"), "phrases.json"),
+            new MemoryFileSystem(),
+            NullLogger<LearnedPhrasesStore>.Instance);
+        var host = SettingsHost.Open(
+            settings, viewState, paths,
+            phrases: () => new PhrasesPage(registry, phrases, () => null));
         var panel = host.Panel;
 
         var root = TestSurface.MemoryFolder("d47-panel-paths");

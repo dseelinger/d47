@@ -16,20 +16,17 @@ public partial class DocumentationGateTests
     {
         "about",
         "bookmarks",
-        "learned-phrases",
     };
 
     private static readonly HashSet<string> PagesWithALongHowItWorksBand = new(StringComparer.Ordinal)
     {
         "adventures",
-        "audio",
         "autonomous-actions",
         "crew",
         "exobiology",
         "flight-controls",
         "general-conversation",
         "general-trade-run",
-        "listening",
         "lore",
         "navigation",
         "on-foot",

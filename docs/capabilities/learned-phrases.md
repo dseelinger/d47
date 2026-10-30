@@ -10,8 +10,8 @@ nav_order: 125
 <p class="intro">Four steps to your own wording for a phrase D47 knows.</p>
 <section>
 <h2><span class="num">1</span> Say you want to teach one.</h2>
-<p class="say">Say "teach a phrase", then your wording, such as "wheels out".</p>
-<p class="expect">D47 asks "What do you want to say?" and takes your wording word for word without acting on it.</p>
+<p class="say">Say "teach a phrase".</p>
+<p class="expect">D47 asks "What do you want to say?" and takes your next reply word for word without acting on it.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a teach command typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">teach a phrase</text>
@@ -20,12 +20,12 @@ nav_order: 125
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Say what it should do.</h2>
-<p class="say">Say the phrase it should do, such as "drop the wheels".</p>
-<p class="expect">D47 repeats the pair and asks whether to keep it.</p>
+<h2><span class="num">2</span> Say your wording, then what it should do.</h2>
+<p class="say">Say your own wording, such as wheels out. When D47 asks what it should do, say a phrase it knows, such as "gear down".</p>
+<p class="expect">D47 repeats the pair and asks whether to keep it: 'wheels out' will do 'gear down'. Keep it?</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with the phrase it stands for typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">drop the wheels</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">gear down</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">It must be a phrase D47 already knows.</text>
 </svg>
@@ -43,15 +43,68 @@ nav_order: 125
 </section>
 <section>
 <h2><span class="num">4</span> Check it on the Phrases page.</h2>
-<p class="say">Open Settings, then Phrases, and look under YOUR PHRASES.</p>
+<p class="say">Open Settings › Phrases and look under Your phrases.</p>
 <p class="expect">The wording is at the top, newest first, with the phrase it runs.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The Phrases page lists what you taught">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">wheels out</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">It runs "drop the wheels".</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">Settings, then Phrases, under YOUR PHRASES.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It runs "gear down".</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Settings › Phrases, under Your phrases.</text>
 </svg>
+</section>
+</div></div>
+</details>
+
+<details class="d47-band">
+<summary>How it works</summary>
+<div class="d47-eli5"><div class="d47-frame">
+<p class="intro">A taught wording is stored per Commander. D47 swaps it for the phrase it stands for before the router or the model sees it.</p>
+<section>
+<h2><span class="num">1</span> You give it two replies and a yes.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="Three replies in turn: the wording, the phrase it runs, and a yes">
+ <rect x="20" y="24" width="250" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="145" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WORDING</text>
+ <text x="145" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">wheels out</text>
+ <line x1="282" y1="69" x2="296" y2="69" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="310,69 294,61 294,77" fill="var(--accent-muted)"/>
+ <rect x="320" y="24" width="250" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="445" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">PHRASE</text>
+ <text x="445" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">gear down</text>
+ <line x1="582" y1="69" x2="596" y2="69" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="610,69 594,61 594,77" fill="var(--accent-muted)"/>
+ <rect x="620" y="24" width="240" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="740" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ANSWER</text>
+ <text x="740" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">yes</text>
+</svg>
+<p class="body">After “teach a phrase”, D47 asks for the wording, then for the phrase it should run, then for a yes.</p>
+</section>
+<section>
+<h2><span class="num">2</span> The wording is stored as you said it.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="The wording is stored as said, and the phrase must be one D47 already knows">
+ <rect x="20" y="24" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">The first reply is stored, never run</text>
+ <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">the second must be a phrase D47 knows</text>
+</svg>
+<p class="body">The first reply is never run, so saying a command to teach it does not fire it. The second reply must be a phrase D47 knows, or close enough to be offered as a near miss.</p>
+</section>
+<section>
+<h2><span class="num">3</span> A yes stores the pair for this Commander.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="A yes writes the pair under the flying Commander">
+ <rect x="20" y="24" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">data/phrases.json</text>
+ <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">wheels out runs gear down, for this Commander</text>
+</svg>
+<p class="body">Any other answer drops it. A wording that is already another phrase is refused, and D47 names the phrase it clashed with.</p>
+</section>
+<section>
+<h2><span class="num">4</span> Next time, the wording is replaced before anything reads it.</h2>
+<svg viewBox="0 0 880 150" role="img" aria-label="A taught wording is replaced by its phrase before routing">
+ <rect x="20" y="24" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">“wheels out” becomes “gear down”</text>
+ <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">then the router handles it as if you had said that</text>
+</svg>
+<p class="body">The turn logs <code>Read "{Said}" as the learned phrase "{Phrase}"</code> and carries on as if you had said “gear down”.</p>
 </section>
 </div></div>
 </details>
@@ -60,8 +113,8 @@ nav_order: 125
 
 When D47 offers "did you mean…" and you pick one, it asks once whether to remember the wording
 you used. A yes writes it down, per Commander; a no or anything else leaves nothing behind. You can
-also teach a wording by voice, without waiting for a near miss. This page is where those entries
-live, and where they stop.
+also teach a wording by voice, without waiting for a near miss. This page covers where those
+entries are listed, added and forgotten.
 
 ```text
 "set focus on elite" → "set focus to elite"
@@ -89,9 +142,9 @@ Say "teach a phrase" or "new phrase" while you are flying, and D47 asks three th
 
 > "What do you want to say?" — "wheels out"
 >
-> "What should it do?" — "drop the wheels"
+> "What should it do?" — "gear down"
 >
-> "'wheels out' will do 'drop the wheels'. Keep it?" — "yes"
+> "'wheels out' will do 'gear down'. Keep it?" — "yes"
 
 The first reply is taken word for word and never acted on, so a wording that is already a command
 does not run while you say it. A wording D47 reads as an answer, such as "yes", "no" or "the
@@ -109,7 +162,7 @@ A phrase you teach is a pattern: plain words, plus `[a|b|c]` groups of alternati
 alternative makes a group optional.
 
 ```text
-[please|] drop the wheels
+[please|] wheels out
 [boost|get clear] and [jump|engage]
 ```
 
