@@ -112,6 +112,47 @@ public class VoiceCastTests
         Assert.NotEqual(first, cast.ForSender("ShipName Police Federation", isPlayer: false).VoiceId);
     }
 
+    [Fact]
+    public void AnNpcIsDrawnAFreshVoiceInEachSystem()
+    {
+        var voices = new[] { "Sol", "Alpha Centauri", "Barnard's Star", "Wolf 359", "Lalande 21185" }
+            .Select(system =>
+            {
+                var cast = Cast();
+                cast.EnteredSystem(system);
+                return cast.ForSender("$ShipName_PassengerLiner_Cruise;", isPlayer: false).VoiceId;
+            })
+            .ToArray();
+
+        Assert.True(voices.Distinct(StringComparer.Ordinal).Count() > 1);
+    }
+
+    [Fact]
+    public void AnNpcInTheSameSystemGetsTheSameVoiceOnEveryRun()
+    {
+        var first = Cast();
+        var second = Cast();
+        first.EnteredSystem("Sol");
+        second.EnteredSystem("Sol");
+
+        Assert.Equal(
+            first.ForSender("Ilse Bruhn", isPlayer: false).VoiceId,
+            second.ForSender("Ilse Bruhn", isPlayer: false).VoiceId);
+    }
+
+    [Fact]
+    public void ACommanderKeepsTheirVoiceIntoAnotherSystem()
+    {
+        var sol = Cast();
+        var wolf = Cast();
+        sol.EnteredSystem("Sol");
+        wolf.EnteredSystem("Wolf 359");
+
+        Assert.Equal(
+            sol.ForSender("Commander Vex", isPlayer: true).VoiceId,
+            wolf.ForSender("Commander Vex", isPlayer: true).VoiceId);
+    }
+
     /// <summary>
  /// The crew are aboard, so their voices last the session.
     /// </summary>

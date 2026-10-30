@@ -189,10 +189,10 @@ public sealed class VoiceCast
             return For(role);
         }
 
-        // Seeded from the name rather than drawn at random, so the same Commander gets the same voice in a
-        // replay as they did live — which is what makes this testable at all — and so a name that has been
-        // seen before is recognisable even after the scope was cleared.
-        var start = (int)(Hash(sender) % (uint)Pool.Count);
+        // Seeded rather than random so a replay gives the live run's voices. A lasting sender is seeded from
+        // the name alone; an NPC from the name and the system, so the same name sounds different per system.
+        var seed = Lasts(isPlayer, role) || System is null ? Hash(sender) : Hash(sender + "\u001f" + System);
+        var start = (int)(seed % (uint)Pool.Count);
 
         // Everything this sender could be given, in the order they would be walked.
         var eligible = new List<string>(Pool.Count);
@@ -355,8 +355,15 @@ public sealed class VoiceCast
         string.Equals(voiceId, DefaultVoice, StringComparison.OrdinalIgnoreCase)
         || _roleVoices.Values.Contains(voiceId, StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>A new system.</summary>
-    public void EnteredSystem() => _perSystem.Clear();
+    /// <summary>The system NPC voices are currently drawn for, or null before one is known.</summary>
+    public string? System { get; set; }
+
+    /// <summary>A new system: NPC voices are cleared and drawn again for <paramref name="system"/>.</summary>
+    public void EnteredSystem(string? system = null)
+    {
+        System = system;
+        _perSystem.Clear();
+    }
 
     /// <summary>How many senders currently hold a voice.</summary>
     public (int Lasting, int PerSystem) Assignments => (_lasting.Count, _perSystem.Count);

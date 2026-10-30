@@ -8,24 +8,39 @@ public sealed class VoiceCasting
 {
     private readonly Dictionary<string, VoiceCast> _casts = new(StringComparer.OrdinalIgnoreCase);
 
+    private string? _system;
+
     /// <summary>The cast for one provider, made on first use.</summary>
     public VoiceCast Of(string providerId)
     {
         if (!_casts.TryGetValue(providerId, out var cast))
         {
-            cast = new VoiceCast();
+            cast = new VoiceCast { System = _system };
             _casts[providerId] = cast;
         }
 
         return cast;
     }
 
-    /// <summary>A new system, for all of them.</summary>
-    public void EnteredSystem()
+    /// <summary>Records the system without clearing anyone's voice, for the first one seen.</summary>
+    public void InSystem(string? system)
     {
+        _system = system;
+
         foreach (var cast in _casts.Values)
         {
-            cast.EnteredSystem();
+            cast.System = system;
+        }
+    }
+
+    /// <summary>A new system, for all of them.</summary>
+    public void EnteredSystem(string? system = null)
+    {
+        _system = system;
+
+        foreach (var cast in _casts.Values)
+        {
+            cast.EnteredSystem(system);
         }
     }
 

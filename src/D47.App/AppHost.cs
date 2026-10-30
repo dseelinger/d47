@@ -6263,8 +6263,12 @@ public sealed class AppHost : IDisposable
         // Not on the first sample.
         if (_voiceScopeSystem is not null)
         {
-            Speech.Casting.EnteredSystem();
+            Speech.Casting.EnteredSystem(system);
             Announcer.NpcsHere.EnteredSystem();
+        }
+        else
+        {
+            Speech.Casting.InSystem(system);
         }
 
         _voiceScopeSystem = system;
