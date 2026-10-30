@@ -51,6 +51,13 @@ public static class PanelPhrases
         " tab",
     ];
 
+    /// <summary>Names a tab answers to besides its own.</summary>
+    private static readonly IReadOnlyDictionary<PanelTab, IReadOnlyList<string>> TabAliases =
+        new Dictionary<PanelTab, IReadOnlyList<string>>
+        {
+            [PanelTab.Stories] = ["story"],
+        };
+
     /// <summary>Moves the panel if the phrase named somewhere it could go, and says what happened.</summary>
     public static string? Apply(string spoken, PanelNavigator nav)
     {
@@ -96,7 +103,7 @@ public static class PanelPhrases
 
         foreach (var tab in Enum.GetValues<PanelTab>())
         {
-            if (!Named(input, tab.ToString()) || !nav.Has(tab))
+            if (!NamesTab(input, tab) || !nav.Has(tab))
             {
                 continue;
             }
@@ -128,6 +135,10 @@ public static class PanelPhrases
     /// </summary>
     private static bool Named(string input, NavCrumb crumb) =>
         Named(input, crumb.Word) || crumb.Spoken.Any(alias => Named(input, alias));
+
+    private static bool NamesTab(string input, PanelTab tab) =>
+        Named(input, tab.ToString())
+        || (TabAliases.TryGetValue(tab, out var aliases) && aliases.Any(alias => Named(input, alias)));
 
     private static bool Named(string input, string word)
     {

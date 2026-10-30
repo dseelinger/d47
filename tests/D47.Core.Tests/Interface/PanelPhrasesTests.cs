@@ -65,6 +65,53 @@ public class PanelPhrasesTests
         Assert.Equal(tab, nav.Tab);
     }
 
+    /// <summary>The Stories tab also answers to "story" (#1948).</summary>
+    [Theory]
+    [InlineData("story tab")]
+    [InlineData("story")]
+    [InlineData("open the story tab")]
+    [InlineData("show the story")]
+    [InlineData("stories")]
+    [InlineData("stories tab")]
+    public void TheStoriesTabAnswersToStory(string spoken)
+    {
+        var nav = Furnished();
+        nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Your stories"));
+
+        Assert.Equal("Stories.", PanelPhrases.Apply(spoken, nav));
+        Assert.Equal(PanelTab.Stories, nav.Tab);
+    }
+
+    [Theory]
+    [InlineData("story")]
+    [InlineData("stories")]
+    public void SayingStoryOnStoriesReturnsToItsRoot(string spoken)
+    {
+        var nav = Furnished();
+        nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Your stories"));
+
+        nav.Select(PanelTab.Stories);
+        nav.GoTo(new NavCrumb("story:7", "The Long Drift"));
+
+        Assert.Equal("Back to Your stories.", PanelPhrases.Apply(spoken, nav));
+        Assert.Equal(PanelTab.Stories, nav.Tab);
+        Assert.True(nav.AtRoot);
+    }
+
+    /// <summary>A story command that names the story is not a request for the tab.</summary>
+    [Theory]
+    [InlineData("recap the story")]
+    [InlineData("comms story")]
+    [InlineData("pause the story")]
+    public void AStoryCommandDoesNotMoveThePanel(string spoken)
+    {
+        var nav = Furnished();
+        nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Your stories"));
+
+        Assert.Null(PanelPhrases.Apply(spoken, nav));
+        Assert.Equal(PanelTab.Transcript, nav.Tab);
+    }
+
     /// <summary>And a phrase that merely contains the word is not a request for the tab.</summary>
     [Theory]
     [InlineData("what is on my checklist for the Corsair")]
