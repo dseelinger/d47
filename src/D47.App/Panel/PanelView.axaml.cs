@@ -2262,12 +2262,13 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         var modal = ModalPane.Child is not null;
 
-        // Mini reading the Stories tab (asked for 2026-08-22) or the Navigation tab's Plan root (#197) — the
+        // Mini reading the Stories tab (asked for 2026-08-22), the Navigation tab's Plan root (#197) or Galaxy map root (#1916) — the
         // rest of Routing keeps drawing its full-size page even at mini's size.
         Control? miniControl = Tab switch
         {
             PanelTab.Stories => _stories.Mini,
             PanelTab.Navigation when Nav.RootKeyOf(Tab) == RoutingPages.PlanRoot => _navigation.Mini,
+            PanelTab.Navigation when Nav.RootKeyOf(Tab) == RoutingPages.GalaxyMapRoot => _navigation.GalaxyMini,
             _ => null,
         };
 

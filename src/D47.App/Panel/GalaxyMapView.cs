@@ -139,6 +139,7 @@ public sealed class GalaxyMapView : Control
     private GalaxyMapStar? _selected;
     private Point? _selectedAt;
     private double? _fitInset;
+    private bool _fitEachAxis;
 
     private Point? _pressedAt;
     private MouseButton _pressedButton;
@@ -209,10 +210,11 @@ public sealed class GalaxyMapView : Control
         Invalidate();
     }
 
-    /// <summary>Frames the scene's route with <paramref name="inset"/> px clear each side at any width, refitted on resize.</summary>
-    public void Fit(double inset)
+    /// <summary>Frames the scene's route with <paramref name="inset"/> px clear each side at any width, refitted on resize; <paramref name="eachAxis"/> fits width and height separately and a single stop.</summary>
+    public void Fit(double inset, bool eachAxis = false)
     {
         _fitInset = inset;
+        _fitEachAxis = eachAxis;
         Invalidate();
     }
 
@@ -268,10 +270,16 @@ public sealed class GalaxyMapView : Control
 
         var stops = _scene.Route?.Where(stop => stop.Position is not null).ToList() ?? [];
 
-        if (_fitInset is { } inset
-            && GalaxyViewport.Fitted([.. stops.Select(stop => stop.Position!.Value)], Math.Min(Bounds.Width, Bounds.Height), inset) is { } fitted)
+        if (_fitInset is { } inset)
         {
-            _viewport = fitted;
+            var points = stops.Select(stop => stop.Position!.Value).ToList();
+
+            if ((_fitEachAxis
+                    ? GalaxyViewport.FittedIn(points, Bounds.Width, Bounds.Height, inset)
+                    : GalaxyViewport.Fitted(points, Math.Min(Bounds.Width, Bounds.Height), inset)) is { } fitted)
+            {
+                _viewport = fitted;
+            }
         }
 
         if (_scene.Travels is { } travels && (_legs is null || _legsFor != Angles))

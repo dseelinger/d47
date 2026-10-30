@@ -29,6 +29,9 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
     /// <summary>Mini's reading of the Plan root; null until a host furnishes a plan book.</summary>
     public RouteMini? Mini { get; private set; }
 
+    /// <summary>Mini's reading of the Galaxy map root; null until a host furnishes travels.</summary>
+    public GalaxyMapMini? GalaxyMini { get; private set; }
+
     /// <summary>
     /// Gives this surface the Navigation tab (Phase 37): where the Commander is going. Progress is a level
     /// beside Plan rather than a root, and needs <paramref name="plan"/>.
@@ -136,6 +139,18 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         if (surface.Plans is { } miniPlans)
         {
             Mini = new RouteMini(miniPlans, surface.Route, surface.Here, surface.OffDuty);
+        }
+
+        if (galaxyMap && surface.Travel is not null)
+        {
+            var stored = surface.Plans;
+
+            GalaxyMini = new GalaxyMapMini(
+                surface.Commander ?? (() => null),
+                surface.Route,
+                surface.Here,
+                surface.OffDuty,
+                () => _planOnMap is { } kind ? stored?.Last(kind) : null);
         }
 
         host.Furnish(
@@ -250,6 +265,8 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         body |= _unsoldPage is { } unsoldPage && host.Nav.RootKeyOf(PanelTab.Navigation) == UnsoldPage.RootKey && unsoldPage.Tick();
         body |= _bestCargo is { } cargo && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.BestCargoRoot && cargo.Tick();
         body |= _galaxyMap is { } map && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.GalaxyMapRoot && map.Tick();
+
+        body |= GalaxyMini is { } mini && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.GalaxyMapRoot && mini.Tick();
 
         var route = _routeState?.Invoke();
         var here = _routeHere?.Invoke();
