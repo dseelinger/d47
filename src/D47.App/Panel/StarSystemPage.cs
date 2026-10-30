@@ -68,6 +68,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     private const string Dash = "—";
 
     private readonly StarSystemSurface _surface;
+    private readonly Func<string, Task<bool>>? _copy;
     private readonly StackPanel _body = new() { Spacing = 18 };
     private readonly TextBox _name;
     private readonly SystemNameSuggestions<SystemNameMatch> _suggestions;
@@ -90,9 +91,11 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     private Section _section;
     private bool _filtering;
 
-    public StarSystemPage(StarSystemSurface surface)
+    /// <param name="copy">Puts text on the clipboard; null draws no copy glyph.</param>
+    public StarSystemPage(StarSystemSurface surface, Func<string, Task<bool>>? copy = null)
     {
         _surface = surface;
+        _copy = copy;
         _history = new HistoryTile(surface.Searches);
 
         _factionHead.Changed += () =>
@@ -656,7 +659,17 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         TitleText.Show(title, _opened?.Name ?? string.Empty);
         ThemeInk.Bind(title, TextBlock.ForegroundProperty, ink);
 
-        return TitleText.Block(title, context, reportedAt is { } at ? Reported(at) : null);
+        Control named = title;
+
+        if (_copy is { } copy && _opened?.Name is { Length: > 0 } shown)
+        {
+            var glyph = CopyGlyph.For(shown, copy);
+            glyph.VerticalAlignment = VerticalAlignment.Center;
+
+            named = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { title, glyph } };
+        }
+
+        return TitleText.Block(named, context, reportedAt is { } at ? Reported(at) : null);
     }
 
     private static StackPanel Reported(DateTimeOffset at)

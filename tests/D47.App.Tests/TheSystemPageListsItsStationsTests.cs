@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text;
 using Avalonia;
 using Avalonia.Automation;
@@ -63,11 +63,17 @@ public sealed class TheSystemPageListsItsStationsTests
             SurfaceMining = surfaceMining,
         };
 
-    internal static (PanelView Panel, Window Window, Systems Systems) Shown(double width = 1280, double height = 1180, Func<long, int, SurfaceMiningSite?>? surfaceMining = null)
+    internal static (PanelView Panel, Window Window, Systems Systems) Shown(double width = 1280, double height = 1180, Func<long, int, SurfaceMiningSite?>? surfaceMining = null, IClipboard? clipboard = null)
     {
         var systems = new Systems(Ltt7786Profile());
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableSearch();
+
+        if (clipboard is not null)
+        {
+            panel.EnableCopy(clipboard);
+        }
+
         panel.EnableStarSystem(Surface(systems, surfaceMining));
 
         var window = new Window { Content = panel, Width = width, Height = height };

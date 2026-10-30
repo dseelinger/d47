@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The star system page (Search › System) now has a copy glyph beside the system's name. Pressing it copies the name, for a system you opened and for your own system while the page follows you.
+
 An outfitting route now leaves out stations whose outfitting was last reported more than three days ago. The route's result page (Navigation › Plan) shows that limit in a "Max report age" picker with a Search button beside it, which plots the same items again with the age you pick. Each stop shows "outfitting reported" and its date, or "report date unknown". Asking D47 to plot an outfitting route takes a report age too; 0 hours means any age.
 
 Price and report searches now leave out data older than three days unless you ask otherwise. This covers commodity prices, the trade route pages, and the station, outfitting and module or ship searches, which also open on "3 days". Ask for 0 hours, or pick Any, to search any age. System and signal searches still search any age. A saved trade price age of 30 days is changed to 3 days once, on upgrade; any other saved age is kept.

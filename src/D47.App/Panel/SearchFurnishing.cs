@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia.Controls;
 using D47.Core.Capabilities.Builtin;
 using D47.App.Controls;
@@ -182,14 +182,14 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         if (crumb.Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
             && long.TryParse(crumb.Key[FoundKeyPrefix.Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var address))
         {
-            var found = _found = new StarSystemPage(surface);
+            var found = _found = new StarSystemPage(surface, host.Copy);
             found.FiltersChanged += (_, _) => host.ShowSearch();
             found.OpenSystem(address);
 
             return found;
         }
 
-        _starSystem = new StarSystemPage(surface);
+        _starSystem = new StarSystemPage(surface, host.Copy);
         _starSystem.FiltersChanged += (_, _) => host.ShowSearch();
         ApplyPending();
 

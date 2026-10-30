@@ -87,7 +87,11 @@ public static class TitleText
     /// A screen title block: an optional A context line above the title, an optional figure at the right, and
     /// a 1px A rule 10px under them.
     /// </summary>
-    public static Control Block(TextBlock title, TextBlock? context = null, Control? figure = null)
+    public static Control Block(TextBlock title, TextBlock? context = null, Control? figure = null) =>
+        Block((Control)title, context, figure);
+
+    /// <summary>A title block whose title is any control, such as a title beside a glyph.</summary>
+    public static Control Block(Control title, TextBlock? context = null, Control? figure = null)
     {
         var text = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Bottom };
 
