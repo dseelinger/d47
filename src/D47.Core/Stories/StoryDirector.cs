@@ -13,16 +13,22 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Stories;
 
 /// <summary>A story picked with a narrated beacon scan, waiting for the tick to say its scan line and wake the cores. <see cref="Line"/> is null when the entry has none.</summary>
-public sealed record StoryScanDue(string StoryId, string Title, StoryLine? Line);
+public sealed record StoryScanDue(string StoryId, string Title, StoryLine? Line) : IStoryDue;
+
+/// <summary>Something the tick takes once while the story it names is still running.</summary>
+internal interface IStoryDue
+{
+    string StoryId { get; }
+}
 
 /// <summary>An objective <see cref="StoryDirector.CurrentObjective"/> returns: its standing, its story's name, and whether the stock story is paused.</summary>
 public sealed record ShownObjective(AdventureStanding Standing, string StoryName, bool Paused);
 
 /// <summary>A story picked with fixed opening lines, waiting for the tick to say them before anything else of the story.</summary>
-public sealed record StoryOpeningDue(string StoryId, string Title, IReadOnlyList<StoryLine> Lines);
+public sealed record StoryOpeningDue(string StoryId, string Title, IReadOnlyList<StoryLine> Lines) : IStoryDue;
 
 /// <summary>A story picked with a beacon scan on record, waiting for the tick to bring its core aboard after the opening.</summary>
-public sealed record StoryRememberedDue(string StoryId, string Title);
+public sealed record StoryRememberedDue(string StoryId, string Title) : IStoryDue;
 
 /// <summary>
 /// The current objective and the ones after it written again from the Commander's words, with the model's
@@ -346,13 +352,9 @@ public sealed class StoryDirector(
 
         if (story.CurrentChapter is { } key)
         {
-            if (book.Store.Find(frontierId, key) is { } onFile)
+            if (ChapterStanding(frontierId, story, key) is { } chapter)
             {
-                story = StoryAboard.Folded(story, secret, onFile, book.Standing(frontierId, key)?.Fired.Count ?? 0);
-            }
-            else if (Archive.Find(frontierId, story, key) is { } archived)
-            {
-                story = StoryAboard.Folded(story, secret, archived.Adventure, archived.Fired.Count);
+                story = StoryAboard.Folded(story, secret, chapter.Adventure, chapter.Fired.Count);
             }
         }
 
@@ -425,34 +427,16 @@ public sealed class StoryDirector(
     internal AdventureBook Book => book;
 
     /// <summary>Whether a chapter is being written for this Commander.</summary>
-    public bool IsWriting(string? frontierId)
-    {
-        lock (_gate)
-        {
-            return _writing.Contains(frontierId ?? AdventureStore.NoCommander);
-        }
-    }
+    public bool IsWriting(string? frontierId) => Holds(_writing, frontierId);
 
     /// <summary>How far the chapter being written for this Commander has got; null when none is.</summary>
-    public StoryProgress? Progress(string? frontierId)
-    {
-        lock (_gate)
-        {
-            return _progress.GetValueOrDefault(frontierId ?? AdventureStore.NoCommander);
-        }
-    }
+    public StoryProgress? Progress(string? frontierId) => Held(_progress, frontierId);
 
     /// <summary>The time a replacement beat takes effect: after it is written, so events during the write do not count toward it.</summary>
     public Func<DateTimeOffset> Clock { get; set; } = () => DateTimeOffset.UtcNow;
 
     /// <summary>Whether a replacement beat is being written for this Commander.</summary>
-    public bool IsRewriting(string? frontierId)
-    {
-        lock (_gate)
-        {
-            return _rewriting.Contains(frontierId ?? AdventureStore.NoCommander);
-        }
-    }
+    public bool IsRewriting(string? frontierId) => Holds(_rewriting, frontierId);
 
     /// <summary>The beat of the running story's chapter that <see cref="RefuseBeatAsync"/> would replace, narrowed to the step it waits on, or null.</summary>
     public AdventureBeat? RefusableBeat(string? frontierId) =>
@@ -526,13 +510,7 @@ public sealed class StoryDirector(
     }
 
     /// <summary>Whether the last chapter could not be written and waits for <see cref="WriteNextAsync"/>.</summary>
-    public bool WriteFailed(string? frontierId)
-    {
-        lock (_gate)
-        {
-            return _failed.Contains(frontierId ?? AdventureStore.NoCommander);
-        }
-    }
+    public bool WriteFailed(string? frontierId) => Holds(_failed, frontierId);
 
     /// <summary>Starts a story when none is current: sets the Backstory and writes chapter one. Returns a refusal or null.</summary>
     public Task<string?> PickAsync(string? frontierId, string id, DateTimeOffset now, CancellationToken cancellationToken) =>
@@ -2175,88 +2153,28 @@ public sealed class StoryDirector(
     }
 
     /// <summary>The waking a stepped beacon scan left, once; the tick adds it to the wakings.</summary>
-    public CoreWaking? TakeSteppedWaking(string? frontierId)
-    {
-        lock (_gate)
-        {
-            return _steppedWakings.Remove(frontierId ?? AdventureStore.NoCommander, out var waking) ? waking : null;
-        }
-    }
+    public CoreWaking? TakeSteppedWaking(string? frontierId) => Removed(_steppedWakings, frontierId, out var waking) ? waking : null;
 
     /// <summary>
     /// The narrated scan of the story just picked, once, while it is still the running story; the caller says the line
     /// and then wakes the cores. Null when none waits.
     /// </summary>
-    public StoryScanDue? TakeNarratedScan(string? frontierId)
-    {
-        StoryScanDue? due;
-
-        lock (_gate)
-        {
-            if (!_scans.Remove(frontierId ?? AdventureStore.NoCommander, out due))
-            {
-                return null;
-            }
-        }
-
-        return stories.Current(frontierId) is { State: StoryState.Running, BeaconNarrated: true } story
-               && string.Equals(story.Id, due.StoryId, StringComparison.OrdinalIgnoreCase)
-            ? due
-            : null;
-    }
+    public StoryScanDue? TakeNarratedScan(string? frontierId) => Taken(_scans, frontierId, story => story.BeaconNarrated);
 
     /// <summary>
     /// The remembered scan of the story just picked, once, while it is still the running story; the caller brings the
     /// story's core aboard after the opening. Null when none waits.
     /// </summary>
-    public StoryRememberedDue? TakeRememberedScan(string? frontierId)
-    {
-        StoryRememberedDue? due;
-
-        lock (_gate)
-        {
-            if (!_remembered.Remove(frontierId ?? AdventureStore.NoCommander, out due))
-            {
-                return null;
-            }
-        }
-
-        return stories.Current(frontierId) is { State: StoryState.Running, BeaconsRemembered: > 0 } story
-               && string.Equals(story.Id, due.StoryId, StringComparison.OrdinalIgnoreCase)
-            ? due
-            : null;
-    }
+    public StoryRememberedDue? TakeRememberedScan(string? frontierId) => Taken(_remembered, frontierId, story => story.BeaconsRemembered > 0);
 
     /// <summary>
     /// The opening of the story just picked, once, while it is still the running story; the caller says its lines before
     /// the narrated scan and chapter one. Null when none waits.
     /// </summary>
-    public StoryOpeningDue? TakeOpening(string? frontierId)
-    {
-        StoryOpeningDue? due;
-
-        lock (_gate)
-        {
-            if (!_openings.Remove(frontierId ?? AdventureStore.NoCommander, out due))
-            {
-                return null;
-            }
-        }
-
-        return stories.Current(frontierId) is { State: StoryState.Running } story
-               && string.Equals(story.Id, due.StoryId, StringComparison.OrdinalIgnoreCase)
-            ? due
-            : null;
-    }
+    public StoryOpeningDue? TakeOpening(string? frontierId) => Taken(_openings, frontierId, _ => true);
 
     /// <summary>Whether an opening has been picked and not yet taken by <see cref="TakeOpening"/>.</summary>
-    public bool OpeningWaits(string? frontierId)
-    {
-        lock (_gate)
-        {
-            return _openings.ContainsKey(frontierId ?? AdventureStore.NoCommander);
-        }
-    }
+    public bool OpeningWaits(string? frontierId) => Held(_openings, frontierId) is not null;
 
     /// <summary>The Guardian core the current story is written for, or null when no story is current.</summary>
     public Persona.Persona? CoreOf(string? frontierId) =>
@@ -2337,13 +2255,9 @@ public sealed class StoryDirector(
 
         foreach (var key in story.Chapters)
         {
-            if (book.Store.Find(frontierId, key) is { } chapter)
+            if (ChapterStanding(frontierId, story, key) is { } chapter)
             {
-                fired.AddRange(StoryRecap.Fired(chapter, book.Standing(frontierId, key)?.Fired.Count ?? 0, Named));
-            }
-            else if (Archive.Find(frontierId, story, key) is { } archived)
-            {
-                fired.AddRange(StoryRecap.Fired(archived.Adventure, archived.Fired.Count, Named));
+                fired.AddRange(StoryRecap.Fired(chapter.Adventure, chapter.Fired.Count, Named));
             }
         }
 
@@ -2633,8 +2547,11 @@ public sealed class StoryDirector(
     }
 
     /// <summary>A chapter of this run of the story, from the adventure file or the archive.</summary>
-    private Adventure? ChapterOf(string? frontierId, Story story, string key) =>
-        book.Store.Find(frontierId, key) ?? Archive.Find(frontierId, story, key)?.Adventure;
+    private Adventure? ChapterOf(string? frontierId, Story story, string key) => ChapterStanding(frontierId, story, key)?.Adventure;
+
+    /// <summary>The standing of a chapter of this run of the story, from the adventure file or the archive.</summary>
+    private AdventureStanding? ChapterStanding(string? frontierId, Story story, string key) =>
+        book.Standing(frontierId, key) ?? Archive.Find(frontierId, story, key)?.Standing;
 
     private async Task<string?> WriteChapterAsync(string? frontierId, DateTimeOffset now, CancellationToken cancellationToken)
     {
@@ -3091,15 +3008,48 @@ public sealed class StoryDirector(
         var existing = book.Store.For(frontierId).Select(adventure => adventure.Key).Concat(story.Chapters)
             .Concat(Archive.For(frontierId).Where(chapter => chapter.Of(story)).Select(chapter => chapter.Adventure.Key))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var key = string.IsNullOrWhiteSpace(wanted) ? "chapter" : wanted;
-        var candidate = key;
-        var suffix = 2;
 
-        while (existing.Contains(candidate))
-        {
-            candidate = $"{key}-{suffix++}";
-        }
-
-        return candidate;
+        return AdventureKeys.Unique(wanted, "chapter", existing.Contains);
     }
+
+    /// <summary>Whether <paramref name="set"/> holds this Commander, read under the gate.</summary>
+    private bool Holds(HashSet<string> set, string? frontierId)
+    {
+        lock (_gate)
+        {
+            return set.Contains(frontierId ?? AdventureStore.NoCommander);
+        }
+    }
+
+    /// <summary>This Commander's entry in <paramref name="map"/>, read under the gate; null for none.</summary>
+    private T? Held<T>(Dictionary<string, T> map, string? frontierId)
+        where T : class
+    {
+        lock (_gate)
+        {
+            return map.GetValueOrDefault(frontierId ?? AdventureStore.NoCommander);
+        }
+    }
+
+    /// <summary>Removes this Commander's entry from <paramref name="map"/> under the gate.</summary>
+    private bool Removed<T>(Dictionary<string, T> map, string? frontierId, [MaybeNullWhen(false)] out T value)
+    {
+        lock (_gate)
+        {
+            return map.Remove(frontierId ?? AdventureStore.NoCommander, out value);
+        }
+    }
+
+    /// <summary>
+    /// This Commander's due, removed under the gate, when the running story is still the one it was picked with and
+    /// <paramref name="stillHolds"/> holds for it; null otherwise.
+    /// </summary>
+    private T? Taken<T>(Dictionary<string, T> due, string? frontierId, Func<Story, bool> stillHolds)
+        where T : class, IStoryDue =>
+        Removed(due, frontierId, out var taken)
+        && stories.Current(frontierId) is { State: StoryState.Running } story
+        && stillHolds(story)
+        && string.Equals(story.Id, taken.StoryId, StringComparison.OrdinalIgnoreCase)
+            ? taken
+            : null;
 }

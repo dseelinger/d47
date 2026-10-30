@@ -1204,18 +1204,10 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     private string UniqueKey(string wanted, string? keep)
     {
         var existing = _surface.Book.Store.For(_surface.Commander());
-        var key = string.IsNullOrWhiteSpace(wanted) ? "adventure" : wanted;
-        var candidate = key;
-        var suffix = 2;
 
-        while (existing.Any(other =>
-                   string.Equals(other.Key, candidate, StringComparison.OrdinalIgnoreCase)
-                   && !string.Equals(other.Key, keep, StringComparison.OrdinalIgnoreCase)))
-        {
-            candidate = $"{key}-{suffix++}";
-        }
-
-        return candidate;
+        return AdventureKeys.Unique(wanted, "adventure", candidate => existing.Any(other =>
+            string.Equals(other.Key, candidate, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(other.Key, keep, StringComparison.OrdinalIgnoreCase)));
     }
 
     // ---- the acts ----------------------------------------------------------------------------

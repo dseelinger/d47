@@ -242,28 +242,7 @@ public static class ChapterDraw
                 (Enum.TryParse<Career>(candidate.Row.Career, out var career) ? weights.Weight(career) : 1)
                 * (recent.Contains(RefusedActivities.Key(TriggerKind.Event, null, candidate.Row.Event, candidate.Tool) ?? string.Empty, StringComparer.OrdinalIgnoreCase) ? RecentFactor : 1))
             .ToList();
-        var total = values.Sum();
-        var chosen = pool[^1];
-
-        if (total <= 0)
-        {
-            chosen = pool[random.Next(pool.Count)];
-        }
-        else
-        {
-            var point = random.NextDouble() * total;
-
-            for (var index = 0; index < pool.Count; index++)
-            {
-                point -= values[index];
-
-                if (point < 0)
-                {
-                    chosen = pool[index];
-                    break;
-                }
-            }
-        }
+        var chosen = pool[Weighted(values, random)];
 
         if (chosen.Tool is not null)
         {
@@ -307,26 +286,33 @@ public static class ChapterDraw
     private static DrawableActivity Pick(List<DrawableActivity> rows, CareerWeights weights, IReadOnlyList<string> recent, Random32 random)
     {
         var values = rows.Select(row => weights.Weight(row.Career) * (WasRecent(row, recent) ? RecentFactor : 1)).ToList();
+
+        return rows[Weighted(values, random)];
+    }
+
+    /// <summary>An index drawn in proportion to <paramref name="values"/>, or uniformly when they sum to zero or less.</summary>
+    private static int Weighted(IReadOnlyList<double> values, Random32 random)
+    {
         var total = values.Sum();
 
         if (total <= 0)
         {
-            return rows[random.Next(rows.Count)];
+            return random.Next(values.Count);
         }
 
         var point = random.NextDouble() * total;
 
-        for (var index = 0; index < rows.Count; index++)
+        for (var index = 0; index < values.Count; index++)
         {
             point -= values[index];
 
             if (point < 0)
             {
-                return rows[index];
+                return index;
             }
         }
 
-        return rows[^1];
+        return values.Count - 1;
     }
 
     private static int Count(DrawableActivity row, ShipLoadout ship, Random32 random)
