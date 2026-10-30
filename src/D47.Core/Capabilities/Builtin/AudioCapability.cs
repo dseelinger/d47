@@ -263,6 +263,7 @@ public static class AudioCapability
                        + "it gets quieter to silence at 0 and louder at 1, in steps of 0.05. Set it back "
                        + "and the original loudness returns.",
             Advanced = true,
+            Protected = true,
             Label = "Level",
             Help = "0 is silent and 1 is full. Muting is separate, so turning something off does not "
                    + "cost you the level you had it at.",
@@ -284,6 +285,7 @@ public static class AudioCapability
             Exercise = Where(channel) + $"Tick Mute while you hear {Hear(channel)}: it goes silent. Untick it and "
                        + "it returns at the Level the row had, because Mute does not change the Level.",
             Advanced = true,
+            Protected = true,
             Label = "Mute",
             Help = "Off, without losing the level. A level of zero and a mute sound the same and mean "
                    + "different things.",
@@ -311,6 +313,7 @@ public static class AudioCapability
                        + "drop at all. Between, it drops to that fraction of its Level while D47 speaks. "
                        + "The row appears for Thinking bed, Ambient music and Sound cues only.",
             Advanced = true,
+            Protected = true,
             Label = "Duck while D47 speaks",
             Help = "What this drops to while D47 is talking, as a fraction of its level. 1 does not duck "
                    + "at all; 0 goes silent until the sentence ends.",

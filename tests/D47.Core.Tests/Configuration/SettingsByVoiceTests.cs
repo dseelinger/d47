@@ -43,6 +43,10 @@ public class SettingsByVoiceTests
             + "phrase would have to carry both. Same voice route as the row above.",
     };
 
+    /// <summary>The mixer mutes: a misheard phrase must not be able to silence D47's voice or the danger callouts. Set on the panel only.</summary>
+    private static readonly HashSet<string> PanelOnlyMutes =
+        [.. Enum.GetValues<D47.Core.Audio.AudioChannel>().Select(channel => AudioCapability.MuteKey(channel))];
+
     [Fact]
     public void EveryProtectedRowWithAClosedValueSetIsReachableByVoice()
     {
@@ -54,7 +58,7 @@ public class SettingsByVoiceTests
             .Where(row => row.Protected)
             .Where(row => row.Kind is SettingKind.Toggle or SettingKind.Choice)
             .Where(row => row.Commands.Count == 0)
-            .Where(row => !NotSettableByPhrase.ContainsKey(row.Key))
+            .Where(row => !NotSettableByPhrase.ContainsKey(row.Key) && !PanelOnlyMutes.Contains(row.Key))
             .Select(row => row.Key)
             .ToArray();
 

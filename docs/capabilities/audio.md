@@ -350,6 +350,6 @@ The same three actions work by voice — "pause the music", "resume the music", 
 ### Who can change a level
 
 `manage_music` pauses, resumes and skips the music and sets no level or mute. The Level, Mute and
-Duck rows are not protected, so the model's `set_setting` tool can change them by key, such as
-`audio.speech.level`, as well as the Settings tab. No row declares a keyword-router phrase, so no
-fixed spoken command sets one.
+Duck rows are protected: the model's `set_setting` tool refuses them, so D47 cannot turn its own
+voice or the danger callouts down. They are changed from the Settings tab. No row declares a
+keyword-router phrase, so no fixed spoken command sets one.
