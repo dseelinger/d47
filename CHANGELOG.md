@@ -10,6 +10,8 @@
 
 A non-player sender's voice is now drawn again in each system, so the cruise ship captain no longer sounds the same everywhere. It stays fixed within one system.
 
+The Corsair, Caspian Explorer, Lynx Highliner and Kestrel Mk II now have credit prices in the ship specifications.
+
 The help pages no longer point at files that do not exist. Seven pages cited working notes the site never had, and the community page named a contributing guide that was never written; those sentences are gone and the findings they stood on stay. The site no longer publishes the working notes folder.
 
 The help pages now match the settings page. Settings says each group has its own reset, which leaves Home system, the character sheet, About me and the scenario as typed, and the Audio page names the Ambient music group's Now playing and Next track rows. Before, Settings described a reset per section.

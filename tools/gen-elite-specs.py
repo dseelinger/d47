@@ -338,7 +338,8 @@ def build_ships(
     `hardness`, `hull_mass`, `hardpoints` and `internals`. coriolis-data, matched on the id
     `shipyard.csv` gives the hull, supplies the other columns, and any of those eight EDSY
     leaves blank. EDSY fills `pad` and `crew` where coriolis-data does not. A hull
-    coriolis-data does not match carries no manufacturer, fuel, masslock or cost.
+    coriolis-data does not match carries no manufacturer, fuel or masslock. `cost` is coriolis-data's
+    `hullCost`, else EDSY's `cost`, and is empty for an `arx-early-access` hull.
     """
     by_edid = {ship.get("edID"): ship for ship in documents}
 
@@ -396,7 +397,7 @@ def build_ships(
             number(properties.get("reserveFuelCapacity")),
             number(properties.get("crew")) or figures.get("crew", ""),
             number(properties.get("masslock")),
-            number(properties.get("hullCost")),
+            number(properties.get("hullCost")) or ("" if symbol in ARX_EARLY_ACCESS else figures.get("cost", "")),
             sizes_of("hardpoint", "hardpoints"),
             sizes_of("internal", "internal", unrestricted=True),
             "arx-early-access" if symbol in ARX_EARLY_ACCESS else requirement(ship) if ship else "",
@@ -1064,6 +1065,7 @@ def edsy_ships(database: str) -> dict[str, dict]:
                 "hardness": edsy_number(head, "hardness"),
                 "class": edsy_number(head, "class"),
                 "crew": edsy_number(head, "crew"),
+                "cost": edsy_number(head, "cost"),
             },
         }
 
