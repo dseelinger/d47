@@ -69,20 +69,15 @@ nav_order: 148
 <p class="intro">A short list you can listen to, ordered by what you can do about it.</p>
 <section>
 <h2><span class="num">1</span> Three named, the rest counted.</h2>
-<svg viewBox="0 0 880 200" role="img" aria-label="Three missions read in full, the remainder as a count">
- <rect x="20" y="36" width="840" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="74" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">First, second, third, and two more.</text>
- <text x="440" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">Then the total reward.</text>
- <text x="440" y="164" text-anchor="middle" font-size="16" fill="var(--text)">Eleven missions read in full take longer than a Commander will listen.</text>
-</svg>
+<p class="body">"What missions do I have" reads the three you can act on first: those expiring within the hour, then those handed in at the station you are docked at, then the soonest expiry. The rest are a count and the total reward.</p>
 </section>
 <section>
-<h2><span class="num">2</span> A mission with no detail is named and left at that.</h2>
-<svg viewBox="0 0 880 176" role="img" aria-label="A mission whose accept was never read is named by its internal name only">
- <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">Mission_Courier</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">No destination, no time left: the journal has not shown its accept.</text>
-</svg>
+<h2><span class="num">2</span> The board is only what you accepted.</h2>
+<p class="body">The journal records a mission when you accept it, not when a station offers it. "What missions should I take" begins "I only see missions after you accept them." and then reads your board.</p>
+</section>
+<section>
+<h2><span class="num">3</span> A mission with no detail is named and left at that.</h2>
+<p class="body">If the journal has not shown the accept, the mission is read by its internal name alone. With no missions the answer says so.</p>
 </section>
 </div></div>
 </details>
@@ -116,6 +111,13 @@ You have five missions. First, Courier Job Available, to Merchiston Dock, Kweleu
 Missions expiring within the hour come first, then those handed in at the station you are docked at,
 then the rest, soonest expiry first in each group. A mission whose accept the journal has not shown is
 named by its internal name alone. With no missions the answer says so.
+
+> "where do I source my missions"
+
+Asking about one mission, or for more than the three, reads every mission one line each, with its
+faction, cargo, destination, progress, time left and reward. "Where do I source my missions" says where to buy the cargo of the collect missions: the buy stops in flying
+order with what to buy at each, then the hand-in stations, the total light years, what could not be
+found, and how many full loads it is.
 
 > "what kinds of missions are there"
 > "where would I find a disable mission"

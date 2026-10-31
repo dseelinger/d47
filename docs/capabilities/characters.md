@@ -29,18 +29,18 @@ nav_order: 164
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">One page for everyone you can talk to, with the same controls for each.</p>
+<p class="intro">One page for everyone you can talk to, with the same rows for each.</p>
 <section>
 <h2><span class="num">1</span> Three kinds of character share one page.</h2>
-<p class="body">The sidebar lists your carrier's captain and tower, the cast of the story you are following, and the characters you made. Each page has a picture, a name, a voice, personality notes and where they are. What you can edit depends on who owns the value.</p>
+<p class="body">The sidebar groups Carrier, Story and Yours. Carrier holds the captain and tower, Story the cast of the running story, and Yours the characters you add. Each page has a picture, name, voice, personality notes and where they are.</p>
 </section>
 <section>
-<h2><span class="num">2</span> The captain and tower keep their settings.</h2>
-<p class="body">Their names and voices are settings, the same for every Commander on this PC. Your notes on them are yours alone, kept with your other characters.</p>
+<h2><span class="num">2</span> Who owns a value decides who edits it.</h2>
+<p class="body">The captain's and tower's names and voices are settings, the same for every Commander on this PC. A story sets its own cast's names, voices and pictures. Your notes on either stay yours.</p>
 </section>
 <section>
-<h2><span class="num">3</span> A story sets its own cast.</h2>
-<p class="body">A story gives its characters their names, voices and pictures. You can add notes, kept for that story only.</p>
+<h2><span class="num">3</span> Where they are decides how they sound.</h2>
+<p class="body">Harlan is aboard, so the comms key reaches him clearly on the intercom. Move him to a system far away and he comes over the radio, fainter, and past the comms range he is out of reach.</p>
 </section>
 </div></div>
 </details>

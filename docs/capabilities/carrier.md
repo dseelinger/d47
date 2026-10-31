@@ -59,11 +59,11 @@ nav_order: 104
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <p class="say">Note the date the figures were reported before you rely on them.</p>
-<p class="expect">Fuel, cargo and balance each carry the date they were reported.</p>
+<p class="expect">The location, fuel and cargo each carry the date they were reported.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Figures are only as fresh as the last carrier management screen read.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Figures are only as fresh as the last time you opened the screen.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Fuel, cargo and balance carry the date they were reported, because the carrier keeps working while you are away.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The location, fuel and cargo carry the date they were reported, because the carrier keeps working while you are away.</text>
 </svg>
 </section>
 </div></div>
@@ -77,50 +77,22 @@ nav_order: 104
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">The carrier's own figures, apart from "where is it".</p>
+<p class="intro">The carrier's own figures, read from the last time you opened its management screen.</p>
 <section>
-<h2><span class="num">1</span> "Where is my carrier" and "how is my carrier" are different questions.</h2>
-<svg viewBox="0 0 880 226" role="img" aria-label="get_fleet answers position, describe_carrier answers everything else">
- <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">"where is my carrier"</text>
- <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">system, and when</text>
- <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">that was last seen</text>
- <rect x="460" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">"how is my carrier"</text>
- <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">fuel, cargo, balance,</text>
- <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text)">jump range, services</text>
- <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Kept apart so a short question does not answer with everything it did not ask for.</text>
-</svg>
+<h2><span class="num">1</span> Asking about the carrier reads one journal event.</h2>
+<p class="body">Open the carrier management screen and Elite writes CarrierStats: fuel, cargo, balance, jump range, docking access and services. "How is my carrier" reads them back with no model. "Where is my carrier" is the Journal page's get_fleet tool, kept apart so a short question gets a short answer.</p>
 </section>
 <section>
-<h2><span class="num">2</span> The figures come from one journal event, and it only writes when you look.</h2>
-<svg viewBox="0 0 880 200" role="img" aria-label="CarrierStats is only written when the Commander opens the carrier management screen">
- <rect x="20" y="36" width="840" height="90" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">CarrierStats</text>
- <text x="440" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">fuel · cargo · balance · jump range · docking access · services</text>
- <text x="440" y="160" text-anchor="middle" font-size="16" fill="var(--text)">Elite writes it when the carrier management screen opens, not continuously.</text>
- <text x="440" y="188" text-anchor="middle" font-size="15" fill="var(--text-muted)">A report says how old its own figures are rather than pretending they are live.</text>
-</svg>
+<h2><span class="num">2</span> Figures say how old they are.</h2>
+<p class="body">Elite writes CarrierStats only when the screen opens, so the carrier may have jumped or burned fuel since. The report gives the date beside the location, fuel and cargo, and estimates the balance from the weekly upkeep since then.</p>
 </section>
 <section>
-<h2><span class="num">3</span> No carrier known is not the same as no carrier.</h2>
-<svg viewBox="0 0 880 176" role="img" aria-label="An unseen carrier is reported as unseen, never as owning none">
- <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">"I have not seen you own a fleet carrier this session."</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Not "you have no carrier" — D47 only knows what the journal has shown it.</text>
-</svg>
+<h2><span class="num">3</span> A carrier not yet seen is not a missing carrier.</h2>
+<p class="body">With no CarrierStats in the journal the report says "I have not seen you own a fleet carrier this session." It does not say you own none.</p>
 </section>
 <section>
-<h2><span class="num">4</span> The captain keeps a separate conversation, and the core overhears it.</h2>
-<svg viewBox="0 0 880 200" role="img" aria-label="The captain answers from their own brief and transcript; the core is told the exchange as overheard">
- <rect x="20" y="36" width="400" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="220" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Captain</text>
- <text x="220" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">own brief, own transcript</text>
- <rect x="460" y="36" width="400" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="660" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">core</text>
- <text x="660" y="106" text-anchor="middle" font-size="15" fill="var(--text-muted)">hears each exchange as overheard</text>
- <text x="440" y="176" text-anchor="middle" font-size="16" fill="var(--text)">The captain never answers as the core, and the core can still refer to what was said.</text>
-</svg>
+<h2><span class="num">4</span> The captain answers from their own conversation.</h2>
+<p class="body">Select the captain on the Carrier comms channel and ask on the comms key: "how much fuel have we got" gets the tritium figure in the captain's voice. The core is told the exchange as overheard, and the captain's words are never added to the core's own conversation.</p>
 </section>
 </div></div>
 </details>
@@ -216,17 +188,24 @@ screen:
 public int? FuelLevel { get; init; }
 ```
 
-Every figure carries the date it was read, because a carrier keeps jumping, trading and burning
-fuel while you are away from the screen that reports it. A booked jump — destination, body and
+The location, fuel and cargo carry the date they were read, because a carrier keeps jumping, trading and burning
+fuel while you are away from the screen that reports it. The balance is not dated: the report estimates
+what it is now from the weekly upkeep, and says "about" and the adjustment when it has. A booked jump — destination, body and
 departure time — comes from `CarrierJumpRequest` instead, and is cleared the moment the jump fires
 or is cancelled.
 
 If no `CarrierStats` has ever been seen, the report says so rather than saying you have no
 carrier — those are different answers, and only one of them is true.
 
-The page shows the carrier's hull beside its tiles, from the same fetch and the same Hull pictures
-setting as a ship's picture; see [the pictures](ships.md#hull-art). The mini panel and the squadron's
-carrier show none.
+### The carrier's picture
+
+With Hull pictures on, Asset Mgmt › Carrier shows the carrier's hull beside its tiles, from the same
+fetch and setting as a ship's picture; see [the pictures](ships.md#hull-art). The mini panel and the
+squadron's carrier show none.
+
+Above the picture is a DRAKE / FORTUNE / NAUTILUS / VICTORY choice, shown when Hull pictures is on.
+The game does not say which model a carrier is, so you pick it. The choice is kept for that carrier's
+callsign, and a carrier you have not picked for is drawn as the Drake.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>

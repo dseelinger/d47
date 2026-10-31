@@ -19,7 +19,6 @@ public partial class DocumentationGateTests
 
     private static readonly HashSet<string> PagesWithALongHowItWorksBand = new(StringComparer.Ordinal)
     {
-        "crew",
         "general-conversation",
         "vr",
     };

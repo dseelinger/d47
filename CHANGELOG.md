@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Carrier, Missions, Crew and Characters help pages were checked against the app. Carrier now describes the DRAKE / FORTUNE / NAUTILUS / VICTORY choice and no longer says the balance carries a date. Crew says only a pilot on duty in the fighter bay can be selected on the Crew channel, and Missions describes the "where do I source my missions" answer. Their How it works bands are shorter.
+
 Pressing a result on Search › Stations or Search › Bodies opens its system on the Stations or Bodies section, as the Systems, Outfitting and Signals results already open theirs.
 
 The Acting on the game help pages now match the code. Navigation, Autonomous actions, Panels, Ship systems and SRV name the real settings: Try to plot courses in the galaxy map, Honk on arriving in a system, and Let D47 press keys in Elite in Settings › Acting on the game › What D47 may do. Comms says the message is read back after it is sent, and that a message starting /d47 is refused. Ship systems now covers chaff, shield cells, the ECM and the HUD mode, On foot controls lists every weapon and grenade phrase, Binding profiles quotes the replies D47 gives, and Bookmarks has a How it works band. Measured figures and history were cut from the Switches and Flight pages.

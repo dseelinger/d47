@@ -22,37 +22,37 @@ nav_order: 103
 <p class="intro">Two steps to talking to somebody other than the ship.</p>
 <section>
 <h2><span class="num">1</span> Hire a pilot in the game. D47 reads your roster.</h2>
-<p class="say">Hire a pilot in the game, then say "who is in my fighter bay".</p>
-<p class="expect">D47 names the crew from your journal roster, each with their own voice.</p>
+<p class="say">Hire a pilot in the game and put them in the fighter bay, then say "who is on duty".</p>
+<p class="expect">D47 lists each pilot you hired with rank, on or off duty in the fighter bay, and the ship they were assigned aboard.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">who is in my fighter bay</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">who is on duty</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Nothing to set up. Your crew comes out of the journal.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">Each one keeps their own voice and their own way of talking.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Each one is read from what Elite wrote when you hired, assigned or fired them.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">2</span> Select them on the Crew channel, then use the comms key.</h2>
-<p class="say">Say "comms Vasquez", then hold the comms push-to-talk and say "how is the fighter holding up".</p>
+<p class="say">Say "comms Vance Ilo", then hold the comms push-to-talk and say "how is the fighter holding up".</p>
 <p class="expect">The crew member answers, and answers every comms question while they stay selected.</p>
 <svg viewBox="0 0 880 212" role="img" aria-label="A question on the comms key with a crew member selected, answered in that crew member's own voice">
  <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="53" font-size="17" fill="var(--text)">how is the fighter holding up?</text>
- <text x="44" y="116" font-size="15" font-weight="700" fill="var(--accent)">[VASQUEZ]</text>
+ <text x="44" y="116" font-size="15" font-weight="700" fill="var(--accent)">[VANCE ILO]</text>
  <text x="180" y="116" font-size="16" fill="var(--text)">Still flying, Commander. Wing took a knock.</text>
- <text x="20" y="150" font-size="16" fill="var(--text-muted)">With CREW · VASQUEZ selected, the comms key reaches them instead of the core.</text>
+ <text x="20" y="150" font-size="16" fill="var(--text-muted)">With CREW · VANCE ILO selected, the comms key reaches them instead of the core.</text>
  <text x="20" y="184" font-size="15" fill="var(--text-muted)">Push-to-talk still reaches the core, even when you start with their name.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Use the name of a crew member you have hired.</p>
-<p class="expect">That crew member answers; any other name reaches the core, which says they are not aboard.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="Only the crew you have actually hired can answer.">
+<p class="say">Put the pilot in the fighter bay in the game before you select them.</p>
+<p class="expect">A pilot on duty is on the Crew channel. One off duty is on the roster but cannot be selected.</p>
+<svg viewBox="0 0 880 152" role="img" aria-label="Only the pilot on duty can be selected.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Only the crew you have actually hired can answer.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A name that is not on your roster reaches the core, which will say so rather than invent somebody.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The Crew channel lists the pilots in the fighter bay, so a pilot on shore leave is not on it.</text>
 </svg>
 </section>
 </div></div>
@@ -68,62 +68,20 @@ nav_order: 103
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">The pilots you have hired, and how to talk to one of them instead of your core.</p>
 <section>
-<h2><span class="num">1</span> The name has to be at the front.</h2>
-<svg viewBox="0 0 880 240" role="img" aria-label="Opening with a crew member's name sends the turn to them; mentioning them later is a question for your core">
- <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="220" y="78" text-anchor="middle" font-size="16" fill="var(--text)">“Vance, what’s the fighter</text>
- <text x="220" y="102" text-anchor="middle" font-size="16" fill="var(--text)">looking like?”</text>
- <text x="220" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">→ goes to Vance</text>
- <rect x="460" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="660" y="78" text-anchor="middle" font-size="16" fill="var(--text)">“What does Vance think</text>
- <text x="660" y="102" text-anchor="middle" font-size="16" fill="var(--text)">of the fighter?”</text>
- <text x="660" y="132" text-anchor="middle" font-size="15" fill="var(--text-muted)">→ goes to your ship’s AI</text>
- <text x="440" y="196" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">That is a real difference, not a parsing quirk.</text>
- <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">A bare name works too — it is how you get somebody’s attention. Matching costs nothing and uses no model.</text>
-</svg>
+<h2><span class="num">1</span> Only the pilot on duty can be selected.</h2>
+<p class="body">Elite writes CrewHire, CrewAssign and CrewFire. After you put Vance Ilo in the fighter bay, "comms Vance Ilo" selects the pilot on the Crew channel. A pilot off duty is on the roster but not on the channel.</p>
 </section>
 <section>
 <h2><span class="num">2</span> They are people you hired, not another Guardian core.</h2>
-<svg viewBox="0 0 880 226" role="img" aria-label="A crew member has no tools, no database and no way to look anything up, unlike a Guardian core">
- <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="220" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">A GUARDIAN CORE</text>
- <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">a million years old,</text>
- <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">with tools and tables</text>
- <rect x="460" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">SOMEBODY YOU HIRED</text>
- <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">at a station, last week</text>
- <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text)">no tools, no database</text>
- <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Asked something they cannot see from where they sit, they say so.</text>
-</svg>
-<p class="body">They speak in their own voice, kept for the session like any other. Each keeps their own conversation, the way the carrier's captain does, and the core is told each exchange as one it overheard rather than one it had — it can refer to what was said, but the pilot's answers are never added to its own conversation.</p>
+<p class="body">A pilot has no tools and no database. Asked something they cannot see from where they sit, they say so. They keep their own conversation, and the core is told each exchange as overheard.</p>
 </section>
 <section>
-<h2><span class="num">3</span> They stay on comms while selected.</h2>
-<svg viewBox="0 0 880 212" role="img" aria-label="A selected pilot answers every comms question, and push-to-talk always reaches the core">
- <rect x="20" y="36" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="440" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">An intercom does not fade</text>
- <text x="440" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">a pilot's line carries as clearly on the last word as the first</text>
- <text x="440" y="160" text-anchor="middle" font-size="16" fill="var(--text)">Every comms question reaches the selected pilot, with no time limit.</text>
- <text x="440" y="188" text-anchor="middle" font-size="15" fill="var(--text-muted)">Push-to-talk always reaches the core.</text>
-</svg>
+<h2><span class="num">3</span> A selected pilot answers every comms question.</h2>
+<p class="body">While Vance Ilo stays selected, anything said on the comms push-to-talk reaches the pilot, with no distance fade. Push-to-talk on its own always reaches the core, whatever name you start with.</p>
 </section>
 <section>
-<h2><span class="num">4</span> The roster is short because Elite's is.</h2>
-<svg viewBox="0 0 880 252" role="img" aria-label="Elite records a crew member's name, rating and duty state and nothing else — there is no engineer, gunner or navigator">
- <rect x="20" y="36" width="400" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="220" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">WHAT ELITE WRITES</text>
- <text x="46" y="104" text-anchor="start" font-size="15" fill="var(--text)">name · combat rating</text>
- <text x="46" y="130" text-anchor="start" font-size="15" fill="var(--text)">on duty, or off the books</text>
- <text x="46" y="154" text-anchor="start" font-size="15" fill="var(--text-muted)">and that is all of it</text>
- <rect x="460" y="36" width="400" height="130" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="660" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--danger)">WHAT IT DOES NOT</text>
- <text x="486" y="104" text-anchor="start" font-size="15" fill="var(--text)">no engineer</text>
- <text x="486" y="130" text-anchor="start" font-size="15" fill="var(--text)">no gunner</text>
- <text x="486" y="154" text-anchor="start" font-size="15" fill="var(--text)">no navigator</text>
- <text x="440" y="206" text-anchor="middle" font-size="16" fill="var(--text)">Elite’s hired crew are fighter pilots and nothing else, so that is the whole roster.</text>
- <text x="440" y="236" text-anchor="middle" font-size="15" fill="var(--text-muted)">Inventing posts to fill it out would be the confident wrong answer the guardrails exist to prevent.</text>
-</svg>
-<p class="body">A posting to a particular ship is <em>derived, not reported</em>: Elite's assignment event names no ship, so Directive 47 remembers which hull you were sitting in when you assigned somebody. A roster it has never seen says so, rather than saying you have no crew — those are different answers, and only one of them is true.</p>
+<h2><span class="num">4</span> The roster is what Elite writes.</h2>
+<p class="body">Elite records a name, a combat rank and whether they are on duty, so there is no engineer, gunner or navigator. With no roster seen, the answer is "I have not seen you hire any crew this session."</p>
 </section>
 </div></div>
 </details>
@@ -147,23 +105,24 @@ The pilots you have hired, and how to talk to them.
 ### Ask for it
 
 > "who is aboard"
+> "who is my crew"
 > "who is on duty"
 > "crew roster"
 
 ```text
 2 pilot(s) on the books:
-  Vance Ilo (Expert) — on duty in the fighter bay, assigned aboard Long Way Home
-  Ilse Bruhn (Competent) — off duty
+  Vance Ilo (Combat Rank 4 of 8, Expert) — on duty in the fighter bay, assigned aboard Long Way Home
+  Ilse Bruhn (Combat Rank 3 of 8, Competent) — off duty
 
 Select one on the Crew comms channel and use the comms key to talk to them directly, for example "comms Vance Ilo".
 ```
 
 ### Talking to one of them
 
-Select them on the Crew [comms channel](comms.md#choose-who-your-comms-key-reaches), then speak
+Put them in the fighter bay, select them on the Crew [comms channel](comms.md#choose-who-your-comms-key-reaches) (only a pilot on duty is on it), then speak
 on the comms push-to-talk, and the turn goes to them instead of your core.
 
-> "comms Vance", then on the comms key: "what's the fighter looking like?"
+> "comms Vance Ilo", then on the comms key: "what's the fighter looking like?"
 
 Push-to-talk goes to your core, so "Vance, what's the fighter looking like?" on it is a question
 for your core *about* Vance.
@@ -208,7 +167,7 @@ different answers, and only one of them is true.
 
 ### A picture for each pilot
 
-Each hired pilot's row on Fleet › Crew has **Change picture** and **Use the default**. The picture is kept
+Each hired pilot's row on Asset Mgmt › Crew has **Change picture** and **Use the default**. The picture is kept
 under the pilot's game crew id, not their name, so two pilots with the same name keep separate pictures. It
 shows beside that pilot's turns on the Conversation page. A pilot you fire keeps their file, and a rehire
 with the same crew id gets it back.
@@ -216,9 +175,7 @@ with the same crew id gets it back.
 ### People of your own
 
 This page covers the pilots you hire in the game. People you name yourself, aboard or elsewhere, are
-characters: see [Characters](characters.md). Crew seats from earlier versions became characters the
-first time this version loaded, one per name, aboard, with the seat's role in their notes, and their
-callouts went back to the core. The old seat file is kept as `data\crew-seats.migrated.json`.
+characters: see [Characters](characters.md).
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>

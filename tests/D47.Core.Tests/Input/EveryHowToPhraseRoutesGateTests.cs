@@ -37,11 +37,6 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("system-names", "what does Praea Euq XV-B c1-42 tell you"), // #1998
         ("bookmarks", "rename bookmark Current CG to Colonia Bridge"), // no issue filed; see the #1903 commit
         ("on-foot", "what does grade 3 on my Maverick cost"), // #1998
-        ("crew", "who is in my fighter bay"),
-        ("crew", "comms Vasquez"),
-        ("crew", "how is the fighter holding up"),
-        ("characters", "comms Harlan"),
-        ("characters", "are you there"),
         ("commander-log", "have I met Arden Vale before"), // #2000
         ("powerplay", "what does my next Powerplay rank give me"), // #2000
         ("powerplay", "what would Edmund Mahon give me"), // #2000
@@ -63,11 +58,18 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("vr", "lock it to my head"),
         ("vr", "move it left"),
         ("vr", "bring it nearer"),
-        ("carrier", "how much fuel have we got"),
         ("commanders", "switch to Kestrel Vane"),
         ("navigation", "plot a course to Shinrarta Dezhra"), // no issue filed; see the #1903 commit
                 ("comms", "tell the wing I am on my way"), // no issue filed; see the #1903 commit
     ];
+
+    private static readonly HashSet<(string Page, string Phrase)> CommsKeyPhrases = new(new EntryComparer())
+    {
+        ("comms", "are you there"),
+        ("carrier", "how much fuel have we got"),
+        ("crew", "how is the fighter holding up"),
+        ("characters", "are you there"),
+    };
 
     public static TheoryData<string> Pages() => [.. PageNames()];
 
@@ -156,7 +158,7 @@ public partial class EveryHowToPhraseRoutesGateTests
     private static HashSet<(string Page, string Phrase)> Listed() =>
         new([.. ModelAnswers, .. NotYetReviewed], new EntryComparer());
 
-    /// <summary>The router, with the things the pages tell the Commander to make first: a checklist line, bookmarks, a macro, a mark on the body and a carrier.</summary>
+    /// <summary>The router, with the things the pages tell the Commander to make first: a checklist line, bookmarks, a macro, a mark on the body, a carrier, a pilot on duty and a character.</summary>
     private static KeywordRouter Router()
     {
         var surface = TestSurface.For(new MemoryInstall());
@@ -182,7 +184,12 @@ public partial class EveryHowToPhraseRoutesGateTests
         marks.Add(state.Surface, null, new SurfaceFix(0, 0, 1_000_000), DateTimeOffset.Parse("2026-08-16T10:30:00Z", System.Globalization.CultureInfo.InvariantCulture));
 
         var channels = new CommsChannels();
-        channels.Update(new CommsInputs { CarrierOwned = true });
+        channels.Update(new CommsInputs
+        {
+            CarrierOwned = true,
+            Crew = new ShipCrew { Members = [new CrewMember("Vance Ilo", 1, 4, Active: true)] },
+            Characters = [new D47.Core.Characters.CustomCharacter("0a1b2c3d", "Harlan", null, null, true, null)],
+        });
 
         return new(
             surface.Registry,
@@ -208,7 +215,7 @@ public partial class EveryHowToPhraseRoutesGateTests
 
     /// <summary>Whether the phrase is said holding the comms key, which sends it to the selected party and never to the router.</summary>
     private static bool SaidOnTheCommsKey(string page, string phrase) =>
-        page == "comms" && string.Equals(phrase, "are you there", StringComparison.OrdinalIgnoreCase);
+        CommsKeyPhrases.Contains((page, phrase));
 
     /// <summary>Whether the turn loop's model-free captain's log grammar takes the phrase, before the router and the model.</summary>
     private static bool LogsOrReadsTheCaptainsLog(string phrase) => D47.Core.CaptainsLog.CaptainsLogPhrase.Read(phrase) is not null;
