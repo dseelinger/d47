@@ -149,12 +149,24 @@ public static class EngineerCapability
                     new ToolCommandPhrase("what is the fastest way in"),
                     new ToolCommandPhrase("which engineer next"),
                 ],
-                Handler = (_, _) => Task.FromResult(ToolResult.Ok(
-                    unlocks?.Describe() ?? "No engineer plans are loaded.")),
+                Handler = (_, _) => Task.FromResult(Unlocks(unlocks)),
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Engineers", Order = 50 },
     };
+
+    private static ToolResult Unlocks(EngineerPlanService? unlocks)
+    {
+        if (unlocks is null)
+        {
+            return ToolResult.Ok("No engineer plans are loaded.");
+        }
+
+        var written = unlocks.Describe();
+        var spoken = unlocks.Describe(aloud: true);
+
+        return written == spoken ? ToolResult.Ok(written) : ToolResult.Ok(written, spoken);
+    }
 
     private static string DescribeProgress(Func<CommanderGameState?> commander)
     {
@@ -367,8 +379,9 @@ public static class EngineerCapability
     }
 
     /// <summary>A result about one engineer, which opens their page.</summary>
-    private static ToolResult About(Engineer engineer, string content) =>
-        ToolResult.Ok(content) with { Page = PageRef.Engineer(engineer.Id) };
+    private static ToolResult About(Engineer engineer, string content, string? aloud = null) =>
+        (aloud is null || aloud == content ? ToolResult.Ok(content) : ToolResult.Ok(content, aloud))
+        with { Page = PageRef.Engineer(engineer.Id) };
 
     private static string Remaining(Func<CommanderGameState?> commander, Engineer engineer)
     {
@@ -411,7 +424,7 @@ public static class EngineerCapability
         if (!string.IsNullOrWhiteSpace(name))
         {
             return EngineerDirectory.ByName(name) is { } engineer
-                ? About(engineer, Describe(engineer, commander()))
+                ? About(engineer, Describe(engineer, commander()), Describe(engineer, commander(), aloud: true))
                 : ToolResult.Ok(Catalogue.Unknown("engineer", name.Trim(), EngineerDirectory.Near(name)));
         }
 
@@ -435,10 +448,21 @@ public static class EngineerCapability
         return here.Count switch
         {
             0 => ToolResult.Ok($"No engineer of mine is based in {system}."),
-            1 => About(here[0], Describe(here[0], commander())),
-            _ => ToolResult.Ok(string.Join("\n\n", here.Select(engineer => Describe(engineer, commander())))),
+            1 => About(here[0], Describe(here[0], commander()), Describe(here[0], commander(), aloud: true)),
+            _ => Several(here, commander),
         };
     }
+
+    private static ToolResult Several(IReadOnlyList<Engineer> engineers, Func<CommanderGameState?> commander)
+    {
+        var written = Joined(engineers, commander, aloud: false);
+        var spoken = Joined(engineers, commander, aloud: true);
+
+        return written == spoken ? ToolResult.Ok(written) : ToolResult.Ok(written, spoken);
+    }
+
+    private static string Joined(IReadOnlyList<Engineer> engineers, Func<CommanderGameState?> commander, bool aloud) =>
+        string.Join("\n\n", engineers.Select(engineer => Describe(engineer, commander(), aloud)));
 
     private static string ByKind(Func<CommanderGameState?> commander, string kind)
     {
@@ -485,7 +509,7 @@ public static class EngineerCapability
         return report.ToString().TrimEnd();
     }
 
-    private static string Describe(Engineer engineer, CommanderGameState? active)
+    private static string Describe(Engineer engineer, CommanderGameState? active, bool aloud = false)
     {
         var report = new StringBuilder();
 
@@ -496,11 +520,11 @@ public static class EngineerCapability
         if (engineer.Specialities.Count > 0)
         {
             // A speciality with no grade is named without one.
-            report.AppendLine("Grades: " + string.Join(
-                ", ",
-                engineer.Specialities.Select(speciality => speciality.IsGraded
-                    ? $"{speciality.Kind} to {speciality.MaxGrade}"
-                    : speciality.Kind)) + ".");
+            var grades = engineer.Specialities
+                .Select(speciality => speciality.IsGraded ? $"{speciality.Kind} to {speciality.MaxGrade}" : speciality.Kind)
+                .ToList();
+
+            report.AppendLine("Grades: " + (aloud ? SpokenList.Names(grades) : string.Join(", ", grades)) + ".");
         }
         else
         {

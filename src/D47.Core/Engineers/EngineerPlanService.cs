@@ -31,7 +31,7 @@ public sealed class EngineerPlanService(
     /// The ranking as a Commander hears it: the best few, each with the sentence that explains where it
     /// came from.
     /// </summary>
-    public string Describe(int most = 3)
+    public string Describe(int most = 3, bool aloud = false)
     {
         var report = Report();
 
@@ -65,7 +65,7 @@ public sealed class EngineerPlanService(
             said.AppendLine();
             said.AppendLine($"{candidate.Engineer.Name} — {candidate.Summary()}");
 
-            foreach (var line in candidate.Working())
+            foreach (var line in candidate.Working(aloud))
             {
                 said.AppendLine($"  {line}");
             }

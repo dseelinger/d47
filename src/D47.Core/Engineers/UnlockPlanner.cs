@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using D47.Core.Capabilities;
 using D47.Core.Checklists;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -81,7 +82,7 @@ public sealed record UnlockCandidate
     }
 
     /// <summary>The work behind the ranking, one line per stop, plus what cannot be counted in jumps.</summary>
-    public IReadOnlyList<string> Working()
+    public IReadOnlyList<string> Working(bool aloud = false)
     {
         var lines = new List<string>();
 
@@ -107,11 +108,19 @@ public sealed record UnlockCandidate
             }
         }
 
-        foreach (var job in Jobs)
+        var covered = Jobs
+            .Select(job => job.Count > 1
+                ? $"{job[0].DescribeJob()} ×{job.Count.ToString(CultureInfo.InvariantCulture)}"
+                : job[0].DescribeJob())
+            .ToList();
+
+        if (aloud && covered.Count > SpokenList.Limit)
         {
-            lines.Add(job.Count > 1
-                ? $"    covers: {job[0].DescribeJob()} ×{job.Count.ToString(CultureInfo.InvariantCulture)}"
-                : $"    covers: {job[0].DescribeJob()}");
+            lines.Add($"    covers: {SpokenList.Names(covered)}");
+        }
+        else
+        {
+            lines.AddRange(covered.Select(job => $"    covers: {job}"));
         }
 
         return lines;

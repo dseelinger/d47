@@ -173,6 +173,55 @@ public class ASpokenAnswerNamesAtMostThreeModulesTests
     }
 
     [Fact]
+    public async Task AFittedNameMatchingFourModulesNamesThreeAndCountsTheRest()
+    {
+        var boosters = string.Join(",", Enumerable.Range(1, 5).Select(index =>
+            $$"""{"Slot":"TinyHardpoint{{index}}","Item":"hpt_shieldbooster_size0_class5","On":true,"Health":1.0}"""));
+
+        var store = Store(
+            Commander,
+            $$"""{"timestamp":"3311-01-01T00:02:00Z","event":"Loadout","Ship":"Krait_MkII","ShipID":4,"Modules":[{{boosters}}]}""");
+
+        var result = await Call(
+            EngineeringCapability.Create(() => store.Active), "get_module_engineering", """{"module":"shield booster"}""");
+
+        Assert.Contains("5 fitted modules match 'shield booster':", result.Spoken, StringComparison.Ordinal);
+        Assert.Contains(", and 2 more.", result.Spoken, StringComparison.Ordinal);
+        Assert.Equal(5, result.Content.Split('\n').Count(line => line.StartsWith("  ", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public async Task AnEngineersGradesNameThreeSpecialitiesAndCountTheRest()
+    {
+        var store = Store(Commander);
+
+        var result = await Call(
+            EngineerCapability.Create(() => store.Active), "find_engineer", """{"engineer":"Felicity Farseer"}""");
+
+        var grades = result.Content.Split('\n').First(line => line.StartsWith("Grades: ", StringComparison.Ordinal));
+        var spoken = result.Spoken.Split('\n').First(line => line.StartsWith("Grades: ", StringComparison.Ordinal));
+
+        Assert.True(grades.Split(", ").Length > 3, grades);
+        Assert.Matches(@"^Grades: [^,]+, [^,]+ and [^,]+, and \d+ more\.$", spoken.TrimEnd());
+        Assert.Equal(PageKind.Engineer, result.Page!.Kind);
+    }
+
+    [Fact]
+    public async Task AModuleWithFourVariantsSpeaksTheSizesInsteadOfFourLines()
+    {
+        var name = EliteSpecifications.Modules
+            .Select(module => module.Name)
+            .Distinct(StringComparer.Ordinal)
+            .First(candidate => EliteSpecifications.ModulesNamed(candidate, null, null).Count == 4);
+
+        var result = await Call(
+            SpecificationCapability.Create(() => null), "get_module_specification", $$"""{"module":"{{name}}"}""");
+
+        Assert.Contains("comes in 4 variants:", result.Spoken, StringComparison.Ordinal);
+        Assert.DoesNotContain("variants", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TheSpokenListSaysHowManyMoreThereAre()
     {
         Assert.Equal("a", SpokenList.Names(["a"]));

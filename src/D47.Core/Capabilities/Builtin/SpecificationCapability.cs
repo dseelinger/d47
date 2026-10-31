@@ -74,7 +74,7 @@ public static class SpecificationCapability
                     ToolParameter.Integer("size", "Module size, 1 to 8."),
                     ToolParameter.Text("rating", "Module rating, A to E."),
                 ],
-                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(DescribeModule(arguments))),
+                Handler = (arguments, _) => Task.FromResult(DescribeModule(arguments)),
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Specifications", Order = 49 },
@@ -198,11 +198,11 @@ public static class SpecificationCapability
             : $"I don't know a ship called '{wanted}'.";
     }
 
-    private static string DescribeModule(ToolArguments arguments)
+    private static ToolResult DescribeModule(ToolArguments arguments)
     {
         if (!arguments.TryGetString("module", out var spoken) || string.IsNullOrWhiteSpace(spoken))
         {
-            return "No module was named.";
+            return ToolResult.Ok("No module was named.");
         }
 
         var size = arguments.TryGetInt32("size", out var value) ? value : (int?)null;
@@ -219,17 +219,17 @@ public static class SpecificationCapability
 
             if (everything.Count == 0)
             {
-                return Catalogue.Unknown("module", spoken.Trim(), EliteSpecifications.NearModules(spoken));
+                return ToolResult.Ok(Catalogue.Unknown("module", spoken.Trim(), EliteSpecifications.NearModules(spoken)));
             }
 
             // Armour is the third failure.
             if (everything.All(module => module.IsBulkhead))
             {
-                return $"{everything[0].Name} is armour. It has no size or rating — ask for it by name.";
+                return ToolResult.Ok($"{everything[0].Name} is armour. It has no size or rating — ask for it by name.");
             }
 
-            return $"There is no {size}{rating} {everything[0].Name}. It comes in "
-                   + $"{string.Join(", ", everything.Select(module => module.Size).Distinct(StringComparer.Ordinal))}.";
+            return ToolResult.Ok($"There is no {size}{rating} {everything[0].Name}. It comes in "
+                   + $"{string.Join(", ", everything.Select(module => module.Size).Distinct(StringComparer.Ordinal))}.");
         }
 
         var report = new StringBuilder();
@@ -237,12 +237,9 @@ public static class SpecificationCapability
         if (matches.Count > Listed)
         {
             // Eleven drives at a dozen figures each is a table, not something anybody can hear.
-            report.AppendLine(
-                $"{matches[0].Name} comes in {matches.Count} variants: "
-                + $"{string.Join(", ", matches.Select(module => module.Size).Distinct(StringComparer.Ordinal))}. "
-                + "Ask for a size and rating for the figures.");
+            report.AppendLine(Variants(matches));
 
-            return report.ToString().TrimEnd();
+            return ToolResult.Ok(report.ToString().TrimEnd());
         }
 
         foreach (var module in matches)
@@ -250,10 +247,19 @@ public static class SpecificationCapability
             report.AppendLine(Describe(module));
         }
 
-        return report.ToString().TrimEnd();
+        var written = report.ToString().TrimEnd();
+
+        return matches.Count > SpokenList.Limit
+            ? ToolResult.Ok(written, Variants(matches))
+            : ToolResult.Ok(written);
     }
 
-    /// <summary>How many variants are worth reading out in full before the answer becomes a table.</summary>
+    private static string Variants(IReadOnlyList<ModuleSpecification> matches) =>
+        $"{matches[0].Name} comes in {matches.Count} variants: "
+        + $"{string.Join(", ", matches.Select(module => module.Size).Distinct(StringComparer.Ordinal))}. "
+        + "Ask for a size and rating for the figures.";
+
+/// <summary>How many variants are worth reading out in full before the answer becomes a table.</summary>
     private const int Listed = 4;
 
     private static string Describe(ModuleSpecification module)

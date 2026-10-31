@@ -823,7 +823,14 @@ public static class EngineeringCapability
                 report.AppendLine("  " + Line(ship.Type, module, active.Engineers));
             }
 
-            return ToolResult.Ok(report.ToString().TrimEnd() + remembered);
+            var written = report.ToString().TrimEnd() + remembered;
+
+            return matches.Count > SpokenList.Limit
+                ? ToolResult.Ok(
+                    written,
+                    $"{matches.Count} fitted modules match '{wanted.Trim()}': "
+                    + SpokenList.Names([.. matches.Select(module => Where(ship.Type, module))]) + "." + remembered)
+                : ToolResult.Ok(written);
         }
 
         return ToolResult.Ok(Detail(ship.Type, matches[0], active.Engineers) + remembered);
