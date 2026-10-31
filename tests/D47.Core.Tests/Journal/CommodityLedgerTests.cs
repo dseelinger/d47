@@ -254,20 +254,6 @@ public class CommodityLedgerTests
     }
 
     [Fact]
-    public void AJournalFileNameSaysWhenItWasOpenedInLocalTime()
-    {
- // Elite stamps the filename in the machine's local time, not UTC — so the expected offset is
-        // whatever this machine was at that moment, asked rather than written down.
-        var stamp = new DateTime(2026, 9, 3, 9, 51, 27, DateTimeKind.Unspecified);
-
-        Assert.Equal(
-            new DateTimeOffset(stamp, TimeZoneInfo.Local.GetUtcOffset(stamp)),
-            CommodityLedger.OpenedAt(@"C:\x\Journal.2026-09-03T095127.01.log"));
-
-        Assert.Null(CommodityLedger.OpenedAt("Journal.log"));
-    }
-
-    [Fact]
     public void TwoSalesInTheSameSecondWithTheSameTotalAreBothFolded()
     {
         var ledger = new CommodityLedger();

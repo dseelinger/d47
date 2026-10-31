@@ -11,12 +11,14 @@ namespace D47.Core.Journal;
 /// The live <c>Status.json</c>, for stamping a position onto events that carry none — organic sampling
 /// is the whole reason it exists (Phase 18).
 /// </param>
+/// <param name="zone">The zone Elite names its files in; the local zone when null.</param>
 public sealed class JournalSpine(
     string directory,
     IFileSystem files,
     GameStateStore gameState,
     ILoggerFactory loggerFactory,
-    Func<GameStatus>? position = null)
+    Func<GameStatus>? position = null,
+    TimeZoneInfo? zone = null)
 {
     private readonly ILogger _logger = loggerFactory.CreateLogger<JournalSpine>();
 
@@ -130,7 +132,7 @@ public sealed class JournalSpine(
 
         _relistNext = writtenAt != _listedAt;
         _listedAt = writtenAt;
-        _latest = JournalFolder.LatestFile(files, Directory);
+        _latest = JournalFolder.LatestFile(files, Directory, zone);
         return _latest;
     }
 

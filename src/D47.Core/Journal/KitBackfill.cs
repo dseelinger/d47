@@ -35,7 +35,7 @@ public static class KitBackfill
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
-        var walking = Window(all, since);
+        var walking = Window(fileSystem, all, since);
 
         if (walking.Count > 0)
         {
@@ -53,7 +53,7 @@ public static class KitBackfill
     /// where nothing says — no floor, because a suit bought and never worn again has no re-listing event
     /// to bound the search the way a docked fleet does.
     /// </summary>
-    public static IReadOnlyList<string> Window(IReadOnlyList<string> files, DateTimeOffset? since)
+    public static IReadOnlyList<string> Window(IFileSystem fileSystem, IReadOnlyList<string> files, DateTimeOffset? since, TimeZoneInfo? zone = null)
     {
         ArgumentNullException.ThrowIfNull(files);
 
@@ -62,7 +62,7 @@ public static class KitBackfill
             return files;
         }
 
-        var first = JournalFolder.FirstFileAt(files, stamp);
+        var first = JournalFolder.FirstFileAt(fileSystem, files, stamp, zone);
 
         // Nothing at or after the stamp means every file predates it, so the newest is the only one that can
         // hold something the file has not already seen.

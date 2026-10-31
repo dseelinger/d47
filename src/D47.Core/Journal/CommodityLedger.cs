@@ -125,7 +125,7 @@ public sealed class CommodityLedger
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
-        var first = files.FindIndex(file => OpenedAt(file) is { } opened && opened >= since);
+        var first = files.FindIndex(file => JournalFolder.StartedAt(fileSystem, file) >= since);
         var start = first < 0 ? files.Count - 1 : Math.Max(0, first - 1);
 
         // The file the fold starts at is frequently a continuation (…T095127.02.log) carrying no identity
@@ -407,30 +407,4 @@ public sealed class CommodityLedger
             journalEvent.Int("Count")?.ToString(CultureInfo.InvariantCulture),
             total?.ToString(CultureInfo.InvariantCulture),
             price?.ToString(CultureInfo.InvariantCulture)));
-
-    /// <summary>
-    /// The moment a journal file was opened, read from its name:
-    /// <c>Journal.2026-09-03T095127.01.log</c>.
-    /// </summary>
-    public static DateTimeOffset? OpenedAt(string path)
-    {
-        var name = Path.GetFileName(path);
-
-        // "Journal." is eight characters; the stamp is the seventeen after it.
-        if (name.Length < 25)
-        {
-            return null;
-        }
-
-        // Elite stamps the journal filename in the machine's LOCAL time; only the timestamps inside the file
-        // are UTC (#306).
-        return DateTimeOffset.TryParseExact(
-            name.Substring(8, 17),
-            "yyyy-MM-dd'T'HHmmss",
-            CultureInfo.InvariantCulture,
-            DateTimeStyles.AssumeLocal,
-            out var opened)
-            ? opened
-            : null;
-    }
 }

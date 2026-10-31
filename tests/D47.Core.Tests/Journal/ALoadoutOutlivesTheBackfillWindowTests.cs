@@ -235,7 +235,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
                 $$"""{"timestamp":"2026-01-{{day:00}}T10:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
         }
 
-        var window = LoadoutBackfill.Window(journals, store.FoldedThrough);
+        var window = LoadoutBackfill.Window(new DiskFileSystem(), journals, store.FoldedThrough, TimeZoneInfo.Utc);
 
         // Wider than the floor, because the gap is wider than the floor.
         Assert.True(window.Count > 25, $"walked {window.Count} files");
@@ -258,17 +258,17 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
             journals.Add(Journal($"2026-01-{day:00}T100000"));
         }
 
-        var recent = LoadoutBackfill.Window(journals, new DateTimeOffset(2026, 2, 27, 0, 0, 0, TimeSpan.Zero));
+        var recent = LoadoutBackfill.Window(new DiskFileSystem(), journals, new DateTimeOffset(2026, 2, 27, 0, 0, 0, TimeSpan.Zero), TimeZoneInfo.Utc);
 
         Assert.Equal(25, recent.Count);
 
         // Nothing said at all — a first run, or a file somebody deleted — is the same floor.
-        Assert.Equal(25, LoadoutBackfill.Window(journals, since: null).Count);
+        Assert.Equal(25, LoadoutBackfill.Window(new DiskFileSystem(), journals, since: null, TimeZoneInfo.Utc).Count);
 
         // And a stamp older than every file walks all of them rather than guessing.
         Assert.Equal(
             journals.Count,
-            LoadoutBackfill.Window(journals, new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero)).Count);
+            LoadoutBackfill.Window(new DiskFileSystem(), journals, new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero), TimeZoneInfo.Utc).Count);
     }
 
     /// <summary>One file before the cutoff, not the cutoff itself.</summary>
@@ -285,7 +285,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         // The stamp lands on day 20, five hours after that day's session opened — so the event that produced
         // it is in day 20's file even though day 21's is the first named at or after it.
         var window = LoadoutBackfill.Window(
-            journals, new DateTimeOffset(2026, 1, 20, 15, 0, 0, TimeSpan.Zero));
+            new DiskFileSystem(), journals, new DateTimeOffset(2026, 1, 20, 15, 0, 0, TimeSpan.Zero), TimeZoneInfo.Utc);
 
         Assert.Equal(journals[19], window[0]);
     }

@@ -96,7 +96,7 @@ public class KitOutlivesTheBackfillWindowTests : IDisposable
             BoughtSuit("2026-08-21T10:05:00Z", 2));
 
         var window = KitBackfill.Window(
-            [older, newer], new DateTimeOffset(2026, 8, 22, 0, 0, 0, TimeSpan.Zero));
+            new DiskFileSystem(), [older, newer], new DateTimeOffset(2026, 8, 22, 0, 0, 0, TimeSpan.Zero), TimeZoneInfo.Utc);
 
         Assert.Equal([newer], window);
     }
@@ -112,7 +112,7 @@ public class KitOutlivesTheBackfillWindowTests : IDisposable
             files.Add(Journal($"2026-01-{day:00}T100000"));
         }
 
-        Assert.Equal(files.Count, KitBackfill.Window(files, since: null).Count);
+        Assert.Equal(files.Count, KitBackfill.Window(new DiskFileSystem(), files, since: null, TimeZoneInfo.Utc).Count);
     }
 
     /// <summary>A reset for one Commander leaves another Commander's kit alone.</summary>

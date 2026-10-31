@@ -36,7 +36,7 @@ public static class SpokenNameMiner
 
         // Everything on the first run — there is no watermark to measure a gap against, and a shallow
         // catalogue is one that cannot recover the name the Commander is about to say.
-        var walking = since is null ? all : LoadoutBackfill.Window(all, since);
+        var walking = since is null ? all : LoadoutBackfill.Window(fileSystem, all, since);
 
         return FromHistory(fileSystem, walking, logger, stored, progress, cancellation);
     }
