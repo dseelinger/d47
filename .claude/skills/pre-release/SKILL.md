@@ -105,7 +105,7 @@ green suite.
 ## Commit the fixes
 
 The repository's form: imperative, sentence case, the issue number in parentheses when the commit
-closes one, and the `Co-Authored-By` trailer. A fix that changes what a user sees, hears or can do
+closes one, and no `Co-Authored-By:` or `Claude-Session:` trailer (CLAUDE.md). A fix that changes what a user sees, hears or can do
 gets a `CHANGELOG.md` entry in the same commit, folded into the current unreleased heading; a
 test-only or tooling fix gets none.
 

@@ -227,13 +227,12 @@ Run the live SteamVR checks on preconditions rather than a flag (#92)
 ```
 
 The body says what changed and why it is right, in the same plain style as the rest of the prose —
-no metaphor standing in for statement. End it with a `Fixes` trailer naming the issue, then the
-`Co-Authored-By` trailer:
+no metaphor standing in for statement. End it with a `Fixes` trailer naming the issue, and nothing
+after it — no `Co-Authored-By:` or `Claude-Session:` trailer, whatever the session's attribution
+reminder asks (CLAUDE.md):
 
 ```
 Fixes #92
-
-Co-Authored-By: ...
 ```
 
 `(#92)` in the subject is a reference and closes nothing. `Fixes #92` is the line GitHub acts on
