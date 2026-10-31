@@ -10,7 +10,8 @@ public static class SpeakerAccent
 {
     /// <summary>What the model may and may not do with an accent.</summary>
     public const string Rules =
-        "Let the words suit that accent through regional word choice, idiom and rhythm. It can be "
+        "Write in English. One word from the accent's own language is allowed; a sentence is not. "
+        + "Let the words suit that accent through regional word choice, idiom and rhythm. It can be "
         + "funny, but never spell the accent out phonetically, never lean on a stereotype, and never "
         + "make the dialect the joke.";
 

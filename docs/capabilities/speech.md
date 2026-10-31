@@ -881,7 +881,7 @@ the story's lines stay in the third person either way.
 
 When the language model writes an NPC's line, and the voice that will speak it has an accent, the
 model can be asked to let the words suit that accent through regional word choice, idiom and
-rhythm. This row sets how often it is asked, from 0 to 100 percent in steps of 10. The default is 50.
+rhythm. The words stay English whatever the accent. This row sets how often it is asked, from 0 to 100 percent in steps of 10. The default is 50.
 
 The roll is made per line for a reworded canned line, and per speaker for each invented exchange,
 including the carrier's tower and captain. A speaker who misses the roll is written without the accent
@@ -955,7 +955,7 @@ all of that.
 journal `Message` is a `$`-key with a localised form — a trader's *"I strongly advise you against
 this."* — is reworded by your language model in the voice of whoever the key says is speaking: a
 pirate, a patrol officer, a cruise liner's captain, or station traffic control. It keeps its
-attitude, so a pirate's threat is still a threat. That sends the line to your language model
+attitude, so a pirate's threat is still a threat, and it keeps its listener. That sends the line to your language model
 provider. A message another player typed is never reworded and never reaches the model, and the
 comms panel shows Elite's wording either way. No-fire zone notices are said in d47's own words and are never sent to the language model.
 

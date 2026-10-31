@@ -157,8 +157,10 @@ public static class FlavourBriefs
                 Instruction =
                     "Say this line in your own words, once, as the same speaker: keep every fact in it, "
                     + "add none, and use no name you were not given. Keep its attitude — a threat stays a "
-                    + "threat, a plea stays a plea, a notice stays a notice: "
-                    + $"\"{announcement.Text}\"",
+                    + "threat, a plea stays a plea, a notice stays a notice. Address only the listener the "
+                    + "line addresses; if it names no listener, name none. Leave abbreviations as they are. "
+                    + "Add no threat, order or warning the line does not carry. "
+                    + $"The line: \"{announcement.Text}\"",
                 NeedsPersona = false,
                 NeedsGameState = false,
                 NeedsAboutMe = false,
