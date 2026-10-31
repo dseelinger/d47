@@ -22,19 +22,19 @@ nav_order: 126
 <p class="intro">Three steps to being told what you want and nothing else.</p>
 <section>
 <h2><span class="num">1</span> Turn callouts on, then pick the ones you want.</h2>
-<p class="say">Turn callouts on, then switch on the rows you want, such as Arrival or Limpets.</p>
+<p class="say">Turn Speak without being asked on, then switch on the rows you want, such as Arrivals or Limpet reminders.</p>
 <p class="expect">The individual rows appear once the master switch is on.</p>
 <svg viewBox="0 0 880 254" role="img" aria-label="The master callouts toggle above a list of individual callout toggles">
  <rect x="20" y="20" width="840" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="46" y="57" font-size="17" font-weight="700" fill="var(--text)">Callouts</text>
+ <text x="46" y="57" font-size="17" font-weight="700" fill="var(--text)">Speak without being asked</text>
  <rect x="746" y="35" width="68" height="30" fill="var(--accent)"/>
  <circle cx="799" cy="50" r="11" fill="var(--background)"/>
  <rect x="60" y="96" width="800" height="48" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="86" y="126" font-size="16" fill="var(--text)">Arrival</text>
+ <text x="86" y="126" font-size="16" fill="var(--text)">Arrivals</text>
  <rect x="756" y="107" width="60" height="26" fill="var(--accent)"/>
  <circle cx="803" cy="120" r="9" fill="var(--background)"/>
  <rect x="60" y="156" width="800" height="48" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="86" y="186" font-size="16" fill="var(--text)">Limpets</text>
+ <text x="86" y="186" font-size="16" fill="var(--text)">Limpet reminders</text>
  <rect x="756" y="167" width="60" height="26" fill="var(--border)"/>
  <circle cx="769" cy="180" r="9" fill="var(--surface)"/>
  <text x="60" y="238" font-size="15" fill="var(--text-muted)">The individual rows are not there until the master one is on.</text>
@@ -42,12 +42,12 @@ nav_order: 126
 </section>
 <section>
 <h2><span class="num">2</span> Or just say it.</h2>
-<p class="say">Say "stop telling me about limpets", or "tell me about limpets again".</p>
+<p class="say">Say "stop calling out limpet reminders", or "start calling out limpet reminders".</p>
 <p class="expect">D47 names the row it switched off or on.</p>
 <svg viewBox="0 0 880 168" role="img" aria-label="Spoken phrases that turn callouts on and off">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">stop telling me about limpets</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">"be quiet about arrivals" — "tell me about limpets again" — "no more callouts"</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">stop calling out limpet reminders</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"stop warning me about arrivals" — "start calling out arrivals" — "stop calling things out"</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">Each one names a row. Nothing here needs the panel.</text>
 </svg>
 </section>
@@ -157,6 +157,8 @@ finished thinking about it — which for an interdiction is after it is over.
 > "stop calling things out"
 > "start calling things out"
 
+A shortened example; the real answer lists every callout:
+
 ```text
 I speak up about:
   danger: on
@@ -195,15 +197,27 @@ An urgent warning cuts in rather than waiting its turn. A warning that arrives a
 has finished reading you a commodity list has arrived too late to be one.
 
 **Every urgent one is preceded by an alarm**, so you know what kind of trouble it is before the
-sentence has finished arriving. There are two, and which you hear tells you where to look:
+sentence has finished arriving. There are three, and which you hear tells you where to look:
 
 | Sound | What it means | The answer |
 |---|---|---|
+| The interdiction alert | Something is pulling you out of supercruise, or about to | Boost, high-wake, or follow the escape vector |
 | Falling three-note tumble | Somebody is hurting you — shot at, shields gone, hull opened | Fight, run, or high-wake |
 | Three pulses on one note | The ship is cooking itself | The throttle, not the trigger |
 
 Being *pulled out of supercruise* uses the same sound as the warning that one was coming, because
 it is the same situation a moment later. A hyperdiction uses it too.
+
+A breached canopy is an urgent warning with the attack alarm, and it names the minutes of oxygen
+left on your life support, to the half minute:
+
+```text
+Canopy breach. Seven and a half minutes of oxygen.
+```
+
+If the life support's oxygen time is not known the line is "Canopy breach. We are on emergency
+oxygen." Dock with the canopy still broken and D47 says "The canopy is still breached. Repair it
+before launching." Both belong to the Danger row.
 
 The lines that are not emergencies stay quiet. A full cargo hold and the rebuy screen are worth
 saying and are not worth an alarm, so neither gets one.
@@ -221,8 +235,8 @@ while there is still time to act:
 Pirate lining up an interdiction. Boost or high-wake now.
 ```
 
-Across 912 real journals (the figures are recorded in a comment in `AnnouncedAttackCallout.cs`), that line came a **median of six seconds** before the first shot and was
-right **88%** of the time. A pirate demanding cargo gives eight seconds and is right 67%. Each
+In the journals measured for it (the figures are recorded in a comment in `AnnouncedAttackCallout.cs`), that line came a **median of six seconds** before the first shot and was
+right **88%** of the time. A pirate demanding cargo is right 67%. Each
 situation gets its own sentence and its own sound, so you can tell an interdiction from a cargo
 demand from somebody who is here for you before the sentence has finished.
 
@@ -234,8 +248,8 @@ the strongest signal in the whole corpus.
 ##### Being hunted, which is not an emergency {#hunted}
 
 Two other hitman families are a hunter *talking about you* rather than closing on you — the one that
-produced *"the eagle is in the nest"* is followed by an attack only **15%** of the time. Warning you
-about those would be crying wolf six times in seven, so Directive 47 does not.
+produced *"the eagle is in the nest"* is seldom followed by an attack. Warning you about those would
+be a false alarm most times, so Directive 47 does not.
 
 It does not ignore them either. Being hunted is a situation rather than an event, so you get a
 remark on it in your core's own voice — no alarm, never interrupting, and once every ten minutes
@@ -244,8 +258,8 @@ say, and inventing a reason is the one thing it must not do.
 
 **Directive 47 matches on Elite's message ids, never on the words.** That is not tidiness — it is
 the difference between a useful warning and an unusable one. The obvious approach, warning about
-anything that *sounds* hostile, was measured (`Phase15WarningTests` names the two worst): one such message fires 2,399 times to catch 30 real
-attacks, and another is wrong 48 times out of 48. A hundred false alarms per real event is a
+anything that *sounds* hostile, was measured (`Phase15WarningTests` names the two worst): one such message fires 2,399 times and is followed
+by an attack 1.3% of the time, and another is wrong 48 times out of 48. Dozens of false alarms per real event is a
 warning you switch off within the hour and then do not have when it matters.
 
 It is also what keeps it safe. In-game chat can be written by anyone in range, and matching on the
@@ -273,8 +287,10 @@ When you destroy a ship, your core remarks on it if the kill is a notable one:
 
 - the first kill of the game session
 - a reward bigger than any other this session
-- a kill within thirty seconds of the one before
+- a kill within thirty seconds of the one before, and each further one in that run
 - every fifth kill
+- across every journal on this PC: the 100th, 250th and 500th kill and every 1,000th, the first of a
+  ship type, and a reward bigger than any before it
 
 Other kills pass without a word. The line names the ship, the pilot when Elite gives one, and the
 reward. A combat bond names the faction instead, because Elite writes no pilot or ship for it. A kill
@@ -283,8 +299,8 @@ one they chose and it is not passed to the language model. When
 it is not reworded in your core's voice, it is said like this:
 
 ```text
-First kill of the session. Paul Curnow's Eagle destroyed, 59,330 credits.
-Two kills inside thirty seconds. KazDav Cain's Eagle destroyed, 60,602 credits.
+First kill of the session. Tarun Okafor's Eagle destroyed, 59,330 credits.
+Two kills inside thirty seconds. Mira Holloway's Eagle destroyed, 60,602 credits.
 ```
 
 If the pilot sent you a message in the five minutes before the kill, the remark may refer back to
@@ -359,7 +375,7 @@ always the ones Elite wrote.
 
 #### Landing pad {#docking}
 
-When docking is granted at a Coriolis, Orbis, Ocellus or asteroid base, your core says where the pad
+When docking is granted at a Coriolis, Orbis, Ocellus, Bernal or asteroid base, your core says where the pad
 is, as a clock hour and how far in ([#574](https://github.com/dseelinger/d47/issues/574)). It is on
 by default.
 
@@ -402,8 +418,8 @@ would miss it four times out of five.
 Whether a star can be scooped is worked out properly rather than from the first letter of its
 class. The KGBFOAM rule gets two cases wrong in opposite directions, and both matter: Herbig AeBe
 stars start with A and cannot be scooped, while orange giants carry a suffix and can. A class
-Directive 47 does not recognise is called unknown rather than unscoopable — routing you around a
-star that would have refuelled you is its own kind of harm.
+Directive 47 does not recognise is never called unscoopable, and nothing is said about scooping it —
+routing you around a star that would have refuelled you is its own kind of harm.
 
 **Fly without a Fuel Scoop and the clause is dropped entirely**, so the line is just `14 jumps
 remaining. Next is Wredguia WD-K d8-30.` Reworded is no better than said: "scoopable" promises fuel
@@ -420,13 +436,11 @@ nothing.
 
 #### Arrivals {#arrival}
 
-Your home system, where your carrier is, ships you have stored where you have just arrived, and
-stations that offer engineering.
+Your home system, where your carrier is, and ships you have stored where you have just arrived:
 
-**There is no built-in list of which engineer lives where.** That kind of list goes stale every
-game update, and inventing one is exactly the confident wrong answer Directive 47 is built not to
-give. Engineering is recognised from what the station itself advertises when you dock — which
-also means it keeps working when a new engineer is added.
+```text
+Home. Welcome back to Shinrarta Dezhra.
+```
 
 #### Material milestones {#materials}
 
@@ -448,12 +462,12 @@ against a number nobody checked.
 
 When you are promoted, your core makes one remark about it in its own voice. That covers the six
 career ladders (Combat, Trade, Exploration, Mercenary, Exobiology and CQC), both navies and your
-Powerplay rank. It keeps the career and the rank name as Elite gives them and adds nothing else.
+Powerplay rank. It keeps the career, the rank number and the rank name as Elite gives them.
 With personality off, or no model, the plain line is spoken:
 
 ```text
-Promoted. Trade, Elite IV.
-Promoted. Empire, Serf.
+Promoted. Trade Rank 12 of 13, Elite IV.
+Promoted. Imperial Navy Rank 2 of 14, Serf.
 Powerplay rank 8 with Li Yong-Rui.
 ```
 
@@ -471,21 +485,20 @@ Yuri Grom controls this system, and you fly for Edmund Mahon. You are exposed he
 
 Said once as you enter the condition, then silent for as long as it lasts. And **explained once
 per day, full stop** — across restarts and whichever core is aboard, remembered in
-`view-state.json`. Every exposure after the first that day, whoever controls the space, is four
+`view-state.json`. Every exposure after the first that day, whoever controls the space, is five
 words rather than the lecture:
 
 ```text
 Hostile territory. Be on guard.
 ```
 
-It began as once per Power per session, and a day of re-launching proved the fourth hearing was
-not information either. One name is trimmed for the ear: the journal writes *A. Lavigny-Duval*,
+One name is trimmed for the ear: the journal writes *A. Lavigny-Duval*,
 and a voice reading "A." is reading punctuation, so she is spoken as *Lavigny-Duval*.
 
 It waits until you are
 in normal space rather than saying it as you arrive, because arriving happens in supercruise and
-nothing can reach you there — that is measured, not assumed: across every Power security contact in
-912 journals, none of them happened in supercruise and two thirds happened in normal space.
+nothing can reach you there — that is measured, not assumed: of the Power security contacts measured for
+`Phase15WarningTests`, none happened in supercruise and two thirds happened in normal space.
 
 It also **stands down for anything dangerous**. A remark about enemy territory arriving as somebody
 opens fire is worse than silence, so if you are already being shot at, interdicted, or have just
@@ -537,7 +550,7 @@ come from Frontier's update notes, last checked against game version 4.4.1.1 on 
 | Salvage scooped in your own Power's system, handed in at a Power contact in that system | reinforcement merits; escape pods earn none | 4.2.2.0 |
 
 In a rival's system this and Rival Power territory both speak. Turn this one off with the
-`powerplay-merits` row.
+Powerplay merits row.
 
 #### Powerplay salvage {#powerplay-salvage}
 
@@ -556,7 +569,7 @@ the count never exceeds what your cargo manifest holds. Occupied and damaged esc
 but never warned about, because Frontier suspended their merits on 2024-11-19. Salvage scooped in an
 unoccupied or rival system is not counted, and a supercruise jump says nothing. Undermining salvage
 is not covered: no source names where it is handed in. The rule is in the table above, last checked
-against game version 4.4.1.1 on 2026-09-28. Turn this one off with the `powerplay-salvage` row.
+against game version 4.4.1.1 on 2026-09-28. Turn this one off with the Powerplay salvage row.
 
 #### Powerplay cycle {#powerplay-cycle}
 
@@ -577,7 +590,7 @@ zero. It is said at most once per cycle, even across restarts. If d47 starts ins
 hours, it is said once it has caught up on the journal, with the hours that are left. A cycle that
 ended while d47 was not running is not mentioned. The same total and the time to the boundary are in
 the game state the model reads, so *"how many merits have I earned this week"* has an answer. Turn
-this one off with the `powerplay-cycle` row.
+this one off with the Powerplay cycle row.
 
 #### BGS tick {#bgs-tick}
 
@@ -590,8 +603,8 @@ The BGS has ticked.
 
 A tick more than fifteen minutes old is said with its age, rounded to the nearest five minutes:
 *"The BGS ticked forty minutes ago."* A tick more than an hour old is not said, so a restart or a long
-gap stays quiet. A time within an hour after the one already said is treated as the same tick, revised.
-Turn this one off with the `bgs-tick` row.
+gap stays quiet. A tick within an hour after the one already said is treated as the same tick and is not said again.
+Turn this one off with the BGS tick row.
 
 #### Friends online {#friends}
 
@@ -606,7 +619,7 @@ One name is *"Arcturus is online."*; two are *"Arcturus and Vega are online."* T
 most, and the rest are a count. A friend already reported online is said again only when the last report is more
 than thirty minutes old, so the restatement Elite writes shortly after login stays quiet. Nothing is
 said during the startup replay. The names are spoken by your ship's voice provider. Turn this one off
-with the `friends` row.
+with the Friends online row.
 
 #### Wing changes {#wing}
 
@@ -620,7 +633,7 @@ Arcturus joined the wing.
 
 Three names are said at most, and the rest are a count. A `WingAdd` within sixty seconds after
 `LoadGame` restores the wing after a reload and is not said. Nothing is said during the startup replay.
-Turn this one off with the `wing` row.
+Turn this one off with the Wing changes row.
 
 #### GalNet headlines {#galnet}
 
@@ -631,13 +644,13 @@ under Outside sources.
 GalNet: Faulcon DeLacy Announces Anaconda Mk II.
 ```
 
-Two or three articles are *"New on GalNet: {title}; {title}; and {title}."* More than three are a count and
+Two articles are *"New on GalNet: {title}; and {title}."* Three are *"New on GalNet: {title}; {title}; and {title}."* More than three are a count and
 the three newest: *"Five new GalNet articles. The latest: {title}; {title}; and {title}."* An article counts
 as new when it is new to the archive, so a restart does not repeat a headline, and articles published while
 d47 was closed are said at the next start. Nothing is said for the first backfill, and articles that arrive
 while this is off are not said when it is switched back on. At launch, headlines wait for the opening lines: the
 greeting and the recap, when those are on. They are said right after the recap, or after the greeting when the
-recap is off. Turn this one off with the `galnet` row.
+recap is off. Turn this one off with the GalNet headlines row.
 
 #### Server status {#server-status}
 
@@ -651,7 +664,7 @@ Elite's servers are down for maintenance.
 *"Elite's servers are down for maintenance."* and *"Elite's servers are offline."* are said when the servers go
 from Online to that state, or when the first answer is not Online. *"Elite's servers are back up."* is said only
 when they come back from Maintenance or Offline. A failed request is not a state: it says nothing and does not
-reset what d47 last knew. Turn this one off with the `server-status` row.
+reset what d47 last knew. Turn this one off with the Server status row.
 
 #### Checklist changes {#checklist}
 
@@ -689,7 +702,7 @@ Shinrarta Dezhra could be running high grade emissions for Core Dynamics Composi
 Proprietary Composites and Pharmaceutical Isolators.
 ```
 
-**Every row is the system's allegiance plus a population over a million**, and four of them add a
+**Every row is the system's allegiance plus a population of a million or more**, and four of them add a
 state — which is the **controlling faction's**, not any faction's:
 
 | The system | Emissions hold |
@@ -702,8 +715,7 @@ state — which is the **controlling faction's**, not any faction's:
 | Independent, controlling faction in Outbreak | Pharmaceutical Isolators |
 
 **Alliance systems yield nothing**, and systems under a million people are not mentioned at all.
-A minority Federal faction in an Independent system does not make it Federal — that reading once
-had Core Dynamics Composites announced in Oppi.
+A minority Federal faction in an Independent system does not make it Federal.
 
 A system can still offer two unrelated groups, when its controlling faction is in two states at
 once. Civil Unrest *and* Expansion gives you Improvised Components and all three Proto materials.
@@ -713,8 +725,9 @@ full says nothing. So once you have finished gathering, this goes quiet on its o
 switching it off. Where D47 does not know a material's cap it says it anyway rather than guessing
 you are full.
 
-Said once per system, and never for the backlog D47 reads at startup — the only jump in that
-backlog you could still act on is the last one.
+Said once on each arrival in a system: supercruise and re-reading the journal in the same system do
+not repeat it, and coming back after another system says it again. It is never said for the backlog
+D47 reads at startup, because the only jump in that backlog you could still act on is the last one.
 
 **Nothing is said at all to a ship with no limpet controller fitted.** The materials come out of an
 emission by limpet or not at all, so this is the same rule as the full hold at the other end of the
@@ -726,9 +739,9 @@ watched you fly leaves it telling you anyway.
 
 **And nothing is said with no limpets in the hold either**, controller or no controller. A rack
 with nothing in it collects exactly as much as no controller does, so the callout treats the two the
-same rather than naming the emissions and adding a note about your hold. It needs a `Cargo.json` D47
-has read, and one written for the ship rather than for the SRV under it — an unread hold is not an
-empty one.
+same rather than naming the emissions and adding a note about your hold. Only a `Cargo.json` D47
+has read, written for the ship rather than for the SRV under it, counts as empty. An unread hold is
+not treated as empty, so the callout still speaks.
 
 #### Limpet reminders {#limpets}
 
@@ -738,7 +751,7 @@ to switch it off.
 When you dock somewhere that sells limpets, with a big enough hold and few enough aboard:
 
 ```
-No limpets aboard, and this station sells them. You have 256 tonnes to fill.
+No limpets aboard, and this station sells them. You have 256 tonnes to fill. Buy 13 and I'll stop asking.
 ```
 
 The reminder is not given to a ship with no limpet controller fitted, of any kind. Where D47
@@ -748,10 +761,9 @@ Limpets are bought through **Advanced Maintenance**, not the commodity market �
 looks for the station's re-arm service rather than reading its market. Most stations have it; the
 ones that do not are on-foot settlements, small outposts, and carriers whose owner has not fitted
 it. **Your own carrier may not be recognised**, which is a known and accepted gap rather than a
-fault: of 136 limpet purchases measured, three were at a carrier that reported no re-arm service.
+fault: a carrier can report no re-arm service even when limpets are sold there.
 
-No price is quoted. Limpets are nearly always 101 credits and occasionally not, and D47 has no
-reading of this station's price until after you have bought some.
+No price is quoted. D47 has no reading of this station's limpet price until after you have bought some.
 
 ##### Only remind me about limpets above {#limpet-floor}
 
@@ -774,21 +786,19 @@ Tritium, 23.5%, plus Liquid oxygen at 5.1%.
 Platinum, 66.7%. Best you have found this session.
 ```
 
-**Directive 47 never repeats Elite's own `Material Content` grade, and that is deliberate.** Measured
-across 1,633 prospects, `Low` and `High` rocks have the same distribution of best-material proportion
-— medians of 19.9% and 20.3% — and **45% of the rocks holding a material at 40% or more are graded
-`Low`**. The example above, at 58.3% Platinum, is one of them. That grade is about the
+**Directive 47 never repeats Elite's own `Material Content` grade.** A rock graded `Low` can hold a
+high proportion of the material you are mining, and a `High` one a low proportion. That grade is about the
 engineering-material fragments a collector limpet picks up, not the commodity you are refining: two
 different questions sharing a word. Passing it on would fly you past the best rock in the cluster.
 
 **"Best you have found this session" is relative, and says so.** There is no fixed percentage that
-means "good" — Platinum's median of 26.6% is above Water's 90th percentile — so a single threshold
-would be wrong per material and silently so. What you have actually seen this session needs no table
+means "good": a typical Platinum rock holds more than a good Water rock, so a single threshold would be
+wrong for each material. What you have actually seen this session needs no table
 and adapts to whatever you are mining. The first rock is never announced as a best, because it is the
 only one.
 
-A prospect arrives every 48 seconds at the median, which is about seventy-five lines in an hour of
-mining. That is why this has its own switch, separate from the one below.
+Every rock you prospect gets a line, which is many lines in an hour of mining. That is why this has
+its own switch, separate from the one below.
 
 **With a [mining target](mining.md) set, only the target material is read out**, judged against the
 target's percentage where it has one:
@@ -807,7 +817,7 @@ A rock someone has already mined from ends its line with "Already mined", target
 Core asteroid. Alexandrite.
 ```
 
-**Its own setting, because a core is 3 in 1,633 prospects.** Turning the running commentary off must
+**Its own setting, because a core is rare.** Turning the running commentary off must
 not cost you the one announcement you are actually mining for.
 
 It is spoken as a routine line rather than an urgent one — urgent speaks over the top of whatever is
@@ -916,10 +926,13 @@ Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go, 500 metres from h
 Stratum Paleas analysed. That run is complete.
 ```
 
+The analysed line then adds what the species is worth, whether the first footfall bonus applies,
+and your unsold total, where D47 has a value for it.
+
 The distance is what the callout is for — you can see the genus and you can count to three, but nobody can
-judge four hundred metres across a ridge, and getting it wrong wastes the sample. The callout
-says how far you moved and not whether it was far enough; asking for your sampling progress adds the
-colony distance. See [Exobiology](exobiology.md).
+judge four hundred metres across a ridge, and getting it wrong wastes the sample. While specimens
+remain, the callout also says the genus' colony distance from here, which is how far the next one must
+be from every earlier one. See [Exobiology](exobiology.md).
 
 #### Far enough to sample {#sampling-range}
 
@@ -1011,14 +1024,14 @@ trait of a body scanned earlier, such as the ringed parent of a moon or the seco
 binary, and then that body is said again with the new trait. Bodies in the journal backlog are
 recorded and not said. Each trait has its own switch under the callout:
 
-- **Colliding binary**: two bodies sharing a barycentre whose orbits touch at their closest.
-- **Shepherd moon**: a moon whose orbit lies inside its parent's rings.
-- **Moon of a moon**: a body with two planets among its parents.
-- **Eccentric orbit**: an eccentricity of 0.8 or more.
-- **Fast rotator**: not tidally locked, turning once in under six hours.
+- **Colliding binaries**: two bodies sharing a barycentre whose orbits touch at their closest.
+- **Shepherd moons**: a moon whose orbit lies inside its parent's rings.
+- **Moons of moons**: a body with two planets among its parents.
+- **Eccentric orbits**: an eccentricity of 0.8 or more.
+- **Fast rotators**: not tidally locked, turning once in under six hours.
 - **Wide rings**: a ring wider than ten times the body's radius.
 - **Premium FSD injection materials**: a landable body with at least five of the six materials
-  for the premium FSD injection, naming the one it lacks.
+  for the premium FSD injection, naming the one it lacks. With all six it says so and names none.
 - **Landable with an atmosphere**: starts off.
 
 #### High-value biology {#biology}
@@ -1068,7 +1081,7 @@ When you log a new organic codex entry that the Canonn table shipped in this bui
 the region you are in:
 
 ```text
-Canonn has no report of Fonticulua Fluctus - Yellow in the Inner Orion Spur. It may be a first for the region.
+No Commander has reported Fonticulua Fluctus - Yellow in the Inner Orion Spur. It may be a first for the region.
 ```
 
 If the table has no report of the entry in any region, it says "anywhere" and "a first in the galaxy"
@@ -1100,7 +1113,7 @@ When you map a body with biological signals and [earlier biology finds from Cano
 is on, the Science Officer names the variants other Commanders have logged on it:
 
 ```text
-Canonn has earlier finds on this body: Bacterium Aurasus - Green, Stratum Tectonicas - Lime, Osseus Fractus - Indigo and two more.
+Commanders have logged earlier finds on this body: Bacterium Aurasus - Green, Stratum Tectonicas - Lime, Osseus Fractus - Indigo and two more.
 ```
 
 The variants with the most finds come first. Up to three are named and the rest are a count. A body
@@ -1108,7 +1121,7 @@ with no finds says nothing, and each body is named once a session. The line is s
 arrives, if you are still in that system. It does nothing while earlier biology finds from Canonn
 is off. The setting is "Earlier biology finds on mapping", on by default.
 
-Directive 47 asks when a body with biology is mapped, not on arrival, so the name of a system you
+Directive 47 asks when a body's surface signals are found, not on arrival, so the name of a system you
 only pass through is not sent. One request covers the system, and a system is asked at most once a
 session. The **Privacy and egress** section of the panel lists it as Earlier biology finds.
 
@@ -1172,21 +1185,22 @@ does not speak again for the life of the process. With a stock core such as COVA
 The first sentence is written by Directive 47. The second is one of ten: *"Ready to go."*,
 *"Standing by."*, *"Ready when you are."*, *"All systems ready."*, *"Ready for orders."*,
 *"Let's get to work."*, *"Good to have you back."*, *"At your service."*, *"Let's fly."* and
-*"Standing by for orders."* The pick varies between launches. Where a persona is on, the core keeps
-the picked sentence unless something real is worth naming — *"Ready to reconcile the ledger"* — and
-changes nothing else; with personality off it is the picked sentence.
+*"Standing by for orders."* The pick varies between launches. Where a persona is on, the core may
+reword the first sentence in its own voice and keeps the picked sentence exactly; with personality
+off both are said as written.
 
 #### Last session recap {#recap}
 
-One line after the opening line, about the last complete session: where it ended, the ship, and the
+One line after the opening line, about the last session: where it ended, the ship, and the
 most notable rank, engineer, death, rebuy or interdiction in it.
 
 ```text
 Last session you finished docked at Garay Terminal, Deciat in the Python "Directive", and earlier you were promoted: Combat Rank 5 of 13, Master.
 ```
 
-Directive 47 writes that line from the journals of the session before the one in progress — from its
-`LoadGame` to its last event — and never from the session you are starting. With a language model
+Directive 47 writes that line from the journals of the session before this launch, from its
+`LoadGame` to its last event. Started while a game session is still running, D47 recaps that session
+instead, and the line opens *"Earlier this session"*. With a language model
 and personality on, the core aboard always says it again in its own voice, keeping every name and
 figure; that is one priced call per launch, counted in spend. With no model, or personality off, the
 line is said as written. Your Backstory and the active story are not sent with it.
@@ -1210,8 +1224,10 @@ round trip is the delay it exists to arrive ahead of. The objective itself follo
 
 The objective waits twenty seconds after it fires, so the line is not read over the jump it arrived
 on and three objectives in a minute are not three model calls. An objective that comes due while you are
-being interdicted or the game says you are in danger is **dropped rather than said late** — the
-story is still in the conversation, so ask and the core picks it up. The opening, said when you
+being interdicted or the game says you are in danger is **held until you are clear**. Then only its
+hand-off is said, unless it offers a choice or ends a chapter, which are said in full; one that a later
+objective has overtaken is not said. The story is still in the conversation, so ask and the core
+picks it up. The opening, said when you
 accept a story, does not wait: you just pressed Begin.
 
 With a language model configured the core aboard says the objective in its own voice, keeping every
@@ -1231,8 +1247,7 @@ it, since both belong to this callout.
 
 After an objective whose function is a midpoint, a turn or
 "all is lost", one more plain line says the story has turned and your Backstory still describes
-where it began. It is said only when a Backstory is set and only if the objective itself was said, so a
-objective dropped in danger drops it too. No model is called and nothing writes to your Backstory.
+where it began. It is said only when a Backstory is set and only if the objective itself was said. No model is called and nothing writes to your Backstory.
 
 While an objective is between firing and being said, the Stories tab shows that the core is
 composing, on the desktop window and in the headset alike.
@@ -1245,7 +1260,7 @@ sale, because the sale's own figure is on your screen at that moment and the run
 not.
 
 ```text
-That's 2.1 million up this session.
+That's 2.1 million this session.
 ```
 
 The commodity is the one the saved Community Goal search names, Palladium, and the figures come from the ledger described on the
@@ -1332,7 +1347,8 @@ When your own carrier's tritium is less than two full-range jumps at its current
 captain says so, on docking at it and on plotting its jump
 ([#834](https://github.com/dseelinger/d47/issues/834)). A full jump costs
 `5 + range × (25,000 + used + tritium) / 200,000` tonnes, where used is the carrier's capacity less
-its free space, so the threshold moves with the load.
+its free space, so the threshold moves with the load. The formula is an estimate fitted to a measured
+Sol to Colonia plot ([#25](https://github.com/dseelinger/d47/issues/25)), within about a quarter.
 
 ```text
 Sacred Fire has 150 tonnes of tritium; a full jump at this load burns 88.
@@ -1461,7 +1477,7 @@ same thirty-minute and once-an-hour limits, from bounties, combat bonds and vouc
 Chart, *"Correction"*, says what exploration data is earning: after sold exploration or organic data,
 under the same limits, from exploration data alone
 ([#614](https://github.com/dseelinger/d47/issues/614)). Mender, *"Preservation"*, says what repairs
-have cost this session, after a repair once the total passes 100,000 credits, at most once an hour.
+have cost this session, after a repair once the total reaches 100,000 credits, at most once an hour.
 Archivist, *"Accuracy"*, counts the firsts this session: arrival stars nobody had discovered, first
 footfalls, and bodies mapped before anyone else had, after the third first, at most once an hour.
 
@@ -1507,8 +1523,8 @@ The core aboard remarks when you have held a ship mode long enough to be deliber
 
 #### Speak without being asked {#enabled}
 
-Off means Directive 47 only ever answers. Every warning above stops with it; everything else
-keeps running.
+Off means Directive 47 only ever answers. Every line on this page stops with it, the
+chatter and the Narrator included. Answers to what you ask keep working.
 
 > "stop calling things out"
 > "start calling things out"
@@ -1516,7 +1532,8 @@ keeps running.
 #### Route progress interval {#route-interval}
 
 In jumps. The right answer depends entirely on the trip: every 3 jumps is reassuring over 20 and
-unbearable over 300. Set it to `0` to silence the progress line while keeping the hazard warnings.
+unbearable over 300. Set it to `0` to silence the progress line and the warning of a hazard further along the route,
+keeping the warning for the next jump.
 
 #### Hyperspace tunnel delay {#long-jump-threshold}
 
@@ -1568,7 +1585,7 @@ of the box, because the same voice arriving on a beat is the most clocklike thin
 app could do. Setting the two equal pins it; 0 on the least silences it. In seconds rather than
 minutes because the interesting end of the range is finer than a minute.
 It waits for the situation to have settled for ninety seconds rather than firing on the
-transition, because Status.json flips several times a minute during an approach and a remark
+transition, because Status.json changes repeatedly during an approach and a remark
 about being docked that arrives as you are lifting off is worse than silence. And it never
 remarks on the same situation twice running.
 
@@ -1606,7 +1623,7 @@ is your own AI and crew.
 
 Made-up radio traffic from people who do not exist: two crews on the local channel about their own
 small business, the dock telling an invented pilot off when you are docked somewhere, and — about
-one exchange in four — one line said to *you* over the open channel. Traffic between other people
+one exchange in four — a line or two said to *you* over the open channel. Traffic between other people
 sounds further off than a hail and has its own row, Overheard chatter, in the audio mixer.
 
 **You can answer them on comms.** Everyone you hear is on the System
@@ -1644,7 +1661,7 @@ gap. It is not made docked, landed, on foot or in supercruise, and is dropped if
 enter supercruise before it is written. It has no setting of its own.
 
 **This is not the game's own NPC traffic.** Elite's real messages — station chatter, pirates,
-your wing — are re-voiced under Speech → *Speak incoming messages*, and they are somebody else's
+your wing — are re-voiced by *Speak incoming messages* in Settings › Other voices › Chatter and messages, and they are somebody else's
 words. NPC chatter is Directive 47's own fiction, on its own switch, so you can have either
 without the other.
 
@@ -1716,9 +1733,8 @@ unprompted line of Directive 47's own waits its turn like anything else.
 
 > "stop calling out npc chatter" / "start calling out npc chatter"
 
-**Switching personality off silences these entirely**, which is the one place that switch
-reaches a callout. It is in that item's own acceptance criteria: plain answers, no flavour, no
-chatter of either kind.
+**Switching personality off silences these entirely**, as it does In Ship chatter, scenes, story
+lines and the Narrator: plain answers, no flavour, no chatter of either kind.
 
 Set the interval to `0` if you want the switch without finding the switch.
 
@@ -1814,25 +1830,22 @@ It speaks only during a lull. The situation has to have held for ninety seconds,
 going on, it is never in supercruise, and it keeps the same ninety seconds from any other chatter.
 Each gap lands somewhere between the least and the most time rows, thirty to sixty minutes out of the
 box, and the first narration of a session waits one full gap. A stock story that is running and
-switched on counts as a story to tell. With no such story and the character sheet, the backstory and the
-scenario all empty, it says nothing, unless a stock core is aboard (below).
+switched on counts as a story to tell, and so does an adventure under way. With neither, it says
+nothing, whatever the character sheet, backstory and scenario hold.
 
-**With a stock core aboard, the Narrator takes the ambient slot.** While the core actually aboard is a
-stock core such as COVAS, the core makes no idle remarks, and the Narrator speaks in those
-moments instead: its gap is the same thirty to sixty minutes, and it narrates the moment from the
-game state whether or not a story is running. The other rules above still hold. With no character sheet it names you as the journal does. Turning the Narrator or
-personality off, or setting its least time to 0, leaves those moments silent; so does having no
-language model, since a stock core's idle lines are not replaced by written ones. With a Guardian core or one of your own aboard, nothing
-changes.
+**With a stock core aboard, the core makes no idle remarks.** While the core actually aboard is a
+stock core such as COVAS, In Ship chatter is silent, and the Narrator speaks only on the rules
+above. With no character sheet it names you as the journal does. With a Guardian core or one of
+your own aboard, In Ship chatter runs as usual.
 
-**Every narration is written by the model, and sends the whole backstory.** At the defaults that is
-one or two calls an hour on the background model. With no
+**Every narration is written by the model, and sends the whole backstory**, one call to the
+background model for each narration. With no
 character sheet it also sends your Commander name from the journal. When the model is unreachable or returns nothing,
 the Narrator says nothing: there are no stock narrations. With no language model configured these
 rows are absent; with personality off, it is silent.
 
 It is captioned *Narrator* and spoken in its own voice from the provider that speaks for your ship,
-chosen under Speech → [Narrator voice](speech.md#narrator-voice). It is never the ship's voice.
+chosen with [Narrator voice](speech.md#narrator-voice) in Settings › Other voices › Narrator and stories. It is never the ship's voice.
 
 **A narration is not answered.** The Narrator is not on the Story
 [comms channel](comms.md#choose-who-your-comms-key-reaches), and push-to-talk goes to your core, so
@@ -1855,7 +1868,7 @@ Two sources feed the warnings, deliberately. The journal reports **transitions**
 down, hull was hit — and `Status.json` reports **conditions** — shields are *still* down. A
 warning built on events alone goes quiet the moment the game stops repeating itself; one built on
 conditions alone cannot tell a new emergency from an ongoing one. Conditions announce on the edge
-into the condition, because `Status.json` is rewritten several times a second and announcing on
+into the condition, because `Status.json` is rewritten many times while a condition lasts and announcing on
 the level would be a warning per tick.
 
 The material grade table is **derived, not written**. `tools/gen-material-grades.py` generates

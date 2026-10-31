@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Callouts help page now matches the code. Its steps quote phrases that work, such as "stop calling out limpet reminders", and it describes the canopy breach warning, which names the minutes of oxygen left, and the reminder to repair the canopy when you dock with it still broken. Spoken examples, row names, defaults and conditions are corrected throughout: Arrivals no longer claims to announce engineering stations, the Narrator speaks only while a story or adventure is running, and a held story objective is said once you are clear rather than dropped.
+
 A destination you name when you change a story objective now carries into the chapters after it, until you get there. Before, it applied only to the rest of the current chapter, and the next chapter was written as if you had never asked. Those chapters head toward it instead of toward Sol or Colonia, and it is cleared once the journal shows you in that system. A beacon chapter, a finale chapter and a stretch of the story with its own destination leave it alone and keep it for the next ordinary chapter.
 
 A story chapter or short story that asks for kill bonds earned on foot now sends the Commander to the Frontline Solutions desk of a station in a system at war. Before, it could dock the Commander at a station with no desk, or in a system with no ground conflict to go to.

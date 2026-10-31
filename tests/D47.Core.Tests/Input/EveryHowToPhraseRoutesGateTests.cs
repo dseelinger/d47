@@ -35,8 +35,6 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("bookmarks", "delete bookmark Current CG"),
         ("lore", "what happened at Hyades Sector DB-X d1-112"),
         ("lore", "remember that this is where I lost the Anaconda"),
-        ("callouts", "stop telling me about limpets"),
-        ("callouts", "tell me about limpets again"),
         ("checklists", "put buy a fuel scoop on my list"),
         ("checklists", "tick off the fuel scoop"),
         ("checklists", "remove it"),

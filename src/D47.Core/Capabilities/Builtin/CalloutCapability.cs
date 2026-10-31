@@ -288,8 +288,8 @@ public static class CalloutCapability
                 ArrivalKey,
                 "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
                 + "open Settings › Your core › Exploring, group Exploration callouts, and find Arrivals (on by "
-                + "default). Arrive in your home system, a system holding your carrier or stored ships, or one "
-                + "with engineering stations: D47 says so on arrival. Say \"stop calling out arrivals\": the row "
+                + "default). Arrive in your home system, or a system holding your carrier or stored ships: "
+                + "D47 says so on arrival. Say \"stop calling out arrivals\": the row "
                 + "shows off and that is no longer said. Say \"start calling out arrivals\" and the row shows on. "
                 + "The row is absent while Speak without being asked is off.",
                 "Arrivals",
@@ -1470,8 +1470,8 @@ public static class CalloutCapability
                 NarratorKey,
                 "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
                 + "open Settings › Other voices › Narrator and stories, group Narrator, and find Narrator (on by "
-                + "default). Play through a lull outside supercruise and combat, with a character sheet, "
-                + "backstory or scenario written: the Narrator tells your story in the third person. Say \"stop "
+                + "default). Play through a lull outside supercruise and combat, with a story running or an "
+                + "adventure under way: the Narrator tells your story in the third person. Say \"stop "
                 + "calling out the narrator\": the row shows off and that is no longer said. Say \"start calling "
                 + "out the narrator\" and the row shows on. The row is absent while Speak without being asked is "
                 + "off. The row appears only while a language model is configured.",
@@ -1856,7 +1856,7 @@ public static class CalloutCapability
                 + "open Settings › Your core › Exploring, group Exploration callouts, and set Call out biology "
                 + "from (credits) to 10000000. Scan a landable body whose biology could reach less than that: "
                 + "nothing is said. Scan one that could reach more: D47 says so. The row appears while High-value "
-                + "biology or Surveyed biology on arrival is on.",
+                + "biology is on, or Surveyed biology on arrival is on with Look things up in the galaxy.",
             Advanced = true,
             Label = "Call out biology from (credits)",
             Help = "The least a body's biology could reach at best, or was surveyed at, before it is said.",
