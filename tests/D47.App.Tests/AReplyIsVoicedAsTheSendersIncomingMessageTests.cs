@@ -1,5 +1,6 @@
 using System.Text.Json;
 using D47.App;
+using D47.App.Voice;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Configuration;
@@ -40,7 +41,7 @@ public class AReplyIsVoicedAsTheSendersIncomingMessageTests
         public VoiceCast Carrier { get; } = Cast("c_heart", "c_adam", "c_emma", "c_george");
 
         public VoiceCast For(Announcement announcement) =>
-            AppHost.CastFor(announcement, Speech, provider => provider switch
+            AddressedVoices.CastFor(announcement, Speech, provider => provider switch
             {
                 TtsProviderCatalog.EdgeId => Carrier,
                 TtsProviderCatalog.KokoroId => Npcs,
@@ -93,7 +94,7 @@ public class AReplyIsVoicedAsTheSendersIncomingMessageTests
         return voice;
     }
 
-    private static string? Accent(Casts casts, Announcement heardAs) => AppHost.AccentHeardAs(heardAs, casts.For);
+    private static string? Accent(Casts casts, Announcement heardAs) => AddressedVoices.AccentHeardAs(heardAs, casts.For);
 
     private static Speaker Taken(LineDecision decision) => Assert.IsType<LineDecision.Taken>(decision).Speaker;
 
@@ -123,7 +124,7 @@ public class AReplyIsVoicedAsTheSendersIncomingMessageTests
         var selected = new CommsSelection(CommsChannel.System, new CommsSubChannel(name, name));
         var speaker = Taken(await line.RouteAsync(selected, "what do you want", TestContext.Current.CancellationToken));
 
-        var reply = AppHost.HeardVoiceOf(Assert.IsType<Announcement>(speaker.HeardAs), casts.For);
+        var reply = AddressedVoices.HeardVoiceOf(Assert.IsType<Announcement>(speaker.HeardAs), casts.For);
 
         HeardInOneVoice(incoming, heard, reply, group, casts);
         Assert.Contains(SpeakerAccent.Sentence(casts.Of(group).AccentOf(reply.Voice.VoiceId))!, speaker.Brief, StringComparison.Ordinal);
@@ -146,7 +147,7 @@ public class AReplyIsVoicedAsTheSendersIncomingMessageTests
             (heardAs.Voice, heardAs.Speaker, heardAs.SpeakerIsPlayer, heardAs.SpeakerAllegiance, heardAs.CommsChannel));
 
         // The target answers first, then sends a message in the same system.
-        var reply = AppHost.HeardVoiceOf(heardAs, casts.For);
+        var reply = AddressedVoices.HeardVoiceOf(heardAs, casts.For);
         var heard = Hear(incoming, casts, roster);
 
         HeardInOneVoice(incoming, heard, reply, VoiceGroup.Npcs, casts);
@@ -167,6 +168,6 @@ public class AReplyIsVoicedAsTheSendersIncomingMessageTests
 
         var heardAs = Assert.IsType<Announcement>(speaker.HeardAs);
         Assert.Equal("unlisted", heardAs.CommsChannel);
-        HeardInOneVoice(incoming, heard, AppHost.HeardVoiceOf(heardAs, casts.For), VoiceGroup.Npcs, casts);
+        HeardInOneVoice(incoming, heard, AddressedVoices.HeardVoiceOf(heardAs, casts.For), VoiceGroup.Npcs, casts);
     }
 }

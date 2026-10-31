@@ -1,4 +1,5 @@
 using D47.App;
+using D47.App.Voice;
 using D47.Core.Audio;
 using D47.Core.Characters;
 using D47.Core.Conversation;
@@ -29,7 +30,7 @@ public class ACharacterSpeaksInItsOwnVoiceTests
     [InlineData(VoiceRole.Comms)]
     public void AStoredVoiceIsSpokenAboardAndOverTheRadio(VoiceRole role)
     {
-        var said = AppHost.AddressedVoiceOf(new TurnEvent.Addressed(role, "Mara", 1, Voice: Adam), Cast(), "kokoro");
+        var said = AddressedVoices.AddressedVoiceOf(new TurnEvent.Addressed(role, "Mara", 1, Voice: Adam), Cast(), "kokoro");
 
         Assert.Equal("am_adam", said.VoiceId);
         Assert.Equal(role, said.Role);
@@ -40,7 +41,7 @@ public class ACharacterSpeaksInItsOwnVoiceTests
     [InlineData(VoiceRole.Comms)]
     public void NoStoredVoiceIsSpokenInTheRolesVoice(VoiceRole role)
     {
-        var said = AppHost.AddressedVoiceOf(new TurnEvent.Addressed(role, "Mara", 1), Cast(), "kokoro");
+        var said = AddressedVoices.AddressedVoiceOf(new TurnEvent.Addressed(role, "Mara", 1), Cast(), "kokoro");
 
         Assert.Equal(Cast().ForSender("Mara", isPlayer: false, role).VoiceId, said.VoiceId);
         Assert.NotEqual(Cast().DefaultVoice, said.VoiceId);
@@ -49,7 +50,7 @@ public class ACharacterSpeaksInItsOwnVoiceTests
     [Fact]
     public void AVoiceFromAnotherProviderIsSpokenInTheRolesVoice()
     {
-        var said = AppHost.AddressedVoiceOf(new TurnEvent.Addressed(VoiceRole.Crew, "Mara", 1, Voice: Adam), Cast(), "elevenlabs");
+        var said = AddressedVoices.AddressedVoiceOf(new TurnEvent.Addressed(VoiceRole.Crew, "Mara", 1, Voice: Adam), Cast(), "elevenlabs");
 
         Assert.Equal(Cast().ForSender("Mara", isPlayer: false, VoiceRole.Crew).VoiceId, said.VoiceId);
     }
@@ -59,7 +60,7 @@ public class ACharacterSpeaksInItsOwnVoiceTests
     {
         var gone = new TurnEvent.Addressed(VoiceRole.Crew, "Mara", 1, Voice: new CharacterVoice("kokoro", "am_gone"));
 
-        Assert.Equal(Cast().ForSender("Mara", isPlayer: false, VoiceRole.Crew).VoiceId, AppHost.AddressedVoiceOf(gone, Cast(), "kokoro").VoiceId);
+        Assert.Equal(Cast().ForSender("Mara", isPlayer: false, VoiceRole.Crew).VoiceId, AddressedVoices.AddressedVoiceOf(gone, Cast(), "kokoro").VoiceId);
     }
 
     [Fact]
@@ -68,6 +69,6 @@ public class ACharacterSpeaksInItsOwnVoiceTests
         var cast = Cast();
         cast.Assign(VoiceRole.Crew, "bm_george");
 
-        Assert.Equal("bm_george", AppHost.AddressedVoiceOf(new TurnEvent.Addressed(VoiceRole.Crew, "Mara", 1), cast, "kokoro").VoiceId);
+        Assert.Equal("bm_george", AddressedVoices.AddressedVoiceOf(new TurnEvent.Addressed(VoiceRole.Crew, "Mara", 1), cast, "kokoro").VoiceId);
     }
 }

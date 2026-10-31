@@ -114,6 +114,7 @@ public sealed class AppHost : IDisposable
         Router = router;
         Cancellation = cancellation;
         _logger = loggerFactory.CreateLogger<AppHost>();
+        AddressedVoices = new AddressedVoices(settings, speech, voice, gameState, () => SpeakerPictures, () => Stories, () => Writer!);
         Writer = new LineWriter(
             settings,
             personas,
@@ -129,7 +130,7 @@ public sealed class AppHost : IDisposable
             liveStatus,
             speech.DirectableIn,
             speech.CastClient,
-            CastFor,
+            AddressedVoices.CastFor,
             () => CanSearch,
             cast => SpeakerPictures.For(cast),
             storyReaction);
@@ -148,7 +149,7 @@ public sealed class AppHost : IDisposable
         Panel.ShipNameSource = () => personas.Current.Name;
         Panel.ShipPictureSource = () => ShipPicture;
         Panel.CommanderPictureSource = () => CommanderPicture;
-        Panel.CarrierPictureSource = SpeakerPicture;
+        Panel.CarrierPictureSource = AddressedVoices.SpeakerPicture;
         ShipCores = shipCores;
         LlmAvailability = llmAvailability;
         Spend = spend;
@@ -187,8 +188,8 @@ public sealed class AppHost : IDisposable
             gameState,
             () => Route,
             loggerFactory,
-            CastFor,
-            RoleGender,
+            AddressedVoices.CastFor,
+            AddressedVoices.RoleGender,
             line => Said?.Invoke(line),
             settings,
             spend,
@@ -453,6 +454,8 @@ public sealed class AppHost : IDisposable
     public Announcer Announcer { get; }
 
     internal LineWriter Writer { get; }
+
+    internal AddressedVoices AddressedVoices { get; }
 
     internal StoryRecords Records { get; }
 
@@ -3042,7 +3045,7 @@ public sealed class AppHost : IDisposable
                 PriceTable.Default,
                 loggerFactory.CreateLogger<ChatterLine>(),
                 cancellationToken),
-            heardAs => late.Host?.AccentHeardAs(heardAs)));
+            heardAs => late.Host?.AddressedVoices.AccentHeardAs(heardAs)));
 
         // The held target's NPC pilot.
         turns.Lines.Add(new TargetLine(
@@ -3062,7 +3065,7 @@ public sealed class AppHost : IDisposable
                 loggerFactory.CreateLogger<TargetLine>(),
                 cancellationToken),
             () => late.Host?.Announcer.NpcsHere,
-            heardAs => late.Host?.AccentHeardAs(heardAs)));
+            heardAs => late.Host?.AddressedVoices.AccentHeardAs(heardAs)));
 
         // The pilot of the shuttle the Commander rides.
         turns.Lines.Add(new ShuttleLine(
@@ -3081,7 +3084,7 @@ public sealed class AppHost : IDisposable
                 PriceTable.Default,
                 loggerFactory.CreateLogger<ShuttleLine>(),
                 cancellationToken),
-            heardAs => late.Host?.AccentHeardAs(heardAs)));
+            heardAs => late.Host?.AddressedVoices.AccentHeardAs(heardAs)));
 
         // The Narrator, while the STORY channel offers it.
         turns.Lines.Add(new NarratorLine(
@@ -5487,25 +5490,6 @@ public sealed class AppHost : IDisposable
     /// <summary>The last <c>Status.json</c> the tick read.</summary>
     public Core.Journal.GameStatus LiveStatus => Writer.LiveStatus();
 
-    /// <summary>The cast belonging to whoever speaks for an announcement's slot.</summary>
-    private VoiceCast CastFor(Announcement announcement) => CastFor(announcement, Settings.Current.Speech, Speech.Casting.Of);
-
-    /// <summary>The cast <paramref name="casting"/> gives the provider that speaks for an announcement's slot.</summary>
-    internal static VoiceCast CastFor(Announcement announcement, SpeechSettings speech, Func<string, VoiceCast> casting) =>
-        casting(VoiceGroups.ProviderFor(speech, VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)));
-
-    /// <summary>The accent of the voice an incoming message resolves to, assigning its sender that voice on first use.</summary>
-    private string? AccentHeardAs(Announcement heardAs) => AccentHeardAs(heardAs, CastFor);
-
-    /// <inheritdoc cref="AccentHeardAs(Announcement)"/>
-    internal static string? AccentHeardAs(Announcement heardAs, Func<Announcement, VoiceCast> castFor)
-    {
-        ArgumentNullException.ThrowIfNull(castFor);
-
-        var cast = castFor(heardAs);
-        return cast.AccentOf(HeardVoiceOf(heardAs, _ => cast).Voice.VoiceId);
-    }
-
     /// <summary>Whether a web lookup could actually be run right now.</summary>
     private bool CanSearch =>
         Settings.Current.Llm.WebSearch && Turns.Provider is not null && SearchReachesTheWeb;
@@ -5570,100 +5554,6 @@ public sealed class AppHost : IDisposable
 
             // Cold, and the reason lives beside the instruction in Core (#98).
             sampling: LoreLookup.Sampling);
-
-    /// <summary>The voice of a turn answered by an addressed speaker. Disposing restores the ship AI's.</summary>
-    public sealed class AddressedVoice(AppHost host, VoiceSelection voice, string? captionSpeaker) : IDisposable
-    {
-        public void Dispose()
-        {
-            host.Voice.Voice = voice;
-            host.Voice.Pinned = null;
-            host.Voice.SpeakingLanguage = null;
-            host.Voice.Picture = null;
-            host.Voice.CaptionSpeaker = captionSpeaker;
-            host.Voice.SpeakingAs = VoiceRole.ShipAi;
-        }
-    }
-
-    /// <summary>Speaks the rest of this turn as the speaker it was addressed to, captioned with their name.</summary>
-    public AddressedVoice SpeakAs(TurnEvent.Addressed addressed)
-    {
-        var restore = new AddressedVoice(this, Voice.Voice, Voice.CaptionSpeaker);
-
-        // A story's cast member speaks in the voice the story gave them, as their lines are spoken.
-        if (CastVoice(addressed) is { Pinned: { } pinned } cast)
-        {
-            var line = new Announcement(D47.Core.Stories.StoryLines.KeyPrefix, string.Empty)
-            {
-                Voice = VoiceRole.Crew,
-                Speaker = addressed.Name,
-                Pinned = pinned,
-            };
-
-            Voice.Voice = SpeakerAccent.VoiceOf(CastFor(line), line);
-            Voice.Pinned = pinned;
-            Voice.SpeakingLanguage = cast.Language;
-            Voice.Picture = SpeakerPictures.For(cast.Cast);
-            Voice.SpeakingAs = VoiceRole.Crew;
-            Voice.CaptionSpeaker = addressed.Name;
-
-            return restore;
-        }
-
-        // A comms NPC answers in the voice, and from the voice group, their incoming message is heard in.
-        if (addressed.HeardAs is { } heardAs)
-        {
-            (Voice.Voice, Voice.SpeakingAs) = HeardVoiceOf(heardAs, CastFor);
-            Voice.Picture = AddressedPicture(addressed);
-            Voice.CaptionSpeaker = addressed.Name;
-
-            return restore;
-        }
-
-        // An invented speaker keeps the voice their exchange was heard in.
-        var provider = VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroups.Of(addressed.Role));
-
-        Voice.Voice = addressed.Role switch
-        {
-            VoiceRole.Comms => AddressedVoiceOf(addressed, Writer.NpcCast, provider),
-            VoiceRole.Narrator => CastFor(new Announcement(NarratorCallout.KeyPrefix, string.Empty) { Voice = VoiceRole.Narrator })
-                .For(VoiceRole.Narrator),
-            _ => AddressedVoiceOf(addressed, Speech.Cast, provider),
-        };
-        Voice.Picture = AddressedPicture(addressed);
-        Voice.SpeakingAs = addressed.Role;
-        Voice.CaptionSpeaker = addressed.Name;
-
-        return restore;
-    }
-
-    /// <summary>
-    /// The voice a reply is spoken in and the role whose voice group synthesises it: those <see cref="D47.App.Voice.Announcer"/>
-    /// gives the incoming message <paramref name="heardAs"/>.
-    /// </summary>
-    internal static (VoiceSelection Voice, VoiceRole SpeakingAs) HeardVoiceOf(Announcement heardAs, Func<Announcement, VoiceCast> castFor)
-    {
-        ArgumentNullException.ThrowIfNull(heardAs);
-        ArgumentNullException.ThrowIfNull(castFor);
-
-        return (SpeakerAccent.VoiceOf(castFor(heardAs), heardAs), heardAs.Voice);
-    }
-
-    /// <summary>
-    /// The voice an addressed speaker is heard in from <paramref name="cast"/>: their own when <paramref name="provider"/>,
-    /// which speaks their role, issued it and the cast lists it; otherwise their role's.
-    /// </summary>
-    internal static VoiceSelection AddressedVoiceOf(TurnEvent.Addressed addressed, VoiceCast cast, string provider)
-    {
-        ArgumentNullException.ThrowIfNull(addressed);
-        ArgumentNullException.ThrowIfNull(cast);
-
-        var own = addressed.Voice is { } voice && string.Equals(voice.Provider, provider, StringComparison.OrdinalIgnoreCase)
-            ? voice.VoiceId
-            : null;
-
-        return cast.ForSender(addressed.Name, isPlayer: false, addressed.Role, own: own);
-    }
 
     /// <summary>The NPC whose hail was spoken since the last feed, selected once the roster that holds them is pushed.</summary>
     private string? _hailedBy;
@@ -5745,31 +5635,6 @@ public sealed class AppHost : IDisposable
         _voiceScopeSystem = system;
     }
 
-    /// <summary>The gender of the voice <paramref name="role"/> is speaking in, by its provider's listing.</summary>
-    private D47.Core.Audio.VoiceGender RoleGender(VoiceRole role)
-    {
-        var cast = CastFor(new Announcement(string.Empty, string.Empty) { Voice = role });
-        return cast.GenderOf(cast.For(role).VoiceId);
-    }
-
-    /// <summary>The picture name the Conversation page shows an addressed turn's reply with, or null.</summary>
-    public string? AddressedPicture(TurnEvent.Addressed addressed) => CastVoice(addressed) is { Cast: { } cast }
-        ? SpeakerPictures.For(cast)
-        : addressed.Picture ?? addressed.Role switch
-    {
-        VoiceRole.CarrierCaptain or VoiceRole.TowerControl =>
-            D47.Core.Interface.SpeakerPictures.ByVoice(addressed.Role, RoleGender(addressed.Role), Flying),
-        VoiceRole.Crew => Announcer.CrewPicture(addressed.Name, GameState.Active?.Crew),
-        VoiceRole.Narrator => D47.Core.Interface.SpeakerPictures.Narrator,
-        _ => null,
-    };
-
-    /// <summary>The voice of the running story's cast member answering a turn, or null for any other speaker.</summary>
-    private D47.Core.Stories.StoryLineVoice? CastVoice(TurnEvent.Addressed addressed) =>
-        addressed.Cast is { } castId && Stories?.LineVoice(GameState.Active?.Identity.FrontierId, castId) is { Cast: not null } voice
-            ? voice
-            : null;
-
     /// <summary>A cast member's answer, posted to the Story log with the clip it was spoken in, once the turn has been spoken.</summary>
     public void NoteCastReply(TurnEvent.Addressed addressed, string asked, TurnResult? result)
     {
@@ -5781,10 +5646,6 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The picture name of the core aboard.</summary>
     public string ShipPicture => D47.Core.Interface.SpeakerPictures.Core(Personas.Current.Id);
-
-    /// <summary>The picture name of the captain or tower in the voice now set for <paramref name="role"/>, for the flying Commander, or null.</summary>
-    public string? SpeakerPicture(VoiceRole role) =>
-        D47.Core.Interface.SpeakerPictures.ByVoice(role, RoleGender(role), Flying);
 
     /// <summary>The picture name of the Commander flying, or null before their Frontier id is known.</summary>
     public string? CommanderPicture => Flying is { Length: > 0 } fid ? D47.Core.Interface.SpeakerPictures.Commander(fid) : null;

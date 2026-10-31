@@ -1247,13 +1247,13 @@ public partial class MainWindow : Window
         ClearAskBox();
         _model.Append(input, voice: TranscriptVoice.Commander, sourceKey: PanelViewModel.TagFor(target));
 
-        var presenter = new TurnPresenter(_model, _host.ShipPicture, _host.AddressedPicture);
+        var presenter = new TurnPresenter(_model, _host.ShipPicture, _host.AddressedVoices.AddressedPicture);
 
         // Claimed before the turn starts and released in the finally.
         var cancelling = _host.Cancellation.Begin();
 
         // Set when the turn is answered by someone other than the ship's AI, and undone in the finally.
-        AppHost.AddressedVoice? addressedVoice = null;
+        D47.App.Voice.AddressedVoices.AddressedVoice? addressedVoice = null;
         TurnEvent.Addressed? addressedTo = null;
 
         try
@@ -1269,7 +1269,7 @@ public partial class MainWindow : Window
                     switch (turnEvent)
                     {
                         case TurnEvent.Addressed addressed:
-                            addressedVoice ??= _host.SpeakAs(addressed);
+                            addressedVoice ??= _host.AddressedVoices.SpeakAs(addressed);
                             addressedTo ??= addressed;
                             break;
 
