@@ -15,7 +15,7 @@ namespace D47.Core.Persona;
 /// The running story's cast member with this id, as the Commander meets them; null when there is none, or the story
 /// is paused, switched off or without Odyssey.
 /// </param>
-/// <param name="hiddenStory">The running story's hidden layer as every speaker reads it, or null.</param>
+/// <param name="hiddenStory">The running story's hidden layer, or null; the member is told to know it only as far as their character would.</param>
 /// <param name="carrierAway">
 /// The light years to the Commander's carrier when the member with this cast id is heard over its link, or null.
 /// </param>
@@ -106,7 +106,7 @@ public sealed class CastLine(
                 Screen: SpeaksEnglish(speaking) ? reply => Screened(reply, castId, speaking.Name) : null,
                 ScreenReply: SpeaksEnglish(speaking) ? null : reply => ScreenedBilingual(reply, castId, speaking.Name),
                 LiveState: inCockpit?.Invoke(castId) == true ? null : () => OffShipKnowledge.Describe(system?.Invoke(), station?.Invoke()),
-                HiddenStory: hiddenStory,
+                HiddenStory: () => StoryClues.ForCast(hiddenStory()),
                 Cast: speaking.Id),
             said.Length == 0 ? "The Commander is trying to get your attention." : said);
     }

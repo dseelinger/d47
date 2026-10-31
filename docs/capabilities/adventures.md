@@ -306,7 +306,7 @@ on the Story [comms channel](comms.md#choose-who-your-comms-key-reaches). While 
 say on the comms push-to-talk goes to that member, with no time limit and no limit on replies. They
 answer in the first person, in their own voice, knowing their last line and what has been said since.
 Push-to-talk still goes to the ship. The member reads
-the hidden story as every speaker does, so they may hint at the secret but never state it, and never
+the hidden story only as far as that member would know it at this point, so they may hint at the secret but never state it, and never
 mislead you about fuel, cargo, credits, routes, rank or danger. A reply that contradicts your ship, such
 as one counting on a fuel scoop you have not fitted, is not said. The member is
 offered no tools, so nothing they say can act on the ship. Each reply is one model call, counted in your
@@ -665,7 +665,7 @@ is the one reacted to.
   a clue owed at the same time. On foot on the station it waits until you are back in the cockpit.
 - The model picks the member from the primary cast, given each one's name and who they are, and writes the
   line as them. A reply naming anyone else is not spoken. The model is given the event as the journal
-  recorded it, with no other Commander's or pilot's name, and the hidden story as every speaker reads it, and
+  recorded it, with no other Commander's or pilot's name, and the hidden story as far as that member would know it, and
   is told to state no new fact about the story.
 - The line is spoken in that member's voice and posted to the Story log from them, with their picture and the
   clip it was spoken in.
@@ -1288,10 +1288,11 @@ aboard; a `narrator` clue by the Narrator; a cast member's clue by that member. 
 does not change who speaks a clue. A clue is also posted to the Story log, from whoever spoke it. A clue needs
 a language model and personality; without them it waits.
 
-The Narrator, invented chatter, scene chatter and the chapter writer all read the same hidden layer:
+The Narrator, hired crew, scene chatter and the chapter writer all read the same hidden layer:
 the story's secret, its end, and the clues you have had so far. A Guardian core or a core you wrote
 reads it too, in conversation and in its own lines. Stock COVAS never reads it: it is standard
-equipment with no history, so it has nothing to hint at. They are told to
+equipment with no history, so it has nothing to hint at. Strangers on comms, the pilot you have
+targeted, invented strangers in overheard chatter and custom characters do not read it. They are told to
 hint at it and never state it, and to mislead you only about the story, never about fuel, cargo,
 credits, routes, rank or danger. **Privacy and egress** says a hidden story is sent to the language
 model, without quoting it.

@@ -1898,7 +1898,7 @@ public sealed class TurnLoop(
         var persona = speaker?.Brief ?? Persona;
         var aboutMe = AboutMe;
         var scenario = ScenarioAudiences.Reaches(ScenarioAudience, speaker?.Role ?? Audio.VoiceRole.ShipAi) ? Scenario : null;
-        var hiddenStory = speaker?.HiddenStory is { } spoken ? spoken() : HiddenStory?.Invoke();
+        var hiddenStory = speaker is null ? HiddenStory?.Invoke() : speaker.HiddenStory?.Invoke();
         var recall = speaker is null ? Recall : null;
         var directions = speaker is null ? Directions : null;
 

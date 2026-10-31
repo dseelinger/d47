@@ -27,7 +27,11 @@ public static class StoryClues
     /// <summary>Whether the Narrator speaks a clue: always while the core aboard is stock, otherwise when the Narrator is on.</summary>
     public static bool Narrated(Persona.Persona? core, bool narratorOn) => core?.Stock == true || narratorOn;
 
-    /// <summary>Whether a speaker reads the hidden layer: every speaker but a stock core's own voice.</summary>
+    /// <summary>
+    /// Whether a speaker reads the hidden layer: the ship AI unless it is a stock core, hired crew, the Narrator, story
+    /// cast, scene chatter and the chapter writer. Real comms NPCs, invented strangers, the targeted pilot and custom
+    /// characters read none.
+    /// </summary>
     public static bool ReadsHiddenStory(VoiceRole speaker, Persona.Persona core)
     {
         ArgumentNullException.ThrowIfNull(core);
@@ -37,6 +41,15 @@ public static class StoryClues
 
     /// <summary>The fewest play sessions between two clues before the finale.</summary>
     public const int SessionsApart = 1;
+
+    /// <summary>Limits a cast member to what their character would know at this point in the story.</summary>
+    public const string CastKnowledge =
+        "You know the secret and the ending only as far as your character would at this point in the story. The "
+        + "clues given so far are the furthest the story has reached.";
+
+    /// <summary>The hidden layer for a cast member: <paramref name="brief"/> with <see cref="CastKnowledge"/>, or null when there is none.</summary>
+    public static string? ForCast(string? brief) =>
+        string.IsNullOrWhiteSpace(brief) ? null : $"{brief}{Environment.NewLine}{CastKnowledge}";
 
     /// <summary>The rule every speaker of a hidden story follows.</summary>
     public const string Rule =
@@ -230,7 +243,7 @@ public static class StoryClues
             : secret.Finale.ElementAtOrDefault(index - pacing.ClueDays.Count);
     }
 
-    /// <summary>The hidden layer as the narrator, the cores, chatter and the chapter writer all read it.</summary>
+    /// <summary>The hidden layer as those who read it are given it.</summary>
     public static string Brief(Story story, StorySecret secret)
     {
         ArgumentNullException.ThrowIfNull(story);

@@ -286,7 +286,7 @@ internal sealed class LineWriter
             _logger,
             budget.Token,
             canBeDirected: directed,
-            hiddenStory: HiddenStory(VoiceRole.Comms),
+            hiddenStory: scene is null ? null : HiddenStory(VoiceRole.Comms),
             recentDelivery: Noted("group:npc", directed)).ConfigureAwait(false);
 
         Remember("group:npc", directed, script);
@@ -543,7 +543,7 @@ internal sealed class LineWriter
             budget.Token,
             canBeDirected: directed,
             scenario: ScenarioFor(brief, voice),
-            hiddenStory: HiddenStory(voice),
+            hiddenStory: cast is null ? HiddenStory(voice) : D47.Core.Stories.StoryClues.ForCast(HiddenStory(voice)),
             recentDelivery: Noted(speaker, directed)).ConfigureAwait(false));
 
         var facts = ShipFacts.Of(GameState.Active);

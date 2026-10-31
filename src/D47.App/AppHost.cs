@@ -2775,7 +2775,8 @@ public sealed class AppHost : IDisposable
         // A hired pilot (#188).
         turns.Lines.Add(new CrewLine(
             () => gameState.Active?.Crew,
-            () => gameState.Active?.Ship.Name));
+            () => gameState.Active?.Ship.Name,
+            () => late.Host?.Writer.HiddenStory(VoiceRole.Crew)));
 
         Func<NpcHeard, CancellationToken, Task<string?>> StrangerAsk(Microsoft.Extensions.Logging.ILogger logger) =>
             (npc, cancellationToken) => FlavourTurn.AskAsync(

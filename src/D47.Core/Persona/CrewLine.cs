@@ -7,10 +7,12 @@ namespace D47.Core.Persona;
 
 /// <summary>A hired pilot, on the CREW channel by crew id.</summary>
 /// <param name="crew">The roster, or null while there is no active Commander.</param>
+/// <param name="hiddenStory">The running story's hidden layer as hired crew read it, or null.</param>
 /// <param name="shipName">What the pilot calls the hull they are posted to, for their own brief.</param>
 public sealed class CrewLine(
     Func<ShipCrew?> crew,
-    Func<string?> shipName) : ILine
+    Func<string?> shipName,
+    Func<string?>? hiddenStory = null) : ILine
 {
     private readonly Dictionary<long, List<ConversationMessage>> _transcripts = [];
 
@@ -39,7 +41,8 @@ public sealed class CrewLine(
                 transcript,
                 OffersTools: false,
                 // An intercom does not fade.
-                Signal: 1),
+                Signal: 1,
+                HiddenStory: hiddenStory),
             question.Length == 0 ? "The Commander is trying to get your attention." : question));
     }
 }

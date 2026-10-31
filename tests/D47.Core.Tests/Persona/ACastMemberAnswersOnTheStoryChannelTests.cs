@@ -93,7 +93,8 @@ public class ACastMemberAnswersOnTheStoryChannelTests
         Assert.Contains("first person", prompt.Persona, StringComparison.Ordinal);
         Assert.Contains($"{Mara.Name}: {Line}", prompt.Persona, StringComparison.Ordinal);
         Assert.Contains("Commander: what happened to your brother?", prompt.Persona, StringComparison.Ordinal);
-        Assert.Equal(Hidden, prompt.HiddenStory);
+        Assert.StartsWith(Hidden, prompt.HiddenStory, StringComparison.Ordinal);
+        Assert.EndsWith(D47.Core.Stories.StoryClues.CastKnowledge, prompt.HiddenStory, StringComparison.Ordinal);
     }
 
     [Fact]

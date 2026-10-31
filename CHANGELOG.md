@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Strangers on comms, invented strangers in overheard chatter, the pilot you have targeted and custom characters no longer read the running story's hidden layer, whichever core is aboard. Overheard chatter reads it only when it is a scene. Hired crew read it. A story cast member reads it only as far as their character would know it at that point in the story.
+
 A comms NPC, a targeted pilot, a custom character who is not aboard and a story cast member outside the cockpit no longer know your ship's fuel, cargo, hull or docking state. They know the system you are in and, when docked, the station. A real comms NPC is told it has just called out on the open channel, so it no longer denies the line it broadcast.
 
 Overheard chatter is now written knowing only the system and, when docked, the station, not your ship's fuel, cargo or hull.
