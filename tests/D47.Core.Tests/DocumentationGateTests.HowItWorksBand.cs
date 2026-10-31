@@ -30,14 +30,12 @@ public partial class DocumentationGateTests
         "lore",
         "navigation",
         "on-foot",
-        "ships",
         "system-names",
         "vr",
     };
 
     private static readonly HashSet<string> PagesWhoseHowItWorksBandCarriesAFigure = new(StringComparer.Ordinal)
     {
-        "specifications",
     };
 
     [Trait("Category", "Gate")]

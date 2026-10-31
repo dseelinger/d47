@@ -84,7 +84,7 @@ nav_order: 107
  <text x="440" y="214" text-anchor="middle" font-size="16" fill="var(--text)">Pad size comes first, because it decides whether a station is even an option.</text>
  <text x="440" y="244" text-anchor="middle" font-size="15" fill="var(--text-muted)">Slots are sizes, not a count — “8 hardpoints” is not an answer to what a ship can carry.</text>
 </svg>
-<p class="body">And the cost is the hull alone, said out loud: quoting 55 million for a Python that is nearer 200 million outfitted would be a true number answering a question nobody asked.</p>
+<p class="body">The cost is the hull alone, and the answer says so.</p>
 </section>
 <section>
 <h2><span class="num">2</span> The table is derived, and the join is the check.</h2>

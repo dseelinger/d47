@@ -69,11 +69,11 @@ nav_order: 112
 </section>
 <section>
 <h2><span class="num">3</span> Accept the plan, and it lands on your checklist.</h2>
-<p class="say">Accept the plan, or say "what do I still need for the Ptarmigan".</p>
+<p class="say">Accept the plan, or say "what am I short of".</p>
 <p class="expect">The shortfall lands on your checklist and the Gap page, with one build per ship.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">what do I still need for the Ptarmigan</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what am I short of</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">The shortfall goes to the Gap page with everything else.</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">One build per ship, kept per Commander.</text>
@@ -163,7 +163,7 @@ nav_order: 112
  <text x="440" y="193" text-anchor="middle" font-size="17" fill="var(--text)">“That Corsair is yours now, and the plan you had for one is pointed at it.”</text>
  <text x="440" y="244" text-anchor="middle" font-size="16" fill="var(--text-muted)">Only when exactly one intended build matches. Two planned and one bought is a question.</text>
 </svg>
-<p class="body">Buying the hull is the plan's <em>first step</em> rather than something you have to do before planning at all — which is also why a hull you own is a derived line and one you only intend is an authored one. That is the same rule the checklist draws, because it is the same rule.</p>
+<p class="body">Buying the hull is the plan's first step, so you can plan before you own it. The list's first line is made here: <code>Text = $"Buy {IndefiniteArticle.With(build.HullName)}",</code></p>
 </section>
 </div></div>
 </details>
@@ -288,6 +288,16 @@ That Corsair is yours now, and the plan you had for one is pointed at it.
 
 Only when exactly one intended build matches the hull. Two Corsairs planned and one bought is a
 question rather than a guess.
+
+### What is left to buy
+
+A ship's page has a **To buy** block between the hull's figures and **Plan** while its plan still needs
+something bought: the hull, if you do not own it yet, and each planned module that is neither fitted in
+its slot nor in module storage. It names three items and counts the rest. **Plot a route to buy them**
+plots a route from your system and opens it on Navigation › Plan; it is off, with the reason under it,
+when "Look things up in the galaxy" is off. Opening module storage takes what you have stored off the
+list, and until D47 has seen your storage the route says **Storage not checked**. The mini panel does not
+show the block.
 
 ### The pictures {#hull-art}
 

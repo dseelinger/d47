@@ -503,6 +503,17 @@ Two ways round it: name the blueprint the way the journal does, or read the verd
 and finished" is a fact either way. An **experimental effect** has no such problem: Elite localises
 that one, so it is checked exactly.
 
+#### A ship you do not own
+
+"Put this build on my checklist" for a ship you do not own makes a list named for the plan, such as
+"Python (planned)". It holds a "Buy a Python" line, a line for each module the plan names and the
+engineering lines. A module line ticks once a matching module is in your module storage; until then it
+says you can buy it into storage before you buy the ship. The checklist filter offers the planned ship group.
+
+Buying the ship ticks "Buy a Python", or removes it when **Remove fulfilled items** is on. The rest of
+the list, your own lines included, moves onto the new ship's list and keeps what was done. When two
+plans are for the same hull, neither moves. Deleting the plan removes its list.
+
 ### What a plan costs
 
 > "what do my plans still need"

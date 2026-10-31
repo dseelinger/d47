@@ -26,7 +26,6 @@ public partial class EveryHowToPhraseRoutesGateTests
     /// <summary>Phrases that did not route when this gate landed. An entry stays only with an open issue that will make it route.</summary>
     private static readonly (string Page, string Phrase)[] NotYetReviewed =
     [
-        ("engineers", "how do I unlock Felicity Farseer"),
         ("mining", "mining target platinum above twenty five percent"),
         ("mining", "how many limpets for ten tonnes of osmium"),
         ("system-names", "what does Praea Euq XV-B c1-42 tell you"),
@@ -35,25 +34,18 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("bookmarks", "delete bookmark Current CG"),
         ("lore", "what happened at Hyades Sector DB-X d1-112"),
         ("lore", "remember that this is where I lost the Anaconda"),
-        ("checklists", "put buy a fuel scoop on my list"),
-        ("checklists", "tick off the fuel scoop"),
-        ("checklists", "remove it"),
         ("on-foot", "what does grade 3 on my Maverick cost"),
         ("crew", "who is in my fighter bay"),
         ("crew", "comms Vasquez"),
         ("crew", "how is the fighter holding up"),
-        ("engineering", "what does a grade 5 dirty drive cost"),
-        ("engineering", "can I afford it"),
         ("characters", "comms Harlan"),
         ("characters", "are you there"),
         ("commander-log", "have I met Arden Vale before"),
         ("powerplay", "what does my next Powerplay rank give me"),
         ("powerplay", "what would Edmund Mahon give me"),
-        ("ships", "what do I still need for the Ptarmigan"),
         ("exobiology", "what biology is on this body"),
         ("binding-profiles", "save these bindings as sim pit"),
         ("binding-profiles", "load the sim pit bindings"),
-        ("gap", "what am I missing"),
         ("surface-guidance", "which way to mark 1"),
         ("reminders", "remind me to buy limpets when I next dock"),
         ("reminders", "noted"),
@@ -66,6 +58,14 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("focus", "bring Elite back"),
         ("utilities", "set a timer for twenty minutes called fuel scoop"),
         ("routes", "plot a neutron route to Colonia"),
+        ("checklists", "put buy a fuel scoop on my list"), // #1957
+        ("checklists", "tick off the fuel scoop"), // #1957
+        ("checklists", "remove it"), // #1957
+        ("engineering", "what does a grade 5 dirty drive cost"), // #1957
+        ("engineering", "can I afford it"), // #1957
+        ("specifications", "what is the Python II like"), // #1957
+        ("specifications", "how much does a 6A power plant draw"), // #1957
+        ("specifications", "compare the Krait and the Python"), // #1957
         ("macros", "docking prep"),
         ("vr", "put the panel down"),
         ("vr", "lock it to my head"),
@@ -78,9 +78,6 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("comms", "comms Tower"),
         ("comms", "are you there"),
         ("comms", "tell the wing I am on my way"),
-        ("specifications", "what is the Python II like"),
-        ("specifications", "how much does a 6A power plant draw"),
-        ("specifications", "compare the Krait and the Python"),
     ];
 
     public static TheoryData<string> Pages() => [.. PageNames()];

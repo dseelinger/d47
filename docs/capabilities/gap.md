@@ -22,11 +22,11 @@ nav_order: 113
 <p class="intro">Two steps to one list of everything you are short of.</p>
 <section>
 <h2><span class="num">1</span> Plan something first. The Gap is the arithmetic on top.</h2>
-<p class="say">Plan something first, then say "what am I missing".</p>
+<p class="say">Plan something first, then say "what am I short of".</p>
 <p class="expect">D47 adds up your engineering plans, builds and goals together.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">what am I missing</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what am I short of</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">It reads your engineering plans, your builds and your goals together.</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">Nothing to configure — it is the sum of what you already asked for.</text>

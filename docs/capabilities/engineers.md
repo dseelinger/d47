@@ -39,11 +39,11 @@ nav_order: 108
 </section>
 <section>
 <h2><span class="num">2</span> Press a name to see what unlocking them takes.</h2>
-<p class="say">Press an engineer's name, or say "how do I unlock Felicity Farseer".</p>
+<p class="say">Press an engineer's name, or say "what is left for Felicity Farseer".</p>
 <p class="expect">You see the requirement, the system and how far away it is.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">how do I unlock Felicity Farseer</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what is left for Felicity Farseer</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or press the name anywhere it appears — both reach the same page.</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">It says the requirement, the system, and how far away it is.</text>
