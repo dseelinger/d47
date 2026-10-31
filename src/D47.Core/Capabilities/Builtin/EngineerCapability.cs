@@ -123,7 +123,7 @@ public static class EngineerCapability
                     "Every engineer's unlock chain in one call, with the Commander's standing against "
                     + "each step: who refers them, what earns the invitation, what it asks for, and "
                     + "whether each of those is met. Covers all engineers at once, so it is the tool for "
-                    + "a question across them — which engineers want a given material, commodity or "
+                    + "a question across them — which engineers need a given material, commodity or "
                     + "on-foot item, which ask for a rank or reputation, or which need nothing but a "
                     + "trip. get_engineer_prerequisites answers for one engineer; this answers for all "
                     + "of them.",

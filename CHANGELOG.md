@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The descriptions of the ship-plan, build-gap and plan-shortfall tools now match what they do. Promoting a ship plan writes the checklist lines at once, dropping a plan for a hull you do not own removes its list, and the build gap opens with a total. The phrase "what wants Conductive Polymers" is now "what needs Conductive Polymers".
+
 The help text for the Arrivals and Narrator rows now says what they do. Arrivals no longer claims to announce engineering stations, and the Narrator no longer claims to speak in place of COVAS when no story or adventure is running.
 
 The Search pages no longer say their results are nearest first. The line beside the SEARCH title is gone from the Systems, Stations, Bodies, Outfitting and Signals sub-tabs, because the tables re-sort from their column headers, and the Systems distance readout now ends at the reference system, as in "Systems within 50 LY of ANLAVE."

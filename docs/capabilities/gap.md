@@ -221,7 +221,7 @@ Conductive Polymers: 14 short (6 of 20).
   Flamebrand (Anaconda) · PowerPlant · Armoured 4 — 12
 ```
 
-Say *"what is Conductive Polymers for"*, *"what do I need Conductive Polymers for"* or *"what wants
+Say *"what is Conductive Polymers for"*, *"what do I need Conductive Polymers for"* or *"what needs
 Conductive Polymers"*. Those phrases exist only for materials something you have planned actually
 needs — the vocabulary follows your plans, and asking about anything else falls through to an
 ordinary answer.
@@ -229,7 +229,7 @@ ordinary answer.
 #### `get_build_gap`
 
 ```json
-{"type":"object","properties":{"include_unowned":{"type":"boolean","description":"Whether hulls and items they do not own yet are counted. True is the whole ambition; false is what can be finished now. Defaults to true."},"material":{"type":"string","description":"One material, by name or symbol. Narrows the answer to what wants that one and names the blueprint each demand is for. Omit for everything."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"include_unowned":{"type":"boolean","description":"Whether hulls and items they do not own yet are counted. True is the whole ambition; false is what can be finished now. Defaults to true."},"material":{"type":"string","description":"One material, by name or symbol. Narrows the answer to what needs that one and names the blueprint each demand is for. Omit for everything."}},"required":[],"additionalProperties":false}
 ```
 
 ### Not the same set as `get_plan_shortfall`

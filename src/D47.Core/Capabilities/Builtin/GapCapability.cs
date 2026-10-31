@@ -53,8 +53,8 @@ public static class GapCapability
                     + "need against what you hold, ledger by ledger and with what each shortfall is for.",
                 Description =
                     "What the Commander's ship builds and on-foot plans still need, netted against what "
-                    + "they hold. Ledger by ledger and never totalled together, with what each shortfall "
-                    + "is for. Not the checklist: this counts plans that have never been promoted.",
+                    + "they hold. Opens with the units still to find across every ledger, then lists each "
+                    + "ledger separately with what each shortfall is for. Not the checklist: this counts plans that have never been promoted.",
                 Parameters =
                 [
                     // A parameter on the tool that already exists, not a second tool
@@ -63,7 +63,7 @@ public static class GapCapability
                     // which the fleet-wide list deliberately does not.
                     ToolParameter.Text(
                         "material",
-                        "One material, by name or symbol. Narrows the answer to what wants that "
+                        "One material, by name or symbol. Narrows the answer to what needs that "
                             + "one and names the blueprint each demand is for. Omit for everything."),
                     ToolParameter.Flag(
                         "include_unowned",
@@ -251,7 +251,7 @@ public static class GapCapability
                      {
                          $"what is {line.Material.Name} for",
                          $"what do i need {line.Material.Name} for",
-                         $"what wants {line.Material.Name}",
+                         $"what needs {line.Material.Name}",
                      })
             {
                 yield return new DynamicCommand(shape, Id, "get_build_gap", arguments);
