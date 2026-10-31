@@ -12,6 +12,8 @@ A suit grade 2 or higher is no longer shown as "$TacticalSuit_Class1_Name;". Fro
 
 A notable kill made on foot is no longer called a ship destroyed. A combat bond earned on foot now reads "{faction} soldier down", and your core's reworded line is told it was a person taken down, not a ship.
 
+Invented chatter no longer starts at the same topic every launch. The exchange order now starts at a different place each time d47 starts, and the topic, opening and controller lists are longer, so the pilot's licence exam, the shift that will not end, the flagged manifest and the beacon out of sync no longer open most sessions.
+
 A reworded line that opens with a remark and then a quotation, such as "Reworded, same meaning: \"...\"", is no longer spoken; the original line is said instead.
 
 Reworded NPC lines now stay in English whatever the accent, address no one the original line does not, keep abbreviations such as ADCS, and add no threat or order the line lacks.

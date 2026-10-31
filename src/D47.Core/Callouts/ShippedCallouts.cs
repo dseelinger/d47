@@ -21,6 +21,9 @@ public static class ShippedCallouts
     {
         public required SettingsService Settings { get; init; }
 
+        /// <summary>Where invented chatter's rotation starts, so each launch differs.</summary>
+        public int ChatterVariantOffset { get; init; }
+
         public required ILoggerFactory Loggers { get; init; }
 
         public required ChecklistService Checklists { get; init; }
@@ -267,7 +270,7 @@ public static class ShippedCallouts
 
             // Invented chatter (#244): the marker only — the app composes the exchange, and with no model the
             // marker composes to nothing.
-            .Add(new NpcChatterCallout(sources.Fight) { SceneHoldsTheFight = () => sceneCallout.HoldsTheFight })
+            .Add(new NpcChatterCallout(sources.Fight) { VariantOffset = sources.ChatterVariantOffset, SceneHoldsTheFight = () => sceneCallout.HoldsTheFight })
 
             // The people of a settlement, or the pilots of a fight, reacting to the Commander: the marker only,
             // composed like chatter.

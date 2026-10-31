@@ -834,7 +834,7 @@ public static partial class NpcChatter
     /// What the traffic is about — routine business only, never a jump (#291's own carrier drops any
     /// exchange that mentions one while none is scheduled, so a rotated subject must not risk it).
     /// </summary>
-    private static readonly string[] ControllerSubjects =
+    internal static readonly string[] ControllerSubjects =
     [
         "clearances and pad assignments",
         "a delayed pad assignment and a docking request",
@@ -843,16 +843,27 @@ public static partial class NpcChatter
         "a maintenance hold and a curt correction",
         "a beacon check and a pad swap",
         "a telling-off over a sloppy approach",
+        "a lost landing slot and a patient apology",
+        "a cargo scan and a short argument over a seal",
+        "a pad closed for cleaning and a reshuffled queue",
+        "a medical flag and a quick all-clear",
+        "a noise complaint and a polite reminder",
     ];
 
-    private static readonly string[] ControllerOpenings =
+    internal static readonly string[] ControllerOpenings =
     [
         "a queue backing up",
         "a pad running late",
-        "a manifest flagged for review",
-        "a beacon out of sync",
         "a pad mix-up",
         "a hold nobody wants",
+        "a shift change running behind",
+        "a lift stuck between pads",
+        "a scanner reading twice",
+        "a clearance given to the wrong callsign",
+        "a pad light that will not stay green",
+        "a schedule nobody can find",
+        "a tug late to the apron",
+        "a request read back wrong",
     ];
 
     private const int ControllerSubjectOffset = 23;
@@ -881,27 +892,37 @@ public static partial class NpcChatter
     ];
 
     /// <summary>What the pair's own small business is about.</summary>
-    private static readonly string[] Topics =
+    internal static readonly string[] Topics =
     [
         "a cargo manifest",
         "prices at the last stop",
-        "a pilot's licence exam",
         "a bad landing somebody else made",
         "a rumour going around",
         "food",
         "weather on a planet nobody has been to",
         "a bet",
+        "a cousin's wedding",
+        "which station has the worst coffee",
+        "a rumoured new engine design",
+        "an old ship someone used to fly",
+        "a game of cards that ran too long",
     ];
 
     /// <summary>What the exchange opens on — never the Commander's ship.</summary>
-    private static readonly string[] Openings =
+    internal static readonly string[] Openings =
     [
-        "a shift that will not end",
         "a delivery running late",
         "a manifest that has come up short",
         "a rumour just heard",
         "a bet neither of them has settled",
         "the weather rolling in",
+        "a sandwich gone missing",
+        "a joke that did not land",
+        "a long night of sleeping badly",
+        "a price that looks wrong",
+        "a song stuck in somebody's head",
+        "a spare part nobody can find",
+        "a question about the shortest route",
     ];
 
     private const int CastOffset = 3;
@@ -917,8 +938,9 @@ public static partial class NpcChatter
     private const string PassersbyBans =
         "Do not write the Commander's ship blocking, hogging or taking up a pad — nobody here has "
         + "noticed it beyond perhaps a glance in passing. Do not write \"not my problem\", \"not my "
-        + "run\", \"just here for the ... run\", or \"third time this week\" — overused lines, "
-        + "off limits here. ";
+        + "run\", \"just here for the ... run\", \"third time this week\", \"is this shift ever going to end\", "
+        + "or \"I could be wrong\" — "
+        + "overused lines, off limits here. ";
 
     /// <summary>
     /// One pick off a fixed list, spaced by the same Knuth multiplicative hash <see

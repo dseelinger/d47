@@ -1491,6 +1491,7 @@ public sealed class AppHost : IDisposable
             new ShippedCallouts.Sources
             {
                 Settings = settings,
+                ChatterVariantOffset = (int)(SystemWallClock.Instance.UtcNow.ToUnixTimeSeconds() / 60 % 100_000),
                 Loggers = loggerFactory,
                 Checklists = checklists,
                 CommanderLog = commanderLog,

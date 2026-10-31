@@ -39,6 +39,9 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
     private DateTimeOffset _sceneTookKillAt;
     private int _picks;
 
+    /// <summary>Added to the exchange number that picks cast, topic and opening, so launches start at different picks.</summary>
+    public int VariantOffset { get; init; }
+
     /// <summary>How long a ship kill stays worth reacting to.</summary>
     public static readonly TimeSpan KillFresh = TimeSpan.FromMinutes(2);
 
@@ -146,7 +149,7 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
             Urgency = CalloutUrgency.Routine,
             Origin = AnnouncementOrigin.InventedChatter,
             Cooldown = Interval,
-            Variant = _picks - 1,
+            Variant = VariantOffset + _picks - 1,
 
             // Said because nothing happened, and the rate the Commander asked for it at — the flag the engine
             // spaces on and the clamp that bounds how long it may hold this (#257).
