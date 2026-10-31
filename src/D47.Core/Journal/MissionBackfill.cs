@@ -30,8 +30,7 @@ public static class MissionBackfill
             return new Dictionary<string, MissionBoard>(StringComparer.Ordinal);
         }
 
-        var journals = files.Enumerate(directory, JournalFolder.FilePattern)
-            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+        var journals = JournalFolder.Ordered(files, directory)
             .ToList();
 
         return FromHistory(journals, logger, path => ReadAll(files, path), cancellation);

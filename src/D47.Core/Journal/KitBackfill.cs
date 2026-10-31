@@ -31,8 +31,7 @@ public static class KitBackfill
             return stored ?? new Dictionary<string, OwnedKit>(StringComparer.Ordinal);
         }
 
-        var all = fileSystem.Enumerate(directory, JournalFolder.FilePattern)
-            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+        var all = JournalFolder.Ordered(fileSystem, directory)
             .ToList();
 
         var walking = Window(fileSystem, all, since);

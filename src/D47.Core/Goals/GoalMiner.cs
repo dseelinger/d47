@@ -56,8 +56,7 @@ public sealed class GoalMiner(IFileSystem fileSystem, ILogger<GoalMiner> logger)
             return [];
         }
 
-        var files = fileSystem.Enumerate(directory, JournalFolder.FilePattern)
-            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+        var files = JournalFolder.Ordered(fileSystem, directory)
             .ToList();
 
         return Mine(files, now);

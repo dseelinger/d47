@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-d47 now orders journal files by when each session started in UTC rather than by file name, which Elite writes in local time. On the night the clocks go back, a session opened in the repeated hour is followed as the newest one, so d47 no longer stops hearing the game until that session ends. When d47 catches up on loadouts and suits from the journals, it now starts at the correct file in any time zone, not only in UTC.
+d47 now orders journal files by when each session started in UTC rather than by file name, which Elite writes in local time. On the night the clocks go back, a session opened in the repeated hour is followed as the newest one, so d47 no longer stops hearing the game until that session ends. When d47 catches up on loadouts and suits from the journals, it now starts at the correct file in any time zone, not only in UTC. The same order now applies to every other read of the journal history, so on the night the clocks go back, sessions in the repeated hour are no longer folded in the wrong order until the next launch.
 
 "Shields are down." is no longer said on loading in, or after a ship swap, before d47 has read that ship's loadout. A ship with no shield generator no longer gets the warning because of the previous session's loadout.
 

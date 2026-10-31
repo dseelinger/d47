@@ -467,7 +467,7 @@ public sealed class HistoryBackfill
     }
 
     private IReadOnlyList<string> Files() =>
-        [.. FileSystem.Enumerate(Directory, JournalFolder.FilePattern).OrderBy(Path.GetFileName, StringComparer.Ordinal)];
+        [.. JournalFolder.Ordered(FileSystem, Directory)];
 
     private T Timed<T>(string name, Func<T> fold)
     {

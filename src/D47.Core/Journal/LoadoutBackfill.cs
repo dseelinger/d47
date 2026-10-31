@@ -43,8 +43,7 @@ public static class LoadoutBackfill
             return stored ?? new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal);
         }
 
-        var all = fileSystem.Enumerate(directory, JournalFolder.FilePattern)
-            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+        var all = JournalFolder.Ordered(fileSystem, directory)
             .ToList();
 
         var walking = Window(fileSystem, all, since);
@@ -320,8 +319,7 @@ public static class LoadoutBackfill
             return new LoadoutRescan(0, 0, new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal));
         }
 
-        var files = fileSystem.Enumerate(directory, JournalFolder.FilePattern)
-            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+        var files = JournalFolder.Ordered(fileSystem, directory)
             .ToList();
 
         logger.LogInformation("Rescanning {Files} journal files at the Commander's request", files.Count);

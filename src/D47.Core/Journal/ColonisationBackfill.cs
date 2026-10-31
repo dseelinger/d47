@@ -27,8 +27,7 @@ public static class ColonisationBackfill
 
         return FromHistory(
             fileSystem,
-            [.. fileSystem.Enumerate(directory, JournalFolder.FilePattern)
-                .OrderBy(Path.GetFileName, StringComparer.Ordinal)],
+            [.. JournalFolder.Ordered(fileSystem, directory)],
             logger,
             cancellation);
     }

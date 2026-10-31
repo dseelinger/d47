@@ -121,8 +121,7 @@ public sealed class CommodityLedger
             return 0;
         }
 
-        var files = fileSystem.Enumerate(directory, JournalFolder.FilePattern)
-            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+        var files = JournalFolder.Ordered(fileSystem, directory)
             .ToList();
 
         var first = files.FindIndex(file => JournalFolder.StartedAt(fileSystem, file) >= since);

@@ -19,9 +19,7 @@ public static class IncidentSources
         DateTimeOffset to,
         ILogger? logger = null)
     {
-        var files = fileSystem
-            .Enumerate(folder, JournalFolder.FilePattern)
-            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+        var files = JournalFolder.Ordered(fileSystem, folder)
             .ToList();
 
         var log = new JournalLog(keep: int.MaxValue);

@@ -1728,7 +1728,7 @@ public sealed class AppHost : IDisposable
 
             // Read at the moment a log is asked for rather than captured now, because a Commander who has
             // been flying since launch has journals here that did not exist then.
-            () => JournalsOnDisk(stores.JournalDirectory, foundations.Logger),
+            () => JournalsOnDisk(foundations.Files, stores.JournalDirectory, foundations.Logger),
             () => DateTimeOffset.Now,
 
             // The provider, the model and the persona as they are at this instant.
@@ -2986,7 +2986,7 @@ public sealed class AppHost : IDisposable
             BgsLastTick = () => late.Host?.BgsTick?.Last,
             GalNetArrived = () => late.Host?.GalNet?.Arrived ?? [],
             ServerStatusAnnounce = () => late.Host?.ServerStatus?.Announce,
-            ComposeRecap = launch => ComposeRecap(foundations.Files, launch, JournalsOnDisk(stores.JournalDirectory, foundations.Logger), loggerFactory),
+            ComposeRecap = launch => ComposeRecap(foundations.Files, launch, JournalsOnDisk(foundations.Files, stores.JournalDirectory, foundations.Logger), loggerFactory),
         });
 
         var pairing = new VoicePairer(
@@ -5435,16 +5435,12 @@ public sealed class AppHost : IDisposable
         }
     }
 
-    private static IReadOnlyList<string> JournalsOnDisk(string directory, Microsoft.Extensions.Logging.ILogger logger)
+    private static IReadOnlyList<string> JournalsOnDisk(IFileSystem files, string directory, Microsoft.Extensions.Logging.ILogger logger)
     {
         try
         {
             return Directory.Exists(directory)
-                ?
-                [
-                    .. Directory.EnumerateFiles(directory, D47.Core.Journal.JournalFolder.FilePattern)
-                        .OrderBy(Path.GetFileName, StringComparer.Ordinal),
-                ]
+                ? D47.Core.Journal.JournalFolder.Ordered(files, directory)
                 : [];
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

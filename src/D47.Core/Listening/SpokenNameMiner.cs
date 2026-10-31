@@ -30,8 +30,7 @@ public static class SpokenNameMiner
             return stored ?? new Dictionary<string, SpokenNames>(StringComparer.Ordinal);
         }
 
-        var all = fileSystem.Enumerate(directory, JournalFolder.FilePattern)
-            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+        var all = JournalFolder.Ordered(fileSystem, directory)
             .ToList();
 
         // Everything on the first run — there is no watermark to measure a gap against, and a shallow

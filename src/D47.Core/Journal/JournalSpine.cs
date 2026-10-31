@@ -139,9 +139,8 @@ public sealed class JournalSpine(
     /// <summary>The Commander the newest older file to name one logs in as.</summary>
     private CommanderIdentity? LastLogin(string latest)
     {
-        var older = files.Enumerate(Directory, JournalFolder.FilePattern)
+        var older = JournalFolder.Ordered(files, Directory)
             .Where(file => !string.Equals(file, latest, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
         return CommanderBackfill.LastLogin(files, older, _logger);

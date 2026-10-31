@@ -214,9 +214,7 @@ public static class CorpusDonation
         IReadOnlyCollection<string>? only,
         Action<string, JournalEntry, ScrubbedLine> onEvent)
     {
-        var files = fileSystem
-            .Enumerate(folder, JournalFolder.FilePattern)
-            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+        var files = JournalFolder.Ordered(fileSystem, folder)
             .ToList();
 
         var opened = 0;
