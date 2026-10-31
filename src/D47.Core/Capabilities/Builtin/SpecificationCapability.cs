@@ -254,7 +254,7 @@ public static class SpecificationCapability
     }
 
     /// <summary>How many variants are worth reading out in full before the answer becomes a table.</summary>
-    private const int Listed = 4;
+    private const int Listed = 3;
 
     private static string Describe(ModuleSpecification module)
     {

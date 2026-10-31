@@ -495,12 +495,14 @@ public static class EngineerCapability
 
         if (engineer.Specialities.Count > 0)
         {
-            // A speciality with no grade is named without one.
-            report.AppendLine("Grades: " + string.Join(
-                ", ",
-                engineer.Specialities.Select(speciality => speciality.IsGraded
+            // A speciality with no grade is named without one. Spoken answers name at most three (SpokenList.Limit).
+            var allGrades = engineer.Specialities.Select(speciality => speciality.IsGraded
                     ? $"{speciality.Kind} to {speciality.MaxGrade}"
-                    : speciality.Kind)) + ".");
+                    : speciality.Kind).ToList();
+            var spokenGrades = allGrades.Count > 3 ? allGrades.Take(3).ToList() : allGrades;
+            var remainingGrades = allGrades.Count - spokenGrades.Count;
+            report.AppendLine("Grades: " + string.Join(", ", spokenGrades) 
+                + (remainingGrades > 0 ? $" and {remainingGrades} more on the Engineering page" : "") + ".");
         }
         else
         {
