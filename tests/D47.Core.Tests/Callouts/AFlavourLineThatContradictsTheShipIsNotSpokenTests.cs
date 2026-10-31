@@ -185,6 +185,31 @@ public class AFlavourLineThatContradictsTheShipIsNotSpokenTests
         Assert.Contains("400", found?.Correction, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("You have 14.25 of 16 tonnes of fuel.")]
+    [InlineData("The tank holds 16 tons of fuel, Commander.")]
+    public void ATonnageOfFuelIsNotACargoClaim(string line)
+    {
+        var small = new ShipFacts { HoldKnown = true, HoldTonnes = 0, HoldCapacity = 2 };
+
+        Assert.Null(ContradictedClaims.Find(line, small));
+        Assert.Equal(line, ContradictedClaims.Sayable(line, small, null, "test"));
+    }
+
+    [Fact]
+    public void ATonnageOfGoldIsStillACapacityClaim()
+    {
+        var small = new ShipFacts { HoldKnown = true, HoldTonnes = 0, HoldCapacity = 2 };
+
+        Assert.Equal("hold capacity", ContradictedClaims.Find("We're carrying 16 tonnes of gold.", small)?.Claim);
+    }
+
+    [Fact]
+    public void ATonnageOfGoldIsStillCargoAboardWhileTheHoldIsEmpty()
+    {
+        Assert.Equal("cargo aboard", ContradictedClaims.Find("We're carrying 4 tonnes of gold.", EmptyHold)?.Claim);
+    }
+
     /// <summary>A figure at or under a known capacity is not this claim's business.</summary>
     [Fact]
     public void ATonnageThatFitsTheHoldsCapacityPasses()

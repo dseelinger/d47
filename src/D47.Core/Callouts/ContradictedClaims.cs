@@ -284,7 +284,7 @@ public static class ContradictedClaims
                 continue;
             }
 
-            if (TonnagePhrases.Contains(word) && NamesFreeCapacity(line, word))
+            if (TonnagePhrases.Contains(word) && !StatesCargoTonnage(line, word))
             {
                 continue;
             }
@@ -296,23 +296,34 @@ public static class ContradictedClaims
     }
 
     /// <summary>
-    /// Whether the word after <paramref name="phrase"/> in <paramref name="line"/> is empty capacity
-    /// rather than a cargo.
+    /// Whether any occurrence of <paramref name="phrase"/> in <paramref name="line"/> is followed by
+    /// something other than free capacity or fuel.
     /// </summary>
-    private static bool NamesFreeCapacity(string line, string phrase)
+    private static bool StatesCargoTonnage(string line, string phrase)
     {
-        var at = line.IndexOf(phrase, StringComparison.OrdinalIgnoreCase);
-        var rest = line[(at + phrase.Length)..].TrimStart(BetweenWords);
-        var word = LeadingWord(rest);
-
-        if (word.Equals("cargo", StringComparison.OrdinalIgnoreCase))
+        for (var at = 0; (at = line.IndexOf(phrase, at, StringComparison.OrdinalIgnoreCase)) >= 0; at += phrase.Length)
         {
-            rest = rest[word.Length..].TrimStart(BetweenWords);
-            word = LeadingWord(rest);
+            var rest = line[(at + phrase.Length)..].TrimStart(BetweenWords);
+            var word = LeadingWord(rest);
+
+            if (word.Equals("cargo", StringComparison.OrdinalIgnoreCase))
+            {
+                rest = rest[word.Length..].TrimStart(BetweenWords);
+                word = LeadingWord(rest);
+            }
+
+            if (!EmptinessWords.Contains(word, StringComparer.OrdinalIgnoreCase) && !NamesFuel(line, at + phrase.Length))
+            {
+                return true;
+            }
         }
 
-        return EmptinessWords.Contains(word, StringComparer.OrdinalIgnoreCase);
+        return false;
     }
+
+    /// <summary>Whether the word at <paramref name="from"/> in <paramref name="line"/> is "fuel".</summary>
+    private static bool NamesFuel(string line, int from) =>
+        LeadingWord(line[from..].TrimStart(BetweenWords)).Equals("fuel", StringComparison.OrdinalIgnoreCase);
 
     private static string LeadingWord(string text)
     {
@@ -337,9 +348,22 @@ public static class ContradictedClaims
             return null;
         }
 
-        if (StatedTonnage.Match(line) is not { Success: true } match
-            || !int.TryParse(match.Groups["n"].Value.Replace(",", string.Empty), out var stated)
-            || stated <= capacity)
+        Match? match = null;
+        var stated = 0;
+
+        foreach (var candidate in StatedTonnage.Matches(line).Cast<Match>())
+        {
+            if (int.TryParse(candidate.Groups["n"].Value.Replace(",", string.Empty), out var value)
+                && value > capacity
+                && !NamesFuel(line, candidate.Index + candidate.Length))
+            {
+                match = candidate;
+                stated = value;
+                break;
+            }
+        }
+
+        if (match is null)
         {
             return null;
         }
