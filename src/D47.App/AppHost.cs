@@ -427,13 +427,8 @@ public sealed class AppHost : IDisposable
 
     private ModelCatalogRefresher? _modelCatalog;
 
-    private D47.Knowledge.InfomancerBgsTickSource? _bgsTickSource;
-    private D47.Knowledge.FrontierGalNetSource? _galNetSource;
-    private D47.Knowledge.FrontierServerStatusSource? _serverStatusSource;
+    private readonly List<IDisposable> _feedSources = [];
 
-    private D47.Knowledge.EddnUploader? _eddnUploader;
-
-    private D47.Knowledge.RavenColonialPlanService? _colonisationPlanService;
     private readonly Dictionary<string, D47.Knowledge.RavenColonialPlanWriter> _colonisationPlanWriters = new(StringComparer.Ordinal);
 
     /// <summary>The time of the last BGS tick d47 has read.</summary>
@@ -2635,11 +2630,7 @@ public sealed class AppHost : IDisposable
                     // Late-bound through the host like the speech surface's three, because the changelog opens on
                     // a panel and nothing here has one yet.
                     ShowChangelog = () => late.Host?.ShowChangelog?.Invoke(),
-                    ShowChangelogOnline = () => System.Diagnostics.Process.Start(
-                        new System.Diagnostics.ProcessStartInfo(Controls.ChangelogPage.OnlineUrl)
-                        {
-                            UseShellExecute = true,
-                        }),
+                    ShowChangelogOnline = () => OpenWithShell(Controls.ChangelogPage.OnlineUrl),
 
                     // Neither of these needs a window, so both are answered here.
                     AddToStartMenu = () =>
@@ -2663,16 +2654,11 @@ public sealed class AppHost : IDisposable
 
                     PendingUpdateVersion = () => late.Host?.PendingUpdateVersion,
 
-                    ShowCommunity = () => System.Diagnostics.Process.Start(
-                        new System.Diagnostics.ProcessStartInfo(D47.Core.Interface.Community.Url)
-                        {
-                            UseShellExecute = true,
-                        }),
+                    ShowCommunity = () => OpenWithShell(D47.Core.Interface.Community.Url),
 
                     // Moved off the foot of the Settings tab and onto the row that names the folder
                     // (2026-09-01).
-                    OpenDataFolder = () => System.Diagnostics.Process.Start(
-                        new System.Diagnostics.ProcessStartInfo(paths.Data) { UseShellExecute = true }),
+                    OpenDataFolder = () => OpenWithShell(paths.Data),
                 },
 
                 // What the audio recorder has kept (#164), so the privacy capability can carry the row that
@@ -2724,8 +2710,7 @@ public sealed class AppHost : IDisposable
                 phraseBook: () => late.Router?.Book ?? throw new InvalidOperationException(
                     "The phrase book was asked for before the router finished building."),
                 contextNote: () => late.Host?.ContextNote,
-                openAudioFolder: () => System.Diagnostics.Process.Start(
-                    new System.Diagnostics.ProcessStartInfo(paths.Audio) { UseShellExecute = true }),
+                openAudioFolder: () => OpenWithShell(paths.Audio),
                 controlMusic: action => late.Host?.Music.Control(action) ?? "Ambient music is not available.",
                 colonisationPlans: () => late.Host?.ColonisationPlans,
                 colonisationProgress: () => late.Host?.ColonisationProgress,
@@ -2956,30 +2941,25 @@ public sealed class AppHost : IDisposable
                     route.Current,
                     settings.Current.Callouts.WeekBoundaryDay,
                     settings.Current.Callouts.WeekBoundaryHourUtc),
-                Join(
-                    ActionCapabilities.Describe(actionSurface),
-                    Join(
-                        MacroCapability.Live(macros),
-                        Join(
-                            ChecklistCapability.Live(checklists),
+                ActionCapabilities.Describe(actionSurface),
+                MacroCapability.Live(macros),
+                ChecklistCapability.Live(checklists),
 
-                            Join(
-                                // The story under way, told from inside (Phase 47).
-                                D47.Core.Adventures.AdventureContext.Describe(
-                                    adventureBook.Audible(gameState.Active?.Identity.FrontierId, SystemWallClock.Instance.UtcNow),
-                                    id => PersonaCatalog.Knows(id) ? PersonaCatalog.Resolve(id).Name : null,
-                                    SystemWallClock.Instance.UtcNow),
+                // The story under way, told from inside (Phase 47).
+                D47.Core.Adventures.AdventureContext.Describe(
+                    adventureBook.Audible(gameState.Active?.Identity.FrontierId, SystemWallClock.Instance.UtcNow),
+                    id => PersonaCatalog.Knows(id) ? PersonaCatalog.Resolve(id).Name : null,
+                    SystemWallClock.Instance.UtcNow),
 
-                            Join(
-                                // Both dates, already worked out, below the cache breakpoint where a per-turn
-                                // value costs nothing (Phase 24).
-                                Timekeeping.TimersAndAlarms.Live(
-                                    timersAndAlarms, SystemWallClock.Instance.UtcNow, TimeZoneInfo.Local),
+                // Both dates, already worked out, below the cache breakpoint where a per-turn
+                // value costs nothing (Phase 24).
+                Timekeeping.TimersAndAlarms.Live(
+                    timersAndAlarms, SystemWallClock.Instance.UtcNow, TimeZoneInfo.Local),
 
-                                // Why d47 cannot look something up, when it cannot.
-                                ConversationCapability.LiveSearch(
-                                    settings.Current.Llm.WebSearch,
-                                    late.Host?.SearchReachesTheWeb ?? true))))))),
+                // Why d47 cannot look something up, when it cannot.
+                ConversationCapability.LiveSearch(
+                    settings.Current.Llm.WebSearch,
+                    late.Host?.SearchReachesTheWeb ?? true)),
         };
 
         // The ship's AI, by its name, "D47" or a wake phrase, any of them removed from the front of an utterance.
@@ -2994,9 +2974,7 @@ public sealed class AppHost : IDisposable
             () => gameState.Active,
             () => gameState.Active?.Location.StarSystem,
             () => SystemWallClock.Instance.UtcNow,
-            (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
-                ? galaxy.DistanceAsync(from, to, cancellationToken)
-                : Task.FromResult<double?>(null),
+            GatedDistance(settings, () => galaxy),
             () => stores.Fight.Snapshot,
             () => settings.Current.Speech.CarrierCaptainName,
             () => CarrierNotes(D47.Core.Characters.CarrierCharacter.Captain)));
@@ -3006,18 +2984,14 @@ public sealed class AppHost : IDisposable
             () => gameState.Active,
             () => gameState.Active?.Location.StarSystem,
             () => SystemWallClock.Instance.UtcNow,
-            (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
-                ? galaxy.DistanceAsync(from, to, cancellationToken)
-                : Task.FromResult<double?>(null),
+            GatedDistance(settings, () => galaxy),
             () => CarrierNotes(D47.Core.Characters.CarrierCharacter.Tower)));
 
         // The Commander's own characters. Aboard they are on the intercom; elsewhere, on the radio.
         turns.Lines.Add(new CharacterLine(
             () => late.Host?.Characters.CharactersOf(gameState.Active?.Identity.FrontierId) ?? [],
             () => gameState.Active?.Location.StarSystem,
-            (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
-                ? galaxy.DistanceAsync(from, to, cancellationToken)
-                : Task.FromResult<double?>(null)));
+            GatedDistance(settings, () => galaxy)));
 
         string? CarrierNotes(D47.Core.Characters.CarrierCharacter who) =>
             late.Host?.Characters.NotesFor(gameState.Active?.Identity.FrontierId, who);
@@ -3027,6 +3001,19 @@ public sealed class AppHost : IDisposable
             () => gameState.Active?.Crew,
             () => gameState.Active?.Ship.Name));
 
+        Func<NpcHeard, CancellationToken, Task<string?>> StrangerAsk(Microsoft.Extensions.Logging.ILogger logger) =>
+            (npc, cancellationToken) => FlavourTurn.AskAsync(
+                turns.Provider,
+                turns.BackgroundModel,
+                persona: null,
+                aboutMe: null,
+                StrangerPersonality.Instruction(npc),
+                gameState: null,
+                spend,
+                PriceTable.Default,
+                logger,
+                cancellationToken);
+
         // A stranger heard in this system: an invented speaker or a real comms NPC.
         turns.Lines.Add(new ChatterLine(
             () => gameState.Active?.Location.StarSystem,
@@ -3035,17 +3022,7 @@ public sealed class AppHost : IDisposable
             () => ShipFacts.Of(gameState.Active),
             loggerFactory.CreateLogger<ChatterLine>(),
             () => late.Host?.Announcer.NpcsHere,
-            (npc, cancellationToken) => FlavourTurn.AskAsync(
-                turns.Provider,
-                turns.BackgroundModel,
-                persona: null,
-                aboutMe: null,
-                StrangerPersonality.Instruction(npc),
-                gameState: null,
-                spend,
-                PriceTable.Default,
-                loggerFactory.CreateLogger<ChatterLine>(),
-                cancellationToken),
+            StrangerAsk(loggerFactory.CreateLogger<ChatterLine>()),
             heardAs => late.Host?.AddressedVoices.AccentHeardAs(heardAs)));
 
         // The held target's NPC pilot.
@@ -3054,17 +3031,7 @@ public sealed class AppHost : IDisposable
             () => turns.BackgroundModel,
             () => ShipFacts.Of(gameState.Active),
             loggerFactory.CreateLogger<TargetLine>(),
-            (npc, cancellationToken) => FlavourTurn.AskAsync(
-                turns.Provider,
-                turns.BackgroundModel,
-                persona: null,
-                aboutMe: null,
-                StrangerPersonality.Instruction(npc),
-                gameState: null,
-                spend,
-                PriceTable.Default,
-                loggerFactory.CreateLogger<TargetLine>(),
-                cancellationToken),
+            StrangerAsk(loggerFactory.CreateLogger<TargetLine>()),
             () => late.Host?.Announcer.NpcsHere,
             heardAs => late.Host?.AddressedVoices.AccentHeardAs(heardAs)));
 
@@ -3074,17 +3041,7 @@ public sealed class AppHost : IDisposable
             () => gameState.Active?.Location.StarSystem,
             () => turns.BackgroundModel,
             loggerFactory.CreateLogger<ShuttleLine>(),
-            (npc, cancellationToken) => FlavourTurn.AskAsync(
-                turns.Provider,
-                turns.BackgroundModel,
-                persona: null,
-                aboutMe: null,
-                StrangerPersonality.Instruction(npc),
-                gameState: null,
-                spend,
-                PriceTable.Default,
-                loggerFactory.CreateLogger<ShuttleLine>(),
-                cancellationToken),
+            StrangerAsk(loggerFactory.CreateLogger<ShuttleLine>()),
             heardAs => late.Host?.AddressedVoices.AccentHeardAs(heardAs)));
 
         // The Narrator, while the STORY channel offers it.
@@ -3967,11 +3924,17 @@ public sealed class AppHost : IDisposable
 
         // After ambience, so it reads this tick's running state.
         var viewState = foundations.ViewState;
-        host._eddnUploader = loop.Eddn;
-        host._bgsTickSource = new D47.Knowledge.InfomancerBgsTickSource(
+        var bgsTickSource = new D47.Knowledge.InfomancerBgsTickSource(
             foundations.LoggerFactory.CreateLogger<D47.Knowledge.InfomancerBgsTickSource>());
+        var galNetSource = new D47.Knowledge.FrontierGalNetSource(
+            foundations.LoggerFactory.CreateLogger<D47.Knowledge.FrontierGalNetSource>());
+        var serverStatusSource = new D47.Knowledge.FrontierServerStatusSource(
+            foundations.LoggerFactory.CreateLogger<D47.Knowledge.FrontierServerStatusSource>());
+        var colonisationPlanService = new D47.Knowledge.RavenColonialPlanService(
+            foundations.LoggerFactory.CreateLogger<D47.Knowledge.RavenColonialPlanService>());
+        host._feedSources.AddRange([bgsTickSource, galNetSource, serverStatusSource, loop.Eddn, colonisationPlanService]);
         var bgsTick = host.BgsTick = new BgsTickWatch(
-            host._bgsTickSource,
+            bgsTickSource,
             () => settings.Current.Knowledge.BgsTick,
             () => gameState.IsGameRunning,
             () => viewState.Load().BgsTickLast,
@@ -3980,10 +3943,8 @@ public sealed class AppHost : IDisposable
 
         tick.Add("bgs-tick", context => bgsTick.Poll(context.Now));
 
-        host._galNetSource = new D47.Knowledge.FrontierGalNetSource(
-            foundations.LoggerFactory.CreateLogger<D47.Knowledge.FrontierGalNetSource>());
         var galNet = host.GalNet = new GalNetWatch(
-            host._galNetSource,
+            galNetSource,
             new GalNetArchive(
                 foundations.Paths.GalNet,
                 foundations.Files,
@@ -3993,20 +3954,16 @@ public sealed class AppHost : IDisposable
 
         tick.Add("galnet", context => galNet.Poll(context.Now));
 
-        host._serverStatusSource = new D47.Knowledge.FrontierServerStatusSource(
-            foundations.LoggerFactory.CreateLogger<D47.Knowledge.FrontierServerStatusSource>());
         var serverStatus = host.ServerStatus = new ServerStatusWatch(
-            host._serverStatusSource,
+            serverStatusSource,
             () => settings.Current.Knowledge.ServerStatus,
             foundations.LoggerFactory.CreateLogger<ServerStatusWatch>());
 
         tick.Add("server-status", context => serverStatus.Poll(context.Now));
 
         // Built whether or not the switch is on; it sends nothing while off.
-        host._colonisationPlanService = new D47.Knowledge.RavenColonialPlanService(
-            foundations.LoggerFactory.CreateLogger<D47.Knowledge.RavenColonialPlanService>());
         var colonisationPlans = host.ColonisationPlans = new ColonisationPlans(
-            host._colonisationPlanService,
+            colonisationPlanService,
             () => settings.Current.Knowledge.ColonisationPlanner,
             () => gameState.Active,
             foundations.LoggerFactory.CreateLogger<ColonisationPlans>());
@@ -5335,9 +5292,7 @@ public sealed class AppHost : IDisposable
         () => Characters,
         Settings,
         RunningCast,
-        (from, to, cancellationToken) => Settings.Current.Knowledge.GalaxySearch && Galaxy is { } galaxy
-            ? galaxy.DistanceAsync(from, to, cancellationToken)
-            : Task.FromResult<double?>(null));
+        GatedDistance(Settings, () => Galaxy));
 
     /// <summary>The story store, for the cast the running story has introduced.</summary>
     public D47.Core.Stories.StoryStore? StoryStore { get; set; }
@@ -5757,14 +5712,20 @@ public sealed class AppHost : IDisposable
             Environment.GetEnvironmentVariable);
     }
 
-    private static string? Join(string? situation, string? actions) =>
-        (situation, actions) switch
-        {
-            (null, null) => null,
-            (null, var only) => only,
-            (var only, null) => only,
-            var (both, and) => both + Environment.NewLine + Environment.NewLine + and,
-        };
+    private static Func<string, string, CancellationToken, Task<double?>> GatedDistance(
+        SettingsService settings, Func<D47.Core.Knowledge.IGalaxyService?> galaxy) =>
+        (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch && galaxy() is { } service
+            ? service.DistanceAsync(from, to, cancellationToken)
+            : Task.FromResult<double?>(null);
+
+    private static void OpenWithShell(string target) =>
+        System.Diagnostics.Process.Start(
+            new System.Diagnostics.ProcessStartInfo(target) { UseShellExecute = true });
+
+    internal static string? Join(params string?[] parts) =>
+        parts.Any(part => part is not null)
+            ? string.Join(Environment.NewLine + Environment.NewLine, parts.Where(part => part is not null))
+            : null;
 
     /// <summary>The plain recap for a launch at <paramref name="launch"/>, or null for none.</summary>
     private static string? ComposeRecap(IFileSystem fileSystem, DateTimeOffset launch, IReadOnlyList<string> files, ILoggerFactory loggerFactory)
@@ -5923,11 +5884,10 @@ public sealed class AppHost : IDisposable
         _commsSelection?.Dispose();
         _audioWatch?.Dispose();
         _modelCatalog?.Dispose();
-        _bgsTickSource?.Dispose();
-        _galNetSource?.Dispose();
-        _serverStatusSource?.Dispose();
-        _eddnUploader?.Dispose();
-        _colonisationPlanService?.Dispose();
+        foreach (var source in _feedSources)
+        {
+            source.Dispose();
+        }
 
         foreach (var writer in _colonisationPlanWriters.Values)
         {
