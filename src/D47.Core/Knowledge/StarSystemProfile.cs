@@ -156,7 +156,63 @@ public sealed record StationProfile
     public IReadOnlyList<string> Services { get; init; } = [];
 
     public DateTimeOffset? UpdatedAt { get; init; }
+
+    /// <summary>The dump's <c>id</c>; equals the <c>MarketId</c> a station search result carries.</summary>
+    public long? MarketId { get; init; }
+
+    public string? Allegiance { get; init; }
+
+    public string? ControllingFactionState { get; init; }
+
+    /// <summary>Each economy with its share as a percentage, largest first.</summary>
+    public IReadOnlyList<EconomyShare> Economies { get; init; } = [];
+
+    /// <summary>Null when the station reports no pad counts.</summary>
+    public PadCounts? Pads { get; init; }
+
+    /// <summary>Who may dock at a fleet carrier; null for any other station.</summary>
+    public string? CarrierDockingAccess { get; init; }
+
+    /// <summary>Null when the dump holds no market for the station.</summary>
+    public StationMarket? Market { get; init; }
+
+    /// <summary>Null when the dump holds no outfitting for the station.</summary>
+    public StationOutfitting? Outfitting { get; init; }
+
+    /// <summary>Null when the dump holds no shipyard for the station.</summary>
+    public StationShipyard? Shipyard { get; init; }
 }
+
+/// <summary>One economy of a station and its share as a percentage.</summary>
+public sealed record EconomyShare(string Name, double Share);
+
+/// <summary>Landing pads by size; a size the station lacks is 0.</summary>
+public sealed record PadCounts(int Small, int Medium, int Large);
+
+/// <summary>One commodity row of a station's market.</summary>
+public sealed record MarketCommodity(
+    string Name,
+    string? Symbol,
+    string? Category,
+    long BuyPrice,
+    long SellPrice,
+    long Supply,
+    long Demand);
+
+/// <summary>A station's market as last reported.</summary>
+public sealed record StationMarket(IReadOnlyList<MarketCommodity> Commodities, DateTimeOffset? ReportedAt);
+
+/// <summary>One module row of a station's outfitting.</summary>
+public sealed record StationModule(string Name, string? Symbol, string? Category, int? Class, string? Rating, string? Ship);
+
+/// <summary>A station's outfitting as last reported.</summary>
+public sealed record StationOutfitting(IReadOnlyList<StationModule> Modules, DateTimeOffset? ReportedAt);
+
+/// <summary>One ship row of a station's shipyard.</summary>
+public sealed record StationShip(string Name, string? Symbol);
+
+/// <summary>A station's shipyard as last reported.</summary>
+public sealed record StationShipyard(IReadOnlyList<StationShip> Ships, DateTimeOffset? ReportedAt);
 
 /// <summary>A ring and the signals reported in it.</summary>
 public sealed record RingProfile(string Name, string? Type, IReadOnlyDictionary<string, int> Signals);
@@ -222,6 +278,47 @@ public sealed record BodyProfile
 
     /// <summary>Signal counts by the service's signal name.</summary>
     public IReadOnlyDictionary<string, int> Signals { get; init; } = new Dictionary<string, int>();
+
+    /// <summary>Surface materials by percentage share.</summary>
+    public IReadOnlyDictionary<string, double> Materials { get; init; } = new Dictionary<string, double>();
+
+    /// <summary>Atmosphere gases by percentage share.</summary>
+    public IReadOnlyDictionary<string, double> AtmosphereComposition { get; init; } = new Dictionary<string, double>();
+
+    /// <summary>Rock, metal and ice by percentage share.</summary>
+    public IReadOnlyDictionary<string, double> SolidComposition { get; init; } = new Dictionary<string, double>();
+
+    /// <summary>Biological genera reported on the body, by <see cref="CodexGenus.Name"/>.</summary>
+    public IReadOnlyList<string> Genera { get; init; } = [];
+
+    /// <summary>In days.</summary>
+    public double? OrbitalPeriod { get; init; }
+
+    /// <summary>In astronomical units.</summary>
+    public double? SemiMajorAxis { get; init; }
+
+    public double? OrbitalEccentricity { get; init; }
+
+    /// <summary>In degrees.</summary>
+    public double? OrbitalInclination { get; init; }
+
+    /// <summary>In degrees.</summary>
+    public double? ArgOfPeriapsis { get; init; }
+
+    /// <summary>In days.</summary>
+    public double? RotationalPeriod { get; init; }
+
+    public bool? TidallyLocked { get; init; }
+
+    /// <summary>In degrees.</summary>
+    public double? AxialTilt { get; init; }
+
+    /// <summary>A star's age in millions of years.</summary>
+    public double? Age { get; init; }
+
+    public double? AbsoluteMagnitude { get; init; }
+
+    public DateTimeOffset? ReportedAt { get; init; }
 
     /// <summary>Whether a fuel scoop works on this star; null for a planet or an unknown class.</summary>
     public bool? Scoopable => Type == "Star" ? StarClasses.IsScoopable(SpectralClass?.TrimEnd("0123456789".ToCharArray())) : null;

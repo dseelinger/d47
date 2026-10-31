@@ -315,7 +315,81 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
                 .Where(service => service.ValueKind == JsonValueKind.String)
                 .Select(service => service.GetString()!)],
             UpdatedAt = Timestamp(station, "updateTime"),
+            MarketId = station.Long("id"),
+            Allegiance = station.String("allegiance"),
+            ControllingFactionState = station.String("controllingFactionState"),
+            Economies = [.. Shares(station.Object("economies"))
+                .OrderByDescending(economy => economy.Value)
+                .Select(economy => new EconomyShare(economy.Key, economy.Value))],
+            Pads = ReadPads(station.Object("landingPads")),
+            CarrierDockingAccess = station.String("carrierDockingAccess"),
+            Market = station.Object("market") is { } market
+                ? new StationMarket(
+                    [.. market.Items("commodities")
+                        .Where(row => row.String("name") is not null)
+                        .Select(row => new MarketCommodity(
+                            row.String("name")!,
+                            row.String("symbol"),
+                            row.String("category"),
+                            row.Long("buyPrice") ?? 0,
+                            row.Long("sellPrice") ?? 0,
+                            row.Long("supply") ?? 0,
+                            row.Long("demand") ?? 0))],
+                    Timestamp(market, "updateTime"))
+                : null,
+            Outfitting = station.Object("outfitting") is { } outfitting
+                ? new StationOutfitting(
+                    [.. outfitting.Items("modules")
+                        .Where(row => row.String("name") is not null)
+                        .Select(row => new StationModule(
+                            row.String("name")!,
+                            row.String("symbol"),
+                            row.String("category"),
+                            row.Int("class"),
+                            row.String("rating"),
+                            row.String("ship")))],
+                    Timestamp(outfitting, "updateTime"))
+                : null,
+            Shipyard = station.Object("shipyard") is { } shipyard
+                ? new StationShipyard(
+                    [.. shipyard.Items("ships")
+                        .Where(row => row.String("name") is not null)
+                        .Select(row => new StationShip(row.String("name")!, row.String("symbol")))],
+                    Timestamp(shipyard, "updateTime"))
+                : null,
         };
+    }
+
+    /// <summary>True or false as reported; null when the property is absent.</summary>
+    private static bool? Flag(JsonElement element, string name) =>
+        element.ValueKind == JsonValueKind.Object
+        && element.TryGetProperty(name, out var value)
+        && value.ValueKind is JsonValueKind.True or JsonValueKind.False
+            ? value.ValueKind == JsonValueKind.True
+            : null;
+
+    private static PadCounts? ReadPads(JsonElement? pads) =>
+        pads is { } counts && (counts.Int("small") is not null || counts.Int("medium") is not null || counts.Int("large") is not null)
+            ? new PadCounts(counts.Int("small") ?? 0, counts.Int("medium") ?? 0, counts.Int("large") ?? 0)
+            : null;
+
+    /// <summary>The numeric members of an object by name; empty when it is absent.</summary>
+    private static Dictionary<string, double> Shares(JsonElement? holder)
+    {
+        var shares = new Dictionary<string, double>(StringComparer.Ordinal);
+
+        if (holder is { } members)
+        {
+            foreach (var member in members.EnumerateObject())
+            {
+                if (member.Value.ValueKind == JsonValueKind.Number && member.Value.TryGetDouble(out var share))
+                {
+                    shares[member.Name] = share;
+                }
+            }
+        }
+
+        return shares;
     }
 
     internal static StationKind KindOf(string? type) => type switch
@@ -371,6 +445,23 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
                 .Where(ring => ring.String("name") is not null)
                 .Select(ring => new RingProfile(ring.String("name")!, ring.String("type"), Signals(ring)))],
             Signals = Signals(body),
+            Materials = Shares(body.Object("materials")),
+            AtmosphereComposition = Shares(body.Object("atmosphereComposition")),
+            SolidComposition = Shares(body.Object("solidComposition")),
+            Genera = [.. (body.Object("signals") is { } reported ? reported.Items("genuses") : [])
+                .Where(genus => genus.ValueKind == JsonValueKind.String)
+                .Select(genus => CodexGenus.Name(genus.GetString()!))],
+            OrbitalPeriod = body.Double("orbitalPeriod"),
+            SemiMajorAxis = body.Double("semiMajorAxis"),
+            OrbitalEccentricity = body.Double("orbitalEccentricity"),
+            OrbitalInclination = body.Double("orbitalInclination"),
+            ArgOfPeriapsis = body.Double("argOfPeriapsis"),
+            RotationalPeriod = body.Double("rotationalPeriod"),
+            TidallyLocked = Flag(body, "rotationalPeriodTidallyLocked"),
+            AxialTilt = body.Double("axialTilt"),
+            Age = body.Double("age"),
+            AbsoluteMagnitude = body.Double("absoluteMagnitude"),
+            ReportedAt = Timestamp(body, "updateTime"),
         };
     }
 
