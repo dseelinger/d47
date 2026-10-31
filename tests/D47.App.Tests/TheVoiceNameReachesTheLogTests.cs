@@ -10,7 +10,7 @@ public class TheVoiceNameReachesTheLogTests
 {
     private static VoicePipeline Pipeline(Func<string?, string?>? names) =>
         new(
-            new AudioArbiter(new Quiet(), NullLogger<AudioArbiter>.Instance),
+            new AudioArbiter(new SilentSink(), NullLogger<AudioArbiter>.Instance),
             CueLibrary.Load,
             NullLoggerFactory.Instance)
         {
@@ -54,42 +54,5 @@ public class TheVoiceNameReachesTheLogTests
         Assert.Equal(
             "George",
             pipeline.Introduce(new VoiceSelection("JBFqnCBsd6RMkjVDRZzb") { Name = "George" }).Name);
-    }
-
-    /// <summary>A sink that accepts everything and finishes nothing.</summary>
-    private sealed class Quiet : IAudioSink
-    {
-        public event Action<long>? Finished;
-
-        public IRenderReferenceTap ReferenceTap { get; } = new NoTap();
-
-        public void Play(PlaybackRequest request) => _ = Finished;
-
-        public void Stop(long playbackId)
-        {
-        }
-
-        public void StopAll()
-        {
-        }
-
-        public void Pause(long playbackId)
-        {
-        }
-
-        public void Resume(long playbackId)
-        {
-        }
-
-        public void SetGain(long playbackId, float gain)
-        {
-        }
-
-        private sealed class NoTap : IRenderReferenceTap
-        {
-            public event Action<RenderReferenceFrame>? Rendered;
-
-            public void Dispose() => _ = Rendered;
-        }
     }
 }

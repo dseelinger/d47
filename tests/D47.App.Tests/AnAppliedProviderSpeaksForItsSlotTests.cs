@@ -70,40 +70,4 @@ public class AnAppliedProviderSpeaksForItsSlotTests : IDisposable
 
         Assert.Null(_speech.Speaker(VoiceGroup.Aboard));
     }
-
-    private sealed class SilentSink : IAudioSink
-    {
-        public event Action<long>? Finished;
-
-        public IRenderReferenceTap ReferenceTap { get; } = new NoTap();
-
-        public void Play(PlaybackRequest request) => _ = Finished;
-
-        public void Stop(long playbackId)
-        {
-        }
-
-        public void StopAll()
-        {
-        }
-
-        public void Pause(long playbackId)
-        {
-        }
-
-        public void Resume(long playbackId)
-        {
-        }
-
-        public void SetGain(long playbackId, float gain)
-        {
-        }
-    }
-
-    private sealed class NoTap : IRenderReferenceTap
-    {
-        public event Action<RenderReferenceFrame>? Rendered;
-
-        public void Dispose() => _ = Rendered;
-    }
 }

@@ -124,61 +124,7 @@ public sealed class ALeadCanSpeakInAnyProvidersVoiceTests
                 throw new TtsException("The key was refused.", fault: TtsFault.KeyRejected);
             }
 
-            const int Samples = 4_800;
-            var pcm = new byte[Samples * 2];
-
-            for (var index = 0; index < Samples; index++)
-            {
-                var value = (short)(Math.Sin(2 * Math.PI * 900 * index / 48_000.0) * 0.4 * short.MaxValue);
-
-                pcm[index * 2] = (byte)(value & 0xFF);
-                pcm[(index * 2) + 1] = (byte)((value >> 8) & 0xFF);
-            }
-
-            return Task.FromResult(new AudioClip(text, pcm, AudioFormat.Standard));
-        }
-    }
-
-    /// <summary>Keeps what it was asked to play.</summary>
-    private sealed class CollectingSink : IAudioSink
-    {
-        public List<AudioClip> Played { get; } = [];
-
-        public event Action<long>? Finished;
-
-        public IRenderReferenceTap ReferenceTap { get; } = new NoTap();
-
-        public void Play(PlaybackRequest request)
-        {
-            Played.Add(request.Clip!);
-            _ = Finished;
-        }
-
-        public void Stop(long playbackId)
-        {
-        }
-
-        public void StopAll()
-        {
-        }
-
-        public void Pause(long playbackId)
-        {
-        }
-
-        public void Resume(long playbackId)
-        {
-        }
-
-        public void SetGain(long playbackId, float gain)
-        {
-        }
-
-        private sealed class NoTap : IRenderReferenceTap
-        {
-            public event Action<RenderReferenceFrame>? Rendered;
-
-            public void Dispose() => _ = Rendered;
+            return Task.FromResult(new AudioClip(text, TestTone.Pcm(4_800), AudioFormat.Standard));
         }
     }
 }

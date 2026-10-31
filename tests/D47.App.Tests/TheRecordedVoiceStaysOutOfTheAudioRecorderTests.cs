@@ -24,54 +24,13 @@ public class TheRecordedVoiceStaysOutOfTheAudioRecorderTests : IDisposable
         }
     }
 
-    private sealed class Tap : IRenderReferenceTap
-    {
-        public event Action<RenderReferenceFrame>? Rendered;
-
-        public void Render(int bytes) =>
-            Rendered?.Invoke(new RenderReferenceFrame(0, new byte[bytes], AudioFormat.Standard));
-    }
-
-    private sealed class Sink : IAudioSink
-    {
-        public List<long> Started { get; } = [];
-
-        public event Action<long>? Finished;
-
-        public IRenderReferenceTap ReferenceTap { get; } = new Tap();
-
-        public void Play(PlaybackRequest request) => Started.Add(request.Id);
-
-        public void Stop(long playbackId)
-        {
-        }
-
-        public void StopAll()
-        {
-        }
-
-        public void Pause(long playbackId)
-        {
-        }
-
-        public void Resume(long playbackId)
-        {
-        }
-
-        public void SetGain(long playbackId, float gain)
-        {
-        }
-
-        public void Finish(long playbackId) => Finished?.Invoke(playbackId);
-    }
-
     [Fact]
     public void PlayingTheRecordingBackLeavesNoRow()
     {
         var log = new RecordingLog(_folder, NullLogger.Instance);
-        var sink = new Sink();
+        var sink = new HandDrivenSink();
         var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
-        var tap = new Tap();
+        var tap = new HandDrivenTap();
         var recording = new AudioClip(OwnVoice.Sentence, new byte[24_000 * 2 * 6], new AudioFormat(24_000, 1));
 
         using (var recorder = AudioRecorder.Regardless(log, () => DateTimeOffset.UnixEpoch, NullLogger.Instance))

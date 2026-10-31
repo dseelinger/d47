@@ -102,7 +102,7 @@ public sealed class EverySpeakerWithAPictureTakesTheAvatarTests
 
     private static (VoicePipeline Voice, List<AudioActivity> Heard) Build()
     {
-        var arbiter = new AudioArbiter(new CollectingSink(), NullLogger<AudioArbiter>.Instance).Start();
+        var arbiter = new AudioArbiter(new SilentSink(), NullLogger<AudioArbiter>.Instance).Start();
         var heard = new List<AudioActivity>();
 
         arbiter.ActivityChanged += activity =>
@@ -147,42 +147,5 @@ public sealed class EverySpeakerWithAPictureTakesTheAvatarTests
 
         public Task<AudioClip> SynthesizeAsync(string text, VoiceSelection voice, CancellationToken cancellationToken = default) =>
             Task.FromResult(new AudioClip(text, new byte[4_800 * 2], AudioFormat.Standard));
-    }
-
-    /// <summary>Takes every clip and never finishes one, so the first line stays current.</summary>
-    private sealed class CollectingSink : IAudioSink
-    {
-        public event Action<long>? Finished;
-
-        public IRenderReferenceTap ReferenceTap { get; } = new NoTap();
-
-        public void Play(PlaybackRequest request) => _ = Finished;
-
-        public void Stop(long playbackId)
-        {
-        }
-
-        public void StopAll()
-        {
-        }
-
-        public void Pause(long playbackId)
-        {
-        }
-
-        public void Resume(long playbackId)
-        {
-        }
-
-        public void SetGain(long playbackId, float gain)
-        {
-        }
-
-        private sealed class NoTap : IRenderReferenceTap
-        {
-            public event Action<RenderReferenceFrame>? Rendered;
-
-            public void Dispose() => _ = Rendered;
-        }
     }
 }

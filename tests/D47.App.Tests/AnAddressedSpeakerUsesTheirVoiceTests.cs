@@ -111,47 +111,4 @@ public class AnAddressedSpeakerUsesTheirVoiceTests
             return Task.FromResult(new AudioClip(text, new byte[4_800 * 2], AudioFormat.Standard));
         }
     }
-
-    /// <summary>Keeps what it was asked to play.</summary>
-    private sealed class CollectingSink : IAudioSink
-    {
-        public List<AudioClip> Played { get; } = [];
-
-        public event Action<long>? Finished;
-
-        public IRenderReferenceTap ReferenceTap { get; } = new NoTap();
-
-        public void Play(PlaybackRequest request)
-        {
-            Played.Add(request.Clip!);
-            _ = Finished;
-        }
-
-        public void Stop(long playbackId)
-        {
-        }
-
-        public void StopAll()
-        {
-        }
-
-        public void Pause(long playbackId)
-        {
-        }
-
-        public void Resume(long playbackId)
-        {
-        }
-
-        public void SetGain(long playbackId, float gain)
-        {
-        }
-
-        private sealed class NoTap : IRenderReferenceTap
-        {
-            public event Action<RenderReferenceFrame>? Rendered;
-
-            public void Dispose() => _ = Rendered;
-        }
-    }
 }

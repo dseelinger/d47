@@ -31,50 +31,6 @@ public class OneUtteranceIsOneRowTests : IDisposable
         }
     }
 
-    /// <summary>The arbiter's tap, driven by hand.</summary>
-    private sealed class Tap : IRenderReferenceTap
-    {
-        public event Action<RenderReferenceFrame>? Rendered;
-
-        public void Render(int bytes, AudioFormat format) =>
-            Rendered?.Invoke(new RenderReferenceFrame(0, new byte[bytes], format));
-    }
-
-    /// <summary> Enough of a sink for the arbiter to run against: it starts and finishes clips on demand and
-    /// renders nothing, the null sink. </summary>
-    private sealed class Sink : IAudioSink
-    {
-        public List<long> Started { get; } = [];
-
-        public event Action<long>? Finished;
-
-        public IRenderReferenceTap ReferenceTap { get; } = new Tap();
-
-        public void Play(PlaybackRequest request) => Started.Add(request.Id);
-
-        public void Stop(long playbackId)
-        {
-        }
-
-        public void StopAll()
-        {
-        }
-
-        public void Pause(long playbackId)
-        {
-        }
-
-        public void Resume(long playbackId)
-        {
-        }
-
-        public void SetGain(long playbackId, float gain)
-        {
-        }
-
-        public void Finish(long playbackId) => Finished?.Invoke(playbackId);
-    }
-
     /// <summary>A clock that moves a second per read, so two rows cannot share an identity.</summary>
     private DateTimeOffset Now() => Noon.AddSeconds(Interlocked.Increment(ref _tick));
 
@@ -93,9 +49,9 @@ public class OneUtteranceIsOneRowTests : IDisposable
     public void What_played_while_one_clip_was_current_becomes_one_row()
     {
         var log = Log();
-        var sink = new Sink();
+        var sink = new HandDrivenSink();
         var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
-        var tap = new Tap();
+        var tap = new HandDrivenTap();
 
         using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
         {
@@ -127,9 +83,9 @@ public class OneUtteranceIsOneRowTests : IDisposable
     public void A_second_clip_is_a_second_row()
     {
         var log = Log();
-        var sink = new Sink();
+        var sink = new HandDrivenSink();
         var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
-        var tap = new Tap();
+        var tap = new HandDrivenTap();
 
         using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
         {
@@ -156,9 +112,9 @@ public class OneUtteranceIsOneRowTests : IDisposable
     public void The_row_carries_what_the_pipeline_reported()
     {
         var log = Log();
-        var sink = new Sink();
+        var sink = new HandDrivenSink();
         var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
-        var tap = new Tap();
+        var tap = new HandDrivenTap();
 
         using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
         {
@@ -189,9 +145,9 @@ public class OneUtteranceIsOneRowTests : IDisposable
     public void A_cue_is_not_written_down()
     {
         var log = Log();
-        var sink = new Sink();
+        var sink = new HandDrivenSink();
         var arbiter = new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start();
-        var tap = new Tap();
+        var tap = new HandDrivenTap();
 
         using (var recorder = AudioRecorder.Regardless(log, Now, NullLogger.Instance))
         {
