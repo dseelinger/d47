@@ -42,12 +42,21 @@ public static partial class NamedLookupPhrase
 
         if (Blueprint().Match(said) is { Success: true } blueprint
             && blueprint.Groups["blueprint"].Value.Trim() is { Length: >= 3 } recipe
+            && (blueprint.Groups["grade"].Success || NamesABlueprintInFull(recipe))
             && BlueprintCatalogue.Named(recipe).Count > 0)
         {
             return new(EngineeringCapability.Id, "get_blueprint", Arguments(("blueprint", recipe)));
         }
 
         return null;
+    }
+
+    /// <summary>A part of a blueprint's name, such as "limpet" or "mining", is an ordinary price question unless a grade is said with it.</summary>
+    private static bool NamesABlueprintInFull(string spoken)
+    {
+        var relaxed = Catalogue.Relax(spoken);
+
+        return BlueprintCatalogue.All.Any(recipe => Catalogue.Relax(recipe.Name) == relaxed);
     }
 
     private static Dictionary<string, string> Arguments(params (string Key, string Value)[] pairs) =>
@@ -64,7 +73,7 @@ public static partial class NamedLookupPhrase
     private static partial Regex Ship();
 
     [GeneratedRegex(
-        @"^what does (?:a |an |the )?(?:grade (?:[1-5]|one|two|three|four|five) )?(?<blueprint>.+?) cost$",
+        @"^what does (?:a |an |the )?(?:grade (?<grade>[1-5]|one|two|three|four|five) )?(?<blueprint>.+?) cost$",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex Blueprint();
 }

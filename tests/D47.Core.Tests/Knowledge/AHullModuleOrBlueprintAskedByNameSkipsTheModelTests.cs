@@ -42,11 +42,26 @@ public class AHullModuleOrBlueprintAskedByNameSkipsTheModelTests
     }
 
     [Theory]
+    [InlineData("what does increased FSD range cost")]
+    [InlineData("what does a grade 3 clean drive cost")]
+    public void ABlueprintNamedInFullOrWithAGradeIsRead(string said)
+    {
+        Assert.Equal("get_blueprint", NamedLookupPhrase.Read(said)?.Tool);
+    }
+
+    [Theory]
     [InlineData("what is the weather like")]
     [InlineData("what is it like")]
     [InlineData("what does a 6A banana weigh")]
     [InlineData("what does the fuel cost")]
     [InlineData("what does a grade 5 sandwich cost")]
+    [InlineData("what does a limpet cost")]
+    [InlineData("what does mining cost")]
+    [InlineData("what does a module cost")]
+    [InlineData("what does a trip cost")]
+    [InlineData("what does armour cost")]
+    [InlineData("what does clean cost")]
+    [InlineData("what does high capacity cost")]
     public void ANameTheTablesDoNotKnowIsLeftForTheModel(string said)
     {
         Assert.Null(NamedLookupPhrase.Read(said));
