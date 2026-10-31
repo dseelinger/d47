@@ -116,6 +116,11 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>The Operation run in progress and the last one to end.</summary>
     public OperationRuns Operations { get; private set; } = OperationRuns.None;
 
+    private ShuttleTrip _shuttleTrip = ShuttleTrip.None;
+
+    /// <summary>The Apex or Frontline shuttle ride they are on, or null when they are not on one.</summary>
+    public ShuttleRide? Shuttle => _shuttleTrip.Ride;
+
     /// <summary>Construction sites they have visited (Phase 17).</summary>
     public ColonisationSites Colonisation { get; internal set; } = ColonisationSites.Empty;
 
@@ -230,6 +235,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(Mining), "your mining runs", state => state.Mining),
         new(nameof(SurfaceMining), "your surface mining sites", state => state.SurfaceMining),
         new(nameof(Operations), "your Operation runs", state => state.Operations),
+        new(nameof(Shuttle), "your shuttle ride", state => state.Shuttle),
         new(nameof(Bodies), "body signals", state => state.Bodies),
         new(nameof(Scans), "body scans", state => state.Scans),
         new(nameof(TechBroker), "your tech broker unlocks", state => state.TechBroker),
@@ -352,6 +358,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Mining = Mining.Apply(journalEvent);
         SurfaceMining = SurfaceMining.Apply(journalEvent);
         Operations = Operations.Apply(journalEvent);
+        _shuttleTrip = _shuttleTrip.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);
         Scans = Scans.Apply(journalEvent);
         TechBroker = TechBroker.Apply(journalEvent);
