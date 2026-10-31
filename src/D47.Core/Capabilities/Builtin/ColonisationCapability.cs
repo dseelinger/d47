@@ -6,7 +6,7 @@ using D47.Core.Knowledge;
 namespace D47.Core.Capabilities.Builtin;
 
 /// <summary>
-/// What a construction site still wants, what the Commander has to give it, and where the next one
+/// What a construction site still needs, what the Commander has to give it, and where the next one
 /// could go (Phase 18, "Colonisation and construction tracking" and "Find somewhere worth colonising").
 /// </summary>
 public static class ColonisationCapability

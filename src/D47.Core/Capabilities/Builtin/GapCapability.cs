@@ -53,7 +53,7 @@ public static class GapCapability
                     + "need against what you hold, ledger by ledger and with what each shortfall is for.",
                 Description =
                     "What the Commander's ship builds and on-foot plans still need, netted against what "
-                    + "they hold. Ledger by ledger and never totalled together, with what each shortfall "
+                    + "they hold. Ledger by ledger, totalled to find across every ledger, with what each shortfall "
                     + "is for. Not the checklist: this counts plans that have never been promoted.",
                 Parameters =
                 [
@@ -63,7 +63,7 @@ public static class GapCapability
                     // which the fleet-wide list deliberately does not.
                     ToolParameter.Text(
                         "material",
-                        "One material, by name or symbol. Narrows the answer to what wants that "
+                        "One material, by name or symbol. Narrows the answer to what needs that "
                             + "one and names the blueprint each demand is for. Omit for everything."),
                     ToolParameter.Flag(
                         "include_unowned",
@@ -194,7 +194,7 @@ public static class GapCapability
 
         if (line is null)
         {
-            return $"Nothing you have planned wants {material.Name}.";
+            return $"Nothing you have planned needs {material.Name}.";
         }
 
         var said = new StringBuilder();
@@ -204,7 +204,7 @@ public static class GapCapability
               + $"({line.Held.ToString(CultureInfo.InvariantCulture)} of "
               + $"{line.Needed.ToString(CultureInfo.InvariantCulture)})."
             : $"{material.Name}: you have all "
-              + $"{line.Needed.ToString(CultureInfo.InvariantCulture)} your plans want.");
+              + $"{line.Needed.ToString(CultureInfo.InvariantCulture)} your plans need.");
 
         foreach (var demand in line.Wanted)
         {
@@ -221,7 +221,7 @@ public static class GapCapability
     }
 
     /// <summary>
-    /// "What is Conductive Polymers for", one phrase per material something actually wants
+    /// "What is Conductive Polymers for", one phrase per material something actually needs
     /// (change-requests.md 37).
     /// </summary>
     public static IEnumerable<DynamicCommand> Phrases(
@@ -251,7 +251,7 @@ public static class GapCapability
                      {
                          $"what is {line.Material.Name} for",
                          $"what do i need {line.Material.Name} for",
-                         $"what wants {line.Material.Name}",
+                         $"what needs {line.Material.Name}",
                      })
             {
                 yield return new DynamicCommand(shape, Id, "get_build_gap", arguments);

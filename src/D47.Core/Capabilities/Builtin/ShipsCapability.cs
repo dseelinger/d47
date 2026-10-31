@@ -116,9 +116,9 @@ public static class ShipsCapability
                     + "for its blueprint and grade, and the reply says how many lines are on your checklist now. The "
                     + "model cannot do this: it is refused if it asks.",
                 Description =
-                    "Offer a ship's build to the checklist. It is a proposal: the Commander accepts, and "
-                    + "each planned slot becomes a line for its blueprint and grade, plus a second line "
-                    + "when the slot names an experimental effect.",
+                    "Offer a ship's build to the checklist. Each planned slot becomes a checklist line "
+                    + "for its blueprint and grade, plus a second line "
+                    + "when the slot names an experimental effect. The plan reaches the checklist when you say so.",
                 Protected = true,
                 Parameters =
                 [
@@ -163,7 +163,7 @@ public static class ShipsCapability
                     + "hull you do not own. The model cannot do this: it is refused if it asks.",
                 Description =
                     "Drop a ship's build. The Commander's own act: not offered to the model, and refused "
-                    + "if it asks. What the plan already put on the checklist is kept.",
+                    + "if it asks. The plan is gone, and so is its list on the Checklist tab.",
                 Protected = true,
                 Parameters =
                 [

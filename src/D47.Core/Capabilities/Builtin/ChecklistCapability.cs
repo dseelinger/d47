@@ -101,7 +101,7 @@ public static class ChecklistCapability
                     "What every live plan still needs, netted across all of them at once: exact material "
                     + "totals against what the Commander holds, storage caps that force more than one "
                     + "trip, engineer ranks that block a grade outright, where several of the shortfall "
-                    + "can be gathered in one trip, and what a construction site still wants delivered.",
+                    + "can be gathered in one trip, and what a construction site still needs delivered.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(checklists.ShortfallReport())),
             },
 
