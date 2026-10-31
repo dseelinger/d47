@@ -1,4 +1,4 @@
-﻿﻿using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Diagnostics;
 using D47.App.Input;
@@ -923,7 +923,6 @@ public sealed class AppHost : IDisposable
     private static StoreParts ComposeStores(FoundationParts foundations, LateBound late)
     {
         var files = foundations.Files;
-        var loadingStores = foundations.LoadingStores;
         var logger = foundations.Logger;
         var loggerFactory = foundations.LoggerFactory;
         var paths = foundations.Paths;
@@ -1446,7 +1445,7 @@ public sealed class AppHost : IDisposable
                 () => late.Foreground!(),
                 address => gameState.Active is { Identity.FrontierId: { } fid } && fullyFound.Contains(fid, address)));
 
-        loadingStores.Dispose();
+        foundations.LoadingStores.Dispose();
 
         return new StoreParts
         {
@@ -1534,14 +1533,9 @@ public sealed class AppHost : IDisposable
     private static LoopParts PrimeGameLoop(FoundationParts foundations, StoreParts stores)
     {
         var files = foundations.Files;
-        var logger = foundations.Logger;
         var loggerFactory = foundations.LoggerFactory;
-        var adventureBook = stores.AdventureBook;
         var gameState = stores.GameState;
-        var journal = stores.Journal;
         var journalDirectory = stores.JournalDirectory;
-        var route = stores.Route;
-        var status = stores.Status;
 
         var eddn = new D47.Knowledge.EddnUploader(
             () => foundations.Settings.Current.Contribution.Eddn,
@@ -1558,7 +1552,7 @@ public sealed class AppHost : IDisposable
                 readOutfitting: () => files.ReadText(Path.Combine(journalDirectory, "Outfitting.json")),
                 readShipyard: () => files.ReadText(Path.Combine(journalDirectory, "Shipyard.json")),
                 readNavRoute: () => files.ReadText(Path.Combine(journalDirectory, "NavRoute.json")),
-                statusBodyName: () => status.Current.BodyName),
+                statusBodyName: () => stores.Status.Current.BodyName),
             eddn,
             () => foundations.Settings.Current.Contribution.Eddn);
 
@@ -1567,11 +1561,11 @@ public sealed class AppHost : IDisposable
 
         var journalTick = new JournalTick(new JournalTick.Sources
         {
-            Journal = journal,
+            Journal = stores.Journal,
             GameState = gameState,
             History = stores.History,
-            Status = status,
-            Route = route,
+            Status = stores.Status,
+            Route = stores.Route,
             ModulePower = stores.ModulePower,
             Markets = stores.Markets,
             Eddn = eddnContribution,
@@ -1620,7 +1614,7 @@ public sealed class AppHost : IDisposable
         // walk is bounded to the files since the earliest acceptance, so with nothing under way it reads
         // nothing, and a beat that fired while d47 was closed is in the standing before the first live event
         // arrives.
-        adventureBook.CatchUp(D47.Core.Adventures.AdventureBook.FilesToWalk(files, journalDirectory, adventureBook.EarliestAcceptance()));
+        stores.AdventureBook.CatchUp(D47.Core.Adventures.AdventureBook.FilesToWalk(files, journalDirectory, stores.AdventureBook.EarliestAcceptance()));
 
         // Primed synchronously before anything reads game state, so a journal already on disk when d47 starts
         // is answered correctly, backlog and all — and so the panel's first status is not a race against the
@@ -1630,10 +1624,10 @@ public sealed class AppHost : IDisposable
             tick.Tick(DateTimeOffset.Now);
         }
 
-        logger.LogInformation(
+        foundations.Logger.LogInformation(
             "Journal folder {Directory}; tailing {File}",
             journalDirectory,
-            journal.CurrentFile ?? "(none found)");
+            stores.Journal.CurrentFile ?? "(none found)");
 
         return new LoopParts
         {
@@ -1646,27 +1640,11 @@ public sealed class AppHost : IDisposable
     private static ServiceParts ComposeServices(FoundationParts foundations, StoreParts stores, LoopParts loop, LateBound late)
     {
         var files = foundations.Files;
-        var loaded = foundations.Loaded;
-        var logger = foundations.Logger;
         var loggerFactory = foundations.LoggerFactory;
         var paths = foundations.Paths;
-        var secrets = foundations.Secrets;
         var settings = foundations.Settings;
-        var version = foundations.Version;
-        var viewState = foundations.ViewState;
-        var adventureBook = stores.AdventureBook;
         var checklists = stores.Checklists;
         var gameState = stores.GameState;
-        var heardNames = stores.HeardNames;
-        var journalDirectory = stores.JournalDirectory;
-        var kit = stores.Kit;
-        var learnedPhrases = stores.LearnedPhrases;
-        var marketBook = stores.MarketBook;
-        var shipBuilds = stores.ShipBuilds;
-        var status = stores.Status;
-        var storyArchive = stores.StoryArchive;
-        var storyStore = stores.StoryStore;
-        var feed = loop.Feed;
 
         // Availability and spend exist before the registry because capabilities report on them; the provider
         // itself is built afterwards, from settings, by ApplyLlmSettings.
@@ -1685,7 +1663,7 @@ public sealed class AppHost : IDisposable
         var timersAndAlarms = Timekeeping.TimersAndAlarms.Create(paths, files, loggerFactory);
 
         // The fleet joined to the builds.
-        var shipPlans = new ShipPlanService(shipBuilds, checklists, () => gameState.Active);
+        var shipPlans = new ShipPlanService(stores.ShipBuilds, checklists, () => gameState.Active);
 
         // And the one thing that watches the two for drifting apart (Phase 38).
         var drift = new ShipDriftWatch(shipPlans, checklists);
@@ -1703,11 +1681,11 @@ public sealed class AppHost : IDisposable
         onFootBuilds.Poll();
 
         var onFootPlans = new D47.Core.Loadout.OnFootPlanService(
-            onFootBuilds, checklists, () => gameState.Active, () => kit.All);
+            onFootBuilds, checklists, () => gameState.Active, () => stores.Kit.All);
 
         // The engineer solver (Phase 28).
         var unlocks = new D47.Core.Engineers.EngineerPlanService(
-            shipBuilds, onFootBuilds, checklists, () => gameState.Active);
+            stores.ShipBuilds, onFootBuilds, checklists, () => gameState.Active);
 
         // The goal book reads it through the holder.
         late.Unlocks = unlocks;
@@ -1717,8 +1695,8 @@ public sealed class AppHost : IDisposable
         var wake = new WakeWordGate();
 
         var wording = new LearnedWording(
-            heardNames,
-            learnedPhrases,
+            stores.HeardNames,
+            stores.LearnedPhrases,
             () => gameState.Active?.Identity.FrontierId,
             () => late.Host?.ReservedPhrases ?? [],
             () => DateTimeOffset.Now);
@@ -1749,7 +1727,7 @@ public sealed class AppHost : IDisposable
 
             // Read at the moment a log is asked for rather than captured now, because a Commander who has
             // been flying since launch has journals here that did not exist then.
-            () => JournalsOnDisk(journalDirectory, logger),
+            () => JournalsOnDisk(stores.JournalDirectory, foundations.Logger),
             () => DateTimeOffset.Now,
 
             // The provider, the model and the persona as they are at this instant.
@@ -1764,7 +1742,7 @@ public sealed class AppHost : IDisposable
                 AboutMe = CommanderStory.Compose(
                     settings.Current.Llm.CharacterSheet, settings.Current.Llm.AboutMe, withStory: true),
                 Ledger = spendLedger,
-                Version = version,
+                Version = foundations.Version,
                 FrontierId = gameState.Active?.Identity.FrontierId,
             },
             loggerFactory.CreateLogger<D47.Core.Logbook.LogbookBook>(),
@@ -1773,7 +1751,7 @@ public sealed class AppHost : IDisposable
                 var frontierId = gameState.Active?.Identity.FrontierId;
 
                 return D47.Core.Logbook.LogStoryBeat.From(
-                    adventureBook.Standings(frontierId), id => storyStore.Find(frontierId, id), storyArchive.For(frontierId));
+                    stores.AdventureBook.Standings(frontierId), id => stores.StoryStore.Find(frontierId, id), stores.StoryArchive.For(frontierId));
             },
             frontierId => frontierId is null ? [] : stores.CaptainsLog.For(frontierId));
 
@@ -1818,13 +1796,13 @@ public sealed class AppHost : IDisposable
         {
             using var opening = StartupTimer.Step("audio output");
 
-            audioSink.Open(loaded.Speech.OutputDevice);
+            audioSink.Open(foundations.Loaded.Speech.OutputDevice);
         }
         catch (Exception ex)
         {
             // No audio output is a capability being off, not a startup failure. d47 stays fully usable in
             // text (Phase 3, "Capabilities as state, not guard").
-            logger.LogError(ex, "No audio output could be opened; D47 will be silent");
+            foundations.Logger.LogError(ex, "No audio output could be opened; D47 will be silent");
         }
 
         // Listening.
@@ -1876,15 +1854,15 @@ public sealed class AppHost : IDisposable
             paths,
             files,
             () => DateTimeOffset.Now,
-            () => status.Current,
-            () => feed.EliteMusic.Track,
+            () => stores.Status.Current,
+            () => loop.Feed.EliteMusic.Track,
             screenCapture,
             loggerFactory.CreateLogger<Diagnostics.InputTraceWriter>());
 
         // With the status alongside the window (#242): running and in front are not the same as in the game,
         // and the injector is the one place the difference is enforced.
         var injector = new ScancodeInjector(
-            eliteWindow, loggerFactory.CreateLogger<ScancodeInjector>(), () => status.Current, inputTrace);
+            eliteWindow, loggerFactory.CreateLogger<ScancodeInjector>(), () => stores.Status.Current, inputTrace);
 
         // Nothing is pressed in a game running a Commander other than the one shown.
         var gameInput = new OffDutyGameInput(injector, gameState);
@@ -1950,11 +1928,11 @@ public sealed class AppHost : IDisposable
         // mutated.
 
         var guardianCores = new GuardianCores(() =>
-            storyStore.Current(gameState.Active?.Identity.FrontierId)?.CoreHold ?? CoreHold.None);
+            stores.StoryStore.Current(gameState.Active?.Identity.FrontierId)?.CoreHold ?? CoreHold.None);
 
         var personas = new PersonaHost(
             PersonaCatalog.Resolve(settings.Current.Persona.Id),
-            new ViewStateIntroductions(viewState),
+            new ViewStateIntroductions(foundations.ViewState),
             guardianCores,
             () => gameState.Active?.Identity.FrontierId);
 
@@ -1997,7 +1975,7 @@ public sealed class AppHost : IDisposable
         var tradePlanner = new D47.Knowledge.SpanshTradePlanService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshTradePlanService>(),
             commodities,
-            marketBook);
+            stores.MarketBook);
 
         var buildingRegistry = StartupTimer.Step("capability registry");
 
@@ -2005,7 +1983,7 @@ public sealed class AppHost : IDisposable
         var customVoices = new CustomVoices(paths.Data, files, new DpapiSecretProtector());
         var speech = new SpeechClients(
             settings,
-            secrets,
+            foundations.Secrets,
             loggerFactory,
             paths,
             files,
@@ -2115,97 +2093,16 @@ public sealed class AppHost : IDisposable
         var logger = foundations.Logger;
         var loggerFactory = foundations.LoggerFactory;
         var paths = foundations.Paths;
-        var secrets = foundations.Secrets;
         var settings = foundations.Settings;
-        var verbosity = foundations.Verbosity;
-        var version = foundations.Version;
-        var activities = stores.Activities;
-        var autonomous = stores.Autonomous;
-        var backfillGoals = stores.BackfillGoals;
         var bookmarks = stores.Bookmarks;
-        var surfaceMarks = stores.SurfaceMarks;
-        var savedSearches = stores.SavedSearches;
-        var searchHistory = stores.SearchHistory;
-        var callouts = stores.Callouts;
-        var cargoBoard = stores.CargoBoard;
-        var cartography = stores.Cartography;
-        var checklists = stores.Checklists;
-        var commodityBoard = stores.CommodityBoard;
-        var commodityLedger = stores.CommodityLedger;
-        var communityGoalSearch = stores.CommunityGoalSearch;
-        var crimes = stores.Crimes;
-        var debriefBook = stores.DebriefBook;
-        var exobiology = stores.Exobiology;
-        var galaxySearchBoard = stores.GalaxySearchBoard;
         var gameState = stores.GameState;
-        var goalBook = stores.GoalBook;
-        var handInOffer = stores.HandInOffer;
-        var history = stores.History;
-        var journalReminders = stores.JournalReminders;
-        var captainsLog = stores.CaptainsLog;
-        var lastFoundSystem = stores.LastFoundSystem;
-        var learnedPhrases = stores.LearnedPhrases;
-        var lore = stores.Lore;
-        var mail = stores.Mail;
-        var memoryBook = stores.MemoryBook;
-        var miningTargets = stores.MiningTargets;
-        var planBook = stores.PlanBook;
         var route = stores.Route;
-        var sourcingBoard = stores.SourcingBoard;
-        var standingWarnings = stores.StandingWarnings;
         var status = stores.Status;
-        var feed = loop.Feed;
-        var tick = loop.Tick;
-        var adventureDesk = services.AdventureDesk;
-        var audio = services.Audio;
         var audioSink = services.AudioSink;
         var auditions = services.Auditions;
-        var beatRefusal = services.BeatRefusal;
-        var bindingProfiles = services.BindingProfiles;
-        var binds = services.Binds;
-        var buildTalk = services.BuildTalk;
-        var buildingRegistry = services.BuildingRegistry;
-        var cancellation = services.Cancellation;
-        var clipboard = services.Clipboard;
-        var clipboardOffer = services.ClipboardOffer;
-        var controllers = services.Controllers;
-        var coverage = services.Coverage;
-        var cues = services.Cues;
-        var echo = services.Echo;
-        var eliteWindow = services.EliteWindow;
-        var endingAnswer = services.EndingAnswer;
-        var storyRecapper = services.StoryRecapper;
-        var galaxy = services.Galaxy;
-        var gameInput = services.GameInput;
-        var gate = services.Gate;
-        var heardAt = services.HeardAt;
-        var llmAvailability = services.LlmAvailability;
-        var logbook = services.Logbook;
-        var macros = services.Macros;
         var microphone = services.Microphone;
-        var models = services.Models;
-        var objectiveMark = services.ObjectiveMark;
-        var offers = services.Offers;
-        var onFootPlans = services.OnFootPlans;
-        var personas = services.Personas;
-        var reconciler = services.Reconciler;
-        var recording = services.Recording;
-        var routePlanner = services.RoutePlanner;
-        var screenCapture = services.ScreenCapture;
-        var shipCores = services.ShipCores;
-        var shipPlans = services.ShipPlans;
         var speech = services.Speech;
-        var spend = services.Spend;
-        var starSystems = services.StarSystems;
-        var visitedStars = services.VisitedStars;
-        var signalIndexStore = services.SignalIndexStore;
-        var storySwitch = services.StorySwitch;
-        var switches = services.Switches;
-        var timersAndAlarms = services.TimersAndAlarms;
-        var tradePlanner = services.TradePlanner;
         var transcriber = services.Transcriber;
-        var unlocks = services.Unlocks;
-        var wake = services.Wake;
         var wording = services.Wording;
 
         // Assigned inside the registry build, so the capabilities and the prompt's game-state block are looking
@@ -2215,15 +2112,15 @@ public sealed class AppHost : IDisposable
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
                 paths,
-                verbosity,
+                foundations.Verbosity,
                 gameState,
                 settings,
-                llmAvailability,
-                spend,
-                version,
+                services.LlmAvailability,
+                services.Spend,
+                foundations.Version,
                 new SpeechCapability.SpeechSurface
                 {
-                    Silence = audio.Silence,
+                    Silence = services.Audio.Silence,
 
                     // The local voice, and what fetching it would cost (Phase 59).
                     LocalVoiceState = speech.LocalVoiceState,
@@ -2295,7 +2192,7 @@ public sealed class AppHost : IDisposable
                     // press asked for here would be null and stay null.
                     Rescan = () => late.Host is null ? null : late.Host.Rescanner.RescanAsync,
 
-                    Talk = () => buildTalk,
+                    Talk = () => services.BuildTalk,
                 },
 
                 // How a misheard proper noun is recovered (#134).
@@ -2303,8 +2200,8 @@ public sealed class AppHost : IDisposable
                     () => gameState.Active?.Names ?? SpokenNames.Empty,
                     new MishearingWatch(),
                     wording.LearnCorrection),
-                cancellation,
-                callouts,
+                services.Cancellation,
+                stores.Callouts,
                 () => late.Registry ?? throw new InvalidOperationException(
                     "Spoken help was asked what D47 can do before the registry finished building."),
                 new ListeningCapability.ListeningSurface
@@ -2317,16 +2214,16 @@ public sealed class AppHost : IDisposable
 
                     // The demonstration beats any assertion about device state: if words arrived recently,
                     // hearing works, and that is the answer.
-                    SinceHeard = () => heardAt.Value is { } heard ? DateTimeOffset.Now - heard : null,
+                    SinceHeard = () => services.HeardAt.Value is { } heard ? DateTimeOffset.Now - heard : null,
 
                     TranscriberState = () => (
                         transcriber.IsReady,
                         transcriber.Model,
                         transcriber.Unavailable ?? "No speech model is selected."),
-                    Binds = () => binds.Current,
+                    Binds = () => services.Binds.Current,
                     Controllers = () => services.SampledControllers.Poll(),
-                    InstalledModels = () => models.Installed(),
-                    KeyStored = secrets.Has,
+                    InstalledModels = () => services.Models.Installed(),
+                    KeyStored = foundations.Secrets.Has,
 
                     // Read at draw time, so the row shows what has been learned rather than what had been
                     // when the surface was assembled (#134).
@@ -2335,9 +2232,9 @@ public sealed class AppHost : IDisposable
 
                     // What the gate policy is actually doing, which is the question a Commander running hands
                     // free is asking when they ask this one (Phase 13).
-                    Microphone = () => gate.State,
-                    EchoState = () => (echo.IsActive, echo.Unavailable),
-                    WakeWords = () => wake.Phrases,
+                    Microphone = () => services.Gate.State,
+                    EchoState = () => (services.Echo.IsActive, services.Echo.Unavailable),
+                    WakeWords = () => services.Wake.Phrases,
 
                     // So the status says "[" where the settings row already does.
                     KeyLabel = Input.Gestures.Describe,
@@ -2358,10 +2255,10 @@ public sealed class AppHost : IDisposable
                 },
                 actionSurface = new ActionSurface
                 {
-                    Binds = () => binds.Current,
+                    Binds = () => services.Binds.Current,
 
                     Status = () => status.Current,
-                    Input = gameInput,
+                    Input = services.GameInput,
                     Enabled = () => settings.Current.Actions.Keyboard,
 
                     // The plotted route rather than Status.json's Destination (#344).
@@ -2373,10 +2270,10 @@ public sealed class AppHost : IDisposable
                     Acknowledge = said => _ = late.Host?.Announcer.SayAsync(
                         new Announcement("action.acknowledge", said)),
                 },
-                () => AutonomousCapability.Describe(autonomous),
+                () => AutonomousCapability.Describe(stores.Autonomous),
                 new NavigationSurface
                 {
-                    Clipboard = clipboard,
+                    Clipboard = services.Clipboard,
                     Actions = actionSurface,
                     AutoPlotEnabled = () => settings.Current.Actions.AutoPlot,
                     HomeSystem = () => settings.Current.Callouts.HomeSystem,
@@ -2397,18 +2294,18 @@ public sealed class AppHost : IDisposable
                     // Where the attempt says how far it got, on every exit including a cancelled turn (#365).
                     Log = logger,
                 },
-                macros,
-                personas,
-                checklists,
-                () => (late.Host?.Cues ?? cues).DescribeDrops(),
-                coverage is null ? null : () => coverage.Report().Summary,
+                services.Macros,
+                services.Personas,
+                stores.Checklists,
+                () => (late.Host?.Cues ?? services.Cues).DescribeDrops(),
+                services.Coverage is null ? null : () => services.Coverage.Report().Summary,
 
                 // Constructed unconditionally and gated by its setting rather than by whether it exists: the
                 // row that turns it on has to work without a restart, and a service built only when the
                 // setting was already true could not (Phase 4).
-                galaxy,
-                routePlanner,
-                tradePlanner,
+                services.Galaxy,
+                services.RoutePlanner,
+                services.TradePlanner,
                 () => DateTimeOffset.Now,
 
                 // Late-bound like the surfaces above: the check is a real network call and the host that
@@ -2422,29 +2319,29 @@ public sealed class AppHost : IDisposable
                 () => status.Current,
 
                 // The same window object the injector asks about before every key.
-                () => Task.Run(eliteWindow.Raise),
+                () => Task.Run(services.EliteWindow.Raise),
 
                 new SwitchSurface
                 {
-                    Mappings = () => switches.Switches,
-                    States = () => reconciler.States,
-                    Unavailable = () => controllers.Unavailable,
-                    Problems = () => switches.Problems,
+                    Mappings = () => services.Switches.Switches,
+                    States = () => services.Reconciler.States,
+                    Unavailable = () => services.Controllers.Unavailable,
+                    Problems = () => services.Switches.Problems,
                 },
-                lore,
+                stores.Lore,
 
                 // The Commander's timers and alarms (Phase 24).
-                timersAndAlarms?.Timekeeper,
+                services.TimersAndAlarms?.Timekeeper,
 
                 // How to present an instant locally.
                 () => TimeZoneInfo.Local,
-                shipPlans,
+                services.ShipPlans,
 
                 // And the suit and weapon plans beside them (Phase 27).
-                onFootPlans,
+                services.OnFootPlans,
 
                 // Which engineer to go and get next, read across both of them (Phase 28).
-                unlocks,
+                services.Unlocks,
 
                 // The endpoint half of web search, for the egress row.
                 () => late.Host?.SearchReachesTheWeb ?? true,
@@ -2453,26 +2350,26 @@ public sealed class AppHost : IDisposable
                 () => late.Host?.EndpointModelIds ?? [],
 
                 // What d47 remembers about the Commander (Phase 31).
-                memoryBook,
+                stores.MemoryBook,
 
                 // Turning a session into something worth keeping (Phase 33).
-                logbook,
+                services.Logbook,
 
                 // The campaigns that outlive a checklist (Phase 34).
-                goalBook,
+                stores.GoalBook,
 
                 // What the "read my journals" button does for the arcs' ages.
-                () => backfillGoals,
+                () => stores.BackfillGoals,
 
                 // Which core flies which ship (Phase 35).
-                shipCores,
+                services.ShipCores,
 
                 // And where a plan goes once it is made (Phase 37), so the spoken route and the drawn one are
                 // one answer rather than two.
-                planBook,
+                stores.PlanBook,
 
                 // What d47 last offered to copy (asked for 2026-08-21).
-                clipboardOffer,
+                services.ClipboardOffer,
 
                 // The three waits the compound ship commands need (Phase 52).
                 new ShipCommandSurface
@@ -2503,7 +2400,7 @@ public sealed class AppHost : IDisposable
                     // Opened before the contacts walk sends a key, so a request already in is not read as
                     // this one (#150).
                     WatchDockingRequest = () => new Input.DockingRequestWatch(
-                        () => feed.DockingRequests, logger),
+                        () => loop.Feed.DockingRequests, logger),
 
                     DockingComputerFitted = () =>
                         gameState.Active?.FlownShip.Fitted(Core.Journal.ShipLoadout.DockingComputer),
@@ -2514,10 +2411,10 @@ public sealed class AppHost : IDisposable
 
                 // Where a commodity answer is posted on its way out (Phase 49), so the Navigation tab draws what
                 // was just said rather than asking again.
-                commodityBoard,
+                stores.CommodityBoard,
 
                 // Where a build's shopping list is posted on its way out (Phase 50).
-                sourcingBoard,
+                stores.SourcingBoard,
 
                 // What this build is, for the About area (#50).
                 new AboutSurface
@@ -2565,7 +2462,7 @@ public sealed class AppHost : IDisposable
 
                 // What the audio recorder has kept (#164), so the privacy capability can carry the row that
                 // empties it.
-                recording?.Log,
+                services.Recording?.Log,
 
                 // **Withdrawal, and it now reaches the store rather than only this machine** (#167).
                 async (_, cancel) =>
@@ -2580,20 +2477,20 @@ public sealed class AppHost : IDisposable
                 },
 
                 // What the debrief drafted and what the Commander took (#162).
-                debriefBook,
+                stores.DebriefBook,
 
                 // What the Community Goal commodity has made or lost, and which commodity that is (#296), for
                 // the earnings question on the community goals capability.
-                commodityLedger,
-                communityGoalSearch,
+                stores.CommodityLedger,
+                stores.CommunityGoalSearch,
 
                 // Where a nearest-first commodity search last sent the Commander (#325), threaded to the
                 // galaxy search that writes it and the ship command that reads it.
-                lastFoundSystem,
+                stores.LastFoundSystem,
 
                 // So a fleet question says the history is still being read rather than reporting an absence
                 // it cannot yet know about (#148).
-                history,
+                stores.History,
 
                 // Where "how many jumps are left" is answered from (#152), which is the file the Route
                 // Progress page already draws.
@@ -2601,14 +2498,14 @@ public sealed class AppHost : IDisposable
 
                 // So a subscriber the loop has paused is named on the diagnostics card rather than only in
                 // the log (#58).
-                tick,
+                loop.Tick,
 
                 // Timers and alarms register only for a run started with the switch (#90).
-                timersAndAlarms: timersAndAlarms is not null,
-                offers: offers,
-                learnedPhrases: learnedPhrases,
+                timersAndAlarms: services.TimersAndAlarms is not null,
+                offers: services.Offers,
+                learnedPhrases: stores.LearnedPhrases,
                 bookmarks: bookmarks,
-                surfaceMarks: surfaceMarks,
+                surfaceMarks: stores.SurfaceMarks,
                 phraseBook: () => late.Router?.Book ?? throw new InvalidOperationException(
                     "The phrase book was asked for before the router finished building."),
                 contextNote: () => late.Host?.ContextNote,
@@ -2625,42 +2522,42 @@ public sealed class AppHost : IDisposable
                     music.Changed += Changed;
                     return () => music.Changed -= Changed;
                 },
-                exobiology: exobiology,
+                exobiology: stores.Exobiology,
                 communityBiology: services.CommunityBiology,
                 earlierFinds: services.EarlierFinds,
-                cartography: cartography,
-                storySwitch: storySwitch,
-                endingAnswer: endingAnswer,
-                beatRefusal: beatRefusal,
-                adventureDesk: adventureDesk,
-                storyRecapper: storyRecapper,
-                objectiveMark: objectiveMark,
+                cartography: stores.Cartography,
+                storySwitch: services.StorySwitch,
+                endingAnswer: services.EndingAnswer,
+                beatRefusal: services.BeatRefusal,
+                adventureDesk: services.AdventureDesk,
+                storyRecapper: services.StoryRecapper,
+                objectiveMark: services.ObjectiveMark,
                 storyChoice: services.StoryChoice,
                 objectiveCourse: services.ObjectiveCourse,
-                journalReminders: journalReminders,
-                captainsLog: captainsLog,
-                miningTargets: miningTargets,
-                crimes: crimes,
+                journalReminders: stores.JournalReminders,
+                captainsLog: stores.CaptainsLog,
+                miningTargets: stores.MiningTargets,
+                crimes: stores.Crimes,
                 liveStatus: () => status.Current,
-                activities: activities,
-                cargo: cargoBoard,
-                mail: mail,
+                activities: stores.Activities,
+                cargo: stores.CargoBoard,
+                mail: stores.Mail,
                 friends: stores.Friends,
                 commsChannels: stores.CommsChannels,
-                searches: galaxySearchBoard,
-                starSystems: starSystems,
-                visitedStars: visitedStars,
-                searchHistory: searchHistory,
+                searches: stores.GalaxySearchBoard,
+                starSystems: services.StarSystems,
+                visitedStars: services.VisitedStars,
+                searchHistory: stores.SearchHistory,
                 squadronFactions: stores.SquadronFactions,
                 bgsTick: () => late.Host?.BgsTick?.Last,
                 signalSightings: stores.SignalSightings,
-                signalIndex: signalIndexStore,
-                pickCommander: feed.Picks.Enqueue,
+                signalIndex: services.SignalIndexStore,
+                pickCommander: loop.Feed.Picks.Enqueue,
                 galNetArchive: () => late.Host?.GalNet?.Archive,
                 serverStatus: () => late.Host?.ServerStatus,
-                standingWarnings: standingWarnings,
-                bindingProfiles: bindingProfiles,
-                screen: screenCapture,
+                standingWarnings: stores.StandingWarnings,
+                bindingProfiles: services.BindingProfiles,
+                screen: services.ScreenCapture,
                 imagesAvailable: () => late.Host?.ReadsPictures ?? true,
                 pictureNote: () => late.Host?.PictureNote,
                 files: files,
@@ -2671,7 +2568,7 @@ public sealed class AppHost : IDisposable
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList() ?? []));
 
-        buildingRegistry.Dispose();
+        services.BuildingRegistry.Dispose();
 
         late.Registry = capabilities;
 
@@ -2697,8 +2594,8 @@ public sealed class AppHost : IDisposable
         // The router's dynamic vocabulary: the Commander's own macro names, and — while one is standing — the
         // phrases that take up a clipboard offer.
         IEnumerable<DynamicCommand> OtherDynamicCommands() =>
-            clipboardOffer.Phrases()
-                .Concat(handInOffer.Phrases())
+            services.ClipboardOffer.Phrases()
+                .Concat(stores.HandInOffer.Phrases())
 
                 // And "set course for my carrier", which is an instruction rather than a topic and has to
                 // out-match the "my carrier" keyword that was answering it with a position report
@@ -2708,23 +2605,23 @@ public sealed class AppHost : IDisposable
 
                 // And "what is Conductive Polymers for", one phrase per material something planned actually
                 // wants (change-requests.md 37).
-                .Concat(GapCapability.Phrases(shipPlans, onFootPlans, () => gameState.Active))
+                .Concat(GapCapability.Phrases(services.ShipPlans, services.OnFootPlans, () => gameState.Active))
 
                 // And "community goal search" (#296): the INARA query with its knobs baked, pointed at
                 // find_nearest_station, plus "refresh" while the page that draws it is up.
-                .Concat(communityGoalSearch.Phrases())
+                .Concat(stores.CommunityGoalSearch.Phrases())
 
                 // And the fixed quick searches, such as "interstellar factors search" (#812).
                 .Concat(D47.Core.Knowledge.QuickSearches.Phrases())
 
                 // And the Commander's own saved searches, such as "large pad repairs search" (#1078).
-                .Concat(D47.Core.Knowledge.SavedSearchPhrases.Commands(savedSearches))
+                .Concat(D47.Core.Knowledge.SavedSearchPhrases.Commands(stores.SavedSearches))
 
                 // And "set a course" (#325): plot_course pointed at whatever a nearest-first commodity search
                 // last found. "Set a course and take us out" is not here — it is a fixed phrase on
                 // ship_command's own compound tool, since it runs two tools in order rather than baking one
                 // argument.
-                .Concat(CommunityGoalCourse.Phrases(lastFoundSystem))
+                .Concat(CommunityGoalCourse.Phrases(stores.LastFoundSystem))
 
                 // And "what's my reputation with Mother Gaia" (#418), one set per faction a reading is held for.
                 .Concat(JournalCapability.StandingPhrases(() => gameState.Active))
@@ -2732,7 +2629,7 @@ public sealed class AppHost : IDisposable
                 // And "forget 'set focus on elite'" (#171), one per phrase the flying Commander has taught
                 // d47 stands for a declared phrase.
                 .Concat(LearnedPhrasesCapability.Phrases(
-                    learnedPhrases, () => gameState.Active?.Identity.FrontierId ?? string.Empty))
+                    stores.LearnedPhrases, () => gameState.Active?.Identity.FrontierId ?? string.Empty))
 
                 // And "set course for Current CG" (#488), one set of spellings per bookmark the flying
                 // Commander has made.
@@ -2745,11 +2642,11 @@ public sealed class AppHost : IDisposable
                     bookmarks, () => gameState.Active?.Identity.FrontierId ?? string.Empty))
 
                 // And "which way to mark 1", one per mark valid for the body the Commander is at.
-                .Concat(SurfaceGuidanceCapability.Phrases(surfaceMarks, () => gameState.Active))
+                .Concat(SurfaceGuidanceCapability.Phrases(stores.SurfaceMarks, () => gameState.Active))
 
                 // And "switch to commander Kestrel Vane" (#895), one pair per Commander but the one flying.
                 .Concat(CommandersCapability.Phrases(
-                    () => history.Commanders, () => gameState.Active?.Identity.FrontierId))
+                    () => stores.History.Commanders, () => gameState.Active?.Identity.FrontierId))
 
                 // And "comms Tower", one or two per party on an open comms channel (#1601).
                 .Concat(CommsCapability.ChannelPhrases(stores.CommsChannels))
@@ -2758,7 +2655,7 @@ public sealed class AppHost : IDisposable
                 .Concat(ChecklistCapability.Phrases(stores.Checklists));
 
         var router = new KeywordRouter(
-            capabilities, () => MacroCapability.Phrases(macros).Concat(OtherDynamicCommands()));
+            capabilities, () => MacroCapability.Phrases(services.Macros).Concat(OtherDynamicCommands()));
 
         late.Router = router;
 
@@ -2775,55 +2672,30 @@ public sealed class AppHost : IDisposable
 
     private static CrewParts ComposeCrew(FoundationParts foundations, StoreParts stores, ServiceParts services, CapabilityParts registry, LateBound late)
     {
-        var files = foundations.Files;
-        var logger = foundations.Logger;
         var loggerFactory = foundations.LoggerFactory;
         var settings = foundations.Settings;
         var adventureBook = stores.AdventureBook;
-        var callouts = stores.Callouts;
         var checklists = stores.Checklists;
         var gameState = stores.GameState;
         var goalBook = stores.GoalBook;
-        var journalDirectory = stores.JournalDirectory;
-        var route = stores.Route;
-        var status = stores.Status;
-        var storyArchive = stores.StoryArchive;
-        var storyClue = stores.StoryClue;
-        var storyReaction = stores.StoryReaction;
         var storyStore = stores.StoryStore;
-        var adventureDesk = services.AdventureDesk;
-        var beatRefusal = services.BeatRefusal;
         var galaxy = services.Galaxy;
-        var llmAvailability = services.LlmAvailability;
-        var signalIndexStore = services.SignalIndexStore;
-        var visitedStars = services.VisitedStars;
-        var macros = services.Macros;
-        var objectiveMark = services.ObjectiveMark;
-        var offers = services.Offers;
         var personas = services.Personas;
-        var speech = services.Speech;
         var spend = services.Spend;
-        var storySwitch = services.StorySwitch;
-        var timersAndAlarms = services.TimersAndAlarms;
-        var tradePlanner = services.TradePlanner;
-        var wording = services.Wording;
-        var actionSurface = registry.ActionSurface;
-        var capabilities = registry.Capabilities;
-        var router = registry.Router;
 
         var turns = new TurnLoop(
-            capabilities,
-            router,
-            llmAvailability,
+            registry.Capabilities,
+            registry.Router,
+            services.LlmAvailability,
             spend,
             PriceTable.Default,
             loggerFactory.CreateLogger<TurnLoop>(),
             settings: settings,
-            offers: offers)
+            offers: services.Offers)
         {
             // Asked once per turn rather than assigned, so the state the model sees is the state as of the
             // moment the prompt was built — not as of whenever something last pushed it in.
-            ToolContext = () => actionSurface.Context,
+            ToolContext = () => registry.ActionSurface.Context,
             ActionsEnabled = () => settings.Current.Actions.Keyboard,
             WebSearchEnabled = () => settings.Current.Llm.WebSearch,
 
@@ -2838,13 +2710,13 @@ public sealed class AppHost : IDisposable
                 // game is showing.
                 Situation.Describe(
                     gameState.Active,
-                    status.Current,
+                    stores.Status.Current,
                     SystemWallClock.Instance.UtcNow,
-                    route.Current,
+                    stores.Route.Current,
                     settings.Current.Callouts.WeekBoundaryDay,
                     settings.Current.Callouts.WeekBoundaryHourUtc),
-                ActionCapabilities.Describe(actionSurface),
-                MacroCapability.Live(macros),
+                ActionCapabilities.Describe(registry.ActionSurface),
+                MacroCapability.Live(services.Macros),
                 ChecklistCapability.Live(checklists),
 
                 // The story under way, told from inside (Phase 47).
@@ -2856,7 +2728,7 @@ public sealed class AppHost : IDisposable
                 // Both dates, already worked out, below the cache breakpoint where a per-turn
                 // value costs nothing (Phase 24).
                 Timekeeping.TimersAndAlarms.Live(
-                    timersAndAlarms, SystemWallClock.Instance.UtcNow, TimeZoneInfo.Local),
+                    services.TimersAndAlarms, SystemWallClock.Instance.UtcNow, TimeZoneInfo.Local),
 
                 // Why d47 cannot look something up, when it cannot.
                 ConversationCapability.LiveSearch(
@@ -2865,8 +2737,7 @@ public sealed class AppHost : IDisposable
         };
 
         // The ship's AI, by its name, "D47" or a wake phrase, any of them removed from the front of an utterance.
-        var wake = services.Wake;
-        turns.ShipAiNames = () => [.. ShipAiNames(personas), .. wake.Phrases];
+        turns.ShipAiNames = () => [.. ShipAiNames(personas), .. services.Wake.Phrases];
 
         // Who a comms turn is spoken to. The lines below answer only there.
         turns.CommsSelected = () => stores.CommsChannels.Selected;
@@ -2979,8 +2850,8 @@ public sealed class AppHost : IDisposable
             PriceTable.Default,
             loggerFactory.CreateLogger<D47.Core.Adventures.AdventureGenerator>(),
             (providerId, chosen) => ModelCatalogSource.Shared.TraitsFor(providerId, chosen).StoryEffort,
-            () => settings.Current.Knowledge.SignalIndex ? signalIndexStore : null,
-            visitedStars);
+            () => settings.Current.Knowledge.SignalIndex ? services.SignalIndexStore : null,
+            services.VisitedStars);
 
         // A stock story picked on the Stories page; each chapter is an adventure the generator writes.
         var storyDirector = new D47.Core.Stories.StoryDirector(
@@ -2992,7 +2863,7 @@ public sealed class AppHost : IDisposable
             backstory => settings.Apply("llm.aboutMe", backstory, SettingsCaller.Panel),
             loggerFactory.CreateLogger<D47.Core.Stories.StoryDirector>())
         {
-            Archive = storyArchive,
+            Archive = stores.StoryArchive,
             Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null,
             Places = () => settings.Current.Knowledge.NotablePlaces ? notablePlaces : null,
             Ledger = () => late.Host?.Activities,
@@ -3029,7 +2900,7 @@ public sealed class AppHost : IDisposable
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Could not delete the stories and adventures of an erased Commander");
+                    foundations.Logger.LogError(ex, "Could not delete the stories and adventures of an erased Commander");
                 }
             });
         }
@@ -3067,17 +2938,17 @@ public sealed class AppHost : IDisposable
             return new D47.Core.Stories.ShipSpeech(provider, D47.Core.Stories.StoryCastPairing.On(current, provider));
         };
 
-        storySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
-        beatRefusal.Refuse = cancellationToken => storyDirector.RefuseBeatAsync(gameState.Active?.Identity.FrontierId, cancellationToken);
-        objectiveMark.Mark = () => storyDirector.MarkObjectiveDone(gameState.Active?.Identity.FrontierId, DateTimeOffset.Now);
+        services.StorySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
+        services.BeatRefusal.Refuse = cancellationToken => storyDirector.RefuseBeatAsync(gameState.Active?.Identity.FrontierId, cancellationToken);
+        services.ObjectiveMark.Mark = () => storyDirector.MarkObjectiveDone(gameState.Active?.Identity.FrontierId, DateTimeOffset.Now);
         services.ObjectiveCourse.Resolve = () => storyDirector.ObjectiveSystem(gameState.Active?.Identity.FrontierId);
         services.StoryChoice.IsOpen = () => storyDirector.ChoiceOpen(gameState.Active?.Identity.FrontierId);
         services.StoryChoice.Choose = option => storyDirector.Choose(gameState.Active?.Identity.FrontierId, option, DateTimeOffset.Now);
-        adventureDesk.HasDraft = () => adventureBook.Standings(gameState.Active?.Identity.FrontierId).Any(standing => standing.Adventure.IsDraft);
+        services.AdventureDesk.HasDraft = () => adventureBook.Standings(gameState.Active?.Identity.FrontierId).Any(standing => standing.Adventure.IsDraft);
 
-        storyClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);
-        storyClue.VoiceOf = due => storyDirector.ClueVoice(gameState.Active?.Identity.FrontierId, due);
-        storyReaction.Window = () => storyDirector.ReactionWindow(gameState.Active?.Identity.FrontierId);
+        stores.StoryClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);
+        stores.StoryClue.VoiceOf = due => storyDirector.ClueVoice(gameState.Active?.Identity.FrontierId, due);
+        stores.StoryReaction.Window = () => storyDirector.ReactionWindow(gameState.Active?.Identity.FrontierId);
         storyDirector.Aboard = () => personas.Current;
         storyDirector.CastNotes = (fid, storyId, castId) => late.Host?.Characters.CastNotes(fid, storyId, castId);
 
@@ -3091,11 +2962,11 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<CastLine>(),
             castId => storyDirector.CastCarrierAway(gameState.Active?.Identity.FrontierId, castId)));
 
-        ShippedCallouts.Connect(callouts, new ShippedCallouts.Services
+        ShippedCallouts.Connect(stores.Callouts, new ShippedCallouts.Services
         {
             Settings = settings,
             Galaxy = galaxy,
-            Trade = tradePlanner,
+            Trade = services.TradePlanner,
             CommunityBiology = () => settings.Current.Knowledge.CommunityBiology ? services.CommunityBiology : null,
             EarlierFinds = services.EarlierFinds,
             StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId),
@@ -3104,11 +2975,11 @@ public sealed class AppHost : IDisposable
             BgsLastTick = () => late.Host?.BgsTick?.Last,
             GalNetArrived = () => late.Host?.GalNet?.Arrived ?? [],
             ServerStatusAnnounce = () => late.Host?.ServerStatus?.Announce,
-            ComposeRecap = launch => ComposeRecap(files, launch, JournalsOnDisk(journalDirectory, logger), loggerFactory),
+            ComposeRecap = launch => ComposeRecap(foundations.Files, launch, JournalsOnDisk(stores.JournalDirectory, foundations.Logger), loggerFactory),
         });
 
         var pairing = new VoicePairer(
-            speech, settings, personas, turns, spend, loggerFactory.CreateLogger<VoicePairer>())
+            services.Speech, settings, personas, turns, spend, loggerFactory.CreateLogger<VoicePairer>())
         {
             CurrentStory = () => storyDirector.CurrentCast(gameState.Active?.Identity.FrontierId),
         };
@@ -3128,82 +2999,21 @@ public sealed class AppHost : IDisposable
     private static AppHost ComposeHost(FoundationParts foundations, StoreParts stores, LoopParts loop, ServiceParts services, CapabilityParts registry, CrewParts crew, LateBound late)
     {
         var files = foundations.Files;
-        var loaded = foundations.Loaded;
         var loggerFactory = foundations.LoggerFactory;
         var paths = foundations.Paths;
         var settings = foundations.Settings;
-        var startedLogging = foundations.StartedLogging;
-        var viewState = foundations.ViewState;
-        var activities = stores.Activities;
-        var adventureBook = stores.AdventureBook;
-        var backfillGoals = stores.BackfillGoals;
-        var bookmarks = stores.Bookmarks;
-        var callouts = stores.Callouts;
-        var cargoBoard = stores.CargoBoard;
         var checklists = stores.Checklists;
-        var commodityBoard = stores.CommodityBoard;
-        var debriefBook = stores.DebriefBook;
-        var galaxySearchBoard = stores.GalaxySearchBoard;
         var gameState = stores.GameState;
-        var goalBook = stores.GoalBook;
         var history = stores.History;
-        var journalDirectory = stores.JournalDirectory;
-        var learnedPhrases = stores.LearnedPhrases;
-        var loadouts = stores.Loadouts;
-        var lore = stores.Lore;
-        var memoryBook = stores.MemoryBook;
         var messageStore = stores.MessageStore;
-        var modulePower = stores.ModulePower;
-        var planBook = stores.PlanBook;
-        var route = stores.Route;
-        var sourcingBoard = stores.SourcingBoard;
-        var storyDownloads = stores.StoryDownloads;
-        var storyRatings = stores.StoryRatings;
-        var storyStore = stores.StoryStore;
-        var feed = loop.Feed;
-        var tick = loop.Tick;
-        var adventureDesk = services.AdventureDesk;
         var audio = services.Audio;
-        var bindingProfiles = services.BindingProfiles;
-        var buildTalk = services.BuildTalk;
-        var clipboard = services.Clipboard;
-        var clipboardOffer = services.ClipboardOffer;
-        var controllers = services.Controllers;
-        var coverage = services.Coverage;
-        var cueLogger = services.CueLogger;
-        var drift = services.Drift;
-        var dropsLogger = services.DropsLogger;
-        var eliteWindow = services.EliteWindow;
-        var endingAnswer = services.EndingAnswer;
-        var storyRecapper = services.StoryRecapper;
-        var galaxy = services.Galaxy;
         var gate = services.Gate;
-        var injector = services.Injector;
-        var inputTrace = services.InputTrace;
-        var logbook = services.Logbook;
-        var macros = services.Macros;
-        var microphone = services.Microphone;
-        var onFootPlans = services.OnFootPlans;
-        var ownPersonas = services.OwnPersonas;
         var personas = services.Personas;
-        var pushToTalk = services.PushToTalk;
-        var pushToTalkButton = services.PushToTalkButton;
-        var reconciler = services.Reconciler;
-        var recording = services.Recording;
-        var screenCapture = services.ScreenCapture;
-        var shipPlans = services.ShipPlans;
         var sources = services.Sources;
         var speech = services.Speech;
-        var spendLedger = services.SpendLedger;
-        var starSystems = services.StarSystems;
-        var switches = services.Switches;
-        var unlocks = services.Unlocks;
         var voice = services.Voice;
         var capabilities = registry.Capabilities;
-        var otherDynamicCommands = registry.OtherDynamicCommands;
-        var adventureGenerator = crew.AdventureGenerator;
         var storyDirector = crew.StoryDirector;
-        var turns = crew.Turns;
 
         var host = late.Host = new AppHost(foundations, stores, loop, services, registry, crew);
 
@@ -3211,19 +3021,19 @@ public sealed class AppHost : IDisposable
 
         // Before ApplyLlmSettings, which reads the persona block it points the loop at.
         personas.Changed += host.OnPersonaChanged;
-        storyStore.Changed += host.ReadmitIfTheHoldChanged;
-        turns.UseTranscript(personas.Transcript);
+        stores.StoryStore.Changed += host.ReadmitIfTheHoldChanged;
+        crew.Turns.UseTranscript(personas.Transcript);
 
         // Speech reaches the ledger too, or the running totals would look authoritative while covering only
         // what the model cost.
-        host.Speech.Spend.LedgerTo(spendLedger, () => settings.Current);
+        host.Speech.Spend.LedgerTo(services.SpendLedger, () => settings.Current);
 
         // The avatar's own imagery, if the Commander has dropped any in.
         host.Avatars = D47.Core.Interface.AvatarLibrary.Load(files, paths);
         host.Panel.CoreId = personas.Current.Id;
 
         // The entry reference is set on the UI thread and read here whole, so the turn thread sees either the old or the new one.
-        turns.SelectedJournalEvent = () => host.Panel.JournalSelected;
+        crew.Turns.SelectedJournalEvent = () => host.Panel.JournalSelected;
 
         // Read now, so the first turn does not read the file or run the seat migration.
         _ = host.Characters;
@@ -3235,7 +3045,7 @@ public sealed class AppHost : IDisposable
         AvatarClipStore.Want(personas.Current.Id);
 
         // The buffer the tick closure has been filling since before this instance existed (#51).
-        host.JournalLog = feed.JournalLog;
+        host.JournalLog = loop.Feed.JournalLog;
 
         // The face follows the loop.
         voice.StateEntered += state => host.Panel.LoopState = state;
@@ -3279,7 +3089,7 @@ public sealed class AppHost : IDisposable
         host.ActionButtons.Bind(settings.Current);
 
         // The mixer as the file left it, before anything is audible.
-        audio.Mix = loaded.Audio;
+        audio.Mix = foundations.Loaded.Audio;
 
         // From here on, a setting takes effect because it changed — not because something was restarted
         // (Phase 4, "Apply every setting without a restart").
@@ -3287,11 +3097,11 @@ public sealed class AppHost : IDisposable
 
         // The one instance, shared: the injector's foreground rule and the overlay's visibility rule are the
         // same question about the same window, and two readers would be two caches of one handle.
-        host.Elite = eliteWindow;
+        host.Elite = services.EliteWindow;
 
-        host.Macros = macros;
-        host.BindingProfiles = bindingProfiles;
-        host.OwnPersonas = ownPersonas;
+        host.Macros = services.Macros;
+        host.BindingProfiles = services.BindingProfiles;
+        host.OwnPersonas = services.OwnPersonas;
         host.Checklists = checklists;
 
         // The conversation's own record of a proposal, independent of whoever raised or settled it — a
@@ -3299,20 +3109,20 @@ public sealed class AppHost : IDisposable
         checklists.Proposals.Added += proposal => host.Panel.AppendProposal(proposal.Id, proposal.Summary);
         checklists.ProposalSettled += (id, accepted, outcome) => host.Panel.SettleProposal(id, accepted, outcome);
         checklists.Typed += host.AskForWatch;
-        host.Ships = shipPlans;
-        host.BuildTalk = buildTalk;
-        host.OnFootPlans = onFootPlans;
-        host.Unlocks = unlocks;
+        host.Ships = services.ShipPlans;
+        host.BuildTalk = services.BuildTalk;
+        host.OnFootPlans = services.OnFootPlans;
+        host.Unlocks = services.Unlocks;
 
         // The Commander switch (Phase 44).
-        host.Drift = drift;
-        host.Continuity = callouts.Callouts.OfType<ContinuityCallout>().Single();
+        host.Drift = services.Drift;
+        host.Continuity = stores.Callouts.Callouts.OfType<ContinuityCallout>().Single();
         gameState.CommanderChanged += host.OnCommanderChanged;
 
         host.SwitchEditing = new Settings.SwitchEditing(
-            switches,
-            controllers,
-            reconciler,
+            services.Switches,
+            services.Controllers,
+            services.Reconciler,
             () => DateTimeOffset.Now,
             Path.Combine(paths.Data, "switch-capture.txt"),
             () => host.PanelRouting.Snapshot.Destinations,
@@ -3321,7 +3131,7 @@ public sealed class AppHost : IDisposable
         // Commander can change the setting or the provider between launching d47 and writing a note, and the
         // window's own first sentence depends on the answer.
         host.LoreEditing = new Settings.LoreEditing(
-            lore,
+            stores.Lore,
             () => LoreCapability.PlaceOf(host.GameState.Active),
             () => host.CanSearch,
             host.SearchForAsync,
@@ -3329,10 +3139,10 @@ public sealed class AppHost : IDisposable
 
         // The store and the clock, together, because a fact typed here is stamped with a real instant and
         // Core reads no clock of its own.
-        host.Memories = (memoryBook, () => DateTimeOffset.Now);
+        host.Memories = (stores.MemoryBook, () => DateTimeOffset.Now);
 
         // Same reason (#162): an adoption is stamped with a real instant and Core reads no clock of its own.
-        var debrief = new DebriefHost(debriefBook, () => DateTimeOffset.Now, settings, host.Personas, loggerFactory.CreateLogger<DebriefHost>());
+        var debrief = new DebriefHost(stores.DebriefBook, () => DateTimeOffset.Now, settings, host.Personas, loggerFactory.CreateLogger<DebriefHost>());
         host.Debrief = debrief;
 
         // The session opens here, over what the file says right now.
@@ -3343,14 +3153,14 @@ public sealed class AppHost : IDisposable
         host.RewordProposals();
 
         // A callout switched off within seconds of it speaking (#162).
-        callouts.Silenced += debrief.NoteSilenced;
-        host.Logbook = logbook;
-        host.Goals = (goalBook, backfillGoals);
-        host.Activities = activities;
-        host.Adventures = (adventureBook, adventureGenerator);
+        stores.Callouts.Silenced += debrief.NoteSilenced;
+        host.Logbook = services.Logbook;
+        host.Goals = (stores.GoalBook, stores.BackfillGoals);
+        host.Activities = stores.Activities;
+        host.Adventures = (stores.AdventureBook, crew.AdventureGenerator);
         host.Stories = storyDirector;
-        host.StoryStore = storyStore;
-        host.StoryDownloads = storyDownloads;
+        host.StoryStore = stores.StoryStore;
+        host.StoryDownloads = stores.StoryDownloads;
         host.CodexPictures = new CodexPictureStore(
             files,
             paths.CodexPictures,
@@ -3370,12 +3180,12 @@ public sealed class AppHost : IDisposable
                     host.Secrets.TryGet(D47.Core.Interface.CodexPublishToken.SecretName, out var stored) ? stored : null, Environment.GetEnvironmentVariable),
                 () => D47.Core.Interface.CodexPublishToken.Present(host.Secrets.Names.Contains(D47.Core.Interface.CodexPublishToken.SecretName), Environment.GetEnvironmentVariable),
                 loggerFactory.CreateLogger<CodexPicturePublisher>()));
-        host.StoryRatings = storyRatings;
+        host.StoryRatings = stores.StoryRatings;
         host.StoryBench = stores.StoryBench;
-        endingAnswer.Answer = host.Narration.AnswerEnding;
-        storyRecapper.Write = cancellationToken => host.Narration.WriteRecapAsync(null, cancellationToken);
-        host.AdventureDesk = adventureDesk;
-        host.LearnedPhrases = learnedPhrases;
+        services.EndingAnswer.Answer = host.Narration.AnswerEnding;
+        services.StoryRecapper.Write = cancellationToken => host.Narration.WriteRecapAsync(null, cancellationToken);
+        host.AdventureDesk = services.AdventureDesk;
+        host.LearnedPhrases = stores.LearnedPhrases;
         host.Messages = messageStore;
 
         // A story's cast speaks through the local voices; a pick waits, and a running story pauses, until they are ready.
@@ -3418,23 +3228,23 @@ public sealed class AppHost : IDisposable
         {
             _ = Task.Run(messageStore.ForgetOwnVoice);
         }
-        host.Galaxy = galaxy;
-        host.StarSystems = starSystems;
-        host.JournalDirectory = journalDirectory;
+        host.Galaxy = services.Galaxy;
+        host.StarSystems = services.StarSystems;
+        host.JournalDirectory = stores.JournalDirectory;
         host.History = history;
         host.Commanders = new CommanderRoster(
             () => history.Commanders,
             () => history.CommanderFilesExamined,
             () => gameState.Active?.Identity.FrontierId,
             () => gameState.IsOffDuty,
-            feed.Picks.Enqueue);
-        host._startedLogging = startedLogging;
+            loop.Feed.Picks.Enqueue);
+        host._startedLogging = foundations.StartedLogging;
 
         // Through the dispatcher: the walk raises this on the thread pool thread WarmUp put it on (#148).
         history.Changed += host.ShowHistory;
         host.Rescanner = new LoadoutRescanner(
-            gameState, loadouts, host.Files, journalDirectory, loggerFactory, () => DateTimeOffset.Now);
-        host._bookmarks = bookmarks;
+            gameState, stores.Loadouts, host.Files, stores.JournalDirectory, loggerFactory, () => DateTimeOffset.Now);
+        host._bookmarks = stores.Bookmarks;
         host.SurfaceMarks = stores.SurfaceMarks;
         host.EarlierFinds = services.EarlierFinds;
 
@@ -3442,39 +3252,39 @@ public sealed class AppHost : IDisposable
             ? []
             : BookmarksCapability.TakenPhrases(late.Router.Book);
 
-        host.Plans = planBook;
+        host.Plans = stores.PlanBook;
 
         // Every system name d47 already holds, for the finder that picks them out of text (#156).
         var systemsInPlay = new D47.Core.Knowledge.SystemsInPlay();
 
-        systemsInPlay.Add(() => [clipboardOffer.Text]);
+        systemsInPlay.Add(() => [services.ClipboardOffer.Text]);
         systemsInPlay.Add(() => D47.Core.Knowledge.CommanderSystems.Of(gameState.Active));
-        systemsInPlay.Add(() => route.Current.Hops.Select(hop => hop.StarSystem));
+        systemsInPlay.Add(() => stores.Route.Current.Hops.Select(hop => hop.StarSystem));
         systemsInPlay.Add(() => D47.Core.Knowledge.EngineerDirectory.All.Select(engineer => engineer.System));
         systemsInPlay.Add(() => D47.Core.Knowledge.LoreDirectory.All.Select(entry => entry.Name));
-        systemsInPlay.Add(planBook.Systems);
-        systemsInPlay.Add(commodityBoard.Systems);
-        systemsInPlay.Add(() => galaxy.Names);
+        systemsInPlay.Add(stores.PlanBook.Systems);
+        systemsInPlay.Add(stores.CommodityBoard.Systems);
+        systemsInPlay.Add(() => services.Galaxy.Names);
 
         host.SystemsInPlay = systemsInPlay;
-        host.Clipboard = clipboard;
-        host.Controllers = controllers;
-        host.Commodities = commodityBoard;
-        host.Sourcing = sourcingBoard;
-        host.Cargo = cargoBoard;
-        host.GalaxySearches = galaxySearchBoard;
+        host.Clipboard = services.Clipboard;
+        host.Controllers = services.Controllers;
+        host.Commodities = stores.CommodityBoard;
+        host.Sourcing = stores.SourcingBoard;
+        host.Cargo = stores.CargoBoard;
+        host.GalaxySearches = stores.GalaxySearchBoard;
         host.SavedSearches = stores.SavedSearches;
         host.SearchHistory = stores.SearchHistory;
         host.SignalSightings = stores.SignalSightings;
         host.CommsChannels = stores.CommsChannels;
         host._commsSelection = new D47.App.Panel.CommsSelectionMemory(
-            stores.CommsChannels, viewState, action => Avalonia.Threading.Dispatcher.UIThread.Post(action), TimeProvider.System);
+            stores.CommsChannels, foundations.ViewState, action => Avalonia.Threading.Dispatcher.UIThread.Post(action), TimeProvider.System);
         host.TravelLog = stores.TravelLog;
 
-        host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, otherDynamicCommands());
+        host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, registry.OtherDynamicCommands());
 
-        host.CoverageRecorder = coverage;
-        coverage?.Follow(capabilities, settings);
+        host.CoverageRecorder = services.Coverage;
+        services.Coverage?.Follow(capabilities, settings);
 
         var usage = new D47.App.Usage.UsageReporter(
             Path.Combine(paths.Data, "usage-counts.json"),
@@ -3503,7 +3313,7 @@ public sealed class AppHost : IDisposable
             {
                 try
                 {
-                    adventureBook.Record(frontierId, made);
+                    stores.AdventureBook.Record(frontierId, made);
                 }
                 catch (Exception ex)
                 {
@@ -3521,9 +3331,9 @@ public sealed class AppHost : IDisposable
             RecordForStories(D47.Core.Adventures.D47Event.PictureSaved(key.EntryId, key.RegionId, onRecord, DateTimeOffset.Now));
         };
 
-        host.AudioRecorder = recording;
-        host.InputTrace = inputTrace;
-        host.ScreenCapture = screenCapture;
+        host.AudioRecorder = services.Recording;
+        host.InputTrace = services.InputTrace;
+        host.ScreenCapture = services.ScreenCapture;
 
         // Captured audio becomes words on the thread pool, never on the audio thread that produced it.
         gate.Captured += host.Listener.TranscribeAsync;
@@ -3531,14 +3341,14 @@ public sealed class AppHost : IDisposable
         // The route reader lives in the tick closure, so the host reaches it through this rather than owning
         // it — proper-noun biasing wants the systems the Commander is about to arrive in, and those are only
         // in the route file.
-        host._route = () => route.Current;
-        host._modulePower = () => modulePower.Current;
+        host._route = () => stores.Route.Current;
+        host._modulePower = () => stores.ModulePower.Current;
 
         // Two sources, one gate (Phase 53).
-        pushToTalk.Pressed += sources.KeyPressed;
-        pushToTalk.Released += sources.KeyReleased;
-        pushToTalkButton.Pressed += sources.ButtonPressed;
-        pushToTalkButton.Released += sources.ButtonReleased;
+        services.PushToTalk.Pressed += sources.KeyPressed;
+        services.PushToTalk.Released += sources.KeyReleased;
+        services.PushToTalkButton.Pressed += sources.ButtonPressed;
+        services.PushToTalkButton.Released += sources.ButtonReleased;
 
         sources.Pressed += () => gate.KeyDown(DateTimeOffset.Now, PttTarget.Core);
         sources.Released += () => gate.KeyUp(PttTarget.Core);
@@ -3561,7 +3371,7 @@ public sealed class AppHost : IDisposable
         // The audio folder, which the Commander can add to while d47 is running.
         host._audioWatch = new AudioFolderWatch(
             paths.Audio,
-            () => host.RebuildAudio(paths.Audio, dropsLogger, cueLogger),
+            () => host.RebuildAudio(paths.Audio, services.DropsLogger, services.CueLogger),
             loggerFactory.CreateLogger<AudioFolderWatch>());
 
         return host;
@@ -3571,57 +3381,27 @@ public sealed class AppHost : IDisposable
     {
         var settings = foundations.Settings;
         var adventureBook = stores.AdventureBook;
-        var adventureStore = stores.AdventureStore;
-        var autonomous = stores.Autonomous;
         var gameState = stores.GameState;
-        var goals = stores.Goals;
-        var journal = stores.Journal;
-        var journalDirectory = stores.JournalDirectory;
-        var memories = stores.Memories;
-        var memoryBook = stores.MemoryBook;
-        var memoryObserver = stores.MemoryObserver;
-        var shipBuilds = stores.ShipBuilds;
-        var status = stores.Status;
-        var storyStore = stores.StoryStore;
         var feed = loop.Feed;
         var tick = loop.Tick;
-        var binds = services.Binds;
-        var drift = services.Drift;
-        var gameInput = services.GameInput;
-        var gate = services.Gate;
-        var macros = services.Macros;
-        var microphone = services.Microphone;
-        var onFootBuilds = services.OnFootBuilds;
-        var onFootPlans = services.OnFootPlans;
-        var ownPersonas = services.OwnPersonas;
-        var pushToTalk = services.PushToTalk;
-        var pushToTalkButton = services.PushToTalkButton;
         var reconciler = services.Reconciler;
-        var sampledControllers = services.SampledControllers;
-        var shipCoreStore = services.ShipCoreStore;
-        var shipCores = services.ShipCores;
         var shipPlans = services.ShipPlans;
-        var switches = services.Switches;
-        var timersAndAlarms = services.TimersAndAlarms;
-        var capabilities = registry.Capabilities;
-        var otherDynamicCommands = registry.OtherDynamicCommands;
-        var storyDirector = crew.StoryDirector;
 
         // Push-to-talk, sampled here rather than hooked.
         tick.Add("push-to-talk", context =>
         {
-            pushToTalk.Poll();
+            services.PushToTalk.Poll();
             host.Listener.CommsKey.Poll();
 
             // And the stick, on the same tick (Phase 53).
-            Listener.PollTheStick(sampledControllers, pushToTalkButton, host.Listener.CommsButton, host.Listener.CancelButton, host.ActionButtons, host._logger);
+            Listener.PollTheStick(services.SampledControllers, services.PushToTalkButton, host.Listener.CommsButton, host.Listener.CancelButton, host.ActionButtons, host._logger);
 
             // Whether the device is actually delivering audio, which only it knows and which is half of what
             // the panel's microphone indicator says.
-            gate.Capturing = microphone.IsCapturing;
+            services.Gate.Capturing = services.Microphone.IsCapturing;
 
             // Where the hands-free gate opens and closes.
-            gate.Poll(context.Now);
+            services.Gate.Poll(context.Now);
         });
 
         // Windows moves its own default endpoint silently; nothing else notices while d47 holds a device
@@ -3633,15 +3413,15 @@ public sealed class AppHost : IDisposable
         });
 
         // The async half of a synchronous tick.
-        tick.Add("macros", _ => macros.Poll(() => PhrasesAlreadyTaken(capabilities, otherDynamicCommands())));
+        tick.Add("macros", _ => services.Macros.Poll(() => PhrasesAlreadyTaken(registry.Capabilities, registry.OtherDynamicCommands())));
 
         // Same shape, same reason: a file Elite owns, re-read only when it moves.
-        tick.Add("binds", _ => binds.Poll());
+        tick.Add("binds", _ => services.Binds.Poll());
 
         // The switch path, in the tick's own shape: read the file if it changed, read the hardware, decide.
         tick.Add("switches", context =>
         {
-            switches.Poll();
+            services.Switches.Poll();
 
             // One snapshot for both fields, so the pages and the one showing were true together.
             var panel = host.PanelRouting.Snapshot;
@@ -3650,8 +3430,8 @@ public sealed class AppHost : IDisposable
                 new SwitchTick
                 {
                     Now = context.Now,
-                    Readings = sampledControllers.PollWithPresses(),
-                    Status = status.Current,
+                    Readings = services.SampledControllers.PollWithPresses(),
+                    Status = stores.Status.Current,
                     Binds = late.Binds!(),
 
                     // Gated by key injection as well as by its own row.
@@ -3663,14 +3443,14 @@ public sealed class AppHost : IDisposable
                     Destinations = panel.Destinations,
                     Showing = panel.Showing,
                 },
-                switches.Switches);
+                services.Switches.Switches);
 
             // The annunciator, on whichever surfaces are up.
             host.ShowSwitches(SwitchCapability.Annunciator(reconciler.States));
         });
 
         // The first thing d47 does that nothing external triggers (Phase 24).
-        if (timersAndAlarms is { } clocks)
+        if (services.TimersAndAlarms is { } clocks)
         {
             tick.Add("reminders", context =>
             {
@@ -3683,8 +3463,8 @@ public sealed class AppHost : IDisposable
         // plan onto it rather than making them re-point it (Phase 26).
         tick.Add("ships", context =>
         {
-            shipBuilds.Poll();
-            onFootBuilds.Poll();
+            stores.ShipBuilds.Poll();
+            services.OnFootBuilds.Poll();
 
             // Before adoption, so a sale and a purchase reusing its id in one batch are taken in that order.
             shipPlans.DropGone(feed.Arrived);
@@ -3697,7 +3477,7 @@ public sealed class AppHost : IDisposable
             // Both halves of the same offer.
             var announce = !context.IsFirst && !gameState.IsOffDuty;
 
-            foreach (var adopted in shipPlans.Observe(feed.Arrived, announce).Concat(onFootPlans.Observe(feed.Arrived)))
+            foreach (var adopted in shipPlans.Observe(feed.Arrived, announce).Concat(services.OnFootPlans.Observe(feed.Arrived)))
             {
                 host.Panel.Append($"{adopted}{Environment.NewLine}");
                 _ = host.Voice.AnnounceAsync(adopted);
@@ -3705,7 +3485,7 @@ public sealed class AppHost : IDisposable
 
             // Boarding a ship whose build carries engineering the checklist has not got is the moment to say
             // so, once (Phase 38).
-            if (drift.Observe(feed.Arrived) is { Length: > 0 } asked)
+            if (services.Drift.Observe(feed.Arrived) is { Length: > 0 } asked)
             {
                 host.Panel.Append($"{asked}{Environment.NewLine}");
                 _ = host.Voice.AnnounceAsync(asked);
@@ -3713,7 +3493,7 @@ public sealed class AppHost : IDisposable
         });
 
         // The cores the Commander wrote, on the tick like every other store.
-        tick.Add("own cores", _ => ownPersonas.Poll());
+        tick.Add("own cores", _ => services.OwnPersonas.Poll());
 
         // After "journal"; the move is posted to each surface's own thread, so the tick does not wait.
         tick.Add("codex entry page", context =>
@@ -3738,9 +3518,9 @@ public sealed class AppHost : IDisposable
         // A core per ship (Phase 35).
         tick.Add("ship cores", context =>
         {
-            shipCoreStore.Poll();
+            services.ShipCoreStore.Poll();
 
-            if (shipCores.Observe(context.Since) is { } due)
+            if (services.ShipCores.Observe(context.Since) is { } due)
             {
                 host.PutCoreAboard(due);
             }
@@ -3751,7 +3531,7 @@ public sealed class AppHost : IDisposable
 
         tick.Add("memory", context =>
         {
-            memories.Poll();
+            stores.Memories.Poll();
 
             if (!settings.Current.Memory.Enabled)
             {
@@ -3762,41 +3542,41 @@ public sealed class AppHost : IDisposable
 
             if (!gameState.IsOffDuty)
             {
-                memoryObserver.Observe(gameState.Active, context.Now);
-                memoryObserver.Touch(gameState.Active, context.Now);
+                stores.MemoryObserver.Observe(gameState.Active, context.Now);
+                stores.MemoryObserver.Touch(gameState.Active, context.Now);
             }
 
             // Once at startup and then rarely.
             if (expiry.TryBegin(context.Now, out var firstPass))
             {
                 host.ReportExpiredMemories(
-                    memoryBook.Expire(context.Now, MemoryCapability.ExpiryOf(settings.Current.Memory)),
+                    stores.MemoryBook.Expire(context.Now, MemoryCapability.ExpiryOf(settings.Current.Memory)),
                     firstPass);
             }
 
-            host.ApplyRecall(memoryBook.Recall());
+            host.ApplyRecall(stores.MemoryBook.Recall());
         });
 
         // The arcs, on the tick because goals.json is hand-editable, so a removed list or a mined mark edited
         // by hand is live without a restart.
-        tick.Add("goals", _ => goals.Poll());
+        tick.Add("goals", _ => stores.Goals.Poll());
 
         // The adventures file is hand-editable and polled like the others. When a stamp has moved - Begin, Begin
         // again, a hand edit - the walk the book asked for is started here, reading up to where the journal tail has
         // read, and run on the pool; the book holds live events until a later tick adopts the walk's result.
-        var storyWaking = new D47.Core.Stories.StoryWaking(storyDirector, storyStore, adventureBook, gameState, new StoryWakingVoice(host));
+        var storyWaking = new D47.Core.Stories.StoryWaking(crew.StoryDirector, stores.StoryStore, adventureBook, gameState, new StoryWakingVoice(host));
         var walked = new System.Collections.Concurrent.ConcurrentQueue<D47.Core.Adventures.AdventureWalkResult>();
 
         tick.Add("adventures", context =>
         {
-            adventureStore.Poll();
+            stores.AdventureStore.Poll();
 
             while (walked.TryDequeue(out var result))
             {
                 adventureBook.Adopt(result);
             }
 
-            if (adventureBook.StartWalk(journalDirectory, journal.Mark) is { } walk)
+            if (adventureBook.StartWalk(stores.JournalDirectory, stores.Journal.Mark) is { } walk)
             {
                 _ = Task.Run(() => walked.Enqueue(walk.Run()));
             }
@@ -3821,7 +3601,7 @@ public sealed class AppHost : IDisposable
                 host.Music.GameRunning(running);
             }
 
-            host.Music.Follow(status.Current, feed.EliteMusic.Track);
+            host.Music.Follow(stores.Status.Current, feed.EliteMusic.Track);
         });
 
         // After ambience, so it reads this tick's running state.
@@ -3915,27 +3695,24 @@ public sealed class AppHost : IDisposable
 
         // After the callouts, so a honk that reports why it did not fire is spoken in the same order it was
         // decided relative to everything else this tick.
-        tick.Add("autonomous-drain", _ => host._actions.CarryOutPendingActions(autonomous, gameInput, host.GameState.IsOffDuty));
+        tick.Add("autonomous-drain", _ => host._actions.CarryOutPendingActions(stores.Autonomous, services.GameInput, host.GameState.IsOffDuty));
 
         // After the autonomous drain and for the same reason it exists: the tick is synchronous and a key
         // press is not.
         tick.Add("switch-drain", _ => host._actions.CarryOutReconciles(
-            reconciler, gameInput, services.HeadsetKey, services.Chords, host.GameState.IsOffDuty, host.PanelRouting.Show));
+            reconciler, services.GameInput, services.HeadsetKey, services.Chords, host.GameState.IsOffDuty, host.PanelRouting.Show));
     }
 
     private static void StartRunning(AppHost host, FoundationParts foundations, LoopParts loop, ServiceParts services, bool startTicking)
     {
         var loggerFactory = foundations.LoggerFactory;
-        var modelCatalog = foundations.ModelCatalog;
         var settings = foundations.Settings;
-        var tick = loop.Tick;
-        var sampledControllers = services.SampledControllers;
 
         // Last, so every subscriber registered during composition is in place before the first timer-driven
         // tick — and so a failure in an earlier stage happens against a loop that never started rather than one already
         // running against half-built state.
         host._modelCatalog = new ModelCatalogRefresher(
-            modelCatalog, settings, loggerFactory.CreateLogger<ModelCatalogRefresher>());
+            foundations.ModelCatalog, settings, loggerFactory.CreateLogger<ModelCatalogRefresher>());
 
         if (startTicking)
         {
@@ -3944,11 +3721,11 @@ public sealed class AppHost : IDisposable
                 foundations.Secrets.Has);
 
             host._modelCatalog.Start();
-            host._controllerSampler = sampledControllers.Start();
+            host._controllerSampler = services.SampledControllers.Start();
             CarryStoredControllerIds(services, settings, loggerFactory.CreateLogger<AppHost>());
 
             host._ticking = StartupTimer.Time(
-                "tick driver", () => new TickDriver(tick, loggerFactory.CreateLogger<TickDriver>()).Start());
+                "tick driver", () => new TickDriver(loop.Tick, loggerFactory.CreateLogger<TickDriver>()).Start());
         }
     }
 

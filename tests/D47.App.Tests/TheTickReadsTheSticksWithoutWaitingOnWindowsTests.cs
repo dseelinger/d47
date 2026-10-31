@@ -152,11 +152,11 @@ public class TheTickReadsTheSticksWithoutWaitingOnWindowsTests
     [Trait("Category", "Gate")]
     public void TheTickSubscribersReadTheSamplerAndNotTheControllers()
     {
-        Assert.NotEmpty(AppSource.CodeLines("PollTheStick(sampledControllers,"));
-        Assert.NotEmpty(AppSource.CodeLines("Readings = sampledControllers.PollWithPresses(),"));
+        Assert.NotEmpty(AppSource.CodeLines("PollTheStick(services.SampledControllers,"));
+        Assert.NotEmpty(AppSource.CodeLines("Readings = services.SampledControllers.PollWithPresses(),"));
         Assert.Empty(AppSource.CodeLinesMatchingOutside(
             "SelfTest",
-            new System.Text.RegularExpressions.Regex(@"\b_?controllers\??\.(Poll\(|IsSettled)")));
+            new System.Text.RegularExpressions.Regex(@"(\b_?controllers|\bservices\.Controllers)\??\.(Poll\(|IsSettled)")));
     }
 
     /// <summary>A reader whose poll can be made to wait, as a Windows call might.</summary>
