@@ -9,17 +9,10 @@ public class HelmetAndHologramRunAsTheClipArrivesTests
 {
     private static readonly AudioClip Line = GuardianVoiceTests.Voiced(150, seconds: 2.0);
 
-    public static TheoryData<string, int> EachEffectAtEachLevel => [.. (
-        from id in new[] { "helmet", "hologram" }
-        from level in new[] { GuardianVoice.LowestLevel, GuardianVoice.Find(id)!.DefaultLevel, GuardianVoice.HighestLevel }
-        select (id, level)).Distinct()];
+    public static TheoryData<string, int> EachEffectAtEachLevel => GuardianStages.EachLevel("helmet", "hologram");
 
-    private static IGuardianStage Start(string id, int level)
-    {
-        var effect = GuardianVoice.Find(id)!;
-
-        return effect.Start(effect.Value(level), 200, Line.Format.SampleRate);
-    }
+    private static IGuardianStage Start(string id, int level) =>
+        GuardianStages.Start(id, level, 200, Line.Format.SampleRate);
 
     [Theory]
     [MemberData(nameof(EachEffectAtEachLevel))]
@@ -27,23 +20,7 @@ public class HelmetAndHologramRunAsTheClipArrivesTests
     {
         var dry = GuardianVoiceTests.Samples(Line);
 
-        var whole = new List<double>();
-        var once = Start(id, level);
-        once.Push(dry, whole);
-        once.Finish(whole);
-
-        var chunked = new List<double>();
-        var piecewise = Start(id, level);
-        var random = new Random(790 + level);
-
-        for (var at = 0; at < dry.Length;)
-        {
-            var size = Math.Min(dry.Length - at, random.Next(0, 3_000));
-            piecewise.Push(dry.AsSpan(at, size), chunked);
-            at += size;
-        }
-
-        piecewise.Finish(chunked);
+        var (whole, chunked) = GuardianStages.WholeAndChunked(id, level, dry, 790 + level, 3_000);
 
         Assert.NotEmpty(whole);
         Assert.Equal(whole, chunked);

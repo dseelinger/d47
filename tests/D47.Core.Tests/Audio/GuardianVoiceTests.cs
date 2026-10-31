@@ -30,10 +30,12 @@ public class GuardianVoiceTests
         [.. GuardianVoice.Defaults.Select(effect => effect with { Ticked = ids.Contains(effect.Id) })];
 
     /// <summary>One effect ticked at a level, everything else off at its default.</summary>
-    private static IReadOnlyList<GuardianVoiceEffect> TickingAt(string id, int level) =>
+    internal static IReadOnlyList<GuardianVoiceEffect> TickingAt(string id, int level) =>
         [.. GuardianVoice.Defaults.Select(effect => effect.Id == id ? effect with { Ticked = true, Level = level } : effect)];
 
-    private static AudioClip Clip(double[] samples, string name = "line")
+    internal static int DefaultLevel(string id) => GuardianVoice.Find(id)!.DefaultLevel;
+
+    internal static AudioClip Clip(double[] samples, string name = "line")
     {
         var pcm = new byte[samples.Length * 2];
 
@@ -48,7 +50,7 @@ public class GuardianVoiceTests
         return new AudioClip(name, pcm, AudioFormat.Standard);
     }
 
-    private static AudioClip Tone(double hertz, double seconds = 1.0, double amplitude = 0.3) =>
+    internal static AudioClip Tone(double hertz, double seconds = 1.0, double amplitude = 0.3) =>
         Clip(Enumerable.Range(0, (int)(Rate * seconds))
             .Select(index => Math.Sin(2 * Math.PI * hertz * index / Rate) * amplitude)
             .ToArray());
@@ -130,7 +132,7 @@ public class GuardianVoiceTests
     }
 
     /// <summary>Goertzel.</summary>
-    private static double Magnitude(double[] samples, double hertz)
+    internal static double Magnitude(ReadOnlySpan<double> samples, double hertz)
     {
         var coefficient = 2 * Math.Cos(2 * Math.PI * hertz / Rate);
         var previous = 0.0;

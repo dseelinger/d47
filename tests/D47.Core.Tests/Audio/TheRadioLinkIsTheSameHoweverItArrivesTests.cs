@@ -1,6 +1,7 @@
 using D47.Core.Audio;
 using D47.Core.Stories;
 using Xunit;
+using static D47.Core.Tests.Audio.PcmChunking;
 
 namespace D47.Core.Tests.Audio;
 
@@ -11,21 +12,6 @@ public class TheRadioLinkIsTheSameHoweverItArrivesTests
     private const int Rate = 48_000;
 
     private static readonly AudioClip Speech = PcmConverter.ToStandard(StandInVoice.Clip);
-
-    private static byte[] Whole(IPcmFilter filter, ReadOnlySpan<byte> pcm) => [.. filter.Push(pcm), .. filter.Finish()];
-
-    /// <summary>Chunks of 1 to 4,999 bytes, odd sizes included, so samples are split across pushes.</summary>
-    private static IEnumerable<int> RandomCuts(int length, int seed)
-    {
-        var random = new Random(seed);
-
-        for (var at = 0; at < length;)
-        {
-            var size = Math.Min(length - at, random.Next(1, 5_000));
-            yield return size;
-            at += size;
-        }
-    }
 
     public static TheoryData<int, double, bool> Links => new()
     {
@@ -39,19 +25,8 @@ public class TheRadioLinkIsTheSameHoweverItArrivesTests
     public void AClipFedInRandomChunksIsByteIdenticalToTheClipFedWhole(int seed, double strength, bool overheard)
     {
         var pcm = Speech.Pcm.ToArray();
-        var chunked = RadioVoice.Filter(strength, overheard);
-        var output = new List<byte>();
-        var at = 0;
 
-        foreach (var size in RandomCuts(pcm.Length, seed))
-        {
-            output.AddRange(chunked.Push(pcm.AsSpan(at, size)));
-            at += size;
-        }
-
-        output.AddRange(chunked.Finish());
-
-        Assert.Equal(Whole(RadioVoice.Filter(strength, overheard), pcm), output.ToArray());
+        Assert.Equal(Whole(RadioVoice.Filter(strength, overheard), pcm), Chunked(RadioVoice.Filter(strength, overheard), pcm, seed));
     }
 
     [Theory]
@@ -74,14 +49,7 @@ public class TheRadioLinkIsTheSameHoweverItArrivesTests
     {
         var source = new ArrivingClip("line");
         var treated = source.Through(RadioVoice.Filter(0.5, overheard: false));
-        var pcm = Speech.Pcm.ToArray();
-        var at = 0;
-
-        foreach (var size in RandomCuts(pcm.Length, 47))
-        {
-            source.Append(pcm.AsSpan(at, size));
-            at += size;
-        }
+        AppendInCuts(source, Speech.Pcm.ToArray(), 47);
 
         Assert.False(treated.IsComplete);
 

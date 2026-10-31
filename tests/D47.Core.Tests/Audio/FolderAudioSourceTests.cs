@@ -48,26 +48,7 @@ public class FolderAudioSourceTests : IDisposable
         var path = Path.Combine(_root, relative.Replace('/', Path.DirectorySeparatorChar));
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
-        const int Samples = 240;
-        var data = Samples * channels * (bits / 8);
-
-        using var file = File.Create(path);
-        using var write = new BinaryWriter(file);
-
-        write.Write("RIFF"u8.ToArray());
-        write.Write(36 + data);
-        write.Write("WAVE"u8.ToArray());
-        write.Write("fmt "u8.ToArray());
-        write.Write(16);
-        write.Write((short)1);
-        write.Write(channels);
-        write.Write(sampleRate);
-        write.Write(sampleRate * channels * (bits / 8));
-        write.Write((short)(channels * (bits / 8)));
-        write.Write(bits);
-        write.Write("data"u8.ToArray());
-        write.Write(data);
-        write.Write(new byte[data]);
+        File.WriteAllBytes(path, TestWav.Bytes(240, sampleRate, channels, bits));
     }
 
     private FolderAudioSource Source() =>

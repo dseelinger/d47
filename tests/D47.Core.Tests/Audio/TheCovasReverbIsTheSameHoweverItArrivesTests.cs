@@ -2,6 +2,7 @@ using D47.Core.Audio;
 using D47.Core.Configuration;
 using D47.Core.Persona;
 using Xunit;
+using static D47.Core.Tests.Audio.PcmChunking;
 
 namespace D47.Core.Tests.Audio;
 
@@ -10,21 +11,6 @@ public class TheCovasReverbIsTheSameHoweverItArrivesTests
 {
     private static readonly AudioClip Speech = PcmConverter.ToStandard(StandInVoice.Clip);
 
-    private static byte[] Whole(IPcmFilter filter, ReadOnlySpan<byte> pcm) => [.. filter.Push(pcm), .. filter.Finish()];
-
-    /// <summary>Chunks of 1 to 4,999 bytes, odd sizes included, so frames are split across pushes.</summary>
-    private static IEnumerable<int> RandomCuts(int length, int seed)
-    {
-        var random = new Random(seed);
-
-        for (var at = 0; at < length;)
-        {
-            var size = Math.Min(length - at, random.Next(1, 5_000));
-            yield return size;
-            at += size;
-        }
-    }
-
     [Theory]
     [InlineData(1)]
     [InlineData(781)]
@@ -32,19 +18,8 @@ public class TheCovasReverbIsTheSameHoweverItArrivesTests
     public void AClipFedInRandomChunksIsByteIdenticalToTheClipFedWhole(int seed)
     {
         var pcm = Speech.Pcm.ToArray();
-        var chunked = CovasVoice.Filter();
-        var output = new List<byte>();
-        var at = 0;
 
-        foreach (var size in RandomCuts(pcm.Length, seed))
-        {
-            output.AddRange(chunked.Push(pcm.AsSpan(at, size)));
-            at += size;
-        }
-
-        output.AddRange(chunked.Finish());
-
-        Assert.Equal(Whole(CovasVoice.Filter(), pcm), output.ToArray());
+        Assert.Equal(Whole(CovasVoice.Filter(), pcm), Chunked(CovasVoice.Filter(), pcm, seed));
     }
 
     [Fact]
@@ -60,14 +35,7 @@ public class TheCovasReverbIsTheSameHoweverItArrivesTests
     {
         var source = new ArrivingClip("line");
         var treated = source.Through(CovasVoice.Filter());
-        var pcm = Speech.Pcm.ToArray();
-        var at = 0;
-
-        foreach (var size in RandomCuts(pcm.Length, 47))
-        {
-            source.Append(pcm.AsSpan(at, size));
-            at += size;
-        }
+        AppendInCuts(source, Speech.Pcm.ToArray(), 47);
 
         Assert.False(treated.IsComplete);
 

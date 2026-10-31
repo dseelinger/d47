@@ -68,26 +68,7 @@ public class TheRowAccountsForEveryDroppedFileTests : IDisposable
 
     private void WriteWav(string relative)
     {
-        const int Samples = 240;
-        var data = Samples * 2;
-
-        using var file = File.Create(FullPath(relative));
-        using var write = new BinaryWriter(file);
-
-        write.Write("RIFF"u8.ToArray());
-        write.Write(36 + data);
-        write.Write("WAVE"u8.ToArray());
-        write.Write("fmt "u8.ToArray());
-        write.Write(16);
-        write.Write((short)1);
-        write.Write((short)1);
-        write.Write(48_000);
-        write.Write(48_000 * 2);
-        write.Write((short)2);
-        write.Write((short)16);
-        write.Write("data"u8.ToArray());
-        write.Write(data);
-        write.Write(new byte[data]);
+        File.WriteAllBytes(FullPath(relative), TestWav.Bytes(240));
     }
 
     private void WriteBytes(string relative, byte[] bytes) => File.WriteAllBytes(FullPath(relative), bytes);

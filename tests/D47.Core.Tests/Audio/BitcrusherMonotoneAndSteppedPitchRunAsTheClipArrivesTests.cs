@@ -16,17 +16,9 @@ public class BitcrusherMonotoneAndSteppedPitchRunAsTheClipArrivesTests
 
     private static readonly string[] Effects = ["bitcrusher", "monotone", "steppedPitch"];
 
-    public static TheoryData<string, int> EachEffectAtEachLevel => [.. (
-        from id in Effects
-        from level in new[] { GuardianVoice.LowestLevel, GuardianVoice.Find(id)!.DefaultLevel, GuardianVoice.HighestLevel }
-        select (id, level)).Distinct()];
+    public static TheoryData<string, int> EachEffectAtEachLevel => GuardianStages.EachLevel(Effects);
 
-    private static IGuardianStage Start(string id, int level)
-    {
-        var effect = GuardianVoice.Find(id)!;
-
-        return effect.Start(effect.Value(level), BasePitch, Rate);
-    }
+    private static IGuardianStage Start(string id, int level) => GuardianStages.Start(id, level, BasePitch, Rate);
 
     private static List<double> Whole(string id, int level, double[] dry)
     {
@@ -52,20 +44,7 @@ public class BitcrusherMonotoneAndSteppedPitchRunAsTheClipArrivesTests
     public void FedInRandomChunksTheOutputMatchesOneChunk(string id, int level)
     {
         var dry = GuardianVoiceTests.Samples(Line);
-        var whole = Whole(id, level, dry);
-
-        var chunked = new List<double>();
-        var piecewise = Start(id, level);
-        var random = new Random(791 + level);
-
-        for (var at = 0; at < dry.Length;)
-        {
-            var size = Math.Min(dry.Length - at, random.Next(0, 3_000));
-            piecewise.Push(dry.AsSpan(at, size), chunked);
-            at += size;
-        }
-
-        piecewise.Finish(chunked);
+        var (whole, chunked) = GuardianStages.WholeAndChunked(id, level, dry, 791 + level, 3_000);
 
         Assert.Equal(dry.Length, whole.Count);
         Assert.Equal(whole, chunked);

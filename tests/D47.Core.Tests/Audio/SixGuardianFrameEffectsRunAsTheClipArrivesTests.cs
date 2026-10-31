@@ -14,17 +14,10 @@ public class SixGuardianFrameEffectsRunAsTheClipArrivesTests
 
     private static readonly string[] Effects = ["cylon", "whisper", "pitchDown", "octaveDown", "hive", "shimmer"];
 
-    public static TheoryData<string, int> EachEffectAtEachLevel => [.. (
-        from id in Effects
-        from level in new[] { GuardianVoice.LowestLevel, GuardianVoice.Find(id)!.DefaultLevel, GuardianVoice.HighestLevel }
-        select (id, level)).Distinct()];
+    public static TheoryData<string, int> EachEffectAtEachLevel => GuardianStages.EachLevel(Effects);
 
-    private static IGuardianStage Start(string id, int level)
-    {
-        var effect = GuardianVoice.Find(id)!;
-
-        return effect.Start(effect.Value(level), BasePitch, Line.Format.SampleRate);
-    }
+    private static IGuardianStage Start(string id, int level) =>
+        GuardianStages.Start(id, level, BasePitch, Line.Format.SampleRate);
 
     private static double Factor(string id, int level) =>
         Math.Pow(2, GuardianVoice.Find(id)!.Value(level) / 12);
@@ -35,23 +28,7 @@ public class SixGuardianFrameEffectsRunAsTheClipArrivesTests
     {
         var dry = GuardianVoiceTests.Samples(Line);
 
-        var whole = new List<double>();
-        var once = Start(id, level);
-        once.Push(dry, whole);
-        once.Finish(whole);
-
-        var chunked = new List<double>();
-        var piecewise = Start(id, level);
-        var random = new Random(789 + level);
-
-        for (var at = 0; at < dry.Length;)
-        {
-            var size = Math.Min(dry.Length - at, random.Next(0, 3_000));
-            piecewise.Push(dry.AsSpan(at, size), chunked);
-            at += size;
-        }
-
-        piecewise.Finish(chunked);
+        var (whole, chunked) = GuardianStages.WholeAndChunked(id, level, dry, 789 + level, 3_000);
 
         Assert.Equal(dry.Length + (id == "shimmer" ? (int)Math.Round(0.5 * Line.Format.SampleRate) : 0), whole.Count);
         Assert.Equal(whole, chunked);

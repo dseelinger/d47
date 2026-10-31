@@ -10,42 +10,19 @@ namespace D47.Core.Tests.Audio;
 [Trait("Category", "Integration")]
 public class SongsAreTwoSecondsApartTests : IDisposable
 {
-    private readonly string _root = Path.Combine(
-        Path.GetTempPath(),
-        "d47-music-gap-tests",
-        Guid.NewGuid().ToString("n"));
-
-    private readonly RecordingAudioSink _sink = new();
-    private readonly AudioArbiter _audio;
-    private readonly AmbientMusic _music;
+    private readonly MusicBench _bench;
 
     public SongsAreTwoSecondsApartTests()
     {
-        _audio = new AudioArbiter(_sink, NullLogger<AudioArbiter>.Instance).Start();
-
-        var library = Library(
+        _bench = new MusicBench(
+            "d47-music-gap-tests",
             (Situations.Docked, "berth"),
             (Situations.Docked, "hangar"),
             (Situations.Supercruise, "cruise"));
-
-        _music = new AmbientMusic(_audio, () => library, new Random(7));
-        _audio.MusicFinished += _music.TrackFinished;
-        _music.GameRunning(running: true);
+        _bench.Music.GameRunning(running: true);
     }
 
-    public void Dispose()
-    {
-        _audio.Dispose();
-
-        try
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-        catch (IOException)
-        {
-            // A temp folder that will not delete is not a test failure.
-        }
-    }
+    public void Dispose() => _bench.Dispose();
 
     private static readonly GameStatus Docked = Status(StatusFlags.Docked);
 
@@ -54,134 +31,119 @@ public class SongsAreTwoSecondsApartTests : IDisposable
     [Fact]
     public void AFinishedTrackIsFollowedByTwoSecondsOfSilenceThenTheNext()
     {
-        _music.Follow(Docked, musicTrack: null);
-        var first = Assert.Single(_sink.Started);
+        _bench.Music.Follow(Docked, musicTrack: null);
+        var first = Assert.Single(_bench.Sink.Started);
 
-        _sink.CompletePlayback(first.Id);
+        _bench.Sink.CompletePlayback(first.Id);
 
-        var gap = _sink.Started[1];
+        var gap = _bench.Sink.Started[1];
         Assert.Null(gap.Track);
         var clip = Assert.IsType<AudioClip>(gap.Clip);
         Assert.Equal(AudioArbiter.MusicGap, clip.Duration);
         Assert.Equal(-1, clip.Pcm.Span.IndexOfAnyExcept((byte)0));
-        Assert.True(_audio.Activity.MusicPlaying);
+        Assert.True(_bench.Audio.Activity.MusicPlaying);
 
-        _sink.CompletePlayback(gap.Id);
+        _bench.Sink.CompletePlayback(gap.Id);
 
-        var second = _sink.Started[2];
+        var second = _bench.Sink.Started[2];
         Assert.NotNull(second.Track);
         Assert.NotEqual(first.Name, second.Name);
-        Assert.Equal(second.Name, _music.State.Track);
+        Assert.Equal(second.Name, _bench.Music.State.Track);
     }
 
     [Fact]
     public void TheFirstTrackInASituationHasNoGap()
     {
-        _music.Follow(Docked, musicTrack: null);
+        _bench.Music.Follow(Docked, musicTrack: null);
 
-        Assert.NotNull(Assert.Single(_sink.Started).Track);
+        Assert.NotNull(Assert.Single(_bench.Sink.Started).Track);
     }
 
     [Fact]
     public void ASituationChangeDuringTheGapStartsTheNewTrackAtOnce()
     {
-        _music.Follow(Docked, musicTrack: null);
-        _sink.CompletePlayback(_sink.Started[0].Id);
-        var gap = _sink.Started[1];
+        _bench.Music.Follow(Docked, musicTrack: null);
+        _bench.Sink.CompletePlayback(_bench.Sink.Started[0].Id);
+        var gap = _bench.Sink.Started[1];
 
-        _music.Follow(InSupercruise, musicTrack: null);
+        _bench.Music.Follow(InSupercruise, musicTrack: null);
 
-        Assert.Contains(gap.Id, _sink.Stopped);
-        Assert.Equal(3, _sink.Started.Count);
-        Assert.Contains("cruise", _sink.Started[2].Name, StringComparison.Ordinal);
-        Assert.NotNull(_sink.Started[2].Track);
+        Assert.Contains(gap.Id, _bench.Sink.Stopped);
+        Assert.Equal(3, _bench.Sink.Started.Count);
+        Assert.Contains("cruise", _bench.Sink.Started[2].Name, StringComparison.Ordinal);
+        Assert.NotNull(_bench.Sink.Started[2].Track);
     }
 
     [Fact]
     public void SilenceDuringTheGapStartsNothingAfterIt()
     {
-        _music.Follow(Docked, musicTrack: null);
-        _sink.CompletePlayback(_sink.Started[0].Id);
-        var gap = _sink.Started[1];
+        _bench.Music.Follow(Docked, musicTrack: null);
+        _bench.Sink.CompletePlayback(_bench.Sink.Started[0].Id);
+        var gap = _bench.Sink.Started[1];
 
-        _audio.Silence();
-        _sink.CompletePlayback(gap.Id);
+        _bench.Audio.Silence();
+        _bench.Sink.CompletePlayback(gap.Id);
 
-        Assert.Equal(2, _sink.Started.Count);
-        Assert.False(_audio.Activity.MusicPlaying);
+        Assert.Equal(2, _bench.Sink.Started.Count);
+        Assert.False(_bench.Audio.Activity.MusicPlaying);
     }
 
     [Fact]
     public void MutingDuringTheGapStartsNothingAfterIt()
     {
-        _music.Follow(Docked, musicTrack: null);
-        _sink.CompletePlayback(_sink.Started[0].Id);
-        var gap = _sink.Started[1];
+        _bench.Music.Follow(Docked, musicTrack: null);
+        _bench.Sink.CompletePlayback(_bench.Sink.Started[0].Id);
+        var gap = _bench.Sink.Started[1];
 
-        _audio.Mix = _audio.Mix.With(AudioChannel.Music, _audio.Mix.Music with { Muted = true });
-        _music.MuteChanged(muted: true);
-        _sink.CompletePlayback(gap.Id);
+        _bench.Audio.Mix = _bench.Audio.Mix.With(AudioChannel.Music, _bench.Audio.Mix.Music with { Muted = true });
+        _bench.Music.MuteChanged(muted: true);
+        _bench.Sink.CompletePlayback(gap.Id);
 
-        Assert.Contains(gap.Id, _sink.Stopped);
-        Assert.Equal(2, _sink.Started.Count);
+        Assert.Contains(gap.Id, _bench.Sink.Stopped);
+        Assert.Equal(2, _bench.Sink.Started.Count);
     }
 
     [Fact]
     public void NextDuringTheGapSkipsTheWait()
     {
-        _music.Follow(Docked, musicTrack: null);
-        _sink.CompletePlayback(_sink.Started[0].Id);
-        var gap = _sink.Started[1];
+        _bench.Music.Follow(Docked, musicTrack: null);
+        _bench.Sink.CompletePlayback(_bench.Sink.Started[0].Id);
+        var gap = _bench.Sink.Started[1];
 
-        _music.Control(MusicAction.Next);
+        _bench.Music.Control(MusicAction.Next);
 
-        Assert.Contains(gap.Id, _sink.Stopped);
-        Assert.NotNull(_sink.Started[2].Track);
+        Assert.Contains(gap.Id, _bench.Sink.Stopped);
+        Assert.NotNull(_bench.Sink.Started[2].Track);
     }
 
     [Fact]
     public void AStoppedTrackIsNotFollowedByAGap()
     {
-        _music.Follow(Docked, musicTrack: null);
+        _bench.Music.Follow(Docked, musicTrack: null);
 
-        _music.Control(MusicAction.Next);
+        _bench.Music.Control(MusicAction.Next);
 
-        Assert.All(_sink.Started, request => Assert.NotNull(request.Track));
+        Assert.All(_bench.Sink.Started, request => Assert.NotNull(request.Track));
     }
 
     [Fact]
     public void PausingDuringTheGapHoldsIt()
     {
-        _music.Follow(Docked, musicTrack: null);
-        _sink.CompletePlayback(_sink.Started[0].Id);
-        var gap = _sink.Started[1];
+        _bench.Music.Follow(Docked, musicTrack: null);
+        _bench.Sink.CompletePlayback(_bench.Sink.Started[0].Id);
+        var gap = _bench.Sink.Started[1];
 
-        _music.Control(MusicAction.Pause);
+        _bench.Music.Control(MusicAction.Pause);
 
-        Assert.Contains(gap.Id, _sink.Paused);
+        Assert.Contains(gap.Id, _bench.Sink.Paused);
 
-        _music.Control(MusicAction.Resume);
-        _sink.CompletePlayback(gap.Id);
+        _bench.Music.Control(MusicAction.Resume);
+        _bench.Sink.CompletePlayback(gap.Id);
 
-        Assert.Equal(3, _sink.Started.Count);
-        Assert.NotNull(_sink.Started[2].Track);
+        Assert.Equal(3, _bench.Sink.Started.Count);
+        Assert.NotNull(_bench.Sink.Started[2].Track);
     }
 
     private static GameStatus Status(StatusFlags flags) =>
         new() { Flags = flags, ReadAt = DateTimeOffset.UnixEpoch };
-
-    private CueLibrary Library(params (string Situation, string Track)[] tracks)
-    {
-        foreach (var (situation, track) in tracks)
-        {
-            var path = Path.Combine(_root, FolderAudioSource.MusicFolder, situation, $"{track}.wav");
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllBytes(path, WavWriter.ToBytes(new byte[480], AudioFormat.Standard));
-        }
-
-        return CueLibrary.Load(
-            null,
-            new EmbeddedCueSource(typeof(CueLibrary).Assembly),
-            new FolderAudioSource(_root, new DiskFileSystem(), NullLogger<FolderAudioSource>.Instance));
-    }
 }

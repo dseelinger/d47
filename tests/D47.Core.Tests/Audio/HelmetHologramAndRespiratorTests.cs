@@ -1,6 +1,7 @@
 using D47.Core.Audio;
 using D47.Core.Configuration;
 using Xunit;
+using static D47.Core.Tests.Audio.GuardianVoiceTests;
 
 namespace D47.Core.Tests.Audio;
 
@@ -11,48 +12,8 @@ public class HelmetHologramAndRespiratorTests
 
     private const double BasePitch = 200;
 
-    private static IReadOnlyList<GuardianVoiceEffect> TickingAt(string id, int level) =>
-        [.. GuardianVoice.Defaults.Select(effect => effect.Id == id ? effect with { Ticked = true, Level = level } : effect)];
-
-    private static int DefaultLevel(string id) => GuardianVoice.Find(id)!.DefaultLevel;
-
-    private static AudioClip Clip(double[] samples)
-    {
-        var pcm = new byte[samples.Length * 2];
-
-        for (var index = 0; index < samples.Length; index++)
-        {
-            var value = (short)Math.Clamp(Math.Round(samples[index] * short.MaxValue), short.MinValue, short.MaxValue);
-
-            pcm[index * 2] = (byte)(value & 0xFF);
-            pcm[(index * 2) + 1] = (byte)((value >> 8) & 0xFF);
-        }
-
-        return new AudioClip("line", pcm, AudioFormat.Standard);
-    }
-
-    private static AudioClip Tone(double hertz, double seconds = 1.0) =>
-        Clip([.. Enumerable.Range(0, (int)(Rate * seconds)).Select(index => Math.Sin(2 * Math.PI * hertz * index / Rate) * 0.3)]);
-
     private static double[] Treated(AudioClip clip, string id, int level) =>
         GuardianVoiceTests.Samples(GuardianVoice.Apply(clip, TickingAt(id, level), BasePitch));
-
-    /// <summary>Goertzel.</summary>
-    private static double Magnitude(ReadOnlySpan<double> samples, double hertz)
-    {
-        var coefficient = 2 * Math.Cos(2 * Math.PI * hertz / Rate);
-        var previous = 0.0;
-        var older = 0.0;
-
-        foreach (var sample in samples)
-        {
-            var current = sample + (coefficient * previous) - older;
-            older = previous;
-            previous = current;
-        }
-
-        return Math.Sqrt(Math.Max(0, (previous * previous) + (older * older) - (coefficient * previous * older)));
-    }
 
     [Fact]
     public void HelmetAttenuatesFarAwayTonesByAtLeastTwentyDecibels()

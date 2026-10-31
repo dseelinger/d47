@@ -108,24 +108,6 @@ public class AudioRescanTests : IDisposable
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
-        var data = samples * 2;
-
-        using var file = File.Create(path);
-        using var write = new BinaryWriter(file);
-
-        write.Write("RIFF"u8.ToArray());
-        write.Write(36 + data);
-        write.Write("WAVE"u8.ToArray());
-        write.Write("fmt "u8.ToArray());
-        write.Write(16);
-        write.Write((short)1);
-        write.Write((short)1);
-        write.Write(AudioFormat.Standard.SampleRate);
-        write.Write(AudioFormat.Standard.SampleRate * 2);
-        write.Write((short)2);
-        write.Write((short)16);
-        write.Write("data"u8.ToArray());
-        write.Write(data);
-        write.Write(new byte[data]);
+        File.WriteAllBytes(path, TestWav.Bytes(samples));
     }
 }

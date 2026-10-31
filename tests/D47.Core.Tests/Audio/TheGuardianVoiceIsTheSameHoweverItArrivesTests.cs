@@ -3,6 +3,7 @@ using D47.Core.Configuration;
 using D47.Core.Persona;
 using D47.Core.Stories;
 using Xunit;
+using static D47.Core.Tests.Audio.PcmChunking;
 
 namespace D47.Core.Tests.Audio;
 
@@ -23,36 +24,6 @@ public class TheGuardianVoiceIsTheSameHoweverItArrivesTests
             Effects = [.. GuardianPresets.EffectsFor(GuardianPresets.Find("damaged-core")!)],
         },
     };
-
-    private static byte[] Whole(IPcmFilter filter, ReadOnlySpan<byte> pcm) => [.. filter.Push(pcm), .. filter.Finish()];
-
-    /// <summary>Chunks of 1 to 4,999 bytes, odd sizes included, so samples are split across pushes.</summary>
-    private static IEnumerable<int> RandomCuts(int length, int seed)
-    {
-        var random = new Random(seed);
-
-        for (var at = 0; at < length;)
-        {
-            var size = Math.Min(length - at, random.Next(1, 5_000));
-            yield return size;
-            at += size;
-        }
-    }
-
-    private static byte[] Chunked(IPcmFilter filter, byte[] pcm, int seed)
-    {
-        var output = new List<byte>();
-        var at = 0;
-
-        foreach (var size in RandomCuts(pcm.Length, seed))
-        {
-            output.AddRange(filter.Push(pcm.AsSpan(at, size)));
-            at += size;
-        }
-
-        output.AddRange(filter.Finish());
-        return [.. output];
-    }
 
     /// <summary>Every built-in preset's chain, and the stock order with every effect ticked.</summary>
     public static TheoryData<string> Chains =>
@@ -153,14 +124,7 @@ public class TheGuardianVoiceIsTheSameHoweverItArrivesTests
         var effects = GuardianVoiceTests.Ticking("comb", "ringMod", "glitch");
         var source = new ArrivingClip("line");
         var treated = source.Through(GuardianVoice.Filter(effects, BasePitch));
-        var pcm = Speech.Pcm.ToArray();
-        var at = 0;
-
-        foreach (var size in RandomCuts(pcm.Length, 47))
-        {
-            source.Append(pcm.AsSpan(at, size));
-            at += size;
-        }
+        AppendInCuts(source, Speech.Pcm.ToArray(), 47);
 
         Assert.False(treated.IsComplete);
 

@@ -1,6 +1,7 @@
 using D47.Core.Audio;
 using D47.Core.Configuration;
 using Xunit;
+using static D47.Core.Tests.Audio.GuardianVoiceTests;
 
 namespace D47.Core.Tests.Audio;
 
@@ -14,26 +15,6 @@ public class MonotoneAndSteppedPitchMoveOnlyThePitchTests
     private const int Window = Rate * 40 / 1000;
 
     private const int Hop = Rate * 10 / 1000;
-
-    private static IReadOnlyList<GuardianVoiceEffect> TickingAt(string id, int level) =>
-        [.. GuardianVoice.Defaults.Select(effect => effect.Id == id ? effect with { Ticked = true, Level = level } : effect)];
-
-    private static int DefaultLevel(string id) => GuardianVoice.Find(id)!.DefaultLevel;
-
-    private static AudioClip Clip(double[] samples)
-    {
-        var pcm = new byte[samples.Length * 2];
-
-        for (var index = 0; index < samples.Length; index++)
-        {
-            var value = (short)Math.Clamp(Math.Round(samples[index] * short.MaxValue), short.MinValue, short.MaxValue);
-
-            pcm[index * 2] = (byte)(value & 0xFF);
-            pcm[(index * 2) + 1] = (byte)((value >> 8) & 0xFF);
-        }
-
-        return new AudioClip("line", pcm, AudioFormat.Standard);
-    }
 
     /// <summary>A sawtooth whose pitch rises linearly from 150 to 250 Hz over one second.</summary>
     internal static AudioClip Glide()
