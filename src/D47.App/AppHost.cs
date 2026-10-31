@@ -4715,13 +4715,7 @@ public sealed class AppHost : IDisposable
     /// </summary>
     private void RefreshEndpointModels(LlmProviderInfo selected, ILlmProvider? provider, string? endpoint, bool keyChanged)
     {
-        var asking = provider switch
-        {
-            AnthropicLlmProvider anthropic => anthropic.ListModelsAsync,
-            ChatCompletionsLlmProvider chat => chat.ListModelsAsync,
-            ResponsesLlmProvider responses => responses.ListModelsAsync,
-            _ => (Func<CancellationToken, Task<EndpointModels>>?)null,
-        };
+        var asking = LlmProviderFactory.ModelLister(provider);
 
         var address = $"{provider?.Id}|{endpoint}";
 
@@ -6157,39 +6151,12 @@ public sealed class AppHost : IDisposable
             return SecretCheck.Rejected($"No {selected.Name} key is stored.");
         }
 
-        var provider = LlmProviderFactory.Create(selected, resolved?.Key, Settings.Current.Llm.Endpoint);
-
-        if (provider is null)
-        {
-            return SecretCheck.Unreachable(LlmProviderFactory.ReasonForNoClient(selected));
-        }
-
-        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        budget.CancelAfter(KeyCheckBudget);
-
-        // Lists the provider's models: free, and the same call the endpoint handshake makes. No completion
-        // is run, so nothing is added to Spend.
-        var asked = provider switch
-        {
-            AnthropicLlmProvider anthropic => await anthropic.ListModelsAsync(budget.Token).ConfigureAwait(false),
-            ChatCompletionsLlmProvider chat => await chat.ListModelsAsync(budget.Token).ConfigureAwait(false),
-            ResponsesLlmProvider responses => await responses.ListModelsAsync(budget.Token).ConfigureAwait(false),
-            _ => EndpointModels.Unreachable(null),
-        };
-
-        return asked.Reach switch
-        {
-            EndpointReach.Refused => SecretCheck.Rejected(asked.Detail ?? $"{selected.Name} refused the request."),
-
-            EndpointReach.Answered when asked.Ids.Count > 0 => SecretCheck.Works(
-                $"{selected.Name} answered — {asked.Ids.Count} models."),
-
-            // An empty catalogue is a gateway's choice, not a fault.
-            EndpointReach.Answered => SecretCheck.Works(
-                $"{selected.Name} answered, but lists no models. Type the model name yourself."),
-
-            _ => SecretCheck.Unreachable(asked.Detail ?? $"{selected.Name} could not be reached."),
-        };
+        return await LlmKeyCheck.RunAsync(
+            selected,
+            resolved?.Key,
+            Settings.Current.Llm.Endpoint,
+            KeyCheckBudget,
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>The secret store is the real home for a key.</summary>

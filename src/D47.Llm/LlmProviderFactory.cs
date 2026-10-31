@@ -1,4 +1,5 @@
 using D47.Core.Conversation;
+using D47.Llm.OpenAi;
 
 namespace D47.Llm;
 
@@ -23,6 +24,15 @@ public static class LlmProviderFactory
             _ => null,
         };
     }
+
+    /// <summary>Asks <paramref name="provider"/> for its models, or null when it cannot be asked.</summary>
+    public static Func<CancellationToken, Task<EndpointModels>>? ModelLister(ILlmProvider? provider) => provider switch
+    {
+        AnthropicLlmProvider anthropic => anthropic.ListModelsAsync,
+        ChatCompletionsLlmProvider chat => chat.ListModelsAsync,
+        ResponsesLlmProvider responses => responses.ListModelsAsync,
+        _ => null,
+    };
 
     /// <summary>Why <see cref="Create"/> returned null, in the Commander's terms.</summary>
     public static string ReasonForNoClient(LlmProviderInfo provider)
