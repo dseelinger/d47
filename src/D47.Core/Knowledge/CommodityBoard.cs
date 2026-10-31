@@ -19,6 +19,12 @@ public sealed class CommodityBoard
         }
     }
 
+    /// <summary>The last posting's reference system and each offer's market system, or nothing.</summary>
+    public IEnumerable<string?> Systems() =>
+        Last is not { } posting
+            ? []
+            : [posting.Near, .. posting.Answer.Offers.Select(offer => offer.Market.System)];
+
     public void Post(CommodityPosting posting)
     {
         lock (_gate)

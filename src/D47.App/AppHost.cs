@@ -3655,58 +3655,13 @@ public sealed class AppHost : IDisposable
         var systemsInPlay = new D47.Core.Knowledge.SystemsInPlay();
 
         systemsInPlay.Add(() => [clipboardOffer.Text]);
-        systemsInPlay.Add(() => gameState.Active is not { } active
-            ? []
-            : [
-                active.Location.StarSystem,
-                active.Carrier.StarSystem,
-                active.Carrier.DestinationSystem,
-                active.SquadronCarrier.StarSystem,
-                active.SquadronCarrier.DestinationSystem,
-                .. active.Fleet.Ships.Select(ship => ship.StarSystem),
-                .. active.Modules.Modules.Select(module => module.StarSystem),
-                .. active.Colonisation.All.Select(site => site.StarSystem),
-            ]);
+        systemsInPlay.Add(() => D47.Core.Knowledge.CommanderSystems.Of(gameState.Active));
         systemsInPlay.Add(() => route.Current.Hops.Select(hop => hop.StarSystem));
         systemsInPlay.Add(() => D47.Core.Knowledge.EngineerDirectory.All.Select(engineer => engineer.System));
         systemsInPlay.Add(() => D47.Core.Knowledge.LoreDirectory.All.Select(entry => entry.Name));
-        systemsInPlay.Add(() => PlannedSystems(planBook));
-        systemsInPlay.Add(() => commodityBoard.Last is not { } posting
-            ? []
-            : [posting.Near, .. posting.Answer.Offers.Select(offer => offer.Market.System)]);
+        systemsInPlay.Add(planBook.Systems);
+        systemsInPlay.Add(commodityBoard.Systems);
         systemsInPlay.Add(() => galaxy.Names);
-
-        static IEnumerable<string?> PlannedSystems(D47.Core.Knowledge.RoutePlanBook book)
-        {
-            foreach (var kind in Enum.GetValues<D47.Core.Knowledge.RoutePlanKind>())
-            {
-                if (book.Last(kind) is not { } plan)
-                {
-                    continue;
-                }
-
-                if (plan.Jump is { } jump)
-                {
-                    yield return jump.Origin;
-                    yield return jump.Destination;
-
-                    foreach (var waypoint in jump.Waypoints)
-                    {
-                        yield return waypoint.System;
-                    }
-                }
-
-                foreach (var stop in plan.Riches?.Stops ?? [])
-                {
-                    yield return stop.System;
-                }
-
-                foreach (var stop in plan.Trade?.Stops ?? [])
-                {
-                    yield return stop.System;
-                }
-            }
-        }
 
         host.SystemsInPlay = systemsInPlay;
         host.Clipboard = clipboard;

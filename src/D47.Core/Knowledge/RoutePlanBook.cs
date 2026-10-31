@@ -125,6 +125,39 @@ public sealed class RoutePlanBook(
         return plan;
     }
 
+    /// <summary>The systems named by each kind's last plan: a jump's ends and waypoints, then the riches and trade stops.</summary>
+    public IEnumerable<string?> Systems()
+    {
+        foreach (var kind in Enum.GetValues<RoutePlanKind>())
+        {
+            if (Last(kind) is not { } plan)
+            {
+                continue;
+            }
+
+            if (plan.Jump is { } jump)
+            {
+                yield return jump.Origin;
+                yield return jump.Destination;
+
+                foreach (var waypoint in jump.Waypoints)
+                {
+                    yield return waypoint.System;
+                }
+            }
+
+            foreach (var stop in plan.Riches?.Stops ?? [])
+            {
+                yield return stop.System;
+            }
+
+            foreach (var stop in plan.Trade?.Stops ?? [])
+            {
+                yield return stop.System;
+            }
+        }
+    }
+
     /// <summary>
     /// Gives plans saved without a Frontier ID to <paramref name="owner"/>, the first Commander to ask.
     /// Call under <see cref="_gate"/>; true when anything moved.
