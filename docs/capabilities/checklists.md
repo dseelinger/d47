@@ -22,19 +22,19 @@ nav_order: 111
 <p class="intro">Three steps to one list that follows you around.</p>
 <section>
 <h2><span class="num">1</span> Put something on it, out loud or on the tab.</h2>
-<p class="say">Say "put buy a fuel scoop on my list", or press + on the Checklist tab and type it.</p>
-<p class="expect">The item appears on the list; routes, engineering plans and goals add their own lines too.</p>
+<p class="say">Press ADD A LINE on the Checklist page and type the line, such as buy a fuel scoop.</p>
+<p class="expect">The line appears on your own list; routes, engineering plans and goals add their own lines too.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with something being added to the checklist">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">put "buy a fuel scoop" on my list</text>
- <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or open Checklist on the Commander tab and press + to type one in.</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">buy a fuel scoop</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Add a line</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Open Checklist on the Commander tab, press ADD A LINE and type it in.</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">Routes, engineering plans and goals land here on their own.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Tick things off by saying so.</h2>
-<p class="say">Say "tick off the fuel scoop", or press its switch.</p>
+<h2><span class="num">2</span> Tick things off, by box or by saying so.</h2>
+<p class="say">Tick the line's completed box, or say "mark buy a fuel scoop as done" and answer yes.</p>
 <p class="expect">The item shows as done and the next stop becomes the current one.</p>
 <svg viewBox="0 0 880 232" role="img" aria-label="The checklist page, with items in three groups and one of them ticked">
  <rect x="20" y="16" width="840" height="200" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
@@ -45,17 +45,17 @@ nav_order: 111
  <text x="44" y="128" font-size="15" font-weight="700" fill="var(--text-muted)">NEXT STOP</text>
  <rect x="44" y="142" width="22" height="22" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="84" y="160" font-size="16" fill="var(--text)">grade 3 dirty drive at Farseer</text>
- <text x="44" y="200" font-size="15" fill="var(--text-muted)">Say "tick off the fuel scoop", or press the switch.</text>
+ <text x="44" y="200" font-size="15" fill="var(--text-muted)">Tick its box, or say "mark buy a fuel scoop as done".</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Say "remove it" to take a finished item off the list.</p>
-<p class="expect">The item disappears; until then a ticked item stays so you can see what you did.</p>
+<p class="say">Say "remove buy a fuel scoop" and answer yes, or press Delete on a line of your own.</p>
+<p class="expect">The line goes once you accept; until then a ticked line stays so you can see what you did.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Finishing an item is not removing it, so a finished item stays on the list">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Ticking is not deleting.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A finished item stays, so you can see what you did. Say "remove it" to take it off.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A finished item stays, so you can see what you did. Say "remove buy a fuel scoop" to take it off.</text>
 </svg>
 </section>
 </div></div>
@@ -228,9 +228,9 @@ model names one, a proposal to set that watch waits under **Suggestions** for yo
 decline. If it names none, no model is set up, or the request fails, the line stays one you tick
 yourself. A line you edit, tick or delete before the answer arrives is left alone.
 
-### Three groups
+### The groups
 
-Universal, this ship, this system. Derived items belong to whatever produced them; your own lines
+Your own notes, a ship, a system, a suit, a weapon, and a planned ship you have not bought. Derived items belong to whatever produced them; your own lines
 file anywhere, which is what lets *"ask Jim about the Krait build"* sit beside the Krait's plan.
 
 ### Missions
@@ -247,10 +247,10 @@ six still open.
 **Deleting is changing your mind.** A different act, and it can happen whether or not the item was
 ever finished.
 
-**"Delete completed items"**, on the Checklist page's control bar, does that in bulk: every Done
-line, whatever list it is in or where it came from, gone in one confirmed press. It looks at the
-whole checklist rather than what the current filter or search is showing, and is greyed out when
-nothing is Done. A plan proposal still waiting to be accepted loses the same lines from what it
+**Delete completed** does that in bulk, in one confirmed press. On All lists it takes every Done
+line, whatever list it is in or where it came from, rather than what the current filter or search is
+showing; on one list's page it takes only that list's Done lines. It is greyed out when nothing is
+Done. A plan proposal still waiting to be accepted loses the same lines from what it
 would add, so accepting it afterwards does not put them back.
 
 ### Changing a plan is a diff, not a rebuild
@@ -263,7 +263,7 @@ moving underneath a plan that did not change:
 - **Plan changed** — items in both versions keep everything they had earned, dropped ones are
   removed, added ones open.
 
-A line a later revision wants again comes back as a new open line — Directive 47 does not remember
+A line a later revision needs again comes back as a new open line — Directive 47 does not remember
 what it had earned before.
 
 This works because an item knows what it is independently of where it sits in a list: **slot plus
@@ -323,12 +323,12 @@ ship's share of it, so scope is a label and a filter and never a partition.
 
 #### Reordering
 
-**Press a line to select it**; it grows a pair of arrows. Press them to move it up or down, past
-whatever is above or below it whichever scope that belongs to.
+**Press a line to select it**; it grows four movers: Move to the top, Move up, Move down and Move
+to the bottom. A line of your own also gets Edit and Delete.
 
 Not a drag. A drag is the worst gesture available to a laser pointer at a metre — it needs a
 press, an aim held through movement, and a release — and it has no spoken form at all, where
-"move buy limpets up" is just the phrase.
+"move it up", with the line selected, is just the phrase.
 
 #### What a state means
 
@@ -382,7 +382,7 @@ falls back to **Everything** on its own, rather than sitting on a row with nothi
 
 ##### Include Partial Grades {#partial-grades}
 
-Beside the engineer filter, and only there, is a switch. It decides which of two questions the
+Beside the engineer filter is a box. It decides which of two questions the
 page is answering, and they are a sentence apart:
 
 - **off** — what this engineer can take **all the way** to the grade the line asks for;
@@ -444,7 +444,7 @@ place, `ChecklistScope.Word`.
           }
         },
         {
-          "key": "bp/mainengines/dirty-drive-tuning/g5",
+          "key": "bp/mainengines",
           "scope": { "group": "ship", "key": "12" },
           "kind": "derived",
           "source": "engineeringPlan",
@@ -505,7 +505,7 @@ that one, so it is checked exactly.
 
 #### A ship you do not own
 
-"Put this build on my checklist" for a ship you do not own makes a list named for the plan, such as
+Pressing **Put this build on my checklist** on the page of a ship you do not own makes a list named for the plan, such as
 "Python (planned)". It holds a "Buy a Python" line, a line for each module the plan names and the
 engineering lines. A module line ticks once a matching module is in your module storage; until then it
 says you can buy it into storage before you buy the ship. The checklist filter offers the planned ship group.
@@ -585,7 +585,7 @@ offer but cannot yet craft is left out of that answer rather than counted as wor
 
 What every live plan still needs, netted across all of them: exact totals against what you hold,
 caps that force more than one trip, rank gates, what can be gathered in one trip, and what a site
-still wants delivered.
+still needs delivered.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

@@ -22,33 +22,33 @@ nav_order: 107
 <p class="intro">Two steps to the figures before anybody buys anything.</p>
 <section>
 <h2><span class="num">1</span> Ask about a hull or a module by name.</h2>
-<p class="say">Say "what is the Python II like", "how much does a 6A power plant draw" or "compare the Krait and the Python".</p>
+<p class="say">Say "what is the Python like" or "what does a 6A power plant weigh".</p>
 <p class="expect">D47 gives the figures from its shipped tables, with no network.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">what is the Python II like</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what is the Python like</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"how much does a 6A power plant draw" — "compare the Krait and the Python"</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">Nothing here touches the network. The tables ship with D47.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Read the figure and where it came from.</h2>
-<p class="say">Listen for where the figures came from.</p>
-<p class="expect">The answer names its source table, so a wrong figure can be traced.</p>
-<svg viewBox="0 0 880 308" role="img" aria-label="Python II">
+<h2><span class="num">2</span> Read the figures in a fixed order.</h2>
+<p class="say">Listen for the pad, speed, strength, slots and price, in that order.</p>
+<p class="expect">The price is the hull alone: the answer ends "before any modules".</p>
+<svg viewBox="0 0 880 308" role="img" aria-label="Python">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Python II</text>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Python</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Hull mass</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">350 t</text>
  <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Hardpoints</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">2 large, 3 medium</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">3 × size 3, 2 × size 2</text>
  <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="210" font-size="16" fill="var(--text)">Where the figures came from</text>
- <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">shipped tables, generated</text>
- <text x="44" y="278" font-size="15" fill="var(--text-muted)">Every table records its provenance, so a wrong figure can be traced rather than argued about.</text>
+ <text x="68" y="210" font-size="16" fill="var(--text)">Hull</text>
+ <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">55,324,684 cr, before any modules</text>
+ <text x="44" y="278" font-size="15" fill="var(--text-muted)">The figures come from tables shipped with D47, so nothing is looked up online.</text>
 </svg>
 </section>
 <section>
@@ -127,7 +127,7 @@ nav_order: 107
  <text x="440" y="208" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A table that is stale and one that is wrong are different things.</text>
  <text x="440" y="238" text-anchor="middle" font-size="15" fill="var(--text-muted)">Collapsing them would tell a Commander flying a brand new hull that Directive 47 is broken.</text>
 </svg>
-<p class="body">The same rule catches modules: a name without a size is not a module. There are thirty-five Frame Shift Drives, differing by an order of magnitude in every figure worth quoting, so a bare name returns the sizes that exist rather than picking one.</p>
+<p class="body">The same rule catches modules: a name without a size is not a module. There are thirty-five Frame Shift Drives, and the heaviest weighs over a hundred times the lightest, so a bare name returns the sizes that exist rather than picking one.</p>
 </section>
 </div></div>
 </details>
@@ -185,13 +185,15 @@ None of this is in the journal, so the choice was a table or no feature — and 
 would be exactly the confidently-invented game data the guardrails exist to prevent. A wrong top
 speed reads identically to the feature working.
 
-`tools/gen-elite-specs.py` builds it by joining two community sources on Frontier's own ids:
+`tools/gen-elite-specs.py` builds it by joining sources on Frontier's own ids:
 
 - **EDCD/FDevIDs** is the naming authority. `shipyard.csv` maps a hull id to the symbol the journal
   writes; `outfitting.csv` maps a module id to its name, mount, class and rating. It carries no
   performance figures.
-- **EDCD/coriolis-data** carries the figures — speed, boost, armour, shields, module mass, power
-  draw, and the drive numbers a jump range is computed from.
+- **EDCD/coriolis-data** carries the module figures — mass, power draw, and the drive numbers a
+  jump range is computed from.
+- **EDSY** gives a hull's speed, boost, armour, shields, hardness, mass and slot sizes first, and
+  the slot layout.
 
 The join **is** the check. A ship in one and not the other is a gap the script refuses to hide.
 
@@ -233,26 +235,22 @@ distinguishes nothing, and "1I Lightweight Alloy" spoken aloud is a claim about 
 not true. Ask for one at a size and it says it has none rather than listing sizes it does not come
 in.
 
-Five bulkheads are named in the id list and absent from the figures, all the Lynx Highliner's.
-They ship as a name with no numbers, on the same reasoning as a hull with no figures: the symbol is
-still what the journal writes, so d47 can say what it is rather than spell it out.
-
 ### A ship it has no figures for
 
 Three different answers, because they are three different situations and collapsing them would
 tell a Commander flying a brand new hull that Directive 47 is broken:
 
 ```text
-Corsair is a ship I know of and have no figures for — it is newer than the specification
+<hull> is a ship I know of and have no figures for — it is newer than the specification
 table d47 ships. I would rather say that than guess at its numbers.
 ```
 
-That one is in the community's ship data and not yet in its id list, so nothing can key it to what
-the journal writes. Its figures are unreachable and its *existence* is certain — which is the
-difference between a table that is stale and one that is wrong. The generator carries those names
-through into the shipped file rather than dropping them.
+That answer is for a hull the generator lists as known but unmeasured: in the community's ship
+data and not yet in its id list, so nothing can key it to what the journal writes. Its figures are
+unreachable and its *existence* is certain — which is the difference between a table that is stale
+and one that is wrong. The shipped table has no such hull today; every hull it names has figures.
 
-A name that was nearly something gets suggestions ("did you mean Anaconda?"). A name that is
+A name that was nearly something gets suggestions ("Did you mean Anaconda?"). A name that is
 nothing at all says so.
 
 ### Tools
@@ -270,11 +268,11 @@ nothing at all says so.
 ```
 
 A module name **without a size is not a module**. There are thirty-five Frame Shift Drives and they
-differ by an order of magnitude in every figure worth quoting, so a bare name returns the sizes
+differ several times over in every figure worth quoting, so a bare name returns the sizes
 that exist rather than picking one:
 
 ```text
-Frame Shift Drive comes in 35 variants: 8A, 8B, 8C, 8D, 8E, 7A, ... 2E.
+Frame Shift Drive comes in 35 variants: 8A, 8B, 8C, 8D, 8E, 7A, 7B, 7C, 7D, 7E, 6A, 6B, 6C, 6D, 6E, 5A, 5B, 5C, 5D, 5E, 4A, 4B, 4C, 4D, 4E, 3A, 3B, 3C, 3D, 3E, 2A, 2B, 2C, 2D, 2E.
 Ask for a size and rating for the figures.
 ```
 
@@ -299,17 +297,12 @@ built the way it is to avoid**, and the sources produce it: `outfitting.csv` cal
 Left alone the table would hold three different 8A drives under one name.
 
 So colliding rows get a qualifier **derived from the symbol** — whatever token one member of the
-group has and the others do not. That yields `Frame Shift Drive (mkii overchargebooster)` rather
-than a guess at what the outfitting screen calls it. Frontier's own placeholder rows
-(`int_missing_*`) are dropped: a "0Z Frame Shift Drive" in a list of the sizes a drive comes in is
+group has and the others do not, rather than a guess at what the outfitting screen calls it.
+Frontier's own placeholder rows (any symbol containing `_missing_`) are dropped: a "0Z Frame Shift Drive" in a list of the sizes a drive comes in is
 a lie about the game.
 
 What the name already says is then struck out of the qualifier, because that is the same word twice
-rather than a distinction. `outfitting.csv` calls `int_corrosionproofcargorack_size5_class1` a
-"Cargo Rack", the same as the plain rack, so the tokens separating them are `cargorack` and
-`corrosionproofcargorack` — and `Cargo Rack (cargorack)` was harder to say than the name it
-qualified while telling a listener strictly less. Striking `cargorack` leaves nothing on one and
-`corrosionproof` on the other, which is the distinction that was actually there. Striking can only
+rather than a distinction. Striking can only
 remove information, so it is kept only while the group still comes apart; a group left ambiguous by
 it keeps its raw tokens and reads badly rather than reading wrong.
 

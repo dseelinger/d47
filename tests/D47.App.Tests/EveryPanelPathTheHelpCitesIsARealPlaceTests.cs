@@ -13,7 +13,6 @@ public sealed class EveryPanelPathTheHelpCitesIsARealPlaceTests
 {
     /// <summary>Paths that do not resolve yet, by source (a docs page, or "exercise:" and a capability id) and path.</summary>
     private static readonly (string Source, string Path)[] Unresolved = [
-        ("choosing-a-module.md", "Asset Mgmt › a ship › a slot › Module — the list of everything that fits"),
         ("capabilities/adventures.md", "Your core › Its voice"),
         ("capabilities/adventures.md", "Other voices › Narrator and stories"),
         ("capabilities/adventures.md", "Providers › Speech synthesis appear while a downloaded story's cast needs them and the model is not downloaded"),

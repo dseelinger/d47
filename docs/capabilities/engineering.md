@@ -23,7 +23,7 @@ nav_order: 109
 <section>
 <h2><span class="num">1</span> Ask about a blueprint by name.</h2>
 <p class="say">Say "what does a grade 5 dirty drive cost".</p>
-<p class="expect">D47 gives the materials per roll, not only per grade, with no network.</p>
+<p class="expect">D47 gives the top grade's effects and the materials per application for each grade, with no network.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what does a grade 5 dirty drive cost</text>
@@ -33,21 +33,21 @@ nav_order: 109
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Ask what it costs from where you actually are.</h2>
-<p class="say">Say "can I afford it".</p>
-<p class="expect">D47 compares the cost with your own materials and names the shortfall, which also appears on the Gap page.</p>
+<h2><span class="num">2</span> Ask how the engineering you already have turned out.</h2>
+<p class="say">Say "how good is my roll".</p>
+<p class="expect">D47 sums up the engineering on the ship you are flying, naming at most three modules aloud.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">can I afford it</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">how good is my roll</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">Your own materials come out of the journal, so the shortfall is yours.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">What you are missing lands on the Gap page as a ledger.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It reads the modules fitted to the ship you are flying.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">More than three engineered modules are counted aloud, and listed in full on screen.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <p class="say">Remember that a grade takes several rolls, and read the cost per roll.</p>
-<p class="expect">The figure quoted is for one roll; the answer says how many rolls a grade takes.</p>
+<p class="expect">The materials are per application. How many rolls a grade takes is said when D47 knows your rank with an engineer who offers it.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Rolls are not grades.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Rolls are not grades.</text>
@@ -110,13 +110,13 @@ nav_order: 109
 <h2><span class="num">3</span> Below the rank it is a gate, not a longer grind.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Grade five cannot be crafted below rank five at all">
  <rect x="20" y="26" width="280" height="94" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="160" y="64" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">YOU WANT GRADE 5</text>
+ <text x="160" y="64" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">YOU NEED GRADE 5</text>
  <text x="160" y="94" text-anchor="middle" font-size="16" fill="var(--text-muted)">you are rank 2</text>
  <line x1="360" y1="14" x2="360" y2="132" stroke="var(--danger)" stroke-width="5" stroke-linecap="butt" stroke-dasharray="12 10"/>
  <text x="392" y="62" font-size="17" font-weight="700" fill="var(--danger)">grade 5 needs rank 5</text>
  <text x="392" y="90" font-size="16" fill="var(--text-muted)">not slower — not at all</text>
  <rect x="20" y="152" width="834" height="62" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="437" y="190" text-anchor="middle" font-size="17" fill="var(--text)">So you are told the rank and its price: 16,000,000 cr sold at their workshop.</text>
+ <text x="437" y="190" text-anchor="middle" font-size="17" fill="var(--text)">So you are told the rank you need, not a list of materials.</text>
  <text x="440" y="240" text-anchor="middle" font-size="16" fill="var(--text-muted)">Never a shopping list for something you could not craft today.</text>
 </svg>
 </section>
@@ -158,7 +158,7 @@ What a blueprint costs and changes, and how the craft on a fitted module actuall
 > "how good is my frame shift drive roll"
 > "what can I engineer on a power plant"
 
-Nothing here touches the network. Two halves, and they answer different questions. **What a grade 5
+The blueprint and farming answers touch no network; finding a material or a material trader uses the galaxy search. Two halves, and they answer different questions. **What a grade 5
 costs** is a fact about the game and comes from shipped tables. **What it costs *you*** depends on
 your rank with the engineer who would craft it, and only your journal knows that — so the two arrive
 together, the way [engineers](engineers.md) pairs a directory with your own standing.
@@ -195,18 +195,16 @@ arithmetic. Five crafts of a three-material recipe is fifteen units, and that is
 ### A grade you cannot craft yet is a gate, not a grind
 
 ```text
-You are grade 2 with Elvira Martuuk, at Long Sight Base in Khun, and grade 5 needs rank 5. Reaching grade 5 with them takes 16,000,000 cr of profit sold at their workshop.
+You are grade 2 with Elvira Martuuk, at Long Sight Base in Khun, and grade 5 needs rank 5. Rank rises by working with them, and it compounds: every rank you gain makes each later craft count for more.
 ```
 
-Grade *N* cannot be crafted below rank *N* **at all**. So the answer is the rank you need and what it
-costs, never a large shopping list you cannot use. Reputation rises by buying modifications and by
-selling exploration data or commodities at that engineer's own workshop; grade 1 arrives with the
-unlock and has no price.
+Grade *N* cannot be crafted below rank *N* **at all**. So the answer is the rank you need, never a
+large shopping list you cannot use.
 
 ### How your own craft went
 
 ```text
-5 of 6 modules engineered on Fixture, a Krait_MkII.
+5 of 6 modules engineered on Fixture, a Krait MkII.
 
   Frame Shift Drive — FSD LongRange, grade 5, finished (1.0)
   Thrusters in Main Engines — Engine Dirty, grade 3, 3 crafts to go (0.4)
@@ -289,8 +287,8 @@ look up would be worse than either.
 
 ```text
 Yttrium — a grade 4 raw material.
-You hold 60 of a possible 100.
-Found at: Surface prospecting; Crashed Satellite.
+You hold 60 of a possible 150.
+Found at: Surface prospecting.
 Richest of the 20 nearest landable bodies carrying it, from Sol:
   Rich Rock — 1.9%, 9.0 ly
   Poor Rock — 0.4%, 1.0 ly
@@ -310,11 +308,11 @@ all — 25 of the game's 28. A search for one comes back empty, and an empty res
 none near you", which is a wrong answer wearing the shape of a right one. So it says the index does
 not carry it, which is a fact about the index.
 
-**Manufactured and Encoded** come from the shipped origin list, and where an origin names a system
-state or a superpower the answer becomes a system search:
+**Manufactured and Encoded** come from the shipped origin list, and where a material is one a system
+state yields, the answer becomes a system search:
 
 ```text
-Nearest systems reported in Boom, Empire-aligned:
+Nearest systems reported Independent-aligned, in Boom or Expansion, over 1,000,000 people:
   Alpha Centauri — 4.4 ly, population 12,000,000
 ```
 
@@ -346,7 +344,7 @@ crossed.
 same-grade exchange is always cross-line and costs the extra six. Reading the journal's `Category`
 instead would price the commonest trade there is at a sixth of its cost.
 
-Trades the rules define but the storage cap forbids — grade 1 to grade 5 within a line wants 1,296
+Trades the rules define but the storage cap forbids — grade 1 to grade 5 within a line needs 1,296
 units against a cap of 300 — are simply not offered.
 
 ### Traders
@@ -427,9 +425,11 @@ whether a relog brings it back, and the trades that turn it into the rest of its
 
 ```text
 Fastest route, nearest first:
-  HIP 36601 C 3 b — collect Tellurium (shards), -17.6769, -55.18. Does not reliably respawn on a relog — move on to the next cluster or tree.
-  Outotz LS-K d8-3 B 5 a — collect Yttrium (shards), -1.9216, -145.7013, a relog respawns it. Trades down: 1 for 3 into grade 3, 1 for 9 into grade 2, 1 for 27 into grade 1.
+  HIP 36601 C 3 b — collect Tellurium (shards), -17.6769, -55.18. Does not reliably respawn on a relog — move on to the next cluster or tree. Trades down: 1 for 27 into grade 1, 1 for 9 into grade 2, 1 for 3 into grade 3.
+  Outotz LS-K d8-3 B 5 a — collect Yttrium (shards), -1.9216, -145.7013. Does not reliably respawn on a relog — move on to the next cluster or tree. Trades down: 1 for 27 into grade 1, 1 for 9 into grade 2, 1 for 3 into grade 3.
 ```
+
+Both steps also end with the jump-range advice quoted under the farming sites below, left out here.
 
 #### Hand-picked farming sites
 
@@ -442,10 +442,10 @@ that turns it into the grade actually asked about:
 
 ```text
 General: crystalline shards or brain trees for grade 4 raws, then trade down.
-Fastest: Outotz LS-K d8-3 B 5 a, shards, -1.9216, -145.7013 — a relog respawns it. Farm Yttrium there and trade 1 for 27 into Carbon.
+Fastest: Outotz LS-K d8-3 B 5 a, shards, -1.9216, -145.7013 — does not reliably respawn on a relog; move on to the next cluster or tree. Farm Yttrium there and trade 1 for 27 into Carbon.
 ```
 
-The table is hand-written, not generated — Frontier defines no such list. Two sites need a longer
+The table is hand-written, not generated — Frontier defines no such list. Six sites, in two systems, need a longer
 jump range than most ships carry unengineered, so their answer, and the route tool's steps there, name
 the confirmed figures rather than guess at a minimum:
 
@@ -487,8 +487,8 @@ system name with it.
 For a raw material the offer is the **system**, not the body — a body name is not something the
 galaxy map takes, and pasting a destination into it is the errand this ends.
 
-An offer stands until the next answer replaces it, so saying it twice copies it twice. A search
-that found nothing clears the offer rather than leaving the previous system answering to "that".
+An offer stands until the next answer replaces it, so saying it twice copies it twice. A trader
+search that found nothing leaves the previous offer standing.
 
 ### Notes for anyone reading the code
 
@@ -505,5 +505,5 @@ trader arrives with the sourcing tools, and it must never cross ledgers or types
 not the nearest and not the first. Where nobody unlocked can reach it, an outstanding invitation is
 mentioned instead, because that is the next step rather than a dead end.
 
-There is no setting. Nothing leaves the machine, so there is nothing to switch off, and a row that
-protects nothing is a row you have to read and decide about for no reason.
+The blueprint, roll and farming answers have no setting and send nothing off the machine. The
+material and trader searches use the galaxy search, and say so when it is switched off.

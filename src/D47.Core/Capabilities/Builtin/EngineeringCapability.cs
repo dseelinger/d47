@@ -49,8 +49,9 @@ public static class EngineeringCapability
             {
                 Name = "get_blueprint",
                 Exercise =
-                    "Ask D47 what Dirty Drive Tuning does. The reply gives the effects and materials for each "
-                    + "grade, who offers it and to what grade, and the exact total for a full grade at your rank.",
+                    "Ask D47 what Dirty Drive Tuning does. The reply gives the top grade's effects, the materials "
+                    + "for each grade, who offers it and to what grade, and the exact total for a full grade when "
+                    + "your rank is known.",
                 Description =
                     "What a blueprint changes and costs: effects and materials per grade, who offers "
                     + "it and to what grade, the module's experimental effects, and — folding the "

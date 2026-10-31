@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-The Ships, Engineers and Gap help pages now ask phrases that work: "what is left for Felicity Farseer" and "what am I short of". A ship's page documents its To buy block, and Checklists documents the list a ship you do not own gets, with its Buy lines. The Ships How it works band is shorter and the Specifications band no longer quotes prices.
+The Ships, Specifications, Engineers, Engineering, Checklists, Gap and Choosing a module help pages now match the app. Their steps ask phrases that work, such as "what is left for Felicity Farseer", "what am I short of" and "how good is my roll", and name the real buttons: ADD A LINE on the Checklist page, and Add to checklist on an engineer's page. The Gap page says it counts ship builds and suit and weapon plans, not goals, in the Materials, Ship locker and Cargo ledgers. Engineering no longer quotes a credit price for engineer rank, and says that finding a material or a trader uses the galaxy search. A ship's page documents its To buy block, and Checklists documents the list a ship you do not own gets, with its Buy lines.
 
 The Callouts help page now matches the code. Its steps quote phrases that work, such as "stop calling out limpet reminders", and it describes the canopy breach warning, which names the minutes of oxygen left, and the reminder to repair the canopy when you dock with it still broken. Spoken examples, row names, defaults and conditions are corrected throughout: Arrivals no longer claims to announce engineering stations, the Narrator speaks only while a story or adventure is running, and a held story objective is said once you are clear rather than dropped.
 

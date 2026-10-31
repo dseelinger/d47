@@ -93,9 +93,9 @@ public static class ShipsCapability
                 Protected = true,
                 Name = "get_ship_plans",
                 Exercise =
-                    "Say \"what have I planned\". The reply lists each ship build you have planned and what its "
-                    + "slots hold, or says there are none. The model cannot call it: it is refused if it asks. The "
-                    + "model cannot call it: it is refused if it asks.",
+                    "Say \"what have I planned\". The reply lists each ship you own and each hull you mean to buy, "
+                    + "where it is and how many slots its build plans. The model cannot call it: it is refused if it "
+                    + "asks.",
                 Description =
                     "Every ship the Commander owns and every hull they intend to buy, with where each "
                     + "one is and how many slots its build has an opinion about.",
@@ -112,9 +112,9 @@ public static class ShipsCapability
             {
                 Name = "promote_ship_plan",
                 Exercise =
-                    "With a ship build planned, say \"put that on my checklist\". D47 proposes it and asks. Accept, "
-                    + "and each planned slot becomes a checklist line for its blueprint and grade. The model cannot "
-                    + "do this: it is refused if it asks.",
+                    "With a ship build planned, say \"promote this plan\". Each planned slot becomes a checklist line "
+                    + "for its blueprint and grade, and the reply says how many lines are on your checklist now. The "
+                    + "model cannot do this: it is refused if it asks.",
                 Description =
                     "Offer a ship's build to the checklist. It is a proposal: the Commander accepts, and "
                     + "each planned slot becomes a line for its blueprint and grade, plus a second line "
@@ -159,7 +159,7 @@ public static class ShipsCapability
                 Name = "drop_ship_plan",
                 Exercise =
                     "Open a planned ship under Ships and press Drop this ship, then answer Drop it. The plan is "
-                    + "gone, and what it already put on the checklist stays. The button appears only for a planned "
+                    + "gone, and so is its list on the Checklist tab. The button appears only for a planned "
                     + "hull you do not own. The model cannot do this: it is refused if it asks.",
                 Description =
                     "Drop a ship's build. The Commander's own act: not offered to the model, and refused "

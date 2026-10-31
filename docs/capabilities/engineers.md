@@ -23,7 +23,7 @@ nav_order: 108
 <section>
 <h2><span class="num">1</span> Open Engineers on the Asset Mgmt tab and read the directory.</h2>
 <p class="say">Open Engineers on the Asset Mgmt tab and read the directory.</p>
-<p class="expect">Engineers are sorted as Ready for unlock, Unlocked and Needs a referral, with the doable ones first.</p>
+<p class="expect">Engineers are sorted as Ready for Unlock, Unlocked and Needs a Referral, with the doable ones first.</p>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Engineers page">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
@@ -40,19 +40,19 @@ nav_order: 108
 <section>
 <h2><span class="num">2</span> Press a name to see what unlocking them takes.</h2>
 <p class="say">Press an engineer's name, or say "what is left for Felicity Farseer".</p>
-<p class="expect">You see the requirement, the system and how far away it is.</p>
+<p class="expect">You hear what is still needed. The engineer's page shows their system and how far away it is.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what is left for Felicity Farseer</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or press the name anywhere it appears — both reach the same page.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">It says the requirement, the system, and how far away it is.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">It says what is still needed; the page shows the system and the distance.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> Press Route, accept it, and it becomes a checklist.</h2>
-<p class="say">Press Route and accept it.</p>
-<p class="expect">The route becomes a checklist with one line per stop.</p>
+<h2><span class="num">3</span> Press Route for the order to unlock them in.</h2>
+<p class="say">Press Route on the Engineers page.</p>
+<p class="expect">Each step is listed with its distance. On an engineer's own page, Add to checklist puts their unmet requirements on your checklist.</p>
 <svg viewBox="0 0 880 208" role="img" aria-label="The Route page">
  <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
@@ -61,7 +61,7 @@ nav_order: 108
  <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">48 ly</text>
  <text x="44" y="130" font-size="16" fill="var(--text)">2. The Dweller — Wyrd</text>
  <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">31 ly</text>
- <text x="44" y="184" font-size="15" fill="var(--text-muted)">Accepting it writes one checklist line per stop.</text>
+ <text x="44" y="184" font-size="15" fill="var(--text-muted)">Add to checklist, on an engineer's page, writes their unmet requirements.</text>
 </svg>
 </section>
 <section>
@@ -101,7 +101,7 @@ nav_order: 108
  <rect x="30" y="30" width="390" height="160" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="225" y="90" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">DIRECTORY</text>
  <text x="225" y="126" text-anchor="middle" font-size="16" fill="var(--text-muted)">everybody — all 38 of them</text>
- <text x="225" y="156" text-anchor="middle" font-size="16" fill="var(--text-muted)">nearest and reachable first</text>
+ <text x="225" y="156" text-anchor="middle" font-size="16" fill="var(--text-muted)">reachable first, then most work</text>
  <rect x="460" y="30" width="390" height="160" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="655" y="90" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">ROUTE</text>
  <text x="655" y="126" text-anchor="middle" font-size="16" fill="var(--text-muted)">who to unlock next</text>
@@ -164,12 +164,12 @@ nav_order: 108
  <polygon points="602,144 586,136 586,152" fill="var(--accent-muted)"/>
  <rect x="612" y="86" width="238" height="116" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="731" y="126" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">PROFESSOR PALIN</text>
- <text x="731" y="154" text-anchor="middle" font-size="16" fill="var(--text-muted)">3 steps, about 18 jumps</text>
+ <text x="731" y="154" text-anchor="middle" font-size="16" fill="var(--text-muted)">3 steps, about 3 jumps</text>
  <text x="731" y="182" text-anchor="middle" font-size="16" fill="var(--accent)">covers 2 of the 3</text>
  <text x="440" y="252" text-anchor="middle" font-size="16" fill="var(--text-muted)">Easiest to reach first, then the most planned jobs per jump.</text>
  <text x="440" y="278" text-anchor="middle" font-size="16" fill="var(--text-muted)">Counted in jumps, at your ship's range, from where you are standing.</text>
 </svg>
-<p class="body">Route counts each unlock in jumps at your ship's range, then ranks by planned jobs covered per jump. It shows every step, and the summary line reads <code>3 steps, 84 ly, about 18 jumps, and 2 planned jobs covered.</code></p>
+<p class="body">Route counts each unlock in jumps at your ship's range, then ranks by planned jobs covered per jump. It shows every step, and the summary line reads <code>3 steps, 84 ly, about 3 jumps, and 2 planned jobs covered.</code></p>
 </section>
 </div></div>
 </details>
@@ -180,7 +180,7 @@ nav_order: 108
 <div class="cards">
 <a class="card" href="engineering.html"><span class="ct">Engineering →</span><span class="cd">The blueprints themselves, and what each grade costs.</span></a>
 <a class="card" href="ships.html"><span class="ct">Ships →</span><span class="cd">Where a plan is made, which is what the Route is solving for.</span></a>
-<a class="card" href="checklists.html"><span class="ct">Checklists →</span><span class="cd">Where a route lands when you accept it, one line per stop.</span></a>
+<a class="card" href="checklists.html"><span class="ct">Checklists →</span><span class="cd">Where an engineer's unmet requirements land when you add them.</span></a>
 </div>
 </div>
 </div></div>
@@ -266,15 +266,15 @@ open does not move.
 Bill Turner works out of Turner Metallics Inc in Alioth, on 4 A.
 Grades: Plasma Accelerator to 5, Sensors to 5, Surface Scanner to 5, Auto Field-Maintenance Unit to 3, ...
 Reached through Selene Jean at grade 3.
-The Commander is grade 2 with Selene Jean, and the referral needs grade 3 — 2,000,000 cr of profit sold at their workshop, plus roughly half the bar to the grade after it.
+The Commander is grade 2 with Selene Jean, and the referral needs grade 3, plus roughly half the bar to the grade after it. Rank rises by working with them, and it compounds: every rank you gain makes each later craft count for more.
 Earning the invitation: Gain Friendly status with Alliance. You will also need Allied status with Alioth Independents to get a permit to access the Alioth starsystem.
 Their invitation asks for Bromellite ×50.
 The Commander has not met them.
 ```
 
 **27 of the 38 engineers are reached through somebody else**, and the middle two lines are the point
-of the whole feature: who introduces them, and how far along that path you already are. The price is
-the published cost of that rank; the "roughly half the bar" is stated in words because that is how
+of the whole feature: who introduces them, and how far along that path you already are. The "roughly
+half the bar" is stated in words because that is how
 both sources state it and nobody published it as a number.
 
 Several referrers mean **any** of them, not all — reading three names as three requirements would
@@ -284,7 +284,8 @@ describe a wall where there is a door:
 Yi Shen works out of Eidolon Hold in Einheriar, on 1 A.
 I have no record of what they modify.
 Reached through any of Baltanos, Eleanor Bresa or Rosa Dayette.
-No grade is stated for that referral — the on-foot engineers unlock on a count of modifications rather than on a grade.
+On-foot engineers have no grade; unlocking the referrer is the referral.
+Earning the invitation: Complete referral tasks for Baltanos, Eleanor Bresa and Rosa Dayette.
 The Commander has not met Baltanos, Eleanor Bresa or Rosa Dayette.
 ```
 
@@ -322,7 +323,7 @@ the name, the system and what they grade.
 ```text
 9 of 38 unlocked. 16 in progress. 13 not started.
 
-You can go and get these now
+Ready for Unlock
   * Felicity Farseer - 1 module                        131 ly, about 5 jumps
   * Elvira Martuuk - 1 module                          182 ly, about 7 jumps
     The Dweller                                        34 ly, about 2 jumps
@@ -338,7 +339,7 @@ invited), not started — against the whole directory. It does not distinguish a
 engineer from one blocked on materials; the gap analysis on the Asset Mgmt tab cannot tell the two
 apart either.
 
-One pane rather than two: a row already holds the name, where they are and what wants them, so a
+One pane rather than two: a row already holds the name, where they are and what needs them, so a
 second column beside it would only repeat them.
 
 #### How do I get everything my plans need
@@ -348,7 +349,7 @@ Felicity Farseer — 1 step, 131 ly, about 5 jumps, and 1 planned job covered.
   Felicity Farseer at Farseer Inc in Deciat — 131 ly, about 5 jumps
       first: Gain exploration rank Scout or higher.
       hand over: Meta-alloys ×1
-      grade 3 with them takes 2,000,000 cr of profit sold there
+      grade 3 with them is rank you still have to earn
       covers: grade 3 Increased FSD Range
 
 Professor Palin — 3 steps, 466 ly, about 18 jumps, and 1 planned job covered.
@@ -375,7 +376,8 @@ is travel and rolling (already invited, already unlocked with rank to earn, or e
 and the hand-over aboard), 1 when a hand-over is still to gather, 2 when an invitation requirement is
 not met or cannot be read. A lower tier always ranks first. A commodity or material hand-over counts
 as held when the hold or the material lockers carry enough, plus what has already been handed over;
-bonds, bounty vouchers and on-foot tributes cannot be read, so they count as still to gather.
+an on-foot tribute counts as held when your suit locker carries enough; bonds and bounty vouchers
+cannot be read, so they count as still to gather.
 
 **Then value per jump.** Work is counted in jobs — one blueprint at one grade on one module kind —
 so grade 5 Long Range on twenty multi-cannons is one job over twenty slots:
@@ -404,8 +406,8 @@ or when you would rather go somewhere else — you cannot tell a bad answer from
 
 ### Distance is arithmetic, and that is deliberate
 
-The coordinates ship in `Engineers.tsv`, generated rather than hand-written. `get_distance` computes
-the same figure correctly and is a network call — so ranking thirty-eight people through one every
+The coordinates ship in `Engineers.tsv`, generated rather than hand-written. Distance is computed
+from them on the machine; a network lookup for it would make ranking thirty-eight people through one every
 time a plan changes is a tab that is useless in flight and unusable offline.
 
 Your own position comes out of the journal: `Location`, `FSDJump` and `CarrierJump` each carry a
@@ -432,12 +434,12 @@ the shape the keyword router handles with no round trip at all.
 
 #### `get_engineer_unlock_requirements`
 
-Every engineer's chain in one call, for a question that spans them — who wants a given material,
+Every engineer's chain in one call, for a question that spans them — who needs a given material,
 who asks for a rank, who is closest to unlocked. `find_engineer` and `get_engineer_prerequisites`
-each answer for one engineer; this is the one that reads all 39 at once.
+each answer for one engineer; this is the one that reads all 38 at once.
 
 ```text
-39 engineers.
+38 engineers.
 
 Chloe Sedesi — known
   Referred by: Marco Qwent. — not met
@@ -450,9 +452,9 @@ Professor Palin — known
   Unlock: Provide 25 units of Sensor Fragments. — undetermined
 ```
 
-Both want Sensor Fragments, and both name the quantity — 25 — in the unlock line, whether or not
-the test behind it parsed cleanly. With no journal loaded every criterion reads undetermined
-rather than the tool refusing to answer.
+Both need Sensor Fragments, and both name the quantity — 25 — in the unlock line, whether or not
+the test behind it parsed cleanly. With no journal loaded a referral reads not met and every
+other criterion reads undetermined, rather than the tool refusing to answer.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
@@ -543,7 +545,7 @@ redundant — the four Colonia on-foot engineers have no rows in the blueprint t
 it alone tells a Colonia Commander that nobody within twenty-two thousand light years can do the
 thing three people next door do.
 
-Four engineers — Baltanos, Eleanor Bresa, Rosa Dayette and Yi Shen — have a location and no
-blueprint data. They are kept, and the answer says "I have no record of what they modify" rather
-than implying they do nothing. Dropping them would have Directive 47 deny that a real person
+Yi Shen has a location and no blueprint data. The entry is kept, and the answer says "I have no
+record of what they modify" rather
+than implying they do nothing. Dropping the entry would have Directive 47 deny that a real person
 exists.

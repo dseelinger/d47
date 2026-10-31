@@ -58,14 +58,11 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("focus", "bring Elite back"),
         ("utilities", "set a timer for twenty minutes called fuel scoop"),
         ("routes", "plot a neutron route to Colonia"),
-        ("checklists", "put buy a fuel scoop on my list"), // #1957
-        ("checklists", "tick off the fuel scoop"), // #1957
-        ("checklists", "remove it"), // #1957
+        ("checklists", "mark buy a fuel scoop as done"), // #1957
+        ("checklists", "remove buy a fuel scoop"), // #1957
         ("engineering", "what does a grade 5 dirty drive cost"), // #1957
-        ("engineering", "can I afford it"), // #1957
-        ("specifications", "what is the Python II like"), // #1957
-        ("specifications", "how much does a 6A power plant draw"), // #1957
-        ("specifications", "compare the Krait and the Python"), // #1957
+        ("specifications", "what is the Python like"), // #1957
+        ("specifications", "what does a 6A power plant weigh"), // #1957
         ("macros", "docking prep"),
         ("vr", "put the panel down"),
         ("vr", "lock it to my head"),

@@ -69,7 +69,7 @@ nav_order: 204
  <text x="48" y="64" font-size="17" font-weight="800" fill="var(--text)">¤  Mining Lance</text>
  <text x="48" y="98" font-size="15" fill="var(--text-muted)">Needs a Powerplay pledge — one Power's, and I cannot tell you which.</text>
  <rect x="20" y="138" width="840" height="92" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="48" y="172" font-size="17" font-weight="800" fill="var(--text)">Keep the 3C Mining Volley Repeater, fixed</text>
+ <text x="48" y="172" font-size="17" font-weight="800" fill="var(--text)">Keep the 3C Mining Volley Repeater</text>
  <text x="48" y="206" font-size="15" fill="var(--text-muted)">Frontier engineers this and I have no recipe for it.</text>
  <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">Both say what is not known rather than guessing. A badge you can act on beats a figure you cannot trust.</text>
 </svg>
@@ -86,12 +86,12 @@ nav_order: 204
 
 ## The details
 
-The page reached from **Asset Mgmt › a ship › a slot › Module** — the list of everything that fits,
-and where a build is decided one slot at a time.
+The **Module** page, reached from Asset Mgmt, then Ships, a ship and a slot. It lists everything that
+fits, and is where a build is decided one slot at a time.
 
 ### The line at the top of the page
 
-Above the search box, the page states the ship, the slot, its size, and what is in it now. It ends
+Above the search box, the page states the ship, the slot, its size where the slot has one, and what is in it now. It ends
 with the sentence that matters most:
 
 > It does not reach your checklist until you promote the build.
@@ -108,13 +108,13 @@ into work to do.
 | **The classes** | Every size-and-class of it that fits this slot — `2D, 1D` means two do |
 | **The figures** | What separates one from another: rate, type, and the raw number |
 
-The list is ordered by what the slot is for, not alphabetically. Where several classes of one
+The list is in alphabetical order by module name. Where several classes of one
 module fit, they are one row rather than several — you are choosing *what*, and *which one* is a
 second question Directive 47 asks only when the answer is not already forced.
 
 ### Keep what is fitted
 
-The first row is always the one that changes nothing: **keep** what is there. It exists because
+When the slot has a module fitted, the first row changes nothing: **keep** what is there. It exists because
 "leave this alone" is a real decision in a build, and a page that offers a hundred alternatives and
 no way to say *this one is fine* is a page that makes you close it and lose your place.
 
@@ -136,9 +136,6 @@ knows what it costs. Named where it happens, so a blank is never mistaken for *n
 The box narrows the list as you type. It is a **filter, not a spelling test**: type `cargo` and you
 get every cargo rack, type nothing and you get everything. It never refuses a value, because a list
 only has to be got near, where a name has to be got right.
-
-**Type it instead** is beside it for the opposite case — you know exactly what you want and would
-rather say it than hunt for it.
 
 ### What it will not do
 

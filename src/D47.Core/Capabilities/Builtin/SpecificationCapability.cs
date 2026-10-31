@@ -38,7 +38,7 @@ public static class SpecificationCapability
                 Name = "get_ship_specification",
                 Exercise =
                     "Ask D47 for the specification of the Python. The reply gives the pad size, speed and boost, "
-                    + "hull and shield strength, the hardpoint and internal sizes, and the hull cost.",
+                    + "armour and base shields, the hardpoint and internal sizes, and the hull cost.",
                 Description =
                     "What a ship can do before it is outfitted: landing pad size, speed and boost, base "
                     + "hull and shield strength, hardpoint and internal compartment sizes, crew seats and "

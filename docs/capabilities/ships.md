@@ -23,7 +23,7 @@ nav_order: 112
 <section>
 <h2><span class="num">1</span> Open the Ships tab. Your fleet is already there.</h2>
 <p class="say">Open the Ships tab.</p>
-<p class="expect">Your fleet is listed from the journal, the ship you are flying outlined and a ship you only mean to buy faded.</p>
+<p class="expect">Your fleet is listed from the journal, the ship you are flying marked CURRENT SHIP and a hull you only mean to buy marked intended.</p>
 <svg viewBox="0 0 880 300" role="img" aria-label="The Ships tab">
  <rect x="20" y="16" width="840" height="264" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
@@ -43,15 +43,15 @@ nav_order: 112
  <rect x="580" y="78" width="256" height="152" fill="var(--surface)" stroke="var(--text-muted)" stroke-width="2" opacity="0.55"/>
  <path d="M614 132 L730 122 L778 146 L730 164 L646 168 Z" fill="var(--text-muted)" opacity="0.55"/>
  <text x="596" y="206" font-size="15" fill="var(--text-muted)">Python</text>
- <text x="596" y="224" font-size="13" fill="var(--text-muted)">wanted</text>
+ <text x="596" y="224" font-size="13" fill="var(--text-muted)">intended</text>
 
- <text x="44" y="266" font-size="15" fill="var(--text-muted)">Read out of the journal. The one you are flying is outlined; a ship you only mean to buy is faded.</text>
+ <text x="44" y="266" font-size="15" fill="var(--text-muted)">Read out of the journal. The one you are flying is marked CURRENT SHIP; a hull you mean to buy is marked intended.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">2</span> Open one and change a module.</h2>
 <p class="say">Open a ship and change a module.</p>
-<p class="expect">The gauges, such as jump range, move as you change it, before you commit.</p>
+<p class="expect">The gauges, such as jump range, move to match the plan once you choose.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Ptarmigan">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Ptarmigan</text>
@@ -64,13 +64,13 @@ nav_order: 112
  <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Jump range</text>
  <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">62.4 ly</text>
- <text x="44" y="278" font-size="15" fill="var(--text-muted)">The gauges move as you change things, so you see the cost before you commit.</text>
+ <text x="44" y="278" font-size="15" fill="var(--text-muted)">The gauges follow the plan, so you see what a change does to the ship.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">3</span> Accept the plan, and it lands on your checklist.</h2>
 <p class="say">Accept the plan, or say "what am I short of".</p>
-<p class="expect">The shortfall lands on your checklist and the Gap page, with one build per ship.</p>
+<p class="expect">The shortfall is on the Gap page, with one build per ship.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what am I short of</text>
@@ -161,7 +161,7 @@ nav_order: 112
  <text x="750" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">points at it</text>
  <rect x="20" y="158" width="840" height="56" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="193" text-anchor="middle" font-size="17" fill="var(--text)">“That Corsair is yours now, and the plan you had for one is pointed at it.”</text>
- <text x="440" y="244" text-anchor="middle" font-size="16" fill="var(--text-muted)">Only when exactly one intended build matches. Two planned and one bought is a question.</text>
+ <text x="440" y="244" text-anchor="middle" font-size="16" fill="var(--text-muted)">Only when exactly one intended build matches. Two planned and one bought moves neither.</text>
 </svg>
 <p class="body">Buying the hull is the plan's first step, so you can plan before you own it. The list's first line is made here: <code>Text = $"Buy {IndefiniteArticle.With(build.HullName)}",</code></p>
 </section>
@@ -201,8 +201,7 @@ These are two different questions and Directive 47 keeps them apart:
 - **Your checklist** is what you are working on next, in the order you put it in.
 
 **Nothing crosses between them unasked.** Planning a slot writes the build and stops. It reaches
-your checklist when you promote it — and even then it arrives as a proposal you accept, the same
-way every other suggestion does.
+your checklist only when you promote it.
 
 Double-clicking a slot row on a ship's page opens the same prompt as **Plan this slot** (or **Change the plan**).
 
@@ -241,7 +240,7 @@ be believed.
 
 ### Copying a ship out
 
-An owned ship's page has a **Copy as SLEF** press beside **Promote**. It puts the ship as it is fitted
+An owned ship's page has a **Copy as SLEF** press beside **Put this build on my checklist**. It puts the ship as it is fitted
 now on the clipboard, for pasting into an outfitting website's import: the loadout live while you are
 aboard, the one last remembered otherwise. A hull you only intend has no press, since a plan can leave
 slots open and a site needs every slot filled. A ship whose modules d47 has not seen says so on the
@@ -286,8 +285,8 @@ hull of a type you had planned for, Directive 47 binds the plan to it and says s
 That Corsair is yours now, and the plan you had for one is pointed at it.
 ```
 
-Only when exactly one intended build matches the hull. Two Corsairs planned and one bought is a
-question rather than a guess.
+Only when exactly one intended build matches the hull. With two Corsairs planned and one bought,
+neither plan is moved.
 
 ### What is left to buy
 
@@ -296,7 +295,7 @@ something bought: the hull, if you do not own it yet, and each planned module th
 its slot nor in module storage. It names three items and counts the rest. **Plot a route to buy them**
 plots a route from your system and opens it on Navigation › Plan; it is off, with the reason under it,
 when "Look things up in the galaxy" is off. Opening module storage takes what you have stored off the
-list, and until D47 has seen your storage the route says **Storage not checked**. The mini panel does not
+list, and until D47 has seen your storage the block says **STORAGE NOT CHECKED**. The mini panel does not
 show the block.
 
 ### The pictures {#hull-art}
@@ -305,7 +304,7 @@ Every card carries a drawing of the hull, and it is a render of Elite's own geom
 artwork somebody drew: the shipyard preview, captured, posed in the game's camera and drawn as
 orange lines over a dark hull.
 
-**The small one came with Directive 47.** All forty-seven fit in eleven megabytes, so a fresh
+**The small one came with Directive 47.** All forty-eight fit in eleven megabytes, so a fresh
 installation has a fleet with pictures on it before anything is downloaded.
 
 **The large ones did not, and there are three of them per hull.** A ship's own page shows the same
@@ -313,7 +312,7 @@ drawing at 3840 by 2160 — rendered again at that size rather than blown up, so
 weight they always were — and opening a ship plays its turntable once through on the card you came
 from. The third is the hull's 3D mesh, for the hull viewer. Together those are about 850 MB for the fleet, which is not something to hand a
 Commander who flies a Sidewinder. So the first time you open a ship, Directive 47 fetches the three
-files for that hull, from the same GitHub release it updates itself from, and keeps them in
+files for that hull, from a release on the same GitHub repository it updates itself from, and keeps them in
 `data/ships`. Each hull is asked for once.
 
 The hull symbol is all that is sent. Not your Commander name, not which ships you own, not where
@@ -356,17 +355,18 @@ whole-window viewer left open while you play.
 
 **With no graphics card path, the processor draws.** Where the window has no GPU interop — software
 rendering, or a driver that cannot set the viewer up or loses it — the viewer is drawn by the processor
-at the same pose, and the log says why, once a session.
+at the same pose, and the log says why, once per reason per session.
 
 ### Owned is derived. Intended is authored.
 
 The same rule your checklist already draws between a line the journal settles and a line a person
 does — so it looks like the same rule, because it is one.
 
-### Dropping a build keeps what it already produced
+### Dropping a build
 
-Delete a plan and whatever it already put on your checklist **stays there**. You ordered your list
-around those lines, and silently removing them makes the history wrong.
+Drop the plan for a ship you own and whatever it already put on your checklist **stays there**. You
+ordered your list around those lines, and silently removing them makes the history wrong. Drop the
+plan for a hull you have not bought and its "(planned)" list on the Checklist tab goes with it.
 
 ### Importing a build from the clipboard
 
@@ -461,8 +461,8 @@ experimental effect.
 {"type":"object","properties":{"ship":{"type":"string","description":"Which ship, by name or hull. Omit for the one the Commander is flying."}},"required":[],"additionalProperties":false}
 ```
 
-**Promotion is one-to-many.** A slot produces a blueprint line and, when it names an experimental
-effect, an experimental line. These are the only two kinds. Each carries its slot in its intent,
+**Promotion is one-to-many.** A slot produces a module line when it names a module, a blueprint
+line, and an experimental line when it names an experimental effect. Each carries its slot in its intent,
 which is what lets a later revision find them again. Promotion adds no engineer unlock or rank
 lines.
 
@@ -490,7 +490,6 @@ What the plan already put on the checklist is kept.
           "slot": "MainEngines",
           "blueprint": "Dirty Drive Tuning",
           "grade": 5,
-          "engineer": "Felicity Farseer",
           "experimental": "Drag Drives"
         }
       ]
