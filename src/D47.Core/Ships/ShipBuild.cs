@@ -1,3 +1,4 @@
+using D47.Core.Loadout;
 using System.Globalization;
 using D47.Core.Checklists;
 
@@ -150,30 +151,10 @@ public sealed record ShipBuild(
         Slots.FirstOrDefault(plan => string.Equals(plan.Slot, slot, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The build with one slot planned, replacing whatever was there.</summary>
-    public ShipBuild With(SlotPlan plan)
-    {
-        var slots = Slots.ToList();
-        var at = slots.FindIndex(existing =>
-            string.Equals(existing.Slot, plan.Slot, StringComparison.OrdinalIgnoreCase));
-
-        if (at >= 0)
-        {
-            slots[at] = plan;
-        }
-        else
-        {
-            slots.Add(plan);
-        }
-
-        return this with { Slots = slots };
-    }
+    public ShipBuild With(SlotPlan plan) => this with { Slots = PlanLists.WithSlot(Slots, plan, p => p.Slot) };
 
     /// <summary>The build with one slot's plan taken out.</summary>
-    public ShipBuild Without(string slot) => this with
-    {
-        Slots = [.. Slots.Where(plan =>
-            !string.Equals(plan.Slot, slot, StringComparison.OrdinalIgnoreCase))],
-    };
+    public ShipBuild Without(string slot) => this with { Slots = PlanLists.WithoutSlot(Slots, slot, p => p.Slot) };
 
     /// <summary>The build with one slot moved to a priority group.</summary>
     public ShipBuild Move(string slot, int priority) => this with

@@ -111,30 +111,10 @@ public sealed record OnFootBuild(
             .Select(plan => plan.Modification!)];
 
     /// <summary>The build with one slot planned, replacing whatever was there.</summary>
-    public OnFootBuild With(KitPlan plan)
-    {
-        var slots = Slots.ToList();
-        var at = slots.FindIndex(existing =>
-            string.Equals(existing.Slot, plan.Slot, StringComparison.OrdinalIgnoreCase));
-
-        if (at >= 0)
-        {
-            slots[at] = plan;
-        }
-        else
-        {
-            slots.Add(plan);
-        }
-
-        return this with { Slots = slots };
-    }
+    public OnFootBuild With(KitPlan plan) => this with { Slots = PlanLists.WithSlot(Slots, plan, p => p.Slot) };
 
     /// <summary>The build with one slot's plan taken out.</summary>
-    public OnFootBuild Without(string slot) => this with
-    {
-        Slots = [.. Slots.Where(plan =>
-            !string.Equals(plan.Slot, slot, StringComparison.OrdinalIgnoreCase))],
-    };
+    public OnFootBuild Without(string slot) => this with { Slots = PlanLists.WithoutSlot(Slots, slot, p => p.Slot) };
 
     /// <summary>How a Commander hears it — "Maverick Suit", "Karma AR-50, intended".</summary>
     public string Describe() => IsOwned ? Equipment : $"{Equipment}, intended";

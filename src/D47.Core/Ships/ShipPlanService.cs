@@ -1,3 +1,4 @@
+using D47.Core.Loadout;
 using System.Globalization;
 using D47.Core.Checklists;
 using D47.Core.Journal;
@@ -826,29 +827,8 @@ public sealed class ShipPlanService(
     }
 
     private void Replace(ShipBuild build) =>
-        store.Save([.. store.Builds.Select(other => other.Id == build.Id ? build : other)]);
+        store.Save(PlanLists.Replacing(store.Builds, build, other => other.Id));
 
-    /// <summary>The next build identity: the lowest number nothing is using.</summary>
-    private string NextId()
-    {
-        var taken = new HashSet<int>();
-
-        foreach (var build in store.Builds)
-        {
-            if (build.Id.StartsWith("ship-", StringComparison.OrdinalIgnoreCase)
-                && int.TryParse(build.Id[5..], CultureInfo.InvariantCulture, out var number))
-            {
-                taken.Add(number);
-            }
-        }
-
-        var next = 1;
-
-        while (taken.Contains(next))
-        {
-            next++;
-        }
-
-        return "ship-" + next.ToString(CultureInfo.InvariantCulture);
-    }
+    private string NextId() =>
+        PlanLists.NextNumberedId(store.Builds.Select(build => build.Id), "ship-");
 }

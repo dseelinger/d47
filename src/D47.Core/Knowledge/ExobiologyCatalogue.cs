@@ -1,3 +1,4 @@
+using static D47.Core.Knowledge.TsvCells;
 using System.Globalization;
 using System.Reflection;
 
@@ -183,14 +184,6 @@ public static class ExobiologyCatalogue
             ColonyDistance = Integer(cells, 14),
         };
     }
-
-    private static string? Text(string[] cells, int index) =>
-        index < cells.Length && cells[index].Length > 0 ? cells[index] : null;
-
-    private static int? Integer(string[] cells, int index) =>
-        Text(cells, index) is { } text && int.TryParse(text, CultureInfo.InvariantCulture, out var value)
-            ? value
-            : null;
 
     private static double? Number(string[] cells, int index) =>
         Text(cells, index) is { } text

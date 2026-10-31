@@ -40,46 +40,20 @@ public static class GoalEvaluator
         live.Percent is { } percent && live.Rank < live.Top ? Math.Clamp(percent, 0, 100) / 100.0 : null;
 
     /// <summary>A career ladder.</summary>
-    private static GoalStanding Rank(GoalArc arc, string career, CommanderGameState? state, GoalMark? mark)
-    {
-        if (state?.Ranks.For(career) is { } live && state.Ranks.IsKnown)
-        {
-            return new GoalStanding
-            {
-                Arc = arc,
-                Have = live.Rank,
-                Need = RankStanding.EliteTop,
-                Source = GoalSource.Live,
-                AsOf = state.Ranks.TakenAt,
-                Started = mark?.Started,
-                Note = live.Describe(),
-                Rung = Rung(live),
-                NextRank = live.NextName(),
-                Track = GoalTrack.Ladder(career, live.Rank, Rung(live), arc.Top!),
-                IsDone = live.IsMaxRank,
-            };
-        }
-
-        // The game has not said this session.
-        return mark?.Have is { } mined
-            ? new GoalStanding
-            {
-                Arc = arc,
-                Have = mined,
-                Need = RankStanding.EliteTop,
-                Source = GoalSource.Mined,
-                AsOf = mark.AsOf,
-                Started = mark.Started,
-                Note = new RankStanding(career, (int)mined).Describe(),
-                NextRank = new RankStanding(career, (int)mined).NextName(),
-                Track = GoalTrack.Ladder(career, (int)mined, null, arc.Top!),
-                IsDone = mined >= RankStanding.EliteTop,
-            }
-            : new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started };
-    }
+    private static GoalStanding Rank(GoalArc arc, string career, CommanderGameState? state, GoalMark? mark) =>
+        Ladder(arc, career, state, mark, RankStanding.EliteTop, live => live.IsMaxRank);
 
     /// <summary>A navy ladder, which runs to the top of its own ladder rather than to Elite.</summary>
-    private static GoalStanding NavyRank(GoalArc arc, string career, CommanderGameState? state, GoalMark? mark)
+    private static GoalStanding NavyRank(GoalArc arc, string career, CommanderGameState? state, GoalMark? mark) =>
+        Ladder(arc, career, state, mark, GoalCatalogue.NavyTop, live => live.Rank >= GoalCatalogue.NavyTop);
+
+    private static GoalStanding Ladder(
+        GoalArc arc,
+        string career,
+        CommanderGameState? state,
+        GoalMark? mark,
+        int top,
+        Func<RankStanding, bool> isDoneLive)
     {
         if (state?.Ranks.For(career) is { } live && state.Ranks.IsKnown)
         {
@@ -87,7 +61,7 @@ public static class GoalEvaluator
             {
                 Arc = arc,
                 Have = live.Rank,
-                Need = GoalCatalogue.NavyTop,
+                Need = top,
                 Source = GoalSource.Live,
                 AsOf = state.Ranks.TakenAt,
                 Started = mark?.Started,
@@ -95,7 +69,7 @@ public static class GoalEvaluator
                 Rung = Rung(live),
                 NextRank = live.NextName(),
                 Track = GoalTrack.Ladder(career, live.Rank, Rung(live), arc.Top!),
-                IsDone = live.Rank >= GoalCatalogue.NavyTop,
+                IsDone = isDoneLive(live),
             };
         }
 
@@ -105,14 +79,14 @@ public static class GoalEvaluator
             {
                 Arc = arc,
                 Have = mined,
-                Need = GoalCatalogue.NavyTop,
+                Need = top,
                 Source = GoalSource.Mined,
                 AsOf = mark.AsOf,
                 Started = mark.Started,
                 Note = new RankStanding(career, (int)mined).Describe(),
                 NextRank = new RankStanding(career, (int)mined).NextName(),
                 Track = GoalTrack.Ladder(career, (int)mined, null, arc.Top!),
-                IsDone = mined >= GoalCatalogue.NavyTop,
+                IsDone = mined >= top,
             }
             : new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started };
     }

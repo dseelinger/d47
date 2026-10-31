@@ -440,29 +440,8 @@ public sealed class OnFootPlanService(
     }
 
     private void Replace(OnFootBuild build) =>
-        store.Save([.. store.Builds.Select(other => other.Id == build.Id ? build : other)]);
+        store.Save(PlanLists.Replacing(store.Builds, build, other => other.Id));
 
-    /// <summary>The next build identity: the lowest number nothing is using.</summary>
-    private string NextId()
-    {
-        var taken = new HashSet<int>();
-
-        foreach (var build in store.Builds)
-        {
-            if (build.Id.StartsWith("kit-", StringComparison.OrdinalIgnoreCase)
-                && int.TryParse(build.Id[4..], CultureInfo.InvariantCulture, out var number))
-            {
-                taken.Add(number);
-            }
-        }
-
-        var next = 1;
-
-        while (taken.Contains(next))
-        {
-            next++;
-        }
-
-        return "kit-" + next.ToString(CultureInfo.InvariantCulture);
-    }
+    private string NextId() =>
+        PlanLists.NextNumberedId(store.Builds.Select(build => build.Id), "kit-");
 }

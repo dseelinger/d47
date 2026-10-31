@@ -1,3 +1,4 @@
+using static D47.Core.Knowledge.TsvCells;
 using System.Globalization;
 using System.Reflection;
 
@@ -764,14 +765,6 @@ public static class EliteSpecifications
                 .Select(part => part.Split('=', 2))
                 .Where(parts => parts.Length == 2 && parts[0].Length > 0 && parts[1].Length > 0)
                 .Select(parts => (parts[0], parts[1]))];
-
-    private static string? Text(string[] cells, int index) =>
-        index < cells.Length && cells[index].Length > 0 ? cells[index] : null;
-
-    private static int? Integer(string[] cells, int index) =>
-        Text(cells, index) is { } text && int.TryParse(text, CultureInfo.InvariantCulture, out var value)
-            ? value
-            : null;
 
     private static long? Long(string[] cells, int index) =>
         Text(cells, index) is { } text && long.TryParse(text, CultureInfo.InvariantCulture, out var value)

@@ -327,6 +327,26 @@ public sealed record StationQuery
     /// <summary>The pad sizes <c>min_pad</c> offers.</summary>
     public static IReadOnlyList<string> MinPads { get; } = ["Medium", "Large"];
 
+    private static bool TryMinPad(string? minPad, out PadSize? pad, out string failure)
+    {
+        pad = null;
+        failure = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(minPad))
+        {
+            return true;
+        }
+
+        if (MinPads.FirstOrDefault(size => Same(size, minPad.Trim())) is not { } match)
+        {
+            failure = $"'{minPad}' is not a pad size to insist on. It is Medium or Large.";
+            return false;
+        }
+
+        pad = Enum.Parse<PadSize>(match);
+        return true;
+    }
+
     /// <summary>Builds a station search, or says what was wrong in words the model can act on.</summary>
     public static bool TryParse(
         string? referenceSystem,
@@ -416,17 +436,9 @@ public sealed record StationQuery
             return false;
         }
 
-        PadSize? pad = null;
-
-        if (!string.IsNullOrWhiteSpace(search.MinPad))
+        if (!TryMinPad(search.MinPad, out var pad, out failure))
         {
-            if (MinPads.FirstOrDefault(size => Same(size, search.MinPad.Trim())) is not { } size)
-            {
-                failure = $"'{search.MinPad}' is not a pad size to insist on. It is Medium or Large.";
-                return false;
-            }
-
-            pad = Enum.Parse<PadSize>(size);
+            return false;
         }
 
         query = new StationQuery
@@ -479,17 +491,9 @@ public sealed record StationQuery
             }
         }
 
-        PadSize? pad = null;
-
-        if (!string.IsNullOrWhiteSpace(search.MinPad))
+        if (!TryMinPad(search.MinPad, out var pad, out failure))
         {
-            if (MinPads.FirstOrDefault(size => Same(size, search.MinPad.Trim())) is not { } size)
-            {
-                failure = $"'{search.MinPad}' is not a pad size to insist on. It is Medium or Large.";
-                return false;
-            }
-
-            pad = Enum.Parse<PadSize>(size);
+            return false;
         }
 
         var services = new List<string>();
