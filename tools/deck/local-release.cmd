@@ -1,4 +1,4 @@
 @echo off
-rem Stream Deck launcher. Opens a session in the repo, then press "To desktop" to hand it over.
-cd /d C:\dev\d47
-claude -n "Test drive" "/test-drive"
+rem Builds Release, mirrors it to the pinned local-release folder, closes every other d47 and starts it.
+powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Users\dougs\.claude\skills\local-release\local-release.ps1" -Repo C:\dev\d47
+pause

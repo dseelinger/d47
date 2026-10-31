@@ -135,16 +135,15 @@ def g_push(d, cx, cy, r, col):
                (cx + r * 0.50, cy - r * 0.28)], fill=col)
 
 
-def g_wheel(d, cx, cy, r, col):
-    """Steering wheel: take the build for a drive."""
-    w = max(2, int(r * 0.15))
-    _ring(d, cx, cy, r * 0.88, col, w)
-    _dot(d, cx, cy, r * 0.24, col)
-    for a in (90, 210, 330):
-        d.line([cx + r * 0.20 * math.cos(math.radians(a)),
-                cy + r * 0.20 * math.sin(math.radians(a)),
-                cx + r * 0.80 * math.cos(math.radians(a)),
-                cy + r * 0.80 * math.sin(math.radians(a))], fill=col, width=w)
+def g_pin(d, cx, cy, r, col):
+    """A pushpin: the Release build pinned to the taskbar."""
+    w = max(2, int(r * 0.14))
+    d.rounded_rectangle([cx - r * 0.36, cy - r * 0.92, cx + r * 0.36, cy - r * 0.74],
+                        radius=int(r * 0.08), fill=col)
+    d.polygon([(cx - r * 0.26, cy - r * 0.74), (cx + r * 0.26, cy - r * 0.74),
+               (cx + r * 0.36, cy - r * 0.04), (cx - r * 0.36, cy - r * 0.04)], fill=col)
+    _bar(d, cx, cy + r * 0.02, r * 0.66, r * 0.09, col)
+    d.line([cx, cy + r * 0.08, cx, cy + r * 0.92], fill=col, width=w)
 
 
 def g_restart(d, cx, cy, r, col):
@@ -325,7 +324,7 @@ KEYS = {
     'desktop':    (g_handoff, CYAN, 'Desktop'),
     'push':       (g_push, CYAN, 'Push'),
 
-    'testdrive':  (g_wheel, GREEN, 'Test drive'),
+    'localrelease': (g_pin, GREEN, 'Local'),
     'status':     (g_branch, GREEN, 'Status'),
 
     'restart':    (g_restart, BLUE, 'Restart'),

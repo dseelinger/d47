@@ -105,7 +105,7 @@ PAGE_1 = {
 
     '0,1': send('/desktop', 'desktop'),
     '1,1': send('push', 'push'),
-    '2,1': run('test-drive.cmd', 'testdrive'),
+    '2,1': run('local-release.cmd', 'localrelease'),
     # Violet in the typing row because it opens a session: /release asks patch or minor.
     '3,1': run('release.cmd', 'release'),
     # Violet in the typing row because it opens the session the phone app reaches.

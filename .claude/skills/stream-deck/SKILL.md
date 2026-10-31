@@ -181,7 +181,7 @@ cuts releases.
 | | 0 | 1 | 2 | 3 | 4 |
 | --- | --- | --- | --- | --- | --- |
 | **0** | Triage | Coord | Architect | Issue | Review |
-| **1** | Desktop | Push | Test drive | Release | Launcher |
+| **1** | Desktop | Push | Local | Release | Launcher |
 | **2** | → OBS | Restart | Pre-release | Patch | Minor |
 
 Page 2 controls OBS, in red. **Record, Pause and Mic** use Elgato's OBS Studio plugin
