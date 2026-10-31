@@ -639,10 +639,8 @@ public sealed class AppHost : IDisposable
         Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.StartupText = saying);
     }
 
-    /// <summary>
-    /// The stored loadouts, for the row that describes them and the press that rebuilds them (#128).
-    /// </summary>
-    private LoadoutStore? _loadouts;
+    /// <summary>Describes the stored loadouts and rebuilds them (#128).</summary>
+    internal LoadoutRescanner Rescanner { get; private set; } = null!;
 
     /// <summary>The systems this Commander has named (#488), for the panel page that lists, renames and
     /// deletes one (#490).</summary>
@@ -657,9 +655,6 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Every phrase already in use, for the panel page's rename prompt (#490).</summary>
     public Func<IReadOnlyCollection<string>> BookmarkPhrasesTaken { get; private set; } = () => [];
-
-    /// <summary>Whether a rescan is already running.</summary>
-    private int _rescanning;
 
     /// <summary>The last plan each planner produced (Phase 37).</summary>
     public D47.Core.Knowledge.RoutePlanBook? Plans { get; private set; }
@@ -2384,12 +2379,12 @@ public sealed class AppHost : IDisposable
                 {
                     // Read at draw time, so the row says what is stored now rather than what was stored when
                     // the surface was assembled — including straight after a rescan.
-                    Remembered = () => late.Host?.RememberedShips() ?? "Nothing is remembered yet.",
+                    Remembered = () => late.Host?.Rescanner.Remembered() ?? "Nothing is remembered yet.",
 
                     // The delegate answers a press rather than being one, for the reason
                     // SpeechCapability.DownloadLocalVoice records: rows are built before `late.Host` exists, so a
                     // press asked for here would be null and stay null.
-                    Rescan = () => late.Host is null ? null : late.Host.RescanLoadoutsAsync,
+                    Rescan = () => late.Host is null ? null : late.Host.Rescanner.RescanAsync,
 
                     Talk = () => buildTalk,
                 },
@@ -3640,7 +3635,8 @@ public sealed class AppHost : IDisposable
 
         // Through the dispatcher: the walk raises this on the thread pool thread WarmUp put it on (#148).
         history.Changed += host.ShowHistory;
-        host._loadouts = loadouts;
+        host.Rescanner = new LoadoutRescanner(
+            gameState, loadouts, host.Files, journalDirectory, loggerFactory, () => DateTimeOffset.Now);
         host._bookmarks = bookmarks;
         host.SurfaceMarks = stores.SurfaceMarks;
         host.EarlierFinds = services.EarlierFinds;
@@ -4777,116 +4773,6 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The Frontier id of the Commander flying, or empty before it is known.</summary>
     private string Flying => GameState.Active?.Identity.FrontierId ?? string.Empty;
-
-    internal string RememberedShips()
-    {
-        if (GameState.Active?.Loadouts is not { IsKnown: true } ships)
-        {
-            return "No ship has been seen inside yet. Board one and D47 will remember it.";
-        }
-
-        var oldest = ships.Ships.Values.Min(ship => ship.SeenAt);
-        var count = ships.Ships.Count;
-
-        return count == 1
-            ? $"One ship, last seen {TelemetryDelta.Spoken(DateTimeOffset.Now - oldest)} ago."
-            : $"{count.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)} ships, the "
-              + $"oldest last seen {TelemetryDelta.Spoken(DateTimeOffset.Now - oldest)} ago.";
-    }
-
-    /// <summary>
-    /// Reads every journal on disk again and rebuilds what each ship was last seen holding (#128).
-    /// </summary>
-    internal async Task<string?> RescanLoadoutsAsync(
-        IProgress<double> progress,
-        CancellationToken cancellationToken)
-    {
-        if (JournalDirectory is not { Length: > 0 } directory || _loadouts is not { } store)
-        {
-            return "There is no journal folder to read.";
-        }
-
-        if (Interlocked.Exchange(ref _rescanning, 1) == 1)
-        {
-            return "A rescan is already running.";
-        }
-
-        try
-        {
-            var found = await Task.Run(
-                () => LoadoutBackfill.Rescan(
-                    Files,
-                    directory,
-                    _loggerFactory.CreateLogger(nameof(LoadoutBackfill)),
-                    progress),
-                cancellationToken).ConfigureAwait(false);
-
-            if (found.Files == 0)
-            {
-                _logger.LogWarning("A rescan read no journals from {Directory}; nothing was changed", directory);
-
-                return $"I could not read any journals in {directory}, so nothing was changed. "
-                       + "Check the journal folder and try again.";
-            }
-
-            GameState.ReplaceLoadouts(found.ByCommander);
-
-            // Dated off the newest thing the walk saw rather than off the clock, so the next start's catch-up
-            // begins where this left off.
-            var through = found.ByCommander.Values
-                .SelectMany(ships => ships.Ships.Values)
-                .Select(ship => ship.SeenAt)
-                .DefaultIfEmpty(DateTimeOffset.Now)
-                .Max();
-
-            store.Save(GameState.All, through);
-
-            _logger.LogInformation(
-                "A rescan read {Files} journals and remembered {Ships} ship(s)", found.Files, found.Ships);
-
-            return found.Ships == 0
-                ? $"Read {found.Files} journals and found no ships in them. Nothing is remembered now."
-                : RescanSentence(found, GameState.Active?.Identity.FrontierId);
-        }
-        catch (OperationCanceledException)
-        {
-            return "The rescan was stopped. Nothing was changed.";
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            _logger.LogWarning(ex, "A rescan of {Directory} could not be completed", directory);
-            return "I could not read the journals through. Nothing was changed.";
-        }
-        finally
-        {
-            _ = Interlocked.Exchange(ref _rescanning, 0);
-        }
-    }
-
-    // Splits a rescan's total by commander, so the sentence matches "What is fitted, remembered"
-    // above it rather than summing every FID in the journal folder (#246).
-    internal static string RescanSentence(LoadoutRescan found, string? activeFid)
-    {
-        if (activeFid is not { Length: > 0 })
-        {
-            return $"Read {found.Files} journals. {found.Ships} {Noun("ship", found.Ships)} remembered.";
-        }
-
-        var mine = found.ByCommander.TryGetValue(activeFid, out var loadouts) ? loadouts.Ships.Count : 0;
-        var others = found.ByCommander.Where(pair => pair.Key != activeFid).ToList();
-
-        if (others.Count == 0)
-        {
-            return $"Read {found.Files} journals. {mine} {Noun("ship", mine)} remembered.";
-        }
-
-        var otherShips = others.Sum(pair => pair.Value.Ships.Count);
-
-        return $"Read {found.Files} journals. {mine} {Noun("ship", mine)} remembered for this commander, "
-               + $"and {otherShips} for {others.Count} {Noun("other commander", others.Count)} on this machine.";
-
-        static string Noun(string singular, int count) => count == 1 ? singular : singular + "s";
-    }
 
     /// <summary>How often the memory store is checked for entries past their expiry (Phase 31).</summary>
     private static readonly TimeSpan ExpiryEvery = TimeSpan.FromMinutes(10);

@@ -1,7 +1,7 @@
 using D47.Core.Journal;
 using Xunit;
 
-namespace D47.App.Tests;
+namespace D47.Core.Tests.Journal;
 
 /// <summary>
 /// The rescan sentence gives the active commander's ship count, matching the row above it, rather
@@ -33,7 +33,7 @@ public class TheRescanSentenceCountsThisCommandersShipsTests
 
         Assert.Equal(
             "Read 979 journals. 12 ships remembered.",
-            AppHost.RescanSentence(found, "F735466"));
+            LoadoutRescanner.Sentence(found, "F735466"));
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class TheRescanSentenceCountsThisCommandersShipsTests
         Assert.Equal(
             "Read 979 journals. 12 ships remembered for this commander, and 9 for 2 other commanders "
             + "on this machine.",
-            AppHost.RescanSentence(found, "F735466"));
+            LoadoutRescanner.Sentence(found, "F735466"));
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class TheRescanSentenceCountsThisCommandersShipsTests
         Assert.Equal(
             "Read 10 journals. 1 ship remembered for this commander, and 1 for 1 other commander "
             + "on this machine.",
-            AppHost.RescanSentence(found, "F735466"));
+            LoadoutRescanner.Sentence(found, "F735466"));
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class TheRescanSentenceCountsThisCommandersShipsTests
                 ["F12484034"] = Ships(9),
             });
 
-        Assert.Equal("Read 979 journals. 21 ships remembered.", AppHost.RescanSentence(found, null));
+        Assert.Equal("Read 979 journals. 21 ships remembered.", LoadoutRescanner.Sentence(found, null));
     }
 
     [Fact]
@@ -99,6 +99,6 @@ public class TheRescanSentenceCountsThisCommandersShipsTests
         Assert.Equal(
             "Read 10 journals. 0 ships remembered for this commander, and 5 for 1 other commander "
             + "on this machine.",
-            AppHost.RescanSentence(found, "F735466"));
+            LoadoutRescanner.Sentence(found, "F735466"));
     }
 }
