@@ -32,17 +32,15 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("bookmarks", "set course for Jameson Memorial"),
         ("bookmarks", "rename bookmark Current CG to Colonia Bridge"),
         ("bookmarks", "delete bookmark Current CG"),
-        ("lore", "what happened at Hyades Sector DB-X d1-112"),
-        ("lore", "remember that this is where I lost the Anaconda"),
         ("on-foot", "what does grade 3 on my Maverick cost"), // #1998
         ("crew", "who is in my fighter bay"),
         ("crew", "comms Vasquez"),
         ("crew", "how is the fighter holding up"),
         ("characters", "comms Harlan"),
         ("characters", "are you there"),
-        ("commander-log", "have I met Arden Vale before"),
-        ("powerplay", "what does my next Powerplay rank give me"),
-        ("powerplay", "what would Edmund Mahon give me"),
+        ("commander-log", "have I met Arden Vale before"), // #2000
+        ("powerplay", "what does my next Powerplay rank give me"), // #2000
+        ("powerplay", "what would Edmund Mahon give me"), // #2000
         ("exobiology", "what biology is on this body"), // #1998
         ("binding-profiles", "save these bindings as sim pit"),
         ("binding-profiles", "load the sim pit bindings"),

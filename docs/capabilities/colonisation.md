@@ -22,8 +22,8 @@ nav_order: 114
 <p class="intro">Three steps to knowing how many runs are left.</p>
 <section>
 <h2><span class="num">1</span> Start a build in the game, then ask.</h2>
-<p class="say">Start a build in the game, then ask what it still needs.</p>
-<p class="expect">D47 reads your construction depot from the journal and gives the figures; ask again after each delivery and they change.</p>
+<p class="say">Start a build in the game, dock at the construction site once, then say "what does my construction site still need".</p>
+<p class="expect">D47 gives the site, how far along it is and each commodity still outstanding. It reads the figures the site reported when you last docked there, so they change after your next visit, not after each delivery.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what does my build still need</text>
@@ -34,8 +34,8 @@ nav_order: 114
 </section>
 <section>
 <h2><span class="num">2</span> Read the two numbers that matter.</h2>
-<p class="say">Listen for what is still needed and how many runs that is.</p>
-<p class="expect">You hear the tonnes still needed per commodity and the runs left for the ship you are flying.</p>
+<p class="say">Listen for the tonnes in your hold and the runs.</p>
+<p class="expect">You hear how many tonnes are already in your hold, how many are left to find, and "At" your ship's tonnes "a run, that is" the number of "more full loads".</p>
 <svg viewBox="0 0 880 210" role="img" aria-label="A commodity line showing what is still needed, what is in the hold, and how many runs remain">
  <rect x="20" y="16" width="840" height="178" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="56" font-size="17" font-weight="700" fill="var(--text)">Steel</text>
@@ -49,8 +49,8 @@ nav_order: 114
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Dock at the construction site once so the journal has seen it.</p>
-<p class="expect">D47 then reports the depot; with no site visited this session it has nothing to report.</p>
+<p class="say">Say "what is left to deliver" before you have docked at the site.</p>
+<p class="expect">D47 has no site to report until a dock at the site writes its manifest to the journal. Dock once and ask again.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="It needs a depot the journal has seen.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It needs a depot the journal has seen.</text>
@@ -104,7 +104,7 @@ nav_order: 114
  <text x="700" y="182" text-anchor="middle" font-size="16" fill="var(--text-muted)">delivered ten minutes ago</text>
  <text x="450" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">nothing on your disk says so</text>
  <text x="440" y="230" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">A site reports its manifest only while you are standing on it.</text>
- <text x="440" y="258" text-anchor="middle" font-size="16" fill="var(--text-muted)">6,307 of 6,330 events across 912 journals. So this is a record of where you have been.</text>
+ <text x="440" y="258" text-anchor="middle" font-size="16" fill="var(--text-muted)">The answer ends with a line saying so. This is a record of where you have been.</text>
 </svg>
 </section>
 <section>
@@ -124,7 +124,7 @@ nav_order: 114
  <text x="820" y="222" text-anchor="end" font-size="17" fill="var(--text)">656 t of something</text>
  <text x="440" y="264" text-anchor="middle" font-size="16" fill="var(--text-muted)">Said apart on purpose, because adding them together would invent a number.</text>
 </svg>
-<p class="body">Tracking a build needs no key, no account and nothing off this machine — it is subtraction over what Elite has already written to your disk. Finding somewhere to build is a different question, and it goes out to the galaxy index like every other one that leaves.</p>
+<p class="body">Tracking a build is subtraction over what Elite wrote to your disk. Every answer ends <code>A site reports only while you are docked at it, so these are its figures from your last visit rather than live ones.</code></p>
 </section>
 </div></div>
 </details>
@@ -152,10 +152,9 @@ haul — and which nearby systems have the bodies your next colony wants.
 > "find me somewhere worth colonising"
 
 **Two halves, and they run on different things.** Tracking a build needs no key, no account and no
-network: it is subtraction over data Elite has already written to your disk, the shortest supply
-chain of anything d47 ships. Finding somewhere to build is a question about the galaxy, so it goes
-to the same index and the same off switch as every other question that leaves this machine — see
-[galaxy search](galaxy.md).
+network: it is subtraction over data Elite has already written to your disk. Finding somewhere to
+build is a question about the galaxy, so it goes to the same index and the same Look things up in the
+galaxy switch as every other question that leaves this machine; see [galaxy search](galaxy.md).
 
 ### The arithmetic you would otherwise be doing on paper
 
@@ -183,8 +182,8 @@ ship's cargo capacity from its `Loadout`.
 
 ### The one thing to know: these figures are from your last visit
 
-A construction site reports its manifest **only while you are docked at it** — 6,307 of 6,330 events
-measured across a 912-journal corpus. So what d47 holds is a record of where you have been, not a
+A construction site reports its manifest **only while you are docked at it**; in a 912-journal corpus
+nearly every depot event was written while docked. So what d47 holds is a record of where you have been, not a
 live feed. Somebody else may have delivered ten minutes ago and nothing on your disk says so.
 
 That caveat is on the end of every answer rather than buried in a settings page, because this is the
@@ -192,9 +191,8 @@ one way this capability can be wrong while looking right: the arithmetic is exac
 describes has passed.
 
 The good news is the manifest itself has no traps in it. `ColonisationConstructionDepot` is a
-**snapshot, not a delta** — measured over 6,330 events and 120,208 resource rows, with
-`RequiredAmount` never moving mid-build and `ProvidedAmount` never once decreasing across 119,887
-consecutive comparisons. So "what is left" is one subtraction over the latest event, with no history
+**snapshot, not a delta**: in that corpus `RequiredAmount` never moved mid-build and `ProvidedAmount`
+never decreased between consecutive events. So "what is left" is one subtraction over the latest event, with no history
 to keep:
 
 ```json
@@ -206,31 +204,29 @@ to keep:
       "RequiredAmount":500, "ProvidedAmount":0, "Payment":3239 } ] }
 ```
 
-`Name_Localised` is on every one of those 120,208 rows, which is why this needs no commodity table
-at all — not even the one d47 already ships for other things.
+`Name_Localised` is on every row in that corpus, so this needs no commodity table.
 
 ### Several sites at once
 
-Three were open simultaneously in the corpus, so this is a list rather than a "current site". With
+Several sites can be open at once, so this is a list rather than a "current site". With
 one current site, asking what is needed just answers; with several, d47 names them and asks which.
 You can also name one directly — by its station or its system, whichever you would say out loud.
 
 **A site is current for 14 days after you last saw it.** Elite writes nothing when a Commander walks
 away from a site, so an unfinished site is current only if it was seen within
-`ColonisationSites.CurrentFor` (14 days) of now; the longest gap between two sightings of a site that
-did complete was 9 days. An older unfinished site is "not seen since" its date. It is not hidden: the
+`ColonisationSites.CurrentFor` (14 days) of now. An older unfinished site is "not seen since" its date. It is not hidden: the
 site list gives it one line, how many there are and when the newest was seen, and naming one still
 answers about it. With no site named and none current, d47 names the most recent one and its date.
 
-A finished site keeps reporting for a while — 2 to 60 more events after it completes — so
+A finished site keeps reporting for a while after it completes, so
 **completion is the `ConstructionComplete` flag and never "the events stopped"**. Complete and failed
 sites are out of the way unless you ask for them.
 
 ### What is in your hold
 
 This comes from `Cargo.json` rather than from the journal, and that is not a preference. The `Cargo`
-event carries its full `Inventory` on only **1,151 of 13,762** occurrences measured — essentially the
-first one in each session — and the other 12,611 carry a bare tonnage. A journal-only reader would
+event carries its full `Inventory` only on essentially the first occurrence in each session (1,151 of 13,762 in the
+912-journal corpus), and the rest carry a bare tonnage. A journal-only reader would
 have a correct manifest for the first minute of a session and a stale one for the rest of it. Elite
 rewrites the file on every change, which is the same reason your backpack and ship locker are read
 the same way.
@@ -257,7 +253,9 @@ it was tried against the corpus and reconciled against the game's own total:
 |---|---|
 | Derived stock matched the reported tonnage | **347 times** |
 | Derived stock was wrong | **679 times** |
-| Commodities driven *negative* | 11 — transfers out of stock d47 never saw arrive |
+| Commodities driven *negative* | 11: transfers out of stock d47 never saw arrive |
+
+The counts are from the 912-journal corpus.
 
 Cargo reaches a carrier by routes the journal never itemises: its own commodity market, another
 Commander's delivery, anything loaded before the file d47 is reading. So an itemised carrier
@@ -320,8 +318,7 @@ This is where the commodity names nearly went wrong. Elite spells the same commo
 | `Cargo.json` | `aluminium` |
 | `ColonisationContribution` | `$ComputerComponents_name;` |
 
-Mixed case on **30 of 30** distinct symbols the contribution event writes, against 0 of 31 for the
-depot and 0 of 64 for the hold. A normaliser that stripped the `$` and the `_name;` and stopped there
+The contribution event writes mixed case where the depot and the hold do not. A normaliser that stripped the `$` and the `_name;` and stopped there
 would join the depot to the hold perfectly and match **no contribution against anything** — reporting
 a delivery you had just completed as never having happened. Names are folded to lowercase for exactly
 that reason.
@@ -330,26 +327,29 @@ that reason.
 
 The claim rule is Frontier's, in their own words: the System Colonisation Contact offers you "a
 nearby unpopulated star system (within a max distance of 15ly)". Both halves of that are checkable
-against an index d47 already queries, so this narrows a hundred-odd neighbours down to the handful
+against an index d47 already queries, so this narrows the neighbours down to the few
 that hold what you want to build on.
 
 ```text
 97 of the 109 systems within 15 light years of Ratraii are unpopulated. 3 are worth a look,
-nearest first:
+best colony first:
 
 Eol Prou LW-L c8-188 — 2.48 ly, 22 bodies.
+  Ranked for rings, settlement worlds and population.
   11 landable. Rings on 2: A 5 (Rocky, pristine reserves); A 8 (Icy, pristine reserves).
   9 Icy bodies, 5 Rocky bodies, 3 High metal content worlds, 1 Class I gas giant, 1 Gas giant
   with water-based life.
   Planets 11 ls to 3,490 ls from arrival.
 
 Eol Prou LW-L c8-266 — 2.66 ly, 18 bodies.
+  Ranked for rings, settlement worlds and population.
   11 landable. Rings on 3: 2 (Rocky, pristine reserves); 4 (Rocky, pristine reserves);
   3 (Metal Rich, Icy, pristine reserves).
   7 Rocky bodies, 6 Icy bodies, 2 Class III gas giants, 1 Class I gas giant, 1 Metal-rich body.
   Planets 10 ls to 3,133 ls from arrival.
 
 Eol Prou RS-T d3-74 — 5.03 ly, 26 bodies.
+  Ranked for rings, settlement worlds and population.
   12 landable. Rings on 4: A 2 (Rocky, pristine reserves); BC 6 (Icy, pristine reserves);
   A 3 (Rocky, pristine reserves); A 1 (Metal Rich, pristine reserves).
   10 Rocky bodies, 5 Icy bodies, 3 High metal content worlds, 2 Class I gas giants,
@@ -358,21 +358,24 @@ Eol Prou RS-T d3-74 — 5.03 ly, 26 bodies.
 
 23 more are systems nobody has surveyed — the index has their stars and no planets at all, so I
 cannot say what is in them. That is not the same as empty.
+Before claiming, check the build slots and where the primary port goes in the system map; no
+index carries either.
 None of this says a system is free. A claim lasts 24 hours, lives on Frontier's servers, and is
 visible only to the Commander who made it — no index outside the game holds one, so I cannot
 check. These are systems worth opening in the System Colonisation Contact, which is the only
 thing that knows.
 ```
 
-That last paragraph is the whole shape of this feature and is on every answer. Look at the third
-candidate to see why the arrival spread is there: its planets run from 3,958 to 81,811 light seconds
-out, which is a very different build from the first one's 11 to 3,490 whatever the bodies are.
+The tool takes `near`, `body_type`, `terraformable`, `rings`, `landable`, `max_distance` and `limit`.
+It looks out 15 light years unless `max_distance` is smaller, and returns up to five systems, three
+by default.
 
-And note the twenty-three. A crowd-sourced index holds what somebody has scanned and uploaded, so a
-system nobody has honked comes back as a star with no planets — **a fifth of the neighbourhood in
-that example**. Those are not small systems and they are not empty ones; they are systems with
-nothing known about them, which on a frontier is often exactly where you would go and look. They are
-counted rather than recommended, and counted rather than silently dropped.
+The last paragraph is on every answer. The third candidate shows why the arrival spread is there: its
+planets run much further from arrival than the first one's, whatever the bodies are.
+
+A crowd-sourced index holds what somebody has scanned and uploaded, so a system nobody has scanned
+comes back as a star with no planets. Those are not empty systems, only unknown ones. They are counted
+rather than recommended, and rather than silently dropped.
 
 #### What this cannot be: telling you a system is free
 
@@ -383,9 +386,8 @@ a better source; it is structural, and it was measured before this was built.
 field** — Frontier's 24 hours is a published rule rather than a number in the file. There is **no
 release or expiry event** either, so a claim lapsing is written nowhere at all. And nothing outside
 the game holds one: the most complete live service in the ecosystem is Raven Colonial, whose API
-covers projects, Commanders, carriers and systems, and **no endpoint records a claim**. It is not an oversight. A claim is server-side state that produces exactly one
-journal line on one machine, and crowd-fed indexes are built from journal lines — there is no line
-to send.
+covers projects, Commanders, carriers and systems, and **no endpoint records a claim**. A claim is server-side state that produces one journal line on one machine, and crowd-fed indexes are built
+from journal lines.
 
 So any "is this free" answer would be stale by up to 24 hours and could not be made fresher. d47
 says which systems have what you want, and the Galaxy Map at a System Colonisation Contact says
@@ -402,16 +404,15 @@ which ones you can have.
 | How many are landable, which have rings | A second call, for the shortlist only — the embedded records carry neither |
 | Nobody has surveyed this one | No known planets at all, which is what an unscanned system looks like in a crowd-fed index |
 
-Two things it deliberately does not do. It **does not rank systems by quality**, because a
-"colonisation score" is a number d47 would be inventing; it filters on what you asked for and orders
-by distance. And it **does not tell you which facility wants which body** — Frontier publishes the
+Two things it deliberately does not do. It does not say which systems are free. And it **does not tell
+you which facility wants which body** — Frontier publishes the
 facility list and not one figure behind it, so the strategy half is a web search with a source
 attached, never a table shipped in d47's own voice.
 
 #### Two traps in the index, both of which read as right answers
 
-Neither of these produces an error. Both were measured on 2026-08-16 and both are the reason this
-tool decides things locally rather than asking the index to decide them.
+Neither of these produces an error. Both were measured on 2026-08-16 and both are why this tool
+decides things locally rather than asking the index to decide them.
 
 **The population filter is dropped in the range shape.** Within 15 light years of Sol, where 48 of
 the 51 systems are populated, asking for population 1 and upwards as `{"min","max"}` returned 51 —
@@ -551,8 +552,8 @@ The order is a score worked out in code from the bodies: Earth-like and water wo
 landable ground (rocky, rocky ice, high metal content and metal-rich bodies count twice), rings
 (metallic and metal rich count double, as do Pristine or Major reserves), terraforming candidates,
 biological signals, the number of bodies and the share of bodies within 2,000 ls of arrival. Ties go
-to the nearer system. The body search is skipped when it fails, and the order then rests on the scan
-alone. Every answer ends by telling the Commander to check the build slots and where the primary port
+to the nearer system. If the body search fails the order rests on the scan alone and the answer says the landable and
+ring figures are missing. Every answer ends by telling the Commander to check the build slots and where the primary port
 goes in the system map before claiming, because no index carries either.
 
 ```json

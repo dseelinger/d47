@@ -21,37 +21,37 @@ nav_order: 117
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Two steps to a system that means something.</p>
 <section>
-<h2><span class="num">1</span> Arrive somewhere, or ask by name.</h2>
-<p class="say">Arrive somewhere, or say "what happened at Hyades Sector DB-X d1-112".</p>
-<p class="expect">D47 tells you what it knows from its twenty shipped systems, with no network.</p>
+<h2><span class="num">1</span> Ask about the system you are in.</h2>
+<p class="say">Say "what is notable about this system".</p>
+<p class="expect">In one of the shipped systems D47 says what it knows and where that came from, with no network. Anywhere else it says "Nothing on" the system "beyond what the scanners say."</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">what happened at Hyades Sector DB-X d1-112</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what is notable about this system</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">It ships knowing about twenty systems and needs no network for those.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">Anything it does not know, it says it does not know.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It answers for the system you are in, from a table that ships with D47.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Arriving in one of those systems makes D47 say so unprompted.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Add your own, and it keeps them.</h2>
-<p class="say">Say "remember that this is where I lost the Anaconda".</p>
-<p class="expect">The note is saved beside the shipped ones and is never overwritten or uploaded.</p>
+<h2><span class="num">2</span> Add a note of your own.</h2>
+<p class="say">Turn on Show every setting, open Settings › You and your records › Memory, notes and debrief, press Open your notes, type a note and press Remember this.</p>
+<p class="expect">The window says "Stored as your word about" the system, or that the search agreed, and lists the note as "your word".</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">remember that this is where I lost the Anaconda</text>
- <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">Your own notes sit beside the shipped ones and are never overwritten.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">They are yours: nothing uploads them and nothing prunes them.</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">Something worth remembering about this system</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Remember this</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">The note is for the system you are in, and is kept between sessions.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Nothing uploads it and nothing prunes it.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Ask about a system among the twenty it knows.</p>
-<p class="expect">For any other system D47 says it has nothing rather than making something up.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="Twenty systems is twenty, not four hundred billion.">
+<p class="say">Ask in a system that is not among the shipped ones.</p>
+<p class="expect">D47 says "Nothing on" the system "beyond what the scanners say" rather than making something up.</p>
+<svg viewBox="0 0 880 152" role="img" aria-label="Only the shipped systems have lore.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Twenty systems is twenty, not four hundred billion.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">For anywhere else it will say it has nothing rather than make something up about your neighbourhood.</text>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Most systems have no lore.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">D47 says it has nothing rather than invent something about your neighbourhood.</text>
 </svg>
 </section>
 </div></div>
@@ -65,10 +65,10 @@ nav_order: 117
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Some systems mean more than their astrography. It ships knowing about twenty, and keeps whatever you tell it about the rest.</p>
+<p class="intro">D47 ships a table of notable systems, remarks on one when you arrive, and keeps notes you add.</p>
 <section>
-<h2><span class="num">1</span> Once per system per week.</h2>
-<svg viewBox="0 0 880 240" role="img" aria-label="A system with lore attached is remarked on once a week, so a return visit the same evening is silent">
+<h2><span class="num">1</span> A system is remarked on once in a quiet period.</h2>
+<svg viewBox="0 0 880 240" role="img" aria-label="A system with lore attached is remarked on once in the quiet period, so a return visit the same evening is silent">
  <rect x="20" y="44" width="250" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="145" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">FIRST ARRIVAL</text>
  <text x="145" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">it says so, unprompted</text>
@@ -76,15 +76,14 @@ nav_order: 117
  <text x="435" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">AGAIN, TONIGHT</text>
  <text x="435" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">silence</text>
  <rect x="600" y="44" width="260" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="730" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A WEEK LATER</text>
+ <text x="730" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">AFTER THE QUIET PERIOD</text>
  <text x="730" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">it says so again</text>
- <text x="440" y="182" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The difference between a companion and a tour guide who forgot meeting you.</text>
- <text x="440" y="216" text-anchor="middle" font-size="16" fill="var(--text)">A Commander whose home system is where most sessions start should not hear the same remark every day.</text>
+ <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">A carrier jump counts as arriving.</text>
 </svg>
-<p class="body">The clock survives a restart, so logging off somewhere and coming back an hour later is quiet. A carrier jump counts as arriving — you were asleep in the back, but you are still somewhere new. <em>How often a system's lore is worth repeating (days)</em>, under Lore in Settings, holds the number of days; it defaults to seven and can be set to whatever fits your own play.</p>
+<p class="body">On arrival D47 looks the system up in its table. If it has an entry and the quiet period has passed, it says the entry once. The clock survives a restart. The period is seven days unless you change it.</p>
 </section>
 <section>
-<h2><span class="num">2</span> Three states, not two switches.</h2>
+<h2><span class="num">2</span> Remark on arrival has three states.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="Arrival lore can be off, a bare remark, or a remark followed by a web lookup">
  <rect x="20" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NEVER</text>
@@ -98,14 +97,12 @@ nav_order: 117
  <text x="725" y="78" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">REMARK, AND LOOK IT UP</text>
  <text x="725" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the fact, then whatever</text>
  <text x="725" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">the search found</text>
- <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Three, because a lookup with the remark switched off is detail</text>
- <text x="440" y="222" text-anchor="middle" font-size="16" fill="var(--text)">about something that was never announced.</text>
 </svg>
-<p class="body">A result that arrives late is dropped. If you have jumped again by the time it lands, you were somewhere else when it became relevant — and a sentence about a system you left is worse than silence.</p>
+<p class="body">Remark and look it up is the default. It follows the fact with a web search. A search result that arrives after you have jumped again is dropped.</p>
 </section>
 <section>
-<h2><span class="num">3</span> Four ways of knowing, and none is ever promoted.</h2>
-<svg viewBox="0 0 880 264" role="img" aria-label="Four tiers of lore, each read back in its own sentence naming where it came from">
+<h2><span class="num">3</span> Each note says where it came from.</h2>
+<svg viewBox="0 0 880 264" role="img" aria-label="Four kinds of lore, each read back in its own sentence naming where it came from">
  <rect x="20" y="30" width="840" height="160" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="66" text-anchor="start" font-size="16" fill="var(--text)">“Earth is here.”</text>
  <text x="470" y="66" text-anchor="start" font-size="15" fill="var(--accent)">← the shipped table</text>
@@ -115,10 +112,9 @@ nav_order: 117
  <text x="470" y="134" text-anchor="start" font-size="15" fill="var(--text-muted)">← your word</text>
  <text x="46" y="168" text-anchor="start" font-size="16" fill="var(--text)">“I wrote this one down myself, and nothing has checked it…”</text>
  <text x="580" y="168" text-anchor="start" font-size="15" fill="var(--text-muted)">← its own note</text>
- <text x="440" y="224" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A tier is never promoted.</text>
- <text x="440" y="254" text-anchor="middle" font-size="15" fill="var(--text-muted)">Surviving a lookup is a label, not a verdict — promotion is how an invention silently becomes a fact.</text>
+ <text x="440" y="224" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">A label is never promoted.</text>
 </svg>
-<p class="body">An obscure but real site finds nothing, and a search can appear to agree with something a model half-invented. So if a later search <em>would</em> have corroborated a note, the note still says <em>you told me</em>.</p>
+<p class="body">A note you write is read back as <code>You told me:</code> and the note. A note the model writes is read back as <code>I wrote this one down myself, and nothing has checked it:</code> and the note. A later search never changes either.</p>
 </section>
 </div></div>
 </details>
@@ -136,7 +132,7 @@ nav_order: 117
 
 ## The details
 
-Some systems mean more than their astrography. Directive 47 ships knowing about twenty of them, says
+Some systems mean more than their astrography. Directive 47 ships a table of twenty of them, says
 so when you arrive, and keeps whatever you tell it about the rest.
 
 ### Ask for it
@@ -145,7 +141,7 @@ so when you arrive, and keeps whatever you tell it about the rest.
 > "anything notable here"
 > "is there anything out here"
 
-The first two need no AI configured at all — they route straight through, with nothing guessed.
+These route straight to the tool with no model, and it answers only for the system you are in. Asking about a system by name is not supported.
 
 ```text
 Sol. Earth is here. Everywhere else on this list is somewhere humanity got to afterwards.
@@ -160,28 +156,28 @@ John Jameson's Cobra Mark Three came down on the first planet's moon B and is st
 wreck every Commander eventually visits.
 ```
 
-**Once per system per week**, and that rule is the whole difference between a companion and a tour
-guide who has forgotten meeting you. A Commander whose home system is where most sessions start
-would otherwise hear the same remark every day. **How often a system's lore is worth repeating (days)**,
-under **Settings → Lore**, holds the length of the quiet period in days; it defaults to seven.
+Once per system per quiet period. **How often a system's lore is worth repeating (days)** holds the
+length of the quiet period in days; it defaults to seven, and 0 remarks every time. The row is under
+Settings › Your core › Exploring, group Exploration callouts, shows with Show every setting on, and is
+absent while Remark on arrival is Never.
 
-The clock survives a restart, so logging off in Shinrarta Dezhra and coming back an hour later is
-quiet.
+The clock survives a restart, so logging off and coming back an hour later is quiet. A system with no
+shipped entry says nothing on arrival in any mode.
 
 A carrier jump counts as arriving. You were asleep in the back, but you are still somewhere new.
 
 ### Then looking it up {#remarks}
 
-Set **Remark on arrival** to *Remark, and look it up* and the bare fact is followed by a web search,
-spoken when it comes back:
+**Remark on arrival**, in the same group, is *Remark, and look it up* by default. The bare fact is followed by a
+web search, spoken when it comes back. You can also say "stop remarking on systems" and "start remarking on
+systems", which choose Never and *Remark, and look it up*.
 
 ```text
 From a search: Commanders have used HIP 12099 as an encoded-materials run since the wreck was found
 in 3303, because the crash site carries nine data points in one place.
 ```
 
-Three states rather than two switches, because a lookup with the remark switched off is detail about
-something that was never announced:
+The three states:
 
 | Setting | What happens on arrival |
 |---|---|
@@ -191,11 +187,11 @@ something that was never announced:
 
 Some things worth knowing about the lookup:
 
-- **It needs [web search](conversation.md) switched on**, and an endpoint that offers one. If it
-  cannot search, the first sentence says so rather than leaving you waiting for a second that never
-  comes.
-- **It costs about a penny a time.** Searches are billed separately from tokens, and the running
-  total counts them.
+- **It needs [web search](conversation.md) switched on**, in Settings › Providers › Outside sources,
+  and an endpoint that offers one. If it cannot search, the first sentence is followed by "I cannot search
+  from here, so that is all I have on it."
+- **Searches are billed separately from tokens**, and the running total counts them.
+- **It gives up after 45 seconds.**
 - **A result that arrives late is dropped.** If you have jumped again by the time it lands, you were
   somewhere else when it became relevant, and a sentence about a system you left is worse than
   silence.
@@ -204,12 +200,14 @@ Some things worth knowing about the lookup:
 
 ### Your own notes {#notes}
 
-**Settings → Lore → Your own notes** opens what you have told Directive 47, and is where you add
-one. It is a window rather than a text box on a row because writing a note is the one act that makes
-an entry *yours* — and that act is not reachable from the tool surface at all.
+**Your own notes**, under Settings › You and your records › Memory, notes and debrief (Show every setting
+on), has an Open your notes button. The window lists what you have told Directive 47 and is where you add
+one, with Remember this. Writing a note in the window is the act that makes an entry yours; the model's
+tool cannot do it.
 
-When you add one, Directive 47 searches for the system first and records what happened. Three tiers,
-read back in three different sentences:
+When you add one, Directive 47 searches for the system first, if it can, and records whether the search
+agreed. The window labels each entry "from d47's table", "a search agreed at the time", "your word" or
+"written by D47 itself, unverified", and Forget removes one. Read back, they are four different sentences:
 
 ```text
 Earth is here.                                                   ← the shipped table
@@ -218,15 +216,12 @@ You told me: …                                                   ← your word
 I wrote this one down myself, and nothing has checked it: …      ← D47's own tool call
 ```
 
-**A tier is never promoted.** Surviving a lookup is a label, not a verdict: an obscure but real site
-finds nothing, and a search can appear to agree with something a model half-invented. If a later
-search would have corroborated a note, the note still says you told me — because promotion is the
-path by which an invention silently becomes a fact Directive 47 states flatly.
+A label is never promoted. If a later search would have corroborated a note, the note still says you told
+me.
 
 Notes live in `data/lore.json` beside the executable, one file for the installation rather than one
-per Commander: what is true about a system is true whichever character you are flying. Each entry
-records which Commander was aboard anyway, and how it arrived. Edit the file by hand if you like —
-changes are noticed by comparing the contents, so an edit is never missed.
+per Commander. Each entry records which Commander was aboard and how it arrived. Edits made by hand are
+noticed from the file's contents.
 
 ### What Directive 47 can do about it
 
@@ -240,35 +235,23 @@ Everything known about the system you are in, each answer stating where it came 
 
 #### `remember_about_system`
 
-Notes something about the system you are in. **Stored as unverified and read back that way** — this
-is the model writing, not you.
+Notes something about the system you are in. Stored as unverified and read back that way, because it is
+the model writing, not you. The reply is "Noted about" the system, "as unverified:" and the note. A
+note over 400 characters is cut at 400 with an ellipsis. Asking D47 aloud to remember something, for
+example "remember that this system has a good mining ring", goes through this tool.
 
 ```json
 {"type":"object","properties":{"note":{"type":"string","description":"What is worth remembering, in one or two sentences. Facts about the place, not about what the Commander is doing today."}},"required":["note"],"additionalProperties":false}
 ```
 
-This one is deliberately *not* locked away from the model, which is a departure from how the
-[checklist](checklists.md) and the [callouts](callouts.md) are handled. Adding a note presses no key
-and switches no warning off, so there is nothing here for a hostile in-game message to gain — except
-persistence, and unprompted speech later. That is answered with a label rather than a lock: an entry
-the model wrote says so, out loud, every time it is read back. Nothing promotes it, and you can
-delete it from the notes window.
-
-Writing is limited to the system you are actually in. That is arithmetic rather than caution — a note
-is keyed on the system's address, addresses come out of your journal, and Directive 47 reaches no
-network to look one up.
+The tool is open to the model. An entry the model wrote says so every time it is read back, and you can
+forget it from the notes window. Writing is limited to the system you are in, because a note is keyed on
+the system address and addresses come from your journal.
 
 ### Where the twenty came from
 
-The shipped table is a compilation, and compilations belong to whoever made them — so this one is the
-maintainer's rather than a community list copied across. The facts in it are Frontier's, in the same
-way that which system an engineer sits in is; see [NOTICE](https://github.com/dseelinger/d47/blob/main/NOTICE).
-
-`tools/gen-lore.py` builds it. Each system's name is resolved to its address twice, through
-spansh.co.uk and edsm.net, and a disagreement or a miss stops the run — which is how two bad rows were
-caught rather than shipped: one system that had been renamed, and one that never existed at all.
-Eleven of the twenty were also checked against real journals, where Frontier themselves wrote the name
-and the address side by side.
-
-Nothing in the table is a distance that gets re-surveyed or a status that can change. Anything that
-moves belongs to the lookup, where it stays a sentence.
+The shipped table is the maintainer's own compilation. The facts in it are Frontier's; see
+[NOTICE](https://github.com/dseelinger/d47/blob/main/NOTICE). `tools/gen-lore.py` builds it, resolving
+each system's name to its address through spansh.co.uk and edsm.net, and a disagreement or a miss stops
+the run. Nothing in the table is a distance that gets re-surveyed or a status that can change. Anything
+that moves belongs to the lookup, where it stays a sentence.

@@ -22,38 +22,36 @@ nav_order: 119
 <p class="intro">Two steps to knowing where you stand in a goal.</p>
 <section>
 <h2><span class="num">1</span> Ask what is running.</h2>
-<p class="say">Turn on web access, then ask what community goals are on.</p>
-<p class="expect">D47 lists the running goals; with web access off it says it cannot look.</p>
+<p class="say">Say "what community goals are running".</p>
+<p class="expect">D47 lists each goal from the boards at stations you have docked at: where it is flown, the time left, its tier, the contributors, what has been delivered and a line starting "You:" with your own standing.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">what community goals are on</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">what community goals are running</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">This one needs the internet. It is off until you turn web access on.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">Your own contribution comes out of your journal, not the network.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">It reads your own journal, needs no internet and sends nothing.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Goals that have ended are left out unless you ask for them.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Read the tier and your own share.</h2>
-<p class="say">Listen for the tier and your own contribution.</p>
-<p class="expect">You hear the goal's current tier and the tonnes you have handed in, taken from your journal.</p>
-<svg viewBox="0 0 880 200" role="img" aria-label="A community goal showing its tier, the contribution so far and where the Commander sits">
- <rect x="20" y="16" width="840" height="168" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="54" font-size="17" font-weight="700" fill="var(--text)">Alliance Rescue Effort</text>
- <text x="836" y="54" text-anchor="end" font-size="16" fill="var(--accent)">TIER 4 of 8</text>
- <rect x="44" y="76" width="792" height="14" fill="var(--border)"/>
- <rect x="44" y="76" width="396" height="14" fill="var(--accent)"/>
- <text x="44" y="128" font-size="16" fill="var(--text)">You have handed in 1,240 tonnes.</text>
- <text x="44" y="164" font-size="15" fill="var(--text-muted)">Your figure is read from your own journal, so it is right even when the site is slow.</text>
+<h2><span class="num">2</span> Ask how your sales are going.</h2>
+<p class="say">Say "how have I done today".</p>
+<p class="expect">D47 says what the goal's commodity has made or lost today, net of what the cargo cost, or "No Palladium sold today." when nothing was sold.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question about today's sales">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">how have I done today</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"How have I done this week" and "how have I done this session" ask the other two.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">The commodity is Palladium.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Turn on web access before you ask.</p>
-<p class="expect">The answer names the goal and your share; the Privacy page lists what leaves your machine.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="It needs the internet, and that is off by default.">
+<p class="say">Ask before you have docked at a station that lists the goal.</p>
+<p class="expect">D47 says "I have no community goals yet" and that they are reported when you dock somewhere that lists one.</p>
+<svg viewBox="0 0 880 152" role="img" aria-label="The board only comes from stations you have docked at.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">It needs the internet, and that is off by default.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">With web access off there is nothing to report. The privacy page says exactly what leaves.</text>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">No dock, no board.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Goals at stations you have not docked at are not listed.</text>
 </svg>
 </section>
 </div></div>
@@ -67,30 +65,28 @@ nav_order: 119
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">What community goals are running, what tier they have reached, and how you are doing in them.</p>
+<p class="intro">Your journal carries the board, and each goal is checked against the clock before it is listed.</p>
 <section>
-<h2><span class="num">1</span> Your journal already knows most of this.</h2>
+<h2><span class="num">1</span> The board comes from stations you have docked at.</h2>
 <svg viewBox="0 0 880 246" role="img" aria-label="The journal carries the community goal board at every station you have docked at">
  <rect x="20" y="40" width="840" height="118" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="78" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">YOUR JOURNAL</text>
- <text x="440" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the whole board: tier, contributors,</text>
+ <text x="440" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">the board at that station: tier, contributors,</text>
  <text x="440" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">handed in, and your own share</text>
- <text x="440" y="198" text-anchor="middle" font-size="16" fill="var(--text)">The event is written off the noticeboard at a station, so it reports where you are.</text>
- <text x="440" y="228" text-anchor="middle" font-size="15" fill="var(--text-muted)">So it covers the stations you have docked at, and no others.</text>
+ <text x="440" y="198" text-anchor="middle" font-size="16" fill="var(--text)">Elite writes it when you dock, so it covers the stations you have docked at.</text>
+ <text x="440" y="228" text-anchor="middle" font-size="15" fill="var(--text-muted)">Nothing is requested and nothing leaves this machine.</text>
 </svg>
-<p class="body">Nothing is requested and nothing leaves this machine. Goals running where you have not docked are not listed.</p>
+<p class="body">Goals running where you have not docked are not listed. The answer ends by saying so.</p>
 </section>
 <section>
-<h2><span class="num">2</span> The trap: the board is a snapshot, not a list of live goals.</h2>
-<svg viewBox="0 0 880 244" role="img" aria-label="A board written on 21 January reported a goal that had already ended on the 17th">
+<h2><span class="num">2</span> An ended goal is hidden, not announced.</h2>
+<svg viewBox="0 0 880 200" role="img" aria-label="A board can still carry a goal that has ended">
  <rect x="20" y="36" width="840" height="100" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="46" y="74" text-anchor="start" font-size="16" fill="var(--text)">a board reported on 21 January…</text>
- <text x="46" y="108" text-anchor="start" font-size="16" fill="var(--danger)">…for a goal that ended on the 17th, still carrying “IsComplete: true”</text>
- <text x="440" y="172" text-anchor="middle" font-size="16" fill="var(--text)">It fires every time you dock, so a stale entry is the common case, not the edge one.</text>
- <text x="440" y="204" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So every goal is checked against the clock before it is listed.</text>
- <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">The deadline sits on the second line of every entry rather than buried among the figures.</text>
+ <text x="46" y="74" text-anchor="start" font-size="16" fill="var(--text)">A board written when you docked can name a goal that has since ended.</text>
+ <text x="46" y="108" text-anchor="start" font-size="16" fill="var(--danger)">So every goal is checked against the clock before it is listed.</text>
+ <text x="440" y="172" text-anchor="middle" font-size="15" fill="var(--text-muted)">The deadline is on the second line of every entry.</text>
 </svg>
-<p class="body">Announcing a finished goal as something you can still fly for is a wrong answer that reads exactly like the feature working. Expired ones are hidden unless you ask — which is how you find out what a goal paid you.</p>
+<p class="body">A goal past its expiry is left out unless you ask for finished goals. The answer ends with <code>This is only what your journal has reported, which is the board at stations you have docked at.</code></p>
 </section>
 </div></div>
 </details>
@@ -113,32 +109,20 @@ What community goals are running, what tier they have reached, and how you are d
 > "how am I doing in the community goal"
 > "what tier is the community goal at"
 
-All of this comes off your own journal and needs nothing. It cannot see a goal running somewhere you
-have not docked.
+The board comes off your own journal and needs nothing else. It cannot see a goal running somewhere you
+have not docked. "How am I doing in the community goal" is the sales ledger (below), not the board.
 
-### Your journal already knows more than you would expect
+### What the journal carries
 
-Elite writes a `CommunityGoal` event carrying the whole board — the goal, where it is flown, the
-tier it has reached, how many Commanders are on it, how much has been handed in, your own
-contribution, your percentile band and whether you are in the top rank. All of that is on disk
-already.
+Elite writes a `CommunityGoal` event carrying the board at the station you docked at: the goal, where it
+is flown, the tier it has reached, how many Commanders are on it, how much has been handed in, your own
+contribution, your percentile band and whether you are in the top rank. D47 merges boards by goal
+rather than replacing them, so goals from earlier stops stay until they expire. Signing up, opting out
+and being paid arrive as their own events and are merged onto the goal.
 
-It is written off the noticeboard **at a station**, though, so it reports what is on offer where
-you happen to be. Across thirteen months of one Commander's play that came to ten goals — and 952
-of the 16,999 board entries in that corpus record a contribution of zero, which is the game telling
-you about goals they merely docked near and never joined.
-
-So the line an outside source buys is **everywhere you have not been**, which is wider than
-"everything you have not joined". Your journal covers the second one on its own.
-
-### The trap: the board is a snapshot, not a list of live goals
-
-The same corpus holds a board reported on 21 January for a goal that ended on the 17th, carrying
-`IsComplete: true`. Four days stale — and because the event fires every time you dock, a stale
-entry is the common case rather than the edge one.
-
-Every goal is therefore checked against the clock before it is listed, and an expired one says so
-in the same breath as its name:
+A board can name a goal that has ended, so every goal is checked against the clock before it is listed.
+An ended goal is left out unless you ask for finished goals (`include_finished`), which is how you find
+out what a goal paid you.
 
 ```text
 2 community goals from your journal:
@@ -156,117 +140,81 @@ Operation Andronicus
   Reported 4 days ago.
 ```
 
-Announcing a finished goal as something you can still fly for is a wrong answer that reads exactly
-like the feature working, which is why the deadline is on the second line of every entry rather
-than buried in the figures.
-
-Expired goals are hidden unless you ask for them — `include_finished` — because an expired goal
-cannot be contributed to. Asking for them is how you find out what a goal paid you.
+The deadline is on the second line of every entry. A goal with more than thirty days left shows its
+expiry date instead of a countdown. With nothing listed, D47 says "No community goals are running in what
+I have seen." and adds that there may be some where you have not been.
 
 ### The Community Goal search
 
-One saved question, run again and again ([#296](https://github.com/dseelinger/d47/issues/296)).
-It is the INARA commodity search a Commander flying a supply goal was typing by hand before every
-run: **buy Palladium, from the goal's own system, nearest first**, within 250 light years, prices
-under eight hours old, a large pad, a station within 50,000 light seconds of the star, at least
-10,000 in stock, no surface stations, no carriers. Every one of those is now a knob on the galaxy
-search's `find_nearest_station`, and this is the one place they are set together.
+One saved search, run again and again. It looks for where to buy the goal's commodity, Palladium: from the
+goal's own system, nearest first, within 250 light years, prices under eight hours old, a large pad, a
+station within 50,000 light seconds of the star and at least 10,000 in stock. Fleet carriers are left out,
+as in any galaxy search. It is a Look things up in the galaxy search, so that setting must be on.
 
-Say *"community goal search"* or *"CG search"* to run it. The phrase is matched whole and first
-by the keyword router and pointed at the galaxy tool with the arguments already filled in, so it
-costs no tool-surface bytes and never goes through a model to be reinterpreted.
+Say "community goal search" or "CG search" to run it. The keyword router takes the phrase whole and points
+the galaxy tool at it with the arguments already filled in, so no model reinterprets it.
 
 #### Where it measures from
 
-**The goal's system, not the ship's** ([#331](https://github.com/dseelinger/d47/issues/331)). A
-supply goal is *buy near where you sell*, so the useful question is "the best supplier for this
-run" — one answer that holds for the life of the goal. Measured from the ship it changed with
-every jump and, once you were standing at a supplier, collapsed to "where you already are".
+The goal's system, not the ship's. The origin is the system of a live goal on your board: the one you are
+running (a contribution or a sign-up is the evidence), then the one whose title names the commodity, then
+the most recently reported. A goal past its expiry is never the origin. With no live goal the search
+measures from the ship.
 
-The origin is the `SystemName` of a **live** goal on your board: the one you are actually running —
-a contribution or a sign-up is the evidence — and otherwise the most recently reported. A goal
-whose `Expiry` has passed is never the origin. With no live goal there is nothing else to measure
-from, so it falls back to wherever the ship is.
-
-**The spoken answer says which it was**, because "nearest" reads the same
-whichever place it was asked from:
+The spoken answer says which it was:
 
 ```text
 Nearest to Ega, the goal's system, for buying Palladium: Coleman Relay (Enayex), 11 ly. System is
 on your clipboard.
 ```
 
-and the heading above the ranking reads *"Palladium near Ega, the goal's system, nearest first"*.
+The heading above the ranking reads "Palladium near Ega, the goal's system, nearest first".
 
-To ask it from the ship on purpose — what is close enough to reach right now — say **"CG search
-from here"** (or *"community goal search from here"*). That is not a setting: which of the two questions you want is a property of the sentence, not
-of the installation. The clipboard and *"set a course"* keep working from wherever the ship is
-either way, since plotting is the ship's business — but the **distance column is measured from
-whatever the search was asked from**, the same number that ranks the list, and the heading above
-the table names that system.
-
-With more than one live goal on the board — Elite runs several at once, and the board merges rather
-than replaces — the goal you are running wins, then the one whose title names the commodity you are
-searching for, and only then the most recently reported. The title is a tie-break rather than a
-requirement: the `CommunityGoal` event carries no commodity field and plenty of goals never name one
-in their title.
+To ask from the ship on purpose, say "CG search from here" or "community goal search from here". The
+clipboard and "set a course" work from wherever the ship is either way. The distance column is measured
+from whatever the search was asked from.
 
 #### What comes back
 
-The spoken answer is **one sentence naming the nearest station that passes every filter**, and the
-rest is left to the page: the price, the stock, the distance from the star and the quote's age are
-all in the table, and the ear could not act on them. The page draws the full ranked list: station,
-system, pad, distance from the star, distance, supply, price, when the quote was reported.
+The spoken answer is one sentence naming the nearest station that passes every filter. The page draws the
+full ranked list: station, system, pad, distance from the star, distance, supply, price and the age of the
+quote.
 
 ### The ledger
 
-What the goal's commodity has made or lost, **net of what the cargo cost** \u2014 a Palladium bought at
-48,200 and sold at 51,000 shows the 2,800 and not the 51,000. The cost is Elite's own
-`AvgPricePaid` on each sale, which the game tracks across sessions and ships; when Elite writes
-zero \u2014 cargo that was never bought \u2014 it falls back to the average of your own `MarketBuy` events
-for the commodity, and failing that the sale is gross, which is the accurate figure for a mined load.
+What the goal's commodity has made or lost, net of what the cargo cost. The cost is Elite's own
+`AvgPricePaid` on each sale. When Elite writes zero, which it does for cargo that was never bought, the
+cost is the average of your own `MarketBuy` events for the commodity, and failing that the sale is counted
+gross, which is the accurate figure for a mined load.
 
-Three stretches; only the first is spoken automatically, and the
-other two are answers to a question
-([#332](https://github.com/dseelinger/d47/issues/332), [#340](https://github.com/dseelinger/d47/issues/340),
-[#342](https://github.com/dseelinger/d47/issues/342)):
+Three stretches. Only the first is spoken automatically:
 
-- **This session** \u2014 the running total rather than the sale, said automatically after every sale
-  of the commodity: *"That's 2 million up this session."* You can see the sale's own figure on
-  your screen at that moment; what you cannot see is where it leaves you. The
+- **This session**: the running total after every sale of the commodity, said automatically, for example
+  "That's 2 million up this session." The
   [Community Goal sales](callouts.html#community-goal-sales) row on the Callouts page switches the
-  sentence off, and nothing is said while d47 is catching up on a journal it did not watch being
-  written.
-- **Today** \u2014 asked for, never announced: *"how have I done today"*.
-- **This week** \u2014 asked for, never announced: *"how have I done this week"*, or *"how have I
-  done since the last maintenance window"* (also *"since maintenance"*, *"since the last
-  maintenance"*, *"since the tick"*). **The week is the Elite week**, turning at
-  [the week boundary](#week-boundary), Thursday 07:00 UTC by default \u2014 where the Powerplay cycle,
-  the BGS tick and the weekly server maintenance all sit. The exact minute does not matter to a
-  ledger: nothing can be sold while the servers are down, so a window opening at the hour holds
-  the same sales as one opening at "live again". The answer names the boundary it used, so "this
-  week" says what it means without a trip to settings:
-  *"Palladium: 2.1 billion up this week, since Thursday's maintenance \u2014 7 sales, 8,400 tonnes\u2026"*
-There is no fourth, goal-named stretch ([#340](https://github.com/dseelinger/d47/issues/340)):
-*"how have I done on the community goal"* and *"how am I doing on the community goal"* answer
-"this week", the same as asking for the week outright \u2014 that is the answer to how a run is going
-while a goal is live.
+  sentence off, and nothing is said while d47 is catching up on a journal it did not watch being written.
+- **Today**: asked for, never announced: "how have I done today".
+- **This week**: asked for, never announced: "how have I done this week", or "how have I done since the
+  last maintenance window" (also "since maintenance", "since the last maintenance", "since the tick").
+  "How have I done on the community goal" and "how am I doing on the community goal" give this week too.
+  The week turns at [the week boundary](#week-boundary), Thursday 07:00 UTC by default, and the answer
+  names the boundary it used.
 
-The day and the week both reach across sessions because the journal files Elite keeps are read at
-startup \u2014 the files that cover the last ten days \u2014 and the live journal after that. Nothing is
-written under `data\`: the journals are the record, and a sale the startup read already counted is
-recognised rather than counted twice when the live journal replays it.
+The day and the week reach across sessions because the journal files Elite keeps are read at start and
+the live journal after that. Nothing is written under `data\`.
 
 ```text
-Palladium: 3 million up this week \u2014 3 sales, 300 tonnes, 15,000,000 cr in against
+Palladium: 3 million up this week — 3 sales, 300 tonnes, 15,000,000 cr in against
 12,000,000 cr the cargo cost.
 ```
 
+A stretch with no sales says "No Palladium sold today." (or "this week", "this session").
+
 #### The week boundary {#week-boundary}
 
-Which day, UTC, and which hour "this week" turns over on \u2014 two advanced rows under Community goal
-sales on the Settings page, Thursday and 07:00 by default. Frontier has moved this boundary before, so it is a setting rather than a constant; it
-is a fact about their schedule and not about d47.
+Which day, UTC, and which hour "this week" turns over on. These are two advanced rows, The week turns on
+and …at this hour, UTC, under Settings › Your core › Callouts, group Plans and reminders. They show with
+Show every setting on. The day defaults to Thursday and the hour to 7, from 0 to 23.
 
 ### Tools
 
@@ -278,28 +226,10 @@ is a fact about their schedule and not about d47.
 
 #### `get_community_goal_earnings`
 
-What the Community Goal commodity has made or lost, net of cost, over one of three stretches. The
-nine questions above reach it through the keyword router without a model; the model can call it
-for anything phrased differently.
+What the Community Goal commodity has made or lost, net of cost, over one of three stretches. The nine
+phrases above reach it through the keyword router without a model; the model can call it for anything
+phrased differently.
 
 ```json
 {"type":"object","properties":{"range":{"type":"string","description":"Which stretch. Default session.","enum":["session","today","week"]}},"required":[],"additionalProperties":false}
 ```
-
-### Notes for anyone reading the code
-
-The board is **merged by `CGID`, never replaced.** `CurrentGoals` looks like a complete board per
-event, which would argue for replacing it — but it is the board at *one station*, and no station in
-the corpus ran more than one goal at a time, so the two-stations case is untested. Replacing on an
-untested assumption loses a goal you are actually running; merging keeps one that has ended, which
-the expiry check already has to handle because the snapshot goes stale regardless. Only one of
-those two failures is silent.
-
-`CommunityGoalJoin`, `CommunityGoalDiscard` and `CommunityGoalReward` carry only `CGID`, `Name` and
-`System` — so signing up and being paid are merged onto the board entry rather than read from it,
-and they survive the next board event. Taking a fresh read's defaults would un-join a goal every
-time you docked. One arriving for a goal no board has reported still counts: a Commander who joined
-a goal before d47 was watching is not a Commander who has not joined it.
-
-`TierReached` is written as the string `"Tier 3"` and only once the first success tier is met, so
-"no tier reached yet" is a fact rather than a gap.

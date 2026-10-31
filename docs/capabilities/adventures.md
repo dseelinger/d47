@@ -132,7 +132,7 @@ nav_order: 115
  <text x="824" y="210" text-anchor="end" font-size="16" fill="var(--text)">the objectives ahead of you</text>
  <text x="440" y="268" text-anchor="middle" font-size="16" fill="var(--text-muted)">A storyteller who knows the ending leaks it. So the AI is simply never told what is coming.</text>
 </svg>
-<p class="body">Foreshadowing still happens — it is written <em>into</em> the earlier objectives, by the turn that did know the ending. Between objectives the core wonders aloud in character and never states a new fact about the story, so nothing it says on a quiet stretch can contradict an objective you have not reached.</p>
+<p class="body">Foreshadowing is written into the earlier objectives by the turn that knew the ending. Between objectives the core wonders aloud in character and states no new fact. Say <code>where am I up to</code> to hear the story so far.</p>
 </section>
 </div></div>
 </details>
@@ -201,7 +201,7 @@ Open the Short Story page and the entry for a brief; committing the brief asks f
 
 ### What an objective can be
 
-Forty triggers, and every one is a comparison on a structured field rather than on a name:
+Every trigger is a comparison on a structured field rather than on a name:
 
 | Trigger | Matched on | Never on |
 |---|---|---|
@@ -216,7 +216,7 @@ Forty triggers, and every one is a comparison on a structured field rather than 
 | Collect bounties | `Bounty` events | anything else |
 | Earn kill bonds | `FactionKillBond` events, optionally for one `AwardingFaction` | the faction fought |
 | Earn kill bonds on foot | `FactionKillBond` events while the Commander is on foot: after a `Disembark` or a `DropshipDeploy`, or a `Location` or `CarrierJump` with `OnFoot` true, and before the next `Embark` | a kill bond earned in a ship or SRV |
-| Complete missions | `MissionCompleted` events, optionally for one `Faction` and a mission family that starts the internal `Name`, such as `Mission_Courier` | the mission's title |
+| Complete missions | `MissionCompleted` events, optionally for one `Faction` and a mission family that starts the internal `Name`, such as `Mission_Courier`, `Mission_Scan` for a planetary scan job, `Mission_Hack` or `Mission_OnFoot_Hack` for a Hack mission from a ship or on foot, or `Mission_Disable` for a settlement Disable mission | the mission's title |
 | Sell tons | `Count` in `MarketSell`, optionally of one `Type` or at one `MarketID` | the commodity's display name |
 | Refine tons | one ton per `MiningRefined`, optionally of one `Type` | the commodity's display name |
 | Step out on foot | `Disembark` onto a planet, not a station, optionally on one body | anything else |
@@ -602,11 +602,11 @@ chapter (a recording plays or a call comes in), their words are a line in their 
 description of what they said. A cast member may give their own name only when introducing themselves:
 "This is …", "My name is …" or "… here".
 
-- **`ship`** is the core aboard, in the ship's voice as you set it under **Your core › Its voice**. While the core
+- **`ship`** is the core aboard, in the ship's voice as you set it under **Settings › Your core › Its voice**. While the core
   aboard is stock COVAS, a `ship` line is spoken in the narrator voice and posted from the Narrator, and
   the chapter writer is told so, so it writes those lines as narration. With a Guardian core or a core you
   wrote aboard, that core speaks them. This is decided when the line is spoken.
-- **`narrator`** is the narrator voice set under **Other voices › Narrator and stories**.
+- **`narrator`** is the narrator voice set under **Settings › Other voices › Narrator and stories**.
 - **A cast member** the story marked `pinned: true` speaks in the provider and voice the story gave it,
   Kokoro or Chatterbox, whatever **Where each voice comes from** says. Any other cast member speaks through the
   provider you set for the ship, in the voice paired with it for that provider, or in the crew voice while none
@@ -688,7 +688,7 @@ Kokoro download.
 - the provider's API key under **Settings**, **Providers**, **Speech synthesis**, when you chose a provider that needs a key and
   none is stored.
 
-The **Local voice** and **Chatterbox voice** download rows under **Providers › Speech synthesis** appear while a downloaded
+The **Local voice** and **Chatterbox voice** download rows, in Settings › Providers › Speech synthesis, appear while a downloaded
 story's cast needs them and the model is not downloaded, even when no slot uses that provider. A pick tried anyway is refused, and the ship
 posts one message to the Story log listing the same things.
 
@@ -745,6 +745,24 @@ character on Kokoro or Chatterbox adds nothing. Only the panel changes these voi
 public static PinnedVoice Voice(
     StorySpeaker member, StorySpeakerShown shown, IReadOnlyDictionary<string, StoryVoiceChoice>? choices, ShipSpeech? ship = null)
 ```
+
+### Characters who speak Japanese {#story-languages}
+
+A story can mark a character as speaking Japanese. The language belongs to the story, not to a setting.
+
+- **Comms.** The character answers in Japanese and the voice speaks only that. The English translation goes
+  to the ship's AI and the Story log, and the character's own memory of the exchange keeps both. A reply
+  with no translation, or one the claims check refuses, is not said.
+- **Clues, reactions, the opening and the beacon scan.** These are given in Japanese too. The voice speaks the
+  Japanese, and the transcript shows the English beneath it as a second paragraph in grey at a slightly
+  smaller size. Copying the message copies both. A clue or reaction with no English, or one the claims check
+  refuses, is not said.
+- **In the headset.** A line spoken in Japanese is captioned with its English translation, shown for the whole
+  line rather than a sentence at a time.
+- **Change voice.** For such a character the picker offers only the providers that speak Japanese, and for a
+  provider whose language follows the voice, only the voices that speak it. A provider with none says
+  "lists no Japanese voices". A stored choice that does not speak the character's language is ignored, and
+  the story's voice speaks.
 
 ### How a chapter is fitted to you
 

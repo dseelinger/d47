@@ -38,8 +38,8 @@ nav_order: 162
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Turn on GalNet news under Galaxy search in Settings.</p>
-<p class="expect">With nothing kept yet, D47 says so; the articles arrive after the setting is on.</p>
+<p class="say">Turn on GalNet news, in Settings › Providers › Outside sources. It is off out of the box.</p>
+<p class="expect">With nothing kept yet, D47 says "GalNet news is off" and where to turn it on; the articles arrive after the setting is on.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="With GalNet news off and nothing kept there is nothing to read.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Off and empty means nothing to read.</text>
@@ -59,11 +59,11 @@ nav_order: 162
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">D47 keeps its own copy of GalNet and answers from that copy.</p>
 <section>
-<h2><span class="num">1</span> The model is sent matches, not the archive.</h2>
+<h2><span class="num">1</span> The model gets the matches, not the whole archive.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="A search sends three full articles and seven titles to the model, not the whole archive">
  <rect x="20" y="44" width="250" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">THE ARCHIVE</text>
- <text x="145" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">two years, never sent whole</text>
+ <text x="145" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">up to two years, never sent whole</text>
  <rect x="310" y="44" width="250" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="435" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A SEARCH</text>
  <text x="435" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">title matches rank first</text>
@@ -72,7 +72,7 @@ nav_order: 162
  <text x="730" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">and seven titles</text>
  <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">The model asks for any other article by title.</text>
 </svg>
-<p class="body">Two years of GalNet is about forty-five thousand tokens, which would ride along with every question. The model gets article text only as the result of a tool it called for your question.</p>
+<p class="body">A search returns the full text of the three best matches and the title of up to seven more. The model reads any other article by calling <code>get_galnet_article</code> with its title. With no query the reply is <code>The latest on GalNet:</code> and the three newest titles.</p>
 </section>
 </div></div>
 </details>
@@ -108,7 +108,9 @@ The latest on GalNet: Faulcon DeLacy Announces Anaconda Mk II, 12 MAR 3310; Aegi
 Both tools answer from the kept articles whether **GalNet news** is on or off; off only stops new
 articles arriving. With nothing kept, D47 says "No GalNet articles are kept yet." when the setting is
 on, and "GalNet news is off. Turn it on under Galaxy search in Settings to keep the articles." when
-it is off.
+it is off. The setting is in Settings › Providers › Outside sources; the message names the
+older place. D47 fetches new articles at start and every hour while it runs, and the first time also
+up to two years of older ones.
 
 ### What Directive 47 can do about it
 

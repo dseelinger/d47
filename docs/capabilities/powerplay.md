@@ -23,13 +23,13 @@ nav_order: 149
 <section>
 <h2><span class="num">2</span> Ask about another Power.</h2>
 <p class="say">Say "what would Edmund Mahon give me".</p>
-<p class="expect">You hear everything that Power gives at rank one hundred, and the first module it unlocks with its rank.</p>
+<p class="expect">You hear the perks and rebuy changes that Power gives at rank 100, up to three modules by name with the rest counted, and that every rank past 100 gives a full care package.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="A question naming another Power">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what would Edmund Mahon give me</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">Without a rank, you hear everything that Power gives at rank 100.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">The first module it unlocks is named with its rank.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Without a rank, you hear what that Power gives at rank 100.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Modules: three named, the rest counted.</text>
 </svg>
 </section>
 </div></div>
@@ -40,7 +40,7 @@ nav_order: 149
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">One table of ranks, read three ways: what you hold, what is next, what is far off.</p>
 <section>
-<h2><span class="num">1</span> Merits only for your own Power.</h2>
+<h2><span class="num">1</span> Merits are given only for your own Power.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="Merits to a rank are given for the pledged Power only">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">Your Power: "Rank 9, 1,708 merits away."</text>
@@ -48,12 +48,13 @@ nav_order: 149
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Three modules named, the rest counted.</h2>
+<h2><span class="num">2</span> Three modules are named and the rest counted.</h2>
 <svg viewBox="0 0 880 176" role="img" aria-label="Three modules read out and the others counted">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">Modules unlocked: A, B, C and 4 more.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A longer list is more than anyone listens to.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The rest is a count, not a list.</text>
 </svg>
+<p class="body">A rank with more than three modules names the first three and counts the rest, as in <code>Modules unlocked: A, B, C and 4 more.</code></p>
 </section>
 </div></div>
 </details>
@@ -81,8 +82,9 @@ What a Powerplay rank gives, read from the table of ranks. Part of every run onc
 Rank 8 with Li Yong-Rui. In Li Yong-Rui's territory your rebuy is 40% lower. Rank 9, 1,708 merits away, gives a mini care package. The next perk is at rank 11, 17,708 merits away: 33% off rebuy when a rival Power's ship kills you outside Li Yong-Rui's territory. The first module is the Pack-Hound Missile Rack at rank 34, 201,708 merits away.
 ```
 
-Perks and rebuy reductions are said at their value at that rank. Merits to a rank are given only for your
-own Power and only once D47 has read your merits. With no pledge and no Power named, the answer asks for a
+Perks and rebuy reductions are said at their value at that rank. Say a rank from 1 to 100 to hear that rank
+instead of the current one; anything else is refused. Merits to a rank are given only for your own Power and
+only once D47 has read your merits. With no pledge and no Power named, the answer asks for a
 Power. At rank 100 it says every further rank gives a full care package.
 
 <details markdown="1">
