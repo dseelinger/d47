@@ -471,12 +471,12 @@ public class VoicesMatchTheNameTests
 {
     private static readonly string[] Women = ["Marianne Hobbs", "Ilse Bruhn", "Astrid Vahl", "Beatrice Kohl"];
 
-    private static VoiceCast Cast(Func<string, NameReading?>? sex = null) => new()
+    private static VoiceCast Cast(Func<string, string?>? sex = null) => new()
     {
         DefaultVoice = "ship-ai",
         Pool = ["m1", "f1", "m2", "f2", "m3", "f3"],
         Feminine = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "f1", "f2", "f3" },
-        ReadingOfName = sex ?? (name => new NameReading("", Women.Contains(name) ? "female" : "male")),
+        SexOfGivenName = sex ?? (given => Women.Any(woman => woman.StartsWith(given + " ", StringComparison.Ordinal)) ? "female" : "male"),
     };
 
     private static bool IsFemale(string? voiceId) => voiceId is not null && voiceId.StartsWith('f');
@@ -504,7 +504,7 @@ public class VoicesMatchTheNameTests
     }
 
     [Theory]
-    [InlineData("unknown")]
+    [InlineData("indeterminate")]
     [InlineData(null)]
     public void AnUnknownOrMissingAnswerDrawsWithoutRegardToSex(string? sex)
     {
@@ -513,7 +513,7 @@ public class VoicesMatchTheNameTests
             DefaultVoice = "ship-ai",
             Pool = ["m1", "f1", "m2", "f2", "m3", "f3"],
             Feminine = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "f1", "f2", "f3" },
-            ReadingOfName = _ => sex is null ? null : new NameReading("", sex),
+            SexOfGivenName = _ => sex,
         };
         var drawn = Women.Select(name => unmatched.ForSender(name, isPlayer: false).VoiceId).ToArray();
 
@@ -538,7 +538,7 @@ public class VoicesMatchTheNameTests
     public void AnotherCommanderIsCastWithoutRegardToSex()
     {
         var asked = new List<string>();
-        var cast = Cast(_ => new NameReading("", "female"));
+        var cast = Cast(_ => "female");
         cast.NameUnknown = asked.Add;
 
         var voices = new[] { "Astrid Vahl", "Ilse Bruhn", "Mark Bennett", "Marianne Hobbs" }

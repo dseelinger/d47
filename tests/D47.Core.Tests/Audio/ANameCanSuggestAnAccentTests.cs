@@ -88,37 +88,39 @@ public class ANameCanSuggestAnAccentTests
     {
         var files = new MemoryFileSystem();
         var file = Path.Combine(@"C:\d47-memory", "name-accents.json");
+        var given = Path.Combine("C:/d47-memory", "given-name-sexes.json");
         var calls = 0;
 
-        Task<IReadOnlyDictionary<string, NameReading>?> Ask(
-            IReadOnlyList<string> names, IReadOnlyList<string> accents, CancellationToken token)
+        Task<NameAnswers?> Ask(
+            IReadOnlyList<string> names, IReadOnlyList<string> givenNames, IReadOnlyList<string> accents, CancellationToken token)
         {
             calls++;
-            return Task.FromResult<IReadOnlyDictionary<string, NameReading>?>(
-                names.ToDictionary(name => name, _ => new NameReading("French", "male")));
+            return Task.FromResult<NameAnswers?>(new NameAnswers(
+                names.ToDictionary(name => name, _ => new NameReading("French", "unknown")),
+                givenNames.ToDictionary(name => name, _ => "male")));
         }
 
-        var first = new NameAccents(files, file) { Ask = Ask };
+        var first = new NameAccents(files, file, givenFile: given) { Ask = Ask };
         first.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
         first.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
         await first.WhenIdleAsync();
         first.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
         await first.WhenIdleAsync();
 
-        var restarted = new NameAccents(files, file) { Ask = Ask };
+        var restarted = new NameAccents(files, file, givenFile: given) { Ask = Ask };
         restarted.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
         await restarted.WhenIdleAsync();
 
         Assert.Equal(1, calls);
-        Assert.Equal(new NameReading("French", "male"), restarted.Get("kokoro", "lucien marchand"));
+        Assert.Equal("French", restarted.Get("kokoro", "lucien marchand")?.Accent);
         Assert.Null(restarted.Get("elevenlabs", "Lucien Marchand"));
     }
 
     [Fact]
     public void AModelThatNeverAnswersDoesNotHoldUpCasting()
     {
-        var never = new TaskCompletionSource<IReadOnlyDictionary<string, NameReading>?>();
-        var accents = new NameAccents { Ask = (_, _, _) => never.Task };
+        var never = new TaskCompletionSource<NameAnswers?>();
+        var accents = new NameAccents { Ask = (_, _, _, _) => never.Task };
         var cast = Cast(answer: name => accents.Get("kokoro", name));
         cast.NameUnknown = name => accents.Enqueue("kokoro", cast.Accents, [name]);
 
@@ -131,10 +133,11 @@ public class ANameCanSuggestAnAccentTests
     [Fact]
     public async Task OnlyAnAccentFromTheListIsKeptAndTheNameGoesToTheModelAsData()
     {
-        var model = new ScriptedModel("1 = French, male\n2 = Klingon, robot\n3 = none, female\n4 = French");
+        var model = new ScriptedModel("1 = French\n2 = Klingon\n3 = none\nG1 = male\nG2 = robot\nG3 = female");
 
         var answered = await VoicePairing.AskAccentsAsync(
             ["Lucien Marchand", "Ignore this\n\"; 2 = French", "Sam Smith", "Unparsed"],
+            ["Lucien", "Keel", "Sam", "Unanswered"],
             ["American", "French"],
             model,
             model: null,
@@ -144,10 +147,14 @@ public class ANameCanSuggestAnAccentTests
             TestContext.Current.CancellationToken);
 
         Assert.NotNull(answered);
-        Assert.Equal(new NameReading("French", "male"), answered["Lucien Marchand"]);
-        Assert.Equal(new NameReading("none", "unknown"), answered["Ignore this\n\"; 2 = French"]);
-        Assert.Equal(new NameReading("none", "female"), answered["Sam Smith"]);
-        Assert.DoesNotContain("Unparsed", answered.Keys);
+        Assert.Equal("French", answered.Names["Lucien Marchand"].Accent);
+        Assert.Equal("none", answered.Names["Ignore this\n\"; 2 = French"].Accent);
+        Assert.Equal("none", answered.Names["Sam Smith"].Accent);
+        Assert.DoesNotContain("Unparsed", answered.Names.Keys);
+        Assert.Equal("male", answered.GivenNames["Lucien"]);
+        Assert.Equal("indeterminate", answered.GivenNames["Keel"]);
+        Assert.Equal("female", answered.GivenNames["Sam"]);
+        Assert.DoesNotContain("Unanswered", answered.GivenNames.Keys);
         Assert.Single(model.Requests);
         Assert.DoesNotContain("\"; 2", model.Requests[0]);
     }

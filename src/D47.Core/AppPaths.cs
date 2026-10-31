@@ -34,6 +34,7 @@ public sealed class AppPaths
         SpendFile = Path.Combine(Data, "spend.jsonl");
         PronunciationsFile = Path.Combine(Data, PronunciationOverrides.FileName);
         NameAccentsFile = Path.Combine(Data, "name-accents.json");
+        GivenNameSexesFile = Path.Combine(Data, "given-name-sexes.json");
         CrewSeatsFile = Path.Combine(Data, "crew-seats.json");
         CharactersFile = Path.Combine(Data, "characters.json");
         VrActions = Path.Combine(Data, "vr-actions");
@@ -94,6 +95,8 @@ public sealed class AppPaths
 
     /// <summary>The accents the language model judged sender names to suggest.</summary>
     public string NameAccentsFile { get; }
+
+    public string GivenNameSexesFile { get; }
 
     /// <summary>The crew seat file, read only by <see cref="Characters.SeatMigration"/>.</summary>
     public string CrewSeatsFile { get; }

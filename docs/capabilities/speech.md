@@ -447,15 +447,20 @@ cores are not re-picked from scratch.
 #### Voices for named characters {#name-accents}
 
 A character named in an in-game message gets a voice from the provider's list that carries the accent
-their name clearly suggests and matches the sex it suggests. The language model is asked once per name
-and provider, in the background, in the same request: which of the accents the provider's voices carry
-the name points to, or none, and whether it reads as female, male or unknown. The answer is kept in
-`data\name-accents.json`, so a name is never asked twice. The first line from a name not yet answered
-is voiced without regard to sex or accent, and the answer applies the next time that name is cast.
-Only an accent the provider's voices actually carry is used. An unknown sex, or no language model,
-draws a voice without regard to sex. Other Commanders are never asked about and are cast without regard
-to sex, invented chatter is cast at random, and the language of every line stays English. The names are
-sent to the language model, as the Language model entry under Privacy and egress says.
+their name clearly suggests and matches the sex their given name suggests. The language model is asked in the
+background, in one request: for each full name, which of the accents the provider's voices carry it points to,
+or none; and for each given name, whether it is male, female or indeterminate. A name that could be either
+(Pat, Terry, Alex) and a moniker that is not a given name are indeterminate. The given name is the first word
+of a name of two or more words; a one-word name is its own given name. Accents are kept per full name and
+provider in `data\name-accents.json`. Sex is kept by given name, for every provider, in
+`data\given-name-sexes.json`, so a given name is never asked twice and "Dan Roberts" and "Dan Okafor" share
+one answer. The first line from a given name not yet answered waits up to five seconds for the answer; past
+that it is voiced without regard to sex, and the answer applies from the next system. Other announcements
+are not held while it waits, and an accent alone is never waited for. Only an accent the provider's voices
+actually carry is used. An indeterminate sex, or no language model, draws a voice without regard to sex.
+Other Commanders are never asked about and are cast without regard to sex, invented chatter is cast at
+random, and the language of every line stays English. The names are sent to the language model, as the
+Language model entry under Privacy and egress says.
 
 #### ElevenLabs model {#elevenlabs-model}
 

@@ -397,8 +397,9 @@ public sealed partial class ComparisonRunner(
             case QuietKind.NameAccents:
             {
                 input = $"accents: {string.Join(", ", quiet.Names)}";
-                var readings = await VoicePairing.AskAccentsAsync(
+                var answers = await VoicePairing.AskAccentsAsync(
                     quiet.Names,
+                    [.. quiet.Names.Select(NameAccents.GivenNameOf).Distinct(StringComparer.OrdinalIgnoreCase)],
                     VoiceAccents(KokoroVoices()),
                     meter,
                     model,
@@ -406,17 +407,21 @@ public sealed partial class ComparisonRunner(
                     null,
                     null,
                     cancellationToken).ConfigureAwait(false);
-                reply = readings is null
+                var readings = answers?.Names;
+                reply = answers is null
                     ? string.Empty
-                    : string.Join(Environment.NewLine, readings.Select(pair => $"{pair.Key} = {pair.Value.Accent}, {pair.Value.Sex}"));
-                failure = readings is null ? "no answer" : null;
-                checks["parses"] = readings is not null && quiet.Names.All(readings.ContainsKey);
+                    : string.Join(
+                        Environment.NewLine,
+                        answers.Names.Select(pair => $"{pair.Key} = {pair.Value.Accent}, {answers.GivenNames.GetValueOrDefault(NameAccents.GivenNameOf(pair.Key))}"));
+                failure = answers is null ? "no answer" : null;
+                checks["parses"] = answers is not null && quiet.Names.All(readings!.ContainsKey);
 
                 if (quiet.ExpectedSex.Count > 0)
                 {
-                    checks["sex as expected"] = readings is not null
+                    checks["sex as expected"] = answers is not null
                                                 && quiet.ExpectedSex.All(pair =>
-                                                    readings.TryGetValue(pair.Key, out var reading) && reading.Sex == pair.Value);
+                                                    answers.GivenNames.TryGetValue(NameAccents.GivenNameOf(pair.Key), out var sex)
+                                                    && sex == (pair.Value == NameReading.Unknown ? NameReading.Indeterminate : pair.Value));
                 }
 
                 break;

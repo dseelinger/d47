@@ -185,89 +185,108 @@ public sealed class Announcer : IDisposable
             _heardFromOutside(message.Text);
         }
 
-        _ = Task.Run(async () =>
+        // A first line from a named NPC waits for the sex of their given name, on its own task so the rest of the
+        // batch is not held.
+        var (ready, held) = SpeakerAccent.SplitByNameWait(pending, announcement => _castFor(announcement));
+
+        foreach (var (line, answer) in held)
         {
-            // Written before the turn is taken, never while holding it.
-            var lines = new List<Announcement>(pending.Count);
-
-            foreach (var announcement in pending)
+            _ = Task.Run(async () =>
             {
-                lines.AddRange(await Writer.WriteAsync(announcement).ConfigureAwait(false));
-            }
+                await SpeakerAccent.WaitForNameAsync(answer).ConfigureAwait(false);
+                await SpeakAsync([line]).ConfigureAwait(false);
+            });
+        }
 
-            // One at a time, and in order.
-            await InTurnAsync(async () =>
+        if (ready.Count > 0)
+        {
+            _ = Task.Run(() => SpeakAsync(ready));
+        }
+    }
+
+    /// <summary>Writes the lines, then says them in order once no other unprompted speaker is speaking.</summary>
+    private async Task SpeakAsync(IReadOnlyList<Announcement> pending)
+    {
+        // Written before the turn is taken, never while holding it.
+        var lines = new List<Announcement>(pending.Count);
+
+        foreach (var announcement in pending)
+        {
+            lines.AddRange(await Writer.WriteAsync(announcement).ConfigureAwait(false));
+        }
+
+        // One at a time, and in order.
+        await InTurnAsync(async () =>
+        {
+            try
             {
-                try
+                var beat = 0;
+
+                foreach (var announcement in lines)
                 {
-                    var beat = 0;
-
-                    foreach (var announcement in lines)
+                    if (announcement.Key == NpcChatter.LineKey)
                     {
-                        if (announcement.Key == NpcChatter.LineKey)
+                        // Air between the lines of an exchange (#259), reported as two people never once
+                        // leaving a gap.
+                        await HoldTheBeatAsync(NpcChatter.Beat(beat++)).ConfigureAwait(false);
+
+                        // Checked after the beat rather than before it: this loop runs ahead of playback,
+                        // so the Commander starts talking while the next line is still waiting on its beat.
+                        // The arbiter refuses a line synthesised after that anyway; this only saves paying
+                        // to synthesise it (#61).
+                        if (Voice.Engaged)
                         {
-                            // Air between the lines of an exchange (#259), reported as two people never once
-                            // leaving a gap.
-                            await HoldTheBeatAsync(NpcChatter.Beat(beat++)).ConfigureAwait(false);
-
-                            // Checked after the beat rather than before it: this loop runs ahead of playback,
-                            // so the Commander starts talking while the next line is still waiting on its beat.
-                            // The arbiter refuses a line synthesised after that anyway; this only saves paying
-                            // to synthesise it (#61).
-                            if (Voice.Engaged)
-                            {
-                                continue;
-                            }
+                            continue;
                         }
-                        else
-                        {
-                            beat = 0;
-                        }
-
-                        var spoken = await SayAsync(announcement).ConfigureAwait(false);
-
-                        // Only a line actually spoken can be answered.
-                        if (announcement.Invented is { } chatter)
-                        {
-                            Turns.LineHeard<D47.Core.Persona.ChatterLine>(line => line.Heard(chatter.Line, chatter.ExchangeIndex));
-
-                            if (chatter.Hail && chatter.Line.Role is null)
-                            {
-                                Hailed?.Invoke(chatter.Line.Name);
-                            }
-                        }
-
-                        if (announcement.Voice == VoiceRole.Narrator)
-                        {
-                            Turns.LineHeard<D47.Core.Persona.NarratorLine>(line => line.Heard(announcement.Text));
-                        }
-
-                        if (announcement.Cast is { } castId)
-                        {
-                            Turns.LineHeard<D47.Core.Persona.CastLine>(line => line.Heard(castId, announcement.Text));
-                        }
-
-                        // What the Commander actually heard about a story, kept (asked for 2026-08-22).
-                        Records.RecordAdventure(announcement, spoken);
-                        Records.RecordOffer(announcement);
-                        Records.RecordNudge(announcement, spoken);
-                        Records.RecordClue(announcement, spoken);
-                        Records.RecordReaction(announcement, spoken);
-                        Records.RecordIntroduction(announcement, spoken);
-
-                        // After the fact has been spoken, and not awaited: the search is a round trip through
-                        // somebody else's index, and the rest of this batch is where a danger callout would be
-                        // waiting.
-                        LookUpLore(announcement);
                     }
+                    else
+                    {
+                        beat = 0;
+                    }
+
+                    var spoken = await SayAsync(announcement).ConfigureAwait(false);
+
+                    // Only a line actually spoken can be answered.
+                    if (announcement.Invented is { } chatter)
+                    {
+                        Turns.LineHeard<D47.Core.Persona.ChatterLine>(line => line.Heard(chatter.Line, chatter.ExchangeIndex));
+
+                        if (chatter.Hail && chatter.Line.Role is null)
+                        {
+                            Hailed?.Invoke(chatter.Line.Name);
+                        }
+                    }
+
+                    if (announcement.Voice == VoiceRole.Narrator)
+                    {
+                        Turns.LineHeard<D47.Core.Persona.NarratorLine>(line => line.Heard(announcement.Text));
+                    }
+
+                    if (announcement.Cast is { } castId)
+                    {
+                        Turns.LineHeard<D47.Core.Persona.CastLine>(line => line.Heard(castId, announcement.Text));
+                    }
+
+                    // What the Commander actually heard about a story, kept (asked for 2026-08-22).
+                    Records.RecordAdventure(announcement, spoken);
+                    Records.RecordOffer(announcement);
+                    Records.RecordNudge(announcement, spoken);
+                    Records.RecordClue(announcement, spoken);
+                    Records.RecordReaction(announcement, spoken);
+                    Records.RecordIntroduction(announcement, spoken);
+
+                    // After the fact has been spoken, and not awaited: the search is a round trip through
+                    // somebody else's index, and the rest of this batch is where a danger callout would be
+                    // waiting.
+                    LookUpLore(announcement);
                 }
-                catch (Exception ex)
-                {
-                    // A callout that cannot be synthesised is a callout the Commander does not hear.
-                    _logger.LogError(ex, "A callout could not be spoken");
-                }
-            }).ConfigureAwait(false);
-        });
+            }
+            catch (Exception ex)
+            {
+                // A callout that cannot be synthesised is a callout the Commander does not hear.
+                _logger.LogError(ex, "A callout could not be spoken");
+            }
+        }).ConfigureAwait(false);
     }
 
     /// <summary>

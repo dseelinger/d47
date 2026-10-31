@@ -27,6 +27,50 @@ public static class SpeakerAccent
     }
 
     /// <summary>
+    /// What a first line from a named NPC waits for before it is cast: the sex of the sender's given name. Null
+    /// where it need not wait.
+    /// </summary>
+    public static Task? NameAnswerFor(VoiceCast cast, Announcement announcement) =>
+        announcement.Speaker is { Length: > 0 } speaker
+            ? cast.SexAnswerFor(speaker, announcement.SpeakerIsPlayer, announcement.Voice)
+            : null;
+
+    /// <summary>Splits a batch into the lines to speak now and the first lines from NPCs that wait, each with its answer.</summary>
+    public static (List<Announcement> Ready, List<(Announcement Line, Task Answer)> Held) SplitByNameWait(
+        IEnumerable<Announcement> batch,
+        Func<Announcement, VoiceCast> castFor)
+    {
+        var ready = new List<Announcement>();
+        var held = new List<(Announcement, Task)>();
+
+        foreach (var announcement in batch)
+        {
+            if (NameAnswerFor(castFor(announcement), announcement) is { } answer)
+            {
+                held.Add((announcement, answer));
+            }
+            else
+            {
+                ready.Add(announcement);
+            }
+        }
+
+        return (ready, held);
+    }
+
+    /// <summary>Completes when <paramref name="answer"/> does or the ceiling passes, whichever is first.</summary>
+    public static async Task WaitForNameAsync(Task answer, TimeProvider? time = null)
+    {
+        ArgumentNullException.ThrowIfNull(answer);
+
+        using var ceiling = new CancellationTokenSource();
+        var elapsed = Task.Delay(NameAccents.AnswerCeiling, time ?? TimeProvider.System, ceiling.Token);
+
+        await Task.WhenAny(answer, elapsed).ConfigureAwait(false);
+        await ceiling.CancelAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// The accent brief for the voice that will speak an NPC's line, or null for a core, the crew, a
     /// voice whose listing names no accent, or a line whose roll against <paramref name="percent"/> misses.
     /// </summary>

@@ -157,8 +157,9 @@ public sealed class AppHost : IDisposable
         Speech = speech;
         Microphone = microphone;
         Pairing = pairing;
-        Speech.NameAccents.Ask = (names, accents, token) => VoicePairing.AskAccentsAsync(
+        Speech.NameAccents.Ask = (names, givenNames, accents, token) => VoicePairing.AskAccentsAsync(
             names,
+            givenNames,
             accents,
             Turns.Provider,
             Turns.BackgroundModel,

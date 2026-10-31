@@ -75,8 +75,41 @@ public sealed class VoiceCast
     /// </summary>
     public Func<string, NameReading?>? ReadingOfName { get; set; }
 
+    /// <summary>
+    /// The sex recorded for a given name (male, female or indeterminate): null while unanswered. Never waits on
+    /// the model.
+    /// </summary>
+    public Func<string, string?>? SexOfGivenName { get; set; }
+
     /// <summary>Called with a name that has no answer yet, so the question can be queued.</summary>
     public Action<string>? NameUnknown { get; set; }
+
+    /// <summary>
+    /// For a full name, null where nothing is to be waited for, otherwise a task completing when the sex of its
+    /// given name is answered. Queues the question.
+    /// </summary>
+    public Func<string, Task?>? GivenNameAnswer { get; set; }
+
+    /// <summary>
+    /// The task a first line from this sender waits on for their given name's sex, or null where it does not
+    /// wait: another Commander, a role other than comms, a role the Commander has cast, a sender already voiced
+    /// here, or a given name with nothing to wait for.
+    /// </summary>
+    public Task? SexAnswerFor(string sender, bool isPlayer, VoiceRole role, string? own = null)
+    {
+        if (isPlayer
+            || role != VoiceRole.Comms
+            || own is not null
+            || GivenNameAnswer is null
+            || Pool.Count == 0
+            || _roleVoices.ContainsKey(role)
+            || _perSystem.ContainsKey(sender))
+        {
+            return null;
+        }
+
+        return GivenNameAnswer(sender);
+    }
 
     /// <summary>The accent a voice is heard in, or null where its listing names none.</summary>
     public string? AccentOf(string? voiceId) =>
@@ -259,19 +292,20 @@ public sealed class VoiceCast
     /// </summary>
     private NameReading? NameReadingOf(string sender, bool isPlayer, VoiceRole role)
     {
-        if (isPlayer || role != VoiceRole.Comms || ReadingOfName is null)
+        if (isPlayer || role != VoiceRole.Comms)
         {
             return null;
         }
 
-        var recorded = ReadingOfName(sender);
+        var recorded = ReadingOfName?.Invoke(sender);
+        var sex = SexOfGivenName?.Invoke(NameAccents.GivenNameOf(sender));
 
-        if (recorded is null)
+        if ((ReadingOfName is not null && recorded is null) || (SexOfGivenName is not null && sex is null))
         {
             NameUnknown?.Invoke(sender);
         }
 
-        return recorded;
+        return recorded is null && sex is null ? null : new NameReading(recorded?.Accent ?? string.Empty, sex ?? NameReading.Unknown);
     }
 
     /// <summary>Gives an NPC in this system a voice chosen before their name was known.</summary>

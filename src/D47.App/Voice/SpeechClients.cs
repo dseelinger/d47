@@ -52,7 +52,7 @@ public sealed class SpeechClients : IDisposable
         _audio = audio;
         _ownVoice = ownVoice;
         _customVoices = customVoices;
-        NameAccents = new NameAccents(files, paths.NameAccentsFile, _logger);
+        NameAccents = new NameAccents(files, paths.NameAccentsFile, _logger, paths.GivenNameSexesFile);
 
         D47.Core.Speech.LocalVoiceStandIn.Installed = id => string.Equals(id, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
             ? D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder())
@@ -614,6 +614,8 @@ public sealed class SpeechClients : IDisposable
             // A sender's name may suggest an accent and a sex; the question is queued and answered off the speech path.
             cast.ReadingOfName = name => NameAccents.Get(provider.Id, name);
             cast.NameUnknown = name => NameAccents.Enqueue(provider.Id, cast.Accents, [name]);
+            cast.SexOfGivenName = NameAccents.SexOfGivenName;
+            cast.GivenNameAnswer = name => NameAccents.WhenGivenNameAnswered(provider.Id, cast.Accents, name);
 
             // Both numbers, because one of them alone is what hid that: "1 voice available" is alarming
             // beside "473 offered" and unremarkable on its own.
