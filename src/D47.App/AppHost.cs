@@ -1618,35 +1618,12 @@ public sealed class AppHost : IDisposable
         var files = foundations.Files;
         var logger = foundations.Logger;
         var loggerFactory = foundations.LoggerFactory;
-        var activities = stores.Activities;
         var adventureBook = stores.AdventureBook;
-        var autonomous = stores.Autonomous;
-        var callouts = stores.Callouts;
-        var cartography = stores.Cartography;
-        var checklists = stores.Checklists;
-        var commodityLedger = stores.CommodityLedger;
-        var crimes = stores.Crimes;
-        var exobiology = stores.Exobiology;
-        var fight = stores.Fight;
         var gameState = stores.GameState;
-        var history = stores.History;
         var journal = stores.Journal;
         var journalDirectory = stores.JournalDirectory;
-        var kit = stores.Kit;
-        var loadouts = stores.Loadouts;
-        var lore = stores.Lore;
-        var loreVisits = stores.LoreVisits;
-        var mail = stores.Mail;
-        var signalSightings = stores.SignalSightings;
-        var markets = stores.Markets;
-        var modulePower = stores.ModulePower;
-        var planBook = stores.PlanBook;
         var route = stores.Route;
-        var sampling = stores.Sampling;
-        var scenes = stores.Scenes;
         var status = stores.Status;
-
-        var feed = new JournalFeed();
 
         var eddn = new D47.Knowledge.EddnUploader(
             () => foundations.Settings.Current.Contribution.Eddn,
@@ -1670,154 +1647,53 @@ public sealed class AppHost : IDisposable
         // The ~4-10 Hz loop.
         var tick = new TickLoop(loggerFactory.CreateLogger<TickLoop>());
 
-        tick.Add("journal", context =>
+        var journalTick = new JournalTick(new JournalTick.Sources
         {
-            // The first tick is the replay of the backlog, and the switch signal has to know that (Phase 44):
-            // a Commander change met during the replay is history, not a login.
-            var events = journal.Poll(priming: context.IsFirst);
-
-            // While Elite runs a Commander other than the one shown, their events fold into their own state and
-            // ledgers and nothing reacts to them.
-            var offDuty = gameState.IsOffDuty;
-            var inGame = gameState.InGame?.Identity.FrontierId;
-            var shown = gameState.Shown(events);
-
-            feed.Events = events;
-            feed.Arrived = shown;
-
-            feed.EliteMusic.Observe(events);
-
-            if (events.Any(journalEvent => journalEvent.Kind == "DockingRequested"))
-            {
-                Interlocked.Increment(ref feed.DockingRequests);
-            }
-
-            // Kept for the Journal page to read (#51).
-            feed.JournalLog.Add(events, journal.Receipts);
-            status.Poll();
-            route.Poll();
-
-            // Elite rewrites this one on outfitting and on a module being switched off, so it is read on the
-            // same terms as the other two: only when its write time moves.
-            modulePower.Poll();
-
-            // The commodity board the Commander is standing in front of, if they have opened one (Phase 36).
-            markets.Poll(gameState.InGame?.Location.StarPos);
-
-            // Every event folds in, the backlog included; only a live one from the Commander shown is sent.
-            eddnContribution.Apply(events, context.Now, context.IsFirst, offDuty);
-
-            // Before the callouts and inside this subscriber, so a verdict recomputed from this tick's events
-            // is announced on this tick rather than the next.
-            checklists.Poll(announce: !context.IsFirst && !offDuty, shown);
-
-            // Before the callouts, so the sale callout reads a total that includes the sale it is announcing
-            // (#296).
-            commodityLedger.Apply(events);
-
-            // Before the callouts too, so an analysis is in the unsold total the sampling callout speaks.
-            exobiology.Apply(events, inGame);
-            cartography.Apply(events, inGame);
-            crimes.Apply(events, inGame);
-            activities.Apply(events, inGame);
-            signalSightings.Apply(events);
-            stores.CommanderErases.Apply(events);
-            stores.Friends.Apply(events);
-            stores.CommanderLog.Apply(events);
-            stores.TravelLog.Apply(events);
-            stores.FullyFound.Apply(events);
-
-            if (!context.IsFirst)
-            {
-                mail.Fold(events, live: true, inGame, announced: !offDuty);
-            }
-
-            // Moves a stored plan's reached stop forward on arrival, replay included (#199).
-            planBook.Apply(events, inGame);
-
-            // Outside the callouts, so the fight is followed while they or chatter are switched off.
-            foreach (var journalEvent in shown)
-            {
-                fight.Fold(journalEvent, context.Now, context.IsFirst);
-                scenes.Fold(journalEvent);
-            }
-
-            var calloutContext = CalloutContext.For(
-                context.Now,
-                context.IsFirst,
-                gameState,
-                status.Current,
-                route.Current,
-                events);
-
-            callouts.Tick(calloutContext);
-            autonomous.Tick(calloutContext);
-
-            // Written only when a sample actually landed, rather than every tick: this runs ten times a
-            // second and the file changes a few times an hour.
-            if (events.Any(journalEvent => journalEvent.Kind == "ScanOrganic"))
-            {
-                sampling.Save(gameState.All);
-            }
-
-            // The same cadence and the same reasoning for the ships (#128).
-            if (events.LastOrDefault(ShipLoadouts.MayChange) is { } changed)
-            {
-                // Stamped with that event's own time rather than with the clock, so the watermark the next
-                // catch-up walks back to means what it says even when this tick is replaying a backlog from
-                // yesterday.
-                loadouts.Save(gameState.All, changed.Timestamp);
-            }
-
-            // The same cadence and the same reasoning for the suits and weapons (#293).
-            if (events.LastOrDefault(OwnedKit.MayChange) is { } kitChanged)
-            {
-                kit.Save(gameState.All, kitChanged.Timestamp);
-            }
-
-            // The Commander's lore notes are hand-editable, so they are polled like the checklist is; the
-            // remark stamps are written only when one was actually made, which is at most a handful of times
-            // a day.
-            lore.Store.Poll();
-
-            if (loreVisits.Dirty)
-            {
-                loreVisits.Save();
-            }
+            Journal = journal,
+            GameState = gameState,
+            History = stores.History,
+            Status = status,
+            Route = route,
+            ModulePower = stores.ModulePower,
+            Markets = stores.Markets,
+            Eddn = eddnContribution,
+            Checklists = stores.Checklists,
+            CommodityLedger = stores.CommodityLedger,
+            Exobiology = stores.Exobiology,
+            Cartography = stores.Cartography,
+            Crimes = stores.Crimes,
+            Activities = stores.Activities,
+            SignalSightings = stores.SignalSightings,
+            CommanderErases = stores.CommanderErases,
+            Friends = stores.Friends,
+            CommanderLog = stores.CommanderLog,
+            TravelLog = stores.TravelLog,
+            FullyFound = stores.FullyFound,
+            Mail = stores.Mail,
+            PlanBook = stores.PlanBook,
+            Fight = stores.Fight,
+            Scenes = stores.Scenes,
+            Callouts = stores.Callouts,
+            Autonomous = stores.Autonomous,
+            Sampling = stores.Sampling,
+            Loadouts = stores.Loadouts,
+            Kit = stores.Kit,
+            Lore = stores.Lore,
+            LoreVisits = stores.LoreVisits,
         });
 
-        // Directly after the journal, so every subscriber registered after it reads the adopted state on the
-        // same tick rather than the next one (#148). Game state is written on the tick thread and nowhere
-        // else, which is why the walk's result is taken here rather than where it finishes.
-        var adopted = false;
-
-        tick.Add("journal history", _ =>
-        {
-            if (adopted || history.State is not HistoryState.Done)
-            {
-                return;
-            }
-
-            adopted = true;
-            gameState.RestoreLate();
-        });
-
-        // A Commander picked on the title bar or the Commanders page, taken here because game state is written
-        // on the tick thread.
-        tick.Add("commander pick", _ =>
-        {
-            while (feed.Picks.TryDequeue(out var picked))
-            {
-                gameState.Pick(picked);
-            }
-        });
+        // History is adopted directly after the fold, so every subscriber registered after it reads the adopted
+        // state on the same tick.
+        tick.Add("journal", journalTick.Fold);
+        tick.Add("journal history", journalTick.AdoptHistory);
+        tick.Add("commander pick", journalTick.TakePicks);
 
         // Every Commander's screenshots are copied; the place they fall back to is the shown Commander's, and none
         // while Elite runs another.
         var screenshots = new ScreenshotConverter(files, EliteScreenshot.Folder(), loggerFactory.CreateLogger<ScreenshotConverter>());
 
         tick.Add("screenshots", context => screenshots.Observe(
-            feed.Events,
+            journalTick.Events,
             context.IsFirst,
             foundations.Settings.Current.Screenshots.Convert,
             gameState.IsOffDuty ? JournalLocation.Unknown : gameState.Active?.Location ?? JournalLocation.Unknown));
@@ -1843,7 +1719,7 @@ public sealed class AppHost : IDisposable
 
         return new LoopParts
         {
-            Feed = feed,
+            Feed = journalTick,
             Tick = tick,
             Eddn = eddn,
         };
@@ -2717,7 +2593,7 @@ public sealed class AppHost : IDisposable
                     // Opened before the contacts walk sends a key, so a request already in is not read as
                     // this one (#150).
                     WatchDockingRequest = () => new Input.DockingRequestWatch(
-                        () => Volatile.Read(ref feed.DockingRequests), logger),
+                        () => feed.DockingRequests, logger),
 
                     DockingComputerFitted = () =>
                         gameState.Active?.FlownShip.Fitted(Core.Journal.ShipLoadout.DockingComputer),
@@ -4444,28 +4320,6 @@ public sealed class AppHost : IDisposable
         public AppHost? Host { get; set; }
     }
 
-    /// <summary>What the journal tick leaves for the subscribers registered after the host exists.</summary>
-    private sealed class JournalFeed
-    {
-        /// <summary>This tick's journal events, whichever Commander they are for.</summary>
-        public IReadOnlyList<JournalEvent> Events { get; set; } = [];
-
-        /// <summary>This tick's journal events for the Commander shown.</summary>
-        public IReadOnlyList<JournalEvent> Arrived { get; set; } = [];
-
-        /// <summary>Docking requests seen in the journal (#150): counted on the tick thread, read by the contacts walk's wait.</summary>
-        public int DockingRequests;
-
-        /// <summary>Commanders picked on the title bar or the Commanders page, taken on the tick thread.</summary>
-        public System.Collections.Concurrent.ConcurrentQueue<CommanderIdentity> Picks { get; } = new();
-
-        /// <summary>The events the Journal page reads (#51).</summary>
-        public D47.Core.Journal.JournalLog JournalLog { get; } = new();
-
-        /// <summary>Elite's own music track: the journal's witness that the galaxy map is showing (#365), and what ambience follows.</summary>
-        public EliteMusic EliteMusic { get; } = new();
-    }
-
     private sealed record FoundationParts
     {
         public required DiskFileSystem Files { get; init; }
@@ -4645,7 +4499,7 @@ public sealed class AppHost : IDisposable
 
     private sealed record LoopParts
     {
-        public required JournalFeed Feed { get; init; }
+        public required JournalTick Feed { get; init; }
 
         public required TickLoop Tick { get; init; }
 

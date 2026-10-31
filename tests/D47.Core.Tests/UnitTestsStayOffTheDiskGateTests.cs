@@ -81,11 +81,17 @@ public sealed class UnitTestsStayOffTheDiskGateTests
         return found;
     }
 
-    /// <summary>True for <c>x.File</c> where <c>x</c> is not the <c>System.IO</c> namespace.</summary>
+    /// <summary>
+    /// True for <c>x.File</c> where <c>x</c> is not the <c>System.IO</c> namespace, and for <c>File</c> set in an
+    /// object initializer, which names a member of the type being created.
+    /// </summary>
     private static bool IsMemberName(IdentifierNameSyntax name) =>
-        name.Parent is MemberAccessExpressionSyntax access
-        && access.Name == name
-        && access.Expression.ToString() is not ("System.IO" or "IO");
+        (name.Parent is MemberAccessExpressionSyntax access
+            && access.Name == name
+            && access.Expression.ToString() is not ("System.IO" or "IO"))
+        || (name.Parent is AssignmentExpressionSyntax { Parent: InitializerExpressionSyntax initializer } assignment
+            && assignment.Left == name
+            && initializer.IsKind(SyntaxKind.ObjectInitializerExpression));
 
     private static bool Tagged(SyntaxList<AttributeListSyntax> lists) =>
         lists.SelectMany(list => list.Attributes).Any(attribute =>
