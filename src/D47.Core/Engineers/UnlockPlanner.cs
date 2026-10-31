@@ -80,7 +80,7 @@ public sealed record UnlockCandidate
         return said.Append('.').ToString();
     }
 
-    /// <summary>The work behind the ranking, one line per stop, plus what cannot be counted in jumps.</summary>
+    /// <summary>The work behind the ranking, one line per stop, plus what cannot be counted in jumps. Spoken answers name at most three (SpokenList.Limit).</summary>
     public IReadOnlyList<string> Working()
     {
         var lines = new List<string>();
@@ -107,11 +107,16 @@ public sealed record UnlockCandidate
             }
         }
 
-        foreach (var job in Jobs)
+        var spokenJobs = Jobs.Count > 3 ? Jobs.Take(3).ToList() : Jobs.ToList();
+        foreach (var job in spokenJobs)
         {
             lines.Add(job.Count > 1
                 ? $"    covers: {job[0].DescribeJob()} ×{job.Count.ToString(CultureInfo.InvariantCulture)}"
                 : $"    covers: {job[0].DescribeJob()}");
+        }
+        if (Jobs.Count > spokenJobs.Count)
+        {
+            lines.Add($"    and {Jobs.Count - spokenJobs.Count} more on the Engineering page.");
         }
 
         return lines;
