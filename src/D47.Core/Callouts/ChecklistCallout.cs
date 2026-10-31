@@ -10,6 +10,9 @@ public sealed class ChecklistCallout(ChecklistService checklists) : ICallout
     /// <summary>Materials whose shortfall has already been announced as cleared.</summary>
     private readonly HashSet<string> _filled = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>The need each material had at the last costing.</summary>
+    private readonly Dictionary<string, int> _needs = new(StringComparer.OrdinalIgnoreCase);
+
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         if (context.IsPriming)
@@ -44,13 +47,23 @@ public sealed class ChecklistCallout(ChecklistService checklists) : ICallout
 
         foreach (var ingredient in costing.Ingredients)
         {
+            var symbol = ingredient.Material.Symbol;
+            var unchanged = _needs.TryGetValue(symbol, out var seen) && seen == ingredient.Needed;
+            _needs[symbol] = ingredient.Needed;
+
             if (ingredient.Short > 0)
             {
-                _filled.Remove(ingredient.Material.Symbol);
+                _filled.Remove(symbol);
                 continue;
             }
 
-            if (!_filled.Add(ingredient.Material.Symbol))
+            if (!unchanged)
+            {
+                _filled.Add(symbol);
+                continue;
+            }
+
+            if (!_filled.Add(symbol))
             {
                 continue;
             }
@@ -66,6 +79,8 @@ public sealed class ChecklistCallout(ChecklistService checklists) : ICallout
     {
         foreach (var ingredient in EngineeringPlan.Cost(checklists.Document.Items, context.State).Ingredients)
         {
+            _needs[ingredient.Material.Symbol] = ingredient.Needed;
+
             if (ingredient.Short == 0)
             {
                 _filled.Add(ingredient.Material.Symbol);

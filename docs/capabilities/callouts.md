@@ -689,6 +689,9 @@ a shopping trip is a trip for everything:
 That is the last Cadmium your plans needed. 12 of 12.
 ```
 
+A plan line added with its materials already in the hold says nothing. Only a pickup that takes a
+material from short to covered is announced.
+
 Switching this off silences both. It does not freeze the list — the verdicts stay up to date and the
 panel keeps showing them; a setting that did two things, one of them invisible, would be the wrong
 setting.
