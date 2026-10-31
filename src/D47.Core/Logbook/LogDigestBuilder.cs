@@ -36,6 +36,30 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
         LogFactKind.Travel,
     ];
 
+    /// <summary>FIX #1963: Suit names via OnFootCatalogue.Find and HullSaid, and on foot detection.</summary>
+    private static string? FixedNamed(JournalEvent e, string property)
+    {
+        var symbol = e.String(property);
+        var clean = D47.Core.Journal.JournalText.Blank(symbol);
+        if (clean is not null)
+        {
+            var suit = Knowledge.OnFootCatalogue.Find(clean)?.Speak();
+            if (suit is not null) return suit;
+            var hull = Knowledge.EliteSpecifications.HullSaid(clean);
+            if (!string.Equals(hull, clean, StringComparison.Ordinal)) return hull;
+        }
+        return D47.Core.Journal.JournalText.Blank(e.String(property + "_Localised")) ?? clean;
+    }
+
+    private static bool IsOnFoot(JournalEvent e)
+    {
+        var id = e.Long("ShipID") ?? 0;
+        var ship = e.String("Ship");
+        return id >= Journal.OutstandingCrimes.SuitLoadoutIds || Knowledge.OnFootCatalogue.Find(ship) != null;
+    }
+
+
+
     /// <summary>
     /// With <paramref name="frontierId"/>, only events between a <c>Commander</c> or <c>LoadGame</c> naming that
     /// Frontier ID and the next one naming anybody else are folded.
@@ -740,121 +764,4 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
             var module = ModuleNames.Readable(journalEvent.Named("Module"));
             var blueprint = ModuleNames.Readable(journalEvent.Named("BlueprintName"));
             var engineer = journalEvent.String("Engineer") ?? "an engineer";
-            var key = $"{module} {blueprint} {engineer}";
-
-            if (!_engineering.TryGetValue(key, out var roll))
-            {
-                roll = new Engineering(module, blueprint, engineer);
-                _engineering[key] = roll;
-            }
-
-            roll.Add(journalEvent);
-        }
-
-        /// <summary>The first thing that happened, stated once.</summary>
-        private void Open(JournalEvent journalEvent, string statement)
-        {
-            if (_opened)
-            {
-                return;
-            }
-
-            _opened = true;
-            Moment(journalEvent, LogFactKind.Opening, statement);
-        }
-
-        public void Story(LogStoryBeat beat) =>
-            _moments.Add(new LogFact
-            {
-                Kind = LogFactKind.Story,
-                Statement = beat.Statement,
-                At = beat.Source.At,
-                Sources = [beat.Source],
-                SourceCount = 1,
-            });
-
-        private void Moment(JournalEvent journalEvent, LogFactKind kind, string statement) =>
-            _moments.Add(new LogFact
-            {
-                Kind = kind,
-                Statement = statement,
-                At = journalEvent.Timestamp,
-                Sources = [new LogSource(journalEvent.Kind, journalEvent.Timestamp)],
-                SourceCount = 1,
-            });
-
-        private string TopCommodity()
-        {
-            if (_commodities.Count == 0)
-            {
-                return string.Empty;
-            }
-
-            var best = _commodities.OrderByDescending(pair => pair.Value).ThenBy(pair => pair.Key, StringComparer.Ordinal).First();
-
-            return $", mostly {best.Key}";
-        }
-
-        private static string Place(JournalEvent journalEvent) =>
-            journalEvent.Named("StationName") is { Length: > 0 } station
-                ? $"docked at {station}, {journalEvent.String("StarSystem")}"
-                : $"in {journalEvent.String("StarSystem")}";
-
-        private static string Ship(JournalEvent journalEvent)
-        {
-            // Spoken, not Named: Elite omits _Localised on plenty of ship symbols and writes them lower case,
-            // so one log would call it an "anaconda" in one line and an "Anaconda" in the next.
-            var type = JournalJson.Spoken(journalEvent.Named("Ship")) ?? "a ship";
-
-            return journalEvent.String("ShipName") is { Length: > 0 } name
-                ? $"the {type} \"{name}\""
-                : $"a {type}";
-        }
-
-        private static string Promotion(JournalEvent journalEvent)
-        {
-            var ranks = new[] { "Combat", "Trade", "Explore", "Soldier", "Exobiologist", "CQC", "Federation", "Empire" };
-
-            var earned = ranks
-                .Where(rank => journalEvent.Int(rank) is not null)
-                .Select(rank => new RankStanding(rank, journalEvent.Int(rank)!.Value).Say(withPercent: false))
-                .ToList();
-
-            return earned.Count == 0
-                ? "Was promoted."
-                : $"Was promoted: {string.Join("; ", earned)}.";
-        }
-
-        private static string Death(JournalEvent journalEvent)
-        {
-            if (journalEvent.Named("KillerName") is { Length: > 0 } killer)
-            {
-                return $"Was killed by {killer}.";
-            }
-
-            var killers = journalEvent.Items("Killers").Count();
-
-            return killers > 0
-                ? $"Was killed by a wing of {killers.ToString(CultureInfo.InvariantCulture)}."
-                : "Died.";
-        }
-
-        /// <summary>A few of a set, and how many more.</summary>
-        private static string Some(SortedSet<string> names)
-        {
-            const int Named = 4;
-
-            if (names.Count <= Named)
-            {
-                return string.Join(", ", names);
-            }
-
-            return string.Join(", ", names.Take(Named))
-                + $" and {(names.Count - Named).ToString("N0", CultureInfo.InvariantCulture)} more";
-        }
-
-        private static string Count(long value) => value.ToString("N0", CultureInfo.InvariantCulture);
-
-        private static string Credits(long value) => $"{value.ToString("N0", CultureInfo.InvariantCulture)} Cr";
-    }
-}
+            var key = $"{module}
