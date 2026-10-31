@@ -157,7 +157,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
             _book = miniPlans;
             _now = surface.Now;
             _runStart = _now();
-            Mini = new RouteMini(miniPlans, surface.Route, surface.Here, surface.OffDuty, InPlay);
+            Mini = new RouteMini(miniPlans, surface.Route, surface.Here, surface.OffDuty, InPlay, RoutingPages.Copy(surface));
         }
 
         if (galaxyMap && surface.Travel is not null)

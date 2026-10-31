@@ -76,7 +76,8 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         bool lookups = true,
         NavRoute? route = null,
         double width = 1280,
-        bool trade = true)
+        bool trade = true,
+        IClipboard? clipboard = null)
     {
         var folder = Path.Combine(Path.GetTempPath(), "d47-best-cargo-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
@@ -123,7 +124,8 @@ public class TheBestCargoPageDrawsTheLastSearchTests
             new CommodityBoard(),
             Settings: settings,
             Commander: () => gameState.Active,
-            Cargo: trade ? board : null));
+            Cargo: trade ? board : null,
+            Clipboard: clipboard));
 
         var window = new Window { Content = panel, Width = width, Height = 860 };
         window.Bind(Window.BackgroundProperty, Avalonia.Application.Current!.Resources.GetResourceObservable(D47.App.Theming.ThemeManager.BgKey));
@@ -140,6 +142,37 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Dispatcher.UIThread.RunJobs();
 
         return new Opened(window, panel, board, fake, registry, folder);
+    }
+
+    private static List<string> Copied(Avalonia.Visual root) =>
+        [.. root.GetVisualDescendants().OfType<Button>().Select(D47.App.Controls.CopyGlyph.GetCopies).OfType<string>()];
+
+    [Trait("Category", "Integration")]
+    [AvaloniaFact]
+    public void TheBuyingAtSystemTheDestinationAndTheSellInHintEachCarryACopyGlyph()
+    {
+        var clipboard = new RecordingClipboard();
+        using var opened = Open(clipboard: clipboard);
+        Search(opened.Page, "Ray");
+
+        Assert.Equal(["LTT 7786", "Ray", "Ray"], Copied(opened.Page).Order(StringComparer.Ordinal));
+
+        var glyph = opened.Page.GetVisualDescendants().OfType<Button>()
+            .First(button => D47.App.Controls.CopyGlyph.GetCopies(button) == "LTT 7786");
+        glyph.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["LTT 7786"], clipboard.Written);
+    }
+
+    [Trait("Category", "Integration")]
+    [AvaloniaFact]
+    public void WithNoClipboardTheBestCargoPageDrawsNoCopyGlyph()
+    {
+        using var opened = Open();
+        Search(opened.Page, "Ray");
+
+        Assert.Empty(Copied(opened.Page));
     }
 
     private static void Search(RouteBestCargoPage page, string system)

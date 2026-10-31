@@ -32,7 +32,30 @@ internal static class RoutingKit
 
         TitleText.Show(block, text, sentence);
 
-        var row = TitleText.Block(block);
+        return (Framed(block), block);
+    }
+
+    /// <summary>
+    /// A title of <paramref name="parts"/> in one wrapping row; a part with a system gets a copy glyph beside it
+    /// when there is a clipboard.
+    /// </summary>
+    public static Control Title(IEnumerable<(string Text, string? System)> parts, Func<string, Task<bool>>? copy)
+    {
+        var line = new WrapPanel { Orientation = Orientation.Horizontal };
+
+        foreach (var (text, system) in parts)
+        {
+            var block = TitleText.Build(text, TypeScale.Heading, TitleRank.Screen, sentence: true);
+            block.VerticalAlignment = VerticalAlignment.Center;
+            line.Children.Add(system is null ? block : D47.App.Controls.CopyGlyph.Beside(block, system, copy));
+        }
+
+        return Framed(line);
+    }
+
+    private static Control Framed(Control content)
+    {
+        var row = TitleText.Block(content);
         row.Margin = new Thickness(0, 0, 0, 10);
 
         IDisposable? mode = null;
@@ -53,7 +76,7 @@ internal static class RoutingKit
             mode = null;
         };
 
-        return (row, block);
+        return row;
     }
 
     /// <summary>An uppercase White section heading over a 1px A rule, with <paramref name="trailing"/> at its right.</summary>

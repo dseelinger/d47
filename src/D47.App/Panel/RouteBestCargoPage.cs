@@ -102,6 +102,8 @@ public sealed class RouteBestCargoPage : UserControl
     private readonly Button _find = new() { Content = "Find cargo", Height = TypeScale.MinimumTarget };
     private readonly StatusLine _status = RoutingKit.Status();
 
+    private readonly Func<string, Task<bool>>? _copy;
+
     private CancellationTokenSource? _inFlight;
     private object? _seen;
 
@@ -117,8 +119,10 @@ public sealed class RouteBestCargoPage : UserControl
         Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? prefixNames = null,
         TimeSpan? suggestionPause = null,
         Func<string, string?>? offDuty = null,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        Func<string, Task<bool>>? copy = null)
     {
+        _copy = copy;
         _columnWidths = columnWidths;
         _offDuty = offDuty;
         _head.Changed += Draw;
@@ -414,7 +418,7 @@ public sealed class RouteBestCargoPage : UserControl
         string.Equals(search.Station, location.StationName, StringComparison.OrdinalIgnoreCase)
         && string.Equals(search.System, location.StarSystem, StringComparison.OrdinalIgnoreCase);
 
-    private static Control TitleBlock(CommanderGameState? state, bool docked)
+    private Control TitleBlock(CommanderGameState? state, bool docked)
     {
         var location = state?.Location;
 
@@ -425,7 +429,7 @@ public sealed class RouteBestCargoPage : UserControl
 
         if (location?.StarSystem is { Length: > 0 } system)
         {
-            heading.Children.Add(Chrome(docked ? $"{system} · Docked" : system, TypeScale.Small, ThemeManager.CyanKey));
+            heading.Children.Add(CopyGlyph.Beside(Chrome(docked ? $"{system} · Docked" : system, TypeScale.Small, ThemeManager.CyanKey), system, _copy));
         }
 
         var hold = new StackPanel
@@ -547,6 +551,11 @@ public sealed class RouteBestCargoPage : UserControl
         head.Inlines.Add(system);
 
         var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 14, VerticalAlignment = VerticalAlignment.Center, Children = { head } };
+
+        if (destination.Length > 0 && _copy is not null)
+        {
+            left.Children.Add(CopyGlyph.For(destination, _copy));
+        }
 
         if (plot)
         {
@@ -678,7 +687,17 @@ public sealed class RouteBestCargoPage : UserControl
         said.TextWrapping = TextWrapping.NoWrap;
         said.VerticalAlignment = VerticalAlignment.Center;
 
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { said } };
+        Control sentence = said;
+
+        if (destination is not null && _copy is not null)
+        {
+            var glyph = CopyGlyph.For(destination, _copy);
+            glyph.Margin = new Thickness(8, 0, 0, 0);
+            DockPanel.SetDock(glyph, Dock.Right);
+            sentence = new DockPanel { Children = { glyph, said } };
+        }
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { sentence } };
 
         if (posting is not null)
         {

@@ -244,7 +244,8 @@ public static class RoutingPages
                 surface.PrefixNames,
                 surface.SuggestionPause,
                 surface.OffDuty,
-                columnWidths)
+                columnWidths,
+                Copy(surface))
             : Missing("Best cargo is not available on this surface.");
 
     private static Control Trade(RoutingSurface surface, PanelNavigator nav) =>
@@ -282,7 +283,7 @@ public static class RoutingPages
     }
 
     /// <summary>Copying a system name, wherever one is drawn on this tab.</summary>
-    private static Func<string, Task<bool>>? Copy(RoutingSurface surface) =>
+    internal static Func<string, Task<bool>>? Copy(RoutingSurface surface) =>
         surface.Clipboard is { } clipboard ? text => clipboard.SetTextAsync(text) : null;
 
     private static Control Missing(string why)

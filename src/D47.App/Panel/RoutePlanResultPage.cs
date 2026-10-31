@@ -173,7 +173,17 @@ public sealed class RoutePlanResultPage : UserControl
             _showTile.IsVisible = _showOnGalaxyMap is not null;
         }
 
-        _stack.Children.Add(RoutingKit.Title(Heading(plan), sentence: true).Row);
+        _stack.Children.Add(
+            plan.Jump is { } leg && _copy is not null
+                ? RoutingKit.Title(
+                    [
+                        (leg.Origin, leg.Origin),
+                        (" → ", null),
+                        (leg.Destination, leg.Destination),
+                        (Heading(plan)[(leg.Origin.Length + 3 + leg.Destination.Length)..], null),
+                    ],
+                    _copy)
+                : RoutingKit.Title(Heading(plan), sentence: true).Row);
 
         var provenance = RoutingKit.Prose(Provenance(plan));
         provenance.Margin = new Thickness(0, 0, 0, 10);
@@ -226,7 +236,7 @@ public sealed class RoutePlanResultPage : UserControl
         }
     }
 
-    private static Control NotFound(OutfittingRoute route)
+    private Control NotFound(OutfittingRoute route)
     {
         var group = new StackPanel { Spacing = 2, Margin = new Thickness(0, 18, 0, 0) };
 
@@ -236,7 +246,7 @@ public sealed class RoutePlanResultPage : UserControl
         var recent = route.MaxReportAgeHours is { } hours ? $" reported in the last {MaxReportAge.Label(hours)}" : string.Empty;
         var prose = RoutingKit.Prose($"No station {reach}{route.Reference ?? "the start"}{recent} sells these.");
         prose.Margin = new Thickness(0, 6, 0, 8);
-        group.Children.Add(prose);
+        group.Children.Add(route.Reference is { Length: > 0 } reference ? CopyGlyph.Beside(prose, reference, _copy) : prose);
 
         foreach (var item in route.NotFound)
         {

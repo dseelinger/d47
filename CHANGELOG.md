@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Every system name on the Navigation tab now has a copy button: both ends of a plan heading and of the Progress headline, the system in the "No station within" and "You are in" lines, the mini route's stops, and the Best cargo page's "Buying at" system, "What to carry to" destination and "sell in" hint.
+
 Every system name in a Systems, Stations or Bodies answer now has a copy button to its right, and so does the system the answer header measures from, on all five search pages. Pressing the button on a Systems row copies the name and does not open the star system page. The header shows no button when it measures from "your system".
 
 The galaxy, system name, exobiology, on-foot and trade run help pages have shorter How it works bands. The galaxy page now describes the Max report age and Start from dropdowns on the search pages, and says EDDN sharing sends nothing inside an Operation. The galaxy and route help pages name the real setting, Look things up in the galaxy, and the route page says to fly a plan with "plot next neutron jump" rather than promising a checklist. The on-foot page's upgrade costs, the system name page's spoken reply and the exobiology route page's ranges now match the app.

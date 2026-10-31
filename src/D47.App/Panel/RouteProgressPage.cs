@@ -4,6 +4,7 @@ using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -21,6 +22,8 @@ public sealed class RouteProgressPage : UserControl
 
     private readonly SelectableTextBlock _headline;
 
+    private readonly WrapPanel _headlineLine = new() { Orientation = Orientation.Horizontal };
+
     private readonly TextBlock _toGo = Figure();
 
     private readonly Control _toGoBlock;
@@ -28,6 +31,8 @@ public sealed class RouteProgressPage : UserControl
     private readonly TextBlock _totals = RoutingKit.Ink(string.Empty, TypeScale.Body, ThemeManager.GreyKey, wrap: true);
 
     private readonly TextBlock _aside = RoutingKit.Prose(string.Empty, TypeScale.Secondary);
+
+    private readonly StackPanel _asideLine = new() { Orientation = Orientation.Horizontal };
 
     private readonly StackPanel _hops = new() { Spacing = 2 };
 
@@ -74,9 +79,9 @@ public sealed class RouteProgressPage : UserControl
             Margin = new Thickness(0, 0, 0, 12),
             Children =
             {
-                TitleText.Block(_headline, TitleText.Context("Progress"), _toGoBlock),
+                TitleText.Block(_headlineLine, TitleText.Context("Progress"), _toGoBlock),
                 _totals,
-                _aside,
+                _asideLine,
             },
         };
 
@@ -129,7 +134,8 @@ public sealed class RouteProgressPage : UserControl
 
         if (!route.IsPlotted)
         {
-            _headline.Inlines = null;
+            _headlineLine.Children.Clear();
+            _headlineLine.Children.Add(_headline);
             TitleText.Show(_headline, offDuty is null ? "No route plotted." : "No route shown.", sentence: true);
             _toGoBlock.IsVisible = false;
             _totals.Inlines = null;
@@ -142,12 +148,10 @@ public sealed class RouteProgressPage : UserControl
         var from = progress.OffRoute ? route.Hops[0] : route.Hops[Math.Min(progress.Index, route.Hops.Count - 1)];
         var last = route.Hops[^1];
 
-        _headline.Inlines =
-        [
-            Ink(from.StarSystem.ToUpperInvariant(), progress.OffRoute ? ThemeManager.AKey : ThemeManager.CyanKey),
-            Ink(" → ", ThemeManager.GreyKey),
-            Ink(last.StarSystem.ToUpperInvariant(), ThemeManager.AKey),
-        ];
+        _headlineLine.Children.Clear();
+        _headlineLine.Children.Add(HeadlineName(from.StarSystem, progress.OffRoute ? ThemeManager.AKey : ThemeManager.CyanKey));
+        _headlineLine.Children.Add(HeadlineText(" → ", ThemeManager.GreyKey, sentence: true));
+        _headlineLine.Children.Add(HeadlineName(last.StarSystem, ThemeManager.AKey));
 
         _toGoBlock.IsVisible = progress.DistanceRemaining is not null;
         _toGo.Text = progress.DistanceRemaining is { } ahead ? $"{ahead:N0} LY" : string.Empty;
@@ -173,12 +177,15 @@ public sealed class RouteProgressPage : UserControl
 
         _totals.Inlines = totals;
 
+        string? asideSystem = null;
+
         if (progress.OffRoute)
         {
             _aside.IsVisible = true;
             _aside.Text = here is { Length: > 0 }
                 ? $"You are in {here}, which is not on this route — so all of it is still ahead."
                 : "Nothing has said where you are yet, so all of this route is still ahead.";
+            asideSystem = here is { Length: > 0 } ? here : null;
         }
         else if (progress.JumpsRemaining == 0)
         {
@@ -189,6 +196,10 @@ public sealed class RouteProgressPage : UserControl
         {
             _aside.IsVisible = false;
         }
+
+        (_aside.Parent as Avalonia.Controls.Panel)?.Children.Remove(_aside);
+        _asideLine.Children.Clear();
+        _asideLine.Children.Add(CopyGlyph.Beside(_aside, asideSystem, _copy));
 
         var stops = RouteMapStop.From(route);
 
@@ -310,6 +321,18 @@ public sealed class RouteProgressPage : UserControl
             Ink("KEPT CURRENT BY THE JOURNAL · ", ThemeManager.GreyKey),
             Number(DateTime.Now.ToString("HH:mm", System.Globalization.CultureInfo.CurrentCulture), ThemeManager.CyanKey),
         ];
+    }
+
+    private Control HeadlineName(string system, string key) =>
+        CopyGlyph.Beside(HeadlineText(system, key, sentence: false), system, _copy);
+
+    private static TextBlock HeadlineText(string text, string key, bool sentence)
+    {
+        var block = TitleText.Build(text, TypeScale.Heading, TitleRank.Screen, sentence);
+        block.VerticalAlignment = VerticalAlignment.Center;
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
+
+        return block;
     }
 
     private static Run Ink(string text, string key)

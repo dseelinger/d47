@@ -15,6 +15,7 @@ public sealed class RouteMini : UserControl
     private readonly Func<NavRoute> _route;
     private readonly Func<string?> _here;
     private readonly Func<string, string?>? _offDuty;
+    private readonly Func<string, Task<bool>>? _copy;
     private readonly StackPanel _body = new() { Spacing = 2 };
 
     /// <param name="plan">The plan to draw; the last Jump plan when null.</param>
@@ -23,8 +24,10 @@ public sealed class RouteMini : UserControl
         Func<NavRoute> route,
         Func<string?> here,
         Func<string, string?>? offDuty = null,
-        Func<StoredRoutePlan?>? plan = null)
+        Func<StoredRoutePlan?>? plan = null,
+        Func<string, Task<bool>>? copy = null)
     {
+        _copy = copy;
         _offDuty = offDuty;
         _plan = plan ?? (() => plans.Last(RoutePlanKind.Jump));
         _route = route;
@@ -163,7 +166,7 @@ public sealed class RouteMini : UserControl
         return None;
     }
 
-    private static Control Row(Stop stop, bool isNext, string? here)
+    private Control Row(Stop stop, bool isNext, string? here)
     {
         var tags = new List<Control>();
 
@@ -188,7 +191,7 @@ public sealed class RouteMini : UserControl
                 RoutingKit.Values(stop.Values),
             ],
             stop.System,
-            copy: null);
+            _copy);
 
         row.Padding = new Thickness(10, 4);
         row.MinHeight = 0;
