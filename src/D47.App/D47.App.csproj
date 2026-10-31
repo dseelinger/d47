@@ -27,12 +27,18 @@
     <AssemblyMetadata Include="DevInstallRoot" Value="$(LOCALAPPDATA)\Programs\d47" />
   </ItemGroup>
 
-  <!-- D47Icon is the exe icon and the window icon. A Debug build shows the test-drive icon. -->
+  <!-- D47Icon is the exe icon and the window icon. D47BuildMark, when set, colours the caption diamond to
+       match it (Palettes.BuildMark). A Debug build is marked test-drive. -->
   <PropertyGroup>
     <D47Icon Condition="'$(D47Icon)' == '' and '$(Configuration)' == 'Debug'">..\..\assets\directive-47-test-drive.ico</D47Icon>
     <D47Icon Condition="'$(D47Icon)' == ''">..\..\assets\directive-47.ico</D47Icon>
+    <D47BuildMark Condition="'$(D47BuildMark)' == '' and '$(Configuration)' == 'Debug'">test-drive</D47BuildMark>
     <ApplicationIcon>$(D47Icon)</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(D47BuildMark)' != ''">
+    <AssemblyMetadata Include="BuildMark" Value="$(D47BuildMark)" />
+  </ItemGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="$(D47Icon)" Link="Assets\directive-47.ico" />

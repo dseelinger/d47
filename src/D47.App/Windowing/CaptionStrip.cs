@@ -118,8 +118,15 @@ public static class CaptionStrip
             Height = 16,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        diamond.Bind(Shape.FillProperty, diamond.GetResourceObservable(ThemeManager.AKey));
-
+        // A test-drive or local-release build marks its diamond in its icon's colour, whatever the theme.
+        if (Palettes.BuildMark(BuildInfo.Mark) is { } mark)
+        {
+            diamond.Fill = new SolidColorBrush(mark);
+        }
+        else
+        {
+            diamond.Bind(Shape.FillProperty, diamond.GetResourceObservable(ThemeManager.AKey));
+        }
 
         var versionRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { version } };
 

@@ -163,6 +163,17 @@ public static class Palettes
         warn: Color.Parse("#A04A00"),
         yellow: Color.Parse("#8A6D00"));
 
+    /// <summary>
+    /// The caption diamond's colour for a build marked "test-drive" or "local-release", matching the frame of
+    /// its icon in <c>assets/</c> whatever the theme; null for a published build.
+    /// </summary>
+    public static Color? BuildMark(string? mark) => mark switch
+    {
+        "test-drive" => Color.Parse("#29B6F6"),
+        "local-release" => Color.Parse("#4CD964"),
+        _ => null,
+    };
+
     /// <summary>The palette for a theme id, before any HUD matrix is applied.</summary>
     public static Palette For(string? themeId) => ThemeCatalog.Selected(themeId).Id switch
     {

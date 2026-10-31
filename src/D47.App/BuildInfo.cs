@@ -27,6 +27,15 @@ public static class BuildInfo
     /// </summary>
     public static string? Label { get; } = LabelOf(Full);
 
+    /// <summary>"test-drive" or "local-release" for a build marked as one, or null for a published build.</summary>
+    public static string? Mark { get; } =
+        Assembly.GetEntryAssembly()
+            ?.GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(attribute => string.Equals(attribute.Key, "BuildMark", StringComparison.Ordinal))
+            ?.Value is { Length: > 0 } mark
+            ? mark
+            : null;
+
     /// <summary>Whether this build came from a working tree rather than a published release.</summary>
     public static bool IsLocal => Label is not null;
 
