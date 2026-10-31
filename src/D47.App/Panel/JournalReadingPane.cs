@@ -8,6 +8,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Journal;
 
@@ -50,15 +51,19 @@ internal sealed class JournalReadingPane : Border
     private readonly Func<ReadingLink, Action?> _open;
     private readonly Func<string?> _currentSystem;
     private readonly Action<SelectableTextBlock>? _watch;
+    private readonly Func<Func<string, Task<bool>>?> _copy;
 
     /// <param name="open">The action a link performs, or null where the link draws as plain text.</param>
     /// <param name="currentSystem">The system the Commander is in now.</param>
     /// <param name="watch">Hooks a selectable block into the panel's copy control.</param>
+    /// <param name="copy">The clipboard copy, read each time an entry is drawn; null draws no copy glyph.</param>
     public JournalReadingPane(
         Func<ReadingLink, Action?> open,
         Func<string?> currentSystem,
-        Action<SelectableTextBlock>? watch = null)
+        Action<SelectableTextBlock>? watch = null,
+        Func<Func<string, Task<bool>>?>? copy = null)
     {
+        _copy = copy ?? (() => null);
         _open = open;
         _currentSystem = currentSystem;
         _watch = watch;
@@ -333,6 +338,7 @@ internal sealed class JournalReadingPane : Border
     {
         var panel = new WrapPanel { Orientation = Orientation.Horizontal };
         var folded = true;
+        var copy = _copy();
 
         void Draw()
         {
@@ -343,7 +349,10 @@ internal sealed class JournalReadingPane : Border
             for (var i = 0; i < shown; i++)
             {
                 var item = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-                item.Children.Add(Value(values[i]));
+                var value = values[i];
+                item.Children.Add(value.Tone == ReadingTone.System && !value.Typed
+                    ? CopyGlyph.Beside(Value(value), value.Text, copy)
+                    : Value(value));
 
                 if (i < shown - 1)
                 {

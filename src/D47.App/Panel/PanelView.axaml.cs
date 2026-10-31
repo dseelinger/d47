@@ -152,7 +152,7 @@ public partial class PanelView : UserControl, IPanelTabHost
             () => TranscriptShown,
             () => OutputOnly);
 
-        _journalPane = new JournalReadingPane(OpenReadingLink, () => _currentSystem?.Invoke(), _selecting.Watch);
+        _journalPane = new JournalReadingPane(OpenReadingLink, () => _currentSystem?.Invoke(), _selecting.Watch, () => _copy);
         JournalDetailScroller.Content = _journalPane;
 
         // Set in code rather than bound, because what mini hides is three named regions and a binding for

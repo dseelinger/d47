@@ -365,7 +365,7 @@ public sealed class TheJournalIsAReadingTests
         panel.Page = TranscriptPage.Journal;
         Dispatcher.UIThread.RunJobs();
 
-        var glyphs = panel.GetVisualDescendants().OfType<Button>()
+        var glyphs = List(panel).GetVisualDescendants().OfType<Button>()
             .Where(button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Kusauts")
             .ToList();
 
@@ -385,8 +385,52 @@ public sealed class TheJournalIsAReadingTests
         panel.Page = TranscriptPage.Journal;
         Dispatcher.UIThread.RunJobs();
 
-        var glyph = panel.GetVisualDescendants().OfType<Button>()
+        var glyph = List(panel).GetVisualDescendants().OfType<Button>()
             .Single(button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Kusauts");
+
+        glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("Kusauts", clipboard.Last);
+
+        window.Close();
+    }
+
+    /// <summary>The reading pane puts a glyph beside a System-tone value, and none beside other tones.</summary>
+    [AvaloniaFact]
+    public void TheReadingPaneDrawsAGlyphBesideAStarSystemOnlyOnceCopyIsEnabled()
+    {
+        var log = WithAStarSystemAndAMusicEvent();
+        var (panel, window) = Shown(rawJournal: true, log);
+        panel.Page = TranscriptPage.Journal;
+        Dispatcher.UIThread.RunJobs();
+        var pane = Reading(panel);
+        var jump = log.Read(noise: true).First(entry => entry.Kind == "FSDJump");
+
+        pane.Show(jump);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(
+            pane.GetVisualDescendants().OfType<Button>(),
+            button => D47.App.Controls.CopyGlyph.GetCopies(button) is not null);
+
+        var clipboard = new RecordingClipboard();
+        panel.EnableCopy(clipboard);
+
+        var other = log.Read(noise: true).First(entry => entry.Kind == "Music");
+        pane.Show(other);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(
+            pane.GetVisualDescendants().OfType<Button>(),
+            button => D47.App.Controls.CopyGlyph.GetCopies(button) is not null);
+
+        pane.Show(jump);
+        Dispatcher.UIThread.RunJobs();
+
+        var glyph = Assert.Single(
+            pane.GetVisualDescendants().OfType<Button>(),
+            button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Kusauts");
 
         glyph.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
