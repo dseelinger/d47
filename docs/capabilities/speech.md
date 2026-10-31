@@ -454,7 +454,8 @@ or none; and for each given name, whether it is male, female or indeterminate. A
 of a name of two or more words; a one-word name is its own given name. Accents are kept per full name and
 provider in `data\name-accents.json`. Sex is kept by given name, for every provider, in
 `data\given-name-sexes.json`, so a given name is never asked twice and "Dan Roberts" and "Dan Okafor" share
-one answer. The first line from a given name not yet answered waits up to five seconds for the answer; past
+one answer. d47 ships a table of given names read from real journals and asks only about names not in it; a
+name in the table keeps the table's sex over any stored answer. The first line from a given name not yet answered waits up to five seconds for the answer; past
 that it is voiced without regard to sex, and the answer applies from the next system. Other announcements
 are not held while it waits, and an accent alone is never waited for. Only an accent the provider's voices
 actually carry is used. An indeterminate sex, or no language model, draws a voice without regard to sex.

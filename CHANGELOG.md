@@ -12,6 +12,8 @@
 
 An NPC on comms is now cast by the sex of their given name on their first line. d47 asks the language model about the given name, keeps the answer in `data\given-name-sexes.json` for every sender with that given name, and holds the first line for up to five seconds for the answer. A name that could be either, or is not a given name, is cast without regard to sex and does not wait. Other announcements are not held behind it.
 
+d47 now ships a table of about 2,800 given names read from NPC senders in real journals, with the sex each suggests. A first line from an NPC whose given name is in it is cast at once, with no question to the language model and no wait; only names not in the table are asked about.
+
 A line stating a tonnage of fuel, such as "14.25 of 16 tonnes of fuel", is no longer dropped as a claim about the cargo hold.
 
 Strangers on comms, invented strangers in overheard chatter, the pilot you have targeted and custom characters no longer read the running story's hidden layer, whichever core is aboard. Overheard chatter reads it only when it is a scene. Hired crew read it. A story cast member reads it only as far as their character would know it at that point in the story.

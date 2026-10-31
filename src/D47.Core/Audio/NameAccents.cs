@@ -50,6 +50,7 @@ public sealed class NameAccents
     private readonly string? _file;
     private readonly string? _givenFile;
     private readonly ILogger? _logger;
+    private readonly IReadOnlyDictionary<string, string> _shipped;
     private readonly Dictionary<string, Dictionary<string, NameReading>> _answers = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, string> _sexes = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, IReadOnlyList<string>> _accents = new(StringComparer.OrdinalIgnoreCase);
@@ -65,9 +66,16 @@ public sealed class NameAccents
     /// <summary>
     /// Accents are read from <paramref name="file"/> and sexes from <paramref name="givenFile"/> if they exist, and
     /// written back; null keeps them in memory. A sex stored in <paramref name="file"/> seeds its given name.
+    /// A given name in <paramref name="shipped"/> takes that sex over any stored answer and is never asked.
     /// </summary>
-    public NameAccents(IFileSystem? files = null, string? file = null, ILogger? logger = null, string? givenFile = null)
+    public NameAccents(
+        IFileSystem? files = null,
+        string? file = null,
+        ILogger? logger = null,
+        string? givenFile = null,
+        IReadOnlyDictionary<string, string>? shipped = null)
     {
+        _shipped = shipped ?? new Dictionary<string, string>();
         _files = files;
         _file = file;
         _givenFile = givenFile;
@@ -89,7 +97,7 @@ public sealed class NameAccents
     {
         lock (_gate)
         {
-            return _sexes.TryGetValue(givenName, out var sex) ? sex : null;
+            return SexLocked(givenName);
         }
     }
 
@@ -123,7 +131,7 @@ public sealed class NameAccents
 
         lock (_gate)
         {
-            if (_sexes.ContainsKey(given))
+            if (SexLocked(given) is not null)
             {
                 return null;
             }
@@ -143,6 +151,11 @@ public sealed class NameAccents
             return _givenWaits.TryGetValue(given, out var queued) ? queued.Task : null;
         }
     }
+
+    private string? SexLocked(string givenName) =>
+        _shipped.TryGetValue(givenName, out var shipped) ? shipped
+        : _sexes.TryGetValue(givenName, out var sex) ? sex
+        : null;
 
     /// <summary>Queues the names not yet answered for one provider, with their given names, and returns at once.</summary>
     public void Enqueue(string provider, IReadOnlyList<string> accents, IEnumerable<string> names)
@@ -168,7 +181,7 @@ public sealed class NameAccents
 
             if (name.Length is > 0 and <= LongestName
                 && given.Length > 0
-                && !_sexes.ContainsKey(given)
+                && SexLocked(given) is null
                 && _givenTried.Add(given))
             {
                 _pendingGiven.Add(given);

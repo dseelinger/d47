@@ -52,7 +52,7 @@ public sealed class SpeechClients : IDisposable
         _audio = audio;
         _ownVoice = ownVoice;
         _customVoices = customVoices;
-        NameAccents = new NameAccents(files, paths.NameAccentsFile, _logger, paths.GivenNameSexesFile);
+        NameAccents = new NameAccents(files, paths.NameAccentsFile, _logger, paths.GivenNameSexesFile, FirstNames.Shipped);
 
         D47.Core.Speech.LocalVoiceStandIn.Installed = id => string.Equals(id, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
             ? D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder())
