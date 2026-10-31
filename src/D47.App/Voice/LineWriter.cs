@@ -280,7 +280,7 @@ internal sealed class LineWriter
                 Settings.Current.Persona,
                 _humor,
                 directed),
-            Turns.LiveGameState?.Invoke(),
+            OffShipKnowledge.Of(location),
             Spend,
             PriceTable.Default,
             _logger,
