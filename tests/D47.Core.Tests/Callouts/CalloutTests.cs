@@ -365,6 +365,82 @@ public class CalloutTests
         Assert.Single(callout.Examine(Context(StateFrom(), Status(StatusFlags.None), atSecond: 1)));
     }
 
+    private const string ShieldedLoadout =
+        """{"timestamp":"3311-01-01T00:00:00Z","event":"Loadout","Ship":"hauler","ShipID":3,"Modules":[{"Slot":"PowerPlant","Item":"int_powerplant_size2_class2"},{"Slot":"Slot01","Item":"int_shieldgenerator_size2_class2"}]}""";
+
+    private const string LoadGameEvent =
+        """{"timestamp":"3311-01-01T00:00:01Z","event":"LoadGame"}""";
+
+    private const string ShieldsDownEvent =
+        """{"timestamp":"3311-01-01T00:00:01Z","event":"ShieldState","ShieldsUp":false}""";
+
+    private const string UnshieldedLoadoutEvent =
+        """{"timestamp":"3311-01-01T00:00:01Z","event":"Loadout","Ship":"hauler","ShipID":3,"Modules":[{"Slot":"PowerPlant","Item":"int_powerplant_size2_class2"}]}""";
+
+    [Fact]
+    public void ShieldsDownAtLoadInTheSameBatchAsTheLoadoutIsNotAnnounced()
+    {
+        var announced = new DangerCallout().Examine(Context(
+            StateFrom(ShieldedLoadout),
+            events: [LoadGameEvent, ShieldsDownEvent, UnshieldedLoadoutEvent]));
+
+        Assert.DoesNotContain(announced, a => a.Key == "danger.shields");
+    }
+
+    [Fact]
+    public void ShieldsDownAtLoadBeforeALaterLoadoutTickIsNotAnnounced()
+    {
+        var callout = new DangerCallout();
+
+        Assert.DoesNotContain(
+            callout.Examine(Context(StateFrom(ShieldedLoadout), events: [LoadGameEvent, ShieldsDownEvent])),
+            a => a.Key == "danger.shields");
+
+        Assert.DoesNotContain(
+            callout.Examine(Context(StateFrom(ShieldedLoadout), atSecond: 1, events: [UnshieldedLoadoutEvent])),
+            a => a.Key == "danger.shields");
+    }
+
+    [Fact]
+    public void AStatusShieldDropAfterLoadGameBeforeTheLoadoutIsNotAnnounced()
+    {
+        var callout = new DangerCallout();
+
+        Assert.Empty(callout.Examine(Context(StateFrom(ShieldedLoadout), Status(StatusFlags.ShieldsUp))));
+
+        Assert.DoesNotContain(
+            callout.Examine(Context(
+                StateFrom(ShieldedLoadout),
+                Status(StatusFlags.None),
+                atSecond: 1,
+                events: [LoadGameEvent])),
+            a => a.Key == "danger.shields");
+    }
+
+    [Fact]
+    public void ShieldsDownAfterAShipSwapBeforeItsLoadoutIsNotAnnounced()
+    {
+        var announced = new DangerCallout().Examine(Context(
+            StateFrom(ShieldedLoadout),
+            events:
+            [
+                """{"timestamp":"3311-01-01T00:00:01Z","event":"ShipyardSwap","ShipType":"hauler","ShipID":4}""",
+                ShieldsDownEvent,
+            ]));
+
+        Assert.DoesNotContain(announced, a => a.Key == "danger.shields");
+    }
+
+    [Fact]
+    public void AShieldedShipWhoseLoadoutIsKnownIsWarnedAfterLoadGame()
+    {
+        var announced = new DangerCallout().Examine(Context(
+            StateFrom(ShieldedLoadout),
+            events: [LoadGameEvent, ShieldedLoadout, ShieldsDownEvent]));
+
+        Assert.Contains(announced, a => a.Key == "danger.shields");
+    }
+
     [Fact]
     public void SubmittingToAnInterdictionIsNotAnnouncedAsAnEmergency()
     {

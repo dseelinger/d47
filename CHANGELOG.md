@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+"Shields are down." is no longer said on loading in, or after a ship swap, before d47 has read that ship's loadout. A ship with no shield generator no longer gets the warning because of the previous session's loadout.
+
 A line stating a tonnage of fuel, such as "14.25 of 16 tonnes of fuel", is no longer dropped as a claim about the cargo hold.
 
 Strangers on comms, invented strangers in overheard chatter, the pilot you have targeted and custom characters no longer read the running story's hidden layer, whichever core is aboard. Overheard chatter reads it only when it is a scene. Hired crew read it. A story cast member reads it only as far as their character would know it at that point in the story.

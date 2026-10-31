@@ -19,6 +19,9 @@ public sealed class DangerCallout : ICallout
     /// </summary>
     private static readonly TimeSpan Cooldown = TimeSpan.FromSeconds(30);
 
+    /// <summary>Set by LoadGame and ship changes, cleared by Loadout; shields-down is not announced while set.</summary>
+    private bool _loadoutPending;
+
     private bool _shieldsWereUp = true;
     private bool _wasOverheating;
     private bool _wasBeingInterdicted;
@@ -106,7 +109,20 @@ public sealed class DangerCallout : ICallout
                     break;
                 }
 
-                case "LoadGame" or "Location" or "Shutdown":
+                case "LoadGame":
+                    _loadoutPending = true;
+                    ForgetJump();
+                    break;
+
+                case "ShipyardSwap" or "ShipyardBuy":
+                    _loadoutPending = true;
+                    break;
+
+                case "Loadout":
+                    _loadoutPending = false;
+                    break;
+
+                case "Location" or "Shutdown":
                     ForgetJump();
                     break;
 
@@ -164,7 +180,7 @@ public sealed class DangerCallout : ICallout
                     yield return Urgent("danger.heat", "Taking heat damage.", AlertCue.Overheating);
                     break;
 
-                case "ShieldState" when !journalEvent.Bool("ShieldsUp") && !HasNoShields(context):
+                case "ShieldState" when !journalEvent.Bool("ShieldsUp") && !_loadoutPending && !HasNoShields(context):
                     yield return Urgent("danger.shields", "Shields are down.", AlertCue.UnderFire);
                     break;
 
@@ -238,7 +254,7 @@ public sealed class DangerCallout : ICallout
 
         // The edge is still recorded when the ship has no shields — only the saying of it is declined
         // (remediation.md 17, item 6).
-        if (_shieldsWereUp && !shieldsUp && !context.IsPriming && !HasNoShields(context))
+        if (_shieldsWereUp && !shieldsUp && !context.IsPriming && !_loadoutPending && !HasNoShields(context))
         {
             yield return Urgent("danger.shields", "Shields are down.", AlertCue.UnderFire);
         }
