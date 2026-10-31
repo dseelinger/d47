@@ -33,6 +33,7 @@ public sealed class KillCallout : ICallout
     private long _bestReward;
     private DateTimeOffset? _lastKillAt;
     private int _quickRun;
+    private bool _afoot;
 
     public string Id => "kills";
 
@@ -50,6 +51,19 @@ public sealed class KillCallout : ICallout
                     _lastKillAt = null;
                     _quickRun = 0;
                     _lastLines.Clear();
+                    _afoot = false;
+                    break;
+
+                case "LoadGame":
+                    _afoot = false;
+                    break;
+
+                case "Disembark":
+                    _afoot = !journalEvent.Bool("SRV");
+                    break;
+
+                case "Embark" or "LaunchSRV" or "DockSRV":
+                    _afoot = false;
                     break;
 
                 case "ReceiveText":
@@ -180,10 +194,12 @@ public sealed class KillCallout : ICallout
 
         var credits = reward.ToString("N0", CultureInfo.InvariantCulture);
         var pilot = bond ? null : PilotOf(journalEvent);
-        var onFoot = !bond && OnFoot(journalEvent);
+        var onFoot = bond ? _afoot : OnFoot(journalEvent);
 
         var victim = bond
-            ? Resolved(journalEvent.Named("VictimFaction")) is { } faction ? $"{faction} ship" : "Ship"
+            ? Resolved(journalEvent.Named("VictimFaction")) is { } faction
+                ? $"{faction} {(onFoot ? "soldier" : "ship")}"
+                : onFoot ? "Soldier" : "Ship"
             : onFoot
                 ? pilot ?? Resolved(journalEvent.String("Target_Localised")) ?? "Target"
                 : ShipOf(journalEvent) is { } ship
@@ -194,6 +210,7 @@ public sealed class KillCallout : ICallout
 
         return new Announcement(chosen.Key, $"{chosen.Reason} {victim} {outcome}, {credits} credits.")
         {
+            OnFoot = onFoot,
             Callback = pilot is not null
                 && _lastLines.TryGetValue(pilot, out var said)
                 && at - said.At <= CallbackWindow

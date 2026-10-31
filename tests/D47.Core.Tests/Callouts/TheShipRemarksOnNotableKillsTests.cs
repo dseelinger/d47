@@ -134,6 +134,89 @@ public class TheShipRemarksOnNotableKillsTests
         Assert.Equal("First kill of the session. Hugh Juarez down, 750 credits.", Assert.Single(said).Said.Text);
     }
 
+    private const string Bond =
+        """{"timestamp":"2026-09-24T14:00:00Z","event":"FactionKillBond","Reward":80000,"AwardingFaction":"Lavigny's Legion","VictimFaction":"Arakang Purple Drug Empire"}""";
+
+    [Fact]
+    public void ACombatBondOnFootIsASoldierDownNotAShipDestroyed()
+    {
+        var said = Replay(
+            new KillCallout(),
+            [
+                Event("""{"timestamp":"2026-09-24T13:59:00Z","event":"Disembark","SRV":false,"OnPlanet":true}"""),
+                Event(Bond),
+            ]);
+
+        var announcement = Assert.Single(said).Said;
+
+        Assert.Equal(
+            "First kill of the session. Arakang Purple Drug Empire soldier down, 80,000 credits.",
+            announcement.Text);
+        Assert.True(announcement.OnFoot);
+    }
+
+    [Fact]
+    public void ACombatBondWithAnUnresolvedFactionOnFootIsSoldierDown()
+    {
+        var said = Replay(
+            new KillCallout(),
+            [
+                Event("""{"timestamp":"2026-09-24T13:59:00Z","event":"Disembark","SRV":false}"""),
+                Event("""{"timestamp":"2026-09-24T14:00:00Z","event":"FactionKillBond","Reward":500}"""),
+            ]);
+
+        Assert.Equal("First kill of the session. Soldier down, 500 credits.", Assert.Single(said).Said.Text);
+    }
+
+    [Fact]
+    public void ACombatBondAfterReboardingIsAShipAgain()
+    {
+        var said = Replay(
+            new KillCallout(),
+            [
+                Event("""{"timestamp":"2026-09-24T13:58:00Z","event":"Disembark","SRV":false}"""),
+                Event("""{"timestamp":"2026-09-24T13:59:00Z","event":"Embark","SRV":false}"""),
+                Event(Bond),
+            ]);
+
+        var announcement = Assert.Single(said).Said;
+
+        Assert.Contains("ship destroyed", announcement.Text, StringComparison.Ordinal);
+        Assert.False(announcement.OnFoot);
+    }
+
+    [Fact]
+    public void ACombatBondFromAnSrvIsAShip()
+    {
+        var said = Replay(
+            new KillCallout(),
+            [
+                Event("""{"timestamp":"2026-09-24T13:59:00Z","event":"Disembark","SRV":true,"OnPlanet":true}"""),
+                Event(Bond),
+            ]);
+
+        Assert.Contains("ship destroyed", Assert.Single(said).Said.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheBriefForAnOnFootKillSaysAPersonNotAShip()
+    {
+        var onFoot = Replay(
+            new KillCallout(),
+            [Event(Bounty("14:00:00", "Hugh Juarez", "lightassaultsuitai_class1", "Scout", 750))]).Single().Said;
+        var ship = Replay(new KillCallout(), [Event(Bounty("14:00:00", "Paul Curnow", "eagle", null, 1000))])
+            .Single().Said;
+
+        var onFootBrief = FlavourBriefs.For(onFoot, personalityEnabled: true);
+        var shipBrief = FlavourBriefs.For(ship, personalityEnabled: true);
+
+        Assert.NotNull(onFootBrief);
+        Assert.NotNull(shipBrief);
+        Assert.Contains("on foot", onFootBrief.Instruction, StringComparison.Ordinal);
+        Assert.DoesNotContain("ship", onFootBrief.Instruction, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("destroyed a ship", shipBrief.Instruction, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void AnUnresolvedKeyIsNeverSpoken()
     {

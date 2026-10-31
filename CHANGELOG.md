@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A notable kill made on foot is no longer called a ship destroyed. A combat bond earned on foot now reads "{faction} soldier down", and your core's reworded line is told it was a person taken down, not a ship.
+
 A reworded line that opens with a remark and then a quotation, such as "Reworded, same meaning: \"...\"", is no longer spoken; the original line is said instead.
 
 Reworded NPC lines now stay in English whatever the accent, address no one the original line does not, keep abbreviations such as ADCS, and add no threat or order the line lacks.

@@ -283,7 +283,7 @@ Commander Arden Vale — you met three weeks ago in Shinrarta Dezhra; they assau
 
 #### Notable kills {#kills}
 
-When you destroy a ship, your core remarks on it if the kill is a notable one:
+When you destroy a ship or take down someone on foot, your core remarks on it if the kill is a notable one:
 
 - the first kill of the game session
 - a reward bigger than any other this session
@@ -293,8 +293,9 @@ When you destroy a ship, your core remarks on it if the kill is a notable one:
   ship type, and a reward bigger than any before it
 
 Other kills pass without a word. The line names the ship, the pilot when Elite gives one, and the
-reward. A combat bond names the faction instead, because Elite writes no pilot or ship for it. A kill
-on foot names the person, not a ship. Another player is called "A Commander", because their name is
+reward. A combat bond names the faction instead, because Elite writes no pilot or ship for it, and a
+combat bond earned on foot names a soldier of that faction rather than a ship. A kill on foot names the
+person, not a ship. Another player is called "A Commander", because their name is
 one they chose and it is not passed to the language model. When
 it is not reworded in your core's voice, it is said like this:
 

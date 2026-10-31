@@ -375,9 +375,13 @@ public static class FlavourBriefs
             return new FlavourBrief
             {
                 Instruction =
-                    "The Commander has just destroyed a ship. Make one short remark about it in your own "
-                    + $"voice, from this: \"{announcement.Text}\" Keep the ship, the pilot's name and the "
-                    + "credits exactly as given. Add no facts. One or two sentences. Do not ask a question."
+                    (announcement.OnFoot
+                        ? "The Commander has just taken down someone on foot. It was a person."
+                        : "The Commander has just destroyed a ship.")
+                    + " Make one short remark about it in your own "
+                    + $"voice, from this: \"{announcement.Text}\" Keep the "
+                    + (announcement.OnFoot ? "name" : "ship, the pilot's name")
+                    + " and the credits exactly as given. Add no facts. One or two sentences. Do not ask a question."
                     + (announcement.Callback is { } callback
                         ? " Shortly before, that pilot said this to the Commander: "
                           + $"\"{callback}\" You may refer back to it once."
