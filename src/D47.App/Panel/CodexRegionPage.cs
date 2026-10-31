@@ -31,6 +31,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
     private readonly CodexChoice _choice;
     private readonly int? _regionId;
     private readonly bool _headset;
+    private readonly Func<string, Task<bool>>? _copy;
     private TableLayout _layout;
     private readonly ColumnWidthMemory? _columnWidths;
     private readonly PanelNavigator? _nav;
@@ -58,8 +59,10 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         bool headset = false,
         PanelNavigator? nav = null,
         CodexTable? table = null,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        Func<string, Task<bool>>? copy = null)
     {
+        _copy = copy;
         _state = state;
         _history = history;
         _now = now;
@@ -293,7 +296,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         grid.VerticalAlignment = VerticalAlignment.Center;
 
         CreditsKit.Place(grid, 0, CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey));
-        CreditsKit.Place(grid, 1, SystemCell(row));
+        CreditsKit.Place(grid, 1, SystemCell(row, _copy));
         CreditsKit.Place(grid, 2, CreditsKit.Mono(CodexModel.DateTime(row.At), TypeScale.Small, ThemeManager.GreyKey, right: false));
         CreditsKit.Place(grid, 3, StatusCell(row));
 
@@ -312,14 +315,16 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         return button;
     }
 
-    internal static StackPanel SystemCell(CodexEntryRow row)
+    internal static StackPanel SystemCell(CodexEntryRow row, Func<string, Task<bool>>? copy = null)
     {
         var cell = new StackPanel();
 
         if (row.System is { } system)
         {
-            cell.Children.Add(CreditsKit.Line(
-                system, Fonts.ChromeFamily, TypeScale.ControlLarge, row.IsHere ? ThemeManager.CyanKey : ThemeManager.AKey));
+            cell.Children.Add(CopyGlyph.Beside(
+                CreditsKit.Line(system, Fonts.ChromeFamily, TypeScale.ControlLarge, row.IsHere ? ThemeManager.CyanKey : ThemeManager.AKey),
+                system,
+                copy));
         }
 
         if (row.Place.Length > 0)

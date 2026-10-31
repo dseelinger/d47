@@ -23,6 +23,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     private readonly CodexTable _table;
     private readonly bool _headset;
     private readonly PanelNavigator? _nav;
+    private readonly Func<string, Task<bool>>? _copy;
     private readonly Func<string, Task<bool>> _confirm;
     private readonly Func<BodySearchLink?>? _bodySearch;
     private readonly StackPanel _body = new();
@@ -43,8 +44,10 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         CodexTable? table = null,
         PanelNavigator? nav = null,
         Func<string, Task<bool>>? confirm = null,
-        Func<BodySearchLink?>? bodySearch = null)
+        Func<BodySearchLink?>? bodySearch = null,
+        Func<string, Task<bool>>? copy = null)
     {
+        _copy = copy;
         _nav = nav;
         _bodySearch = bodySearch;
         _confirm = confirm ?? AskAsync;
@@ -395,7 +398,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
 
         foreach (var logging in view.Loggings)
         {
-            group.Children.Add(LoggingView(logging));
+            group.Children.Add(LoggingView(logging, _copy));
         }
 
         column.Children.Add(group);
@@ -421,11 +424,11 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         CreditsKit.Place(grid, column, tile);
     }
 
-    private static Border LoggingView(CodexEntryRow row)
+    private static Border LoggingView(CodexEntryRow row, Func<string, Task<bool>>? copy)
     {
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 12 };
 
-        CreditsKit.Place(grid, 0, CodexRegionPage.SystemCell(row));
+        CreditsKit.Place(grid, 0, CodexRegionPage.SystemCell(row, copy));
 
         if (row.IsNew)
         {

@@ -143,7 +143,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     {
         var headset = host.Headset;
 
-        _bgsWorkBuild = _ => _bgsWork = new BgsWorkPage(state, tick, now, host.SettingsJump, headset, host.ColumnWidths);
+        _bgsWorkBuild = _ => _bgsWork = new BgsWorkPage(state, tick, now, host.SettingsJump, headset, host.ColumnWidths, host.Copy);
 
         DeclareLedger(new NavCrumb(BgsWorkPage.PageKey, "BGS work"));
     }
@@ -155,7 +155,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     {
         var headset = host.Headset;
 
-        _combatStatsBuild = _ => _combatStats = new CombatStatsPage(state, history, now, headset, host.ColumnWidths);
+        _combatStatsBuild = _ => _combatStats = new CombatStatsPage(state, history, now, headset, host.ColumnWidths, host.Copy);
 
         DeclareLedger(new NavCrumb(CombatStatsPage.PageKey, "Combat stats"));
     }
@@ -192,13 +192,13 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         var work = new CodexPictureWork();
 
         _codexBuild = crumb => CodexPage.EntryOf(crumb.Key) is { } entry
-            ? _codexEntry = new CodexEntryPage(state, entry.EntryId, entry.RegionId, crumb.Word, pictures, headset, nav: host.Nav, bodySearch: () => host.BodySearch)
+            ? _codexEntry = new CodexEntryPage(state, entry.EntryId, entry.RegionId, crumb.Word, pictures, headset, nav: host.Nav, bodySearch: () => host.BodySearch, copy: host.Copy)
             : CodexPage.PictureOf(crumb.Key) is { } picture
             ? pictures is not null && !headset ? PicturePage(crumb.Key, picture, pictures, work) : new Border()
             : CodexPage.IsDiscoveries(crumb.Key)
             ? _codexDiscoveries = new CodexDiscoveriesPage(state, history, CodexPage.DiscoveriesOf(crumb.Key), headset: headset, nav: host.Nav, pictures: pictures, columnWidths: host.ColumnWidths, bodySearch: () => host.BodySearch)
             : CodexPage.IsRegion(crumb.Key)
-            ? _codexRegion = new CodexRegionPage(state, history, now, choice, CodexPage.RegionOf(crumb.Key), headset, host.Nav, columnWidths: host.ColumnWidths)
+            ? _codexRegion = new CodexRegionPage(state, history, now, choice, CodexPage.RegionOf(crumb.Key), headset, host.Nav, columnWidths: host.ColumnWidths, copy: host.Copy)
             : _codex = new CodexPage(state, history, now, choice, host.Nav, headset, host.ColumnWidths);
 
         DeclareLedger(new NavCrumb(CodexPage.PageKey, "Codex"));
@@ -218,7 +218,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
     public void EnableCommanders(CommanderRoster roster)
     {
-        _commandersBuild = _ => _commanders = new CommandersPage(roster, host.ColumnWidths);
+        _commandersBuild = _ => _commanders = new CommandersPage(roster, host.ColumnWidths, host.Copy);
 
         host.Furnish(
             PanelTab.Commander,

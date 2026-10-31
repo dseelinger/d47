@@ -4,6 +4,7 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Journal;
 
@@ -46,12 +47,14 @@ public sealed class CommandersPage : UserControl
     private readonly CommanderRoster _roster;
     private readonly ColumnWidthMemory? _columnWidths;
     private TableLayout _layout;
+    private readonly Func<string, Task<bool>>? _copy;
     private readonly StackPanel _body = new();
     private (object? Sightings, string? Shown, int Files, bool OffDuty) _seen;
 
-    public CommandersPage(CommanderRoster roster, ColumnWidthMemory? columnWidths = null)
+    public CommandersPage(CommanderRoster roster, ColumnWidthMemory? columnWidths = null, Func<string, Task<bool>>? copy = null)
     {
         _roster = roster;
+        _copy = copy;
         _columnWidths = columnWidths;
         _layout = new TableLayout(TableId, ColumnList, columnWidths, 16);
         _head.Changed += Draw;
@@ -147,7 +150,10 @@ public sealed class CommandersPage : UserControl
 
         var ship = Text(sighting.Ship ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
 
-        var location = Text(sighting.StarSystem ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, current ? ThemeManager.CyanKey : ThemeManager.AKey);
+        var location = CopyGlyph.Beside(
+            Text(sighting.StarSystem ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, current ? ThemeManager.CyanKey : ThemeManager.AKey),
+            sighting.StarSystem,
+            _copy);
 
         var detected = Text(CommanderRoster.Detected(sighting.LastSeen), Fonts.MonoFamily, TypeScale.Meta, ThemeManager.GreyKey);
 

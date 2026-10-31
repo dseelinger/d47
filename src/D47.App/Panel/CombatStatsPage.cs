@@ -110,6 +110,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
     private readonly Func<HistoryState> _history;
     private readonly Func<DateTimeOffset> _now;
     private readonly bool _headset;
+    private readonly Func<string, Task<bool>>? _copy;
     private readonly ColumnWidthMemory? _columnWidths;
     private readonly SortHeader<CombatRow>[] _heads;
     private readonly Segment _period = SortBar.Choice("CombatPeriod", Periods);
@@ -129,8 +130,10 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         Func<HistoryState> history,
         Func<DateTimeOffset> now,
         bool headset = false,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        Func<string, Task<bool>>? copy = null)
     {
+        _copy = copy;
         _state = state;
         _history = history;
         _now = now;
@@ -458,18 +461,18 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 
         foreach (var row in head.Sort(rows))
         {
-            table.Children.Add(RowView(row, current, layout));
+            table.Children.Add(RowView(row, current, layout, _copy));
         }
 
         return table;
     }
 
-    private static Border RowView(CombatRow row, long? current, TableLayout layout)
+    private static Border RowView(CombatRow row, long? current, TableLayout layout, Func<string, Task<bool>>? copy)
     {
         var grid = layout.Row([]);
         grid.VerticalAlignment = VerticalAlignment.Center;
 
-        Place(grid, 0, NameOf(row, current));
+        Place(grid, 0, NameOf(row, current, copy));
         Place(grid, 1, Figure(Number(row.Kills), row.Kills));
         Place(grid, 2, Figure(Credits(row.Awarded), row.Awarded));
 
@@ -484,7 +487,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         return border;
     }
 
-    private static Control NameOf(CombatRow row, long? current)
+    private static Control NameOf(CombatRow row, long? current, Func<string, Task<bool>>? copy)
     {
         var dock = new DockPanel { LastChildFill = false };
 
@@ -497,7 +500,10 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         if (row.Style == CombatNameStyle.System)
         {
             var isCurrent = current is { } address && row.SystemAddress == address;
-            dock.Children.Add(CreditsKit.Line(row.Text, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey));
+            dock.Children.Add(CopyGlyph.Beside(
+                CreditsKit.Line(row.Text, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey),
+                row.Text,
+                copy));
             return dock;
         }
 

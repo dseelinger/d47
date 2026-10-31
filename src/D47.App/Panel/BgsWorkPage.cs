@@ -82,6 +82,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
     private readonly Func<DateTimeOffset?> _tick;
     private readonly Func<DateTimeOffset> _now;
     private readonly Action<string>? _openSettings;
+    private readonly Func<string, Task<bool>>? _copy;
     private readonly bool _headset;
     private readonly ColumnWidthMemory? _columnWidths;
     private readonly SortHeader<BgsWorkRow> _head = new("BgsWorkHead", Heads);
@@ -100,8 +101,10 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         Func<DateTimeOffset> now,
         Action<string>? openSettings = null,
         bool headset = false,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        Func<string, Task<bool>>? copy = null)
     {
+        _copy = copy;
         _state = state;
         _tick = tick;
         _now = now;
@@ -381,13 +384,13 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
 
         foreach (var row in _head.Sort(rows))
         {
-            table.Children.Add(RowView(row, withInfluence, current, layout));
+            table.Children.Add(RowView(row, withInfluence, current, layout, _copy));
         }
 
         return table;
     }
 
-    private static Border RowView(BgsWorkRow row, bool withInfluence, string? current, TableLayout layout)
+    private static Border RowView(BgsWorkRow row, bool withInfluence, string? current, TableLayout layout, Func<string, Task<bool>>? copy)
     {
         var grid = layout.Row([]);
         grid.VerticalAlignment = VerticalAlignment.Center;
@@ -395,7 +398,10 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         var isCurrent = row.System is not null && string.Equals(row.System, current, StringComparison.OrdinalIgnoreCase);
         var system = row.System is null
             ? CreditsKit.Line(UnnamedSystem, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey)
-            : CreditsKit.Line(row.System, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey);
+            : CopyGlyph.Beside(
+                CreditsKit.Line(row.System, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey),
+                row.System,
+                copy);
         var faction = CreditsKit.Line(row.Faction, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
 
         Place(grid, 0, new StackPanel { Children = { system, faction } });
