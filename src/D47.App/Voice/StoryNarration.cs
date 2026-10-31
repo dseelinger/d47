@@ -55,12 +55,6 @@ public sealed class StoryNarration
         _logger = logger;
     }
 
-    /// <summary>What a waking held behind a narrated scan line waits on, in place of a chapter key.</summary>
-    internal const string NarratedScanKey = "story.scan";
-
-    /// <summary>What a waking held behind a story's opening lines waits on, in place of a chapter key.</summary>
-    internal const string OpeningKey = "story.opening";
-
     private const string RecapKey = "story.recap";
 
     /// <summary>Whether a narrated scan line is waiting to be said.</summary>
@@ -104,7 +98,7 @@ public sealed class StoryNarration
                     {
                         try
                         {
-                            await NarrateLineAsync(OpeningKey, opening.StoryId, opening.Title, line, commander).ConfigureAwait(false);
+                            await NarrateLineAsync(StoryWaking.OpeningKey, opening.StoryId, opening.Title, line, commander).ConfigureAwait(false);
                         }
                         catch (Exception ex)
                         {
@@ -122,7 +116,7 @@ public sealed class StoryNarration
             {
                 try
                 {
-                    await NarrateLineAsync(NarratedScanKey, scan.StoryId, scan.Title, scanLine, commander).ConfigureAwait(false);
+                    await NarrateLineAsync(StoryWaking.NarratedScanKey, scan.StoryId, scan.Title, scanLine, commander).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {

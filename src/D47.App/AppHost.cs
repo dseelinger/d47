@@ -4015,7 +4015,7 @@ public sealed class AppHost : IDisposable
         // The adventures file is hand-editable and polled like the others. When a stamp has moved - Begin, Begin
         // again, a hand edit - the walk the book asked for is started here, reading up to where the journal tail has
         // read, and run on the pool; the book holds live events until a later tick adopts the walk's result.
-        var wakings = new WakingAfterTheBeat();
+        var storyWaking = new D47.Core.Stories.StoryWaking(storyDirector, storyStore, adventureBook, gameState, new StoryWakingVoice(host));
         var walked = new System.Collections.Concurrent.ConcurrentQueue<D47.Core.Adventures.AdventureWalkResult>();
 
         tick.Add("adventures", context =>
@@ -4032,83 +4032,7 @@ public sealed class AppHost : IDisposable
                 _ = Task.Run(() => walked.Enqueue(walk.Run()));
             }
 
-            var commander = gameState.Active?.Identity.FrontierId;
-            var inGame = gameState.InGame?.Identity.FrontierId;
-
-            foreach (var journalEvent in feed.Arrived)
-            {
-                if (storyDirector.Observe(journalEvent, inGame) is { } waking)
-                {
-                    // The callouts ran earlier on this tick, so a beat the same scan reached is already owed its line.
-                    var chapter = storyStore.Current(commander)?.CurrentChapter;
-                    var core = waking == CoreWaking.Cores ? storyDirector.CoreOf(commander) : null;
-                    wakings.Add(waking, core, chapter is not null && adventureBook.IsStirring(commander, chapter) ? chapter : null, context.Now);
-                }
-
-                // A dock beat whose station has its docks offline is written again on the pool.
-                _ = storyDirector.DockOffline(journalEvent, inGame);
-            }
-
-            if (storyDirector.TakeSteppedWaking(commander) is { } stepped)
-            {
-                var chapter = storyStore.Current(commander)?.CurrentChapter;
-                var core = stepped == CoreWaking.Cores ? storyDirector.CoreOf(commander) : null;
-                wakings.Add(stepped, core, chapter is not null && adventureBook.IsStirring(commander, chapter) ? chapter : null, context.Now);
-            }
-
-            // The opening is said first, then a narrated scan, before the cores it wakes; the story's core comes aboard
-            // once the scan line has been said. A remembered scan says no line and boards the core once no opening is
-            // being said. It is taken before the opening, so it is never taken a tick ahead of the opening it waits for.
-            var remembered = storyDirector.TakeRememberedScan(commander);
-            var opening = storyDirector.TakeOpening(commander);
-            var narrated = storyDirector.TakeNarratedScan(commander);
-
-            if (opening is not null || narrated is not null)
-            {
-                host.Narration.NarrateStart(opening, narrated, commander);
-            }
-
-            if (narrated is not null)
-            {
-                wakings.Add(CoreWaking.Cores, storyDirector.CoreOf(commander), StoryNarration.NarratedScanKey, context.Now);
-            }
-
-            if (remembered is not null)
-            {
-                wakings.Add(CoreWaking.Remembered, storyDirector.CoreOf(commander), StoryNarration.OpeningKey, context.Now);
-            }
-
-            foreach (var (waking, core) in wakings.Due(
-                         owed => owed switch
-                         {
-                             StoryNarration.NarratedScanKey => host.Narration.IsNarratingScan,
-                             StoryNarration.OpeningKey => host.Narration.IsSayingOpening,
-                             _ => adventureBook.IsStirring(commander, owed),
-                         },
-                         context.Now))
-            {
-                host.OnCoresWoke(waking, core);
-            }
-
-            // A change of Commander changes whose story holds the cores.
-            host.ReadmitIfTheHoldChanged();
-
-            // A finished chapter's successor is written on the pool; the tick only starts it. A refusal is said.
-            if (storyDirector.Tick(commander, context.Now) is { } writing)
-            {
-                _ = writing.ContinueWith(
-                    written =>
-                    {
-                        if (written.Result is { } refusal)
-                        {
-                            host.Announcer.SayAside(refusal);
-                        }
-                    },
-                    CancellationToken.None,
-                    TaskContinuationOptions.OnlyOnRanToCompletion,
-                    TaskScheduler.Default);
-            }
-            host.Narration.PostEndingIfDue(commander);
+            storyWaking.Tick(feed.Arrived, context.Now);
         });
 
         tick.Add("callout-drain", _ => host.Announcer.SpeakPending());
@@ -5124,6 +5048,25 @@ public sealed class AppHost : IDisposable
             Turns.UseTranscript(Personas.Transcript);
             ApplyPersonaBlock();
         }
+    }
+
+    /// <summary>The story waking's voice: the host's narration, announcer and core boarding, read on each call.</summary>
+    private sealed class StoryWakingVoice(AppHost host) : D47.Core.Stories.IStoryWakingVoice
+    {
+        public bool IsNarratingScan => host.Narration.IsNarratingScan;
+
+        public bool IsSayingOpening => host.Narration.IsSayingOpening;
+
+        public void NarrateStart(D47.Core.Stories.StoryOpeningDue? opening, D47.Core.Stories.StoryScanDue? scan, string? commander) =>
+            host.Narration.NarrateStart(opening, scan, commander);
+
+        public void PostEndingIfDue(string? commander) => host.Narration.PostEndingIfDue(commander);
+
+        public void CoresWoke(CoreWaking waking, D47.Core.Persona.Persona? storyCore) => host.OnCoresWoke(waking, storyCore);
+
+        public void ReadmitIfTheHoldChanged() => host.ReadmitIfTheHoldChanged();
+
+        public void SayAside(string line) => host.Announcer.SayAside(line);
     }
 
     /// <summary>Puts the chosen core aboard again, or the stock core in its place, when the story's hold on the cores changes.</summary>
