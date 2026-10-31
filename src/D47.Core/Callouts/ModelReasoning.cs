@@ -16,8 +16,9 @@ public static partial class ModelReasoning
     };
 
     /// <summary>
-    /// True when the reply puts commentary ahead of a delivery tag, quotes text that is in the prompt, or
-    /// repeats a run of the prompt's own instruction words.
+    /// True when the reply puts commentary ahead of a delivery tag, quotes text that is in the prompt,
+    /// repeats a run of the prompt's own instruction words, or introduces a quotation with a colon. Every
+    /// test but the tag test needs a prompt.
     /// </summary>
     /// <param name="prompt">Everything the model was told, or null when the caller has only the reply.</param>
     public static bool Shows(string reply, string? prompt)
@@ -32,6 +33,11 @@ public static partial class ModelReasoning
         if (string.IsNullOrWhiteSpace(prompt))
         {
             return false;
+        }
+
+        if (ColonBeforeAQuotation().IsMatch(reply))
+        {
+            return true;
         }
 
         if (Quoted(reply).Any(said => prompt.Contains(said, StringComparison.OrdinalIgnoreCase)))
@@ -74,6 +80,9 @@ public static partial class ModelReasoning
 
     [GeneratedRegex("[\"“]([^\"“”]+)[\"”]")]
     private static partial Regex QuotedSpan();
+
+    [GeneratedRegex(@":\s*[""“]")]
+    private static partial Regex ColonBeforeAQuotation();
 
     [GeneratedRegex(@"\[[A-Za-z][A-Za-z ,'-]{1,30}\]")]
     private static partial Regex DeliveryTag();

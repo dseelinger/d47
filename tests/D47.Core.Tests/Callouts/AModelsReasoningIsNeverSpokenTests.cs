@@ -57,6 +57,28 @@ public class AModelsReasoningIsNeverSpokenTests
             "Here it is: \"No fire zone entered.\"", Prompt("message.canned.STATION", "No fire zone entered.")));
     }
 
+    [Theory]
+    [InlineData("Rendering it in my own words, same notice, nothing added: \"Your entry into the fire zone is not permitted.\"")]
+    [InlineData("Reworded, same meaning, same threat: \"I'd really think twice before you go and do that.\"")]
+    [InlineData("Reworded:   “Keep out of the fire zone.”")]
+    public void ARewordedLineThatIntroducesAQuotationIsRejected(string reply)
+    {
+        Assert.False(FlavourBriefs.MayBeSpoken(reply, Prompt("message.canned.STATION", "No fire zone entered.")));
+    }
+
+    [Fact]
+    public void AColonNotBeforeAQuotationIsAllowedWithAPrompt()
+    {
+        Assert.True(FlavourBriefs.MayBeSpoken(
+            "Traffic control notice: you have left the no-fire zone.", Prompt("message.canned.STATION", "No fire zone entered.")));
+    }
+
+    [Fact]
+    public void AColonBeforeAQuotationIsAllowedWithoutAPrompt()
+    {
+        Assert.True(FlavourBriefs.MayBeSpoken("The sign read: \"Keep out.\""));
+    }
+
     [Fact]
     public void CommentaryAheadOfADeliveryTagIsRejectedWithoutAPrompt()
     {

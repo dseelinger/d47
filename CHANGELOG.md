@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A reworded line that opens with a remark and then a quotation, such as "Reworded, same meaning: \"...\"", is no longer spoken; the original line is said instead.
+
 Reworded NPC lines now stay in English whatever the accent, address no one the original line does not, keep abbreviations such as ADCS, and add no threat or order the line lacks.
 
 No-fire zone notices are now said in d47's own words, in either direction, and are never sent to the language model. Before, a reworded notice could say the opposite of Elite's, such as "you have not entered a fire zone". A station says them to "pilot", your own carrier says them to you by name, and they are spoken whether personality is on or off. The comms panel still shows Elite's wording.
