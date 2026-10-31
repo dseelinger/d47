@@ -21,8 +21,8 @@ nav_order: 140
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps to a name that runs a sequence.</p>
 <section>
-<h2><span class="num">1</span> Turn on key injection, then write the macro.</h2>
-<p class="say">Turn on key injection, then write a macro with a name and its steps.</p>
+<h2><span class="num">1</span> Turn on key presses, then write the macro.</h2>
+<p class="say">Turn on Let D47 press keys in Elite. With Show every setting on, open Settings › Acting on the game › Macros and switches, press Edit macros, and write a macro with a name and its steps.</p>
 <p class="expect">The macro is saved, for example docking prep as gear down, lights on and hardpoints away.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Macros">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
@@ -81,7 +81,7 @@ nav_order: 140
  <text x="660" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A NEW SEQUENCE</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">does not, and never can</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">so you author it instead</text>
- <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Settings → Macros → Edit macros: a stepper of actions, on / off / toggle, and a pause.</text>
+ <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Edit macros opens a stepper of actions, on / off / toggle, and a pause.</text>
  <text x="440" y="224" text-anchor="middle" font-size="15" fill="var(--text-muted)">Or the file. Both write the same one, re-read while it runs — a saved macro is sayable a moment later.</text>
 </svg>
 </section>
@@ -139,7 +139,7 @@ nav_order: 140
 <div class="cards">
 <a class="card" href="flight-controls.html"><span class="ct">Flight and navigation →</span><span class="cd">The actions a macro is built from, and the switch it needs.</span></a>
 <a class="card" href="switches.html"><span class="ct">HOTAS switches →</span><span class="cd">Running one from a physical switch instead of by saying its name.</span></a>
-<a class="card" href="ship-systems.html"><span class="ct">Ship systems →</span><span class="cd">Pips and heat sinks, the steps a docking macro usually wants.</span></a>
+<a class="card" href="ship-systems.html"><span class="ct">Ship systems →</span><span class="cd">Pips and heat sinks, the steps a docking macro usually uses.</span></a>
 </div>
 </div>
 </div></div>
@@ -163,7 +163,7 @@ Macros are the one thing here you cannot set up by voice, and that is deliberate
 Directive 47 does has a fixed list of words behind it; composing a *new* sequence does not, and it
 never can. So authoring happens in the panel or in the file.
 
-**In the panel:** Settings → Macros → **Edit macros**. Each step is a stepper of actions, a
+**In the panel:** with Show every setting on, Settings › Acting on the game › Macros and switches, row Your macros, **Edit macros**. Each step is a stepper of actions, a
 row of on / off / toggle, and a pause in milliseconds. There is nothing to type but the
 name, so nothing you build there can be rejected.
 
@@ -243,7 +243,7 @@ configured in a state you did not ask for and have to work out for yourself.
 Steps already in the state you asked for are skipped, so a macro that puts the gear down does
 nothing about the gear when it is already down.
 
-Macros need **Let Directive 47 press keys in Elite** switched on — see
+Macros need **Let D47 press keys in Elite** switched on — see
 [Flight and navigation](flight-controls.md).
 
 <details markdown="1">

@@ -10,6 +10,8 @@
 
 Pressing a result on Search › Stations or Search › Bodies opens its system on the Stations or Bodies section, as the Systems, Outfitting and Signals results already open theirs.
 
+The Acting on the game help pages now match the code. Navigation, Autonomous actions, Panels, Ship systems and SRV name the real settings: Try to plot courses in the galaxy map, Honk on arriving in a system, and Let D47 press keys in Elite in Settings › Acting on the game › What D47 may do. Comms says the message is read back after it is sent, and that a message starting /d47 is refused. Ship systems now covers chaff, shield cells, the ECM and the HUD mode, On foot controls lists every weapon and grenade phrase, Binding profiles quotes the replies D47 gives, and Bookmarks has a How it works band. Measured figures and history were cut from the Switches and Flight pages.
+
 The comms selection, and who you last had on each channel, is kept for each Commander when d47 restarts. The channel you left on is selected again at launch even if no one is on it yet; your carrier's Captain or Tower comes back once d47 has found the carrier in your journals.
 
 Each comms channel now remembers who you last had selected on it, and Story remembers it for each story. Coming back to a channel, or to a story, selects that party again if they are still on it; if they have left, no one is selected until they return.

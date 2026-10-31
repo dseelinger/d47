@@ -22,11 +22,11 @@ nav_order: 137
 <p class="intro">Three steps to a system name where you can use it.</p>
 <section>
 <h2><span class="num">1</span> Say where you want to go.</h2>
-<p class="say">Say "plot a route to Shinrarta Dezhra".</p>
-<p class="expect">The system name is put on the clipboard, spelled correctly, ready to paste.</p>
+<p class="say">Say "plot a course to Shinrarta Dezhra".</p>
+<p class="expect">D47 says the name is on your clipboard and tells you to paste it into the galaxy map's search box.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">plot a route to Shinrarta Dezhra</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">plot a course to Shinrarta Dezhra</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">It puts the name on the clipboard, which is the part that always works.</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">Say it however you say it — the spelling is worked out for you.</text>
@@ -34,28 +34,28 @@ nav_order: 137
 </section>
 <section>
 <h2><span class="num">2</span> Let it drive the map, if you want that.</h2>
-<p class="say">Turn on key injection and Drive the galaxy map.</p>
-<p class="expect">D47 opens the map, types the name and plots; with either off you paste the name yourself.</p>
-<svg viewBox="0 0 880 252" role="img" aria-label="Navigation">
+<p class="say">Turn on Let D47 press keys in Elite, then say "try to plot courses yourself".</p>
+<p class="expect">D47 says "Plotting the course to" and the system, opens the galaxy map, searches, plots and closes the map. With either row off, you paste the name yourself.</p>
+<svg viewBox="0 0 880 252" role="img" aria-label="Permissions">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Navigation</text>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Permissions</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 press keys in Elite</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
  <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="154" font-size="16" fill="var(--text)">Drive the galaxy map</text>
+ <text x="68" y="154" font-size="16" fill="var(--text)">Try to plot courses in the galaxy map</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">on</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">With both on it opens the map, types the name and plots. Without them, you paste.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Turn off Drive the galaxy map if your map layout is not the default.</p>
-<p class="expect">The name goes to the clipboard and you paste it.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="The map macro is a fixed key sequence.">
+<h2><span class="num">!</span> Every key it presses needs a binding.</h2>
+<p class="say">Bind the galaxy map, UI up, UI select and both sideways camera keys on your keyboard or mouse, or say "stop plotting courses yourself".</p>
+<p class="expect">With a key missing, D47 names it and leaves the name on the clipboard to paste.</p>
+<svg viewBox="0 0 880 152" role="img" aria-label="A missing key stops the attempt">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">The map macro is a fixed key sequence.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">It assumes the default map layout. If yours is different, turn it off and paste the name instead.</text>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">One missing key stops the attempt.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">D47 presses your own keys, so each of the five needs a binding it can press.</text>
 </svg>
 </section>
 </div></div>
@@ -84,7 +84,7 @@ nav_order: 137
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Seven steps, two of them scar tissue.</h2>
+<h2><span class="num">2</span> Seven steps, two of them added after failures.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="The seven steps of driving the galaxy map, with the two that exist because of earlier failures picked out">
  <rect x="25" y="40" width="110" height="76" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="80" y="72" text-anchor="middle" font-size="14" fill="var(--text)">open the</text>
@@ -109,9 +109,9 @@ nav_order: 137
  <text x="800" y="96" text-anchor="middle" font-size="14" fill="var(--text)">map</text>
  <text x="440" y="152" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">The two picked out exist because of what went wrong without them.</text>
  <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">Return rather than the UI down key — the search box keeps focus, and a UI</text>
- <text x="440" y="216" text-anchor="middle" font-size="16" fill="var(--text)">key sent to it is a character. The first cut of this typed an S into the box.</text>
+ <text x="440" y="216" text-anchor="middle" font-size="16" fill="var(--text)">key sent to it is a character. An earlier version typed an S into the box.</text>
 </svg>
-<p class="body">The camera brush is right-then-left, for the same 30 milliseconds each. What arms the selector is movement; what knocks it off the star is net displacement. A key is full deflection for as long as it is down, so a single tap is twitchy — two equal taps in opposite directions are a stick excursion and return, done with keys.</p>
+<p class="body">The camera brush is one tap right and one left, so the camera ends where it started. It makes the selector respond to the held select.</p>
 </section>
 <section>
 <h2><span class="num">3</span> Three answers, and they mean different things.</h2>
@@ -128,8 +128,8 @@ nav_order: 137
  <text x="725" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">CANNOT TELL</text>
  <text x="725" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">the file never became</text>
  <text x="725" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">readable at all</text>
- <text x="440" y="198" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">None of them is “done” said hopefully.</text>
- <text x="440" y="230" text-anchor="middle" font-size="15" fill="var(--text-muted)">A companion that leaves you flying towards a course you do not have is worse than one that never tries.</text>
+ <text x="440" y="198" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">D47 says “done” only when the file shows the route.</text>
+ <text x="440" y="230" text-anchor="middle" font-size="15" fill="var(--text-muted)">Otherwise you would fly towards a course you do not have.</text>
 </svg>
 </section>
 <section>
@@ -149,7 +149,7 @@ nav_order: 137
  <text x="440" y="174" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So the first one it cannot press stops the whole attempt.</text>
  <text x="440" y="208" text-anchor="middle" font-size="15" fill="var(--text-muted)">Opening the map with no “select” to follow leaves it open over the cockpit — worse than nothing.</text>
 </svg>
-<p class="body">Elite's own default keyboard preset ships the galaxy map <strong>unbound</strong>, so out of the box you get the clipboard and an explanation naming the key that was missing.</p>
+<p class="body">Example: with no binding for select, you hear "You have no binding for select, so there is no key for me to press."</p>
 </section>
 </div></div>
 </details>
@@ -182,8 +182,8 @@ map.
 ### Ask for it
 
 > "plot a course to Shinrarta Dezhra"
+> "set course for Colonia"
 > "copy that system name"
-> "put the route on my clipboard"
 
 ### Spell a system
 
@@ -224,38 +224,31 @@ Automatic plotting is switched off.
 That is the whole feature, and it is deliberately the primary one. Everything below is a
 convenience on top of it that can fail.
 
-Every system name drawn anywhere on that tab — a waypoint on the
-route you are flying, a stop on a trade plan — copies when you press it.
-
 ### Letting it drive the map
 
-Turn on **Try to plot courses in the galaxy map** and Directive 47 will also drive the map for
-you, with your own keys, in this order:
+Turn on **Try to plot courses in the galaxy map** (Settings, Acting on the game, What D47 may do,
+Permissions; an advanced row, off by default) and say "try to plot courses yourself" or turn the
+row on. **Let D47 press keys in Elite** has to be on too. D47 then drives the map with your own
+keys, in this order:
 
 0. Say what it is about to do, naming the system: *"Plotting the course to Shinrarta Dezhra."*
-   This comes before the map key, and it is there because the seven steps below take several
-   seconds — in a headset you watch the map fly about on its own with nothing to connect it to
-   what you asked for. Naming the system also catches a misheard one five seconds earlier than
-   the verdict would, and the name is the whole payload.
+   A plot takes several seconds, and the name lets you catch a misheard system early.
 1. Open the galaxy map, and wait until the game reports it showing.
 2. **Up**, then **select** — that is the search box.
-3. Paste the name, and wait a second and a half for the search to fill its list.
-4. **Down**, then **select** — the first row of that list, which is the system itself.
-5. Three seconds for the camera to get there.
-5. A brush of **sideways camera** — right, then left, for the same 30 milliseconds each.
-6. **Select**, held for 1.2 seconds — a tap opens the system, a hold plots to it.
-7. The galaxy map key again, which closes it.
+3. Paste the name, and wait 1.5 seconds for the search to fill its list.
+4. **Return**, then **down**, then **select** — the first row of the list, which is the system itself.
+5. Wait 4 seconds for the camera to get there.
+6. A brush of **sideways camera** — right, then left, 30 milliseconds each.
+7. **Select**, held for 1.2 seconds — a tap opens the system, a hold plots to it.
+8. The galaxy map key again, which closes it.
 
-Two of those steps exist because of what went wrong without them. Return rather than the UI down
-key, because the search box keeps focus after the paste and an interface key sent to it is a
-character — the first cut of this macro typed an S into the box. And the camera brush, because
-after the search the selector over the star is a plain circle and select does nothing, and the
-search box still has the keyboard; the smallest camera movement takes focus out of the box and
-draws the arrows around the selector, and with the arrows showing and the selector still on the
-star, the held select plots. It is right-then-left because what arms the selector is movement and
-what knocks it off the star is net displacement — a key is full deflection for as long as it is
-down, so a single tap is twitchy, while two equal taps in opposite directions are a stick
-excursion and return done with keys.
+Return is sent instead of the UI down key because the search box keeps focus after the paste, and
+an interface key sent to it is typed as a character. The camera brush takes focus out of the box
+and arms the selector; without it select does nothing on the star.
+
+If the first attempt shows no route, D47 drives the map once more before it says the plot failed.
+Asked for a course that is already set, it answers "The course to Shinrarta Dezhra is already
+plotted, so I have left it alone." and presses nothing.
 
 This is still best-effort. Directive 47 cannot see the map, so it cannot check that the search
 matched the system you meant rather than another that starts the same way, and it cannot see
@@ -274,12 +267,7 @@ really is in the file. **Assume it did not work** means the file was readable an
 appeared. **Cannot tell** means the file never became readable at all — which usually means Elite
 is not running.
 
-None of the three offers a reason, because nothing on this path has one. A failed plot says so
-out loud rather than suggesting a culprit: a guessed cause reads as a finding, and the guess
-Directive 47 once made was to blame the spelling of a name you had just given it.
-
-None of them is "done" said hopefully. A companion that leaves you flying towards a course you do
-not have is worse than one that never tries.
+None of the three offers a reason, because nothing on this path has one.
 
 Two more things it watches for. If the map key is pressed and the game never reports the map
 open, nothing else is sent — the remaining keys are a W and a space bar, and typed into the
@@ -287,18 +275,13 @@ cockpit instead of the map they would fly the ship. And if the closing press lea
 showing, it says so: *the galaxy map is still open*.
 
 **It needs five keys**: the galaxy map, UI up, UI select, and both sideways camera translates,
-right and left. All on the keyboard or mouse — a key on a stick is one Directive 47 cannot press,
-and the camera's stick axis is exactly that. It takes all five or none: a macro that opens the map and then has no
-"select" leaves it open over the cockpit, which is worse than the clipboard alone. So the first
-key it cannot press stops the whole attempt before anything is sent, and you hear which one:
+right and left. All on the keyboard or mouse — a key on a stick is one Directive 47 cannot press.
+The first key it cannot press stops the attempt before anything is sent, and you hear which one:
 
 ```text
 Colonia is on your clipboard. I could not drive the galaxy map myself — You have no binding for
 select, so there is no key for me to press. Paste it into the map's search box to plot it.
 ```
-
-Elite's own default keyboard preset ships the galaxy map **unbound**, so out of the box you will
-get the clipboard and that explanation.
 
 ### Pasting is an ordinary paste
 
@@ -349,7 +332,6 @@ Never callable by the model; the three phrases above reach it.
 ```
 
 Return and Ctrl+V are sent as plain virtual keys rather than resolved from the bindings file,
-because Elite binds neither. Every wait in the sequence is the Commander's own figure
-(2026-08-21), not a measurement.
+because Elite binds neither. The waits in the sequence are fixed in `NavigationCapability.cs`.
 
 </details>

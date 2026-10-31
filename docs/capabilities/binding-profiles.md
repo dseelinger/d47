@@ -14,17 +14,17 @@ nav_order: 156
 <section>
 <h2><span class="num">1</span> Save the bindings you have.</h2>
 <p class="say">Close Elite, then say "save these bindings as sim pit".</p>
-<p class="expect">D47 says it saved your bindings as "sim pit", and the name appears under Binding profiles in Settings › Macros and switches.</p>
+<p class="expect">D47 says 'Saved your bindings as "sim pit".' and the name appears on the Saved binding profiles row in Settings › Acting on the game › Macros and switches.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Load them back.</h2>
 <p class="say">With Elite closed, say "load the sim pit bindings".</p>
-<p class="expect">D47 says it loaded them, and Elite uses them the next time it starts.</p>
+<p class="expect">D47 says 'Loaded the "sim pit" bindings. Elite will use them when it next starts.'</p>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <p class="say">Ask while Elite is running.</p>
-<p class="expect">D47 refuses and says to close Elite first: Elite reads its bindings only when it starts.</p>
+<p class="expect">D47 refuses with "Elite is running." and says to close Elite first, because Elite reads its bindings only when it starts.</p>
 </section>
 </div></div>
 </details>
@@ -40,6 +40,10 @@ nav_order: 156
 <section>
 <h2><span class="num">2</span> Nothing is lost by loading.</h2>
 <p class="body">Before a load writes anything, the set it replaces is saved as "before last load", so loading the wrong profile is undone by loading that one.</p>
+</section>
+<section>
+<h2><span class="num">3</span> Elite has to be closed.</h2>
+<p class="body">Elite reads its bindings only when it starts. Asked while it runs, D47 changes nothing and says "Elite is running. It reads its bindings only when it starts, so close Elite first and ask again."</p>
 </section>
 </div></div>
 </details>
@@ -67,7 +71,8 @@ A binding profile is a named copy of the set.
 > "load the sim pit bindings"
 > "list my binding profiles"
 
-None of these needs an AI configured.
+Only "list my binding profiles" is answered without a language model. Saving and loading take a
+name, so they go through the model.
 
 ### Save
 
@@ -96,8 +101,8 @@ Elite is running. It reads its bindings only when it starts, so close Elite firs
 
 ### Deleting one
 
-**Settings › Acting on the game › Macros and switches**, under **Binding profiles**, lists every saved profile with a
-**Delete** button. Deleting removes the copy under `data\`; Elite's own files are not touched.
+**Settings › Acting on the game › Macros and switches**, row **Saved binding profiles**, lists every
+saved profile with a **Delete** button. Deleting removes the copy under `data\`; Elite's own files are not touched.
 There is no voice command for deleting.
 
 <details markdown="1">

@@ -98,6 +98,16 @@ knows about suits.
 Elite binds one key for the suit shields and Status.json reports no suit shield state, so "shields
 on" and "shields off" both press the toggle.
 
+### Weapons and grenades
+
+> "primary weapon"
+> "secondary weapon"
+> "sidearm" or "utility weapon"
+> "holster"
+> "frag grenade", "emp grenade" or "shield projector"
+
+Each press selects the item; it does not fire it.
+
 ### The suit tool
 
 "Suit tool", "genetic sampler" and "arc cutter" press one binding, which selects whichever tool the
@@ -105,7 +115,7 @@ suit carries: the genetic sampler on Artemis, the arc cutter on Maverick, none o
 
 ### You have to turn it on
 
-Everything here needs **Let Directive 47 press keys in Elite**, off by default and unreachable by
+Everything here needs **Let D47 press keys in Elite**, off by default and unreachable by
 the AI. See [Flight and navigation](flight-controls.md).
 
 <details markdown="1">

@@ -1,7 +1,13 @@
 using System.Text.RegularExpressions;
+using D47.Core.Actions;
 using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Help;
+using D47.Core.Input;
+using D47.Core.Journal;
+using D47.Core.Storage;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Input;
@@ -29,9 +35,7 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("mining", "mining target platinum above twenty five percent"), // #1998
         ("mining", "how many limpets for ten tonnes of osmium"), // #1998
         ("system-names", "what does Praea Euq XV-B c1-42 tell you"), // #1998
-        ("bookmarks", "set course for Jameson Memorial"),
-        ("bookmarks", "rename bookmark Current CG to Colonia Bridge"),
-        ("bookmarks", "delete bookmark Current CG"),
+        ("bookmarks", "rename bookmark Current CG to Colonia Bridge"), // no issue filed; see the #1903 commit
         ("on-foot", "what does grade 3 on my Maverick cost"), // #1998
         ("crew", "who is in my fighter bay"),
         ("crew", "comms Vasquez"),
@@ -42,9 +46,8 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("powerplay", "what does my next Powerplay rank give me"), // #2000
         ("powerplay", "what would Edmund Mahon give me"), // #2000
         ("exobiology", "what biology is on this body"), // #1998
-        ("binding-profiles", "save these bindings as sim pit"),
-        ("binding-profiles", "load the sim pit bindings"),
-        ("surface-guidance", "which way to mark 1"),
+        ("binding-profiles", "save these bindings as sim pit"), // no issue filed; see the #1903 commit
+        ("binding-profiles", "load the sim pit bindings"), // no issue filed; see the #1903 commit
         ("reminders", "remind me to buy limpets when I next dock"),
         ("reminders", "noted"),
         ("reminders", "remind me next time"),
@@ -56,18 +59,14 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("focus", "bring Elite back"),
         ("utilities", "set a timer for twenty minutes called fuel scoop"),
         ("routes", "plot a neutron route to Colonia"), // #1998
-        ("macros", "docking prep"),
         ("vr", "put the panel down"),
         ("vr", "lock it to my head"),
         ("vr", "move it left"),
         ("vr", "bring it nearer"),
-        ("carrier", "comms captain"),
         ("carrier", "how much fuel have we got"),
         ("commanders", "switch to Kestrel Vane"),
-        ("navigation", "plot a route to Shinrarta Dezhra"),
-        ("comms", "comms Tower"),
-        ("comms", "are you there"),
-        ("comms", "tell the wing I am on my way"),
+        ("navigation", "plot a course to Shinrarta Dezhra"), // no issue filed; see the #1903 commit
+                ("comms", "tell the wing I am on my way"), // no issue filed; see the #1903 commit
     ];
 
     public static TheoryData<string> Pages() => [.. PageNames()];
@@ -89,7 +88,7 @@ public partial class EveryHowToPhraseRoutesGateTests
         var router = Router();
         var listed = Listed();
         var unlisted = Quoted(page)
-            .Where(phrase => !Routes(router, phrase) && !AnswersAnExchange(page, phrase) && !listed.Contains((page, phrase)))
+            .Where(phrase => !Routes(router, phrase) && !AnswersAnExchange(page, phrase) && !SaidOnTheCommsKey(page, phrase) && !listed.Contains((page, phrase)))
             .ToList();
 
         Assert.True(unlisted.Count == 0, $"{page}.md quotes phrases that reach the model: {string.Join(", ", unlisted.Select(p => $"\"{p}\""))}");
@@ -157,13 +156,42 @@ public partial class EveryHowToPhraseRoutesGateTests
     private static HashSet<(string Page, string Phrase)> Listed() =>
         new([.. ModelAnswers, .. NotYetReviewed], new EntryComparer());
 
-    /// <summary>The router, with the line the checklists page names on the Commander's own list.</summary>
+    /// <summary>The router, with the things the pages tell the Commander to make first: a checklist line, bookmarks, a macro, a mark on the body and a carrier.</summary>
     private static KeywordRouter Router()
     {
         var surface = TestSurface.For(new MemoryInstall());
         surface.ChecklistService.AddNote(D47.Core.Checklists.ChecklistScope.Universal, "buy a fuel scoop");
 
-        return new(surface.Registry, () => D47.Core.Capabilities.Builtin.ChecklistCapability.Phrases(surface.ChecklistService));
+        const string commander = "F1";
+        var files = new MemoryFileSystem();
+        var bookmarks = new BookmarkStore(@"C:\gate/bookmarks.json", files, NullLogger<BookmarkStore>.Instance);
+        bookmarks.Add(commander, "Jameson Memorial", "Shinrarta Dezhra", DateTimeOffset.UnixEpoch);
+        bookmarks.Add(commander, "Current CG", "Colonia", DateTimeOffset.UnixEpoch);
+
+        var macros = new MacroStore(@"C:\gate/macros.json", files, NullLogger<MacroStore>.Instance);
+        macros.Save([new Macro { Name = "docking prep", Steps = [new MacroStep("hardpoints", DesiredState.Off)] }]);
+        macros.Poll([]);
+
+        var state = new CommanderGameState(new CommanderIdentity(commander, "Fixture"));
+        Assert.True(JournalEvent.TryParse(
+            "{\"timestamp\":\"2026-08-16T10:00:00Z\",\"event\":\"Touchdown\",\"SystemAddress\":2175107336563,\"BodyID\":37,\"Latitude\":0,\"Longitude\":0}",
+            NullLogger.Instance,
+            out var touchdown));
+        state.Apply(touchdown!, null);
+        var marks = new SurfaceMarks();
+        marks.Add(state.Surface, null, new SurfaceFix(0, 0, 1_000_000), DateTimeOffset.Parse("2026-08-16T10:30:00Z", System.Globalization.CultureInfo.InvariantCulture));
+
+        var channels = new CommsChannels();
+        channels.Update(new CommsInputs { CarrierOwned = true });
+
+        return new(
+            surface.Registry,
+            () => ChecklistCapability.Phrases(surface.ChecklistService)
+                .Concat(BookmarkCourse.Phrases(bookmarks, () => commander))
+                .Concat(BookmarksCapability.Phrases(bookmarks, () => commander))
+                .Concat(MacroCapability.Phrases(macros))
+                .Concat(SurfaceGuidanceCapability.Phrases(marks, () => state))
+                .Concat(CommsCapability.ChannelPhrases(channels)));
     }
 
     private static bool Routes(KeywordRouter router, string phrase) =>
@@ -177,6 +205,10 @@ public partial class EveryHowToPhraseRoutesGateTests
     /// <summary>Whether the phrase is a reply the turn loop takes while a teaching exchange is open, before the router and the model.</summary>
     private static bool AnswersAnExchange(string page, string phrase) =>
         page == "learned-phrases" && phrase.ToUpperInvariant() is "YES" or "CANCEL";
+
+    /// <summary>Whether the phrase is said holding the comms key, which sends it to the selected party and never to the router.</summary>
+    private static bool SaidOnTheCommsKey(string page, string phrase) =>
+        page == "comms" && string.Equals(phrase, "are you there", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Whether the turn loop's model-free captain's log grammar takes the phrase, before the router and the model.</summary>
     private static bool LogsOrReadsTheCaptainsLog(string phrase) => D47.Core.CaptainsLog.CaptainsLogPhrase.Read(phrase) is not null;

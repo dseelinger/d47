@@ -21,12 +21,12 @@ nav_order: 131
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps to moving power without taking a hand off.</p>
 <section>
-<h2><span class="num">1</span> Turn on key injection.</h2>
-<p class="say">Turn on key injection in the Ship systems settings.</p>
+<h2><span class="num">1</span> Turn on key presses.</h2>
+<p class="say">Turn on Let D47 press keys in Elite, in Settings › Acting on the game › What D47 may do.</p>
 <p class="expect">The row shows on; pips and panic buttons are your own Elite bindings.</p>
-<svg viewBox="0 0 880 196" role="img" aria-label="Ship systems">
+<svg viewBox="0 0 880 196" role="img" aria-label="Permissions">
  <rect x="20" y="16" width="840" height="156" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Ship systems</text>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Permissions</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 press keys in Elite</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
@@ -46,7 +46,7 @@ nav_order: 131
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> And the two you want in a hurry.</h2>
+<h2><span class="num">3</span> And the two you need in a hurry.</h2>
 <p class="say">Say "heat sink" or "silent running", and "silent running off" to stop it.</p>
 <p class="expect">D47 presses the binding once, with Elite in front.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -106,7 +106,7 @@ nav_order: 131
 <p class="body">In the SRV the same words reach the SRV's own power bindings, because Elite binds those separately and you meant the vehicle you are sitting in.</p>
 </section>
 <section>
-<h2><span class="num">2</span> The panic buttons are yours to misuse.</h2>
+<h2><span class="num">2</span> Silent running is a toggle.</h2>
 <svg viewBox="0 0 880 220" role="img" aria-label="Heat sinks and silent running work only while flying, and silent running is a toggle">
  <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">ONLY WHILE FLYING</text>
@@ -116,7 +116,7 @@ nav_order: 131
  <text x="660" y="76" text-anchor="middle" font-size="15" font-weight="800" fill="var(--danger)">SILENT RUNNING IS A TOGGLE</text>
  <text x="660" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">asking twice turns it back off,</text>
  <text x="660" y="132" text-anchor="middle" font-size="15" fill="var(--text-muted)">and nothing here will stop you</text>
- <text x="440" y="198" text-anchor="middle" font-size="16" fill="var(--text-muted)">Directive 47 will not stop you cooking your own ship, and does not pretend otherwise.</text>
+ <text x="440" y="198" text-anchor="middle" font-size="16" fill="var(--text-muted)">D47 does not stop you overheating your own ship.</text>
 </svg>
 </section>
 <section>
@@ -176,9 +176,19 @@ same bindings as in the ship. Heat sinks and silent running are refused there wi
 
 ### Heat sinks and silent running
 
-Both work only while you are flying — they are refused when docked or landed, with the reason.
-Silent running is worth knowing about before you use it by voice: it is a toggle, so asking twice
-turns it back off, and Directive 47 will not stop you cooking your own ship.
+Heat sinks work while you are flying, in normal space or supercruise. Silent running works in
+normal space only. Both are refused otherwise, with the reason. Silent running is a toggle, so
+asking twice turns it back off, and Directive 47 does not stop you overheating your own ship.
+
+### Chaff, shield cells, ECM and the HUD mode
+
+> "fire chaff" or "deploy chaff"
+> "use a shield cell" or "fire a shield cell"
+> "fire the ECM" or "charge the ECM"
+> "analysis mode" or "combat mode"
+
+Chaff, shield cells and the ECM work in normal space only. The ECM key is held for four seconds
+and fires on release. The HUD mode switches between analysis mode and combat mode.
 
 ### The fuel scoop is not a switch
 
@@ -191,7 +201,7 @@ it cannot start or stop it and neither can you.
 
 ### You have to turn it on
 
-Everything here needs **Let Directive 47 press keys in Elite**, which is off by default and
+Everything here needs **Let D47 press keys in Elite**, which is off by default and
 cannot be switched on by the AI. See [Flight and navigation](flight-controls.md) for why, and for
 what happens when an action is on your stick rather than your keyboard.
 

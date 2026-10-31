@@ -21,12 +21,12 @@ nav_order: 132
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Two steps to opening a cockpit panel without letting go.</p>
 <section>
-<h2><span class="num">1</span> Turn on key injection.</h2>
-<p class="say">Turn on key injection in the Panels settings.</p>
+<h2><span class="num">1</span> Turn on key presses.</h2>
+<p class="say">Turn on Let D47 press keys in Elite, in Settings › Acting on the game › What D47 may do.</p>
 <p class="expect">The row shows on; every panel command is one of your own Elite bindings.</p>
-<svg viewBox="0 0 880 196" role="img" aria-label="Panels">
+<svg viewBox="0 0 880 196" role="img" aria-label="Permissions">
  <rect x="20" y="16" width="840" height="156" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Panels</text>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Permissions</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 press keys in Elite</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
@@ -90,12 +90,12 @@ nav_order: 132
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Both maps ship unbound, so it says so.</h2>
+<h2><span class="num">2</span> A map with no key is named.</h2>
 <svg viewBox="0 0 880 236" role="img" aria-label="On Elite's default preset the galaxy and system maps have no binding, and Directive 47 reports that rather than failing silently">
  <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="220" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">ELITE’S DEFAULT PRESET</text>
- <text x="220" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">ships both maps unbound</text>
- <text x="220" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">if you never touched your controls</text>
+ <text x="220" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A MAP WITH NO KEY</text>
+ <text x="220" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">in your Elite bindings</text>
+ <text x="220" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">gets a refusal that names it</text>
  <line x1="432" y1="96" x2="448" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="462,96 446,88 446,104" fill="var(--accent-muted)"/>
  <rect x="474" y="40" width="386" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
@@ -103,7 +103,7 @@ nav_order: 132
  <text x="667" y="104" text-anchor="middle" font-size="15" fill="var(--text)">galaxy map, so there is no key</text>
  <text x="667" y="130" text-anchor="middle" font-size="15" fill="var(--text)">for me to press.”</text>
  <text x="440" y="194" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Bind them in the game and they start working.</text>
- <text x="440" y="224" text-anchor="middle" font-size="15" fill="var(--text-muted)">Directive 47 will not bind them for you — your bindings file is read-only to it, always.</text>
+ <text x="440" y="224" text-anchor="middle" font-size="15" fill="var(--text-muted)">D47 does not bind them for you; it only reads your bindings file.</text>
 </svg>
 </section>
 <section>
@@ -152,13 +152,10 @@ exists for the moments when both hands are busy.
 
 ### The maps
 
-"Galaxy map" and "system map" open them, and that is all they do here. Plotting a course inside
-the galaxy map is its own thing, because it depends on where the map's focus happens to be and on
-what language your game is in — see [Navigation](navigation.md) for why the clipboard is
-the route that actually works.
+"Galaxy map" and "system map" open them, and that is all they do here. Plotting a course in the
+galaxy map is a separate feature; see [Navigation](navigation.md).
 
-On Elite's own default keyboard preset both maps ship **unbound**. If you have never touched your
-controls, asking for the galaxy map gets:
+If the galaxy map or the system map has no key in your Elite bindings, asking for the galaxy map gets:
 
 ```text
 You have no binding for the galaxy map, so there is no key for me to press.
@@ -169,7 +166,7 @@ bindings file is read-only to it, always.
 
 ### You have to turn it on
 
-Everything here needs **Let Directive 47 press keys in Elite**, off by default and unreachable by
+Everything here needs **Let D47 press keys in Elite**, off by default and unreachable by
 the AI. See [Flight and navigation](flight-controls.md).
 
 <details markdown="1">

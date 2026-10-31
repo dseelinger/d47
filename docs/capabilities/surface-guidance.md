@@ -56,7 +56,7 @@ nav_order: 158
  <text x="145" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR SHIP</text>
  <text x="145" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">where it landed</text>
  <rect x="315" y="40" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR {"type":"object","properties":{"name":{"type":"string","description":"What to call the mark. Optional; omit to number it."}},"required":[],"additionalProperties":false}S</text>
+ <text x="440" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR MARKS</text>
  <text x="440" y="114" text-anchor="middle" font-size="15" fill="var(--text-muted)">saved by you</text>
  <rect x="610" y="40" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="735" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">YOUR SAMPLES</text>
@@ -71,6 +71,7 @@ nav_order: 158
  <text x="440" y="68" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Marks are held in memory, not saved to disk.</text>
  <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text-muted)">Neither tool sends anything, and the model may use either.</text>
 </svg>
+<p class="body">Asked with nothing saved, D47 says "Nothing is saved on this body to guide you to."</p>
 </section>
 </div></div>
 </details>

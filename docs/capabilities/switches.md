@@ -162,7 +162,7 @@ nav_order: 141
  <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A MAINTAINED SWITCH</text>
  <text x="220" y="110" text-anchor="middle" font-size="15" fill="var(--text-muted)">is held, not pressed</text>
- <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">sixteen were held on the bench</text>
+ <text x="220" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">Elite sees the button held down</text>
  <line x1="432" y1="96" x2="448" y2="96" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="462,96 446,88 446,104" fill="var(--accent-muted)"/>
  <rect x="474" y="40" width="386" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
@@ -193,8 +193,8 @@ nav_order: 141
  <text x="755" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">a spring-return switch</text>
  <text x="755" y="128" text-anchor="middle" font-size="14" fill="var(--text-muted)">cannot mean a state</text>
  <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">The pause is what tells a maintained switch from a spring-return one.</text>
- <text x="440" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">Hold duration cannot — flips ran 407–1611 ms and deliberate presses 206–1751 ms, which overlap outright.</text>
- <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">After a second and a half, one is still held and the other has gone home. That is not a close call.</text>
+ <text x="440" y="222" text-anchor="middle" font-size="15" fill="var(--text-muted)">Hold duration cannot, because flips and deliberate presses overlap.</text>
+ <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">After a second and a half, one is still held and the other has gone home.</text>
 </svg>
 <p class="body">There is no list of sticks to pick from, and there never can be: Windows reports every controller as <code>HID-compliant game controller</code>, so a WinWing throttle, a Virpil base and a twenty-year-old Saitek are all the same string.</p>
 </section>
@@ -205,7 +205,7 @@ nav_order: 141
  <text x="440" y="76" text-anchor="middle" font-size="18" fill="var(--text)">“gear switch: the landing gear is up”</text>
  <text x="440" y="140" text-anchor="middle" font-size="16" fill="var(--text)">A stale switch costs one extra flip — but only if you can see it coming.</text>
  <text x="440" y="176" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So the panel shows which switches disagree with the game.</text>
- <text x="440" y="210" text-anchor="middle" font-size="15" fill="var(--text-muted)">The answer real aviation reached with annunciator lights — showing the state is cheap, moving the switch is not.</text>
+ <text x="440" y="210" text-anchor="middle" font-size="15" fill="var(--text-muted)">Showing the state is cheap; moving the switch is not.</text>
 </svg>
 <p class="body">A spare three-position toggle can name <em>pages of Directive 47's own panel</em> instead of ship actions — three detents, three pages. That one presses nothing, reads no binds and checks no foreground, so it works whether the key-injection rows are on or off.</p>
 </section>
@@ -238,8 +238,7 @@ the switch is upside down and stays that way until you notice.
 
 ### Why your switches cannot just be bound in Elite
 
-Because a maintained switch is *held*, not pressed. On the bench here, **sixteen buttons were
-held down with nothing being touched**. Elite sees a switch left in the "on" position as a button
+Because a maintained switch is *held*, not pressed. Elite sees a switch left in the "on" position as a button
 you are leaning on forever, and there is no way to express "this position means gear down" in a
 bindings file.
 
@@ -276,13 +275,12 @@ Walk it all the way through. That instruction is doing four jobs at once:
 | What the walk discovers | Why it cannot be assumed |
 |---|---|
 | How many positions the switch has | Two, three and four-position switches all exist |
-| Which button index each position holds | Indices were consecutive on the bench; that is a hint, not a rule |
+| Which button index each position holds | Consecutive indices are a hint, not a rule |
 | Whether every position holds a button *at all* | A centre detent that holds nothing is a legitimate design |
 | Whether the switch stays where you put it | A spring-return switch cannot mean a state |
 
-The pause is what tells a maintained switch from a spring-return one. Hold duration cannot: the
-measured ranges overlap outright — switch flips ran 407–1611 ms and deliberate button presses ran
-206–1751 ms. But after a second and a half, a maintained switch is still held and a spring-return
+The pause is what tells a maintained switch from a spring-return one. Hold duration cannot,
+because the ranges overlap. But after a second and a half, a maintained switch is still held and a spring-return
 one has gone home, and that is not a close call.
 
 #### When a walk is declined
@@ -388,8 +386,7 @@ In Ship, Log File and Journal File — three detents, three pages. Each position
 **page** rather than an action, chosen from the same list the spoken route reads: every page any
 surface shows, so there is nothing here that cannot also be said.
 
-The same rule applies, and it fits better here than where it was invented. The flip is the
-question, *are you already there* is asked first — and for Directive 47's own panel the answer is
+The same rule applies. The flip is the question, *are you already there* is asked first — and for Directive 47's own panel the answer is
 exact rather than read out of `Status.json` — and between flips nothing is touched. Flip to
 Log File while the panel is already on Log File and nothing happens at all. Flip to it while
 the panel is on the checklist and the panel goes to Log File, on both surfaces.
@@ -501,7 +498,7 @@ refusal and does not save. If Windows refuses the keystroke, it is said:
 ### When a mapping stops fitting
 
 A mapping is stored against the controller's HID collection and its button count, never against
-its vendor and product ids. This matters more than it sounds.
+its vendor and product ids.
 
 Turning **4x32 mode** on or off on a WinWing throttle renumbers every button on it, while leaving
 the vendor and product ids completely unchanged. A mapping keyed on those would survive the
@@ -509,12 +506,12 @@ change and silently press button 15 of a block that is no longer the same block.
 changes, so instead the switch **fails closed**: the row says it needs reassigning, and nothing is
 pressed.
 
-Moving a controller to another USB port, and switching between the installed app and the test
-drive, no longer change the stored identity, so the switches do not need walking again.
+Moving a controller to another USB port, or switching between the installed app and the test
+drive, does not change the stored identity, so the switches do not need walking again.
 
-Bindings made before this change were stored under a `{wgi/nrid/…}` id that Windows gave to each
-copy of Directive 47 separately. At start-up, once the controllers have settled, Directive 47
-moves each of those ids to the controller's HID identity where the match is certain: the same
+A mapping stored under a `{wgi/nrid/…}` id, which Windows gives to each copy of Directive 47
+separately, is moved at start-up, once the controllers have settled, to the controller's HID
+identity where the match is certain: the same
 vendor, product and shape, and, where several controllers look alike, held buttons that tell them
 apart. Switches, push-to-talk and cancel move together, and the log records each move.
 
@@ -537,8 +534,7 @@ like Directive 47 misbehaving in two different ways at once:
   wrong way;
 - where Directive 47 correctly **presses**, the two toggles cancel and nothing happens at all.
 
-That is one setup fault wearing two disguises, and it cost an afternoon before it was understood.
-The switch now says so directly:
+Both come from one setup fault, and the switch says so directly:
 
 > Elite binds this button to LandingGearToggle as well, so both act on every flip. Unbind it in
 > Elite, or move this switch to a button Elite does not use.
@@ -558,10 +554,9 @@ Resume button; a restart clears it too.
 A mode change is not counted as unexplained. Hardpoints retract by themselves when you enter
 supercruise, and that is the game doing its job.
 
-**And a press that simply does not take is now reported too.** Watching for a reversal only catches
-something that fights back *after* the state arrives; two toggles cancelling means the state never
-arrives at all, and that used to be silent — the log said the key was sent, and nothing said the
-thing had not moved. Now:
+**A press that does not take is reported too.** Watching for a reversal only catches something that
+fights back *after* the state arrives; two toggles cancelling means the state never arrives at all.
+D47 then says:
 
 > I set the landing gear from LDG GEAR and it did not take. Something else may be bound to the same
 > button.
@@ -572,9 +567,6 @@ A stale switch is harmless — it costs one extra flip — but only if you can s
 panel and the VR surface show which assigned switches currently sit against the game's state:
 
 > gear switch: the landing gear is up
-
-This is the answer real aviation reached with annunciator lights rather than motorised switches,
-for the same reason: showing the state is cheap and moving the switch is not.
 
 You can also ask.
 

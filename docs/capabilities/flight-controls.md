@@ -94,15 +94,15 @@ nav_order: 130
 <h2><span class="num">2</span> Two switches stand between it and your keyboard.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Key pressing is off by default and unreachable by the AI, and keys go out only while Elite is in front">
  <rect x="20" y="36" width="410" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="225" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">LET DIRECTIVE 47 PRESS KEYS</text>
+ <text x="225" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">LET D47 PRESS KEYS IN ELITE</text>
  <text x="225" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">off until you switch it on</text>
  <text x="225" y="128" text-anchor="middle" font-size="14" fill="var(--text-muted)">panel, hotkey or voice — never the AI</text>
  <rect x="460" y="36" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="660" y="72" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">AND ONLY WHILE ELITE IS IN FRONT</text>
  <text x="660" y="102" text-anchor="middle" font-size="15" fill="var(--text-muted)">alt-tab mid-command and the rest</text>
  <text x="660" y="128" text-anchor="middle" font-size="15" fill="var(--text-muted)">is dropped, not typed into a browser</text>
- <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">A companion that could grant itself your keyboard on the strength of a message</text>
- <text x="440" y="220" text-anchor="middle" font-size="16" fill="var(--text)">another Commander sent you is not a companion.</text>
+ <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">If the AI could turn it on, text from another Commander could grant D47</text>
+ <text x="440" y="220" text-anchor="middle" font-size="16" fill="var(--text)">your keyboard. So it cannot.</text>
 </svg>
 </section>
 <section>
@@ -116,10 +116,10 @@ nav_order: 130
  <text x="660" y="76" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">IT IS ON YOUR JOYSTICK</text>
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">“Bind it to a key or a mouse</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text)">button and I can.”</text>
- <text x="440" y="206" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">It would rather refuse than say “done” over a key that did nothing.</text>
+ <text x="440" y="206" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">It refuses rather than say “done” over a key that did nothing.</text>
  <text x="440" y="238" text-anchor="middle" font-size="15" fill="var(--text-muted)">The joystick one is the common case, not the rare one — Elite gives every action a second slot.</text>
 </svg>
-<p class="body">It knows which mode you are in because the game says so with every question you ask: the system, the ship, and whether you are in normal space, in supercruise, in hyperspace, docked, landed or on foot. When you are not docked it says that outright, so a station you left a minute ago cannot be answered about as though you were still on the pad. Before the game has said anything at all it claims neither, because a guess about where you are is worse than a shrug.</p>
+<p class="body">The game reports the system, the ship and the mode: normal space, supercruise, hyperspace, docked, landed or on foot. D47 refuses by that report. Before the game has reported anything, it claims no mode.</p>
 </section>
 <section>
 <h2><span class="num">4</span> Your weapons are deliberately not on the list.</h2>
@@ -132,7 +132,7 @@ nav_order: 130
  <text x="720" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--danger)">NOT YOUR WEAPONS</text>
  <text x="720" y="116" text-anchor="middle" font-size="14" fill="var(--text-muted)">deliberately, and for good</text>
  <text x="440" y="192" text-anchor="middle" font-size="16" fill="var(--text)">Directive 47 reads text from the galaxy that anyone can write.</text>
- <text x="440" y="220" text-anchor="middle" font-size="16" fill="var(--text-muted)">One that can be talked into opening fire is a different kind of problem.</text>
+ <text x="440" y="220" text-anchor="middle" font-size="16" fill="var(--text-muted)">It must not be able to open fire because of one.</text>
 </svg>
 </section>
 </div></div>
@@ -143,7 +143,7 @@ nav_order: 130
 <div class="next-title">Where to go next</div>
 <div class="cards">
 <a class="card" href="ship-systems.html"><span class="ct">Ship systems →</span><span class="cd">Pips, heat sinks, and the one thing here that is not a switch at all.</span></a>
-<a class="card" href="panels.html"><span class="ct">Panels →</span><span class="cd">Walking the cockpit panels, and the two maps Elite ships unbound.</span></a>
+<a class="card" href="panels.html"><span class="ct">Panels →</span><span class="cd">Walking the cockpit panels and opening the maps.</span></a>
 <a class="card" href="switches.html"><span class="ct">HOTAS switches →</span><span class="cd">Driving all of this from the stick instead of from your voice.</span></a>
 </div>
 </div>
@@ -196,10 +196,10 @@ Your bindings are only ever read. Directive 47 never writes to them.
 
 ### You have to turn it on
 
-**Let Directive 47 press keys in Elite** is off until you switch it on, and it is one of the
+**Let D47 press keys in Elite** is off until you switch it on, and it is one of the
 settings the model cannot reach — it can be changed from the panel, a hotkey, or by voice
-through the keyword router, but never by asking the AI nicely. A companion that could grant
-itself your keyboard on the strength of a message another Commander sent you is not a companion.
+through the keyword router, but never through the AI, so text from another Commander cannot
+grant D47 your keyboard.
 
 Keys go out only while Elite is the window in front. Alt-tab to a browser mid-command and the
 rest of the sequence is dropped rather than typed into it.
@@ -218,7 +218,7 @@ Landing gear does nothing while you are in supercruise.
 ```
 
 The cockpit is not one mode. Gear, scoop and hardpoints are inert in supercruise, so Directive 47
-would rather refuse than say "done" over a key that did nothing.
+refuses rather than say "done" over a key that did nothing.
 
 ```text
 Hardpoints is on your joystick, which I have no way to press. Bind it to a key or a mouse
@@ -256,8 +256,7 @@ toggle, because the game reports no flag for the suit light. The HUD mode switch
 mode" and "combat mode" press the toggle without checking first.
 
 Firing your weapons is deliberately not on this list. Directive 47 reads text from the galaxy
-that anyone can write, and a companion that can be talked into opening fire is a different kind
-of problem from one that can be talked into turning the lights on.
+that anyone can write, and it must not be able to open fire because of it.
 
 ### Engage
 
@@ -295,14 +294,12 @@ Launch* lives. The left panel is only a way of getting to that menu.
 
 It waits for the panel to actually close before pressing anything else, rather than counting on a
 delay: those two keys sent while the panel is still going away arrive with no menu to receive them,
-which is exactly how this failed the first time it was flown.
+and are lost.
 
 **You hear it accept before it starts.** Directive 47 says *"Taking us out."* the moment the
 command is accepted — before the first key — and then tells you how it went when it knows:
-*"We are away."* The two sentences do two different jobs. It used to say only the second, and it
-used to say *"Taking us out"* for it, spoken after the ship had already left the pad; the whole of
-the walk and up to thirty seconds of watching for the pad clamps to release happened in silence,
-which is a long time to sit wondering whether you were heard.
+*"We are away."* The first says it heard you; the second says how it went. Without the first, the
+walk and the wait for the ship to leave the pad would be silent.
 
 A refusal is still one sentence and it comes straight away. Nothing is acknowledged on a road where
 no work follows — being told *"Taking us out"* and then *"you are not docked"* would be worse than

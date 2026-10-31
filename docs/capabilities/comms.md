@@ -53,28 +53,28 @@ nav_order: 139
 </svg>
 </section>
 <section>
-<h2><span class="num">4</span> Turn on key injection, then say what to send.</h2>
-<p class="say">Turn on key injection, then say what to send, such as "tell the wing I am on my way".</p>
-<p class="expect">D47 names the channel and the message before it types anything. The message then appears in Elite's chat for other people to read; nothing else D47 does is visible to them.</p>
+<h2><span class="num">4</span> Turn on both permissions, then say what to send.</h2>
+<p class="say">Turn on Let D47 send messages in Elite and Let D47 press keys in Elite, then say what to send, such as "tell the wing I am on my way".</p>
+<p class="expect">D47 opens the chat box, types the message and sends it, then reads it back, such as "Sent to wing: I am on my way." The message appears in Elite's chat for other people to read; nothing else D47 does is visible to them.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">tell the wing I am on my way</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">Comms types into Elite's own chat, so key injection has to be on.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">Comms types into Elite's own chat, so both permission rows have to be on.</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">It types; it never picks the words for you.</text>
 </svg>
 </section>
 <section>
-<h2><span class="num">5</span> Check the channel before it goes.</h2>
-<p class="say">Check the channel and the message it read back.</p>
-<p class="expect">The channel is local, wing, squadron or a direct message, and the words are the ones you said.</p>
+<h2><span class="num">5</span> Check what it sent.</h2>
+<p class="say">Listen to the channel and the message it reads back.</p>
+<p class="expect">The channel is local, system, wing or squadron, and the words are the ones you said. If they are not, the message has already gone; say it again.</p>
 <svg viewBox="0 0 880 190" role="img" aria-label="The confirmation showing the channel and the exact text before it is sent">
  <rect x="20" y="16" width="840" height="158" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="44" y="56" font-size="15" font-weight="700" fill="var(--text-muted)">CHANNEL</text>
  <text x="200" y="56" font-size="17" fill="var(--text)">wing</text>
  <text x="44" y="100" font-size="15" font-weight="700" fill="var(--text-muted)">MESSAGE</text>
  <text x="200" y="100" font-size="17" fill="var(--text)">on my way</text>
- <text x="44" y="148" font-size="16" fill="var(--text-muted)">Local, wing, squadron or a direct message. It says which before it types.</text>
+ <text x="44" y="148" font-size="16" fill="var(--text-muted)">Local, system, wing or squadron. It says which after it sends.</text>
 </svg>
 </section>
 </div></div>
@@ -101,7 +101,7 @@ nav_order: 139
  <text x="660" y="110" text-anchor="middle" font-size="15" fill="var(--text)">goes out under your name</text>
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text)">and cannot be recalled</text>
  <text x="440" y="196" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">So it is off until you switch it on, and the AI cannot switch it on for you.</text>
- <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">The row is “Let Directive 47 send messages in Elite”, and it is protected like the keyboard one.</text>
+ <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">The row is “Let D47 send messages in Elite”, and it is protected like the keyboard one.</text>
 </svg>
 </section>
 <section>
@@ -130,7 +130,7 @@ nav_order: 139
  <rect x="20" y="34" width="840" height="64" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="74" text-anchor="middle" font-size="18" fill="var(--text)">“Sent to wing: docking at Jameson”</text>
  <text x="440" y="134" text-anchor="middle" font-size="16" fill="var(--text)">Directive 47 cannot see the chat window, so it cannot check what arrived.</text>
- <text x="440" y="164" text-anchor="middle" font-size="16" fill="var(--text-muted)">Reading it back is how you find out dictation misheard you — ideally first.</text>
+ <text x="440" y="164" text-anchor="middle" font-size="16" fill="var(--text-muted)">Reading it back is how you find out dictation misheard you.</text>
  <rect x="20" y="184" width="840" height="48" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="214" text-anchor="middle" font-size="16" fill="var(--text-muted)">A channel is a prefix it types: “/w on my way”. Wrong channel? That is the thing to check.</text>
 </svg>
@@ -183,7 +183,7 @@ Types a message into Elite's chat for you.
 
 ### You have to turn it on
 
-**Let Directive 47 send messages in Elite** is off until you switch it on, and the AI cannot
+**Let D47 send messages in Elite** is off until you switch it on, and the AI cannot
 switch it on for you.
 
 This is the only thing Directive 47 does that other people can see. Everything else acts on your
@@ -202,12 +202,11 @@ Sent to wing: docking at Jameson
 ```
 
 Directive 47 cannot see the chat window, so it has no way to check what actually arrived. Reading
-the message back is how you find out that dictation misheard you — ideally before the person you
-sent it to does.
+the message back is how you find out that dictation misheard you, so you can say it again.
 
 ### Channels
 
-Local, system, wing and squadron. Directive 47 types the game's own channel prefix at the front
+Local, system, wing and squadron. A direct message is not supported. Directive 47 types the game's own channel prefix at the front
 of the message, so what goes into the box for a wing message is:
 
 ```text
@@ -215,6 +214,8 @@ of the message, so what goes into the box for a wing message is:
 ```
 
 If a message ends up in the wrong channel, that prefix is the thing to check.
+
+A message that starts with `/d47` is refused, since the chat box treats that as a command to D47.
 
 Line breaks are flattened to spaces before anything is typed. A newline in the middle of a message
 would send the first half early and type the second half into the cockpit, where every character
@@ -347,7 +348,7 @@ work while Elite has the foreground.
 ### It needs the keyboard too
 
 Sending a message means opening the chat box, which means pressing a key. So this needs **Let
-Directive 47 press keys in Elite** switched on as well — see
+D47 press keys in Elite** switched on as well — see
 [Flight and navigation](flight-controls.md). Both are off by default and both are protected.
 
 <details markdown="1">

@@ -21,12 +21,12 @@ nav_order: 133
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps to driving the buggy by voice.</p>
 <section>
-<h2><span class="num">1</span> Turn on key injection, and get in an SRV.</h2>
-<p class="say">Turn on key injection, and get in an SRV.</p>
+<h2><span class="num">1</span> Turn on key presses, and get in an SRV.</h2>
+<p class="say">Turn on Let D47 press keys in Elite, in Settings › Acting on the game › What D47 may do, and get in an SRV.</p>
 <p class="expect">The SRV commands apply; they are your own Elite bindings and only work in the buggy.</p>
-<svg viewBox="0 0 880 196" role="img" aria-label="SRV">
+<svg viewBox="0 0 880 196" role="img" aria-label="Permissions">
  <rect x="20" y="16" width="840" height="156" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">SRV</text>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Permissions</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 press keys in Elite</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
@@ -46,7 +46,7 @@ nav_order: 133
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> And when you want the ship back.</h2>
+<h2><span class="num">3</span> And when you need the ship back.</h2>
 <p class="say">Say "recall my ship".</p>
 <p class="expect">D47 presses the recall binding once; where the ship lands is the game's decision.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -180,7 +180,7 @@ closest thing, and from there "down", "right" and "select" walk you to it.
 
 ### You have to turn it on
 
-Everything here needs **Let Directive 47 press keys in Elite**, off by default and unreachable by
+Everything here needs **Let D47 press keys in Elite**, off by default and unreachable by
 the AI. See [Flight and navigation](flight-controls.md).
 
 <details markdown="1">

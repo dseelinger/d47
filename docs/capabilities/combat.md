@@ -100,7 +100,7 @@ Directive 47 does not check.
 
 ### You have to turn it on
 
-Everything here needs **Let Directive 47 press keys in Elite**, off by default and unreachable by
+Everything here needs **Let D47 press keys in Elite**, off by default and unreachable by
 the AI. See [Flight and navigation](flight-controls.md).
 
 <details markdown="1">

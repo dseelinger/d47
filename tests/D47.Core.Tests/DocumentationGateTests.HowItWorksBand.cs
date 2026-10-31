@@ -15,16 +15,12 @@ public partial class DocumentationGateTests
     private static readonly HashSet<string> PagesWithoutAHowItWorksBand = new(StringComparer.Ordinal)
     {
         "about",
-        "bookmarks",
     };
 
     private static readonly HashSet<string> PagesWithALongHowItWorksBand = new(StringComparer.Ordinal)
     {
-        "autonomous-actions",
         "crew",
-        "flight-controls",
         "general-conversation",
-        "navigation",
         "vr",
     };
 

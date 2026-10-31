@@ -68,6 +68,25 @@ nav_order: 138
 </div></div>
 </details>
 
+<details class="d47-band">
+<summary>How it works</summary>
+<div class="d47-eli5"><div class="d47-frame">
+<p class="intro">Name a system once, then say the name to set a course.</p>
+<section>
+<h2><span class="num">1</span> A bookmark is a name for a system.</h2>
+<p class="body">Target Jameson Memorial and say "bookmark this". D47 keeps the name and the system it is in, Shinrarta Dezhra, in data/bookmarks.json. The file is D47's own; Elite never reads it.</p>
+</section>
+<section>
+<h2><span class="num">2</span> Saying the name plots a course.</h2>
+<p class="body">"Set course for Jameson Memorial" plots to the system the bookmark points at, as naming that system would. Deleting a bookmark is never offered to the AI, so a misheard name cannot remove one.</p>
+</section>
+<section>
+<h2><span class="num">3</span> Elite names the target, not its system.</h2>
+<p class="body">Inside the system you are in, D47 knows where a target is. For a body or station elsewhere it answers "That is in another system, and Elite does not name the system. Target the system itself."</p>
+</section>
+</div></div>
+</details>
+
 ## The details
 
 A bookmark is d47's own, not Elite's — it is not one of the game's own galaxy-map bookmarks, and
@@ -90,7 +109,8 @@ Bookmarked Jameson Memorial, in Shinrarta Dezhra. Say 'set course for Jameson Me
 ```
 
 The name is cleaned so it can be said out loud — anything that is not a letter, digit or space
-becomes a space, runs of spaces collapse, and it is cut to 40 characters at a word boundary. A
+becomes a space, runs of spaces collapse, and it is cut to 40 characters at a word boundary. A name
+already in use gets a number added. A
 procedural name such as *Col 285 Sector AB-C d1-23* becomes *Col 285 Sector AB C d1 23*. Where
 Elite gives no sayable name at all, the bookmark is called *Bookmark 1*, *Bookmark 2* and so on.
 

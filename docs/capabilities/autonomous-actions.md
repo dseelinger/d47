@@ -22,16 +22,16 @@ nav_order: 136
 <p class="intro">One switch, one action, and nothing else happens without you.</p>
 <section>
 <h2><span class="num">1</span> Turn on the arrival honk, if you want it.</h2>
-<p class="say">Turn on Honk on arrival, and key injection on the Flight page.</p>
-<p class="expect">The Honk on arrival row shows on; it is off until you switch it.</p>
+<p class="say">Say "turn on the arrival honk", and turn on Let D47 press keys in Elite.</p>
+<p class="expect">The Honk on arriving in a system row shows on; it is off until you switch it. With Show every setting on, it is in Settings › Acting on the game › What D47 may do.</p>
 <svg viewBox="0 0 880 192" role="img" aria-label="The setting that lets Directive 47 fire the discovery scanner on arrival, off out of the box">
  <rect x="20" y="24" width="840" height="66" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="46" y="63" font-size="17" fill="var(--text)">Honk on arrival</text>
+ <text x="46" y="63" font-size="17" fill="var(--text)">Honk on arriving in a system</text>
  <rect x="746" y="42" width="68" height="30" fill="var(--border)"/>
  <circle cx="761" cy="57" r="11" fill="var(--surface)"/>
  <text x="836" y="63" text-anchor="end" font-size="15" fill="var(--text-muted)">off</text>
  <text x="20" y="132" font-size="16" fill="var(--text-muted)">Off out of the box. This is the only thing D47 does to your ship unasked.</text>
- <text x="20" y="168" font-size="16" fill="var(--text-muted)">It needs key injection on as well — the master switch on the Flight page.</text>
+ <text x="20" y="168" font-size="16" fill="var(--text-muted)">It needs Let D47 press keys in Elite on as well.</text>
 </svg>
 </section>
 <section>
@@ -112,12 +112,12 @@ nav_order: 136
  <text x="440" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">it cannot see your fire groups</text>
  <rect x="590" y="36" width="270" height="118" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="725" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A FIRE BUTTON</text>
- <text x="725" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">Mouse_1 works</text>
+ <text x="725" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">a key or mouse works</text>
  <text x="725" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">a stick does not</text>
  <rect x="20" y="178" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="210" text-anchor="middle" font-size="16" fill="var(--text)">Normal space: “I did not honk: the scanner only fires in analysis mode, and you are in combat mode.”</text>
 </svg>
-<p class="body">Elite has no honk binding, because the discovery scanner is not a button — it is a fire-group weapon. So this holds <em>your</em> fire button for the six seconds the scan takes. It arms on the jump and fires once you are out of the witchspace tunnel, and if thirty seconds pass without that, the arm expires rather than waiting to surprise you later.</p>
+<p class="body">The discovery scanner is a fire-group weapon, so D47 holds your fire button for about five seconds. It arms on the jump and fires once the witchspace tunnel ends. If 30 seconds pass first, the arm expires.</p>
 </section>
 </div></div>
 </details>
@@ -149,7 +149,7 @@ agreement: **each one is off by default and switched on individually**, and none
 switched on by the AI.
 
 One switch per action, not one for the category. If there were a single "act on your own" toggle,
-the next thing added here would arrive already enabled for everyone who wanted the first one —
+the next thing added here would arrive already enabled for everyone who had switched on the first one —
 and that is permission for one thing being spent on another.
 
 ### The arrival honk
@@ -158,7 +158,7 @@ Fires the discovery scanner after each hyperspace jump.
 
 Elite has no "honk" binding, because the discovery scanner is not a button — it is a fire-group
 weapon. It goes off when you hold primary fire in analysis mode with the scanner in your current
-fire group. So this holds **your** fire button, for the six seconds the scan takes.
+fire group. So this holds **your** fire button, for the 5.3 seconds the scan takes.
 
 Three things have to be true, and it tells you when they are not:
 
@@ -174,8 +174,8 @@ Three things have to be true, and it tells you when they are not:
   ```
 - **The scanner in your current fire group.** Directive 47 cannot see your fire groups. If you
   hear "The honk did not take" after every jump, this is the likely reason.
-- **A fire button it can press.** On Elite's default keyboard preset that is `Mouse_1`, which
-  works. On a stick it does not, and you get told which device it is on.
+- **A fire button it can press.** A key or a mouse button works. A stick button does not,
+  and you get told which device it is on.
 
 It arms on the jump and fires once the tunnel ends, because during the witchspace tunnel the
 game has the controls and a held button goes nowhere. If thirty seconds pass without that
@@ -216,7 +216,7 @@ would otherwise mean a honk for every system you visited that afternoon.
 > "turn on the arrival honk"
 > "stop honking on arrival"
 
-Or the **Honk on arriving in a system** row in settings. Like every switch that reaches your
+Or the **Honk on arriving in a system** row in Settings › Acting on the game › What D47 may do. "honk when we arrive" turns it on too. Like every switch that reaches your
 keyboard, the AI cannot touch it — it can tell you whether it is on, and that is all.
 
 <details markdown="1">
