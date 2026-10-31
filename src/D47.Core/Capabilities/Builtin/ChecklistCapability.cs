@@ -41,7 +41,6 @@ public static class ChecklistCapability
             new("what am i working on", "get_checklist"),
             new("read my checklist", "get_checklist"),
             new("what is on my checklist", "get_checklist"),
-            new("my checklist", "get_checklist"),
             new("what am i building", "get_checklist"),
         ],
         Display = new CapabilityDisplay { PanelTitle = "Checklists", Order = 63 },
