@@ -39,7 +39,7 @@ nav_order: 202
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Three dials, and each one trades against the others.</h2>
+<h2><span class="num">2</span> Each setting on the card trades against the others.</h2>
 <svg viewBox="0 0 880 400" role="img" aria-label="Stops, radius, the least a body must be worth, jump range and the farthest a body may sit from arrival">
  <rect x="20" y="30" width="270" height="140" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="68" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">STOPS</text>

@@ -23,7 +23,7 @@ nav_order: 110
 <section>
 <h2><span class="num">1</span> Ask about what you are wearing.</h2>
 <p class="say">Say "what does grade 3 on my Maverick cost".</p>
-<p class="expect">D47 answers in materials as well as credits, with no network.</p>
+<p class="expect">D47 answers in materials as well as credits, from tables shipped with the app.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">what does grade 3 on my Maverick cost</text>
@@ -34,21 +34,21 @@ nav_order: 110
 </section>
 <section>
 <h2><span class="num">2</span> Find out where the materials come from.</h2>
-<p class="say">Listen for where each material comes from.</p>
-<p class="expect">You hear each material with its quantity and source, and what you are short of goes to the Gap page.</p>
+<p class="say">Listen for what you are short of.</p>
+<p class="expect">You hear each material with its quantity, how many you have and how many you are short. Ask "where do I find graphene" for where one comes from.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Grade 3 Maverick">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Grade 3 Maverick</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">Manganese</text>
- <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">10 — settlements</text>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Suit Schematic</text>
+ <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">2 — you have 1</text>
  <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="154" font-size="16" fill="var(--text)">Chemical Superbase</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">5 — you have 2</text>
+ <text x="68" y="154" font-size="16" fill="var(--text)">Graphene</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">5 — you have 12</text>
  <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="210" font-size="16" fill="var(--text)">Credits</text>
- <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">75,000</text>
- <text x="44" y="278" font-size="15" fill="var(--text-muted)">What you are short of lands on the Gap page with everything else.</text>
+ <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">2,850,000 from grade 1</text>
+ <text x="44" y="278" font-size="15" fill="var(--text-muted)">Each line says how many you have and how many you are short.</text>
 </svg>
 </section>
 <section>
@@ -105,7 +105,7 @@ nav_order: 110
  <text x="667" y="120" text-anchor="middle" font-size="24" font-weight="800" fill="var(--accent)">3 / 5 / 8</text>
  <text x="667" y="148" text-anchor="middle" font-size="14" fill="var(--text-muted)">measured on 16 real upgrades</text>
  <text x="440" y="210" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The published figures would have quoted you two to three times the real cost.</text>
- <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">And they would have looked right, because they are what every other tool says.</text>
+ <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">And they would have looked right, because they are what the published lists say.</text>
 </svg>
 <p class="body">Published ingredient lists differ from what the game takes. D47 uses quantities checked against real upgrades, and the generator refuses to run if an on-foot ingredient falls outside its checked tables.</p>
 </section>
@@ -167,7 +167,7 @@ materials come from.
 > "what would grade 5 on this suit take"
 > "where do I find graphene"
 
-Nothing here touches the network.
+The tools make no network calls.
 
 ### On foot is not the ship feature with a different vocabulary
 
@@ -203,7 +203,7 @@ footnote: the upgrade cannot be done when you get there.
 ```
 
 ```text
-Wearing: Maverick Suit, grade 5 — loadout "Sneaky-Snipy".
+Wearing: Maverick Suit, grade 5 — loadout "Quiet Run".
   Suit: Improved jump assist, Quieter footsteps, 2 of 4 slots free.
 PrimaryWeapon1: Manticore Executioner, grade 5.
   PrimaryWeapon1: Noise suppressor, Magazine size, Stability, 1 of 4 slots free.
@@ -218,7 +218,7 @@ each weapon and names at most three modifications across all of them.
 
 **The suit's name never comes from Elite's own localisation.** Frontier's localisation is broken for
 every suit above grade 1, and it is not an edge case: of 768 `SuitLoadout` events in a 912-journal
-corpus, **269 carry an unresolved `$UtilitySuit_Class1_Name;` token, and every one says Class1**
+corpus measured on 2026-08-16, **269 carry an unresolved `$UtilitySuit_Class1_Name;` token, and every one says Class1**
 whatever the real class is. Speaking that string would give you the wrong grade more than a third of
 the time. The symbol plus a shipped table is the only accurate route.
 
@@ -241,7 +241,7 @@ Quieter footsteps — a suit modification.
   Costs: 3 × Settlement Assault Plans (have 0, short 3), 5 × Tactical Plans (have 12),
          5 × Patrol Routes (have 2, short 3), 3 × Micro Hydraulics (have 9),
          8 × Viscoelastic Polymer (have 21)
-  From: Yarden Bond.
+  From: Yarden Bond or Yi Shen.
 It is ungraded and permanent, and it needs the item at grade 2 or better before it can be applied
 at all.
 ```
@@ -253,7 +253,7 @@ Maverick Suit to grade 4, at Pioneer Supplies.
   Costs: 4 × Suit Schematic (have 1, short 3), 4 × Health Monitor (have 6),
          4 × Manufacturing Instructions (have 4), 9 × Carbon Fibre Plating (have 30),
          9 × Graphene (have 12)
-  Credits from grade 1: 6,150,000.
+  Credits from grade 1: 7,350,000.
   Grade 4 carries 3 modification slots. An engineer's base has no Pioneer Supplies, so this has to
   happen before the trip.
 ```
@@ -270,19 +270,19 @@ charges:
 | Grade upgrade ingredients | 1 / 5 / 10 / 15 / 25 / 35 | **1 / 2 / 4 / 5 / 9 / 12** |
 | Power Regulators in an upgrade | listed | **not asked for at all** |
 
-Measured against the game itself: 78 ingredient comparisons against the `Resources` list on 16 real
+Measured against the game itself on 2026-08-16, in the same corpus: 78 ingredient comparisons against the `Resources` list on 16 real
 upgrade events, and a zero-remainder cover of 41 material lines across four `ShipLocker` deltas,
 each corroborating the other's leftovers. Every quantity in both tables was observed; nothing is
 extrapolated.
 
 Shipping the published figures would have quoted you two to three times the real cost of everything
-on foot — and it would have looked right, because it is what every other tool says.
+on foot — and it would have looked right, because it is what the published figures say.
 
 #### Credits
 
 Reaching a grade costs the item's grade 1 price times a fixed multiplier — **×4, ×15, ×30, ×50** for
 grades 2 to 5, per step rather than cumulative, so grade 1 to 5 in full is 99 times the base price.
-Exact on all 12 weapon upgrades in the corpus across five weapons and four grades, and on both suit
+Exact on all 12 weapon upgrades in that corpus across five weapons and four grades, and on both suit
 grades it covers.
 
 Six of the eleven weapons have no published price, and for those d47 gives **no** credit figure
@@ -309,14 +309,12 @@ Graphene — Component. You have 12.
 
 **The sourcing is more specific than anything a ship material gets.** Every micro-resource carries
 the settlement types, the building types (16 codes, AGRI to STO) and the container types (22 kinds
-of locker and data port) it turns up in — so "which settlement, which building, which locker" is
-answerable rather than approximated, where the best a ship material manages is "Planetary
-Settlement".
+of locker and data port) it turns up in. The spoken answer names where it is found; the On foot
+page lists the building and container codes.
 
 **The Bartender's rate is arithmetic.** It takes Components for a fixed barter value each and sells
 Components for a fixed barter cost, so a trade is
-`floor(Σ(offered × value) ÷ cost)` — reproduced exactly on 49 of 49 real trades. This is a better
-position than the ship material trader, whose rate took a 1,096-trade corpus to pin down.
+`floor(Σ(offered × value) ÷ cost)` — reproduced exactly on 49 of 49 real trades in that corpus.
 
 Two things that change what you should do:
 
@@ -328,7 +326,7 @@ Two things that change what you should do:
 #### The locker cap is per category
 
 **1,000 per category, not per item type** — the sources conflicted and the game settles it. Across
-28,148 locker snapshots, Components total exactly 1,000 in 7,931 of them and never once more, while
+28,148 locker snapshots in that corpus, Components total exactly 1,000 in 7,931 of them and never once more, while
 the largest single component ever held is 94. d47 says so when you are within a quarter of the cap,
 because gathering past it is wasted time.
 

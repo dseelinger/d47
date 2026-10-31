@@ -29,26 +29,26 @@ nav_order: 116
  <text x="44" y="57" font-size="17" fill="var(--text)">what does Praea Euq XV-B c1-42 tell you</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">This one needs no network at all — it is read off the string.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">It works four thousand light years out, where nothing else does.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">It works for any procedurally named system in the galaxy.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">2</span> Read what the shape of it says.</h2>
 <p class="say">Listen for what the name encodes.</p>
-<p class="expect">You hear the region, the mass code and the kind of system to expect, marked as inference.</p>
+<p class="expect">You hear the sector, the boxel and system number, the mass code with its rank and box size, and the main star if you are in the system.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Praea Euq XV-B c1-42">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Praea Euq XV-B c1-42</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">Region</text>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Sector</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Praea Euq</text>
  <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Mass code</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">c — small</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text)">c — third of eight</text>
  <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="210" font-size="16" fill="var(--text)">Likely contents</text>
- <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">few bodies, low value</text>
- <text x="44" y="278" font-size="15" fill="var(--text-muted)">The name encodes the region and the mass code. The rest is inference, and it says so.</text>
+ <text x="68" y="210" font-size="16" fill="var(--text)">Boxel</text>
+ <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">XV-B, system 42</text>
+ <text x="44" y="278" font-size="15" fill="var(--text-muted)">The name gives the sector, boxel and box size. It does not say what is in the system.</text>
 </svg>
 </section>
 <section>
@@ -240,7 +240,7 @@ Dryafea      PO-X       d        2      -0
 D47 does not recite this from memory. The name encodes a boxel index in its letters and boxel
 number, so regressing that index against real `StarPos` coordinates — with each sector's own origin
 cancelled, so no sector grid has to be assumed — recovers the box size as the slope of the fit.
-Across 2,854 procedurally-named systems:
+Across 2,854 procedurally-named systems in one Commander's journals, measured before 2026-09-08:
 
 | Mass code | Box size | Measured | Systems |
 |---|---|---|---|
@@ -264,8 +264,8 @@ land. Community documentation agrees at both ends: mass code `a` within a 10 ly 
 **Whether a heavier boxel pays better.** This is the thing the feature is most likely to be asked to
 confirm, and D47 declines every time.
 
-The claim is real folklore — more system mass, more of the big-payout genera — and Phase 16's spike
-set out to turn it into a number using one Commander's own 632 `ScanOrganic` events. It could not,
+The claim is real folklore — more system mass, more of the big-payout genera — and a study made
+before 2026-09-08 set out to turn it into a number using one Commander's own 632 `ScanOrganic` events. It could not,
 for three reasons that no amount of further care fixes at this sample size:
 
 - Only three mass codes carry a usable sample, and `b` — the one the claim leans hardest on — has
@@ -285,7 +285,7 @@ Where D47 watched you arrive, it names the main star's class too — a variant's
 star, and the variant is what sets an organic's price.
 
 That comes from the `FSDTarget` the game writes **before** the jump, not from the arrival scan.
-Measured over 7,412 jumps: `FSDTarget` named the system being entered on **99.7%** of them, while a
+Measured over 7,412 jumps in one Commander's journals, before 2026-09-08: `FSDTarget` named the system being entered on **99.7%** of them, while a
 main-star `Scan` followed on only **28.6%**. The obvious source is the one that is usually not
 there.
 
@@ -299,7 +299,7 @@ Two cases deliberately produce no star at all rather than a plausible one:
 ### Hand-named systems
 
 Sol, Colonia and `HIP 12685` carry no mass code, and being told so is a real answer rather than a
-failure — 1,892 of the 4,746 names surveyed were hand-named, which makes it the common case.
+failure — 1,892 of the 4,746 names in those journals were hand-named, which makes it the common case.
 
 ```text
 Colonia is a hand-named system, so there is no mass code in it to read. Only

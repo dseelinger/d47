@@ -132,7 +132,7 @@ route with ninety supercharges in it is ninety opportunities to get it wrong. Ca
 
 ### What comes back
 
-A Sol-to-Colonia plot is **131 waypoints and 168 jumps**. Spoken, you get the totals and the next
+A Sol-to-Colonia plot at a 50 ly range, measured on 2026-08-14, is **131 waypoints and 168 jumps**. Spoken, you get the totals and the next
 handful of stops; the neutron flag rides on the waypoint rather than in a preamble, because it is
 the only part that changes what you do on arrival.
 
@@ -156,7 +156,7 @@ rather than each keeping their own.
 A plot is submitted and queued rather than asked and answered. The budget is ninety seconds, against
 fifteen for an ordinary lookup, because a Commander asking for a route across the galaxy has
 knowingly asked for arithmetic. Past that the answer says so, and says what to change: a shorter
-route, or a higher efficiency.
+route, fewer hops or a smaller radius.
 
 The tool schema and the service it calls are on
 [Route planning](capabilities/routes.html) — one page for all three planners, because that part

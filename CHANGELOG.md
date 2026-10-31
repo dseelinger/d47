@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-The galaxy, system name, exobiology, on-foot and trade run help pages have shorter How it works bands. The galaxy page now describes the Max report age and Start from dropdowns on the search pages, and says EDDN sharing sends nothing inside an Operation.
+The galaxy, system name, exobiology, on-foot and trade run help pages have shorter How it works bands. The galaxy page now describes the Max report age and Start from dropdowns on the search pages, and says EDDN sharing sends nothing inside an Operation. The galaxy and route help pages name the real setting, Look things up in the galaxy, and the route page says to fly a plan with "plot next neutron jump" rather than promising a checklist. The on-foot page's upgrade costs, the system name page's spoken reply and the exobiology route page's ranges now match the app.
 
 "What is the Python like", "what does a 6A power plant weigh" and "what does a grade 5 dirty drive cost" are now answered from the shipped tables without the AI model, so they work with no model configured. A name the tables do not know still goes to the model.
 

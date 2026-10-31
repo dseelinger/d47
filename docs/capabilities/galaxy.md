@@ -21,14 +21,14 @@ nav_order: 105
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Two steps to looking something up in the galaxy.</p>
 <section>
-<h2><span class="num">1</span> Turn web access on. It is off out of the box.</h2>
-<p class="say">Turn on Let D47 search the web in the Web access settings.</p>
+<h2><span class="num">1</span> Turn galaxy lookups on. They are off out of the box.</h2>
+<p class="say">Turn on Look things up in the galaxy, in the Outside sources group of the Providers settings.</p>
 <p class="expect">The row shows on; it is off until you switch it, and the Privacy page lists the sites it may reach.</p>
-<svg viewBox="0 0 880 252" role="img" aria-label="Web access">
+<svg viewBox="0 0 880 252" role="img" aria-label="Outside sources">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Web access</text>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Outside sources</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 search the web</text>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Look things up in the galaxy</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
  <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Which sites it may reach</text>
@@ -38,24 +38,24 @@ nav_order: 105
 </section>
 <section>
 <h2><span class="num">2</span> Ask.</h2>
-<p class="say">Say "where is the nearest material trader" or "find me a neutron star".</p>
-<p class="expect">D47 answers and names its source, so you can tell a lookup from a guess.</p>
+<p class="say">Say "nearest raw material trader" or "find me a neutron star".</p>
+<p class="expect">D47 answers with the distance from your system and, where it has one, the date the data was reported.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">where is the nearest material trader</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">nearest raw material trader</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"what is at Jameson Memorial" — "find me a neutron star"</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">The answer names its source, so you can tell a lookup from a guess.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">The answer says the distance from your system and when the data was reported.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Turn web access on before you ask.</p>
-<p class="expect">The lookup runs; with web access off D47 says it is off rather than inventing an answer.</p>
+<p class="say">Turn Look things up in the galaxy on before you ask.</p>
+<p class="expect">The lookup runs; with it off D47 says galaxy search is switched off rather than inventing an answer.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Off means off, and the answer says so.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Off means off, and the answer says so.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">With web access off D47 refuses the lookup rather than inventing one. That refusal is the feature.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">With it off D47 refuses the lookup rather than inventing one.</text>
 </svg>
 </section>
 </div></div>
@@ -156,13 +156,13 @@ Turning it on takes effect immediately. There is no restart.
 
 ### Notable places for short stories {#notable-places-for-short-stories}
 
-A second setting, added with list.md Phase 47 and off by default, and a second host. When the
+A second setting, off by default, with a second host. When the
 core writes you a short story it may pick the story's stops from the
 [Galactic Exploration Catalog](https://edastro.com/gec/) on edastro.com — the community
 catalogue of nebulae, notable bodies, wrecks, memorials and tourist sites that the Galactic
 Mapping Project was migrated into. One request fetches the whole catalogue, about two megabytes,
 and **the choosing by distance happens on this machine**: where you are never leaves it, and
-nothing about you goes with the request. The catalogue is kept in memory for a few hours so a
+nothing about you goes with the request. The catalogue is kept in memory for six hours so a
 draft and its revisions do not fetch it three times, and it is never written to disk.
 
 A lookup and never a copy. Nothing from the catalogue is written into d47's own tables; the
@@ -318,13 +318,13 @@ refuses the rest by name.
 
 #### A boolean filter cannot express false
 
-`is_colonised` returned the same 5 systems for `"true"`, `"false"`, `"False"`, JSON `true` and JSON
+Probed on or before 2026-10-06, `is_colonised` returned the same 5 systems for `"true"`, `"false"`, `"False"`, JSON `true` and JSON
 `false`. So `colonised` means "only colonised systems": true sends `"true"`, and false sends nothing.
 
 #### Population takes the comparison shape
 
-The service drops `population` in the `{"min","max"}` shape that `distance` uses. Within 15 light
-years of Sol, where 48 of the 51 systems are populated:
+The service drops `population` in the `{"min","max"}` shape that `distance` uses. Probed before
+2026-09-08 within 15 light years of Sol, where 48 of the 51 systems are populated:
 
 | Request | Systems returned |
 |---|---|
@@ -361,7 +361,7 @@ answer says systems *reported* in Boom — the same framing the station stock ca
 
 ### What comes back
 
-One system record from the service is **268 KB** — every body, every station, every market. A
+Measured before 2026-09-08, one system record from the service is **268 KB** — every body, every station, every market. A
 search returning three systems is 44 KB. None of that reaches the model: d47 reads six fields
 per system and drops the rest, so the answer is a handful of facts that can be said out loud in
 a cockpit rather than a database dump billed by the token.
@@ -860,10 +860,10 @@ distance is nearest first and price is best first: cheapest for a buyer, highest
 farthest-first answer does not go on the clipboard or become the system "set a course" takes.
 The Distance and Price headers on the Route market page ask this way.
 
-**The four filters INARA's commodity search has and this one lacked**
+**Four further filters**
 ([#296](https://github.com/dseelinger/d47/issues/296)): `max_station_distance` in light seconds
 from the star, `min_supply` as a floor a station must clear (demand when selling), `surface_stations`
-to let planetary ports and settlements back in — they are out unless asked for, as INARA has it —
+to let planetary ports and settlements back in — they are out unless asked for —
 and `order_by`, which is `price` for the ranking this search has always had and `distance` for
 nearest first. Only `min_supply` goes into the request, as the least a station must hold to be
 answered for at all; the other three are applied here, off the arrival distance and station type
@@ -921,7 +921,7 @@ outright.
 the Commander's to change:
 carriers are still out by default, because their prices are player-set and the station itself may
 be a hundred light years away by the time anybody arrives, but a carrier is sometimes the only
-seller and INARA's equivalent search includes them.
+seller.
 
 Two rules ride along with that, and they are the reason the knobs are safe to expose.
 
@@ -943,7 +943,7 @@ for."* — and echoes a non-default count that was honoured, the way the radius 
 halves of the tool obey it: the commodity search and the module-and-ship search take the same
 argument and now owe the same sentence.
 
-Module and ship names are **not** in the schema. There are 132 modules and 49 ships, and an
+Module and ship names are **not** in the schema. There are 134 modules and 49 ships, and an
 `enum` that large sits in prompt position 1 where one changed byte invalidates the whole cached
 prefix — several kilobytes paid for on every turn to answer a question asked once a session. So
 the parameter is free text and the name is matched against the real catalogue here, before a
@@ -965,7 +965,7 @@ morning. Reading the stale one out as current is how a Commander flies a long wa
 shelf.
 
 Getting a position out of a name takes one search: there is no lookup-by-name endpoint —
-`api/system/name/Colonia` is a 404, and the by-id endpoint wants an id64 nobody says out loud —
+`api/system/name/Colonia` is a 404, and the by-id endpoint needs an id64 nobody says out loud —
 so d47 names the system as a *search reference* and reads back the coordinates the service
 resolved it to.
 
@@ -987,7 +987,7 @@ One index answers three questions that sound unrelated:
 
 Body types are matched, not listed. There are 61 of them, so the same reasoning applies as for
 module names — and the matcher takes a **unique fragment** as well as a spelling: "earth-like"
-names exactly one subtype and is what a person says. "gas giant" names six, so it is refused with
+names exactly one subtype and is what a person says. "gas giant" names nine, so it is refused with
 the candidates rather than answered about whichever one came first.
 
 Two things about this search were measured and are worth knowing before changing it.
@@ -1002,10 +1002,10 @@ furthest a body search goes."
 **The signal filter has a third wire shape**, different from both the system filters and the
 station module group. It is `{"name":{"value":["Biological"]},"count":2}` — a choice member beside
 a **bare number**. The obvious spelling, `{"Biological":{"min":"1","max":"40"}}`, is accepted and
-ignored: within 20 light years of Sol it returned the unfiltered 1,315 bodies, exactly as a
+ignored: probed before 2026-09-08 within 20 light years of Sol, it returned the unfiltered 1,315 bodies, exactly as a
 misspelled key did.
 
-**A signal count is exact, not a minimum.** Asking for 1 returned 41 bodies, 2 returned 14, 3
+**A signal count is exact, not a minimum.** In the same probe, asking for 1 returned 41 bodies, 2 returned 14, 3
 returned none and 4 returned 2 — not a decreasing series, and every result carried precisely the
 number asked for. So the schema says "exactly how many" rather than "at least", because a "three
 or more" that silently meant "exactly three" would be a wrong answer that reads like a right one.
@@ -1031,7 +1031,7 @@ sends `"true"` or nothing, as `landable` does.
 
 **A material can be asked for, and ordered by share, but only among the nearest.** `material`
 is the same `materials` group `find_material` sends. The service carries each body's share of
-each material, but it ignores a share bound — Polonium with a bound of 90–100 returned the same 56
+each material, but it ignores a share bound — probed on or before 2026-10-06, Polonium with a bound of 90–100 returned the same 56
 bodies as Polonium alone — and sorting by `materials` is an HTTP 400. So `order_by: material`
 asks for the 50 nearest bodies carrying the material and keeps the `limit` with the highest share.
 The richest is the richest among those 50, and the answer says so. It sorts highest first only;

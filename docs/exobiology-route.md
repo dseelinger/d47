@@ -25,7 +25,7 @@ nav_order: 206
  <text x="660" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A BODY</text>
  <text x="660" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">what its biology is worth,</text>
  <text x="660" y="122" text-anchor="middle" font-size="15" fill="var(--text-muted)">and each species on it with its price</text>
- <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text)">The most valuable body at each stop is listed first.</text>
+ <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text)">On the plan page, the most valuable body at each stop is listed first.</text>
 </svg>
 </section>
 <section>
@@ -80,23 +80,21 @@ behind it.
 
 ### What you fill in
 
-| Box | What it means | Out of the box |
-|---|---|---|
-| **Stops** | How many systems the circuit visits | 10 |
-| **Radius (ly)** | How far from the start it may look | 200 |
-| **Least a species is worth (cr)** | The least a species must be worth to be listed; a body is a stop when any of its species clears it | 1,000,000 |
-| **Jump range (ly)** | How far one jump goes | This ship's |
-| **Farthest from arrival (ls)** | How far in-system a body may sit | 10,000 |
-| **Come back to the start** | Whether the circuit ends where it started | On |
+| Box | What it means | Out of the box | Range |
+|---|---|---|---|
+| **Stops** | How many systems the circuit visits | 10 | 1 to 50 |
+| **Radius (ly)** | How far from the start it may look | 200 | 10 to 10,000 |
+| **Least a species is worth (cr)** | The least a species must be worth to be listed; a body is a stop when any of its species clears it | 1,000,000 | 0 to 100,000,000 |
+| **Jump range (ly)** | How far one jump goes | This ship's | 10.01 to 500 |
+| **Farthest from arrival (ls)** | How far in-system a body may sit | 10,000 | 100 to 1,000,000 |
+| **Come back to the start** | Whether the circuit ends where it started | On | |
 
-It starts from where you are. Systems with Thargoid presence are avoided. A body's worth is the total of all its species, including those under the minimum.
-
-A loop can come back in either direction. Spansh may return the same systems in a different order for the same request.
+It starts from where you are. Systems with Thargoid presence are avoided. A body's worth is the total of all its species, including those under the minimum. A value outside its range is moved to the nearest end of it. Plotting needs Look things up in the galaxy on; with it off, D47 says route planning is switched off.
 
 ### What the plan shows
 
 Each stop shows its system, the jumps to reach it and how many bodies are worth landing on. Under
-it, each body shows what its biology is worth, most valuable first, and each species on it with its
+it, each body shows what its biology is worth, most valuable first on the page, and each species on it with its
 price. Arriving at a stop marks it reached, and "plot next exobiology stop" puts the next system in
 the galaxy map.
 

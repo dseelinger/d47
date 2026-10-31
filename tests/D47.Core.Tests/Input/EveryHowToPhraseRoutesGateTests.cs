@@ -26,15 +26,15 @@ public partial class EveryHowToPhraseRoutesGateTests
     /// <summary>Phrases that did not route when this gate landed. An entry stays only with an open issue that will make it route.</summary>
     private static readonly (string Page, string Phrase)[] NotYetReviewed =
     [
-        ("mining", "mining target platinum above twenty five percent"),
-        ("mining", "how many limpets for ten tonnes of osmium"),
-        ("system-names", "what does Praea Euq XV-B c1-42 tell you"),
+        ("mining", "mining target platinum above twenty five percent"), // #1998
+        ("mining", "how many limpets for ten tonnes of osmium"), // #1998
+        ("system-names", "what does Praea Euq XV-B c1-42 tell you"), // #1998
         ("bookmarks", "set course for Jameson Memorial"),
         ("bookmarks", "rename bookmark Current CG to Colonia Bridge"),
         ("bookmarks", "delete bookmark Current CG"),
         ("lore", "what happened at Hyades Sector DB-X d1-112"),
         ("lore", "remember that this is where I lost the Anaconda"),
-        ("on-foot", "what does grade 3 on my Maverick cost"),
+        ("on-foot", "what does grade 3 on my Maverick cost"), // #1998
         ("crew", "who is in my fighter bay"),
         ("crew", "comms Vasquez"),
         ("crew", "how is the fighter holding up"),
@@ -43,7 +43,7 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("commander-log", "have I met Arden Vale before"),
         ("powerplay", "what does my next Powerplay rank give me"),
         ("powerplay", "what would Edmund Mahon give me"),
-        ("exobiology", "what biology is on this body"),
+        ("exobiology", "what biology is on this body"), // #1998
         ("binding-profiles", "save these bindings as sim pit"),
         ("binding-profiles", "load the sim pit bindings"),
         ("surface-guidance", "which way to mark 1"),
@@ -53,11 +53,11 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("reminders", "when I next dock"),
         ("reminders", "next session"),
         ("reminders", "in twenty minutes"),
-        ("galaxy", "where is the nearest material trader"),
-        ("galaxy", "find me a neutron star"),
+        ("galaxy", "nearest raw material trader"), // #1998: a quick search, which this router does not load
+        ("galaxy", "find me a neutron star"), // #1998
         ("focus", "bring Elite back"),
         ("utilities", "set a timer for twenty minutes called fuel scoop"),
-        ("routes", "plot a neutron route to Colonia"),
+        ("routes", "plot a neutron route to Colonia"), // #1998
         ("macros", "docking prep"),
         ("vr", "put the panel down"),
         ("vr", "lock it to my head"),

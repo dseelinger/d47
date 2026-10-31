@@ -21,19 +21,19 @@ nav_order: 106
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps to a route worth flying.</p>
 <section>
-<h2><span class="num">1</span> Turn web access on. Routes are worked out elsewhere.</h2>
-<p class="say">Turn on web access in the Route planning settings.</p>
-<p class="expect">The row shows on; with web access off route planning does nothing.</p>
-<svg viewBox="0 0 880 252" role="img" aria-label="Route planning">
+<h2><span class="num">1</span> Turn galaxy lookups on. Routes are worked out by Spansh.</h2>
+<p class="say">Turn on Look things up in the galaxy, in the Outside sources group of the Providers settings.</p>
+<p class="expect">The row shows on. With it off, D47 answers that route planning is switched off.</p>
+<svg viewBox="0 0 880 252" role="img" aria-label="Outside sources">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Route planning</text>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Outside sources</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">Let D47 search the web</text>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Look things up in the galaxy</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
  <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">Which sites</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">named on the Privacy page</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">The plotter is somebody else's service. Off, this page does nothing.</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">Route planning shares this setting with galaxy search.</text>
 </svg>
 </section>
 <section>
@@ -49,17 +49,16 @@ nav_order: 106
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> Accept it, and it becomes a checklist.</h2>
-<p class="say">Accept the route.</p>
-<p class="expect">It becomes a checklist with one line per stop, ticked as you fly them.</p>
-<svg viewBox="0 0 880 208" role="img" aria-label="The Checklist page">
+<h2><span class="num">3</span> Fly it one stop at a time.</h2>
+<p class="say">Say "plot next neutron jump".</p>
+<p class="expect">D47 sets the next stop in the galaxy map and says which stop it is, such as "Stop 2 of 21".</p>
+<svg viewBox="0 0 880 208" role="img" aria-label="The ask row with the next-stop phrase typed into it">
  <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
- <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Checklist</text>
- <text x="44" y="92" font-size="16" fill="var(--text)">1. Jump to Jackson's Lighthouse</text>
- <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">neutron</text>
- <text x="44" y="130" font-size="16" fill="var(--text)">2. Jump to Skaudai CH-B d14-34</text>
- <text x="44" y="184" font-size="15" fill="var(--text-muted)">One line per stop, ticked as you fly them.</text>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">plot next neutron jump</text>
+ <text x="44" y="92" font-size="16" fill="var(--text)">Stop 2 of 21, set in the galaxy map.</text>
+ <text x="44" y="130" font-size="16" fill="var(--text)">"plot next riches stop" and "plot next trade stop" work the same way.</text>
+ <text x="44" y="184" font-size="15" fill="var(--text-muted)">Each stop is planned in advance; this sets the next one.</text>
 </svg>
 </section>
 <section>
@@ -216,7 +215,7 @@ worth is nobody's business but yours.
 
 ### What comes back
 
-A Sol-to-Colonia plot is 131 waypoints and 168 jumps. Reading that out is not an answer, so the
+A Sol-to-Colonia plot at a 50 ly range, measured on 2026-08-14, is 131 waypoints and 168 jumps. Reading that out is not an answer, so the
 totals come first and the next handful of waypoints follow — which is how the route is flown
 anyway. You plot the next waypoint when you reach this one.
 
@@ -300,7 +299,7 @@ your system's name are drawn at 6,400 ly and closer.
 
 ### Mining routes
 
-There are none, and that is a measurement rather than an omission: `api/mining/route` is a **404**.
+There are none, and that is a measurement rather than an omission: `api/mining/route` was a **404** when checked before 2026-09-08.
 The service has no mining route planner.
 
 What it does have is the ring index, and that is `find_body` on the [galaxy search](galaxy.md) —
@@ -349,7 +348,8 @@ trip is short and the payout is high.
 Stops with nothing to scan are dropped. The plotter includes the system you started from, and a
 loop includes the return leg; both come back with an empty body list and would read as "stop here
 and scan nothing". Bodies within a stop are read out worth-most first, because that is the number
-that decides whether the stop is worth making at all.
+that decides whether the stop is worth making at all. The spoken answer reads the first three stops
+and four bodies at each, then counts the rest: "and 2 more here." and "7 more stops after those."
 
 #### `plot_trade_route`
 
@@ -498,15 +498,13 @@ The arithmetic was never the problem. Holding cargo makes the state carried betw
 and cargo* rather than credits, so a plain search over ten hops is the reachable set raised to the
 tenth power — the version that does not finish. d47 runs a bounded one instead: a beam of the best
 200 partial routes carried hop to hop, with each leg's buy-and-sell decision solved inside it.
-Measured at the real shape — ten hops, 150 markets, 30 commodities — that is 300,000 leg
+Measured before 2026-09-08 at the real shape — ten hops, 150 markets, 30 commodities — that is 300,000 leg
 evaluations and tens of milliseconds.
 
-What costs is asking. A station search answers in 1.1 to 1.3 seconds whatever it returns, so the
+What costs is asking. A station search answered in 1.1 to 1.3 seconds whatever it returned, measured before 2026-09-08, so the
 bill is the number of requests and hardly the size of them: d47 asks for the largest pages the
 service gives, and caches what comes back, because a market does not move between two plans made a
 minute apart.
-
-For scale: the planner this replaced took **forty-eight seconds** to answer four hops.
 
 #### `best_commodities_for`
 
@@ -558,6 +556,10 @@ Restock 1,000 t at Sol, 964 t at Pyraleau OA-Q c21-5, 964 t at Clooku GK-S c19-5
 Tank and hold read from carrier management 2 days ago.
 ```
 
+The answer ends with where to buy tritium near the destination: "Tritium is sold at" a station
+within one jump, with when its market was reported, or that nothing within one jump sells it. On a
+one-way plot it adds "Plot it as a round trip and carry the whole total."
+
 Used capacity is the carrier's total capacity less its free space, so crew, shipyard and outfitting
 stock and reserved market space all count: fuel burn follows mass, and cargo is mass. The tritium in
 the hold is counted inside that figure, never beside it. Where the hold's tritium has not been seen,
@@ -597,7 +599,7 @@ parameter at its default, which is the quietest way to be given a wrong answer.
 real and still answers; d47 stopped asking. It could not hold cargo between legs, it silently
 dropped `loop` and `capital` alike — a trade plot with no capital finds nothing affordable and
 reports an empty route, which looks exactly like a correct answer about a Commander with no money —
-and it took forty-eight seconds over four hops. Those are not parameters of somebody else's planner
+and, measured before 2026-09-08, it took forty-eight seconds over four hops. Those are not parameters of somebody else's planner
 but a different problem. It was **replaced rather than kept as a fallback**: two tools that both
 plan trade routes and disagree is worse than either alone.
 
@@ -629,7 +631,7 @@ waiting well past finishing before anybody noticed. The delay is injected, so th
 including the ninety-second budget — is tested without a second of real time passing.
 
 **The galaxy plotter is not wired up.** `api/generic/route` is real and it does not take a jump
-range: it wants the drive's physics — `optimal_mass`, `fuel_power`, `fuel_multiplier`,
+range: it needs the drive's physics — `optimal_mass`, `fuel_power`, `fuel_multiplier`,
 `max_fuel_per_jump`, `range_boost` — and answers `ship details are invalid` without them. Some of
 that is in the journal's `Loadout` engineering modifiers and some needs a module specification
 table. It is a real feature and it belongs behind the one that provides that table, not bolted on

@@ -35,7 +35,7 @@ nav_order: 118
 <section>
 <h2><span class="num">2</span> Read which half the answer came from.</h2>
 <p class="say">Listen for which half of the answer came from where.</p>
-<p class="expect">Where a plant grows comes from the shipped tables; whether anyone has sold one here needs the network, and the answer says so.</p>
+<p class="expect">Species values come from the shipped tables. What other Commanders logged on the body needs the Earlier biology finds from Canonn setting and the network.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Bacterium Aurasus">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Bacterium Aurasus</text>
@@ -46,19 +46,19 @@ nav_order: 118
  <text x="68" y="154" font-size="16" fill="var(--text)">Where it grows</text>
  <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">from the shipped tables</text>
  <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="210" font-size="16" fill="var(--text)">Whether anybody has sold one here</text>
- <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">needs the network</text>
+ <text x="68" y="210" font-size="16" fill="var(--text)">Earlier finds on this body</text>
+ <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">needs the setting and the network</text>
  <text x="44" y="278" font-size="15" fill="var(--text-muted)">The two halves come from two places, and the answer says which.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <p class="say">Treat the figure as the base sale, and remember a first footfall multiplies it.</p>
-<p class="expect">D47 states that the first-footfall bonus is not included in the number.</p>
+<p class="expect">The values are base values. A first footfall pays five times as much, and the footfall callout says when a body has one.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="First-footfall bonuses are not in the shipped figure.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">First-footfall bonuses are not in the shipped figure.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The number is the base sale. Being first multiplies it, and D47 says so rather than folding it in.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">The number is the base sale. Being first multiplies it.</text>
 </svg>
 </section>
 </div></div>
@@ -96,7 +96,7 @@ nav_order: 118
  <rect x="20" y="36" width="840" height="94" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="74" text-anchor="start" font-size="16" fill="var(--text)">1 biological signal: Brain Trees.</text>
  <text x="46" y="108" text-anchor="start" font-size="15" fill="var(--text-muted)">Also down there: 3 Geological.</text>
- <text x="440" y="170" text-anchor="middle" font-size="16" fill="var(--text)">Every one of the 792 events measured names a genus, and never a species.</text>
+ <text x="440" y="170" text-anchor="middle" font-size="16" fill="var(--text)">The signal names a genus, and never a species.</text>
  <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text)">Bacterium Alcyoneum and Bacterium Acies are very different money.</text>
  <text x="440" y="230" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So this half lists what is there and quotes no single price.</text>
 </svg>
@@ -174,7 +174,7 @@ Elite names the genus and not the species. The candidates are a prediction from 
 conditions, and the sample decides.
 ```
 
-**The game's own answer stops at the genus.** Every one of the 792 events measured names a *genus* —
+**The game's own answer stops at the genus.** The signal event names a *genus* —
 `Bacterium`, `Stratum`, `Brain Trees` — and never a species. *Bacterium Alcyoneum* and *Bacterium Acies*
 are very different money, and the game does not say which you are looking at until you take the
 sample. For a mapped body whose `Scan` D47 holds, it lists under each genus the species the body's
@@ -237,8 +237,7 @@ that pays five times as much and only happens where nobody has been.
 **Here the species *are* named, and that is why this half may quote figures.** The plotter is reading
 an index of bodies people have already scanned and uploaded, and that index knows down to the
 species. Values come from the response, never computed — a Commander's own sale history cannot price
-a species, because 30 of the 31 species sold in the measured corpus were sold exactly once and the
-row total covers an unstated number of specimens.
+a species, because a sale row's total covers an unstated number of specimens.
 
 ### On the surface: how many, and how far
 
@@ -262,12 +261,12 @@ Finished here: Bacterium Cerbrus.
 
 **The colony distance is a community figure.** Frontier publishes no table of it; the species' own
 Codex entry in the game is the authority. `Exobiology.tsv` holds one value per genus in its
-`colony_distance` column, taken from ArtemisScannerTracker, HerzbubeWiki's EDExobiology page and
-EDCoPilot's callouts. A genus with no value is answered as before.
+`colony_distance` column, taken from community tools and wiki pages, which the file's header
+lists. A genus with no value is answered without a distance.
 
 **It says when you are far enough, and when a set is lost.** With a colony distance and a surface
-position, Directive 47 keeps the position of every specimen in the set and says once, as you cross
-the distance from all of them, "Far enough for the next Stratum Paleas sample." Logging a different
+position, Directive 47 keeps the position of every specimen in the set and, after each of the first two
+specimens, says once as you cross the distance from all of them, "Far enough for the next Stratum Paleas sample." Logging a different
 species while a set holds one or two specimens loses that set, and it says so as the scan lands:
 "That abandoned your 2 Stratum Paleas samples." Approaching a body with biological signals that
 nobody has walked, it says "Nobody has set foot on Smojue EB-O d6-37 AB 1 b. First footfall bonus is
@@ -280,16 +279,16 @@ there." Each has its own switch:
 travelled was sufficient, so the smallest accepted gap is an upper bound on the requirement —
 measured from your own play, carried with its sample size, and never presented as the figure itself.
 
-Three things this rests on, all measured:
+Three things this rests on:
 
-- **`ScanOrganic` carries no position at all** — not on any of the 632 events measured. Directive 47
+- **`ScanOrganic` carries no position at all** — it has no latitude or longitude. Directive 47
   stamps one from `Status.json` as the event lands, so the distance is only as good as how closely
   those two writes track each other. A specimen taken with no position still counts; it simply
   carries no distance, because reporting zero would read as "you have not moved".
-- **The run is `Log`, `Sample`, `Sample`, `Analyse`** on 94 of 101 runs. That is three specimens and
+- **A run is `Log`, `Sample`, `Sample`, `Analyse`**. That is three specimens and
   a fourth event that banks them, so `Analyse` completes rather than counting as a fourth.
-- **The body radius comes from `Status.json`**, not from a `Scan`. That is a correction to the
-  original plan, which would have made the distance uncomputable on any body you had not scanned.
+- **The body radius comes from `Status.json`**, not from a `Scan`, so the distance can be worked out
+  on a body you have not scanned.
   Distances are great-circle, so the same angle is a shorter drive on a small moon than on a large
   planet.
 
@@ -380,7 +379,7 @@ measured from every specimen of the set. While a set is open on the body you are
 #### `get_unsold_exobiology`
 
 The organic data you have analysed and not sold: the total, how many analyses, how many carry the
-first footfall bonus, and any left out for want of a value.
+first footfall bonus, and any left out because it has no value.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

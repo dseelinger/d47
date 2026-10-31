@@ -11,7 +11,7 @@ nav_order: 153
 <section>
 <h2><span class="num">1</span> Set a target material.</h2>
 <p class="say">Say "mining target painite".</p>
-<p class="expect">Prospector results read out only painite, and say whether the rock holds enough of it.</p>
+<p class="expect">Prospector results read out only painite, with its share of the rock.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a mining target typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">mining target painite</text>
@@ -175,7 +175,7 @@ This needs the language model, since the number of tonnes is in the sentence.
 
 > "list my surface mining sites"
 
-The answer comes from the refining you did in an SRV, such as a Rhino, read from your journals. Each
+These need the language model. The answer comes from the refining you did in an SRV, such as a Rhino, read from your journals. Each
 site is a body: its name and system, the tonnes refined, the number of runs, the date of the last
 run, and the latitude and longitude where a landing or a login placed you on the body. The tonnes are
 tonnes refined, since ore ejected from the SRV is not kept.
