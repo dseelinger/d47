@@ -8,10 +8,12 @@ namespace D47.Core.Persona;
 /// <param name="characters">The active Commander's characters.</param>
 /// <param name="commanderSystem">The system the Commander is in.</param>
 /// <param name="distance">Light years between two systems, or null when the host cannot ask.</param>
+/// <param name="station">The station the Commander is docked at, or null.</param>
 public sealed class CharacterLine(
     Func<IReadOnlyList<CustomCharacter>> characters,
     Func<string?> commanderSystem,
-    Func<string, string, CancellationToken, Task<double?>>? distance = null) : ILine
+    Func<string, string, CancellationToken, Task<double?>>? distance = null,
+    Func<string?>? station = null) : ILine
 {
     private readonly Dictionary<string, List<ConversationMessage>> _transcripts = [];
 
@@ -52,6 +54,7 @@ public sealed class CharacterLine(
                 transcript,
                 OffersTools: false,
                 Signal: character.Aboard ? 1 : LinkSignal.Strength(lightYears),
+                LiveState: character.Aboard ? null : () => OffShipKnowledge.Describe(commanderSystem(), station?.Invoke()),
                 Voice: character.Voice,
                 Picture: character.Picture),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);

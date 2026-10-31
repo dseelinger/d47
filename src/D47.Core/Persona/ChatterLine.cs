@@ -16,6 +16,7 @@ namespace D47.Core.Persona;
 /// <param name="roster">The NPCs heard here, which keep the personality written for each, or null for none.</param>
 /// <param name="writePersonality">Writes one NPC's personality on the background model, or null for none.</param>
 /// <param name="accentHeardAs">The accent of the voice an incoming message resolves to, or null for none.</param>
+/// <param name="station">The station the Commander is docked at, or null.</param>
 public sealed class ChatterLine(
     Func<string?> system,
     Func<string?>? model = null,
@@ -24,7 +25,8 @@ public sealed class ChatterLine(
     ILogger? logger = null,
     Func<NpcsHeardHere?>? roster = null,
     Func<NpcHeard, CancellationToken, Task<string?>>? writePersonality = null,
-    Func<Announcement, string?>? accentHeardAs = null) : ILine
+    Func<Announcement, string?>? accentHeardAs = null,
+    Func<string?>? station = null) : ILine
 {
     private const string Commander = "Commander";
 
@@ -156,7 +158,8 @@ public sealed class ChatterLine(
                 OffersTools: false,
                 Signal: 1,
                 Model: model?.Invoke(),
-                Screen: reply => Screened(reply, name, exchange)),
+                Screen: reply => Screened(reply, name, exchange),
+                LiveState: Knows),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
 
@@ -180,7 +183,7 @@ public sealed class ChatterLine(
 
         var brief = $"""
                      {CannedSpeakers.For(npc.Family ?? string.Empty)}
-                     You are {npc.Name}, a real contact on the comms channel. The Commander is talking to you.
+                     You are {npc.Name}, a real contact on the comms channel. You have just called out on the open channel, in the situation described above, and the Commander is answering you.
                      You are a human being, not an artificial intelligence, and you never claim to be one.{trait}
                      Answer in one or two short spoken lines, as yourself: no narration, no stage directions,
                      no quotation marks. Never name or imitate a real person or another player.
@@ -199,9 +202,12 @@ public sealed class ChatterLine(
                 Signal: 1,
                 Model: model?.Invoke(),
                 Screen: reply => Screened(reply, npc.Name, exchange: null),
+                LiveState: Knows,
                 HeardAs: heardAs),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
+
+    private string Knows() => OffShipKnowledge.Describe(system(), station?.Invoke());
 
     /// <summary>The held conversation with a comms NPC, empty for a new stay and trimmed to the last <see cref="ExchangeLines.Most"/> messages.</summary>
     private List<ConversationMessage> Conversation(string name)

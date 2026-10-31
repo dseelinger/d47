@@ -19,12 +19,18 @@ namespace D47.Core.Persona;
 /// <param name="carrierAway">
 /// The light years to the Commander's carrier when the member with this cast id is heard over its link, or null.
 /// </param>
+/// <param name="inCockpit">Whether the member with this cast id has a seat in the hull the Commander flies; one that does reads the ship's live state.</param>
+/// <param name="system">The Commander's current star system, or null.</param>
+/// <param name="station">The station the Commander is docked at, or null.</param>
 public sealed class CastLine(
     Func<string, AdventureSpeaker?> member,
     Func<string?> hiddenStory,
     Func<ShipFacts>? facts = null,
     ILogger? logger = null,
-    Func<string, double?>? carrierAway = null) : ILine
+    Func<string, double?>? carrierAway = null,
+    Func<string, bool>? inCockpit = null,
+    Func<string?>? system = null,
+    Func<string?>? station = null) : ILine
 {
     private const string KeyPrefix = "cast.reply";
 
@@ -99,6 +105,7 @@ public sealed class CastLine(
                 Signal: away is { } carried ? CastLink.Strength(carried) : 1,
                 Screen: SpeaksEnglish(speaking) ? reply => Screened(reply, castId, speaking.Name) : null,
                 ScreenReply: SpeaksEnglish(speaking) ? null : reply => ScreenedBilingual(reply, castId, speaking.Name),
+                LiveState: inCockpit?.Invoke(castId) == true ? null : () => OffShipKnowledge.Describe(system?.Invoke(), station?.Invoke()),
                 HiddenStory: hiddenStory,
                 Cast: speaking.Id),
             said.Length == 0 ? "The Commander is trying to get your attention." : said);

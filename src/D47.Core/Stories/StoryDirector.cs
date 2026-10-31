@@ -317,6 +317,11 @@ public sealed class StoryDirector(
                 Carrier())
             : null;
 
+    /// <summary>Whether the current story's member <paramref name="castId"/> has a seat in the hull the Commander flies.</summary>
+    public bool CastInCockpit(string? frontierId, string castId) =>
+        stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret
+        && InCockpit(frontierId, story, secret).Contains(castId, StringComparer.Ordinal);
+
     /// <summary>
     /// The current story's cast ids aboard the ship at <paramref name="beat"/> of its current chapter, -1 for the opening and by
     /// default the last beat that fired; for a story with no recorded chapter, those aboard by span. Empty when no story is current.

@@ -16,6 +16,8 @@ namespace D47.Core.Persona;
 /// <param name="writePersonality">Writes one NPC's personality on the background model, or null for none.</param>
 /// <param name="roster">The NPCs heard here, whose message voices a target heard on comms, or null for none.</param>
 /// <param name="accentHeardAs">The accent of the voice an incoming message resolves to, or null for none.</param>
+/// <param name="system">The Commander's current star system, or null.</param>
+/// <param name="station">The station the Commander is docked at, or null.</param>
 public sealed class TargetLine(
     Func<TargetedShip?> target,
     Func<string?>? model = null,
@@ -23,7 +25,9 @@ public sealed class TargetLine(
     ILogger? logger = null,
     Func<NpcHeard, CancellationToken, Task<string?>>? writePersonality = null,
     Func<NpcsHeardHere?>? roster = null,
-    Func<Announcement, string?>? accentHeardAs = null) : ILine
+    Func<Announcement, string?>? accentHeardAs = null,
+    Func<string?>? system = null,
+    Func<string?>? station = null) : ILine
 {
     private const string KeyPrefix = "target.reply";
 
@@ -77,6 +81,7 @@ public sealed class TargetLine(
                 Signal: 1,
                 Model: model?.Invoke(),
                 Screen: reply => Screened(reply, name),
+                LiveState: () => OffShipKnowledge.Describe(system?.Invoke(), station?.Invoke()),
                 HeardAs: heardAs),
             question);
     }

@@ -2764,7 +2764,10 @@ public sealed class AppHost : IDisposable
         turns.Lines.Add(new CharacterLine(
             () => late.Host?.Characters.CharactersOf(gameState.Active?.Identity.FrontierId) ?? [],
             () => gameState.Active?.Location.StarSystem,
-            GatedDistance(settings, () => galaxy)));
+            GatedDistance(settings, () => galaxy),
+            DockedStation));
+
+        string? DockedStation() => gameState.Active?.Location is { Docked: true } place ? place.StationName : null;
 
         string? CarrierNotes(D47.Core.Characters.CarrierCharacter who) =>
             late.Host?.Characters.NotesFor(gameState.Active?.Identity.FrontierId, who);
@@ -2796,7 +2799,8 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<ChatterLine>(),
             () => late.Host?.Announcer.NpcsHere,
             StrangerAsk(loggerFactory.CreateLogger<ChatterLine>()),
-            heardAs => late.Host?.AddressedVoices.AccentHeardAs(heardAs)));
+            heardAs => late.Host?.AddressedVoices.AccentHeardAs(heardAs),
+            DockedStation));
 
         // The held target's NPC pilot.
         turns.Lines.Add(new TargetLine(
@@ -2806,7 +2810,9 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<TargetLine>(),
             StrangerAsk(loggerFactory.CreateLogger<TargetLine>()),
             () => late.Host?.Announcer.NpcsHere,
-            heardAs => late.Host?.AddressedVoices.AccentHeardAs(heardAs)));
+            heardAs => late.Host?.AddressedVoices.AccentHeardAs(heardAs),
+            () => gameState.Active?.Location.StarSystem,
+            DockedStation));
 
         // The pilot of the shuttle the Commander rides.
         turns.Lines.Add(new ShuttleLine(
@@ -2960,7 +2966,10 @@ public sealed class AppHost : IDisposable
             () => storyDirector.HiddenBrief(gameState.Active?.Identity.FrontierId),
             () => ShipFacts.Of(gameState.Active),
             loggerFactory.CreateLogger<CastLine>(),
-            castId => storyDirector.CastCarrierAway(gameState.Active?.Identity.FrontierId, castId)));
+            castId => storyDirector.CastCarrierAway(gameState.Active?.Identity.FrontierId, castId),
+            castId => storyDirector.CastInCockpit(gameState.Active?.Identity.FrontierId, castId),
+            () => gameState.Active?.Location.StarSystem,
+            DockedStation));
 
         ShippedCallouts.Connect(stores.Callouts, new ShippedCallouts.Services
         {

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A comms NPC, a targeted pilot, a custom character who is not aboard and a story cast member outside the cockpit no longer know your ship's fuel, cargo, hull or docking state. They know the system you are in and, when docked, the station. A real comms NPC is told it has just called out on the open channel, so it no longer denies the line it broadcast.
+
 Each star and planet on Search › System › Bodies now opens a page of its own under the system. The page has four sections: Overview gives the body's physical facts, signals, genera, rings and your surface mining there; Composition gives its atmosphere, solid composition and materials with their shares; Orbit gives its orbit and rotation; Orbiting lists the stations on it and the bodies around it. A body listed there opens its own page in turn. A star's Overview shows its class and says what the letter, the number and the luminosity class mean. Pressing a Search › Bodies result opens its system with that body's page under it. Each body and genus has a Codex tile beside it, which opens its Codex entry where d47 has one.
 
 The Carrier, Missions, Crew and Characters help pages were checked against the app. Carrier now describes the DRAKE / FORTUNE / NAUTILUS / VICTORY choice and no longer says the balance carries a date. Crew says only a pilot on duty in the fighter bay can be selected on the Crew channel, and Missions describes the "where do I source my missions" answer. Their How it works bands are shorter.
