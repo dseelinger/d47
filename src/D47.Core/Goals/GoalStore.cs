@@ -14,15 +14,11 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
     /// <summary>The key used where the journals never said who was flying.</summary>
     public const string NoCommander = "";
 
-    /// <summary>Bounds how many arcs a person can invent.</summary>
-    public const int MaxAuthored = 40;
-
     private static readonly JsonSerializerOptions Json = StoreJson.OmittingNulls;
 
     private readonly Lock _gate = new();
 
     private Dictionary<string, GoalMine> _mines = new(StringComparer.Ordinal);
-    private Dictionary<string, IReadOnlyList<GoalArc>> _authored = new(StringComparer.Ordinal);
     private Dictionary<string, IReadOnlyList<string>> _setAside = new(StringComparer.Ordinal);
     private IReadOnlyList<GoalProblem> _problems = [];
     private readonly WatchedTextFile _file = new(files, path, logger);
@@ -49,15 +45,6 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
         }
     }
 
-    /// <summary>The arcs this Commander invented, in the order they wrote them.</summary>
-    public IReadOnlyList<GoalArc> AuthoredBy(string? frontierId)
-    {
-        lock (_gate)
-        {
-            return _authored.GetValueOrDefault(frontierId ?? NoCommander, []);
-        }
-    }
-
     /// <summary>Arc keys this Commander does not want to see.</summary>
     public IReadOnlyList<string> SetAsideBy(string? frontierId)
     {
@@ -73,7 +60,6 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
             lock (_gate)
             {
                 _mines = new Dictionary<string, GoalMine>(StringComparer.Ordinal);
-                _authored = new Dictionary<string, IReadOnlyList<GoalArc>>(StringComparer.Ordinal);
                 _setAside = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
                 _problems = [];
             }
@@ -111,74 +97,6 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
 
         Save();
         Changed?.Invoke();
-    }
-
-    /// <summary>Writes a goal the Commander invented.</summary>
-    public string? Author(string? frontierId, GoalArc arc)
-    {
-        ArgumentNullException.ThrowIfNull(arc);
-
-        Poll();
-
-        var commander = frontierId ?? NoCommander;
-
-        lock (_gate)
-        {
-            var existing = _authored.GetValueOrDefault(commander, []);
-
-            if (existing.Count >= MaxAuthored)
-            {
-                return $"You already have {MaxAuthored} of your own goals, which is the most I hold.";
-            }
-
-            if (GoalCatalogue.Find(arc.Key) is not null ||
-                existing.Any(other => string.Equals(other.Key, arc.Key, StringComparison.OrdinalIgnoreCase)))
-            {
-                return $"There is already a goal keyed {arc.Key}.";
-            }
-
-            _authored = new Dictionary<string, IReadOnlyList<GoalArc>>(_authored, StringComparer.Ordinal)
-            {
-                [commander] = [.. existing, arc],
-            };
-        }
-
-        Save();
-        Changed?.Invoke();
-        return null;
-    }
-
-    /// <summary>Replaces one authored arc — the only way its <see cref="GoalArc.Finished"/> moves.</summary>
-    public bool Replace(string? frontierId, GoalArc arc)
-    {
-        ArgumentNullException.ThrowIfNull(arc);
-
-        Poll();
-
-        var commander = frontierId ?? NoCommander;
-
-        lock (_gate)
-        {
-            var existing = _authored.GetValueOrDefault(commander, []);
-
-            if (!existing.Any(other => string.Equals(other.Key, arc.Key, StringComparison.OrdinalIgnoreCase)))
-            {
-                return false;
-            }
-
-            _authored = new Dictionary<string, IReadOnlyList<GoalArc>>(_authored, StringComparer.Ordinal)
-            {
-                [commander] =
-                [
-                    .. existing.Select(other =>
-                        string.Equals(other.Key, arc.Key, StringComparison.OrdinalIgnoreCase) ? arc : other),
-                ],
-            };
-        }
-
-        Save();
-        Changed?.Invoke();
-        return true;
     }
 
     /// <summary>Puts an arc out of sight, or brings it back.</summary>
@@ -246,7 +164,6 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
         lock (_gate)
         {
             var commanders = _mines.Keys
-                .Concat(_authored.Keys)
                 .Concat(_setAside.Keys)
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(key => key, StringComparer.Ordinal);
@@ -278,20 +195,6 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
                                         AsOf = mark.AsOf,
                                     }),
                                 ],
-                            Goals = _authored.GetValueOrDefault(key, []) is { Count: > 0 } authored
-                                ?
-                                [
-                                    .. authored.Select(arc => new GoalRecord
-                                    {
-                                        Key = arc.Key,
-                                        Name = arc.Name,
-                                        Done = arc.Done,
-                                        Written = arc.Written,
-                                        Finished = arc.Finished ? true : null,
-                                        FinishedAt = arc.FinishedAt,
-                                    }),
-                                ]
-                                : null,
                             SetAside = _setAside.GetValueOrDefault(key, []) is { Count: > 0 } aside
                                 ? [.. aside]
                                 : null,
@@ -321,7 +224,6 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
     private void Reload(string text)
     {
         var mines = new Dictionary<string, GoalMine>(StringComparer.Ordinal);
-        var authored = new Dictionary<string, IReadOnlyList<GoalArc>>(StringComparer.Ordinal);
         var aside = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
         var problems = new List<GoalProblem>();
 
@@ -331,37 +233,6 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
             {
                 var key = commander.FrontierId ?? NoCommander;
 
-                if (commander.Goals is { Count: > 0 } goals)
-                {
-                    var kept = new List<GoalArc>();
-
-                    foreach (var record in goals)
-                    {
-                        if (string.IsNullOrWhiteSpace(record.Key) || string.IsNullOrWhiteSpace(record.Name))
-                        {
-                            problems.Add(new GoalProblem(record.Key ?? "(a goal)", "no key or no name"));
-                            continue;
-                        }
-
-                        kept.Add(new GoalArc
-                        {
-                            Key = record.Key.Trim(),
-                            Name = record.Name.Trim(),
-
-                            // A hand-written goal with no definition of done still reads back.
-                            Done = string.IsNullOrWhiteSpace(record.Done)
-                                ? "Yours to call finished."
-                                : record.Done.Trim(),
-                            Kind = GoalKind.Authored,
-                            Written = record.Written,
-                            Finished = record.Finished ?? false,
-                            FinishedAt = record.FinishedAt,
-                        });
-                    }
-
-                    authored[key] = kept;
-                }
-
                 if (commander.SetAside is { Count: > 0 } hidden)
                 {
                     aside[key] =
@@ -370,8 +241,8 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
                     ];
                 }
 
-                // A record carrying only a person's own goals is a real state — nothing has been mined yet —
-                // and it gets no mine rather than an empty one, so "have you ever looked" stays answerable.
+                // A record with no MinedAt gets no mine rather than an empty one, so "have you ever looked"
+                // stays answerable.
                 if (commander.MinedAt is not { } minedAt)
                 {
                     continue;
@@ -407,10 +278,9 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
 
         lock (_gate)
         {
-            if (problems.Count == 0 || mines.Count > 0 || authored.Count > 0)
+            if (problems.Count == 0 || mines.Count > 0)
             {
                 _mines = mines;
-                _authored = authored;
                 _setAside = aside;
             }
 
@@ -444,10 +314,7 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
 
         public IReadOnlyList<MarkRecord>? Marks { get; set; }
 
-        /// <summary>The Commander's own arcs.</summary>
-        public IReadOnlyList<GoalRecord>? Goals { get; set; }
-
-        /// <summary>Read first and rewritten untouched — the other half of what a person authored.</summary>
+        /// <summary>Arc keys the Commander removed.</summary>
         public IReadOnlyList<string>? SetAside { get; set; }
     }
 
@@ -460,20 +327,5 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
         public long? Have { get; set; }
 
         public DateTimeOffset? AsOf { get; set; }
-    }
-
-    private sealed class GoalRecord
-    {
-        public string? Key { get; set; }
-
-        public string? Name { get; set; }
-
-        public string? Done { get; set; }
-
-        public DateTimeOffset? Written { get; set; }
-
-        public bool? Finished { get; set; }
-
-        public DateTimeOffset? FinishedAt { get; set; }
     }
 }

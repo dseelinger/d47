@@ -46,8 +46,7 @@ public sealed class GoalBook(
     public IReadOnlyList<string> Removed => store.SetAsideBy(commander());
 
     /// <summary>
-    /// Every arc that should be on the page: the built-ins, plus whatever the Commander invented, less
-    /// anything removed.
+    /// Every arc that should be on the page: the built-ins and the story, less anything removed.
     /// </summary>
     public IReadOnlyList<GoalStanding> Standings
     {
@@ -60,7 +59,6 @@ public sealed class GoalBook(
             return
             [
                 .. GoalCatalogue.All(live)
-                    .Concat(store.AuthoredBy(commander()))
                     .Where(arc => !removed.Contains(arc.Key, StringComparer.OrdinalIgnoreCase))
                     .Select(arc => GoalEvaluator.Evaluate(arc, live, mine))
                     .Concat(StoryStandings().Where(standing => !removed.Contains(standing.Arc.Key, StringComparer.OrdinalIgnoreCase))),
@@ -77,7 +75,6 @@ public sealed class GoalBook(
         return
         [
             .. GoalCatalogue.All(live)
-                .Concat(store.AuthoredBy(commander()))
                 .Select(arc => GoalEvaluator.Evaluate(arc, live, mine))
                 .Concat(StoryStandings()),
         ];
@@ -162,13 +159,6 @@ public sealed class GoalBook(
             return new GoalStep($"{standing.Arc.Name} is done. Nothing to do about it.", []);
         }
 
-        if (standing.Arc.Kind == GoalKind.Authored)
-        {
-            return new GoalStep(
-                $"{standing.Arc.Name} is yours rather than mine to work out. {standing.Arc.Done}",
-                []);
-        }
-
         return standing.Arc.Key switch
         {
             _ when GoalCatalogue.CareerOf(standing.Arc.Key) is not null => Career(standing),
@@ -217,68 +207,6 @@ public sealed class GoalBook(
         var said = checklists.ProposeAdd(ChecklistScope.Universal, step.Lines, standing.Arc.Key);
 
         return $"{said} That is towards {standing.Arc.Name}.";
-    }
-
-    /// <summary>Writes a goal the Commander invented.</summary>
-    public string Author(string name, string? done, DateTimeOffset now)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return "A goal needs a name.";
-        }
-
-        var trimmed = name.Trim();
-
-        if (trimmed.Length > ChecklistLimits.MaxTextLength)
-        {
-            return $"That is {trimmed.Length} characters; a goal's name is at most "
-                   + $"{ChecklistLimits.MaxTextLength}.";
-        }
-
-        var arc = new GoalArc
-        {
-            Key = Key(trimmed),
-            Name = trimmed,
-            Done = string.IsNullOrWhiteSpace(done) ? "Yours to call finished." : done.Trim(),
-            Kind = GoalKind.Authored,
-            Written = now,
-        };
-
-        return store.Author(commander(), arc)
-               ?? $"Noted: {arc.Name}. That one is yours to call done, and I will count how long it runs.";
-    }
-
-    /// <summary>Marks an authored arc finished, or re-opens it.</summary>
-    public string Finish(string? key, bool finished, DateTimeOffset now)
-    {
-        if (Find(key) is not { } standing)
-        {
-            return key is { Length: > 0 } named
-                ? $"I have no goal called {named.Trim()}."
-                : "Which goal?";
-        }
-
-        if (standing.Arc.Kind != GoalKind.Authored)
-        {
-            return $"{standing.Arc.Name} is worked out from your journal rather than ticked. "
-                   + "If I marked it by hand the next read would either undo it or leave it standing and wrong.";
-        }
-
-        if (standing.Arc.Finished == finished)
-        {
-            return $"{standing.Arc.Name} is already {(finished ? "done" : "open")}.";
-        }
-
-        var updated = standing.Arc with { Finished = finished, FinishedAt = finished ? now : null };
-
-        if (!store.Replace(commander(), updated))
-        {
-            return $"I could not write {standing.Arc.Name} back.";
-        }
-
-        return finished
-            ? $"{standing.Arc.Name} — done. That one ran {Ran(standing, now)}."
-            : $"{standing.Arc.Name} is open again.";
     }
 
     /// <summary>Takes an arc off the page. Recover brings it back.</summary>
@@ -425,33 +353,5 @@ public sealed class GoalBook(
             .Where(ship => !owned.Contains(ship.Symbol) && !GoalEvaluator.IsUnobtainable(ship) && ship.Cost is > 0)
             .OrderBy(ship => ship.Cost)
             .FirstOrDefault();
-    }
-
-    private static string Ran(GoalStanding standing, DateTimeOffset now) =>
-        standing.Age(now) is { } age && age.TotalDays >= 1
-            ? $"{(int)age.TotalDays} days"
-            : "less than a day";
-
-    /// <summary>
-    /// A key from a name — lowercase, spaces to hyphens, prefixed so it can never collide with a
-    /// built-in arc's key however somebody names their goal.
-    /// </summary>
-    private static string Key(string name)
-    {
-        var text = new StringBuilder("mine.");
-
-        foreach (var character in name.ToLowerInvariant())
-        {
-            if (char.IsLetterOrDigit(character))
-            {
-                text.Append(character);
-            }
-            else if (text.Length > 5 && text[^1] != '-')
-            {
-                text.Append('-');
-            }
-        }
-
-        return text.ToString().TrimEnd('-');
     }
 }

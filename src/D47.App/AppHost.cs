@@ -4131,8 +4131,8 @@ public sealed class AppHost : IDisposable
             host.ApplyRecall(memoryBook.Recall());
         });
 
-        // The arcs, on the tick because goals.json is hand-editable, so a goal typed into it is live without
-        // a restart.
+        // The arcs, on the tick because goals.json is hand-editable, so a removed list or a mined mark edited
+        // by hand is live without a restart.
         tick.Add("goals", _ => goals.Poll());
 
         // The adventures file is hand-editable and polled like the others. When a stamp has moved - Begin, Begin

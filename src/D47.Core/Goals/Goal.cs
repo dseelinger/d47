@@ -8,9 +8,6 @@ public enum GoalKind
     /// <summary>A diff against journal state.</summary>
     Derived,
 
-    /// <summary>A goal the Commander invented.</summary>
-    Authored,
-
     /// <summary>The Commander's current or just-finished stock story, computed from the story's own state.</summary>
     Story,
 }
@@ -43,14 +40,6 @@ public sealed record GoalArc
 
     /// <summary>The question the goal row's Ask D47 button sends, on an arc with nothing to put on a list.</summary>
     public string? Ask { get; init; }
-
-    /// <summary>When the Commander wrote it.</summary>
-    public DateTimeOffset? Written { get; init; }
-
-    /// <summary>Their own decision, and the only place in this namespace a person's tick is stored.</summary>
-    public bool Finished { get; init; }
-
-    public DateTimeOffset? FinishedAt { get; init; }
 }
 
 /// <summary>Where one figure came from, which decides how much a Commander should trust it.</summary>

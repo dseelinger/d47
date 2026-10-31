@@ -175,25 +175,6 @@ public class GoalEvaluatorTests
     }
 
     [Fact]
-    public void AnAuthoredArcIsThePersonsToCallDone()
-    {
-        var arc = new GoalArc
-        {
-            Key = "mine.thargoid-war",
-            Name = "See the war out",
-            Done = "When it ends.",
-            Kind = GoalKind.Authored,
-            Written = Long,
-        };
-
-        var standing = GoalEvaluator.Evaluate(arc, null, null);
-
-        Assert.Equal(GoalSource.Commander, standing.Source);
-        Assert.False(standing.IsDone);
-        Assert.Equal(Long, standing.Started);
-    }
-
-    [Fact]
     public void ACommanderWithoutACobraMkIvNeedsTheOtherHulls()
     {
         var standing = Evaluate(GoalCatalogue.Ships, FleetOf(Obtainable()), null);

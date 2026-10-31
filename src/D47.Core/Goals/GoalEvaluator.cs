@@ -10,19 +10,6 @@ public static class GoalEvaluator
     {
         ArgumentNullException.ThrowIfNull(arc);
 
-        if (arc.Kind == GoalKind.Authored)
-        {
-            return new GoalStanding
-            {
-                Arc = arc,
-                Source = GoalSource.Commander,
-                Started = arc.Written,
-                AsOf = arc.FinishedAt,
-                IsDone = arc.Finished,
-                Note = arc.Finished ? "done, and you said so" : "yours to call done",
-            };
-        }
-
         var mark = mine?.For(arc.Key);
 
         return arc.Key switch

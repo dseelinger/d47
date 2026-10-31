@@ -118,39 +118,6 @@ public class GoalBookTests : IDisposable
     }
 
     [Fact]
-    public void AGoalTheCommanderInventedIsTheirsToCallDone()
-    {
-        var install = new MemoryInstall();
-        var book = Book(install);
-
-        book.Author("See the war out", "When it ends.", Now);
-
-        var standing = Assert.Single(book.Standings, entry => entry.Arc.Name == "See the war out");
-
-        Assert.Equal(GoalKind.Authored, standing.Arc.Kind);
-        Assert.False(standing.IsDone);
-
-        Assert.Contains("done", book.Finish("See the war out", finished: true, Now.AddDays(30)), StringComparison.OrdinalIgnoreCase);
-        Assert.True(Assert.Single(book.Standings, entry => entry.Arc.Name == "See the war out").IsDone);
-    }
-
-    /// <summary>
-    /// The same refusal <see cref="ChecklistDocument.Complete"/> gives about a derived line, for the
-    /// same reason: the next journal read would either undo it or leave it standing and wrong.
-    /// </summary>
-    [Fact]
-    public void ADerivedArcCannotBeTickedByHand()
-    {
-        var install = new MemoryInstall();
-        var book = Book(install);
-
-        var said = book.Finish(GoalCatalogue.Engineers, finished: true, Now);
-
-        Assert.Contains("rather than ticked", said, StringComparison.Ordinal);
-        Assert.DoesNotContain(book.Standings, standing => standing.Arc.Key == GoalCatalogue.Engineers && standing.IsDone);
-    }
-
-    [Fact]
     public void WithNothingMinedTheReadbackSaysSoRatherThanReportingNothing()
     {
         var install = new MemoryInstall();
