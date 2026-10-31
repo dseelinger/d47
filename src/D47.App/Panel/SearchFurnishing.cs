@@ -95,6 +95,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 OpenFound,
+                host.Copy,
                 surface.OpenSettings,
                 host.Headset)
             {
@@ -113,6 +114,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 ChooseServices,
+                host.Copy,
                 surface.OpenSettings,
                 host.Headset)
             {
@@ -149,6 +151,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 bodySearches,
                 surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
+                host.Copy,
                 surface.OpenSettings,
                 host.Headset)
             {

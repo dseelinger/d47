@@ -58,14 +58,33 @@ public static class CopyGlyph
         return tile;
     }
 
+    /// <summary>The name with a copy glyph for <paramref name="system"/> to its right; the name alone without a system or a clipboard.</summary>
+    public static Control Beside(Control name, string? system, Func<string, Task<bool>>? copy)
+    {
+        if (system is not { Length: > 0 } target || copy is null)
+        {
+            return name;
+        }
+
+        name.VerticalAlignment = VerticalAlignment.Center;
+
+        return new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            Children = { name, For(target, copy) },
+        };
+    }
+
     /// <summary>A copy glyph that copies <paramref name="value"/> through <paramref name="copy"/>.</summary>
     public static Button For(string value, Func<string, Task<bool>> copy)
     {
         var button = Dress(new Button { VerticalAlignment = VerticalAlignment.Center });
         button.SetValue(CopiesProperty, value);
 
-        button.Click += async (_, _) =>
+        button.Click += async (_, e) =>
         {
+            e.Handled = true;
             bool worked;
 
             try

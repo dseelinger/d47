@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Every system name in a Systems, Stations or Bodies answer now has a copy button to its right, and so does the system the answer header measures from, on all five search pages. Pressing the button on a Systems row copies the name and does not open the star system page. The header shows no button when it measures from "your system".
+
 The galaxy, system name, exobiology, on-foot and trade run help pages have shorter How it works bands. The galaxy page now describes the Max report age and Start from dropdowns on the search pages, and says EDDN sharing sends nothing inside an Operation. The galaxy and route help pages name the real setting, Look things up in the galaxy, and the route page says to fly a plan with "plot next neutron jump" rather than promising a checklist. The on-foot page's upgrade costs, the system name page's spoken reply and the exobiology route page's ranges now match the app.
 
 The Stories, Lore, Colonisation, Powerplay ranks, Community goals, GalNet, Server status and Commander log help pages were checked against the app. The Community goals steps no longer say web access is needed, since the goals come from your journal. The Lore steps no longer ask about a system by name, which the tool cannot do. The Powerplay step for another Power says what is spoken at rank 100. The GalNet, Server status and Lore pages name the real place of their settings, Settings › Providers › Outside sources. The Colonisation page ranks candidates best first, as the app does. The Stories page now documents characters who speak Japanese and the planetary scan, Hack and settlement Disable missions a story can ask for, and the Stories and Lore How it works bands are shorter.

@@ -48,7 +48,6 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
 
     private readonly Func<string?> _here;
     private readonly Action<string, long?> _openSystem;
-    private readonly Func<string, Task<bool>>? _copy;
 
     private readonly TextBox _add = Field("add a module or ship");
     private readonly SystemNameSuggestions<OutfittingItem> _addNames;
@@ -78,7 +77,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     {
         _here = here;
         _openSystem = openSystem;
-        _copy = copy;
+        Copy = copy;
         _nearNames = SuggestNames(_near);
         _addNames = SuggestItems(_add, Offer, Add);
 
@@ -359,14 +358,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         system.VerticalAlignment = VerticalAlignment.Center;
         ThemeInk.Bind(system, TextBlock.ForegroundProperty, here ? ThemeManager.CyanKey : ThemeManager.AKey);
 
-        var systemCell = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Children = { system } };
-
-        if (_copy is { } copy)
-        {
-            var glyph = CopyGlyph.For(station.SystemName, copy);
-            glyph.VerticalAlignment = VerticalAlignment.Center;
-            systemCell.Children.Add(glyph);
-        }
+        var systemCell = CopyGlyph.Beside(system, station.SystemName, Copy);
 
         List<Control> cells =
         [

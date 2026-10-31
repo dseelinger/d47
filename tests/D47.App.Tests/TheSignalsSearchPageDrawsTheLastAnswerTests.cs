@@ -317,7 +317,7 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
         await world.AskAsync(("signal", "Hazardous RES"));
 
         var copies = panel.GetVisualDescendants().OfType<Button>().Select(CopyGlyph.GetCopies).OfType<string>().ToList();
-        Assert.Equal(["Delta", "Alpha", "Beta", "Gamma"], copies);
+        Assert.Equal(["LTT 7786", "Delta", "Alpha", "Beta", "Gamma"], copies);
 
         window.Close();
     }

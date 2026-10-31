@@ -386,7 +386,7 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
         await world.AskAsync("search_outfitting", ("items", "6A Fuel Scoop"));
 
         var copies = panel.GetVisualDescendants().OfType<Button>().Select(CopyGlyph.GetCopies).OfType<string>().ToList();
-        Assert.Equal(["Shinrarta Dezhra", "LTT 7786"], copies);
+        Assert.Equal(["LTT 7786", "Shinrarta Dezhra", "LTT 7786"], copies);
 
         window.Close();
     }

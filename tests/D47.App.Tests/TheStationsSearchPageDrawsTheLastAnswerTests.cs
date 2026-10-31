@@ -138,13 +138,18 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
             "Stations matched.",
             AskedAt);
 
-    private static (PanelView Panel, Window Window) Shown(World world, bool headset = false)
+    private static (PanelView Panel, Window Window) Shown(World world, bool headset = false, bool copy = false)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         if (headset)
         {
             panel.Classes.Add("headset");
+        }
+
+        if (copy)
+        {
+            panel.EnableCopy(new Clipboard());
         }
 
         panel.EnableStarSystem(world.Surface);
@@ -424,6 +429,52 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
 
         Assert.Contains("1 STATION", TextOf(panel));
         Assert.DoesNotContain("1 STATIONS", TextOf(panel));
+
+        window.Close();
+    }
+
+    private sealed class Clipboard : IClipboard
+    {
+        public Task<bool> SetTextAsync(string text, CancellationToken cancellationToken = default) => Task.FromResult(true);
+    }
+
+    private static List<string> Copies(Control root) =>
+        [.. root.GetVisualDescendants().OfType<Button>().Select(CopyGlyph.GetCopies).OfType<string>()];
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EverySystemNameCarriesACopyGlyph(bool headset)
+    {
+        var world = new World(lookups: true);
+        world.Board.Post(Posting(new Dictionary<string, string> { ["material_trader"] = "Raw" }, TwoStations));
+        var (panel, window) = Shown(world, headset, copy: true);
+
+        Assert.Equal(["Shinrarta Dezhra", "Alioth"], Rows(panel).SelectMany(Copies).ToList());
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheAnswerHeaderCarriesACopyGlyphAfterTheReference()
+    {
+        var world = new World(lookups: true);
+        world.Board.Post(Posting(new Dictionary<string, string> { ["max_distance"] = "50" }, TwoStations));
+        var (panel, window) = Shown(world, copy: true);
+
+        Assert.Equal(new[] { "LTT 7786", "Shinrarta Dezhra", "Alioth" }, Copies(panel));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void WithoutACopyDelegateNoGlyphIsDrawn()
+    {
+        var world = new World(lookups: true);
+        world.Board.Post(Posting(new Dictionary<string, string> { ["max_distance"] = "50" }, TwoStations));
+        var (panel, window) = Shown(world);
+
+        Assert.Empty(Copies(panel));
 
         window.Close();
     }

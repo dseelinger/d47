@@ -44,7 +44,6 @@ public sealed class SignalSearchPage : GalaxySearchPage
 
     private readonly Func<string?> _here;
     private readonly Action<string, long?> _openSystem;
-    private readonly Func<string, Task<bool>>? _copy;
 
     private readonly InlinePicker _signal = new() { Label = "Signal", ListMaxHeight = 320 };
     private readonly TextBox _name = Field("part of a signal's name");
@@ -69,7 +68,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
     {
         _here = here;
         _openSystem = openSystem;
-        _copy = copy;
+        Copy = copy;
         _nearNames = SuggestNames(_near);
 
         _name.Name = NameName;
@@ -266,14 +265,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
         system.VerticalAlignment = VerticalAlignment.Center;
         ThemeInk.Bind(system, TextBlock.ForegroundProperty, here ? ThemeManager.CyanKey : ThemeManager.AKey);
 
-        var systemCell = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Children = { system } };
-
-        if (_copy is { } copy)
-        {
-            var glyph = CopyGlyph.For(finding.System, copy);
-            glyph.VerticalAlignment = VerticalAlignment.Center;
-            systemCell.Children.Add(glyph);
-        }
+        var systemCell = CopyGlyph.Beside(system, finding.System, Copy);
 
         var grid = columns.Row(
             [

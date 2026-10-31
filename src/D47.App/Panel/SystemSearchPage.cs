@@ -64,11 +64,13 @@ public sealed class SystemSearchPage : GalaxySearchPage
         Func<bool> lookupsEnabled,
         Func<string?> here,
         Action<SystemSummary>? open,
+        Func<string, Task<bool>>? copy,
         Action? openSettings,
         bool headset)
         : base(searches, lookupsEnabled, openSettings, headset)
     {
         _here = here;
+        Copy = copy;
         _nearNames = SuggestNames(_near);
         _controllingFactionNames = SuggestFactions(_controllingFaction);
         _factionNames = SuggestFactions(_faction);
@@ -334,7 +336,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         List<Control> cells =
         [
-                Cell(Pair(name, Sub(faction)), 0),
+                Cell(Pair(CopyGlyph.Beside(name, system.Name, Copy), Sub(faction)), 0),
                 Cell(Right(Mono(system.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 1),
                 Cell(Pair(Value(system.Allegiance), Sub(system.Government)), 2),
                 Cell(Pair(Value(system.PrimaryEconomy), Sub(system.Security)), 3),
@@ -486,7 +488,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         return new StackPanel { Spacing = 6, Children = { boxes, readout.Line } };
     }
 
-    internal static StackPanel Pair(TextBlock top, TextBlock bottom) =>
+    internal static StackPanel Pair(Control top, TextBlock bottom) =>
         new() { VerticalAlignment = VerticalAlignment.Center, Children = { top, bottom } };
 
     internal static TextBlock Value(string? text)

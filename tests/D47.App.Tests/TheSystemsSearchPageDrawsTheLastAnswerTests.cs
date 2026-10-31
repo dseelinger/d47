@@ -159,13 +159,18 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
             result.Systems.Count == 0 ? "Nothing matched that search." : "2 systems matched.",
             AskedAt);
 
-    private static (PanelView Panel, Window Window) Shown(World world, bool headset = false, bool systems = true)
+    private static (PanelView Panel, Window Window) Shown(World world, bool headset = false, bool systems = true, bool copy = false)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         if (headset)
         {
             panel.Classes.Add("headset");
+        }
+
+        if (copy)
+        {
+            panel.EnableCopy(new Clipboard());
         }
 
         panel.EnableStarSystem(world.Surface);
@@ -364,7 +369,8 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         var (panel, window) = Shown(world);
 
         Assert.Contains(TextOf(panel), text => text.StartsWith("2 SYSTEMS", StringComparison.Ordinal));
-        Assert.Contains("WITHIN 50 LY OF LTT 7786", TextOf(panel));
+        Assert.Contains("WITHIN 50 LY OF ", TextOf(panel));
+        Assert.Contains("LTT 7786", TextOf(panel));
 
         Press(Named(panel, GalaxySearchPage.RefreshName));
 
@@ -788,6 +794,67 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
 
         Assert.Contains("1 SYSTEM", TextOf(panel));
         Assert.DoesNotContain("1 SYSTEMS", TextOf(panel));
+
+        window.Close();
+    }
+
+    private sealed class Clipboard : IClipboard
+    {
+        public Task<bool> SetTextAsync(string text, CancellationToken cancellationToken = default) => Task.FromResult(true);
+    }
+
+    private static List<string> Copies(Control root) =>
+        [.. root.GetVisualDescendants().OfType<Button>().Select(CopyGlyph.GetCopies).OfType<string>()];
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EverySystemNameCarriesACopyGlyph(bool headset)
+    {
+        var world = new World(lookups: true);
+        world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Independent" }, TwoSystems));
+        var (panel, window) = Shown(world, headset, copy: true);
+
+        Assert.Equal(["LTT 7786", "HIP 112535"], Rows(panel).SelectMany(Copies).ToList());
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheAnswerHeaderCarriesACopyGlyphAfterTheReference()
+    {
+        var world = new World(lookups: true);
+        world.Board.Post(Posting(new Dictionary<string, string> { ["distance"] = "50" }, TwoSystems));
+        var (panel, window) = Shown(world, copy: true);
+
+        Assert.Equal(new[] { "LTT 7786", "LTT 7786", "HIP 112535" }, Copies(panel));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void WithoutACopyDelegateNoGlyphIsDrawn()
+    {
+        var world = new World(lookups: true);
+        world.Board.Post(Posting(new Dictionary<string, string> { ["distance"] = "50" }, TwoSystems));
+        var (panel, window) = Shown(world);
+
+        Assert.Empty(Copies(panel));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PressingTheGlyphCopiesTheNameAndDoesNotOpenTheSystem()
+    {
+        var world = new World(lookups: true);
+        world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Independent" }, TwoSystems));
+        var (panel, window) = Shown(world, copy: true);
+
+        var glyph = Rows(panel).First().GetVisualDescendants().OfType<Button>().First(button => CopyGlyph.GetCopies(button) == "LTT 7786");
+        Press(glyph);
+
+        Assert.Single(panel.Nav.TrailOf(PanelTab.Search));
 
         window.Close();
     }

@@ -147,6 +147,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private readonly HistoryTile _history;
     private GalaxySearchPosting? _fromHistory;
 
+    /// <summary>Copies a system name to the clipboard; null draws no copy glyphs.</summary>
+    protected Func<string, Task<bool>>? Copy { get; set; }
+
+    private const string YourSystem = "your system";
+
     protected GalaxySearchPage(GalaxySearchSurface searches, Func<bool> lookupsEnabled, Action? openSettings, bool headset, Func<bool>? namesEnabled = null)
     {
         _searches = searches;
@@ -495,7 +500,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     protected static string AsideFrom(IReadOnlyDictionary<string, string> arguments, string? reference) =>
         reference
         ?? (arguments.TryGetValue("near", out var near) && near.Trim().Length > 0 ? near.Trim() : null)
-        ?? "your system";
+        ?? YourSystem;
 
     /// <summary>Makes a dropdown for <paramref name="name"/> and registers it, set to Any.</summary>
     protected void AddPicker(
@@ -1145,20 +1150,25 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         if (aside is { } words)
         {
-            var line = new TextBlock
+            TextBlock Words(string text, string ink)
             {
-                FontFamily = Fonts.ChromeFamily,
-                FontSize = TypeScale.Small,
-                FontWeight = FontWeight.Medium,
-                LetterSpacing = TypeScale.Small * Fonts.ChromeTracking,
-                VerticalAlignment = VerticalAlignment.Bottom,
-            };
-            ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.AKey);
-            line.Inlines!.Add(new Run(words.Lead.ToUpperInvariant()));
+                var block = new TextBlock
+                {
+                    Text = text.ToUpperInvariant(),
+                    FontFamily = Fonts.ChromeFamily,
+                    FontSize = TypeScale.Small,
+                    FontWeight = FontWeight.Medium,
+                    LetterSpacing = TypeScale.Small * Fonts.ChromeTracking,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                };
+                ThemeInk.Bind(block, TextBlock.ForegroundProperty, ink);
+                return block;
+            }
 
-            var reference = new Run(words.Reference.ToUpperInvariant());
-            reference.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.CyanKey));
-            line.Inlines.Add(reference);
+            var isSystem = !string.Equals(words.Reference, YourSystem, StringComparison.Ordinal);
+            var line = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Bottom };
+            line.Children.Add(Words(words.Lead, ThemeManager.AKey));
+            line.Children.Add(CopyGlyph.Beside(Words(words.Reference, ThemeManager.CyanKey), isSystem ? words.Reference : null, Copy));
             left.Children.Add(line);
         }
 
