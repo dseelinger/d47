@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Pressing a result on Search › Stations or Search › Bodies opens its system on the Stations or Bodies section, as the Systems, Outfitting and Signals results already open theirs.
+
 The comms selection, and who you last had on each channel, is kept for each Commander when d47 restarts. The channel you left on is selected again at launch even if no one is on it yet; your carrier's Captain or Tower comes back once d47 has found the carrier in your journals.
 
 Each comms channel now remembers who you last had selected on it, and Story remembers it for each story. Coming back to a channel, or to a story, selects that party again if they are still on it; if they have left, no one is selected until they return.

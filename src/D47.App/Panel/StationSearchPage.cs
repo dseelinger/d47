@@ -43,6 +43,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     ];
 
     private readonly Func<string?> _here;
+    private readonly Action<StationSummary>? _open;
     private readonly Action<IReadOnlyList<string>, Action<IReadOnlyList<string>>> _chooseServices;
 
     private readonly TextBox _near = Field("near");
@@ -74,12 +75,14 @@ public sealed class StationSearchPage : GalaxySearchPage
         Func<bool> lookupsEnabled,
         Func<string?> here,
         Action<IReadOnlyList<string>, Action<IReadOnlyList<string>>> chooseServices,
+        Action<StationSummary>? open,
         Func<string, Task<bool>>? copy,
         Action? openSettings,
         bool headset)
         : base(searches, lookupsEnabled, openSettings, headset)
     {
         _here = here;
+        _open = open;
         Copy = copy;
         _nearNames = SuggestNames(_near);
         _controllingFactionNames = SuggestFactions(_controllingFaction);
@@ -452,7 +455,28 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         var grid = columns.Row(cells);
 
-        var row = new Border { MinHeight = 54, Padding = new Thickness(12, 6), Child = grid, Classes = { RowClass } };
+        if (station.SystemAddress is null || _open is null)
+        {
+            var still = new Border { MinHeight = 54, Padding = new Thickness(12, 6), Child = grid, Classes = { RowClass } };
+            return ListRow.Dress(still);
+        }
+
+        var row = new Button
+        {
+            MinHeight = 54,
+            Padding = new Thickness(12, 6),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Content = grid,
+            Classes = { RowClass },
+            Tag = station.Name,
+        };
+        Avalonia.Automation.AutomationProperties.SetName(row, $"{station.Name} in {station.SystemName}");
+
+        var open = _open;
+        row.Click += (_, _) => open(station);
+
         return ListRow.Dress(row);
     }
 

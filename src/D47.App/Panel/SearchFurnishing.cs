@@ -13,6 +13,12 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     /// <summary>Opens the System page on one system, by its id64, beneath Systems.</summary>
     public const string FoundKeyPrefix = "search.systems.found:";
 
+    /// <summary>Ends a found-system key that opens the System page on its Stations section.</summary>
+    public const string StationsSuffix = ":stations";
+
+    /// <summary>Ends a found-system key that opens the System page on its Bodies section.</summary>
+    public const string BodiesSuffix = ":bodies";
+
     private StarSystemPage? _starSystem;
     private SystemSearchPage? _systems;
     private StationSearchPage? _stations;
@@ -114,6 +120,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 ChooseServices,
+                station => OpenFound(station.SystemName, station.SystemAddress, StationsSuffix),
                 host.Copy,
                 surface.OpenSettings,
                 host.Headset)
@@ -151,6 +158,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 bodySearches,
                 surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
+                body => OpenFound(body.SystemName, body.SystemAddress, BodiesSuffix),
                 host.Copy,
                 surface.OpenSettings,
                 host.Headset)
@@ -183,11 +191,17 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         }
 
         if (crumb.Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
-            && long.TryParse(crumb.Key[FoundKeyPrefix.Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var address))
+            && FoundTarget(crumb.Key) is var (address, suffix))
         {
             var found = _found = new StarSystemPage(surface, host.Copy);
             found.FiltersChanged += (_, _) => host.ShowSearch();
-            found.OpenSystem(address);
+
+            _ = suffix switch
+            {
+                StationsSuffix => found.OpenSystemStations(address),
+                BodiesSuffix => found.OpenSystemBodies(address),
+                _ => found.OpenSystem(address),
+            };
 
             return found;
         }
@@ -311,14 +325,34 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
 
     private void OpenFound(SystemSummary system) => OpenFound(system.Name, system.SystemAddress);
 
-    private void OpenFound(string name, long? systemAddress)
+    private static (long Address, string Suffix)? FoundTarget(string key)
+    {
+        var rest = key[FoundKeyPrefix.Length..];
+        var suffix = string.Empty;
+
+        foreach (var candidate in new[] { StationsSuffix, BodiesSuffix })
+        {
+            if (rest.EndsWith(candidate, StringComparison.Ordinal))
+            {
+                suffix = candidate;
+                rest = rest[..^candidate.Length];
+                break;
+            }
+        }
+
+        return long.TryParse(rest, NumberStyles.Integer, CultureInfo.InvariantCulture, out var address) ? (address, suffix) : null;
+    }
+
+    private void OpenFound(string name, long? systemAddress) => OpenFound(name, systemAddress, string.Empty);
+
+    private void OpenFound(string name, long? systemAddress, string suffix)
     {
         if (systemAddress is not { } address)
         {
             return;
         }
 
-        var crumb = new NavCrumb(FoundKeyPrefix + address.ToString(CultureInfo.InvariantCulture), name)
+        var crumb = new NavCrumb(FoundKeyPrefix + address.ToString(CultureInfo.InvariantCulture) + suffix, name)
         {
             Help = GalaxyCapability.Id,
         };

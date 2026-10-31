@@ -278,6 +278,25 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         return true;
     }
 
+    /// <summary>As <see cref="OpenSystem(long)"/>, on the Stations section.</summary>
+    public bool OpenSystemStations(long address) => OpenSystemOn(address, Section.Stations);
+
+    /// <summary>As <see cref="OpenSystem(long)"/>, on the Bodies section.</summary>
+    public bool OpenSystemBodies(long address) => OpenSystemOn(address, Section.Bodies);
+
+    private bool OpenSystemOn(long address, Section section)
+    {
+        if (!OpenSystem(address))
+        {
+            return false;
+        }
+
+        _section = section;
+        Draw();
+
+        return true;
+    }
+
     private void BackToMySystem()
     {
         _suggestions.SetText(string.Empty);

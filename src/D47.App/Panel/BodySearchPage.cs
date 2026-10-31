@@ -25,6 +25,7 @@ public sealed class BodySearchPage : GalaxySearchPage
     private const string Dash = "—";
 
     private readonly Func<string?> _here;
+    private readonly Action<BodySummary>? _open;
 
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
@@ -53,12 +54,14 @@ public sealed class BodySearchPage : GalaxySearchPage
         GalaxySearchSurface searches,
         Func<bool> lookupsEnabled,
         Func<string?> here,
+        Action<BodySummary>? open,
         Func<string, Task<bool>>? copy,
         Action? openSettings,
         bool headset)
         : base(searches, lookupsEnabled, openSettings, headset)
     {
         _here = here;
+        _open = open;
         Copy = copy;
         _nearNames = SuggestNames(_near);
 
@@ -404,7 +407,30 @@ public sealed class BodySearchPage : GalaxySearchPage
                 ThemeManager.GreyKey)), gravityColumn));
         }
 
-        var row = new Border { MinHeight = 54, Padding = new Thickness(12, 6), Child = columns.Row(cells), Classes = { RowClass } };
+        var grid = columns.Row(cells);
+
+        if (body.SystemAddress is null || _open is null)
+        {
+            var still = new Border { MinHeight = 54, Padding = new Thickness(12, 6), Child = grid, Classes = { RowClass } };
+            return ListRow.Dress(still);
+        }
+
+        var row = new Button
+        {
+            MinHeight = 54,
+            Padding = new Thickness(12, 6),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Content = grid,
+            Classes = { RowClass },
+            Tag = body.Name,
+        };
+        Avalonia.Automation.AutomationProperties.SetName(row, $"{body.Name} in {body.SystemName}");
+
+        var open = _open;
+        row.Click += (_, _) => open(body);
+
         return ListRow.Dress(row);
     }
 
