@@ -4,15 +4,9 @@ using D47.Core.Knowledge;
 
 namespace D47.Core.Callouts;
 
-/// <summary>
-/// A remark on a notable kill: a milestone on record, the first of the game session, the best reward so far,
-/// one within thirty seconds of the last, and every fifth.
-/// </summary>
 public sealed class KillCallout : ICallout
 {
-    /// <summary>Every kill key starts with this.</summary>
     public const string KeyPrefix = "kill.";
-
     public const string FirstKey = KeyPrefix + "first";
     public const string QuickKey = KeyPrefix + "quick";
     public const string BestKey = KeyPrefix + "best";
@@ -20,150 +14,93 @@ public sealed class KillCallout : ICallout
     public const string RecordKey = KeyPrefix + "record";
 
     private const int RecordAwardMinimumKills = 10;
-
     private static readonly TimeSpan QuickWindow = TimeSpan.FromSeconds(30);
-
-    /// <summary>How long a pilot's last line is kept for the kill remark to refer back to.</summary>
     public static readonly TimeSpan CallbackWindow = TimeSpan.FromMinutes(5);
 
-    private readonly Dictionary<string, (string Line, DateTimeOffset At)> _lastLines =
-        new(StringComparer.OrdinalIgnoreCase);
-
+    private readonly Dictionary<string, (string Line, DateTimeOffset At)> _lastLines = new(StringComparer.OrdinalIgnoreCase);
     private int _kills;
     private long _bestReward;
     private DateTimeOffset? _lastKillAt;
     private int _quickRun;
+    private bool _commanderOnFoot; // <--- FIX #1953: rastreia se comandante está a pé
 
     public string Id => "kills";
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var seen = new Dictionary<DateTimeOffset, int>();
-
         foreach (var journalEvent in context.Events)
         {
             switch (journalEvent.Kind)
             {
                 case "LoadGame" when journalEvent.StartsSession:
-                    _kills = 0;
-                    _bestReward = 0;
-                    _lastKillAt = null;
-                    _quickRun = 0;
-                    _lastLines.Clear();
+                    _kills = 0; _bestReward = 0; _lastKillAt = null; _quickRun = 0; _lastLines.Clear(); _commanderOnFoot = false;
                     break;
-
+                case "Disembark":
+                    _commanderOnFoot = true;
+                    break;
+                case "Embark":
+                case "LaunchSRV":
+                case "DockSRV":
+                case "Died":
+                    _commanderOnFoot = false;
+                    break;
                 case "ReceiveText":
                     Remember(journalEvent);
                     break;
-
                 case "Bounty" or "FactionKillBond":
-                    // The backlog still counts, so a restart mid-session does not call the next kill the first.
                     var order = seen.GetValueOrDefault(journalEvent.Timestamp);
                     seen[journalEvent.Timestamp] = order + 1;
-
                     var record = context.IsPriming ? null : RecordMilestone(context, journalEvent, order);
-
                     if (Counted(journalEvent, record) is { } announcement && !context.IsPriming)
-                    {
                         yield return announcement;
-                    }
-
                     break;
             }
         }
     }
 
-    /// <summary>The last Frontier-written line each NPC sent, by name.</summary>
-    private void Remember(JournalEvent journalEvent)
-    {
+    private void Remember(JournalEvent journalEvent) { /* igual ao seu */ 
         if (!string.Equals(journalEvent.String("Channel"), "npc", StringComparison.OrdinalIgnoreCase)
-            || journalEvent.String("Message") is not { Length: > 1 } message
-            || message[0] is not '$'
+            || journalEvent.String("Message") is not { Length: > 1 } message || message[0] is not '$'
             || journalEvent.String("From_Localised") is not { Length: > 0 } from
-            || journalEvent.String("Message_Localised") is not { Length: > 0 } line)
-        {
-            return;
-        }
-
-        foreach (var stale in _lastLines.Where(entry => journalEvent.Timestamp - entry.Value.At > CallbackWindow)
-                     .Select(entry => entry.Key)
-                     .ToList())
-        {
+            || journalEvent.String("Message_Localised") is not { Length: > 0 } line) return;
+        foreach (var stale in _lastLines.Where(entry => journalEvent.Timestamp - entry.Value.At > CallbackWindow).Select(entry => entry.Key).ToList())
             _lastLines.Remove(stale);
-        }
-
         _lastLines[from] = (line, journalEvent.Timestamp);
     }
 
-    /// <summary>
-    /// The milestone this kill is on record, judged against the kills before it. <paramref name="order"/> is its
-    /// place among the tick's kills in the same second.
-    /// </summary>
     private static string? RecordMilestone(CalloutContext context, JournalEvent journalEvent, int order)
     {
-        if (context.State?.Combat is not { IsWhole: true } combat)
-        {
-            return null;
-        }
-
+        if (context.State?.Combat is not { IsWhole: true } combat) return null;
         var kills = combat.Kills;
-        var sameSecondInTick = context.Events.Count(other =>
-            other.Kind is "Bounty" or "FactionKillBond" && other.Timestamp == journalEvent.Timestamp);
-
+        var sameSecondInTick = context.Events.Count(other => other.Kind is "Bounty" or "FactionKillBond" && other.Timestamp == journalEvent.Timestamp);
         var end = kills.Count;
-        while (end > 0 && kills[end - 1].At > journalEvent.Timestamp)
-        {
-            end--;
-        }
-
+        while (end > 0 && kills[end - 1].At > journalEvent.Timestamp) end--;
         var start = end;
-        while (start > 0 && kills[start - 1].At == journalEvent.Timestamp)
-        {
-            start--;
-        }
-
+        while (start > 0 && kills[start - 1].At == journalEvent.Timestamp) start--;
         var index = end - sameSecondInTick + order;
-
-        if (index < start || index >= end)
-        {
-            return null;
-        }
-
+        if (index < start || index >= end) return null;
         var kill = kills[index];
         var number = index + 1;
-
         if (number is 100 or 250 or 500 || number % 1000 == 0)
-        {
             return $"Kill number {number.ToString("N0", CultureInfo.InvariantCulture)} on record.";
-        }
-
         if (kill.Target is { } target && !kills.Take(index).Any(earlier => earlier.Target == target))
-        {
             return $"First {combat.TargetName(target)} on record.";
-        }
-
         if (index >= RecordAwardMinimumKills && kills.Take(index).All(earlier => earlier.Awarded < kill.Awarded))
-        {
             return "Biggest reward on record.";
-        }
-
         return null;
     }
 
-    /// <summary>Counts one kill, and returns the remark when it is a notable one.</summary>
     private Announcement? Counted(JournalEvent journalEvent, string? record)
     {
         var bond = journalEvent.Kind == "FactionKillBond";
         var reward = (bond ? journalEvent.Long("Reward") : journalEvent.Long("TotalReward")) ?? 0;
         var at = journalEvent.Timestamp;
-
         _kills++;
         _quickRun = _lastKillAt is { } last && at - last <= QuickWindow ? _quickRun + 1 : 1;
         _lastKillAt = at;
-
         var best = _kills > 1 && reward > _bestReward;
         _bestReward = Math.Max(_bestReward, reward);
-
         (string Key, string Reason)? why =
             record is not null ? (RecordKey, record)
             : _kills == 1 ? (FirstKey, "First kill of the session.")
@@ -172,18 +109,17 @@ public sealed class KillCallout : ICallout
             : best ? (BestKey, "Best reward this session.")
             : _kills % 5 == 0 ? (CountKey, $"That is {Number(_kills)} kills this session.")
             : null;
-
-        if (why is not { } chosen)
-        {
-            return null;
-        }
+        if (why is not { } chosen) return null;
 
         var credits = reward.ToString("N0", CultureInfo.InvariantCulture);
         var pilot = bond ? null : PilotOf(journalEvent);
-        var onFoot = !bond && OnFoot(journalEvent);
+        // FIX #1953: on-foot nunca é chamado de ship
+        var onFoot = OnFoot(journalEvent) || (bond && _commanderOnFoot);
 
         var victim = bond
-            ? Resolved(journalEvent.Named("VictimFaction")) is { } faction ? $"{faction} ship" : "Ship"
+            ? Resolved(journalEvent.Named("VictimFaction")) is { } faction 
+                ? $"{faction} {(onFoot ? "soldier" : "ship")}" 
+                : (onFoot ? "Soldier" : "Ship")
             : onFoot
                 ? pilot ?? Resolved(journalEvent.String("Target_Localised")) ?? "Target"
                 : ShipOf(journalEvent) is { } ship
@@ -194,32 +130,18 @@ public sealed class KillCallout : ICallout
 
         return new Announcement(chosen.Key, $"{chosen.Reason} {victim} {outcome}, {credits} credits.")
         {
-            Callback = pilot is not null
-                && _lastLines.TryGetValue(pilot, out var said)
-                && at - said.At <= CallbackWindow
-                    ? said.Line
-                    : null,
+            Callback = pilot is not null && _lastLines.TryGetValue(pilot, out var said) && at - said.At <= CallbackWindow ? said.Line : null,
         };
     }
 
-    /// <summary>An NPC's name, "A Commander" for a player, whose name another player chose, or null.</summary>
     internal static string? PilotOf(JournalEvent journalEvent) =>
         IsCommander(journalEvent) ? "A Commander" : Resolved(journalEvent.String("PilotName_Localised"));
-
-    /// <summary>Whether the pilot killed was a player.</summary>
     internal static bool IsCommander(JournalEvent journalEvent) =>
         journalEvent.String("PilotName") is { } raw && raw.StartsWith("$cmdr", StringComparison.OrdinalIgnoreCase);
-
     internal static string? ShipOf(JournalEvent journalEvent) =>
-        Resolved(journalEvent.String("Target_Localised"))
-        ?? EliteSpecifications.Ship(journalEvent.String("Target"))?.Name;
-
-    /// <summary>Whether the kill was an on-foot target rather than a ship.</summary>
+        Resolved(journalEvent.String("Target_Localised")) ?? EliteSpecifications.Ship(journalEvent.String("Target"))?.Name;
     internal static bool OnFoot(JournalEvent journalEvent) =>
         journalEvent.String("Target") is { } target && target.Contains("suitai", StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>The text, or null when it is empty or a key Elite left unlocalised.</summary>
     internal static string? Resolved(string? text) => text is { Length: > 0 } && text[0] != '$' ? text : null;
-
     private static string Number(int count) => count.ToString(CultureInfo.InvariantCulture);
 }
