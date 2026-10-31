@@ -203,95 +203,9 @@ public sealed class GameStateStore
     {
         foreach (var (fid, state) in _byFrontierId)
         {
-            if (!state.Fleet.IsKnown && RestoreFleet?.Invoke(fid) is { IsKnown: true } fleet)
+            foreach (var restorer in Restorers)
             {
-                state.Fleet = fleet;
-            }
-
-            if (state.Location.StarSystem is null && RestoreLocation?.Invoke(fid) is { StarSystem: not null } location)
-            {
-                state.Location = location;
-            }
-
-            // A CarrierLocation after LoadGame gives the live state a system but never a callsign. An owned
-            // live state is kept, but for its hold.
-            if (RestoreCarrier?.Invoke(fid) is { IsKnown: true } carrier)
-            {
-                state.Carrier = carrier.With(state.Carrier);
-            }
-
-            if (RestoreMissions?.Invoke(fid) is { IsKnown: true } missions)
-            {
-                state.Missions = missions.With(state.Missions);
-            }
-
-            if (RestoreColonisation?.Invoke(fid) is { IsKnown: true } sites)
-            {
-                state.Colonisation = sites.With(state.Colonisation);
-            }
-
-            // Merged rather than taken or refused: a ship boarded this session is in the live set and every
-            // other ship the Commander owns is only in the recovered one.
-            if (RestoreLoadouts?.Invoke(fid) is { IsKnown: true } loadouts)
-            {
-                state.Loadouts = loadouts.With(state.Loadouts);
-            }
-
-            if (RestoreKit?.Invoke(fid) is { IsKnown: true } kit)
-            {
-                state.Kit = kit.With(state.Kit);
-            }
-
-            if (RestoreNames?.Invoke(fid) is { IsKnown: true } names)
-            {
-                state.Names = names.With(state.Names.Names);
-            }
-
-            if (RestoreEvidence?.Invoke(fid) is { IsKnown: true } evidence)
-            {
-                state.Reputation = evidence.Reputation.With(state.Reputation);
-                state.Contributions = evidence.Contributions.With(state.Contributions);
-                state.Tallies = evidence.Tallies.With(state.Tallies);
-            }
-
-            if (RestoreTechBroker?.Invoke(fid) is { IsKnown: true } unlocks)
-            {
-                state.TechBroker = state.TechBroker.With(unlocks);
-            }
-
-            if (RestoreCycleMerits?.Invoke(fid) is { IsKnown: true } merits)
-            {
-                state.CycleMerits = merits.With(state.CycleMerits);
-            }
-
-            if (RestoreBgsWork?.Invoke(fid) is { IsKnown: true } bgsWork)
-            {
-                state.BgsWork = bgsWork.With(state.BgsWork);
-            }
-
-            if (RestoreCombat?.Invoke(fid) is { } combat)
-            {
-                state.Combat = combat.With(state.Combat);
-            }
-
-            if (RestoreSurfaceMining?.Invoke(fid) is { } surfaceMining)
-            {
-                state.SurfaceMining = surfaceMining.With(state.SurfaceMining);
-            }
-
-            if (RestoreCreditLedger?.Invoke(fid) is { } ledger)
-            {
-                state.CreditLedger = ledger.With(state.CreditLedger);
-            }
-
-            if (RestoreCodexLedger?.Invoke(fid) is { } codex)
-            {
-                state.CodexLedger = codex.With(state.CodexLedger);
-            }
-
-            if (RestoreCredits?.Invoke(fid) is { } credits)
-            {
-                state.RestoreBalance(credits);
+                restorer.Late?.Invoke(this, fid, state);
             }
         }
     }
@@ -423,97 +337,80 @@ public sealed class GameStateStore
         state = new CommanderGameState(identity);
 
         // Anything this Commander had before d47 last stopped.
-        if (Restore?.Invoke(identity.FrontierId) is { } restored)
+        foreach (var restorer in Restorers)
         {
-            state.Sampling = restored;
-        }
-
-        if (RestoreFleet?.Invoke(identity.FrontierId) is { IsKnown: true } fleet)
-        {
-            state.Fleet = fleet;
-        }
-
-        if (RestoreLoadouts?.Invoke(identity.FrontierId) is { IsKnown: true } loadouts)
-        {
-            state.Loadouts = loadouts;
-        }
-
-        if (RestoreKit?.Invoke(identity.FrontierId) is { IsKnown: true } kit)
-        {
-            state.Kit = kit;
-        }
-
-        // Applied only where the recovered state actually knows something, so a Commander with no
-        // carrier in any journal stays at None rather than being handed an empty carrier that reads
-        // the same as one d47 has merely lost track of (#406).
-        if (RestoreCarrier?.Invoke(identity.FrontierId) is { IsKnown: true } carrier)
-        {
-            state.Carrier = carrier;
-        }
-
-        if (RestoreMissions?.Invoke(identity.FrontierId) is { IsKnown: true } missions)
-        {
-            state.Missions = missions;
-        }
-
-        if (RestoreColonisation?.Invoke(identity.FrontierId) is { IsKnown: true } sites)
-        {
-            state.Colonisation = sites;
-        }
-
-        if (RestoreNames?.Invoke(identity.FrontierId) is { IsKnown: true } names)
-        {
-            state.Names = names;
-        }
-
-        if (RestoreCycleMerits?.Invoke(identity.FrontierId) is { IsKnown: true } merits)
-        {
-            state.CycleMerits = merits;
-        }
-
-        if (RestoreBgsWork?.Invoke(identity.FrontierId) is { IsKnown: true } bgsWork)
-        {
-            state.BgsWork = bgsWork;
-        }
-
-        if (RestoreCombat?.Invoke(identity.FrontierId) is { } combat)
-        {
-            state.Combat = combat.With(state.Combat);
-        }
-
-        if (RestoreSurfaceMining?.Invoke(identity.FrontierId) is { } surfaceMining)
-        {
-            state.SurfaceMining = surfaceMining.With(state.SurfaceMining);
-        }
-
-        if (RestoreCreditLedger?.Invoke(identity.FrontierId) is { } ledger)
-        {
-            state.CreditLedger = ledger.With(state.CreditLedger);
-        }
-
-        if (RestoreCodexLedger?.Invoke(identity.FrontierId) is { } codex)
-        {
-            state.CodexLedger = codex.With(state.CodexLedger);
-        }
-
-        if (RestoreEvidence?.Invoke(identity.FrontierId) is { IsKnown: true } evidence)
-        {
-            state.Reputation = evidence.Reputation;
-            state.Contributions = evidence.Contributions;
-            state.Tallies = evidence.Tallies;
-        }
-
-        if (RestoreTechBroker?.Invoke(identity.FrontierId) is { IsKnown: true } unlocks)
-        {
-            state.TechBroker = unlocks;
-        }
-
-        if (RestoreCredits?.Invoke(identity.FrontierId) is { } credits)
-        {
-            state.RestoreBalance(credits);
+            restorer.Admit?.Invoke(this, identity.FrontierId, state);
         }
 
         _byFrontierId[identity.FrontierId] = state;
         return state;
     }
+
+    private sealed record Restorer(
+        Action<GameStateStore, string, CommanderGameState>? Admit,
+        Action<GameStateStore, string, CommanderGameState>? Late);
+
+    private static Action<GameStateStore, string, CommanderGameState>? Step<T>(
+        Func<GameStateStore, Func<string, T?>?> hook, Func<T, bool> usable, Action<CommanderGameState, T>? write)
+        where T : class =>
+        write is null
+            ? null
+            : (store, fid, state) =>
+            {
+                if (hook(store)?.Invoke(fid) is { } value && usable(value))
+                {
+                    write(state, value);
+                }
+            };
+
+    private static Restorer Part<T>(
+        Func<GameStateStore, Func<string, T?>?> hook,
+        Func<T, bool> usable,
+        Action<CommanderGameState, T>? admit,
+        Action<CommanderGameState, T>? late)
+        where T : class => new(Step(hook, usable, admit), Step(hook, usable, late));
+
+    private static Restorer Merged<T>(Func<GameStateStore, Func<string, T?>?> hook, Action<CommanderGameState, T> merge)
+        where T : class => Part(hook, _ => true, merge, merge);
+
+    private static readonly Action<GameStateStore, string, CommanderGameState> Credits = (store, fid, state) =>
+    {
+        if (store.RestoreCredits?.Invoke(fid) is { } credits)
+        {
+            state.RestoreBalance(credits);
+        }
+    };
+
+    // One order serves both methods: each hook writes only its own parts. A hook with no Admit step is
+    // read only by RestoreLate, and one with no Late step only when a Commander is first met.
+    private static readonly Restorer[] Restorers =
+    [
+        Part<OrganicSampling>(s => s.Restore, _ => true, (c, v) => c.Sampling = v, null),
+        Part<FleetRegistry>(s => s.RestoreFleet, v => v.IsKnown, (c, v) => c.Fleet = v, (c, v) => c.Fleet = c.Fleet.IsKnown ? c.Fleet : v),
+        Part<JournalLocation>(s => s.RestoreLocation, v => v.StarSystem is not null, null, (c, v) => c.Location = c.Location.StarSystem is null ? v : c.Location),
+        // Merged rather than taken or refused: a ship boarded this session is in the live set and every
+        // other ship the Commander owns is only in the recovered one.
+        Part<ShipLoadouts>(s => s.RestoreLoadouts, v => v.IsKnown, (c, v) => c.Loadouts = v, (c, v) => c.Loadouts = v.With(c.Loadouts)),
+        Part<OwnedKit>(s => s.RestoreKit, v => v.IsKnown, (c, v) => c.Kit = v, (c, v) => c.Kit = v.With(c.Kit)),
+        // A CarrierLocation after LoadGame gives the live state a system but never a callsign. An owned
+        // live state is kept, but for its hold. Only a known carrier is applied, so a Commander with none
+        // stays at None.
+        Part<CarrierState>(s => s.RestoreCarrier, v => v.IsKnown, (c, v) => c.Carrier = v, (c, v) => c.Carrier = v.With(c.Carrier)),
+        Part<MissionBoard>(s => s.RestoreMissions, v => v.IsKnown, (c, v) => c.Missions = v, (c, v) => c.Missions = v.With(c.Missions)),
+        Part<ColonisationSites>(s => s.RestoreColonisation, v => v.IsKnown, (c, v) => c.Colonisation = v, (c, v) => c.Colonisation = v.With(c.Colonisation)),
+        Part<Listening.SpokenNames>(s => s.RestoreNames, v => v.IsKnown, (c, v) => c.Names = v, (c, v) => c.Names = v.With(c.Names.Names)),
+        Part<PowerplayCycleMerits>(s => s.RestoreCycleMerits, v => v.IsKnown, (c, v) => c.CycleMerits = v, (c, v) => c.CycleMerits = v.With(c.CycleMerits)),
+        Part<BgsWork>(s => s.RestoreBgsWork, v => v.IsKnown, (c, v) => c.BgsWork = v, (c, v) => c.BgsWork = v.With(c.BgsWork)),
+        Merged<CombatRecord>(s => s.RestoreCombat, (c, v) => c.Combat = v.With(c.Combat)),
+        Merged<SurfaceMiningSites>(s => s.RestoreSurfaceMining, (c, v) => c.SurfaceMining = v.With(c.SurfaceMining)),
+        Merged<CreditLedger>(s => s.RestoreCreditLedger, (c, v) => c.CreditLedger = v.With(c.CreditLedger)),
+        Merged<CodexLedger>(s => s.RestoreCodexLedger, (c, v) => c.CodexLedger = v.With(c.CodexLedger)),
+        Part<UnlockEvidence>(s => s.RestoreEvidence, v => v.IsKnown,
+            (c, v) => (c.Reputation, c.Contributions, c.Tallies) = (v.Reputation, v.Contributions, v.Tallies),
+            (c, v) => (c.Reputation, c.Contributions, c.Tallies) =
+                (v.Reputation.With(c.Reputation), v.Contributions.With(c.Contributions), v.Tallies.With(c.Tallies))),
+        // The other way round from the rest: the live unlocks take the restored ones.
+        Part<TechBrokerUnlocks>(s => s.RestoreTechBroker, v => v.IsKnown, (c, v) => c.TechBroker = v, (c, v) => c.TechBroker = c.TechBroker.With(v)),
+        new Restorer(Credits, Credits),
+    ];
 }
