@@ -58,8 +58,6 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("focus", "bring Elite back"),
         ("utilities", "set a timer for twenty minutes called fuel scoop"),
         ("routes", "plot a neutron route to Colonia"),
-        ("checklists", "mark buy a fuel scoop as done"), // #1957
-        ("checklists", "remove buy a fuel scoop"), // #1957
         ("macros", "docking prep"),
         ("vr", "put the panel down"),
         ("vr", "lock it to my head"),
@@ -161,7 +159,14 @@ public partial class EveryHowToPhraseRoutesGateTests
     private static HashSet<(string Page, string Phrase)> Listed() =>
         new([.. ModelAnswers, .. NotYetReviewed], new EntryComparer());
 
-    private static KeywordRouter Router() => new(TestSurface.For(new MemoryInstall()).Registry);
+    /// <summary>The router, with the line the checklists page names on the Commander's own list.</summary>
+    private static KeywordRouter Router()
+    {
+        var surface = TestSurface.For(new MemoryInstall());
+        surface.ChecklistService.AddNote(D47.Core.Checklists.ChecklistScope.Universal, "buy a fuel scoop");
+
+        return new(surface.Registry, () => D47.Core.Capabilities.Builtin.ChecklistCapability.Phrases(surface.ChecklistService));
+    }
 
     private static bool Routes(KeywordRouter router, string phrase) =>
         router.MatchSetting(phrase) is not null

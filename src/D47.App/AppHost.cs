@@ -2976,7 +2976,10 @@ public sealed class AppHost : IDisposable
                     () => history.Commanders, () => gameState.Active?.Identity.FrontierId))
 
                 // And "comms Tower", one or two per party on an open comms channel (#1601).
-                .Concat(CommsCapability.ChannelPhrases(stores.CommsChannels));
+                .Concat(CommsCapability.ChannelPhrases(stores.CommsChannels))
+
+                // And "mark buy limpets as done" / "remove buy limpets" (#1957), per line of the Commander's own.
+                .Concat(ChecklistCapability.Phrases(stores.Checklists));
 
         var router = new KeywordRouter(
             capabilities, () => MacroCapability.Phrases(macros).Concat(OtherDynamicCommands()));

@@ -1,4 +1,5 @@
 ﻿using D47.Core.Checklists;
+using D47.Core.Conversation;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -404,6 +405,48 @@ public static class ChecklistCapability
         phrases.Select(phrase => new ToolCommandPhrase(
             phrase,
             new Dictionary<string, string>(StringComparer.Ordinal) { ["to"] = to }));
+
+    /// <summary>
+    /// "mark buy limpets as done" and "remove buy limpets", proposing the change, for each of the Commander's own
+    /// lines whose words no other item on the checklist shares.
+    /// </summary>
+    public static IEnumerable<DynamicCommand> Phrases(ChecklistService? checklists)
+    {
+        if (checklists is null)
+        {
+            yield break;
+        }
+
+        var items = checklists.Document.Items;
+
+        foreach (var line in items.Where(item => item.TicksByHand))
+        {
+            var words = ChecklistKeys.Compact(line.Text);
+
+            if (words.Length == 0 || items.Count(item => ChecklistKeys.Compact(item.Text) == words) != 1)
+            {
+                continue;
+            }
+
+            if (!line.IsComplete)
+            {
+                var done = Change(line.Text, "done");
+
+                yield return new DynamicCommand($"mark {line.Text} as done", Id, "propose_checklist_change", done);
+                yield return new DynamicCommand($"mark {line.Text} done", Id, "propose_checklist_change", done);
+                yield return new DynamicCommand($"tick off {line.Text}", Id, "propose_checklist_change", done);
+            }
+
+            var remove = Change(line.Text, "remove");
+
+            yield return new DynamicCommand($"remove {line.Text}", Id, "propose_checklist_change", remove);
+            yield return new DynamicCommand($"remove {line.Text} from my checklist", Id, "propose_checklist_change", remove);
+            yield return new DynamicCommand($"take {line.Text} off my checklist", Id, "propose_checklist_change", remove);
+        }
+
+        static Dictionary<string, string> Change(string item, string change) =>
+            new(StringComparer.Ordinal) { ["item"] = item, ["change"] = change };
+    }
 
     /// <summary>
     /// The phrases that answer a proposal: the plain ones always, the conversational ones only while
