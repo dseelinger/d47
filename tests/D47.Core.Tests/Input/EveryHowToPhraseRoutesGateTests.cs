@@ -60,9 +60,6 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("routes", "plot a neutron route to Colonia"),
         ("checklists", "mark buy a fuel scoop as done"), // #1957
         ("checklists", "remove buy a fuel scoop"), // #1957
-        ("engineering", "what does a grade 5 dirty drive cost"), // #1957
-        ("specifications", "what is the Python like"), // #1957
-        ("specifications", "what does a 6A power plant weigh"), // #1957
         ("macros", "docking prep"),
         ("vr", "put the panel down"),
         ("vr", "lock it to my head"),
@@ -171,7 +168,8 @@ public partial class EveryHowToPhraseRoutesGateTests
         || router.MatchToolCommand(phrase) is not null
         || router.Match(phrase, InputSource.Spoken) is not null
         || Walks(phrase)
-        || LogsOrReadsTheCaptainsLog(phrase);
+        || LogsOrReadsTheCaptainsLog(phrase)
+        || LooksUpByName(phrase);
 
     /// <summary>Whether the phrase is a reply the turn loop takes while a teaching exchange is open, before the router and the model.</summary>
     private static bool AnswersAnExchange(string page, string phrase) =>
@@ -179,6 +177,9 @@ public partial class EveryHowToPhraseRoutesGateTests
 
     /// <summary>Whether the turn loop's model-free captain's log grammar takes the phrase, before the router and the model.</summary>
     private static bool LogsOrReadsTheCaptainsLog(string phrase) => D47.Core.CaptainsLog.CaptainsLogPhrase.Read(phrase) is not null;
+
+    /// <summary>Whether the turn loop's model-free lookup by hull, module or blueprint name takes the phrase, before the router and the model.</summary>
+    private static bool LooksUpByName(string phrase) => D47.Core.Knowledge.NamedLookupPhrase.Read(phrase) is not null;
 
     /// <summary>Whether a walkthrough starts on the phrase; the app asks it before the router.</summary>
     private static bool Walks(string phrase) => new Walkthrough().Take(phrase, DateTimeOffset.UnixEpoch) is not null;

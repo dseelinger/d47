@@ -1657,6 +1657,29 @@ public sealed class TurnLoop(
             yield break;
         }
 
+        // 0. A hull, module or blueprint by name, which no declared phrase can carry.
+        if (Knowledge.NamedLookupPhrase.Read(input) is { } lookup
+            && capabilities.Find(lookup.CapabilityId) is not null)
+        {
+            routing.Handled = true;
+            yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
+
+            var looked = await capabilities
+                .InvokeAsync(lookup.Tool, new ToolArguments(lookup.Arguments), cancellationToken)
+                .ConfigureAwait(false);
+
+            Said(looked.Spoken, input);
+
+            yield return new TurnEvent.TextDelta(looked.Spoken);
+            yield return new TurnEvent.Completed(new TurnResult(
+                looked.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
+                TurnRoute.ActionCommand,
+                looked.Spoken,
+                Effort: null,
+                Cost: null));
+            yield break;
+        }
+
         // 1.
         if (settings is not null && keywordRouter.MatchSetting(input) is { } settingCommand)
         {
