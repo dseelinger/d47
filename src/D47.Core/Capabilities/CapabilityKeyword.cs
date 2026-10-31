@@ -16,6 +16,9 @@ public sealed record CapabilityKeyword(string Phrase, string? ToolName = null)
     public IReadOnlyDictionary<string, string> Arguments { get; init; } =
         ReadOnlyDictionary<string, string>.Empty;
 
+    /// <summary>Words that, said anywhere in the utterance, mean this phrase is not the command.</summary>
+    public IReadOnlyList<string> NotWith { get; init; } = [];
+
     /// <summary>
     /// So a capability with one answer still declares <c>["where am i", "what system"]</c> and nothing
     /// about this type appears in it.

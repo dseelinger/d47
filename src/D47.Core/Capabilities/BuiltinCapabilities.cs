@@ -372,7 +372,7 @@ public static class BuiltinCapabilities
         SpecificationCapability.Create(() => gameState.Active),
         EngineerCapability.Create(() => gameState.Active, unlocks),
         EngineeringCapability.Create(() => gameState.Active, galaxy, clipboard),
-        OnFootCapability.Create(() => gameState.Active, onFoot),
+        OnFootCapability.Create(() => gameState.Active, onFoot, ships),
         ChecklistCapability.Create(checklists, ships, onFoot),
         ShipsCapability.Create(ships, fleet),
         GapCapability.Create(ships, onFoot, () => gameState.Active),

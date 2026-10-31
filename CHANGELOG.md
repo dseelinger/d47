@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+"Add buy a fuel scoop to my checklist" and "put this build on my checklist" no longer read the checklist aloud. "Put this build on my checklist" promotes the ship build, and "put that on my checklist" promotes the build of the ship you are flying, or the suit plan when that ship has none.
+
 The descriptions of the ship-plan, build-gap and plan-shortfall tools now match what they do. Promoting a ship plan writes the checklist lines at once, dropping a plan for a hull you do not own removes its list, and the build gap opens with a total. The phrase "what wants Conductive Polymers" is now "what needs Conductive Polymers".
 
 Spoken engineering answers now name at most three items and count the rest: an engineer's graded specialities, the planned jobs a route covers, a module with several variants, and a module name that matches several fitted modules. The written answer and the model's copy stay complete.

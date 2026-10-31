@@ -80,11 +80,13 @@ public sealed class KeywordRouter(
 
         var folded = Folded(input);
         var words = bounded ? Words(folded).Length : (int?)null;
+        var spoken = new HashSet<string>(Words(folded), StringComparer.OrdinalIgnoreCase);
 
         var candidates =
             from capability in registry.All
             from keyword in Vocabulary(capability.Descriptor, source)
             where MatchesAsCommand(folded, keyword.Phrase, words)
+            where !keyword.NotWith.Any(word => spoken.Contains(word))
             orderby keyword.Phrase.Length descending
             select (capability, keyword);
 

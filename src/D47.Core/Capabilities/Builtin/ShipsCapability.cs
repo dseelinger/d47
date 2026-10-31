@@ -128,7 +128,11 @@ public static class ShipsCapability
                 ],
                 Commands =
                 [
-                    new ToolCommandPhrase("put that on my checklist"),
+                    new ToolCommandPhrase("put that on my checklist")
+                    {
+                        When = () => FlownShipHasBuild(ships),
+                    },
+                    new ToolCommandPhrase("put this build on my checklist"),
                     new ToolCommandPhrase("promote this plan"),
                     new ToolCommandPhrase("add this build to my checklist"),
                 ],
@@ -350,6 +354,10 @@ public static class ShipsCapability
         return ToolResult.Ok(
             $"{build.Describe()}. Buying one will point this plan at it rather than making you start again.");
     }
+
+    /// <summary>Whether the ship being flown has a build; reads the fleet without creating one.</summary>
+    internal static bool FlownShipHasBuild(ShipPlanService? ships) =>
+        ships?.Fleet().FirstOrDefault(entry => entry.IsActive)?.Build is not null;
 
     private static ToolResult Promote(ShipPlanService? ships, ToolArguments arguments)
     {

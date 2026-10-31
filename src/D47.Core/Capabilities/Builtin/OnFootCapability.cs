@@ -3,6 +3,7 @@ using System.Text;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Loadout;
+using D47.Core.Ships;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -14,10 +15,10 @@ public static class OnFootCapability
 {
     public const string Id = "on-foot";
 
-    /// <summary><param name="plans"> The Commander's suit and weapon plans (Phase 27).</summary>
     /// <param name="plans">The Commander's suit and weapon plans (Phase 27).</param>
+    /// <param name="ships">When the flown ship has a build, "put that on my checklist" means the build.</param>
     public static CapabilityDescriptor Create(
-        Func<CommanderGameState?> commander, OnFootPlanService? plans = null) => new()
+        Func<CommanderGameState?> commander, OnFootPlanService? plans = null, ShipPlanService? ships = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -140,7 +141,11 @@ public static class OnFootCapability
                 Parameters = [Which, Weapon],
                 Commands =
                 [
-                    new ToolCommandPhrase("put that on my checklist"),
+                    new ToolCommandPhrase("put that on my checklist")
+                    {
+                        When = () => !ShipsCapability.FlownShipHasBuild(ships),
+                    },
+                    new ToolCommandPhrase("put this plan on my checklist"),
                     new ToolCommandPhrase("promote this suit plan"),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Promote(plans, arguments)),
