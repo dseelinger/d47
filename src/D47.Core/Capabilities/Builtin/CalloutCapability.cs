@@ -293,7 +293,7 @@ public static class CalloutCapability
                 + "shows off and that is no longer said. Say \"start calling out arrivals\" and the row shows on. "
                 + "The row is absent while Speak without being asked is off.",
                 "Arrivals",
-                "Your home system, where your carrier is, ships stored here, and stations offering engineering.",
+                "Your home system, where your carrier is, and ships you have stored there.",
                 "arrival",
                 "arrivals",
                 s => s.Callouts.Arrival,
@@ -1478,8 +1478,8 @@ public static class CalloutCapability
                 "Narrator",
                 "A voice of its own that tells your story in the third person during a lull, from your "
                 + "character sheet, your backstory and your scenario. Never in supercruise or during a fight, "
-                + "and silent while all three are empty, unless COVAS is aboard: then it speaks in place of "
-                + "COVAS's idle remarks. Written by the model, which is sent the whole "
+                + "and silent unless a story is running or an adventure is under way. With a stock core such "
+                + "as COVAS aboard, In Ship chatter is silent. Written by the model, which is sent the whole "
                 + "backstory each time; with no model, or personality off, there is no narration.",
                 "narrator",
                 "the narrator",
