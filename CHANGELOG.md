@@ -10,6 +10,8 @@
 
 Every system name in the Commander tab's tables now has a copy button to its right: the Last location column of Commanders, the System rows of Combat stats, the System column of BGS work, and the system of each codex entry row and logging on a codex entry page. Rows with no system show no button.
 
+Every system name on Asset Mgmt now has a copy button as well: the parked-in line of each ship card and row, the Compare where column, the system headings on Stored modules, the carrier's Where line on Characters, and each sourcing stop on Construction. Ships in transit or with no known system show no button.
+
 Off the ship, a Guardian core or a core you wrote now sounds like it is coming in over the radio: on foot, in a taxi or dropship, in multicrew, in the SRV or in a fighter. The ticked Guardian effects run first, then the link. COVAS is unchanged, and the Test button on Its voice plays without the link.
 
 Every system name on the Navigation tab now has a copy button: both ends of a plan heading and of the Progress headline, the system in the "No station within" and "You are in" lines, the mini route's stops, and the Best cargo page's "Buying at" system, "What to carry to" destination and "sell in" hint.

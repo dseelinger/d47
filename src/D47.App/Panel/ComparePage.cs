@@ -57,7 +57,8 @@ public sealed class ComparePage : UserControl
         long? Value,
         long? Rebuy,
         string Where,
-        bool InCurrentSystem);
+        bool InCurrentSystem,
+        string? System = null);
 
     /// <summary>The table's columns, each sortable from its header.</summary>
     public static readonly IReadOnlyList<SortColumn<Ship>> Heads =
@@ -87,12 +88,17 @@ public sealed class ComparePage : UserControl
     private readonly SortHeader<Ship> _head = new("CompareHead", Heads, ByJump);
     private readonly Stepper _minimum;
     private readonly ColumnWidthMemory? _columnWidths;
+    private readonly Func<string, Task<bool>>? _copy;
     private TableLayout _layout;
     private object? _seen;
 
-    public ComparePage(Func<CommanderGameState?> state, ColumnWidthMemory? columnWidths = null)
+    public ComparePage(
+        Func<CommanderGameState?> state,
+        ColumnWidthMemory? columnWidths = null,
+        Func<string, Task<bool>>? copy = null)
     {
         _columnWidths = columnWidths;
+        _copy = copy;
         _layout = new TableLayout(TableId, ColumnList, columnWidths, 14);
         _state = state;
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
@@ -196,7 +202,8 @@ public sealed class ComparePage : UserControl
                     loadout?.TotalValue,
                     loadout?.Rebuy,
                     where,
-                    system is not null && string.Equals(system, here, StringComparison.OrdinalIgnoreCase));
+                    system is not null && string.Equals(system, here, StringComparison.OrdinalIgnoreCase),
+                    system);
             }),
         ];
     }
@@ -344,7 +351,7 @@ public sealed class ComparePage : UserControl
         where.FontWeight = FontWeight.Medium;
         where.TextTrimming = TextTrimming.CharacterEllipsis;
         ThemeInk.Bind(where, TextBlock.ForegroundProperty, ship.InCurrentSystem ? ThemeManager.CyanKey : ThemeManager.AKey);
-        cells.Add(Cell(where, left: true));
+        cells.Add(Cell(CopyGlyph.Beside(where, ship.System, _copy), left: true));
 
         var grid = _layout.Row(cells);
         grid.Margin = new Thickness(14, 0);

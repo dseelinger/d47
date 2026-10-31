@@ -186,6 +186,9 @@ public sealed record LoadoutRow(string Key, string Word, string Text, string? As
     /// is not a ship.
     /// </summary>
     public string? Hull { get; init; }
+
+    /// <summary>The star system <see cref="Aside"/> names, or null when it names none.</summary>
+    public string? AsideSystem { get; init; }
 }
 
 /// <summary>

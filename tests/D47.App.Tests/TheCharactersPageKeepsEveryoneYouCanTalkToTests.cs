@@ -29,7 +29,9 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
         bool big = false,
         RunningCast? story = null,
         Func<string, string, CancellationToken, Task<double?>>? distance = null,
-        bool galaxy = false)
+        bool galaxy = false,
+        Func<string, Task<bool>>? copy = null,
+        bool carrier = false)
     {
         var look = AppLook.Put();
         var settings = TestSurface.Settings();
@@ -56,6 +58,19 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
             state.Apply(parsed!);
         }
 
+        if (carrier)
+        {
+            foreach (var line in new[]
+                     {
+                         """{"timestamp":"2026-10-24T09:00:02Z","event":"CarrierStats","CarrierID":3700000000,"Callsign":"K7Q-B4X","Name":"Sacred Fire","CarrierType":"FleetCarrier","FuelLevel":1000,"JumpRangeCurr":500.0,"SpaceUsage":{"TotalCapacity":25000,"Crew":0,"Cargo":0,"CargoSpaceReserved":0,"ShipPacks":0,"ModulePacks":0,"FreeSpace":25000},"Crew":[]}""",
+                         """{"timestamp":"2026-10-24T09:00:03Z","event":"CarrierLocation","CarrierType":"FleetCarrier","CarrierID":3700000000,"StarSystem":"Deciat","SystemAddress":6681123623626}""",
+                     })
+            {
+                Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
+                state.Apply(parsed!);
+            }
+        }
+
         var host = new CharactersHost(
             () => store,
             settings,
@@ -67,7 +82,7 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
         Assert.True(nav.Select(PanelTab.Assets));
 
         var prompts = new PanelPrompts(nav, new Avalonia.Controls.Panel());
-        var page = new CharactersPage(host, () => state.Active, prompts, big: big);
+        var page = new CharactersPage(host, () => state.Active, prompts, big: big, copy: copy);
         var window = new Window
         {
             Content = page,
@@ -375,6 +390,33 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
 
         Assert.Equal("Hides a limp.", surface.Store.CastNotes("F1", "salt-road", "wren"));
 
+        Close(surface);
+    }
+
+    [AvaloniaFact]
+    public void TheCarrierWhereLineEndsInAGlyphThatCopiesItsSystem()
+    {
+        var written = new List<string>();
+        var surface = Open(copy: text => { written.Add(text); return Task.FromResult(true); }, carrier: true);
+
+        var glyph = surface.Page.GetVisualDescendants().OfType<Button>().Single(button => D47.App.Controls.CopyGlyph.GetCopies(button) is not null);
+        Assert.Equal("Deciat", D47.App.Controls.CopyGlyph.GetCopies(glyph));
+
+        glyph.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Deciat"], written);
+        Close(surface);
+    }
+
+    [AvaloniaFact]
+    public void TheCarrierWhereLineWithNoCopyDelegateDrawsNoGlyph()
+    {
+        var surface = Open(carrier: true);
+
+        Assert.DoesNotContain(
+            surface.Page.GetVisualDescendants().OfType<Button>(),
+            button => D47.App.Controls.CopyGlyph.GetCopies(button) is not null);
         Close(surface);
     }
 

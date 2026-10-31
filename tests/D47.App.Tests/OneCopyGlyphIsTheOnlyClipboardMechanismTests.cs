@@ -173,7 +173,8 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
         Row(panel, "Big Slow (Anaconda)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        var copy = Assert.Single(SystemGlyphs(panel));
+        // The ship's card in the index carries its own glyph; this is the one on the ship page.
+        var copy = Assert.Single(SystemGlyphs(panel), glyph => !glyph.GetVisualAncestors().OfType<Button>().Any());
         var face = copy.Content;
 
         Assert.Equal(D47.App.Controls.CopyGlyph.Name, AutomationProperties.GetName(copy));

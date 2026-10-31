@@ -86,13 +86,18 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
     private readonly StackPanel _body = new();
     private readonly SortHeader<Held> _head = new("StoredHead", ColumnHeadings, ByName);
     private readonly ColumnWidthMemory? _columnWidths;
+    private readonly Func<string, Task<bool>>? _copy;
     private TableLayout _table;
     private object? _seen;
     private string _query = string.Empty;
 
-    public StoredModulesPage(Func<CommanderGameState?> state, ColumnWidthMemory? columnWidths = null)
+    public StoredModulesPage(
+        Func<CommanderGameState?> state,
+        ColumnWidthMemory? columnWidths = null,
+        Func<string, Task<bool>>? copy = null)
     {
         _state = state;
+        _copy = copy;
         _columnWidths = columnWidths;
         _table = new TableLayout(TableId, ColumnList, columnWidths);
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
@@ -297,7 +302,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         };
         ThemeInk.Bind(detail, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        var head = new WrapPanel { ItemSpacing = 12, LineSpacing = 4, Children = { name, detail } };
+        var head = new WrapPanel { ItemSpacing = 12, LineSpacing = 4, Children = { CopyGlyph.Beside(name, group.System == InTransit ? null : group.System, _copy), detail } };
 
         var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0) };
 

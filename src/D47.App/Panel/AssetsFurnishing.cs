@@ -118,7 +118,8 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
                 host.Prompts,
                 host.Portraits,
                 host.Model?.CarrierPictureSource,
-                host.Headset);
+                host.Headset,
+                host.Copy);
 
             roots.Add(new NavCrumb(CharactersPage.RootKey, "Characters")
             {
@@ -148,8 +149,8 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         // _engineers is read when the first draw opens Materials, not here (#477); Copy and Portraits likewise.
         _loadoutBuild = crumb => LoadoutPages.Build(
             crumb, modes, gap, _carrier, host.Nav, host.Prompts, host.Copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
-            () => _comparePage = new ComparePage(state, host.ColumnWidths),
-            () => _storedModulesPage = new StoredModulesPage(state, host.ColumnWidths),
+            () => _comparePage = new ComparePage(state, host.ColumnWidths, host.Copy),
+            () => _storedModulesPage = new StoredModulesPage(state, host.ColumnWidths, host.Copy),
             () => _crewPage = new CrewPage(state, host.Portraits?.Pictures, host.ColumnWidths),
             planCarrierRoute,
             host.Portraits?.Pictures is { } pictures && host.Model?.CarrierPictureSource is { } picture

@@ -95,6 +95,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
     private double? _distance;
     private bool _distanceKnown;
     private CancellationTokenSource? _lookup;
+    private readonly Func<string, Task<bool>>? _copy;
 
     public CharactersPage(
         CharactersHost host,
@@ -102,8 +103,10 @@ public sealed class CharactersPage : UserControl, IPageSummary
         PanelPrompts prompts,
         SpeakerPortraits? portraits = null,
         Func<VoiceRole, string?>? carrierPicture = null,
-        bool big = false)
+        bool big = false,
+        Func<string, Task<bool>>? copy = null)
     {
+        _copy = copy;
         _host = host;
         _state = state;
         _prompts = prompts;
@@ -1162,7 +1165,15 @@ public sealed class CharactersPage : UserControl, IPageSummary
 
         LookUpDistance(_state()?.Location.StarSystem, system);
 
-        return new StackPanel { Orientation = Orientation.Horizontal, Children = { place, _distanceText } };
+        var where = new StackPanel { Orientation = Orientation.Horizontal, Children = { place, _distanceText } };
+
+        if (_copy is not null)
+        {
+            where.Spacing = 6;
+            where.Children.Add(CopyGlyph.For(system, _copy));
+        }
+
+        return where;
     }
 
     private void LookUpDistance(string? here, string? there)

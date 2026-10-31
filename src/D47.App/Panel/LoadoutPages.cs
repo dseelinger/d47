@@ -167,7 +167,8 @@ public static class LoadoutPages
             nav,
             prompts,
             root.RootKey == FleetRoot ? settingsStrip?.Invoke() : null,
-            root.RootKey == FleetRoot && compare is not null ? () => nav.Drill(ComparePage.Crumb) : null);
+            root.RootKey == FleetRoot && compare is not null ? () => nav.Drill(ComparePage.Crumb) : null,
+            copy);
     }
 
     /// <summary>The crumb for a ship, and for a slot of it.</summary>
@@ -218,7 +219,9 @@ public static class LoadoutPages
         Action pressed,
         bool engineered = false,
         bool showing = false,
-        string? markKey = null)
+        string? markKey = null,
+        string? system = null,
+        Func<string, Task<bool>>? copy = null)
     {
         var label = ListRow.Name(new TextBlock
         {
@@ -235,6 +238,7 @@ public static class LoadoutPages
             [
                 new ColumnDefinition(GridLength.Auto),
                 new ColumnDefinition(GridLength.Star) { MinWidth = 120 },
+                new ColumnDefinition(GridLength.Auto),
                 new ColumnDefinition(GridLength.Auto),
             ],
         };
@@ -262,6 +266,14 @@ public static class LoadoutPages
             // is cut off mid-word rather than wrapping.
             body.SizeChanged += (_, size) =>
                 note.MaxWidth = Math.Max(80, size.NewSize.Width * 0.6);
+
+            if (system is { Length: > 0 } && copy is not null)
+            {
+                var glyph = D47.App.Controls.CopyGlyph.For(system, copy);
+                glyph.Margin = new Thickness(6, 0, 0, 0);
+                Grid.SetColumn(glyph, 3);
+                body.Children.Add(glyph);
+            }
         }
 
         // The marks, and they are marks rather than columns: "this slot has a plan" and "this module is
@@ -342,7 +354,9 @@ public static class LoadoutPages
         bool drawings = false,
         bool showing = false,
         string? headline = null,
-        string badgeText = "CURRENT SHIP")
+        string badgeText = "CURRENT SHIP",
+        string? system = null,
+        Func<string, Task<bool>>? copy = null)
     {
         headline ??= text;
 
@@ -439,14 +453,39 @@ public static class LoadoutPages
             // Hull, where it is, and what is planned — each on its own line beneath the name (#278).
             var lines = new StackPanel { Margin = new Thickness(0, 1, 0, 0) };
 
+            var glyphed = false;
+
             foreach (var line in aside.Split('\n', StringSplitOptions.RemoveEmptyEntries))
             {
-                lines.Children.Add(ListRow.SecondaryInk(new TextBlock
+                var said = ListRow.SecondaryInk(new TextBlock
                 {
                     Text = line,
                     FontSize = TypeScale.Secondary,
                     TextTrimming = TextTrimming.CharacterEllipsis,
-                }));
+                });
+
+                if (!glyphed
+                    && system is { Length: > 0 }
+                    && copy is not null
+                    && line.Contains(system, StringComparison.Ordinal))
+                {
+                    glyphed = true;
+                    said.VerticalAlignment = VerticalAlignment.Center;
+
+                    var glyph = D47.App.Controls.CopyGlyph.For(system, copy);
+                    Grid.SetColumn(glyph, 1);
+
+                    lines.Children.Add(new Grid
+                    {
+                        ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+                        ColumnSpacing = 6,
+                        Children = { said, glyph },
+                    });
+
+                    continue;
+                }
+
+                lines.Children.Add(said);
             }
 
             Grid.SetRow(lines, 2);
@@ -1440,6 +1479,7 @@ public sealed class IndexPage : LoadoutPage, IPageChrome
 {
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
+    private readonly Func<string, Task<bool>>? _copy;
     private readonly StackPanel _list = new() { Spacing = ListGap };
 
     /// <summary>Where the cards go, for a mode that has them.</summary>
@@ -1455,11 +1495,13 @@ public sealed class IndexPage : LoadoutPage, IPageChrome
         PanelNavigator nav,
         PanelPrompts prompts,
         Control? settingsStrip = null,
-        Action? compare = null)
+        Action? compare = null,
+        Func<string, Task<bool>>? copy = null)
         : base(mode)
     {
         _nav = nav;
         _prompts = prompts;
+        _copy = copy;
 
         BarTool = PageChrome.ToolOf(settingsStrip);
 
@@ -1580,7 +1622,9 @@ public sealed class IndexPage : LoadoutPage, IPageChrome
                     row.Aside,
                     row.Marked,
                     () => _nav.Drill(LoadoutPages.Crumb(Mode, row)),
-                    row.Engineered));
+                    row.Engineered,
+                    system: row.AsideSystem,
+                    copy: _copy));
             }
 
             return;
@@ -1614,7 +1658,9 @@ public sealed class IndexPage : LoadoutPage, IPageChrome
                 Drawings,
                 showing,
                 headline: row.Word,
-                badgeText: row.Badge);
+                badgeText: row.Badge,
+                system: row.AsideSystem,
+                copy: _copy);
 
             if (showing)
             {
@@ -1978,7 +2024,9 @@ public sealed class ItemPage : LoadoutPage
                     row.Marked,
                     () => _nav.Drill(crumb),
                     row.Engineered,
-                    showing);
+                    showing,
+                    system: row.AsideSystem,
+                    copy: _copy);
 
             Draggable(control, row);
             PlansOnDoubleClick(control, row, crumb);

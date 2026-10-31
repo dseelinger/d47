@@ -1033,7 +1033,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         return section;
     }
 
-    private static StackPanel Plan(SourcingPlan plan)
+    private StackPanel Plan(SourcingPlan plan)
     {
         var drawn = new StackPanel { Spacing = Gaps.Tile };
 
@@ -1075,7 +1075,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         return drawn;
     }
 
-    private static Border Stop(SourcingStop stop)
+    private Border Stop(SourcingStop stop)
     {
         var station = Chrome(stop.Market.Station, TypeScale.Secondary, ThemeManager.WhiteKey);
         station.FontWeight = FontWeight.SemiBold;
@@ -1090,7 +1090,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         };
         ThemeInk.Bind(system, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
-        var names = new WrapPanel { ItemSpacing = 12, Children = { station, system } };
+        var names = new WrapPanel { ItemSpacing = 12, Children = { station, CopyGlyph.Beside(system, stop.Market.System, _copy) } };
 
         if (stop.Distance > 0)
         {

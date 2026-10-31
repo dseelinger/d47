@@ -116,6 +116,7 @@ public sealed class ShipsMode(
                             ? LoadoutStanding.Owned
                             : LoadoutStanding.Wanted,
                     Hull = entry.Hull,
+                    AsideSystem = AsideSystem(entry),
                 };
             }),
     ];
@@ -138,6 +139,10 @@ public sealed class ShipsMode(
 
         return Lines(HullLine(entry), system, PlannedLine(planned));
     }
+
+    /// <summary>The system the ship's whereabouts line names, or null when it is in transit, not bought or unknown.</summary>
+    private static string? AsideSystem(FleetEntry entry) =>
+        entry.Stored is { InTransit: false, HasSystem: true } stored ? stored.StarSystem : null;
 
     /// <summary>The hull, where the name on the card does not already carry it — a build with no name of
     /// its own reads as its hull already, and a second line naming it again would say nothing new.</summary>

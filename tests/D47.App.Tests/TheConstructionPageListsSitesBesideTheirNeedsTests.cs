@@ -318,6 +318,25 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
     }
 
     [AvaloniaFact]
+    public void EachSourcingStopCarriesAGlyphThatCopiesItsSystem()
+    {
+        var board = new SourcingBoard();
+        board.Post(Posting(VogelWhere));
+
+        var (window, panel) = Open(State(Reconciled), board);
+
+        var copies = Page(panel).GetVisualDescendants().OfType<Button>()
+            .Select(CopyGlyph.GetCopies)
+            .OfType<string>()
+            .ToList();
+
+        Assert.Contains("LHS 2936", copies);
+        Assert.Contains("Wolf 397", copies);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void TheLastSearchForThisSiteIsDrawnStopByStop()
     {
         var board = new SourcingBoard();
