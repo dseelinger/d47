@@ -26,6 +26,8 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private BodySearchPage? _bodies;
     private SignalSearchPage? _signals;
     private StarSystemPage? _found;
+    private SystemBodyPage? _body;
+    private StarSystemProfile? _drawn;
     private StarSystemSurface? _surface;
     private (long Address, string Id)? _pendingSystem;
     private string? _systemEntry;
@@ -68,6 +70,10 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             && host.Nav.TrailOf(PanelTab.Search) is { Count: > 1 } trail
             && trail[^1].Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
             && found.Tick();
+        redrawn |= _body is { } body
+            && host.Nav.TrailOf(PanelTab.Search) is { Count: > 1 } bodyTrail
+            && SystemBodyPage.IsKey(bodyTrail[^1].Key)
+            && body.Tick();
         redrawn |= _systems is { } systems && host.Nav.RootKeyOf(PanelTab.Search) == SystemSearchPage.RootKey && systems.Tick();
         redrawn |= _stations is { } stations && host.Nav.RootKeyOf(PanelTab.Search) == StationSearchPage.RootKey && stations.Tick();
         redrawn |= _outfitting is { } outfitting && host.Nav.RootKeyOf(PanelTab.Search) == OutfittingSearchPage.RootKey && outfitting.Tick();
@@ -158,7 +164,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 bodySearches,
                 surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
-                body => OpenFound(body.SystemName, body.SystemAddress, BodiesSuffix),
+                OpenResult,
                 host.Copy,
                 surface.OpenSettings,
                 host.Headset)
@@ -190,10 +196,17 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             return _signals;
         }
 
+        if (SystemBodyPage.Parse(crumb.Key) is var (bodyAddress, bodyId))
+        {
+            var profile = _drawn?.SystemAddress == bodyAddress ? _drawn : null;
+
+            return _body = new SystemBodyPage(surface, bodyAddress, bodyId, crumb.Word, profile, Codex, OpenBody, () => host.Nav.Back());
+        }
+
         if (crumb.Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
             && FoundTarget(crumb.Key) is var (address, suffix))
         {
-            var found = _found = new StarSystemPage(surface, host.Copy);
+            var found = _found = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, Codex = Codex };
             found.FiltersChanged += (_, _) => host.ShowSearch();
 
             _ = suffix switch
@@ -206,7 +219,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             return found;
         }
 
-        _starSystem = new StarSystemPage(surface, host.Copy);
+        _starSystem = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, Codex = Codex };
         _starSystem.FiltersChanged += (_, _) => host.ShowSearch();
         ApplyPending();
 
@@ -324,6 +337,52 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             result => chosen(result.Values ?? []));
 
     private void OpenFound(SystemSummary system) => OpenFound(system.Name, system.SystemAddress);
+
+    /// <summary>The Codex pictures the body pages draw, or null where this surface has none.</summary>
+    public CodexPictureSet? CodexPictures { get; set; }
+
+    private BodyCodex Codex => new(
+        CodexCatalogue.Table,
+        CodexPictures,
+        host.Nav.CanShow(CodexPage.PageKey) ? OpenCodexEntry : null,
+        host.Nav.CanShow(CodexPage.PageKey) ? OpenGenus : null);
+
+    private void OpenCodexEntry(CodexEntry entry) =>
+        PageTrail.Open(host.Nav, LedgersPage.RootKey, [
+            new NavCrumb(CodexPage.PageKey, "Codex"),
+            CodexPage.RegionCrumb(null),
+            CodexPage.EntryCrumb(null, entry.EntryId, entry.Name)]);
+
+    /// <summary>Opens Commander › Codex with its search set to the genus.</summary>
+    private void OpenGenus(string genus)
+    {
+        host.Nav.Show(CodexPage.PageKey);
+
+        if (host.Nav.Trail is { Count: > 0 } trail && trail[^1].Key == CodexPage.PageKey)
+        {
+            host.Seek(genus);
+        }
+    }
+
+    /// <summary>Drills a body's page under the page it was pressed on, keeping the record already read.</summary>
+    private void OpenBody(StarSystemProfile profile, BodyProfile body)
+    {
+        _drawn = profile;
+        host.Nav.Drill(PanelTab.Search, SystemBodyPage.Crumb(profile.SystemAddress, body));
+    }
+
+    /// <summary>Opens a Bodies result's system on its Bodies section, with the body's page drilled under it where the result names the body.</summary>
+    private void OpenResult(BodySummary body)
+    {
+        OpenFound(body.SystemName, body.SystemAddress, BodiesSuffix);
+
+        if (body is { SystemAddress: { } address, BodyId: { } id }
+            && host.Nav.TrailOf(PanelTab.Search) is { Count: > 1 } trail
+            && trail[^1].Key == FoundKeyPrefix + address.ToString(CultureInfo.InvariantCulture) + BodiesSuffix)
+        {
+            host.Nav.Drill(PanelTab.Search, SystemBodyPage.Crumb(address, id, body.Name));
+        }
+    }
 
     private static (long Address, string Suffix)? FoundTarget(string key)
     {

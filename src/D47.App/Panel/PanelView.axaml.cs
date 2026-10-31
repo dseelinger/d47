@@ -411,6 +411,8 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     void IPanelTabHost.ShowSearch() => ShowSearch();
 
+    void IPanelTabHost.Seek(string query) => SearchInput.Text = query;
+
     BodySearchLink? IPanelTabHost.BodySearch => _searchFurnishing.BodySearch;
 
     private void OnModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -654,8 +656,11 @@ public partial class PanelView : UserControl, IPanelTabHost
         Func<D47.Core.Journal.CommanderGameState?> state,
         Func<D47.Core.Journal.HistoryState> history,
         Func<DateTimeOffset> now,
-        CodexPictureSet? pictures = null) =>
+        CodexPictureSet? pictures = null)
+    {
         _commander.EnableCodex(state, history, now, pictures);
+        _searchFurnishing.CodexPictures = pictures;
+    }
 
     /// <summary>Gives this surface Commander › Commanders, after Ledgers.</summary>
     public void EnableCommanders(CommanderRoster roster) => _commander.EnableCommanders(roster);

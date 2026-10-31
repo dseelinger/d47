@@ -47,4 +47,7 @@ internal interface IPanelTabHost
     bool ClearSearch();
 
     void ShowSearch();
+
+    /// <summary>Puts <paramref name="query"/> in the search box, which filters the page showing.</summary>
+    void Seek(string query);
 }

@@ -21,7 +21,10 @@ public sealed class TheSystemPageDrawsItsBodiesTests
 
     private static List<Border> Slabs(Control root) =>
         [.. root.GetVisualDescendants().OfType<Border>()
-            .Where(border => border.Child is StackPanel && border.Padding == new Thickness(14, 9, 14, 10))];
+            .Where(border => border.Classes.Contains(StarSystemPage.BodySlabClass))];
+
+    /// <summary>The indent of a slab's row, which holds the slab beside its Codex tile.</summary>
+    private static double Indent(Border slab) => ((Control)slab.GetVisualParent()!).Margin.Left;
 
     private static List<string> Lines(Border slab) =>
         [.. slab.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
@@ -43,8 +46,8 @@ public sealed class TheSystemPageDrawsItsBodiesTests
         Assert.DoesNotContain(slabs, slab => AutomationProperties.GetName(slab)!.Contains("Barycentre", StringComparison.OrdinalIgnoreCase));
 
         var moonOfAMoon = slabs.Single(slab => AutomationProperties.GetName(slab) == "LTT 7786 11 b a");
-        Assert.Equal(84, moonOfAMoon.Margin.Left);
-        Assert.Equal(0, slabs[0].Margin.Left);
+        Assert.Equal(84, Indent(moonOfAMoon));
+        Assert.Equal(0, Indent(slabs[0]));
 
         window.Close();
     }

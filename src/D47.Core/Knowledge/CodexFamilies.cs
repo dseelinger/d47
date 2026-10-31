@@ -25,6 +25,18 @@ public static class CodexFamilies
     public static string? FileOfSymbol(string? symbol) =>
         symbol is not null && BySymbol.TryGetValue(symbol.Trim(), out var file) ? file : null;
 
+    /// <summary>The placeholder file for a star or planet: Stars, Gas giants for a gas or water giant, otherwise Terrestrials.</summary>
+    public static string FileOfBody(string type, string? subType) =>
+        BySymbol[type == "Star"
+            ? "$Codex_SubCategory_Stars;"
+            : subType is not null && (subType.Contains("gas giant", StringComparison.OrdinalIgnoreCase)
+                || subType.Contains("water giant", StringComparison.OrdinalIgnoreCase))
+                ? "$Codex_SubCategory_Gas_Giants;"
+                : "$Codex_SubCategory_Terrestrials;"];
+
+    /// <summary>The placeholder file for a biological genus.</summary>
+    public static string FileOfGenus => BySymbol["$Codex_SubCategory_Organic_Structures;"];
+
     /// <summary>The placeholder file for a subcategory name in the codex table; null for a name outside the families.</summary>
     public static string? FileOfTableName(string? name) =>
         name is not null && ByTableName.TryGetValue(name.Trim(), out var file) ? file : null;

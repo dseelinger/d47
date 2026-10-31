@@ -1,4 +1,4 @@
-﻿﻿using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -17,6 +17,15 @@ public sealed partial class StarSystemPage
     public const string BodiesNote = "bodies · each star, what orbits it, and moons under their planet";
 
     private const double BodyIndent = 28;
+
+    /// <summary>Marks a body's row on the Bodies section.</summary>
+    public const string BodySlabClass = "body-slab";
+
+    /// <summary>Drills a body's page; null leaves the rows unpressable.</summary>
+    public Action<StarSystemProfile, BodyProfile>? OpenBody { get; init; }
+
+    /// <summary>Where each row's Codex tile comes from.</summary>
+    public BodyCodex Codex { get; init; } = BodyCodex.None;
 
     /// <summary>Each star, then what orbits it, every body followed by its moons; siblings in <c>BodyId</c> order.</summary>
     public static IReadOnlyList<BodyLevel> BodyTree(IReadOnlyList<BodyProfile> bodies)
@@ -120,7 +129,11 @@ public sealed partial class StarSystemPage
         return facts;
     }
 
-    private static string? MinedFact(SurfaceMiningSite? site)
+    private static string? MinedFact(SurfaceMiningSite? site) =>
+        MinedText(site) is { } shown ? $"Surface mined: {shown}" : null;
+
+    /// <summary>"12 t Gold, 4 t Silver and 2 more": the three commodities with the most tonnes and a count of the rest; null with none.</summary>
+    public static string? MinedText(SurfaceMiningSite? site)
     {
         var tonnes = (site?.Runs ?? [])
             .SelectMany(run => run.Refined.Values)
@@ -138,7 +151,7 @@ public sealed partial class StarSystemPage
         var shown = string.Join(", ", tonnes.Take(MostMinedShown).Select(material => $"{material.Tonnes.ToString(CultureInfo.InvariantCulture)} t {material.Name}"));
         var more = tonnes.Count - MostMinedShown;
 
-        return $"Surface mined: {shown}{(more > 0 ? $" and {more.ToString(CultureInfo.InvariantCulture)} more" : string.Empty)}";
+        return $"{shown}{(more > 0 ? $" and {more.ToString(CultureInfo.InvariantCulture)} more" : string.Empty)}";
     }
 
     /// <summary>A ring's line: its type, the body's reserve level and each hotspot.</summary>
@@ -205,23 +218,24 @@ public sealed partial class StarSystemPage
 
         foreach (var level in BodyTree(profile.Bodies))
         {
-            list.Children.Add(BodySlab(level, _surface.SurfaceMining?.Invoke(profile.SystemAddress, level.Body.BodyId)));
+            list.Children.Add(BodySlab(profile, level, _surface.SurfaceMining?.Invoke(profile.SystemAddress, level.Body.BodyId)));
         }
 
         return list;
     }
 
-    private static Border BodySlab(BodyLevel level, SurfaceMiningSite? mined)
+    /// <summary>A body's row: pressable where the page can drill a body, its Codex tile beside it, indented by its depth.</summary>
+    private DockPanel BodySlab(StarSystemProfile profile, BodyLevel level, SurfaceMiningSite? mined)
     {
         var body = level.Body;
 
         var first = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,240,90"),
+            ColumnDefinitions = new ColumnDefinitions("*,Auto,90"),
             ColumnSpacing = 16,
         };
 
-        var name = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+        var name = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, ClipToBounds = true };
         name.Children.Add(Ellipsed(body.Name, TypeScale.Secondary, FontWeight.SemiBold, ThemeManager.WhiteKey));
 
         if (body.IsLandable)
@@ -253,16 +267,41 @@ public sealed partial class StarSystemPage
             stack.Children.Add(line);
         }
 
+        var content = new DockPanel();
+
+        if (OpenBody is not null)
+        {
+            var more = Typeset.Chrome("›", TypeScale.ControlLarge, ThemeManager.AKey, vertical: VerticalAlignment.Center);
+            more.Margin = new Thickness(16, 0, 0, 0);
+            DockPanel.SetDock(more, Dock.Right);
+            content.Children.Add(more);
+        }
+
+        content.Children.Add(stack);
+
         var slab = new Border
         {
-            Margin = new Thickness(level.Depth * BodyIndent, 0, 0, 0),
+            MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 9, 14, 10),
-            Child = stack,
+            Child = content,
         };
-        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
         Avalonia.Automation.AutomationProperties.SetName(slab, body.Name);
+        slab.Classes.Add(BodySlabClass);
 
-        return slab;
+        if (OpenBody is { } open)
+        {
+            ListRow.Dress(slab);
+            ListRow.Opens(slab, () => open(profile, body));
+        }
+        else
+        {
+            ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+        }
+
+        var row = SystemBodyPage.Beside(Codex.Tile(body, framed: true), slab);
+        row.Margin = new Thickness(level.Depth * BodyIndent, 0, 0, 0);
+
+        return row;
     }
 
     private static WrapPanel Facts(IReadOnlyList<string> facts, string key)

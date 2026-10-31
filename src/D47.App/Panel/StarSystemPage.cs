@@ -691,7 +691,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         return TitleText.Block(named, context, reportedAt is { } at ? Reported(at) : null);
     }
 
-    private static StackPanel Reported(DateTimeOffset at)
+    internal static StackPanel Reported(DateTimeOffset at)
     {
         var label = Caption("Last reported", ThemeManager.GreyKey);
         label.HorizontalAlignment = HorizontalAlignment.Right;
