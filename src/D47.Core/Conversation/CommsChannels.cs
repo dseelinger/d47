@@ -39,6 +39,9 @@ public sealed record CommsInputs
 
     public bool StoryRunning { get; init; }
 
+    /// <summary>The running story's id; its cast selection is remembered under it.</summary>
+    public string? StoryId { get; init; }
+
     /// <summary>The running story's cast members the Commander has been introduced to.</summary>
     public IReadOnlyList<AdventureSpeaker> StoryCast { get; init; } = [];
 
@@ -51,6 +54,18 @@ public sealed record CommsInputs
 
     /// <summary>The shuttle ride in progress, or null.</summary>
     public ShuttleRide? Shuttle { get; init; }
+}
+
+/// <summary>The selected channel and the party last selected on each channel, for saving and restoring.</summary>
+public sealed record CommsMemory
+{
+    public CommsChannel? Channel { get; init; }
+
+    /// <summary>The party last selected on each channel but Story, by key.</summary>
+    public IReadOnlyDictionary<CommsChannel, string> Parties { get; init; } = new Dictionary<CommsChannel, string>();
+
+    /// <summary>The cast member last selected on Story, by story id.</summary>
+    public IReadOnlyDictionary<string, string> StoryParties { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
 }
 
 /// <summary>
@@ -74,7 +89,8 @@ public sealed class CommsChannels
     private readonly Lock _lock = new();
     private CommsInputs _inputs = new();
     private CommsChannel? _channel;
-    private string? _key;
+    private readonly Dictionary<CommsChannel, string> _parties = [];
+    private readonly Dictionary<string, string> _storyParties = new(StringComparer.Ordinal);
 
     /// <summary>Raised, outside any lock, when the selection or the available set changes.</summary>
     public event Action? Changed;
@@ -90,6 +106,41 @@ public sealed class CommsChannels
             }
         }
     }
+
+    /// <summary>The selected channel and the party last selected on each.</summary>
+    public CommsMemory Memory
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return Snapshot();
+            }
+        }
+    }
+
+    /// <summary>Takes up a saved selection; null returns to the launch state. Speaks nothing.</summary>
+    public void Restore(CommsMemory? memory) => Change(() =>
+    {
+        _parties.Clear();
+        _storyParties.Clear();
+        _channel = memory?.Channel;
+
+        if (memory is not null)
+        {
+            foreach (var (channel, key) in memory.Parties)
+            {
+                _parties[channel] = key;
+            }
+
+            foreach (var (story, key) in memory.StoryParties)
+            {
+                _storyParties[story] = key;
+            }
+        }
+
+        return true;
+    });
 
     /// <summary>The channels available now, in cycling order.</summary>
     public IReadOnlyList<CommsChannel> Available
@@ -119,18 +170,19 @@ public sealed class CommsChannels
 
         Change(() =>
         {
+            var previousStory = _inputs.StoryId;
             _inputs = inputs;
 
-            if (_channel is { } channel)
+            if (_channel is null)
             {
-                if (_key is not null && !PartiesOn(channel).Any(party => Same(party.Key, _key)))
+                if (AvailableNow() is [var first, ..])
                 {
-                    _key = null;
+                    Enter(first);
                 }
             }
-            else if (AvailableNow() is [var first, ..])
+            else if (_channel == CommsChannel.Story && inputs.StoryRunning && inputs.StoryId != previousStory)
             {
-                Enter(first);
+                Enter(CommsChannel.Story);
             }
 
             return true;
@@ -172,7 +224,7 @@ public sealed class CommsChannels
         }
 
         _channel = channel;
-        _key = party.Key;
+        Remember(channel, party.Key);
         return true;
     });
 
@@ -187,7 +239,7 @@ public sealed class CommsChannels
         }
 
         _channel = CommsChannel.System;
-        _key = party.Key;
+        Remember(CommsChannel.System, party.Key);
         return true;
     });
 
@@ -200,10 +252,11 @@ public sealed class CommsChannels
         {
             var available = AvailableNow();
             var selected = Selection();
+            var memory = Snapshot();
 
             result = change();
 
-            changed = !available.SequenceEqual(AvailableNow()) || selected != Selection();
+            changed = !available.SequenceEqual(AvailableNow()) || selected != Selection() || !Same(memory, Snapshot());
         }
 
         if (changed)
@@ -246,20 +299,65 @@ public sealed class CommsChannels
             return false;
         }
 
-        var at = _key is null ? -1 : parties.ToList().FindIndex(party => Same(party.Key, _key));
+        var key = RememberedKey(channel);
+        var at = key is null ? -1 : parties.ToList().FindIndex(party => Same(party.Key, key));
         var next = at < 0
             ? (by > 0 ? 0 : parties.Count - 1)
             : ((at + by) % parties.Count + parties.Count) % parties.Count;
 
-        _key = parties[next].Key;
+        Remember(channel, parties[next].Key);
         return true;
     }
 
     private void Enter(CommsChannel channel)
     {
         _channel = channel;
-        _key = PartiesOn(channel).FirstOrDefault()?.Key;
+
+        var parties = PartiesOn(channel);
+        var remembered = RememberedKey(channel);
+        var chosen = parties.FirstOrDefault(party => remembered is not null && Same(party.Key, remembered)) ?? parties.FirstOrDefault();
+
+        if (chosen is not null)
+        {
+            Remember(channel, chosen.Key);
+        }
     }
+
+    private string? RememberedKey(CommsChannel channel)
+    {
+        if (channel == CommsChannel.Story)
+        {
+            return _storyParties.GetValueOrDefault(_inputs.StoryId ?? string.Empty);
+        }
+
+        return _parties.GetValueOrDefault(channel);
+    }
+
+    private void Remember(CommsChannel channel, string key)
+    {
+        if (channel == CommsChannel.Story)
+        {
+            _storyParties[_inputs.StoryId ?? string.Empty] = key;
+        }
+        else if (channel != CommsChannel.Target)
+        {
+            _parties[channel] = key;
+        }
+    }
+
+    private CommsMemory Snapshot() => new()
+    {
+        Channel = _channel,
+        Parties = new Dictionary<CommsChannel, string>(_parties),
+        StoryParties = new Dictionary<string, string>(_storyParties, StringComparer.Ordinal),
+    };
+
+    private static bool Same(CommsMemory left, CommsMemory right) =>
+        left.Channel == right.Channel
+        && left.Parties.Count == right.Parties.Count
+        && left.Parties.All(pair => right.Parties.TryGetValue(pair.Key, out var key) && key == pair.Value)
+        && left.StoryParties.Count == right.StoryParties.Count
+        && left.StoryParties.All(pair => right.StoryParties.TryGetValue(pair.Key, out var key) && key == pair.Value);
 
     private CommsSelection? Selection()
     {
@@ -270,9 +368,11 @@ public sealed class CommsChannels
 
         var parties = PartiesOn(channel);
 
+        var remembered = RememberedKey(channel);
+
         var party = channel == CommsChannel.Target
             ? parties.FirstOrDefault()
-            : parties.FirstOrDefault(party => _key is not null && Same(party.Key, _key));
+            : parties.FirstOrDefault(party => remembered is not null && Same(party.Key, remembered));
 
         return new CommsSelection(channel, party);
     }

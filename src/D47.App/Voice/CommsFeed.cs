@@ -29,6 +29,7 @@ public static class CommsFeed
             Target = active?.Target,
             Heard = heard,
             StoryRunning = story is not null,
+            StoryId = story?.StoryId,
             NarratorAnswers = narratorAnswers,
             StoryCast = story is null
                 ? []

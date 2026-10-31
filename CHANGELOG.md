@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Each comms channel now remembers who you last had selected on it, and Story remembers it for each story. Coming back to a channel, or to a story, selects that party again if they are still on it; if they have left, no one is selected until they return.
+
 While you ride an Apex or Frontline shuttle, a Shuttle comms channel opens with the shuttle's pilot on it. Select it with the comms key, "channel up" or "comms pilot", and talk to the pilot by voice; they remember the conversation until the ride ends.
 
 Every system name in the Journal tab's reading pane now has a copy button to its right, on the fields that name a system such as StarSystem and Next system.
