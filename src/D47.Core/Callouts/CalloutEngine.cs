@@ -27,6 +27,9 @@ public readonly record struct CalloutContext(
     ChatterSaid? LastChatter = null,
     bool AnotherFlying = false)
 {
+    /// <summary>False while Elite is not running; chatter is refused then.</summary>
+    public bool GameRunning { get; init; } = true;
+
     /// <summary>Whether the shown Commander is in an Operation.</summary>
     public bool InOperation => State?.InOperationSince is not null;
 
@@ -44,6 +47,7 @@ public readonly record struct CalloutContext(
         return new(now, IsPriming: isFirst || commanders.IsAnotherFlying, commanders.Active, status, route, events)
         {
             AnotherFlying = !isFirst && commanders.IsAnotherFlying,
+            GameRunning = commanders.IsGameRunning,
         };
     }
 }
@@ -234,6 +238,13 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
         if (context.InOperation
             && announcement.Urgency != CalloutUrgency.Urgent
             && calloutId != IncomingMessages.CalloutId)
+        {
+            return false;
+        }
+
+        // Nothing is said because nothing happened while Elite is closed.
+        if (!context.GameRunning
+            && (announcement.Chatter is not null || announcement.Origin == AnnouncementOrigin.InventedChatter))
         {
             return false;
         }

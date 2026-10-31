@@ -1574,6 +1574,8 @@ Commander doing the interdicting.
 
 #### In Ship chatter {#ambient}
 
+It is silent while Elite is not running.
+
 **Who it is: your core and your crew** — the voices inside your ship, as against the
 [NPC chatter](#npc-chatter) below, which is everybody outside it. Only the AI speaks unasked; your
 crew answer on comms.
@@ -1621,6 +1623,8 @@ The drive note has not changed in some minutes. That is what it sounds like when
 ```
 
 #### NPC chatter {#npc-chatter}
+
+It is silent while Elite is not running.
 
 **Who it is: anybody outside your ship** — as against [In Ship chatter](#ambient) above, which
 is your own AI and crew.
@@ -1744,6 +1748,8 @@ Set the interval to `0` if you want the switch without finding the switch.
 
 #### Scene chatter {#scenes}
 
+It is silent while Elite is not running.
+
 **Who it is: the people of a settlement you are on foot at, the pilots of a fight you are in, or the
 people of a faction whose mission you took**, heard on their own radio reacting to what the journal says
 just happened. It needs a
@@ -1822,6 +1828,8 @@ chatter muted in the mixer, there are no scenes.
 > "stop calling out scene chatter" / "start calling out scene chatter"
 
 #### Narrator {#narrator}
+
+It is silent while Elite is not running.
 
 **Who it is: a voice of its own**, neither your core nor anybody outside the ship. It tells your
 story in the third person and the past tense, the way a novel's narrator writes, from your
