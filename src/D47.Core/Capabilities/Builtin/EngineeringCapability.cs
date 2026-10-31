@@ -811,16 +811,21 @@ public static class EngineeringCapability
         }
 
         // More than one is an answer, not a failure — "shield booster" names four slots on plenty of ships,
-        // and picking one silently would report about the wrong module with total confidence.
+        // and picking one silently would report about the wrong module with total confidence. Spoken answers name at most three (SpokenList.Limit).
         if (matches.Count > 1)
         {
             var report = new StringBuilder();
 
             report.AppendLine($"{matches.Count} fitted modules match '{wanted.Trim()}':");
 
-            foreach (var module in matches)
+            var spokenMatches = matches.Count > SpokenList.Limit ? matches.Take(SpokenList.Limit).ToList() : matches.ToList();
+            foreach (var module in spokenMatches)
             {
                 report.AppendLine("  " + Line(ship.Type, module, active.Engineers));
+            }
+            if (matches.Count > spokenMatches.Count)
+            {
+                report.AppendLine($"  and {matches.Count - spokenMatches.Count} more on the Engineering page.");
             }
 
             return ToolResult.Ok(report.ToString().TrimEnd() + remembered);
