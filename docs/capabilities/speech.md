@@ -580,7 +580,8 @@ never bills a provider.
 Optional effects for the core's voice, each off by default. They apply to what the core says —
 turn replies, its own callouts, and a persona's introduction or return — and to nothing else: your
 crew, the carrier and every over-the-air voice are unchanged. COVAS, the stock core, is never given
-them. Any combination can be ticked at once,
+them. When you are out of the ship (on foot, in a taxi or dropship, in multicrew, in the SRV or in a
+fighter), the core's voice also comes over the radio link, after the effects. Any combination can be ticked at once,
 and the ticked effects run top to bottom in the order set, each feeding the next. The order starts as
 listed here.
 

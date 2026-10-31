@@ -730,6 +730,8 @@ public sealed class SpeechClients : IDisposable
             _voice.BedEnabled = speech.ThinkingBedEnabled;
             _voice.GuardianColour = GuardianVoice.ColourFor(speech, _personas.Current);
             _voice.GuardianRunning = GuardianVoice.RunningColourFor(speech, _personas.Current);
+            _voice.AwayColour = GuardianVoice.AwayColourFor(speech, _personas.Current);
+            _voice.AwayRunning = GuardianVoice.AwayRunningColourFor(speech, _personas.Current);
         }
 
         // Disposed outside the lock: Kokoro's Dispose waits on the gate its model load holds.

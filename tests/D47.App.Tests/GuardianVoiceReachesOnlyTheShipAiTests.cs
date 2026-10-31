@@ -2,6 +2,7 @@ using D47.App.Voice;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Conversation;
+using D47.Core.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -23,6 +24,7 @@ public class GuardianVoiceReachesOnlyTheShipAiTests
 
             // A marker rather than the real chain, since the chain itself is GuardianVoiceTests' job.
             GuardianColour = clip => clip with { Name = $"{clip.Name} (guardian)" },
+            AwayColour = clip => clip with { Name = $"{clip.Name} (guardian) (away)" },
         };
 
         return (voice, sink.Played);
@@ -62,6 +64,56 @@ public class GuardianVoiceReachesOnlyTheShipAiTests
         await voice.AnnounceAsync(new Announcement("routine.scan", "Scanning."));
 
         Assert.Equal("Scanning.", Assert.Single(played).Name);
+    }
+
+    private static GameStatus OnFoot() =>
+        new() { Flags = StatusFlags.InMainShip, Flags2 = (uint)StatusFlags2.OnFoot, ReadAt = DateTimeOffset.UtcNow };
+
+    [Fact]
+    public async Task TheShipsAiComesOverTheLinkWhenTheCommanderIsOnFoot()
+    {
+        var (voice, played) = Build();
+        voice.Status = OnFoot;
+
+        await voice.AnnounceAsync(new Announcement("routine.scan", "Scanning."));
+
+        Assert.EndsWith("(away)", Assert.Single(played).Name, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ATurnReplyComesOverTheLinkWhenTheCommanderIsOnFoot()
+    {
+        var (voice, played) = Build();
+        voice.Status = OnFoot;
+
+        await voice.RunAsync(Reply("Scanning."), cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.EndsWith("(away)", Assert.Single(played).Name, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TheShipsAiIsUnchangedInTheShipOrWithNoStatus()
+    {
+        var (voice, played) = Build();
+
+        await voice.AnnounceAsync(new Announcement("routine.scan", "Scanning."));
+        voice.Status = () => new GameStatus { Flags = StatusFlags.InMainShip, ReadAt = DateTimeOffset.UtcNow };
+        await voice.AnnounceAsync(new Announcement("routine.scan", "Scanning."));
+
+        Assert.All(played, clip => Assert.EndsWith("(guardian)", clip.Name, StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(VoiceRole.Crew, "Scanning.")]
+    [InlineData(VoiceRole.Comms, "Scanning. (radio)")]
+    public async Task TheCrewAndTheRadioAreUnchangedWhenTheCommanderIsOnFoot(VoiceRole role, string expected)
+    {
+        var (voice, played) = Build();
+        voice.Status = OnFoot;
+
+        await voice.AnnounceAsync(new Announcement($"line.{role}", "Scanning.") { Voice = role });
+
+        Assert.Equal(expected, Assert.Single(played).Name);
     }
 
     /// <summary>A turn reply is the ship AI too, unless it answers as a crew member.</summary>

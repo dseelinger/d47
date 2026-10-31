@@ -3448,6 +3448,7 @@ public sealed class AppHost : IDisposable
         // A voice the provider refuses is written out of settings rather than merely skipped for the turn it
         // broke.
         voice.VoiceRejected += speech.ForgetTheVoice;
+        voice.Status = () => host.LiveStatus;
 
         using (StartupTimer.Step("model settings"))
         {

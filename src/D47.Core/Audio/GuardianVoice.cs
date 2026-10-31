@@ -598,6 +598,40 @@ public static partial class GuardianVoice
         return () => Filter(effects, basePitch);
     }
 
+    /// <summary>
+    /// The treatment for a core heard over the comms link, for a Commander out of their ship: the ticked effects, then
+    /// <see cref="RadioVoice"/> at full strength. Null for a stock core; a link even when no effect is ticked.
+    /// </summary>
+    public static Func<AudioClip, AudioClip>? AwayColourFor(SpeechSettings speech, D47.Core.Persona.Persona core)
+    {
+        if (core.Stock)
+        {
+            return null;
+        }
+
+        var effects = Effects(speech.GuardianVoice);
+        var basePitch = BasePitchHz(core.VoiceHint.Gender);
+
+        return clip => RadioVoice.Apply(Apply(clip, effects, basePitch), 1);
+    }
+
+    /// <summary><see cref="AwayColourFor"/> as a running filter factory, null in the same case.</summary>
+    public static Func<IPcmFilter>? AwayRunningColourFor(SpeechSettings speech, D47.Core.Persona.Persona core)
+    {
+        if (core.Stock)
+        {
+            return null;
+        }
+
+        var effects = Effects(speech.GuardianVoice);
+        var basePitch = BasePitchHz(core.VoiceHint.Gender);
+        var ticked = Ticked(effects).Count > 0;
+
+        return () => ticked
+            ? new SeriesPcmFilter(Filter(effects, basePitch), RadioVoice.Filter(1, overheard: false))
+            : RadioVoice.Filter(1, overheard: false);
+    }
+
     /// <summary>The ship AI's treatment for the settings in force, or null when no effect is ticked (#225).</summary>
     public static Func<AudioClip, AudioClip>? ColourFor(SpeechSettings speech, D47.Core.Persona.VoiceGender gender)
     {

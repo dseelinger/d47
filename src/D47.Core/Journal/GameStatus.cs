@@ -193,6 +193,20 @@ public sealed record GameStatus
         CommanderIsInTheGame && ReadAt is { } read && now - read < FreshFor;
 
     /// <summary>
+    /// Whether the Commander is in the game and not in their own ship: on foot, in a taxi or dropship, in
+    /// multicrew, in an SRV or a fighter, or without <see cref="StatusFlags.InMainShip"/>. False when the read
+    /// is not live at <paramref name="now"/>.
+    /// </summary>
+    public bool IsAwayFromShipAt(DateTimeOffset now) =>
+        IsLiveAt(now)
+        && (OnFoot
+            || Has2(StatusFlags2.InTaxi)
+            || Has2(StatusFlags2.InMulticrew)
+            || Has(StatusFlags.InSrv)
+            || Has(StatusFlags.InFighter)
+            || !Has(StatusFlags.InMainShip));
+
+    /// <summary>
     /// Fuel as a fraction of the tank, which Status.json cannot answer on its own — it reports the
     /// level and never the capacity.
     /// </summary>

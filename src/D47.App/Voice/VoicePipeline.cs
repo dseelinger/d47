@@ -3,6 +3,7 @@ using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
+using D47.Core.Journal;
 using D47.Core.Speech;
 using Microsoft.Extensions.Logging;
 
@@ -18,7 +19,8 @@ public sealed class VoicePipeline(
     AudioArbiter arbiter,
     Func<CueLibrary> cues,
     ILoggerFactory loggers,
-    IWallClock? clock = null)
+    IWallClock? clock = null,
+    TimeProvider? time = null)
 {
     private readonly ILogger<VoicePipeline> _logger = loggers.CreateLogger<VoicePipeline>();
 
@@ -103,6 +105,19 @@ public sealed class VoicePipeline(
 
     /// <summary><see cref="GuardianColour"/> as a running filter, so the ship AI plays while it arrives.</summary>
     public Func<IPcmFilter>? GuardianRunning { get; set; }
+
+    /// <summary>The ship AI's treatment for a Commander out of their ship: <see cref="GuardianColour"/>'s effects, then the radio link.</summary>
+    public Func<AudioClip, AudioClip>? AwayColour { get; set; }
+
+    /// <summary><see cref="AwayColour"/> as a running filter.</summary>
+    public Func<IPcmFilter>? AwayRunning { get; set; }
+
+    /// <summary>Where the Commander is, read once as a ship AI line starts synthesising; null reads as in the ship.</summary>
+    public Func<GameStatus>? Status { get; set; }
+
+    private readonly TimeProvider _time = time ?? TimeProvider.System;
+
+    private bool Away => Status?.Invoke().IsAwayFromShipAt(_time.GetUtcNow()) == true;
 
     /// <summary>
     /// Who speaks the reply in progress. Guardian treatment reaches only <see cref="VoiceRole.ShipAi"/>, and a
@@ -618,15 +633,15 @@ public sealed class VoicePipeline(
     /// on, and no treatment for every other role — Crew included (#225).
     /// </summary>
     private Func<AudioClip, AudioClip>? Colour(VoiceRole role, double signal = 1, bool overheard = false) =>
-        RadioVoice.Colours(role, signal, overheard) ?? (role == VoiceRole.ShipAi ? GuardianColour : null);
+        RadioVoice.Colours(role, signal, overheard) ?? (role == VoiceRole.ShipAi ? (Away && AwayColour is { } away ? away : GuardianColour) : null);
 
     /// <summary>
     /// <see cref="Colour"/> as a running filter: the radio link for an over-the-air role, and
-    /// <see cref="GuardianRunning"/> where the resolved colour is the ship AI's own treatment; otherwise null.
+    /// <see cref="GuardianRunning"/> or <see cref="AwayRunning"/> where the resolved colour is the ship AI's own treatment; otherwise null.
     /// </summary>
     private Func<IPcmFilter>? Running(VoiceRole role, Func<AudioClip, AudioClip>? colour, double signal = 1, bool overheard = false) =>
         RadioVoice.RunningColours(role, signal, overheard)
-        ?? (role == VoiceRole.ShipAi && colour is not null && colour == GuardianColour ? GuardianRunning : null);
+        ?? (role != VoiceRole.ShipAi || colour is null ? null : colour == AwayColour ? AwayRunning : colour == GuardianColour ? GuardianRunning : null);
 
     /// <summary>Whether a resolved colour is the Guardian treatment rather than a radio link, for the log.</summary>
     private static bool IsGuardianTreated(VoiceRole role, Func<AudioClip, AudioClip>? colour) =>
