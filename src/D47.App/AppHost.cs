@@ -3055,6 +3055,25 @@ public sealed class AppHost : IDisposable
             () => late.Host?.Announcer.NpcsHere,
             heardAs => late.Host?.AccentHeardAs(heardAs)));
 
+        // The pilot of the shuttle the Commander rides.
+        turns.Lines.Add(new ShuttleLine(
+            () => gameState.Active?.Shuttle,
+            () => gameState.Active?.Location.StarSystem,
+            () => turns.BackgroundModel,
+            loggerFactory.CreateLogger<ShuttleLine>(),
+            (npc, cancellationToken) => FlavourTurn.AskAsync(
+                turns.Provider,
+                turns.BackgroundModel,
+                persona: null,
+                aboutMe: null,
+                StrangerPersonality.Instruction(npc),
+                gameState: null,
+                spend,
+                PriceTable.Default,
+                loggerFactory.CreateLogger<ShuttleLine>(),
+                cancellationToken),
+            heardAs => late.Host?.AccentHeardAs(heardAs)));
+
         // The Narrator, while the STORY channel offers it.
         turns.Lines.Add(new NarratorLine(
             () => late.Host?.Writer.HiddenStory(VoiceRole.Narrator),

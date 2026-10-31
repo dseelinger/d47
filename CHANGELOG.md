@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+While you ride an Apex or Frontline shuttle, a Shuttle comms channel opens with the shuttle's pilot on it. Select it with the comms key, "channel up" or "comms pilot", and talk to the pilot by voice; they remember the conversation until the ride ends.
+
 Every system name in the Commander tab's tables now has a copy button to its right: the Last location column of Commanders, the System rows of Combat stats, the System column of BGS work, and the system of each codex entry row and logging on a codex entry page. Rows with no system show no button.
 
 Every system name on Asset Mgmt now has a copy button as well: the parked-in line of each ship card and row, the Compare where column, the system headings on Stored modules, the carrier's Where line on Characters, and each sourcing stop on Construction. Ships in transit or with no known system show no button.

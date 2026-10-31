@@ -39,6 +39,12 @@ public sealed class TheCommsChannelsFollowTheGameTests
     private const string ShoreLeave =
         """{"timestamp":"2026-10-24T09:05:00Z","event":"CrewAssign","Name":"Samira Voss","CrewID":1,"Role":"OnShoreLeave"}""";
 
+    private const string BoardShuttle =
+        """{"timestamp":"2026-10-24T09:06:00Z","event":"Embark","SRV":false,"Taxi":true,"Multicrew":false,"SystemAddress":1,"BodyID":9,"OnStation":true,"OnPlanet":false}""";
+
+    private const string LeaveShuttle =
+        """{"timestamp":"2026-10-24T09:07:00Z","event":"Disembark","SRV":false,"Taxi":true,"Multicrew":false,"SystemAddress":1,"BodyID":9}""";
+
     private const string OtherCommander =
         """{"timestamp":"2026-10-24T10:00:00Z","event":"Commander","FID":"F2","Name":"Kestrel"}""";
 
@@ -139,9 +145,24 @@ public sealed class TheCommsChannelsFollowTheGameTests
     }
 
     [Fact]
+    public void ARideOnAShuttleOpensShuttleUntilItEnds()
+    {
+        var game = Game(BoardShuttle);
+        var channels = new CommsChannels();
+
+        channels.Update(CommsFeed.Inputs(game.Active, [], null, []));
+        Assert.Equal([CommsChannel.Shuttle], channels.Available);
+        Assert.Equal("Shuttle pilot", Assert.Single(channels.SubChannels(CommsChannel.Shuttle)).Name);
+
+        Apply(game, LeaveShuttle);
+        channels.Update(CommsFeed.Inputs(game.Active, [], null, []));
+        Assert.Empty(channels.Available);
+    }
+
+    [Fact]
     public void LosingEachInputClosesItsChannel()
     {
-        var game = Game(Carrier, Target, Hired, Active);
+        var game = Game(Carrier, Target, Hired, Active, BoardShuttle);
         var channels = new CommsChannels();
 
         channels.Update(CommsFeed.Inputs(game.Active, [Npc], Story(), [Character]));
@@ -161,6 +182,10 @@ public sealed class TheCommsChannelsFollowTheGameTests
         channels.Update(CommsFeed.Inputs(game.Active, [], null, [Character]));
         Assert.DoesNotContain(CommsChannel.Story, channels.Available);
 
+        channels.Update(CommsFeed.Inputs(game.Active, [], null, []));
+        Assert.Equal([CommsChannel.Carrier, CommsChannel.Shuttle], channels.Available);
+
+        Apply(game, LeaveShuttle);
         channels.Update(CommsFeed.Inputs(game.Active, [], null, []));
         Assert.Equal([CommsChannel.Carrier], channels.Available);
 

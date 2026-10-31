@@ -15,6 +15,7 @@ public enum CommsChannel
     Story,
     Crew,
     Characters,
+    Shuttle,
 }
 
 /// <summary>One party on a channel. <see cref="Key"/> stays the same while they stay on it; <see cref="Name"/> may change.</summary>
@@ -47,6 +48,9 @@ public sealed record CommsInputs
     public ShipCrew Crew { get; init; } = ShipCrew.Empty;
 
     public IReadOnlyList<CustomCharacter> Characters { get; init; } = [];
+
+    /// <summary>The shuttle ride in progress, or null.</summary>
+    public ShuttleRide? Shuttle { get; init; }
 }
 
 /// <summary>
@@ -62,6 +66,8 @@ public sealed class CommsChannels
     public const string TargetKey = "target";
 
     public const string NarratorKey = ":narrator";
+
+    public const string PilotKey = "pilot";
 
     private static readonly CommsChannel[] Order = Enum.GetValues<CommsChannel>();
 
@@ -281,6 +287,7 @@ public sealed class CommsChannels
         CommsChannel.Story => _inputs.StoryRunning,
         CommsChannel.Crew => _inputs.Crew.Members.Any(member => member.Active),
         CommsChannel.Characters => _inputs.Characters.Count > 0,
+        CommsChannel.Shuttle => _inputs.Shuttle is not null,
         _ => false,
     };
 
@@ -309,9 +316,18 @@ public sealed class CommsChannels
                     .Select(member => new CommsSubChannel(member.CrewId.ToString(CultureInfo.InvariantCulture), member.Name)),
             ],
             CommsChannel.Characters => [.. _inputs.Characters.Select(character => new CommsSubChannel(character.Id, character.Name))],
+            CommsChannel.Shuttle when _inputs.Shuttle is { } ride => [new(PilotKey, PilotName(ride.Kind))],
             _ => [],
         };
     }
+
+    /// <summary>The shuttle pilot's name for a kind of ride.</summary>
+    public static string PilotName(ShuttleKind kind) => kind switch
+    {
+        ShuttleKind.Apex => "Apex pilot",
+        ShuttleKind.Frontline => "Frontline pilot",
+        _ => "Shuttle pilot",
+    };
 
     private TargetedShip? NpcTarget() => _inputs.Target is { IsCommander: false } target ? target : null;
 

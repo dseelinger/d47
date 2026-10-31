@@ -153,6 +153,27 @@ public class CommsChannelsFollowWhoIsReachableTests
     }
 
     [Fact]
+    public void TheShuttleChannelIsOpenOnlyWhileARideIsHeldAndNamesThePilotByKind()
+    {
+        var channels = With(new CommsInputs { CarrierOwned = true });
+        Assert.DoesNotContain(CommsChannel.Shuttle, channels.Available);
+
+        channels.Update(new CommsInputs { CarrierOwned = true, Shuttle = new ShuttleRide(ShuttleKind.Frontline, null, null, false) });
+
+        Assert.Equal([CommsChannel.Carrier, CommsChannel.Shuttle], channels.Available);
+        Assert.Equal(CommsChannel.Carrier, channels.Selected!.Channel);
+        Assert.Equal(["Frontline pilot"], channels.SubChannels(CommsChannel.Shuttle).Select(party => party.Name));
+        Assert.True(channels.Select(CommsChannel.Shuttle, "pilot"));
+
+        channels.Update(new CommsInputs { CarrierOwned = true, Shuttle = new ShuttleRide(ShuttleKind.Unknown, null, null, false) });
+        Assert.Equal("Shuttle pilot", Party(channels));
+
+        channels.Update(new CommsInputs { CarrierOwned = true });
+        Assert.Equal([CommsChannel.Carrier], channels.Available);
+        Assert.Empty(channels.SubChannels(CommsChannel.Shuttle));
+    }
+
+    [Fact]
     public void CustomCharactersAreOfferedOnTheirChannel()
     {
         var channels = With(new CommsInputs { Characters = [Character("0a1b2c3d", "Wren"), Character("4e5f6a7b", "Tamsin Holt")] });

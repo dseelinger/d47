@@ -83,10 +83,10 @@ public static class CommsCapability
                     "Settings › Acting on the game › What D47 may do, group Comms channel keys",
                     "none (unbound)",
                     "the selection moves to the next open channel in the order Carrier, Target, System, "
-                        + "Story, Crew, Characters, wrapping. Needs two channels open to show a move: Story "
+                        + "Story, Crew, Characters, Shuttle, wrapping. Needs two channels open to show a move: Story "
                         + "while a story runs, Crew while a crew member is active, System after NPCs have been "
                         + "heard, Carrier when you own one, Target with an NPC ship targeted, Characters when "
-                        + "you have custom characters. D47 says the selection aloud, as \"Carrier, Tower.\" or "
+                        + "you have custom characters, Shuttle while you ride an Apex or Frontline shuttle. D47 says the selection aloud, as \"Carrier, Tower.\" or "
                         + "\"Story, no one.\", and says \"No comms channel is open.\" when none is.")),
             .. InterfaceCapability.HotkeyRows(
                 ChannelDownHotkeyKey,
@@ -102,7 +102,7 @@ public static class CommsCapability
                     "the selection moves to the previous open channel in that order, wrapping. Needs two "
                         + "channels open to show a move: Story while a story runs, Crew while a crew member is "
                         + "active, System after NPCs have been heard, Carrier when you own one, Target with an "
-                        + "NPC ship targeted, Characters when you have custom characters. D47 says the "
+                        + "NPC ship targeted, Characters when you have custom characters, Shuttle while you ride an Apex or Frontline shuttle. D47 says the "
                         + "selection aloud, as \"Carrier, Tower.\" or \"Story, no one.\", and says \"No comms "
                         + "channel is open.\" when none is.")),
             .. InterfaceCapability.HotkeyRows(
@@ -119,7 +119,7 @@ public static class CommsCapability
                     "the selection moves to the next party on the current channel, wrapping. Needs two "
                         + "channels open to show a move: Story while a story runs, Crew while a crew member is "
                         + "active, System after NPCs have been heard, Carrier when you own one, Target with an "
-                        + "NPC ship targeted, Characters when you have custom characters. D47 says the "
+                        + "NPC ship targeted, Characters when you have custom characters, Shuttle while you ride an Apex or Frontline shuttle. D47 says the "
                         + "selection aloud, as \"Carrier, Tower.\" or \"Story, no one.\", and says \"No comms "
                         + "channel is open.\" when none is.")),
             .. InterfaceCapability.HotkeyRows(
@@ -136,7 +136,7 @@ public static class CommsCapability
                     "the selection moves to the previous party on the current channel, wrapping. Needs "
                         + "two channels open to show a move: Story while a story runs, Crew while a crew member "
                         + "is active, System after NPCs have been heard, Carrier when you own one, Target with "
-                        + "an NPC ship targeted, Characters when you have custom characters. D47 says the "
+                        + "an NPC ship targeted, Characters when you have custom characters, Shuttle while you ride an Apex or Frontline shuttle. D47 says the "
                         + "selection aloud, as \"Carrier, Tower.\" or \"Story, no one.\", and says \"No comms "
                         + "channel is open.\" when none is.")),
         ],
@@ -252,6 +252,7 @@ public static class CommsCapability
         [CommsChannel.Story] = "story",
         [CommsChannel.Crew] = "crew",
         [CommsChannel.Characters] = "characters",
+        [CommsChannel.Shuttle] = "shuttle",
     };
 
     /// <summary>"comms Tower", "comms Kestrel Vane" and "comms Vane", for everyone on an available channel.</summary>

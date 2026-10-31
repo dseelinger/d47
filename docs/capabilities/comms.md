@@ -138,19 +138,21 @@ nav_order: 139
 </section>
 <section>
 <h2><span class="num">4</span> You choose who hears you, and the AI cannot.</h2>
-<svg viewBox="0 0 880 220" role="img" aria-label="The channel selector steps through carrier, target, system, story, crew and characters, and only the Commander moves it">
- <rect x="20" y="30" width="130" height="64" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="85" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">CARRIER</text>
- <rect x="166" y="30" width="130" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="231" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">TARGET</text>
- <rect x="312" y="30" width="130" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="377" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">SYSTEM</text>
- <rect x="458" y="30" width="130" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="523" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">STORY</text>
- <rect x="604" y="30" width="110" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="659" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">CREW</text>
- <rect x="730" y="30" width="130" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="795" y="68" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text-muted)">CHARACTERS</text>
+<svg viewBox="0 0 880 220" role="img" aria-label="The channel selector steps through carrier, target, system, story, crew, characters and shuttle, and only the Commander moves it">
+ <rect x="20" y="30" width="112" height="64" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="76" y="68" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text)">CARRIER</text>
+ <rect x="141" y="30" width="112" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="197" y="68" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text-muted)">TARGET</text>
+ <rect x="262" y="30" width="112" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="318" y="68" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text-muted)">SYSTEM</text>
+ <rect x="383" y="30" width="112" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="439" y="68" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text-muted)">STORY</text>
+ <rect x="504" y="30" width="112" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="560" y="68" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text-muted)">CREW</text>
+ <rect x="625" y="30" width="112" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="681" y="68" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text-muted)">CHARACTERS</text>
+ <rect x="746" y="30" width="112" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="802" y="68" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text-muted)">SHUTTLE</text>
  <text x="440" y="136" text-anchor="middle" font-size="17" fill="var(--text)">“Channel up” skips any channel with nobody on it. “Next sub-channel” picks who on it.</text>
  <text x="440" y="168" text-anchor="middle" font-size="16" fill="var(--text-muted)">After each move D47 says where you are: “Carrier, Tower.”</text>
  <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text-muted)">The AI cannot move it, so text from the game cannot redirect your voice.</text>
@@ -262,7 +264,7 @@ reported, not who is online now. With Elite closed it says so.
 > "comms carrier"
 > "comms Tower"
 
-The comms channels are Carrier, Target, System, Story, Crew and Characters. Channel up and down
+The comms channels are Carrier, Target, System, Story, Crew, Characters and Shuttle. Channel up and down
 skip any channel that has no one on it, and wrap around. Sub-channel up and down step through
 who is on the selected channel and wrap within it. "Comms" followed by a channel or a name
 selects it directly. A name can be the whole name or the last word of it.
@@ -277,6 +279,7 @@ Each channel opens from the game:
 | Story | a story runs | the cast it has introduced |
 | Crew | a hired pilot is active | that pilot |
 | Characters | you have made a character | each of them |
+| Shuttle | you ride an Apex or Frontline shuttle | its pilot |
 
 What you say on the [comms push-to-talk](listening.md#comms-push-to-talk) goes to whoever the
 selection names, and never to your core. It is not routed: a command such as "landing gear" is said
@@ -318,9 +321,10 @@ cast, a hired pilot, and any you add on the [Characters](characters.md) page. Th
 voice and notes you gave them.
 
 **Strangers** are NPCs D47 makes up, such as a pilot on your target or a voice heard on comms in this
-system. D47 writes each one a short personality. Strangers appear on the Target and System
-channels. A stranger remembers the conversation until you jump or they sign off, and a target
-pilot remembers it until you target someone else.
+system. D47 writes each one a short personality. Strangers appear on the Target, System and Shuttle
+channels, and the pilot of a shuttle you ride is one on the Shuttle channel. A stranger remembers the
+conversation until you jump or they sign off, a target pilot remembers it until you target someone
+else, and a shuttle pilot remembers it until the ride ends.
 
 ### Range
 
@@ -385,7 +389,7 @@ Choose which comms channel, and who on it, the Commander's comms key reaches, an
 Protected: the keyword router, the keys and the stick buttons reach it, and the model is refused.
 
 ```json
-{"type":"object","properties":{"channel":{"type":"string","description":"A channel by name, or next, previous or current to move from the one selected.","enum":["carrier","target","system","story","crew","characters","next","previous","current"]},"sub_channel":{"type":"string","description":"Who on the channel, by name, or next or previous."}},"required":["channel"],"additionalProperties":false}
+{"type":"object","properties":{"channel":{"type":"string","description":"A channel by name, or next, previous or current to move from the one selected.","enum":["carrier","target","system","story","crew","characters","shuttle","next","previous","current"]},"sub_channel":{"type":"string","description":"Who on the channel, by name, or next or previous."}},"required":["channel"],"additionalProperties":false}
 ```
 
 </details>

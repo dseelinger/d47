@@ -35,6 +35,7 @@ public static class CommsFeed
                 : [.. story.Members.Where(member => !member.Recorded).Select(member => new AdventureSpeaker(member.Shown.Id, member.Shown.Name, string.Empty) { Role = member.Role })],
             Crew = active?.Crew ?? ShipCrew.Empty,
             Characters = characters,
+            Shuttle = active?.Shuttle,
         };
     }
 }
