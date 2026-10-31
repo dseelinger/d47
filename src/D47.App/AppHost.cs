@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+﻿﻿using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Diagnostics;
 using D47.App.Input;
@@ -48,6 +48,7 @@ public sealed class AppHost : IDisposable
 {
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<AppHost> _logger;
+    private readonly Input.GameActions _actions;
     private readonly WasapiAudioSink _audioSink;
 
     private readonly DefaultDeviceFollowPolicy _outputFollow;
@@ -199,6 +200,11 @@ public sealed class AppHost : IDisposable
         {
             Hailed = name => Volatile.Write(ref _hailedBy, name),
         };
+
+        _actions = new Input.GameActions(
+            _logger,
+            announcement => Voice.AnnounceAsync(announcement),
+            announcement => Announcer.SayAsync(announcement));
 
         Listener = new Listener(
             settings,
@@ -2479,7 +2485,13 @@ public sealed class AppHost : IDisposable
                         route,
                         loggerFactory.CreateLogger<Input.RoutePlotWatch>(),
                         () => gameState.Active?.Location.StarSystem),
-                    AwaitGalaxyMap = (open, token) => AwaitGalaxyMap(status, open, logger, token),
+                    AwaitGalaxyMap = (open, token) => StatusWaits.AwaitStatus(
+                        status,
+                        current => (current.GuiFocus == Core.Journal.GuiFocus.GalaxyMap) == open,
+                        TimeSpan.FromSeconds(3),
+                        open ? "galaxy map open" : "galaxy map closed",
+                        logger,
+                        token),
 
                     // Where the attempt says how far it got, on every exit including a cancelled turn (#365).
                     Log = logger,
@@ -2566,7 +2578,7 @@ public sealed class AppHost : IDisposable
                 {
                     Enabled = command => ShipCommands.IsEnabled(settings.Current, command),
 
-                    AwaitLeftPanel = (open, token) => AwaitStatus(
+                    AwaitLeftPanel = (open, token) => StatusWaits.AwaitStatus(
                         status,
                         current => (current.GuiFocus == Core.Actions.Launch.Panel) == open,
                         TimeSpan.FromSeconds(3),
@@ -2577,7 +2589,7 @@ public sealed class AppHost : IDisposable
                     // Longer than the others on purpose: the pad lift and the mail slot take real seconds,
                     // and a launch reported as failed because d47 stopped watching too early is the same lie
                     // as one reported as succeeded.
-                    AwaitUndocked = token => AwaitStatus(
+                    AwaitUndocked = token => StatusWaits.AwaitStatus(
                         status,
                         current => !current.Has(Core.Journal.StatusFlags.Docked),
                         TimeSpan.FromSeconds(30),
@@ -2585,7 +2597,7 @@ public sealed class AppHost : IDisposable
                         logger,
                         token),
 
-                    NextStatus = token => NextStatus(status, token),
+                    NextStatus = token => StatusWaits.NextStatus(status, token),
 
                     // Opened before the contacts walk sends a key, so a request already in is not read as
                     // this one (#150).
@@ -4120,11 +4132,12 @@ public sealed class AppHost : IDisposable
 
         // After the callouts, so a honk that reports why it did not fire is spoken in the same order it was
         // decided relative to everything else this tick.
-        tick.Add("autonomous-drain", _ => host.CarryOutPendingActions(autonomous, gameInput));
+        tick.Add("autonomous-drain", _ => host._actions.CarryOutPendingActions(autonomous, gameInput, host.GameState.IsOffDuty));
 
         // After the autonomous drain and for the same reason it exists: the tick is synchronous and a key
         // press is not.
-        tick.Add("switch-drain", _ => host.CarryOutReconciles(reconciler, gameInput, services.HeadsetKey, services.Chords));
+        tick.Add("switch-drain", _ => host._actions.CarryOutReconciles(
+            reconciler, gameInput, services.HeadsetKey, services.Chords, host.GameState.IsOffDuty, host.PanelRouting.Show));
     }
 
     private static void StartRunning(AppHost host, FoundationParts foundations, LoopParts loop, ServiceParts services, bool startTicking)
@@ -5321,165 +5334,6 @@ public sealed class AppHost : IDisposable
     /// <summary>Puts what the microphone is doing in front of the Commander, on both surfaces.</summary>
     private void ShowSwitches(string? against) => Panel.SwitchesText = against;
 
-    /// <summary>Carries out whatever the reconciler decided this tick.</summary>
-    private void CarryOutReconciles(
-        SwitchReconciler reconciler, IGameInput input, HeadsetViewKey headsetKey, ChordSender chords)
-    {
-        var drained = reconciler.Drain();
-
-        if (drained.Count == 0)
-        {
-            return;
-        }
-
-        var route = ReconcileRoute.Of(drained, GameState.IsOffDuty);
-
-        // The ones that move the panel rather than the ship go elsewhere: to each surface on its own thread,
-        // and outside _acting, because a page move holds no keys for a honk to collide with (Phase 46).
-        foreach (var page in route.Pages)
-        {
-            PanelRouting.Show(page.Destination!);
-        }
-
-        if (route.Headset.Count > 0)
-        {
-            CarryOutHeadsetViews(route.Headset, headsetKey, reconciler);
-        }
-
-        if (route.Chords.Count > 0)
-        {
-            CarryOutChords(route.Chords, chords);
-        }
-
-        var pending = route.Game;
-
-        if (pending.Count == 0)
-        {
-            return;
-        }
-
-        _ = Task.Run(async () =>
-        {
-            await _acting.WaitAsync().ConfigureAwait(false);
-
-            try
-            {
-                foreach (var reconcile in pending)
-                {
-                    if (reconcile.Steps.Count > 0)
-                    {
-                        var result = await input.SendAsync(reconcile.Steps).ConfigureAwait(false);
-
-                        _logger.LogInformation(
-                            "Switch {Name} reconciled {Label}: {Outcome}",
-                            reconcile.Switch,
-                            reconcile.Label,
-                            result.Outcome);
-
-                        // The Commander flipped a switch and is watching for the thing to happen, so a
-                        // refusal that stayed in the log would look like the feature not working.
-                        if (!result.Sent)
-                        {
-                            await Voice.AnnounceAsync(new Announcement(
-                                reconcile.Switch,
-                                $"I could not set {reconcile.Label} from {reconcile.Switch}. {result.Reason}"))
-                                .ConfigureAwait(false);
-                        }
-                    }
-
-                    if (reconcile.Say is { } say)
-                    {
-                        await Voice.AnnounceAsync(new Announcement(reconcile.Switch, say)).ConfigureAwait(false);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "A switch could not be reconciled");
-            }
-            finally
-            {
-                // Unconditional, like everywhere else that presses a key.
-                input.ReleaseAll();
-                _acting.Release();
-            }
-        });
-    }
-
-    /// <summary>
-    /// Presses Shift+Win+D for the headset views decided this tick, off duty as well, under <c>_acting</c> so a
-    /// held Shift is not combined with keys sent to Elite.
-    /// </summary>
-    private void CarryOutHeadsetViews(
-        IReadOnlyList<PendingReconcile> pending, HeadsetViewKey headsetKey, SwitchReconciler reconciler)
-    {
-        _ = Task.Run(async () =>
-        {
-            await _acting.WaitAsync().ConfigureAwait(false);
-
-            try
-            {
-                foreach (var reconcile in pending)
-                {
-                    if (headsetKey.CarryOut(reconcile, reconciler) is { } say)
-                    {
-                        await Voice.AnnounceAsync(new Announcement(reconcile.Switch, say)).ConfigureAwait(false);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "A headset view could not be set");
-            }
-            finally
-            {
-                _acting.Release();
-            }
-        });
-    }
-
-    /// <summary>
-    /// Presses the key chords decided this tick in whatever window is in front, off duty as well, under
-    /// <c>_acting</c> so a held modifier is not combined with keys sent to Elite.
-    /// </summary>
-    private void CarryOutChords(IReadOnlyList<PendingReconcile> pending, ChordSender chords)
-    {
-        _ = Task.Run(async () =>
-        {
-            await _acting.WaitAsync().ConfigureAwait(false);
-
-            try
-            {
-                foreach (var reconcile in pending)
-                {
-                    var refused = chords.Press(reconcile.Chord!);
-
-                    _logger.LogInformation(
-                        "Switch {Name} pressed {Chord}: {Outcome}",
-                        reconcile.Switch,
-                        reconcile.Label,
-                        refused ?? "done");
-
-                    if (refused is not null)
-                    {
-                        await Voice.AnnounceAsync(new Announcement(
-                            reconcile.Switch,
-                            $"I could not press {reconcile.Label} from {reconcile.Switch}. {refused}"))
-                            .ConfigureAwait(false);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "A key chord could not be pressed");
-            }
-            finally
-            {
-                _acting.Release();
-            }
-        });
-    }
-
     /// <summary>Says out loud that settings or the model are unusable, if there is a voice to say it with.</summary>
     /// <param name="setupShown">Whether the first-run wizard was offered, which already covers a missing model.</param>
     public async Task AnnounceStartupProblemsAsync(bool setupShown = false)
@@ -5629,65 +5483,6 @@ public sealed class AppHost : IDisposable
 
     /// <summary>How many times an endpoint has been asked, so only the latest answer is kept.</summary>
     private int _endpointModelsAsked;
-
-    /// <summary>One autonomous action at a time.</summary>
-    private readonly SemaphoreSlim _acting = new(1, 1);
-
-    /// <summary>Carries out whatever the autonomous actions decided this tick.</summary>
-    private void CarryOutPendingActions(AutonomousActionRunner runner, IGameInput input)
-    {
-        var pending = runner.Drain();
-
-        // Dropped rather than held, so nothing decided off duty is carried out on return.
-        if (pending.Count == 0 || GameState.IsOffDuty)
-        {
-            return;
-        }
-
-        _ = Task.Run(async () =>
-        {
-            await _acting.WaitAsync().ConfigureAwait(false);
-
-            try
-            {
-                foreach (var action in pending)
-                {
-                    if (action.Decision.Acts)
-                    {
-                        var result = await input.SendAsync(action.Decision.Steps).ConfigureAwait(false);
-
-                        _logger.LogInformation(
-                            "Autonomous action {Id} finished: {Outcome}", action.Id, result.Outcome);
-
-                        // Nobody asked for this, so nobody is watching for it to fail. The action says when
-                        // Elite was not in front.
-                        if (!result.Sent && result.Outcome != InjectionOutcome.NotForeground)
-                        {
-                            // Through SayAsync rather than straight at the synthesiser (remediation.md 17,
-                            // item 4).
-                            await Announcer.SayAsync(new Announcement(
-                                action.Id, $"I could not use {action.Label}. {result.Reason}")).ConfigureAwait(false);
-                        }
-                    }
-
-                    if (action.Decision.Say is { } say)
-                    {
-                        await Announcer.SayAsync(new Announcement(action.Id, say)).ConfigureAwait(false);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An autonomous action could not be carried out");
-            }
-            finally
-            {
-                // Unconditional, like everywhere else that presses a key.
-                input.ReleaseAll();
-                _acting.Release();
-            }
-        });
-    }
 
     /// <summary>The last <c>Status.json</c> the tick read.</summary>
     public Core.Journal.GameStatus LiveStatus => Writer.LiveStatus();
@@ -6188,113 +5983,6 @@ public sealed class AppHost : IDisposable
             (var only, null) => only,
             var (both, and) => both + Environment.NewLine + Environment.NewLine + and,
         };
-
-    private static async Task<bool?> AwaitStatus(
-        GameStatusReader status,
-        Func<Core.Journal.GameStatus, bool> arrived,
-        TimeSpan within,
-        string what,
-        Microsoft.Extensions.Logging.ILogger logger,
-        CancellationToken cancellationToken)
-    {
-        var started = DateTimeOffset.Now;
-        var deadline = started + within;
-        var sawTheFile = false;
-
-        while (DateTimeOffset.Now < deadline)
-        {
-            var current = status.Current;
-
-            if (current.IsKnown)
-            {
-                sawTheFile = true;
-
-                if (arrived(current))
-                {
-                    logger.LogInformation(
-                        "Status reached {What} after {Elapsed:0.0}s",
-                        what,
-                        (DateTimeOffset.Now - started).TotalSeconds);
-                    return true;
-                }
-            }
-
-            try
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                return null;
-            }
-        }
-
-        logger.LogInformation(
-            "Status never reached {What} within {Seconds:0}s; Status.json {Readable}",
-            what,
-            within.TotalSeconds,
-            sawTheFile ? "readable" : "never readable");
-
-        return sawTheFile ? false : null;
-    }
-
-    /// <summary>The next status sample, which is what the boost loop watches (Phase 52).</summary>
-    private static async Task<Core.Journal.GameStatus> NextStatus(
-        GameStatusReader status,
-        CancellationToken cancellationToken)
-    {
-        await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
-        return status.Current;
-    }
-
-    /// <summary>Waits for Status.json to report the galaxy map showing, or no longer showing.</summary>
-    private static async Task<bool?> AwaitGalaxyMap(
-        GameStatusReader status,
-        bool open,
-        Microsoft.Extensions.Logging.ILogger logger,
-        CancellationToken cancellationToken)
-    {
-        var started = DateTimeOffset.Now;
-        var deadline = started + TimeSpan.FromSeconds(3);
-        var sawTheFile = false;
-
-        while (DateTimeOffset.Now < deadline)
-        {
-            var current = status.Current;
-
-            if (current.IsKnown)
-            {
-                sawTheFile = true;
-
-                if ((current.GuiFocus == Core.Journal.GuiFocus.GalaxyMap) == open)
-                {
-                    logger.LogInformation(
-                        "Galaxy map {State} after {Elapsed:0.0}s (GuiFocus {Focus})",
-                        open ? "open" : "closed",
-                        (DateTimeOffset.Now - started).TotalSeconds,
-                        current.GuiFocus);
-                    return true;
-                }
-            }
-
-            try
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                return null;
-            }
-        }
-
-        logger.LogInformation(
-            "Galaxy map not {State} within 3s; Status.json {Readable}, GuiFocus {Focus}",
-            open ? "open" : "closed",
-            sawTheFile ? "readable" : "never readable",
-            status.Current.GuiFocus);
-
-        return sawTheFile ? false : null;
-    }
 
     /// <summary>The plain recap for a launch at <paramref name="launch"/>, or null for none.</summary>
     private static string? ComposeRecap(IFileSystem fileSystem, DateTimeOffset launch, IReadOnlyList<string> files, ILoggerFactory loggerFactory)
