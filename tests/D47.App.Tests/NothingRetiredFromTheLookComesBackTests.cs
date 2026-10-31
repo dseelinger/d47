@@ -47,7 +47,7 @@ public sealed class NothingRetiredFromTheLookComesBackTests
     [Trait("Category", "Gate")]
     public void NothingUnderSrcNamesARetiredControlColourOrKey()
     {
-        var root = RepositoryRoot();
+        var root = AppSource.RepositoryRoot();
         var sightings = new List<string>();
 
         foreach (var path in SourceFiles(Path.Combine(root, "src")))
@@ -204,19 +204,5 @@ public sealed class NothingRetiredFromTheLookComesBackTests
         }
 
         return sightings;
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
     }
 }

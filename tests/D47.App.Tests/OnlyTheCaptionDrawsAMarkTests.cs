@@ -10,18 +10,6 @@ namespace D47.App.Tests;
 [Trait("Category", "Gate")]
 public class OnlyTheCaptionDrawsAMarkTests
 {
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new InvalidOperationException("d47.slnx not found");
-    }
-
     [Fact]
     public void GlyphsHoldsOnlyTheCaptionPaths()
     {
@@ -38,7 +26,7 @@ public class OnlyTheCaptionDrawsAMarkTests
     [Trait("Category", "Gate")]
     public void NothingButTheCaptionPutsAMarkOnAButton()
     {
-        var app = Path.Combine(RepositoryRoot(), "src", "D47.App");
+        var app = Path.Combine(AppSource.RepositoryRoot(), "src", "D47.App");
 
         var offenders = Directory.EnumerateFiles(app, "*.cs", SearchOption.AllDirectories)
             .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
@@ -57,7 +45,7 @@ public class OnlyTheCaptionDrawsAMarkTests
     [Trait("Category", "Gate")]
     public void ThePanelMarkupDrawsNoPath()
     {
-        var markup = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "D47.App", "Panel", "PanelView.axaml"));
+        var markup = File.ReadAllText(Path.Combine(AppSource.RepositoryRoot(), "src", "D47.App", "Panel", "PanelView.axaml"));
 
         Assert.DoesNotContain("<Path", markup, StringComparison.Ordinal);
     }

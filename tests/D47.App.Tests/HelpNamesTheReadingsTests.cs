@@ -64,7 +64,7 @@ public sealed class HelpNamesTheReadingsTests
                  reading.
                  """);
 
-            var page = File.ReadAllText(Path.Combine(RepositoryRoot(), "docs", file!));
+            var page = File.ReadAllText(Path.Combine(AppSource.RepositoryRoot(), "docs", file!));
 
             Assert.True(
                 page.Contains(reading, StringComparison.Ordinal),
@@ -146,7 +146,7 @@ public sealed class HelpNamesTheReadingsTests
         var offences = new List<string>();
 
         var sources = Directory
-            .EnumerateFiles(Path.Combine(RepositoryRoot(), "src"), "*.cs", SearchOption.AllDirectories)
+            .EnumerateFiles(Path.Combine(AppSource.RepositoryRoot(), "src"), "*.cs", SearchOption.AllDirectories)
             .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
                            && !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}"));
 
@@ -202,26 +202,12 @@ public sealed class HelpNamesTheReadingsTests
     /// </summary>
     private static IEnumerable<(string Path, string Relative)> Pages()
     {
-        var docs = Path.Combine(RepositoryRoot(), "docs");
+        var docs = Path.Combine(AppSource.RepositoryRoot(), "docs");
 
         return Directory
             .EnumerateFiles(docs, "*.md", SearchOption.AllDirectories)
             .Select(path => (path, Path.GetRelativePath(docs, path).Replace('\\', '/')))
             .Where(page => !page.Item2.StartsWith("spikes", StringComparison.OrdinalIgnoreCase)
                            && !page.Item2.StartsWith("_", StringComparison.Ordinal));
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
     }
 }

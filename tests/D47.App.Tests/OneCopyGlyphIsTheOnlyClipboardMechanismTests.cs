@@ -24,19 +24,6 @@ namespace D47.App.Tests;
 [Trait("Category", "Gate")]
 public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
 {
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        Assert.NotNull(directory);
-        return directory.FullName;
-    }
-
     /// <summary>
     /// The pages that drew a system name never reach for a mechanism of their own: no glyph text, no
     /// bare copy mark, and no clipboard read straight off the
@@ -47,7 +34,7 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
     [Trait("Category", "Gate")]
     public void NoPageThatDrawsASystemNameReachesForItsOwnClipboardMechanism()
     {
-        var folder = Path.Combine(RepositoryRoot(), "src", "D47.App", "Panel");
+        var folder = Path.Combine(AppSource.RepositoryRoot(), "src", "D47.App", "Panel");
 
         foreach (var name in new[]
                  {

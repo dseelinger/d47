@@ -258,27 +258,13 @@ public class SpellItOntoTheBoardTests
     public void SpelledPressesReachDrawnBoardsAndNothingElse()
     {
         var readers = Directory
-            .EnumerateFiles(Path.Combine(RepositoryRoot(), "src"), "*.cs", SearchOption.AllDirectories)
+            .EnumerateFiles(Path.Combine(AppSource.RepositoryRoot(), "src"), "*.cs", SearchOption.AllDirectories)
             .Where(file => File.ReadAllText(file).Contains("Spelling.Hear", StringComparison.Ordinal))
             .Select(file => Path.GetFileName(file))
             .Order(StringComparer.Ordinal)
             .ToArray();
 
         Assert.Equal(["OffscreenSurface.cs", "PanelPrompts.cs"], readers);
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
     }
 
     /// <summary>The vocabulary and the drawn key table are one thing (#51).</summary>

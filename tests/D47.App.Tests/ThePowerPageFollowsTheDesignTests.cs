@@ -113,19 +113,8 @@ public class ThePowerPageFollowsTheDesignTests
             .Select(block => block.Text ?? string.Empty)
             .Where(text => text.Length > 0)];
 
-    private static string Screenshots()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return Path.Combine(
-            directory?.FullName ?? throw new InvalidOperationException("No d47.slnx above the test binary."),
-            "design", "handoff", "Power gauge design breakdown", "design_handoff_power_gauge", "screenshots");
-    }
+    private static string Screenshots() =>
+        Path.Combine(AppSource.RepositoryRoot(), "design", "handoff", "Power gauge design breakdown", "design_handoff_power_gauge", "screenshots");
 
     /// <summary>
     /// Draws <paramref name="ours"/> beside the reference screenshot's POWER panel, the build on the

@@ -263,7 +263,7 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
     [Trait("Category", "Gate")]
     public void TheAdventuresSourceDrawsOnlyInTheNewTokens(string file)
     {
-        var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", "Panel", file));
+        var source = File.ReadAllText(Path.Combine(AppSource.RepositoryRoot(), "src", "D47.App", "Panel", file));
 
         Assert.DoesNotContain("CornerRadius", source, StringComparison.Ordinal);
         Assert.DoesNotContain("CardChrome", source, StringComparison.Ordinal);
@@ -272,18 +272,5 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
         Assert.DoesNotMatch(
             @"ThemeManager\.(Background|Surface|SurfaceAlt|Border|Text|TextMuted|TextFaint|Accent|AccentMuted|Danger|Warn|Good|Info|Rule|FillLow|FillHigh|FillHigher|AccentBorder|AccentInk|CardFill|CardFillSelected|RowFill|TagBorder|PaneFill|PaneBorder|TagInk)Key\b",
             source);
-    }
-
-    private static string Root()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException($"No d47.slnx above {AppContext.BaseDirectory}.");
     }
 }

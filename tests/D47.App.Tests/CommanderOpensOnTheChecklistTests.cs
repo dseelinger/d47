@@ -14,7 +14,7 @@ public class CommanderOpensOnTheChecklistTests
     [InlineData("Panel/MiniPanelServices.cs")]
     public void TheChecklistRootIsFurnishedBeforeMissionsStandingStatisticsAndSession(string file)
     {
-        var text = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "D47.App", file));
+        var text = File.ReadAllText(Path.Combine(AppSource.RepositoryRoot(), "src", "D47.App", file));
 
         var order = new[] { "EnableChecklist(", "EnableMissions(", "EnableStanding(", "EnableStatistics(", "EnableSession(" }
             .Select(call => text.IndexOf("." + call, StringComparison.Ordinal))
@@ -22,19 +22,5 @@ public class CommanderOpensOnTheChecklistTests
 
         Assert.All(order, index => Assert.True(index >= 0, $"A Commander root is not furnished in {file}."));
         Assert.Equal(order.Order(), order);
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
     }
 }

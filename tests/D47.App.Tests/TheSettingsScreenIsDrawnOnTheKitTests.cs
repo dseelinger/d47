@@ -153,7 +153,7 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
 
     public static TheoryData<string> SettingsSourceFiles()
     {
-        var folder = Path.Combine(Root(), "src", "D47.App", "Settings");
+        var folder = Path.Combine(AppSource.RepositoryRoot(), "src", "D47.App", "Settings");
         var names = Directory.EnumerateFiles(folder, "SettingsView*").Concat(Directory.EnumerateFiles(folder, "SettingControls*")).Select(Path.GetFileName).OfType<string>()
             .Concat(["SecretEditor.cs", "SwitchEditing.cs", "LoreEditing.cs", "SetupWizard.cs", "BindCapture.cs", "QueryMarker.cs", "SettingsNav.cs"])
             .Distinct();
@@ -166,7 +166,7 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
     [Trait("Category", "Gate")]
     public void TheSettingsSourceDrawsOnlyInTheNewTokens(string file)
     {
-        var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", "Settings", file));
+        var source = File.ReadAllText(Path.Combine(AppSource.RepositoryRoot(), "src", "D47.App", "Settings", file));
 
         Assert.DoesNotContain("CornerRadius", source, StringComparison.Ordinal);
         Assert.DoesNotContain("CardChrome", source, StringComparison.Ordinal);
@@ -177,18 +177,5 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
         Assert.DoesNotMatch(
             @"D47\.(Background|Surface|SurfaceAlt|Border|Text|TextMuted|TextFaint|Accent|AccentMuted|Danger|Warn|Good|Info|Rule|FillLow|FillHigh|FillHigher|AccentBorder|AccentInk|CardFill|CardFillSelected|RowFill|TagBorder|PaneFill|PaneBorder|TagInk)\}",
             source);
-    }
-
-    private static string Root()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException($"No d47.slnx above {AppContext.BaseDirectory}.");
     }
 }

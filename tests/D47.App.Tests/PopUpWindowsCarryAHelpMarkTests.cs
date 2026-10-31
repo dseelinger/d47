@@ -73,22 +73,8 @@ public sealed class PopUpWindowsCarryAHelpMarkTests
         // And the anchor is a heading that page actually declares — an anchor that resolves to nothing lands
         // a Commander at the top with no sign anything went wrong.
         var page = File.ReadAllText(
-            Path.Combine(RepositoryRoot(), "docs", "capabilities", "conversation.md"));
+            Path.Combine(AppSource.RepositoryRoot(), "docs", "capabilities", "conversation.md"));
 
         Assert.Contains("{#running-totals}", page, StringComparison.Ordinal);
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
     }
 }

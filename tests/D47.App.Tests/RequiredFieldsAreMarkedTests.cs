@@ -169,7 +169,7 @@ public sealed class RequiredFieldsAreMarkedTests
     public void NoPlaceholderIsTheWordRequired()
     {
         var offenders = Directory
-            .EnumerateFiles(Path.Combine(RepositoryRoot(), "src"), "*.cs", SearchOption.AllDirectories)
+            .EnumerateFiles(Path.Combine(AppSource.RepositoryRoot(), "src"), "*.cs", SearchOption.AllDirectories)
             .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
                            && !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}"))
             .Where(path => File.ReadAllText(path)
@@ -183,19 +183,5 @@ public sealed class RequiredFieldsAreMarkedTests
              A placeholder is the word "required". It belongs on the label, where it is still true
              once the Commander has typed something: {string.Join(", ", offenders)}
              """);
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
     }
 }

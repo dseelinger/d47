@@ -9,7 +9,7 @@ namespace D47.App.Tests;
 [Trait("Category", "Gate")]
 public class InstallerScriptTests
 {
-    private static string Script => File.ReadAllText(Path.Combine(RepositoryRoot(), "installer", "d47.iss"));
+    private static string Script => File.ReadAllText(Path.Combine(AppSource.RepositoryRoot(), "installer", "d47.iss"));
 
     /// <summary>
     /// The installer's Start Menu entry has to land on <see cref="StartMenuShortcut.DefaultPath"/>
@@ -68,7 +68,7 @@ public class InstallerScriptTests
     [Fact]
     public void EveryFolderTheBuildCopiesBesideTheExeReachesTheCommander()
     {
-        var root = RepositoryRoot();
+        var root = AppSource.RepositoryRoot();
         var project = System.Xml.Linq.XDocument.Load(Path.Combine(root, "src", "D47.App", "D47.App.csproj"));
         var workflow = File.ReadAllText(Path.Combine(root, ".github", "workflows", "release.yml"));
         var packed = System.Text.RegularExpressions.Regex.Match(workflow, @"Compress-Archive[^\r\n]*`\s*([^\r\n]+)").Groups[1].Value;
@@ -91,18 +91,5 @@ public class InstallerScriptTests
                 packed.Contains($"$publish/{folder}", StringComparison.Ordinal),
                 $"release.yml does not pack {folder} into d47.zip");
         }
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        Assert.NotNull(directory);
-        return directory.FullName;
     }
 }

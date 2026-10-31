@@ -15,7 +15,7 @@ public sealed class EveryTwoStateControlIsAnEliteCheckboxTests
     [Fact]
     public void NoControlIsBuiltAsAToggleSwitchOrAToggleButton()
     {
-        var root = Path.Combine(RepositoryRoot(), "src", "D47.App");
+        var root = Path.Combine(AppSource.RepositoryRoot(), "src", "D47.App");
 
         var offenders =
             Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
@@ -33,19 +33,5 @@ public sealed class EveryTwoStateControlIsAnEliteCheckboxTests
             "Use CheckBox instead — a ToggleSwitch, or a control whose declared or constructed type is "
             + $"exactly ToggleButton, is one the app does not draw:{Environment.NewLine}"
             + string.Join(Environment.NewLine, offenders));
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
     }
 }

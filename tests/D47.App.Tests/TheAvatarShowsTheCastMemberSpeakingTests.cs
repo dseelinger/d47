@@ -30,25 +30,11 @@ public sealed class TheAvatarShowsTheCastMemberSpeakingTests : IDisposable
         }
     }
 
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        Assert.NotNull(directory);
-
-        return directory.FullName;
-    }
-
     /// <summary>A story's downloaded picture for <see cref="Member"/>, from a shipped portrait.</summary>
     private static SpeakerPictureFixture WithMember()
     {
         var fixture = new SpeakerPictureFixture("d47-cast-avatar");
-        var portrait = File.ReadAllBytes(Path.Combine(RepositoryRoot(), "assets", "portraits", "captain.woman.jpg"));
+        var portrait = File.ReadAllBytes(Path.Combine(AppSource.RepositoryRoot(), "assets", "portraits", "captain.woman.jpg"));
         fixture.Files.WriteBytes(Path.Combine(fixture.Paths.Stories, Member + ".jpg"), portrait);
 
         return fixture;
@@ -116,7 +102,7 @@ public sealed class TheAvatarShowsTheCastMemberSpeakingTests : IDisposable
         var paths = new AppPaths(_root);
         Directory.CreateDirectory(paths.AvatarClips);
         File.Copy(
-            Path.Combine(RepositoryRoot(), "tests", "fixtures", "avatars", "clip.mp4"),
+            Path.Combine(AppSource.RepositoryRoot(), "tests", "fixtures", "avatars", "clip.mp4"),
             Path.Combine(paths.AvatarClips, CoreClips.FileName("covas", LoopState.Speaking)));
 
         var fixture = WithMember();
@@ -145,7 +131,7 @@ public sealed class TheAvatarShowsTheCastMemberSpeakingTests : IDisposable
         var paths = new AppPaths(_root);
         Directory.CreateDirectory(paths.AvatarClips);
         File.Copy(
-            Path.Combine(RepositoryRoot(), "tests", "fixtures", "avatars", "clip.mp4"),
+            Path.Combine(AppSource.RepositoryRoot(), "tests", "fixtures", "avatars", "clip.mp4"),
             Path.Combine(paths.AvatarClips, CoreClips.FileName("covas", LoopState.Idle)));
 
         var fixture = WithMember();

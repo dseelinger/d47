@@ -29,18 +29,6 @@ public partial class ErrorsAndCautionsAreNoticesTests
 
     private static Color Ink(IBrush? brush) => ((ISolidColorBrush)brush!).Color;
 
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new InvalidOperationException("No d47.slnx above the test binary.");
-    }
-
     [GeneratedRegex(@"\[data-d47-theme='(?<theme>[a-z-]+)'\]\s*\{(?<body>[^}]*)\}")]
     private static partial Regex ThemeBlock();
 
@@ -50,7 +38,7 @@ public partial class ErrorsAndCautionsAreNoticesTests
     /// <summary>The design's warn value for each theme id, read from its palette.</summary>
     private static Dictionary<string, Color> DesignWarns()
     {
-        var css = File.ReadAllText(Path.Combine(RepositoryRoot(), "design", "system", "tokens", "palette.css"));
+        var css = File.ReadAllText(Path.Combine(AppSource.RepositoryRoot(), "design", "system", "tokens", "palette.css"));
 
         return ThemeBlock().Matches(css)
             .Select(block => (Theme: block.Groups["theme"].Value, Warn: WarnToken().Match(block.Groups["body"].Value)))

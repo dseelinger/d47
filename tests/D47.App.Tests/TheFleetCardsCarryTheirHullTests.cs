@@ -25,22 +25,7 @@ namespace D47.App.Tests;
 public class TheFleetCardsCarryTheirHullTests
 {
     /// <summary>The repo's own hull art.</summary>
-    private static string Assets
-    {
-        get
-        {
-            var at = new DirectoryInfo(AppContext.BaseDirectory);
-
-            while (at is not null && !Directory.Exists(Path.Combine(at.FullName, "assets", "ships")))
-            {
-                at = at.Parent;
-            }
-
-            return at is null
-                ? throw new DirectoryNotFoundException("assets/ships not found above the test binary")
-                : Path.Combine(at.FullName, "assets", "ships");
-        }
-    }
+    private static string Assets => Path.Combine(AppSource.RepositoryRoot(), "assets", "ships");
 
     /// <summary>Stand-ins for the large art, beside the tests that need it.</summary>
     private static string Fixtures => Path.Combine(AppContext.BaseDirectory, "Fixtures", "ships");

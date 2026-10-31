@@ -84,7 +84,7 @@ public class TooltipsTakeATerminalReadoutThemeTests
     [Trait("Category", "Gate")]
     public void NoCallSiteSetsItsOwnShowDelay()
     {
-        var root = RepositoryRoot();
+        var root = AppSource.RepositoryRoot();
         var source = Path.Combine(root, "src", "D47.App");
         var sightings = new List<string>();
 
@@ -113,19 +113,5 @@ public class TooltipsTakeATerminalReadoutThemeTests
             sightings.Count == 0,
             "ToolTip.SetShowDelay is set at a call site rather than once for every control (#381):\n"
             + string.Join(Environment.NewLine, sightings));
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
     }
 }

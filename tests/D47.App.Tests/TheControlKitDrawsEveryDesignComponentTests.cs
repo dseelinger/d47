@@ -37,7 +37,7 @@ public sealed partial class TheControlKitDrawsEveryDesignComponentTests
             .Select(name => name![ControlKitWindow.CardPrefix.Length..])
             .ToHashSet(StringComparer.Ordinal);
 
-        var components = Directory.GetDirectories(Path.Combine(RepositoryRoot(), "design", "system", "components"))
+        var components = Directory.GetDirectories(Path.Combine(AppSource.RepositoryRoot(), "design", "system", "components"))
             .SelectMany(Directory.GetDirectories)
             .Select(Path.GetFileName)
             .ToList();
@@ -102,19 +102,5 @@ public sealed partial class TheControlKitDrawsEveryDesignComponentTests
 
     [GeneratedRegex(@"\d+\s*px\b|#[0-9A-Fa-f]{6}\b|\d+\s*[×x]\s*\d+", RegexOptions.IgnoreCase)]
     private static partial Regex StatedValue();
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
-    }
 }
 #endif

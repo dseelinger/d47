@@ -14,7 +14,7 @@ namespace D47.App.Tests;
 public class TheRetentionPolicyTellsTheTruthTests
 {
     private static string Policy =>
-        File.ReadAllText(Path.Combine(RepositoryRoot(), "docs", "data-retention.md"));
+        File.ReadAllText(Path.Combine(AppSource.RepositoryRoot(), "docs", "data-retention.md"));
 
     /// <summary>
     /// The two log lives and the per-day ceiling, read off <see cref="LoggingSetup"/> rather than typed
@@ -65,7 +65,7 @@ public class TheRetentionPolicyTellsTheTruthTests
 
         // The excerpt's expiry is a bucket lifecycle rule rather than code, so the command that creates it in
         // the runbook is the only place it exists.
-        var runbook = File.ReadAllText(Path.Combine(RepositoryRoot(), "worker", "README.md"));
+        var runbook = File.ReadAllText(Path.Combine(AppSource.RepositoryRoot(), "worker", "README.md"));
         Assert.Contains("--expire-days 30", runbook, StringComparison.Ordinal);
         Assert.Contains("**30 days**", policy, StringComparison.Ordinal);
     }
@@ -79,7 +79,7 @@ public class TheRetentionPolicyTellsTheTruthTests
     public void TheTwoDocumentsReachEachOther()
     {
         var notice = File.ReadAllText(
-            Path.Combine(RepositoryRoot(), "docs", "donation-privacy.md"));
+            Path.Combine(AppSource.RepositoryRoot(), "docs", "donation-privacy.md"));
 
         Assert.Contains("donation-privacy.html", Policy, StringComparison.Ordinal);
         Assert.Contains("data-retention.html", notice, StringComparison.Ordinal);
@@ -121,17 +121,4 @@ public class TheRetentionPolicyTellsTheTruthTests
 
     private static IEnumerable<string> Text(string folder, string pattern) =>
         Directory.EnumerateFiles(folder, pattern).Select(File.ReadAllText);
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        Assert.NotNull(directory);
-        return directory.FullName;
-    }
 }

@@ -15,7 +15,7 @@ public sealed class UnitTestsStayOffTheDiskGateTests
 {
     private static readonly HashSet<string> Banned =
     [
-        "File", "Directory", "FileInfo", "FileStream", "DiskFileSystem", "TempInstall", "TempFolders",
+        "File", "Directory", "FileInfo", "FileStream", "DiskFileSystem", "TempInstall", "TempFolders", "AppSource",
     ];
 
     /// <summary>Helper types that write render captures when <c>D47_CAPTURES=1</c>.</summary>

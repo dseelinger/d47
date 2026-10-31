@@ -23,7 +23,7 @@ public sealed class BloomGlowsOnlyTheFourNamedElementsTests
     [Fact]
     public void BloomStackAppearsOnlyAtItsFourGlowingElements()
     {
-        var root = System.IO.Path.Combine(RepositoryRoot(), "src", "D47.App");
+        var root = System.IO.Path.Combine(AppSource.RepositoryRoot(), "src", "D47.App");
 
         var found = Directory
             .EnumerateFiles(root, "*.*", SearchOption.AllDirectories)
@@ -37,19 +37,5 @@ public sealed class BloomGlowsOnlyTheFourNamedElementsTests
             .ToArray();
 
         Assert.Equal(Expected.OrderBy(e => e.File, StringComparer.Ordinal).ToArray(), found);
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(System.IO.Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
     }
 }
