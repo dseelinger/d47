@@ -23,6 +23,22 @@ public static class JournalSentence
         "MarketID",
     };
 
+    /// <summary>FIX #1963: Suit names read as Frontier placeholders - raw symbol through tables.</summary>
+    private static string? Named(System.Text.Json.JsonElement raw, string property)
+    {
+        var symbol = Blank(raw.String(property));
+        if (symbol is not null)
+        {
+            var suit = Knowledge.OnFootCatalogue.Find(symbol)?.Speak();
+            if (suit is not null) return suit;
+            var hull = Knowledge.EliteSpecifications.HullSaid(symbol);
+            if (!string.Equals(hull, symbol, StringComparison.Ordinal)) return hull;
+        }
+        return Blank(raw.String(property + "_Localised")) ?? symbol;
+    }
+
+
+
     /// <summary>
     /// What this event says, in one line, or the bare kind where nothing more can be said without
     /// inventing it.
