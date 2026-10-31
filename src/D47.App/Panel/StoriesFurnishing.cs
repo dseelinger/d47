@@ -94,7 +94,7 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
             });
         }
 
-        Mini = new AdventureMini(surface, () => host.Portraits);
+        Mini = new AdventureMini(surface, () => host.Portraits, () => host.Copy);
         Strip = new ObjectiveStrip(surface, () => host.Copy);
     }
 }

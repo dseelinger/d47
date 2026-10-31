@@ -89,6 +89,7 @@ public sealed class GalaxyMapPage : UserControl
     private readonly Button _tiltDown = Drawn("Tilt down", "M3 18 H20 M3 18 L13.3 5.7 M12 8.7 A13 13 0 0 1 14.9 12.7", "M16.1 16.1 L17.3 11.7 L12.5 13.8 Z");
     private readonly Button _topDown = Drawn("Top down", "M5 5 h12 v12 H5 z", "M9.5 9.5 h3 v3 h-3 z");
     private readonly TextBlock _system = Chrome(TypeScale.ControlLarge, ThemeManager.CyanKey);
+    private readonly ContentControl _systemCopy = new() { VerticalAlignment = VerticalAlignment.Center, IsVisible = false };
     private readonly TextBlock _dot = Chrome(TypeScale.ControlLarge, ThemeManager.Grey2Key);
     private readonly TextBlock _region = RoutingKit.Tag(string.Empty, ThemeManager.GreyKey);
     private readonly TextBlock _note = RoutingKit.Prose(string.Empty);
@@ -981,13 +982,16 @@ public sealed class GalaxyMapPage : UserControl
         {
             _note.Text = offDuty;
             _note.IsVisible = true;
-            _system.IsVisible = _dot.IsVisible = _region.IsVisible = false;
+            _system.IsVisible = _dot.IsVisible = _region.IsVisible = _systemCopy.IsVisible = false;
+            _systemCopy.Content = null;
             return;
         }
 
         _note.IsVisible = false;
         _system.Text = here?.ToUpperInvariant() ?? string.Empty;
         _system.IsVisible = !string.IsNullOrEmpty(here);
+        _systemCopy.Content = _copy is { } copy && !string.IsNullOrEmpty(here) ? CopyGlyph.For(here, copy) : null;
+        _systemCopy.IsVisible = _systemCopy.Content is not null;
 
         var region = _position is { } at ? GalacticRegions.Find(at) : null;
         _region.Text = region?.ToUpperInvariant() ?? string.Empty;
@@ -1304,6 +1308,13 @@ public sealed class GalaxyMapPage : UserControl
         Children = { _travels, _routeShown, _regions, _engineers, _bookmarkMarks, _carrierMark, _shipMarks, _unvisited },
     };
 
+    private StackPanel SystemWithCopy() => new()
+    {
+        Orientation = Orientation.Horizontal,
+        Spacing = 6,
+        Children = { _system, _systemCopy },
+    };
+
     private Control WhereLine()
     {
         var where = new StackPanel
@@ -1311,7 +1322,7 @@ public sealed class GalaxyMapPage : UserControl
             Orientation = Orientation.Horizontal,
             Spacing = 8,
             VerticalAlignment = VerticalAlignment.Center,
-            Children = { _system, _dot, _region },
+            Children = { SystemWithCopy(), _dot, _region },
         };
 
         var line = new DockPanel { Height = 22 };
@@ -1376,7 +1387,7 @@ public sealed class GalaxyMapPage : UserControl
             text.MaxWidth = PadRail;
         }
 
-        var where = new StackPanel { Spacing = 2, Children = { _system, _region, _note } };
+        var where = new StackPanel { Spacing = 2, Children = { SystemWithCopy(), _region, _note } };
         _unplaced.TextWrapping = TextWrapping.Wrap;
         _unplaced.TextTrimming = TextTrimming.None;
         _unplaced.MaxWidth = PadRail;

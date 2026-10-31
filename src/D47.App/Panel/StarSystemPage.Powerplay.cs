@@ -289,7 +289,7 @@ public sealed partial class StarSystemPage
         _neighbourHead.Reset();
     }
 
-    private StackPanel NeighbourTable(PowerplayNeighbourhood near)
+    internal StackPanel NeighbourTable(PowerplayNeighbourhood near)
     {
         var shown = _neighbourHead.Sort([.. near.Systems.Where(PowerplayStateFilter.All[_stateFilter].Holds)]);
         var table = new StackPanel { Spacing = Gaps.Tile };
@@ -326,7 +326,7 @@ public sealed partial class StarSystemPage
     {
         List<Control> cells = [];
 
-        cells.Add(Centred(Ellipsed(system.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.AKey)));
+        cells.Add(Centred(CopyGlyph.Beside(Ellipsed(system.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.AKey), system.Name, _copy)));
         cells.Add(Centred(Mono(DistanceText(system.Distance), ThemeManager.AKey)));
         cells.Add(Centred(Ellipsed(system.State ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)));
         cells.Add(Centred(Ellipsed(system.ControllingPower ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey)));

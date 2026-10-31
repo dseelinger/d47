@@ -1399,7 +1399,7 @@ public class LoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         var copy = surface.Panel.GetVisualDescendants().OfType<Button>()
-            .Single(button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Shinrarta Dezhra");
+            .Single(button => D47.App.Controls.CopyGlyph.GetCopies(button) == "Shinrarta Dezhra" && button.GetVisualAncestors().OfType<ItemPage>().Any());
 
         copy.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();

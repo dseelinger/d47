@@ -17,10 +17,13 @@ public sealed class AdventureMini : UserControl
 {
     private readonly AdventureSurface _surface;
     private readonly Func<SpeakerPortraits?> _portraits;
+    private readonly Func<Func<string, Task<bool>>?> _copy;
     private readonly StackPanel _body = new() { Spacing = 3 };
 
-    public AdventureMini(AdventureSurface surface, Func<SpeakerPortraits?>? portraits = null)
+    public AdventureMini(AdventureSurface surface, Func<SpeakerPortraits?>? portraits = null,
+        Func<Func<string, Task<bool>>?>? copy = null)
     {
+        _copy = copy ?? (() => null);
         _surface = surface;
         _portraits = portraits ?? (() => null);
 
@@ -115,7 +118,7 @@ public sealed class AdventureMini : UserControl
 
         for (var index = adventure.Told.Count - 1; index >= 0; index--)
         {
-            _body.Children.Add(entries.Entry(adventure, adventure.Told[index], here, copy: null));
+            _body.Children.Add(entries.Entry(adventure, adventure.Told[index], here, _copy()));
         }
     }
 
@@ -174,7 +177,7 @@ public sealed class AdventureMini : UserControl
 
         if (standing.NextTrigger() is { } next)
         {
-            _body.Children.Add(Row("Next", next, _surface.State()?.Location?.StarSystem));
+            _body.Children.Add(Row("Next", next, _surface.State()?.Location?.StarSystem, standing.CurrentTrigger?.System, _copy()));
         }
 
         AddChoice(standing);
@@ -201,7 +204,7 @@ public sealed class AdventureMini : UserControl
             && standing.Chosen.TryGetValue(standing.Current, out var chosen)
             && standing.CurrentBeat?.Steps[0].Options.ElementAtOrDefault(chosen) is { } option)
         {
-            _body.Children.Add(Row("Chosen", $"option {(chosen + 1).ToString(CultureInfo.InvariantCulture)}, {option.Label}", null));
+            _body.Children.Add(Row("Chosen", $"option {(chosen + 1).ToString(CultureInfo.InvariantCulture)}, {option.Label}", null, null, _copy()));
         }
     }
 
@@ -246,6 +249,6 @@ public sealed class AdventureMini : UserControl
     }
 
     /// <summary>A trigger with its word in front, both in A so the pair reads as one.</summary>
-    private static Control Row(string label, string trigger, string? here) =>
-        AdventuresPage.Trigger($"{label}: {AdventuresPage.Sentence(trigger)}", here);
+    private static Control Row(string label, string trigger, string? here, string? system, Func<string, Task<bool>>? copy) =>
+        AdventuresPage.Trigger($"{label}: {AdventuresPage.Sentence(trigger)}", here, system, copy);
 }
