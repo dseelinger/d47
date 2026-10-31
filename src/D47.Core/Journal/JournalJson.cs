@@ -64,7 +64,12 @@ public static class JournalJson
 
     /// <summary>The player-facing name where Elite supplies one, falling back to the internal symbol.</summary>
     public static string? Named(this JsonElement element, string property) =>
-        element.String(property + "_Localised") ?? element.String(property);
+        element.String(property + "_Localised") is { } localised && !IsPlaceholder(localised)
+            ? localised
+            : element.String(property);
+
+    /// <summary>Whether a <c>_Localised</c> value is Frontier's unresolved <c>$key;</c> rather than a name.</summary>
+    public static bool IsPlaceholder(string? value) => value is not null && value.TrimStart().StartsWith('$');
 
     /// <summary>A name Elite left unlocalised, cased the way the localised ones are cased.</summary>
     public static string? Spoken(string? name) =>

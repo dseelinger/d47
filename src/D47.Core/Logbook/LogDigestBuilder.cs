@@ -193,6 +193,7 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
             Commander = fold.Commander,
             FrontierId = fold.FrontierId,
             Ship = fold.Flying,
+            OnFoot = fold.OnFoot,
             Facts = numbered,
             JournalsRead = journals,
             EventsRead = events,
@@ -316,6 +317,7 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
         private string? _lastSystem;
         private string? _lastStation;
         private string? _ship;
+        private bool _loadedOnFoot;
         private LogSource? _lastPlace;
 
         public string? Commander { get; private set; }
@@ -323,6 +325,8 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
         public string? FrontierId { get; private set; }
 
         public string? Flying => _ship;
+
+        public bool OnFoot => _loadedOnFoot;
 
         public IReadOnlyList<LogFact> Moments => _moments;
 
@@ -344,9 +348,10 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
             {
                 case "LoadGame":
                     _ship = Ship(journalEvent);
+                    _loadedOnFoot = JournalNames.IsOnFoot(journalEvent.Raw);
                     Open(
                         journalEvent,
-                        $"Entered the game flying {_ship}"
+                        $"Entered the game {(_loadedOnFoot ? "on foot in" : "flying")} {_ship}"
                         + (journalEvent.Long("Credits") is { } credits
                             ? $", {Credits(credits)} in the bank."
                             : "."));
@@ -526,6 +531,7 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
 
                 case "ShipyardSwap":
                     _ship = $"the {JournalJson.Spoken(journalEvent.Named("ShipType"))}";
+                    _loadedOnFoot = false;
                     Moment(journalEvent, LogFactKind.Fleet, $"Swapped into {_ship}.");
                     break;
 
@@ -804,6 +810,11 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
         {
             // Spoken, not Named: Elite omits _Localised on plenty of ship symbols and writes them lower case,
             // so one log would call it an "anaconda" in one line and an "Anaconda" in the next.
+            if (JournalNames.IsOnFoot(journalEvent.Raw) && JournalNames.Suit(journalEvent.Raw, "Ship") is { } suit)
+            {
+                return $"a {suit}";
+            }
+
             var type = JournalJson.Spoken(journalEvent.Named("Ship")) ?? "a ship";
 
             return journalEvent.String("ShipName") is { Length: > 0 } name

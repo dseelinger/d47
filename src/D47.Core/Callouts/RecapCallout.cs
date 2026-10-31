@@ -158,7 +158,7 @@ public sealed class RecapCallout : ICallout
         }
         else if (digest.Ship is { } ship)
         {
-            parts.Add($"you flew {ship}");
+            parts.Add($"you {(digest.OnFoot ? "wore" : "flew")} {ship}");
         }
 
         if (notable is not null)

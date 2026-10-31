@@ -221,7 +221,7 @@ public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
             case "ShipTargeted":
                 if (journalEvent.String("PilotName") is { } pilot && PilotNameOf(pilot) is { } targeted)
                 {
-                    Meet(journalEvent, targeted, EncounterKind.Targeted, ship: journalEvent.String("Ship_Localised"));
+                    Meet(journalEvent, targeted, EncounterKind.Targeted, ship: JournalNames.Ship(journalEvent.Raw, "Ship"));
                 }
 
                 break;

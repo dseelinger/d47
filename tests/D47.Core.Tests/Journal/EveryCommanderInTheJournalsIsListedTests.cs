@@ -54,6 +54,23 @@ public class EveryCommanderInTheJournalsIsListedTests
         Assert.Equal("Python", bravo.Ship);
     }
 
+    [Fact]
+    public void ALoadGameMadeOnFootWithAPlaceholderNameStoresNoPlaceholder()
+    {
+        var install = new MemoryInstall();
+
+        Write(
+            install,
+            "Journal.2026-08-04T100000.01.log",
+            """{ "timestamp":"2026-08-04T10:00:00Z", "event":"LoadGame", "FID":"F9", "Commander":"Quill", "Ship":"TacticalSuit_Class3", "Ship_Localised":"$TacticalSuit_Class1_Name;", "ShipID":4293000001 }""");
+
+        var (commanders, _) = CommanderBackfill.FromHistory(
+            install.Files,
+            Files(install), NullLogger.Instance, TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain("$", commanders["F9"].Ship!);
+    }
+
     [Trait("Category", "Integration")]
     [Fact]
     public void AHistoryWalkOffersTheCommandersOnceItIsDone()

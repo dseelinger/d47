@@ -8,7 +8,8 @@ internal static class JournalText
 {
     /// <summary>The localised name where Elite supplies one, then the raw.</summary>
     public static string? Named(JsonElement raw, string property) =>
-        Blank(raw.String(property + "_Localised")) ?? Blank(Symbol(raw.String(property)));
+        Blank(raw.String(property + "_Localised") is { } localised && !JournalJson.IsPlaceholder(localised) ? localised : null)
+        ?? Blank(Symbol(raw.String(property)));
 
     /// <summary>
     /// A bare symbol made readable where no localised name came with it: Frontier wraps some in

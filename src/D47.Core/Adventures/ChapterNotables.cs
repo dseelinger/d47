@@ -81,7 +81,7 @@ public static class ChapterNotables
 
             case "Bounty":
                 return raw.Long("TotalReward") is { } reward and > 0
-                    ? new Notable(NotableKind.Bounty, at, $"Their largest bounty was {Credits(reward)} for a {(raw.Named("Target") is { Length: > 0 } target ? target : "ship")}.", reward)
+                    ? new Notable(NotableKind.Bounty, at, $"Their largest bounty was {Credits(reward)} for a {(JournalNames.IsSuitAi(raw.String("Target")) ? "soldier" : raw.Named("Target") is { Length: > 0 } target ? target : "ship")}.", reward)
                     : null;
 
             default:

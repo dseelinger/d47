@@ -1192,7 +1192,7 @@ off both are said as written.
 
 #### Last session recap {#recap}
 
-One line after the opening line, about the last session: where it ended, the ship, and the
+One line after the opening line, about the last session: where it ended, the ship or suit, and the
 most notable rank, engineer, death, rebuy or interdiction in it.
 
 ```text

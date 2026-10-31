@@ -127,8 +127,10 @@ public sealed record ShipModule(string Slot, string Item, bool Powered, int? Hea
 
             // Loadout writes "ExperimentalEffect" and EngineerCraft writes "ApplyExperimentalEffect" for the
             // same thing.
-            Experimental = Blank(engineering?.Named("ExperimentalEffect")
-                                 ?? engineering?.Named("ApplyExperimentalEffect")),
+            Experimental = Blank(engineering is { } fitted
+                ? JournalNames.Experimental(fitted, "ExperimentalEffect")
+                  ?? JournalNames.Experimental(fitted, "ApplyExperimentalEffect")
+                : null),
             ExperimentalSymbol = Blank(engineering?.String("ExperimentalEffect")
                                        ?? engineering?.String("ApplyExperimentalEffect")),
 
@@ -330,8 +332,8 @@ public sealed record ShipLoadout
 
             // Localised first, exactly as the Loadout path does it — a plan names "Fast Charge" and Elite
             // localises this one field.
-            Experimental = Blank(journalEvent.Named("ExperimentalEffect")
-                                 ?? journalEvent.Named("ApplyExperimentalEffect"))
+            Experimental = Blank(JournalNames.Experimental(journalEvent.Raw, "ExperimentalEffect")
+                                 ?? JournalNames.Experimental(journalEvent.Raw, "ApplyExperimentalEffect"))
                            ?? existing.Experimental,
             ExperimentalSymbol = Blank(journalEvent.String("ExperimentalEffect")
                                        ?? journalEvent.String("ApplyExperimentalEffect"))

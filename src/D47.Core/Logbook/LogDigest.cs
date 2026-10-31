@@ -20,6 +20,9 @@ public sealed record LogDigest
     /// <summary>The ship flown when the window closed, as a phrase such as "the Python", or null.</summary>
     public string? Ship { get; init; }
 
+    /// <summary>Whether <see cref="Ship"/> is a suit, the Commander having loaded in on foot.</summary>
+    public bool OnFoot { get; init; }
+
     public IReadOnlyList<LogFact> Facts { get; init; } = [];
 
     public required int JournalsRead { get; init; }

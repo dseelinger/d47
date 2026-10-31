@@ -320,7 +320,7 @@ public static class JournalSentence
             "Bounty" => raw.Long("TotalReward") is { } reward
                 ? $"Bounty claimed{Against(raw)} — {Credits(reward)}"
                 : "Bounty claimed",
-            "ShipTargeted" => Named(raw, "Ship") is { } targeted
+            "ShipTargeted" => JournalNames.Hull(raw, "Ship") is { } targeted
                 ? $"Targeted a {targeted}"
                 : "Target scanned",
 
@@ -340,10 +340,10 @@ public static class JournalSentence
             "Powerplay" => "Powerplay standing reported",
 
             // ---- On foot ------------------------------------------------------------------
-            "SwitchSuitLoadout" => Named(raw, "SuitName") is { } suit
+            "SwitchSuitLoadout" => (JournalNames.Suit(raw, "SuitName") ?? Named(raw, "SuitName")) is { } suit
                 ? $"Changed into the {suit}"
                 : "Changed suit",
-            "BuySuit" => Named(raw, "Name") is { } boughtSuit
+            "BuySuit" => (JournalNames.Suit(raw, "Name") ?? Named(raw, "Name")) is { } boughtSuit
                 ? $"Bought the {boughtSuit}"
                 : "Bought a suit",
             "BuyWeapon" => Named(raw, "Name") is { } weapon
@@ -394,9 +394,11 @@ public static class JournalSentence
             "Commander" => raw.String("Name") is { } commander
                 ? $"Commander {commander}"
                 : "Commander identified",
-            "LoadGame" => Named(raw, "Ship") is not null
-                ? $"Loaded, flying the {Hull(raw, "Ship")}"
-                : "Game loaded",
+            "LoadGame" => JournalNames.IsOnFoot(raw) && JournalNames.Suit(raw, "Ship") is { } loadedSuit
+                ? $"Loaded, on foot in the {loadedSuit}"
+                : Named(raw, "Ship") is not null
+                    ? $"Loaded, flying the {Hull(raw, "Ship")}"
+                    : "Game loaded",
             "Shutdown" => "Game closed",
             "GameModeChange" => Blank(raw.String("GameMode")) switch
             {
@@ -447,7 +449,7 @@ public static class JournalSentence
                 ? $"Community goal paid {Credits(goalReward)}"
                 : "Community goal reward",
             "CommunityGoalDiscard" => "Left a community goal",
-            "SuitLoadout" => Named(raw, "SuitName") is { } wearing
+            "SuitLoadout" => (JournalNames.Suit(raw, "SuitName") ?? Named(raw, "SuitName")) is { } wearing
                 ? $"Wearing the {wearing}"
                 : "Suit loadout reported",
             "CreateSuitLoadout" => "Created a suit loadout",
@@ -579,7 +581,8 @@ public static class JournalSentence
             : "a modification";
 
     private static string Against(JsonElement raw) =>
-        Named(raw, "Target") is { } target ? $" on a {target}" : string.Empty;
+        JournalNames.IsSuitAi(raw.String("Target")) ? " on a soldier"
+        : Named(raw, "Target") is { } target ? $" on a {target}" : string.Empty;
 
     /// <summary>The signal types found, which is the half of a mapping worth reading.</summary>
     private static string Signals(JsonElement raw)

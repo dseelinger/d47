@@ -26,7 +26,7 @@ public sealed record TargetedShip(
             && raw.Contains("$cmdr_decorate", StringComparison.OrdinalIgnoreCase);
 
         return new TargetedShip(
-            journalEvent.String("Ship_Localised") ?? journalEvent.String("Ship"),
+            JournalNames.Ship(journalEvent.Raw, "Ship"),
             isCommander ? null : journalEvent.String("PilotName_Localised"),
             journalEvent.String("PilotRank"),
             journalEvent.String("Faction"),
