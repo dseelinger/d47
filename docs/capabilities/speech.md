@@ -957,7 +957,7 @@ this."* — is reworded by your language model in the voice of whoever the key s
 pirate, a patrol officer, a cruise liner's captain, or station traffic control. It keeps its
 attitude, so a pirate's threat is still a threat. That sends the line to your language model
 provider. A message another player typed is never reworded and never reaches the model, and the
-comms panel shows Elite's wording either way.
+comms panel shows Elite's wording either way. No-fire zone notices are said in d47's own words and are never sent to the language model.
 
 **Five more rows, one per player channel, appear once Speak incoming messages is on** — so system
 chat can go quiet in a Community Goal system's wall of strangers while your wing and squadron stay

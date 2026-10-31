@@ -119,7 +119,36 @@ public sealed partial class IncomingMessages : ICallout
             || (CarrierDisplayName is { Length: > 0 } shown
                 && sender.Contains(shown, StringComparison.OrdinalIgnoreCase)));
 
-    public Announcement? Read(JournalEvent journalEvent)
+    private readonly Dictionary<string, int> lastNotice = new(StringComparer.Ordinal);
+
+    public Announcement? Read(JournalEvent journalEvent) =>
+        ReadCore(journalEvent) is { } read ? InOwnWords(read, journalEvent.Timestamp) : null;
+
+    /// <summary>A no-fire zone notice is said from d47's own pool, never Elite's wording.</summary>
+    private Announcement InOwnWords(Announcement read, DateTimeOffset at)
+    {
+        if (StationNotices.Normalise(read.MessageKey) is not { } key)
+        {
+            return read;
+        }
+
+        var pool = StationNotices.PoolFor(key);
+        int index;
+
+        lock (lastNotice)
+        {
+            index = StationNotices.Pick(at, pool.Count, lastNotice.TryGetValue(key, out var previous) ? previous : null);
+            lastNotice[key] = index;
+        }
+
+        var address = read.Key == CarrierCannedKey
+            ? CommanderAddress.Said(CommanderName)
+            : StationNotices.StationAddress;
+
+        return read with { Text = string.Format(System.Globalization.CultureInfo.InvariantCulture, pool[index], address) };
+    }
+
+    private Announcement? ReadCore(JournalEvent journalEvent)
     {
         var channel = journalEvent.String("Channel") ?? "npc";
         var isPlayer = IsAPlayerChannel(channel);
@@ -236,6 +265,7 @@ public sealed partial class IncomingMessages : ICallout
 
             // No cooldown.
             Cooldown = TimeSpan.Zero,
+            MessageKey = frontiers ? journalEvent.String("Message") : null,
         };
     }
 

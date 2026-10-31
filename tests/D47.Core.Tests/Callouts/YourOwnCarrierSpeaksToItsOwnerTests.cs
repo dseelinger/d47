@@ -208,8 +208,6 @@ public class YourOwnCarrierSpeaksToItsOwnerTests
     [InlineData("$DockingChatter_Friendly;")]
     [InlineData("$DockingChatter_Unfriendly;")]
     [InlineData("$STATION_docking_granted;")]
-    [InlineData("$STATION_NoFireZone_entered;")]
-    [InlineData("$STATION_NoFireZone_exited;")]
     public void EveryKeyTheCarrierSendsHasAnAuthoredLineForItsOwner(string key)
     {
         var line = CarrierOwnerLines.For(key, Commander);
@@ -221,8 +219,6 @@ public class YourOwnCarrierSpeaksToItsOwnerTests
 
     [Theory]
     [InlineData("$STATION_docking_granted;", "Docking granted")]
-    [InlineData("$STATION_NoFireZone_entered;", "No fire zone entered")]
-    [InlineData("$STATION_NoFireZone_exited;", "No fire zone exited")]
     public void AnAuthoredLineKeepsFrontiersFact(string key, string fact)
     {
         Assert.StartsWith(fact, CarrierOwnerLines.For(key, Commander), StringComparison.Ordinal);

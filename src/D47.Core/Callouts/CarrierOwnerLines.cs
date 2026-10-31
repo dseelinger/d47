@@ -15,8 +15,6 @@ public static class CarrierOwnerLines
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["$STATION_docking_granted"] = owner => $"Docking granted, {owner}.",
-            ["$STATION_NoFireZone_entered"] = owner => $"No fire zone entered, {owner}.",
-            ["$STATION_NoFireZone_exited"] = owner => $"No fire zone exited, {owner}.",
         };
 
     /// <summary>The authored line for a raw <c>$</c>-key, or null when there is none.</summary>

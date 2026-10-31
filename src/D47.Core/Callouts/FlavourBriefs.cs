@@ -134,7 +134,7 @@ public static class FlavourBriefs
     {
         ArgumentNullException.ThrowIfNull(announcement);
 
-        if (!personalityEnabled)
+        if (!personalityEnabled || StationNotices.IsNotice(announcement.MessageKey))
         {
             return null;
         }
