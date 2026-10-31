@@ -293,7 +293,7 @@ rather than a total missing a step — the two read identically otherwise.
 #### `find_micro_resource`
 
 ```json
-{"type":"object","properties":{"material":{"type":"string","description":"A micro-resource by name \u2014 for example \u0022Graphene\u0022, \u0022Circuit Board\u0022 or \u0022Opinion Polls\u0022."},"wanted":{"type":"integer","description":"How many are wanted, for the trade arithmetic. Defaults to the shortfall."}},"required":["material"],"additionalProperties":false}
+{"type":"object","properties":{"material":{"type":"string","description":"A micro-resource by name \u2014 for example \u0022Graphene\u0022, \u0022Circuit Board\u0022 or \u0022Opinion Polls\u0022."},"wanted":{"type":"integer","description":"How many are wanted, for the trade arithmetic. Defaults to 1."}},"required":["material"],"additionalProperties":false}
 ```
 
 ```text

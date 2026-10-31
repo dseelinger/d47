@@ -101,7 +101,7 @@ public static class OnFootCapability
                         required: true),
                     ToolParameter.Integer(
                         "wanted",
-                        "How many are wanted, for the trade arithmetic. Defaults to the shortfall."),
+                        "How many are wanted, for the trade arithmetic. Defaults to 1."),
                 ],
                 Handler = (arguments, _) =>
                     Task.FromResult(ToolResult.Ok(DescribeMaterial(commander, arguments))),
