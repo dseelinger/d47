@@ -128,10 +128,7 @@ internal static class SpanshRequest
             writer.WriteStartObject();
             writer.WriteStartObject("filters");
 
-            writer.WriteStartObject("distance");
-            writer.WriteString("min", "0");
-            writer.WriteString("max", Number(query.Unbounded ? UnboundedMax : query.MaxDistance));
-            writer.WriteEndObject();
+            WriteDistance(writer, query.Unbounded ? UnboundedMax : query.MaxDistance);
 
             if (query.StationName is not null)
             {
@@ -287,10 +284,7 @@ internal static class SpanshRequest
             writer.WriteStartObject();
             writer.WriteStartObject("filters");
 
-            writer.WriteStartObject("distance");
-            writer.WriteString("min", "0");
-            writer.WriteString("max", Number(query.MaxDistance));
-            writer.WriteEndObject();
+            WriteDistance(writer, query.MaxDistance);
 
             if (query.SystemNames.Count > 0)
             {
@@ -372,10 +366,7 @@ internal static class SpanshRequest
             writer.WriteStartObject();
             writer.WriteStartObject("filters");
 
-            writer.WriteStartObject("distance");
-            writer.WriteString("min", "0");
-            writer.WriteString("max", Number(query.MaxDistance));
-            writer.WriteEndObject();
+            WriteDistance(writer, query.MaxDistance);
 
             writer.WriteEndObject();
 
@@ -418,10 +409,7 @@ internal static class SpanshRequest
             writer.WriteStartObject();
             writer.WriteStartObject("filters");
 
-            writer.WriteStartObject("distance");
-            writer.WriteString("min", "0");
-            writer.WriteString("max", Number(query.MaxDistance));
-            writer.WriteEndObject();
+            WriteDistance(writer, query.MaxDistance);
 
             if (query.FactionFilter.Count > 0)
             {
@@ -443,17 +431,7 @@ internal static class SpanshRequest
 
             writer.WriteEndObject();
 
-            writer.WriteStartArray("sort");
-            writer.WriteStartObject();
-            writer.WriteStartObject("distance");
-            writer.WriteString("direction", "asc");
-            writer.WriteEndObject();
-            writer.WriteEndObject();
-            writer.WriteEndArray();
-
-            writer.WriteNumber("size", MissionStationQuery.ScanSize);
-            writer.WriteNumber("page", 0);
-            writer.WriteString("reference_system", query.ReferenceSystem);
+            WriteFooter(writer, null, MissionStationQuery.ScanSize, 0, query.ReferenceSystem);
 
             writer.WriteEndObject();
         }
@@ -471,10 +449,7 @@ internal static class SpanshRequest
             writer.WriteStartObject();
             writer.WriteStartObject("filters");
 
-            writer.WriteStartObject("distance");
-            writer.WriteString("min", "0");
-            writer.WriteString("max", Number(lightYears));
-            writer.WriteEndObject();
+            WriteDistance(writer, lightYears);
 
             writer.WriteStartObject("power_state");
             writer.WriteStartArray("value");
@@ -486,22 +461,29 @@ internal static class SpanshRequest
 
             writer.WriteEndObject();
 
-            writer.WriteStartArray("sort");
-            writer.WriteStartObject();
-            writer.WriteStartObject("distance");
-            writer.WriteString("direction", "asc");
-            writer.WriteEndObject();
-            writer.WriteEndObject();
-            writer.WriteEndArray();
-
-            writer.WriteNumber("size", PowerplayNeighbourhood.Limit);
-            writer.WriteNumber("page", 0);
-            writer.WriteString("reference_system", referenceSystem);
+            WriteFooter(writer, null, PowerplayNeighbourhood.Limit, 0, referenceSystem);
 
             writer.WriteEndObject();
         }
 
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
+    private static void WriteDistance(Utf8JsonWriter writer, double max)
+    {
+        writer.WriteStartObject("distance");
+        writer.WriteString("min", "0");
+        writer.WriteString("max", Number(max));
+        writer.WriteEndObject();
+    }
+
+    private static void WriteFooter(Utf8JsonWriter writer, SearchSort? sort, int size, int page, string referenceSystem)
+    {
+        WriteSort(writer, sort);
+
+        writer.WriteNumber("size", size);
+        writer.WriteNumber("page", page);
+        writer.WriteString("reference_system", referenceSystem);
     }
 
     /// <summary>The sort array: <paramref name="sort"/>, or nearest first when it is null.</summary>
@@ -591,10 +573,7 @@ internal static class SpanshRequest
             writer.WriteStartObject();
             writer.WriteStartObject("filters");
 
-            writer.WriteStartObject("distance");
-            writer.WriteString("min", "0");
-            writer.WriteString("max", Number(radius));
-            writer.WriteEndObject();
+            WriteDistance(writer, radius);
 
             if (!includeCarriers || !surfaceStations)
             {
@@ -615,17 +594,7 @@ internal static class SpanshRequest
 
             writer.WriteEndObject();
 
-            writer.WriteStartArray("sort");
-            writer.WriteStartObject();
-            writer.WriteStartObject("distance");
-            writer.WriteString("direction", "asc");
-            writer.WriteEndObject();
-            writer.WriteEndObject();
-            writer.WriteEndArray();
-
-            writer.WriteNumber("size", size);
-            writer.WriteNumber("page", page);
-            writer.WriteString("reference_system", referenceSystem);
+            WriteFooter(writer, null, size, page, referenceSystem);
 
             writer.WriteEndObject();
         }

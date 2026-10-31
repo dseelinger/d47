@@ -34,20 +34,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         _now = now ?? (() => DateTimeOffset.UtcNow);
         _ownsClient = http is null;
 
-        _http = http ?? new HttpClient
-        {
-            // The ceiling rather than the budget.
-            Timeout = TimeSpan.FromSeconds(45),
-        };
-
-        _http.BaseAddress ??= new Uri($"https://{Host}/");
-
-        // Identifying rather than anonymous, because a small service run by one person deserves to know who
-        // is generating its traffic and how to ask us to stop.
-        if (!_http.DefaultRequestHeaders.UserAgent.Any())
-        {
-            _http.DefaultRequestHeaders.UserAgent.ParseAdd("d47/0.1 (+https://github.com/dseelinger/d47)");
-        }
+        _http = KnowledgeHttp.Client(http, Host, TimeSpan.FromSeconds(45));
     }
 
     /// <summary>How long a Commander waits for an answer before being told there is not one.</summary>

@@ -50,14 +50,7 @@ public sealed class ArdentCommodityService : IDisposable
         _logger = logger;
         _ownsClient = http is null;
 
-        _http = http ?? new HttpClient { Timeout = TimeSpan.FromSeconds(45) };
-
-        _http.BaseAddress ??= new Uri($"https://{Host}/");
-
-        if (!_http.DefaultRequestHeaders.UserAgent.Any())
-        {
-            _http.DefaultRequestHeaders.UserAgent.ParseAdd("d47/0.1 (+https://github.com/dseelinger/d47)");
-        }
+        _http = KnowledgeHttp.Client(http, Host, TimeSpan.FromSeconds(45));
     }
 
     /// <summary>One call's answer, in the shape the planner's own sweep already returns.</summary>

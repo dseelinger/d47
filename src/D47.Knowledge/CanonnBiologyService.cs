@@ -21,13 +21,7 @@ public sealed class CanonnBiologyService : ICommunityBiology, IDisposable
         _logger = logger;
         _ownsClient = http is null;
 
-        _http = http ?? new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
-        _http.BaseAddress ??= new Uri($"https://{Host}/");
-
-        if (!_http.DefaultRequestHeaders.UserAgent.Any())
-        {
-            _http.DefaultRequestHeaders.UserAgent.ParseAdd("d47/0.1 (+https://github.com/dseelinger/d47)");
-        }
+        _http = KnowledgeHttp.Client(http, Host, TimeSpan.FromSeconds(20));
     }
 
     public async Task<IReadOnlyList<EarlierFind>> SystemFindsAsync(string systemName, CancellationToken cancellationToken)
@@ -92,9 +86,9 @@ public sealed class CanonnBiologyService : ICommunityBiology, IDisposable
                 || Text(row, "hud_category") != "Biology"
                 || Text(row, "body") is not { } body
                 || Text(row, "english_name") is not { } name
-                || Number(row, "entryid") is not { } entryId
-                || Number(row, "latitude") is not { } latitude
-                || Number(row, "longitude") is not { } longitude)
+                || JsonNumbers.Number(row, "entryid") is not { } entryId
+                || JsonNumbers.Number(row, "latitude") is not { } latitude
+                || JsonNumbers.Number(row, "longitude") is not { } longitude)
             {
                 continue;
             }
@@ -111,15 +105,6 @@ public sealed class CanonnBiologyService : ICommunityBiology, IDisposable
         && value.GetString()?.Trim() is { Length: > 0 } text
             ? text
             : null;
-
-    private static double? Number(JsonElement row, string property) =>
-        row.TryGetProperty(property, out var value) switch
-        {
-            true when value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number) => number,
-            true when value.ValueKind == JsonValueKind.String
-                      && double.TryParse(value.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) => parsed,
-            _ => null,
-        };
 
     public void Dispose()
     {

@@ -33,14 +33,7 @@ public sealed class SpanshRouteService : IRouteService, IDisposable
         _ownsClient = http is null;
         _delay = delay ?? ((wait, token) => Task.Delay(wait, token));
 
-        _http = http ?? new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-
-        _http.BaseAddress ??= new Uri($"https://{Host}/");
-
-        if (!_http.DefaultRequestHeaders.UserAgent.Any())
-        {
-            _http.DefaultRequestHeaders.UserAgent.ParseAdd("d47/0.1 (+https://github.com/dseelinger/d47)");
-        }
+        _http = KnowledgeHttp.Client(http, Host, TimeSpan.FromSeconds(15));
     }
 
     /// <summary>How long a plot may take before d47 gives up on it.</summary>

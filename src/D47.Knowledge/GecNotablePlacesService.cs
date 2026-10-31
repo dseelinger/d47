@@ -39,13 +39,7 @@ public sealed class GecNotablePlacesService : INotablePlacesService, IDisposable
         _ownsClient = http is null;
         _now = now ?? (() => DateTimeOffset.UtcNow);
 
-        _http = http ?? new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-        _http.BaseAddress ??= new Uri($"https://{Host}/");
-
-        if (!_http.DefaultRequestHeaders.UserAgent.Any())
-        {
-            _http.DefaultRequestHeaders.UserAgent.ParseAdd("d47/0.1 (+https://github.com/dseelinger/d47)");
-        }
+        _http = KnowledgeHttp.Client(http, Host, TimeSpan.FromSeconds(60));
     }
 
     public async Task<IReadOnlyList<NotablePlace>> NearAsync(
@@ -159,7 +153,7 @@ public sealed class GecNotablePlacesService : INotablePlacesService, IDisposable
             places.Add(new NotablePlace(name, Text(entry, "type") ?? "Point of interest", system, Long(entry, "id64"), position)
             {
                 Summary = Text(entry, "summary"),
-                Rating = Number(entry, "rating"),
+                Rating = JsonNumbers.Number(entry, "rating"),
             });
         }
 
@@ -178,15 +172,6 @@ public sealed class GecNotablePlacesService : INotablePlacesService, IDisposable
             true when value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var number) => number,
             true when value.ValueKind == JsonValueKind.String
                       && long.TryParse(value.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) => parsed,
-            _ => null,
-        };
-
-    private static double? Number(JsonElement entry, string property) =>
-        entry.TryGetProperty(property, out var value) switch
-        {
-            true when value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number) => number,
-            true when value.ValueKind == JsonValueKind.String
-                      && double.TryParse(value.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) => parsed,
             _ => null,
         };
 
