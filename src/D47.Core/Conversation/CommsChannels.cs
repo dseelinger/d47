@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 using D47.Core.Adventures;
 using D47.Core.Callouts;
 using D47.Core.Characters;
@@ -59,6 +60,7 @@ public sealed record CommsInputs
 /// <summary>The selected channel and the party last selected on each channel, for saving and restoring.</summary>
 public sealed record CommsMemory
 {
+    [JsonConverter(typeof(JsonStringEnumConverter<CommsChannel>))]
     public CommsChannel? Channel { get; init; }
 
     /// <summary>The party last selected on each channel but Story, by key.</summary>
@@ -66,6 +68,18 @@ public sealed record CommsMemory
 
     /// <summary>The cast member last selected on Story, by story id.</summary>
     public IReadOnlyDictionary<string, string> StoryParties { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>Whether both hold the same channel and parties, comparing the dictionaries by content.</summary>
+    public bool SameAs(CommsMemory other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+
+        return Channel == other.Channel
+            && Parties.Count == other.Parties.Count
+            && Parties.All(pair => other.Parties.TryGetValue(pair.Key, out var key) && key == pair.Value)
+            && StoryParties.Count == other.StoryParties.Count
+            && StoryParties.All(pair => other.StoryParties.TryGetValue(pair.Key, out var key) && key == pair.Value);
+    }
 }
 
 /// <summary>
@@ -256,7 +270,7 @@ public sealed class CommsChannels
 
             result = change();
 
-            changed = !available.SequenceEqual(AvailableNow()) || selected != Selection() || !Same(memory, Snapshot());
+            changed = !available.SequenceEqual(AvailableNow()) || selected != Selection() || !memory.SameAs(Snapshot());
         }
 
         if (changed)
@@ -351,13 +365,6 @@ public sealed class CommsChannels
         Parties = new Dictionary<CommsChannel, string>(_parties),
         StoryParties = new Dictionary<string, string>(_storyParties, StringComparer.Ordinal),
     };
-
-    private static bool Same(CommsMemory left, CommsMemory right) =>
-        left.Channel == right.Channel
-        && left.Parties.Count == right.Parties.Count
-        && left.Parties.All(pair => right.Parties.TryGetValue(pair.Key, out var key) && key == pair.Value)
-        && left.StoryParties.Count == right.StoryParties.Count
-        && left.StoryParties.All(pair => right.StoryParties.TryGetValue(pair.Key, out var key) && key == pair.Value);
 
     private CommsSelection? Selection()
     {

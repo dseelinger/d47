@@ -688,6 +688,8 @@ public sealed class AppHost : IDisposable
     /// <summary>Who the comms key reaches.</summary>
     public D47.Core.Conversation.CommsChannels? CommsChannels { get; private set; }
 
+    private D47.App.Panel.CommsSelectionMemory? _commsSelection;
+
     /// <summary>Each Commander's arrivals, with their positions.</summary>
     public D47.Core.Journal.TravelLog? TravelLog { get; private set; }
 
@@ -3670,6 +3672,8 @@ public sealed class AppHost : IDisposable
         host.SearchHistory = stores.SearchHistory;
         host.SignalSightings = stores.SignalSightings;
         host.CommsChannels = stores.CommsChannels;
+        host._commsSelection = new D47.App.Panel.CommsSelectionMemory(
+            stores.CommsChannels, viewState, action => Avalonia.Threading.Dispatcher.UIThread.Post(action), TimeProvider.System);
         host.TravelLog = stores.TravelLog;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, otherDynamicCommands());
@@ -5883,6 +5887,8 @@ public sealed class AppHost : IDisposable
         var active = GameState.Active;
         var fid = active?.Identity.FrontierId;
 
+        _commsSelection?.Follow(fid);
+
         channels.Update(D47.App.Voice.CommsFeed.Inputs(active, Announcer.NpcsHere.Present, RunningCast(fid), Characters.CharactersOf(fid),
             Settings.Current.Speech.NarratorFourthWall));
 
@@ -6442,6 +6448,9 @@ public sealed class AppHost : IDisposable
         _ticking?.Dispose();
         _controllerSampler?.Dispose();
         (Controllers as IDisposable)?.Dispose();
+
+        // After the tick and the hotkeys, so no step comes after the last write.
+        _commsSelection?.Dispose();
         _audioWatch?.Dispose();
         _modelCatalog?.Dispose();
         _bgsTickSource?.Dispose();

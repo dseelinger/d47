@@ -85,6 +85,10 @@ public sealed record ViewState
     public IReadOnlyDictionary<string, IReadOnlyList<int>> PinsByCommander { get; init; } =
         new Dictionary<string, IReadOnlyList<int>>(StringComparer.Ordinal);
 
+    /// <summary>How each Commander left the comms channels, by Frontier ID.</summary>
+    public IReadOnlyDictionary<string, D47.Core.Conversation.CommsMemory> CommsByCommander { get; init; } =
+        new Dictionary<string, D47.Core.Conversation.CommsMemory>(StringComparer.Ordinal);
+
     /// <summary>
     /// Which reading each tab was left on, by tab name and root key (#268) — the Transcript on the log
     /// file, Routing on Course.
