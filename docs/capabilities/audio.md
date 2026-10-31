@@ -164,12 +164,13 @@ unmuting returns to the level the row had.
 ### What silences what
 
 Ranking decides who goes next, not who gets cut off. Something already playing is normally left to
-finish. Three things cut it, and a new turn also drops what the previous turn had left to say:
+finish. Four things cut it, and a new turn also drops what the previous turn had left to say:
 
 | What arrives | What it cuts | What it leaves alone |
 |---|---|---|
 | **An alert** | Anything being said, mid-word | Nothing; only "stop" overrules it |
 | **You starting to talk to it** | Invented NPC chatter, playing or queued | Everything else, including the sound cue |
+| **Elite closing** | Invented chatter and Narrator lines, playing or queued | Everything else |
 | **"Stop"** | Everything audible, including the alert | Nothing |
 
 The middle row fires when the microphone opens, and also when a turn starts without you having

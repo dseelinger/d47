@@ -102,6 +102,12 @@ public sealed class Announcer : IDisposable
 
     private ILogger? _comms;
 
+    /// <summary>Unprompted talk that nothing in the game caused: chatter, invented lines and the Narrator.</summary>
+    internal static bool IsChatter(Announcement announcement) =>
+        announcement.Chatter is not null
+        || announcement.Origin == AnnouncementOrigin.InventedChatter
+        || announcement.Voice == VoiceRole.Narrator;
+
     /// <summary>Runs <paramref name="speak"/> once no other unprompted speaker is speaking. Never awaited by code holding the turn.</summary>
     internal Task InTurnAsync(Func<Task> speak) => _speaking.TakeAsync(speak);
 
@@ -224,6 +230,12 @@ public sealed class Announcer : IDisposable
 
                 foreach (var announcement in lines)
                 {
+                    // Chatter composed before Elite closed is not spoken after.
+                    if (!GameState.IsGameRunning && IsChatter(announcement))
+                    {
+                        continue;
+                    }
+
                     if (announcement.Key == NpcChatter.LineKey)
                     {
                         // Air between the lines of an exchange (#259), reported as two people never once

@@ -3610,6 +3610,7 @@ public sealed class AppHost : IDisposable
                 var running = host.Elite.IsRunning;
                 gameState.GameRunning(running);
                 host.Music.GameRunning(running);
+                host.Voice.GameRunning = running;
             }
 
             host.Music.Follow(stores.Status.Current, feed.EliteMusic.Track);

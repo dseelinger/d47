@@ -98,6 +98,32 @@ public sealed class VoicePipeline(
 
     public bool CuesEnabled { get; set; } = true;
 
+    private volatile bool _gameRunning = true;
+
+    /// <summary>False while Elite is not running: invented chatter is cut and stays refused until it runs again.</summary>
+    public bool GameRunning
+    {
+        get => _gameRunning;
+        set
+        {
+            if (_gameRunning == value)
+            {
+                return;
+            }
+
+            _gameRunning = value;
+
+            if (!value)
+            {
+                arbiter.CloseGroup(SpokenGroup.InventedChatter);
+            }
+            else if (_state == LoopState.Idle)
+            {
+                arbiter.OpenGroup(SpokenGroup.InventedChatter);
+            }
+        }
+    }
+
     public bool BedEnabled { get; set; } = true;
 
     /// <summary>The ship AI's Guardian treatment for the settings in force, or null with every toggle off (#225).</summary>
@@ -579,7 +605,7 @@ public sealed class VoicePipeline(
         {
             arbiter.CloseGroup(SpokenGroup.InventedChatter);
         }
-        else if (state == LoopState.Idle)
+        else if (state == LoopState.Idle && _gameRunning)
         {
             arbiter.OpenGroup(SpokenGroup.InventedChatter);
         }
@@ -622,7 +648,12 @@ public sealed class VoicePipeline(
         }
 
         _state = LoopState.Idle;
-        arbiter.OpenGroup(SpokenGroup.InventedChatter);
+
+        if (_gameRunning)
+        {
+            arbiter.OpenGroup(SpokenGroup.InventedChatter);
+        }
+
         StateEntered?.Invoke(LoopState.Idle);
     }
 
