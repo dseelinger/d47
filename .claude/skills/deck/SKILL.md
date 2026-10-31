@@ -1,6 +1,6 @@
 ---
 name: deck
-description: Start the maintainer's deck sessions and releases from the phone, through the Launcher session — a plain session, triage, triage lanes, architect, an issue worker, pre-release, or a patch or minor release. Each session opens in its own console on the PC with the settings its Stream Deck key uses, and shows up in the Claude app's Code tab. Use when the user invokes /deck <name>, or says "start triage", "open the architect", "work issue N", "run pre-release", "cut a patch", "cut a minor".
+description: Start the maintainer's deck sessions and releases from the phone, through the Launcher session — a plain session, triage, triage lanes, the unattended lanes run, architect, an issue worker, pre-release, or a patch or minor release. Each session opens in its own console on the PC with the settings its Stream Deck key uses, and shows up in the Claude app's Code tab. Use when the user invokes /deck <name>, or says "start triage", "open the architect", "work issue N", "run pre-release", "cut a patch", "cut a minor".
 ---
 
 # Deck
@@ -18,6 +18,8 @@ Run from the repo root, with the Bash tool:
 | `triage` | `cmd.exe //c "tools\\deck\\spawn.cmd" Triage triage.cmd` |
 | `triage lanes` | `cmd.exe //c "tools\\deck\\spawn.cmd" Triage triage.cmd lanes` |
 | `triage overnight` | `cmd.exe //c "tools\\deck\\spawn.cmd" Triage triage.cmd overnight` |
+| `triage lanes overnight` | `cmd.exe //c "tools\\deck\\spawn.cmd" Triage triage.cmd "lanes overnight"` |
+| `lanes` | `cmd.exe //c "tools\\deck\\spawn.cmd" Lanes run-lanes.cmd` |
 | `architect` | `cmd.exe //c "tools\\deck\\spawn.cmd" Architect architect.cmd` |
 | `issue <N>` or `issue <lane>` | `cmd.exe //c "tools\\deck\\spawn.cmd" Issue issue-worker.cmd <N>` |
 | `pre-release` | `cmd.exe //c "tools\\deck\\spawn.cmd" Pre-release pre-release.cmd` |
@@ -32,6 +34,11 @@ For `issue`, the argument must be a number or a single letter. Without one, ask 
 console on the PC cannot be answered from the phone. Before spawning, run
 `python tools/deck/issue_settings.py <arg>` and report its stderr line (which issue, which model
 and effort, how old the triage is). If it prints nothing on stdout, report why and spawn nothing.
+
+`lanes` starts no Claude session of its own: it opens one console per lane of the last
+`/triage lanes overnight`, each working its issues unattended. Say where the run's `needs-you.md`
+is — `%LOCALAPPDATA%\Temp\d47-lanes\latest.txt` names the run folder. `run-lanes.ps1` refuses a main
+checkout with uncommitted tracked changes or a triage with no lanes; its console says which.
 
 With no argument, the session is a plain one: Opus, high effort, no starting skill, as the Claude
 key opens it.

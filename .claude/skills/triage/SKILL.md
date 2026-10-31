@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Read the open GitHub issues that are ready to be implemented and report a build order — what to do next, which issues ship together as one release, the model and effort each is worth, and the few that are worth a code review. With "lanes", also splits every eligible issue into lanes that run in parallel — each issue its own session, in its own worktree. With "overnight", leaves out every issue that needs the maintainer at the keyboard, so the grid is the unattended queue tools/deck/run-queue.ps1 works through. Reports only; files, labels and starts nothing. Use when the user invokes /triage, /triage lanes or /triage overnight, or says "what should I work on", "triage the issues", "what's next", "plan the next release", "split the issues into lanes", "triage for the overnight queue".
+description: Read the open GitHub issues that are ready to be implemented and report a build order — what to do next, which issues ship together as one release, the model and effort each is worth, and the few that are worth a code review. With "lanes", also splits every eligible issue into lanes that run in parallel — each issue its own session, in its own worktree. With "overnight", leaves out every issue that needs the maintainer at the keyboard, so the grid is the unattended queue tools/deck/run-queue.ps1 works through; "lanes overnight" does both, for tools/deck/run-lanes.ps1. Reports only; files, labels and starts nothing. Use when the user invokes /triage, /triage lanes, /triage overnight or /triage lanes overnight, or says "what should I work on", "triage the issues", "what's next", "plan the next release", "split the issues into lanes", "triage for the overnight queue".
 ---
 
 # Triage
@@ -213,15 +213,17 @@ is a triage the maintainer learns to skip, and then the one that mattered goes u
 
 ## Lanes
 
-Only when invoked as `/triage lanes`, or `/triage lanes <N>` to set the number of lanes. A plain
-`/triage` or `/triage overnight` produces no lanes and writes none.
+Only when invoked as `/triage lanes`, or `/triage lanes <N>` to set the number of lanes, either
+followed by `overnight` (see **Overnight**). A plain `/triage` or `/triage overnight` produces no
+lanes and writes none.
 
 A lane is a list of issues worked in order, one session per issue on that issue's own model and
 effort, each in its own worktree and merged into `main` when it lands (`/issue-worker` defines
 how). The next issue in a lane starts once the one before it has merged. Lanes run at the same time
 as each other.
 
-**Every eligible issue goes into a lane.** The only issues left out are those the lanes cannot
+**Every eligible issue goes into a lane**, except under `overnight`, where only the issues the
+unattended queue keeps go into lanes. The only other issues left out are those the lanes cannot
 hold: one waiting on an issue that is not eligible, and a tracking issue with nothing to build.
 The split is about keeping merge conflicts unlikely, not about keeping the queue short.
 
@@ -290,8 +292,9 @@ A later triage run keeps a paused issue first in its lane. Find paused issues wi
 
 ### Overnight
 
-Only when invoked as `/triage overnight`. It produces no lanes; `overnight` and `lanes` do not
-combine.
+Only when invoked as `/triage overnight`, or as `/triage lanes overnight`. With `lanes`, apply the
+rules below first, then split what is left into lanes as **Lanes** says; the lanes are the queues
+`tools/deck/run-lanes.ps1` runs at the same time, one unattended `run-queue.ps1` per lane.
 
 The grid is the queue `tools/deck/run-queue.ps1` works through unattended, one headless session per
 issue, while the maintainer is asleep. The order is the same as a plain `/triage`. The difference is
@@ -434,7 +437,7 @@ echo "$(git worktree list | head -1 | cut -d' ' -f1)/.claude/triage-state.json"
   `lanes` object: each lane's issue numbers in work order. A plain `/triage` writes neither.
 - In overnight mode, the file gains `"mode": "overnight"` at the top level, and the issues left out
   under **Overnight** get no row. The queue works through the rows in the order they are written,
-  so write them in the table's order.
+  so write them in the table's order. `lanes overnight` writes both `mode` and `lanes`.
 
   ```json
   "lanes": {
