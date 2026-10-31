@@ -934,117 +934,72 @@ public sealed class AppHost : IDisposable
 
         // Sampling history, which is the one derived state that has to outlive a session: the spine tails the
         // newest journal, so a run begun yesterday is otherwise simply gone (Phase 18).
-        var sampling = new SamplingStore(
-            Path.Combine(paths.Data, "sampling.json"),
-            files,
-            loggerFactory.CreateLogger<SamplingStore>());
+        var sampling = new SamplingStore(foundations.Data("sampling.json"), files, foundations.Log<SamplingStore>());
 
         sampling.Load();
 
         // Systems worth remarking on, in two files with two different characters (Phase 23).
-        var lore = new LoreBook(new LoreStore(
-            Path.Combine(paths.Data, "lore.json"),
-            files,
-            loggerFactory.CreateLogger<LoreStore>()));
+        var lore = new LoreBook(new LoreStore(foundations.Data("lore.json"), files, foundations.Log<LoreStore>()));
 
-        var loreVisits = new LoreVisits(
-            Path.Combine(paths.Data, "lore-visits.json"),
-            files,
-            loggerFactory.CreateLogger<LoreVisits>());
+        var loreVisits = new LoreVisits(foundations.Data("lore-visits.json"), files, foundations.Log<LoreVisits>());
 
         lore.Store.Poll();
         loreVisits.Load();
 
         // What every ship the Commander has flown was last seen holding, kept between sessions (#128).
-        var loadouts = new LoadoutStore(
-            Path.Combine(paths.Data, "loadouts.json"),
-            files,
-            loggerFactory.CreateLogger<LoadoutStore>());
+        var loadouts = new LoadoutStore(foundations.Data("loadouts.json"), files, foundations.Log<LoadoutStore>());
 
         loadouts.Load();
 
         // Every suit and hand weapon the Commander owns, kept between sessions the same way (#293).
-        var kit = new KitStore(
-            Path.Combine(paths.Data, "kit.json"),
-            files,
-            loggerFactory.CreateLogger<KitStore>());
+        var kit = new KitStore(foundations.Data("kit.json"), files, foundations.Log<KitStore>());
 
         kit.Load();
 
         // Every place this Commander has met, and what their transcriber gets wrong about them (#134).
-        var heardNames = new HeardNamesStore(
-            Path.Combine(paths.Data, "heard-names.json"),
-            files,
-            loggerFactory.CreateLogger<HeardNamesStore>());
+        var heardNames = new HeardNamesStore(foundations.Data("heard-names.json"), files, foundations.Log<HeardNamesStore>());
 
         heardNames.Load();
 
         // What this Commander has taught d47 stands for a declared phrase, on a "did you mean" yes (#169).
-        var learnedPhrases = new LearnedPhrasesStore(
-            Path.Combine(paths.Data, "phrases.json"),
-            files,
-            loggerFactory.CreateLogger<LearnedPhrasesStore>());
+        var learnedPhrases = new LearnedPhrasesStore(foundations.Data("phrases.json"), files, foundations.Log<LearnedPhrasesStore>());
 
         learnedPhrases.Load();
 
         // The systems this Commander has named, so they can be said back as a course (#488).
-        var bookmarks = new BookmarkStore(
-            Path.Combine(paths.Data, "bookmarks.json"),
-            files,
-            loggerFactory.CreateLogger<BookmarkStore>());
+        var bookmarks = new BookmarkStore(foundations.Data("bookmarks.json"), files, foundations.Log<BookmarkStore>());
 
         bookmarks.Load();
 
-        var savedSearches = new D47.Core.Knowledge.SavedSearchStore(
-            Path.Combine(paths.Data, "saved-searches.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Knowledge.SavedSearchStore>());
+        var savedSearches = new D47.Core.Knowledge.SavedSearchStore(foundations.Data("saved-searches.json"), files, foundations.Log<D47.Core.Knowledge.SavedSearchStore>());
 
         savedSearches.Load();
 
-        var searchHistory = new D47.Core.Knowledge.SearchHistory(
-            Path.Combine(paths.Data, "search-history.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Knowledge.SearchHistory>());
+        var searchHistory = new D47.Core.Knowledge.SearchHistory(foundations.Data("search-history.json"), files, foundations.Log<D47.Core.Knowledge.SearchHistory>());
 
         searchHistory.Load();
 
-        var squadronFactions = new D47.Core.Knowledge.SquadronFactions(
-            Path.Combine(paths.Data, "squadron-factions.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Knowledge.SquadronFactions>());
+        var squadronFactions = new D47.Core.Knowledge.SquadronFactions(foundations.Data("squadron-factions.json"), files, foundations.Log<D47.Core.Knowledge.SquadronFactions>());
 
         squadronFactions.Load();
 
         // Every run, not only behind the timers switch (#90).
-        var journalReminders = new D47.Core.Reminders.JournalReminderStore(
-            Path.Combine(paths.Data, "journal-reminders.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Reminders.JournalReminderStore>());
+        var journalReminders = new D47.Core.Reminders.JournalReminderStore(foundations.Data("journal-reminders.json"), files, foundations.Log<D47.Core.Reminders.JournalReminderStore>());
 
         journalReminders.Poll();
 
-        var captainsLog = new D47.Core.CaptainsLog.CaptainsLogStore(
-            Path.Combine(paths.Data, "captains-log.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.CaptainsLog.CaptainsLogStore>());
+        var captainsLog = new D47.Core.CaptainsLog.CaptainsLogStore(foundations.Data("captains-log.json"), files, foundations.Log<D47.Core.CaptainsLog.CaptainsLogStore>());
 
         captainsLog.Load();
 
         var standingWarnings = new D47.Core.Callouts.StandingWarnings();
 
-        var miningTargets = new D47.Core.Mining.MiningTargetStore(
-            Path.Combine(paths.Data, "mining.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Mining.MiningTargetStore>());
+        var miningTargets = new D47.Core.Mining.MiningTargetStore(foundations.Data("mining.json"), files, foundations.Log<D47.Core.Mining.MiningTargetStore>());
 
         miningTargets.Load();
 
         // The Commander's ship builds (Phase 26), before the history walk that looks for the ships they name.
-        var shipBuilds = new ShipBuildStore(
-            Path.Combine(paths.Data, "ships.json"),
-            files,
-            loggerFactory.CreateLogger<ShipBuildStore>());
+        var shipBuilds = new ShipBuildStore(foundations.Data("ships.json"), files, foundations.Log<ShipBuildStore>());
 
         shipBuilds.Poll();
 
@@ -1052,18 +1007,12 @@ public sealed class AppHost : IDisposable
         // a data folder with no watermark the names walk reads every file in the folder, which is every first
         // run of a fresh install. Nothing here reads a journal until WarmUp asks it to.
         // Organic data analysed and not yet sold, rebuilt by the history walk below (#526).
-        var exobiology = new D47.Core.Journal.ExobiologyLedger(
-            Path.Combine(paths.Data, "unsold-data.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Journal.ExobiologyLedger>());
+        var exobiology = new D47.Core.Journal.ExobiologyLedger(foundations.Data("unsold-data.json"), files, foundations.Log<D47.Core.Journal.ExobiologyLedger>());
 
         exobiology.Load();
 
         // Bodies mapped with the DSS and not yet sold, rebuilt by the same walk (#527).
-        var cartography = new D47.Core.Journal.CartographyLedger(
-            Path.Combine(paths.Data, "unsold-data.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Journal.CartographyLedger>());
+        var cartography = new D47.Core.Journal.CartographyLedger(foundations.Data("unsold-data.json"), files, foundations.Log<D47.Core.Journal.CartographyLedger>());
 
         cartography.Load();
 
@@ -1072,25 +1021,16 @@ public sealed class AppHost : IDisposable
             files,
             loggerFactory.CreateLogger<D47.Core.Journal.OutstandingCrimes>());
 
-        var activities = new D47.Core.Activities.ActivityLedger(
-            Path.Combine(paths.Data, "activities.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Activities.ActivityLedger>());
+        var activities = new D47.Core.Activities.ActivityLedger(foundations.Data("activities.json"), files, foundations.Log<D47.Core.Activities.ActivityLedger>());
 
         activities.Load();
 
-        var activityBars = new D47.Core.Adventures.ActivityBars(
-            Path.Combine(paths.Data, "activity-bars.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Adventures.ActivityBars>());
+        var activityBars = new D47.Core.Adventures.ActivityBars(foundations.Data("activity-bars.json"), files, foundations.Log<D47.Core.Adventures.ActivityBars>());
 
         activityBars.Load();
 
         // Mail Elite also sends and d47 has not said, with its read watermark (#618).
-        var mail = new D47.Core.Journal.MailLedger(
-            Path.Combine(paths.Data, D47.Core.Journal.MailLedger.FileName),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Journal.MailLedger>());
+        var mail = new D47.Core.Journal.MailLedger(foundations.Data(D47.Core.Journal.MailLedger.FileName), files, foundations.Log<D47.Core.Journal.MailLedger>());
 
         // The signals the Commander scans, rebuilt by the same walk and extended live.
         var signalSightings = new D47.Core.Journal.SignalSightings(
@@ -1223,18 +1163,12 @@ public sealed class AppHost : IDisposable
             journalDirectory, files, loggerFactory.CreateLogger<ModulePowerReader>());
 
         // A third file of the same kind, and the markets read out of it (Phase 36).
-        var marketBook = new D47.Core.Knowledge.MarketBook(
-            Path.Combine(paths.Data, "markets.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Knowledge.MarketBook>());
+        var marketBook = new D47.Core.Knowledge.MarketBook(foundations.Data("markets.json"), files, foundations.Log<D47.Core.Knowledge.MarketBook>());
 
         marketBook.Load();
 
         // And a fourth (Phase 37).
-        var planBook = new D47.Core.Knowledge.RoutePlanBook(
-            Path.Combine(paths.Data, "route-plans.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Knowledge.RoutePlanBook>(),
+        var planBook = new D47.Core.Knowledge.RoutePlanBook(foundations.Data("route-plans.json"), files, foundations.Log<D47.Core.Knowledge.RoutePlanBook>(),
             () => gameState.Active?.Identity.FrontierId);
 
         planBook.Load();
@@ -1281,14 +1215,8 @@ public sealed class AppHost : IDisposable
         // The Commander's checklist and the proposals waiting on it, in two files beside the executable
         // (Phase 17).
         var checklists = new ChecklistService(
-            new ChecklistStore(
-                Path.Combine(paths.Data, "checklist.json"),
-                files,
-                loggerFactory.CreateLogger<ChecklistStore>()),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                files,
-                loggerFactory.CreateLogger<ChecklistProposalStore>()),
+            new ChecklistStore(foundations.Data("checklist.json"), files, foundations.Log<ChecklistStore>()),
+            new ChecklistProposalStore(foundations.Data("checklist-proposals.json"), files, foundations.Log<ChecklistProposalStore>()),
             () => gameState.Active,
 
             // The chosen filter outlives the session, which is what was asked for on 2026-08-23.
@@ -1314,10 +1242,7 @@ public sealed class AppHost : IDisposable
                 viewState.Load().PinsByCommander));
 
         // What d47 remembers about the Commander (Phase 31).
-        var memories = new MemoryStore(
-            Path.Combine(paths.Data, "memories.json"),
-            files,
-            loggerFactory.CreateLogger<MemoryStore>());
+        var memories = new MemoryStore(foundations.Data("memories.json"), files, foundations.Log<MemoryStore>());
 
         memories.Poll();
 
@@ -1331,10 +1256,7 @@ public sealed class AppHost : IDisposable
         var memoryObserver = new MemoryObserver(memoryBook);
 
         // The standing directions the debrief pass drafts and the Commander adopts (#162).
-        var directions = new StandingDirectionsStore(
-            Path.Combine(paths.Data, DebriefWriteFence.FileName),
-            files,
-            loggerFactory.CreateLogger<StandingDirectionsStore>());
+        var directions = new StandingDirectionsStore(foundations.Data(DebriefWriteFence.FileName), files, foundations.Log<StandingDirectionsStore>());
 
         directions.Poll();
 
@@ -1359,10 +1281,7 @@ public sealed class AppHost : IDisposable
         }
 
         // The Commander's long arcs (Phase 34).
-        var goals = new D47.Core.Goals.GoalStore(
-            Path.Combine(paths.Data, "goals.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Goals.GoalStore>());
+        var goals = new D47.Core.Goals.GoalStore(foundations.Data("goals.json"), files, foundations.Log<D47.Core.Goals.GoalStore>());
 
         goals.Poll();
 
@@ -1378,10 +1297,7 @@ public sealed class AppHost : IDisposable
 
         adventureStore.Poll();
 
-        var messageStore = new D47.Core.Messages.MessageStore(
-            Path.Combine(paths.Data, "messages.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Messages.MessageStore>(),
+        var messageStore = new D47.Core.Messages.MessageStore(foundations.Data("messages.json"), files, foundations.Log<D47.Core.Messages.MessageStore>(),
             new D47.Core.Messages.MessageClips(files, Path.Combine(paths.Data, "messages"), new DpapiSecretProtector()));
 
         var adventureBook = new D47.Core.Adventures.AdventureBook(
@@ -1775,20 +1691,14 @@ public sealed class AppHost : IDisposable
         var drift = new ShipDriftWatch(shipPlans, checklists);
 
         // Which core flies which ship (Phase 35).
-        var shipCoreStore = new ShipCoreStore(
-            Path.Combine(paths.Data, "ship-cores.json"),
-            files,
-            loggerFactory.CreateLogger<ShipCoreStore>());
+        var shipCoreStore = new ShipCoreStore(foundations.Data("ship-cores.json"), files, foundations.Log<ShipCoreStore>());
 
         shipCoreStore.Poll();
 
         var shipCores = new ShipCoreService(shipCoreStore, () => gameState.Active);
 
         // And the same arrangement on foot (Phase 27).
-        var onFootBuilds = new D47.Core.Loadout.OnFootBuildStore(
-            Path.Combine(paths.Data, "on-foot.json"),
-            files,
-            loggerFactory.CreateLogger<D47.Core.Loadout.OnFootBuildStore>());
+        var onFootBuilds = new D47.Core.Loadout.OnFootBuildStore(foundations.Data("on-foot.json"), files, foundations.Log<D47.Core.Loadout.OnFootBuildStore>());
 
         onFootBuilds.Poll();
 
@@ -1831,10 +1741,7 @@ public sealed class AppHost : IDisposable
 
         // A session, written up (Phase 33).
         var logbook = new D47.Core.Logbook.LogbookBook(
-            new D47.Core.Logbook.LogFolder(
-                Path.Combine(paths.Data, D47.Core.Logbook.LogFolder.FolderName),
-                files,
-                loggerFactory.CreateLogger<D47.Core.Logbook.LogFolder>(),
+            new D47.Core.Logbook.LogFolder(foundations.Data(D47.Core.Logbook.LogFolder.FolderName), files, foundations.Log<D47.Core.Logbook.LogFolder>(),
                 () => gameState.Active?.Identity.FrontierId),
             new D47.Core.Logbook.LogDigestBuilder(files, loggerFactory.CreateLogger<D47.Core.Logbook.LogDigestBuilder>()),
             new D47.Core.Logbook.LogWriter(loggerFactory.CreateLogger<D47.Core.Logbook.LogWriter>()),
@@ -2002,15 +1909,13 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<BindingProfiles>());
 
         // The Commander's own macros, beside the executable like everything else d47 writes.
-        var macros = new MacroStore(
-            Path.Combine(paths.Data, "macros.json"), files, loggerFactory.CreateLogger<MacroStore>());
+        var macros = new MacroStore(foundations.Data("macros.json"), files, foundations.Log<MacroStore>());
 
         // What d47 last offered to put on the clipboard.
         var clipboardOffer = new D47.Core.Conversation.ClipboardOffer();
 
         // The Commander's HOTAS switches, in the same shape and beside the same executable (Phase 21).
-        var switches = new SwitchStore(
-            Path.Combine(paths.Data, "switches.json"), files, loggerFactory.CreateLogger<SwitchStore>());
+        var switches = new SwitchStore(foundations.Data("switches.json"), files, foundations.Log<SwitchStore>());
 
         // The constructor only: the controllers are first listed on the sampler thread.
         var controllers = StartupTimer.Time(
@@ -2034,10 +1939,7 @@ public sealed class AppHost : IDisposable
 
         // The cores the Commander wrote, beside the executable and polled like the macros above
         // (remediation.md 11, item 9).
-        var ownPersonas = new OwnPersonaStore(
-            Path.Combine(paths.Data, "personas.json"),
-            files,
-            loggerFactory.CreateLogger<OwnPersonaStore>());
+        var ownPersonas = new OwnPersonaStore(foundations.Data("personas.json"), files, foundations.Log<OwnPersonaStore>());
 
         ownPersonas.Poll();
 
@@ -4122,6 +4024,10 @@ public sealed class AppHost : IDisposable
         public required IDisposable LoadingStores { get; init; }
 
         public required ILogger<AppHost> Logger { get; init; }
+
+        public string Data(string file) => Path.Combine(Paths.Data, file);
+
+        public ILogger<T> Log<T>() => LoggerFactory.CreateLogger<T>();
 
         public required SerilogLoggerFactory LoggerFactory { get; init; }
 
