@@ -74,7 +74,7 @@ nav_order: 110
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">What you are wearing, what an on-foot upgrade really costs, and where its materials come from.</p>
 <section>
-<h2><span class="num">1</span> Two axes, and neither one is the ship model.</h2>
+<h2><span class="num">1</span> An item has a grade and up to four modifications.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="A grade is bought at Pioneer Supplies and can be raised; a modification is applied by an engineer and is permanent">
  <rect x="20" y="40" width="400" height="150" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="82" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">GRADE</text>
@@ -89,10 +89,10 @@ nav_order: 110
  <text x="440" y="226" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Four slots, permanent, and no way to practise.</text>
  <text x="440" y="256" text-anchor="middle" font-size="15" fill="var(--text-muted)">A wrong one is recoverable only by buying and re-upgrading a fresh item, so it says so once per answer.</text>
 </svg>
-<p class="body">There is no roll count anywhere on this page, so there is no hedging either: every quantity is what the game charges, exactly.</p>
+<p class="body">Grade runs from 1 to 5, bought at Pioneer Supplies at a fixed price. Modifications are made at an engineer, are permanent, and cannot be undone, so each answer says so once.</p>
 </section>
 <section>
-<h2><span class="num">2</span> The published quantities are wrong, and the game settles it.</h2>
+<h2><span class="num">2</span> D47 charges the quantities the game charges.</h2>
 <svg viewBox="0 0 880 256" role="img" aria-label="Community sources list five, ten and fifteen ingredients where the game actually charges three, five and eight">
  <rect x="20" y="40" width="400" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text-muted)">PUBLISHED EVERYWHERE</text>
@@ -107,10 +107,10 @@ nav_order: 110
  <text x="440" y="210" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The published figures would have quoted you two to three times the real cost.</text>
  <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">And they would have looked right, because they are what every other tool says.</text>
 </svg>
-<p class="body">Grade upgrades were restated the same way — 1 / 5 / 10 / 15 / 25 / 35 published against <strong>1 / 2 / 4 / 5 / 9 / 12</strong> charged — and Power Regulators, listed everywhere, are not asked for at all. The generator refuses to run if any on-foot ingredient falls outside the measured tables: one uncorrected number sitting among corrected ones is invisible and wrong by a factor of three.</p>
+<p class="body">Published ingredient lists differ from what the game takes. D47 uses quantities checked against real upgrades, and the generator refuses to run if an on-foot ingredient falls outside its checked tables.</p>
 </section>
 <section>
-<h2><span class="num">3</span> The suit's own name is not safe to repeat.</h2>
+<h2><span class="num">3</span> The suit is named from its symbol.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="Elite's localisation leaves an unresolved token naming Class1 whatever the real grade is">
  <rect x="20" y="36" width="840" height="94" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="46" y="74" text-anchor="start" font-size="16" font-weight="700" fill="var(--danger)">$UtilitySuit_Class1_Name;</text>
@@ -119,9 +119,10 @@ nav_order: 110
  <text x="440" y="202" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So the name comes from the symbol and a shipped table, never from Elite’s own text.</text>
  <text x="440" y="232" text-anchor="middle" font-size="15" fill="var(--text-muted)">A modification with no known name is said as the symbol Elite wrote, and labelled as one.</text>
 </svg>
+<p class="body">Elite’s own name text says Class1 for suits above grade 1. D47 names the suit from its symbol and a shipped table, and says an unknown modification as the symbol Elite wrote.</p>
 </section>
 <section>
-<h2><span class="num">4</span> The order of the plan is a routing fact.</h2>
+<h2><span class="num">4</span> A grade 1 item is upgraded before the trip.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="A grade 1 item has no modification slots and an engineer's base has no Pioneer Supplies, so upgrading comes first">
  <rect x="20" y="40" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="80" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">A GRADE 1 ITEM</text>
@@ -139,6 +140,7 @@ nav_order: 110
  <text x="440" y="190" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The upgrade cannot be done when you get there.</text>
  <text x="440" y="220" text-anchor="middle" font-size="15" fill="var(--text-muted)">So the plan is ordered the way the trips have to happen — a step in the order, not a footnote.</text>
 </svg>
+<p class="body">A grade 1 item has no modification slots and an engineer’s base sells no upgrades. The checklist says: “Upgrade it at Pioneer Supplies first — an engineer's base has none.”</p>
 </section>
 </div></div>
 </details>

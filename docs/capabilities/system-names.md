@@ -72,9 +72,9 @@ nav_order: 116
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">What a system's own name says about it — read off the string, four thousand light years from anything.</p>
+<p class="intro">What a system’s name says about it, read from the name alone.</p>
 <section>
-<h2><span class="num">1</span> The one thing here that needs nothing at all.</h2>
+<h2><span class="num">1</span> The name is decoded with no network.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="Reading a system name needs no key, account, network or journal, which is the point of it">
  <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">NEEDS NOTHING</text>
@@ -86,9 +86,10 @@ nav_order: 116
  <text x="660" y="134" text-anchor="middle" font-size="14" fill="var(--text-muted)">nobody has scanned and uploaded</text>
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">A crowd-fed index is the wrong tool for exactly the half of exploring worth the most.</text>
 </svg>
+<p class="body">No key, account or journal is needed, so it works for a system nobody has scanned and uploaded.</p>
 </section>
 <section>
-<h2><span class="num">2</span> Every piece of the name is saying something.</h2>
+<h2><span class="num">2</span> Each part of the name encodes something.</h2>
 <svg viewBox="0 0 880 256" role="img" aria-label="Dryafea PO-X d2-0 broken into sector, boxel, mass code, boxel number and system number">
  <rect x="21" y="40" width="158" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="100" y="82" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">Dryafea</text>
@@ -113,9 +114,10 @@ nav_order: 116
  <text x="440" y="212" text-anchor="middle" font-size="16" fill="var(--text)">The mass code also sizes the box, because a bigger box holds more mass.</text>
  <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">So the lone letter is the interesting one: it is the ranking and the scale at once.</text>
 </svg>
+<p class="body">A name gives a sector, a boxel, a mass code and a number. The mass code, a to h, also sizes the cube the boxel sits in.</p>
 </section>
 <section>
-<h2><span class="num">3</span> The ladder was measured, not recited.</h2>
+<h2><span class="num">3</span> The cube sizes come from real coordinates.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Eight mass codes with their box sizes, five of them measured against real coordinates and three not">
  <rect x="25" y="44" width="96" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="73" y="76" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">a</text>
@@ -153,9 +155,10 @@ nav_order: 116
  <text x="440" y="212" text-anchor="middle" font-size="16" fill="var(--text)">The last three are not measured, and the answer says so out loud when you ask.</text>
  <text x="440" y="242" text-anchor="middle" font-size="15" fill="var(--text-muted)">They rest on the doubling the five below establish, closed at the far end by h being the sector itself.</text>
 </svg>
+<p class="body">Five of the eight mass codes are checked against real system coordinates. The answer says so aloud when you ask about one of the other three.</p>
 </section>
 <section>
-<h2><span class="num">4</span> What it will not tell you, however you ask.</h2>
+<h2><span class="num">4</span> It will not say what a system pays.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="The folklore that a heavier boxel pays better is declined every time, because the sample cannot settle it">
  <rect x="20" y="40" width="400" height="112" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">THE FOLKLORE</text>
@@ -170,7 +173,7 @@ nav_order: 116
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">“b” — the code the claim leans hardest on — has five scans.</text>
  <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">Shipping a heuristic here would send you a very long way in the wrong direction, sounding certain.</text>
 </svg>
-<p class="body">There is a deeper problem than the sample size. The data is not a sample of the galaxy — it is a record of where somebody chose to fly. A Commander who already believes the folklore goes hunting where it says to, and their own history then agrees with it for that reason alone.</p>
+<p class="body">The tool tells the model the mass code “orders by mass and does not predict payout”, so a question about what a system pays gets no ranking.</p>
 </section>
 </div></div>
 </details>

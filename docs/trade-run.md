@@ -13,9 +13,9 @@ nav_order: 203
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">A circuit of markets worked out here, from the station you are docked at — and the one number Directive 47 will not read from your journal.</p>
+<p class="intro">A circuit of markets worked out here from your station, for a balance you type.</p>
 <section>
-<h2><span class="num">1</span> Your balance is asked for, never taken.</h2>
+<h2><span class="num">1</span> Your balance is typed, never read.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Jump range and cargo capacity come from the journal; the credit balance is typed every time and never saved">
  <rect x="20" y="30" width="400" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">FROM THE JOURNAL</text>
@@ -30,9 +30,10 @@ nav_order: 203
  <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text)">Your balance is in the journal. It is the one figure here that is about you rather than your ship.</text>
  <text x="440" y="232" text-anchor="middle" font-size="15" fill="var(--text-muted)">Cargo capacity is a property of the hull. What you are worth is nobody's business but yours.</text>
 </svg>
+<p class="body">Cargo capacity and the station you are docked at come from the journal. Your credit balance does not: you type it each time, and it is not saved.</p>
 </section>
 <section>
-<h2><span class="num">2</span> This one is not a plot at all.</h2>
+<h2><span class="num">2</span> The sums are done on your machine.</h2>
 <svg viewBox="0 0 880 244" role="img" aria-label="The other planners submit a job to the service; the trade run asks for markets and does the arithmetic on this machine">
  <rect x="20" y="30" width="400" height="118" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text-muted)">THE OTHER TWO</text>
@@ -46,9 +47,10 @@ nav_order: 203
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Which is what lets it hold cargo past a poor buyer and still come home.</text>
  <text x="440" y="220" text-anchor="middle" font-size="15" fill="var(--text-muted)">A planner that sold everything at every stop would be a simpler planner and a worse one.</text>
 </svg>
+<p class="body">The other two planners submit a job and wait. This one asks the service what the markets hold, then works out the circuit locally, so it can hold cargo past a poor buyer.</p>
 </section>
 <section>
-<h2><span class="num">3</span> A price is a report, and it has a date on it.</h2>
+<h2><span class="num">3</span> Every stop says when its price was reported.</h2>
 <svg viewBox="0 0 880 234" role="img" aria-label="Every trade stop carries when its market was last reported; an old price can make a perfect route worthless">
  <rect x="20" y="30" width="270" height="104" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="155" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">YESTERDAY</text>
@@ -66,6 +68,7 @@ nav_order: 203
  <text x="440" y="180" text-anchor="middle" font-size="16" fill="var(--text)">So every stop says when its market was last reported, beside what it says the price is.</text>
  <text x="440" y="204" text-anchor="middle" font-size="15" fill="var(--text-muted)">The same reason outfitting stock carries a date. A figure with no date invites you to trust it.</text>
 </svg>
+<p class="body">Prices come from other Commanders and can be out of date. The plan shows “prices reported” with a date beside each stop.</p>
 </section>
 <div class="next">
 <div class="next-title">Where to go next</div>
@@ -90,7 +93,7 @@ card on it is still called Trade run, the same name the tool's answer and this p
 | **Hops** | How many buy-and-sell legs | 5 | Yes |
 | **Most jumps per leg** | The furthest one hop may reach, in jumps | 2 | Yes |
 | **Max distance from star (ls)** | How far in-system a station may sit | 1,000 | Yes |
-| **Max price age (hours)** | How stale a reported price may be | 72 | Yes |
+| **Max price age** | How stale a reported price may be, picked from a dropdown | 72 hours (3 days) | Yes |
 | **End where it started** | Whether the circuit closes | Off | Yes |
 | **Large pads only** | Skip stations your ship cannot land at | Off | Yes |
 | **Planetary ports** | Also search surface stations | Off | Yes |

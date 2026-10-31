@@ -23,14 +23,10 @@ public partial class DocumentationGateTests
         "adventures",
         "autonomous-actions",
         "crew",
-        "exobiology",
         "flight-controls",
         "general-conversation",
-        "general-trade-run",
         "lore",
         "navigation",
-        "on-foot",
-        "system-names",
         "vr",
     };
 

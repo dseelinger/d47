@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The galaxy, system name, exobiology, on-foot and trade run help pages have shorter How it works bands. The galaxy page now describes the Max report age and Start from dropdowns on the search pages, and says EDDN sharing sends nothing inside an Operation.
+
 "What is the Python like", "what does a 6A power plant weigh" and "what does a grade 5 dirty drive cost" are now answered from the shipped tables without the AI model, so they work with no model configured. A name the tables do not know still goes to the model.
 
 "Mark buy a fuel scoop as done" and "remove buy a fuel scoop" now propose the change without the AI model when the words are a line of your own on the checklist, and "yes" accepts it. "Tick off", "remove … from my checklist" and "take … off my checklist" work the same way. A line whose words another item on the checklist shares still goes to the model.

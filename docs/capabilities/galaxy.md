@@ -260,6 +260,10 @@ running is sent: journals read from before it started, a market opened more than
 ago, and anything while Elite runs a different Commander than the one shown are never sent. A
 Debug build sends to EDDN's test schemas.
 
+Nothing is sent while you are inside an Operation. The instance's station, its star system
+position and the signals seen there stay off EDDN, and sharing resumes when you leave. A scan run
+begun in the main game is still sent when the Operation starts.
+
 Messages are sent in the background, from a queue of at most 100. A refusal is not tried again;
 a timeout or a server error is tried again no sooner than 60 seconds later, up to three tries in
 all. Nothing is written to disk. The model cannot turn the setting on. If another program already
@@ -430,6 +434,24 @@ Everything that can go wrong becomes a sentence rather than an error: the servic
 unreachable, rate limiting you, taking too long, or having no record of the system you named.
 A system the service does not know produces "I couldn't find one of those systems", not a
 failed turn.
+
+### The search pages {#search-pages}
+
+The **System**, **Station**, **Outfitting** and **Signal** search pages, on the Search tab, share two
+controls.
+
+**Max report age** leaves out reports older than the age you pick. The choices are Any, 1 hour,
+8 hours, 16 hours, 1 day, 2 days, 3 days, 7 days, 14 days, 30 days and 180 days. Any sends no bound.
+A page opens on Any for System and Signal, and on 3 days for Station and Outfitting; CLEAR puts it
+back. The choice goes to the service as `max_report_age_hours`, and replaying a search from history
+restores it. The Outfitting table's **Updated** column shows the stock date the age filters on. The
+Market page has the same dropdown, labelled **Max price age**, and opens on 3 days; the Trade page's
+**Max price age** box is the same dropdown.
+
+**Start from** lists your saved searches and the [quick searches](#quick-searches), at the top of the
+form. Picking one fills the form and runs it. The button reads "Choose a saved search" until you pick
+one, then shows the search you picked until you change a field, press CLEAR, or another search
+arrives. While one of your own searches is shown, **FORGET THIS SEARCH** sits under the dropdown.
 
 ### Quick searches {#quick-searches}
 

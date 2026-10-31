@@ -72,9 +72,9 @@ nav_order: 118
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Two halves, from two sources, answering two questions — and only one of them may quote a figure for a species.</p>
+<p class="intro">Two sources answer two questions, and only the scan may speak of a species.</p>
 <section>
-<h2><span class="num">1</span> Keeping the halves apart is the whole design.</h2>
+<h2><span class="num">1</span> The scan and the index are kept apart.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="The scan half names genera and can only give a range; the route half names species and can quote figures">
  <rect x="20" y="40" width="400" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">AFTER THE SCAN</text>
@@ -91,7 +91,7 @@ nav_order: 118
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Elite names the genus and stops there.</h2>
+<h2><span class="num">2</span> The scan names the genus and stops there.</h2>
 <svg viewBox="0 0 880 240" role="img" aria-label="A surface scan reports a genus such as Brain Trees, never the species that would set its value">
  <rect x="20" y="36" width="840" height="94" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="74" text-anchor="start" font-size="16" fill="var(--text)">1 biological signal: Brain Trees.</text>
@@ -100,10 +100,10 @@ nav_order: 118
  <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text)">Bacterium Alcyoneum and Bacterium Acies are very different money.</text>
  <text x="440" y="230" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So this half lists what is there and quotes no single price.</text>
 </svg>
-<p class="body">A scan that found nothing is a real answer, and the one that saves you a landing — <em>no biological signals, nothing here to sample</em>. That is different from “I have not looked”, and the two are worded differently on purpose.</p>
+<p class="body">A scan that found nothing is an answer: <em>no biological signals, nothing here to sample</em>. D47 words that differently from “I have not looked”.</p>
 </section>
 <section>
-<h2><span class="num">3</span> It says how far there is still to go.</h2>
+<h2><span class="num">3</span> It says how far you still have to walk.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Sampling progress reports the genus' colony distance and how many metres are still to go">
  <rect x="20" y="36" width="840" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="46" y="72" text-anchor="start" font-size="16" fill="var(--text)">Stratum Paleas — 2 of 3, 1 to go.  341 metres from your last specimen.</text>
@@ -111,10 +111,10 @@ nav_order: 118
  <text x="440" y="192" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">The distance is a community figure, per genus.</text>
  <text x="440" y="222" text-anchor="middle" font-size="16" fill="var(--text)">Frontier publishes no table; the Codex entry is the authority.</text>
 </svg>
-<p class="body">The table carries a colony distance in metres for each genus, taken from community sources because Frontier publishes none. For a genus it lists, the answer says the distance and how many metres are still to go, or that you are far enough. For a genus it does not list, the answer says only how far you have moved and the closest gap the game has accepted from you, which is an upper bound and never the requirement.</p>
+<p class="body">For a genus with a listed colony distance, it says how many metres are left, or that you are far enough. For any other genus it says how far you have moved and the closest gap the game has accepted: an upper bound, not the requirement.</p>
 </section>
 <section>
-<h2><span class="num">4</span> A plotted route cannot contain a first footfall.</h2>
+<h2><span class="num">4</span> A plotted route cannot include a first footfall.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="An index only holds visited systems while a first footfall only happens where nobody has been">
  <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A PLOTTED ROUTE</text>
@@ -128,7 +128,7 @@ nav_order: 118
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text-muted)">nobody has been</text>
  <text x="440" y="196" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So every plot says so in its own last line.</text>
 </svg>
-<p class="body">The bonus is five times the value, and it is the trade-off nobody should discover after the flight. If undiscovered systems are what you are after, read a system name instead — that works with no network at all, which is the point of it.</p>
+<p class="body">A route holds only systems someone has already surveyed, so the plan says so: “Every stop has already been surveyed by somebody, so none of it is a first footfall.” For undiscovered systems, read a system name instead, which needs no network.</p>
 </section>
 </div></div>
 </details>
