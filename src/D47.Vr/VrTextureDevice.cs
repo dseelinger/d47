@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using static D47.Vr.D3D11Native;
 
 namespace D47.Vr;
 
@@ -40,37 +41,7 @@ public sealed class D3D11TextureDevice : IVrTextureDevice
 
         try
         {
-            var iid = DxgiFactory1;
-            Marshal.ThrowExceptionForHR(CreateDXGIFactory1(in iid, out var factory));
-
-            try
-            {
-                Marshal.ThrowExceptionForHR(
-                    Slot<EnumAdapters1Fn>(factory, FactoryEnumAdapters1)(factory, (uint)adapter, out var dxgiAdapter));
-
-                try
-                {
-                    Marshal.ThrowExceptionForHR(D3D11CreateDevice(
-                        dxgiAdapter,
-                        DriverTypeUnknown,
-                        0,
-                        0,
-                        0,
-                        0,
-                        SdkVersion,
-                        out _device,
-                        out _,
-                        out _context));
-                }
-                finally
-                {
-                    Marshal.Release(dxgiAdapter);
-                }
-            }
-            finally
-            {
-                Marshal.Release(factory);
-            }
+            D3D11Native.CreateDevice(adapter, out _device, out _context);
 
             _update = Slot<UpdateSubresourceFn>(_context, ContextUpdateSubresource);
             _flush = Slot<FlushFn>(_context, ContextFlush);
@@ -140,27 +111,6 @@ public sealed class D3D11TextureDevice : IVrTextureDevice
         }
     }
 
-    /// <summary>The method at <paramref name="slot"/> in a COM object's table.</summary>
-    private static T Slot<T>(nint com, int slot)
-        where T : Delegate =>
-        Marshal.GetDelegateForFunctionPointer<T>(Marshal.ReadIntPtr(Marshal.ReadIntPtr(com), slot * IntPtr.Size));
-
-    [StructLayout(LayoutKind.Sequential)]
-    private record struct TextureDesc(
-        uint Width,
-        uint Height,
-        uint MipLevels,
-        uint ArraySize,
-        uint Format,
-        uint SampleCount,
-        uint SampleQuality,
-        uint Usage,
-        uint BindFlags,
-        uint CpuAccessFlags,
-        uint MiscFlags);
-
-    private delegate int EnumAdapters1Fn(nint factory, uint index, out nint adapter);
-
     private delegate int CreateTexture2DFn(nint device, ref TextureDesc desc, nint initial, out nint texture);
 
     private delegate void FlushFn(nint context);
@@ -174,34 +124,11 @@ public sealed class D3D11TextureDevice : IVrTextureDevice
         uint rowPitch,
         uint depthPitch);
 
-    private const int FactoryEnumAdapters1 = 12;
     private const int DeviceCreateTexture2D = 5;
     private const int ContextUpdateSubresource = 48;
     private const int ContextFlush = 111;
 
-    /// <summary>Required with an explicit adapter.</summary>
-    private const uint DriverTypeUnknown = 0;
-
-    private const uint SdkVersion = 7;
     private const uint FormatBgra = 87;
     private const uint UsageDefault = 0;
     private const uint BindShaderResource = 0x8;
-
-    private static readonly Guid DxgiFactory1 = new("770aae78-f26f-4dba-a829-253c83d1b387");
-
-    [DllImport("dxgi.dll", ExactSpelling = true)]
-    private static extern int CreateDXGIFactory1(in Guid iid, out nint factory);
-
-    [DllImport("d3d11.dll", ExactSpelling = true)]
-    private static extern int D3D11CreateDevice(
-        nint adapter,
-        uint driverType,
-        nint software,
-        uint flags,
-        nint featureLevels,
-        uint levels,
-        uint sdkVersion,
-        out nint device,
-        out uint featureLevel,
-        out nint context);
 }

@@ -4,6 +4,7 @@ using D47.Core.Interface;
 using D47.Vr;
 using Microsoft.Extensions.Logging;
 using Windows.Graphics.Imaging;
+using static D47.Vr.D3D11Native;
 
 namespace D47.App.Diagnostics;
 
@@ -285,37 +286,7 @@ public sealed class HeadsetEyeCapture(
 
         Teardown();
 
-        var iid = DxgiFactory1;
-        Marshal.ThrowExceptionForHR(CreateDXGIFactory1(in iid, out var factory));
-
-        try
-        {
-            Marshal.ThrowExceptionForHR(
-                Slot<EnumAdapters1Fn>(factory, FactoryEnumAdapters1)(factory, (uint)adapter, out var dxgiAdapter));
-
-            try
-            {
-                Marshal.ThrowExceptionForHR(D3D11CreateDevice(
-                    dxgiAdapter,
-                    DriverTypeUnknown,
-                    0,
-                    0,
-                    0,
-                    0,
-                    SdkVersion,
-                    out _device,
-                    out _,
-                    out _context));
-            }
-            finally
-            {
-                Marshal.Release(dxgiAdapter);
-            }
-        }
-        finally
-        {
-            Marshal.Release(factory);
-        }
+        D3D11Native.CreateDevice(adapter, out _device, out _context);
 
         _adapter = adapter;
     }
@@ -348,29 +319,8 @@ public sealed class HeadsetEyeCapture(
         (window as IDisposable)?.Dispose();
     }
 
-    /// <summary>The method at <paramref name="slot"/> in a COM object's table.</summary>
-    private static T Slot<T>(nint com, int slot)
-        where T : Delegate =>
-        Marshal.GetDelegateForFunctionPointer<T>(Marshal.ReadIntPtr(Marshal.ReadIntPtr(com), slot * IntPtr.Size));
-
-    [StructLayout(LayoutKind.Sequential)]
-    private record struct TextureDesc(
-        uint Width,
-        uint Height,
-        uint MipLevels,
-        uint ArraySize,
-        uint Format,
-        uint SampleCount,
-        uint SampleQuality,
-        uint Usage,
-        uint BindFlags,
-        uint CpuAccessFlags,
-        uint MiscFlags);
-
     [StructLayout(LayoutKind.Sequential)]
     private readonly record struct MappedSubresource(nint Data, uint RowPitch, uint DepthPitch);
-
-    private delegate int EnumAdapters1Fn(nint factory, uint index, out nint adapter);
 
     private delegate int CreateTexture2DFn(nint device, ref TextureDesc desc, nint initial, out nint texture);
 
@@ -399,7 +349,6 @@ public sealed class HeadsetEyeCapture(
         uint sourceSubresource,
         nint box);
 
-    private const int FactoryEnumAdapters1 = 12;
     private const int DeviceCreateTexture2D = 5;
     private const int ViewGetResource = 7;
     private const int TextureGetDesc = 10;
@@ -407,10 +356,6 @@ public sealed class HeadsetEyeCapture(
     private const int ContextUnmap = 15;
     private const int ContextCopySubresourceRegion = 46;
 
-    /// <summary>Required with an explicit adapter.</summary>
-    private const uint DriverTypeUnknown = 0;
-
-    private const uint SdkVersion = 7;
     private const uint UsageStaging = 3;
     private const uint CpuAccessRead = 0x20000;
     private const uint MapRead = 1;
@@ -422,22 +367,5 @@ public sealed class HeadsetEyeCapture(
     private const uint FormatBgraTypeless = 90;
     private const uint FormatBgraSrgb = 91;
 
-    private static readonly Guid DxgiFactory1 = new("770aae78-f26f-4dba-a829-253c83d1b387");
     private static readonly Guid Texture2D = new("6f15aaf2-d208-4e89-9ab4-489535d34f9c");
-
-    [DllImport("dxgi.dll", ExactSpelling = true)]
-    private static extern int CreateDXGIFactory1(in Guid iid, out nint factory);
-
-    [DllImport("d3d11.dll", ExactSpelling = true)]
-    private static extern int D3D11CreateDevice(
-        nint adapter,
-        uint driverType,
-        nint software,
-        uint flags,
-        nint featureLevels,
-        uint levels,
-        uint sdkVersion,
-        out nint device,
-        out uint featureLevel,
-        out nint context);
 }
