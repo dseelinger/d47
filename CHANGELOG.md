@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Search pages no longer say their results are nearest first. The line beside the SEARCH title is gone from the Systems, Stations, Bodies, Outfitting and Signals sub-tabs, because the tables re-sort from their column headers, and the Systems distance readout now ends at the reference system, as in "Systems within 50 LY of ANLAVE."
+
 A suit grade 2 or higher is no longer shown as "$TacticalSuit_Class1_Name;". Frontier writes that unresolved key where the name should be, and it also appeared for some ships, enemy soldiers and engineering effects. d47 now names a suit by its family and grade, such as "Dominator Suit, grade 3", a ship by its hull, a bounty on an enemy soldier as "a soldier", and an experimental effect by its name, such as "Plasma Slug". A session that began on foot is recapped as "you wore" a suit, and the logbook says you entered the game on foot.
 
 A notable kill made on foot is no longer called a ship destroyed. A combat bond earned on foot now reads "{faction} soldier down", and your core's reworded line is told it was a person taken down, not a ship.

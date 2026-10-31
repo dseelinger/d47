@@ -14,8 +14,6 @@ public sealed class SignalSearchPage : GalaxySearchPage
 {
     public const string RootKey = "search.signals";
 
-    public const string SummaryText = "Signals that match, nearest first.";
-
     public const string Help = "Signals from the daily index and from your own scans.";
 
     public const string NoSources =
@@ -92,7 +90,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
 
     public override GalaxySearchKind Kind => GalaxySearchKind.Signals;
 
-    public override string Summary => SummaryText;
+    public override string Summary => "";
 
     protected override string Noun => "Signals";
     protected override string NounOne => "Signal";

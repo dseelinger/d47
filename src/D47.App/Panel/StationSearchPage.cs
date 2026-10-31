@@ -9,12 +9,10 @@ using static D47.App.Panel.SystemSearchPage;
 
 namespace D47.App.Panel;
 
-/// <summary>Search › Stations: stations that match, nearest first, through <c>search_stations</c>.</summary>
+/// <summary>Search › Stations: stations that match, through <c>search_stations</c>.</summary>
 public sealed class StationSearchPage : GalaxySearchPage
 {
     public const string RootKey = "search.stations";
-
-    public const string SummaryText = "Stations that match, nearest first.";
 
     public const string ChooseServicesName = "ChooseServices";
 
@@ -102,7 +100,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     public override GalaxySearchKind Kind => GalaxySearchKind.Stations;
 
-    public override string Summary => SummaryText;
+    public override string Summary => "";
 
     protected override string Noun => "Stations";
     protected override string NounOne => "Station";

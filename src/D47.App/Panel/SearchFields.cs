@@ -107,9 +107,9 @@ internal sealed class RangeReadout
     /// <summary>The line for a distance range, in the words the answer head uses.</summary>
     internal static (string Lead, string? Reference, string Tail)? Distance(double? min, double? max, string from) => (min, max) switch
     {
-        ({ } low, { } high) => ($"Systems {SystemSearchPage.Number(low)}–{SystemSearchPage.Number(high)} LY from ", from.ToUpperInvariant(), ", nearest first."),
-        (null, { } high) => ($"Systems within {SystemSearchPage.Number(high)} LY of ", from.ToUpperInvariant(), ", nearest first."),
-        ({ } low, null) => ($"Systems beyond {SystemSearchPage.Number(low)} LY of ", from.ToUpperInvariant(), ", nearest first."),
+        ({ } low, { } high) => ($"Systems {SystemSearchPage.Number(low)}–{SystemSearchPage.Number(high)} LY from ", from.ToUpperInvariant(), "."),
+        (null, { } high) => ($"Systems within {SystemSearchPage.Number(high)} LY of ", from.ToUpperInvariant(), "."),
+        ({ } low, null) => ($"Systems beyond {SystemSearchPage.Number(low)} LY of ", from.ToUpperInvariant(), "."),
         _ => null,
     };
 

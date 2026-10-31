@@ -14,8 +14,6 @@ public sealed class SystemSearchPage : GalaxySearchPage
 {
     public const string RootKey = "search.systems";
 
-    public const string SummaryText = "Star systems that match, nearest first.";
-
     public const string Any = "Any";
 
     /// <summary>The tool's own default for how many to return.</summary>
@@ -104,7 +102,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
     public override GalaxySearchKind Kind => GalaxySearchKind.Systems;
 
-    public override string Summary => SummaryText;
+    public override string Summary => "";
 
     protected override string Noun => "Systems";
     protected override string NounOne => "System";

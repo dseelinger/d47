@@ -15,8 +15,6 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
 {
     public const string RootKey = "search.outfitting";
 
-    public const string SummaryText = "Stations that sell everything you add, nearest first.";
-
     public const string ItemsHelp = "A station that sells every module you add, and the ship if you add one.";
 
     public const string NothingText = "Nothing matches.";
@@ -101,7 +99,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
 
     public override GalaxySearchKind Kind => GalaxySearchKind.Outfitting;
 
-    public override string Summary => SummaryText;
+    public override string Summary => "";
 
     protected override string Noun => "Stations";
     protected override string NounOne => "Station";

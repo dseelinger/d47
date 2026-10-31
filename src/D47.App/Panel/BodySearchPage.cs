@@ -14,8 +14,6 @@ public sealed class BodySearchPage : GalaxySearchPage
 {
     public const string RootKey = "search.bodies";
 
-    public const string SummaryText = "Bodies that match, sorted by column.";
-
     public const int DefaultDistance = 50;
 
     public const int DefaultLimit = ShowUpTo.Default;
@@ -82,7 +80,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     public override GalaxySearchKind Kind => GalaxySearchKind.Bodies;
 
-    public override string Summary => SummaryText;
+    public override string Summary => "";
 
     protected override string Noun => "Bodies";
     protected override string NounOne => "Body";
