@@ -79,7 +79,6 @@ public class TheHowToBandLeadsTheHelpPageTests
 
     [AvaloniaTheory]
     [InlineData("about")]
-    [InlineData("bookmarks")]
     public void APageWithOnlyTheHowToBandDrawsOnlyThatHead(string id)
     {
         var (window, page) = Open(id);

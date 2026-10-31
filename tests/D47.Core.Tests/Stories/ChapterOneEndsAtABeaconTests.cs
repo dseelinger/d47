@@ -67,7 +67,9 @@ public sealed class ChapterOneEndsAtABeaconTests
 
         var beats = fixtures.Provider.Requests[1].Prompt.History[0].Text;
 
-        Assert.Contains("one of thirty-nine things", beats);
+        // No galaxy search, so no Frontline Solutions station is known and "onfootbond" is not offered.
+        Assert.Contains("one of thirty-eight things", beats);
+        Assert.Contains("so write no \"onfootbond\" objective", beats);
         Assert.Contains("\"wing\"|\"multicrew\"|\"squadron\"|\"conflict\"|\"faction\"|\"beacon\"", beats);
     }
 

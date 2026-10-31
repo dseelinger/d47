@@ -107,6 +107,9 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
     {
         public List<StationQuery> Queries { get; } = [];
 
+        /// <summary>The station-in-reach queries, without the separate Frontline Solutions query the on-foot bond row asks.</summary>
+        public List<StationQuery> InReach => [.. Queries.Where(query => !query.Services.Contains(AdventureResolver.FrontlineSolutions))];
+
         public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             Queries.Add(query);
@@ -168,7 +171,7 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
 
         await fixtures.Director.WriteNextAsync("F1", Now, CancellationToken.None);
 
-        var query = Assert.Single(galaxy.Queries);
+        var query = Assert.Single(galaxy.InReach);
 
         Assert.Equal("Far Out", query.ReferenceSystem);
         Assert.Equal(AdventureGenerator.Radius(AdventureReach.Session, 30.5, false), query.MaxDistance);
@@ -226,7 +229,7 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
 
         await fixtures.Director.WriteNextAsync("F1", Now, CancellationToken.None);
 
-        Assert.Single(galaxy.Queries);
+        Assert.Single(galaxy.InReach);
         Assert.Equal(ChapterDraw.Slots, Assert.Single(fixtures.Asks).Story!.Slots!.Count);
     }
 
@@ -275,7 +278,7 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
 
         await fixtures.Director.RefuseBeatAsync("F1", TestContext.Current.CancellationToken);
 
-        Assert.Single(galaxy.Queries);
+        Assert.Single(galaxy.InReach);
         Assert.DoesNotContain(Assert.Single(fixtures.Asks).Story!.Slots!, slot => NeedStation.Contains(slot.Kind));
     }
 }

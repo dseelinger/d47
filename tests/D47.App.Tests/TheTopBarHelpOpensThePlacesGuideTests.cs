@@ -51,7 +51,7 @@ public class TheTopBarHelpOpensThePlacesGuideTests
             .Select(text => text.Text ?? string.Empty)
             .ToList();
 
-        Assert.Contains(shown, text => text.StartsWith("Whisper turns your voice", StringComparison.Ordinal));
+        Assert.Contains(HelpLibrary.For(ListeningCapability.Id)!.Intro, shown);
 
         host.Close();
     }
