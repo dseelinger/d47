@@ -53,57 +53,58 @@ public sealed class AppHost : IDisposable
 
     private readonly DefaultDeviceFollowPolicy _outputFollow;
 
-    private AppHost(
-        AppPaths paths,
-        IFileSystem files,
-        KeywordRouter router,
-        TurnCancellation cancellation,
-        ILoggerFactory loggerFactory,
-        SettingsService settings,
-        SecretStore secrets,
-        ViewStateStore viewState,
-        GameStateStore gameState,
-        TickLoop tick,
-        CalloutEngine callouts,
-        CapabilityRegistry capabilities,
-        UpdateChecker updates,
-        UpdateInstaller installer,
-        TurnLoop turns,
-        PersonaHost personas,
-        ShipCoreService shipCores,
-        LlmAvailabilityState llmAvailability,
-        SpendTracker spend,
-        SpendLedger spendLedger,
-        WasapiAudioSink audioSink,
-        AudioArbiter audio,
-        CueLibrary cues,
-        VoicePipeline voice,
-        OwnVoice ownVoice,
-        CustomVoices customVoices,
-        SpeechClients speech,
-        VoicePairer pairing,
-        ListenGate gate,
-        EchoCanceller echo,
-        WasapiMicrophone microphone,
-        PushToTalkKey pushToTalk,
-        D47.Core.Hotas.BoundButton pushToTalkButton,
-        BindsWatch binds,
-        ScancodeInjector gameInput,
-        HttpModelStore models,
-        WhisperTranscriber transcriber,
-        LearnedWording wording,
-        WakeWordGate wake,
-        StrongBox<DateTimeOffset?> heardAt,
-        string version,
-        string? startupError,
-        D47.Core.Stories.StoryDirector stories,
-        D47.Core.Adventures.AdventureBook adventures,
-        D47.Core.Messages.MessageStore messages,
-        NearbyFight fight,
-        SceneTracker scenes,
-        D47.Core.Stories.StoryReactionCallout storyReaction,
-        Func<Core.Journal.GameStatus> liveStatus)
+    private AppHost(FoundationParts foundations, StoreParts stores, LoopParts loop, ServiceParts services, CapabilityParts registry, CrewParts crew)
     {
+        var paths = foundations.Paths;
+        var files = foundations.Files;
+        var router = registry.Router;
+        var cancellation = services.Cancellation;
+        var loggerFactory = foundations.LoggerFactory;
+        var settings = foundations.Settings;
+        var secrets = foundations.Secrets;
+        var viewState = foundations.ViewState;
+        var gameState = stores.GameState;
+        var tick = loop.Tick;
+        var callouts = stores.Callouts;
+        var capabilities = registry.Capabilities;
+        var updates = registry.Updates;
+        var installer = registry.Installer;
+        var turns = crew.Turns;
+        var personas = services.Personas;
+        var shipCores = services.ShipCores;
+        var llmAvailability = services.LlmAvailability;
+        var spend = services.Spend;
+        var spendLedger = services.SpendLedger;
+        var audioSink = services.AudioSink;
+        var audio = services.Audio;
+        var cues = services.Cues;
+        var voice = services.Voice;
+        var ownVoice = services.OwnVoice;
+        var customVoices = services.CustomVoices;
+        var speech = services.Speech;
+        var pairing = crew.Pairing;
+        var gate = services.Gate;
+        var echo = services.Echo;
+        var microphone = services.Microphone;
+        var pushToTalk = services.PushToTalk;
+        var pushToTalkButton = services.PushToTalkButton;
+        var binds = services.Binds;
+        var gameInput = services.Injector;
+        var models = services.Models;
+        var transcriber = services.Transcriber;
+        var wording = services.Wording;
+        var wake = services.Wake;
+        var heardAt = services.HeardAt;
+        var version = foundations.Version;
+        var startupError = foundations.StartupError;
+        var stories = crew.StoryDirector;
+        var adventures = stores.AdventureBook;
+        var messages = stores.MessageStore;
+        var fight = stores.Fight;
+        var scenes = stores.Scenes;
+        var storyReaction = stores.StoryReaction;
+        Func<Core.Journal.GameStatus> liveStatus = () => stores.Status.Current;
+
         Paths = paths;
         Files = files;
         _loggerFactory = loggerFactory;
@@ -3271,12 +3272,8 @@ public sealed class AppHost : IDisposable
         var loaded = foundations.Loaded;
         var loggerFactory = foundations.LoggerFactory;
         var paths = foundations.Paths;
-        var secrets = foundations.Secrets;
         var settings = foundations.Settings;
         var startedLogging = foundations.StartedLogging;
-        var startupError = foundations.StartupError;
-        var verbosity = foundations.Verbosity;
-        var version = foundations.Version;
         var viewState = foundations.ViewState;
         var activities = stores.Activities;
         var adventureBook = stores.AdventureBook;
@@ -3286,15 +3283,11 @@ public sealed class AppHost : IDisposable
         var cargoBoard = stores.CargoBoard;
         var checklists = stores.Checklists;
         var commodityBoard = stores.CommodityBoard;
-        var commodityLedger = stores.CommodityLedger;
-        var communityGoalSearch = stores.CommunityGoalSearch;
         var debriefBook = stores.DebriefBook;
-        var fight = stores.Fight;
         var galaxySearchBoard = stores.GalaxySearchBoard;
         var gameState = stores.GameState;
         var goalBook = stores.GoalBook;
         var history = stores.History;
-        var journal = stores.Journal;
         var journalDirectory = stores.JournalDirectory;
         var learnedPhrases = stores.LearnedPhrases;
         var loadouts = stores.Loadouts;
@@ -3304,10 +3297,7 @@ public sealed class AppHost : IDisposable
         var modulePower = stores.ModulePower;
         var planBook = stores.PlanBook;
         var route = stores.Route;
-        var scenes = stores.Scenes;
-        var shipBuilds = stores.ShipBuilds;
         var sourcingBoard = stores.SourcingBoard;
-        var status = stores.Status;
         var storyDownloads = stores.StoryDownloads;
         var storyRatings = stores.StoryRatings;
         var storyStore = stores.StoryStore;
@@ -3315,117 +3305,48 @@ public sealed class AppHost : IDisposable
         var tick = loop.Tick;
         var adventureDesk = services.AdventureDesk;
         var audio = services.Audio;
-        var audioSink = services.AudioSink;
         var bindingProfiles = services.BindingProfiles;
-        var binds = services.Binds;
         var buildTalk = services.BuildTalk;
-        var cancellation = services.Cancellation;
         var clipboard = services.Clipboard;
         var clipboardOffer = services.ClipboardOffer;
         var controllers = services.Controllers;
         var coverage = services.Coverage;
         var cueLogger = services.CueLogger;
-        var cues = services.Cues;
-        var customVoices = services.CustomVoices;
         var drift = services.Drift;
         var dropsLogger = services.DropsLogger;
-        var echo = services.Echo;
         var eliteWindow = services.EliteWindow;
         var endingAnswer = services.EndingAnswer;
         var storyRecapper = services.StoryRecapper;
         var galaxy = services.Galaxy;
         var gate = services.Gate;
-        var heardAt = services.HeardAt;
         var injector = services.Injector;
         var inputTrace = services.InputTrace;
-        var llmAvailability = services.LlmAvailability;
         var logbook = services.Logbook;
         var macros = services.Macros;
         var microphone = services.Microphone;
-        var models = services.Models;
-        var onFootBuilds = services.OnFootBuilds;
         var onFootPlans = services.OnFootPlans;
         var ownPersonas = services.OwnPersonas;
-        var ownVoice = services.OwnVoice;
         var personas = services.Personas;
         var pushToTalk = services.PushToTalk;
         var pushToTalkButton = services.PushToTalkButton;
         var reconciler = services.Reconciler;
         var recording = services.Recording;
         var screenCapture = services.ScreenCapture;
-        var shipCores = services.ShipCores;
         var shipPlans = services.ShipPlans;
         var sources = services.Sources;
         var speech = services.Speech;
-        var spend = services.Spend;
         var spendLedger = services.SpendLedger;
         var starSystems = services.StarSystems;
         var switches = services.Switches;
-        var transcriber = services.Transcriber;
         var unlocks = services.Unlocks;
         var voice = services.Voice;
-        var wake = services.Wake;
-        var wording = services.Wording;
         var capabilities = registry.Capabilities;
-        var installer = registry.Installer;
         var otherDynamicCommands = registry.OtherDynamicCommands;
-        var router = registry.Router;
-        var updates = registry.Updates;
         var adventureGenerator = crew.AdventureGenerator;
-        var pairing = crew.Pairing;
         var storyDirector = crew.StoryDirector;
         var turns = crew.Turns;
 
-        var host = late.Host = new AppHost(
-            paths,
-            files,
-            router,
-            cancellation,
-            loggerFactory,
-            settings,
-            secrets,
-            viewState,
-            gameState,
-            tick,
-            callouts,
-            capabilities,
-            updates,
-            installer,
-            turns,
-            personas,
-            shipCores,
-            llmAvailability,
-            spend,
-            spendLedger,
-            audioSink,
-            audio,
-            cues,
-            voice,
-            ownVoice,
-            customVoices,
-            speech,
-            pairing,
-            gate,
-            echo,
-            microphone,
-            pushToTalk,
-            pushToTalkButton,
-            binds,
-            injector,
-            models,
-            transcriber,
-            wording,
-            wake,
-            heardAt,
-            version,
-            startupError,
-            storyDirector,
-            adventureBook,
-            messageStore,
-            fight,
-            scenes,
-            stores.StoryReaction,
-            () => status.Current);
+        var host = late.Host = new AppHost(foundations, stores, loop, services, registry, crew);
 
         host.Auditions = services.Auditions;
 
