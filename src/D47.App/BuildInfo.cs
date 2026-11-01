@@ -36,6 +36,18 @@ public static class BuildInfo
             ? mark
             : null;
 
+    /// <summary>The local date and time of the commit a test drive or local release was built from, or null.</summary>
+    public static string? Committed { get; } =
+        Assembly.GetEntryAssembly()
+            ?.GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(attribute => string.Equals(attribute.Key, "CommitTime", StringComparison.Ordinal))
+            ?.Value is { Length: > 0 } committed
+            ? committed
+            : null;
+
+    /// <summary>The version for the title bar, followed by the commit time when the build carries one.</summary>
+    public static string Titled(string version) => Committed is null ? version : $"{version} · {Committed}";
+
     /// <summary>Whether this build came from a working tree rather than a published release.</summary>
     public static bool IsLocal => Label is not null;
 

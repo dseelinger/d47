@@ -119,7 +119,7 @@ public partial class MainWindow : Window
         // The version lives in the chrome that is on screen anyway, and it is set here rather than on load
         // because it does not depend on the host - a window with no version in its title, however briefly, is
         // a window that cannot answer the one question a title bar is good at.
-        Title = $"Directive 47 — {BuildInfo.Semantic}";
+        Title = $"Directive 47 — {BuildInfo.Titled(BuildInfo.Semantic)}";
 
         Panel.DataContext = _model;
 
@@ -1824,7 +1824,7 @@ public partial class MainWindow : Window
             ? ReleaseChannel.Local
             : await host.Updates.ChannelAsync(host.Version, CancellationToken.None);
 
-        Title = $"Directive 47 — {ReleaseChannelText.Marked(BuildInfo.Semantic, host.Channel)}";
+        Title = $"Directive 47 — {BuildInfo.Titled(ReleaseChannelText.Marked(BuildInfo.Semantic, host.Channel))}";
 
         Panel?.ShowChannel(host.Channel);
     }

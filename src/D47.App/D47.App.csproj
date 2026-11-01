@@ -40,6 +40,11 @@
     <AssemblyMetadata Include="BuildMark" Value="$(D47BuildMark)" />
   </ItemGroup>
 
+  <!-- D47CommitTime, passed by the test-drive and local-release scripts, follows the version in the title bar. -->
+  <ItemGroup Condition="'$(D47CommitTime)' != ''">
+    <AssemblyMetadata Include="CommitTime" Value="$(D47CommitTime)" />
+  </ItemGroup>
+
   <ItemGroup>
     <AvaloniaResource Include="$(D47Icon)" Link="Assets\directive-47.ico" />
     <AvaloniaResource Include="..\..\assets\fonts\*.ttf" Link="Assets\Fonts\%(Filename)%(Extension)" />
