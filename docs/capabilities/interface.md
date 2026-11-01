@@ -294,9 +294,9 @@ the arrows move the caret instead.
 
 #### Find {#find}
 
-Opens a box that searches every page, settings place, setting and help page at once. `Ctrl+Shift+F` out of the box. A stick button can be bound beside the key, as for Open settings; it works only while Directive 47 has focus.
+Opens a box that searches every page, settings place, setting and help page at once, and by name every engineer, every bookmark of the Commander flying, and every star system while **Look things up in the galaxy** is on. `Ctrl+Shift+F` out of the box. A stick button can be bound beside the key, as for Open settings; it works only while Directive 47 has focus.
 
-Type, and up to eight results appear, best first, each with its path and whether it is a page, a place, a setting or a help page. Up and Down move the selection, Enter or a click opens it, and Esc or pressing the key again closes the box and leaves the panel where it was. `Ctrl+F` still searches only the page you are on.
+Type, and up to eight results appear, best first, each with its path and whether it is a page, a place, a setting, a help page, a system, an engineer or a bookmark. A name matches only when it equals, starts with, has a word that starts with, or contains what you typed; pages and settings come before names, and names take turns by kind. Up and Down move the selection, Enter or a click opens it, and Esc or pressing the key again closes the box and leaves the panel where it was. `Ctrl+F` still searches only the page you are on.
 
 The box is in the window only. The headset has no text keyboard, so ask there instead: "where is the push-to-talk setting".
 

@@ -847,6 +847,8 @@ public partial class PanelView : UserControl, IPanelTabHost
     public bool TickSearch() => _searchFurnishing.Tick();
 
     /// <summary>Opens the System page on one system, where this surface has one; true when it did.</summary>
+    public void OpenSystemNamed(string name) => _searchFurnishing.OpenSystemNamed(name);
+
     public bool OpenSystem(long systemAddress) => _searchFurnishing.OpenSystem(systemAddress);
 
     private readonly SearchFurnishing _searchFurnishing;
@@ -956,6 +958,23 @@ public partial class PanelView : UserControl, IPanelTabHost
 
             case PanelFindKind.HelpPage:
                 HelpLevel.Open(Nav, found.Target);
+                break;
+
+            case PanelFindKind.StarSystem:
+                OpenSystemNamed(found.Target);
+                break;
+
+            case PanelFindKind.Engineer:
+                if (EngineerDirectory.All.FirstOrDefault(e => e.Name == found.Target) is { } engineer)
+                {
+                    Nav.Show(EngineersPages.DirectoryRoot);
+                    Nav.GoTo(EngineersPages.Crumb(engineer));
+                }
+
+                break;
+
+            case PanelFindKind.Bookmark:
+                Nav.Show(RoutingPages.BookmarksRoot);
                 break;
         }
     }

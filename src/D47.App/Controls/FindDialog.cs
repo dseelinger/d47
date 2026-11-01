@@ -49,7 +49,7 @@ public sealed class FindDialog : ModalDialog
             Name = FieldName,
             Height = TypeScale.MinimumTarget,
             VerticalContentAlignment = VerticalAlignment.Center,
-            PlaceholderText = "A page, a setting or a help page",
+            PlaceholderText = "A page, a setting, a help page or a name",
         };
         Avalonia.Automation.AutomationProperties.SetName(_field, "Find");
         _field.TextChanged += (_, _) => Refresh();
@@ -74,7 +74,7 @@ public sealed class FindDialog : ModalDialog
         _hint = new TextBlock
         {
             Name = HintName,
-            Text = "No page, setting or help page matches that.",
+            Text = "Nothing matches that.",
             FontFamily = Fonts.ProseFamily,
             FontSize = TypeScale.Small,
             IsVisible = false,
@@ -264,6 +264,12 @@ public sealed class FindDialog : ModalDialog
         PanelFindKind.Page => "PAGE",
         PanelFindKind.SettingsPlace => "PLACE",
         PanelFindKind.SettingRow => "SETTING",
+        PanelFindKind.StarSystem => "SYSTEM",
+        PanelFindKind.Station => "STATION",
+        PanelFindKind.Carrier => "CARRIER",
+        PanelFindKind.Faction => "FACTION",
+        PanelFindKind.Engineer => "ENGINEER",
+        PanelFindKind.Bookmark => "BOOKMARK",
         _ => "HELP",
     };
 

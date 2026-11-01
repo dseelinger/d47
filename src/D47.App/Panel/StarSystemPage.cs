@@ -304,6 +304,13 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         Follow();
     }
 
+    /// <summary>Fills the name field with <paramref name="name"/> and looks it up, as typing it and pressing Enter does.</summary>
+    public void LookUp(string name)
+    {
+        _name.Text = name;
+        Look(name);
+    }
+
     /// <summary>Resolves a typed name: an exact match opens; otherwise the close names, or none.</summary>
     private void Look(string typed)
     {

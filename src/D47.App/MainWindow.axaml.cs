@@ -467,7 +467,7 @@ public partial class MainWindow : Window
                 openFound: Panel.OpenFound);
 
             // Searched from this surface's navigator; every surface resolves the result itself (#1473).
-            host.PanelRouting.RouteFind(new PanelFind(Panel.Nav, host.Settings, Panel.TabWords));
+            host.PanelRouting.RouteFind(new PanelFind(Panel.Nav, host.Settings, Panel.TabWords, Bookmarks(host)));
 
             host.PanelRouting.RoutePromptSurface(Panel.Prompts, move => ui.Post(move));
 
@@ -928,6 +928,9 @@ public partial class MainWindow : Window
 
     private FindDialog? _find;
 
+    private static Func<IReadOnlyList<D47.Core.Conversation.Bookmark>> Bookmarks(AppHost host) =>
+        () => host.GameState.Active?.Identity.FrontierId is { } id && host.Bookmarks is { } store ? store.For(id) : [];
+
     /// <summary>Opens Find, or closes it when it is open. The index is built from the live settings each time it opens.</summary>
     private void ToggleFind()
     {
@@ -942,8 +945,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        var find = new PanelFind(Panel.Nav, host.Settings, Panel.TabWords);
-        var dialog = new FindDialog(find.Search, Panel.OpenFound, host.Settings.Current.Hotkeys.Find);
+        var find = new PanelFind(Panel.Nav, host.Settings, Panel.TabWords, Bookmarks(host));
+        var dialog = new FindDialog(query => find.Search(query), Panel.OpenFound, host.Settings.Current.Hotkeys.Find);
 
         _find = dialog;
         dialog.Closed += (_, _) => _find = null;

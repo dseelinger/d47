@@ -180,7 +180,7 @@ public static class InterfaceCapability
                 exercise: new(
                     "Settings › Screens › Window, group Look and keys",
                     "Ctrl+Shift+F",
-                    "a dialog titled Find opens, with a FIND: field that hints \"A page, a setting or a help page\". "
+                    "a dialog titled Find opens, with a FIND: field that hints \"A page, a setting, a help page or a name\". "
                         + "Press it again and the dialog closes. Nothing opens while another dialog is open.")),
 
             // Seventy-five knobs is not a welcome (#60).

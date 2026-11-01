@@ -1,7 +1,9 @@
 using System.Text;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
+using D47.Core.Conversation;
 using D47.Core.Help;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Interface;
 
@@ -12,13 +14,22 @@ public enum PanelFindKind
     SettingsPlace,
     SettingRow,
     HelpPage,
+    StarSystem,
+    Station,
+    Carrier,
+    Faction,
+    Engineer,
+    Bookmark,
 }
+
+/// <summary>A name to rank beside the pages: what it is, how it reads, where it sits and the key that reaches it.</summary>
+public sealed record PanelFindName(PanelFindKind Kind, string Title, string Path, string Target);
 
 /// <summary>One Find result: what it is, how it reads, where it sits, and the key that reaches it.</summary>
 /// <param name="Title">A destination's word, a place's title, a row's label or an article's title.</param>
 /// <param name="Path">Where it sits, such as "Asset Mgmt › Ships".</param>
 /// <param name="Target">The destination key, place id, row key or capability id, by <paramref name="Kind"/>.</param>
-/// <param name="Rank">The step it matched at, 1 to 8; lower is better.</param>
+/// <param name="Rank">The step it matched at, 1 to 8; lower is better. A name matches at 1 to 4 only.</param>
 /// <param name="ReadOnly">A row that shows a value and has no control to change it.</param>
 public sealed record PanelFindResult(
     PanelFindKind Kind, string Title, string Path, string Target, int Rank, bool ReadOnly = false)
@@ -29,13 +40,21 @@ public sealed record PanelFindResult(
 
 /// <summary>Searches the pages, settings and help the app has, computed from the sources each time (#1471).</summary>
 public sealed class PanelFind(
-    PanelNavigator nav, SettingsService settings, IReadOnlyDictionary<PanelTab, string> tabWords)
+    PanelNavigator nav,
+    SettingsService settings,
+    IReadOnlyDictionary<PanelTab, string> tabWords,
+    Func<IReadOnlyList<Bookmark>>? bookmarks = null)
 {
     private const string SettingsWord = "Settings";
     internal const string Separator = " › ";
 
-    /// <summary>The results for a query, best first; empty for a blank query.</summary>
-    public IReadOnlyList<PanelFindResult> Search(string query)
+    private const int NameSteps = 4;
+
+    /// <summary>
+    /// Every result for a query, best first; empty for a blank query. <paramref name="extraNames"/> are names
+    /// fetched elsewhere, ranked with the local ones.
+    /// </summary>
+    public IReadOnlyList<PanelFindResult> Search(string query, IReadOnlyList<PanelFindName>? extraNames = null)
     {
         var needle = Normalize(query);
 
@@ -44,19 +63,84 @@ public sealed class PanelFind(
             return [];
         }
 
-        return
-        [
-            .. Candidates()
-                .Select(candidate => (candidate, rank: Rank(candidate, needle)))
-                .Where(scored => scored.rank is not null)
-                .OrderBy(scored => scored.rank!.Value.Rank)
-                .ThenBy(scored => scored.rank!.Value.Run)
-                .ThenBy(scored => scored.candidate.Result.Kind)
-                .ThenBy(scored => scored.candidate.Result.ReadOnly)
-                .ThenBy(scored => scored.candidate.Result.Title.Length)
-                .ThenBy(scored => scored.candidate.Order)
-                .Select(scored => scored.candidate.Result with { Rank = scored.rank!.Value.Rank }),
-        ];
+        var scored = Candidates()
+            .Select(candidate => (candidate, rank: Rank(candidate, needle)))
+            .Where(scored => scored.rank is not null)
+            .OrderBy(scored => scored.rank!.Value.Rank)
+            .ThenBy(scored => scored.rank!.Value.Run)
+            .ThenBy(scored => scored.candidate.Result.Kind)
+            .ThenBy(scored => scored.candidate.Result.ReadOnly)
+            .ThenBy(scored => scored.candidate.Result.Title.Length)
+            .ThenBy(scored => scored.candidate.Order)
+            .Select(scored => scored.candidate.Result with { Rank = scored.rank!.Value.Rank })
+            .ToList();
+
+        var named = Names(extraNames)
+            .Select(name => (name, rank: NameRank(Normalize(name.Title), needle)))
+            .Where(item => item.rank is not null)
+            .ToList();
+
+        var results = new List<PanelFindResult>(scored.Count + named.Count);
+
+        for (var step = 1; step <= 8; step++)
+        {
+            results.AddRange(scored.Where(result => result.Rank == step));
+
+            if (step <= NameSteps)
+            {
+                results.AddRange(TakeTurns(named.Where(item => item.rank == step).Select(item => item.name), step));
+            }
+        }
+
+        return results;
+    }
+
+    private static IEnumerable<PanelFindResult> TakeTurns(IEnumerable<PanelFindName> names, int step)
+    {
+        var kinds = names
+            .GroupBy(name => name.Kind)
+            .OrderBy(group => group.Key)
+            .Select(group => group
+                .OrderBy(name => name.Title.Length)
+                .ThenBy(name => name.Title, StringComparer.OrdinalIgnoreCase)
+                .ToList())
+            .ToList();
+
+        for (var turn = 0; kinds.Any(kind => turn < kind.Count); turn++)
+        {
+            foreach (var kind in kinds.Where(kind => turn < kind.Count))
+            {
+                var name = kind[turn];
+                yield return new PanelFindResult(name.Kind, name.Title, name.Path, name.Target, step);
+            }
+        }
+    }
+
+    private IEnumerable<PanelFindName> Names(IReadOnlyList<PanelFindName>? extraNames)
+    {
+        if (settings.Current.Knowledge.GalaxySearch)
+        {
+            foreach (var system in SystemNameTable.Names)
+            {
+                yield return new PanelFindName(PanelFindKind.StarSystem, system, "Star system", system);
+            }
+        }
+
+        foreach (var engineer in EngineerDirectory.All)
+        {
+            yield return new PanelFindName(PanelFindKind.Engineer, engineer.Name, "Engineer", engineer.Name);
+        }
+
+        foreach (var bookmark in bookmarks?.Invoke() ?? [])
+        {
+            yield return new PanelFindName(
+                PanelFindKind.Bookmark, bookmark.Name, "Bookmark" + Separator + bookmark.System, bookmark.Name);
+        }
+
+        foreach (var name in extraNames ?? [])
+        {
+            yield return name;
+        }
     }
 
     private sealed record Candidate(
@@ -145,26 +229,9 @@ public sealed class PanelFind(
     {
         var title = Normalize(candidate.Result.Title);
 
-        if (title == needle)
+        if (NameRank(title, needle) is { } step)
         {
-            return (1, 0);
-        }
-
-        if (title.StartsWith(needle, StringComparison.Ordinal))
-        {
-            return (2, 0);
-        }
-
-        var titleWords = title.Split(' ');
-
-        if (needle.Split(' ').All(word => titleWords.Any(t => t.StartsWith(word, StringComparison.Ordinal))))
-        {
-            return (3, 0);
-        }
-
-        if (title.Contains(needle, StringComparison.Ordinal))
-        {
-            return (4, 0);
+            return (step, 0);
         }
 
         if (candidate.Aliases.Any(alias => Normalize(alias).Contains(needle, StringComparison.Ordinal)))
@@ -185,6 +252,29 @@ public sealed class PanelFind(
         return ShortestRun(title, needle.Replace(" ", string.Empty, StringComparison.Ordinal)) is { } run
             ? (8, run)
             : null;
+    }
+
+    /// <summary>The step, 1 to 4, at which a normalized title matches: exact, starts with, every word starts a title word, contains.</summary>
+    private static int? NameRank(string title, string needle)
+    {
+        if (title == needle)
+        {
+            return 1;
+        }
+
+        if (title.StartsWith(needle, StringComparison.Ordinal))
+        {
+            return 2;
+        }
+
+        var titleWords = title.Split(' ');
+
+        if (needle.Split(' ').All(word => titleWords.Any(t => t.StartsWith(word, StringComparison.Ordinal))))
+        {
+            return 3;
+        }
+
+        return title.Contains(needle, StringComparison.Ordinal) ? 4 : null;
     }
 
     /// <summary>The shortest stretch of the title that holds the letters in order, the first at the start of a word.</summary>

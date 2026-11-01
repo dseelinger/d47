@@ -30,6 +30,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private StarSystemProfile? _drawn;
     private StarSystemSurface? _surface;
     private (long Address, string Id)? _pendingSystem;
+    private string? _pendingName;
     private string? _systemEntry;
     private readonly Dictionary<GalaxySearchKind, SearchHistoryEntry> _pending = [];
     private IReadOnlyDictionary<string, string>? _pendingBodies;
@@ -93,6 +94,16 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         _pendingSystem = null;
         _pendingBodies = arguments;
         host.Nav.Show(BodySearchPage.RootKey);
+        ApplyPending();
+    }
+
+    /// <summary>Opens Search › System on <paramref name="name"/>, as typing it there and pressing Enter does.</summary>
+    public void OpenSystemNamed(string name)
+    {
+        _pending.Clear();
+        _pendingSystem = null;
+        _pendingName = name;
+        host.Nav.Show(StarSystemPage.RootKey);
         ApplyPending();
     }
 
@@ -293,6 +304,12 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     /// <summary>Hands a waiting entry to its page, once that page exists.</summary>
     private void ApplyPending()
     {
+        if (_pendingName is { } name && _starSystem is { } named)
+        {
+            _pendingName = null;
+            named.LookUp(name);
+        }
+
         if (_pendingSystem is { } system && _starSystem is { } page)
         {
             _pendingSystem = null;
