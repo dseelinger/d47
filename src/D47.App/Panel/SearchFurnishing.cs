@@ -30,6 +30,8 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private StarSystemProfile? _drawn;
     private StarSystemSurface? _surface;
     private (string Query, IReadOnlyList<PanelFindResult> Results, Action<PanelFindResult> Open)? _allResults;
+    private string? _foundStation;
+    private string? _foundSeek;
     private (long Address, string Id)? _pendingSystem;
     private string? _pendingName;
     private (long Address, string? Station)? _pendingAddress;
@@ -153,10 +155,45 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     /// <summary>Opens Search › System › All results on the list Find held for <paramref name="query"/>.</summary>
     public void OpenAllResults(string query, IReadOnlyList<PanelFindResult> results, Action<PanelFindResult> open)
     {
-        _allResults = (query, results, open);
+        _allResults = (query, results, result => ChooseFromAllResults(result, open));
         host.Nav.Show(StarSystemPage.RootKey);
         host.Forget(PanelTab.Search, key => key == AllResultsPage.PageKey);
-        host.Nav.Drill(PanelTab.Search, new NavCrumb(AllResultsPage.PageKey, "All results") { Whole = true, Local = true });
+        host.Nav.Drill(PanelTab.Search, new NavCrumb(AllResultsPage.PageKey, "All results") { Whole = true, Starts = true, Local = true });
+    }
+
+    /// <summary>
+    /// Drills a system, station or carrier with a known system under All results, a station or carrier on its
+    /// Stations section narrowed to its name; any other result opens as it does from Find.
+    /// </summary>
+    private void ChooseFromAllResults(PanelFindResult result, Action<PanelFindResult> open)
+    {
+        if (result is not { SystemAddress: { } address, Kind: PanelFindKind.StarSystem or PanelFindKind.Station or PanelFindKind.Carrier })
+        {
+            open(result);
+            return;
+        }
+
+        var station = result.Kind == PanelFindKind.StarSystem ? null : result.Target;
+
+        while (host.Nav.TrailOf(PanelTab.Search) is { Count: > 1 } trail && trail[^1].Key != AllResultsPage.PageKey && host.Nav.Back())
+        {
+        }
+
+        var key = FoundKeyPrefix + address.ToString(CultureInfo.InvariantCulture) + (station is null ? string.Empty : StationsSuffix);
+
+        _foundStation = station;
+        host.Forget(PanelTab.Search, built => built == key);
+        host.Nav.Drill(PanelTab.Search, new NavCrumb(key, result.Title) { Help = GalaxyCapability.Id, Local = true });
+    }
+
+    /// <summary>Fills the page-search box with the station once the drilled system page lists its stations.</summary>
+    private void SeekFoundStation()
+    {
+        if (_foundSeek is { } station && _found is { Filters: true })
+        {
+            _foundSeek = null;
+            host.Seek(station);
+        }
     }
 
     public bool OpenSystem(long systemAddress) => _starSystem is { } page && page.OpenSystem(systemAddress);
@@ -277,7 +314,22 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             && FoundTarget(crumb.Key) is var (address, suffix))
         {
             var found = _found = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, Codex = Codex };
-            found.FiltersChanged += (_, _) => host.ShowSearch();
+            found.FiltersChanged += (_, _) =>
+            {
+                host.ShowSearch();
+                SeekFoundStation();
+            };
+
+            if (_foundStation is { } station && suffix == StationsSuffix)
+            {
+                _foundStation = null;
+                _foundSeek = station;
+                found.OpenSystemStation(address, station);
+
+                return found;
+            }
+
+            _foundStation = null;
 
             _ = suffix switch
             {

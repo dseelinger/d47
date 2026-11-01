@@ -1,6 +1,8 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.VisualTree;
 using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Panel;
@@ -18,7 +20,7 @@ public sealed class AllResultsIsDrawnAsItsCanvasShowsTests
     private sealed class Systems : IStarSystemService
     {
         public Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
-            Task.FromResult<StarSystemProfile?>(null);
+            Task.FromResult<StarSystemProfile?>(new StarSystemProfile { Name = $"System {systemAddress}", SystemAddress = systemAddress });
 
         public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
@@ -80,7 +82,7 @@ public sealed class AllResultsIsDrawnAsItsCanvasShowsTests
         panel.EnableStarSystem(new StarSystemSurface(
             new Systems(),
             () => new JournalLocation("LTT 7786", null, false, null),
-            () => false,
+            () => true,
             () => { }));
 
         var window = new Window { Content = panel, Width = 1280, Height = 2000 };
@@ -89,6 +91,11 @@ public sealed class AllResultsIsDrawnAsItsCanvasShowsTests
 
         panel.OpenAllResults("dark", Dark());
         Save(window, "all-results-page-dark.png");
+
+        window.Height = 960;
+        var page = panel.GetVisualDescendants().OfType<AllResultsPage>().Single();
+        page.Rows[1].RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, Source = page.Rows[1] });
+        Save(window, "all-results-drilled-system.png");
 
         window.Height = 640;
         panel.OpenAllResults("push", Push());

@@ -156,7 +156,14 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
             return;
         }
 
-        var window = trail[^1].Whole ? 1 : Math.Min(_panes, trail.Count);
+        var start = trail.Count - 1;
+
+        while (start > 0 && !trail[start].Starts)
+        {
+            start--;
+        }
+
+        var window = trail[^1].Whole ? 1 : Math.Min(_panes, trail.Count - start);
 
         var first = trail.Count - window;
         var visible = trail.Skip(first).ToList();

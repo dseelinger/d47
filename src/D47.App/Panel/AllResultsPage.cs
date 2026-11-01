@@ -87,7 +87,7 @@ internal sealed class AllResultsPage : UserControl, IPageSummary
 
     internal IReadOnlyList<Border> Rows => _rows;
 
-    private static Border Row(PanelFindResult result, bool tall, Action<PanelFindResult> open)
+    private Border Row(PanelFindResult result, bool tall, Action<PanelFindResult> open)
     {
         var lines = new StackPanel
         {
@@ -126,7 +126,15 @@ internal sealed class AllResultsPage : UserControl, IPageSummary
             row.Padding = new Thickness(14, 0);
         }
 
-        return ListRow.Opens(row, () => open(result));
+        return ListRow.Opens(row, () =>
+        {
+            foreach (var other in _rows)
+            {
+                other.Classes.Set(ListRow.SelectedClass, ReferenceEquals(other, row));
+            }
+
+            open(result);
+        });
     }
 
     /// <summary>Holds <paramref name="body"/> at the left, as wide as the page up to <see cref="ColumnWidth"/>.</summary>

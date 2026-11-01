@@ -81,6 +81,9 @@ public sealed record NavCrumb(string Key, string Word, bool Modal = false)
     /// <summary>Whether this level takes the whole strip rather than sharing it with the levels above (#469).</summary>
     public bool Whole { get; init; }
 
+    /// <summary>Whether the levels under this one share the strip with it but not with the levels above it.</summary>
+    public bool Starts { get; init; }
+
     /// <summary>Whether this level stays on the surface that opened it rather than being carried to the surfaces following it.</summary>
     public bool Local { get; init; }
 }
