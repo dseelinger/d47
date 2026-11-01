@@ -12,8 +12,8 @@ public sealed class AGeneratedBeatCanHaveSeveralStepsTests
     private const string Steps = """
         {"opening": "Again.", "reply": "Here.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back.",
-           "then": [{"kind": "bounty", "count": 3}, {"kind": "mine", "count": 5}, {"kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage"}]},
-          {"title": "The Ore", "function": "finale", "kind": "mine", "count": 20, "line": "Refined.", "then": []}
+           "then": [{"kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3}, {"kind": "mine", "reason": "Someone there knows about the burst.", "count": 5}, {"kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage"}]},
+          {"title": "The Ore", "function": "finale", "kind": "mine", "reason": "Someone there knows about the burst.", "count": 20, "line": "Refined.", "then": []}
         ]}
         """;
 
@@ -21,7 +21,7 @@ public sealed class AGeneratedBeatCanHaveSeveralStepsTests
         {"opening": "Again.", "reply": "Here.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back.",
            "then": [{"kind": "dock", "system": "Dyson's Hollow", "station": "Maren Anchorage"}]},
-          {"title": "The Ore", "function": "finale", "kind": "mine", "count": 20, "line": "Refined."}
+          {"title": "The Ore", "function": "finale", "kind": "mine", "reason": "Someone there knows about the burst.", "count": 20, "line": "Refined."}
         ]}
         """;
 
@@ -52,7 +52,7 @@ public sealed class AGeneratedBeatCanHaveSeveralStepsTests
         var outcome = await Generate(provider);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("Objective 2 (The Lantern, a further step) is a travel objective with no \"reason\"", outcome.Refusal);
+        Assert.Contains("Objective 2 (The Lantern, a further step) has no \"reason\"", outcome.Refusal);
     }
 
     private static Task<AdventureOutcome> Generate(RoundScriptedLlmProvider provider) =>

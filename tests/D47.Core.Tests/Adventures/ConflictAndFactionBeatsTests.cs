@@ -248,7 +248,7 @@ public class ConflictAndFactionBeatsTests
     public async Task TheWriterIsToldTheKindsAndTheConflictsItCanSee()
     {
         const string Beats = """
-            {"opening": "x", "reply": "ok", "beats": [{"title": "The Work", "function": "finale", "kind": "conflict", "count": 3, "faction": "Labour of Havalokul", "line": "Fight."}]}
+            {"opening": "x", "reply": "ok", "beats": [{"title": "The Work", "function": "finale", "kind": "conflict", "reason": "Someone there knows about the burst.", "count": 3, "faction": "Labour of Havalokul", "line": "Fight."}]}
             """;
 
         var provider = new RoundScriptedLlmProvider(

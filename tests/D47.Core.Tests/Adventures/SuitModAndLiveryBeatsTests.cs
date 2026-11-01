@@ -108,7 +108,7 @@ public class SuitModAndLiveryBeatsTests
     {
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying("""{"opening": "Again.", "reply": "Here.", "beats": [{"title": "The Ore", "function": "finale", "kind": "mine", "count": 20, "line": "Refined."}]}"""));
+            RoundScriptedLlmProvider.Saying("""{"opening": "Again.", "reply": "Here.", "beats": [{"title": "The Ore", "function": "finale", "kind": "mine", "reason": "Someone there knows about the burst.", "count": 20, "line": "Refined."}]}"""));
 
         await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy()).GenerateAsync(
             new AdventureAsk(AdventureReach.Session, Story: new AdventureStory(Id, Card.Title, Card.Describe(), Secret.Secret, 1, 10, 5)),
@@ -128,7 +128,7 @@ public class SuitModAndLiveryBeatsTests
     {
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying("""{"opening": "Again.", "reply": "Here.", "beats": [{"title": "The Ore", "function": "finale", "kind": "mine", "count": 20, "line": "Refined."}]}"""));
+            RoundScriptedLlmProvider.Saying("""{"opening": "Again.", "reply": "Here.", "beats": [{"title": "The Ore", "function": "finale", "kind": "mine", "reason": "Someone there knows about the burst.", "count": 20, "line": "Refined."}]}"""));
 
         await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
@@ -142,7 +142,7 @@ public class SuitModAndLiveryBeatsTests
         const string livery = """
             {"opening": "Again.", "reply": "Here.", "beats": [
               {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Repaint", "function": "resolution", "kind": "livery", "count": 2, "line": "Painted."}
+              {"title": "The Repaint", "function": "resolution", "kind": "livery", "reason": "Someone there knows about the burst.", "count": 2, "line": "Painted."}
             ]}
             """;
 

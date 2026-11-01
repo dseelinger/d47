@@ -207,7 +207,7 @@ public sealed class ABoardingWaitsForAFreeSeatTests
     {
         const string BountyAndADock = """
             {"opening": "x", "reply": "ok", "beats": [
-              {"title": "Another Way", "function": "midpoint", "kind": "bounty", "count": 2, "line": "Two more."},
+              {"title": "Another Way", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 2, "line": "Two more."},
               {"title": "Home Again", "function": "finale", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
             ]}
             """;

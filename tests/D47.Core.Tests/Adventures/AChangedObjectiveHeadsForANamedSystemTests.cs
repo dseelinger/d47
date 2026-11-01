@@ -30,8 +30,8 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
     private static string Beats(bool heading, string system = "Waypoint") => $$"""
         {"opening": "x", "reply": "Home it is.", "heading": {{(heading ? "true" : "false")}}, "beats": [
           {"title": "The Way Back", "function": "midpoint", "kind": "arrive", "reason": "A courier there flies the home run.", "system": "{{system}}", "station": null, "body": null, "career": null, "rank": null, "line": "Halfway."},
-          {"title": "The Turn", "function": "all is lost", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
-          {"title": "The End", "function": "finale", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
+          {"title": "The Turn", "function": "all is lost", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
+          {"title": "The End", "function": "finale", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
         ]}
         """;
 
@@ -123,8 +123,8 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
         {"opening": "x", "reply": "Home it is.", "heading": true, "beats": [
           {"title": "The Way Back", "function": "midpoint", "kind": "arrive", "reason": "A courier there flies the home run.", "system": "Waypoint", "station": null, "body": null, "career": null, "rank": null, "line": "Halfway.",
            "then": [{"kind": "arrive", "reason": "Home.", "system": "Tavell's Reach", "station": null, "body": null}]},
-          {"title": "The Turn", "function": "all is lost", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
-          {"title": "The End", "function": "finale", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
+          {"title": "The Turn", "function": "all is lost", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
+          {"title": "The End", "function": "finale", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
         ]}
         """;
 

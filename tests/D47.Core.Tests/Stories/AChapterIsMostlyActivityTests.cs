@@ -13,18 +13,18 @@ public sealed class AChapterIsMostlyActivityTests
         {"opening": "Again.", "reply": "Here.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
           {"title": "The Anchorage", "function": "catalyst", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."},
-          {"title": "The Bounties", "function": "midpoint", "kind": "bounty", "count": 3, "line": "Paid."},
+          {"title": "The Bounties", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Paid."},
           {"title": "The Lantern Again", "function": "all is lost", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back again."},
-          {"title": "The Ore", "function": "finale", "kind": "mine", "count": 20, "line": "Refined."}
+          {"title": "The Ore", "function": "finale", "kind": "mine", "reason": "Someone there knows about the burst.", "count": 20, "line": "Refined."}
         ]}
         """;
 
     private const string ABeaconInTheMiddle = """
         {"opening": "Again.", "reply": "Here.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "The Bounties", "function": "midpoint", "kind": "bounty", "count": 3, "line": "Paid."},
-          {"title": "The Beacon", "function": "all is lost", "kind": "beacon", "line": "Lit."},
-          {"title": "The Ore", "function": "finale", "kind": "mine", "count": 20, "line": "Refined."}
+          {"title": "The Bounties", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Paid."},
+          {"title": "The Beacon", "function": "all is lost", "kind": "beacon", "reason": "Someone there knows about the burst.", "line": "Lit."},
+          {"title": "The Ore", "function": "finale", "kind": "mine", "reason": "Someone there knows about the burst.", "count": 20, "line": "Refined."}
         ]}
         """;
 

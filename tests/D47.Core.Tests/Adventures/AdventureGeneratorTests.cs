@@ -26,7 +26,7 @@ public sealed class AdventureGeneratorTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Scoop here."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "body": null, "career": null, "rank": null, "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "It balances."}
         ]}
         """;
 
@@ -35,7 +35,7 @@ public sealed class AdventureGeneratorTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Scoop here."},
           {"title": "Where The Freight Went", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Colonia", "station": null, "body": null, "career": null, "rank": null, "line": "Twenty-two thousand light years."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trade", "rank": 8, "line": "It balances."}
+          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trade", "rank": 8, "line": "It balances."}
         ]}
         """;
 
@@ -195,7 +195,7 @@ public sealed class AdventureGeneratorTests
         const string nested = """
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "rank": {"career": "Trade", "rank": "8"}, "line": "It balances."}
+              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "rank": {"career": "Trade", "rank": "8"}, "line": "It balances."}
             ]}
             """;
 
@@ -211,7 +211,7 @@ public sealed class AdventureGeneratorTests
     private const string BoardBeats = """
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Hull", "function": "turn", "kind": "board", "ship": "Cobra MkIII", "line": "Sign for it."}
+          {"title": "The Hull", "function": "turn", "kind": "board", "reason": "Someone there knows about the burst.", "ship": "Cobra MkIII", "line": "Sign for it."}
         ]}
         """;
 
@@ -248,7 +248,7 @@ public sealed class AdventureGeneratorTests
     private static string EngineerBeats(string engineer) => $$"""
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Workshop", "function": "resolution", "kind": "engineer", "engineer": "{{engineer}}", "stage": "Unlocked", "line": "She lets you in."}
+          {"title": "The Workshop", "function": "resolution", "kind": "engineer", "reason": "Someone there knows about the burst.", "engineer": "{{engineer}}", "stage": "Unlocked", "line": "She lets you in."}
         ]}
         """;
 
@@ -301,7 +301,7 @@ public sealed class AdventureGeneratorTests
         const string careerless = """
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "rank": 8, "line": "It balances."}
+              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "rank": 8, "line": "It balances."}
             ]}
             """;
 
@@ -324,7 +324,7 @@ public sealed class AdventureGeneratorTests
         const string elite = """
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Combat", "rank": 8, "line": "It balances."}
+              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Combat", "rank": 8, "line": "It balances."}
             ]}
             """;
 

@@ -36,7 +36,7 @@ public class ATechBrokerUnlockObjectiveWaitsForOneItemTests
     private static string Beats(string filter) => $$"""
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Broker", "function": "resolution", "kind": "unlock", "filter": "{{filter}}", "line": "The broker opens the case."}
+          {"title": "The Broker", "function": "resolution", "kind": "unlock", "reason": "Someone there knows about the burst.", "filter": "{{filter}}", "line": "The broker opens the case."}
         ]}
         """;
 

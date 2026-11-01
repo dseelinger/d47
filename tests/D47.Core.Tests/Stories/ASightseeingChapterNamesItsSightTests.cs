@@ -19,8 +19,8 @@ public sealed class ASightseeingChapterNamesItsSightTests
     private const string ArriveAtTheLantern = """
         {"opening": "Again.", "reply": "Here.", "beats": [
           {"title": "The Spire", "function": "setup", "kind": "arrive", "reason": "The Spire is worth the trip.", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "Any Mission", "function": "turn", "kind": "mission", "count": 2, "mission": null, "line": "Work."},
-          {"title": "The Bounties", "function": "resolution", "kind": "bounty", "count": 3, "line": "Paid."}
+          {"title": "Any Mission", "function": "turn", "kind": "mission", "reason": "Someone there knows about the burst.", "count": 2, "mission": null, "line": "Work."},
+          {"title": "The Bounties", "function": "resolution", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Paid."}
         ]}
         """;
 
@@ -28,7 +28,7 @@ public sealed class ASightseeingChapterNamesItsSightTests
         {"opening": "Again.", "reply": "Here.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "A berth by the arch.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Moored."},
-          {"title": "The Bounties", "function": "resolution", "kind": "bounty", "count": 3, "line": "Paid."}
+          {"title": "The Bounties", "function": "resolution", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Paid."}
         ]}
         """;
 

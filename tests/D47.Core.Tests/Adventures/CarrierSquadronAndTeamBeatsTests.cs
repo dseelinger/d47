@@ -137,7 +137,7 @@ public class CarrierSquadronAndTeamBeatsTests
     private static string Beats(string kind) => $$"""
         {"opening": "x", "reply": "ok", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Job", "function": "finale", "kind": "{{kind}}", "count": 1, "line": "Do it."}
+          {"title": "The Job", "function": "finale", "kind": "{{kind}}", "reason": "Someone there knows about the burst.", "count": 1, "line": "Do it."}
         ]}
         """;
 

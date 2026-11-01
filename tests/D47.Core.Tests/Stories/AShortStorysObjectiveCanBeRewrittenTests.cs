@@ -22,7 +22,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
 
     private const string ABountyAndADock = """
         {"opening": "x", "reply": "A bounty does the same.", "beats": [
-          {"title": "Another Way", "function": "midpoint", "kind": "bounty", "count": 2, "line": "Two more."},
+          {"title": "Another Way", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 2, "line": "Two more."},
           {"title": "Home Again", "function": "finale", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
         ]}
         """;
@@ -201,7 +201,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     {
         const string AgainBonds = """
             {"opening": "x", "reply": "ok", "beats": [
-              {"title": "More Bonds", "function": "midpoint", "kind": "bond", "count": 2, "line": "Two more."},
+              {"title": "More Bonds", "function": "midpoint", "kind": "bond", "reason": "Someone there knows about the burst.", "count": 2, "line": "Two more."},
               {"title": "Home Again", "function": "finale", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
             ]}
             """;

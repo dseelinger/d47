@@ -120,8 +120,8 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
         return $$"""
             {"opening": "A job.", "reply": "Here it is.", "beats": [
               {{arrive}}
-              {"title": "The Job", "function": "turn", "kind": "mission", "system": null, "station": null, "body": null, "career": null, "rank": null, "count": 1, "faction": null, "mission": "{{family}}", "line": "Take the job."},
-              {"title": "The Quiet Job Ends", "function": "resolution", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "It is done."}
+              {"title": "The Job", "function": "turn", "kind": "mission", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": null, "rank": null, "count": 1, "faction": null, "mission": "{{family}}", "line": "Take the job."},
+              {"title": "The Quiet Job Ends", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "It is done."}
             ]}
             """;
     }

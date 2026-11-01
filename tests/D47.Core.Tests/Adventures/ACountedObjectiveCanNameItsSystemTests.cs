@@ -89,8 +89,8 @@ public sealed class ACountedObjectiveCanNameItsSystemTests
     private static string Beats(string kind, int count, string? system, string? filter = null) => $$"""
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Count", "function": "turn", "kind": "{{kind}}", "count": {{count}}, "filter": {{(filter is null ? "null" : $"\"{filter}\"")}}, "system": {{(system is null ? "null" : $"\"{system}\"")}}, "line": "Count them."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Count", "function": "turn", "kind": "{{kind}}", "reason": "Someone there knows about the burst.", "count": {{count}}, "filter": {{(filter is null ? "null" : $"\"{filter}\"")}}, "system": {{(system is null ? "null" : $"\"{system}\"")}}, "line": "Count them."},
+          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
         ]}
         """;
 

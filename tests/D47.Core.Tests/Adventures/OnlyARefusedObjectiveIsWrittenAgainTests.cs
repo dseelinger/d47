@@ -21,13 +21,13 @@ public sealed class OnlyARefusedObjectiveIsWrittenAgainTests
           {"title": "The Anchorage", "function": "catalyst", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
           {"title": "Where The Freight Went", "function": "midpoint", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Colonia", "line": "Twenty-two thousand light years."},
           {"title": "Back To The Lantern", "function": "all is lost", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Nothing was ever loaded."},
-          {"title": "The Column Will Not Balance", "function": "finale", "kind": "rank", "career": "Trade", "rank": 8, "line": "It balances."}
+          {"title": "The Column Will Not Balance", "function": "finale", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trade", "rank": 8, "line": "It balances."}
         ]}
         """;
 
     private const string Bounties = """
         {"replacements": [
-          {"objective": 3, "title": "The Collectors", "function": "midpoint", "kind": "bounty", "count": 3, "line": "Three names on a board."}
+          {"objective": 3, "title": "The Collectors", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Three names on a board."}
         ]}
         """;
 
@@ -133,8 +133,8 @@ public sealed class OnlyARefusedObjectiveIsWrittenAgainTests
     {
         const string alsoTheFirst = """
             {"replacements": [
-              {"objective": 1, "title": "Somewhere Else", "function": "setup", "kind": "bounty", "count": 1, "line": "Not asked for."},
-              {"objective": 3, "title": "The Collectors", "function": "midpoint", "kind": "bounty", "count": 3, "line": "Three names on a board."}
+              {"objective": 1, "title": "Somewhere Else", "function": "setup", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 1, "line": "Not asked for."},
+              {"objective": 3, "title": "The Collectors", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Three names on a board."}
             ]}
             """;
 

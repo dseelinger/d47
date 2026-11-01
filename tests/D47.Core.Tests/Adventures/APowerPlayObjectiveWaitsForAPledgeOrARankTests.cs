@@ -35,7 +35,7 @@ public class APowerPlayObjectiveWaitsForAPledgeOrARankTests
     private static string Beats(string kind, string fields) => $$"""
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Oath", "function": "resolution", "kind": "{{kind}}", {{fields}} "line": "The Power takes note."}
+          {"title": "The Oath", "function": "resolution", "kind": "{{kind}}", "reason": "Someone there knows about the burst.", {{fields}} "line": "The Power takes note."}
         ]}
         """;
 

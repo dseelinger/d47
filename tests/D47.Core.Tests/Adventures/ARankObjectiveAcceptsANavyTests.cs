@@ -59,7 +59,7 @@ public sealed class ARankObjectiveAcceptsANavyTests
         const string navy = """
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Imperial Navy", "rank": 14, "line": "It balances."}
+              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Imperial Navy", "rank": 14, "line": "It balances."}
             ]}
             """;
 

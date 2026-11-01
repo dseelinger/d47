@@ -326,7 +326,7 @@ The log's last entry is dated the day the beacon went quiet.
 Next: dock at Maren Anchorage in Dyson's Hollow.
 ```
 
-The hand-off names the place and the act and nothing else — never the next objective's title or its
+The hand-off names the place, the act and why the Commander goes — never the next objective's title or its
 line, which is the spoiler rule holding. A scan's hand-off says *how*, because "scan X" sent a
 Commander looking for a detailed surface scanner when the ship's own scanner was what the story
 meant. It also says that going there counts: a body already scanned writes no second `Scan`, so a

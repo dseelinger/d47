@@ -18,7 +18,7 @@ public sealed class AnArriveBeatWhereTheCommanderAlreadyIsGoesBackThroughTheTurn
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
         ]}
         """;
 
@@ -29,7 +29,7 @@ public sealed class AnArriveBeatWhereTheCommanderAlreadyIsGoesBackThroughTheTurn
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "Home Ledger", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Oppi", "line": "Start here."},
               {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
             ]}
             """;
 
@@ -46,7 +46,7 @@ public sealed class AnArriveBeatWhereTheCommanderAlreadyIsGoesBackThroughTheTurn
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Consignee", "function": "setup", "kind": "land", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "line": "Dust."},
               {"title": "The Lantern", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
             ]}
             """;
 

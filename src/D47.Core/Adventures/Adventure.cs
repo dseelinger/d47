@@ -751,7 +751,7 @@ public sealed record BeatStep
     /// <summary>Events that fail the chapter while this step is the one it waits on; none counts to a total.</summary>
     public IReadOnlyList<AdventureTrigger> FailsOn { get; init; } = [];
 
-    /// <summary>What is at a travel step's place that matters to the story; said in the hand-off, before arrival.</summary>
+    /// <summary>Why the Commander goes: what they do or get there, and where in the story that comes from; said in the hand-off, before arrival.</summary>
     public string? Reason { get; init; }
 
     /// <summary>For a <see cref="TriggerKind.Choice"/> step: its options, two or three, in the order they are numbered.</summary>

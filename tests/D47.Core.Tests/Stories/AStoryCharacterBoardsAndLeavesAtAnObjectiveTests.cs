@@ -173,8 +173,8 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
             {"opening": "Again.", "reply": "Here.", "openingBoards": [], "beats": [
               {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back.",
                "boards": ["dock-hand"], "leaves": ["rider"], "then": []},
-              {"title": "The Ore", "function": "finale", "kind": "mine", "count": 20, "line": "Refined.", "boards": ["RIDER"], "leaves": ["rider"],
-               "then": [{"kind": "bounty", "count": 3, "boards": ["rider"]}]}
+              {"title": "The Ore", "function": "finale", "kind": "mine", "reason": "Someone there knows about the burst.", "count": 20, "line": "Refined.", "boards": ["RIDER"], "leaves": ["rider"],
+               "then": [{"kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "boards": ["rider"]}]}
             ]}
             """;
         var provider = new RoundScriptedLlmProvider(

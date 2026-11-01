@@ -3517,7 +3517,7 @@ public sealed class AdventureGenerator(
             text.AppendLine(
                 "- \"site\": the Commander flies to a Guardian site, scans a tourist beacon or drops out at a generation ship, from the sites within reach listed above and no other. "
                 + "\"filter\" is guardian, tourist or generation, \"system\" is the listed system, and \"body\" is the listed body for a Guardian site and null for a tourist beacon or generation ship. "
-                + "Like arrive, dock, land and scan, it is a place and has a \"reason\".");
+                + "Like every objective but a choice, it has a \"reason\".");
         }
 
         if (reachAway is not null)
@@ -3539,12 +3539,15 @@ public sealed class AdventureGenerator(
         text.AppendLine("Write every line plainly, whoever says it. Do not use a metaphor or an image where a direct statement would do. Do not end a line on an aphorism or a moral (\"That will hold.\", \"It will keep.\"). Do not repeat the spine's premise, want, stake, turn or ending as a line.");
         text.AppendLine("A line never gives the Commander a task. The only thing they can do is fly to the next objective, and the game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never \"ask the clerk\", \"find the pilot\" or \"see what their face does\". What the Commander does next is always the next objective's place, and the line may point them at it.");
         text.AppendLine(
-            "Give every arrive, dock, land and scan objective a \"reason\": one plain sentence, said before the Commander sets off, "
-            + "saying what is at that place that matters to the story — never a place reached for its own sake. It says what is there, "
-            + "not what the Commander must do there, and it never says what the objective's line will say. It may name an invented "
+            "Give every objective except a choice a \"reason\": one plain sentence, said before the Commander sets off, "
+            + "saying why they go — what they go to do or get there and how it serves the chapter — and where in the story that comes from, "
+            + "such as a record, a sheet, a note, a cast member, or what an earlier objective found. The purpose belongs in the reason, "
+            + "not only in the objective's line, and the reason never says what the line will say. It never attributes the objective to "
+            + "someone unnamed (\"I'm told\", \"I've been asked\"). It may say what the Commander does there only if the game records it: "
+            + "dock, take or hand in a mission, scan, land and the like; the game has no act for meeting a person. It may name an invented "
             + "person who is at the place, such as a comms specialist who reads signals like the burst, a visiting scholar, or a doctor "
             + "who can say whether the voices are real; the Commander is told about that person and never meets them, and what the "
-            + "person said or left is the objective's line. Every other kind has a null reason.");
+            + "person said or left is the objective's line. A choice has a null reason.");
         text.AppendLine("Give each objective a short title — a chapter name, never a number.");
         var speakers = ask.Story is not null;
         var due = Due(ask, facts);
@@ -4707,7 +4710,7 @@ public sealed class AdventureGenerator(
                 {
                     Title = beat.Title,
                     Function = beat.Function,
-                    Steps = [new BeatStep { Trigger = trigger, Reason = IsTravel(trigger.Kind) ? beat.Reason : null, Options = options }],
+                    Steps = [new BeatStep { Trigger = trigger, Reason = trigger.Kind == TriggerKind.Choice ? null : beat.Reason, Options = options }],
                     Lines = beat.Lines,
                     Boards = beat.Boards,
                     Leaves = beat.Leaves,
@@ -4764,12 +4767,12 @@ public sealed class AdventureGenerator(
 
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
-            if (IsTravel(beat.Kind) && beat.Reason is null)
+            if (beat.Kind != TriggerKind.Choice && beat.Reason is null)
             {
                 Refuse(
                     index,
-                    $"Objective {offset + index + 1} ({beat.Named}) is a travel objective with no \"reason\"; give it one plain sentence saying "
-                    + "what is at that place that matters to the story.");
+                    $"Objective {offset + index + 1} ({beat.Named}) has no \"reason\"; give it one plain sentence saying why the Commander goes: "
+                    + "what they go to do or get and how it serves the chapter, and where in the story that comes from, never an order from someone unnamed.");
             }
         }
 

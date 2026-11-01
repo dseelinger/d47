@@ -119,7 +119,7 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
         var beats = $$"""
             {"opening": "Go.", "reply": "Here.", "beats": [
               {{Arrive("Kestrel")}},
-              {"title": "The Heist", "function": "turn", "kind": "mission", "count": 2, "mission": "Mission_OnFoot_Heist", "line": "Do it."},
+              {"title": "The Heist", "function": "turn", "kind": "mission", "reason": "Someone there knows about the burst.", "count": 2, "mission": "Mission_OnFoot_Heist", "line": "Do it."},
               {{Land("Edge Moon", "Edge Moon 1 a")}}
             ]}
             """;

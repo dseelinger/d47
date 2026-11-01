@@ -38,7 +38,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Ruins", "function": "setup", "kind": "site", "reason": "The survey flagged a structure there.", "system": "Dyson's Hollow", "body": "Dyson's Hollow 3 b", "filter": "guardian", "line": "Stone older than the colonies."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
         ]}
         """;
 
@@ -46,7 +46,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Ruins", "function": "setup", "kind": "site", "reason": "The survey flagged a structure there.", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "filter": "guardian", "line": "Stone older than the colonies."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
         ]}
         """;
 
@@ -138,7 +138,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Watch", "function": "setup", "kind": "site", "reason": "A beacon there has been logging visitors.", "system": "Ossen's Lantern", "body": null, "filter": "tourist", "line": "It logs every visitor."},
               {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
             ]}
             """;
         var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(beats));
@@ -182,7 +182,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Ship", "function": "setup", "kind": "site", "reason": "A generation ship drifts there.", "system": "Ossen's Lantern", "body": null, "filter": "generation", "line": "It has been travelling for centuries."},
               {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
             ]}
             """;
         var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(beats));
@@ -218,7 +218,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Watch", "function": "setup", "kind": "site", "reason": "A beacon there has been logging visitors.", "system": "Ossen's Lantern", "body": null, "filter": "tourist", "line": "It logs every visitor."},
               {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
             ]}
             """;
         var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(beats), Saying("""{"objections": []}"""));

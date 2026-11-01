@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Every objective in a generated chapter now states why you go, including rank, mission and other counted objectives. The reason says what you go to do or get and where in the story that comes from, and the core no longer presents the next objective as an order from someone unnamed.
+
 An owned ship's page now offers Clear this plan whenever the ship has planned slots, whether or not they are all fitted. It removes the build, keeps the ship in the fleet, and says which checklist lines stayed.
 
 An outfitting route on Navigation › Plan now marks each module or ship as bought once you buy it, and a stop with everything bought shows as done. Plotting the route again asks only for what is left.

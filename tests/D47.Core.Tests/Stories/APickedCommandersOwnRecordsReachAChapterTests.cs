@@ -16,9 +16,9 @@ public sealed class APickedCommandersOwnRecordsReachAChapterTests
 
     private const string ChieftainBeats = """
         {"opening": "Again.", "reply": "Here.", "beats": [
-          {"title": "The Hull", "function": "setup", "kind": "board", "ship": "Alliance Chieftain", "line": "Sign for it."},
-          {"title": "The Bounties", "function": "midpoint", "kind": "bounty", "count": 3, "line": "Paid."},
-          {"title": "The Ore", "function": "finale", "kind": "mine", "count": 20, "line": "Refined."}
+          {"title": "The Hull", "function": "setup", "kind": "board", "reason": "Someone there knows about the burst.", "ship": "Alliance Chieftain", "line": "Sign for it."},
+          {"title": "The Bounties", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Paid."},
+          {"title": "The Ore", "function": "finale", "kind": "mine", "reason": "Someone there knows about the burst.", "count": 20, "line": "Refined."}
         ]}
         """;
 

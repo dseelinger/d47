@@ -21,7 +21,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
             {"text": "CAST", "speaker": "dock-hand"}
           ]},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "lines": [{"text": "SHIP", "speaker": "ship"}]},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "system": "Ossen's Lantern", "line": "Scan it."}
+          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
         ]}
         """;
 

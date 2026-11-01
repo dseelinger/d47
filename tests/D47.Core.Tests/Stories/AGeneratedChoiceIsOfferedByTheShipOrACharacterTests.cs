@@ -11,7 +11,7 @@ public sealed class AGeneratedChoiceIsOfferedByTheShipOrACharacterTests
 {
     private static string Chapter(string speaker) => $$"""
         {"opening": "Again.", "reply": "Here.", "beats": [
-          {"title": "The Parcel", "function": "setup", "kind": "missiontaken", "handle": "parcel", "mission": "Mission_Courier",
+          {"title": "The Parcel", "function": "setup", "kind": "missiontaken", "reason": "Someone there knows about the burst.", "handle": "parcel", "mission": "Mission_Courier",
            "lines": [{"text": "They are waiting at the jump-in. Fight them, or drop the parcel and run.", "speaker": "{{speaker}}"}]},
           {"title": "The Jump-in", "function": "finale", "kind": "choice", "line": "Done, one way or the other.", "options": [
             {"label": "fight", "then": [{"kind": "missioncomplete", "handle": "parcel"}]},

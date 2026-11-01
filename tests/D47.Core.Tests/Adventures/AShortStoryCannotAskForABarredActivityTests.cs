@@ -15,7 +15,7 @@ public sealed class AShortStoryCannotAskForABarredActivityTests
     private const string Beats = """
         {"opening": "x", "reply": "ok", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Job", "function": "finale", "kind": "mission", "count": 2, "mission": "Mission_Courier", "line": "Do it."}
+          {"title": "The Job", "function": "finale", "kind": "mission", "reason": "Someone there knows about the burst.", "count": 2, "mission": "Mission_Courier", "line": "Do it."}
         ]}
         """;
 

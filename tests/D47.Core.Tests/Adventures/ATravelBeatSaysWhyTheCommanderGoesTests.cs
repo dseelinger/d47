@@ -7,7 +7,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 
 namespace D47.Core.Tests.Adventures;
 
-/// <summary>Every arrive, dock, land and scan beat carries a reason, said in the hand-off and given to the core before arrival.</summary>
+/// <summary>Every objective except a choice carries a reason, said in the hand-off and given to the core before arrival.</summary>
 [Trait("Category", "Integration")]
 public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
 {
@@ -24,7 +24,7 @@ public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "The freight's last beacon ping came from here.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "A comms specialist there reads signals like the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
         ]}
         """;
 
@@ -45,7 +45,7 @@ public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "The freight's last beacon ping came from here.", "system": "Ossen's Lantern", "line": "Scoop here."},
               {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "  ", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
             ]}
             """;
 
@@ -67,12 +67,12 @@ public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
         Assert.Contains("A line never gives the Commander a task.", first);
 
         var refusals = provider.Requests[2].Prompt.History[0].Text.Split("cannot stand")[1];
-        Assert.Contains("Objective 2 (The Anchorage) is a travel objective with no \"reason\";", refusals);
+        Assert.Contains("Objective 2 (The Anchorage) has no \"reason\";", refusals);
         Assert.DoesNotContain("Objective 1 (The Lantern)", refusals);
         Assert.DoesNotContain("Objective 3", refusals);
 
         Assert.Equal(Reason, outcome.Draft!.Beats[1].Reason);
-        Assert.Null(outcome.Draft.Beats[2].Reason);
+        Assert.Equal("Someone there knows about the burst.", outcome.Draft.Beats[2].Reason);
     }
 
     [Fact]

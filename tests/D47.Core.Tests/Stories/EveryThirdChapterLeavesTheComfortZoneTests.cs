@@ -24,8 +24,8 @@ public sealed class EveryThirdChapterLeavesTheComfortZoneTests
     private const string BeatsWithoutPassengers = """
         {"opening": "Again.", "reply": "Here.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "Any Mission", "function": "turn", "kind": "mission", "count": 2, "mission": null, "line": "Work."},
-          {"title": "The Bounties", "function": "resolution", "kind": "bounty", "count": 3, "line": "Paid."}
+          {"title": "Any Mission", "function": "turn", "kind": "mission", "reason": "Someone there knows about the burst.", "count": 2, "mission": null, "line": "Work."},
+          {"title": "The Bounties", "function": "resolution", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Paid."}
         ]}
         """;
 

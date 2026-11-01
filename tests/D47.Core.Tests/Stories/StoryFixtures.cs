@@ -116,16 +116,16 @@ internal sealed class StoryFixtures : IDisposable
         {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "system": "Ossen's Lantern", "line": "Scan it."}
+          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
         ]}
         """;
 
     /// <summary>Chapter one with a beacon beat before its last, which also ends at the beacon.</summary>
     public const string BeatsWithAnEarlyBeacon = """
         {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
-          {"title": "Too Soon", "function": "setup", "kind": "beacon", "line": "Not yet."},
+          {"title": "Too Soon", "function": "setup", "kind": "beacon", "reason": "Someone there knows about the burst.", "line": "Not yet."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "line": "Scan it."}
+          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "line": "Scan it."}
         ]}
         """;
 
@@ -153,7 +153,7 @@ internal sealed class StoryFixtures : IDisposable
         {
             var beat = new System.Text.Json.Nodes.JsonObject
             {
-                ["title"] = $"The {slot.Kind}", ["function"] = "turn", ["kind"] = slot.Kind.ToString().ToLowerInvariant(), ["count"] = slot.Count, ["line"] = "Do it.",
+                ["title"] = $"The {slot.Kind}", ["function"] = "turn", ["kind"] = slot.Kind.ToString().ToLowerInvariant(), ["reason"] = "Someone there knows about the burst.", ["count"] = slot.Count, ["line"] = "Do it.",
             };
 
             if (slot.Family is not null)
@@ -193,7 +193,7 @@ internal sealed class StoryFixtures : IDisposable
     public const string NextBeatsWithABeacon = """
         {"opening": "Again.", "reply": "Here.", "beats": [
           {"title": "The Lantern Again", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "The Beacon Again", "function": "resolution", "kind": "beacon", "line": "Again."}
+          {"title": "The Beacon Again", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "line": "Again."}
         ]}
         """;
 

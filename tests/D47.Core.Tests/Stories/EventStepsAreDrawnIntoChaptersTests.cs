@@ -183,12 +183,12 @@ public sealed class EventStepsAreDrawnIntoChaptersTests
 
         foreach (var other in others)
         {
-            beats.Add(new JsonObject { ["title"] = "The Bounty", ["function"] = "turn", ["kind"] = "bounty", ["count"] = other.Count, ["line"] = "Do it." });
+            beats.Add(new JsonObject { ["title"] = "The Bounty", ["function"] = "turn", ["kind"] = "bounty", ["reason"] = "Someone there knows about the burst.", ["count"] = other.Count, ["line"] = "Do it." });
         }
 
         if (task is not null)
         {
-            beats.Add(new JsonObject { ["title"] = "The Task", ["function"] = "turn", ["kind"] = "event", ["task"] = task, ["count"] = 9, ["line"] = "Do it." });
+            beats.Add(new JsonObject { ["title"] = "The Task", ["function"] = "turn", ["kind"] = "event", ["reason"] = "Someone there knows about the burst.", ["task"] = task, ["count"] = 9, ["line"] = "Do it." });
         }
 
         beats.Add(new JsonObject

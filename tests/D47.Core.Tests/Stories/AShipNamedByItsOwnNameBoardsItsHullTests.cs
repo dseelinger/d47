@@ -13,9 +13,9 @@ public sealed class AShipNamedByItsOwnNameBoardsItsHullTests
 {
     private static string Beats(string ship) => $$"""
         {"opening": "Again.", "reply": "Here.", "beats": [
-          {"title": "Range", "function": "setup", "kind": "board", "ship": "{{ship}}", "line": "Sign for it."},
-          {"title": "The Bounties", "function": "midpoint", "kind": "bounty", "count": 3, "line": "Paid."},
-          {"title": "The Ore", "function": "finale", "kind": "mine", "count": 20, "line": "Refined."}
+          {"title": "Range", "function": "setup", "kind": "board", "reason": "Someone there knows about the burst.", "ship": "{{ship}}", "line": "Sign for it."},
+          {"title": "The Bounties", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Paid."},
+          {"title": "The Ore", "function": "finale", "kind": "mine", "reason": "Someone there knows about the burst.", "count": 20, "line": "Refined."}
         ]}
         """;
 

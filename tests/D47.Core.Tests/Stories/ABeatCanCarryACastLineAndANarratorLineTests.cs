@@ -34,7 +34,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
             {"text": "The channel hisses, and the yard lights stay on.", "speaker": "narrator"}
           ]},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "lines": [{"text": "To one name.", "speaker": "ship"}]},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "system": "Ossen's Lantern", "line": "Scan it."}
+          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
         ]}
         """;
 
@@ -104,7 +104,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
         var path = Path.Combine(_folder, "adventures.json");
         _files.WriteText(path, """
             {"commanders": [{"frontierId": "F1", "adventures": [{"key": "old", "name": "Old", "beats": [
-              {"title": "Yard Paint", "trigger": {"kind": "arrive", "systemAddress": 10477373803}, "line": "Anyone. Please.", "speaker": "caller"}
+              {"title": "Yard Paint", "trigger": {"kind": "arrive", "reason": "Someone there knows about the burst.", "systemAddress": 10477373803}, "line": "Anyone. Please.", "speaker": "caller"}
             ]}]}]}
             """);
 

@@ -244,8 +244,10 @@ public static class FlavourBriefs
                     + $"\"{announcement.Text}\" Show the place and what is in it; never tell the Commander "
                     + "what they feel. Two to four sentences, spoken in a cockpit. If the text ends by saying "
                     + "where the Commander goes next, end by saying the same place and the same act in your own "
-                    + "words — that is the only thing you say about what is ahead; do not guess at what is "
-                    + "there or why, and never send the Commander to find or speak to anyone.",
+                    + "words, with the reason and its source when the text gives one — that is the only thing you say about "
+                    + "what is ahead; do not guess at what is there or why, never present the next objective as an order you "
+                    + "were given (\"I'm told\", \"I've been told\", \"we've been asked\"), and never send the Commander to find or "
+                    + "speak to anyone.",
                 NeedsPersona = true,
                 NeedsGameState = true,
                 NeedsAboutMe = true,

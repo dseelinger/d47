@@ -231,8 +231,8 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
     private const string BeatsWithTheTradeRankOnly = """
         {"opening": "Again.", "reply": "Here.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "The Turn", "function": "turn", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
-          {"title": "The Bounties", "function": "resolution", "kind": "bounty", "count": 3, "line": "Paid."}
+          {"title": "The Turn", "function": "turn", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
+          {"title": "The Bounties", "function": "resolution", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Paid."}
         ]}
         """;
 

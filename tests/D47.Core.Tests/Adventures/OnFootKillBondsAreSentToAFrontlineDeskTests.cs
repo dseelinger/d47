@@ -136,8 +136,8 @@ public sealed class OnFootKillBondsAreSentToAFrontlineDeskTests
         return $$"""
             {"opening": "A war.", "reply": "Here it is.", "beats": [
               {{dock}}
-              {"title": "The Fight", "function": "turn", "kind": "onfootbond", "system": null, "station": null, "body": null, "career": null, "rank": null, "count": 5, "faction": null, "line": "Go to the desk."},
-              {"title": "The Ground War Ends", "function": "resolution", "kind": "rank", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "It is done."}
+              {"title": "The Fight", "function": "turn", "kind": "onfootbond", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": null, "rank": null, "count": 5, "faction": null, "line": "Go to the desk."},
+              {"title": "The Ground War Ends", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "It is done."}
             ]}
             """;
     }

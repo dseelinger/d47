@@ -21,7 +21,7 @@ public sealed class ARefusedBeatIsReplacedTests
 
     private const string BountyAndADock = """
         {"opening": "x", "reply": "ok", "beats": [
-          {"title": "Another Way", "function": "midpoint", "kind": "bounty", "count": 2, "line": "Two more."},
+          {"title": "Another Way", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 2, "line": "Two more."},
           {"title": "Home Again", "function": "finale", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
         ]}
         """;
@@ -29,7 +29,7 @@ public sealed class ARefusedBeatIsReplacedTests
     private const string ArriveAgainThenABounty = """
         {"opening": "x", "reply": "ok", "beats": [
           {"title": "Back Again", "function": "midpoint", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Again."},
-          {"title": "Home Again", "function": "finale", "kind": "bounty", "count": 1, "line": "Home."}
+          {"title": "Home Again", "function": "finale", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 1, "line": "Home."}
         ]}
         """;
 
