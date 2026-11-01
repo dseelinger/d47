@@ -98,6 +98,16 @@ public sealed record OutfittingItem
         return false;
     }
 
+    /// <summary>Whether a module from the specification table is this item; an unstated size or rating matches any.</summary>
+    public bool Matches(ModuleSpecification module) =>
+        !IsShip
+        && Catalogue.Relax(Name) == Catalogue.Relax(Aliases.TryGetValue(module.Name, out var alias) ? alias : module.Name)
+        && (Class is null || Class == module.Class)
+        && (Rating is null || string.Equals(Rating, module.Rating, StringComparison.Ordinal));
+
+    /// <summary>Whether this item is the ship with this hull name.</summary>
+    public bool Matches(string hullName) => IsShip && Catalogue.Relax(Name) == Catalogue.Relax(hullName);
+
     /// <summary>Lowest and highest list price across the specifications this module matches; null for a ship or when none has a cost.</summary>
     public (long Low, long High)? PriceRange()
     {

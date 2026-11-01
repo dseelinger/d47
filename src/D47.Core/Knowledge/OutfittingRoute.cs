@@ -36,6 +36,96 @@ public sealed record OutfittingRoute(IReadOnlyList<OutfittingStop> Stops, IReadO
     public double TotalDistance => Stops.Sum(stop => stop.Distance ?? 0);
 }
 
+/// <summary>Which items on an outfitting route have been bought. No I/O.</summary>
+public static class OutfittingBought
+{
+    /// <summary>
+    /// Per stop, per item: true where bought. Each entry of <paramref name="bought"/> marks the first
+    /// unmarked item with that text, in stop order.
+    /// </summary>
+    public static bool[][] Flags(OutfittingRoute route, IReadOnlyList<string> bought)
+    {
+        var left = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        foreach (var text in bought)
+        {
+            left[text] = left.GetValueOrDefault(text) + 1;
+        }
+
+        return
+        [
+            .. route.Stops.Select(stop => stop.Items.Select(item =>
+            {
+                if (left.GetValueOrDefault(item) <= 0)
+                {
+                    return false;
+                }
+
+                left[item]--;
+
+                return true;
+            }).ToArray()),
+        ];
+    }
+
+    /// <summary>The items not yet bought, then those no station sold.</summary>
+    public static IReadOnlyList<string> Remaining(OutfittingRoute route, IReadOnlyList<string> bought)
+    {
+        var flags = Flags(route, bought);
+
+        return
+        [
+            .. route.Stops.SelectMany((stop, s) => stop.Items.Where((_, i) => !flags[s][i])),
+            .. route.NotFound,
+        ];
+    }
+
+    /// <summary>The route's item text that a module or hull purchase ticks, or null when none matches.</summary>
+    public static string? Ticked(OutfittingRoute route, IReadOnlyList<string> bought, JournalEvent purchase)
+    {
+        Func<OutfittingItem, bool> matches;
+
+        switch (purchase.Kind)
+        {
+            case "ModuleBuy" or "ModuleBuyAndStore":
+                if (EliteSpecifications.Module(purchase.String("BuyItem")) is not { } module)
+                {
+                    return null;
+                }
+
+                matches = item => item.Matches(module);
+                break;
+            case "ShipyardBuy":
+                if (EliteSpecifications.HullName(purchase.String("ShipType")) is not { } hull)
+                {
+                    return null;
+                }
+
+                matches = item => item.Matches(hull);
+                break;
+            default:
+                return null;
+        }
+
+        var flags = Flags(route, bought);
+
+        for (var s = 0; s < route.Stops.Count; s++)
+        {
+            for (var i = 0; i < route.Stops[s].Items.Count; i++)
+            {
+                if (!flags[s][i]
+                    && OutfittingItem.TryParse(route.Stops[s].Items[i], out var item, out _)
+                    && matches(item))
+                {
+                    return route.Stops[s].Items[i];
+                }
+            }
+        }
+
+        return null;
+    }
+}
+
 /// <summary>Picks the stations an outfitting route visits. No I/O.</summary>
 public static class OutfittingRoutePlanner
 {

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+An outfitting route on Navigation › Plan now marks each module or ship as bought once you buy it, and a stop with everything bought shows as done. Plotting the route again asks only for what is left.
+
 D47 now says when a ship you transferred arrives at the station you sent it to, using its own name where it has one. A transfer still in transit when d47 restarts is announced on time. The Ship transfers row under Plans and reminders switches it off.
 
 The carrier captain now says when your own carrier has arrived at its destination, whether or not you are aboard, and a jump booked while you were away no longer shows as pending once the carrier is seen there.

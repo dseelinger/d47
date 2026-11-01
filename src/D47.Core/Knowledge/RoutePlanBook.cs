@@ -65,6 +65,9 @@ public sealed record StoredRoutePlan
 
     /// <summary>The furthest stop the Commander has reached, as an index into the plan's own stop list.</summary>
     public int? Reached { get; init; }
+
+    /// <summary>The item texts of an <see cref="RoutePlanKind.Outfitting"/> plan that the Commander has bought.</summary>
+    public IReadOnlyList<string> Bought { get; init; } = [];
 }
 
 /// <summary>
@@ -271,7 +274,7 @@ public sealed class RoutePlanBook(
         });
 
     /// <summary>
-    /// Moves a stored plan's reached stop forward on arrival, one plan and one kind at a time (#199).
+    /// Moves a stored plan's reached stop forward on arrival, one plan and one kind at a time (#199), and marks outfitting items bought on a purchase.
     /// Only the plans of <paramref name="frontierId"/>, the Commander who wrote the events, move.
     /// </summary>
     public void Apply(IReadOnlyList<JournalEvent> events, string? frontierId = null)
@@ -288,6 +291,20 @@ public sealed class RoutePlanBook(
 
             foreach (var journalEvent in events)
             {
+                if (journalEvent.Kind is "ModuleBuy" or "ModuleBuyAndStore" or "ShipyardBuy")
+                {
+                    if (_plans.TryGetValue((frontierId, RoutePlanKind.Outfitting), out var outfitting)
+                        && journalEvent.Timestamp >= outfitting.PlottedAt
+                        && outfitting.Outfitting is { } route
+                        && OutfittingBought.Ticked(route, outfitting.Bought, journalEvent) is { } text)
+                    {
+                        _plans[(frontierId, RoutePlanKind.Outfitting)] = outfitting with { Bought = [.. outfitting.Bought, text] };
+                        moved = true;
+                    }
+
+                    continue;
+                }
+
                 if (journalEvent.Kind is not ("FSDJump" or "CarrierJump" or "Location" or "CarrierLocation") || journalEvent.IsOperationLocation)
                 {
                     continue;

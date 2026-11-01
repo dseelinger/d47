@@ -80,11 +80,11 @@ public sealed record OutfittingPlotter(
             });
     }
 
-    /// <summary>Plots <paramref name="route"/> again with the same items, start, radius, pad and storage flag.</summary>
+    /// <summary>Plots <paramref name="route"/> again for the items not in <paramref name="bought"/>, start, radius, pad and storage flag.</summary>
     /// <param name="reportAgeHours">The oldest report accepted; 0 for any age.</param>
-    public Task<ToolResult> Replot(OutfittingRoute route, int reportAgeHours, CancellationToken cancellationToken)
+    public Task<ToolResult> Replot(OutfittingRoute route, IReadOnlyList<string> bought, int reportAgeHours, CancellationToken cancellationToken)
     {
-        var items = route.Stops.SelectMany(stop => stop.Items).Concat(route.NotFound).Distinct(StringComparer.Ordinal);
+        var items = OutfittingBought.Remaining(route, bought).Distinct(StringComparer.Ordinal);
         var invariant = System.Globalization.CultureInfo.InvariantCulture;
 
         var arguments = new Dictionary<string, string>(StringComparer.Ordinal)

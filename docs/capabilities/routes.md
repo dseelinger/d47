@@ -572,7 +572,7 @@ management panel has never been opened gets a sentence saying which, and nothing
 
 "Plot a route to buy a 6A fuel scoop and a 5A frame shift drive" finds the fewest stations near a
 system that sell the whole list between them, and keeps the result as an outfitting plan that
-`plot_next_stop` follows like a trade run.
+`plot_next_stop` follows like a trade run. The stored plan marks each item bought as you buy it.
 
 ```json
 {"type":"object","properties":{"items":{"type":"string","description":"Comma-separated: modules by name with an optional size and rating, and ships, such as \u00225A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\u0022."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"max_report_age_hours":{"type":"integer","description":"Leave out reports older than this many hours, 1 to 8,760. Default 72, three days; 0 means any age."},"min_pad":{"type":"string","description":"Large, or Medium for at least one medium pad.","enum":["Medium","Large"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"storage_checked":{"type":"boolean","description":"False when the list was worked out without counting stored modules."}},"required":["items"],"additionalProperties":false}

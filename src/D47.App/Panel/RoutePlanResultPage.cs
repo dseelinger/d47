@@ -122,7 +122,7 @@ public sealed class RoutePlanResultPage : UserControl
             TimeSpan.FromSeconds(70),
             "Searching…",
             () => _planSeen?.Outfitting is not null && _plotter?.LookupsEnabled() == true,
-            token => _plotter!.Replot(_planSeen!.Outfitting!, _age.Value, token),
+            token => _plotter!.Replot(_planSeen!.Outfitting!, _planSeen.Bought, _age.Value, token),
             _ => { });
 
         Draw(plan);
@@ -342,7 +342,7 @@ public sealed class RoutePlanResultPage : UserControl
             here,
             LegLength(index == 0 ? riches.Start?.Position : riches.Stops[index - 1].Position, stop.Position))),
         { Trade: { } trade } => trade.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
-        { Outfitting: { } outfitting } => outfitting.Stops.Select((stop, index) => Stop(stop, State(index, plan.Reached), here)),
+        { Outfitting: { } outfitting } => OutfittingRows(outfitting, plan, here),
         { Exobiology: { } exobiology } =>
             exobiology.Stops.Select((stop, index) => Stop(
                 stop,
@@ -497,7 +497,19 @@ public sealed class RoutePlanResultPage : UserControl
         return RoutingKit.Row(lines, stop.System, _copy);
     }
 
-    private Control Stop(OutfittingStop stop, RowState state, string? here)
+    private IEnumerable<Control> OutfittingRows(OutfittingRoute route, StoredRoutePlan plan, string? here)
+    {
+        var flags = OutfittingBought.Flags(route, plan.Bought);
+
+        return route.Stops.Select((stop, index) =>
+        {
+            var state = State(index, plan.Reached);
+
+            return Stop(stop, state with { Reached = state.Reached || (flags[index].Length > 0 && flags[index].All(bought => bought)) }, here, flags[index]);
+        });
+    }
+
+    private Control Stop(OutfittingStop stop, RowState state, string? here, bool[] bought)
     {
         var lines = new List<Control> { Line($"{stop.Station} in {stop.System}", stop.System, state, here) };
 
@@ -506,9 +518,11 @@ public sealed class RoutePlanResultPage : UserControl
             lines.Add(RoutingKit.Values($"{distance:N1} ly", state.Reached));
         }
 
-        foreach (var item in stop.Items)
+        for (var i = 0; i < stop.Items.Count; i++)
         {
-            lines.Add(RoutingKit.Values($"buy {item}", state.Reached));
+            lines.Add(bought[i]
+                ? RoutingKit.Values($"bought {stop.Items[i]}", behind: true)
+                : RoutingKit.Values($"buy {stop.Items[i]}", state.Reached));
         }
 
         lines.Add(Caveat(
