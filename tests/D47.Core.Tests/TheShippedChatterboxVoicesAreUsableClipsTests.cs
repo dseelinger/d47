@@ -12,7 +12,7 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
     [Fact]
     public void EveryShippedRowHasAClipOfTheRightShapeAndASource()
     {
-        var folder = Path.Combine(RepositoryRoot(), "assets", "voices", "chatterbox");
+        var folder = Path.Combine(RepositoryFolder.Root(), "assets", "voices", "chatterbox");
         var log = new ListLogger();
 
         var voices = ChatterboxVoices.Load(new DiskFileSystem(), folder, log);
@@ -80,20 +80,6 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
         var format = new AudioFormat(sampleRate, 1);
         var pcm = new byte[(int)(seconds * sampleRate) * format.BytesPerFrame];
         files.WriteBytes(Path.Combine(folder, id + ".wav"), WavWriter.ToBytes(pcm, format));
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-            ?? throw new InvalidOperationException(
-                $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
     }
 
     private sealed class ListLogger : ILogger

@@ -25,7 +25,7 @@ public sealed class AnAdventureWrittenByHandStillPlaysTests : IDisposable
     {
         Directory.CreateDirectory(_folder);
         var path = Path.Combine(_folder, "adventures.json");
-        File.Copy(Path.Combine(RepositoryRoot(), "tests", "fixtures", "adventures", "hand-written.json"), path);
+        File.Copy(Path.Combine(RepositoryFolder.Root(), "tests", "fixtures", "adventures", "hand-written.json"), path);
 
         var store = new AdventureStore(path, new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         Assert.True(store.Poll());
@@ -53,17 +53,5 @@ public sealed class AnAdventureWrittenByHandStillPlaysTests : IDisposable
 
         Assert.True(after.Adventure.IsActive);
         Assert.Equal(["Remove"], after.ReadingButtons());
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new InvalidOperationException("No d47.slnx above the test binary.");
     }
 }

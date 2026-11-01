@@ -74,7 +74,7 @@ public class FindMaterialAsksTheOneTableTests
     public void TheGuideDerivesNoConditionsOfItsOwn()
     {
         var source = File.ReadAllText(Path.Combine(
-            RepositoryRoot(), "src", "D47.Core", "Knowledge", "MaterialGuide.cs"));
+            RepositoryFolder.Root(), "src", "D47.Core", "Knowledge", "MaterialGuide.cs"));
 
         Assert.DoesNotContain("StateOf", source, StringComparison.Ordinal);
         Assert.Contains("EmissionRules.Holding", source, StringComparison.Ordinal);
@@ -82,18 +82,5 @@ public class FindMaterialAsksTheOneTableTests
         // The population floor is the guide's to apply, and it must come from the table rather than be
         // written out again as a number.
         Assert.Contains("EmissionRules.MinimumPopulation", source, StringComparison.Ordinal);
-    }
-
-    private static string RepositoryRoot()
-    {
-        var at = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (at is not null && !File.Exists(Path.Combine(at.FullName, "d47.slnx")))
-        {
-            at = at.Parent;
-        }
-
-        Assert.NotNull(at);
-        return at!.FullName;
     }
 }

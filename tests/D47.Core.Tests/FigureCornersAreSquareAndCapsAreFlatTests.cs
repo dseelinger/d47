@@ -13,10 +13,10 @@ public partial class FigureCornersAreSquareAndCapsAreFlatTests
     {
         var offenders = new List<string>();
 
-        foreach (var file in Directory.EnumerateFiles(Path.Combine(RepositoryRoot(), "docs"), "*.md", SearchOption.AllDirectories))
+        foreach (var file in Directory.EnumerateFiles(Path.Combine(RepositoryFolder.Root(), "docs"), "*.md", SearchOption.AllDirectories))
         {
             var text = File.ReadAllText(file);
-            var relative = Path.GetRelativePath(RepositoryRoot(), file).Replace('\\', '/');
+            var relative = Path.GetRelativePath(RepositoryFolder.Root(), file).Replace('\\', '/');
 
             foreach (Match match in RoundedRadius().Matches(text))
             {
@@ -37,18 +37,4 @@ public partial class FigureCornersAreSquareAndCapsAreFlatTests
 
     [GeneratedRegex(@"stroke-linecap=""round""|stroke-linejoin=""round""")]
     private static partial Regex RoundCapOrJoin();
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
-    }
 }

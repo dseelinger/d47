@@ -15,7 +15,7 @@ public sealed class UnitTestsStayOffTheDiskGateTests
 {
     private static readonly HashSet<string> Banned =
     [
-        "File", "Directory", "FileInfo", "FileStream", "DiskFileSystem", "TempInstall", "TempFolders", "AppSource",
+        "File", "Directory", "FileInfo", "FileStream", "DiskFileSystem", "TempInstall", "TempFolders", "AppSource", "RepositoryFolder",
     ];
 
     /// <summary>Helper types that write render captures when <c>D47_CAPTURES=1</c>.</summary>
@@ -41,7 +41,7 @@ public sealed class UnitTestsStayOffTheDiskGateTests
 
     private static List<string> Survey()
     {
-        var tests = Path.Combine(RepositoryRoot(), "tests");
+        var tests = Path.Combine(RepositoryFolder.Root(), "tests");
         var parse = new CSharpParseOptions(LanguageVersion.Preview);
         var found = new List<string>();
 
@@ -102,16 +102,4 @@ public sealed class UnitTestsStayOffTheDiskGateTests
 
     private static string Namespace(SyntaxNode node) =>
         node.Ancestors().OfType<BaseNamespaceDeclarationSyntax>().FirstOrDefault()?.Name.ToString() ?? string.Empty;
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new InvalidOperationException("No d47.slnx above the test binary.");
-    }
 }

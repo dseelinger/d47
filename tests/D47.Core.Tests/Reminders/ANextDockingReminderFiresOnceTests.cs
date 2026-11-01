@@ -100,15 +100,5 @@ public class ANextDockingReminderFiresOnceTests
         Assert.Empty(bench.Say(state));
     }
 
-    private static string FixturesDirectory()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return Path.Combine(directory!.FullName, "tests", "fixtures", "journal");
-    }
+    private static string FixturesDirectory() => Path.Combine(RepositoryFolder.Root(), "tests", "fixtures", "journal");
 }

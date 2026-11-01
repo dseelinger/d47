@@ -6,20 +6,9 @@ namespace D47.Core.Tests.Knowledge;
 [Trait("Category", "Integration")]
 public class TheSystemNameTableIsWhatThePatternsMissTests
 {
-    private static string Root()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new InvalidOperationException("d47.slnx not found above the test output.");
-    }
 
     private static string[] Lines() =>
-        File.ReadAllLines(Path.Combine(Root(), "src", "D47.Core", "Knowledge", "SystemNames.tsv"));
+        File.ReadAllLines(Path.Combine(RepositoryFolder.Root(), "src", "D47.Core", "Knowledge", "SystemNames.tsv"));
 
     [Trait("Category", "Integration")]
     [Fact]
@@ -69,7 +58,7 @@ public class TheSystemNameTableIsWhatThePatternsMissTests
     [Fact]
     public void NoticeNamesTheTableAndItsGenerator()
     {
-        var notice = File.ReadAllText(Path.Combine(Root(), "NOTICE"));
+        var notice = File.ReadAllText(Path.Combine(RepositoryFolder.Root(), "NOTICE"));
 
         Assert.Contains("SystemNames.tsv", notice, StringComparison.Ordinal);
         Assert.Contains("tools/gen-system-names.py", notice, StringComparison.Ordinal);

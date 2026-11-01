@@ -11,7 +11,7 @@ public class LogRoutingTests
     /// <summary>Every namespace declared anywhere under <c>src/</c>.</summary>
     private static IReadOnlyList<string> DeclaredNamespaces()
     {
-        var source = Path.Combine(RepositoryRoot(), "src");
+        var source = Path.Combine(RepositoryFolder.Root(), "src");
         var found = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var file in Directory.EnumerateFiles(source, "*.cs", SearchOption.AllDirectories))
@@ -30,18 +30,6 @@ public class LogRoutingTests
         }
 
         return [.. found];
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new InvalidOperationException("no repository root above the test binary");
     }
 
     /// <summary>The assertion that was missing.</summary>

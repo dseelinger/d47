@@ -148,7 +148,7 @@ public class PackageLicenceGateTests
 
     private static IReadOnlyList<ProjectPackages> Load()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFolder.Root();
         var projects = new List<ProjectPackages>();
 
         foreach (var relative in SolutionProjects())
@@ -177,22 +177,8 @@ public class PackageLicenceGateTests
     /// </summary>
     private static IReadOnlyList<string> SolutionProjects() =>
         [.. XDocument
-            .Load(Path.Combine(RepositoryRoot(), "d47.slnx"))
+            .Load(Path.Combine(RepositoryFolder.Root(), "d47.slnx"))
             .Descendants("Project")
             .Select(project => project.Attribute("Path")?.Value)
             .OfType<string>()];
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
-    }
 }

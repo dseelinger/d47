@@ -19,7 +19,7 @@ public partial class AControlPageQuotesOnlyPhrasesThatRouteGateTests
     [InlineData("on-foot-controls")]
     public void EveryQuotedPhraseRoutes(string page)
     {
-        var phrases = Quoted(File.ReadAllText(Path.Combine(RepositoryRoot(), "docs", "capabilities", $"{page}.md")));
+        var phrases = Quoted(File.ReadAllText(Path.Combine(RepositoryFolder.Root(), "docs", "capabilities", $"{page}.md")));
 
         Assert.NotEmpty(phrases);
 
@@ -55,18 +55,6 @@ public partial class AControlPageQuotesOnlyPhrasesThatRouteGateTests
         phrases.AddRange(AskList().Matches(text).Select(asked => asked.Groups[1].Value));
 
         return [.. phrases.Distinct(StringComparer.OrdinalIgnoreCase)];
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new InvalidOperationException("No d47.slnx above the test binary.");
     }
 
     [GeneratedRegex(@"<!--.*?-->", RegexOptions.Singleline)]

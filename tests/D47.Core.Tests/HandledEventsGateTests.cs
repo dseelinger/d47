@@ -77,7 +77,7 @@ public sealed class HandledEventsGateTests
     [Fact]
     public void TheBlocksAreAlphabeticalDisjointAndComplete()
     {
-        var blocks = Blocks(File.ReadAllLines(Path.Combine(RepositoryRoot(), ListPath)));
+        var blocks = Blocks(File.ReadAllLines(Path.Combine(RepositoryFolder.Root(), ListPath)));
 
         foreach (var (block, names) in blocks)
         {
@@ -169,20 +169,6 @@ public sealed class HandledEventsGateTests
         return blocks;
     }
 
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
-    }
-
     /// <summary>One event name the code compares a kind against, and where.</summary>
     private sealed record Sighting(string Name, string Where);
 
@@ -237,7 +223,7 @@ public sealed class HandledEventsGateTests
 
         public static Survey Run()
         {
-            var survey = new Survey(RepositoryRoot());
+            var survey = new Survey(RepositoryFolder.Root());
             var parse = new CSharpParseOptions(LanguageVersion.Preview);
             var source = Path.Combine(survey._root, "src");
             var trees = new List<SyntaxTree>();

@@ -16,7 +16,7 @@ public sealed partial class NoTextCallsTheCoreAShipAiGateTests
     [Fact]
     public void NoStringLiteralInSourceCallsTheCoreTheShipsAi()
     {
-        var source = Path.Combine(RepositoryRoot(), "src");
+        var source = Path.Combine(RepositoryFolder.Root(), "src");
         var found = new List<string>();
 
         foreach (var path in Directory.EnumerateFiles(source, "*.cs", SearchOption.AllDirectories))
@@ -52,17 +52,5 @@ public sealed partial class NoTextCallsTheCoreAShipAiGateTests
             found.Count == 0,
             "These string literals call the core the ship's AI; say \"core\":" + Environment.NewLine
             + string.Join(Environment.NewLine, found));
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new InvalidOperationException("No d47.slnx above the test binary.");
     }
 }

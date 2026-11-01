@@ -172,7 +172,7 @@ public class ACalloutSwitchTakesEffectWithoutARestartTests
 
         private static List<string> CatalogueLines()
         {
-            var root = RepositoryRoot();
+            var root = RepositoryFolder.Root();
 
             var type = Directory.EnumerateFiles(Path.Combine(root, "src", "D47.Core"), "*.cs", SearchOption.AllDirectories)
                 .SelectMany(file => CSharpSyntaxTree.ParseText(File.ReadAllText(file), path: file)
@@ -190,16 +190,5 @@ public class ACalloutSwitchTakesEffectWithoutARestartTests
             return lines;
         }
 
-        private static string RepositoryRoot()
-        {
-            var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-            while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-            {
-                directory = directory.Parent;
-            }
-
-            return directory?.FullName ?? throw new InvalidOperationException("No d47.slnx above the test binary.");
-        }
     }
 }

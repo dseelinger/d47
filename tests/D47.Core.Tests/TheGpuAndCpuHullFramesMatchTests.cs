@@ -71,17 +71,7 @@ public class TheGpuAndCpuHullFramesMatchTests
         Assert.True(matched >= compared * RequiredShare, $"{matched} of {compared} pixels are within {ChannelTolerance}/255 of the GPU frame");
     }
 
-    private static string Fixtures()
-    {
-        var folder = AppContext.BaseDirectory;
-
-        while (!File.Exists(Path.Combine(folder, "d47.slnx")))
-        {
-            folder = Path.GetDirectoryName(folder) ?? throw new InvalidOperationException("d47.slnx was not found above the test binary");
-        }
-
-        return Path.Combine(folder, "tests", "fixtures", "hulls");
-    }
+    private static string Fixtures() => Path.Combine(RepositoryFolder.Root(), "tests", "fixtures", "hulls");
 
     private static uint[] ReadFrame(string path)
     {

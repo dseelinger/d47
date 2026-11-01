@@ -255,7 +255,7 @@ public class AJournalEventReadsAsLabelledRowsTests
     [Fact]
     public void EveryFixtureEventReadsWithCompletePlumbingAndNoDollarKeys()
     {
-        var folder = Path.Combine(RepositoryRoot(), "tests", "fixtures", "journal");
+        var folder = Path.Combine(RepositoryFolder.Root(), "tests", "fixtures", "journal");
         var entries = Directory.GetFiles(folder, "*.log")
             .SelectMany(File.ReadAllLines)
             .Where(line => line.TrimStart().StartsWith('{'))
@@ -275,17 +275,5 @@ public class AJournalEventReadsAsLabelledRowsTests
                 reading.Rows.SelectMany(row => row.Values),
                 value => Assert.False(value.Text.StartsWith('$')));
         }
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new InvalidOperationException("No d47.slnx above the test binary.");
     }
 }

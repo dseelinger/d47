@@ -46,23 +46,9 @@ public class TheWordIsCraftExceptWhereItIsNotTests
     [Fact]
     public void ThePreRollAnchorIsUntouched()
     {
-        var source = File.ReadAllText(Path.Combine(Repository(), "src", "D47.Core",
+        var source = File.ReadAllText(Path.Combine(RepositoryFolder.Root(), "src", "D47.Core",
             "Capabilities", "Builtin", "ListeningCapability.cs"));
 
         Assert.Contains("DocsAnchor = \"pre-roll\"", source, StringComparison.Ordinal);
-    }
-
-    /// <summary>The repository root, found by walking up for d47.slnx.</summary>
-    private static string Repository()
-    {
-        var here = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (here is not null && !File.Exists(Path.Combine(here.FullName, "d47.slnx")))
-        {
-            here = here.Parent;
-        }
-
-        Assert.NotNull(here);
-        return here!.FullName;
     }
 }

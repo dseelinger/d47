@@ -30,7 +30,7 @@ public sealed class ADecoratorForwardsTheStreamGateTests
 
     private static IEnumerable<Decorator> Decorators()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFolder.Root();
 
         foreach (var file in Directory.EnumerateFiles(Path.Combine(root, "src"), "*.cs", SearchOption.AllDirectories))
         {
@@ -65,16 +65,4 @@ public sealed class ADecoratorForwardsTheStreamGateTests
         SimpleNameSyntax simple => simple.Identifier.Text,
         _ => type.ToString(),
     };
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new InvalidOperationException("No d47.slnx above the test binary.");
-    }
 }

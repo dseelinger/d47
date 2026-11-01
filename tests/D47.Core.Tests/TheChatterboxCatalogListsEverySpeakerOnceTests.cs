@@ -86,21 +86,7 @@ public class TheChatterboxCatalogListsEverySpeakerOnceTests
 
     private static string[] ReadLines(string path) => File.ReadAllLines(path).Where(line => line.Length > 0).ToArray();
 
-    private static string Folder() => Path.Combine(RepositoryRoot(), "assets", "voices", "chatterbox");
+    private static string Folder() => Path.Combine(RepositoryFolder.Root(), "assets", "voices", "chatterbox");
 
     private static string Catalog() => Path.Combine(Folder(), "catalog.tsv");
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-            ?? throw new InvalidOperationException(
-                $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
-    }
 }

@@ -31,7 +31,7 @@ public partial class DocumentationGateTests
     [MemberData(nameof(CapabilityIds))]
     public void EveryRegisteredCapabilityHasADocumentationPage(string id)
     {
-        var page = Path.Combine(RepositoryRoot(), CapabilityDocsFolder, $"{id}.md");
+        var page = Path.Combine(RepositoryFolder.Root(), CapabilityDocsFolder, $"{id}.md");
 
         Assert.True(
             File.Exists(page),
@@ -43,7 +43,7 @@ public partial class DocumentationGateTests
     [MemberData(nameof(CapabilityIds))]
     public void EveryPageQuotesRealCodeOrOutput(string id)
     {
-        var page = File.ReadAllText(Path.Combine(RepositoryRoot(), CapabilityDocsFolder, $"{id}.md"));
+        var page = File.ReadAllText(Path.Combine(RepositoryFolder.Root(), CapabilityDocsFolder, $"{id}.md"));
 
         // A page that describes a capability without quoting one real artifact from it is the kind of
         // documentation that goes stale without anybody noticing.
@@ -60,7 +60,7 @@ public partial class DocumentationGateTests
         var capability = Registry().Find(id);
         Assert.NotNull(capability);
 
-        var page = File.ReadAllText(Path.Combine(RepositoryRoot(), CapabilityDocsFolder, $"{id}.md"));
+        var page = File.ReadAllText(Path.Combine(RepositoryFolder.Root(), CapabilityDocsFolder, $"{id}.md"));
 
         foreach (var (tool, schema) in capability.ToolSchemas)
         {
@@ -89,7 +89,7 @@ public partial class DocumentationGateTests
     [Fact]
     public void GeneralHelpExistsAlongsideTheCapabilityPages()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFolder.Root();
 
         Assert.True(File.Exists(Path.Combine(root, "docs/index.md")), "docs/index.md is missing.");
         Assert.True(File.Exists(Path.Combine(root, "docs/install.md")), "docs/install.md is missing.");
@@ -133,7 +133,7 @@ public partial class DocumentationGateTests
         foreach (var (capability, index) in Registry().All.Select((c, i) => (c, i)))
         {
             var descriptor = capability.Descriptor;
-            var path = Path.Combine(RepositoryRoot(), CapabilityDocsFolder, $"{descriptor.Id}.md");
+            var path = Path.Combine(RepositoryFolder.Root(), CapabilityDocsFolder, $"{descriptor.Id}.md");
             var front = FrontMatter(File.ReadAllText(path));
 
             var expected = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -201,7 +201,7 @@ public partial class DocumentationGateTests
     /// <summary>The pages the site actually publishes.</summary>
     private static IEnumerable<(string Path, string Relative)> PublishedPages()
     {
-        var docs = Path.Combine(RepositoryRoot(), "docs");
+        var docs = Path.Combine(RepositoryFolder.Root(), "docs");
 
         return Directory
             .EnumerateFiles(docs, "*.md", SearchOption.AllDirectories)
@@ -274,7 +274,7 @@ public partial class DocumentationGateTests
         var registered = Registry().All.Select(c => c.Descriptor.Id).ToHashSet(StringComparer.Ordinal);
 
         var orphans = Directory
-            .EnumerateFiles(Path.Combine(RepositoryRoot(), CapabilityDocsFolder), "*.md")
+            .EnumerateFiles(Path.Combine(RepositoryFolder.Root(), CapabilityDocsFolder), "*.md")
             .Select(Path.GetFileNameWithoutExtension)
             .Where(name => name is not null && !registered.Contains(name))
             .ToArray();
@@ -296,7 +296,7 @@ public partial class DocumentationGateTests
 
         foreach (var capability in Registry().All)
         {
-            var page = Path.Combine(RepositoryRoot(), CapabilityDocsFolder, $"{capability.Descriptor.Id}.md");
+            var page = Path.Combine(RepositoryFolder.Root(), CapabilityDocsFolder, $"{capability.Descriptor.Id}.md");
 
             if (!File.Exists(page))
             {
@@ -366,7 +366,7 @@ public partial class DocumentationGateTests
     [MemberData(nameof(CapabilityIds))]
     public void EveryHowToStepHasALineToSayAndALineToExpect(string id)
     {
-        var page = File.ReadAllText(Path.Combine(RepositoryRoot(), CapabilityDocsFolder, $"{id}.md"));
+        var page = File.ReadAllText(Path.Combine(RepositoryFolder.Root(), CapabilityDocsFolder, $"{id}.md"));
         var band = D47.Core.Help.HelpLibrary.ParseHowTo(page, id);
 
         Assert.True(band is not null, $"The page for '{id}' has no how-to band.");
@@ -397,7 +397,7 @@ public partial class DocumentationGateTests
         var shipped = ShippedGestures();
 
         var documented = Directory
-            .EnumerateFiles(Path.Combine(RepositoryRoot(), "docs"), "*.md", SearchOption.AllDirectories)
+            .EnumerateFiles(Path.Combine(RepositoryFolder.Root(), "docs"), "*.md", SearchOption.AllDirectories)
             .SelectMany(file => DefaultGesturesIn(File.ReadAllText(file))
                 .Select(gesture => (File: Path.GetFileName(file), Gesture: gesture)))
             .ToList();
@@ -475,18 +475,4 @@ public partial class DocumentationGateTests
     /// depends on where the app happens to be installed.
     /// </summary>
     private static TestSurface Surface() => TestSurface.For(new MemoryInstall());
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
-    }
 }

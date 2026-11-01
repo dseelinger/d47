@@ -16,7 +16,7 @@ public class NoDebuggingProbeShipsGateTests
     [Fact]
     public void NoSourceFileCarriesAProbeMarker()
     {
-        var src = Path.Combine(RepositoryRoot(), "src");
+        var src = Path.Combine(RepositoryFolder.Root(), "src");
 
         var offenders = Directory.EnumerateFiles(src, "*.cs", SearchOption.AllDirectories)
             .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
@@ -27,18 +27,5 @@ public class NoDebuggingProbeShipsGateTests
             .ToList();
 
         Assert.True(offenders.Count == 0, string.Join(Environment.NewLine, offenders));
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException("no repository root above the test binary");
     }
 }
