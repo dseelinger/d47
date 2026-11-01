@@ -13,8 +13,11 @@
     the manifest already in the release. Zips are written with fixed entry timestamps and sorted
     entries, so the same tracks give the same hash.
 
-    The script prints what it will upload and asks for a yes. -WhatIf builds the zips and manifest
-    in a temp folder and uploads nothing.
+    The script prints what it will upload and asks for a yes; -Yes skips the question. -WhatIf builds
+    the zips and manifest in a temp folder and uploads nothing.
+
+    With -Folders only those folders' zips are built and uploaded. The manifest keeps every other
+    entry as published and changes only the named ones.
 
     Needs gh on PATH. The repository must exist; the release is created with --latest=false when missing.
 
@@ -23,6 +26,9 @@
 
 .PARAMETER Order
     Folders to list first in the manifest, in download order.
+
+.PARAMETER Folders
+    Limits the zips and the manifest change to these folders.
 
 .PARAMETER Repo
     The repository that holds the release.
@@ -34,7 +40,9 @@
 param(
     [Parameter(Mandatory)] [string] $Source,
     [string[]] $Order = @('docked', 'supercruise', 'normal-space'),
+    [string[]] $Folders,
     [string] $Repo = 'dseelinger/d47-music',
+    [switch] $Yes,
     [switch] $WhatIf
 )
 
@@ -57,14 +65,18 @@ foreach ($m in [regex]::Matches($byTrack, '\] = (?:"([^"]+)"|\w+),')) {
 }
 if ($known.Count -lt 30) { throw "Read only $($known.Count) folder names from Ambience.cs" }
 
-$folders = @(Get-ChildItem $Source -Directory)
-foreach ($f in $folders) {
+$present = @(Get-ChildItem $Source -Directory)
+foreach ($name in $Folders) {
+    if ($name -cnotin $present.Name) { throw "-Folders names $name, which is not a subfolder of $Source" }
+}
+if ($Folders) { $present = @($present | Where-Object { $_.Name -cin $Folders }) }
+foreach ($f in $present) {
     if ($f.Name -cnotin $known) { throw "$($f.Name) is not a folder in Situations.All" }
 }
 foreach ($name in $Order) {
     if ($name -cnotin $known) { throw "-Order names $name, which is not a folder in Situations.All" }
 }
-$ordered = @($Order | Where-Object { $_ -in $folders.Name }) + @($known | Where-Object { $_ -in $folders.Name -and $_ -notin $Order })
+$ordered = @($Order | Where-Object { $_ -in $present.Name }) + @($known | Where-Object { $_ -in $present.Name -and $_ -notin $Order })
 if ($ordered.Count -eq 0) { throw "No subfolders in $Source" }
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { throw 'gh is not on PATH' }
@@ -74,12 +86,13 @@ New-Item -ItemType Directory -Path $work | Out-Null
 
 # The manifest already published, for the version numbers.
 $previous = @{}
+$previousOrder = [System.Collections.Generic.List[string]]::new()
 $ErrorActionPreference = 'Continue'
 & gh release download $release --repo $Repo --pattern manifest.json --dir $work 2>&1 | Out-Null
 $ErrorActionPreference = 'Stop'
 $old = Join-Path $work 'manifest.json'
 if ($LASTEXITCODE -eq 0 -and (Test-Path $old)) {
-    foreach ($e in (Get-Content $old -Raw | ConvertFrom-Json).folders) { $previous[$e.name] = $e }
+    foreach ($e in (Get-Content $old -Raw | ConvertFrom-Json).folders) { $previous[$e.name] = $e; $previousOrder.Add($e.name) }
     Remove-Item $old
 }
 
@@ -125,8 +138,16 @@ $entries = foreach ($name in $ordered) {
     }
 }
 
+$manifestEntries = @($entries)
+if ($Folders) {
+    $built = @{}
+    foreach ($e in $entries) { $built[$e.name] = $e }
+    $manifestEntries = @($previousOrder | ForEach-Object { if ($built.ContainsKey($_)) { $built[$_] } else { $previous[$_] } })
+    $manifestEntries += @($entries | Where-Object { $_.name -notin $previousOrder })
+}
+
 $manifestPath = Join-Path $work 'manifest.json'
-[ordered]@{ folders = @($entries) } | ConvertTo-Json -Depth 4 | Set-Content -Path $manifestPath -Encoding utf8
+[ordered]@{ folders = $manifestEntries } | ConvertTo-Json -Depth 4 | Set-Content -Path $manifestPath -Encoding utf8
 
 $files = @($entries | ForEach-Object { Join-Path $work $_.zip }) + $manifestPath
 "Release $release of $Repo"
@@ -140,7 +161,7 @@ if ($WhatIf) {
     return
 }
 
-if ((Read-Host "Upload $($files.Count) file(s) to $Repo $release? (yes/no)") -ne 'yes') {
+if (-not $Yes -and (Read-Host "Upload $($files.Count) file(s) to $Repo $release? (yes/no)") -ne 'yes') {
     "Not uploaded. Files are in $work"
     return
 }

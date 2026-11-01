@@ -1,7 +1,8 @@
 """Write catalogue.tsv: one row per track to generate, built from the per-folder briefs below.
 
-Each track's seed is derived from its id, so re-running this gives the same catalogue. Changing a
-brief changes the prompts of tracks not yet generated; tracks already on disk are kept.
+Each track's seed is derived from its id, so re-running this gives the same catalogue. A track whose
+id appears n times in rejected.tsv takes the seed of "<id>#<n>", so its replacement differs from the
+tracks deleted. Changing a brief changes the prompts of tracks not yet generated; tracks already on disk are kept.
 
 Captions name a melody, its accompaniment and a mood, with no negations. Lyrics carry
 instrumental section tags only: no [Verse] or [Chorus], which invite singing.
@@ -185,11 +186,26 @@ def short(instrument):
     return "ambient"
 
 
-def rows():
+def rejected_counts(data):
+    """How many times each id appears in rejected.tsv; empty when the file is missing."""
+    path = os.path.join(data, "rejected.tsv")
+    counts = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                track_id = line.strip()
+                if track_id:
+                    counts[track_id] = counts.get(track_id, 0) + 1
+    return counts
+
+
+def rows(rejected=None):
+    rejected = rejected or {}
     for folder, (count, dur, bpm, style, moods, voicings, shapes) in BRIEFS.items():
         for n in range(1, count + 1):
             track_id = f"{folder}-{n:03d}"
-            seed = seed_of(track_id)
+            times = rejected.get(track_id, 0)
+            seed = seed_of(f"{track_id}#{times}" if times else track_id)
             rng = random.Random(seed)
             mood = rng.choice(moods)
             lead, second, accompaniment = rng.choice(voicings)
@@ -211,7 +227,7 @@ if __name__ == "__main__":
                            delimiter="\t")
         w.writeheader()
         total = 0
-        for r in rows():
+        for r in rows(rejected_counts(data)):
             w.writerow(r)
             total += 1
     print(f"{total} tracks -> {out}")

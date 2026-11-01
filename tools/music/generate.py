@@ -5,6 +5,7 @@
   generate.py --per-folder 3      only fill each folder up to that many tracks (the trial batch)
   generate.py --folders a,b       only those folders
 
+Writes the folders it added tracks to, one per line, to generated.txt in the data folder.
 Stops after the current track when STOP exists. Waits while Elite Dangerous is running.
 Only one copy runs at a time; a second start exits.
 """
@@ -28,6 +29,7 @@ TMP = os.path.join(DATA, "_tmp")
 STOP = os.path.join(DATA, "STOP")
 LOCK = os.path.join(DATA, "generate.lock")
 LOG = os.path.join(DATA, "generate.log")
+GENERATED = os.path.join(DATA, "generated.txt")
 GAME = "EliteDangerous64.exe"
 
 
@@ -68,6 +70,12 @@ def deadline_of(until):
     now = datetime.now()
     d = now.replace(hour=h, minute=m, second=0, microsecond=0)
     return d if d > now else d + timedelta(days=1)
+
+
+def write_generated(folders):
+    with open(GENERATED, "w", encoding="utf-8") as f:
+        f.write("".join(name + "
+" for name in sorted(folders)))
 
 
 def path_of(row):
@@ -130,6 +138,8 @@ def main():
     try:
         if os.path.exists(STOP):
             os.remove(STOP)
+        added = set()
+        write_generated(added)
         deadline = deadline_of(args.until)
         todo = list(queue(args.per_folder, set(filter(None, args.folders.split(",")))))
         log(f"start: {len(todo)} tracks to do" + (f", until {deadline:%Y-%m-%d %H:%M}" if deadline else ""))
@@ -179,6 +189,8 @@ def main():
             os.makedirs(os.path.dirname(dest), exist_ok=True)
             os.replace(result.audios[0]["path"], dest)
             done += 1
+            added.add(row["folder"])
+            write_generated(added)
             log(f"{row['id']} {row['duration']}s in {time.time() - t0:.0f}s")
         log(f"finished: {done} generated this run")
     finally:
