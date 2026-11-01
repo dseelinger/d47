@@ -215,6 +215,13 @@ Other third-party components
 Package dependencies are declared in the project files and are permissively licensed.
 
 
+Ambient music
+-------------
+
+    The ambient music library is generated with ACE-Step 1.5, which is MIT licensed, and is
+    distributed with D47 under the same terms.
+
+
 Ported code
 -----------
 
