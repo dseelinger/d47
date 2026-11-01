@@ -25,7 +25,7 @@ public sealed class TheStarSystemTablesSortFromTheirHeadersTests
 
     private static List<string> StationNames(Control root) =>
         [.. root.GetVisualDescendants().OfType<Border>()
-            .Where(border => border.Child is Grid { ColumnDefinitions.Count: 7 } && AutomationProperties.GetName(border) is { Length: > 0 })
+            .Where(border => border.Classes.Contains(StarSystemPage.StationRowClass) && AutomationProperties.GetName(border) is { Length: > 0 })
             .Select(border => AutomationProperties.GetName(border)!)];
 
     private static List<string> FactionNames(Control root) =>

@@ -41,6 +41,7 @@ public sealed class SystemBodyPage : UserControl, IPageSummary
     private readonly string _word;
     private readonly BodyCodex _codex;
     private readonly Action<StarSystemProfile, BodyProfile>? _openBody;
+    private readonly Action<StarSystemProfile, StationProfile>? _openStation;
     private readonly Action? _back;
     private readonly StackPanel _page = new() { Spacing = 18 };
 
@@ -62,7 +63,8 @@ public sealed class SystemBodyPage : UserControl, IPageSummary
         StarSystemProfile? profile = null,
         BodyCodex? codex = null,
         Action<StarSystemProfile, BodyProfile>? openBody = null,
-        Action? back = null)
+        Action? back = null,
+        Action<StarSystemProfile, StationProfile>? openStation = null)
     {
         _surface = surface;
         _address = address;
@@ -71,6 +73,7 @@ public sealed class SystemBodyPage : UserControl, IPageSummary
         _codex = codex ?? BodyCodex.None;
         _openBody = openBody;
         _back = back;
+        _openStation = openStation;
 
         Content = new ScrollViewer
         {
@@ -705,7 +708,9 @@ public sealed class SystemBodyPage : UserControl, IPageSummary
                     station.LargestPad is { } pad ? $"{StarSystemPage.PadText(pad)} pad" : null,
                 }.Where(part => part is not null));
 
-                list.Children.Add(Row(station.Name, sub, StarSystemPage.ArrivalText(station.DistanceToArrival), null));
+                Action? open = _openStation is { } drill && station.MarketId is not null ? () => drill(profile, station) : null;
+
+                list.Children.Add(Row(station.Name, sub, StarSystemPage.ArrivalText(station.DistanceToArrival), open));
             }
 
             column.Children.Add(Group("Stations", Count(stations.Count), list));

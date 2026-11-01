@@ -27,6 +27,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private SignalSearchPage? _signals;
     private StarSystemPage? _found;
     private SystemBodyPage? _body;
+    private SystemStationPage? _station;
     private StarSystemProfile? _drawn;
     private StarSystemSurface? _surface;
     private (string Query, IReadOnlyList<PanelFindResult> Results, Action<PanelFindResult> Open)? _allResults;
@@ -81,6 +82,10 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             && host.Nav.TrailOf(PanelTab.Search) is { Count: > 1 } bodyTrail
             && SystemBodyPage.IsKey(bodyTrail[^1].Key)
             && body.Tick();
+        redrawn |= _station is { } station
+            && host.Nav.TrailOf(PanelTab.Search) is { Count: > 1 } stationTrail
+            && SystemStationPage.IsKey(stationTrail[^1].Key)
+            && station.Tick();
         redrawn |= _systems is { } systems && host.Nav.RootKeyOf(PanelTab.Search) == SystemSearchPage.RootKey && systems.Tick();
         redrawn |= _stations is { } stations && host.Nav.RootKeyOf(PanelTab.Search) == StationSearchPage.RootKey && stations.Tick();
         redrawn |= _outfitting is { } outfitting && host.Nav.RootKeyOf(PanelTab.Search) == OutfittingSearchPage.RootKey && outfitting.Tick();
@@ -226,7 +231,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 ChooseServices,
-                station => OpenFound(station.SystemName, station.SystemAddress, StationsSuffix),
+                OpenResult,
                 host.Copy,
                 surface.OpenSettings,
                 host.Headset)
@@ -307,13 +312,20 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         {
             var profile = _drawn?.SystemAddress == bodyAddress ? _drawn : null;
 
-            return _body = new SystemBodyPage(surface, bodyAddress, bodyId, crumb.Word, profile, Codex, OpenBody, () => host.Nav.Back());
+            return _body = new SystemBodyPage(surface, bodyAddress, bodyId, crumb.Word, profile, Codex, OpenBody, () => host.Nav.Back(), OpenStation);
+        }
+
+        if (SystemStationPage.Parse(crumb.Key) is var (stationAddress, marketId))
+        {
+            var profile = _drawn?.SystemAddress == stationAddress ? _drawn : null;
+
+            return _station = new SystemStationPage(surface, stationAddress, marketId, crumb.Word, profile, () => host.Nav.Back());
         }
 
         if (crumb.Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
             && FoundTarget(crumb.Key) is var (address, suffix))
         {
-            var found = _found = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, Codex = Codex };
+            var found = _found = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, OpenStation = OpenStation, Codex = Codex };
             found.FiltersChanged += (_, _) =>
             {
                 host.ShowSearch();
@@ -341,7 +353,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             return found;
         }
 
-        _starSystem = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, Codex = Codex };
+        _starSystem = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, OpenStation = OpenStation, Codex = Codex };
         _starSystem.FiltersChanged += (_, _) =>
         {
             host.ShowSearch();
@@ -523,6 +535,29 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     {
         _drawn = profile;
         host.Nav.Drill(PanelTab.Search, SystemBodyPage.Crumb(profile.SystemAddress, body));
+    }
+
+    /// <summary>Drills a station's page under the page it was pressed on, keeping the record already read.</summary>
+    private void OpenStation(StarSystemProfile profile, StationProfile station)
+    {
+        if (SystemStationPage.Crumb(profile.SystemAddress, station) is { } crumb)
+        {
+            _drawn = profile;
+            host.Nav.Drill(PanelTab.Search, crumb);
+        }
+    }
+
+    /// <summary>Opens a Stations result's system on its Stations section, with the station's page drilled under it where the result names the station.</summary>
+    private void OpenResult(StationSummary station)
+    {
+        OpenFound(station.SystemName, station.SystemAddress, StationsSuffix);
+
+        if (station is { SystemAddress: { } address, MarketId: { } marketId }
+            && host.Nav.TrailOf(PanelTab.Search) is { Count: > 1 } trail
+            && trail[^1].Key == FoundKeyPrefix + address.ToString(CultureInfo.InvariantCulture) + StationsSuffix)
+        {
+            host.Nav.Drill(PanelTab.Search, SystemStationPage.Crumb(address, marketId, station.Name));
+        }
     }
 
     /// <summary>Opens a Bodies result's system on its Bodies section, with the body's page drilled under it where the result names the body.</summary>

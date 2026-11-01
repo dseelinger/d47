@@ -119,6 +119,14 @@ public sealed partial class StarSystemPage
     /// <summary>The default order: nearest first.</summary>
     public static readonly SortOrder ByArrival = new(6, SortDirection.Ascending);
 
+    /// <summary>Marks a station's row on the Stations section.</summary>
+    public const string StationRowClass = "station-row";
+
+    private const double MoreWidth = 28;
+
+    /// <summary>Drills a station's page; null leaves the rows unpressable.</summary>
+    public Action<StarSystemProfile, StationProfile>? OpenStation { get; init; }
+
     private readonly SortHeader<StationProfile> _stationHead = new("StationHead", StationHeads, ByArrival);
     private StationFilter _stationFilter = new();
     private Border? _stationTable;
@@ -383,13 +391,13 @@ public sealed partial class StarSystemPage
             _stationHead,
             [.. StationHeads.Select((_, i) => i == StationHeads.Count - 1 ? HorizontalAlignment.Right : HorizontalAlignment.Left)]);
         header.MinHeight = TypeScale.MinimumTarget;
-        header.Margin = new Thickness(12, 0);
+        header.Margin = new Thickness(12, 0, 12 + MoreWidth, 0);
 
         table.Children.Add(header);
 
         foreach (var station in shown)
         {
-            table.Children.Add(StationRow(station, layout));
+            table.Children.Add(StationRow(profile, station, layout));
         }
 
         if (shown.Count == 0)
@@ -402,7 +410,7 @@ public sealed partial class StarSystemPage
         return table;
     }
 
-    private static Border StationRow(StationProfile station, TableLayout layout)
+    private Border StationRow(StarSystemProfile profile, StationProfile station, TableLayout layout)
     {
         List<Control> cells = [];
 
@@ -420,14 +428,43 @@ public sealed partial class StarSystemPage
         arrival.HorizontalAlignment = HorizontalAlignment.Right;
         cells.Add(Centred(arrival));
 
+        var content = new DockPanel();
+        var more = Typeset.Chrome("›", TypeScale.ControlLarge, ThemeManager.AKey, vertical: VerticalAlignment.Center);
+        more.Width = MoreWidth;
+        more.TextAlignment = TextAlignment.Right;
+        DockPanel.SetDock(more, Dock.Right);
+
+        var opens = OpenStation is not null && station.MarketId is not null;
+
+        if (opens)
+        {
+            content.Children.Add(more);
+        }
+        else
+        {
+            content.Margin = new Thickness(0, 0, MoreWidth, 0);
+        }
+
+        content.Children.Add(layout.Row(cells));
+
         var row = new Border
         {
-            MinHeight = 40,
+            MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(12, 0),
-            Child = layout.Row(cells),
+            Child = content,
         };
-        ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+        row.Classes.Add(StationRowClass);
         Avalonia.Automation.AutomationProperties.SetName(row, station.Name);
+
+        if (opens && OpenStation is { } open)
+        {
+            ListRow.Dress(row);
+            ListRow.Opens(row, () => open(profile, station));
+        }
+        else
+        {
+            ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+        }
 
         return row;
     }

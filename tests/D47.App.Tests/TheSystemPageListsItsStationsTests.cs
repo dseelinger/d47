@@ -153,7 +153,7 @@ public sealed class TheSystemPageListsItsStationsTests
 
     private static List<string> Rows(Control root) =>
         [.. root.GetVisualDescendants().OfType<Border>()
-            .Where(border => border.Child is Grid && AutomationProperties.GetName(border) is { Length: > 0 } && border.Padding == new Thickness(12, 0))
+            .Where(border => border.Classes.Contains(StarSystemPage.StationRowClass) && AutomationProperties.GetName(border) is { Length: > 0 })
             .Select(border => AutomationProperties.GetName(border)!)];
 
     [AvaloniaFact]
