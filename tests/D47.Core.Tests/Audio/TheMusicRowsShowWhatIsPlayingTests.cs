@@ -28,7 +28,9 @@ public class TheMusicRowsShowWhatIsPlayingTests
                 return () => _refresh = null;
             }).Settings;
 
-        Assert.Equal(AudioCapability.NowPlayingKey, rows.First(row => row.Group == "Ambient music").Key);
+        Assert.Equal(
+            [AudioCapability.MusicLibraryKey, AudioCapability.NowPlayingKey],
+            rows.Where(row => row.Group == "Ambient music").Take(2).Select(row => row.Key));
         return (rows.Single(row => row.Key == AudioCapability.NowPlayingKey),
                 rows.Single(row => row.Key == AudioCapability.NextTrackKey));
     }

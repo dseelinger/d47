@@ -485,7 +485,8 @@ public static class SettingsLayout
                         G(
                             "Ambient music",
                             "The background layer that follows what you are doing.",
-                            [E("audio.music.now"), E("audio.music.next")]),
+                            [E("audio.music.library"), E("audio.music.now"), E("audio.music.next")],
+                            toggleColumns: 0),
                         G("Levels", "Level, mute and duck, for every channel.", LevelEntries(), toggleColumns: 0) with
                         {
                             Layout = SettingsGroupLayout.Mixer,

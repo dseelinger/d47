@@ -57,9 +57,9 @@ nav_order: 123
 </svg>
 </section>
 <section>
-<h2><span class="num">!</span> No music plays until you add some.</h2>
+<h2><span class="num">!</span> No music plays until you add some or download the library.</h2>
 <p class="say">Put an audio file in data/audio/music/general, with Elite running.</p>
-<p class="expect">The file plays, quietly. D47 ships with no music of its own.</p>
+<p class="expect">The file plays, quietly. D47's own music library is a separate download, off until you turn on <b>Download the D47 music library</b>.</p>
 <svg viewBox="0 0 880 150" role="img" aria-label="A file in the general music folder">
  <rect x="20" y="24" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">data/audio/music/general</text>
@@ -313,10 +313,10 @@ folder changes nothing. `NoTrack`, `NoInGameMusic` and any track not listed have
 back. The track is not looped, and a change of Elite's track while it plays does not cut it: when it ends, the
 folder for the situation at that moment continues or starts. A track still playing after 60 seconds fades out.
 
-D47 can also read a downloaded music library from `data/music-pack/<folder>/`, with the same folder names. Files of your own
-in a music folder replace the downloaded library for that folder: a folder with any file in
-`data/audio/music/<folder>/` plays only those, and an empty one plays the library's. The "Your own audio" row counts
-only your files.
+With **Download the D47 music library** on, D47 also plays its music library from `data/music-pack/<folder>/`,
+with the same folder names; see [The music library](#the-music-library). Files of your own in a music folder replace
+the library for that folder: a folder with any file in `data/audio/music/<folder>/` plays only those, and an empty one
+plays the library's. The "Your own audio" row counts only your files.
 
 To hear this music rather than Elite's, set Elite's music volume to zero (Options, Audio).
 
@@ -326,8 +326,8 @@ for the situation it is in, unless you paused or muted it. Until Elite is detect
 
 Tracks are shuffled within a folder and the whole folder plays before any of them repeats. Two
 seconds of silence separate a track that ends from the next one. A situation with nothing in it falls back to `general`; `general` with
-nothing in it is quiet, which is what every Commander gets until they drop something in. D47
-ships with no music of its own.
+nothing in it is quiet, which is what every Commander gets until they drop something in or download the music
+library.
 
 Changing situation fades the old track out and the new one in, quickly (under a second) when either is a map or a menu or the new one is combat, and over a few seconds between the others. The old track is held where it is, and coming back to that folder within 30
 minutes continues it from that point, so a run of short galaxy-map visits plays as one track. The
@@ -341,6 +341,22 @@ point. Something happening is any journal event except `Music`, `ReceiveText`, `
 `CommunityGoal` and `FSSSignalDiscovered`, which Elite writes while you sit docked; a change of situation;
 a turn with D47; or a media key. A track held this way is not dropped after 30 minutes. While it is held,
 the volume flyout shows it paused and **Now playing** reads Paused, and Resume or the play key brings it back.
+
+### The music library
+
+**Download the D47 music library** (Settings › Hearing and sound › Sounds and levels, group Ambient music) is off
+by default. The library is several gigabytes; the line under the setting gives its size once D47 has read the list of
+folders. On, D47 downloads it from GitHub in the background, one folder at a time in the order the library lists
+them, the most-used first, into `data/music-pack/<folder>/`. Each folder is checked against its SHA-256 and unpacked under
+another name before it is renamed into place, so a folder never plays half-written. A folder already on disk at the
+current version is not downloaded again, and a newer version replaces it.
+
+Before each folder D47 checks for twice its download size free on the drive, and stops with a message on the setting's
+line when there is less. The line also counts the folders in, names the one being fetched and says when one failed. A
+failed folder is tried again at the next start.
+
+Off, nothing more is downloaded, the music restarts without the library, and the files stay on disk. Deleting
+`data/music-pack` reclaims the space.
 
 ### Pause, resume and next track
 

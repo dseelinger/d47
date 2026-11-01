@@ -138,7 +138,11 @@ public sealed class FolderAudioSource : ICueSource
 
             if (_pack)
             {
-                if (parts.Length >= 2 && extensions.Contains(Path.GetExtension(path)))
+                // Only a folder named exactly as a situation: a download being unpacked into <folder>.partial is
+                // not read until it is renamed.
+                if (parts.Length >= 2
+                    && Situations.All.Contains(parts[0], StringComparer.OrdinalIgnoreCase)
+                    && extensions.Contains(Path.GetExtension(path)))
                 {
                     files[$"{CueLibrary.MusicPrefix}{parts[0]}.{Path.GetFileNameWithoutExtension(path)}"] = path;
                 }

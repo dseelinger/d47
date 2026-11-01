@@ -327,6 +327,27 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
     }
 
     /// <summary>
+    /// The library lost tracks: stops every track, held ones included, and starts the next one from the
+    /// library as it is now unless paused, idle, muted or Elite is not running.
+    /// </summary>
+    public void Restart()
+    {
+        lock (_gate)
+        {
+            audio.StopMusic();
+            _current = null;
+            LeaveCue();
+
+            if (_running && !_paused && !_idle && !audio.Mix.Music.Muted)
+            {
+                StartNext();
+            }
+        }
+
+        Raise();
+    }
+
+    /// <summary>
     /// Whether Elite is running. Stopping stops every track; starting again leaves the next
     /// <see cref="Follow"/> to start one for the situation it finds.
     /// </summary>

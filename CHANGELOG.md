@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-D47 now reads a music library from `data\music-pack\<folder>` beneath your own music. Files of your own in a music folder replace the library for that folder, so three tracks of yours are not drowned among fifty. The "Your own audio" row counts only your files.
+D47 has a music library of its own, as a download. Turn on **Download the D47 music library** (Settings › Hearing and sound › Sounds and levels) and it downloads in the background into `data\music-pack`, one folder at a time, the most-used first. The line under the setting gives the size and counts the folders in. Files of your own in a music folder replace the library for that folder, so three tracks of yours are not drowned among fifty. The "Your own audio" row counts only your files. Turned off, the library stops playing and nothing more is downloaded; deleting `data\music-pack` reclaims the space.
 
 Six more Elite music tracks now have folders of their own under `data\audio\music`: `titan-encounter`, `titan-graveyard`, `thargoid-factory`, `combat-thargoid-ground`, `combat-hunters` and `damaged-starport`. Before, those tracks played the normal-space or supercruise folder. A folder with no files still falls back to the situation's own music.
 

@@ -71,12 +71,15 @@ public static class AudioCapability
     /// <param name="drops">What was picked up from <c>data/audio/</c> and what was skipped, in words.</param>
     /// <param name="openFolder">Opens that folder, or null where there is no shell to open it with.</param>
     /// <param name="music">Pauses, resumes or skips the ambient music; null where nothing plays it.</param>
+    /// <param name="library">The music library download's state line, or null when there is nothing to say.</param>
     public static CapabilityDescriptor Create(
         Func<string>? drops = null,
         Action? openFolder = null,
         Func<MusicAction, string>? music = null,
         Func<MusicState>? musicState = null,
-        Func<Action, Action>? watchMusic = null) => new()
+        Func<Action, Action>? watchMusic = null,
+        Func<string?>? library = null,
+        Func<Action, Action>? watchLibrary = null) => new()
     {
         Id = Id,
         Group = "Voice",
@@ -92,7 +95,7 @@ public static class AudioCapability
         Settings =
         [
             .. Enum.GetValues<AudioChannel>().SelectMany(channel => channel == AudioChannel.Music
-                ? [.. TransportRows(music, musicState, watchMusic), .. RowsFor(channel)]
+                ? [LibraryRow(library, watchLibrary), .. TransportRows(music, musicState, watchMusic), .. RowsFor(channel)]
                 : RowsFor(channel)),
             .. drops is null ? Array.Empty<SettingRow>() : [DropsRow(drops, openFolder)],
         ],
@@ -147,6 +150,8 @@ public static class AudioCapability
     };
 
     public const string NowPlayingKey = "audio.music.now";
+
+    public const string MusicLibraryKey = "audio.music.library";
 
     public const string NextTrackKey = "audio.music.next";
 
@@ -228,6 +233,35 @@ public static class AudioCapability
             Watch = watch,
         };
     }
+
+    /// <summary>Whether d47 downloads the music library, with the download's state under it.</summary>
+    private static SettingRow LibraryRow(Func<string?>? library, Func<Action, Action>? watch) => new()
+    {
+        Key = MusicLibraryKey,
+        Exercise =
+            "Open Settings › Hearing and sound › Sounds and levels, group Ambient music, and find Download the "
+            + "D47 music library (off by default). Tick it: the line under it gives the library's size and counts "
+            + "folders in as each one lands in data\\music-pack, naming the folder being fetched. Needs a network "
+            + "connection to GitHub and several gigabytes free. With Elite running and Elite's music volume at zero, "
+            + "a situation with no files of your own plays the library. Untick it: the music stops and starts again "
+            + "without the library, nothing more is downloaded, and the files stay in data\\music-pack.",
+        Label = "Download the D47 music library",
+        Help =
+            "Ambient music for every situation, several gigabytes in all, downloaded in the background from "
+            + "GitHub into data\\music-pack, most-used folders first. Files of your own in a music folder still "
+            + "replace the library for that folder.\n\n"
+            + "Off, nothing more is downloaded and the library does not play. The files stay on disk; deleting "
+            + "data\\music-pack reclaims the space.",
+        Kind = SettingKind.Toggle,
+        Group = MusicGroup,
+        GroupHelp = Describe(AudioChannel.Music).What,
+        DocsAnchor = "the-music-library",
+        Note = library is null ? null : _ => library(),
+        Watch = watch,
+        Binding = SettingBinding.Toggle(
+            s => s.Ui.MusicLibrary,
+            (s, on) => s with { Ui = s.Ui with { MusicLibrary = on } }),
+    };
 
     private static ToolCommandPhrase Phrase(string phrase, string action) =>
         new(phrase, new Dictionary<string, string>(StringComparer.Ordinal) { ["action"] = action });

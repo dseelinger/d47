@@ -37,6 +37,7 @@ public sealed class SourceReachesTheDiskOnlyThroughTheFileSeamGateTests
         "D47.App.Logging.LoggingSetup",
         "D47.App.Logging.LogTail",
         "D47.App.Media.AudioFolderWatch",
+        "D47.App.Media.MusicPackDisk",
         "D47.App.Panel.AvatarClipStore",
         "D47.App.Panel.HullGpuCapture",
         "D47.App.Panel.ShipArtStore",

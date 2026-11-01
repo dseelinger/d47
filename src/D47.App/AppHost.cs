@@ -423,11 +423,16 @@ public sealed class AppHost : IDisposable
     /// </summary>
     public CueLibrary Cues => _cues;
 
+    /// <summary>Downloads the music library while <see cref="UiSettings.MusicLibrary"/> is on.</summary>
+    internal MusicPackStore? MusicPack { get; private set; }
+
     /// <summary>Replaced whole by the audio folder watch, from the thread pool.</summary>
     private volatile CueLibrary _cues;
 
     private AudioFolderWatch? _audioWatch;
     private AudioFolderWatch? _musicPackWatch;
+
+    private Action? _reloadAudio;
 
     private ModelCatalogRefresher? _modelCatalog;
 
@@ -1762,10 +1767,8 @@ public sealed class AppHost : IDisposable
         // Audio comes up before the registry because the speech capability's settings rows read the bed names
         // and the device list from it.
         var dropsLogger = loggerFactory.CreateLogger<FolderAudioSource>();
-        var drops = new FolderAudioSource(paths.Audio, files, dropsLogger, new MediaFoundationDecoder());
         var cueLogger = loggerFactory.CreateLogger<CueLibrary>();
-        var pack = new FolderAudioSource(paths.MusicPack, files, dropsLogger, new MediaFoundationDecoder(), musicPack: true);
-        var cues = CueLibrary.Load(cueLogger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), pack, drops);
+        var cues = LoadCues(paths, files, settings.Current.Ui.MusicLibrary, dropsLogger, cueLogger);
 
         var audioSink = new WasapiAudioSink(loggerFactory.CreateLogger<WasapiAudioSink>());
         var audio = new AudioArbiter(audioSink, loggerFactory.CreateLogger<AudioArbiter>()).Start();
@@ -2526,6 +2529,17 @@ public sealed class AppHost : IDisposable
                     var music = late.Host!.Music;
                     music.Changed += Changed;
                     return () => music.Changed -= Changed;
+                },
+                musicLibrary: () => late.Host?.MusicPack?.Status,
+                watchMusicLibrary: refresh =>
+                {
+                    if (late.Host?.MusicPack is not { } store)
+                    {
+                        return () => { };
+                    }
+
+                    store.Changed += refresh;
+                    return () => store.Changed -= refresh;
                 },
                 exobiology: stores.Exobiology,
                 communityBiology: services.CommunityBiology,
@@ -3387,18 +3401,27 @@ public sealed class AppHost : IDisposable
         };
 
         // The audio folder, which the Commander can add to while d47 is running.
+        host._reloadAudio = () => host.RebuildAudio(paths, services.DropsLogger, services.CueLogger);
         host._audioWatch = new AudioFolderWatch(
             paths.Audio,
-            () => host.RebuildAudio(paths.Audio, paths.MusicPack, services.DropsLogger, services.CueLogger),
+            host._reloadAudio,
             loggerFactory.CreateLogger<AudioFolderWatch>());
 
         if (Directory.Exists(paths.MusicPack))
         {
             host._musicPackWatch = new AudioFolderWatch(
                 paths.MusicPack,
-                () => host.RebuildAudio(paths.Audio, paths.MusicPack, services.DropsLogger, services.CueLogger),
+                host._reloadAudio,
                 loggerFactory.CreateLogger<AudioFolderWatch>());
         }
+
+        host.MusicPack = new MusicPackStore(
+            paths.MusicPack,
+            () => host.Settings.Current.Ui.MusicLibrary,
+            new MusicPackDisk(),
+            MusicPackStore.CreateClient(),
+            loggerFactory.CreateLogger<MusicPackStore>());
+        host.MusicPack.Landed += host._reloadAudio;
 
         return host;
     }
@@ -3748,6 +3771,7 @@ public sealed class AppHost : IDisposable
                 foundations.Secrets.Has);
 
             host._modelCatalog.Start();
+            host.MusicPack?.Start();
             host._controllerSampler = services.SampledControllers.Start();
             CarryStoredControllerIds(services, settings, loggerFactory.CreateLogger<AppHost>());
 
@@ -4742,11 +4766,9 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>Re-reads <c>data/audio/</c> and replaces <see cref="Cues"/>. Runs on the thread pool.</summary>
-    private void RebuildAudio(string folder, string packFolder, ILogger<FolderAudioSource> dropsLogger, ILogger<CueLibrary> logger)
+    private void RebuildAudio(AppPaths paths, ILogger<FolderAudioSource> dropsLogger, ILogger<CueLibrary> logger)
     {
-        var drops = new FolderAudioSource(folder, Files, dropsLogger, new MediaFoundationDecoder());
-        var pack = new FolderAudioSource(packFolder, Files, dropsLogger, new MediaFoundationDecoder(), musicPack: true);
-        var cues = CueLibrary.Load(logger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), pack, drops);
+        var cues = LoadCues(paths, Files, Settings.Current.Ui.MusicLibrary, dropsLogger, logger);
 
         _cues = cues;
 
@@ -4758,6 +4780,40 @@ public sealed class AppHost : IDisposable
         // The row saying what was found has no other way to know.
         AudioReloaded?.Invoke();
     }
+
+    /// <summary>The shipped cues, the music library while it is on, then the Commander's own files.</summary>
+    private static CueLibrary LoadCues(
+        AppPaths paths, IFileSystem files, bool musicLibrary, ILogger<FolderAudioSource> dropsLogger, ILogger<CueLibrary> logger)
+    {
+        var drops = new FolderAudioSource(paths.Audio, files, dropsLogger, new MediaFoundationDecoder());
+        var embedded = new EmbeddedCueSource(typeof(CueLibrary).Assembly);
+
+        return musicLibrary
+            ? CueLibrary.Load(logger, embedded, new FolderAudioSource(paths.MusicPack, files, dropsLogger, new MediaFoundationDecoder(), musicPack: true), drops)
+            : CueLibrary.Load(logger, embedded, drops);
+    }
+
+    /// <summary>On, the library on disk plays and the download starts; off, the music restarts without it.</summary>
+    private void MusicLibraryChanged() => _ = Task.Run(() =>
+    {
+        try
+        {
+            _reloadAudio?.Invoke();
+
+            if (Settings.Current.Ui.MusicLibrary)
+            {
+                MusicPack?.Start();
+            }
+            else
+            {
+                Music.Restart();
+            }
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Applying the music library setting failed");
+        }
+    });
 
     /// <summary>Applies the speech settings, then the retry policy and the output device.</summary>
     private void ApplySpeechSettings()
@@ -5350,6 +5406,11 @@ public sealed class AppHost : IDisposable
                 Audio.Mix = Settings.Current.Audio;
 
                 Music.MuteChanged(Settings.Current.Audio.Music.Muted);
+
+                if (change.Key == AudioCapability.MusicLibraryKey)
+                {
+                    MusicLibraryChanged();
+                }
 
                 break;
 

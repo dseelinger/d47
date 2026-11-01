@@ -1227,6 +1227,9 @@ public sealed record UiSettings
     /// </summary>
     public bool HullArt { get; init; } = true;
 
+    /// <summary>Whether d47 downloads the music library into <c>data\music-pack</c> and plays it.</summary>
+    public bool MusicLibrary { get; init; }
+
     /// <summary>Whether the hull viewer draws through OpenGL rather than on the CPU.</summary>
     public bool HullGpu { get; init; }
 

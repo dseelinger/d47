@@ -206,6 +206,10 @@ public static class BuiltinCapabilities
         Func<Audio.MusicState>? musicState = null,
         Func<Action, Action>? watchMusic = null,
 
+        // The music library download's state line, and a way to be told when it changes.
+        Func<string?>? musicLibrary = null,
+        Func<Action, Action>? watchMusicLibrary = null,
+
         // The organic data analysed and not yet sold (#526).
         ExobiologyLedger? exobiology = null,
 
@@ -418,7 +422,7 @@ public static class BuiltinCapabilities
             pictureNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
-        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic),
+        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic, musicLibrary, watchMusicLibrary),
         ListeningCapability.Create(settings, listening),
         LearnedPhrasesCapability.Create(
             learnedPhrases,
