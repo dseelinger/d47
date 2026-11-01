@@ -1,21 +1,19 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using D47.App.Controls;
+using Avalonia.Threading;
 using D47.App.Theming;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
 /// <summary>Search › All results: every result Find held when it was chosen, grouped by kind.</summary>
-internal sealed class AllResultsPage : UserControl
+internal sealed class AllResultsPage : UserControl, IPageSummary
 {
     public const string PageKey = "search.allresults";
-
-    public const string RowClass = "AllResultsRow";
 
     public const string RootName = "AllResultsPage";
 
@@ -23,24 +21,16 @@ internal sealed class AllResultsPage : UserControl
     public const int MostPerGroup = 20;
 
     private const double ColumnWidth = 900;
+    private const double CompactHeight = 44;
 
-    private readonly List<Button> _rows = [];
+    private readonly List<Border> _rows = [];
 
     public AllResultsPage(string query, IReadOnlyList<PanelFindResult> results, Action<PanelFindResult> open)
     {
         Name = RootName;
+        Summary = $"{results.Count} {(results.Count == 1 ? "result" : "results")} for “{query}”, as Find held them.";
 
-        var body = new StackPanel { MaxWidth = ColumnWidth, HorizontalAlignment = HorizontalAlignment.Left };
-
-        var summary = new TextBlock
-        {
-            Text = $"{results.Count} {(results.Count == 1 ? "result" : "results")} for “{query}”, as Find held them.",
-            FontFamily = Fonts.ProseFamily,
-            FontSize = TypeScale.Small,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        ThemeInk.Bind(summary, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        body.Children.Add(summary);
+        var body = new StackPanel { Spacing = 28 };
 
         foreach (var group in Groups)
         {
@@ -55,12 +45,14 @@ internal sealed class AllResultsPage : UserControl
             {
                 Text = rows.Count.ToString(CultureInfo.InvariantCulture),
                 FontFamily = new FontFamily(Fonts.MonoFamily),
-                FontSize = TypeScale.Meta,
+                FontSize = ListRow.AsideSize,
+                FontWeight = FontWeight.Medium,
                 VerticalAlignment = VerticalAlignment.Bottom,
             };
-            ThemeInk.Bind(count, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(count, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
-            body.Children.Add(RoutingKit.Section(group.Head, count));
+            var head = RoutingKit.Section(group.Head, count);
+            head.Margin = default;
 
             var list = new StackPanel { Spacing = 2 };
 
@@ -71,7 +63,7 @@ internal sealed class AllResultsPage : UserControl
                 list.Children.Add(row);
             }
 
-            body.Children.Add(list);
+            body.Children.Add(new StackPanel { Spacing = 10, Children = { head, list } });
         }
 
         Content = new ScrollViewer
@@ -79,82 +71,82 @@ internal sealed class AllResultsPage : UserControl
             Padding = new Thickness(14),
             VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
-            Content = body,
+            Content = Column(body),
         };
 
-        AddHandler(KeyDownEvent, OnKeyDown, Avalonia.Interactivity.RoutingStrategies.Tunnel);
-        AttachedToVisualTree += (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(() => _rows.FirstOrDefault()?.Focus());
+        AttachedToVisualTree += (_, _) => Dispatcher.UIThread.Post(() => _rows.FirstOrDefault()?.Focus(NavigationMethod.Directional));
     }
 
-    internal IReadOnlyList<Button> Rows => _rows;
+    public string Summary { get; }
 
-    private void OnKeyDown(object? sender, KeyEventArgs e)
+    public event EventHandler? SummaryChanged
     {
-        if (e.Key is not (Key.Down or Key.Up) || _rows.Count == 0)
+        add { }
+        remove { }
+    }
+
+    internal IReadOnlyList<Border> Rows => _rows;
+
+    private static Border Row(PanelFindResult result, bool tall, Action<PanelFindResult> open)
+    {
+        var lines = new StackPanel
         {
-            return;
-        }
-
-        var at = _rows.FindIndex(row => row.IsFocused);
-        var next = Math.Clamp(at < 0 ? 0 : at + (e.Key == Key.Down ? 1 : -1), 0, _rows.Count - 1);
-
-        e.Handled = true;
-        _rows[next].Focus();
-        _rows[next].BringIntoView();
-    }
-
-    private static Button Row(PanelFindResult result, bool tall, Action<PanelFindResult> open)
-    {
-        var title = new TextBlock { Text = result.Title, FontFamily = Fonts.ChromeFamily, FontSize = TypeScale.Tip, FontWeight = FontWeight.Medium };
-        ThemeInk.Bind(title, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
-
-        var lines = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { title } };
+            Spacing = 1,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { ListRow.Name(new TextBlock { Text = result.Title, TextTrimming = TextTrimming.CharacterEllipsis }) },
+        };
 
         if (tall)
         {
-            var path = new TextBlock { Text = result.Path, FontFamily = Fonts.ChromeFamily, FontSize = TypeScale.Small, TextTrimming = TextTrimming.CharacterEllipsis };
-            ThemeInk.Bind(path, TextBlock.ForegroundProperty, ThemeManager.AKey);
-            lines.Children.Add(path);
+            lines.Children.Add(ListRow.Sub(new TextBlock { Text = result.Path, TextTrimming = TextTrimming.CharacterEllipsis }));
         }
 
-        var dock = new DockPanel { LastChildFill = true };
-        Control? trailing = null;
+        var dock = new DockPanel();
 
-        if (tall && Kind(result.Kind) is { } word && result.Kind is not PanelFindKind.Bookmark)
+        if (tall && Kind(result.Kind) is { } word)
         {
-            trailing = new TextBlock { Text = word, FontFamily = Fonts.ChromeFamily, FontSize = TypeScale.Caption, FontWeight = FontWeight.Medium, LetterSpacing = TypeScale.Caption * 0.06 };
-            ThemeInk.Bind(trailing, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            var kind = new TextBlock { Text = word, FontFamily = Fonts.ChromeFamily, FontSize = ListRow.AsideSize, FontWeight = FontWeight.Medium };
+            ThemeInk.Bind(kind, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            Dock(dock, kind);
         }
         else if (result.LightYears is { } lightYears && result.Kind is PanelFindKind.Station or PanelFindKind.Carrier)
         {
-            trailing = new TextBlock { Text = lightYears.ToString("N1", CultureInfo.InvariantCulture) + " LY", FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Meta };
-            ThemeInk.Bind(trailing, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        }
-
-        if (trailing is not null)
-        {
-            trailing.VerticalAlignment = VerticalAlignment.Center;
-            trailing.Margin = new Thickness(12, 0, 0, 0);
-            DockPanel.SetDock(trailing, Dock.Right);
-            dock.Children.Add(trailing);
+            var distance = ListRow.Aside(new TextBlock { Text = lightYears.ToString("N1", CultureInfo.InvariantCulture) + " LY" });
+            distance.FontFamily = new FontFamily(Fonts.MonoFamily);
+            Dock(dock, distance);
         }
 
         dock.Children.Add(lines);
 
-        var row = new Button
-        {
-            Tag = result.Title,
-            MinHeight = tall ? 50 : TypeScale.MinimumTarget,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            Padding = new Thickness(12, 4),
-            Content = dock,
-        };
-        row.Classes.Add(RowClass);
-        row.Click += (_, _) => open(result);
+        var row = ListRow.Dress(new Border { Tag = result.Title, Child = dock });
 
-        return row;
+        if (!tall)
+        {
+            row.MinHeight = CompactHeight;
+            row.Padding = new Thickness(14, 0);
+        }
+
+        return ListRow.Opens(row, () => open(result));
+    }
+
+    /// <summary>Holds <paramref name="body"/> at the left, as wide as the page up to <see cref="ColumnWidth"/>.</summary>
+    private static Grid Column(Control body)
+    {
+        var column = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(1, GridUnitType.Star) { MaxWidth = ColumnWidth }, new ColumnDefinition(0, GridUnitType.Auto)],
+        };
+        column.Children.Add(body);
+
+        return column;
+    }
+
+    private static void Dock(DockPanel dock, TextBlock aside)
+    {
+        aside.VerticalAlignment = VerticalAlignment.Center;
+        aside.Margin = new Thickness(12, 0, 0, 0);
+        DockPanel.SetDock(aside, Avalonia.Controls.Dock.Right);
+        dock.Children.Add(aside);
     }
 
     private static string? Kind(PanelFindKind kind) => kind switch

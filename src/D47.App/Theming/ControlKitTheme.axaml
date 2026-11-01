@@ -1,4 +1,4 @@
-<Styles xmlns="https://github.com/avaloniaui"
+﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:D47.App.Controls"
         xmlns:theming="clr-namespace:D47.App.Theming">
@@ -54,6 +54,10 @@
         <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
       </Style>
       <Style Selector="^:pressed">
+        <Setter Property="Background" Value="{DynamicResource D47.A}" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
+      </Style>
+      <Style Selector="^.selected">
         <Setter Property="Background" Value="{DynamicResource D47.A}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
       </Style>

@@ -156,7 +156,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         _allResults = (query, results, open);
         host.Nav.Show(StarSystemPage.RootKey);
         host.Forget(PanelTab.Search, key => key == AllResultsPage.PageKey);
-        host.Nav.Drill(PanelTab.Search, new NavCrumb(AllResultsPage.PageKey, "All results"));
+        host.Nav.Drill(PanelTab.Search, new NavCrumb(AllResultsPage.PageKey, "All results") { Whole = true, Local = true });
     }
 
     public bool OpenSystem(long systemAddress) => _starSystem is { } page && page.OpenSystem(systemAddress);

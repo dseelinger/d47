@@ -1,8 +1,7 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Controls;
@@ -46,9 +45,9 @@ public sealed class FindOpensAllResultsOnAPageTests
         var (few, _, _) = Shown(3);
         var (many, _, _) = Shown(12);
 
-        Assert.Equal("ALL 3 RESULTS ►", few.TileText);
+        Assert.Equal("ALL 3 RESULTS", few.TileText);
         Assert.Equal("3 RESULTS", few.Count);
-        Assert.Equal("ALL 12 RESULTS ►", many.TileText);
+        Assert.Equal("ALL 12 RESULTS", many.TileText);
         Assert.Equal("8 OF 12 RESULTS", many.Count);
     }
 
@@ -94,7 +93,7 @@ public sealed class FindOpensAllResultsOnAPageTests
             Jobs();
         }
 
-        Assert.Equal("ALL 12 RESULTS ►", dialog.TileText);
+        Assert.Equal("ALL 12 RESULTS", dialog.TileText);
     }
 
     [AvaloniaFact]
@@ -127,7 +126,7 @@ public sealed class FindOpensAllResultsOnAPageTests
 
         Assert.Equal(["Dark page", "Darkan", "Dark Wheel", "Dark Echo"], page.Rows.Select(r => (string)r.Tag!));
 
-        page.Rows[2].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        page.Rows[2].RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
         Assert.Equal("Dark Wheel", Assert.Single(opened).Title);
 
         window.Close();
