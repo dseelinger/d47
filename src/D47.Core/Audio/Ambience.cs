@@ -14,6 +14,7 @@ public static class Situations
     public const string NormalSpace = "normal-space";
     public const string OnFoot = "on-foot";
     public const string OnFootStation = "on-foot-station";
+    public const string Settlement = "settlement";
 
     /// <summary>
     /// The folder each Elite <c>MusicTrack</c> plays from. <c>NoTrack</c>, <c>NoInGameMusic</c> and values
@@ -68,7 +69,7 @@ public static class Situations
 
     /// <summary>Every music folder: the Status.json situations first, then the rest of the track folders.</summary>
     public static readonly IReadOnlyList<string> All =
-        new[] { General, Docked, Supercruise, NormalSpace, OnFoot, OnFootStation }
+        new[] { General, Docked, Supercruise, NormalSpace, OnFoot, OnFootStation, Settlement }
             .Concat(ByTrack.Values)
             .Distinct(StringComparer.Ordinal)
             .ToList();
@@ -78,13 +79,13 @@ public static class Situations
         new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "OnFoot", "Starport", "Exploration" };
 
     /// <summary>
-    /// A folder chosen from Status.json that has tracks wins over Elite's general tracks and over no
-    /// track; any other Elite track with a folder that has tracks wins over Status.json; otherwise
-    /// <see cref="For(GameStatus)"/>.
+    /// A folder D47 chose from its own state that has tracks wins over Elite's general tracks and over no
+    /// track; any other Elite track with a folder that has tracks wins over that state; otherwise
+    /// <see cref="For(GameStatus, bool)"/>.
     /// </summary>
-    public static string For(GameStatus status, string? musicTrack, CueLibrary library)
+    public static string For(GameStatus status, string? musicTrack, CueLibrary library, bool atSettlement = false)
     {
-        var own = For(status, library);
+        var own = For(status, library, atSettlement);
         var chosen = IsChosen(own);
 
         if (musicTrack is null || !ByTrack.TryGetValue(musicTrack, out var folder))
@@ -101,14 +102,19 @@ public static class Situations
     }
 
     /// <summary>
-    /// <see cref="For(GameStatus)"/>, except that a folder with no tracks is skipped for the folders
+    /// <see cref="For(GameStatus, bool)"/>, except that a folder with no tracks is skipped for the folders
     /// used before it existed.
     /// </summary>
-    public static string For(GameStatus status, CueLibrary library)
+    public static string For(GameStatus status, CueLibrary library, bool atSettlement = false)
     {
-        var folder = For(status);
+        var folder = For(status, atSettlement);
 
-        if (IsChosen(folder) && library.Music(folder).Count == 0)
+        if (folder == Settlement && library.Music(folder).Count == 0)
+        {
+            folder = For(status);
+        }
+
+        if (folder == OnFootStation && library.Music(folder).Count == 0)
         {
             return OnFoot;
         }
@@ -117,14 +123,24 @@ public static class Situations
     }
 
     private static bool IsChosen(string folder) =>
-        string.Equals(folder, OnFootStation, StringComparison.Ordinal);
+        string.Equals(folder, OnFootStation, StringComparison.Ordinal)
+        || string.Equals(folder, Settlement, StringComparison.Ordinal);
 
-    /// <summary>A pure function of the state Elite last wrote — no clock, no thread, no history.</summary>
-    public static string For(GameStatus status)
+    /// <summary>
+    /// A pure function of the state Elite last wrote and whether <see cref="SettlementVisit"/> holds a
+    /// settlement — no clock, no thread.
+    /// </summary>
+    public static string For(GameStatus status, bool atSettlement = false)
     {
         if (!status.IsKnown)
         {
             return General;
+        }
+
+        if (atSettlement
+            && (status.OnFoot ? status.Has2(StatusFlags2.OnFootOnPlanet) : status.Has(StatusFlags.InSrv)))
+        {
+            return Settlement;
         }
 
         if (status.OnFoot)
@@ -169,6 +185,32 @@ public sealed class EliteMusic
             if (journalEvent.Kind == "Music")
             {
                 Track = journalEvent.String("MusicTrack");
+            }
+        }
+    }
+}
+
+/// <summary>
+/// The settlement of the latest <c>ApproachSettlement</c>, held until <c>SupercruiseEntry</c>, <c>FSDJump</c>,
+/// <c>LoadGame</c>, <c>Died</c> or a <c>Docked</c> anywhere but a settlement's own pad.
+/// </summary>
+public sealed class SettlementVisit
+{
+    public bool Held { get; private set; }
+
+    public void Observe(IEnumerable<JournalEvent> events)
+    {
+        foreach (var journalEvent in events)
+        {
+            switch (journalEvent.Kind)
+            {
+                case "ApproachSettlement":
+                case "Docked" when journalEvent.String("StationType") == "OnFootSettlement":
+                    Held = true;
+                    break;
+                case "SupercruiseEntry" or "FSDJump" or "LoadGame" or "Died" or "Docked":
+                    Held = false;
+                    break;
             }
         }
     }

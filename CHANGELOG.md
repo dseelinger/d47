@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A new music folder, `settlement`, plays while the Commander is on foot or in the SRV at an Odyssey settlement, from the journal's settlement approach until supercruise, a jump, death, a new session or docking anywhere but the settlement's own pad. It wins over Elite's `OnFoot` and `Exploration` tracks and gives way to every other Elite track, so combat in the SRV still plays `combat-srv`. In the ship, landed at the settlement, `normal-space` plays as before, and while the folder is empty nothing changes. The folder is created on the next start.
+
 A new music folder, `on-foot-station`, plays while the Commander is on foot in a station, a hangar or a social space. It wins over Elite's general tracks (`OnFoot`, `Starport` and `Exploration`) and gives way to every other Elite track. While it is empty, the `on-foot` and `docked` folders play as before. The folder is created on the next start.
 
 For the maintainer of the music library: with a Music publish token, "thumbs down this track" (or a hotkey or stick button bound in Settings › Hearing and sound) adds the playing library track to `data\music-rejects.tsv` and skips to the next one. A queued track is not played again, a track from your own `data\audio` folder is refused, and without a token the phrase and the hotkey do nothing. The model is never offered it.

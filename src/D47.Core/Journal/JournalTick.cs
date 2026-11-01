@@ -101,6 +101,9 @@ public sealed class JournalTick(JournalTick.Sources sources)
     /// <summary>Elite's own music track: the journal's witness that the galaxy map is showing (#365), and what ambience follows.</summary>
     public EliteMusic EliteMusic { get; } = new();
 
+    /// <summary>The settlement the Commander approached and has not left, which ambience follows.</summary>
+    public SettlementVisit Settlement { get; } = new();
+
     /// <summary>Polls the journal and the state files and folds this tick's events, ledgers before callouts.</summary>
     public void Fold(TickContext context)
     {
@@ -123,6 +126,7 @@ public sealed class JournalTick(JournalTick.Sources sources)
         Arrived = shown;
 
         EliteMusic.Observe(events);
+        Settlement.Observe(events);
 
         if (events.Any(journalEvent => journalEvent.Kind == "DockingRequested"))
         {

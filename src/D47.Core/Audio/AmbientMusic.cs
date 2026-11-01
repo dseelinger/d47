@@ -45,6 +45,7 @@ public sealed class AmbientMusic(
     private DateTimeOffset _cueStart;
     private GameStatus? _status;
     private string? _track;
+    private bool _atSettlement;
     private readonly IdleWatch _watch = new();
     private string? _target;
     private bool _idle;
@@ -81,13 +82,15 @@ public sealed class AmbientMusic(
     /// Points the ambience at the current situation, at the tick's time, given this tick's journal events. A
     /// change of folder shelves the old track and continues the new folder's shelved track, or starts its next
     /// one. A one-shot folder plays one track instead, and a change during it waits for it to end. Only the
-    /// tick calls it, and it is the only source of time for going idle.
+    /// tick calls it, and it is the only source of time for going idle. <paramref name="atSettlement"/> is
+    /// <see cref="SettlementVisit.Held"/>.
     /// </summary>
     public void Follow(
         GameStatus status,
         string? musicTrack,
         DateTimeOffset now = default,
-        IReadOnlyList<JournalEvent>? events = null)
+        IReadOnlyList<JournalEvent>? events = null,
+        bool atSettlement = false)
     {
         lock (_gate)
         {
@@ -98,9 +101,10 @@ public sealed class AmbientMusic(
 
             _status = status;
             _track = musicTrack;
+            _atSettlement = atSettlement;
             audio.DropStaleMusic(now);
 
-            var target = Situations.For(status, musicTrack, library());
+            var target = Situations.For(status, musicTrack, library(), atSettlement);
             var oneShot = Situations.OneShot.Contains(target);
             var changed = Idle(target, events ?? [], now);
 
@@ -134,7 +138,7 @@ public sealed class AmbientMusic(
             {
                 changed = true;
             }
-            else if (_cue is null && Change(oneShot ? Situations.For(status, library()) : target, now))
+            else if (_cue is null && Change(oneShot ? Situations.For(status, library(), atSettlement) : target, now))
             {
                 changed = true;
             }
@@ -283,8 +287,8 @@ public sealed class AmbientMusic(
     private string Underlying()
     {
         var status = _status ?? new GameStatus();
-        var target = Situations.For(status, _track, library());
-        return Situations.OneShot.Contains(target) ? Situations.For(status, library()) : target;
+        var target = Situations.For(status, _track, library(), _atSettlement);
+        return Situations.OneShot.Contains(target) ? Situations.For(status, library(), _atSettlement) : target;
     }
 
     /// <summary>A track ended on its own.</summary>

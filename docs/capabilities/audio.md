@@ -274,6 +274,7 @@ track, and D47 maps that track to a folder:
 | `normal-space` | `Exploration` | In a ship, a fighter or an SRV, and neither of the above — including landed. |
 | `on-foot` | `OnFoot` | Out of the ship. |
 | `on-foot-station` |  | On foot in a station, a hangar or a social space. |
+| `settlement` |  | On foot or in the SRV at a settlement, from the journal's settlement approach until supercruise. |
 | `general` | — | Anything else, and the last fallback. |
 | `main-menu` | `MainMenu` |  |
 | `docking-computer` | `DockingComputer` |  |
@@ -306,10 +307,10 @@ track, and D47 maps that track to a folder:
 | `combat-hunters` | `Combat_Hunters` |  |
 | `damaged-starport` | `Damaged_Starport` |  |
 
-Elite's general tracks (`OnFoot`, `Starport` and `Exploration`) give way to a folder D47 chose
-from `Status.json`, when that folder has files in it. Every other Elite track whose folder has files
-in it plays that folder. Otherwise the folder comes from what `Status.json` states — the six in the
-last column — and then `general`. An empty
+Elite's general tracks (`OnFoot`, `Starport` and `Exploration`) give way to `on-foot-station` or
+`settlement`, when that folder has files in it. Every other Elite track whose folder has files
+in it plays that folder. Otherwise the folder comes from what `Status.json` and the journal state — the
+seven in the last column — and then `general`. An empty
 folder changes nothing. `NoTrack`, `NoInGameMusic` and any track not listed have no folder.
 
 `arrival-from-supercruise`, `arrival-from-hyperspace` and `interdiction` each play one track and then hand
