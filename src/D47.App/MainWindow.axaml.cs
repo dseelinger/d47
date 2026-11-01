@@ -1249,6 +1249,8 @@ public partial class MainWindow : Window
 
         var presenter = new TurnPresenter(_model, _host.ShipPicture, _host.AddressedVoices.AddressedPicture);
 
+        _host.Music.TurnStarted();
+
         // Claimed before the turn starts and released in the finally.
         var cancelling = _host.Cancellation.Begin();
 

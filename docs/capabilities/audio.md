@@ -324,6 +324,13 @@ hold is per folder, not per situation: two situations that both fall back to `ge
 track. Up to four tracks are held; a fifth drops the one held longest. Muting the category, saying
 "stop" or closing Elite stops every held track, and unmuting starts a new one.
 
+After ten minutes in one situation with nothing happening, the music fades out over ten seconds and the
+track is held where it stopped. When something happens it fades back in over three seconds from that
+point. Something happening is any journal event except `Music`, `ReceiveText`, `NpcCrewPaidWage`,
+`CommunityGoal` and `FSSSignalDiscovered`, which Elite writes while you sit docked; a change of situation;
+a turn with D47; or a media key. A track held this way is not dropped after 30 minutes. While it is held,
+the volume flyout shows it paused and **Now playing** reads Paused, and Resume or the play key brings it back.
+
 ### Pause, resume and next track
 
 The keyboard's play/pause and next-track keys control the ambient music. D47 registers as a Windows

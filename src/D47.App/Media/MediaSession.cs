@@ -92,7 +92,7 @@ internal sealed class MediaSession : IDisposable
         _controls.PlaybackStatus = state switch
         {
             { Playing: true } => MediaPlaybackStatus.Playing,
-            { Paused: true } => MediaPlaybackStatus.Paused,
+            { Paused: true } or { Idle: true } => MediaPlaybackStatus.Paused,
             _ => MediaPlaybackStatus.Stopped,
         };
 

@@ -3618,7 +3618,7 @@ public sealed class AppHost : IDisposable
                 host.Voice.GameRunning = running;
             }
 
-            host.Music.Follow(stores.Status.Current, feed.EliteMusic.Track, context.Now);
+            host.Music.Follow(stores.Status.Current, feed.EliteMusic.Track, context.Now, feed.Arrived);
         });
 
         // After ambience, so it reads this tick's running state.

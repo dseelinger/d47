@@ -159,13 +159,13 @@ public static class AudioCapability
     internal static string NowPlaying(MusicState state, bool muted) => state switch
     {
         _ when muted => "Muted",
-        { Paused: true } => "Paused",
+        { Paused: true } or { Idle: true } => "Paused",
         { Track: { } track } => Path.GetFileNameWithoutExtension(track),
         _ => "Nothing playing",
     };
 
     private static bool CanControl(MusicState state, D47Settings settings) =>
-        !settings.Audio.For(AudioChannel.Music).Muted && (state.Playing || state.Paused);
+        !settings.Audio.For(AudioChannel.Music).Muted && (state.Playing || state.Paused || state.Idle);
 
     /// <summary>Pause or resume, and next, above the music's level row. None where nothing plays the music.</summary>
     private static IEnumerable<SettingRow> TransportRows(
@@ -202,9 +202,9 @@ public static class AudioCapability
             {
                 Read = s => NowPlaying(musicState(), s.Audio.For(AudioChannel.Music).Muted),
             },
-            PressLabelFor = () => musicState().Paused ? "Resume" : "Pause",
+            PressLabelFor = () => musicState() is { Paused: true } or { Idle: true } ? "Resume" : "Pause",
             PressEnabled = s => CanControl(musicState(), s),
-            Press = () => music(musicState().Paused ? MusicAction.Resume : MusicAction.Pause),
+            Press = () => music(musicState() is { Paused: true } or { Idle: true } ? MusicAction.Resume : MusicAction.Pause),
             Watch = watch,
         };
 

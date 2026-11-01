@@ -10,19 +10,28 @@ public enum MusicAction
     Next,
 }
 
-/// <summary>What the transport controls show: the track, whether it is playing, and whether the Commander paused it.</summary>
-public sealed record MusicState(string? Track, bool Playing, bool Paused);
+/// <summary>
+/// What the transport controls show: the track, whether it is playing, whether the Commander paused it, and
+/// whether it faded out with nothing happening.
+/// </summary>
+public sealed record MusicState(string? Track, bool Playing, bool Paused, bool Idle = false);
 
 /// <summary>
 /// The ambience layer and its transport: follows the situation, starts the next track, and holds the
 /// Commander's pause. Pause is session state; the mute setting is separate and saved. Nothing plays
 /// until <see cref="GameRunning"/> says Elite is running. A one-shot folder plays one cue that keeps the
 /// slot to its end, or <see cref="CueLimit"/>, then hands back to the situation current at that moment.
+/// After <see cref="IdleWatch.Threshold"/> with nothing happening the track fades out and is held, and it
+/// fades back in on the next activity.
 /// </summary>
 public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, Random? shuffle = null)
 {
     /// <summary>The longest a one-shot cue holds the slot.</summary>
     public static readonly TimeSpan CueLimit = TimeSpan.FromSeconds(60);
+
+    public static readonly TimeSpan IdleFadeOut = TimeSpan.FromSeconds(10);
+
+    public static readonly TimeSpan WakeFadeIn = TimeSpan.FromSeconds(3);
 
     private readonly Lock _gate = new();
 
@@ -35,6 +44,12 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
     private DateTimeOffset _cueStart;
     private GameStatus? _status;
     private string? _track;
+    private readonly IdleWatch _watch = new();
+    private string? _target;
+    private bool _idle;
+
+    /// <summary>1 when a voice turn or a transport key happened since the last <see cref="Follow"/>.</summary>
+    private int _stirred;
 
     /// <summary>Raised after the track or the paused state changes, outside any lock.</summary>
     public event Action<MusicState>? Changed;
@@ -62,11 +77,16 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
     }
 
     /// <summary>
-    /// Points the ambience at the current situation, at the tick's time. A change of folder shelves the old
-    /// track and continues the new folder's shelved track, or starts its next one. A one-shot folder plays
-    /// one track instead, and a change during it waits for it to end.
+    /// Points the ambience at the current situation, at the tick's time, given this tick's journal events. A
+    /// change of folder shelves the old track and continues the new folder's shelved track, or starts its next
+    /// one. A one-shot folder plays one track instead, and a change during it waits for it to end. Only the
+    /// tick calls it, and it is the only source of time for going idle.
     /// </summary>
-    public void Follow(GameStatus status, string? musicTrack, DateTimeOffset now = default)
+    public void Follow(
+        GameStatus status,
+        string? musicTrack,
+        DateTimeOffset now = default,
+        IReadOnlyList<JournalEvent>? events = null)
     {
         lock (_gate)
         {
@@ -81,7 +101,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
 
             var target = Situations.For(status, musicTrack, library());
             var oneShot = Situations.OneShot.Contains(target);
-            var changed = false;
+            var changed = Idle(target, events ?? [], now);
 
             if (!oneShot)
             {
@@ -126,6 +146,69 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
 
         Raise();
     }
+
+    /// <summary>Feeds the idle watch and fades out when idle starts or back in when it ends. True when either happened.</summary>
+    private bool Idle(string target, IReadOnlyList<JournalEvent> events, DateTimeOffset now)
+    {
+        if (Interlocked.Exchange(ref _stirred, 0) == 1)
+        {
+            _watch.Stir(now);
+        }
+
+        _watch.Observe(events, now);
+
+        if (!string.Equals(target, _target, StringComparison.OrdinalIgnoreCase))
+        {
+            _target = target;
+            _watch.Stir(now);
+        }
+
+        var idle = _watch.IsIdle(now);
+
+        if (idle == _idle || _cue is not null)
+        {
+            return false;
+        }
+
+        if (idle)
+        {
+            _idle = true;
+
+            if (!_paused && !audio.FadeOutMusic(IdleFadeOut) && !audio.Activity.MusicPlaying)
+            {
+                _current = null;
+            }
+        }
+        else
+        {
+            Wake();
+        }
+
+        return true;
+    }
+
+    /// <summary>Ends idle, fading the held track back in, or starting one when none is held. A pause stays.</summary>
+    private void Wake()
+    {
+        _idle = false;
+
+        if (_paused || audio.Mix.Music.Muted)
+        {
+            return;
+        }
+
+        if (audio.MusicHeld)
+        {
+            audio.ResumeMusic(WakeFadeIn);
+        }
+        else if (!audio.Activity.MusicPlaying)
+        {
+            Continue(WakeFadeIn);
+        }
+    }
+
+    /// <summary>A voice turn started. Safe from any thread; the next <see cref="Follow"/> counts it.</summary>
+    public void TurnStarted() => Interlocked.Exchange(ref _stirred, 1);
 
     private bool Change(string situation, DateTimeOffset now)
     {
@@ -214,7 +297,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
             {
                 EndCue(default, fade: false);
             }
-            else if (_running && !_paused)
+            else if (_running && !_paused && !_idle)
             {
                 StartNext(afterGap: true);
             }
@@ -234,7 +317,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
                 _current = null;
                 LeaveCue();
             }
-            else if (_running && !_paused && !audio.Activity.MusicPlaying)
+            else if (_running && !_paused && !_idle && !audio.Activity.MusicPlaying)
             {
                 StartNext();
             }
@@ -257,6 +340,9 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
             }
 
             _running = running;
+            _watch.Reset();
+            _target = null;
+            _idle = false;
 
             if (!running)
             {
@@ -271,17 +357,21 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
         Raise();
     }
 
-    /// <summary>Carries out one transport action and says what happened.</summary>
+    /// <summary>Carries out one transport action and says what happened. Any action ends idle.</summary>
     public string Control(MusicAction action)
     {
         string said;
 
         lock (_gate)
         {
+            Interlocked.Exchange(ref _stirred, 1);
+            var waking = _idle;
+            _idle = false;
+
             said = action switch
             {
                 MusicAction.Pause => Pause(),
-                MusicAction.Resume => Resume(),
+                MusicAction.Resume => Resume(waking ? WakeFadeIn : null),
                 _ => Skip(),
             };
         }
@@ -302,7 +392,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
         return "Music paused.";
     }
 
-    private string Resume()
+    private string Resume(TimeSpan? fadeIn)
     {
         if (!_running)
         {
@@ -318,7 +408,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
 
         if (audio.MusicHeld)
         {
-            audio.ResumeMusic();
+            audio.ResumeMusic(fadeIn);
             return "Music resumed.";
         }
 
@@ -327,7 +417,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
             return "The music is already playing.";
         }
 
-        return Continue() ? "Music resumed." : NothingToPlay;
+        return Continue(fadeIn) ? "Music resumed." : NothingToPlay;
     }
 
     private string Skip()
@@ -397,7 +487,8 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
     private MusicState Snapshot()
     {
         var live = _current is not null && audio.Activity.MusicPlaying;
-        return new MusicState(live ? _current!.Name : null, live && !_paused, _paused);
+        var idle = live && _idle && !_paused;
+        return new MusicState(live ? _current!.Name : null, live && !_paused && !_idle, _paused, idle);
     }
 
     private void Raise()

@@ -100,6 +100,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private MusicTrack? _musicTrack;
     private string? _musicFolder;
     private bool _musicHeld;
+    private bool _musicFadedOut;
 
     /// <summary>Paused tracks held under their folder, longest held first, at most one per folder.</summary>
     private readonly List<Shelved> _shelf = [];
@@ -387,6 +388,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             _musicTrack = track;
             _musicFolder = folder;
             _musicHeld = false;
+            _musicFadedOut = false;
 
             if (afterGap)
             {
@@ -600,8 +602,43 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
-    /// <summary>Continues a held ambience track. False when there is no track to continue.</summary>
-    public bool ResumeMusic()
+    /// <summary>
+    /// Fades the live track out and holds it in the slot at the end of the fade, so it neither ages nor is
+    /// shelved. A gap is stopped instead. False when nothing faded.
+    /// </summary>
+    public bool FadeOutMusic(TimeSpan fadeOut)
+    {
+        AudioActivity activity;
+
+        lock (_gate)
+        {
+            if (_music is not { } playing || _musicHeld)
+            {
+                return false;
+            }
+
+            if (_musicAfterGap is null)
+            {
+                sink.Fade(playing, 0, fadeOut, holdAtEnd: true);
+                _musicHeld = true;
+                _musicFadedOut = true;
+                return true;
+            }
+
+            sink.Stop(playing);
+            ClearLive();
+            activity = Snapshot();
+        }
+
+        ActivityChanged?.Invoke(activity);
+        return false;
+    }
+
+    /// <summary>
+    /// Continues a held ambience track; one held by <see cref="FadeOutMusic"/> fades back in over
+    /// <paramref name="fadeIn"/>. False when there is no track to continue.
+    /// </summary>
+    public bool ResumeMusic(TimeSpan? fadeIn = null)
     {
         lock (_gate)
         {
@@ -611,12 +648,19 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             }
 
             sink.Resume(playing);
+
+            if (_musicFadedOut)
+            {
+                sink.Fade(playing, 1, fadeIn ?? TimeSpan.Zero);
+                _musicFadedOut = false;
+            }
+
             _musicHeld = false;
             return true;
         }
     }
 
-    /// <summary>Whether an ambience track is held by <see cref="PauseMusic"/>.</summary>
+    /// <summary>Whether an ambience track is held by <see cref="PauseMusic"/> or <see cref="FadeOutMusic"/>.</summary>
     public bool MusicHeld
     {
         get
@@ -634,6 +678,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         _musicTrack = null;
         _musicFolder = null;
         _musicHeld = false;
+        _musicFadedOut = false;
         _musicAfterGap = null;
     }
 
