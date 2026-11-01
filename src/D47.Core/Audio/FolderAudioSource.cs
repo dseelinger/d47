@@ -56,6 +56,8 @@ public sealed class FolderAudioSource : ICueSource
 
     public IEnumerable<string> Names => _files.Keys;
 
+    public string? FileName(string name) => _files.TryGetValue(name, out var path) ? Path.GetFileName(path) : null;
+
     /// <summary>Every file under the root that was never a candidate to load, with where it should go.</summary>
     public IReadOnlyList<string> Ignored => _ignored;
 

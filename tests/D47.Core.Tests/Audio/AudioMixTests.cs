@@ -140,12 +140,15 @@ public class AudioMixTests
         }
     }
 
-    /// <summary>The one tool is the music transport; no tool sets a level or a mute.</summary>
+    /// <summary>The tools are the music transport and the protected thumbs down; no tool sets a level or a mute.</summary>
     [Fact]
     public void TheModelCannotReachTheMixer()
     {
-        var tool = Assert.Single(AudioCapability.Create().Tools);
-        Assert.Equal(AudioCapability.ManageMusicTool, tool.Name);
+        var tools = AudioCapability.Create().Tools;
+        Assert.Equal(
+            [AudioCapability.ManageMusicTool, AudioCapability.ThumbsDownTool],
+            tools.Select(tool => tool.Name));
+        Assert.True(tools.Single(tool => tool.Name == AudioCapability.ThumbsDownTool).Protected);
     }
 
     /// <summary>The defaults are what d47 sounded like before there was a mixer.</summary>

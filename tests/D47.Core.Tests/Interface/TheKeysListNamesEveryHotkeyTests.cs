@@ -21,7 +21,7 @@ public sealed class TheKeysListNamesEveryHotkeyTests
 
         var missing = surface.Settings.Sections
             .SelectMany(section => section.Rows)
-            .Where(row => row.Kind == SettingKind.Hotkey && !listed.Contains(row.Label))
+            .Where(row => row.Kind == SettingKind.Hotkey && row.Applies(surface.Settings.Current) && !listed.Contains(row.Label))
             .Select(row => row.Key)
             .ToList();
 

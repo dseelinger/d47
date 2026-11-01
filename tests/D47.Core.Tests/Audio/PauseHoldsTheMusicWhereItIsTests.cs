@@ -153,7 +153,7 @@ public class PauseHoldsTheMusicWhereItIsTests : IDisposable
         {
             ran = action;
             return "Next track.";
-        }).Tools.Single();
+        }).Tools.Single(t => t.Name == AudioCapability.ManageMusicTool);
 
         var result = await tool.Handler(
             new ToolArguments(new Dictionary<string, string> { ["action"] = "next" }),

@@ -24,7 +24,8 @@ public sealed record MusicState(string? Track, bool Playing, bool Paused, bool I
 /// After <see cref="IdleWatch.Threshold"/> with nothing happening the track fades out and is held, and it
 /// fades back in on the next activity.
 /// </summary>
-public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, Random? shuffle = null)
+public sealed class AmbientMusic(
+    AudioArbiter audio, Func<CueLibrary> library, Random? shuffle = null, MusicRejects? rejects = null)
 {
     /// <summary>The longest a one-shot cue holds the slot.</summary>
     public static readonly TimeSpan CueLimit = TimeSpan.FromSeconds(60);
@@ -35,7 +36,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
 
     private readonly Lock _gate = new();
 
-    private Ambience _ambience = new(shuffle);
+    private Ambience _ambience = new(shuffle, track => IsRejected(rejects, track));
     private MusicTrack? _current;
     private bool _paused;
     private bool _running;
@@ -371,11 +372,58 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
                 _current = null;
                 _cue = null;
                 _spent = null;
-                _ambience = new Ambience(shuffle);
+                _ambience = new Ambience(shuffle, track => IsRejected(rejects, track));
             }
         }
 
         Raise();
+    }
+
+    private static bool IsRejected(MusicRejects? rejects, MusicTrack track) =>
+        rejects is not null
+        && track is { PackFolder: { } folder, PackFile: { } file }
+        && rejects.Contains(folder, file);
+
+    /// <summary>
+    /// Queues the playing library track for deletion and skips to the next one, and says what happened. A
+    /// track from the Commander's own folder is refused.
+    /// </summary>
+    public string ThumbsDown()
+    {
+        string said;
+
+        lock (_gate)
+        {
+            if (rejects is null)
+            {
+                return "Thumbs down is not available.";
+            }
+
+            var live = _current is not null && audio.Activity.MusicPlaying;
+
+            if (!live)
+            {
+                return "No music is playing.";
+            }
+
+            if (_current is not { PackFolder: { } folder, PackFile: { } file })
+            {
+                return "That track is one of your own files, so it is not queued.";
+            }
+
+            var added = rejects.Add(folder, file);
+            var queued = rejects.Count;
+
+            Interlocked.Exchange(ref _stirred, 1);
+            _idle = false;
+            var next = Skip();
+
+            said = $"{(added ? "Queued" : "Already queued")} {Path.GetFileNameWithoutExtension(file)}. "
+                   + $"{queued} track{(queued == 1 ? " is" : "s are")} queued for deletion. {next}";
+        }
+
+        Raise();
+        return said;
     }
 
     /// <summary>Carries out one transport action and says what happened. Any action ends idle.</summary>

@@ -171,7 +171,7 @@ public sealed class AppHost : IDisposable
         _audioSink = audioSink;
         _outputFollow = new DefaultDeviceFollowPolicy(audioSink);
         Audio = audio;
-        Music = new AmbientMusic(audio, () => Cues);
+        Music = new AmbientMusic(audio, () => Cues, rejects: new MusicRejects(paths.MusicRejects, files));
         _cues = cues;
         Voice = voice;
         _binds = binds;
@@ -425,6 +425,13 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Downloads the music library while <see cref="UiSettings.MusicLibrary"/> is on.</summary>
     internal MusicPackStore? MusicPack { get; private set; }
+
+    /// <summary>Whether a Music publish token is stored or in the environment.</summary>
+    internal bool MusicMaintainer =>
+        MusicPublishToken.Present(Secrets.Names.Contains(MusicPublishToken.SecretName), Environment.GetEnvironmentVariable);
+
+    /// <summary>Queues the playing library track for deletion and skips it; refused without a token.</summary>
+    internal string ThumbsDownMusic() => MusicMaintainer ? Music.ThumbsDown() : "Thumbs down is not available.";
 
     /// <summary>Replaced whole by the audio folder watch, from the thread pool.</summary>
     private volatile CueLibrary _cues;
@@ -2519,6 +2526,8 @@ public sealed class AppHost : IDisposable
                 contextNote: () => late.Host?.ContextNote,
                 openAudioFolder: () => OpenWithShell(paths.Audio),
                 controlMusic: action => late.Host?.Music.Control(action) ?? "Ambient music is not available.",
+                thumbsDownMusic: () => late.Host?.ThumbsDownMusic() ?? "Ambient music is not available.",
+                musicMaintainer: () => late.Host?.MusicMaintainer == true,
                 colonisationPlans: () => late.Host?.ColonisationPlans,
                 colonisationProgress: () => late.Host?.ColonisationProgress,
                 commanderLog: stores.CommanderLog,

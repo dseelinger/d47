@@ -46,6 +46,27 @@ public partial class MainWindow : Window
     private readonly GlobalHotkey _resetHeadsetZoom;
     private readonly GlobalHotkey _resizeHeadsetPanel;
 
+    /// <summary>The gesture that thumbs down the playing library track; it does nothing without a Music publish token.</summary>
+    private void BindThumbsDownKey()
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        BindHotkey(_thumbsDownMusic, _host.Settings.Current.Hotkeys.ThumbsDownMusic, "thumbs-down-music",
+            AudioCapability.ThumbsDownHotkeyKey, () => Avalonia.Threading.Dispatcher.UIThread.Post(ThumbsDownMusic));
+    }
+
+    /// <summary>Queues the playing library track for deletion and says what happened; UI thread.</summary>
+    private void ThumbsDownMusic()
+    {
+        if (_host is { MusicMaintainer: true })
+        {
+            _host.Announcer.SayAside(_host.ThumbsDownMusic());
+        }
+    }
+
     /// <summary>The four gestures that move the comms channel selection.</summary>
     private readonly GlobalHotkey _commsChannelUp;
     private CommsStepSpeaker? _commsStepSpeaker;
@@ -54,6 +75,7 @@ public partial class MainWindow : Window
     private readonly GlobalHotkey _commsChannelDown;
     private readonly GlobalHotkey _commsSubChannelUp;
     private readonly GlobalHotkey _commsSubChannelDown;
+    private readonly GlobalHotkey _thumbsDownMusic;
 
     private readonly PanelViewModel _model;
 
@@ -100,6 +122,7 @@ public partial class MainWindow : Window
         _commsChannelDown = new GlobalHotkey(hotkeyLogger);
         _commsSubChannelUp = new GlobalHotkey(hotkeyLogger);
         _commsSubChannelDown = new GlobalHotkey(hotkeyLogger);
+        _thumbsDownMusic = new GlobalHotkey(hotkeyLogger);
 
         InitializeComponent();
 
@@ -616,6 +639,7 @@ public partial class MainWindow : Window
         BindOverlayKeys();
         BindHeadsetZoomAndResizeKeys();
         BindCommsChannelKeys();
+        BindThumbsDownKey();
 
         // The stick's half of the same actions, read on the tick and run here.
         _host.ActionButtons.Pressed += key => Avalonia.Threading.Dispatcher.UIThread.Post(() => OnActionButton(key));
@@ -696,6 +720,11 @@ public partial class MainWindow : Window
             if (SettingsLayout.IsCommsHotkeyFamily(change.Key))
             {
                 BindCommsChannelKeys();
+            }
+
+            if (change.Key == AudioCapability.ThumbsDownHotkeyKey)
+            {
+                BindThumbsDownKey();
             }
 
             if (change.Key == ShipsCapability.HullArtKey
@@ -1562,6 +1591,7 @@ public partial class MainWindow : Window
             [VrCapability.ZoomOutButtonKey] = window => window.StepHeadsetZoom("out"),
             [VrCapability.ResetZoomButtonKey] = window => window.StepHeadsetZoom("reset"),
             [VrCapability.ResizeButtonKey] = window => window.ToggleHeadsetResize(),
+            [AudioCapability.ThumbsDownButtonKey] = window => window.ThumbsDownMusic(),
             [CommsCapability.ChannelUpButtonKey] = window => window.StepComms(CommsCapability.Next, null),
             [CommsCapability.ChannelDownButtonKey] = window => window.StepComms(CommsCapability.Previous, null),
             [CommsCapability.SubChannelUpButtonKey] = window => window.StepComms(CommsCapability.Current, CommsCapability.Next),

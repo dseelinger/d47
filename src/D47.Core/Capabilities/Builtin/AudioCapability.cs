@@ -72,6 +72,8 @@ public static class AudioCapability
     /// <param name="openFolder">Opens that folder, or null where there is no shell to open it with.</param>
     /// <param name="music">Pauses, resumes or skips the ambient music; null where nothing plays it.</param>
     /// <param name="library">The music library download's state line, or null when there is nothing to say.</param>
+    /// <param name="thumbsDown">Queues the playing library track for deletion and skips it; null where nothing plays the music.</param>
+    /// <param name="maintainer">Whether a Music publish token is present, which is what makes thumbs down reachable.</param>
     public static CapabilityDescriptor Create(
         Func<string>? drops = null,
         Action? openFolder = null,
@@ -79,7 +81,9 @@ public static class AudioCapability
         Func<MusicState>? musicState = null,
         Func<Action, Action>? watchMusic = null,
         Func<string?>? library = null,
-        Func<Action, Action>? watchLibrary = null) => new()
+        Func<Action, Action>? watchLibrary = null,
+        Func<string>? thumbsDown = null,
+        Func<bool>? maintainer = null) => new()
     {
         Id = Id,
         Group = "Voice",
@@ -98,8 +102,80 @@ public static class AudioCapability
                 ? [LibraryRow(library, watchLibrary), .. TransportRows(music, musicState, watchMusic), .. RowsFor(channel)]
                 : RowsFor(channel)),
             .. drops is null ? Array.Empty<SettingRow>() : [DropsRow(drops, openFolder)],
+            TokenRow,
+            .. InterfaceCapability.HotkeyRows(
+                ThumbsDownHotkeyKey,
+                ThumbsDownButtonKey,
+                "Thumbs down the playing track",
+                "thumbs-down-music",
+                s => s.Hotkeys.ThumbsDownMusic,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { ThumbsDownMusic = v } },
+                systemWide: true,
+                exercise: new(
+                    "Settings › Hearing and sound › Sounds and levels, group Ambient music",
+                    "(unbound)",
+                    "with a Music publish token set and a library track playing, the track is added to "
+                        + "data\\music-rejects.tsv and the next track starts. Without a token the row is not shown "
+                        + "and the key does nothing."))
+                .Select(row => row with { AppliesWhen = _ => maintainer?.Invoke() == true }),
         ],
-        Tools = [ManageMusic(music)],
+        Tools = [ManageMusic(music), ThumbsDownMusic(thumbsDown, maintainer)],
+    };
+
+    public const string ThumbsDownTool = "thumbs_down_music";
+
+    public const string MusicPublishTokenKey = "audio.music.publishToken";
+
+    public const string ThumbsDownHotkeyKey = "hotkeys.thumbsDownMusic";
+
+    public const string ThumbsDownButtonKey = "hotkeys.thumbsDownMusicButton";
+
+    private static readonly SettingRow TokenRow = new()
+    {
+        Key = MusicPublishTokenKey,
+        Exercise =
+            ShowMusic + "paste a fine-grained GitHub token with contents write on dseelinger/d47-music into Music "
+            + "publish token. For the music library's maintainer only; it needs that GitHub account. The row never "
+            + "shows the token back. Then say \"thumbs down this track\" while a library track plays: the track is "
+            + "queued for deletion and the next one starts. Without a token, and without D47_MUSIC_PUBLISH_TOKEN in "
+            + "the environment, the phrase does nothing.",
+        Advanced = true,
+        Label = "Music publish token",
+        Help =
+            "For the maintainer of the D47 music library. With a token here, \"thumbs down this track\" queues the "
+            + "library track that is playing for deletion, and skips it.\n\n"
+            + "It is a fine-grained GitHub token with contents write on dseelinger/d47-music only. It is stored "
+            + "encrypted for this Windows account and is write-only. Without one here, D47 reads "
+            + "D47_MUSIC_PUBLISH_TOKEN from the environment.",
+        Kind = SettingKind.Secret,
+        Group = MusicGroup,
+        SecretName = MusicPublishToken.SecretName,
+        DocsAnchor = "music-publish-token",
+    };
+
+    /// <summary>
+    /// Queues the playing library track for deletion and skips it. Reached by phrase only while a token is
+    /// present; never offered to the model.
+    /// </summary>
+    private static ToolDefinition ThumbsDownMusic(Func<string>? thumbsDown, Func<bool>? maintainer) => new()
+    {
+        Name = ThumbsDownTool,
+        Exercise =
+            "With a Music publish token set and a library track playing, say \"thumbs down this track\". The "
+            + "reply says the track is queued and how many are queued, and the next track starts. For the "
+            + "maintainer of the music library.",
+        Description = "Queues the playing library music track for deletion and skips it.",
+        Protected = true,
+        RefusalExample = "thumbs down this track",
+        Commands =
+        [
+            new ToolCommandPhrase("thumbs down this track") { When = () => maintainer?.Invoke() == true },
+            new ToolCommandPhrase("thumbs down") { When = () => maintainer?.Invoke() == true },
+        ],
+        Handler = (_, _) => Task.FromResult(
+            thumbsDown is null || maintainer?.Invoke() != true
+                ? ToolResult.Error("Thumbs down is not available.")
+                : ToolResult.Ok(thumbsDown())),
     };
 
     public const string ManageMusicTool = "manage_music";

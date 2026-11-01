@@ -22,6 +22,9 @@ public interface ICueSource
     /// <summary>A downloaded library: its files are logged when they fail, never counted or described.</summary>
     bool IsPack => false;
 
+    /// <summary>The file name, with its extension, behind a prefixed name; null where there is no file.</summary>
+    string? FileName(string name) => null;
+
     /// <summary>The whole clip in <see cref="AudioFormat.Standard"/>.</summary>
     AudioClip Decode(string name, string clipName)
     {
@@ -304,7 +307,7 @@ public sealed class CueLibrary
                         continue;
                     }
 
-                    if (TryReference(source, resource, stem, sourceSkipped) is { } track)
+                    if (TryReference(source, resource, situation, stem, sourceSkipped) is { } track)
                     {
                         if (!sourceMusic.TryGetValue(situation, out var tracks))
                         {
@@ -464,7 +467,7 @@ public sealed class CueLibrary
     /// A track whose header was checked and whose samples are left on disk, or null with the reason
     /// recorded.
     /// </summary>
-    private static MusicTrack? TryReference(ICueSource source, string resource, string name, List<string> skipped)
+    private static MusicTrack? TryReference(ICueSource source, string resource, string situation, string name, List<string> skipped)
     {
         try
         {
@@ -476,7 +479,9 @@ public sealed class CueLibrary
             return null;
         }
 
-        return new MusicTrack(name, () => source.Stream(resource, name));
+        return source.IsPack && source.FileName(resource) is { } file
+            ? new MusicTrack(name, () => source.Stream(resource, name), situation, file)
+            : new MusicTrack(name, () => source.Stream(resource, name));
     }
 
     private static bool IsSkippable(Exception ex) =>

@@ -391,6 +391,33 @@ The same three actions work by voice — "pause the music", "resume the music", 
 {"type":"object","properties":{"action":{"type":"string","description":"What to do to the music.","enum":["pause","resume","next"]}},"required":["action"],"additionalProperties":false}
 ```
 
+### Thumbs down a track {#thumbs-down-music}
+
+This is for the maintainer of the music library, and appears only with a Music publish token. With
+a library track playing, "thumbs down this track" or "thumbs down" adds the track's folder and file name to
+`data/music-rejects.tsv`, skips to the next track and replies with the number of tracks queued. The same
+happens from the **Thumbs down the playing track** hotkey, which has no default and is bound in Settings ›
+Hearing and sound › Sounds and levels, group Ambient music, or from a stick button.
+
+- A track already in the file is not added twice, and a queued track is not played again.
+- A track from your own `data/audio/music` folder is refused, with a reply saying it is one of your own files.
+- With no music playing, the reply says so.
+- Without a token the phrase is not matched, the hotkey does nothing and its row is not shown.
+
+The phrase reaches `thumbs_down_music`, which only you can reach: the model is never offered it.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+### Music publish token {#music-publish-token}
+
+This is for the maintainer of the music library, the public repository `dseelinger/d47-music`. Create a
+fine-grained personal access token on GitHub with access to that repository only and the permission **Contents:
+Read and write**. Paste it into **Music publish token** in the advanced settings, where it is stored encrypted
+for this Windows account and is never shown again. Without a stored token, Directive 47 reads the environment
+variable `D47_MUSIC_PUBLISH_TOKEN`.
+
 ### Who can change a level
 
 `manage_music` pauses, resumes and skips the music and sets no level or mute. The Level, Mute and

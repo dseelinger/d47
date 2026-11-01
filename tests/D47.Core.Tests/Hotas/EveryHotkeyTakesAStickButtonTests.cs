@@ -16,6 +16,7 @@ public sealed class EveryHotkeyTakesAStickButtonTests
         VrCapability.ZoomInHotkeyKey, VrCapability.ZoomOutHotkeyKey, VrCapability.ResetZoomHotkeyKey, VrCapability.ResizeHotkeyKey,
         CommsCapability.ChannelUpHotkeyKey, CommsCapability.ChannelDownHotkeyKey,
         CommsCapability.SubChannelUpHotkeyKey, CommsCapability.SubChannelDownHotkeyKey,
+        AudioCapability.ThumbsDownHotkeyKey,
     ];
 
     private static SettingsService Settings() => TestSurface.For(new MemoryInstall(), everyOptionalSurface: true).Settings;

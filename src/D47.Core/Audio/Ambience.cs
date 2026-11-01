@@ -136,9 +136,10 @@ public sealed class EliteMusic
 
 /// <summary>
 /// The ambience layer: which situation is playing and which track comes next (Phase 12, "Ambient
-/// music"). Each folder keeps its own shuffle, so coming back to a folder continues its order.
+/// music"). Each folder keeps its own shuffle, so coming back to a folder continues its order. A track
+/// <paramref name="rejected"/> says is queued for deletion is never drawn.
 /// </summary>
-public sealed class Ambience(Random? shuffle = null)
+public sealed class Ambience(Random? shuffle = null, Func<MusicTrack, bool>? rejected = null)
 {
     private readonly Random _shuffle = shuffle ?? Random.Shared;
 
@@ -180,15 +181,28 @@ public sealed class Ambience(Random? shuffle = null)
     /// <summary>The next track of a folder's shuffle, whatever the situation is, or null when it is empty.</summary>
     public MusicTrack? Draw(string folder, CueLibrary library)
     {
-        if (!_orders.TryGetValue(folder, out var order)
-            || order.Next >= order.Tracks.Count
-            || !ReferenceEquals(order.From, library))
+        for (var pass = 0; pass < 2; pass++)
         {
-            order = Fill(folder, library);
-            _orders[folder] = order;
+            if (!_orders.TryGetValue(folder, out var order)
+                || order.Next >= order.Tracks.Count
+                || !ReferenceEquals(order.From, library))
+            {
+                order = Fill(folder, library);
+                _orders[folder] = order;
+            }
+
+            while (order.Next < order.Tracks.Count)
+            {
+                var track = order.Tracks[order.Next++];
+
+                if (rejected?.Invoke(track) != true)
+                {
+                    return track;
+                }
+            }
         }
 
-        return order.Tracks.Count == 0 ? null : order.Tracks[order.Next++];
+        return null;
     }
 
     private Order Fill(string folder, CueLibrary library)

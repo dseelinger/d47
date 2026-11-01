@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+For the maintainer of the music library: with a Music publish token, "thumbs down this track" (or a hotkey or stick button bound in Settings › Hearing and sound) adds the playing library track to `data\music-rejects.tsv` and skips to the next one. A queued track is not played again, a track from your own `data\audio` folder is refused, and without a token the phrase and the hotkey do nothing. The model is never offered it.
+
 The Interface help pages (Interface, Headset, Timers and alarms, Focus the game, Reminders, About, Clock and Switch Commander) were checked against the code. The Theme table names the row labels, the mini panel's default width reads 0.526 m, the Focus how-to closes Elite before it asks for the error reply, and the Reminders time-phrase step says it applies without `--utilities`.
 
 Hulls are spelled the way Elite spells them, with a space before the Mark numeral: "Cobra Mk V", "Krait Mk II", "Python Mk II", "Panther Clipper Mk II" and "Viper Mk III" in the hull table, armour names, tool descriptions and Ships page. Either spelling still finds the hull. The outfitting search keeps the run-together form in its ship list because the station search filters on it.

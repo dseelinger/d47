@@ -195,6 +195,10 @@ public static class BuiltinCapabilities
         // Pauses, resumes or skips the ambient music; null where nothing plays it.
         Func<Audio.MusicAction, string>? controlMusic = null,
 
+        // Queues the playing library track for deletion; and whether a Music publish token is present.
+        Func<string>? thumbsDownMusic = null,
+        Func<bool>? musicMaintainer = null,
+
         // The planner's plan for each colonisation system, where one is composed.
         Func<D47.Core.Knowledge.ColonisationPlans?>? colonisationPlans = null,
         Func<D47.Core.Knowledge.ColonisationProgress?>? colonisationProgress = null,
@@ -422,7 +426,7 @@ public static class BuiltinCapabilities
             pictureNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
-        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic, musicLibrary, watchMusicLibrary),
+        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer),
         ListeningCapability.Create(settings, listening),
         LearnedPhrasesCapability.Create(
             learnedPhrases,

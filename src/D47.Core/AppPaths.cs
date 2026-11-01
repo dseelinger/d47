@@ -29,6 +29,7 @@ public sealed class AppPaths
         Logs = Path.Combine(Data, "logs");
         Audio = Path.Combine(Data, "audio");
         MusicPack = Path.Combine(Data, "music-pack");
+        MusicRejects = Path.Combine(Data, "music-rejects.tsv");
         SettingsFile = Path.Combine(Data, "settings.json");
         SecretsFile = Path.Combine(Data, "secrets.json");
         ViewStateFile = Path.Combine(Data, "view-state.json");
@@ -85,6 +86,10 @@ public sealed class AppPaths
 
     /// <summary>Downloaded music, <c>&lt;folder&gt;\&lt;file&gt;</c>; made when something is downloaded into it.</summary>
     public string MusicPack { get; }
+
+    /// <summary>The library tracks the maintainer rejected: folder, a tab, file name.</summary>
+    public string MusicRejects { get; }
+
     public string SettingsFile { get; }
     public string SecretsFile { get; }
 

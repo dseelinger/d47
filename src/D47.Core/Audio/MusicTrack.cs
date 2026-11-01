@@ -6,5 +6,8 @@ public interface IPcmStream : IDisposable
     int Read(Span<byte> buffer);
 }
 
-/// <summary>An ambience track, opened afresh each time it plays and streamed rather than held.</summary>
-public sealed record MusicTrack(string Name, Func<IPcmStream> Open);
+/// <summary>
+/// An ambience track, opened afresh each time it plays and streamed rather than held. A track read from the
+/// downloaded library carries its folder and file name.
+/// </summary>
+public sealed record MusicTrack(string Name, Func<IPcmStream> Open, string? PackFolder = null, string? PackFile = null);

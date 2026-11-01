@@ -86,7 +86,7 @@ public static class KeyList
             from placed in place.Groups
             let rows = placed.Entries
                 .SelectMany(settings.RowsForEntry)
-                .Where(row => row.Kind == SettingKind.Hotkey)
+                .Where(row => row.Kind == SettingKind.Hotkey && row.Applies(settings.Current))
                 .ToList()
             where rows.Count > 0
             select (Place: place, Group: new KeyGroup(
