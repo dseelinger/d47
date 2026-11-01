@@ -471,7 +471,7 @@ lines.
 
 Drop a ship's build. The Commander's own act: not offered to the model, and refused if it asks. For
 a hull the Commander does not own, the plan's list on the checklist is removed with it; for an
-owned ship, what the plan already put there is kept.
+owned ship, what the plan already put there is kept. An owned ship's page offers the same action as **Clear this plan**.
 
 ```json
 {"type":"object","properties":{"ship":{"type":"string","description":"Which ship, by name or hull. Omit for the one the Commander is flying."}},"required":[],"additionalProperties":false}

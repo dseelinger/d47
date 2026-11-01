@@ -122,15 +122,10 @@ public class AHullYouDoNotOwnCanBeDroppedTests
         Assert.Empty(ships.Store.Builds);
     }
 
-    /// <summary>
-    /// An owned ship is a fact about the Commander's fleet rather than something they wrote, so there
-    /// is nothing to drop and no button offering to.
-    /// </summary>
     [Fact]
-    public void AnOwnedShipIsNotDroppable()
+    public void AnOwnedShipOffersToClearItsPlanOnlyWhileItHoldsOne()
     {
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-drop-owned-tests"));
-
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
@@ -150,14 +145,17 @@ public class AHullYouDoNotOwnCanBeDroppedTests
 
         Assert.Null(mode.DropLabel(owned.Id));
 
-        // And the intended one beside it still is, so this is a rule about the ship rather than about the
-        // page being cautious.
+        ships.Plan(owned.Id, new SlotPlan("Core1", Module: "int_powerplant_size8_class5"));
+
+        Assert.Equal("Clear this plan", mode.DropLabel(owned.Id));
+
         ships.Intend("Anaconda");
 
         var intended = ships.Store.Builds.Single(build => !build.IsOwned);
 
         Assert.Equal("Drop this ship", mode.DropLabel(intended.Id));
     }
+
     [AvaloniaFact]
     public void AndTheHullLeavesTheFleetList()
     {

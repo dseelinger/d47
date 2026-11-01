@@ -1038,12 +1038,14 @@ public sealed class ShipsMode(
     public string Promote(string item) =>
         Resolve(item) is { } build ? ships.Promote(build.Id) : "That build is not there any more.";
 
-    /// <summary>
-    /// A hull the Commander intends to buy can be dropped; one they own cannot (remediation.md 11, item
-    /// 7).
-    /// </summary>
+    /// <summary>"Drop this ship" for an intended hull, "Clear this plan" for an owned build with planned slots.</summary>
     public string? DropLabel(string item) =>
-        Resolve(item) is { IsOwned: false } ? "Drop this ship" : null;
+        Resolve(item) switch
+        {
+            { IsOwned: false } => "Drop this ship",
+            { } build when build.Slots.Any(slot => !slot.IsEmpty) => "Clear this plan",
+            _ => null,
+        };
 
     public string Drop(string item) =>
         Resolve(item) is { } build ? ships.Delete(build.Id) : "That build is not there any more.";

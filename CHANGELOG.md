@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+An owned ship's page now offers Clear this plan whenever the ship has planned slots, whether or not they are all fitted. It removes the build, keeps the ship in the fleet, and says which checklist lines stayed.
+
 An outfitting route on Navigation › Plan now marks each module or ship as bought once you buy it, and a stop with everything bought shows as done. Plotting the route again asks only for what is left.
 
 D47 now says when a ship you transferred arrives at the station you sent it to, using its own name where it has one. A transfer still in transit when d47 restarts is announced on time. The Ship transfers row under Plans and reminders switches it off.

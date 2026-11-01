@@ -1782,8 +1782,7 @@ public sealed class ItemPage : LoadoutPage
             actions.Children.Add(LoadoutPages.Press(exportLabel, ExportToClipboard));
         }
 
-        // Only where there is something to drop — an intended hull rather than an owned ship (remediation.md
-        // 11, item 7).
+        // Only where there is something to drop or clear.
         if (mode.DropLabel(item) is { Length: > 0 } label)
         {
             _drop = LoadoutPages.Press(label, Drop);
