@@ -33,6 +33,7 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("on-foot", "what does grade 3 on my Maverick cost"),
         ("galaxy", "find me a neutron star"),
         ("routes", "plot a neutron route to Colonia"),
+        ("utilities", "set a timer for twenty minutes called fuel scoop"),
     ];
 
     /// <summary>Phrases that did not route when this gate landed. An entry stays only with an open issue that will make it route.</summary>
@@ -41,7 +42,6 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("bookmarks", "rename bookmark Current CG to Colonia Bridge"), // no issue filed; see the #1903 commit
         ("binding-profiles", "save these bindings as sim pit"), // no issue filed; see the #1903 commit
         ("binding-profiles", "load the sim pit bindings"), // no issue filed; see the #1903 commit
-        ("utilities", "set a timer for twenty minutes called fuel scoop"), // no issue filed; set_timer is model-only
         ("navigation", "plot a course to Shinrarta Dezhra"), // no issue filed; see the #1903 commit
         ("comms", "tell the wing I am on my way"), // no issue filed; see the #1903 commit
     ];

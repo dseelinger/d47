@@ -179,12 +179,12 @@ the phrase list is where Directive 47 meets your words, and the label is where i
 
 #### Theme {#theme}
 
-| Choice | What it looks like |
-|---|---|
-| `elite` | Amber on near-black. The default, and the one that matches the cockpit. |
-| `dark` | Neutral dark. No colour opinion. |
-| `light` | Neutral light, for a desktop that is not in a dark room. |
-| `elite-palette` | Elite, recoloured to match your own HUD. |
+| Choice | Stored as | What it looks like |
+|---|---|---|
+| Elite | `elite` | Amber on near-black. The default, and the one that matches the cockpit. |
+| Dark | `dark` | Neutral dark. No colour opinion. |
+| Light | `light` | Neutral light, for a desktop that is not in a dark room. |
+| My HUD colours | `elite-palette` | Elite, recoloured to match your own HUD. |
 
 ##### What the accent is for
 
@@ -201,7 +201,7 @@ cannot be pressed is the colour making a promise the control cannot keep.
 
 ##### Matching your HUD
 
-`elite-palette` reads the colour matrix Elite applies to its own HUD and uses it on Directive
+**My HUD colours** reads the colour matrix Elite applies to its own HUD and uses it on Directive
 47's amber palette, so the panel comes out the same colour as your cockpit — teal, white,
 whatever you have set — without borrowing anything from the game.
 

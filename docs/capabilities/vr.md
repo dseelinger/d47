@@ -451,7 +451,7 @@ makes it readable; switching to mini gives you less to read.
 The mini rows work the same way: [locking](#mini-lock), [distance](#mini-distance),
 [size](#mini-size), [curvature](#mini-curve), [scale](#mini-scale) and resolution — but not opacity, which
 [both panels share](#opacity).
-The mini panel defaults to 0.34 m across — it is meant to sit at the edge of vision — against
+The mini panel defaults to 0.526 m across — it is meant to sit at the edge of vision — against
 1.1 m for the full one.
 
 #### Captions {#captions}

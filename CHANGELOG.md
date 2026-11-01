@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Interface help pages (Interface, Headset, Timers and alarms, Focus the game, Reminders, About, Clock and Switch Commander) were checked against the code. The Theme table names the row labels, the mini panel's default width reads 0.526 m, the Focus how-to closes Elite before it asks for the error reply, and the Reminders time-phrase step says it applies without `--utilities`.
+
 Hulls are spelled the way Elite spells them, with a space before the Mark numeral: "Cobra Mk V", "Krait Mk II", "Python Mk II", "Panther Clipper Mk II" and "Viper Mk III" in the hull table, armour names, tool descriptions and Ships page. Either spelling still finds the hull. The outfitting search keeps the run-together form in its ship list because the station search filters on it.
 
 Ships are named from the hull table everywhere: the recap says "in a Cobra MkV" rather than "in a Cobramkv", an Anaconda Mk II takes "an", and the memory book, Captain's Log entries and the Crew page's "Posted to" column use the same name. Voices that take text, ElevenLabs among them, now say "Mk V" as "Mark five", as the local voice already did.

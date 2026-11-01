@@ -106,10 +106,12 @@ nav_order: 165
  <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">Build 0.111.0+4ebbc82</text>
  <text x="440" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">Quote this in a bug report.</text>
 </svg>
-<p class="body">Two builds of one release share a version but not a commit. <code>AboutCapability.cs</code> shows the full build string in the Build row.</p>
+<p class="body">Two builds of one release share a version but not a commit. <code>AboutCapability.cs</code> describes the row: "Quote it in a bug report".</p>
 </section>
 </div></div>
 </details>
+
+## The details
 
 What this build is, where it keeps its files, and what changed.
 

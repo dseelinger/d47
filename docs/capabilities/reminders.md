@@ -39,7 +39,7 @@ nav_order: 152
 </section>
 <section>
 <h2><span class="num">!</span> A moment in the game, never a time.</h2>
-<p class="say">Say "remind me to sell data in twenty minutes" and read the reply.</p>
+<p class="say">Without --utilities, say "remind me to sell data in twenty minutes" and read the reply.</p>
 <p class="expect">A time is declined: "Reminders follow the game rather than the clock. Ask me for one when you next dock, when you arrive in a system, or next session."</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="A time of day is declined">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
@@ -86,7 +86,7 @@ nav_order: 152
  <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">"I'll remind you to buy limpets when you next dock."</text>
  <text x="440" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">RemindersCapability.cs</text>
 </svg>
-<p class="body"><code>RemindersCapability.Set</code> returns this line, built from the sentence and the moment, so a misheard station or system name shows at once.</p>
+<p class="body"><code>RemindersCapability.Set</code> returns "I'll remind you" and then the sentence and the moment, so a misheard station or system name shows at once.</p>
 </section>
 </div></div>
 </details>

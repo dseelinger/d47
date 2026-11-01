@@ -92,7 +92,7 @@ nav_order: 143
  <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">"Nothing is running."</text>
  <text x="440" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">UtilitiesCapability.cs</text>
 </svg>
-<p class="body"><code>UtilitiesCapability.Cancel</code> answers with this line when nothing is set. The AI is not offered cancelling and is refused if it asks.</p>
+<p class="body"><code>UtilitiesCapability.Cancel</code> answers "Nothing is running." when nothing is set. The AI is not offered cancelling and is refused if it asks.</p>
 </section>
 </div></div>
 </details>

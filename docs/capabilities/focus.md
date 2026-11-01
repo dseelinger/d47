@@ -46,7 +46,7 @@ nav_order: 129
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Start Elite yourself before you ask.</p>
+<p class="say">Close Elite, then say "focus the game".</p>
 <p class="expect">With Elite closed, the reply is "I cannot find Elite — it does not look like it is running."</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="It cannot start Elite for you.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
@@ -92,7 +92,7 @@ nav_order: 129
  <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">"Windows would not let me bring Elite forward from the background."</text>
  <text x="440" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">FocusCapability.cs</text>
 </svg>
-<p class="body"><code>FocusCapability.Describe</code> picks one line per outcome. The model cannot call this: a hostile in-game message could otherwise move your focus.</p>
+<p class="body"><code>FocusCapability.Describe</code> picks one line per outcome, such as "Elite is already in front." The model cannot call this: a hostile in-game message could otherwise move your focus.</p>
 </section>
 </div></div>
 </details>
