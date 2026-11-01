@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A new music folder, `combat-ground`, plays while the Commander is on foot in a ground conflict zone: from the dropship's deploy, or the first kill bond earned on foot at a settlement, until the retreat booking, boarding their own ship, death, supercruise, a jump or a new session. It wins over the `settlement` folder and Elite's `OnFoot` and `Exploration` tracks and gives way to every other Elite track, such as `Thargoid_GroundCombat`. While it is empty nothing changes. The folder is created on the next start.
+
 A new music folder, `settlement`, plays while the Commander is on foot or in the SRV at an Odyssey settlement, from the journal's settlement approach until supercruise, a jump, death, a new session or docking anywhere but the settlement's own pad. It wins over Elite's `OnFoot` and `Exploration` tracks and gives way to every other Elite track, so combat in the SRV still plays `combat-srv`. In the ship, landed at the settlement, `normal-space` plays as before, and while the folder is empty nothing changes. The folder is created on the next start.
 
 A new music folder, `on-foot-station`, plays while the Commander is on foot in a station, a hangar or a social space. It wins over Elite's general tracks (`OnFoot`, `Starport` and `Exploration`) and gives way to every other Elite track. While it is empty, the `on-foot` and `docked` folders play as before. The folder is created on the next start.

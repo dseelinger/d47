@@ -1,0 +1,14 @@
+{ "timestamp":"2025-10-13T18:19:59Z", "event":"ApproachSettlement", "Name":"Brownlie Research Installation", "MarketID":3830860032, "StationFaction":{ "Name":"Formidine Greybeard Guild", "FactionState":"War" }, "StationGovernment":"$government_Confederacy;", "StationGovernment_Localised":"Confederacy", "StationServices":[ "missions", "flightcontroller", "stationoperations" ], "StationEconomy":"$economy_HighTech;", "StationEconomy_Localised":"High Tech", "StationEconomies":[ { "Name":"$economy_HighTech;", "Name_Localised":"High Tech", "Proportion":1.000000 } ], "SystemAddress":4374130592115, "BodyID":13, "BodyName":"Cakutsi ABC 4 a", "Latitude":-27.284679, "Longitude":-57.830528 }
+{ "timestamp":"2025-10-13T18:20:03Z", "event":"SupercruiseExit", "Taxi":true, "Multicrew":false, "StarSystem":"Cakutsi", "SystemAddress":4374130592115, "Body":"Cakutsi ABC 4 a", "BodyID":13, "BodyType":"Planet" }
+{ "timestamp":"2025-10-13T18:20:03Z", "event":"Music", "MusicTrack":"Exploration" }
+{ "timestamp":"2025-10-13T18:20:55Z", "event":"DropshipDeploy", "StarSystem":"Cakutsi", "SystemAddress":4374130592115, "Body":"Cakutsi ABC 4 a", "BodyID":13, "OnStation":false, "OnPlanet":true }
+{ "timestamp":"2025-10-13T18:20:57Z", "event":"Music", "MusicTrack":"OnFoot" }
+{ "timestamp":"2025-10-13T18:21:41Z", "event":"FactionKillBond", "Reward":3189, "AwardingFaction":"Formidine Greybeard Guild", "VictimFaction":"Cakutsi Industry" }
+{ "timestamp":"2025-10-13T18:21:54Z", "event":"FactionKillBond", "Reward":3189, "AwardingFaction":"Formidine Greybeard Guild", "VictimFaction":"Cakutsi Industry" }
+{ "timestamp":"2025-10-13T18:22:08Z", "event":"FactionKillBond", "Reward":3189, "AwardingFaction":"Formidine Greybeard Guild", "VictimFaction":"Cakutsi Industry" }
+{ "timestamp":"2025-10-13T18:28:04Z", "event":"DropshipDeploy", "StarSystem":"Cakutsi", "SystemAddress":4374130592115, "Body":"Cakutsi ABC 4 a", "BodyID":13, "OnStation":false, "OnPlanet":true }
+{ "timestamp":"2025-10-13T18:34:32Z", "event":"BookDropship", "Retreat":true, "Cost":0, "DestinationSystem":"Cakutsi", "DestinationLocation":"Wait Colburn Dock" }
+{ "timestamp":"2025-10-13T18:34:33Z", "event":"Music", "MusicTrack":"Combat_SRV" }
+{ "timestamp":"2025-10-13T18:34:34Z", "event":"Music", "MusicTrack":"NoTrack" }
+{ "timestamp":"2025-10-13T18:34:50Z", "event":"SupercruiseEntry", "Taxi":true, "Multicrew":false, "StarSystem":"Cakutsi", "SystemAddress":4374130592115 }
+{ "timestamp":"2025-10-13T18:34:50Z", "event":"Music", "MusicTrack":"Supercruise" }

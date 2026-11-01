@@ -305,12 +305,13 @@ track, and D47 maps that track to a folder:
 | `thargoid-factory` | `TGFactory` |  |
 | `combat-thargoid-ground` | `Thargoid_GroundCombat` |  |
 | `combat-hunters` | `Combat_Hunters` |  |
+| `combat-ground` |  | On foot in a ground conflict zone: from the dropship's deploy, or the first kill bond on foot at a settlement, until the retreat or supercruise. |
 | `damaged-starport` | `Damaged_Starport` |  |
 
-Elite's general tracks (`OnFoot`, `Starport` and `Exploration`) give way to `on-foot-station` or
-`settlement`, when that folder has files in it. Every other Elite track whose folder has files
+Elite's general tracks (`OnFoot`, `Starport` and `Exploration`) give way to `on-foot-station`,
+`settlement` or `combat-ground`, when that folder has files in it. Every other Elite track whose folder has files
 in it plays that folder. Otherwise the folder comes from what `Status.json` and the journal state — the
-seven in the last column — and then `general`. An empty
+eight in the last column — and then `general`. An empty
 folder changes nothing. `NoTrack`, `NoInGameMusic` and any track not listed have no folder.
 
 `arrival-from-supercruise`, `arrival-from-hyperspace` and `interdiction` each play one track and then hand

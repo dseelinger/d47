@@ -3712,7 +3712,12 @@ public sealed class AppHost : IDisposable
             }
 
             host.Music.Follow(
-                stores.Status.Current, feed.EliteMusic.Track, context.Now, feed.Arrived, feed.Settlement.Held);
+                stores.Status.Current,
+                feed.EliteMusic.Track,
+                context.Now,
+                feed.Arrived,
+                feed.Settlement.Held,
+                feed.Settlement.InGroundConflict);
         });
 
         // After ambience, so it reads this tick's running state.

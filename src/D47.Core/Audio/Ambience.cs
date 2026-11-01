@@ -15,6 +15,7 @@ public static class Situations
     public const string OnFoot = "on-foot";
     public const string OnFootStation = "on-foot-station";
     public const string Settlement = "settlement";
+    public const string CombatGround = "combat-ground";
 
     /// <summary>
     /// The folder each Elite <c>MusicTrack</c> plays from. <c>NoTrack</c>, <c>NoInGameMusic</c> and values
@@ -69,7 +70,7 @@ public static class Situations
 
     /// <summary>Every music folder: the Status.json situations first, then the rest of the track folders.</summary>
     public static readonly IReadOnlyList<string> All =
-        new[] { General, Docked, Supercruise, NormalSpace, OnFoot, OnFootStation, Settlement }
+        new[] { General, Docked, Supercruise, NormalSpace, OnFoot, OnFootStation, Settlement, CombatGround }
             .Concat(ByTrack.Values)
             .Distinct(StringComparer.Ordinal)
             .ToList();
@@ -81,11 +82,16 @@ public static class Situations
     /// <summary>
     /// A folder D47 chose from its own state that has tracks wins over Elite's general tracks and over no
     /// track; any other Elite track with a folder that has tracks wins over that state; otherwise
-    /// <see cref="For(GameStatus, bool)"/>.
+    /// <see cref="For(GameStatus, bool, bool)"/>.
     /// </summary>
-    public static string For(GameStatus status, string? musicTrack, CueLibrary library, bool atSettlement = false)
+    public static string For(
+        GameStatus status,
+        string? musicTrack,
+        CueLibrary library,
+        bool atSettlement = false,
+        bool inGroundConflict = false)
     {
-        var own = For(status, library, atSettlement);
+        var own = For(status, library, atSettlement, inGroundConflict);
         var chosen = IsChosen(own);
 
         if (musicTrack is null || !ByTrack.TryGetValue(musicTrack, out var folder))
@@ -102,12 +108,18 @@ public static class Situations
     }
 
     /// <summary>
-    /// <see cref="For(GameStatus, bool)"/>, except that a folder with no tracks is skipped for the folders
+    /// <see cref="For(GameStatus, bool, bool)"/>, except that a folder with no tracks is skipped for the folders
     /// used before it existed.
     /// </summary>
-    public static string For(GameStatus status, CueLibrary library, bool atSettlement = false)
+    public static string For(
+        GameStatus status, CueLibrary library, bool atSettlement = false, bool inGroundConflict = false)
     {
-        var folder = For(status, atSettlement);
+        var folder = For(status, atSettlement, inGroundConflict);
+
+        if (folder == CombatGround && library.Music(folder).Count == 0)
+        {
+            folder = For(status, atSettlement);
+        }
 
         if (folder == Settlement && library.Music(folder).Count == 0)
         {
@@ -124,17 +136,23 @@ public static class Situations
 
     private static bool IsChosen(string folder) =>
         string.Equals(folder, OnFootStation, StringComparison.Ordinal)
-        || string.Equals(folder, Settlement, StringComparison.Ordinal);
+        || string.Equals(folder, Settlement, StringComparison.Ordinal)
+        || string.Equals(folder, CombatGround, StringComparison.Ordinal);
 
     /// <summary>
-    /// A pure function of the state Elite last wrote and whether <see cref="SettlementVisit"/> holds a
-    /// settlement — no clock, no thread.
+    /// A pure function of the state Elite last wrote and what <see cref="SettlementVisit"/> holds — no
+    /// clock, no thread.
     /// </summary>
-    public static string For(GameStatus status, bool atSettlement = false)
+    public static string For(GameStatus status, bool atSettlement = false, bool inGroundConflict = false)
     {
         if (!status.IsKnown)
         {
             return General;
+        }
+
+        if (inGroundConflict && status.OnFoot)
+        {
+            return CombatGround;
         }
 
         if (atSettlement
@@ -192,11 +210,18 @@ public sealed class EliteMusic
 
 /// <summary>
 /// The settlement of the latest <c>ApproachSettlement</c>, held until <c>SupercruiseEntry</c>, <c>FSDJump</c>,
-/// <c>LoadGame</c>, <c>Died</c> or a <c>Docked</c> anywhere but a settlement's own pad.
+/// <c>LoadGame</c>, <c>Died</c> or a <c>Docked</c> anywhere but a settlement's own pad. Also whether the
+/// Commander is in a ground conflict zone: from a <c>DropshipDeploy</c>, or the first on-foot
+/// <c>FactionKillBond</c> with a settlement held, until a retreat booking, <c>Died</c>,
+/// <c>SupercruiseEntry</c>, <c>FSDJump</c>, <c>LoadGame</c> or an <c>Embark</c> into their own ship.
 /// </summary>
 public sealed class SettlementVisit
 {
+    private bool _afoot;
+
     public bool Held { get; private set; }
+
+    public bool InGroundConflict { get; private set; }
 
     public void Observe(IEnumerable<JournalEvent> events)
     {
@@ -208,8 +233,33 @@ public sealed class SettlementVisit
                 case "Docked" when journalEvent.String("StationType") == "OnFootSettlement":
                     Held = true;
                     break;
-                case "SupercruiseEntry" or "FSDJump" or "LoadGame" or "Died" or "Docked":
+                case "SupercruiseEntry" or "FSDJump" or "LoadGame" or "Died":
                     Held = false;
+                    InGroundConflict = false;
+                    _afoot = false;
+                    break;
+                case "Docked":
+                    Held = false;
+                    break;
+                case "DropshipDeploy":
+                    _afoot = true;
+                    InGroundConflict = true;
+                    break;
+                case "Disembark":
+                    _afoot = !journalEvent.Bool("SRV");
+                    break;
+                case "Embark":
+                    _afoot = false;
+                    InGroundConflict &= journalEvent.Bool("Taxi");
+                    break;
+                case "LaunchSRV" or "DockSRV":
+                    _afoot = false;
+                    break;
+                case "BookDropship" when journalEvent.Bool("Retreat"):
+                    InGroundConflict = false;
+                    break;
+                case "FactionKillBond" when _afoot && Held:
+                    InGroundConflict = true;
                     break;
             }
         }
