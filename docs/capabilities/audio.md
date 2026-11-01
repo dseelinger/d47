@@ -303,6 +303,10 @@ When Elite's track has a folder with files in it, that folder plays. Otherwise t
 from what `Status.json` states — the five in the last column — and then `general`. An empty
 folder changes nothing. `NoTrack`, `NoInGameMusic` and any track not listed have no folder.
 
+`arrival-from-supercruise`, `arrival-from-hyperspace` and `interdiction` each play one track and then hand
+back. The track is not looped, and a change of Elite's track while it plays does not cut it: when it ends, the
+folder for the situation at that moment continues or starts. A track still playing after 60 seconds fades out.
+
 To hear this music rather than Elite's, set Elite's music volume to zero (Options, Audio).
 
 Ambience plays only while Elite is running. D47 checks for the game's window every two seconds:

@@ -16,16 +16,25 @@ public sealed record MusicState(string? Track, bool Playing, bool Paused);
 /// <summary>
 /// The ambience layer and its transport: follows the situation, starts the next track, and holds the
 /// Commander's pause. Pause is session state; the mute setting is separate and saved. Nothing plays
-/// until <see cref="GameRunning"/> says Elite is running.
+/// until <see cref="GameRunning"/> says Elite is running. A one-shot folder plays one cue that keeps the
+/// slot to its end, or <see cref="CueLimit"/>, then hands back to the situation current at that moment.
 /// </summary>
 public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, Random? shuffle = null)
 {
+    /// <summary>The longest a one-shot cue holds the slot.</summary>
+    public static readonly TimeSpan CueLimit = TimeSpan.FromSeconds(60);
+
     private readonly Lock _gate = new();
 
     private Ambience _ambience = new(shuffle);
     private MusicTrack? _current;
     private bool _paused;
     private bool _running;
+    private string? _cue;
+    private string? _spent;
+    private DateTimeOffset _cueStart;
+    private GameStatus? _status;
+    private string? _track;
 
     /// <summary>Raised after the track or the paused state changes, outside any lock.</summary>
     public event Action<MusicState>? Changed;
@@ -54,7 +63,8 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
 
     /// <summary>
     /// Points the ambience at the current situation, at the tick's time. A change of folder shelves the old
-    /// track and continues the new folder's shelved track, or starts its next one.
+    /// track and continues the new folder's shelved track, or starts its next one. A one-shot folder plays
+    /// one track instead, and a change during it waits for it to end.
     /// </summary>
     public void Follow(GameStatus status, string? musicTrack, DateTimeOffset now = default)
     {
@@ -65,26 +75,132 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
                 return;
             }
 
+            _status = status;
+            _track = musicTrack;
             audio.DropStaleMusic(now);
 
-            if (!_ambience.Enter(Situations.For(status, musicTrack, library()))
-                || string.Equals(_ambience.Folder(library()), audio.MusicFolder, StringComparison.OrdinalIgnoreCase))
+            var target = Situations.For(status, musicTrack, library());
+            var oneShot = Situations.OneShot.Contains(target);
+            var changed = false;
+
+            if (!oneShot)
             {
-                return;
+                _spent = null;
             }
 
-            var from = audio.MusicFolder;
-            var to = _ambience.Folder(library());
-            var faded = audio.ShelveMusic(now, from is null ? null : Crossfade.Between(from, to));
-            _current = null;
-
-            if (!_paused)
+            if (_cue is not null)
             {
-                Continue(faded ? Crossfade.Between(from!, to) : null);
+                if (now - _cueStart >= CueLimit)
+                {
+                    EndCue(now, fade: true);
+                    changed = true;
+                }
+                else if (oneShot && !string.Equals(target, _cue, StringComparison.OrdinalIgnoreCase))
+                {
+                    StartCue(target, now);
+                    changed = true;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            if (oneShot
+                && _cue is null
+                && !string.Equals(target, _spent, StringComparison.OrdinalIgnoreCase)
+                && StartCue(target, now))
+            {
+                changed = true;
+            }
+            else if (_cue is null && Change(oneShot ? Situations.For(status) : target, now))
+            {
+                changed = true;
+            }
+
+            if (!changed)
+            {
+                return;
             }
         }
 
         Raise();
+    }
+
+    private bool Change(string situation, DateTimeOffset now)
+    {
+        if (!_ambience.Enter(situation)
+            || string.Equals(_ambience.Folder(library()), audio.MusicFolder, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var from = audio.MusicFolder;
+        var to = _ambience.Folder(library());
+        var faded = audio.ShelveMusic(now, from is null ? null : Crossfade.Between(from, to));
+        _current = null;
+
+        if (!_paused)
+        {
+            Continue(faded ? Crossfade.Between(from!, to) : null);
+        }
+
+        return true;
+    }
+
+    /// <summary>Plays one track of a one-shot folder, replacing the live one. False when muted or paused.</summary>
+    private bool StartCue(string folder, DateTimeOffset now)
+    {
+        _spent = folder;
+
+        if (_paused || audio.Mix.Music.Muted || _ambience.Draw(folder, library()) is not { } track)
+        {
+            return false;
+        }
+
+        var from = audio.MusicFolder;
+        var length = from is null ? (TimeSpan?)null : Crossfade.Between(from, folder);
+        var faded = audio.ShelveMusic(now, length);
+        audio.PlayMusic(track, folder, afterGap: false, faded ? length : null);
+        _current = track;
+        _cue = folder;
+        _cueStart = now;
+        return true;
+    }
+
+    /// <summary>Hands the slot back to the situation current now, continuing its shelved track if it has one.</summary>
+    private void EndCue(DateTimeOffset now, bool fade)
+    {
+        var cue = _cue!;
+        _cue = null;
+        _ambience.Enter(Underlying());
+        var folder = _ambience.Folder(library());
+        var length = fade ? Crossfade.Between(cue, folder) : (TimeSpan?)null;
+        var faded = fade && audio.ShelveMusic(now, length);
+        _current = null;
+
+        if (!_paused)
+        {
+            Continue(faded ? length : null);
+        }
+    }
+
+    /// <summary>Drops a live cue without playing anything; the stopped track is the caller's.</summary>
+    private void LeaveCue()
+    {
+        if (_cue is not null)
+        {
+            _cue = null;
+            _ambience.Enter(Underlying());
+        }
+    }
+
+    /// <summary>The situation for the last status and track, skipping a one-shot folder.</summary>
+    private string Underlying()
+    {
+        var status = _status ?? new GameStatus();
+        var target = Situations.For(status, _track, library());
+        return Situations.OneShot.Contains(target) ? Situations.For(status) : target;
     }
 
     /// <summary>A track ended on its own.</summary>
@@ -94,7 +210,11 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
         {
             _current = null;
 
-            if (_running && !_paused)
+            if (_cue is not null)
+            {
+                EndCue(default, fade: false);
+            }
+            else if (_running && !_paused)
             {
                 StartNext(afterGap: true);
             }
@@ -112,6 +232,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
             {
                 audio.StopMusic();
                 _current = null;
+                LeaveCue();
             }
             else if (_running && !_paused && !audio.Activity.MusicPlaying)
             {
@@ -141,6 +262,8 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
             {
                 audio.StopMusic();
                 _current = null;
+                _cue = null;
+                _spent = null;
                 _ambience = new Ambience(shuffle);
             }
         }
@@ -223,6 +346,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
 
         audio.SkipMusic();
         _current = null;
+        LeaveCue();
         return StartNext() ? "Next track." : NothingToPlay;
     }
 

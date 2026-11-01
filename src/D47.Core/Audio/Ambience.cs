@@ -1,4 +1,4 @@
-using D47.Core.Journal;
+﻿using D47.Core.Journal;
 
 namespace D47.Core.Audio;
 
@@ -50,6 +50,13 @@ public static class Situations
             ["Unknown_Encounter"] = "unknown-encounter",
             ["CapitalShip"] = "capital-ship",
             ["Unknown_Settlement"] = "unknown-settlement",
+        };
+
+    /// <summary>Folders of short cues: each plays one track, then the situation's own music takes over.</summary>
+    public static readonly IReadOnlySet<string> OneShot =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "arrival-from-supercruise", "arrival-from-hyperspace", "interdiction",
         };
 
     /// <summary>Every music folder: the five Status.json situations first, then the rest of the track folders.</summary>
@@ -161,7 +168,12 @@ public sealed class Ambience(Random? shuffle = null)
     {
         var folder = Folder(library);
         Playing = folder;
+        return Draw(folder, library);
+    }
 
+    /// <summary>The next track of a folder's shuffle, whatever the situation is, or null when it is empty.</summary>
+    public MusicTrack? Draw(string folder, CueLibrary library)
+    {
         if (!_orders.TryGetValue(folder, out var order)
             || order.Next >= order.Tracks.Count
             || !ReferenceEquals(order.From, library))

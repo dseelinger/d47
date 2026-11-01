@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Audio;
 
@@ -415,7 +415,8 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     /// Holds the live track, paused, under its folder to continue later; a gap is stopped instead. Drops
     /// tracks shelved longer than <see cref="ShelfLife"/>, then the longest shelved beyond
     /// <see cref="MostShelved"/>. With <paramref name="fadeOut"/>, the track fades out and is held at the
-    /// end of the fade instead of being paused. True when it did.
+    /// end of the fade instead of being paused. A one-shot folder's track is never shelved: it fades out
+    /// and finishes unheard, or stops. True when it faded.
     /// </summary>
     public bool ShelveMusic(DateTimeOffset now, TimeSpan? fadeOut = null)
     {
@@ -431,9 +432,15 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
                 return false;
             }
 
-            if (_musicAfterGap is not null || _musicTrack is null || _musicFolder is null)
+            if (_musicAfterGap is not null || _musicTrack is null || _musicFolder is null
+                || (Situations.OneShot.Contains(_musicFolder) && (_musicHeld || fadeOut is null)))
             {
                 sink.Stop(playing);
+            }
+            else if (Situations.OneShot.Contains(_musicFolder))
+            {
+                sink.Fade(playing, 0, fadeOut!.Value);
+                faded = true;
             }
             else
             {
