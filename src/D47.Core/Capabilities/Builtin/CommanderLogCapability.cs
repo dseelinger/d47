@@ -9,6 +9,8 @@ public static class CommanderLogCapability
 {
     public const string Id = "commander-log";
 
+    public const string Tool = "get_commander_log";
+
     private const int Cap = 10;
 
     public static CapabilityDescriptor Create(CommanderLog? log, Func<string> frontierId) => new()
@@ -28,7 +30,7 @@ public static class CommanderLogCapability
         [
             new ToolDefinition
             {
-                Name = "get_commander_log",
+                Name = Tool,
                 Exercise =
                     "Say \"have I met this commander\" with another Commander targeted, or ask about one by name. "
                     + "The reply lists the encounters with when, the system, their ship and what happened, and never "

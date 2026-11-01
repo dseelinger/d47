@@ -39,9 +39,6 @@ public partial class EveryHowToPhraseRoutesGateTests
     private static readonly (string Page, string Phrase)[] NotYetReviewed =
     [
         ("bookmarks", "rename bookmark Current CG to Colonia Bridge"), // no issue filed; see the #1903 commit
-        ("commander-log", "have I met Arden Vale before"), // #2000
-        ("powerplay", "what does my next Powerplay rank give me"), // #2000
-        ("powerplay", "what would Edmund Mahon give me"), // #2000
         ("binding-profiles", "save these bindings as sim pit"), // no issue filed; see the #1903 commit
         ("binding-profiles", "load the sim pit bindings"), // no issue filed; see the #1903 commit
         ("reminders", "remind me to buy limpets when I next dock"),

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+"What does my next Powerplay rank give me", "what would" followed by a Power's name and "give me", and "have I met" followed by a Commander's name are now answered without the language model.
+
 "What biology is on this body" is now answered without the language model, about the body most recently scanned with biology on it.
 
 d47 no longer speaks Ship chatter, NPC chatter, scene chatter, Narrator lines, story clues or story reactions while Elite is not running, so a closed game with the launcher open stays quiet. Chatter and Narrator lines already playing or queued when Elite closes are cut, and stay refused until it runs again. Greetings, reminders, GalNet and answers to you are unchanged.

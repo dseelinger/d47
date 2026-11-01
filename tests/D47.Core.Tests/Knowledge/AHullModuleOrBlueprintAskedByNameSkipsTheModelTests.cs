@@ -110,4 +110,51 @@ public class AHullModuleOrBlueprintAskedByNameSkipsTheModelTests
         Assert.Equal(0, model.CallCount);
         Assert.Contains(answered, text.ToString(), StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void ANextRankQuestionIsAPowerplayLookupForTheOwnPower()
+    {
+        var lookup = Assert.IsType<NamedLookup>(NamedLookupPhrase.Read("what does my next Powerplay rank give me"));
+
+        Assert.Equal(PowerplayCapability.Id, lookup.CapabilityId);
+        Assert.Equal(PowerplayCapability.Tool, lookup.Tool);
+        Assert.Empty(lookup.Arguments);
+    }
+
+    [Fact]
+    public void AKnownPowerAskedAboutIsAPowerplayLookupForThatPower()
+    {
+        var lookup = Assert.IsType<NamedLookup>(NamedLookupPhrase.Read("what would Edmund Mahon give me"));
+
+        Assert.Equal(PowerplayCapability.Tool, lookup.Tool);
+        Assert.Equal("Edmund Mahon", lookup.Arguments["power"]);
+    }
+
+    [Theory]
+    [InlineData("what would a sandwich give me")]
+    [InlineData("what would my wing give me")]
+    public void ANameThatIsNoPowerIsLeftToTheModel(string said)
+    {
+        Assert.Null(NamedLookupPhrase.Read(said));
+    }
+
+    [Theory]
+    [InlineData("have I met Arden Vale before", "Arden Vale")]
+    [InlineData("have I ever met Arden Vale?", "Arden Vale")]
+    public void ANamedCommanderIsACommanderLogLookup(string said, string name)
+    {
+        var lookup = Assert.IsType<NamedLookup>(NamedLookupPhrase.Read(said));
+
+        Assert.Equal(CommanderLogCapability.Id, lookup.CapabilityId);
+        Assert.Equal(CommanderLogCapability.Tool, lookup.Tool);
+        Assert.Equal(name, lookup.Arguments["name"]);
+    }
+
+    [Theory]
+    [InlineData("have I met this commander")]
+    [InlineData("have I met anyone before")]
+    public void ThePhraseWithoutANameIsLeftToTheModel(string said)
+    {
+        Assert.Null(NamedLookupPhrase.Read(said));
+    }
 }

@@ -8,7 +8,7 @@ namespace D47.Core.Knowledge;
 public sealed record NamedLookup(string CapabilityId, string Tool, IReadOnlyDictionary<string, string> Arguments);
 
 /// <summary>
-/// The model-free grammar for a hull, a module or a blueprint asked about by name: "what is the Python like",
+/// The model-free grammar for a hull, a module or a blueprint asked about by name, a Powerplay rank and a Commander met before: "what is the Python like",
 /// "what does a 6A power plant weigh", "what does a grade 5 dirty drive cost". A name the shipped tables do not
 /// resolve to exactly one entry is not read, so the sentence goes on to the model.
 /// </summary>
@@ -48,8 +48,30 @@ public static partial class NamedLookupPhrase
             return new(EngineeringCapability.Id, "get_blueprint", Arguments(("blueprint", recipe)));
         }
 
+        if (NextRank().IsMatch(said))
+        {
+            return new(PowerplayCapability.Id, PowerplayCapability.Tool, Arguments());
+        }
+
+        if (PowerGives().Match(said) is { Success: true } power
+            && PowerplayRanks.Powers.FirstOrDefault(known => string.Equals(known, power.Groups["power"].Value.Trim(), StringComparison.OrdinalIgnoreCase)) is { } named)
+        {
+            return new(PowerplayCapability.Id, PowerplayCapability.Tool, Arguments(("power", named)));
+        }
+
+        if (Met().Match(said) is { Success: true } met
+            && met.Groups["name"].Value.Trim() is { Length: >= 2 } who
+            && !NotAName.Contains(who.Split(' ')[0]))
+        {
+            return new(CommanderLogCapability.Id, CommanderLogCapability.Tool, Arguments(("name", who)));
+        }
+
         return null;
     }
+
+    private static readonly HashSet<string> NotAName = new(
+        ["this", "that", "the", "a", "an", "any", "anyone", "anybody", "someone", "somebody", "him", "her", "them", "you", "it", "everyone", "anything"],
+        StringComparer.OrdinalIgnoreCase);
 
     /// <summary>A part of a blueprint's name, such as "limpet" or "mining", is an ordinary price question unless a grade is said with it.</summary>
     private static bool NamesABlueprintInFull(string spoken)
@@ -76,4 +98,19 @@ public static partial class NamedLookupPhrase
         @"^what does (?:a |an |the )?(?:grade (?<grade>[1-5]|one|two|three|four|five) )?(?<blueprint>.+?) cost$",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex Blueprint();
+
+    [GeneratedRegex(
+        @"^what does my next (?:powerplay )?rank give me$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex NextRank();
+
+    [GeneratedRegex(
+        @"^what (?:would|does) (?<power>.+?) give me$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex PowerGives();
+
+    [GeneratedRegex(
+        @"^have I (?:ever )?met (?<name>.+?)(?: before)?$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex Met();
 }
