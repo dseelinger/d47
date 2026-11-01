@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
@@ -6,6 +6,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
+using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using D47.App.Theming;
 using static D47.App.Theming.ThemedText;
@@ -30,6 +31,13 @@ public sealed class LogbookPage : DialogPage
     private readonly Button _write;
     private readonly TextBlock _quote;
     private readonly StackPanel _entries = new() { Spacing = Gaps.Tile };
+
+    private const int PageSize = 20;
+
+    private IReadOnlyList<LogEntry> _all = [];
+    private int _shown;
+    private ScrollViewer? _scroll;
+    private bool _checking;
 
     private CancellationTokenSource? _running;
 
@@ -114,6 +122,13 @@ public sealed class LogbookPage : DialogPage
         };
 
         Modal.Apply(this, "Logbook", Title, body, [open, close]);
+
+        _scroll = this.GetLogicalDescendants().OfType<ScrollViewer>().FirstOrDefault(s => s.Name == "ModalBody");
+
+        if (_scroll is not null)
+        {
+            _scroll.ScrollChanged += (_, _) => CheckSoon();
+        }
 
         book.Changed += OnChanged;
         Closed += (_, _) =>
@@ -294,6 +309,8 @@ public sealed class LogbookPage : DialogPage
 
         if (entries.Count == 0)
         {
+            _all = entries;
+            _shown = 0;
             _entries.Children.Add(Muted(
                 $"Nothing written yet. Logs go to {_book.Folder.WriteFolder} as plain markdown, and D47 never "
                 + "overwrites one."));
@@ -301,16 +318,60 @@ public sealed class LogbookPage : DialogPage
             return;
         }
 
-        foreach (var entry in entries.Take(20))
+        var added = _all.Count == 0 ? 0 : Math.Max(0, entries.Count - _all.Count);
+        _shown = Math.Min(entries.Count, Math.Max(PageSize, _shown + added));
+        _all = entries;
+
+        for (var i = 0; i < _shown; i++)
         {
-            _entries.Children.Add(Row(entry));
+            _entries.Children.Add(Row(entries[i]));
         }
 
-        if (entries.Count > 20)
+        CheckSoon();
+    }
+
+    private void CheckSoon()
+    {
+        if (_checking)
         {
-            var more = Muted($"and {entries.Count - 20} more in the folder");
-            more.Margin = new Thickness(0, 4, 0, 0);
-            _entries.Children.Add(more);
+            return;
+        }
+
+        _checking = true;
+        _dispatcher.Post(() =>
+        {
+            _checking = false;
+            AddIfAtEnd();
+        });
+    }
+
+    /// <summary>Adds the next page when the scroller is within one row of its end, or its rows do not fill it.</summary>
+    private void AddIfAtEnd()
+    {
+        if (_scroll is not { } scroll || _shown >= _all.Count)
+        {
+            return;
+        }
+
+        scroll.UpdateLayout();
+
+        if (scroll.Viewport.Height <= 0)
+        {
+            return;
+        }
+
+        var row = _entries.Children.Count > 0 ? _entries.Children[^1].Bounds.Height + Gaps.Tile : 44;
+
+        if (scroll.Offset.Y + scroll.Viewport.Height < scroll.Extent.Height - row)
+        {
+            return;
+        }
+
+        var next = Math.Min(_all.Count, _shown + PageSize);
+
+        for (; _shown < next; _shown++)
+        {
+            _entries.Children.Add(Row(_all[_shown]));
         }
     }
 
