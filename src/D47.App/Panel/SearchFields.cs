@@ -123,52 +123,6 @@ internal sealed class RangeReadout
     };
 }
 
-/// <summary>The SHOW UP TO dropdown: how many results a search returns.</summary>
-internal sealed class ShowUpTo
-{
-    internal const int Default = 25;
-
-    internal const int Max = 100;
-
-    internal static readonly IReadOnlyList<int> Choices = [1, 5, 10, 25, 50, 100];
-
-    private readonly InlinePicker _picker = new() { Label = "show up to", Mono = true };
-    private int _value = Default;
-
-    public ShowUpTo()
-    {
-        _picker.Picked += (_, id) => Value = int.Parse(id, CultureInfo.InvariantCulture);
-        Draw();
-    }
-
-    /// <summary>The count shown; one outside <see cref="Choices"/> is shown as it is.</summary>
-    public int Value
-    {
-        get => _value;
-        set
-        {
-            _value = value;
-            Draw();
-        }
-    }
-
-    /// <summary>The labelled field, with a line naming what is counted.</summary>
-    public Control Field(string noun) =>
-        SystemSearchPage.Labelled("Show up to", new StackPanel { Spacing = 4, Children = { _picker, SearchText.Line($"{noun} in the answer.") } });
-
-    private void Draw()
-    {
-        var shown = _value.ToString(CultureInfo.InvariantCulture);
-
-        _picker.Show(
-            [.. Choices.Select(choice => new InlinePickerOption(choice.ToString(CultureInfo.InvariantCulture), choice.ToString(CultureInfo.InvariantCulture), ThemeManager.WhiteKey))],
-            shown,
-            shown,
-            ThemeManager.WhiteKey,
-            null);
-    }
-}
-
 /// <summary>The MAX REPORT AGE dropdown: how old a report may be, stored as hours with 0 for any age.</summary>
 internal sealed class MaxReportAge
 {

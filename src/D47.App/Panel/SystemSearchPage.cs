@@ -16,9 +16,6 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
     public const string Any = "Any";
 
-    /// <summary>The tool's own default for how many to return.</summary>
-    public const int DefaultLimit = ShowUpTo.Default;
-
     /// <summary>The table's columns: system, light years, allegiance, economy, population, power, reported.</summary>
     public const string HeadName = "SystemHead";
 
@@ -46,7 +43,6 @@ public sealed class SystemSearchPage : GalaxySearchPage
     private readonly SystemNameSuggestions<string>? _factionNames;
     private readonly TextBox _distanceFrom = Field("distance from", mono: true);
     private readonly TextBox _distanceTo = Field("distance to", mono: true);
-    private readonly ShowUpTo _limit = new();
     private readonly MaxReportAge _age = new();
     private readonly RangeReadout _distanceReadout;
 
@@ -122,13 +118,6 @@ public sealed class SystemSearchPage : GalaxySearchPage
         set => _age.Value = value;
     }
 
-    /// <summary>The count SHOW UP TO shows.</summary>
-    public int Limit
-    {
-        get => _limit.Value;
-        set => _limit.Value = value;
-    }
-
     /// <summary>Sets a text field by its tool argument name.</summary>
     public void Type(string name, string value) => TextField(name).Text = value;
 
@@ -158,8 +147,6 @@ public sealed class SystemSearchPage : GalaxySearchPage
             arguments["max_report_age_hours"] = age;
         }
 
-        PutLimit(arguments, _limit, DefaultLimit);
-
         return arguments;
     }
 
@@ -171,7 +158,6 @@ public sealed class SystemSearchPage : GalaxySearchPage
         }
 
         _population.Set(null);
-        _limit.Value = DefaultLimit;
         _age.Reset();
         _powerState.SelectedIndex = 0;
         _colonised.IsChecked = false;
@@ -193,8 +179,6 @@ public sealed class SystemSearchPage : GalaxySearchPage
         _age.Set(Get("max_report_age_hours"));
         _colonised.IsChecked = bool.TryParse(Get("colonised"), out var colonised) && colonised;
         _powerState.SelectedIndex = Index(_powerState.ItemsSource, Get("power_state"));
-
-        FillLimit(arguments, _limit);
 
         ResetPickers(_pickers, _picked, arguments, several: true);
     }
@@ -233,9 +217,15 @@ public sealed class SystemSearchPage : GalaxySearchPage
     protected override int Count(GalaxySearchPosting posting) =>
         posting.Result is GalaxySearchResult result ? result.Systems.Count : 0;
 
-    protected override Control? Table(GalaxySearchPosting posting, bool headset)
+    protected override int Total(GalaxySearchPosting posting) =>
+        posting.Result is GalaxySearchResult result ? result.Total : 0;
+
+    protected override IReadOnlyList<object> Rows(GalaxySearchPosting posting) =>
+        posting.Result is GalaxySearchResult result ? [.. result.Systems] : [];
+
+    protected override PagedTable? Paged(GalaxySearchPosting posting, bool headset)
     {
-        if (posting.Result is not GalaxySearchResult { Systems.Count: > 0 } result)
+        if (posting.Result is not GalaxySearchResult { Systems.Count: > 0 })
         {
             return null;
         }
@@ -258,16 +248,11 @@ public sealed class SystemSearchPage : GalaxySearchPage
         }
 
         var rule = SearchHead(posting, HeadName, columns, heads);
-
-        var rows = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 2, 0, 0) };
         var here = _here();
 
-        foreach (var system in result.Systems)
-        {
-            rows.Children.Add(Row(system, columns, headset, string.Equals(system.Name, here, StringComparison.OrdinalIgnoreCase)));
-        }
-
-        return new StackPanel { Children = { rule, rows } };
+        return new PagedTable(
+            rule,
+            item => Row((SystemSummary)item, columns, headset, string.Equals(((SystemSummary)item).Name, here, StringComparison.OrdinalIgnoreCase)));
     }
 
     protected override Control BuildForm()
@@ -278,7 +263,6 @@ public sealed class SystemSearchPage : GalaxySearchPage
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
             Labelled("Distance in light years", Span(_distanceFrom, _distanceTo, _distanceReadout)),
-            _limit.Field("Systems"),
             _age.Field("Max report age")));
 
         form.Children.Add(Group(

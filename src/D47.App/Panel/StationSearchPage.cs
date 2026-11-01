@@ -25,8 +25,6 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     public const int DefaultDistance = 50;
 
-    public const int DefaultLimit = ShowUpTo.Default;
-
     public const string HeadName = "StationHead";
 
     public const string TableId = "Search.Stations";
@@ -50,7 +48,6 @@ public sealed class StationSearchPage : GalaxySearchPage
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
     private readonly SystemNameSuggestions<string>? _controllingFactionNames;
     private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 99999, Step = 10, Format = "#,0" };
-    private readonly ShowUpTo _limit = new();
     private readonly MaxReportAge _age = new(72);
     private readonly Dictionary<string, CheckBox> _types = StationQuery.StationTypes.ToDictionary(type => type.Name, type => Tile(type.Name), StringComparer.Ordinal);
     private readonly Stepper _pad = Choice(StationQuery.MinPads);
@@ -134,13 +131,6 @@ public sealed class StationSearchPage : GalaxySearchPage
         set => _age.Value = value;
     }
 
-    /// <summary>The count SHOW UP TO shows.</summary>
-    public int Limit
-    {
-        get => _limit.Value;
-        set => _limit.Value = value;
-    }
-
     /// <summary>Sets a text field by its tool argument name.</summary>
     public void Type(string name, string value) => TextField(name).Text = value;
 
@@ -187,8 +177,6 @@ public sealed class StationSearchPage : GalaxySearchPage
             arguments["max_report_age_hours"] = age;
         }
 
-        PutLimit(arguments, _limit, DefaultLimit);
-
         return arguments;
     }
 
@@ -210,7 +198,6 @@ public sealed class StationSearchPage : GalaxySearchPage
         }
 
         _distance.Value = DefaultDistance;
-        _limit.Value = DefaultLimit;
         _age.Reset();
         _population.Set(null);
         _colonised.IsChecked = false;
@@ -250,8 +237,6 @@ public sealed class StationSearchPage : GalaxySearchPage
         ChooseServices([.. Items(Get("services"))]);
 
         FillDistance(arguments, _distance);
-
-        FillLimit(arguments, _limit);
 
         ResetPickers(_pickers, _picked, arguments, several: true);
     }
@@ -304,9 +289,15 @@ public sealed class StationSearchPage : GalaxySearchPage
                 || string.Equals(service, StationQuery.ServiceNames.First(known => known.Name == name).Field, StringComparison.OrdinalIgnoreCase))),
     ];
 
-    protected override Control? Table(GalaxySearchPosting posting, bool headset)
+    protected override int Total(GalaxySearchPosting posting) =>
+        posting.Result is StationSearchResult result ? result.Total : 0;
+
+    protected override IReadOnlyList<object> Rows(GalaxySearchPosting posting) =>
+        posting.Result is StationSearchResult result ? [.. result.Stations] : [];
+
+    protected override PagedTable? Paged(GalaxySearchPosting posting, bool headset)
     {
-        if (posting.Result is not StationSearchResult { Stations.Count: > 0 } result)
+        if (posting.Result is not StationSearchResult { Stations.Count: > 0 })
         {
             return null;
         }
@@ -329,15 +320,9 @@ public sealed class StationSearchPage : GalaxySearchPage
         }
 
         var rule = SearchHead(posting, HeadName, columns, heads);
+        var asked = posting.Arguments;
 
-        var rows = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 2, 0, 0) };
-
-        foreach (var station in result.Stations)
-        {
-            rows.Children.Add(Row(station, AskedFor(station, posting.Arguments), columns, headset));
-        }
-
-        return new StackPanel { Children = { rule, rows } };
+        return new PagedTable(rule, item => Row((StationSummary)item, AskedFor((StationSummary)item, asked), columns, headset));
     }
 
     protected override Control BuildForm()
@@ -348,7 +333,6 @@ public sealed class StationSearchPage : GalaxySearchPage
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
             Labelled("Distance in LY", _distance),
-            _limit.Field("Stations"),
             _age.Field("Max report age")));
 
         var types = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };

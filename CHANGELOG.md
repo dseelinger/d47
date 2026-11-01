@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Systems, Stations and Bodies search pages no longer have a **Show up to** field. An answer comes 25 rows at a time, and scrolling to the end of it loads the next 25 into the same table without moving the scroll position. While more rows remain, the head counts both, such as "25 of 1234 systems". If a later page fails, the table ends with the error and **Retry**, and the rows already shown stay. A search spoken aloud continues the same way on the panel. A bodies search ordered by a material's share still shows all 50 bodies it chooses from.
+
 Asking for more after a systems, stations or bodies search by voice continues that search: D47 reads out the next rows, such as "Systems 26 to 50 of 1234", and adds them to the same answer, with no second entry in the search history. A bodies search ordered by a material's share is one answer and has no more rows.
 
 D47 has a music library of its own, as a download. Turn on **Download the D47 music library** (Settings › Hearing and sound › Sounds and levels) and it downloads in the background into `data\music-pack`, one folder at a time, the most-used first. The line under the setting gives the size and counts the folders in. Files of your own in a music folder replace the library for that folder, so three tracks of yours are not drowned among fifty. The "Your own audio" row counts only your files. Turned off, the library stops playing and nothing more is downloaded; deleting `data\music-pack` reclaims the space.

@@ -365,13 +365,12 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
 
         var amounts = page.GetVisualDescendants().OfType<Amount>().ToList();
         amounts[0].Value = 80;
-        page.Limit = 8;
         page.MaxReportAgeHours = 48;
 
         var tool = GalaxyCapability.Create(null, () => null, world.Settings).Tools.Single(t => t.Name == "search_stations");
 
         Assert.Equal(
-            tool.Parameters.Select(parameter => parameter.Name).Except(["order_by", "order", "page"]).Order(StringComparer.Ordinal),
+            tool.Parameters.Select(parameter => parameter.Name).Except(["order_by", "order", "page", "limit"]).Order(StringComparer.Ordinal),
             page.FormArguments().Keys.Order(StringComparer.Ordinal));
 
         Press(Named(panel, GalaxySearchPage.ClearName));

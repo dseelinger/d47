@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Templates;
@@ -99,6 +100,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     public const string RetryName = "RetrySearch";
 
+    public const string RetryPageName = "RetryPage";
+
+    /// <summary>The answer's rows, drawn a screen at a time.</summary>
+    public const string RowsName = "SearchRows";
+
     public const string AskedName = "AskedAgo";
 
     public const string SortedName = "SortedBy";
@@ -146,6 +152,21 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private GalaxySearchPosting? _filledFrom;
     private readonly HistoryTile _history;
     private GalaxySearchPosting? _fromHistory;
+    private AvaloniaList<object>? _rows;
+    private int _shownRows;
+    private ScrollViewer? _scroll;
+    private TextBlock? _count;
+    private GalaxySearchPosting? _drawn;
+    private CancellationTokenSource? _nextPage;
+    private PageFailed? _pageFailed;
+
+    /// <summary>The last item of the rows while the next page loads.</summary>
+    private sealed record PageLoading;
+
+    /// <summary>The last item of the rows when the next page failed.</summary>
+    private sealed record PageFailed(string Text, DateTimeOffset At, int Page);
+
+    private static readonly PageLoading Loading = new();
 
     /// <summary>Copies a system name to the clipboard; null draws no copy glyphs.</summary>
     protected Func<string, Task<bool>>? Copy { get; set; }
@@ -203,6 +224,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         _fromHistory = posting;
         ResetPick();
         _failure = null;
+        DropNextPage();
 
         FillForm(posting.Arguments);
         _showingAnswer = true;
@@ -290,6 +312,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         if (Equals(Stamp(), _seen))
         {
+            // The headset raises no ScrollChanged, so the end of the answer is also checked here.
+            MoreIfAtEnd();
             return tileChanged;
         }
 
@@ -312,6 +336,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         {
             return;
         }
+
+        DropNextPage();
+        arguments = Sent(arguments);
 
         var inFlight = _inFlight = new CancellationTokenSource(Budget);
         _running = arguments;
@@ -456,15 +483,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         }
     }
 
-    /// <summary>Adds <c>limit</c> when it is not the default.</summary>
-    private protected static void PutLimit(Dictionary<string, string> arguments, ShowUpTo limit, int defaultLimit)
-    {
-        if (limit.Value is { } value && value != defaultLimit)
-        {
-            arguments["limit"] = value.ToString("0", CultureInfo.InvariantCulture);
-        }
-    }
-
     /// <summary>Sets <paramref name="distance"/> from <c>max_distance</c>, clamped to <paramref name="ceiling"/>, when it is a number.</summary>
     protected static void FillDistance(IReadOnlyDictionary<string, string> arguments, Amount distance, double ceiling = 99999)
     {
@@ -472,16 +490,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked))
         {
             distance.Value = (decimal)Math.Clamp(asked, 1, ceiling);
-        }
-    }
-
-    /// <summary>Sets <paramref name="limit"/> from <c>limit</c>, clamped, when it is a number.</summary>
-    private protected static void FillLimit(IReadOnlyDictionary<string, string> arguments, ShowUpTo limit)
-    {
-        if (arguments.TryGetValue("limit", out var typed)
-            && int.TryParse(typed, NumberStyles.Integer, CultureInfo.InvariantCulture, out var asked))
-        {
-            limit.Value = Math.Clamp(asked, 1, ShowUpTo.Max);
         }
     }
 
@@ -586,11 +594,31 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>The words after the count in the answer head, such as “WITHIN 50 LY OF ”, or null for none.</summary>
     protected abstract (string Lead, string Reference)? Aside(IReadOnlyDictionary<string, string> arguments, string? reference);
 
-    /// <summary>The answer's table, or null when it matched nothing.</summary>
-    protected abstract Control? Table(GalaxySearchPosting posting, bool headset);
+    /// <summary>The answer's table drawn whole, or null when it matched nothing or the page draws it through <see cref="Paged"/>.</summary>
+    protected virtual Control? Table(GalaxySearchPosting posting, bool headset) => null;
+
+    /// <summary>An answer table drawn a row at a time: its column header, and the control for one item of <see cref="Rows"/>.</summary>
+    protected sealed record PagedTable(Control Head, Func<object, Control> Row);
+
+    /// <summary>The answer's table as a header and rows, or null where the page draws it through <see cref="Table"/>.</summary>
+    protected virtual PagedTable? Paged(GalaxySearchPosting posting, bool headset) => null;
+
+    /// <summary>The answer's rows, in order.</summary>
+    protected virtual IReadOnlyList<object> Rows(GalaxySearchPosting posting) => [];
+
+    /// <summary>How many rows the service has for the search in all.</summary>
+    protected virtual int Total(GalaxySearchPosting posting) => Count(posting);
 
     /// <summary>How many the answer holds.</summary>
     protected abstract int Count(GalaxySearchPosting posting);
+
+    /// <summary>The arguments a search started from this page sends: without <c>limit</c>, so the answer comes a page at a time.</summary>
+    protected virtual IReadOnlyDictionary<string, string> Sent(IReadOnlyDictionary<string, string> arguments)
+    {
+        var sent = new Dictionary<string, string>(arguments, StringComparer.Ordinal);
+        sent.Remove("limit");
+        return sent;
+    }
 
     /// <summary>One column of an answer table: its labels, the <c>order_by</c> name the service sorts it on (null for none), and which side its figures sit on.</summary>
     protected sealed record SearchColumn(string Label, string? Second, string? Sort, bool Right);
@@ -655,6 +683,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     {
         base.OnAttachedToVisualTree(e);
         _searches.Board.Posted += OnPosted;
+        _searches.Board.Extended += OnExtended;
         _history.Attach();
 
         if (_searches.Saved is { } saved)
@@ -669,6 +698,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         _searches.Board.Posted -= OnPosted;
+        _searches.Board.Extended -= OnExtended;
         _history.Detach();
 
         if (_searches.Saved is { } saved)
@@ -688,6 +718,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         Dispatcher.UIThread.Post(() =>
         {
+            DropNextPage();
             _failure = null;
             _fromHistory = null;
             HistoryId = null;
@@ -709,12 +740,169 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         });
     }
 
+    /// <summary>Adds the rows of a later page to the drawn table, leaving the scroll position, the form and the pick alone.</summary>
+    private void OnExtended(GalaxySearchKind kind)
+    {
+        if (kind != Kind)
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_fromHistory is not null || _searches.Board.Last(Kind) is not { } last)
+            {
+                return;
+            }
+
+            if (_filledFrom is { } filled && ReferenceEquals(filled.Arguments, last.Arguments))
+            {
+                _filledFrom = last;
+            }
+
+            if (_rows is null || _count is null || _drawn is null || !ReferenceEquals(_drawn.Arguments, last.Arguments))
+            {
+                Draw();
+                return;
+            }
+
+            var all = Rows(last);
+            var at = _rows.Count > 0 && _rows[^1] is PageLoading or PageFailed ? _rows.Count - 1 : _rows.Count;
+            _rows.InsertRange(at, all.Skip(_shownRows));
+            _shownRows = all.Count;
+            _drawn = last;
+            _count.Text = CountText(last).ToUpperInvariant();
+            _seen = Stamp();
+            CheckSoon();
+        });
+    }
+
     private void OnSavedChanged() => Dispatcher.UIThread.Post(Draw);
+
+    /// <summary>Cancels a next-page fetch and forgets a failed one.</summary>
+    private void DropNextPage()
+    {
+        _pageFailed = null;
+
+        if (_nextPage is { } fetch)
+        {
+            _nextPage = null;
+            fetch.Cancel();
+        }
+
+        ShowTail();
+    }
+
+    /// <summary>Ends the rows with the loading slab or the failure notice, or with neither.</summary>
+    private void ShowTail()
+    {
+        if (_rows is null)
+        {
+            return;
+        }
+
+        if (_rows.Count > 0 && _rows[^1] is PageLoading or PageFailed)
+        {
+            _rows.RemoveAt(_rows.Count - 1);
+        }
+
+        if (_nextPage is not null)
+        {
+            _rows.Add(Loading);
+        }
+        else if (_pageFailed is { } failed)
+        {
+            _rows.Add(failed);
+        }
+    }
+
+    private void CheckSoon() => Dispatcher.UIThread.Post(MoreIfAtEnd, DispatcherPriority.Background);
+
+    /// <summary>Fetches the next page when the answer's scroller is within one row of its end and the service has more.</summary>
+    private void MoreIfAtEnd()
+    {
+        if (_nextPage is not null
+            || _pageFailed is not null
+            || _running is not null
+            || _fromHistory is not null
+            || View != GalaxySearchView.Answer
+            || _rows is not { Count: > 0 } rows
+            || _showingAnswer is not true
+            || _scroll is not { } scroll
+            || scroll.Viewport.Height <= 0
+            || _searches.Board.Last(Kind) is not { More: true } last
+            || _drawn is null
+            || !ReferenceEquals(last.Arguments, _drawn.Arguments))
+        {
+            return;
+        }
+
+        var row = scroll.Extent.Height / rows.Count;
+
+        if (scroll.Offset.Y + scroll.Viewport.Height >= scroll.Extent.Height - row)
+        {
+            _ = NextPageAsync(last.Arguments, last.Pages + 1);
+        }
+    }
+
+    /// <summary>Runs <see cref="Tool"/> for <paramref name="page"/> of the search; the rows arrive through <see cref="GalaxySearchBoard.Extended"/>.</summary>
+    private async Task NextPageAsync(IReadOnlyDictionary<string, string> search, int page)
+    {
+        var fetch = _nextPage = new CancellationTokenSource(Budget);
+        _pageFailed = null;
+        ShowTail();
+
+        var arguments = new Dictionary<string, string>(search, StringComparer.Ordinal)
+        {
+            ["page"] = page.ToString(CultureInfo.InvariantCulture),
+        };
+
+        string? failure = null;
+
+        try
+        {
+            var result = await _searches.Registry
+                .InvokeAsync(Tool, new ToolArguments(arguments), fetch.Token, ToolCaller.Commander)
+                .ConfigureAwait(true);
+
+            if (result.IsError)
+            {
+                failure = result.Content;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            failure = "The galaxy search took too long to answer.";
+        }
+        finally
+        {
+            fetch.Dispose();
+        }
+
+        if (!ReferenceEquals(_nextPage, fetch))
+        {
+            return;
+        }
+
+        _nextPage = null;
+        _pageFailed = failure is null ? null : new PageFailed(failure, DateTimeOffset.Now, page);
+        ShowTail();
+    }
+
+    /// <summary>The answer head's count: "25 OF 1234 SYSTEMS" while the service has more, otherwise the rows drawn.</summary>
+    private string CountText(GalaxySearchPosting posting)
+    {
+        var count = Count(posting);
+
+        return posting.More ? $"{count} OF {GalaxyQuery.SayTotal(Total(posting))} {Noun}"
+            : count == 1 ? $"1 {NounOne}"
+            : $"{count} {Noun}";
+    }
 
     /// <summary>Sets the form to a posting it has not shown yet, so typing survives the page being re-attached.</summary>
     private void FillFromLast()
     {
-        if (_fromHistory is not null || _searches.Board.Last(Kind) is not { } last || ReferenceEquals(last, _filledFrom))
+        if (_fromHistory is not null || _searches.Board.Last(Kind) is not { } last || ReferenceEquals(last.Arguments, _filledFrom?.Arguments))
         {
             return;
         }
@@ -725,7 +913,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     private GalaxySearchPosting? Latest => _fromHistory ?? _searches.Board.Last(Kind);
 
-    private object Stamp() => (_lookupsEnabled(), Latest, _searches.FrontierId(), Followed);
+    /// <summary>What a redraw follows. A later page added to the answer keeps its arguments, so it is not a change here.</summary>
+    private object Stamp() => (_lookupsEnabled(), Latest?.Arguments, Latest?.AskedAt, _searches.FrontierId(), Followed);
 
     /// <summary>Shows the form with the values the shown answer was asked with.</summary>
     private void Edit()
@@ -789,6 +978,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             _formView.IsVisible = !_showingAnswer!.Value;
             _answerView.IsVisible = _showingAnswer.Value;
         }
+
+        if (_scroll is not null)
+        {
+            CheckSoon();
+        }
     }
 
     private Grid HeadsetLayout()
@@ -805,7 +999,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         var footer = Footer();
         DockPanel.SetDock(footer, Dock.Bottom);
         answer.Children.Add(footer);
-        answer.Children.Add(LoadoutPages.Scrolling(_answer));
+        answer.Children.Add(_answer);
 
         _formView = form;
         _answerView = answer;
@@ -850,7 +1044,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         DockPanel.SetDock(footer, Dock.Bottom);
         right.Children.Add(footer);
 
-        right.Children.Add(LoadoutPages.Scrolling(_answer));
+        right.Children.Add(_answer);
 
         var grid = new Grid { Margin = new Thickness(0, 16, 0, 0) };
 
@@ -1032,6 +1226,12 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     private Control AnswerBlock(GalaxySearchPosting? last)
     {
+        _rows = null;
+        _scroll = null;
+        _count = null;
+        _drawn = null;
+        _shownRows = 0;
+
         var block = new StackPanel { Spacing = 14 };
 
         switch (View)
@@ -1055,9 +1255,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             case GalaxySearchView.Running:
                 block.Children.Add(Head("Searching", Aside(_running!, null), refresh: null, save: false, disabled: true));
 
-                var asking = new Border { MinHeight = 50, Padding = new Thickness(14, 0), Child = Label(RunningText, width: null) };
-                ThemeInk.Bind(asking, Border.BackgroundProperty, ThemeManager.SlabKey);
-                block.Children.Add(asking);
+                block.Children.Add(LoadingSlab());
                 break;
 
             case GalaxySearchView.Unavailable:
@@ -1093,8 +1291,14 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 break;
 
             case GalaxySearchView.Answer:
-                block.Children.Add(Head(Count(last!) == 1 ? $"1 {NounOne}" : $"{Count(last!)} {Noun}", Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments, sorted: Sorted(last)));
+                block.Children.Add(Head(CountText(last!), Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments, sorted: Sorted(last)));
                 AddNotes(block, last);
+
+                if (Paged(last, _headset) is { } paged)
+                {
+                    block.Children.Add(paged.Head);
+                    return RowsBelow(block, paged, last);
+                }
 
                 if (Table(last, _headset) is { } table)
                 {
@@ -1104,7 +1308,75 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 break;
         }
 
-        return block;
+        return LoadoutPages.Scrolling(block);
+    }
+
+    /// <summary>The head above the answer's rows, which the desktop realises only as they scroll into view.</summary>
+    private Grid RowsBelow(StackPanel head, PagedTable paged, GalaxySearchPosting posting)
+    {
+        var rows = Rows(posting);
+        _rows = [.. rows];
+        _shownRows = rows.Count;
+        _drawn = posting;
+        ShowTail();
+
+        var list = new ItemsControl
+        {
+            Name = RowsName,
+            // The headset lays out without a layout manager, so a virtualising panel there never learns its viewport.
+            ItemsPanel = new FuncTemplate<Avalonia.Controls.Panel?>(() => _headset ? new StackPanel() : new VirtualizingStackPanel()),
+            ItemTemplate = new FuncDataTemplate<object>((item, _) => item switch
+            {
+                PageLoading => Spaced(LoadingSlab()),
+                PageFailed failed => Spaced(PageNotice(failed)),
+                null => null,
+                _ => Spaced(paged.Row(item)),
+            }),
+            ItemsSource = _rows,
+        };
+
+        var grid = LoadoutPages.HeaderAndList(head, list, out var scroll);
+        _scroll = scroll;
+        scroll.ScrollChanged += (_, _) => CheckSoon();
+
+        return grid;
+    }
+
+    /// <summary>A row with the gap the table keeps between rows.</summary>
+    private static Border Spaced(Control row) => new() { Margin = new Thickness(0, 2, 0, Gaps.Tile - 2), Child = row };
+
+    /// <summary>The slab drawn while a search runs.</summary>
+    private Border LoadingSlab()
+    {
+        var asking = new Border { MinHeight = 50, Padding = new Thickness(14, 0), Child = Label(RunningText, width: null) };
+        ThemeInk.Bind(asking, Border.BackgroundProperty, ThemeManager.SlabKey);
+        return asking;
+    }
+
+    /// <summary>The failure of a later page, with RETRY asking for that page again.</summary>
+    private Notice PageNotice(PageFailed failed)
+    {
+        var notice = new Notice(NoticeLevel.Error)
+        {
+            Label = "GALAXY SEARCH UNAVAILABLE",
+            Text = failed.Text,
+            Detail = failed.At.ToString("HH:mm", CultureInfo.InvariantCulture),
+        };
+
+        var retry = new Button { Name = RetryPageName, Content = "RETRY", Height = TypeScale.MinimumTarget };
+        retry.Click += (_, _) =>
+        {
+            if (ReferenceEquals(_pageFailed, failed)
+                && _searches.Board.Last(Kind) is { } last
+                && last.Pages == failed.Page - 1
+                && ReferenceEquals(last.Arguments, _drawn?.Arguments))
+            {
+                _ = NextPageAsync(last.Arguments, failed.Page);
+            }
+        };
+        notice.Actions.Add(retry);
+
+        return notice;
     }
 
     private static void AddNotes(StackPanel block, GalaxySearchPosting posting)
@@ -1146,6 +1418,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         string? sorted = null)
     {
         var name = Chrome(count, TypeScale.Section, ThemeManager.AKey);
+        _count = name;
         var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, VerticalAlignment = VerticalAlignment.Bottom, Children = { name } };
 
         if (aside is { } words)

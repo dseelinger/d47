@@ -255,6 +255,25 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     }
 
     [AvaloniaFact]
+    public void AnOrderByMaterialShowsAllFiftyItChoosesFromAndANearestSearchComesAPageAtATime()
+    {
+        var world = new World(lookups: true);
+        var (panel, window) = Shown(world);
+
+        Page(panel).Run(new Dictionary<string, string> { ["material"] = "Polonium", ["limit"] = "5" });
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(25, Assert.Single(world.Galaxy.Asked).Limit);
+
+        Press(Named(panel, "BodyHead.Polonium"));
+
+        Assert.True(world.Galaxy.Asked[^1].OrderByMaterial);
+        Assert.Equal(BodyQuery.RichestOf, world.Galaxy.Asked[^1].Limit);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void ANearestSearchDrawsNoShareColumnAndNoRichestLine()
     {
         var world = new World(lookups: true);
@@ -361,12 +380,11 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
 
         var amounts = page.GetVisualDescendants().OfType<Amount>().ToList();
         amounts[0].Value = 80;
-        page.Limit = 8;
 
         var tool = GalaxyCapability.Create(null, () => null, world.Settings).Tools.Single(t => t.Name == "find_body");
 
         Assert.Equal(
-            tool.Parameters.Select(parameter => parameter.Name).Except(["order_by", "order", "page"]).Order(StringComparer.Ordinal),
+            tool.Parameters.Select(parameter => parameter.Name).Except(["order_by", "order", "page", "limit"]).Order(StringComparer.Ordinal),
             page.FormArguments().Keys.Order(StringComparer.Ordinal));
 
         Press(Named(panel, GalaxySearchPage.ClearName));

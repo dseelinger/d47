@@ -16,8 +16,6 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     public const int DefaultDistance = 50;
 
-    public const int DefaultLimit = ShowUpTo.Default;
-
     public const string HeadName = "BodyHead";
 
     public const string TableId = "Search.Bodies";
@@ -30,7 +28,6 @@ public sealed class BodySearchPage : GalaxySearchPage
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
     private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = (decimal)BodyQuery.MaxDistanceCeiling, Step = 10, Format = "#,0" };
-    private readonly ShowUpTo _limit = new();
     private readonly CheckBox _landable = Tile("Landable");
     private readonly CheckBox _terraformable = Tile("Terraforming candidate");
     private readonly CheckBox _tidallyLocked = Tile("Tidally locked");
@@ -105,13 +102,6 @@ public sealed class BodySearchPage : GalaxySearchPage
     /// <summary>Sets a dropdown field to <paramref name="value"/>, or to Any for a value it does not offer.</summary>
     public void Pick(string name, string value) => ShowPick(_pickers, _picked, name, value, several: false);
 
-    /// <summary>The count SHOW UP TO shows.</summary>
-    public int Limit
-    {
-        get => _limit.Value;
-        set => _limit.Value = value;
-    }
-
     /// <summary>Sets a text field by its tool argument name.</summary>
     public void Type(string name, string value) => TextField(name).Text = value;
 
@@ -146,8 +136,6 @@ public sealed class BodySearchPage : GalaxySearchPage
             }
         }
 
-        PutLimit(arguments, _limit, DefaultLimit);
-
         return arguments;
     }
 
@@ -164,7 +152,6 @@ public sealed class BodySearchPage : GalaxySearchPage
         }
 
         _distance.Value = DefaultDistance;
-        _limit.Value = DefaultLimit;
 
         ResetPickers(_pickers, _picked, null, several: false);
     }
@@ -191,8 +178,6 @@ public sealed class BodySearchPage : GalaxySearchPage
         }
 
         FillDistance(arguments, _distance, BodyQuery.MaxDistanceCeiling);
-
-        FillLimit(arguments, _limit);
 
         ResetPickers(_pickers, _picked, arguments, several: false);
     }
@@ -254,9 +239,28 @@ public sealed class BodySearchPage : GalaxySearchPage
             ? BodyCatalogue.MatchSurfaceMaterial(spoken) ?? spoken.Trim()
             : null;
 
-    protected override Control? Table(GalaxySearchPosting posting, bool headset)
+    protected override int Total(GalaxySearchPosting posting) =>
+        posting.Result is BodySearchResult result ? result.Total : 0;
+
+    protected override IReadOnlyList<object> Rows(GalaxySearchPosting posting) =>
+        posting.Result is BodySearchResult result ? [.. result.Bodies] : [];
+
+    /// <summary>Without <c>limit</c>, except that an order by material shows every body it chooses from.</summary>
+    protected override IReadOnlyDictionary<string, string> Sent(IReadOnlyDictionary<string, string> arguments)
     {
-        if (posting.Result is not BodySearchResult { Bodies.Count: > 0 } result)
+        var sent = new Dictionary<string, string>(base.Sent(arguments), StringComparer.Ordinal);
+
+        if (string.Equals(sent.GetValueOrDefault("order_by"), SearchSorts.Material, StringComparison.OrdinalIgnoreCase))
+        {
+            sent["limit"] = BodyQuery.RichestOf.ToString(CultureInfo.InvariantCulture);
+        }
+
+        return sent;
+    }
+
+    protected override PagedTable? Paged(GalaxySearchPosting posting, bool headset)
+    {
+        if (posting.Result is not BodySearchResult { Bodies.Count: > 0 })
         {
             return null;
         }
@@ -306,13 +310,6 @@ public sealed class BodySearchPage : GalaxySearchPage
         var columns = NewTable(TableId, shown);
         var rule = SearchHead(posting, HeadName, columns, heads);
 
-        var rows = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 2, 0, 0) };
-
-        foreach (var body in result.Bodies)
-        {
-            rows.Children.Add(Row(body, material, columns, shareColumn, gravityColumn));
-        }
-
         var table = new StackPanel { Spacing = 8 };
 
         if (RichestIn(posting.Arguments) is { } richest)
@@ -324,8 +321,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         }
 
         table.Children.Add(rule);
-        table.Children.Add(rows);
-        return table;
+        return new PagedTable(table, item => Row((BodySummary)item, material, columns, shareColumn, gravityColumn));
     }
 
     protected override Control BuildForm()
@@ -335,8 +331,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
-            Labelled("Distance in LY", _distance),
-            _limit.Field("Bodies")));
+            Labelled("Distance in LY", _distance)));
 
         var flags = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _landable, _terraformable, _tidallyLocked } };
 

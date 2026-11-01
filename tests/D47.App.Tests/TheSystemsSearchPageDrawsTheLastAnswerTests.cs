@@ -324,17 +324,15 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         }
 
         page.GetLogicalDescendants().OfType<CheckBox>().Single(box => box.Content as string == "Only colonised systems").IsChecked = true;
-        page.Limit = 8;
         page.MaxReportAgeHours = 72;
 
         var tool = GalaxyCapability.Create(null, () => null, world.Settings).Tools.Single(t => t.Name == "search_systems");
 
         Assert.Equal(
-            tool.Parameters.Select(parameter => parameter.Name).Except(["order_by", "order", "page"]).Order(StringComparer.Ordinal),
+            tool.Parameters.Select(parameter => parameter.Name).Except(["order_by", "order", "page", "limit"]).Order(StringComparer.Ordinal),
             page.FormArguments().Keys.Order(StringComparer.Ordinal));
         Assert.Equal("10-50", page.FormArguments()["distance"]);
         Assert.Equal("1000-", page.FormArguments()["population"]);
-        Assert.Equal("8", page.FormArguments()["limit"]);
 
         Press(Named(panel, GalaxySearchPage.ClearName));
 
