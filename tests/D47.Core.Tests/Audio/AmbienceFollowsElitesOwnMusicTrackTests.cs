@@ -118,6 +118,55 @@ public class AmbienceFollowsElitesOwnMusicTrackTests : IDisposable
         Assert.Equal("Combat_Dogfight", music.Track);
     }
 
+    private static GameStatus OnFootWith(StatusFlags2 flag) => new()
+    {
+        Flags2 = (uint)(StatusFlags2.OnFoot | flag),
+        ReadAt = DateTimeOffset.UnixEpoch,
+    };
+
+    [Theory]
+    [InlineData("Starport")]
+    [InlineData("OnFoot")]
+    [InlineData("Exploration")]
+    [InlineData("NoTrack")]
+    [InlineData(null)]
+    public void OnFootInAStationPlaysItsFolderOverEliteGeneralTracks(string? track)
+    {
+        var library = Library(("on-foot-station", "concourse"), ("docked", "dock"), ("on-foot", "walk"));
+
+        foreach (var flag in new[] { StatusFlags2.OnFootInStation, StatusFlags2.OnFootInHangar, StatusFlags2.OnFootSocialSpace })
+        {
+            Assert.Equal(Situations.OnFootStation, Situations.For(OnFootWith(flag), track, library));
+        }
+    }
+
+    [Fact]
+    public void OnFootInAStationLeavesAMapTrackPlaying()
+    {
+        var library = Library(("on-foot-station", "concourse"), ("galaxy-map", "map"));
+
+        Assert.Equal("galaxy-map", Situations.For(OnFootWith(StatusFlags2.OnFootInStation), "GalaxyMap", library));
+    }
+
+    [Theory]
+    [InlineData("Starport", "docked")]
+    [InlineData("OnFoot", "on-foot")]
+    [InlineData("NoTrack", "on-foot")]
+    public void AnEmptyOnFootStationFolderChangesNothing(string track, string expected)
+    {
+        var library = Library(("docked", "dock"), ("on-foot", "walk"));
+
+        Assert.Equal(expected, Situations.For(OnFootWith(StatusFlags2.OnFootInStation), track, library));
+    }
+
+    [Fact]
+    public void OnFootOnAPlanetOnlyPlaysTheOnFootFolder()
+    {
+        var library = Library(("on-foot-station", "concourse"), ("on-foot", "walk"));
+
+        Assert.Equal(Situations.OnFoot, Situations.For(OnFootWith(StatusFlags2.OnFootOnPlanet), "OnFoot", library));
+    }
+
     [Fact]
     public void FirstRunMakesEveryMusicFolderEmpty()
     {

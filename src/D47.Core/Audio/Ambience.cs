@@ -13,6 +13,7 @@ public static class Situations
     public const string Supercruise = "supercruise";
     public const string NormalSpace = "normal-space";
     public const string OnFoot = "on-foot";
+    public const string OnFootStation = "on-foot-station";
 
     /// <summary>
     /// The folder each Elite <c>MusicTrack</c> plays from. <c>NoTrack</c>, <c>NoInGameMusic</c> and values
@@ -65,23 +66,58 @@ public static class Situations
             "arrival-from-supercruise", "arrival-from-hyperspace", "interdiction",
         };
 
-    /// <summary>Every music folder: the five Status.json situations first, then the rest of the track folders.</summary>
+    /// <summary>Every music folder: the Status.json situations first, then the rest of the track folders.</summary>
     public static readonly IReadOnlyList<string> All =
-        new[] { General, Docked, Supercruise, NormalSpace, OnFoot }
+        new[] { General, Docked, Supercruise, NormalSpace, OnFoot, OnFootStation }
             .Concat(ByTrack.Values)
             .Distinct(StringComparer.Ordinal)
             .ToList();
 
+    /// <summary>Elite's general tracks, which give way to a folder D47 chose from its own state.</summary>
+    private static readonly IReadOnlySet<string> GeneralTracks =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "OnFoot", "Starport", "Exploration" };
+
     /// <summary>
-    /// The folder for Elite's current music track when that folder has tracks, otherwise
+    /// A folder chosen from Status.json that has tracks wins over Elite's general tracks and over no
+    /// track; any other Elite track with a folder that has tracks wins over Status.json; otherwise
     /// <see cref="For(GameStatus)"/>.
     /// </summary>
-    public static string For(GameStatus status, string? musicTrack, CueLibrary library) =>
-        musicTrack is not null
-        && ByTrack.TryGetValue(musicTrack, out var folder)
-        && library.Music(folder).Count > 0
-            ? folder
-            : For(status);
+    public static string For(GameStatus status, string? musicTrack, CueLibrary library)
+    {
+        var own = For(status, library);
+        var chosen = IsChosen(own);
+
+        if (musicTrack is null || !ByTrack.TryGetValue(musicTrack, out var folder))
+        {
+            return own;
+        }
+
+        if (chosen && GeneralTracks.Contains(musicTrack))
+        {
+            return own;
+        }
+
+        return library.Music(folder).Count > 0 ? folder : own;
+    }
+
+    /// <summary>
+    /// <see cref="For(GameStatus)"/>, except that a folder with no tracks is skipped for the folders
+    /// used before it existed.
+    /// </summary>
+    public static string For(GameStatus status, CueLibrary library)
+    {
+        var folder = For(status);
+
+        if (IsChosen(folder) && library.Music(folder).Count == 0)
+        {
+            return OnFoot;
+        }
+
+        return folder;
+    }
+
+    private static bool IsChosen(string folder) =>
+        string.Equals(folder, OnFootStation, StringComparison.Ordinal);
 
     /// <summary>A pure function of the state Elite last wrote — no clock, no thread, no history.</summary>
     public static string For(GameStatus status)
@@ -93,7 +129,11 @@ public static class Situations
 
         if (status.OnFoot)
         {
-            return OnFoot;
+            return status.Has2(StatusFlags2.OnFootInStation)
+                   || status.Has2(StatusFlags2.OnFootInHangar)
+                   || status.Has2(StatusFlags2.OnFootSocialSpace)
+                ? OnFootStation
+                : OnFoot;
         }
 
         if (status.Has(StatusFlags.Docked))

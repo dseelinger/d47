@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A new music folder, `on-foot-station`, plays while the Commander is on foot in a station, a hangar or a social space. It wins over Elite's general tracks (`OnFoot`, `Starport` and `Exploration`) and gives way to every other Elite track. While it is empty, the `on-foot` and `docked` folders play as before. The folder is created on the next start.
+
 For the maintainer of the music library: with a Music publish token, "thumbs down this track" (or a hotkey or stick button bound in Settings › Hearing and sound) adds the playing library track to `data\music-rejects.tsv` and skips to the next one. A queued track is not played again, a track from your own `data\audio` folder is refused, and without a token the phrase and the hotkey do nothing. The model is never offered it.
 
 For the maintainer of the music library: "delete the thumbs-down tracks" deletes every queued track. For each folder it uploads a new zip without them to the `music-1` release and replaces `manifest.json` with the folder's version increased by one, then deletes the tracks from `data\music-pack` and their rows from `data\music-rejects.tsv`. With `D47_MUSIC_SOURCE` set, the generator's copies are deleted and their ids added to `rejected.tsv` in that folder. A folder whose upload fails keeps its tracks and rows, and a folder still downloading an older version is refused. Without a token the phrase does nothing, and the model is never offered it.

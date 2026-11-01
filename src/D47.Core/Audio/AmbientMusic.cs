@@ -1,4 +1,4 @@
-using D47.Core.Journal;
+﻿using D47.Core.Journal;
 
 namespace D47.Core.Audio;
 
@@ -134,7 +134,7 @@ public sealed class AmbientMusic(
             {
                 changed = true;
             }
-            else if (_cue is null && Change(oneShot ? Situations.For(status) : target, now))
+            else if (_cue is null && Change(oneShot ? Situations.For(status, library()) : target, now))
             {
                 changed = true;
             }
@@ -284,7 +284,7 @@ public sealed class AmbientMusic(
     {
         var status = _status ?? new GameStatus();
         var target = Situations.For(status, _track, library());
-        return Situations.OneShot.Contains(target) ? Situations.For(status) : target;
+        return Situations.OneShot.Contains(target) ? Situations.For(status, library()) : target;
     }
 
     /// <summary>A track ended on its own.</summary>
