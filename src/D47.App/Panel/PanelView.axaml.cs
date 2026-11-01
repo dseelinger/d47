@@ -960,8 +960,20 @@ public partial class PanelView : UserControl, IPanelTabHost
                 HelpLevel.Open(Nav, found.Target);
                 break;
 
+            case PanelFindKind.StarSystem when found.SystemAddress is { } address:
+                _searchFurnishing.OpenSystemAt(address, null);
+                break;
+
             case PanelFindKind.StarSystem:
                 OpenSystemNamed(found.Target);
+                break;
+
+            case PanelFindKind.Station or PanelFindKind.Carrier when found.SystemAddress is { } address:
+                _searchFurnishing.OpenSystemAt(address, found.Target);
+                break;
+
+            case PanelFindKind.Faction:
+                _searchFurnishing.OpenFaction(found.Target);
                 break;
 
             case PanelFindKind.Engineer:

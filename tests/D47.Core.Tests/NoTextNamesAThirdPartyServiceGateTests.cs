@@ -100,6 +100,10 @@ public sealed partial class NoTextNamesAThirdPartyServiceGateTests
                 case VariableDeclaratorSyntax { Identifier.Text: "NoKey" } when relative == "D47.Knowledge/RavenColonialPlanWriter.cs":
                     return true;
 
+                // The footer mark Find shows while Spansh is asked.
+                case VariableDeclaratorSyntax { Identifier.Text: "AskingMark" } when relative == "D47.App/Controls/FindDialog.cs":
+                    return true;
+
                 // The two browser tooltips.
                 case MethodDeclarationSyntax { Identifier.Text: "TitleRow" } when relative == "D47.App/Panel/ConstructionPage.cs":
                     return true;

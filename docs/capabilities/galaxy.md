@@ -143,8 +143,8 @@ on, three things leave this machine:
 - the system name you asked about, and any filters — an allegiance, a distance, an economy
 - **where you are**, whenever the question is relative to you, because "the nearest high tech
   system" cannot be asked without saying where from
-- the letters you type into a field that suggests system or faction names, such as the one on
-  **Search › System**, sent as you type once there are three of them
+- the letters you type into a field that suggests system, station or faction names, such as the one on
+  **Search › System** or Find, sent as you type once there are three of them
 - when you ask for a home system suggestion: the names of systems you have claimed for colonisation,
   your pledged Power, your squadron's minor faction, and your position for a search within 200
   light years

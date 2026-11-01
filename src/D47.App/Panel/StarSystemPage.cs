@@ -281,6 +281,19 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     /// <summary>As <see cref="OpenSystem(long)"/>, on the Stations section.</summary>
     public bool OpenSystemStations(long address) => OpenSystemOn(address, Section.Stations);
 
+    /// <summary>As <see cref="OpenSystem(long)"/>, on the Stations section narrowed to <paramref name="station"/>.</summary>
+    public bool OpenSystemStation(long address, string station)
+    {
+        if (!_surface.LookupsEnabled())
+        {
+            return false;
+        }
+
+        _stationFilter = new StationFilter { Query = station };
+
+        return OpenSystemOn(address, Section.Stations);
+    }
+
     /// <summary>As <see cref="OpenSystem(long)"/>, on the Bodies section.</summary>
     public bool OpenSystemBodies(long address) => OpenSystemOn(address, Section.Bodies);
 

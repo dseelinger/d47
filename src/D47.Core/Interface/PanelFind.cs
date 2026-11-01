@@ -23,7 +23,8 @@ public enum PanelFindKind
 }
 
 /// <summary>A name to rank beside the pages: what it is, how it reads, where it sits and the key that reaches it.</summary>
-public sealed record PanelFindName(PanelFindKind Kind, string Title, string Path, string Target);
+public sealed record PanelFindName(
+    PanelFindKind Kind, string Title, string Path, string Target, long? SystemAddress = null, double? LightYears = null);
 
 /// <summary>One Find result: what it is, how it reads, where it sits, and the key that reaches it.</summary>
 /// <param name="Title">A destination's word, a place's title, a row's label or an article's title.</param>
@@ -31,8 +32,11 @@ public sealed record PanelFindName(PanelFindKind Kind, string Title, string Path
 /// <param name="Target">The destination key, place id, row key or capability id, by <paramref name="Kind"/>.</param>
 /// <param name="Rank">The step it matched at, 1 to 8; lower is better. A name matches at 1 to 4 only.</param>
 /// <param name="ReadOnly">A row that shows a value and has no control to change it.</param>
+/// <param name="SystemAddress">The system a galaxy name sits in, when the lookup gave it.</param>
+/// <param name="LightYears">A station's distance from the Commander's system, when both positions are known.</param>
 public sealed record PanelFindResult(
-    PanelFindKind Kind, string Title, string Path, string Target, int Rank, bool ReadOnly = false)
+    PanelFindKind Kind, string Title, string Path, string Target, int Rank, bool ReadOnly = false,
+    long? SystemAddress = null, double? LightYears = null)
 {
     /// <summary>The path and the title, such as "Asset Mgmt › Ships › Hull pictures".</summary>
     public string Where => Path + PanelFind.Separator + Title;
@@ -111,16 +115,21 @@ public sealed class PanelFind(
             foreach (var kind in kinds.Where(kind => turn < kind.Count))
             {
                 var name = kind[turn];
-                yield return new PanelFindResult(name.Kind, name.Title, name.Path, name.Target, step);
+                yield return new PanelFindResult(name.Kind, name.Title, name.Path, name.Target, step, false, name.SystemAddress, name.LightYears);
             }
         }
     }
 
     private IEnumerable<PanelFindName> Names(IReadOnlyList<PanelFindName>? extraNames)
     {
+        var galaxySystems = (extraNames ?? [])
+            .Where(name => name.Kind == PanelFindKind.StarSystem)
+            .Select(name => name.Title)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         if (settings.Current.Knowledge.GalaxySearch)
         {
-            foreach (var system in SystemNameTable.Names)
+            foreach (var system in SystemNameTable.Names.Where(system => !galaxySystems.Contains(system)))
             {
                 yield return new PanelFindName(PanelFindKind.StarSystem, system, "Star system", system);
             }

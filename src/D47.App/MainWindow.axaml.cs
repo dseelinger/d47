@@ -946,11 +946,47 @@ public partial class MainWindow : Window
         }
 
         var find = new PanelFind(Panel.Nav, host.Settings, Panel.TabWords, Bookmarks(host));
-        var dialog = new FindDialog(query => find.Search(query), Panel.OpenFound, host.Settings.Current.Hotkeys.Find);
+        var dialog = new FindDialog(query => find.Search(query), Panel.OpenFound, host.Settings.Current.Hotkeys.Find, GalaxyNames(host, find));
 
         _find = dialog;
         dialog.Closed += (_, _) => _find = null;
         _ = dialog.Over(this);
+    }
+
+    private static GalaxyFind? GalaxyNames(AppHost host, PanelFind find)
+    {
+        if (host.StarSystems is not { } service)
+        {
+            return null;
+        }
+
+        return new GalaxyFind(
+            () => host.Settings.Current.Knowledge.GalaxySearch,
+            async (typed, cancellation) =>
+            {
+                var here = host.GameState.Active?.Location.StarPos;
+
+                var systems = Task.Run(() => Quietly(service.PrefixNamesAsync(typed, cancellation)), cancellation);
+                var stations = Task.Run(() => Quietly(service.StationNamesAsync(typed, cancellation)), cancellation);
+                var factions = Task.Run(() => Quietly(service.FactionNamesAsync(typed, cancellation)), cancellation);
+
+                await Task.WhenAll(systems, stations, factions);
+
+                return GalaxyFindNames.Of(systems.Result, stations.Result, factions.Result, here);
+            },
+            (typed, names) => find.Search(typed, names));
+    }
+
+    private static async Task<IReadOnlyList<T>> Quietly<T>(Task<IReadOnlyList<T>> lookup)
+    {
+        try
+        {
+            return await lookup.ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return [];
+        }
     }
 
     private CommanderSwitcher? _switcher;

@@ -31,6 +31,9 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private StarSystemSurface? _surface;
     private (long Address, string Id)? _pendingSystem;
     private string? _pendingName;
+    private (long Address, string? Station)? _pendingAddress;
+    private string? _pendingFaction;
+    private string? _stationSeek;
     private string? _systemEntry;
     private readonly Dictionary<GalaxySearchKind, SearchHistoryEntry> _pending = [];
     private IReadOnlyDictionary<string, string>? _pendingBodies;
@@ -105,6 +108,45 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         _pendingName = name;
         host.Nav.Show(StarSystemPage.RootKey);
         ApplyPending();
+    }
+
+    /// <summary>Opens Search › System on one system, and on its Stations section narrowed to <paramref name="station"/> when one is named.</summary>
+    public void OpenSystemAt(long address, string? station)
+    {
+        ClearPending();
+        _pendingAddress = (address, station);
+        host.Nav.Show(StarSystemPage.RootKey);
+        ApplyPending();
+    }
+
+    /// <summary>Opens Search › Systems and runs it with <paramref name="faction"/> as a faction present.</summary>
+    public void OpenFaction(string faction)
+    {
+        ClearPending();
+        _pendingFaction = faction;
+        host.Nav.Show(SystemSearchPage.RootKey);
+        ApplyPending();
+    }
+
+    private void ClearPending()
+    {
+        _pending.Clear();
+        _pendingBodies = null;
+        _pendingSystem = null;
+        _pendingName = null;
+        _pendingAddress = null;
+        _pendingFaction = null;
+        _stationSeek = null;
+    }
+
+    /// <summary>Fills the panel's page-search box with the station once the System page lists its stations.</summary>
+    private void SeekStation()
+    {
+        if (_stationSeek is { } station && _starSystem is { Filters: true })
+        {
+            _stationSeek = null;
+            host.Seek(station);
+        }
     }
 
     public bool OpenSystem(long systemAddress) => _starSystem is { } page && page.OpenSystem(systemAddress);
@@ -231,7 +273,11 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         }
 
         _starSystem = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, Codex = Codex };
-        _starSystem.FiltersChanged += (_, _) => host.ShowSearch();
+        _starSystem.FiltersChanged += (_, _) =>
+        {
+            host.ShowSearch();
+            SeekStation();
+        };
         ApplyPending();
 
         return _starSystem;
@@ -308,6 +354,28 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         {
             _pendingName = null;
             named.LookUp(name);
+        }
+
+        if (_pendingAddress is { } at && _starSystem is { } target)
+        {
+            _pendingAddress = null;
+            _systemEntry = null;
+
+            if (at.Station is { } station)
+            {
+                _stationSeek = station;
+                target.OpenSystemStation(at.Address, station);
+            }
+            else
+            {
+                target.OpenSystem(at.Address);
+            }
+        }
+
+        if (_pendingFaction is { } faction && _systems is { } search)
+        {
+            _pendingFaction = null;
+            search.Run(new Dictionary<string, string>(StringComparer.Ordinal) { ["faction"] = faction });
         }
 
         if (_pendingSystem is { } system && _starSystem is { } page)

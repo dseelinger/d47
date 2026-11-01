@@ -289,7 +289,7 @@ public static class EgressDisclosure
                 + "system's name to spansh.co.uk, to ask for the hundred systems nearest it; and opening it sends the "
                 + "names of systems holding your bookmarks, your carrier or your stored ships that you have never "
                 + "visited, one at a time, to find where they are. "
-                + "Typing three or more letters into a field that suggests system or faction names sends those letters "
+                + "Typing three or more letters into a field that suggests system, station or faction names sends those letters "
                 + "to spansh.co.uk as you type. "
                 + "Asking for a home system suggestion sends the names of systems you have claimed for colonisation, "
                 + "your pledged Power, your squadron's minor faction and your position for a search within 200 light years. "

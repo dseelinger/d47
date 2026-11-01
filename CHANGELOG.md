@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Find (Ctrl+Shift+F) now also asks Spansh as you type: with **Look things up in the galaxy** on, three or more letters and a short pause add star systems, stations (with their distance from your system), fleet carriers and minor factions to the list, marked SYSTEM, STATION, CARRIER or FACTION, and the footer reads ASKING SPANSH until they arrive. A system opens Search › System; a station or carrier opens its system on Stations with its name in the search box; a faction runs the search on Search › Systems, with it as a faction present. If Spansh does not answer, the local results stay and no error shows.
+
 Find (Ctrl+Shift+F) now also lists engineers and your bookmarks by name, and star systems while **Look things up in the galaxy** is on. Each is marked ENGINEER, BOOKMARK or SYSTEM. Opening an engineer shows their page under Engineers, a bookmark shows the Bookmarks page, and a system opens Search › System on that name. Names match when they equal, start with, have a word that starts with, or contain what you typed, and come after matching pages and settings, taking turns by kind.
 
 The Systems, Stations and Bodies search pages no longer have a **Show up to** field. An answer comes 25 rows at a time, and scrolling to the end of it loads the next 25 into the same table without moving the scroll position. While more rows remain, the head counts both, such as "25 of 1234 systems". If a later page fails, the table ends with the error and **Retry**, and the rows already shown stay. A search spoken aloud continues the same way on the panel. A bodies search ordered by a material's share still shows all 50 bodies it chooses from.
