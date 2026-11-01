@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+D47 now says when a ship you transferred arrives at the station you sent it to, using its own name where it has one. A transfer still in transit when d47 restarts is announced on time. The Ship transfers row under Plans and reminders switches it off.
+
 The carrier captain now says when your own carrier has arrived at its destination, whether or not you are aboard, and a jump booked while you were away no longer shows as pending once the carrier is seen there.
 
 The modules fitted to your ship change as soon as you buy, sell, store, retrieve or swap one, without waiting for the game to write its next loadout. The ship page, the fleet count and the list of modules still to buy no longer show a module you have already bought.

@@ -1377,6 +1377,21 @@ jumped since the reading, the line adds how old the reading is and that the tank
 A squadron carrier, or one you do not own, is not announced. Nothing is said while d47 is catching up
 on a journal it did not watch being written.
 
+#### Ship transfers {#ship-transfer}
+
+When a ship you transferred arrives, D47 says so. Elite writes no event on arrival, so the time comes
+from the transfer: the event's timestamp plus its transfer time.
+
+```text
+Your Type-6 Transporter has arrived at Jameson Memorial.
+```
+
+The line uses the ship's own name where the fleet has one. It is said once. A transfer still in
+transit when d47 restarts is announced on time; one that fell due before d47 finished catching up on
+the journal is dropped without a line, and a transfer time of zero says nothing. Switch it off with
+the Ship transfers row (`Callouts.ShipTransfers`), under Plans and reminders, or say "stop calling out
+ship transfers".
+
 #### Carrier upkeep {#carrier-upkeep}
 
 When your own carrier's balance covers less than four weeks of upkeep, the carrier captain says so,

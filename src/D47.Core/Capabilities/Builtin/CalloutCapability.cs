@@ -80,6 +80,7 @@ public static class CalloutCapability
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
 
     public const string CarrierFuelKey = "callouts.carrierFuel";
+    public const string ShipTransfersKey = "callouts.shipTransfers";
     public const string CommunityGoalExpiryKey = "callouts.communityGoalExpiry";
 
     public const string ColonisationKey = "callouts.colonisation";
@@ -1264,6 +1265,21 @@ public static class CalloutCapability
                 "carrier fuel",
                 s => s.Callouts.CarrierFuel,
                 (s, v) => s with { Callouts = s.Callouts with { CarrierFuel = v } }),
+
+            Toggle(
+                ShipTransfersKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Ship transfers (on by "
+                + "default). Transfer a ship to the station you are docked at: D47 says when it arrives. Say "
+                + "\"stop calling out ship transfers\": the row shows off and that is no longer said. Say \"start "
+                + "calling out ship transfers\" and the row shows on. The row is absent while Speak without being "
+                + "asked is off.",
+                "Ship transfers",
+                "Says when a ship you transferred arrives at the station you sent it to.",
+                "ship-transfer",
+                "ship transfers",
+                s => s.Callouts.ShipTransfers,
+                (s, v) => s with { Callouts = s.Callouts with { ShipTransfers = v } }),
 
             Toggle(
                 CarrierUpkeepKey,

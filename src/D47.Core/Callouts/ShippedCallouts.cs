@@ -159,6 +159,7 @@ public static class ShippedCallouts
             // Phase 11.
             .Add(new CarrierCallout())
             .Add(new CarrierFuelCallout { Plan = () => sources.PlanBook.Last(D47.Core.Knowledge.RoutePlanKind.Carrier), Warnings = sources.StandingWarnings })
+            .Add(new ShipTransferCallout())
             .Add(new CarrierUpkeepCallout { Warnings = sources.StandingWarnings })
             .Add(new CarrierPayrollCallout
             {
@@ -494,6 +495,7 @@ public static class ShippedCallouts
         engine.SetEnabled("notable-ships", callouts.NotableShips, now);
         engine.SetEnabled("ship-modes", callouts.ShipModes, now);
         engine.SetEnabled("carrier-fuel", callouts.CarrierFuel, now);
+        engine.SetEnabled("ship-transfer", callouts.ShipTransfers, now);
         engine.SetEnabled("carrier-upkeep", callouts.CarrierUpkeep, now);
         engine.SetEnabled("carrier-payroll", callouts.CarrierPayroll, now);
         engine.SetEnabled("missions", callouts.Missions, now);
