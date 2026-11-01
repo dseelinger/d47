@@ -34,14 +34,14 @@ public class AFolderLeftAndReturnedToContinuesItsTrackTests
         music.Follow(Docked, musicTrack: null, Start.AddMinutes(1));
         var berth = _sink.Started[1];
 
-        Assert.Contains(map.Id, _sink.Paused);
+        Assert.Contains(map.Id, _sink.Held);
         Assert.DoesNotContain(map.Id, _sink.Stopped);
 
         music.Follow(Docked, "GalaxyMap", Start.AddMinutes(2));
 
         Assert.Equal(2, _sink.Started.Count);
-        Assert.DoesNotContain(map.Id, _sink.Paused);
-        Assert.Contains(berth.Id, _sink.Paused);
+        Assert.DoesNotContain(map.Id, _sink.Held);
+        Assert.Contains(berth.Id, _sink.Held);
         Assert.Equal(map.Name, music.State.Track);
         Assert.True(music.State.Playing);
     }
@@ -185,12 +185,12 @@ public class AFolderLeftAndReturnedToContinuesItsTrackTests
 
         Assert.Equal(2, _sink.Started.Count);
         Assert.Contains(berth.Id, _sink.Paused);
-        Assert.Contains(map.Id, _sink.Paused);
+        Assert.Contains(map.Id, _sink.Held);
 
         Assert.Equal("Music resumed.", music.Control(MusicAction.Resume));
 
         Assert.Equal(2, _sink.Started.Count);
-        Assert.DoesNotContain(map.Id, _sink.Paused);
+        Assert.DoesNotContain(map.Id, _sink.Held);
         Assert.Contains(berth.Id, _sink.Paused);
         Assert.Equal(map.Name, music.State.Track);
     }

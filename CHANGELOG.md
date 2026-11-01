@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Ambient music now fades between folders instead of cutting. The change is quick for the maps and menus and for a switch into combat, and takes a few seconds between the longer beds. The old track is held at the end of the fade, so coming back continues it.
+
 Ambient music now continues where it stopped when you return to a folder within 30 minutes, so leaving the galaxy map and opening it again carries on the same track instead of starting a new one. Two situations that play from the same folder share one track, and each folder continues its own shuffle.
 
 Invented NPCs now state their sex on their first line, and d47 keeps it while they are in the system. Replies to you, and later exchanges that bring them back, say so, so a reply no longer contradicts the voice. A real comms NPC's reply uses the sex of their given name where one is recorded.

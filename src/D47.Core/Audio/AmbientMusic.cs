@@ -73,12 +73,14 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
                 return;
             }
 
-            audio.ShelveMusic(now);
+            var from = audio.MusicFolder;
+            var to = _ambience.Folder(library());
+            var faded = audio.ShelveMusic(now, from is null ? null : Crossfade.Between(from, to));
             _current = null;
 
             if (!_paused)
             {
-                Continue();
+                Continue(faded ? Crossfade.Between(from!, to) : null);
             }
         }
 
@@ -229,27 +231,27 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
     private const string NothingToPlay = "There is no music to play. Drop tracks into data\\audio\\music.";
 
     /// <summary>Continues the folder's shelved track, or starts its next one. False when nothing plays.</summary>
-    private bool Continue()
+    private bool Continue(TimeSpan? fadeIn = null)
     {
         if (audio.Mix.Music.Muted)
         {
             return false;
         }
 
-        if (audio.UnshelveMusic(_ambience.Folder(library())) is { } shelved)
+        if (audio.UnshelveMusic(_ambience.Folder(library()), fadeIn) is { } shelved)
         {
             _current = shelved;
             return true;
         }
 
-        return StartNext();
+        return StartNext(fadeIn: fadeIn);
     }
 
     /// <summary>
     /// Starts the next track unless muted, after <see cref="AudioArbiter.MusicGap"/> when it follows a
     /// finished one. False when there is nothing to play.
     /// </summary>
-    private bool StartNext(bool afterGap = false)
+    private bool StartNext(bool afterGap = false, TimeSpan? fadeIn = null)
     {
         if (audio.Mix.Music.Muted)
         {
@@ -263,7 +265,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
             return false;
         }
 
-        audio.PlayMusic(_current, _ambience.Playing, afterGap);
+        audio.PlayMusic(_current, _ambience.Playing, afterGap, fadeIn);
         return true;
     }
 

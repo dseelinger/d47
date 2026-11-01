@@ -363,9 +363,13 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     /// <summary>
     /// Streams one ambience track from a folder in the music slot, replacing whatever was live and any track
     /// shelved for that folder. With <paramref name="afterGap"/>, <see cref="MusicGap"/> of silence plays in
-    /// the slot first.
+    /// the slot first. With <paramref name="fadeIn"/>, the track fades in from silence over that time.
     /// </summary>
-    public void PlayMusic(MusicTrack track, string folder = Situations.General, bool afterGap = false)
+    public void PlayMusic(
+        MusicTrack track,
+        string folder = Situations.General,
+        bool afterGap = false,
+        TimeSpan? fadeIn = null)
     {
         AudioActivity activity;
 
@@ -393,6 +397,12 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             {
                 _musicAfterGap = null;
                 sink.Play(PlaybackRequest.Stream(id, track, GainFor(AudioChannel.Music)));
+
+                if (fadeIn is { } length)
+                {
+                    sink.Fade(id, 0, TimeSpan.Zero);
+                    sink.Fade(id, 1, length);
+                }
             }
 
             activity = Snapshot();
@@ -404,11 +414,13 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     /// <summary>
     /// Holds the live track, paused, under its folder to continue later; a gap is stopped instead. Drops
     /// tracks shelved longer than <see cref="ShelfLife"/>, then the longest shelved beyond
-    /// <see cref="MostShelved"/>.
+    /// <see cref="MostShelved"/>. With <paramref name="fadeOut"/>, the track fades out and is held at the
+    /// end of the fade instead of being paused. True when it did.
     /// </summary>
-    public void ShelveMusic(DateTimeOffset now)
+    public bool ShelveMusic(DateTimeOffset now, TimeSpan? fadeOut = null)
     {
         AudioActivity activity;
+        var faded = false;
 
         lock (_gate)
         {
@@ -416,7 +428,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
             if (_music is not { } playing)
             {
-                return;
+                return false;
             }
 
             if (_musicAfterGap is not null || _musicTrack is null || _musicFolder is null)
@@ -425,7 +437,12 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             }
             else
             {
-                if (!_musicHeld)
+                if (!_musicHeld && fadeOut is { } length)
+                {
+                    sink.Fade(playing, 0, length, holdAtEnd: true);
+                    faded = true;
+                }
+                else if (!_musicHeld)
                 {
                     sink.Pause(playing);
                 }
@@ -445,13 +462,14 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
 
         ActivityChanged?.Invoke(activity);
+        return faded;
     }
 
     /// <summary>
-    /// Continues the track shelved for a folder as the live track, replacing whatever was live. Null when
-    /// that folder has none.
+    /// Continues the track shelved for a folder as the live track, replacing whatever was live, fading it in
+    /// over <paramref name="fadeIn"/> from where its fade is. Null when that folder has none.
     /// </summary>
-    public MusicTrack? UnshelveMusic(string folder)
+    public MusicTrack? UnshelveMusic(string folder, TimeSpan? fadeIn = null)
     {
         AudioActivity activity;
         Shelved shelved;
@@ -479,6 +497,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             _musicFolder = shelved.Folder;
             sink.SetGain(shelved.Id, GainFor(AudioChannel.Music));
             sink.Resume(shelved.Id);
+            sink.Fade(shelved.Id, 1, fadeIn ?? TimeSpan.Zero);
             activity = Snapshot();
         }
 

@@ -314,7 +314,7 @@ seconds of silence separate a track that ends from the next one. A situation wit
 nothing in it is quiet, which is what every Commander gets until they drop something in. D47
 ships with no music of its own.
 
-Changing situation holds the old track where it is, and coming back to that folder within 30
+Changing situation fades the old track out and the new one in, quickly (under a second) when either is a map or a menu or the new one is combat, and over a few seconds between the others. The old track is held where it is, and coming back to that folder within 30
 minutes continues it from that point, so a run of short galaxy-map visits plays as one track. The
 hold is per folder, not per situation: two situations that both fall back to `general` share one
 track. Up to four tracks are held; a fifth drops the one held longest. Muting the category, saying

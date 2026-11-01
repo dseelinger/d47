@@ -57,6 +57,7 @@ public sealed class RecordingAudioSink : IAudioSink
     public void Resume(long playbackId)
     {
         Paused.Remove(playbackId);
+        Held.Remove(playbackId);
         _log.Add($"resume {playbackId}");
     }
 
@@ -68,9 +69,18 @@ public sealed class RecordingAudioSink : IAudioSink
 
     public List<(long Id, float To, TimeSpan Over, bool HoldAtEnd)> Fades { get; } = [];
 
+    /// <summary>Ids faded with a hold at the end and not since resumed.</summary>
+    public HashSet<long> Held { get; } = [];
+
     public void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false)
     {
         Fades.Add((playbackId, to, over, holdAtEnd));
+
+        if (holdAtEnd)
+        {
+            Held.Add(playbackId);
+        }
+
         _log.Add($"fade {playbackId} {to:0.##} {over.TotalSeconds:0.##}s{(holdAtEnd ? " hold" : string.Empty)}");
     }
 
