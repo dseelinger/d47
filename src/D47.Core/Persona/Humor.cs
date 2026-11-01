@@ -31,8 +31,7 @@ public static class Humor
 
     /// <summary>Added on a hit when the voice performs delivery notes.</summary>
     public const string Laughter =
-        "Where a line is funny, a delivery note can carry the laugh: [laughs], [chuckles], "
-        + "[stifles a laugh].";
+        "Where a line is funny, a delivery note can carry the laugh, for example [laughs] or [chuckles].";
 
     /// <summary>Holds for every level.</summary>
     private const string Limits =

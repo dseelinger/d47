@@ -6,16 +6,43 @@ namespace D47.Core.Tests.Conversation;
 public sealed class RecentDeliveryNotesTests
 {
     [Fact]
-    public void OnlyTheLastSixNotesAreKept()
+    public void OnlyTheLastTwelveDistinctWordsAreKept()
     {
         var delivery = new RecentDelivery();
 
-        delivery.Record("ship", "[a] one [b] two [c] three [d] four");
-        delivery.Record("ship", "[e] five [f] six [g] seven");
+        delivery.Record("ship", "[a1] x [b1] x [c1] x [d1] x [e1] x [f1] x [g1] x [h1] x");
+        delivery.Record("ship", "[i1] x [j1] x [k1] x [l1] x [m1] x [n1] x [o1] x");
 
         Assert.Equal(
-            "Delivery notes this speaker used recently: b, c, d, e, f, g. Choose a different one, or none.",
+            "Delivery words this speaker used recently: d1, e1, f1, g1, h1, i1, j1, k1, l1, m1, n1, o1. Use none of them in a delivery note this time.",
             delivery.Describe("ship"));
+    }
+
+    [Fact]
+    public void VariantsOfOneToneAreOneWord()
+    {
+        var delivery = new RecentDelivery();
+
+        delivery.Record("ship", "[dry, deadpan] Noted.");
+        delivery.Record("ship", "[dryly] Noted.");
+
+        Assert.Equal(
+            "Delivery words this speaker used recently: deadpan, dry. Use none of them in a delivery note this time.",
+            delivery.Describe("ship"));
+    }
+
+    [Fact]
+    public void FillerWordsAreNotRemembered()
+    {
+        var delivery = new RecentDelivery();
+
+        delivery.Record("ship", "[chuckles] Noted.");
+        delivery.Record("ship", "[almost approving, a very slight tone] Noted.");
+
+        Assert.Contains("chuckles", delivery.Describe("ship"));
+        Assert.Contains("approving, slight", delivery.Describe("ship"));
+        Assert.DoesNotContain("almost", delivery.Describe("ship"));
+        Assert.DoesNotContain("tone", delivery.Describe("ship"));
     }
 
     [Fact]
@@ -26,8 +53,8 @@ public sealed class RecentDeliveryNotesTests
         delivery.Record("ship", "[flatly] Noted.");
         delivery.Record("tower", "[curtly] Cleared.");
 
-        Assert.Contains("flatly", delivery.Describe("ship"));
-        Assert.DoesNotContain("curtly", delivery.Describe("ship"));
+        Assert.Contains("flat", delivery.Describe("ship"));
+        Assert.DoesNotContain("curt", delivery.Describe("ship"));
     }
 
     [Fact]
@@ -68,7 +95,7 @@ public sealed class RecentDeliveryNotesTests
         }
 
         Assert.Null(provider.Trailing[0]);
-        Assert.Contains("flatly", provider.Trailing[1]);
+        Assert.Contains("flat", provider.Trailing[1]);
     }
 
     [Fact]

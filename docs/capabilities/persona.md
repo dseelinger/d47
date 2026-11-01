@@ -482,7 +482,8 @@ carrier's captain and tower).
   roll hits. It does not apply to lines spoken as written.
 - **Laughter.** When a line gets humor and its voice performs delivery notes (ElevenLabs v4 Turbo
   or v3), the model is offered `[laughs]` and `[chuckles]` as well. Any other voice has them
-  stripped.
+  stripped. d47 tells the model which delivery words a speaker used recently and asks it not to
+  repeat them.
 - **Warnings never get humor**, at any level.
 - **COVAS ignores Core humor.** While the stock core is aboard, no line it speaks gets humor or
   delivery notes, whatever the level.

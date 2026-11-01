@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Delivery notes no longer repeat a tone by rewording it. d47 remembers the last twelve words a speaker used in delivery notes, so "[dry]", "[dryly]" and "[dry, deadpan]" count as the same word, and asks the model to use none of them next time.
+
 Passers-by chatter is sometimes about where you are: about one exchange in three, when the system's economy, the controlling faction's state or the station's economy is known, the speakers talk about that. The same goes for a hail while docked.
 
 Station search has a **Stronghold carrier** type tile, and `search_stations` takes it as a `station_type`. It lists the Stronghold Carriers of the Power you set, or of every Power when none is set, and must be searched on its own. Each carrier row names its Power in place of the controlling faction. A search that names a Power now keeps that Power's carriers instead of leaving them out.
