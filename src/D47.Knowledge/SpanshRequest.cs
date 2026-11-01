@@ -28,7 +28,7 @@ internal static class SpanshRequest
             WriteSort(writer, query.Sort);
 
             writer.WriteNumber("size", query.Size);
-            writer.WriteNumber("page", 0);
+            writer.WriteNumber("page", query.Page - 1);
 
             if (query.ReferenceSystem is not null)
             {
@@ -248,7 +248,7 @@ internal static class SpanshRequest
             WriteSort(writer, query.Sort);
 
             writer.WriteNumber("size", query.Size);
-            writer.WriteNumber("page", 0);
+            writer.WriteNumber("page", query.Page - 1);
 
             WriteReference(writer, query.ReferenceSystem, query.ReferencePosition);
 
@@ -346,7 +346,7 @@ internal static class SpanshRequest
             WriteSort(writer, query.Sort);
 
             writer.WriteNumber("size", query.Size);
-            writer.WriteNumber("page", 0);
+            writer.WriteNumber("page", query.Page - 1);
 
             WriteReference(writer, query.ReferenceSystem, query.ReferencePosition);
 

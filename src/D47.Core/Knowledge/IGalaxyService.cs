@@ -64,7 +64,11 @@ public sealed record FactionPresence(string Name, double? Influence)
 public sealed record GalaxySearchResult(
     string? Reference,
     int Total,
-    IReadOnlyList<SystemSummary> Systems);
+    IReadOnlyList<SystemSummary> Systems)
+{
+    /// <summary>Whether the service has rows past the ones this answer used.</summary>
+    public bool More { get; init; }
+}
 
 /// <summary>A body with reported biology.</summary>
 /// <param name="BodyId">The journal's <c>BodyID</c>.</param>

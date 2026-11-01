@@ -73,7 +73,11 @@ public sealed record BodySummary
             .FirstOrDefault();
 }
 
-public sealed record BodySearchResult(string? Reference, int Total, IReadOnlyList<BodySummary> Bodies);
+public sealed record BodySearchResult(string? Reference, int Total, IReadOnlyList<BodySummary> Bodies)
+{
+    /// <summary>Whether the service has rows past the ones this answer used.</summary>
+    public bool More { get; init; }
+}
 
 /// <summary>A body search as asked, before validation. A filter left null is not applied.</summary>
 public sealed record BodyRequest
@@ -130,6 +134,9 @@ public sealed record BodyRequest
     public double? MaxDistance { get; init; }
 
     public int Size { get; init; } = 5;
+
+    /// <summary>Which page of <see cref="Size"/> results, from 1.</summary>
+    public int Page { get; init; } = 1;
 }
 
 /// <summary>A validated body search.</summary>
@@ -217,6 +224,9 @@ public sealed record BodyQuery
     /// <summary>How many bodies the answer keeps.</summary>
     public int Limit { get; init; } = 5;
 
+    /// <summary>Which page of <see cref="Size"/> results, from 1. An order by material has only page 1.</summary>
+    public int Page { get; init; } = 1;
+
     /// <summary>How many of the nearest bodies an order by material chooses from.</summary>
     public const int RichestOf = 50;
 
@@ -237,6 +247,7 @@ public sealed record BodyQuery
         return result with
         {
             Bodies = [.. result.Bodies.OrderByDescending(body => body.Share(material) ?? 0).Take(Limit)],
+            More = false,
         };
     }
 
@@ -287,6 +298,15 @@ public sealed record BodyQuery
         if (orderByMaterial && matchedMaterial is null)
         {
             failure = "Say which surface material to order by — for example Polonium or Arsenic.";
+            return false;
+        }
+
+        var page = GalaxyQuery.PageOf(request.Page);
+
+        if (orderByMaterial && page > 1)
+        {
+            failure =
+                $"An order by material is one answer, chosen from the nearest {RichestOf} bodies, so it has no page {page}.";
             return false;
         }
 
@@ -351,6 +371,7 @@ public sealed record BodyQuery
             MaxDistance = Math.Clamp(request.MaxDistance is > 0 ? request.MaxDistance.Value : 50, 1, MaxDistanceCeiling),
             Size = orderByMaterial ? RichestOf : limit,
             Limit = limit,
+            Page = page,
         };
 
         return true;

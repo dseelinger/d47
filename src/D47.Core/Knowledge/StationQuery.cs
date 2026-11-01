@@ -166,6 +166,9 @@ public sealed record StationSearchResult(
 {
     /// <summary>Stronghold Carriers of other Powers dropped from the answer.</summary>
     public int LeftOut { get; init; }
+
+    /// <summary>Whether the service has rows past the ones this answer used.</summary>
+    public bool More { get; init; }
 }
 
 /// <summary>A module to be sold at the station, by catalogue name, with an optional size and rating.</summary>
@@ -227,6 +230,9 @@ public sealed record StationQuery
     public string? TraderType { get; init; }
 
     public int Size { get; init; } = 5;
+
+    /// <summary>Which page of <see cref="Size"/> results, from 1.</summary>
+    public int Page { get; init; } = 1;
 
     /// <summary>Oldest report to match, in hours; null sends no bound.</summary>
     public int? MaxReportAgeHours { get; init; }

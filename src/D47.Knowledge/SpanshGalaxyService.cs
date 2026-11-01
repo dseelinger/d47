@@ -50,7 +50,9 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             cancellationToken).ConfigureAwait(false);
 
         // Only null where a rejection was asked to mean "missing", which this call does not.
-        return SpanshResponse.ReadSearch(document!);
+        var result = SpanshResponse.ReadSearch(document!);
+
+        return result with { More = GalaxyQuery.HasMore(query.Page, query.Size, result.Systems.Count, result.Total) };
     }
 
     public async Task<StationSearchResult> FindStationsAsync(
@@ -64,7 +66,9 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             "the station search",
             cancellationToken).ConfigureAwait(false);
 
-        return SpanshResponse.ReadStations(document!);
+        var result = SpanshResponse.ReadStations(document!);
+
+        return result with { More = GalaxyQuery.HasMore(query.Page, query.Size, result.Stations.Count, result.Total) };
     }
 
     public async Task<IReadOnlyList<OutfitterStation>> FindOutfittersAsync(
@@ -127,7 +131,9 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             "the body search",
             cancellationToken).ConfigureAwait(false);
 
-        return SpanshResponse.ReadBodies(document!);
+        var result = SpanshResponse.ReadBodies(document!);
+
+        return result with { More = GalaxyQuery.HasMore(query.Page, query.Size, result.Bodies.Count, result.Total) };
     }
 
     /// <summary>The candidate scan.</summary>

@@ -162,6 +162,7 @@ public static class GalaxyCapability
                     .. SortParameters(GalaxySearchKind.Systems),
                     ReportAgeParameter,
                     LimitParameter,
+                    PageParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchAsync(
@@ -212,6 +213,7 @@ public static class GalaxyCapability
                     .. SortParameters(GalaxySearchKind.Stations),
                     StationReportAgeParameter,
                     LimitParameter,
+                    PageParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchStationsAsync(
@@ -504,6 +506,7 @@ public static class GalaxyCapability
                         "max_distance",
                         "How far to look, in light years. Default 50, at most 1,000."),
                     LimitParameter,
+                    PageParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindBodyAsync(
@@ -799,6 +802,11 @@ public static class GalaxyCapability
 
     private static readonly ToolParameter LimitParameter =
         ToolParameter.Integer("limit", "How many to return, 1 to 100. Default 25.");
+    private static readonly ToolParameter PageParameter =
+        ToolParameter.Integer(
+            "page",
+            "Which page of results, from 1; each page holds limit results. Ask for page 2 and on only to continue "
+                + "the search just answered.");
     private static readonly ToolParameter NearParameter =
         ToolParameter.Text("near", "Search out from this system. Defaults to theirs.");
     private static readonly ToolParameter MaxDistanceParameter =
@@ -1092,7 +1100,7 @@ public static class GalaxyCapability
             return ToolResult.Error(failure);
         }
 
-        query = query with { MaxReportAgeHours = reportAge };
+        query = query with { MaxReportAgeHours = reportAge, Page = PageAsked(arguments) };
 
         try
         {
@@ -1103,14 +1111,13 @@ public static class GalaxyCapability
 
             var posting = new GalaxySearchPosting(
                 GalaxySearchKind.Systems,
-                new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
+                SearchArguments(arguments),
                 result.Reference,
                 result,
                 said,
-                now?.Invoke() ?? DateTimeOffset.UtcNow) { Notes = notes.TrimEnd() };
+                now?.Invoke() ?? DateTimeOffset.UtcNow) { Notes = notes.TrimEnd(), Pages = query.Page, More = result.More };
 
-            searches?.Post(posting);
-            Remember(remember, "search_systems", posting);
+            Answered(searches, remember, "search_systems", posting);
 
             return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Systems) };
         }
@@ -1226,7 +1233,7 @@ public static class GalaxyCapability
             return ToolResult.Error(failure);
         }
 
-        query = query with { MaxReportAgeHours = reportAge };
+        query = query with { MaxReportAgeHours = reportAge, Page = PageAsked(arguments) };
 
         try
         {
@@ -1240,14 +1247,13 @@ public static class GalaxyCapability
 
             var posting = new GalaxySearchPosting(
                 GalaxySearchKind.Stations,
-                new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
+                SearchArguments(arguments),
                 result.Reference,
                 result,
                 said,
-                now?.Invoke() ?? DateTimeOffset.UtcNow);
+                now?.Invoke() ?? DateTimeOffset.UtcNow) { Pages = query.Page, More = result.More };
 
-            searches?.Post(posting);
-            Remember(remember, "search_stations", posting);
+            Answered(searches, remember, "search_stations", posting);
 
             return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Stations) };
         }
@@ -1532,6 +1538,32 @@ public static class GalaxyCapability
     private static void Remember(Action<SearchHistoryEntry>? remember, string tool, GalaxySearchPosting posting) =>
         remember?.Invoke(SearchHistoryEntry.Of(
             tool, posting.Arguments, posting.Reference, null, posting.Result, posting.AskedAt));
+
+    /// <summary>Posts page 1 and remembers it; a later page only extends the answer on the board.</summary>
+    private static void Answered(
+        GalaxySearchBoard? searches, Action<SearchHistoryEntry>? remember, string tool, GalaxySearchPosting posting)
+    {
+        if (posting.Pages > 1)
+        {
+            searches?.Extend(posting);
+            return;
+        }
+
+        searches?.Post(posting);
+        Remember(remember, tool, posting);
+    }
+
+    /// <summary>The page asked for, from 1.</summary>
+    private static int PageAsked(ToolArguments arguments) =>
+        GalaxyQuery.PageOf(arguments.TryGetInt32("page", out var page) ? page : 1);
+
+    /// <summary>A posting's arguments: the search as asked, without the page, so it is saved and asked again whole.</summary>
+    private static Dictionary<string, string> SearchArguments(ToolArguments arguments)
+    {
+        var search = new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal);
+        search.Remove("page");
+        return search;
+    }
 
     private const double DefaultSignalDistance = 100;
 
@@ -2735,6 +2767,7 @@ public static class GalaxyCapability
             Filters = filters,
             MaxDistance = arguments.Double("max_distance"),
             Size = arguments.TryGetInt32("limit", out var limit) ? limit : DefaultLimit,
+            Page = PageAsked(arguments),
         };
 
         if (!BodyQuery.TryParse(request, out var query, out var failure))
@@ -2750,14 +2783,13 @@ public static class GalaxyCapability
 
             var posting = new GalaxySearchPosting(
                 GalaxySearchKind.Bodies,
-                new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
+                SearchArguments(arguments),
                 result.Reference,
                 result,
                 said,
-                now?.Invoke() ?? DateTimeOffset.UtcNow);
+                now?.Invoke() ?? DateTimeOffset.UtcNow) { Pages = query.Page, More = result.More };
 
-            searches?.Post(posting);
-            Remember(remember, "find_body", posting);
+            Answered(searches, remember, "find_body", posting);
 
             return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Bodies) };
         }
@@ -3106,6 +3138,11 @@ public static class GalaxyCapability
     {
         if (result.Bodies.Count == 0)
         {
+            if (query.Page > 1)
+            {
+                return NothingOnPage(query.Page, result.More);
+            }
+
             return $"Nothing within {query.MaxDistance:N0} light years matches that"
                 + (query.CodexEntry is { } none ? $", with {none} recorded." : ".");
         }
@@ -3119,6 +3156,10 @@ public static class GalaxyCapability
             report.Append(
                 $"{GalaxyQuery.SayTotal(result.Total)} bod{(result.Total == 1 ? "y" : "ies")} matched; here are the richest "
                 + $"{result.Bodies.Count} in {query.Material} among the nearest {among}");
+        }
+        else if (query.Page > 1)
+        {
+            report.Append(PageLead("Bodies", query.Page, query.Limit, result.Bodies.Count, result.Total));
         }
         else
         {
@@ -3196,7 +3237,7 @@ public static class GalaxyCapability
             }
         }
 
-        return report.ToString().TrimEnd();
+        return report.ToString().TrimEnd() + LastPage(query.Page, result.More);
     }
 
     /// <summary>The body's value for each new filter the query asked about.</summary>
@@ -3275,6 +3316,25 @@ public static class GalaxyCapability
             ? $"here are {count}, ordered {words.ToLowerInvariant()}"
             : $"here are the nearest {count}";
 
+    /// <summary>"Systems 26 to 50 of 1234", the lead of a later page.</summary>
+    private static string PageLead(string kind, int page, int size, int count, int total)
+    {
+        var first = ((page - 1) * size) + 1;
+
+        return $"{kind} {first.ToString(CultureInfo.InvariantCulture)} to "
+               + $"{(first + count - 1).ToString(CultureInfo.InvariantCulture)} of {GalaxyQuery.SayTotal(total)}";
+    }
+
+    /// <summary>The answer to a later page that kept no rows.</summary>
+    private static string NothingOnPage(int page, bool more) =>
+        more
+            ? $"Page {page} added nothing; page {page + 1} continues the search."
+            : "Nothing more matched that search.";
+
+    /// <summary>The sentence closing a later page that is the last.</summary>
+    private static string LastPage(int page, bool more) =>
+        page > 1 && !more ? " That is the last of them." : string.Empty;
+
     /// <summary>One sentence naming the Stronghold Carriers left out of another Power's side; empty when none were.</summary>
     private static string LeftOutSaid(StationSearchResult result) =>
         result.LeftOut > 0
@@ -3337,14 +3397,18 @@ public static class GalaxyCapability
     {
         if (result.Stations.Count == 0)
         {
-            return $"No station within {query.MaxDistance:N0} light years matched that search.";
+            return query.Page > 1
+                ? NothingOnPage(query.Page, result.More)
+                : $"No station within {query.MaxDistance:N0} light years matched that search.";
         }
 
         var askedFaction = query.Criteria.Any(criterion => criterion.Filter.Kind == GalaxyFilterKind.Name);
         var askedState = query.Criteria.Any(criterion => criterion.Filter.Name == "station_state");
         var report = new StringBuilder();
 
-        report.Append(result.Total == result.Stations.Count
+        report.Append(query.Page > 1
+            ? PageLead("Stations", query.Page, query.Size, result.Stations.Count, result.Total)
+            : result.Total == result.Stations.Count
             ? $"{GalaxyQuery.SayTotal(result.Total)} station{(result.Total == 1 ? "" : "s")} matched"
             : $"{GalaxyQuery.SayTotal(result.Total)} stations matched; {Ranked(query.Sort, result.Stations.Count)}");
 
@@ -3406,7 +3470,7 @@ public static class GalaxyCapability
             }
         }
 
-        return report.ToString().TrimEnd();
+        return report.ToString().TrimEnd() + LastPage(query.Page, result.More);
     }
 
     private static string Describe(StationQuery query)
@@ -3442,12 +3506,14 @@ public static class GalaxyCapability
 
         if (result.Systems.Count == 0)
         {
-            return "Nothing matched that search.";
+            return query.Page > 1 ? NothingOnPage(query.Page, result.More) : "Nothing matched that search.";
         }
 
         var report = new StringBuilder();
 
-        report.Append(result.Total == result.Systems.Count
+        report.Append(query.Page > 1
+            ? PageLead("Systems", query.Page, query.Size, result.Systems.Count, result.Total)
+            : result.Total == result.Systems.Count
             ? $"{GalaxyQuery.SayTotal(result.Total)} system{(result.Total == 1 ? "" : "s")} matched"
             : $"{GalaxyQuery.SayTotal(result.Total)} systems matched; {Ranked(query.Sort, result.Systems.Count)}");
 
@@ -3570,7 +3636,7 @@ public static class GalaxyCapability
             }
         }
 
-        return report.ToString().TrimEnd();
+        return report.ToString().TrimEnd() + LastPage(query.Page, result.More);
     }
 
     /// <summary>True when nothing was asked, or <paramref name="value"/> is one of the values asked for.</summary>

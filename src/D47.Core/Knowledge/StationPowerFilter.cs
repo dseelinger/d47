@@ -11,19 +11,28 @@ public sealed class StationPowerFilter(IGalaxyService inner, Func<PowerplayPledg
     {
         var power = pledge()?.Power;
 
+        // Page 1 asks for three times Size so dropped carriers do not leave it short; a later page asks for
+        // exactly that service page at Size.
+        var later = query.Page > 1;
+
         var asked = await inner
-            .FindStationsAsync(query with { Size = Math.Min(GalaxyQuery.MaxSize, query.Size * OverAsk) }, cancellationToken)
+            .FindStationsAsync(
+                later ? query : query with { Size = Math.Min(GalaxyQuery.MaxSize, query.Size * OverAsk) },
+                cancellationToken)
             .ConfigureAwait(false);
 
         var kept = new List<StationSummary>();
         var leftOut = 0;
+        var read = 0;
 
         foreach (var station in asked.Stations)
         {
-            if (kept.Count >= query.Size)
+            if (!later && kept.Count >= query.Size)
             {
                 break;
             }
+
+            read++;
 
             if (station.IsOtherPowersStrongholdCarrier(power))
             {
@@ -42,6 +51,7 @@ public sealed class StationPowerFilter(IGalaxyService inner, Func<PowerplayPledg
             Total = Math.Max(kept.Count, asked.Total - dropped),
             Stations = kept,
             LeftOut = leftOut,
+            More = asked.More || read < asked.Stations.Count,
         };
     }
 

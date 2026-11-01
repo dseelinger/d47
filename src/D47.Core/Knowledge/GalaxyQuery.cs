@@ -445,6 +445,16 @@ public sealed record GalaxyQuery
     public static string SayTotal(int total) =>
         total >= CountCeiling ? $"{CountCeiling:N0} or more" : total.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
+    /// <summary>
+    /// Whether a service page has rows past it: a page shorter than its size is the last, and a total at the
+    /// ceiling is a lower bound.
+    /// </summary>
+    public static bool HasMore(int page, int size, int returned, int total) =>
+        returned >= size && (total >= CountCeiling || (long)page * size < total);
+
+    /// <summary>A page number as asked: anything below 1 is 1.</summary>
+    public static int PageOf(int page) => Math.Max(1, page);
+
     private GalaxyQuery()
     {
     }
@@ -455,6 +465,9 @@ public sealed record GalaxyQuery
     public IReadOnlyList<GalaxyCriterion> Criteria { get; init; } = [];
 
     public int Size { get; init; } = 5;
+
+    /// <summary>Which page of <see cref="Size"/> results, from 1.</summary>
+    public int Page { get; init; } = 1;
 
     /// <summary>What the results are sorted by; null is nearest first.</summary>
     public SearchSort? Sort { get; init; }
