@@ -21,7 +21,8 @@ MINOR = ["C minor", "D minor", "E minor", "F minor", "G minor", "A minor", "B mi
 KEYS = MINOR + ["C major", "D major", "E major", "F major", "G major", "A major", "Bb major", "Eb major"]
 
 # Combat folders: minor keys only, and a heavier mix than PRODUCTION.
-COMBAT = {"combat-dogfight", "combat-large", "combat-unknown", "combat-srv", "interdiction", "cqc", "capital-ship"}
+COMBAT = {"combat-dogfight", "combat-large", "combat-unknown", "combat-srv", "interdiction", "cqc", "capital-ship",
+          "combat-ground", "titan-encounter", "combat-thargoid-ground", "combat-hunters"}
 COMBAT_PRODUCTION = "dark minor harmony, punchy low end, powerful cinematic mix"
 
 # Section shapes. {lead} and {second} are filled with the track's lead and second instruments.
@@ -167,6 +168,51 @@ BRIEFS = {
     "general": (20, (150, 240), (65, 100), "cinematic space soundtrack",
         ["calm", "spacious", "wistful", "hopeful"],
         [("piano melody", "warm pads", "soft strings"), ("synth melody", "strings", "light pulse, cello")], GENTLE),
+    "on-foot-station": (40, (150, 240), (85, 115), "busy space station concourse soundtrack",
+        ["relaxed", "urban", "bustling and easygoing", "casual", "city-bright"],
+        [("electric piano melody", "soft synth pads", "walking bass, brushed drums"),
+         ("vibraphone melody", "muted guitar", "jazzy bass, light percussion"),
+         ("mellow lead synth", "warm keys", "lofi beat, round bass"),
+         ("marimba melody", "strings", "light percussion, soft bass")], GENTLE),
+    "settlement": (40, (150, 240), (60, 90), "remote planetary outpost soundtrack",
+        ["wary", "isolated", "watchful", "windswept", "quietly tense"],
+        [("sparse piano melody", "wind textures", "low drones, distant machinery"),
+         ("muted guitar motif", "dark pads", "slow metallic percussion, sub bass"),
+         ("solo cello melody", "industrial textures", "low strings, soft pulse"),
+         ("plucked synth motif", "ambient pads", "rhythmic machine hum, deep bass")], GENTLE),
+    "combat-ground": (30, (120, 200), (115, 145), "close-quarters infantry battle soundtrack",
+        ["gritty", "urgent", "ruthless", "claustrophobic and violent"],
+        [("low brass melody", "driving staccato strings", "pounding taiko, distorted synth bass"),
+         ("aggressive staccato string motif", "brass stabs", "heavy cinematic drums, deep sub bass"),
+         ("heavy distorted guitar riff", "low brass", "hard-hitting drums, orchestral hits")], DRIVING),
+    "titan-encounter": (15, (120, 210), (50, 80), "colossal alien presence film score",
+        ["dread", "overwhelming", "monstrous", "ominous"],
+        [("slow low brass melody", "dissonant string clusters", "deep taiko, sub bass"),
+         ("menacing horn theme", "metallic textures", "war drums, rumbling synth bass"),
+         ("staccato string motif", "alien synth", "heavy percussion, deep drones")], DRIVING),
+    "titan-graveyard": (5, (150, 240), (45, 70), "desolate alien wreckage soundtrack",
+        ["desolate", "mournful", "aftermath", "hollow"],
+        [("solo cello melody", "wind textures", "low drones, distant bells"),
+         ("sparse piano melody", "dark pads", "slow strings, deep resonance")], GENTLE),
+    "thargoid-factory": (10, (120, 210), (60, 90), "alien industrial soundtrack",
+        ["uneasy", "mechanical and alien", "uncanny", "restless"],
+        [("eerie synth melody", "bowed metal", "rhythmic machine pulse, sub drones"),
+         ("dissonant string motif", "alien textures", "metallic percussion, low pulse"),
+         ("glassy synth melody", "dark pads", "clanking industrial rhythm, deep bass")], GENTLE),
+    "combat-thargoid-ground": (10, (120, 200), (110, 140), "alien ground battle soundtrack",
+        ["dread", "alien hostility", "panic", "hostile"],
+        [("dissonant string motif", "alien synth", "pounding drums, sub bass"),
+         ("menacing brass motif", "metallic textures", "heavy percussion, taiko"),
+         ("aggressive staccato string motif", "low brass", "war drums, gritty synth bass")], DRIVING),
+    "combat-hunters": (10, (120, 200), (130, 160), "relentless pursuit battle soundtrack",
+        ["relentless", "hunted", "desperate", "high intensity"],
+        [("low brass melody", "driving staccato strings", "pounding taiko, war drums"),
+         ("aggressive staccato string motif", "brass stabs", "heavy cinematic drums, deep sub bass"),
+         ("dark horn theme", "string ostinato", "thunderous percussion, gritty synth bass")], DRIVING),
+    "damaged-starport": (5, (150, 240), (50, 75), "wrecked space station soundtrack",
+        ["sombre", "emergency", "shaken", "bleak"],
+        [("sparse piano melody", "dark pads", "low strings, distant alarm tones"),
+         ("solo cello melody", "industrial textures", "slow pulse, deep drones")], GENTLE),
 }
 
 
