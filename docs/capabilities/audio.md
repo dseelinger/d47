@@ -298,6 +298,12 @@ track, and D47 maps that track to a folder:
 | `powerplay` | `GalacticPowers` |  |
 | `cqc-menu` | `CQCMenu` |  |
 | `cqc` | `CQC` |  |
+| `titan-encounter` | `Titan_Encounter` |  |
+| `titan-graveyard` | `Titan_Graveyard` |  |
+| `thargoid-factory` | `TGFactory` |  |
+| `combat-thargoid-ground` | `Thargoid_GroundCombat` |  |
+| `combat-hunters` | `Combat_Hunters` |  |
+| `damaged-starport` | `Damaged_Starport` |  |
 
 When Elite's track has a folder with files in it, that folder plays. Otherwise the folder comes
 from what `Status.json` states — the five in the last column — and then `general`. An empty

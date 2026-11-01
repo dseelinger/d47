@@ -58,6 +58,12 @@ public class AmbienceFollowsElitesOwnMusicTrackTests : IDisposable
     [InlineData("Interdiction", "interdiction")]
     [InlineData("Lifeform_FogCloud", "fog-cloud")]
     [InlineData("CQC", "cqc")]
+    [InlineData("Titan_Encounter", "titan-encounter")]
+    [InlineData("Titan_Graveyard", "titan-graveyard")]
+    [InlineData("TGFactory", "thargoid-factory")]
+    [InlineData("Thargoid_GroundCombat", "combat-thargoid-ground")]
+    [InlineData("Combat_Hunters", "combat-hunters")]
+    [InlineData("Damaged_Starport", "damaged-starport")]
     [InlineData("Combat_Unknown", "combat-unknown")]
     [InlineData("Unknown_Encounter", "unknown-encounter")]
     [InlineData("CapitalShip", "capital-ship")]
@@ -70,7 +76,7 @@ public class AmbienceFollowsElitesOwnMusicTrackTests : IDisposable
     [Fact]
     public void TheTableHasNoRowsTheTestDoesNotName()
     {
-        Assert.Equal(29, Situations.ByTrack.Count);
+        Assert.Equal(35,Situations.ByTrack.Count);
     }
 
     [Fact]

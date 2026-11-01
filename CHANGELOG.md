@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Six more Elite music tracks now have folders of their own under `data\audio\music`: `titan-encounter`, `titan-graveyard`, `thargoid-factory`, `combat-thargoid-ground`, `combat-hunters` and `damaged-starport`. Before, those tracks played the normal-space or supercruise folder. A folder with no files still falls back to the situation's own music.
+
 Ambient music now fades out after ten minutes with nothing happening, such as sitting docked, and fades back in from where it stopped when something does. Station chatter, crew wages and Elite's own music changes do not count as something happening. A turn with D47, a change of situation or a media key does, and the volume flyout shows the music paused in the meantime.
 
 The arrival and interdiction music folders now play one track and hand back to the situation's own music, instead of looping. A change of Elite's track while the cue plays no longer cuts it, and a cue longer than a minute fades out.
