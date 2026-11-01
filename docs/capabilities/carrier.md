@@ -191,8 +191,8 @@ public int? FuelLevel { get; init; }
 The location, fuel and cargo carry the date they were read, because a carrier keeps jumping, trading and burning
 fuel while you are away from the screen that reports it. The balance is not dated: the report estimates
 what it is now from the weekly upkeep, and says "about" and the adjustment when it has. A booked jump — destination, body and
-departure time — comes from `CarrierJumpRequest` instead, and is cleared the moment the jump fires
-or is cancelled.
+departure time — comes from `CarrierJumpRequest` instead, and is cleared when the jump fires, when the
+carrier is next seen at its destination, or when the jump is cancelled.
 
 If no `CarrierStats` has ever been seen, the report says so rather than saying you have no
 carrier — those are different answers, and only one of them is true.

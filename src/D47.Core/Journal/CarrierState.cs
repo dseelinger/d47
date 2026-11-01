@@ -319,13 +319,13 @@ public sealed record CarrierState
 
         // The callsign read here has never once arrived — 0 of 1,134 across the corpus — and is left in place
         // because it costs nothing and would start working the day Frontier adds the field.
-        "CarrierLocation" => this with
+        "CarrierLocation" => (this with
         {
             CallSign = journalEvent.String("Callsign") ?? CallSign,
             CarrierId = journalEvent.Long("CarrierID") ?? CarrierId,
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
             SeenAt = Stamped(journalEvent, journalEvent.String("StarSystem")),
-        },
+        }).ArrivedIfBooked(journalEvent.String("StarSystem")),
 
         // The body as well as the system (#230).
         "CarrierJumpRequest" => this with
@@ -452,6 +452,12 @@ public sealed record CarrierState
         system is { Length: > 0 } ? journalEvent.Timestamp : SeenAt;
 
     /// <summary>Elite writes the departure time as an ISO 8601 string.</summary>
+    /// <summary>This state with the booked jump cleared when <paramref name="system"/> is its destination.</summary>
+    private CarrierState ArrivedIfBooked(string? system) =>
+        system is not null && string.Equals(system, DestinationSystem, StringComparison.OrdinalIgnoreCase)
+            ? this with { DestinationSystem = null, DepartureTime = null, DestinationBody = null }
+            : this;
+
     private static DateTimeOffset? ParseDeparture(string? value) =>
         DateTimeOffset.TryParse(
             value,

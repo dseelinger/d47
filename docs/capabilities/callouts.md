@@ -1345,6 +1345,20 @@ again re-arms the reminder. Restarting d47 in the middle of a session keeps the 
 recorded. Nothing is said while d47 is catching up on a journal it did not watch being written. It is
 separate from the welcome-back line, so either can be switched off without the other.
 
+#### Carrier jumps {#carrier-jumps}
+
+The carrier captain speaks when you plot your own carrier's jump, and again when the carrier arrives.
+
+```text
+Jump plotted for LTT 7786, Commander Fixture. We will be under way on your order.
+We've arrived at LTT 7786, Commander Fixture.
+```
+
+The arrival line is said when the carrier is seen at its booked destination, whether or not you are
+aboard, and only within ten minutes of the booked departure. A carrier first seen there at a later
+login clears the booking without a line. One jump gets one arrival line. A squadron carrier is not
+announced, and nothing is said while d47 is catching up on a journal it did not watch being written.
+
 #### Carrier fuel {#carrier-fuel}
 
 When your own carrier's tritium is less than two full-range jumps at its current load, the carrier

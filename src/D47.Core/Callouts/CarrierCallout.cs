@@ -20,6 +20,15 @@ public sealed class CarrierCallout : ICallout
 
     public const string JumpKey = "carrier.jump";
 
+    /// <summary>The Commander's own carrier has reached the system it was booked to.</summary>
+    public const string ArrivalKey = "carrier.arrival";
+
+    private static readonly TimeSpan ArrivalWindow = TimeSpan.FromMinutes(10);
+
+    private string? _bookedSystem;
+
+    private DateTimeOffset? _bookedDeparture;
+
     /// <summary>
     /// The Commander has dropped out of supercruise at their own carrier, and the tower tells the
     /// captain before the captain says anything to anyone (asked for 2026-08-21).
@@ -126,6 +135,17 @@ public sealed class CarrierCallout : ICallout
         "Ready to jump for {0}, {1}. Awaiting your word.",
     ];
 
+    /// <summary>Captain: the carrier has arrived. Names the system and the owner.</summary>
+    private static readonly string[] ArrivalLines =
+    [
+        "We've arrived at {0}, {1}.",
+        "Jump complete. We're in {0}, {1}.",
+        "{0} reached, {1}. The carrier is on station.",
+        "We're in {0} now, {1}.",
+        "Arrival confirmed at {0}, {1}.",
+        "The carrier has arrived in {0}, {1}.",
+    ];
+
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         if (context.State is not { Carrier.Owned: true } state)
@@ -186,12 +206,49 @@ public sealed class CarrierCallout : ICallout
 
                 // The captain's business rather than the tower's: this is about the carrier itself moving,
                 // not about the Commander arriving.
-                case "CarrierJumpRequest" when !context.IsPriming:
+                case "CarrierJumpRequest":
                     if (journalEvent.String("SystemName") is { Length: > 0 } destination)
                     {
+                        _bookedSystem = destination;
+                        _bookedDeparture = DepartureOf(journalEvent);
+
+                        if (!context.IsPriming)
+                        {
+                            yield return Captain(
+                                JumpKey,
+                                string.Format(Pick(JumpKey, JumpLines), destination, Owner(state)));
+                        }
+                    }
+
+                    break;
+
+                case "CarrierJumpCancelled":
+                    _bookedSystem = null;
+                    _bookedDeparture = null;
+                    break;
+
+                case "CarrierJump" or "CarrierLocation" when IsOwnCarrierEvent(journalEvent, state.Carrier):
+                    var arrivedAt = journalEvent.String("StarSystem");
+                    var jumped = journalEvent.Kind == "CarrierJump";
+
+                    if (!jumped
+                        && (_bookedSystem is null
+                            || !string.Equals(arrivedAt, _bookedSystem, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        break;
+                    }
+
+                    var onTime = _bookedDeparture is not { } departure
+                                 || journalEvent.Timestamp - departure <= ArrivalWindow;
+
+                    _bookedSystem = null;
+                    _bookedDeparture = null;
+
+                    if (!context.IsPriming && onTime && arrivedAt is { Length: > 0 })
+                    {
                         yield return Captain(
-                            JumpKey,
-                            string.Format(Pick(JumpKey, JumpLines), destination, Owner(state)));
+                            ArrivalKey,
+                            string.Format(Pick(ArrivalKey, ArrivalLines), arrivedAt, Owner(state)));
                     }
 
                     break;
@@ -213,6 +270,28 @@ public sealed class CarrierCallout : ICallout
         var at = said.LastIndexOf(' ');
 
         return at < 0 ? said : said[(at + 1)..];
+    }
+
+    private static DateTimeOffset? DepartureOf(JournalEvent journalEvent) =>
+        DateTimeOffset.TryParse(
+            journalEvent.String("DepartureTime"),
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.AssumeUniversal,
+            out var parsed)
+            ? parsed
+            : null;
+
+    /// <summary>A fleet carrier event naming this carrier's id, or naming none.</summary>
+    private static bool IsOwnCarrierEvent(JournalEvent journalEvent, CarrierState carrier)
+    {
+        if (string.Equals(journalEvent.String("CarrierType"), "SquadronCarrier", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var id = journalEvent.Long("CarrierID") ?? journalEvent.Long("MarketID");
+
+        return id is null || id == carrier.CarrierId;
     }
 
     private static bool IsOwnCarrier(string? stationName, CarrierState carrier) =>
