@@ -29,7 +29,7 @@ public sealed record OutfittingItem
     /// <summary>Module rating, A to I.</summary>
     public string? Rating { get; init; }
 
-    /// <summary>"5A Frame Shift Drive (SCO)", "Fuel Scoop" or "Python MkII".</summary>
+    /// <summary>"5A Frame Shift Drive (SCO)", "Fuel Scoop" or "Python Mk II".</summary>
     public string Display =>
         IsShip || (Class is null && Rating is null)
             ? Name
@@ -43,7 +43,7 @@ public sealed record OutfittingItem
     /// <summary>Specification-table module names that map to no catalogue name and carry a size or rating.</summary>
     public static IReadOnlyList<string> Unmapped => Loaded.Value.Unmapped;
 
-    /// <summary>Reads "5A Frame Shift Drive (SCO)", "fuel scoop" or "Python MkII"; otherwise says why not.</summary>
+    /// <summary>Reads "5A Frame Shift Drive (SCO)", "fuel scoop" or "Python Mk II"; otherwise says why not.</summary>
     public static bool TryParse(string? text, out OutfittingItem item, out string failure)
     {
         item = null!;

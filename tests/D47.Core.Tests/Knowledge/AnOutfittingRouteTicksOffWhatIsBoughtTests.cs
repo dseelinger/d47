@@ -16,7 +16,7 @@ public class AnOutfittingRouteTicksOffWhatIsBoughtTests
         var route = new OutfittingRoute(
             [
                 new OutfittingStop("Eravate", "Ackerman Market", 12.4, ["4A Thrusters", "4A Thrusters"]),
-                new OutfittingStop("Sol", "Daedalus", 40, ["Python MkII"]),
+                new OutfittingStop("Sol", "Daedalus", 40, ["Python Mk II"]),
             ],
             []);
 
@@ -72,7 +72,7 @@ public class AnOutfittingRouteTicksOffWhatIsBoughtTests
 
         book.Apply([Buy("ShipyardBuy", "ShipType", "python_nx", TimeSpan.FromMinutes(5))], "F1");
 
-        Assert.Equal(["Python MkII"], Bought(book));
+        Assert.Equal(["Python Mk II"], Bought(book));
     }
 
     [Fact]
@@ -86,6 +86,6 @@ public class AnOutfittingRouteTicksOffWhatIsBoughtTests
         var flags = OutfittingBought.Flags(route, Bought(book));
 
         Assert.Equal([true, false], flags[0]);
-        Assert.Equal(["4A Thrusters", "Python MkII"], OutfittingBought.Remaining(route, Bought(book)));
+        Assert.Equal(["4A Thrusters", "Python Mk II"], OutfittingBought.Remaining(route, Bought(book)));
     }
 }

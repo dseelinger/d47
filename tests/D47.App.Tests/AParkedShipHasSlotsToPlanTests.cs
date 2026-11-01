@@ -36,7 +36,7 @@ public class AParkedShipHasSlotsToPlanTests
                      """{"timestamp":"2026-08-19T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
 
                      // ShipType and ShipType_Localised both, exactly as Elite writes them.
-                     """{"timestamp":"2026-08-19T09:00:00Z","event":"StoredShips","StarSystem":"Laksak","StationName":"BNH-T2F","ShipsHere":[],"ShipsRemote":[{"ShipID":12,"ShipType":"cobramkv","ShipType_Localised":"Cobra MkV","Name":"Reaper","Value":15450304,"StarSystem":"Laksak"}]}""",
+                     """{"timestamp":"2026-08-19T09:00:00Z","event":"StoredShips","StarSystem":"Laksak","StationName":"BNH-T2F","ShipsHere":[],"ShipsRemote":[{"ShipID":12,"ShipType":"cobramkv","ShipType_Localised":"Cobra Mk V","Name":"Reaper","Value":15450304,"StarSystem":"Laksak"}]}""",
                  })
         {
             Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
@@ -100,7 +100,7 @@ public class AParkedShipHasSlotsToPlanTests
         Assert.NotEmpty(EliteSpecifications.Slots("cobramkv"));
         Assert.Equal(
             EliteSpecifications.Slots("cobramkv").Count,
-            EliteSpecifications.Slots("Cobra MkV").Count);
+            EliteSpecifications.Slots("Cobra Mk V").Count);
     }
 
     /// <summary>And a hull that is not a hull is still empty rather than something.</summary>

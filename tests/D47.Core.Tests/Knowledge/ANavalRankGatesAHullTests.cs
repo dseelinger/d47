@@ -45,7 +45,7 @@ public class ANavalRankGatesAHullTests
     [Fact]
     public void ACobraMkIVIsUnobtainableOutsideEarlyAdoption()
     {
-        var cobra = AcquisitionGuide.For("Cobra MkIV");
+        var cobra = AcquisitionGuide.For("Cobra Mk IV");
 
         Assert.NotNull(cobra);
         Assert.Equal([AcquisitionMethod.Unobtainable], cobra.Methods);

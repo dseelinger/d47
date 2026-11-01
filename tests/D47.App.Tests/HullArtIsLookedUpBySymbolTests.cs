@@ -72,7 +72,7 @@ public sealed class HullArtIsLookedUpBySymbolTests : IDisposable
 
         Assert.NotNull(ShipArt.For("python_nx"));
         Assert.NotNull(ShipArt.For("Python Mk II"));
-        Assert.NotNull(ShipArt.For("Python MkII"));
+        Assert.NotNull(ShipArt.For("Python Mk II"));
         Assert.NotNull(ShipArt.For("Type-8 Transporter"));
         Assert.NotNull(ShipArt.For("Panther Clipper Mk II"));
         Assert.NotNull(ShipArt.For("Type-11 Prospector"));

@@ -235,7 +235,7 @@ public static class GalaxyCapability
                     ToolParameter.Text(
                         "items",
                         "Comma-separated: modules by name with an optional size and rating, and at most one ship, "
-                            + "such as \"5A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\".",
+                            + "such as \"5A Frame Shift Drive (SCO), 6A Fuel Scoop, Python Mk II\".",
                         required: true),
                     NearParameter,
                     MaxDistanceParameter,
@@ -392,7 +392,7 @@ public static class GalaxyCapability
                         "A module to be sold there, by name — \"Frame Shift Drive\"."),
                     ToolParameter.Text(
                         "ship",
-                        "A ship to be sold there, by name — \"Krait MkII\"."),
+                        "A ship to be sold there, by name — \"Krait Mk II\"."),
                     ModuleClassParameter,
                     ModuleRatingParameter,
                     NearParameter,
@@ -520,7 +520,7 @@ public static class GalaxyCapability
             {
                 Name = "how_to_get",
                 Exercise =
-                    "Ask D47 how to get a Krait MkII. The reply gives the method first, then the nearest "
+                    "Ask D47 how to get a Krait Mk II. The reply gives the method first, then the nearest "
                     + "place to buy it when buying is the method.",
                 Description =
                     "How to get anything — a ship, module, suit, hand weapon, modification, material, "

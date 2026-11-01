@@ -162,7 +162,7 @@ public sealed class MarkDoneFiresTheObjectiveFromItsPageTests
         Dispatcher.UIThread.RunJobs();
         vr.Board.Render();
 
-        var row = new[] { "Plan a Cobra MkIII", "Mark done", "Change objective", "Never ask this" }
+        var row = new[] { "Plan a Cobra Mk III", "Mark done", "Change objective", "Never ask this" }
             .Select(label => vr.Board.View.GetVisualDescendants().OfType<Avalonia.Controls.Button>().Single(button => button.Content as string == label))
             .ToList();
 

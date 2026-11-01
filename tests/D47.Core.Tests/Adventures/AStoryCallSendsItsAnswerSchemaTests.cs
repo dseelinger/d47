@@ -63,8 +63,8 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
         var ship = BeatProperties(Root(beats.Schema)).GetProperty("ship");
 
         Assert.Contains("board", Kinds(beats.Schema));
-        Assert.Equal(["Cobra MkIII", null], ship.GetProperty("enum").EnumerateArray().Select(name => name.GetString()));
-        Assert.Contains("one of Cobra MkIII;", beats.Text);
+        Assert.Equal(["Cobra Mk III", null], ship.GetProperty("enum").EnumerateArray().Select(name => name.GetString()));
+        Assert.Contains("one of Cobra Mk III;", beats.Text);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
         var hulls = BeatProperties(Root(beats.Schema)).GetProperty("ship").GetProperty("enum").EnumerateArray().Select(name => name.GetString()).ToList();
 
         Assert.Contains("board", Kinds(beats.Schema));
-        Assert.Contains("Cobra MkIII", hulls);
+        Assert.Contains("Cobra Mk III", hulls);
         Assert.Contains("Anaconda", hulls);
         Assert.Null(hulls[^1]);
     }
@@ -147,7 +147,7 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
 
         Assert.Contains(
             "Tess (\"tess\") comes aboard at the catalyst beat. The Commander's ship has no seat for Tess: place the boarding only on or after an objective "
-            + "that boards a ship with 2 seats or more, such as Adder, Cobra MkIII, Cobra MkIV, Cobra MkV, Keelback.",
+            + "that boards a ship with 2 seats or more, such as Adder, Cobra Mk III, Cobra Mk IV, Cobra Mk V, Keelback.",
             text,
             StringComparison.Ordinal);
     }

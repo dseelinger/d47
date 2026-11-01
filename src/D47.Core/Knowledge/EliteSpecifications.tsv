@@ -13,7 +13,7 @@
 # Ships: 49. Modules: 1221, of which bulkheads 247. Known but unmeasured: 0.
 # Slots: 1290 across 49 hulls. Modules with no type: 11.
 # coriolis-data tree 0db9234b5b9c. EDSY eddb.js as of the same day.
-# Built: 2026-10-29.
+# Built: 2026-11-01.
 [ships]
 symbol	name	manufacturer	pad	speed	boost	armour	shields	hardness	hull_mass	fuel	crew	masslock	cost	hardpoints	internals	requirement
 adder	Adder	Zorgon Peterson	small	220	320	90	60	35	35	0.36	2	7	40833	2,1,1	3,3,2,2,1,1,1	
@@ -22,9 +22,9 @@ anacondamkii	Anaconda Mk II		large	190	250	745	450	65	940		4			4,3,3,3,3,1,1	8,7
 asp	Asp Explorer	Lakon	medium	250	340	210	140	52	280	0.63	2	11	6145793	2,2,1,1,1,1	6,5,3,3,3,2,2,1	
 asp_scout	Asp Scout	Lakon	medium	270	360	180	120	52	140	0.47	2	8	3819823	2,2,1,1	5,4,3,3,2,2,1	
 belugaliner	Beluga Liner	Saud Kruger	large	200	280	280	280	60	950	0.81	4	18	79694761	2,2,2,2,2	6,6,6,6,5,5,4,3,3,3,3,1	
-cobramkiii	Cobra MkIII	Faulcon DeLacy	small	280	400	120	80	35	180	0.49	2	8	208372	2,2,1,1	4,4,4,2,2,2,1,1	
-cobramkiv	Cobra MkIV	Faulcon DeLacy	small	200	300	120	120	35	210	0.51	2	8	623374	2,2,1,1,1	4,4,4,4,3,3,2,2,1,1	early-adoption
-cobramkv	Cobra MkV	Faulcon DeLacy	small	290	410	180	160	40	150	0.49	3	8	1477085	2,2,2,1,1	5,4,4,4,3,3,3,2,1	
+cobramkiii	Cobra Mk III	Faulcon DeLacy	small	280	400	120	80	35	180	0.49	2	8	208372	2,2,1,1	4,4,4,2,2,2,1,1	
+cobramkiv	Cobra Mk IV	Faulcon DeLacy	small	200	300	120	120	35	210	0.51	2	8	623374	2,2,1,1,1	4,4,4,4,3,3,2,2,1,1	early-adoption
+cobramkv	Cobra Mk V	Faulcon DeLacy	small	290	410	180	160	40	150	0.49	3	8	1477085	2,2,2,1,1	5,4,4,4,3,3,3,2,1	
 corsair	Corsair		medium	280	355	270	235	65	265		2		76884160	3,3,3,2,2,2	6,6,6,5,5,5,4,3,2,1	
 cutter	Imperial Cutter	Gutamaya	large	200	320	400	600	70	1100	1.16	4	27	200493413	4,3,3,2,2,2,2	8,8,6,6,6,5,5,4,3,1	empire:12
 diamondback	Diamondback Scout	Lakon	small	280	380	120	120	40	170	0.49	1	8	463926	2,2,1,1	3,3,3,2,1,1	
@@ -43,15 +43,15 @@ ferdelance	Fer-de-Lance	Zorgon Peterson	medium	260	350	225	300	70	250	0.67	2	12	
 hauler	Hauler	Zorgon Peterson	small	200	300	100	50	20	14	0.25	1	6	30308	1	3,3,2,1,1,1	
 independant_trader	Keelback	Lakon	medium	200	300	270	135	45	180	0.39	2	8	2946463	2,2,1,1	5,5,4,3,2,2,1	
 krait_light	Krait Phantom	Faulcon DeLacy	medium	250	350	180	200	55	270	0.63	2	14	35741519	3,3,2,2	6,5,5,5,3,3,3,2,1	
-krait_mkii	Krait MkII	Faulcon DeLacy	medium	240	330	220	220	55	320	0.63	3	16	44160710	3,3,3,2,2	6,6,5,5,4,3,3,2,1	
+krait_mkii	Krait Mk II	Faulcon DeLacy	medium	240	330	220	220	55	320	0.63	3	16	44160710	3,3,3,2,2	6,6,5,5,4,3,3,2,1	
 lakonminer	Type-11 Prospector	Lakon	medium	270	365	350	275	58	320	0.77	3	16	66346710	3,2,2,2,1,1,1,1	6,6,6,5,5,4,3,2,1,1	
 mamba	Mamba	Zorgon Peterson	medium	310	380	230	270	70	250	0.5	2	12	55442918	4,3,3,1,1	5,4,3,2,2,1	
 mandalay	Mandalay	Zorgon Peterson	medium	280	350	230	220	55	190	0.52	2	11	16527192	2,2,2,2,1,1	6,5,4,4,3,3,2,1,1,1	
 mediumtransport01	Lynx Highliner		medium	285	350	350	200	55	260		2		67992080	3,2,2,2,2	6,5,4,4,3,2,1	
 orca	Orca	Saud Kruger	large	300	380	220	220	55	290	0.79	2	16	47800723	3,2,2	6,5,5,5,4,3,2,2,1	
-panthermkii	Panther Clipper MkII	Zorgon Peterson	large	180	250	620	350	70	1200	1.16	4	27	286905678	3,3,2,2,2,2,1,1,1,1	8,7,6,6,6,5,5,4,2,1	
+panthermkii	Panther Clipper Mk II	Zorgon Peterson	large	180	250	620	350	70	1200	1.16	4	27	286905678	3,3,2,2,2,2,1,1,1,1	8,7,6,6,6,5,5,4,2,1	
 python	Python	Faulcon DeLacy	medium	230	300	260	260	65	350	0.83	2	17	55324684	3,3,3,2,2	6,6,6,5,5,4,3,3,2,1	
-python_nx	Python MkII	Faulcon DeLacy	medium	256	345	280	335	70	450	0.83	2	17	64743724	3,3,3,3,2,2	6,4,3,2,1,1	
+python_nx	Python Mk II	Faulcon DeLacy	medium	256	345	280	335	70	450	0.83	2	17	64743724	3,3,3,3,2,2	6,4,3,2,1,1	
 sidewinder	Sidewinder	Faulcon DeLacy	small	220	320	60	55	20	25	0.3	1	6	4588	1,1	2,2,1,1,1,1	
 smallcombat01_nx	Kestrel Mk II		small	270	360	70	225	55	190		1		13776380	3,3,3,1,1	5,4,3,2,2,2,1	
 type6	Type-6 Transporter	Lakon	medium	220	350	180	125	35	155	0.39	1	8	866622	1,1	6,5,5,4,4,3,2,2,1	
@@ -62,8 +62,8 @@ type9_military	Type-10 Defender	Lakon	large	180	220	580	320	75	1200	0.77	4	26	12
 typex	Alliance Chieftain	Lakon	medium	230	330	280	200	65	400	0.77	2	13	18612476	3,3,2,1,1,1	6,5,4,2,2,1	
 typex_2	Alliance Crusader	Lakon	medium	180	300	300	200	65	500	0.77	4	13	22096565	3,2,2,1,1,1	6,5,3,3,2,2,1	
 typex_3	Alliance Challenger	Lakon	medium	200	310	300	220	65	450	0.77	2	13	29569804	3,2,2,2,1,1,1	6,6,3,3,2,2,1	
-viper	Viper MkIII	Faulcon DeLacy	small	320	400	70	105	35	50	0.41	1	7	96733	2,2,1,1	3,3,2,1,1,1	
-viper_mkiv	Viper MkIV	Faulcon DeLacy	small	280	360	150	160	35	190	0.46	1	7	312797	2,2,1,1	4,4,3,2,2,1,1,1	
+viper	Viper Mk III	Faulcon DeLacy	small	320	400	70	105	35	50	0.41	1	7	96733	2,2,1,1	3,3,2,1,1,1	
+viper_mkiv	Viper Mk IV	Faulcon DeLacy	small	280	360	150	160	35	190	0.46	1	7	312797	2,2,1,1	4,4,3,2,2,1,1,1	
 vulture	Vulture	Core Dynamics	small	210	340	160	240	55	230	0.57	2	10	4692214	3,3	5,4,2,1,1,1,1	
 [modules]
 symbol	name	class	rating	mount	mass	power	integrity	cost	optimal_mass	max_fuel	fuel_power	fuel_multiplier	hull_boost	kinetic_res	thermal_res	explosive_res	caustic_res	mtype	hulls	exact_size	figures	about	limit	entitlement	power_capacity	jump_boost
@@ -98,21 +98,21 @@ belugaliner_armour_grade2	Beluga Liner Reinforced Alloy				83			33813105					1.5
 belugaliner_armour_grade3	Beluga Liner Military Grade Composite				165			76079487					2.5	-0.2	0	-0.4	0	cbh	belugaliner							
 belugaliner_armour_mirrored	Beluga Liner Mirrored Surface Composite				165			179801189					2.5	-0.75	0.5	-0.5	0	cbh	belugaliner							
 belugaliner_armour_reactive	Beluga Liner Reactive Surface Composite				165			199243724					2.5	0.25	-0.4	0.2	0	cbh	belugaliner							
-cobramkiii_armour_grade1	Cobra MkIII Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	cobramkiii							
-cobramkiii_armour_grade2	Cobra MkIII Reinforced Alloy				14			139887					1.52	-0.2	0	-0.4	0	cbh	cobramkiii							
-cobramkiii_armour_grade3	Cobra MkIII Military Grade Composite				27			341746					2.5	-0.2	0	-0.4	0	cbh	cobramkiii							
-cobramkiii_armour_mirrored	Cobra MkIII Mirrored Surface Composite				27			734407					2.5	-0.75	0.5	-0.5	0	cbh	cobramkiii							
-cobramkiii_armour_reactive	Cobra MkIII Reactive Surface Composite				27			824285					2.5	0.25	-0.4	0.2	0	cbh	cobramkiii							
-cobramkiv_armour_grade1	Cobra MkIV Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	cobramkiv							
-cobramkiv_armour_grade2	Cobra MkIV Reinforced Alloy				14			305887					1.52	-0.2	0	-0.4	0	cbh	cobramkiv							
-cobramkiv_armour_grade3	Cobra MkIV Military Grade Composite				27			688246					2.5	-0.2	0	-0.4	0	cbh	cobramkiv							
-cobramkiv_armour_mirrored	Cobra MkIV Mirrored Surface Composite				27			1605907					2.5	-0.75	0.5	-0.5	0	cbh	cobramkiv							
-cobramkiv_armour_reactive	Cobra MkIV Reactive Surface Composite				27			1802440					2.5	0.25	-0.4	0.2	0	cbh	cobramkiv							
-cobramkv_armour_grade1	Cobra MkV Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	cobramkv					ELITE_V_COBRA_MKV		
-cobramkv_armour_grade2	Cobra MkV Reinforced Alloy				14			795784					1.52	-0.2	0	-0.4	0	cbh	cobramkv					ELITE_V_COBRA_MKV		
-cobramkv_armour_grade3	Cobra MkV Military Grade Composite				27			1790514					2.5	-0.2	0	-0.4	0	cbh	cobramkv					ELITE_V_COBRA_MKV		
-cobramkv_armour_mirrored	Cobra MkV Mirrored Surface Composite				27			4177866					2.5	-0.75	0.5	-0.5	0	cbh	cobramkv					ELITE_V_COBRA_MKV		
-cobramkv_armour_reactive	Cobra MkV Reactive Surface Composite				27			4689157					2.5	0.25	-0.4	0.2	0	cbh	cobramkv					ELITE_V_COBRA_MKV		
+cobramkiii_armour_grade1	Cobra Mk III Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	cobramkiii							
+cobramkiii_armour_grade2	Cobra Mk III Reinforced Alloy				14			139887					1.52	-0.2	0	-0.4	0	cbh	cobramkiii							
+cobramkiii_armour_grade3	Cobra Mk III Military Grade Composite				27			341746					2.5	-0.2	0	-0.4	0	cbh	cobramkiii							
+cobramkiii_armour_mirrored	Cobra Mk III Mirrored Surface Composite				27			734407					2.5	-0.75	0.5	-0.5	0	cbh	cobramkiii							
+cobramkiii_armour_reactive	Cobra Mk III Reactive Surface Composite				27			824285					2.5	0.25	-0.4	0.2	0	cbh	cobramkiii							
+cobramkiv_armour_grade1	Cobra Mk IV Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	cobramkiv							
+cobramkiv_armour_grade2	Cobra Mk IV Reinforced Alloy				14			305887					1.52	-0.2	0	-0.4	0	cbh	cobramkiv							
+cobramkiv_armour_grade3	Cobra Mk IV Military Grade Composite				27			688246					2.5	-0.2	0	-0.4	0	cbh	cobramkiv							
+cobramkiv_armour_mirrored	Cobra Mk IV Mirrored Surface Composite				27			1605907					2.5	-0.75	0.5	-0.5	0	cbh	cobramkiv							
+cobramkiv_armour_reactive	Cobra Mk IV Reactive Surface Composite				27			1802440					2.5	0.25	-0.4	0.2	0	cbh	cobramkiv							
+cobramkv_armour_grade1	Cobra Mk V Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	cobramkv					ELITE_V_COBRA_MKV		
+cobramkv_armour_grade2	Cobra Mk V Reinforced Alloy				14			795784					1.52	-0.2	0	-0.4	0	cbh	cobramkv					ELITE_V_COBRA_MKV		
+cobramkv_armour_grade3	Cobra Mk V Military Grade Composite				27			1790514					2.5	-0.2	0	-0.4	0	cbh	cobramkv					ELITE_V_COBRA_MKV		
+cobramkv_armour_mirrored	Cobra Mk V Mirrored Surface Composite				27			4177866					2.5	-0.75	0.5	-0.5	0	cbh	cobramkv					ELITE_V_COBRA_MKV		
+cobramkv_armour_reactive	Cobra Mk V Reactive Surface Composite				27			4689157					2.5	0.25	-0.4	0.2	0	cbh	cobramkv					ELITE_V_COBRA_MKV		
 corsair_armour_grade1	Corsair Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	corsair					ELITE_V_CORSAIR		
 corsair_armour_grade2	Corsair Reinforced Alloy				32			31721900					1.52	-0.2	0	-0.4	0	cbh	corsair					ELITE_V_CORSAIR		
 corsair_armour_grade3	Corsair Military Grade Composite				63			71374270					2.5	-0.2	0	-0.4	0	cbh	corsair					ELITE_V_CORSAIR		
@@ -1177,11 +1177,11 @@ krait_light_armour_grade2	Krait Phantom Reinforced Alloy				26			14988900					1.
 krait_light_armour_grade3	Krait Phantom Military Grade Composite				53			33725026					2.5	-0.2	0	-0.4	0	cbh	krait_light					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
 krait_light_armour_mirrored	Krait Phantom Mirrored Surface Composite				53			79703480					2.5	-0.75	0.5	-0.5	0	cbh	krait_light					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
 krait_light_armour_reactive	Krait Phantom Reactive Surface Composite				53			88322097					2.5	0.25	-0.4	0.2	0	cbh	krait_light					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-krait_mkii_armour_grade1	Krait MkII Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	krait_mkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-krait_mkii_armour_grade2	Krait MkII Reinforced Alloy				36			18325682					1.52	-0.2	0	-0.4	0	cbh	krait_mkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-krait_mkii_armour_grade3	Krait MkII Military Grade Composite				67			41232784					2.5	-0.2	0	-0.4	0	cbh	krait_mkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-krait_mkii_armour_mirrored	Krait MkII Mirrored Surface Composite				67			97446814					2.5	-0.75	0.5	-0.5	0	cbh	krait_mkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-krait_mkii_armour_reactive	Krait MkII Reactive Surface Composite				67			88322097					2.5	0.25	-0.4	0.2	0	cbh	krait_mkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+krait_mkii_armour_grade1	Krait Mk II Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	krait_mkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+krait_mkii_armour_grade2	Krait Mk II Reinforced Alloy				36			18325682					1.52	-0.2	0	-0.4	0	cbh	krait_mkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+krait_mkii_armour_grade3	Krait Mk II Military Grade Composite				67			41232784					2.5	-0.2	0	-0.4	0	cbh	krait_mkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+krait_mkii_armour_mirrored	Krait Mk II Mirrored Surface Composite				67			97446814					2.5	-0.75	0.5	-0.5	0	cbh	krait_mkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+krait_mkii_armour_reactive	Krait Mk II Reactive Surface Composite				67			88322097					2.5	0.25	-0.4	0.2	0	cbh	krait_mkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
 lakonminer_armour_grade1	Type-11 Prospector Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	lakonminer					ELITE_V_LAKON_MINER		
 lakonminer_armour_grade2	Type-11 Prospector Reinforced Alloy				32			27144740					1.52	-0.2	0	-0.4	0	cbh	lakonminer					ELITE_V_LAKON_MINER		
 lakonminer_armour_grade3	Type-11 Prospector Military Grade Composite				63			61075670					2.5	-0.2	0	-0.4	0	cbh	lakonminer					ELITE_V_LAKON_MINER		
@@ -1208,21 +1208,21 @@ orca_armour_grade2	Orca Reinforced Alloy				21			19415954					1.52	-0.2	0	-0.4	0
 orca_armour_grade3	Orca Military Grade Composite				87			43685898					2.5	-0.2	0	-0.4	0	cbh	orca							
 orca_armour_mirrored	Orca Mirrored Surface Composite				87			103244339					2.5	-0.75	0.5	-0.5	0	cbh	orca							
 orca_armour_reactive	Orca Reactive Surface Composite				87			114408513					2.5	0.25	-0.4	0.2	0	cbh	orca							
-panthermkii_armour_grade1	Panther Clipper MkII Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	panthermkii					ELITE_V_PANTHER_MKII		
-panthermkii_armour_grade2	Panther Clipper MkII Reinforced Alloy				75			120839434					1.52	-0.2	0	-0.4	0	cbh	panthermkii					ELITE_V_PANTHER_MKII		
-panthermkii_armour_grade3	Panther Clipper MkII Military Grade Composite				150			271213728					2.5	-0.2	0	-0.4	0	cbh	panthermkii					ELITE_V_PANTHER_MKII		
-panthermkii_armour_mirrored	Panther Clipper MkII Mirrored Surface Composite				150			632832030					2.5	-0.75	0.5	-0.5	0	cbh	panthermkii					ELITE_V_PANTHER_MKII		
-panthermkii_armour_reactive	Panther Clipper MkII Reactive Surface Composite				150			710278615					2.5	0.25	-0.4	0.2	0	cbh	panthermkii					ELITE_V_PANTHER_MKII		
+panthermkii_armour_grade1	Panther Clipper Mk II Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	panthermkii					ELITE_V_PANTHER_MKII		
+panthermkii_armour_grade2	Panther Clipper Mk II Reinforced Alloy				75			120839434					1.52	-0.2	0	-0.4	0	cbh	panthermkii					ELITE_V_PANTHER_MKII		
+panthermkii_armour_grade3	Panther Clipper Mk II Military Grade Composite				150			271213728					2.5	-0.2	0	-0.4	0	cbh	panthermkii					ELITE_V_PANTHER_MKII		
+panthermkii_armour_mirrored	Panther Clipper Mk II Mirrored Surface Composite				150			632832030					2.5	-0.75	0.5	-0.5	0	cbh	panthermkii					ELITE_V_PANTHER_MKII		
+panthermkii_armour_reactive	Panther Clipper Mk II Reactive Surface Composite				150			710278615					2.5	0.25	-0.4	0.2	0	cbh	panthermkii					ELITE_V_PANTHER_MKII		
 python_armour_grade1	Python Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	python							
 python_armour_grade2	Python Reinforced Alloy				26			22791271					1.52	-0.2	0	-0.4	0	cbh	python							
 python_armour_grade3	Python Military Grade Composite				53			51280361					2.5	-0.2	0	-0.4	0	cbh	python							
 python_armour_mirrored	Python Mirrored Surface Composite				53			121192586					2.5	-0.75	0.5	-0.5	0	cbh	python							
 python_armour_reactive	Python Reactive Surface Composite				53			134297567					2.5	0.25	-0.4	0.2	0	cbh	python							
-python_nx_armour_grade1	Python MkII Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	python_nx					ELITE_V_PYTHON_NX		
-python_nx_armour_grade2	Python MkII Reinforced Alloy				26			23702103					1.52	-0.2	0	-0.4	0	cbh	python_nx					ELITE_V_PYTHON_NX		
-python_nx_armour_grade3	Python MkII Military Grade Composite				53			53329732					2.5	-0.2	0	-0.4	0	cbh	python_nx					ELITE_V_PYTHON_NX		
-python_nx_armour_mirrored	Python MkII Mirrored Surface Composite				53			126035933					2.5	-0.75	0.5	-0.5	0	cbh	python_nx					ELITE_V_PYTHON_NX		
-python_nx_armour_reactive	Python MkII Reactive Surface Composite				53			139664643					2.5	0.25	-0.4	0.2	0	cbh	python_nx					ELITE_V_PYTHON_NX		
+python_nx_armour_grade1	Python Mk II Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	python_nx					ELITE_V_PYTHON_NX		
+python_nx_armour_grade2	Python Mk II Reinforced Alloy				26			23702103					1.52	-0.2	0	-0.4	0	cbh	python_nx					ELITE_V_PYTHON_NX		
+python_nx_armour_grade3	Python Mk II Military Grade Composite				53			53329732					2.5	-0.2	0	-0.4	0	cbh	python_nx					ELITE_V_PYTHON_NX		
+python_nx_armour_mirrored	Python Mk II Mirrored Surface Composite				53			126035933					2.5	-0.75	0.5	-0.5	0	cbh	python_nx					ELITE_V_PYTHON_NX		
+python_nx_armour_reactive	Python Mk II Reactive Surface Composite				53			139664643					2.5	0.25	-0.4	0.2	0	cbh	python_nx					ELITE_V_PYTHON_NX		
 sidewinder_armour_grade1	Sidewinder Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	sidewinder							
 sidewinder_armour_grade2	Sidewinder Reinforced Alloy				2			25600					1.52	-0.2	0	-0.4	0	cbh	sidewinder							
 sidewinder_armour_grade3	Sidewinder Military Grade Composite				4			80320					2.5	-0.2	0	-0.4	0	cbh	sidewinder							
@@ -1273,16 +1273,16 @@ typex_armour_grade2	Alliance Chieftain Reinforced Alloy				40			7752900					1.52
 typex_armour_grade3	Alliance Chieftain Military Grade Composite				78			17444026					2.5	-0.2	0	-0.4	0	cbh	typex					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
 typex_armour_mirrored	Alliance Chieftain Mirrored Surface Composite				78			41226050					2.5	-0.75	0.5	-0.5	0	cbh	typex					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
 typex_armour_reactive	Alliance Chieftain Reactive Surface Composite				78			45683967					2.5	0.25	-0.4	0.2	0	cbh	typex					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-viper_armour_grade1	Viper MkIII Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	viper							
-viper_armour_grade2	Viper MkIII Reinforced Alloy				5			57172					1.52	-0.2	0	-0.4	0	cbh	viper							
-viper_armour_grade3	Viper MkIII Military Grade Composite				9			128637					2.5	-0.2	0	-0.4	0	cbh	viper							
-viper_armour_mirrored	Viper MkIII Mirrored Surface Composite				9			304014					2.5	-0.75	0.5	-0.5	0	cbh	viper							
-viper_armour_reactive	Viper MkIII Reactive Surface Composite				9			336888					2.5	0.25	-0.4	0.2	0	cbh	viper							
-viper_mkiv_armour_grade1	Viper MkIV Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	viper_mkiv							
-viper_mkiv_armour_grade2	Viper MkIV Reinforced Alloy				5			175172					1.52	-0.2	0	-0.4	0	cbh	viper_mkiv							
-viper_mkiv_armour_grade3	Viper MkIV Military Grade Composite				9			394137					2.5	-0.2	0	-0.4	0	cbh	viper_mkiv							
-viper_mkiv_armour_mirrored	Viper MkIV Mirrored Surface Composite				9			931479					2.5	-0.75	0.5	-0.5	0	cbh	viper_mkiv							
-viper_mkiv_armour_reactive	Viper MkIV Reactive Surface Composite				9			1032203					2.5	0.25	-0.4	0.2	0	cbh	viper_mkiv							
+viper_armour_grade1	Viper Mk III Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	viper							
+viper_armour_grade2	Viper Mk III Reinforced Alloy				5			57172					1.52	-0.2	0	-0.4	0	cbh	viper							
+viper_armour_grade3	Viper Mk III Military Grade Composite				9			128637					2.5	-0.2	0	-0.4	0	cbh	viper							
+viper_armour_mirrored	Viper Mk III Mirrored Surface Composite				9			304014					2.5	-0.75	0.5	-0.5	0	cbh	viper							
+viper_armour_reactive	Viper Mk III Reactive Surface Composite				9			336888					2.5	0.25	-0.4	0.2	0	cbh	viper							
+viper_mkiv_armour_grade1	Viper Mk IV Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	viper_mkiv							
+viper_mkiv_armour_grade2	Viper Mk IV Reinforced Alloy				5			175172					1.52	-0.2	0	-0.4	0	cbh	viper_mkiv							
+viper_mkiv_armour_grade3	Viper Mk IV Military Grade Composite				9			394137					2.5	-0.2	0	-0.4	0	cbh	viper_mkiv							
+viper_mkiv_armour_mirrored	Viper Mk IV Mirrored Surface Composite				9			931479					2.5	-0.75	0.5	-0.5	0	cbh	viper_mkiv							
+viper_mkiv_armour_reactive	Viper Mk IV Reactive Surface Composite				9			1032203					2.5	0.25	-0.4	0.2	0	cbh	viper_mkiv							
 vulture_armour_grade1	Vulture Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	vulture							
 vulture_armour_grade2	Vulture Reinforced Alloy				17			1970246					1.52	-0.2	0	-0.4	0	cbh	vulture							
 vulture_armour_grade3	Vulture Military Grade Composite				35			4433053					2.5	-0.2	0	-0.4	0	cbh	vulture							

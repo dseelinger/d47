@@ -22,7 +22,7 @@ public class SpecificationTests
     {
         // Both arrive: get_ship reports the symbol off the Loadout, and a Commander says the name.
         var bySymbol = EliteSpecifications.Ship("krait_mkii");
-        var byName = EliteSpecifications.Ship("Krait MkII");
+        var byName = EliteSpecifications.Ship("Krait Mk II");
 
         Assert.NotNull(bySymbol);
         Assert.Equal(bySymbol, byName);
@@ -400,7 +400,7 @@ public class SpecificationTests
     {
         // A measured hull keeps the id list's name, which is the naming authority — this must not become a
         // second answer to a question already answered.
-        Assert.Equal("Krait MkII", EliteSpecifications.HullName("krait_mkii"));
+        Assert.Equal("Krait Mk II", EliteSpecifications.HullName("krait_mkii"));
 
         // And nothing is invented for a symbol no armour and no row knows.
         Assert.Null(EliteSpecifications.HullName("smallcombat99_zz"));

@@ -23,7 +23,7 @@ public class AnOutfittingRouteVisitsFewStationsTests
             new StationSummary { Name = name, SystemName = $"{name} system", MarketId = name.GetHashCode(), Distance = distance, Position = at },
             [.. sells.Select(Item)]);
 
-    private static readonly string[] Wanted = ["6A Fuel Scoop", "5A Frame Shift Drive", "Python MkII"];
+    private static readonly string[] Wanted = ["6A Fuel Scoop", "5A Frame Shift Drive", "Python Mk II"];
 
     [Fact]
     public void OneStationThatSellsEverythingIsTheWholeRoute()
@@ -32,7 +32,7 @@ public class AnOutfittingRouteVisitsFewStationsTests
             [.. Wanted.Select(Item)],
             [
                 Station("Near", 5, null, "6A Fuel Scoop"),
-                Station("All", 20, null, "6A Fuel Scoop", "5A Frame Shift Drive", "Python MkII"),
+                Station("All", 20, null, "6A Fuel Scoop", "5A Frame Shift Drive", "Python Mk II"),
             ],
             "Sol");
 
@@ -48,7 +48,7 @@ public class AnOutfittingRouteVisitsFewStationsTests
         var route = OutfittingRoutePlanner.Plan(
             [.. Wanted.Select(Item)],
             [
-                Station("Far", 40, new StarPosition(0, 0, 40), "Python MkII"),
+                Station("Far", 40, new StarPosition(0, 0, 40), "Python Mk II"),
                 Station("Middle", 20, new StarPosition(0, 0, 20), "5A Frame Shift Drive"),
                 Station("Close", 10, new StarPosition(0, 0, 10), "6A Fuel Scoop"),
             ],
@@ -77,7 +77,7 @@ public class AnOutfittingRouteVisitsFewStationsTests
     {
         var route = OutfittingRoutePlanner.Plan(
             [.. Wanted.Select(Item)],
-            [Station("Some", 5, null, "6A Fuel Scoop", "Python MkII")],
+            [Station("Some", 5, null, "6A Fuel Scoop", "Python Mk II")],
             "Sol");
 
         Assert.Equal(["Some"], route.Stops.Select(stop => stop.Station));

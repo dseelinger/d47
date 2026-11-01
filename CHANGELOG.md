@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Hulls are spelled the way Elite spells them, with a space before the Mark numeral: "Cobra Mk V", "Krait Mk II", "Python Mk II", "Panther Clipper Mk II" and "Viper Mk III" in the hull table, armour names, tool descriptions and Ships page. Either spelling still finds the hull. The outfitting search keeps the run-together form in its ship list because the station search filters on it.
+
 Ships are named from the hull table everywhere: the recap says "in a Cobra MkV" rather than "in a Cobramkv", an Anaconda Mk II takes "an", and the memory book, Captain's Log entries and the Crew page's "Posted to" column use the same name. Voices that take text, ElevenLabs among them, now say "Mk V" as "Mark five", as the local voice already did.
 
 Delivery notes no longer repeat a tone by rewording it. d47 remembers the last twelve words a speaker used in delivery notes, so "[dry]", "[dryly]" and "[dry, deadpan]" count as the same word, and asks the model to use none of them next time.

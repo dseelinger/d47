@@ -46,20 +46,20 @@ public sealed class AStoryShipObjectiveHasAButtonTests
         ReadChapter(surface);
         Save(surface.Window, "story-ship-objective-plan-chapter.png");
 
-        var plan = Assert.IsAssignableFrom<Button>(Ship(surface.Panel, "Plan a Cobra MkIII"));
+        var plan = Assert.IsAssignableFrom<Button>(Ship(surface.Panel, "Plan a Cobra Mk III"));
         Assert.True(plan.Bounds.Height >= 44);
         Assert.Empty(ships.Plans.Store.Builds);
 
         Press(plan);
 
         var pick = surface.Panel.GetVisualDescendants().OfType<ListBox>().Single(box => AutomationProperties.GetName(box) == "Ship");
-        Assert.Equal("Cobra MkIII", pick.SelectedItem);
+        Assert.Equal("Cobra Mk III", pick.SelectedItem);
         Assert.Empty(ships.Plans.Store.Builds);
 
         Press(surface.Panel.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == "Plan this hull"));
 
         var build = Assert.Single(ships.Plans.Store.Builds);
-        Assert.Equal("Cobra MkIII", build.HullName);
+        Assert.Equal("Cobra Mk III", build.HullName);
         Assert.Equal(LoadoutPages.ShipPrefix + build.Id, surface.Panel.Nav.Trail[^1].Key);
 
         surface.Panel.Tab = PanelTab.Stories;
@@ -67,8 +67,8 @@ public sealed class AStoryShipObjectiveHasAButtonTests
         Dispatcher.UIThread.RunJobs();
         ReadChapter(surface);
 
-        Assert.NotNull(Ship(surface.Panel, "Show the Cobra MkIII plan"));
-        Assert.Null(Ship(surface.Panel, "Plan a Cobra MkIII"));
+        Assert.NotNull(Ship(surface.Panel, "Show the Cobra Mk III plan"));
+        Assert.Null(Ship(surface.Panel, "Plan a Cobra Mk III"));
 
         surface.Window.Close();
     }
@@ -82,12 +82,12 @@ public sealed class AStoryShipObjectiveHasAButtonTests
         var surface = Open(TriggerKind.Board, ships, Hull);
         ReadChapter(surface);
 
-        Press(Ship(surface.Panel, "Plan a Cobra MkIII")!);
+        Press(Ship(surface.Panel, "Plan a Cobra Mk III")!);
         Assert.True(surface.Panel.GoBack());
         Dispatcher.UIThread.RunJobs();
 
         Assert.Empty(ships.Plans.Store.Builds);
-        Assert.NotNull(Ship(surface.Panel, "Plan a Cobra MkIII"));
+        Assert.NotNull(Ship(surface.Panel, "Plan a Cobra Mk III"));
 
         surface.Window.Close();
     }
@@ -101,7 +101,7 @@ public sealed class AStoryShipObjectiveHasAButtonTests
         ReadChapter(surface);
         Save(surface.Window, "story-ship-objective-show-chapter.png");
 
-        var show = Assert.IsAssignableFrom<Button>(Ship(surface.Panel, "Show my Cobra MkIII"));
+        var show = Assert.IsAssignableFrom<Button>(Ship(surface.Panel, "Show my Cobra Mk III"));
         Assert.True(show.Bounds.Height >= 44);
         Assert.NotNull(Pressable(surface.Panel, "Never ask this"));
 
@@ -116,7 +116,7 @@ public sealed class AStoryShipObjectiveHasAButtonTests
         var surface = Open(TriggerKind.Board, Fleet("d47-story-ship-strip"), Hull);
         Save(surface.Window, "story-ship-objective-plan-strip.png");
 
-        var plan = Assert.IsAssignableFrom<Button>(Ship(surface.Panel, "Plan a Cobra MkIII"));
+        var plan = Assert.IsAssignableFrom<Button>(Ship(surface.Panel, "Plan a Cobra Mk III"));
         var objective = Assert.IsAssignableFrom<TextBlock>(Starting(surface.Panel, "Board"));
 
         Assert.True(Bottom(objective, surface.Window) <= Top(plan, surface.Window));
@@ -132,7 +132,7 @@ public sealed class AStoryShipObjectiveHasAButtonTests
         var surface = Open(TriggerKind.Arrive, Fleet("d47-story-ship-none"), Hull);
         ReadChapter(surface);
 
-        Assert.Null(Ship(surface.Panel, "Plan a Cobra MkIII"));
+        Assert.Null(Ship(surface.Panel, "Plan a Cobra Mk III"));
 
         surface.Window.Close();
     }
@@ -144,8 +144,8 @@ public sealed class AStoryShipObjectiveHasAButtonTests
 
         foreach (var (fleet, label, capture) in new[]
         {
-            ((IReadOnlyList<FleetEntry>?)null, "Plan a Cobra MkIII", "story-ship-objective-plan-headset.png"),
-            (OwnedCobra, "Show my Cobra MkIII", "story-ship-objective-show-headset.png"),
+            ((IReadOnlyList<FleetEntry>?)null, "Plan a Cobra Mk III", "story-ship-objective-plan-headset.png"),
+            (OwnedCobra, "Show my Cobra Mk III", "story-ship-objective-show-headset.png"),
         })
         {
             var ships = Fleet("d47-story-ship-headset");

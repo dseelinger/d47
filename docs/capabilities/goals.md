@@ -182,7 +182,7 @@ Where the journal cannot say, d47 says so rather than guessing:
 | Federal Navy | Federation rank 14 — Admiral | Live journal state |
 | Powerplay rank | Powerplay rank 100 | Your live pledge |
 | Every engineer unlocked | Every engineer in the directory | Live journal state |
-| The ship collection | One of every hull, owned at once; the Cobra MkIV counts only when owned | Your fleet, plus what you are flying |
+| The ship collection | One of every hull, owned at once; the Cobra Mk IV counts only when owned | Your fleet, plus what you are flying |
 
 **Each rank says its name**, from Harmless up through Elite V — so d47 says *Trailblazer, 12% into
 it* rather than *rank 5 of 8, 12% into it*. A career arc is done at Elite V, not at Elite. The two

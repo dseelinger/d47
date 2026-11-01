@@ -221,7 +221,7 @@ public sealed class ShipsMode(
     ];
 
     /// <summary>
-    /// The ship, named — "Campaigner (Panther Clipper MkII)", or "Corsair, intended" for a hull nobody
+    /// The ship, named — "Campaigner (Panther Clipper Mk II)", or "Corsair, intended" for a hull nobody
     /// has bought yet (#289).
     /// </summary>
     public string? Title(string item) => Resolve(item)?.Describe();

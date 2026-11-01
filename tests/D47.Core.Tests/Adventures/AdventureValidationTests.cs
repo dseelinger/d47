@@ -183,6 +183,6 @@ public class AdventureValidationTests
         Assert.Equal("arrive at system 42", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = 42 }.Describe());
         Assert.Equal("dock at Maren Anchorage in Dyson's Hollow", new AdventureTrigger { Kind = TriggerKind.Dock, Station = "Maren Anchorage", System = "Dyson's Hollow" }.Describe());
         Assert.Equal("reach Exploration Rank 6 of 13, Ranger", new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Explore", Rank = 6 }.Describe());
-        Assert.Equal("board a Cobra MkIII", new AdventureTrigger { Kind = TriggerKind.Board, ShipType = "cobramkiii" }.Describe());
+        Assert.Equal("board a Cobra Mk III", new AdventureTrigger { Kind = TriggerKind.Board, ShipType = "cobramkiii" }.Describe());
     }
 }

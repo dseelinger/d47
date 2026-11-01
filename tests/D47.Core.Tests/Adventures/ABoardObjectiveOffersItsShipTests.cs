@@ -25,7 +25,7 @@ public sealed class ABoardObjectiveOffersItsShipTests
 
         Assert.NotNull(button);
         Assert.Equal(ShipObjectiveKind.ShowOwned, button.Kind);
-        Assert.Equal("Show my Cobra MkIII", button.Label);
+        Assert.Equal("Show my Cobra Mk III", button.Label);
         Assert.Same(owned, button.Entry);
     }
 
@@ -38,7 +38,7 @@ public sealed class ABoardObjectiveOffersItsShipTests
 
         Assert.NotNull(button);
         Assert.Equal(ShipObjectiveKind.ShowPlan, button.Kind);
-        Assert.Equal("Show the Cobra MkIII plan", button.Label);
+        Assert.Equal("Show the Cobra Mk III plan", button.Label);
         Assert.Same(planned, button.Entry);
     }
 
@@ -76,8 +76,8 @@ public sealed class ABoardObjectiveOffersItsShipTests
 
         Assert.NotNull(button);
         Assert.Equal(ShipObjectiveKind.Plan, button.Kind);
-        Assert.Equal("Plan a Cobra MkIII", button.Label);
-        Assert.Equal("Cobra MkIII", button.HullName);
+        Assert.Equal("Plan a Cobra Mk III", button.Label);
+        Assert.Equal("Cobra Mk III", button.HullName);
         Assert.Null(button.Entry);
     }
 

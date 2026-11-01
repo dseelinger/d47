@@ -53,8 +53,8 @@ public class TheAssetMgmtTabCopiesEverySystemNameTests
         var pressed = false;
 
         var card = Shown(LoadoutPages.Card(
-            "Reaper (Cobra MkV)",
-            "Cobra MkV\nParked in Laksak\n2 planned",
+            "Reaper (Cobra Mk V)",
+            "Cobra Mk V\nParked in Laksak\n2 planned",
             marked: true,
             () => pressed = true,
             LoadoutStanding.Owned,
@@ -72,8 +72,8 @@ public class TheAssetMgmtTabCopiesEverySystemNameTests
     [AvaloniaFact]
     public void AShipCardWithNoSystemOrNoCopyDelegateDrawsNoGlyph()
     {
-        var noSystem = Shown(LoadoutPages.Card("Reaper", "Cobra MkV\nin transit", marked: false, () => { }, LoadoutStanding.Owned, copy: Ok));
-        var noCopy = Shown(LoadoutPages.Card("Reaper", "Cobra MkV\nParked in Laksak", marked: false, () => { }, LoadoutStanding.Owned, system: "Laksak"));
+        var noSystem = Shown(LoadoutPages.Card("Reaper", "Cobra Mk V\nin transit", marked: false, () => { }, LoadoutStanding.Owned, copy: Ok));
+        var noCopy = Shown(LoadoutPages.Card("Reaper", "Cobra Mk V\nParked in Laksak", marked: false, () => { }, LoadoutStanding.Owned, system: "Laksak"));
 
         Assert.Empty(Copies(noSystem));
         Assert.Empty(Copies(noCopy));
@@ -86,7 +86,7 @@ public class TheAssetMgmtTabCopiesEverySystemNameTests
         var pressed = false;
 
         var row = Shown(LoadoutPages.Row(
-            "Reaper (Cobra MkV)",
+            "Reaper (Cobra Mk V)",
             "Parked in Laksak",
             marked: false,
             () => pressed = true,

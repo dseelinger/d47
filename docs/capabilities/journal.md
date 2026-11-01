@@ -205,7 +205,7 @@ Elite has ever written for it, kept whether or not you are aboard right now — 
 refitted since you last boarded it is visibly stale:
 
 ```text
-Campaigner, a Panther Clipper MkII, as of 2026-08-01 09:00 UTC.
+Campaigner, a Panther Clipper Mk II, as of 2026-08-01 09:00 UTC.
 maximum jump range 48.14 ly, fuel tank 128 t, cargo capacity 1200 t, unladen mass 1575.4 t.
 27 modules fitted, 6 engineered.
 Hardpoints:
@@ -215,7 +215,7 @@ Hardpoints:
 A ship you own that no `Loadout` has been read for says so rather than describing a different one:
 
 ```text
-Campaigner (Panther Clipper MkII) — no loadout has been read for it yet. That is written the
+Campaigner (Panther Clipper Mk II) — no loadout has been read for it yet. That is written the
 next time you board it.
 ```
 

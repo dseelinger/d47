@@ -125,7 +125,7 @@ public class TypingMaleDoesNotListEveryWomanTests
     /// <summary>Word starts rather than whole words, asserted in both directions.</summary>
     [Theory]
     [InlineData("eng", "Engineering", true)]
-    [InlineData("kra", "Krait MkII", true)]
+    [InlineData("kra", "Krait Mk II", true)]
     [InlineData("male", "Emma — female, en-GB", false)]
     [InlineData("male", "FEMALE VOICE", false)]
     [InlineData("male", "George — male, en-GB", true)]

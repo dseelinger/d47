@@ -968,7 +968,7 @@ public sealed class ControlKitWindow : Window
 
         var cards = Reflow.Grid(
             [
-                Stated("rest", Ship("Campaigner", "Panther Clipper MkII", "Muang · docked", selected: false)),
+                Stated("rest", Ship("Campaigner", "Panther Clipper Mk II", "Muang · docked", selected: false)),
                 Stated("hover", Hovered(Ship("Wanderer", "Mandalay", "Stored · Giryak", selected: false))),
                 Stated("selected", Ship("Hauler", "Type-9 Heavy", "Stored · Leesti", selected: true)),
             ],

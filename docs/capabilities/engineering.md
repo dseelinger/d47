@@ -204,7 +204,7 @@ large shopping list you cannot use.
 ### How your own craft went
 
 ```text
-5 of 6 modules engineered on Fixture, a Krait MkII.
+5 of 6 modules engineered on Fixture, a Krait Mk II.
 
   Frame Shift Drive — FSD LongRange, grade 5, finished (1.0)
   Thrusters in Main Engines — Engine Dirty, grade 3, 3 crafts to go (0.4)

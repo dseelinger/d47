@@ -32,7 +32,7 @@ public sealed class AShipIsNamedFromTheHullTableTests
     }
 
     [Theory]
-    [InlineData("cobramkv", "a Cobra MkV")]
+    [InlineData("cobramkv", "a Cobra Mk V")]
     [InlineData("explorer_nx", "a Caspian Explorer")]
     [InlineData("anacondamkii", "an Anaconda Mk II")]
     public void ASymbolWithoutALocalisedNameIsSaidAsTheTableNamesIt(string symbol, string expected) =>
@@ -40,11 +40,11 @@ public sealed class AShipIsNamedFromTheHullTableTests
 
     [Fact]
     public void ANamedShipKeepsItsName() =>
-        Assert.Contains("the Cobra MkV \"Insti-taneous\"", Rendered("cobramkv", "Insti-taneous"), StringComparison.Ordinal);
+        Assert.Contains("the Cobra Mk V \"Insti-taneous\"", Rendered("cobramkv", "Insti-taneous"), StringComparison.Ordinal);
 
     [Theory]
-    [InlineData("", "you were flying a Cobra MkV.")]
-    [InlineData(",\"ShipName\":\"Reaper\"", "you were flying Reaper, a Cobra MkV.")]
+    [InlineData("", "you were flying a Cobra Mk V.")]
+    [InlineData(",\"ShipName\":\"Reaper\"", "you were flying Reaper, a Cobra Mk V.")]
     public void TheMemoryFactNamesTheHullFromTheTable(string name, string expected)
     {
         var store = new GameStateStore();
@@ -52,7 +52,7 @@ public sealed class AShipIsNamedFromTheHullTableTests
         store.Apply(Parsed("{\"timestamp\":\"3311-04-01T08:31:00Z\",\"event\":\"Loadout\",\"Ship\":\"cobramkv\"" + name + ",\"ShipID\":7,\"Modules\":[]}"));
         store.Apply(Parsed("""{"timestamp":"3311-04-01T08:32:00Z","event":"Location","StarSystem":"Deciat","SystemAddress":1}"""));
 
-        Assert.Equal("Cobra MkV", store.Active!.Ship.TypeSaid);
+        Assert.Equal("Cobra Mk V", store.Active!.Ship.TypeSaid);
         Assert.Equal(expected, MemoryObserver.ShipFact(store.Active!));
     }
 

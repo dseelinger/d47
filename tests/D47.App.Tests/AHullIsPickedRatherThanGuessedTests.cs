@@ -187,10 +187,10 @@ public class AHullIsPickedRatherThanGuessedTests
 
         Assert.True(panel.Prompts.IsListening);
 
-        panel.Prompts.Hear(new Heard("Krait MkII", 1, Final: true));
+        panel.Prompts.Hear(new Heard("Krait Mk II", 1, Final: true));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("Krait MkII", ships.Store.Builds.Single().HullName);
+        Assert.Equal("Krait Mk II", ships.Store.Builds.Single().HullName);
     }
 
     /// <summary>A hull that is not a hull says so and leaves the picker up.</summary>

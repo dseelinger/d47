@@ -683,7 +683,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         {
             """{"timestamp":"2026-10-21T11:00:00Z","event":"CarrierStats","CarrierID":3715429376,"CarrierType":"FleetCarrier","Callsign":"BNH-T2F","Name":"Sacred Fire","FuelLevel":792}""",
             """{"timestamp":"2026-10-21T11:00:01Z","event":"CarrierLocation","CarrierType":"FleetCarrier","CarrierID":3715429376,"StarSystem":"Bubble 9","SystemAddress":1009,"BodyID":0}""",
-            """{"timestamp":"2026-10-21T11:01:00Z","event":"StoredShips","StarSystem":"Wregoe TC-X b29-0","StationName":"Home Base","ShipsHere":[],"ShipsRemote":[{"ShipID":12,"ShipType":"cobramkv","ShipType_Localised":"Cobra MkV","Name":"Reaper","Value":1,"StarSystem":"Bubble 12"},{"ShipID":13,"ShipType":"python","ShipType_Localised":"Python","Value":1,"StarSystem":"Bubble 12"},{"ShipID":14,"ShipType":"anaconda","ShipType_Localised":"Anaconda","Name":"Big Slow","Value":1,"StarSystem":"Nowhere Known"}]}""",
+            """{"timestamp":"2026-10-21T11:01:00Z","event":"StoredShips","StarSystem":"Wregoe TC-X b29-0","StationName":"Home Base","ShipsHere":[],"ShipsRemote":[{"ShipID":12,"ShipType":"cobramkv","ShipType_Localised":"Cobra Mk V","Name":"Reaper","Value":1,"StarSystem":"Bubble 12"},{"ShipID":13,"ShipType":"python","ShipType_Localised":"Python","Value":1,"StarSystem":"Bubble 12"},{"ShipID":14,"ShipType":"anaconda","ShipType_Localised":"Anaconda","Name":"Big Slow","Value":1,"StarSystem":"Nowhere Known"}]}""",
         })
         {
             game.Commander.Apply(Event(line));

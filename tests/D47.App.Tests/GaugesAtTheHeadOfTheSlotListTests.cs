@@ -108,7 +108,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
 
     private static void OpenTheShip(Surface surface)
     {
-        Row(surface.Panel, "Predestinatio (Cobra MkV)")
+        Row(surface.Panel, "Predestinatio (Cobra Mk V)")
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
         Dispatcher.UIThread.RunJobs();

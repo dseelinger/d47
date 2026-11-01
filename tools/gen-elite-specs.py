@@ -385,7 +385,7 @@ def build_ships(
 
         built.append([
             symbol,
-            identity["name"],
+            elite_hull_name(identity["name"]),
             properties.get("manufacturer") or "",
             PADS.get(properties.get("class")) or PADS.get(int(figures.get("class") or 0), ""),
             pick("speed", "topspd"),
@@ -742,6 +742,11 @@ def inherit_family_names(
     return left
 
 
+def elite_hull_name(name: str) -> str:
+    """FDevIDs run the Mk numeral into the word; Elite's journals put a space before it."""
+    return re.sub(r"\bMk(?=[IVX]+\b)", "Mk ", name)
+
+
 def hull_and_name(hull: str, name: str) -> str:
     """`hull` then `name`, saying once the words where one ends as the other begins."""
     hull_words, name_words = hull.split(), name.split()
@@ -789,7 +794,7 @@ def build_bulkheads(
             # The hull, then Frontier's name for the armour. Every ship has a
             # "Lightweight Alloy", and the outfitting screen can leave the hull unsaid
             # because the Commander is standing in it. A table cannot.
-            hull_and_name(identity["ship"], identity["name"]),
+            hull_and_name(elite_hull_name(identity["ship"]), identity["name"]),
 
             # Class and rating are placeholders in the id list — every bulkhead is class 1,
             # rated I on the old hulls and A, B or C on the new ones for the same five
