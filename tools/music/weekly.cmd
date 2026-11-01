@@ -1,9 +1,10 @@
 @echo off
 rem Run by the "d47 music weekly" scheduled task on Sunday at midnight.
-rem Writes the catalogue, generates the missing tracks until 05:00, publishes the folders that gained tracks.
+rem Updates ACE-Step, writes the catalogue, generates the missing tracks until 05:00, publishes the folders that gained tracks.
 if "%D47_MUSIC_SOURCE%"=="" (echo D47_MUSIC_SOURCE is not set. & exit /b 1)
 if "%D47_ACE_STEP%"=="" (echo D47_ACE_STEP is not set. & exit /b 1)
 set "GENERATED=%D47_MUSIC_SOURCE%\generated.txt"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0update-ace.ps1"
 "%D47_ACE_STEP%\.venv\Scripts\python.exe" "%~dp0catalogue.py" || exit /b 1
 "%D47_ACE_STEP%\.venv\Scripts\python.exe" "%~dp0generate.py" --until 05:00 || exit /b 1
 if not exist "%GENERATED%" exit /b 0

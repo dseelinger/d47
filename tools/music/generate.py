@@ -4,6 +4,7 @@
   generate.py --until 05:00       also stop at that local wall-clock time
   generate.py --per-folder 3      only fill each folder up to that many tracks (the trial batch)
   generate.py --folders a,b       only those folders
+  generate.py --smoke DIR         one 10-second test track into DIR, to check an ACE-Step update
 
 Writes the folders it added tracks to, one per line, to generated.txt in the data folder.
 Stops after the current track when STOP exists. Waits while Elite Dangerous is running.
@@ -74,8 +75,7 @@ def deadline_of(until):
 
 def write_generated(folders):
     with open(GENERATED, "w", encoding="utf-8") as f:
-        f.write("".join(name + "
-" for name in sorted(folders)))
+        f.write("".join(name + "\n" for name in sorted(folders)))
 
 
 def path_of(row):
@@ -125,13 +125,68 @@ def wait_for_game(deadline):
     return True
 
 
+def load_models():
+    """Returns (dit, llm), or (None, None) after logging the failure."""
+    sys.path.insert(0, ACE)
+    os.chdir(ACE)
+    from acestep.handler import AceStepHandler
+    from acestep.llm_inference import LLMHandler
+
+    dit = AceStepHandler()
+    msg, ok = dit.initialize_service(project_root=ACE, config_path="acestep-v15-xl-sft", device="auto", offload_to_cpu=True)
+    if not ok:
+        log(f"DiT failed: {msg}")
+        return None, None
+    llm = LLMHandler()
+    msg, ok = llm.initialize(checkpoint_dir=os.path.join(ACE, "checkpoints"), lm_model_path="acestep-5Hz-lm-1.7B",
+                             backend="pt", device="auto", offload_to_cpu=True, dtype=None)
+    if not ok:
+        log(f"LM failed: {msg}")
+        return None, None
+    return dit, llm
+
+
+def settings(prompt, lyrics, bpm, key, duration, seed):
+    from acestep.inference import GenerationParams, GenerationConfig
+
+    params = GenerationParams(
+        task_type="text2music", thinking=True, caption=prompt, lyrics=lyrics.replace("\\n", "\n"),
+        instrumental=True, bpm=int(bpm), keyscale=key, duration=int(duration),
+        use_cot_caption=False, use_cot_metas=False, use_cot_language=False,
+        inference_steps=50, guidance_scale=7.0, shift=3.0, seed=int(seed))
+    config = GenerationConfig(batch_size=1, audio_format="mp3", use_random_seed=False, seeds=[int(seed)])
+    return params, config
+
+
+def smoke(out_dir):
+    """Generates one 10-second track into out_dir with the run's models and settings. Exit code 0 on success."""
+    from acestep.inference import generate_music
+
+    dit, llm = load_models()
+    if dit is None:
+        return 1
+    params, config = settings("calm ambient pads, slow", "[Instrumental]", 70, "C minor", 10, 1)
+    try:
+        result = generate_music(dit, llm, params=params, config=config, save_dir=out_dir)
+    except Exception as e:
+        log(f"test track FAILED: {e}")
+        return 1
+    if not result.success or not result.audios or not os.path.getsize(result.audios[0]["path"]):
+        log(f"test track FAILED: {result.status_message}")
+        return 1
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--until")
     ap.add_argument("--per-folder", type=int, default=0)
     ap.add_argument("--folders", default="", help="comma-separated folders to limit the run to")
+    ap.add_argument("--smoke", metavar="DIR", help="generate one 10-second test track into DIR and exit")
     args = ap.parse_args()
 
+    if args.smoke:
+        sys.exit(smoke(args.smoke))
     if not take_lock():
         print("Already running.")
         return
@@ -146,22 +201,8 @@ def main():
         if not todo or not wait_for_game(deadline) or should_stop(deadline):
             return
 
-        sys.path.insert(0, ACE)
-        os.chdir(ACE)
-        from acestep.handler import AceStepHandler
-        from acestep.llm_inference import LLMHandler
-        from acestep.inference import GenerationParams, GenerationConfig, generate_music
-
-        dit = AceStepHandler()
-        msg, ok = dit.initialize_service(project_root=ACE, config_path="acestep-v15-xl-sft", device="auto", offload_to_cpu=True)
-        if not ok:
-            log(f"DiT failed: {msg}")
-            return
-        llm = LLMHandler()
-        msg, ok = llm.initialize(checkpoint_dir=os.path.join(ACE, "checkpoints"), lm_model_path="acestep-5Hz-lm-1.7B",
-                                 backend="pt", device="auto", offload_to_cpu=True, dtype=None)
-        if not ok:
-            log(f"LM failed: {msg}")
+        dit, llm = load_models()
+        if dit is None:
             return
 
         done = 0
