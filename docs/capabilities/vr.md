@@ -22,13 +22,13 @@ nav_order: 128
 <p class="intro">Three steps to D47 in the headset.</p>
 <section>
 <h2><span class="num">1</span> Start SteamVR first, then D47.</h2>
-<p class="say">Start SteamVR first, then D47, and turn on Draw in the headset.</p>
-<p class="expect">The panel appears in the headset as an overlay beside the game.</p>
+<p class="say">Start SteamVR first, then D47, and check that Show D47 in the headset is on.</p>
+<p class="expect">The panel appears in the headset as an overlay beside the game, and the Headset row reads "Showing in the headset."</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Headset">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Headset</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">Draw in the headset</text>
+ <text x="68" y="98" font-size="16" fill="var(--text)">Show D47 in the headset</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
  <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="154" font-size="16" fill="var(--text)">SteamVR</text>
@@ -38,8 +38,8 @@ nav_order: 128
 </section>
 <section>
 <h2><span class="num">2</span> Put the panel where you want it.</h2>
-<p class="say">Say "put the panel down", "lock it to my head", "move it left" or "bring it nearer".</p>
-<p class="expect">The panel moves; world-locked stays where you put it and head-locked follows you.</p>
+<p class="say">Say "move the panel left", "move the panel closer" or, looking at a spot, "place the panel here".</p>
+<p class="expect">The panel moves 5 cm a step, or "Put it where you are looking." for the placement; with no headset the reply says so.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">put the panel down</text>
@@ -50,8 +50,8 @@ nav_order: 128
 </section>
 <section>
 <h2><span class="num">3</span> Set the size and the distance.</h2>
-<p class="say">Set the distance, size and opacity in the Headset settings.</p>
-<p class="expect">The panel changes to match, and tilts to face you when it is below eye level.</p>
+<p class="say">Say "zoom the panel in", or set Distance, Size and Panel opacity in the Headset settings.</p>
+<p class="expect">"The panel is drawn at" the new percentage; the settings change the panel to match.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Headset">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Headset</text>
@@ -88,72 +88,44 @@ nav_order: 128
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Directive 47 drawn over Elite in your own cockpit — beside the game, never inside it.</p>
+<p class="intro">D47 attaches to SteamVR and draws its panel over Elite, never inside it.</p>
 <section>
-<h2><span class="num">1</span> It attaches. It never starts anything.</h2>
-<svg viewBox="0 0 880 240" role="img" aria-label="Directive 47 waits for SteamVR and a headset to appear, and never launches SteamVR or hooks Elite">
- <rect x="20" y="44" width="250" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="145" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">IT ATTACHES</text>
- <text x="145" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">looks every few seconds</text>
- <rect x="310" y="44" width="250" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="435" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NEVER STARTS</text>
- <text x="435" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">SteamVR, on your behalf</text>
- <rect x="600" y="44" width="260" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="730" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NEVER HOOKS</text>
- <text x="730" y="114" text-anchor="middle" font-size="14" fill="var(--text-muted)">Elite, or its frame</text>
- <text x="440" y="188" text-anchor="middle" font-size="16" fill="var(--text)">SteamVR first, Directive 47 first, SteamVR restarted halfway through — none of it matters.</text>
- <text x="440" y="220" text-anchor="middle" font-size="15" fill="var(--text-muted)">And it says which of the two it is waiting for: “SteamVR is not running”, or “no headset is switched on”.</text>
+<h2><span class="num">1</span> D47 attaches to SteamVR and never starts it.</h2>
+<svg viewBox="0 0 880 128" role="img" aria-label="D47 waits for SteamVR and a switched-on headset">
+ <rect x="20" y="16" width="840" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">"SteamVR is not running. D47 will attach when you start it."</text>
+ <text x="440" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">"No headset is switched on. D47 will attach when one appears."</text>
 </svg>
+<p class="body">D47 looks for a running SteamVR and a switched-on headset every few seconds. When either is missing it says which, and attaches when it appears.</p>
 </section>
 <section>
-<h2><span class="num">2</span> The panel is the same app, drawn a second time.</h2>
-<svg viewBox="0 0 880 230" role="img" aria-label="The headset panel is a second instantiation of the same view, not a screenshot of the desktop window">
- <rect x="20" y="44" width="380" height="104" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="210" y="84" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">THE SAME APP</text>
- <text x="210" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">drawn a second time</text>
- <rect x="460" y="44" width="400" height="104" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="660" y="84" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text-muted)">NOT A PICTURE OF IT</text>
- <text x="660" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">no screenshot of a window</text>
- <text x="440" y="198" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So the windowed version can never do something the headset version cannot.</text>
+<h2><span class="num">2</span> The headset panel is the same app drawn a second time.</h2>
+<svg viewBox="0 0 880 162" role="img" aria-label="The panel in the headset is a second drawing of the same view">
+ <rect x="20" y="16" width="840" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="16" fill="var(--text-muted)">Look at a spot.</text>
+ <text x="440" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">Say "place the panel here".</text>
+ <text x="440" y="124" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">"Put it where you are looking."</text>
 </svg>
-<p class="body">Point a controller at it, pull the <strong>trigger</strong>, and it comes with you — position and angle together, so it feels attached rather than dragged. Nothing turns it to face you while you hold it: a panel forced upright and square cannot be tilted to read from below or angled to sit beside you, which is most of what moving one is for.</p>
+<p class="body">The panel moves to the middle of your view, as far away as it already was, turned to face you. It stays there until you move it again.</p>
 </section>
 <section>
-<h2><span class="num">3</span> Three levers that all sound like “how big”.</h2>
-<svg viewBox="0 0 880 258" role="img" aria-label="Resolution decides how much the image holds, size how big it looks, and scale how much layout the pixels carry">
- <rect x="20" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="155" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">RESOLUTION</text>
- <text x="155" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">how much the image can hold</text>
- <text x="155" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">more pixels, more rows</text>
- <rect x="305" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SIZE</text>
- <text x="440" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">how big it looks in the room</text>
- <text x="440" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">metres across</text>
- <rect x="590" y="36" width="270" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="725" y="76" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SCALE</text>
- <text x="725" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">how much layout those</text>
- <text x="725" y="132" text-anchor="middle" font-size="14" fill="var(--text-muted)">pixels carry — a density</text>
- <text x="440" y="198" text-anchor="middle" font-size="16" fill="var(--text)">At 75% the panel presents 1365×853 worth of layout and a ship’s slots fit.</text>
- <text x="440" y="224" text-anchor="middle" font-size="16" fill="var(--text)">At 200% it presents 512×320 and you can read it from across the cockpit.</text>
- <text x="440" y="252" text-anchor="middle" font-size="15" fill="var(--text-muted)">More pixels cost more every frame — pick by looking at it, not by picking the biggest number.</text>
+<h2><span class="num">3</span> Size, Scale and Resolution are three separate levers.</h2>
+<svg viewBox="0 0 880 162" role="img" aria-label="Size is metres across, Scale is content size, Resolution is pixels">
+ <rect x="20" y="16" width="840" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">Size: metres across</text>
+ <text x="440" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">Scale: how large the content is drawn</text>
+ <text x="440" y="124" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">Resolution: how many pixels it holds</text>
 </svg>
-<p class="body">Scale and <em>mini</em> are different things, and the difference is the point: scale changes how big everything on the panel is, mini changes how much of it there is. Zooming a panel you cannot read makes it readable; switching to mini gives you less to read.</p>
+<p class="body">Size moves the panel edges. Scale draws the same content larger inside the same edges. Resolution decides how many pixels the panel can hold.</p>
 </section>
 <section>
-<h2><span class="num">4</span> The captions follow the broadcast standard, not a preference.</h2>
-<svg viewBox="0 0 880 246" role="img" aria-label="Caption limits: 42 characters a line, three lines per utterance, 20 characters a second, timed from when the speech ends">
- <rect x="20" y="34" width="840" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="60" y="68" text-anchor="start" font-size="16" font-weight="700" fill="var(--text)">42 characters</text>
- <text x="270" y="68" text-anchor="start" font-size="15" fill="var(--text-muted)">the most on one line</text>
- <text x="60" y="96" text-anchor="start" font-size="16" font-weight="700" fill="var(--text)">3 lines</text>
- <text x="270" y="96" text-anchor="start" font-size="15" fill="var(--text-muted)">the most for one thing said</text>
- <text x="60" y="124" text-anchor="start" font-size="16" font-weight="700" fill="var(--text)">20 a second</text>
- <text x="270" y="124" text-anchor="start" font-size="15" fill="var(--text-muted)">reading speed, which sets how long one stays</text>
- <text x="60" y="150" text-anchor="start" font-size="16" font-weight="700" fill="var(--accent)">timed from the end</text>
- <text x="270" y="150" text-anchor="start" font-size="15" fill="var(--text-muted)">not from when the speech starts</text>
- <text x="440" y="202" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Nobody reads along with a voice they can hear.</text>
- <text x="440" y="234" text-anchor="middle" font-size="15" fill="var(--text-muted)">They catch the last line after it has gone — and if you say “stop”, the captions stop with the voice.</text>
+<h2><span class="num">4</span> Each voice command answers with one fixed line.</h2>
+<svg viewBox="0 0 880 128" role="img" aria-label="The placement command answers with a fixed line">
+ <rect x="20" y="16" width="840" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">"Put it where you are looking."</text>
+ <text x="440" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">VrCapability.cs</text>
 </svg>
+<p class="body"><code>VrCapability.cs</code> answers a successful placement with this line. With no headset session the reply says so, because a headset has no transcript to read.</p>
 </section>
 </div></div>
 </details>
@@ -236,7 +208,7 @@ what a panel sitting below them wants.
 
 It acts on whichever panel is on screen — big or mini — and each keeps its own place. If the panel
 was still riding your head when you asked, Directive 47 puts it down in front of you first and then
-moves it, exactly as picking it up with a controller used to.
+moves it.
 
 **Or look where you want it and say so.** The panel on screen moves to the middle of your view, as
 far from you as it already was, turned to face you:
@@ -271,12 +243,8 @@ at overlay priority, and gives them back the moment the ray leaves. On a default
 that changes nothing you would notice: taking inputs away from other applications needs SteamVR's
 **Enable global input from overlays** developer setting, which is off unless you turned it on, and
 without it the game, Virtual Desktop and the dashboard keep the trigger while Directive 47 reads it
-too. With it on, the hand-back is what returns the trigger — 0.48.6 meant to do that on every path
-and did not, because SteamVR refused the call it made and said so only in d47's log; 0.52.2 does,
-and its log says when the controllers are claimed and given back, and **"headset overlay off"**
-then **"headset overlay on"** still frees a controller on an older build. A controller that stops
-answering everything some way into a session is a different fault, tracked as
-[#1](https://github.com/dseelinger/d47/issues/1) and closed as not reproducing on 0.111.3.
+too. With it on, d47 hands the trigger and grip back when the ray leaves, and its log says when the
+controllers are claimed and given back.
 
 Nothing turns it to face you while you hold it. A panel forced upright and square cannot be
 tilted to read from below or angled to sit beside you, which is most of what moving one is for.
@@ -286,8 +254,7 @@ world-locked means. Directive 47 does not then argue with you about the setting.
 
 If Elite's own recenter moves your cockpit out from under a panel you had placed, put it back by
 switching that panel's lock to **head**, which brings it to your face, and then nudging it — the
-first nudge sets a head-locked panel down in front of you, at knee height, before it moves. Two
-steps where re-anchoring was one; that command was retired in 0.94.0.
+first nudge sets a head-locked panel down in front of you, at knee height, before it moves. 
 
 ### Resizing it
 
@@ -387,7 +354,7 @@ Ask for either by name, in whichever words come out:
 The two keep their own placements, so parking mini out to one side while the full panel stays in
 front of you works the way you would expect.
 
-**Mini means a minimal interface, not a fixed size.** It starts at 512 by 280 pixels and 0.34 m
+**Mini means a minimal interface, not a fixed size.** It starts at 512 by 280 pixels and 0.526 m
 across, and both are yours to change — with its own [resolution](#placing-a-surface) setting, or by
 [resizing it](#resizing-it) in the headset to whatever shape you want.
 
@@ -444,11 +411,6 @@ table above is genuinely per-surface: mini exists to be smaller and further out 
 distance, size and drop have to be able to differ. How see-through the glass is does not. It is one
 preference about how much cockpit shows through Directive 47, and asking for it at half never means
 *half, in one of the two modes*.
-
-It used to be two, and that is exactly how it went wrong: *"set the opacity to 0.5"* landed on the
-big panel's copy while the mini panel was the one in front of the Commander, so the number they
-could see never moved and nothing was broken. A value already set on either panel is carried up to
-the shared one the first time this version runs, so nobody has to set it again.
 
 ##### Three levers, and they do different things
 
@@ -686,11 +648,6 @@ could then take hold of a handle.
 {"type":"object","properties":{"on":{"type":"boolean","description":"True to enter resize mode, false to leave it."}},"required":["on"],"additionalProperties":false}
 ```
 
-It exists because asking to see the panel used to reach `get_headset_status`, that being the only
-headset-shaped thing on the surface — so *"show the VR panel"* was answered with *"the overlays
-are dark, Commander"*, which is true and is not what was asked. `set_setting` could always have
-done it; nothing pointed at that.
-
 An *overlay* application, never a scene one — that is what keeps D47 clear of anything resembling
 game injection. Elite renders through OpenVR, which is why this is OpenVR and not OpenXR.
 
@@ -712,7 +669,7 @@ Out of the box, before anything is resized:
 
 ```text
 full       1024 x 640 px   at 1.10 m wide
-mini         512 x 280 px   at 0.34 m wide
+mini         512 x 280 px   at 0.526 m wide
 captions    1600 x 340 px   at 0.90 m head-locked, 0.57 m world-locked
 ```
 
@@ -720,12 +677,8 @@ The caption quad is the same texture in both positions. The world-locked strip i
 narrower by exactly the ratio of the two distances — which is what makes the size steps mean one
 thing rather than two.
 
-1.4 m was tried first and read as enormous — close to fifty degrees of view, so the panel filled
-the middle and the cockpit was behind it rather than around it.
-
 The panel is a second instantiation of the same view definition bound to the same view model,
-rasterised offscreen into a plain pixel buffer and submitted with `SetOverlayRaw`. About 0.75 ms
-a frame measured live against SteamVR, of which the rasterise is 0.30 ms, and only when something
+rasterised offscreen into a plain pixel buffer and submitted with `SetOverlayRaw`. It is redrawn only when something
 changed.
 
 **The trigger only.** A controller reports its grip and other buttons through the same channel,

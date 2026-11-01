@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The help pages for the window, the headset, timers and alarms, focusing the game, journal reminders, About, the clock and switching Commanders now match the app: the headset page names the Show D47 in the headset row and the mini panel's real width, the focus page no longer sends you to the overlay hotkeys, the About page points to Settings › Privacy and this install, the interface page lists all seven tabs, and About has a How it works band.
+
 "What does my next Powerplay rank give me", "what would" followed by a Power's name and "give me", and "have I met" followed by a Commander's name are now answered without the language model.
 
 "What biology is on this body" is now answered without the language model, about the body most recently scanned with biology on it.

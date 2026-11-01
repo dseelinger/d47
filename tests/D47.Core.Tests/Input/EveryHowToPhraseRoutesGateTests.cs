@@ -41,19 +41,7 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("bookmarks", "rename bookmark Current CG to Colonia Bridge"), // no issue filed; see the #1903 commit
         ("binding-profiles", "save these bindings as sim pit"), // no issue filed; see the #1903 commit
         ("binding-profiles", "load the sim pit bindings"), // no issue filed; see the #1903 commit
-        ("reminders", "remind me to buy limpets when I next dock"),
-        ("reminders", "noted"),
-        ("reminders", "remind me next time"),
-        ("reminders", "when I next dock"),
-        ("reminders", "next session"),
-        ("reminders", "in twenty minutes"),
-        ("focus", "bring Elite back"),
-        ("utilities", "set a timer for twenty minutes called fuel scoop"),
-        ("vr", "put the panel down"),
-        ("vr", "lock it to my head"),
-        ("vr", "move it left"),
-        ("vr", "bring it nearer"),
-        ("commanders", "switch to Kestrel Vane"),
+        ("utilities", "set a timer for twenty minutes called fuel scoop"), // no issue filed; set_timer is model-only
         ("navigation", "plot a course to Shinrarta Dezhra"), // no issue filed; see the #1903 commit
         ("comms", "tell the wing I am on my way"), // no issue filed; see the #1903 commit
     ];
@@ -194,6 +182,13 @@ public partial class EveryHowToPhraseRoutesGateTests
                 .Concat(MacroCapability.Phrases(macros))
                 .Concat(SurfaceGuidanceCapability.Phrases(marks, () => state))
                 .Concat(CommsCapability.ChannelPhrases(channels))
+                .Concat(CommandersCapability.Phrases(
+                    () => new Dictionary<string, CommanderSighting>
+                    {
+                        [commander] = new(commander, "Fixture", DateTimeOffset.UnixEpoch, null, null),
+                        ["F2"] = new("F2", "Kestrel Vane", DateTimeOffset.UnixEpoch, null, null),
+                    },
+                    () => commander))
                 .Concat(D47.Core.Knowledge.QuickSearches.Phrases()));
     }
 
@@ -203,7 +198,9 @@ public partial class EveryHowToPhraseRoutesGateTests
         || router.Match(phrase, InputSource.Spoken) is not null
         || Walks(phrase)
         || LogsOrReadsTheCaptainsLog(phrase)
-        || LooksUpByName(phrase);
+        || LooksUpByName(phrase)
+        || ReadsAJournalReminder(phrase)
+        || AnswersAFiredReminder(phrase);
 
     /// <summary>Whether the phrase is a reply the turn loop takes while a teaching exchange is open, before the router and the model.</summary>
     private static bool AnswersAnExchange(string page, string phrase) =>
@@ -215,6 +212,16 @@ public partial class EveryHowToPhraseRoutesGateTests
 
     /// <summary>Whether the turn loop's model-free captain's log grammar takes the phrase, before the router and the model.</summary>
     private static bool LogsOrReadsTheCaptainsLog(string phrase) => D47.Core.CaptainsLog.CaptainsLogPhrase.Read(phrase) is not null;
+
+    /// <summary>Whether the turn loop's model-free journal reminder grammar takes the phrase, with timers and alarms off.</summary>
+    private static bool ReadsAJournalReminder(string phrase) => D47.Core.Reminders.JournalReminderPhrase.Read(phrase, timersRegistered: false) is not null;
+
+    /// <summary>Whether a registered tool holds the phrase as a command that is heard only while a reminder or warning waits.</summary>
+    private static bool AnswersAFiredReminder(string phrase) =>
+        TestSurface.For(new MemoryInstall()).Registry.All
+            .SelectMany(capability => capability.Descriptor.Tools)
+            .SelectMany(tool => tool.Commands)
+            .Any(command => command.When is not null && string.Equals(command.Phrase, phrase, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Whether the turn loop's model-free lookup by hull, module or blueprint name takes the phrase, before the router and the model.</summary>
     private static bool LooksUpByName(string phrase) => D47.Core.Knowledge.NamedLookupPhrase.Read(phrase) is not null;

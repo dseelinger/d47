@@ -13,7 +13,6 @@ public sealed class EveryPanelPathTheHelpCitesIsARealPlaceTests
 {
     /// <summary>Paths that do not resolve yet, by source (a docs page, or "exercise:" and a capability id) and path.</summary>
     private static readonly (string Source, string Path)[] Unresolved = [
-        ("capabilities/interface.md", "Settings › Your core › In flight › Flight callouts › Fuel and range"),
     ];
 
     [AvaloniaFact]

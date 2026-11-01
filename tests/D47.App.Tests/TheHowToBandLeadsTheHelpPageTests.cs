@@ -77,11 +77,16 @@ public class TheHowToBandLeadsTheHelpPageTests
         window.Close();
     }
 
-    [AvaloniaTheory]
-    [InlineData("about")]
-    public void APageWithOnlyTheHowToBandDrawsOnlyThatHead(string id)
+    [AvaloniaFact]
+    public void APageWithOnlyTheHowToBandDrawsOnlyThatHead()
     {
-        var (window, page) = Open(id);
+        const string id = "about";
+        var page = HelpPageView.Build(HelpLibrary.HowTo(id), null, new PanelNavigator(), _ => { });
+        var window = new Window { Content = page, Width = 1280, Height = 900 };
+
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
         var shown = Text(page);
 
         Assert.Contains("HOW TO USE IT", shown);

@@ -27,7 +27,7 @@ nav_order: 152
 </section>
 <section>
 <h2><span class="num">2</span> Answer it when it goes off.</h2>
-<p class="say">Say "noted", or "remind me next time".</p>
+<p class="say">When one goes off, say "noted" or "remind me next time".</p>
 <p class="expect">Noted removes the reminder; remind me next time arms it again for the same moment.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with an answer to a reminder typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
@@ -39,8 +39,8 @@ nav_order: 152
 </section>
 <section>
 <h2><span class="num">!</span> A moment in the game, never a time.</h2>
-<p class="say">Say a moment such as "when I next dock" or "next session", not "in twenty minutes".</p>
-<p class="expect">A time is declined, and the reply names the moments D47 does take.</p>
+<p class="say">Say "remind me to sell data in twenty minutes" and read the reply.</p>
+<p class="expect">A time is declined: "Reminders follow the game rather than the clock. Ask me for one when you next dock, when you arrive in a system, or next session."</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="A time of day is declined">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">remind me to sell data in twenty minutes</text>
@@ -59,18 +59,34 @@ nav_order: 152
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Reminders in your own words, said when the game reaches a moment.</p>
+<p class="intro">A reminder waits for a moment in the game, then D47 says it in your words.</p>
 <section>
 <h2><span class="num">1</span> The game decides when, not the clock.</h2>
-<svg viewBox="0 0 880 200" role="img" aria-label="A reminder waits for a journal moment such as docking, then is said in the Commander's words">
- <rect x="20" y="30" width="400" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="220" y="72" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">when I next dock</text>
- <text x="220" y="104" text-anchor="middle" font-size="16" fill="var(--text-muted)">waits for Docked in the journal</text>
- <rect x="460" y="30" width="400" height="100" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="660" y="72" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">buy limpets</text>
- <text x="660" y="104" text-anchor="middle" font-size="16" fill="var(--text-muted)">said once, as you said it</text>
- <text x="440" y="176" text-anchor="middle" font-size="16" fill="var(--text-muted)">Only you can set or cancel one. The AI is refused both.</text>
+<svg viewBox="0 0 880 162" role="img" aria-label="A reminder waits for a journal moment such as docking">
+ <rect x="20" y="16" width="840" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">You say "remind me to buy limpets when I next dock".</text>
+ <text x="440" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">D47 stores "buy limpets" against the next docking.</text>
+ <text x="440" y="124" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">At the next docking it says it once.</text>
 </svg>
+<p class="body">A fixed grammar reads the sentence and the moment, with no AI. The reminder fires when the journal shows that moment.</p>
+</section>
+<section>
+<h2><span class="num">2</span> Only you can set, cancel or answer one.</h2>
+<svg viewBox="0 0 880 128" role="img" aria-label="The AI is refused every reminder tool that changes anything">
+ <rect x="20" y="16" width="840" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">Setting, cancelling and answering are protected.</text>
+ <text x="440" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">A comms message cannot plant a reminder.</text>
+</svg>
+<p class="body">These tools are protected: the AI is not offered them and is refused if it asks. A message from another player cannot set a reminder.</p>
+</section>
+<section>
+<h2><span class="num">3</span> The reply reads back what was stored.</h2>
+<svg viewBox="0 0 880 128" role="img" aria-label="D47 reads the reminder back as it will be said">
+ <rect x="20" y="16" width="840" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">"I'll remind you to buy limpets when you next dock."</text>
+ <text x="440" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">RemindersCapability.cs</text>
+</svg>
+<p class="body"><code>RemindersCapability.Set</code> returns this line, built from the sentence and the moment, so a misheard station or system name shows at once.</p>
 </section>
 </div></div>
 </details>
@@ -105,8 +121,11 @@ stored, so a misheard name shows up straight away.
 
 "Remind me to" with any other moment is declined, and the reply names these. A time — "in twenty
 minutes", "at seven" — is declined the same way, because these reminders follow the game. In a run
-started with timers and alarms, a time goes to the [timer and alarm tools](utilities.html)
+started with `--utilities`, a time goes to the [timer and alarm tools](utilities.html)
 instead.
+
+A material must be one with a storage limit, and a reminder holds at most 300 characters. At most 64
+reminders are kept at once; the 65th is refused until one is cancelled.
 
 What it says when one fires is set out on the [Callouts](callouts.html) page.
 
@@ -123,7 +142,7 @@ answer the most recent one.
 
 "Tomorrow" means your next session, not a time of day, because these reminders follow the game.
 With nothing gone off, none of these is heard. A reminder you do not answer is removed at the
-start of your next session, as before.
+start of your next session.
 
 The carrier captain's fuel and upkeep warnings answer to the same phrases while one has just been
 spoken, whichever fired last. "Noted" keeps it quiet until its condition clears and returns.

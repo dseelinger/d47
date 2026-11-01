@@ -22,12 +22,12 @@ nav_order: 127
 <p class="intro">Two steps to making the window your own.</p>
 <section>
 <h2><span class="num">1</span> Learn the tab strip. Everything is behind it.</h2>
-<p class="say">Press the tabs along the top: Transcript, Commander, Asset Mgmt and Settings.</p>
+<p class="say">Press the tabs along the top: Transcript, Search, Stories, Commander, Asset Mgmt, Navigation and Settings.</p>
 <p class="expect">Each tab opens its page; the headset shows the same strip without the tabs it has no room for.</p>
-<svg viewBox="0 0 880 208" role="img" aria-label="The Transcript  Commander  Asset Mgmt  Settings tab">
+<svg viewBox="0 0 880 208" role="img" aria-label="The seven tabs">
  <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
- <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Transcript  Commander  Asset Mgmt  Settings</text>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Transcript  Search  Stories  Commander  Asset Mgmt  Navigation  Settings</text>
  <text x="44" y="92" font-size="16" fill="var(--text)">The page you land on</text>
  <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">the conversation</text>
  <text x="44" y="130" font-size="16" fill="var(--text)">Everything else</text>
@@ -64,76 +64,44 @@ nav_order: 127
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">How Directive 47 is laid out, and why one design fits a monitor and a metre-wide quad alike.</p>
+<p class="intro">The panel is a stack of levels you drill into, and the same design fits a monitor and a headset.</p>
 <section>
-<h2><span class="num">1</span> The tab is the top of the stack, not the first step into it.</h2>
-<svg viewBox="0 0 880 258" role="img" aria-label="A tab sits above a stack of levels, and pressing the tab you are already on returns to its top">
- <rect x="20" y="30" width="840" height="44" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="46" y="59" text-anchor="start" font-size="16" font-weight="800" fill="var(--accent)">Asset Mgmt</text>
- <text x="200" y="59" text-anchor="start" font-size="15" fill="var(--text-muted)">← press it again to come straight back here</text>
- <rect x="60" y="82" width="800" height="44" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="86" y="111" text-anchor="start" font-size="16" fill="var(--text)">Ships</text>
- <rect x="100" y="134" width="760" height="44" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="126" y="163" text-anchor="start" font-size="16" fill="var(--text)">Corsair</text>
- <rect x="140" y="186" width="720" height="44" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="166" y="215" text-anchor="start" font-size="16" fill="var(--text)">Hardpoint 3</text>
- <text x="440" y="250" text-anchor="middle" font-size="15" fill="var(--text-muted)">The breadcrumb under the bar is both where you are and the way back.</text>
+<h2><span class="num">1</span> A tab is the top of a stack of levels.</h2>
+<svg viewBox="0 0 880 162" role="img" aria-label="Pressing the tab you are on returns to its top">
+ <rect x="20" y="16" width="840" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="16" fill="var(--text-muted)">Settings › Screens › Overlay</text>
+ <text x="440" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">Press the Settings tab again.</text>
+ <text x="440" y="124" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">You are back at the top of Settings.</text>
 </svg>
-<p class="body">Back is three routes that agree: the breadcrumb, the <strong>grip button</strong> on either controller, and saying so. And voice jumps levels — asking for something three levels down takes you there with the whole trail behind it, rather than dropping you somewhere with nothing above.</p>
+<p class="body">Back is the breadcrumb, the grip button on either controller, or saying so. Asking for something deep takes you there with the trail behind it.</p>
 </section>
 <section>
-<h2><span class="num">2</span> Drilling in and reflowing are the same mechanism.</h2>
-<svg viewBox="0 0 880 246" role="img" aria-label="A narrow surface shows one pane and you drill; a wider one shows two, and a wide one three">
- <text x="110" y="30" text-anchor="middle" font-size="14" fill="var(--text-muted)">MINI PANEL</text>
- <rect x="20" y="40" width="180" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <rect x="34" y="54" width="152" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="400" y="30" text-anchor="middle" font-size="14" fill="var(--text-muted)">THE WINDOW</text>
- <rect x="240" y="40" width="320" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <rect x="254" y="54" width="142" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
- <rect x="404" y="54" width="142" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="730" y="30" text-anchor="middle" font-size="14" fill="var(--text-muted)">WIDE, OR ZOOMED OUT</text>
- <rect x="600" y="40" width="260" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <rect x="610" y="54" width="76" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
- <rect x="694" y="54" width="76" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
- <rect x="778" y="54" width="76" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="440" y="194" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">It is one question: how many panes fit.</text>
- <text x="440" y="226" text-anchor="middle" font-size="16" fill="var(--text)">Same stack, same breadcrumb, same phrases — one design, not four that have to agree.</text>
+<h2><span class="num">2</span> How many panes fit decides drill or side by side.</h2>
+<svg viewBox="0 0 880 162" role="img" aria-label="A narrow surface shows one pane and a wider one shows more">
+ <rect x="20" y="16" width="840" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">Narrow: one pane, and you drill.</text>
+ <text x="440" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">Wider: the level above sits beside it.</text>
+ <text x="440" y="124" text-anchor="middle" font-size="16" fill="var(--text-muted)">Zoom re-measures, so zooming out can add a pane.</text>
 </svg>
-<p class="body">Zoom is what moves you between them most of the time: it re-measures rather than magnifying, so zooming out gives the layout more logical room and a third pane appears.</p>
+<p class="body">The same stack, breadcrumb and phrases serve every width. Zoom lays the content out again rather than magnifying it.</p>
 </section>
 <section>
 <h2><span class="num">3</span> A chooser takes the whole panel.</h2>
-<svg viewBox="0 0 880 240" role="img" aria-label="A whole-panel chooser carries the slot it is choosing for in its header, which a drop-down has nowhere to put">
- <rect x="20" y="34" width="400" height="140" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="220" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">A CHOOSER, WHOLE-PANEL</text>
- <text x="220" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">carries the slot, its size,</text>
- <text x="220" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">and what is fitted now</text>
- <text x="220" y="154" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">about sixteen rows, comfortably</text>
- <rect x="460" y="34" width="400" height="140" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="660" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">A DROP-DOWN</text>
- <text x="660" y="102" text-anchor="middle" font-size="14" fill="var(--text-muted)">has nowhere to put that</text>
- <text x="660" y="124" text-anchor="middle" font-size="14" fill="var(--text-muted)">and fits fewer rows</text>
- <text x="660" y="154" text-anchor="middle" font-size="14" fill="var(--text-muted)">and cannot exist on a quad at all</text>
- <text x="440" y="214" text-anchor="middle" font-size="16" fill="var(--text)">So it is a level of the stack rather than a pop-up, and Back is the way out of it.</text>
+<svg viewBox="0 0 880 128" role="img" aria-label="A chooser names the slot it is choosing for">
+ <rect x="20" y="16" width="840" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">Choose a voice for the narrator.</text>
+ <text x="440" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">The header says which slot is being set.</text>
 </svg>
+<p class="body">A whole-panel chooser carries the slot it is choosing for in its header, which a drop-down has nowhere to put. It is used where the choice is pressed in a headset.</p>
 </section>
 <section>
-<h2><span class="num">4</span> Text entry is voice first, and never your real keyboard.</h2>
-<svg viewBox="0 0 880 252" role="img" aria-label="Voice is the primary text entry with a drawn keyboard as fallback; there is deliberately no physical keyboard route">
- <rect x="20" y="36" width="400" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="220" y="74" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)">VOICE FIRST</text>
- <text x="220" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">a system name is far easier said</text>
- <text x="220" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">and it reaches the box once,</text>
- <text x="220" y="152" text-anchor="middle" font-size="14" fill="var(--text-muted)">when it is done</text>
- <rect x="460" y="36" width="400" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="660" y="74" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A DRAWN KEYBOARD</text>
- <text x="660" y="108" text-anchor="middle" font-size="14" fill="var(--text-muted)">for a number — and it comes back</text>
- <text x="660" y="130" text-anchor="middle" font-size="14" fill="var(--text-muted)">on its own for the three failures</text>
- <text x="660" y="152" text-anchor="middle" font-size="14" fill="var(--text-muted)">Directive 47 can actually detect</text>
- <text x="440" y="208" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">There is no physical keyboard route, and that is deliberate.</text>
- <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">A global hook is forbidden outright, and raw input would deliver every keystroke on the system.</text>
+<h2><span class="num">4</span> In the headset, a row that opens a window is refused.</h2>
+<svg viewBox="0 0 880 128" role="img" aria-label="A window cannot appear in a headset, so the press is refused">
+ <rect x="20" y="16" width="840" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">"Not currently supported in VR"</text>
+ <text x="440" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">OffscreenSurface.cs</text>
 </svg>
-<p class="body">A system name arriving letter by letter is eleven wrong values on the way to the right one — so what you say lands in one piece. Confident, valid and <em>still</em> not what you meant is the one case no machine can catch, which is what the read-back is for.</p>
+<p class="body">A ray press on a Settings row that opens a second window says this over the panel and opens nothing. Everything else on the page is pressed as usual.</p>
 </section>
 </div></div>
 </details>
@@ -547,8 +515,8 @@ open the X setting              open the X settings
 find the X setting              find the X settings             find the X page
 ```
 
-"Where is the fuel setting" opens *Fuel and range* and answers "Settings › Your core › In flight ›
-Flight callouts › Fuel and range." When two or three places match equally well, nothing moves and
+"Where is the fuel setting" opens *Fuel and range* and answers with its path, which starts under
+Settings › Your core › In flight and ends in the row's name. When two or three places match equally well, nothing moves and
 the answer names them and asks which. A phrase that finds nothing goes to the model as any other
 question does, and so does anything not in the list above — "where is my Anaconda" is a question
 about the game. This only shows where a setting is and changes nothing.
@@ -704,7 +672,7 @@ the jump-to-latest control, say "newest", or scroll back to the bottom, to start
 
 The transcript follows its own newest line, which is what you want almost all of the time and
 exactly what you do not want the moment you scroll up to read something — a busy session appends
-several lines a second, and every one of them used to drag you back to the bottom.
+several lines a second.
 
 Scrolling away from the end stops it following. A **↓ Newest** button appears over the bottom
 right of the page while you are behind; pressing it goes to the newest line *and* starts

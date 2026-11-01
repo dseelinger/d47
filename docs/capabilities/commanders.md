@@ -49,14 +49,33 @@ nav_order: 155
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Changing the Commander d47 shows, without the mouse.</p>
+<p class="intro">Saying a Commander's name changes which Commander D47 shows, without the mouse.</p>
 <section>
-<h2><span class="num">1</span> Only you can switch.</h2>
-<svg viewBox="0 0 880 152" role="img" aria-label="A misheard sentence could switch Commanders, so the model is never allowed to">
- <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">The model cannot switch Commanders.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Your own words, the panel and the title bar can.</text>
+<h2><span class="num">1</span> The journals list the Commanders you can switch to.</h2>
+<svg viewBox="0 0 880 162" role="img" aria-label="Each Commander but the one showing gets two phrases">
+ <rect x="20" y="16" width="840" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="16" fill="var(--text-muted)">Journals list CMDR Kestrel Vane.</text>
+ <text x="440" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">You say "switch to Kestrel Vane".</text>
+ <text x="440" y="124" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">D47 shows that Commander.</text>
 </svg>
+<p class="body">D47 builds "switch to" phrases from the Commanders the journals list, leaving out the one showing. With only one Commander listed there is nothing to switch to.</p>
+</section>
+<section>
+<h2><span class="num">2</span> Only you can switch.</h2>
+<svg viewBox="0 0 880 128" role="img" aria-label="A model call to switch Commanders is refused">
+ <rect x="20" y="16" width="840" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="16" fill="var(--text-muted)">A misheard sentence could switch Commanders.</text>
+ <text x="440" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">So the model is refused this tool.</text>
+</svg>
+<p class="body">Spoken phrases, the title bar and the Commanders page switch Commanders. The model is refused, so a misheard sentence cannot change who D47 shows mid-conversation.</p>
+</section>
+<section>
+<h2><span class="num">3</span> The reply confirms who you are now.</h2>
+<svg viewBox="0 0 880 94" role="img" aria-label="The confirmation is one fixed line">
+ <rect x="20" y="16" width="840" height="62" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="16" fill="var(--text-muted)">"Switched to CMDR Kestrel Vane. I'll stay with this commander until you switch again or another commander logs in."</text>
+</svg>
+<p class="body"><code>CommandersCapability.Switched</code> builds this line. Picking the Commander already showing answers "You are already CMDR" and the name.</p>
 </section>
 </div></div>
 </details>

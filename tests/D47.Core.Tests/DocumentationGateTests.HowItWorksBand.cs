@@ -14,13 +14,11 @@ public partial class DocumentationGateTests
     // Each list names pages that fail its fact today; an entry that stops failing is stale and fails.
     private static readonly HashSet<string> PagesWithoutAHowItWorksBand = new(StringComparer.Ordinal)
     {
-        "about",
     };
 
     private static readonly HashSet<string> PagesWithALongHowItWorksBand = new(StringComparer.Ordinal)
     {
         "general-conversation",
-        "vr",
     };
 
     private static readonly HashSet<string> PagesWhoseHowItWorksBandCarriesAFigure = new(StringComparer.Ordinal)

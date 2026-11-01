@@ -19,17 +19,29 @@ nav_order: 143
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Off unless D47 is started with --utilities. Then one step to timers that say their own name.</p>
+<p class="intro">Off unless D47 is started with --utilities. Then two steps to timers that say their own name.</p>
 <section>
 <h2><span class="num">1</span> Set a timer, and give it a name.</h2>
 <p class="say">Start D47 with --utilities, then say "set a timer for twenty minutes called fuel scoop".</p>
-<p class="expect">D47 confirms the timer, and when it goes off it says its name instead of beeping.</p>
+<p class="expect">D47 replies "\"fuel scoop\" is running" and when it ends; when it finishes a chime sounds and D47 says "fuel scoop".</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">set a timer for twenty minutes called fuel scoop</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">When it goes off it says the name rather than beeping.</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">"how long left on the fuel scoop timer" — "cancel it"</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Cancel it by saying so.</h2>
+<p class="say">Say "cancel the timer".</p>
+<p class="expect">The reply is "Cancelled" and its name, or "Cancelled" and a count when several were running; with none, "Nothing is running."</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a cancel phrase typed into it">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">cancel the timer</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">"cancel the alarm" — "stop the timer"</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Cancelling needs no AI configured.</text>
 </svg>
 </section>
 <section>
@@ -53,44 +65,34 @@ nav_order: 143
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Timers and alarms that say their own name.</p>
+<p class="intro">Timers count down, alarms wait for a clock time, and both say their name when they finish.</p>
 <section>
-<h2><span class="num">1</span> A timer is a stretch. An alarm is a moment.</h2>
-<svg viewBox="0 0 880 288" role="img" aria-label="Timers measure a stretch and do not survive a restart; alarms name a moment and do">
- <rect x="20" y="20" width="410" height="150" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="225" y="62" text-anchor="middle" font-size="22" font-weight="800" fill="var(--text)">TIMER</text>
- <text x="225" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">forty minutes for the mining run</text>
- <line x1="70" y1="122" x2="380" y2="122" stroke="var(--accent-muted)" stroke-width="6" stroke-linecap="butt"/>
- <text x="225" y="152" text-anchor="middle" font-size="16" fill="var(--text-muted)">a stretch of time</text>
- <rect x="450" y="20" width="410" height="150" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="655" y="62" text-anchor="middle" font-size="22" font-weight="800" fill="var(--text)">ALARM</text>
- <text x="655" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">seven in the morning</text>
- <line x1="500" y1="122" x2="810" y2="122" stroke="var(--border)" stroke-width="6" stroke-linecap="butt"/>
- <circle cx="700" cy="122" r="11" fill="var(--accent)"/>
- <text x="655" y="152" text-anchor="middle" font-size="16" fill="var(--text-muted)">a single moment</text>
- <rect x="20" y="196" width="410" height="58" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="225" y="232" text-anchor="middle" font-size="17" fill="var(--text-muted)">gone if D47 restarts</text>
- <rect x="450" y="196" width="410" height="58" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="655" y="232" text-anchor="middle" font-size="17" fill="var(--accent)">survives a restart</text>
- <text x="440" y="282" text-anchor="middle" font-size="16" fill="var(--text-muted)">Half of forty minutes through a crash is a question nobody can answer, so it is not asked.</text>
+<h2><span class="num">1</span> A timer is a stretch; an alarm is a moment.</h2>
+<svg viewBox="0 0 880 162" role="img" aria-label="A timer is lost on restart and an alarm is kept">
+ <rect x="20" y="16" width="840" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">Timer: "fuel scoop", twenty minutes</text>
+ <text x="440" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">Alarm: "wake up", 07:00</text>
+ <text x="440" y="124" text-anchor="middle" font-size="16" fill="var(--text-muted)">Only the alarm survives D47 closing.</text>
 </svg>
+<p class="body">A timer counts minutes from now and does not survive D47 restarting. An alarm names a local clock time, today or tomorrow, and is kept in <code>alarms.json</code>.</p>
 </section>
 <section>
-<h2><span class="num">2</span> One it could not sound, it owns up to.</h2>
-<svg viewBox="0 0 880 232" role="img" aria-label="An alarm that came due while D47 was closed is reported at the next start rather than sounded late">
- <rect x="20" y="26" width="250" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="145" y="64" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">07:00</text>
- <text x="145" y="92" text-anchor="middle" font-size="15" fill="var(--text-muted)">due, and D47 was closed</text>
- <line x1="282" y1="69" x2="308" y2="69" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="322,69 306,61 306,77" fill="var(--accent-muted)"/>
- <rect x="334" y="26" width="526" height="86" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="597" y="62" text-anchor="middle" font-size="17" fill="var(--text)">“That alarm was due at 07:00 and I was not running.</text>
- <text x="597" y="88" text-anchor="middle" font-size="17" fill="var(--text)">I have not sounded it since.”</text>
- <text x="440" y="164" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Told at the next start, with when it was due.</text>
- <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text-muted)">Sounding it hours late as though nothing had happened would be worse than not sounding it.</text>
- <text x="440" y="224" text-anchor="middle" font-size="16" fill="var(--text-muted)">A chime says something finished; the name says which.</text>
+<h2><span class="num">2</span> An alarm it could not sound is reported later.</h2>
+<svg viewBox="0 0 880 128" role="img" aria-label="An alarm due while D47 was closed is reported, not sounded">
+ <rect x="20" y="16" width="840" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="16" fill="var(--text-muted)">D47 closed at 06:00; the alarm was due at 07:00.</text>
+ <text x="440" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">At the next start, D47 says the alarm was missed.</text>
 </svg>
-<p class="body">Cancelling is reachable by saying so, and from nowhere else — the AI is not offered it and is refused if it asks. Naming one that matches nothing, or two, is answered rather than guessed at: cancelling the wrong alarm of two is worse than being asked which.</p>
+<p class="body">D47 cannot fire while it is closed. At the next start it reports the alarm with its due time instead of sounding it late.</p>
+</section>
+<section>
+<h2><span class="num">3</span> Only you can cancel one.</h2>
+<svg viewBox="0 0 880 128" role="img" aria-label="Cancelling is answered with a fixed line">
+ <rect x="20" y="16" width="840" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">"Nothing is running."</text>
+ <text x="440" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">UtilitiesCapability.cs</text>
+</svg>
+<p class="body"><code>UtilitiesCapability.Cancel</code> answers with this line when nothing is set. The AI is not offered cancelling and is refused if it asks.</p>
 </section>
 </div></div>
 </details>
@@ -139,9 +141,7 @@ Directive 47 tells you which one finished.
 
 #### What happens when one goes off
 
-A short rising chime, and then Directive 47 **says the name**. One clip for all of them rather
-than a tone per timer: the sound says *something finished* and the sentence says which, which the
-voice does better than a chime ever could. It goes through the same audio arbiter as everything
+A short rising chime, and then Directive 47 **says the name**. One clip serves all of them and the sentence says which. It goes through the same audio arbiter as everything
 else, so it either waits for a sentence to end or lands on top of it according to the same rules.
 
 #### Alarms survive a restart. Timers do not.
@@ -157,8 +157,6 @@ due:
 ```text
 Wake up: that alarm was due at 07:00 and I was not running. I have not sounded it since.
 ```
-
-Sounding it hours late as though nothing had happened would be worse than not sounding it at all.
 
 #### The file
 
@@ -202,10 +200,8 @@ Timers do not survive D47 restarting; use an alarm for a wall-clock moment.
 {"type":"object","properties":{"minutes":{"type":"number","description":"How long, in minutes."},"name":{"type":"string","description":"What to call it. Said back when it finishes."}},"required":["minutes","name"],"additionalProperties":false}
 ```
 
-Advertised, unlike the rest of this capability, and the asymmetry is the point: a duration arrives
-as English — "about forty minutes", "an hour and a half" — which is the one thing a model does
-better than a closed grammar, and the keyword router cannot extract an argument from free text
-without starting to guess.
+The only tool of the three offered to the model. A duration arrives as English, such as "about forty
+minutes", and the model turns it into minutes; the keyword router does not parse it.
 
 #### `set_alarm`
 
@@ -216,8 +212,7 @@ came round while D47 was closed is reported afterwards rather than sounded late.
 {"type":"object","properties":{"at":{"type":"string","description":"Local time for the Commander, as 24-hour HH:mm."},"name":{"type":"string","description":"What to call it. Said back when it goes off."}},"required":["at","name"],"additionalProperties":false}
 ```
 
-"Seven in the morning" said at nine in the evening means the seven that is coming rather than the
-one that went, so a time already past today is set for tomorrow rather than refused.
+A time already past today is set for tomorrow.
 
 #### `cancel_reminder`
 

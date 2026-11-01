@@ -66,21 +66,24 @@ nav_order: 142
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">What time it is in both worlds at once.</p>
+<p class="intro">D47 answers the date and time itself, in both calendars, from one instant.</p>
 <section>
-<h2><span class="num">1</span> Two dates. One instant.</h2>
-<svg viewBox="0 0 880 250" role="img" aria-label="The same moment written twice, 1286 years apart">
- <rect x="30" y="40" width="360" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="210" y="84" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">17 Aug 3312</text>
- <text x="210" y="116" text-anchor="middle" font-size="16" fill="var(--text-muted)">out there</text>
- <text x="440" y="86" text-anchor="middle" font-size="20" font-weight="800" fill="var(--accent)">+1286</text>
- <text x="440" y="112" text-anchor="middle" font-size="15" fill="var(--text-muted)">years</text>
- <rect x="490" y="40" width="360" height="110" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="670" y="84" text-anchor="middle" font-size="24" font-weight="800" fill="var(--text)">17 Aug 2026</text>
- <text x="670" y="116" text-anchor="middle" font-size="16" fill="var(--text-muted)">where you are</text>
- <text x="440" y="196" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">One moment presented twice, not two clocks.</text>
- <text x="440" y="228" text-anchor="middle" font-size="16" fill="var(--text-muted)">Which is why they can never drift apart, and why D47 never asks a model to add 1286.</text>
+<h2><span class="num">1</span> One instant is written as two dates.</h2>
+<svg viewBox="0 0 880 128" role="img" aria-label="The same moment written as a galactic date and a local date">
+ <rect x="20" y="16" width="840" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="16" fill="var(--text-muted)">You say "what time is it".</text>
+ <text x="440" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">3312 out here, 2026 where you are.</text>
 </svg>
+<p class="body">The galactic date is your own date moved forward by a fixed number of years, so the two can never drift apart. No AI, key or network is needed.</p>
+</section>
+<section>
+<h2><span class="num">2</span> The reply is one fixed sentence.</h2>
+<svg viewBox="0 0 880 128" role="img" aria-label="The reply is built from two clocks">
+ <rect x="20" y="16" width="840" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">"It is 21:04 on 17 August 3312 out here, and 21:04 on Monday 17 August 2026 where you are."</text>
+ <text x="440" y="90" text-anchor="middle" font-size="16" fill="var(--text-muted)">GalacticTime.cs</text>
+</svg>
+<p class="body"><code>GalacticTime.Say</code> builds this sentence. The galactic date is written the same way for everyone; your own date follows your computer.</p>
 </section>
 </div></div>
 </details>
@@ -114,7 +117,7 @@ over the same moment rather than a second clock — one instant presented twice,
 two can never drift out of step with each other.
 
 ```text
-21:04 on 17 August 3312 out here, and 21:04 on Monday 17 August 2026 where you are.
+It is 21:04 on 17 August 3312 out here, and 21:04 on Monday 17 August 2026 where you are.
 ```
 
 The galactic date is written the same way for everybody, because the galaxy's calendar is not a
@@ -124,8 +127,7 @@ different days. Your own clock is written the way your computer writes dates.
 **Directive 47 answers this itself.** No turn is taken, no provider is needed, and nothing is
 spent — it works with no key configured and no network. Both dates also go into the block of live
 game state that goes with every conversation, already worked out, so the core can mention
-the date without asking for it. It is never asked to add 1286 to anything: that is arithmetic,
-and a model doing arithmetic in prose is wrong occasionally and confidently.
+the date without asking for it. The core is told not to calculate either date from the other.
 
 When [timers and alarms](utilities.html) are switched on, the same block also lists what is
 running.
@@ -142,8 +144,6 @@ provider, no tokens.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-**Protected**, which here is about cost as much as about safety: the advertised tool surface is
-paid for on every turn whether or not anybody asks the time, and this question does not need the
-model at all. The keyword router reaches it; the model never sees it.
+**Protected**: the model is not offered it. The keyword router reaches it.
 
 </details>
