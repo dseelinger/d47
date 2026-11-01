@@ -114,7 +114,7 @@ nav_order: 123
  <text x="740" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">Level and Duck</text>
  <text x="740" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">as set</text>
 </svg>
-<p class="body">When you dock, Elite writes a Music event naming Starport. D47 stops the old track and plays one from music/docked, at the music Level, dropping to its Duck while D47 speaks.</p>
+<p class="body">When you dock, Elite writes a Music event naming Starport. D47 holds the old track and plays from music/docked, continuing the docked track it held if you left less than 30 minutes ago, at the music Level, dropping to its Duck while D47 speaks.</p>
 </section>
 <section>
 <h2><span class="num">4</span> Pause, resume and next control the music only.</h2>
@@ -314,8 +314,11 @@ seconds of silence separate a track that ends from the next one. A situation wit
 nothing in it is quiet, which is what every Commander gets until they drop something in. D47
 ships with no music of its own.
 
-Changing situation stops the old track rather than letting it play out. Muting the category stops
-it, and unmuting starts one.
+Changing situation holds the old track where it is, and coming back to that folder within 30
+minutes continues it from that point, so a run of short galaxy-map visits plays as one track. The
+hold is per folder, not per situation: two situations that both fall back to `general` share one
+track. Up to four tracks are held; a fifth drops the one held longest. Muting the category, saying
+"stop" or closing Elite stops every held track, and unmuting starts a new one.
 
 ### Pause, resume and next track
 
@@ -326,7 +329,9 @@ these keys.
 
 - **Pause** holds the track where it is. **Resume** continues it from that point.
 - **Next** ends the track and starts the next one in the shuffle. It also ends a pause.
-- While paused, a change of situation starts nothing. Resume starts the new situation's track.
+- While paused, a change of situation starts nothing, and the paused track is held for its folder.
+  Resume continues the held track of the folder you are in now, if it has one within 30 minutes,
+  and otherwise starts that folder's next track.
 - With Elite closed, resume and next reply "Elite is not running." and play nothing. Pause still
   works.
 - Pause lasts until you resume or restart D47. It is not the **Mute** setting, which is saved and

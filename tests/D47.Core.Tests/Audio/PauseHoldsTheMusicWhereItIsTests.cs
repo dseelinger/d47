@@ -86,7 +86,8 @@ public class PauseHoldsTheMusicWhereItIsTests : IDisposable
 
         _bench.Music.Follow(InSupercruise, musicTrack: null);
 
-        Assert.Contains(docked.Id, _bench.Sink.Stopped);
+        Assert.DoesNotContain(docked.Id, _bench.Sink.Stopped);
+        Assert.Contains(docked.Id, _bench.Sink.Paused);
         Assert.Single(_bench.Sink.Started);
         Assert.Null(_bench.Music.State.Track);
 

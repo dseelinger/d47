@@ -75,6 +75,12 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         new byte[(int)(AudioFormat.Standard.SampleRate * Gap.TotalSeconds) * AudioFormat.Standard.BytesPerFrame],
         AudioFormat.Standard);
 
+    /// <summary>How many ambience tracks are held to continue later; one more drops the one held longest.</summary>
+    public const int MostShelved = 4;
+
+    /// <summary>How long a shelved track can wait to be continued before it is stopped.</summary>
+    public static readonly TimeSpan ShelfLife = TimeSpan.FromMinutes(30);
+
     /// <summary>The silence between two ambience tracks, the Red Book CD pause (#522).</summary>
     public static readonly TimeSpan MusicGap = TimeSpan.FromSeconds(2);
 
@@ -91,7 +97,12 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private Playing? _current;
     private Playing? _bed;
     private long? _music;
+    private MusicTrack? _musicTrack;
+    private string? _musicFolder;
     private bool _musicHeld;
+
+    /// <summary>Paused tracks held under their folder, longest held first, at most one per folder.</summary>
+    private readonly List<Shelved> _shelf = [];
 
     /// <summary>The track to stream once the gap in the music slot finishes, or null when no gap is playing.</summary>
     private MusicTrack? _musicAfterGap;
@@ -104,6 +115,8 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private sealed record Pending(long Id, AudioRequest Request);
 
     private sealed record Playing(long Id, AudioRequest Request);
+
+    private sealed record Shelved(long Id, MusicTrack Track, string Folder, DateTimeOffset At);
 
     /// <summary>Raised when everything was cut off — the Commander said stop.</summary>
     public event Action? Silenced;
@@ -302,8 +315,8 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             _lastSpokenGroup = null;
 
             // Silence is silence.
-            _music = null;
-            _musicAfterGap = null;
+            ClearLive();
+            _shelf.Clear();
             sink.StopAll();
             activity = Snapshot();
         }
@@ -348,10 +361,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     }
 
     /// <summary>
-    /// Streams one ambience track in the music slot, replacing whatever was in it. With
-    /// <paramref name="afterGap"/>, <see cref="MusicGap"/> of silence plays in the slot first.
+    /// Streams one ambience track from a folder in the music slot, replacing whatever was live and any track
+    /// shelved for that folder. With <paramref name="afterGap"/>, <see cref="MusicGap"/> of silence plays in
+    /// the slot first.
     /// </summary>
-    public void PlayMusic(MusicTrack track, bool afterGap = false)
+    public void PlayMusic(MusicTrack track, string folder = Situations.General, bool afterGap = false)
     {
         AudioActivity activity;
 
@@ -362,8 +376,12 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
                 sink.Stop(playing);
             }
 
+            DropShelved(folder);
+
             var id = _nextId++;
             _music = id;
+            _musicTrack = track;
+            _musicFolder = folder;
             _musicHeld = false;
 
             if (afterGap)
@@ -383,8 +401,145 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         ActivityChanged?.Invoke(activity);
     }
 
-    /// <summary>Stops the ambience without touching anything else.</summary>
+    /// <summary>
+    /// Holds the live track, paused, under its folder to continue later; a gap is stopped instead. Drops
+    /// tracks shelved longer than <see cref="ShelfLife"/>, then the longest shelved beyond
+    /// <see cref="MostShelved"/>.
+    /// </summary>
+    public void ShelveMusic(DateTimeOffset now)
+    {
+        AudioActivity activity;
+
+        lock (_gate)
+        {
+            DropStale(now);
+
+            if (_music is not { } playing)
+            {
+                return;
+            }
+
+            if (_musicAfterGap is not null || _musicTrack is null || _musicFolder is null)
+            {
+                sink.Stop(playing);
+            }
+            else
+            {
+                if (!_musicHeld)
+                {
+                    sink.Pause(playing);
+                }
+
+                DropShelved(_musicFolder);
+                _shelf.Add(new Shelved(playing, _musicTrack, _musicFolder, now));
+
+                while (_shelf.Count > MostShelved)
+                {
+                    sink.Stop(_shelf[0].Id);
+                    _shelf.RemoveAt(0);
+                }
+            }
+
+            ClearLive();
+            activity = Snapshot();
+        }
+
+        ActivityChanged?.Invoke(activity);
+    }
+
+    /// <summary>
+    /// Continues the track shelved for a folder as the live track, replacing whatever was live. Null when
+    /// that folder has none.
+    /// </summary>
+    public MusicTrack? UnshelveMusic(string folder)
+    {
+        AudioActivity activity;
+        Shelved shelved;
+
+        lock (_gate)
+        {
+            var index = _shelf.FindIndex(entry => string.Equals(entry.Folder, folder, StringComparison.OrdinalIgnoreCase));
+
+            if (index < 0)
+            {
+                return null;
+            }
+
+            shelved = _shelf[index];
+            _shelf.RemoveAt(index);
+
+            if (_music is { } playing)
+            {
+                sink.Stop(playing);
+            }
+
+            ClearLive();
+            _music = shelved.Id;
+            _musicTrack = shelved.Track;
+            _musicFolder = shelved.Folder;
+            sink.SetGain(shelved.Id, GainFor(AudioChannel.Music));
+            sink.Resume(shelved.Id);
+            activity = Snapshot();
+        }
+
+        ActivityChanged?.Invoke(activity);
+        return shelved.Track;
+    }
+
+    /// <summary>Stops every track shelved longer than <see cref="ShelfLife"/>.</summary>
+    public void DropStaleMusic(DateTimeOffset now)
+    {
+        lock (_gate)
+        {
+            DropStale(now);
+        }
+    }
+
+    /// <summary>The folder of the live track, held or not, or null when the music slot is empty.</summary>
+    public string? MusicFolder
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _musicFolder;
+            }
+        }
+    }
+
+    /// <summary>Stops the live ambience track and every shelved one, without touching anything else.</summary>
     public void StopMusic()
+    {
+        AudioActivity activity;
+
+        lock (_gate)
+        {
+            if (_music is null && _shelf.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var shelved in _shelf)
+            {
+                sink.Stop(shelved.Id);
+            }
+
+            _shelf.Clear();
+
+            if (_music is { } playing)
+            {
+                sink.Stop(playing);
+            }
+
+            ClearLive();
+            activity = Snapshot();
+        }
+
+        ActivityChanged?.Invoke(activity);
+    }
+
+    /// <summary>Stops the live ambience track and leaves the shelved ones.</summary>
+    public void SkipMusic()
     {
         AudioActivity activity;
 
@@ -396,9 +551,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             }
 
             sink.Stop(playing);
-            _music = null;
-            _musicHeld = false;
-            _musicAfterGap = null;
+            ClearLive();
             activity = Snapshot();
         }
 
@@ -445,6 +598,38 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             lock (_gate)
             {
                 return _music is not null && _musicHeld;
+            }
+        }
+    }
+
+    private void ClearLive()
+    {
+        _music = null;
+        _musicTrack = null;
+        _musicFolder = null;
+        _musicHeld = false;
+        _musicAfterGap = null;
+    }
+
+    private void DropShelved(string folder)
+    {
+        var index = _shelf.FindIndex(shelved => string.Equals(shelved.Folder, folder, StringComparison.OrdinalIgnoreCase));
+
+        if (index >= 0)
+        {
+            sink.Stop(_shelf[index].Id);
+            _shelf.RemoveAt(index);
+        }
+    }
+
+    private void DropStale(DateTimeOffset now)
+    {
+        for (var i = _shelf.Count - 1; i >= 0; i--)
+        {
+            if (now - _shelf[i].At > ShelfLife)
+            {
+                sink.Stop(_shelf[i].Id);
+                _shelf.RemoveAt(i);
             }
         }
     }
@@ -541,6 +726,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             sink.SetGain(music, GainFor(AudioChannel.Music));
         }
 
+        foreach (var shelved in _shelf)
+        {
+            sink.SetGain(shelved.Id, GainFor(AudioChannel.Music));
+        }
+
         if (_current is { } playing)
         {
             sink.SetGain(playing.Id, GainFor(playing.Request.Channel));
@@ -576,9 +766,15 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             }
             else if (_music == playbackId)
             {
-                _music = null;
+                ClearLive();
                 trackEnded = true;
                 activity = Snapshot();
+            }
+            else if (_shelf.FindIndex(shelved => shelved.Id == playbackId) is >= 0 and var index)
+            {
+                // A shelved track that ended, or failed to open, is not the live track ending.
+                _shelf.RemoveAt(index);
+                return;
             }
             else if (_current?.Id == playbackId)
             {

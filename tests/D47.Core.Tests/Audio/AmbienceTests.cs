@@ -116,6 +116,23 @@ public class AmbienceTests : IDisposable
         Assert.NotNull(ambience.Next(library));
     }
 
+    /// <summary>Coming back to a folder continues its shuffle rather than starting a new one (#2016).</summary>
+    [Fact]
+    public void EachFolderKeepsItsOwnShuffle()
+    {
+        var library = Library(("docked", "berth"), ("docked", "hangar"), ("supercruise", "cruise"));
+        var ambience = new Ambience(new Random(7));
+
+        ambience.Enter(Situations.Docked);
+        var first = ambience.Next(library)!.Name;
+        ambience.Enter(Situations.Supercruise);
+        ambience.Next(library);
+        ambience.Enter(Situations.Docked);
+
+        Assert.NotEqual(first, ambience.Next(library)!.Name);
+        Assert.Equal(Situations.Docked, ambience.Playing);
+    }
+
     /// <summary>The bed and the music play at once without either taking the queue head.</summary>
     [Fact]
     public void TheBedAndTheMusicPlayAtOnce()

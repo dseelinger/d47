@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Ambient music now continues where it stopped when you return to a folder within 30 minutes, so leaving the galaxy map and opening it again carries on the same track instead of starting a new one. Two situations that play from the same folder share one track, and each folder continues its own shuffle.
+
 Invented NPCs now state their sex on their first line, and d47 keeps it while they are in the system. Replies to you, and later exchanges that bring them back, say so, so a reply no longer contradicts the voice. A real comms NPC's reply uses the sex of their given name where one is recorded.
 
 A cast member of the running story now knows the chapter's current objective and its reason, so asking one of them why you are going somewhere gets an answer from the story's reason instead of "no reason on my desk".

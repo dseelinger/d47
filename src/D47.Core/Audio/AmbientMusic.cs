@@ -52,22 +52,33 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
         }
     }
 
-    /// <summary>Points the ambience at the current situation. A change stops the old track.</summary>
-    public void Follow(GameStatus status, string? musicTrack)
+    /// <summary>
+    /// Points the ambience at the current situation, at the tick's time. A change of folder shelves the old
+    /// track and continues the new folder's shelved track, or starts its next one.
+    /// </summary>
+    public void Follow(GameStatus status, string? musicTrack, DateTimeOffset now = default)
     {
         lock (_gate)
         {
-            if (!_running || !_ambience.Enter(Situations.For(status, musicTrack, library())))
+            if (!_running)
             {
                 return;
             }
 
-            audio.StopMusic();
+            audio.DropStaleMusic(now);
+
+            if (!_ambience.Enter(Situations.For(status, musicTrack, library()))
+                || string.Equals(_ambience.Folder(library()), audio.MusicFolder, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            audio.ShelveMusic(now);
             _current = null;
 
             if (!_paused)
             {
-                StartNext();
+                Continue();
             }
         }
 
@@ -90,7 +101,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
         Raise();
     }
 
-    /// <summary>The mute setting changed: muting stops the track, unmuting starts one unless paused.</summary>
+    /// <summary>The mute setting changed: muting stops every track, unmuting starts one unless paused.</summary>
     public void MuteChanged(bool muted)
     {
         lock (_gate)
@@ -110,7 +121,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
     }
 
     /// <summary>
-    /// Whether Elite is running. Stopping stops the track; starting again leaves the next
+    /// Whether Elite is running. Stopping stops every track; starting again leaves the next
     /// <see cref="Follow"/> to start one for the situation it finds.
     /// </summary>
     public void GameRunning(bool running)
@@ -191,7 +202,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
             return "The music is already playing.";
         }
 
-        return StartNext() ? "Music resumed." : NothingToPlay;
+        return Continue() ? "Music resumed." : NothingToPlay;
     }
 
     private string Skip()
@@ -208,7 +219,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
             return "Ambient music is muted in the Audio mixer.";
         }
 
-        audio.StopMusic();
+        audio.SkipMusic();
         _current = null;
         return StartNext() ? "Next track." : NothingToPlay;
     }
@@ -216,6 +227,23 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
     private const string NotRunning = "Elite is not running.";
 
     private const string NothingToPlay = "There is no music to play. Drop tracks into data\\audio\\music.";
+
+    /// <summary>Continues the folder's shelved track, or starts its next one. False when nothing plays.</summary>
+    private bool Continue()
+    {
+        if (audio.Mix.Music.Muted)
+        {
+            return false;
+        }
+
+        if (audio.UnshelveMusic(_ambience.Folder(library())) is { } shelved)
+        {
+            _current = shelved;
+            return true;
+        }
+
+        return StartNext();
+    }
 
     /// <summary>
     /// Starts the next track unless muted, after <see cref="AudioArbiter.MusicGap"/> when it follows a
@@ -235,7 +263,7 @@ public sealed class AmbientMusic(AudioArbiter audio, Func<CueLibrary> library, R
             return false;
         }
 
-        audio.PlayMusic(_current, afterGap);
+        audio.PlayMusic(_current, _ambience.Playing, afterGap);
         return true;
     }
 
