@@ -29,6 +29,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private SystemBodyPage? _body;
     private StarSystemProfile? _drawn;
     private StarSystemSurface? _surface;
+    private (string Query, IReadOnlyList<PanelFindResult> Results, Action<PanelFindResult> Open)? _allResults;
     private (long Address, string Id)? _pendingSystem;
     private string? _pendingName;
     private (long Address, string? Station)? _pendingAddress;
@@ -149,6 +150,14 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         }
     }
 
+    /// <summary>Opens Search › System › All results on the list Find held for <paramref name="query"/>.</summary>
+    public void OpenAllResults(string query, IReadOnlyList<PanelFindResult> results, Action<PanelFindResult> open)
+    {
+        _allResults = (query, results, open);
+        host.Nav.Show(StarSystemPage.RootKey);
+        host.Nav.Drill(PanelTab.Search, new NavCrumb(AllResultsPage.PageKey, "All results"));
+    }
+
     public bool OpenSystem(long systemAddress) => _starSystem is { } page && page.OpenSystem(systemAddress);
 
     private Control Build(NavCrumb crumb, StarSystemSurface surface)
@@ -247,6 +256,13 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             ApplyPending();
 
             return _signals;
+        }
+
+        if (crumb.Key == AllResultsPage.PageKey)
+        {
+            var (query, results, open) = _allResults ?? (string.Empty, [], _ => { });
+
+            return new AllResultsPage(query, results, open);
         }
 
         if (SystemBodyPage.Parse(crumb.Key) is var (bodyAddress, bodyId))

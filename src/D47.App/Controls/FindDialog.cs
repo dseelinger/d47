@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
@@ -36,6 +36,8 @@ public sealed class FindDialog : ModalDialog
 
     public const string ResultPrefix = "FindResult.";
 
+    public const string TileName = "FindAllResults";
+
     public const string AskingMark = " · ASKING SPANSH";
 
     private readonly Func<string, IReadOnlyList<PanelFindResult>> _search;
@@ -52,13 +54,20 @@ public sealed class FindDialog : ModalDialog
     private CancellationTokenSource? _asking;
     private int _generation;
 
+    private readonly Action<string, IReadOnlyList<PanelFindResult>>? _openAll;
+    private readonly TextBlock _tileText = new() { FontFamily = Fonts.ChromeFamily, FontSize = TypeScale.Tip, FontWeight = FontWeight.Medium };
+    private Border? _tile;
+
+    private IReadOnlyList<PanelFindResult> _all = [];
     private IReadOnlyList<PanelFindResult> _shown = [];
     private int _selected;
     private bool _requestOut;
 
     public FindDialog(
-        Func<string, IReadOnlyList<PanelFindResult>> search, Action<PanelFindResult> open, string? keyLabel, GalaxyFind? galaxy = null)
+        Func<string, IReadOnlyList<PanelFindResult>> search, Action<PanelFindResult> open, string? keyLabel, GalaxyFind? galaxy = null,
+        Action<string, IReadOnlyList<PanelFindResult>>? openAll = null)
     {
+        _openAll = openAll;
         _search = search;
         _galaxy = galaxy;
         _open = open;
@@ -140,6 +149,16 @@ public sealed class FindDialog : ModalDialog
 
     internal int SelectedIndex => _selected;
 
+    /// <summary>Every result held, not only the ones drawn.</summary>
+    internal IReadOnlyList<PanelFindResult> All => _all;
+
+    /// <summary>The All results tile's text, or null when it is not drawn.</summary>
+    internal string? TileText => _tile is null ? null : _tileText.Text;
+
+    internal bool TileSelected => _tile is not null && _selected == _shown.Count;
+
+    private bool HasTile => _openAll is not null && _all.Count > 0;
+
     /// <summary>The footer's count, such as "5 RESULTS · ASKING SPANSH".</summary>
     internal string? Count => _count.Text;
 
@@ -160,24 +179,47 @@ public sealed class FindDialog : ModalDialog
     /// <summary>Moves the selection by <paramref name="step"/>, wrapping at either end.</summary>
     internal void Move(int step)
     {
-        if (_shown.Count == 0)
+        var stops = _shown.Count + (HasTile ? 1 : 0);
+
+        if (stops == 0)
         {
             return;
         }
 
-        _selected = (_selected + step + _shown.Count) % _shown.Count;
+        _selected = (_selected + step + stops) % stops;
         Paint();
     }
 
     /// <summary>Closes the box and opens the selected result, if there is one.</summary>
     internal void OpenSelected()
     {
+        if (TileSelected)
+        {
+            OpenAll();
+            return;
+        }
+
         if (_selected >= _shown.Count)
         {
             return;
         }
 
         Choose(_shown[_selected]);
+    }
+
+    /// <summary>Closes the box and opens the All results page, if there are results.</summary>
+    internal void OpenAll()
+    {
+        if (!HasTile)
+        {
+            return;
+        }
+
+        var query = (_field.Text ?? string.Empty).Trim();
+        var all = _all;
+
+        Close();
+        _openAll!(query, all);
     }
 
     private void Choose(PanelFindResult result)
@@ -200,6 +242,11 @@ public sealed class FindDialog : ModalDialog
                 Move(-1);
                 break;
 
+            case Key.Enter when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                e.Handled = true;
+                OpenAll();
+                break;
+
             case Key.Enter:
                 e.Handled = true;
                 OpenSelected();
@@ -212,7 +259,8 @@ public sealed class FindDialog : ModalDialog
         var text = _field.Text ?? string.Empty;
 
         Cancel();
-        _shown = [.. _search(text).Take(MostResults)];
+        _all = _search(text);
+        _shown = [.. _all.Take(MostResults)];
         _selected = 0;
 
         Redraw();
@@ -224,9 +272,15 @@ public sealed class FindDialog : ModalDialog
         var typed = !string.IsNullOrWhiteSpace(_field.Text);
 
         _hint.IsVisible = typed && _shown.Count == 0 && !_requestOut;
-        _help.Text = typed ? (_shown.Count == 0 ? "ESC CLOSE" : "↑ ↓ MOVE · ENTER OPEN · ESC CLOSE") : "ESC CLOSE";
+        var more = _all.Count > _shown.Count;
+
+        _help.Text = typed
+            ? (_shown.Count == 0
+                ? "ESC CLOSE"
+                : HasTile ? "↑ ↓ MOVE · ENTER OPEN · CTRL+ENTER ALL RESULTS · ESC CLOSE" : "↑ ↓ MOVE · ENTER OPEN · ESC CLOSE")
+            : "ESC CLOSE";
         _count.Text = typed
-            ? $"{_shown.Count} {(_shown.Count == 1 ? "RESULT" : "RESULTS")}{(_requestOut ? AskingMark : string.Empty)}"
+            ? $"{(more ? $"{_shown.Count} OF {_all.Count}" : _shown.Count.ToString(CultureInfo.InvariantCulture))} {(!more && _shown.Count == 1 ? "RESULT" : "RESULTS")}{(_requestOut ? AskingMark : string.Empty)}"
             : _keyLabel;
 
         _list.Children.Clear();
@@ -234,6 +288,35 @@ public sealed class FindDialog : ModalDialog
         for (var i = 0; i < _shown.Count; i++)
         {
             _list.Children.Add(Row(i));
+        }
+
+        _tile = null;
+
+        if (HasTile)
+        {
+            _tileText.Text = $"ALL {_all.Count} RESULTS ►";
+            _tileText.VerticalAlignment = VerticalAlignment.Center;
+
+            var tile = new Border
+            {
+                Name = TileName,
+                Padding = new Thickness(12, 4),
+                MinHeight = TypeScale.MinimumTarget,
+                Child = _tileText,
+            };
+            tile.PointerPressed += (_, e) =>
+            {
+                e.Handled = true;
+                OpenAll();
+            };
+            tile.PointerEntered += (_, _) =>
+            {
+                _selected = _shown.Count;
+                Paint();
+            };
+
+            _tile = tile;
+            _list.Children.Add(tile);
         }
 
         Paint();
@@ -286,7 +369,8 @@ public sealed class FindDialog : ModalDialog
 
             var kept = _selected < _shown.Count ? _shown[_selected] : null;
 
-            _shown = [.. galaxy.Rank(query, names).Take(MostResults)];
+            _all = galaxy.Rank(query, names);
+            _shown = [.. _all.Take(MostResults)];
             _selected = kept is null ? 0 : Math.Max(0, IndexOf(kept));
             Redraw();
         }
@@ -366,6 +450,14 @@ public sealed class FindDialog : ModalDialog
 
     private void Paint()
     {
+        if (_tile is { } tile)
+        {
+            var on = _selected == _shown.Count;
+
+            ThemeInk.Bind(tile, Border.BackgroundProperty, on ? ThemeManager.AKey : ThemeManager.TileKey);
+            ThemeInk.Bind(_tileText, TextBlock.ForegroundProperty, on ? ThemeManager.KnockKey : ThemeManager.AKey);
+        }
+
         for (var i = 0; i < _list.Children.Count; i++)
         {
             if (_list.Children[i] is not Border { Tag: (TextBlock title, TextBlock path, TextBlock kind) } row)

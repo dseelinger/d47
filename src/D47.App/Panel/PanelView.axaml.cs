@@ -930,6 +930,13 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>The words the tab bar draws, by tab.</summary>
     public IReadOnlyDictionary<PanelTab, string> TabWords { get; }
 
+    /// <summary>Opens Search › System › All results on the list Find held.</summary>
+    public void OpenAllResults(string query, IReadOnlyList<PanelFindResult> results)
+    {
+        CloseDialogs();
+        _searchFurnishing.OpenAllResults(query, results, OpenFound);
+    }
+
     /// <summary>Takes this surface to a Find result, closing any dialog page first. A result this surface lacks moves nothing.</summary>
     public void OpenFound(PanelFindResult found)
     {

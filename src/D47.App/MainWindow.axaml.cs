@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
@@ -946,7 +946,7 @@ public partial class MainWindow : Window
         }
 
         var find = new PanelFind(Panel.Nav, host.Settings, Panel.TabWords, Bookmarks(host));
-        var dialog = new FindDialog(query => find.Search(query), Panel.OpenFound, host.Settings.Current.Hotkeys.Find, GalaxyNames(host, find));
+        var dialog = new FindDialog(query => find.Search(query), Panel.OpenFound, host.Settings.Current.Hotkeys.Find, GalaxyNames(host, find), Panel.OpenAllResults);
 
         _find = dialog;
         dialog.Closed += (_, _) => _find = null;

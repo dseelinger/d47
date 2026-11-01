@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Find (Ctrl+Shift+F) has an **ALL N RESULTS ►** tile under its list. Down from the last row selects it, Enter or a click opens it, and Ctrl+Enter opens it from the field. It opens Search › System › All results: every result Find held, grouped as pages, settings and help, star systems, stations, fleet carriers, minor factions, engineers and bookmarks, up to twenty in a group, with a station's or carrier's distance where your position is known. The footer now reads "8 OF N RESULTS" when Find holds more than it shows. Opening the page asks Spansh nothing.
+
 Find (Ctrl+Shift+F) now also asks Spansh as you type: with **Look things up in the galaxy** on, three or more letters and a short pause add star systems, stations (with their distance from your system), fleet carriers and minor factions to the list, marked SYSTEM, STATION, CARRIER or FACTION, and the footer reads ASKING SPANSH until they arrive. A system opens Search › System; a station or carrier opens its system on Stations with its name in the search box; a faction runs the search on Search › Systems, with it as a faction present. If Spansh does not answer, the local results stay and no error shows.
 
 Find (Ctrl+Shift+F) now also lists engineers and your bookmarks by name, and star systems while **Look things up in the galaxy** is on. Each is marked ENGINEER, BOOKMARK or SYSTEM. Opening an engineer shows their page under Engineers, a bookmark shows the Bookmarks page, and a system opens Search › System on that name. Names match when they equal, start with, have a word that starts with, or contain what you typed, and come after matching pages and settings, taking turns by kind.
