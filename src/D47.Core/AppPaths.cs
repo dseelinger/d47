@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using D47.Core.Audio;
 using D47.Core.Speech;
 
@@ -28,6 +28,7 @@ public sealed class AppPaths
         Data = Path.Combine(InstallRoot, DataFolderName);
         Logs = Path.Combine(Data, "logs");
         Audio = Path.Combine(Data, "audio");
+        MusicPack = Path.Combine(Data, "music-pack");
         SettingsFile = Path.Combine(Data, "settings.json");
         SecretsFile = Path.Combine(Data, "secrets.json");
         ViewStateFile = Path.Combine(Data, "view-state.json");
@@ -81,6 +82,9 @@ public sealed class AppPaths
 
     /// <summary>Where the Commander drops their own cues, beds and ambience (Phase 12).</summary>
     public string Audio { get; }
+
+    /// <summary>Downloaded music, <c>&lt;folder&gt;\&lt;file&gt;</c>; made when something is downloaded into it.</summary>
+    public string MusicPack { get; }
     public string SettingsFile { get; }
     public string SecretsFile { get; }
 

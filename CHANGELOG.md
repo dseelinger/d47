@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+D47 now reads a music library from `data\music-pack\<folder>` beneath your own music. Files of your own in a music folder replace the library for that folder, so three tracks of yours are not drowned among fifty. The "Your own audio" row counts only your files.
+
 Six more Elite music tracks now have folders of their own under `data\audio\music`: `titan-encounter`, `titan-graveyard`, `thargoid-factory`, `combat-thargoid-ground`, `combat-hunters` and `damaged-starport`. Before, those tracks played the normal-space or supercruise folder. A folder with no files still falls back to the situation's own music.
 
 Ambient music now fades out after ten minutes with nothing happening, such as sitting docked, and fades back in from where it stopped when something does. Station chatter, crew wages and Elite's own music changes do not count as something happening. A turn with D47, a change of situation or a media key does, and the volume flyout shows the music paused in the meantime.

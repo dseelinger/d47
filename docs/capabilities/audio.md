@@ -313,6 +313,11 @@ folder changes nothing. `NoTrack`, `NoInGameMusic` and any track not listed have
 back. The track is not looped, and a change of Elite's track while it plays does not cut it: when it ends, the
 folder for the situation at that moment continues or starts. A track still playing after 60 seconds fades out.
 
+D47 can also read a downloaded music library from `data/music-pack/<folder>/`, with the same folder names. Files of your own
+in a music folder replace the downloaded library for that folder: a folder with any file in
+`data/audio/music/<folder>/` plays only those, and an empty one plays the library's. The "Your own audio" row counts
+only your files.
+
 To hear this music rather than Elite's, set Elite's music volume to zero (Options, Audio).
 
 Ambience plays only while Elite is running. D47 checks for the game's window every two seconds:

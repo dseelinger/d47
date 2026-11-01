@@ -427,6 +427,7 @@ public sealed class AppHost : IDisposable
     private volatile CueLibrary _cues;
 
     private AudioFolderWatch? _audioWatch;
+    private AudioFolderWatch? _musicPackWatch;
 
     private ModelCatalogRefresher? _modelCatalog;
 
@@ -1763,7 +1764,8 @@ public sealed class AppHost : IDisposable
         var dropsLogger = loggerFactory.CreateLogger<FolderAudioSource>();
         var drops = new FolderAudioSource(paths.Audio, files, dropsLogger, new MediaFoundationDecoder());
         var cueLogger = loggerFactory.CreateLogger<CueLibrary>();
-        var cues = CueLibrary.Load(cueLogger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
+        var pack = new FolderAudioSource(paths.MusicPack, files, dropsLogger, new MediaFoundationDecoder(), musicPack: true);
+        var cues = CueLibrary.Load(cueLogger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), pack, drops);
 
         var audioSink = new WasapiAudioSink(loggerFactory.CreateLogger<WasapiAudioSink>());
         var audio = new AudioArbiter(audioSink, loggerFactory.CreateLogger<AudioArbiter>()).Start();
@@ -3387,8 +3389,16 @@ public sealed class AppHost : IDisposable
         // The audio folder, which the Commander can add to while d47 is running.
         host._audioWatch = new AudioFolderWatch(
             paths.Audio,
-            () => host.RebuildAudio(paths.Audio, services.DropsLogger, services.CueLogger),
+            () => host.RebuildAudio(paths.Audio, paths.MusicPack, services.DropsLogger, services.CueLogger),
             loggerFactory.CreateLogger<AudioFolderWatch>());
+
+        if (Directory.Exists(paths.MusicPack))
+        {
+            host._musicPackWatch = new AudioFolderWatch(
+                paths.MusicPack,
+                () => host.RebuildAudio(paths.Audio, paths.MusicPack, services.DropsLogger, services.CueLogger),
+                loggerFactory.CreateLogger<AudioFolderWatch>());
+        }
 
         return host;
     }
@@ -4732,10 +4742,11 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>Re-reads <c>data/audio/</c> and replaces <see cref="Cues"/>. Runs on the thread pool.</summary>
-    private void RebuildAudio(string folder, ILogger<FolderAudioSource> dropsLogger, ILogger<CueLibrary> logger)
+    private void RebuildAudio(string folder, string packFolder, ILogger<FolderAudioSource> dropsLogger, ILogger<CueLibrary> logger)
     {
         var drops = new FolderAudioSource(folder, Files, dropsLogger, new MediaFoundationDecoder());
-        var cues = CueLibrary.Load(logger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), drops);
+        var pack = new FolderAudioSource(packFolder, Files, dropsLogger, new MediaFoundationDecoder(), musicPack: true);
+        var cues = CueLibrary.Load(logger, new EmbeddedCueSource(typeof(CueLibrary).Assembly), pack, drops);
 
         _cues = cues;
 
@@ -5579,6 +5590,7 @@ public sealed class AppHost : IDisposable
         // After the tick and the hotkeys, so no step comes after the last write.
         _commsSelection?.Dispose();
         _audioWatch?.Dispose();
+        _musicPackWatch?.Dispose();
         _modelCatalog?.Dispose();
         foreach (var source in _feedSources)
         {

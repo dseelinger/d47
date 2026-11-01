@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Audio;
@@ -18,6 +18,9 @@ public interface ICueSource
 
     /// <summary>Files that were never a candidate to load, with where they should go instead.</summary>
     IReadOnlyList<string> Ignored => [];
+
+    /// <summary>A downloaded library: its files are logged when they fail, never counted or described.</summary>
+    bool IsPack => false;
 
     /// <summary>The whole clip in <see cref="AudioFormat.Standard"/>.</summary>
     AudioClip Decode(string name, string clipName)
@@ -162,6 +165,7 @@ public sealed class CueLibrary
         var custom = 0;
         var skipped = new List<string>();
         var ignored = new List<string>();
+        var packSkipped = new List<string>();
         var unclaimed = new List<string>();
         var folderOrder = new List<string>();
         var folderCounts = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -178,7 +182,14 @@ public sealed class CueLibrary
 
         foreach (var source in sources)
         {
-            ignored.AddRange(source.Ignored);
+            if (!source.IsPack)
+            {
+                ignored.AddRange(source.Ignored);
+            }
+
+            // A later source with tracks in a folder replaces what earlier sources read for it.
+            var sourceMusic = new Dictionary<string, List<MusicTrack>>(StringComparer.OrdinalIgnoreCase);
+            var sourceSkipped = source.IsPack ? packSkipped : skipped;
 
             // Loop states and alerts are both keyed by an enum, with the same rule binding a name to a member.
             void ReadInto<TKey>(
@@ -283,28 +294,37 @@ public sealed class CueLibrary
 
                     if (!Situations.All.Contains(situation, StringComparer.OrdinalIgnoreCase))
                     {
-                        ignored.Add(
-                            $"music/{situation}/{stem} is in no situation D47 knows — expected one of "
-                            + $"{string.Join(", ", Situations.All)}.");
+                        if (!source.IsPack)
+                        {
+                            ignored.Add(
+                                $"music/{situation}/{stem} is in no situation D47 knows — expected one of "
+                                + $"{string.Join(", ", Situations.All)}.");
+                        }
+
                         continue;
                     }
 
-                    if (TryReference(source, resource, stem, skipped) is { } track)
+                    if (TryReference(source, resource, stem, sourceSkipped) is { } track)
                     {
-                        if (!music.TryGetValue(situation, out var tracks))
+                        if (!sourceMusic.TryGetValue(situation, out var tracks))
                         {
-                            music[situation] = tracks = [];
+                            sourceMusic[situation] = tracks = [];
                         }
 
                         tracks.Add(track);
 
-                        if (!source.Required)
+                        if (!source.Required && !source.IsPack)
                         {
                             custom++;
                             CountFolder($"music/{situation}");
                         }
                     }
                 }
+            }
+
+            foreach (var entry in sourceMusic)
+            {
+                music[entry.Key] = entry.Value;
             }
         }
 
@@ -342,6 +362,11 @@ public sealed class CueLibrary
         foreach (var reason in skipped)
         {
             logger?.LogWarning("Skipped a drop-in audio file: {Reason}", reason);
+        }
+
+        foreach (var reason in packSkipped)
+        {
+            logger?.LogWarning("Skipped a music pack file: {Reason}", reason);
         }
 
         foreach (var reason in ignored)

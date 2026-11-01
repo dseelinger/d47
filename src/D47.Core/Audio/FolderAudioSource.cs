@@ -1,4 +1,4 @@
-using D47.Core.Storage;
+﻿using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Audio;
@@ -27,13 +27,18 @@ public sealed class FolderAudioSource : ICueSource
     private readonly Dictionary<string, string> _files;
 
     private readonly List<string> _ignored = [];
+    private readonly bool _pack;
 
     /// <param name="decoder">
     /// Reads every extension it lists. Without one only <c>.wav</c> is picked up, through
     /// <see cref="WavReader"/>.
     /// </param>
-    public FolderAudioSource(string root, IFileSystem files, ILogger logger, IAudioDecoder? decoder = null)
+    /// <param name="musicPack">
+    /// Reads <c>&lt;root&gt;\&lt;folder&gt;\&lt;file&gt;</c> as music only, and reports nothing as ignored.
+    /// </param>
+    public FolderAudioSource(string root, IFileSystem files, ILogger logger, IAudioDecoder? decoder = null, bool musicPack = false)
     {
+        _pack = musicPack;
         _root = root;
         _disk = files;
         _logger = logger;
@@ -46,6 +51,8 @@ public sealed class FolderAudioSource : ICueSource
     /// start.
     /// </summary>
     public bool Required => false;
+
+    public bool IsPack => _pack;
 
     public IEnumerable<string> Names => _files.Keys;
 
@@ -128,6 +135,16 @@ public sealed class FolderAudioSource : ICueSource
         {
             var relative = Path.GetRelativePath(_root, path).Replace('\\', '/');
             var parts = relative.Split('/');
+
+            if (_pack)
+            {
+                if (parts.Length >= 2 && extensions.Contains(Path.GetExtension(path)))
+                {
+                    files[$"{CueLibrary.MusicPrefix}{parts[0]}.{Path.GetFileNameWithoutExtension(path)}"] = path;
+                }
+
+                continue;
+            }
 
             if (!KnownFolders.Contains(parts[0], StringComparer.OrdinalIgnoreCase))
             {
