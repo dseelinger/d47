@@ -74,6 +74,7 @@ public static class AudioCapability
     /// <param name="library">The music library download's state line, or null when there is nothing to say.</param>
     /// <param name="thumbsDown">Queues the playing library track for deletion and skips it; null where nothing plays the music.</param>
     /// <param name="maintainer">Whether a Music publish token is present, which is what makes thumbs down reachable.</param>
+    /// <param name="deleteRejects">Starts deleting the queued tracks and returns the reply; null where nothing deletes them.</param>
     public static CapabilityDescriptor Create(
         Func<string>? drops = null,
         Action? openFolder = null,
@@ -83,7 +84,8 @@ public static class AudioCapability
         Func<string?>? library = null,
         Func<Action, Action>? watchLibrary = null,
         Func<string>? thumbsDown = null,
-        Func<bool>? maintainer = null) => new()
+        Func<bool>? maintainer = null,
+        Func<string>? deleteRejects = null) => new()
     {
         Id = Id,
         Group = "Voice",
@@ -119,7 +121,7 @@ public static class AudioCapability
                         + "and the key does nothing."))
                 .Select(row => row with { AppliesWhen = _ => maintainer?.Invoke() == true }),
         ],
-        Tools = [ManageMusic(music), ThumbsDownMusic(thumbsDown, maintainer)],
+        Tools = [ManageMusic(music), ThumbsDownMusic(thumbsDown, maintainer), DeleteMusicRejects(deleteRejects, maintainer)],
     };
 
     public const string ThumbsDownTool = "thumbs_down_music";
@@ -176,6 +178,34 @@ public static class AudioCapability
             thumbsDown is null || maintainer?.Invoke() != true
                 ? ToolResult.Error("Thumbs down is not available.")
                 : ToolResult.Ok(thumbsDown())),
+    };
+
+    public const string DeleteRejectsTool = "delete_music_rejects";
+
+    /// <summary>
+    /// Deletes every queued track from the music library's release and from this PC. Reached by phrase only while a
+    /// token is present; never offered to the model.
+    /// </summary>
+    private static ToolDefinition DeleteMusicRejects(Func<string>? deleteRejects, Func<bool>? maintainer) => new()
+    {
+        Name = DeleteRejectsTool,
+        Exercise =
+            "With a Music publish token set and at least one track thumbed down, say \"delete the thumbs-down "
+            + "tracks\". The reply says how many tracks in how many folders are being deleted; a second reply, when "
+            + "it ends, says what was deleted and what failed. The tracks are gone from data\\music-pack and from "
+            + "data\\music-rejects.tsv, and the folder's zip on the music-1 release has a new version. For the "
+            + "maintainer of the music library.",
+        Description = "Deletes the queued music tracks from the music library's release and from this PC.",
+        Protected = true,
+        RefusalExample = "delete the thumbs-down tracks",
+        Commands =
+        [
+            new ToolCommandPhrase("delete the thumbs-down tracks") { When = () => maintainer?.Invoke() == true },
+        ],
+        Handler = (_, _) => Task.FromResult(
+            deleteRejects is null || maintainer?.Invoke() != true
+                ? ToolResult.Error("Deleting the thumbs-down tracks is not available.")
+                : ToolResult.Ok(deleteRejects())),
     };
 
     public const string ManageMusicTool = "manage_music";

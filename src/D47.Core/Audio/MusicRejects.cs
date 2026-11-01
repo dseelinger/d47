@@ -74,6 +74,37 @@ public sealed class MusicRejects(string path, IFileSystem files)
         }
     }
 
+    /// <summary>Every queued track.</summary>
+    public IReadOnlyList<(string Folder, string File)> Rows
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return Load().ToList();
+            }
+        }
+    }
+
+    /// <summary>Removes these rows and keeps every other, including rows added since they were read.</summary>
+    public void Remove(IEnumerable<(string Folder, string File)> rows)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+
+        lock (_gate)
+        {
+            var gone = new HashSet<(string Folder, string File)>(rows, new RowComparer());
+
+            if (gone.Count == 0)
+            {
+                return;
+            }
+
+            var kept = Load().Where(row => !gone.Contains(row)).ToList();
+            files.WriteText(path, string.Concat(kept.Select(row => $"{row.Folder}\t{row.File}\n")));
+        }
+    }
+
     private HashSet<(string Folder, string File)> Load()
     {
         var rows = new HashSet<(string Folder, string File)>(new RowComparer());

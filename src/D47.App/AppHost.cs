@@ -171,7 +171,8 @@ public sealed class AppHost : IDisposable
         _audioSink = audioSink;
         _outputFollow = new DefaultDeviceFollowPolicy(audioSink);
         Audio = audio;
-        Music = new AmbientMusic(audio, () => Cues, rejects: new MusicRejects(paths.MusicRejects, files));
+        MusicRejects = new MusicRejects(paths.MusicRejects, files);
+        Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects);
         _cues = cues;
         Voice = voice;
         _binds = binds;
@@ -432,6 +433,46 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Queues the playing library track for deletion and skips it; refused without a token.</summary>
     internal string ThumbsDownMusic() => MusicMaintainer ? Music.ThumbsDown() : "Thumbs down is not available.";
+
+    /// <summary>The library tracks the maintainer queued for deletion.</summary>
+    internal MusicRejects MusicRejects { get; }
+
+    /// <summary>Deletes the queued library tracks from the release and this PC.</summary>
+    internal MusicRejectDeleter? MusicRejectDeleter { get; private set; }
+
+    /// <summary>
+    /// Starts deleting the queued library tracks and returns the reply to say now; the reply when it ends is said
+    /// aside. Refused without a token.
+    /// </summary>
+    internal string DeleteMusicRejects()
+    {
+        if (!MusicMaintainer || MusicRejectDeleter is not { } deleter)
+        {
+            return "Deleting the thumbs-down tracks is not available.";
+        }
+
+        var (reply, run) = deleter.Start();
+
+        run?.ContinueWith(
+            done =>
+            {
+                try
+                {
+                    Announcer.SayAside(done.Result);
+                    _reloadAudio?.Invoke();
+                    MusicPack?.Start();
+                }
+                catch (Exception exception)
+                {
+                    _logger.LogWarning(exception, "Reporting the deleted music tracks failed");
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.None,
+            TaskScheduler.Default);
+
+        return reply;
+    }
 
     /// <summary>Replaced whole by the audio folder watch, from the thread pool.</summary>
     private volatile CueLibrary _cues;
@@ -2528,6 +2569,7 @@ public sealed class AppHost : IDisposable
                 controlMusic: action => late.Host?.Music.Control(action) ?? "Ambient music is not available.",
                 thumbsDownMusic: () => late.Host?.ThumbsDownMusic() ?? "Ambient music is not available.",
                 musicMaintainer: () => late.Host?.MusicMaintainer == true,
+                deleteMusicRejects: () => late.Host?.DeleteMusicRejects() ?? "Ambient music is not available.",
                 colonisationPlans: () => late.Host?.ColonisationPlans,
                 colonisationProgress: () => late.Host?.ColonisationProgress,
                 commanderLog: stores.CommanderLog,
@@ -3431,6 +3473,15 @@ public sealed class AppHost : IDisposable
             MusicPackStore.CreateClient(),
             loggerFactory.CreateLogger<MusicPackStore>());
         host.MusicPack.Landed += host._reloadAudio;
+        host.MusicRejectDeleter = new MusicRejectDeleter(
+            paths.MusicPack,
+            host.MusicRejects,
+            files,
+            () => MusicPublishToken.Resolve(
+                host.Secrets.TryGet(MusicPublishToken.SecretName, out var stored) ? stored : null, Environment.GetEnvironmentVariable),
+            Environment.GetEnvironmentVariable,
+            () => MusicRejectDeleter.TempZip(new MusicPackDisk()),
+            loggerFactory.CreateLogger<MusicRejectDeleter>());
 
         return host;
     }

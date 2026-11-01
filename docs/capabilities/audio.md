@@ -410,6 +410,41 @@ The phrase reaches `thumbs_down_music`, which only you can reach: the model is n
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
+### Delete the thumbs-down tracks {#delete-music-rejects}
+
+This is for the maintainer of the music library, and works only with a Music publish token. "Delete the
+thumbs-down tracks" deletes every track in `data/music-rejects.tsv` from the library's download and from this PC.
+There is no hotkey or button for it. The reply says how many tracks in how many folders are being deleted, and a
+second reply, when the work ends, says what was deleted and what failed.
+
+For each folder with queued tracks, one at a time:
+
+1. A new `<folder>.zip` is built from the folder's tracks in `data/music-pack/<folder>/`, without the queued ones.
+2. It replaces `<folder>.zip` on the `music-1` release of `dseelinger/d47-music`. Then `manifest.json` is replaced,
+   with that folder's version increased by one and its size, SHA-256 and track count updated.
+3. The new version is recorded in the folder, so the library download does not fetch it again.
+4. The queued tracks are deleted from `data/music-pack/<folder>/`.
+5. With `D47_MUSIC_SOURCE` set to the music generator's data folder, each track is deleted from
+   `<source>/tracks/<folder>/` and its id, the file name without `.mp3`, is added to `<source>/rejected.tsv`.
+   Without it, the reply says the generator's copies were left.
+6. The folder's rows are removed from `data/music-rejects.tsv`.
+
+Nothing is deleted from this PC until GitHub has the folder's new zip and manifest.
+
+- A folder whose download here is older than the published version is left, with a reply saying to let the
+  download finish first, because a zip built from it would drop tracks.
+- A folder whose every track is queued is left, since a folder cannot be emptied.
+- When an upload fails, that folder keeps its rows and its files, and the work stops. The reply names the folder,
+  GitHub's message, and the folders that were not tried. Saying the phrase again continues with the folders left.
+- One deletion runs at a time.
+- Without a token the phrase is not matched.
+
+The phrase reaches `delete_music_rejects`, which only you can reach: the model is never offered it.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
 ### Music publish token {#music-publish-token}
 
 This is for the maintainer of the music library, the public repository `dseelinger/d47-music`. Create a
