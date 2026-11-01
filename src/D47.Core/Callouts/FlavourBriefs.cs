@@ -425,8 +425,9 @@ public static class FlavourBriefs
             {
                 Instruction =
                     "The Commander has just sat down. Recap their last session once, in your own voice, from "
-                    + "this; where the line opens \"Earlier this session\", the game was already running and "
-                    + $"the line recaps the flying so far: \"{announcement.Text}\" Keep every name, place, ship and figure exactly as given. "
+                    + "this; where the line opens \"Earlier this session\", the game was already running: "
+                    + $"\"{announcement.Text}\" Keep every name, place, ship and figure exactly as given. "
+                    + "Do not state how long the session or any part of it lasted. "
                     + "Add no facts and no plans. One or two short sentences. Do not greet them and do not ask "
                     + "a question.",
                 NeedsPersona = true,

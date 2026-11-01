@@ -88,12 +88,24 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
             said = null;
         }
 
+        string? figure = null;
+
+        if (said is not null
+            && string.Equals(announcement.Key, RecapCallout.Key, StringComparison.Ordinal)
+            && RecapFigures.FirstInvented(announcement.Text, said) is { } invented)
+        {
+            said = null;
+            figure = invented;
+        }
+
         if (said is not null)
         {
             return announcement with { Text = said };
         }
 
-        var reason = reply.Miss switch
+        var reason = figure is not null
+            ? $"recap figure check: the reply added \"{figure}\""
+            : reply.Miss switch
         {
             FlavourMiss.None => "rejected",
             FlavourMiss.Cancelled => "timed out",
