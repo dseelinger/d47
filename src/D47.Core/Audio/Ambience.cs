@@ -212,7 +212,7 @@ public sealed class EliteMusic
 /// The settlement of the latest <c>ApproachSettlement</c>, held until <c>SupercruiseEntry</c>, <c>FSDJump</c>,
 /// <c>LoadGame</c>, <c>Died</c> or a <c>Docked</c> anywhere but a settlement's own pad. Also whether the
 /// Commander is in a ground conflict zone: from a <c>DropshipDeploy</c>, or the first on-foot
-/// <c>FactionKillBond</c> with a settlement held, until a retreat booking, <c>Died</c>,
+/// <c>FactionKillBond</c> with a settlement held, until a retreat or taxi booking, <c>Died</c>,
 /// <c>SupercruiseEntry</c>, <c>FSDJump</c>, <c>LoadGame</c> or an <c>Embark</c> into their own ship.
 /// </summary>
 public sealed class SettlementVisit
@@ -256,6 +256,7 @@ public sealed class SettlementVisit
                     _afoot = false;
                     break;
                 case "BookDropship" when journalEvent.Bool("Retreat"):
+                case "BookTaxi":
                     InGroundConflict = false;
                     break;
                 case "FactionKillBond" when _afoot && Held:

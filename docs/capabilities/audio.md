@@ -305,7 +305,7 @@ track, and D47 maps that track to a folder:
 | `thargoid-factory` | `TGFactory` |  |
 | `combat-thargoid-ground` | `Thargoid_GroundCombat` |  |
 | `combat-hunters` | `Combat_Hunters` |  |
-| `combat-ground` |  | On foot in a ground conflict zone: from the dropship's deploy, or the first kill bond on foot at a settlement, until the retreat or supercruise. |
+| `combat-ground` |  | On foot in a ground conflict zone: from the dropship's deploy, or the first kill bond on foot at a settlement, until the retreat, a taxi booking or supercruise. |
 | `damaged-starport` | `Damaged_Starport` |  |
 
 Elite's general tracks (`OnFoot`, `Starport` and `Exploration`) give way to `on-foot-station`,

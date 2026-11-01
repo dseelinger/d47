@@ -66,6 +66,14 @@ public class AGroundConflictZonePlaysTheCombatGroundFolderTests
     }
 
     [Fact]
+    public void ATaxiBookingClosesIt()
+    {
+        var taxi = Event("""{ "timestamp":"2025-10-13T16:04:43Z", "event":"BookTaxi", "Cost":100, "DestinationLocation":"Wait Colburn Dock" }""");
+
+        Assert.Equal(Situations.Settlement, After([Approach, Deploy, taxi], OnFootOnPlanet, "OnFoot"));
+    }
+
+    [Fact]
     public void ABookingToAConflictZoneDoesNotOpenOrCloseIt()
     {
         var book = Event("""{ "timestamp":"2025-10-13T15:30:00Z", "event":"BookDropship", "Retreat":false, "Cost":100 }""");
