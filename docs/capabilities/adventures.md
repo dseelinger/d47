@@ -304,7 +304,7 @@ never sends you to a permit-locked system such as Shinrarta Dezhra or Sol, unles
 **A stock story's cast can be answered.** Every cast member the running stock story has introduced is
 on the Story [comms channel](comms.md#choose-who-your-comms-key-reaches). While one is selected, what you
 say on the comms push-to-talk goes to that member, with no time limit and no limit on replies. They
-answer in the first person, in their own voice, knowing their last line and what has been said since.
+answer in the first person, in their own voice, knowing their last line, what has been said since, and the story's current objective with its reason.
 Push-to-talk still goes to the ship. The member reads
 the hidden story only as far as that member would know it at this point, so they may hint at the secret but never state it, and never
 mislead you about fuel, cargo, credits, routes, rank or danger. A reply that contradicts your ship, such

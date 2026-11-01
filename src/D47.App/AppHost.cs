@@ -2971,7 +2971,9 @@ public sealed class AppHost : IDisposable
             castId => storyDirector.CastCarrierAway(gameState.Active?.Identity.FrontierId, castId),
             castId => storyDirector.CastInCockpit(gameState.Active?.Identity.FrontierId, castId),
             () => gameState.Active?.Location.StarSystem,
-            DockedStation));
+            DockedStation,
+            () => D47.Core.Adventures.AdventureContext.StoryNowLine(
+                adventureBook.Audible(gameState.Active?.Identity.FrontierId, SystemWallClock.Instance.UtcNow))));
 
         ShippedCallouts.Connect(stores.Callouts, new ShippedCallouts.Services
         {

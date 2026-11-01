@@ -101,25 +101,50 @@ public static class AdventureContext
                 }
             }
 
-            if (standing.CurrentBeat is { } current && standing.CurrentObjective is { } step)
+            if (NowLine(standing) is { } objective)
             {
-                var function = string.IsNullOrWhiteSpace(current.Function) ? string.Empty : $" ({current.Function})";
-                var steps = standing.StepsOf(standing.Current).Count;
-                var place = steps > 1 ? $", step {standing.CurrentStep + 1} of {steps}" : string.Empty;
-                var reason = string.IsNullOrWhiteSpace(step.Reason) ? string.Empty : $" Reason: {step.Reason.Trim()}";
-                var how = step.Trigger.Kind switch
-                {
-                    TriggerKind.Rescue => $" {step.Trigger.RescueHowTo()}",
-                    TriggerKind.Mission or TriggerKind.MissionTaken when MissionHowTo.For(step.Trigger.MissionFamily) is { } line => $" {line}",
-                    _ => string.Empty,
-                };
-                Line(block, $"Now: {current.Title}{function}{place}", $"waiting to {step.Trigger.Describe()}.{how}{reason}");
+                block.AppendLine().Append("  ").Append(objective);
             }
 
             Line(block, "Stuck", Stuck(standing, shortStoryByVoice));
         }
 
         return block.ToString().TrimEnd();
+    }
+
+    /// <summary>The "Now:" line for the standing's current objective, with its step, how-to and reason; null when it has none.</summary>
+    public static string? NowLine(AdventureStanding standing)
+    {
+        ArgumentNullException.ThrowIfNull(standing);
+
+        if (standing.CurrentBeat is not { } current || standing.CurrentObjective is not { } step)
+        {
+            return null;
+        }
+
+        var function = string.IsNullOrWhiteSpace(current.Function) ? string.Empty : $" ({current.Function})";
+        var steps = standing.StepsOf(standing.Current).Count;
+        var place = steps > 1 ? $", step {standing.CurrentStep + 1} of {steps}" : string.Empty;
+        var reason = string.IsNullOrWhiteSpace(step.Reason) ? string.Empty : $" Reason: {step.Reason.Trim()}";
+        var how = step.Trigger.Kind switch
+        {
+            TriggerKind.Rescue => $" {step.Trigger.RescueHowTo()}",
+            TriggerKind.Mission or TriggerKind.MissionTaken when MissionHowTo.For(step.Trigger.MissionFamily) is { } line => $" {line}",
+            _ => string.Empty,
+        };
+
+        return $"Now: {current.Title}{function}{place}: waiting to {step.Trigger.Describe()}.{how}{reason}".Trim();
+    }
+
+    /// <summary>The "Now:" line of the running story's chapter among <paramref name="standings"/>, or null.</summary>
+    public static string? StoryNowLine(IReadOnlyList<AdventureStanding> standings)
+    {
+        ArgumentNullException.ThrowIfNull(standings);
+
+        return standings
+            .Where(standing => standing.Adventure is { IsActive: true, StoryId: not null } && !standing.IsDone && !standing.IsFailed)
+            .Select(NowLine)
+            .FirstOrDefault(line => line is not null);
     }
 
     /// <summary>

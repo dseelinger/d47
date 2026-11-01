@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A cast member of the running story now knows the chapter's current objective and its reason, so asking one of them why you are going somewhere gets an answer from the story's reason instead of "no reason on my desk".
+
 Every objective in a generated chapter now states why you go, including rank, mission and other counted objectives. The reason says what you go to do or get and where in the story that comes from, and the core no longer presents the next objective as an order from someone unnamed.
 
 An owned ship's page now offers Clear this plan whenever the ship has planned slots, whether or not they are all fitted. It removes the build, keeps the ship in the fleet, and says which checklist lines stayed.

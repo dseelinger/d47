@@ -22,6 +22,7 @@ namespace D47.Core.Persona;
 /// <param name="inCockpit">Whether the member with this cast id has a seat in the hull the Commander flies; one that does reads the ship's live state.</param>
 /// <param name="system">The Commander's current star system, or null.</param>
 /// <param name="station">The station the Commander is docked at, or null.</param>
+/// <param name="objective">The running story chapter's current objective line with its reason, or null; given to a member outside the cockpit.</param>
 public sealed class CastLine(
     Func<string, AdventureSpeaker?> member,
     Func<string?> hiddenStory,
@@ -30,7 +31,8 @@ public sealed class CastLine(
     Func<string, double?>? carrierAway = null,
     Func<string, bool>? inCockpit = null,
     Func<string?>? system = null,
-    Func<string?>? station = null) : ILine
+    Func<string?>? station = null,
+    Func<string?>? objective = null) : ILine
 {
     private const string KeyPrefix = "cast.reply";
 
@@ -105,10 +107,17 @@ public sealed class CastLine(
                 Signal: away is { } carried ? CastLink.Strength(carried) : 1,
                 Screen: SpeaksEnglish(speaking) ? reply => Screened(reply, castId, speaking.Name) : null,
                 ScreenReply: SpeaksEnglish(speaking) ? null : reply => ScreenedBilingual(reply, castId, speaking.Name),
-                LiveState: inCockpit?.Invoke(castId) == true ? null : () => OffShipKnowledge.Describe(system?.Invoke(), station?.Invoke()),
+                LiveState: inCockpit?.Invoke(castId) == true ? null : () => OffShip(),
                 HiddenStory: () => StoryClues.ForCast(hiddenStory()),
                 Cast: speaking.Id),
             said.Length == 0 ? "The Commander is trying to get your attention." : said);
+    }
+
+    private string OffShip()
+    {
+        var where = OffShipKnowledge.Describe(system?.Invoke(), station?.Invoke());
+
+        return objective?.Invoke() is { Length: > 0 } now ? $"{where}{Environment.NewLine}{now}" : where;
     }
 
     private static bool SpeaksEnglish(AdventureSpeaker speaking) => SpokenLanguage.IsEnglish(speaking.Language);
@@ -174,7 +183,7 @@ public sealed class CastLine(
                  You are {speaking.Name}, a person in the story the Commander is playing. {speaking.Who}{notes} {StorySpeaker.MannerRule}
                  The Commander is talking to you. Reply as {speaking.Name}, in the first person, speaking to the Commander,
                  in one to three short sentences, as said aloud. You are not the core and never speak for it. You
-                 have no tools and change nothing aboard.{language} The exchange so far:
+                 have no tools and change nothing aboard. Asked why the Commander is going somewhere, answer from the reason on the Now line, in your own words, and invent none; if it has no reason, say you do not know.{language} The exchange so far:
 
                  {ExchangeLines.Recent(exchange)}
                  """;
