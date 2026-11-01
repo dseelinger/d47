@@ -38,6 +38,14 @@ public sealed class EddnUploader : IEddnSink, IDisposable
 
     private readonly CancellationTokenSource _stop = new();
 
+    private readonly Lock _countLock = new();
+
+    private readonly SortedDictionary<string, int> _accepted = [];
+
+    private int _refused;
+
+    private int _dropped;
+
     private Task? _drain;
 
     public EddnUploader(Func<bool> enabled, ILogger<EddnUploader> logger, HttpClient? http = null)
@@ -77,6 +85,8 @@ public sealed class EddnUploader : IEddnSink, IDisposable
         }
 
         _stop.Dispose();
+
+        LogSessionSummary();
 
         if (_ownsClient)
         {
@@ -123,6 +133,11 @@ public sealed class EddnUploader : IEddnSink, IDisposable
                 else
                 {
                     _logger.LogWarning("EDDN message dropped after {Attempts} attempts: {Reason}", attempts, retry);
+
+                    lock (_countLock)
+                    {
+                        _dropped++;
+                    }
                 }
             }
         }
@@ -148,6 +163,8 @@ public sealed class EddnUploader : IEddnSink, IDisposable
 
             if (response.IsSuccessStatusCode)
             {
+                RecordAccepted(envelope);
+
                 return null;
             }
 
@@ -161,6 +178,11 @@ public sealed class EddnUploader : IEddnSink, IDisposable
                 status,
                 await FirstLineAsync(response).ConfigureAwait(false));
 
+            lock (_countLock)
+            {
+                _refused++;
+            }
+
             return null;
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -171,6 +193,61 @@ public sealed class EddnUploader : IEddnSink, IDisposable
         {
             return ex.GetType().Name;
         }
+    }
+
+    private static string SchemaName(EddnEnvelope envelope)
+    {
+        const string Marker = "/schemas/";
+        var at = envelope.SchemaRef.IndexOf(Marker, StringComparison.Ordinal);
+
+        return at < 0 ? envelope.SchemaRef : envelope.SchemaRef[(at + Marker.Length)..];
+    }
+
+    private void RecordAccepted(EddnEnvelope envelope)
+    {
+        var schema = SchemaName(envelope);
+        bool first;
+
+        lock (_countLock)
+        {
+            first = _accepted.Count == 0;
+            _accepted[schema] = _accepted.GetValueOrDefault(schema) + 1;
+        }
+
+        if (first)
+        {
+            _logger.LogInformation("EDDN accepted the first message of this session ({Schema})", schema);
+        }
+    }
+
+    private void LogSessionSummary()
+    {
+        string bySchema;
+        int accepted;
+        int refused;
+        int dropped;
+
+        lock (_countLock)
+        {
+            accepted = _accepted.Values.Sum();
+            refused = _refused;
+            dropped = _dropped;
+            bySchema = string.Join(", ", _accepted.Select(pair => $"{pair.Key} {pair.Value}"));
+        }
+
+        if (accepted + refused + dropped == 0)
+        {
+            _logger.LogInformation("EDDN this session: nothing was sent");
+
+            return;
+        }
+
+        _logger.LogInformation(
+            "EDDN this session: {Accepted} accepted ({BySchema}), {Refused} refused, {Dropped} dropped",
+            accepted,
+            bySchema,
+            refused,
+            dropped);
     }
 
     private static async Task<string> FirstLineAsync(HttpResponseMessage response)

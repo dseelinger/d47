@@ -266,7 +266,8 @@ begun in the main game is still sent when the Operation starts.
 
 Messages are sent in the background, from a queue of at most 100. A refusal is not tried again;
 a timeout or a server error is tried again no sooner than 60 seconds later, up to three tries in
-all. Nothing is written to disk. The model cannot turn the setting on. If another program already
+all. The log records the first accepted message and, at shutdown, how many were accepted, refused
+and dropped; only counts and schema names reach it. Nothing is written to disk. The model cannot turn the setting on. If another program already
 sends your game data to EDDN, leave this off: sending it twice adds nothing. With it off, nothing
 is sent.
 
