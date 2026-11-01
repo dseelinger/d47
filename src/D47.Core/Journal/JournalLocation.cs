@@ -93,6 +93,22 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     /// <summary>Control score added by undermining this cycle, or null where the journal gives none.</summary>
     public long? PowerplayStateUndermining { get; init; }
 
+    /// <summary>The system's main economy as Elite words it, or null where the journal gives none.</summary>
+    public string? SystemEconomy { get; init; }
+
+    /// <summary>The controlling faction's state (Boom, Famine and so on), or null where it has none.</summary>
+    public string? SystemFactionState { get; init; }
+
+    /// <summary>The docked station's economy, or null when not docked or the journal gives none.</summary>
+    public string? StationEconomy { get; init; }
+
+    private static string? FactionState(JournalEvent journalEvent) =>
+        journalEvent.Object("SystemFaction") is { } faction
+        && faction.String("FactionState") is { Length: > 0 } state
+        && !string.Equals(state, "None", StringComparison.OrdinalIgnoreCase)
+            ? state
+            : null;
+
     /// <summary>The current system's population, or null where it has not been read this session.</summary>
     public long? Population { get; init; }
 
@@ -143,6 +159,9 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             PowerplayStateReinforcement = journalEvent.Long("PowerplayStateReinforcement"),
             PowerplayStateUndermining = journalEvent.Long("PowerplayStateUndermining"),
             Population = journalEvent.Long("Population"),
+            SystemEconomy = journalEvent.Named("SystemEconomy"),
+            SystemFactionState = FactionState(journalEvent),
+            StationEconomy = journalEvent.Bool("Docked") ? journalEvent.Named("StationEconomy") : null,
 
             // Neither event carries a star class, and both can move the Commander somewhere new — so a class
             // carried over would describe the system they left.
@@ -174,6 +193,9 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             PowerplayStateReinforcement = journalEvent.Long("PowerplayStateReinforcement"),
             PowerplayStateUndermining = journalEvent.Long("PowerplayStateUndermining"),
             Population = journalEvent.Long("Population"),
+            SystemEconomy = journalEvent.Named("SystemEconomy"),
+            SystemFactionState = FactionState(journalEvent),
+            StationEconomy = null,
 
             // Not discarded on arrival — moved. StartJump named this system and its class when the jump
             // began, and nothing between the two events overwrites that.
@@ -190,6 +212,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             StationName = Station(journalEvent) ?? StationName,
             StationType = journalEvent.String("StationType") ?? StationType,
             StationAllegiance = journalEvent.String("StationAllegiance"),
+            StationEconomy = journalEvent.Named("StationEconomy"),
             StarSystem = journalEvent.String("StarSystem") ?? StarSystem,
             SystemAddress = Addressed(journalEvent, SystemAddress),
             MarketId = journalEvent.Long("MarketID") ?? MarketId,
@@ -202,6 +225,7 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             StationName = null,
             StationType = null,
             StationAllegiance = null,
+            StationEconomy = null,
             MarketId = null,
             Mode = FlightMode.Normal,
         },

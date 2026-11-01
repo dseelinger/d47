@@ -1659,7 +1659,7 @@ It is silent while Elite is not running.
 is your own AI and crew.
 
 Made-up radio traffic from people who do not exist: two crews on the local channel about their own
-small business, the dock telling an invented pilot off when you are docked somewhere, and — about
+small business (sometimes the local economy or the controlling faction's situation), the dock telling an invented pilot off when you are docked somewhere, and — about
 one exchange in four — a line or two said to *you* over the open channel. Traffic between other people
 sounds further off than a hail and has its own row, Overheard chatter, in the audio mixer.
 

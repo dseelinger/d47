@@ -273,7 +273,7 @@ internal sealed class LineWriter
             NpcChatter.WithHumor(
                 scene is null
                     ? NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType, roster, Fight.Snapshot,
-                        NpcChatter.ScenarioFor(Settings.Current.Llm.ScenarioAudience, scenario))
+                        NpcChatter.ScenarioFor(Settings.Current.Llm.ScenarioAudience, scenario), location)
                     : NpcChatter.SceneInstruction(
                         scene,
                         scenario!,

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Passers-by chatter is sometimes about where you are: about one exchange in three, when the system's economy, the controlling faction's state or the station's economy is known, the speakers talk about that. The same goes for a hail while docked.
+
 Station search has a **Stronghold carrier** type tile, and `search_stations` takes it as a `station_type`. It lists the Stronghold Carriers of the Power you set, or of every Power when none is set, and must be searched on its own. Each carrier row names its Power in place of the controlling faction. A search that names a Power now keeps that Power's carriers instead of leaving them out.
 
 Pressing a station on Search › System › Stations, on a body's page, or in a Stations search result opens a page for that station under its system. Its sections are OVERVIEW, MARKET, OUTFITTING and SHIPYARD, each with a count and the time it was reported. OVERVIEW shows the station's type, faction, economies, pads and services, and a REPORTED TRADE row that opens a list or reads "None reported". MARKET is a table you can sort by commodity, buy, sell, supply or demand; prices are as a Commander last reported them. The rows on Stations are now pressable tiles ending in ›.

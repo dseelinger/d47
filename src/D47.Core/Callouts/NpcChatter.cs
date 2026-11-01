@@ -452,13 +452,14 @@ public static partial class NpcChatter
         string? stationType = null,
         NpcChatterRoster? roster = null,
         FightSnapshot? fight = null,
-        string? scenario = null)
+        string? scenario = null,
+        JournalLocation? place = null)
     {
         var about = carrier ?? NpcChatterCarrier.None;
         var cast = roster ?? NpcChatterRoster.None;
 
         return Situation(docked, stationType)
-            + Scene(kind, about, docked, exchangeIndex, fight, stationType)
+            + Scene(kind, about, docked, exchangeIndex, fight, stationType, place)
             + (cast.Slots.Count > 0 ? Roster(cast, exchangeIndex) : UnslottedManners(kind, exchangeIndex))
             + (cast.Slots.Count > 0 ? Slotted : Unslotted)
             + Contract
@@ -754,7 +755,7 @@ public static partial class NpcChatter
 
     private static string Scene(
         NpcChatterKind kind, NpcChatterCarrier carrier, bool docked, int exchangeIndex, FightSnapshot? fight,
-        string? stationType) =>
+        string? stationType, JournalLocation? place) =>
         kind switch
         {
             NpcChatterKind.Combat => CombatScene(fight ?? FightSnapshot.None),
@@ -783,9 +784,10 @@ public static partial class NpcChatter
             NpcChatterKind.Hail =>
                 "One invented person nearby says one or two lines to the Commander over the open "
                 + "channel — a compliment on the ship, a grumble about the queue, a rumour heard in "
-                + "the bar. Statements only: they are not starting a conversation. ",
+                + "the bar. Statements only: they are not starting a conversation. "
+                + LocalHail(exchangeIndex, place),
 
-            _ => PassersbyScene(exchangeIndex, docked, stationType),
+            _ => PassersbyScene(exchangeIndex, docked, stationType, place),
         };
 
     private static string CombatScene(FightSnapshot fight)
@@ -812,10 +814,10 @@ public static partial class NpcChatter
     /// <paramref name="exchangeIndex"/>, and the completions that shape is known to reach for are
     /// named off limits.
     /// </summary>
-    private static string PassersbyScene(int exchangeIndex, bool docked, string? stationType)
+    private static string PassersbyScene(int exchangeIndex, bool docked, string? stationType, JournalLocation? place)
     {
         var cast = Pick(exchangeIndex, CastOffset, docked ? DockedCasts : OpenSpaceCasts);
-        var topic = Pick(exchangeIndex, TopicOffset, Topics);
+        var topic = LocalTopic(exchangeIndex, place) ?? Pick(exchangeIndex, TopicOffset, Topics);
         var opening = Pick(exchangeIndex, OpeningOffset, Openings);
 
         var noStation = docked
@@ -942,6 +944,41 @@ public static partial class NpcChatter
         "a question about the shortest route",
     ];
 
+    /// <summary>
+    /// One exchange in three, a topic built from the system economy, the controlling faction's state or
+    /// the station economy, whichever are known; null otherwise.
+    /// </summary>
+    internal static string? LocalTopic(int exchangeIndex, JournalLocation? place)
+    {
+        List<string> known = [];
+
+        if (place?.SystemEconomy is { Length: > 0 } system)
+        {
+            known.Add($"how the {system} trade here is going");
+        }
+
+        if (place?.StationEconomy is { Length: > 0 } station && station != place.SystemEconomy)
+        {
+            known.Add($"how the {station} trade at this station is going");
+        }
+
+        if (place?.SystemFactionState is { Length: > 0 } state)
+        {
+            known.Add($"living with the {state} the local faction is in");
+        }
+
+        return known.Count == 0 || !Pick(exchangeIndex, LocalOffset, LocalOneInThree)
+            ? null
+            : Pick(exchangeIndex, LocalTopicOffset, known.ToArray());
+    }
+
+    private static string LocalHail(int exchangeIndex, JournalLocation? place) =>
+        LocalTopic(exchangeIndex, place) is { } topic ? $"This time the remark is about {topic}. " : string.Empty;
+
+    private static readonly bool[] LocalOneInThree = [false, false, true];
+
+    private const int LocalOffset = 41;
+    private const int LocalTopicOffset = 47;
     private const int CastOffset = 3;
     private const int TopicOffset = 7;
     private const int OpeningOffset = 13;
