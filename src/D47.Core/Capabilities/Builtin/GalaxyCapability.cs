@@ -186,7 +186,8 @@ public static class GalaxyCapability
                     ToolParameter.Text(
                         "station_type",
                         "One or more, comma-separated: "
-                            + $"{string.Join(", ", StationQuery.StationTypes.Select(type => type.Name))}."),
+                            + $"{string.Join(", ", StationQuery.StationTypeNames)}. "
+                            + "Stronghold carrier is searched on its own, with no other type."),
                     MinPadParameter,
                     MaxStationDistanceParameter,
                     ToolParameter.Text(
@@ -3435,6 +3436,11 @@ public static class GalaxyCapability
         {
             report.AppendLine();
             report.Append($"{station.Name} in {station.SystemName}");
+
+            if (station.IsStrongholdCarrier && station.ControllingPower is { Length: > 0 } carrierPower)
+            {
+                report.Append($" ({carrierPower})");
+            }
 
             if (station.Distance is not null)
             {

@@ -97,10 +97,14 @@ public sealed record StationSummary
     /// <summary>The system's Powerplay state, in the service's spelling.</summary>
     public string? PowerState { get; init; }
 
+    /// <summary>A Stronghold Carrier in a Stronghold system.</summary>
+    public bool IsStrongholdCarrier =>
+        string.Equals(Name, "Stronghold Carrier", StringComparison.OrdinalIgnoreCase)
+        && string.Equals(PowerState, "Stronghold", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>A Stronghold Carrier in a Stronghold system controlled by any Power but <paramref name="pledgedPower"/>.</summary>
     public bool IsOtherPowersStrongholdCarrier(string? pledgedPower) =>
-        string.Equals(Name, "Stronghold Carrier", StringComparison.OrdinalIgnoreCase)
-        && string.Equals(PowerState, "Stronghold", StringComparison.OrdinalIgnoreCase)
+        IsStrongholdCarrier
         && !(pledgedPower is { Length: > 0 }
              && string.Equals(ControllingPower, pledgedPower, StringComparison.OrdinalIgnoreCase));
 
@@ -246,6 +250,9 @@ public sealed record StationQuery
     /// <summary>The kinds of station to include; null sends no type filter.</summary>
     public IReadOnlyList<StationKind>? Kinds { get; init; }
 
+    /// <summary>Searches for Stronghold Carriers by exact name and Stronghold state, with no type filter.</summary>
+    public bool StrongholdCarriers { get; init; }
+
     /// <summary>False leaves out every surface port and settlement type, on top of <see cref="Kinds"/>.</summary>
     public bool SurfaceStations { get; init; } = true;
 
@@ -284,6 +291,13 @@ public sealed record StationQuery
         new("Fleet carrier", StationKind.FleetCarrier),
         new("Megaship", StationKind.Megaship),
     ];
+
+    /// <summary>The tile name for Stronghold Carriers, which Spansh types as a planetary outpost.</summary>
+    public const string StrongholdCarrierType = "Stronghold carrier";
+
+    /// <summary>Every name <c>station_type</c> offers: <see cref="StationTypes"/> then <see cref="StrongholdCarrierType"/>.</summary>
+    public static IReadOnlyList<string> StationTypeNames { get; } =
+        [.. StationTypes.Select(type => type.Name), StrongholdCarrierType];
 
     /// <summary>The services <c>services</c> offers; the field is the name in <c>field_values/services</c>.</summary>
     public static IReadOnlyList<StationServiceName> ServiceNames { get; } =
@@ -479,21 +493,40 @@ public sealed record StationQuery
         }
 
         List<StationKind>? kinds = null;
+        var strongholdCarriers = false;
 
         if (!string.IsNullOrWhiteSpace(search.StationTypes))
         {
             kinds = [];
+            var names = Split(search.StationTypes).ToList();
 
-            foreach (var name in Split(search.StationTypes))
+            foreach (var name in names)
             {
-                if (StationTypes.FirstOrDefault(type => Same(type.Name, name)) is not { } type)
+                if (Same(StrongholdCarrierType, name))
+                {
+                    strongholdCarriers = true;
+                }
+                else if (StationTypes.FirstOrDefault(type => Same(type.Name, name)) is { } type)
+                {
+                    kinds.Add(type.Kind);
+                }
+                else
                 {
                     failure = $"'{name}' is not a station type I know. It has to be one of: "
-                              + $"{string.Join(", ", StationTypes.Select(known => known.Name))}.";
+                              + $"{string.Join(", ", StationTypeNames)}.";
+                    return false;
+                }
+            }
+
+            if (strongholdCarriers)
+            {
+                if (names.Count > 1)
+                {
+                    failure = "Stronghold carrier is searched on its own; untick the other types.";
                     return false;
                 }
 
-                kinds.Add(type.Kind);
+                kinds = null;
             }
         }
 
@@ -554,6 +587,20 @@ public sealed record StationQuery
             return false;
         }
 
+        if (strongholdCarriers)
+        {
+            var states = criteria.Where(criterion => criterion.Filter.Name == "power_state").ToList();
+
+            if (states.Any(state => !state.Choices.SequenceEqual(["Stronghold"], StringComparer.OrdinalIgnoreCase)))
+            {
+                failure = "Stronghold carrier is searched on its own, in Stronghold systems; leave power_state out "
+                          + "or set it to Stronghold.";
+                return false;
+            }
+
+            criteria = [.. criteria.Except(states)];
+        }
+
         if (!SearchSorts.TryParse(GalaxySearchKind.Stations, search.OrderBy, search.Order, out var sort, out failure))
         {
             return false;
@@ -561,7 +608,7 @@ public sealed record StationQuery
 
         var furthest = search.MaxStationDistance is > 0 ? search.MaxStationDistance : null;
 
-        if (kinds is null && pad is null && furthest is null && services.Count == 0 && trader is null
+        if (kinds is null && !strongholdCarriers && pad is null && furthest is null && services.Count == 0 && trader is null
             && broker is null && stock.Modules.Count == 0 && stock.Ship is null && criteria.Count == 0)
         {
             failure =
@@ -577,9 +624,11 @@ public sealed record StationQuery
             ReferenceSystem = string.IsNullOrWhiteSpace(search.ReferenceSystem) ? null : search.ReferenceSystem.Trim(),
 
             // Carriers are left out unless asked for, as the market search leaves them out.
-            Kinds = kinds is null
+            Kinds = strongholdCarriers ? null
+                : kinds is null
                 ? [.. Enum.GetValues<StationKind>().Where(kind => kind != StationKind.FleetCarrier)]
                 : [.. kinds.Distinct()],
+            StrongholdCarriers = strongholdCarriers,
             MinPad = pad,
             MaxStationDistance = furthest,
             Services = services,

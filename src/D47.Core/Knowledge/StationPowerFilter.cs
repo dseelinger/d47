@@ -21,6 +21,11 @@ public sealed class StationPowerFilter(IGalaxyService inner, Func<PowerplayPledg
                 cancellationToken)
             .ConfigureAwait(false);
 
+        bool Drops(StationSummary station) =>
+            station.IsOtherPowersStrongholdCarrier(power)
+            && !query.StrongholdCarriers
+            && !NamesPower(query, station.ControllingPower);
+
         var kept = new List<StationSummary>();
         var leftOut = 0;
         var read = 0;
@@ -34,7 +39,7 @@ public sealed class StationPowerFilter(IGalaxyService inner, Func<PowerplayPledg
 
             read++;
 
-            if (station.IsOtherPowersStrongholdCarrier(power))
+            if (Drops(station))
             {
                 leftOut++;
             }
@@ -44,7 +49,7 @@ public sealed class StationPowerFilter(IGalaxyService inner, Func<PowerplayPledg
             }
         }
 
-        var dropped = asked.Stations.Count(station => station.IsOtherPowersStrongholdCarrier(power));
+        var dropped = asked.Stations.Count(Drops);
 
         return asked with
         {
@@ -54,6 +59,12 @@ public sealed class StationPowerFilter(IGalaxyService inner, Func<PowerplayPledg
             More = asked.More || read < asked.Stations.Count,
         };
     }
+
+    private static bool NamesPower(StationQuery query, string? power) =>
+        power is { Length: > 0 }
+        && query.Criteria.Any(criterion =>
+            criterion.Filter.Name == "power"
+            && criterion.Choices.Contains(power, StringComparer.OrdinalIgnoreCase));
 
     public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
         inner.SearchAsync(query, cancellationToken);

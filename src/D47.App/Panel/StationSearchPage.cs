@@ -49,7 +49,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     private readonly SystemNameSuggestions<string>? _controllingFactionNames;
     private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 99999, Step = 10, Format = "#,0" };
     private readonly MaxReportAge _age = new(72);
-    private readonly Dictionary<string, CheckBox> _types = StationQuery.StationTypes.ToDictionary(type => type.Name, type => Tile(type.Name), StringComparer.Ordinal);
+    private readonly Dictionary<string, CheckBox> _types = StationQuery.StationTypeNames.ToDictionary(name => name, name => Tile(name), StringComparer.Ordinal);
     private readonly Stepper _pad = Choice(StationQuery.MinPads);
     private readonly TextBox _fromStar = Field("from the star at most", mono: true);
     private readonly WrapPanel _serviceTiles = new() { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
@@ -150,7 +150,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         PutNear(arguments, _near, _distance, DefaultDistance);
 
-        Put(arguments, "station_type", string.Join(", ", StationQuery.StationTypes.Where(type => _types[type.Name].IsChecked == true).Select(type => type.Name)));
+        Put(arguments, "station_type", string.Join(", ", StationQuery.StationTypeNames.Where(name => _types[name].IsChecked == true)));
         Put(arguments, "min_pad", Selected(_pad));
         Put(arguments, "max_station_distance", _fromStar.Text);
         Put(arguments, "services", string.Join(", ", _services));
@@ -415,7 +415,9 @@ public sealed class StationSearchPage : GalaxySearchPage
         var systemName = Value(station.SystemName);
         ThemeInk.Bind(systemName, TextBlock.ForegroundProperty, string.Equals(station.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
 
-        var system = station.ControllingFaction is { } controlling
+        var system = station.IsStrongholdCarrier && station.ControllingPower is { Length: > 0 } carrierPower
+            ? carrierPower
+            : station.ControllingFaction is { } controlling
             ? station.ReportedState is { } state ? $"{controlling} · {state}" : controlling
             : Dash;
 

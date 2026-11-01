@@ -137,6 +137,21 @@ internal static class SpanshRequest
                 writer.WriteEndObject();
             }
 
+            if (query.StrongholdCarriers)
+            {
+                writer.WriteStartObject("name");
+                writer.WriteStartArray("value");
+                writer.WriteStringValue("Stronghold Carrier");
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+
+                writer.WriteStartObject("system_power_state");
+                writer.WriteStartArray("value");
+                writer.WriteStringValue("Stronghold");
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            }
+
             if (query.Ship is not null)
             {
                 writer.WriteStartObject("ships");
