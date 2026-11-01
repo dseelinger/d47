@@ -66,6 +66,14 @@ public sealed class RecordingAudioSink : IAudioSink
         _log.Add($"gain {playbackId} {gain:0.##}");
     }
 
+    public List<(long Id, float To, TimeSpan Over, bool HoldAtEnd)> Fades { get; } = [];
+
+    public void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false)
+    {
+        Fades.Add((playbackId, to, over, holdAtEnd));
+        _log.Add($"fade {playbackId} {to:0.##} {over.TotalSeconds:0.##}s{(holdAtEnd ? " hold" : string.Empty)}");
+    }
+
     /// <summary>Stands in for a clip reaching its end.</summary>
     public void CompletePlayback(long playbackId)
     {

@@ -73,6 +73,114 @@ internal sealed class TrackedSampleProvider(long id, ISampleProvider source) : I
     }
 }
 
+/// <summary>
+/// A second multiplier on a playback, ramped per sample. Held, it renders silence without reading
+/// <c>source</c>.
+/// </summary>
+internal sealed class FadeSampleProvider(ISampleProvider source) : ISampleProvider
+{
+    private readonly Lock _gate = new();
+
+    private float _level = 1f;
+    private float _from;
+    private long _frames;
+    private long _framesLeft;
+    private float _target = 1f;
+    private bool _holdAtEnd;
+    private bool _held;
+
+    public WaveFormat WaveFormat => source.WaveFormat;
+
+    public float Level
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _level;
+            }
+        }
+    }
+
+    public void Fade(float to, TimeSpan over, bool holdAtEnd)
+    {
+        lock (_gate)
+        {
+            var frames = (long)(over.TotalSeconds * WaveFormat.SampleRate);
+            _held = false;
+            _target = to;
+            _holdAtEnd = holdAtEnd;
+
+            if (frames <= 0)
+            {
+                _level = to;
+                _framesLeft = 0;
+                _held = holdAtEnd;
+                return;
+            }
+
+            _framesLeft = frames;
+            _frames = frames;
+            _from = _level;
+        }
+    }
+
+    /// <summary>Lifts a hold; the fade stays at the level it was left at.</summary>
+    public void Release()
+    {
+        lock (_gate)
+        {
+            _held = false;
+            _holdAtEnd = false;
+        }
+    }
+
+    public int Read(float[] buffer, int offset, int count)
+    {
+        lock (_gate)
+        {
+            if (_held)
+            {
+                Array.Clear(buffer, offset, count);
+                return count;
+            }
+
+            var channels = WaveFormat.Channels;
+            var toRead = count;
+
+            if (_holdAtEnd && _framesLeft > 0 && _framesLeft * channels < count)
+            {
+                toRead = (int)(_framesLeft * channels);
+            }
+
+            var read = source.Read(buffer, offset, toRead);
+
+            for (var i = 0; i + channels <= read; i += channels)
+            {
+                if (_framesLeft > 0)
+                {
+                    _framesLeft--;
+                    _level = _target + ((_from - _target) * _framesLeft / _frames);
+                }
+
+                for (var c = 0; c < channels; c++)
+                {
+                    buffer[offset + i + c] *= _level;
+                }
+            }
+
+            if (_holdAtEnd && _framesLeft == 0 && read == toRead)
+            {
+                _held = true;
+                Array.Clear(buffer, offset + read, count - read);
+                return count;
+            }
+
+            return read;
+        }
+    }
+}
+
 /// <summary>Calls <paramref name="after"/> each time a read of <paramref name="source"/> has returned.</summary>
 internal sealed class AfterEachRead(ISampleProvider source, Action after) : ISampleProvider
 {

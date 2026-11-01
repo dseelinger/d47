@@ -39,7 +39,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
     private bool _disposed;
 
     /// <summary>One playing input; <paramref name="Owned"/> is released when it stops or ends.</summary>
-    private sealed record Input(VolumeSampleProvider Volume, TrackedSampleProvider Root, IDisposable? Owned);
+    private sealed record Input(VolumeSampleProvider Volume, FadeSampleProvider Fade, TrackedSampleProvider Root, IDisposable? Owned);
 
     public WasapiAudioSink(ILogger<WasapiAudioSink> logger)
         : this(logger, new WasapiEndpointEnumerator(logger))
@@ -187,9 +187,10 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
             }
 
             var volume = new VolumeSampleProvider(source) { Volume = request.Gain };
-            var tracked = new TrackedSampleProvider(request.Id, volume);
+            var fade = new FadeSampleProvider(volume);
+            var tracked = new TrackedSampleProvider(request.Id, fade);
 
-            _inputs[request.Id] = new Input(volume, tracked, owned);
+            _inputs[request.Id] = new Input(volume, fade, tracked, owned);
             _mixer.AddMixerInput(tracked);
         }
     }
@@ -227,6 +228,11 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
             if (_inputs.TryGetValue(playbackId, out var input))
             {
                 input.Root.Paused = paused;
+
+                if (!paused)
+                {
+                    input.Fade.Release();
+                }
             }
         }
     }
@@ -238,6 +244,17 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
             if (_inputs.TryGetValue(playbackId, out var input))
             {
                 input.Volume.Volume = gain;
+            }
+        }
+    }
+
+    public void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false)
+    {
+        lock (_gate)
+        {
+            if (_inputs.TryGetValue(playbackId, out var input))
+            {
+                input.Fade.Fade(to, over, holdAtEnd);
             }
         }
     }

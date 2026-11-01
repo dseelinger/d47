@@ -54,6 +54,12 @@ public interface IAudioSink
     void SetGain(long playbackId, float gain);
 
     /// <summary>
+    /// Ramps a playback's fade, which multiplies its gain, to <paramref name="to"/> over <paramref name="over"/>.
+    /// With <paramref name="holdAtEnd"/>, holds the playback at its position once the ramp ends.
+    /// </summary>
+    void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false);
+
+    /// <summary>
     /// Raised when a clip, track or arriving clip reaches its end on its own, including a track that failed
     /// to open or to read.
     /// </summary>

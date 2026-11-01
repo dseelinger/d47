@@ -57,6 +57,11 @@ internal sealed class FakeAudioSink : IAudioSink
     {
     }
 
+    public List<(long Id, float To, TimeSpan Over, bool HoldAtEnd)> Fades { get; } = [];
+
+    public void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false) =>
+        Fades.Add((playbackId, to, over, holdAtEnd));
+
     public void Complete(long playbackId) => Finished?.Invoke(playbackId);
 }
 

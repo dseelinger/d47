@@ -304,6 +304,10 @@ public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
         {
         }
 
+        public void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false)
+        {
+        }
+
         private sealed class NoTap : IRenderReferenceTap
         {
             public event Action<RenderReferenceFrame>? Rendered;

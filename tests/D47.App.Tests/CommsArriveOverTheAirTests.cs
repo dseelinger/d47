@@ -128,6 +128,10 @@ public class CommsArriveOverTheAirTests
         {
         }
 
+        public void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false)
+        {
+        }
+
         /// <summary>Never raised here; the assertions are about what was started.</summary>
         public void Ignore() => Finished?.Invoke(0);
 

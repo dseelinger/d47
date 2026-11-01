@@ -282,6 +282,10 @@ public class AskingCutsAheadOfInventedChatterTests
         {
         }
 
+        public void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false)
+        {
+        }
+
         /// <summary>
         /// Whether a line was ever started. Matched by prefix, because a line arriving over a link is
         /// renamed by the treatment applied to it.

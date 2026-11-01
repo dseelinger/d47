@@ -135,6 +135,10 @@ public class ChatterStopsWhenEliteClosesTests
         {
         }
 
+        public void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false)
+        {
+        }
+
         public void Finish(long id) => Finished?.Invoke(id);
 
         public bool Played(string text) =>
