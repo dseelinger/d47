@@ -248,6 +248,7 @@ public static class GalaxyCapability
                         "include_carriers",
                         "Include fleet carriers. Default false."),
                     LimitParameter,
+                    PageParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchOutfittingAsync(
@@ -274,6 +275,7 @@ public static class GalaxyCapability
                         "max_distance",
                         "How far to look, in light years. Default 100."),
                     LimitParameter,
+                    PageParameter,
                     ReportAgeParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
@@ -1314,7 +1316,7 @@ public static class GalaxyCapability
             return ToolResult.Error(failure);
         }
 
-        query = query with { MaxReportAgeHours = reportAge };
+        query = query with { MaxReportAgeHours = reportAge, Page = PageAsked(arguments) };
 
         try
         {
@@ -1325,14 +1327,13 @@ public static class GalaxyCapability
 
             var posting = new GalaxySearchPosting(
                 GalaxySearchKind.Outfitting,
-                new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
+                SearchArguments(arguments),
                 result.Reference,
                 result,
                 said,
-                now?.Invoke() ?? DateTimeOffset.UtcNow);
+                now?.Invoke() ?? DateTimeOffset.UtcNow) { Pages = query.Page, More = result.More };
 
-            searches?.Post(posting);
-            Remember(remember, "search_outfitting", posting);
+            Answered(searches, remember, "search_outfitting", posting);
 
             return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Outfitting) };
         }
@@ -1667,8 +1668,10 @@ public static class GalaxyCapability
         var at = now?.Invoke() ?? DateTimeOffset.UtcNow;
         DateTimeOffset? notBefore = reportAge is { } hours ? at - TimeSpan.FromHours(hours) : null;
 
+        var page = PageAsked(arguments);
+
         var result = await Task.Run(
-            () => SignalSearch.Find(origin, reference, matcher, maxDistance, limit, own, index, notBefore),
+            () => SignalSearch.Find(origin, reference, matcher, maxDistance, limit, own, index, notBefore, page),
             cancellationToken).ConfigureAwait(false);
 
         var distance = maxDistance.ToString("0.##", CultureInfo.InvariantCulture);
@@ -1687,13 +1690,21 @@ public static class GalaxyCapability
 
         string said;
 
-        if (result.Signals.Count == 0)
+        if (result.Signals.Count == 0 && page > 1)
+        {
+            said = NothingOnPage(page, result.More);
+        }
+        else if (result.Signals.Count == 0)
         {
             said = $"No {signal.Trim()} found within {distance} light years of {from}."
                    + (byKind
                        ? string.Empty
                        : " Names are matched as they were uploaded, in the uploader's game language, so a memorial "
                          + "may be listed under another language's name (\"Sol-Pilotengedenkstätte\").");
+        }
+        else if (page > 1)
+        {
+            said = PageLead("Signals", page, limit, result.Signals.Count, result.Total) + LastPage(page, result.More);
         }
         else
         {
@@ -1715,17 +1726,18 @@ public static class GalaxyCapability
 
         var posting = new GalaxySearchPosting(
             GalaxySearchKind.Signals,
-            new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
+            SearchArguments(arguments),
             reference,
             result,
             said,
             at)
         {
             Notes = source.Trim(),
+            Pages = page,
+            More = result.More,
         };
 
-        searches?.Post(posting);
-        Remember(remember, "find_signal", posting);
+        Answered(searches, remember, "find_signal", posting);
 
         return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Signals) };
     }

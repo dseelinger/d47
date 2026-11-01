@@ -227,9 +227,15 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     protected override int Count(GalaxySearchPosting posting) =>
         posting.Result is StationSearchResult result ? result.Stations.Count : 0;
 
-    protected override Control? Table(GalaxySearchPosting posting, bool headset)
+    protected override int Total(GalaxySearchPosting posting) =>
+        posting.Result is StationSearchResult result ? result.Total : 0;
+
+    protected override IReadOnlyList<object> Rows(GalaxySearchPosting posting) =>
+        posting.Result is StationSearchResult result ? [.. result.Stations] : [];
+
+    protected override PagedTable? Paged(GalaxySearchPosting posting, bool headset)
     {
-        if (posting.Result is not StationSearchResult { Stations.Count: > 0 } result)
+        if (posting.Result is not StationSearchResult { Stations.Count: > 0 })
         {
             return null;
         }
@@ -251,14 +257,8 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         }
 
         var rule = SearchHead(posting, HeadName, columns, heads);
-        var rows = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 2, 0, 0) };
 
-        foreach (var station in result.Stations)
-        {
-            rows.Children.Add(Row(station, columns, headset));
-        }
-
-        return new StackPanel { Children = { rule, rows } };
+        return new PagedTable(rule, item => Row((StationSummary)item, columns, headset));
     }
 
     protected override Control BuildForm()

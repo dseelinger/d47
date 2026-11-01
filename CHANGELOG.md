@@ -12,6 +12,8 @@ The Systems, Stations and Bodies search pages no longer have a **Show up to** fi
 
 Asking for more after a systems, stations or bodies search by voice continues that search: D47 reads out the next rows, such as "Systems 26 to 50 of 1234", and adds them to the same answer, with no second entry in the search history. A bodies search ordered by a material's share is one answer and has no more rows.
 
+The Outfitting and Signals search pages now load more the same way: an answer comes 25 rows at a time, scrolling to its end loads the next 25, and the head counts rows and total, such as "25 of 60 signals". Asking for more after an outfitting or signal search by voice continues it too.
+
 D47 has a music library of its own, as a download. Turn on **Download the D47 music library** (Settings › Hearing and sound › Sounds and levels) and it downloads in the background into `data\music-pack`, one folder at a time, the most-used first. The line under the setting gives the size and counts the folders in. Files of your own in a music folder replace the library for that folder, so three tracks of yours are not drowned among fifty. The "Your own audio" row counts only your files. Turned off, the library stops playing and nothing more is downloaded; deleting `data\music-pack` reclaims the space.
 
 Six more Elite music tracks now have folders of their own under `data\audio\music`: `titan-encounter`, `titan-graveyard`, `thargoid-factory`, `combat-thargoid-ground`, `combat-hunters` and `damaged-starport`. Before, those tracks played the normal-space or supercruise folder. A folder with no files still falls back to the situation's own music.

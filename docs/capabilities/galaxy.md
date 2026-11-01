@@ -529,13 +529,14 @@ power and its Powerplay state.
 Every answer is kept as the last systems search, with the arguments as given, the system it was
 measured from, the result and what was said. A search that fails keeps nothing.
 
-`search_systems`, `search_stations` and `find_body` take `page`, from 1, and each page holds `limit`
+`search_systems`, `search_stations`, `search_outfitting`, `find_signal` and `find_body` take `page`, from 1, and each page holds `limit`
 rows, so page 3 at `limit` 25 asks the service for rows 51 to 75. Page 2 and on continues the last
 answer: when that answer has the same arguments and one page fewer, the rows are added to it, and
 the spoken answer opens with which rows these are, such as "Systems 26 to 50 of 1234". A later page
 adds no search history entry, and the kept arguments leave out `page`, so a saved or refreshed
 search asks for the whole search again. Each answer records whether the service has more rows: a
-page shorter than `limit` is the last.
+page shorter than `limit` is the last. `find_signal` asks no service: it skips the first
+`(page − 1) × limit` matches of the local index and scans, and has more when matches remain past the page.
 
 #### `search_stations`
 
@@ -618,7 +619,7 @@ that fails keeps nothing.
 Find stations that sell several modules, or modules and a ship, at once, nearest first.
 
 ```json
-{"type":"object","properties":{"include_carriers":{"type":"boolean","description":"Include fleet carriers. Default false."},"items":{"type":"string","description":"Comma-separated: modules by name with an optional size and rating, and at most one ship, such as \u00225A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\u0022."},"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"max_report_age_hours":{"type":"integer","description":"Leave out reports older than this many hours, 1 to 8,760. Default 72, three days; 0 means any age."},"max_station_distance":{"type":"number","description":"Furthest from the star, in light seconds."},"min_pad":{"type":"string","description":"Large, or Medium for at least one medium pad.","enum":["Medium","Large"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"surface_stations":{"type":"boolean","description":"Include surface ports and settlements. Default true."}},"required":["items"],"additionalProperties":false}
+{"type":"object","properties":{"include_carriers":{"type":"boolean","description":"Include fleet carriers. Default false."},"items":{"type":"string","description":"Comma-separated: modules by name with an optional size and rating, and at most one ship, such as \u00225A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\u0022."},"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50."},"max_report_age_hours":{"type":"integer","description":"Leave out reports older than this many hours, 1 to 8,760. Default 72, three days; 0 means any age."},"max_station_distance":{"type":"number","description":"Furthest from the star, in light seconds."},"min_pad":{"type":"string","description":"Large, or Medium for at least one medium pad.","enum":["Medium","Large"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"page":{"type":"integer","description":"Which page of results, from 1; each page holds limit results. Ask for page 2 and on only to continue the search just answered."},"surface_stations":{"type":"boolean","description":"Include surface ports and settlements. Default true."}},"required":["items"],"additionalProperties":false}
 ```
 
 `items` is comma-separated. A module is its catalogue name with an optional size and rating, such
@@ -643,7 +644,7 @@ be saved by name.
 Find the nearest signal of a kind, such as a Hazardous RES, a nav beacon or a memorial.
 
 ```json
-{"type":"object","properties":{"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 100."},"max_report_age_hours":{"type":"integer","description":"Leave out reports older than this many hours, 1 to 8,760. Absent or 0 means any age."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"signal":{"type":"string","description":"A kind, one of Any RES, Nav beacon, Compromised nav beacon, Resource extraction site, Low RES, High RES, Hazardous RES, Colonisation beacon, Tourist beacon, Installation, Megaship, Titan, Listening post, Unregistered comms beacon, Notable stellar phenomena; or any part of a signal\u0027s name such as \u0022unauthorised\u0022, \u0022memorial\u0022 or \u0022Natalie Fraser\u0022."}},"required":["signal"],"additionalProperties":false}
+{"type":"object","properties":{"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 100."},"max_report_age_hours":{"type":"integer","description":"Leave out reports older than this many hours, 1 to 8,760. Absent or 0 means any age."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"page":{"type":"integer","description":"Which page of results, from 1; each page holds limit results. Ask for page 2 and on only to continue the search just answered."},"signal":{"type":"string","description":"A kind, one of Any RES, Nav beacon, Compromised nav beacon, Resource extraction site, Low RES, High RES, Hazardous RES, Colonisation beacon, Tourist beacon, Installation, Megaship, Titan, Listening post, Unregistered comms beacon, Notable stellar phenomena; or any part of a signal\u0027s name such as \u0022unauthorised\u0022, \u0022memorial\u0022 or \u0022Natalie Fraser\u0022."}},"required":["signal"],"additionalProperties":false}
 ```
 
 `signal` is a kind's display name or "Any RES", tried first, or any part of a signal's name, such as

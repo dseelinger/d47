@@ -36,6 +36,17 @@ public class APageIsAskedOfTheServiceFromZeroTests
     }
 
     [Fact]
+    public void AnOutfittingPageTwoIsServicePageOne()
+    {
+        Assert.True(StationQuery.TryParse(
+            new OutfittingSearch { ReferenceSystem = "Sol", Items = "6A Fuel Scoop", Size = 25 },
+            out var query,
+            out var failure), failure);
+
+        Assert.Equal((1, 25), PageOf(SpanshRequest.Stations(query with { Page = 2 })));
+    }
+
+    [Fact]
     public void ABodiesPageIsSentAtItsSize()
     {
         Assert.True(BodyQuery.TryParse(

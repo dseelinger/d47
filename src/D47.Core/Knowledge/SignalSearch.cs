@@ -6,7 +6,11 @@ namespace D47.Core.Knowledge;
 public sealed record SignalFinding(string Signal, string System, double Distance, DateTimeOffset LastSeen, bool OwnScan, long SystemAddress = 0);
 
 /// <summary>The answer to a signal search: <paramref name="Total"/> found, nearest first, of which <paramref name="Signals"/> are listed.</summary>
-public sealed record SignalSearchResult(string? Reference, int Total, IReadOnlyList<SignalFinding> Signals);
+public sealed record SignalSearchResult(string? Reference, int Total, IReadOnlyList<SignalFinding> Signals)
+{
+    /// <summary>Whether matches remain past the ones this answer used.</summary>
+    public bool More { get; init; }
+}
 
 /// <summary>Searches the Commander's own scans and the daily index together, nearest first.</summary>
 public static class SignalSearch
@@ -45,6 +49,7 @@ public static class SignalSearch
     /// The signals within <paramref name="maxDistance"/> light years of <paramref name="origin"/> that
     /// <paramref name="matches"/> accepts. A signal in both sources appears once, with the later date; a megaship
     /// appears once, where it was last seen. A sighting last seen before <paramref name="notBefore"/> is left out.
+    /// <paramref name="page"/>, from 1, selects which <paramref name="limit"/> of them are listed.
     /// </summary>
     public static SignalSearchResult Find(
         StarPosition origin,
@@ -54,7 +59,8 @@ public static class SignalSearch
         int limit,
         IEnumerable<SignalSighting> own,
         SignalIndex? index,
-        DateTimeOffset? notBefore = null)
+        DateTimeOffset? notBefore = null,
+        int page = 1)
     {
         var found = new Dictionary<(long System, string Type, string Name), (SignalSighting Sighting, bool Own)>();
 
@@ -87,7 +93,10 @@ public static class SignalSearch
             .ThenBy(finding => finding.System, StringComparer.Ordinal)
             .ToList();
 
-        return new SignalSearchResult(reference, ordered.Count, [.. ordered.Take(limit)]);
+        var skipped = (long)(GalaxyQuery.PageOf(page) - 1) * limit;
+        var listed = ordered.Skip((int)Math.Min(skipped, ordered.Count)).Take(limit).ToList();
+
+        return new SignalSearchResult(reference, ordered.Count, listed) { More = ordered.Count > skipped + listed.Count };
     }
 
     private static bool IsRecent(SignalSighting sighting, DateTimeOffset? notBefore) =>

@@ -204,9 +204,15 @@ public sealed class SignalSearchPage : GalaxySearchPage
     protected override int Count(GalaxySearchPosting posting) =>
         posting.Result is SignalSearchResult result ? result.Signals.Count : 0;
 
-    protected override Control? Table(GalaxySearchPosting posting, bool headset)
+    protected override int Total(GalaxySearchPosting posting) =>
+        posting.Result is SignalSearchResult result ? result.Total : 0;
+
+    protected override IReadOnlyList<object> Rows(GalaxySearchPosting posting) =>
+        posting.Result is SignalSearchResult result ? [.. result.Signals] : [];
+
+    protected override PagedTable? Paged(GalaxySearchPosting posting, bool headset)
     {
-        if (posting.Result is not SignalSearchResult { Signals.Count: > 0 } result)
+        if (posting.Result is not SignalSearchResult { Signals.Count: > 0 })
         {
             return null;
         }
@@ -223,15 +229,9 @@ public sealed class SignalSearchPage : GalaxySearchPage
         ];
 
         var rule = SearchHead(posting, HeadName, columns, heads);
-        var rows = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 2, 0, 0) };
         var now = DateTimeOffset.UtcNow;
 
-        foreach (var finding in result.Signals)
-        {
-            rows.Children.Add(Row(finding, columns, now));
-        }
-
-        return new StackPanel { Children = { rule, rows } };
+        return new PagedTable(rule, item => Row((SignalFinding)item, columns, now));
     }
 
     protected override Control BuildForm()

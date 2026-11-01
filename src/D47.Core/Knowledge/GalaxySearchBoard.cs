@@ -79,6 +79,16 @@ public sealed class GalaxySearchBoard
         },
         (BodySearchResult held, BodySearchResult added) =>
             added with { Reference = held.Reference, Bodies = [.. held.Bodies, .. added.Bodies] },
+        (SignalSearchResult held, SignalSearchResult added) => added with
+        {
+            Reference = held.Reference,
+            Signals =
+            [
+                .. held.Signals,
+                .. added.Signals.Where(signal =>
+                    !held.Signals.Any(shown => shown.System == signal.System && shown.Signal == signal.Signal)),
+            ],
+        },
         _ => null,
     };
 }
