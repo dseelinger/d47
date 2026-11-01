@@ -3,8 +3,9 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Input;
 using D47.Core.Journal;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
+using static D47.Core.Tests.Conversation.TurnLoops;
 
 namespace D47.Core.Tests.Conversation;
 
@@ -13,38 +14,6 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
 {
     /// <summary>A question no model-free route answers.</summary>
     private const string Question = "what is my elite rank in combat";
-
-    private static TurnLoop Build(CapabilityRegistry registry, ILlmProvider provider)
-    {
-        var loop = new TurnLoop(
-            registry,
-            new KeywordRouter(registry),
-            new LlmAvailabilityState(true),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            provider,
-            clock: new InstantClock());
-
-        loop.Retry = RetryPolicy.Default with { Attempts = 1 };
-        return loop;
-    }
-
-    private static async Task<TurnResult> RunAsync(TurnLoop loop, string input)
-    {
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            if (turnEvent is TurnEvent.Completed completed)
-            {
-                result = completed.Result;
-            }
-        }
-
-        Assert.NotNull(result);
-        return result;
-    }
 
     [Fact]
     public async Task ASearchingProviderIsSentTheSameToolsOnFootInTheSrvAndWithKeyPressesOff()

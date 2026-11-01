@@ -1,7 +1,7 @@
 using D47.Core.Capabilities;
 using D47.Core.Conversation;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
 
 namespace D47.Core.Tests.Conversation;
 
@@ -12,18 +12,7 @@ public class WebSearchTurnTests
     {
         var registry = CapabilityRegistry.Build([]);
 
-        var loop = new TurnLoop(
-            registry,
-            new KeywordRouter(registry),
-            new LlmAvailabilityState(true),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            provider,
-            clock: new InstantClock())
-        {
-            Retry = RetryPolicy.Default with { Attempts = 1 },
-        };
+        var loop = TurnLoops.Build(registry, provider);
 
         if (webSearchEnabled is not null)
         {
@@ -31,22 +20,6 @@ public class WebSearchTurnTests
         }
 
         return loop;
-    }
-
-    private static async Task<TurnResult> RunAsync(TurnLoop loop, string input)
-    {
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            if (turnEvent is TurnEvent.Completed completed)
-            {
-                result = completed.Result;
-            }
-        }
-
-        Assert.NotNull(result);
-        return result;
     }
 
     [Fact]

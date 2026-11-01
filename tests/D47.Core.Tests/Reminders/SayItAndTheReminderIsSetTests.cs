@@ -3,8 +3,8 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Reminders;
 using D47.Core.Tests.Conversation;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
 
 namespace D47.Core.Tests.Reminders;
 
@@ -25,34 +25,9 @@ public class SayItAndTheReminderIsSetTests
         var registry = CapabilityRegistry.Build(descriptors);
         var model = FakeLlmProvider.Answering("From the model.");
 
-        var loop = new TurnLoop(
-            registry,
-            new KeywordRouter(registry),
-            new LlmAvailabilityState(providerConfigured: true),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            model,
-            clock: new InstantClock());
-
-        loop.Retry = RetryPolicy.Default with { Attempts = 1 };
-        return (loop, model);
+        return (TurnLoops.Build(registry, model), model);
     }
 
-    private static async Task<string> SaidAsync(TurnLoop loop, string input)
-    {
-        var text = new System.Text.StringBuilder();
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            if (turnEvent is TurnEvent.TextDelta delta)
-            {
-                text.Append(delta.Text);
-            }
-        }
-
-        return text.ToString();
-    }
 
     [Fact]
     public async Task ANextDockingReminderIsStoredAndReadBack()

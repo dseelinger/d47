@@ -6,6 +6,8 @@ using D47.Core.Persona;
 using D47.Core.Tests.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
+using static D47.Core.Tests.Conversation.TurnLoops;
 
 namespace D47.Core.Tests.Persona;
 
@@ -15,39 +17,6 @@ namespace D47.Core.Tests.Persona;
 /// </summary>
 public class AMisheardCoreNameStillSwitchesTests
 {
-    private static TurnLoop Build(CapabilityRegistry registry, SettingsService settings, ILlmProvider? provider = null)
-    {
-        var loop = new TurnLoop(
-            registry,
-            new KeywordRouter(registry),
-            new LlmAvailabilityState(provider is not null),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            provider,
-            settings: settings,
-            clock: new InstantClock());
-
-        loop.Retry = RetryPolicy.Default with { Attempts = 1 };
-        return loop;
-    }
-
-    private static async Task<TurnResult> RunAsync(TurnLoop loop, string input)
-    {
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            if (turnEvent is TurnEvent.Completed completed)
-            {
-                result = completed.Result;
-            }
-        }
-
-        Assert.NotNull(result);
-        return result;
-    }
-
     /// <summary>The same sounds and nearly the same spelling: set without asking.</summary>
     [Theory]
     [InlineData("switch to Quora", "cora")]
@@ -112,7 +81,7 @@ public class AMisheardCoreNameStillSwitchesTests
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("From the model.");
-        var loop = Build(surface.Registry, surface.Settings, provider);
+        var loop = Build(surface.Registry, provider, settings: surface.Settings);
 
         var result = await RunAsync(loop, "Switch to Quora.");
 
@@ -127,7 +96,7 @@ public class AMisheardCoreNameStillSwitchesTests
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
-        var loop = Build(surface.Registry, surface.Settings);
+        var loop = Build(surface.Registry, null, settings: surface.Settings);
 
         await RunAsync(loop, "switch to Cora");
         var result = await RunAsync(loop, "Switch to COVAS.");
@@ -142,7 +111,7 @@ public class AMisheardCoreNameStillSwitchesTests
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
-        var loop = Build(surface.Registry, surface.Settings);
+        var loop = Build(surface.Registry, null, settings: surface.Settings);
 
         var result = await RunAsync(loop, "switch to elite");
 
@@ -155,7 +124,7 @@ public class AMisheardCoreNameStillSwitchesTests
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
-        var loop = Build(surface.Registry, surface.Settings);
+        var loop = Build(surface.Registry, null, settings: surface.Settings);
 
         var result = await RunAsync(loop, "switch to Quora please");
 
@@ -168,7 +137,7 @@ public class AMisheardCoreNameStillSwitchesTests
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
-        var loop = Build(surface.Registry, surface.Settings);
+        var loop = Build(surface.Registry, null, settings: surface.Settings);
 
         var offered = await RunAsync(loop, "switch to carrier");
 
@@ -222,7 +191,7 @@ public class AMisheardCoreNameStillSwitchesTests
         ]);
 
         settings.Bind(registry);
-        var loop = Build(registry, settings);
+        var loop = Build(registry, null, settings: settings);
 
         var offered = await RunAsync(loop, "switch to wender");
 

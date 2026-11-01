@@ -91,17 +91,7 @@ public class ASquadronsFactionIsNamedByTheCommanderTests
     {
         var registry = Registry();
         var model = FakeLlmProvider.Answering("From the model.");
-        var loop = new TurnLoop(
-            registry,
-            new KeywordRouter(registry),
-            new LlmAvailabilityState(providerConfigured: true),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            model,
-            clock: new InstantClock());
-
-        loop.Retry = RetryPolicy.Default with { Attempts = 1 };
+        var loop = TurnLoops.Build(registry, model);
 
         var text = new System.Text.StringBuilder();
         TurnRoute? route = null;

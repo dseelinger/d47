@@ -40,17 +40,7 @@ public class ReadCaptainsLogEntriesBackByVoiceTests
             ]);
             Model = FakeLlmProvider.Answering("From the model.");
 
-            Loop = new TurnLoop(
-                Registry,
-                new KeywordRouter(Registry),
-                new LlmAvailabilityState(providerConfigured: true),
-                new SpendTracker(),
-                PriceTable.Default,
-                NullLogger<TurnLoop>.Instance,
-                Model,
-                clock: new InstantClock());
-
-            Loop.Retry = RetryPolicy.Default with { Attempts = 1 };
+            Loop = TurnLoops.Build(Registry, Model);
         }
 
         public CaptainsLogStore Store { get; }
@@ -66,20 +56,7 @@ public class ReadCaptainsLogEntriesBackByVoiceTests
         private void Add(int number, DateTimeOffset at, string system, string text) =>
             Store.Add(Commander, new CaptainsLogEntry($"id{number}", text, at) { System = system });
 
-        public async Task<string> SaidAsync(string input)
-        {
-            var text = new System.Text.StringBuilder();
-
-            await foreach (var turnEvent in Loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-            {
-                if (turnEvent is TurnEvent.TextDelta delta)
-                {
-                    text.Append(delta.Text);
-                }
-            }
-
-            return text.ToString();
-        }
+        public Task<string> SaidAsync(string input) => TurnRuns.SaidAsync(Loop, input);
     }
 
     private static JournalEvent Event(string json, DateTimeOffset at)

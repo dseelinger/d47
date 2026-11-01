@@ -1,45 +1,18 @@
 using D47.Core.Capabilities;
 using D47.Core.Checklists;
 using D47.Core.Conversation;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
 
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>The model said it had removed a checklist item, and it had not.</summary>
 public class AModelCannotClaimAnActionItCannotTakeTests
 {
-    private static async Task<string> SaidAsync(TurnLoop loop, string input)
-    {
-        var text = new System.Text.StringBuilder();
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            if (turnEvent is TurnEvent.TextDelta delta)
-            {
-                text.Append(delta.Text);
-            }
-        }
-
-        return text.ToString();
-    }
-
     private static TurnLoop Build(TestSurface surface, string reply)
     {
-        var loop = new TurnLoop(
-            surface.Registry,
-            new KeywordRouter(surface.Registry),
-            new LlmAvailabilityState(providerConfigured: true),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            FakeLlmProvider.Answering(reply),
-            clock: new InstantClock())
-        {
-            Standing = surface.ChecklistService.Standing,
-        };
-
-        loop.Retry = RetryPolicy.Default with { Attempts = 1 };
+        var loop = TurnLoops.Build(surface.Registry, FakeLlmProvider.Answering(reply));
+        loop.Standing = surface.ChecklistService.Standing;
         return loop;
     }
 

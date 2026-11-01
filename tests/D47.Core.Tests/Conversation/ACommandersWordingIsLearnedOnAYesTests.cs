@@ -4,6 +4,7 @@ using D47.Core.Configuration;
 using D47.Core.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
 
 namespace D47.Core.Tests.Conversation;
 
@@ -52,19 +53,8 @@ public class ACommandersWordingIsLearnedOnAYesTests
 
     private static TurnLoop Build(CapabilityRegistry registry, LearnedPhrasesStore? store = null, string? commander = "F1")
     {
-        var loop = new TurnLoop(
-            registry,
-            new KeywordRouter(registry),
-            new LlmAvailabilityState(providerConfigured: false),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            clock: new InstantClock())
-        {
-            CommanderId = () => commander,
-        };
-
-        loop.Retry = RetryPolicy.Default with { Attempts = 1 };
+        var loop = TurnLoops.Build(registry, null, null);
+        loop.CommanderId = () => commander;
 
         if (store is not null)
         {
@@ -79,22 +69,6 @@ public class ACommandersWordingIsLearnedOnAYesTests
         }
 
         return loop;
-    }
-
-    private static async Task<TurnResult> RunAsync(TurnLoop loop, string input)
-    {
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            if (turnEvent is TurnEvent.Completed completed)
-            {
-                result = completed.Result;
-            }
-        }
-
-        Assert.NotNull(result);
-        return result;
     }
 
     [Fact]

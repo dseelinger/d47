@@ -77,29 +77,9 @@ public class ANotedOrASnoozeAnswersACarrierWarningTests
         var registry = CapabilityRegistry.Build(
             [RemindersCapability.Create(null, () => Commander, () => Noon, _warnings)]);
         var model = FakeLlmProvider.Answering("From the model.");
-        var loop = new TurnLoop(
-            registry,
-            new KeywordRouter(registry),
-            new LlmAvailabilityState(providerConfigured: true),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            model,
-            clock: new InstantClock());
+        var loop = TurnLoops.Build(registry, model);
 
-        loop.Retry = RetryPolicy.Default with { Attempts = 1 };
-
-        var text = new System.Text.StringBuilder();
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            if (turnEvent is TurnEvent.TextDelta delta)
-            {
-                text.Append(delta.Text);
-            }
-        }
-
-        return text.ToString();
+        return await TurnRuns.SaidAsync(loop, input);
     }
 
     [Fact]

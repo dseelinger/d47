@@ -39,17 +39,7 @@ public class SayCaptainsLogAndTheEntryIsKeptTests
             Registry = registry;
             Model = FakeLlmProvider.Answering("From the model.");
 
-            Loop = new TurnLoop(
-                registry,
-                new KeywordRouter(registry),
-                new LlmAvailabilityState(providerConfigured: true),
-                new SpendTracker(),
-                PriceTable.Default,
-                NullLogger<TurnLoop>.Instance,
-                Model,
-                clock: new InstantClock());
-
-            Loop.Retry = RetryPolicy.Default with { Attempts = 1 };
+            Loop = TurnLoops.Build(registry, Model);
         }
 
         public MemoryFileSystem Files { get; } = new();
@@ -62,20 +52,7 @@ public class SayCaptainsLogAndTheEntryIsKeptTests
 
         public TurnLoop Loop { get; }
 
-        public async Task<string> SaidAsync(string input)
-        {
-            var text = new System.Text.StringBuilder();
-
-            await foreach (var turnEvent in Loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-            {
-                if (turnEvent is TurnEvent.TextDelta delta)
-                {
-                    text.Append(delta.Text);
-                }
-            }
-
-            return text.ToString();
-        }
+        public Task<string> SaidAsync(string input) => TurnRuns.SaidAsync(Loop, input);
     }
 
     private static JournalEvent Event(string json)

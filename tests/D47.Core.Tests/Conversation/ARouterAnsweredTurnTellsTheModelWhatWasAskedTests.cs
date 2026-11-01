@@ -1,8 +1,8 @@
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
 
 namespace D47.Core.Tests.Conversation;
 
@@ -19,10 +19,10 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, surface.Router, provider);
 
-        var (routed, _) = await RunAsync(loop, "what's your status");
+        var (routed, _) = await RunWithTextAsync(loop, "what's your status");
         Assert.Equal(TurnRoute.KeywordRouter, routed.Route);
 
-        await RunAsync(loop, "no, the other one");
+        await RunWithTextAsync(loop, "no, the other one");
 
         var carried = Text(provider.LastRequest!.Prompt.History[0]);
 
@@ -42,10 +42,10 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, ActionRouter(surface.Registry), provider);
 
-        var (routed, _) = await RunAsync(loop, ActionPhrase);
+        var (routed, _) = await RunWithTextAsync(loop, ActionPhrase);
         Assert.Equal(TurnRoute.ActionCommand, routed.Route);
 
-        await RunAsync(loop, "no, the other one");
+        await RunWithTextAsync(loop, "no, the other one");
 
         var carried = Text(provider.LastRequest!.Prompt.History[0]);
 
@@ -61,12 +61,12 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, surface.Router, provider, surface.Settings);
 
-        var (routed, _) = await RunAsync(loop, "stop checking for updates");
+        var (routed, _) = await RunWithTextAsync(loop, "stop checking for updates");
         Assert.Equal(TurnRoute.SettingCommand, routed.Route);
 
         // The issue's second road: *"stop calling things out"* answered by the router, then *"why did you do
         // that?"* — a follow-up that needs the request as much as a course does.
-        await RunAsync(loop, "why did you do that?");
+        await RunWithTextAsync(loop, "why did you do that?");
 
         var carried = Text(provider.LastRequest!.Prompt.History[0]);
 
@@ -86,9 +86,9 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, ActionRouter(surface.Registry), provider);
 
-        await RunAsync(loop, "what's your status");
-        await RunAsync(loop, ActionPhrase);
-        await RunAsync(loop, "no, I meant the other way");
+        await RunWithTextAsync(loop, "what's your status");
+        await RunWithTextAsync(loop, ActionPhrase);
+        await RunWithTextAsync(loop, "no, I meant the other way");
 
         var carried = Text(provider.LastRequest!.Prompt.History[0]);
 
@@ -108,9 +108,9 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, ActionRouter(surface.Registry), provider);
 
-        await RunAsync(loop, ActionPhrase);
-        await RunAsync(loop, "no, I meant the other way");
-        await RunAsync(loop, "how far is Sol?");
+        await RunWithTextAsync(loop, ActionPhrase);
+        await RunWithTextAsync(loop, "no, I meant the other way");
+        await RunWithTextAsync(loop, "how far is Sol?");
 
         var carried = string.Join(
             '\n',
@@ -135,14 +135,14 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, ActionRouter(surface.Registry), provider);
 
-        await RunAsync(loop, ActionPhrase);
+        await RunWithTextAsync(loop, ActionPhrase);
 
         for (var line = 1; line <= 20; line++)
         {
             loop.Said($"Ambient line {line}.");
         }
 
-        await RunAsync(loop, "no, I meant the other way");
+        await RunWithTextAsync(loop, "no, I meant the other way");
 
         var carried = Text(provider.LastRequest!.Prompt.History[0]);
 
@@ -165,10 +165,10 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, surface.Router, provider);
 
-        var (routed, _) = await RunAsync(loop, "what's your status");
+        var (routed, _) = await RunWithTextAsync(loop, "what's your status");
         Assert.Equal(TurnRoute.KeywordRouter, routed.Route);
 
-        await RunAsync(loop, "no, the other one");
+        await RunWithTextAsync(loop, "no, the other one");
 
         var carried = Text(provider.LastRequest!.Prompt.History[0]);
 
@@ -195,7 +195,7 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
 
         loop.Said("Commander. Elvira Martuuk is one stop away.");
 
-        await RunAsync(loop, "why would I care about that?");
+        await RunWithTextAsync(loop, "why would I care about that?");
 
         var carried = Text(provider.LastRequest!.Prompt.History[0]);
 
@@ -217,9 +217,9 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
         var loop = Build(surface, surface.Router, provider);
 
         loop.Said("Commander. Elvira Martuuk is one stop away.");
-        await RunAsync(loop, "what's your status");
+        await RunWithTextAsync(loop, "what's your status");
 
-        await RunAsync(loop, "and now?");
+        await RunWithTextAsync(loop, "and now?");
 
         var carried = Text(provider.LastRequest!.Prompt.History[0]);
 
@@ -248,44 +248,8 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
         TestSurface surface,
         KeywordRouter router,
         ILlmProvider provider,
-        SettingsService? settings = null)
-    {
-        var loop = new TurnLoop(
-            surface.Registry,
-            router,
-            new LlmAvailabilityState(providerConfigured: true),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            provider,
-            settings: settings,
-            clock: new InstantClock());
-
-        loop.Retry = RetryPolicy.Default with { Attempts = 1 };
-        return loop;
-    }
-
-    private static async Task<(TurnResult Result, string Text)> RunAsync(TurnLoop loop, string input)
-    {
-        var text = new System.Text.StringBuilder();
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            switch (turnEvent)
-            {
-                case TurnEvent.TextDelta delta:
-                    text.Append(delta.Text);
-                    break;
-                case TurnEvent.Completed completed:
-                    result = completed.Result;
-                    break;
-            }
-        }
-
-        Assert.NotNull(result);
-        return (result, text.ToString());
-    }
+        SettingsService? settings = null) =>
+        TurnLoops.Build(surface.Registry, provider, router, settings);
 
     private static string Text(ConversationMessage message) =>
         string.Join(

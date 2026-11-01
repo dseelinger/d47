@@ -1,7 +1,7 @@
 using D47.Core.Capabilities;
 using D47.Core.Conversation;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
 
 namespace D47.Core.Tests.Conversation;
 
@@ -60,18 +60,7 @@ public class ARelayedResultIsSpokenAsWrittenTests
     {
         var registry = CapabilityRegistry.Build([Navigation()]);
 
-        var loop = new TurnLoop(
-            registry,
-            new KeywordRouter(registry),
-            new LlmAvailabilityState(true),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            provider,
-            clock: new InstantClock())
-        {
-            Retry = RetryPolicy.Default with { Attempts = 1 },
-        };
+        var loop = TurnLoops.Build(registry, provider);
 
         if (transcript is not null)
         {
@@ -79,28 +68,6 @@ public class ARelayedResultIsSpokenAsWrittenTests
         }
 
         return loop;
-    }
-
-    private static async Task<(TurnResult Result, string Spoken)> RunAsync(TurnLoop loop, string input)
-    {
-        var spoken = new System.Text.StringBuilder();
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            switch (turnEvent)
-            {
-                case TurnEvent.TextDelta delta:
-                    spoken.Append(delta.Text);
-                    break;
-                case TurnEvent.Completed completed:
-                    result = completed.Result;
-                    break;
-            }
-        }
-
-        Assert.NotNull(result);
-        return (result, spoken.ToString());
     }
 
     /// <summary>Text, then the calls it announced, in one round.</summary>
@@ -121,7 +88,7 @@ public class ARelayedResultIsSpokenAsWrittenTests
             SayingAndCalling("Plotting a course now.", ("call_1", "plot_course", """{"system":"Colonia"}""")),
             RoundScriptedLlmProvider.Saying("Confirm the spelling that comes up."));
 
-        var (result, spoken) = await RunAsync(Build(provider), "plot a course to Colonia");
+        var (result, spoken) = await RunWithTextAsync(Build(provider), "plot a course to Colonia");
 
         Assert.Equal(TurnOutcome.Answered, result.Outcome);
         Assert.Equal(TurnRoute.Model, result.Route);
@@ -145,7 +112,7 @@ public class ARelayedResultIsSpokenAsWrittenTests
                 ("call_2", "look_up_distance", """{"system":"Colonia"}""")),
             RoundScriptedLlmProvider.Saying("It is 22,000 light years."));
 
-        var (result, _) = await RunAsync(Build(provider, transcript), "plot a course to Colonia");
+        var (result, _) = await RunWithTextAsync(Build(provider, transcript), "plot a course to Colonia");
 
         Assert.Single(provider.Requests);
         Assert.Equal($"Plotting a course now. {Plotted}", result.Text);
@@ -169,14 +136,14 @@ public class ARelayedResultIsSpokenAsWrittenTests
             SayingAndCalling("Plotting a course now.", ("call_1", "plot_course", """{"system":"Colonia"}""")),
             RoundScriptedLlmProvider.Saying("Never asked for."));
 
-        await RunAsync(Build(provider, transcript), "plot a course to Colonia");
+        await RunWithTextAsync(Build(provider, transcript), "plot a course to Colonia");
 
         AssertAlternates(transcript);
         AssertNoStrandedPair(transcript);
 
         // The next turn reads that history back and adds to it.
         var second = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying("Twenty-two thousand."));
-        var (result, _) = await RunAsync(Build(second, transcript), "how far was that");
+        var (result, _) = await RunWithTextAsync(Build(second, transcript), "how far was that");
 
         Assert.Equal("Twenty-two thousand.", result.Text);
         Assert.Equal(ConversationRole.Assistant, Assert.Single(second.Requests).Prompt.History[^2].Role);
@@ -200,7 +167,7 @@ public class ARelayedResultIsSpokenAsWrittenTests
             SayingAndCalling("Plotting a course now.", ("call_1", "plot_course", """{"system":"Colonia"}""")),
             RoundScriptedLlmProvider.Saying("Never asked for."));
 
-        await RunAsync(Build(provider, transcript), "plot a course to Colonia");
+        await RunWithTextAsync(Build(provider, transcript), "plot a course to Colonia");
 
         Assert.Equal(TurnLoop.TranscriptTrimmedTo, transcript.Count);
         AssertNoStrandedPair(transcript);

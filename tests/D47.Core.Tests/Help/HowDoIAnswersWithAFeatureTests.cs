@@ -3,47 +3,16 @@ using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Help;
 using D47.Core.Tests.Conversation;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
 
 namespace D47.Core.Tests.Help;
 
 /// <summary>"How do I ..." lands on a feature by the words that reach it, model-free (#170).</summary>
 public class HowDoIAnswersWithAFeatureTests
 {
-    private static TurnLoop Build(TestSurface surface, ILlmProvider? provider = null)
-    {
-        var loop = new TurnLoop(
-            surface.Registry,
-            surface.Router,
-            new LlmAvailabilityState(provider is not null),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            provider,
-            settings: surface.Settings,
-            clock: new InstantClock(),
-            offers: surface.Offers);
-
-        loop.Retry = RetryPolicy.Default with { Attempts = 1 };
-        return loop;
-    }
-
-    private static async Task<TurnResult> RunAsync(TurnLoop loop, string input)
-    {
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            if (turnEvent is TurnEvent.Completed completed)
-            {
-                result = completed.Result;
-            }
-        }
-
-        Assert.NotNull(result);
-        return result;
-    }
+    private static TurnLoop Build(TestSurface surface, ILlmProvider? provider = null) =>
+        TurnLoops.Build(surface.Registry, provider, surface.Router, surface.Settings, surface.Offers);
 
     [Fact]
     public async Task ASingleMatchAnswersWithTheLeaf()

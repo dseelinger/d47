@@ -1,6 +1,7 @@
 using D47.Core.Conversation;
 using Microsoft.Extensions.Logging;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
 
 namespace D47.Core.Tests.Conversation;
 
@@ -27,28 +28,6 @@ public sealed class ATurnThatRunsOutOfRoomSaysSoTests
         return loop;
     }
 
-    private static async Task<(TurnResult Result, string Text)> RunAsync(TurnLoop loop, string input)
-    {
-        var text = new System.Text.StringBuilder();
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            switch (turnEvent)
-            {
-                case TurnEvent.TextDelta delta:
-                    text.Append(delta.Text);
-                    break;
-                case TurnEvent.Completed completed:
-                    result = completed.Result;
-                    break;
-            }
-        }
-
-        Assert.NotNull(result);
-        return (result, text.ToString());
-    }
-
     [Fact]
     public async Task AnAnswerCutOffMidSentenceEndsOnTheLineSayingSo()
     {
@@ -56,7 +35,7 @@ public sealed class ATurnThatRunsOutOfRoomSaysSoTests
             new LlmStreamEvent.TextDelta("The best route to Colonia runs through"),
             new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.MaxTokens));
 
-        var (result, text) = await RunAsync(Build(provider), "work out the best route to Colonia and explain why");
+        var (result, text) = await RunWithTextAsync(Build(provider), "work out the best route to Colonia and explain why");
 
         Assert.Equal(TurnOutcome.Truncated, result.Outcome);
         Assert.Equal($"The best route to Colonia runs through {TurnLoop.TruncatedLine} {MoreRoom}", text);
@@ -70,7 +49,7 @@ public sealed class ATurnThatRunsOutOfRoomSaysSoTests
             new LlmStreamEvent.ThinkingDelta("First the jump range, then the neutron stars..."),
             new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.MaxTokens));
 
-        var (result, text) = await RunAsync(Build(provider), "work out the best route to Colonia and explain why");
+        var (result, text) = await RunWithTextAsync(Build(provider), "work out the best route to Colonia and explain why");
 
         Assert.Equal(TurnOutcome.Truncated, result.Outcome);
         Assert.Equal($"{TurnLoop.TruncatedLine} {MoreRoom}", text);
@@ -91,7 +70,7 @@ public sealed class ATurnThatRunsOutOfRoomSaysSoTests
     [Fact]
     public async Task AModelWithNoEffortSettingIsToldToAskForOnePartAtATime()
     {
-        var (result, text) = await RunAsync(Build(Truncated(takesEffort: false)), "work out the best route");
+        var (result, text) = await RunWithTextAsync(Build(Truncated(takesEffort: false)), "work out the best route");
 
         Assert.Equal(TurnOutcome.Truncated, result.Outcome);
         Assert.EndsWith($"{TurnLoop.TruncatedLine} {OnePart}", text, StringComparison.Ordinal);
@@ -103,7 +82,7 @@ public sealed class ATurnThatRunsOutOfRoomSaysSoTests
         var loop = Build(Truncated());
         loop.EffortCeiling = D47.Core.Conversation.ThinkingEffort.High;
 
-        var (result, text) = await RunAsync(loop, "think carefully about the best route");
+        var (result, text) = await RunWithTextAsync(loop, "think carefully about the best route");
 
         Assert.Equal(TurnOutcome.Truncated, result.Outcome);
         Assert.EndsWith(
@@ -115,7 +94,7 @@ public sealed class ATurnThatRunsOutOfRoomSaysSoTests
     [Fact]
     public async Task ATurnThatRanAtMaxIsToldToAskForOnePartAtATime()
     {
-        var (result, text) = await RunAsync(Build(Truncated()), "think carefully about the best route");
+        var (result, text) = await RunWithTextAsync(Build(Truncated()), "think carefully about the best route");
 
         Assert.Equal(TurnOutcome.Truncated, result.Outcome);
         Assert.EndsWith($"{TurnLoop.TruncatedLine} {OnePart}", text, StringComparison.Ordinal);
@@ -127,7 +106,7 @@ public sealed class ATurnThatRunsOutOfRoomSaysSoTests
         var loop = Build(Truncated());
         loop.EffortCeiling = D47.Core.Conversation.ThinkingEffort.Max;
 
-        var (_, text) = await RunAsync(loop, "work out the best route");
+        var (_, text) = await RunWithTextAsync(loop, "work out the best route");
 
         Assert.EndsWith($"{TurnLoop.TruncatedLine} {MoreRoom}", text, StringComparison.Ordinal);
     }
@@ -153,8 +132,8 @@ public sealed class ATurnThatRunsOutOfRoomSaysSoTests
 
         var loop = Build(provider);
 
-        await RunAsync(loop, "work out the best route to Colonia and explain why");
-        await RunAsync(loop, "compose a sonnet about hyperspace");
+        await RunWithTextAsync(loop, "work out the best route to Colonia and explain why");
+        await RunWithTextAsync(loop, "compose a sonnet about hyperspace");
 
         Assert.DoesNotContain(
             provider.Requests[1].Prompt.History,
@@ -166,7 +145,7 @@ public sealed class ATurnThatRunsOutOfRoomSaysSoTests
     {
         var log = new CapturingLogger();
 
-        await RunAsync(Build(FakeLlmProvider.Answering("Quiet out here."), log), "anything to report");
+        await RunWithTextAsync(Build(FakeLlmProvider.Answering("Quiet out here."), log), "anything to report");
 
         Assert.Contains(log.Lines, line => line.StartsWith("Model turn", StringComparison.Ordinal)
                                            && line.Contains("stopped on Completed", StringComparison.Ordinal));

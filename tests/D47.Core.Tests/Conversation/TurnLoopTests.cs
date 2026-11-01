@@ -4,6 +4,7 @@ using D47.Core.Conversation;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
 
 namespace D47.Core.Tests.Conversation;
 
@@ -37,28 +38,6 @@ public class TurnLoopTests
         return loop;
     }
 
-    private static async Task<(TurnResult Result, string Text)> RunAsync(TurnLoop loop, string input)
-    {
-        var text = new System.Text.StringBuilder();
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            switch (turnEvent)
-            {
-                case TurnEvent.TextDelta delta:
-                    text.Append(delta.Text);
-                    break;
-                case TurnEvent.Completed completed:
-                    result = completed.Result;
-                    break;
-            }
-        }
-
-        Assert.NotNull(result);
-        return (result, text.ToString());
-    }
-
     [Fact]
     public async Task WithNoProviderTheKeywordRouterStillAnswers()
     {
@@ -66,7 +45,7 @@ public class TurnLoopTests
         var install = new MemoryInstall();
         var loop = Build(BuiltinRegistry(install), provider: null, out _, out _);
 
-        var (result, text) = await RunAsync(loop, "what's your status");
+        var (result, text) = await RunWithTextAsync(loop, "what's your status");
 
         Assert.Equal(TurnRoute.KeywordRouter, result.Route);
         Assert.Equal(TurnOutcome.Answered, result.Outcome);
@@ -79,7 +58,7 @@ public class TurnLoopTests
         var install = new MemoryInstall();
         var loop = Build(BuiltinRegistry(install), provider: null, out _, out _);
 
-        var (result, text) = await RunAsync(loop, "compose a sonnet about hyperspace");
+        var (result, text) = await RunWithTextAsync(loop, "compose a sonnet about hyperspace");
 
         Assert.Equal(TurnOutcome.Unsure, result.Outcome);
         Assert.Equal(TurnRoute.NoCapability, result.Route);
@@ -93,14 +72,14 @@ public class TurnLoopTests
         var install = new MemoryInstall();
         var loop = Build(BuiltinRegistry(install), provider: null, out _, out _);
 
-        var (result, text) = await RunAsync(loop, "how far along is this engineer");
+        var (result, text) = await RunWithTextAsync(loop, "how far along is this engineer");
 
         Assert.Equal(TurnOutcome.Unsure, result.Outcome);
         Assert.Equal(TurnRoute.NoCapability, result.Route);
         Assert.Contains("The closest area is Loadout and engineering; want the list?", text, StringComparison.Ordinal);
         Assert.Contains("No language model provider is configured.", text, StringComparison.Ordinal);
 
-        var (yes, yesText) = await RunAsync(loop, "yes");
+        var (yes, yesText) = await RunWithTextAsync(loop, "yes");
 
         Assert.Equal(TurnRoute.Offer, yes.Route);
         Assert.Contains("Ship and module specifications", yesText, StringComparison.Ordinal);
@@ -113,7 +92,7 @@ public class TurnLoopTests
         var provider = FakeLlmProvider.Answering("Fetch me the numbers.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
-        var (result, _) = await RunAsync(loop, "how far along is this engineer");
+        var (result, _) = await RunWithTextAsync(loop, "how far along is this engineer");
 
         Assert.Equal(TurnRoute.Model, result.Route);
         Assert.Equal(1, provider.CallCount);
@@ -128,7 +107,7 @@ public class TurnLoopTests
         var provider = FakeLlmProvider.Answering("The model answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
-        var (result, _) = await RunAsync(loop, "what's your status");
+        var (result, _) = await RunWithTextAsync(loop, "what's your status");
 
         Assert.Equal(TurnRoute.KeywordRouter, result.Route);
         Assert.Equal(0, provider.CallCount);
@@ -144,7 +123,7 @@ public class TurnLoopTests
             new LlmStreamEvent.Completed(new LlmUsage(100, 20, 0, 0), LlmStopReason.Completed));
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
-        var (result, text) = await RunAsync(loop, "tell me about hyperspace physics");
+        var (result, text) = await RunWithTextAsync(loop, "tell me about hyperspace physics");
 
         Assert.Equal(TurnRoute.Model, result.Route);
         Assert.Equal(TurnOutcome.Answered, result.Outcome);
@@ -160,7 +139,7 @@ public class TurnLoopTests
             new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Refusal));
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
-        var (result, _) = await RunAsync(loop, "tell me about hyperspace physics");
+        var (result, _) = await RunWithTextAsync(loop, "tell me about hyperspace physics");
 
         Assert.Equal(TurnOutcome.Unsure, result.Outcome);
     }
@@ -174,11 +153,11 @@ public class TurnLoopTests
             new LlmStreamEvent.Failed("Rate limited.", Transient: true));
         var loop = Build(BuiltinRegistry(install), provider, out var availability, out _);
 
-        var (first, _) = await RunAsync(loop, "tell me about hyperspace physics");
+        var (first, _) = await RunWithTextAsync(loop, "tell me about hyperspace physics");
         Assert.Equal(TurnOutcome.Failed, first.Outcome);
         Assert.Equal(LlmAvailability.TemporarilyUnavailable, availability.Current);
 
-        var (second, _) = await RunAsync(loop, "tell me about hyperspace physics");
+        var (second, _) = await RunWithTextAsync(loop, "tell me about hyperspace physics");
         Assert.Equal(TurnRoute.NoCapability, second.Route);
         Assert.Equal(TurnOutcome.Unsure, second.Outcome);
     }
@@ -191,20 +170,20 @@ public class TurnLoopTests
             new LlmStreamEvent.Failed("Overloaded.", Transient: true));
         var loop = Build(BuiltinRegistry(install), provider, out var availability, out _);
 
-        await RunAsync(loop, "tell me about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me about hyperspace physics");
         Assert.Equal(LlmAvailability.TemporarilyUnavailable, availability.Current);
         Assert.Equal(1, provider.CallCount);
 
         // Turns, not seconds — no Core component reads the clock, so recovery is counted rather than timed.
         for (var i = 0; i < LlmAvailabilityState.ProbeAfterTurns - 1; i++)
         {
-            await RunAsync(loop, "tell me about hyperspace physics");
+            await RunWithTextAsync(loop, "tell me about hyperspace physics");
         }
 
         Assert.Equal(1, provider.CallCount);
 
         // The probe turn contacts the provider again.
-        await RunAsync(loop, "tell me about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me about hyperspace physics");
         Assert.Equal(2, provider.CallCount);
     }
 
@@ -227,7 +206,7 @@ public class TurnLoopTests
 
         for (var i = 0; i < LlmAvailabilityState.ProbeAfterTurns; i++)
         {
-            await RunAsync(loop, "tell me about hyperspace physics");
+            await RunWithTextAsync(loop, "tell me about hyperspace physics");
         }
 
         Assert.Equal(LlmAvailability.Available, availability.Current);
@@ -242,11 +221,11 @@ public class TurnLoopTests
             new LlmStreamEvent.Failed("The API key was rejected.", Transient: false));
         var loop = Build(BuiltinRegistry(install), provider, out var availability, out _);
 
-        await RunAsync(loop, "tell me about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me about hyperspace physics");
 
         for (var i = 0; i < LlmAvailabilityState.ProbeAfterTurns + 2; i++)
         {
-            await RunAsync(loop, "tell me about hyperspace physics");
+            await RunWithTextAsync(loop, "tell me about hyperspace physics");
         }
 
         // Retrying a rejected key forever would be noise; only a settings change should clear it.
@@ -261,7 +240,7 @@ public class TurnLoopTests
             "Answered.", new LlmUsage(InputTokens: 1_000_000, OutputTokens: 0, 0, 0));
         var loop = Build(BuiltinRegistry(install), provider, out _, out var spend);
 
-        var (result, _) = await RunAsync(loop, "tell me about hyperspace physics");
+        var (result, _) = await RunWithTextAsync(loop, "tell me about hyperspace physics");
 
         Assert.NotNull(result.Cost);
         Assert.True(result.Cost.Priced);
@@ -280,11 +259,11 @@ public class TurnLoopTests
         var loop = Build(BuiltinRegistry(install), provider, out _, out var spend);
 
         // The first turn writes cache legitimately — a cold prefix is expected there.
-        await RunAsync(loop, "tell me about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me about hyperspace physics");
         Assert.Equal(0, spend.UnexplainedColdPrefixes);
 
         // The second writes cache on an unchanged model, which is the regression signal.
-        await RunAsync(loop, "tell me more about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me more about hyperspace physics");
         Assert.Equal(1, spend.UnexplainedColdPrefixes);
     }
 
@@ -325,8 +304,8 @@ public class TurnLoopTests
 
         var loop = Build(registry, provider, out _, out var spend);
 
-        await RunAsync(loop, "tell me about hyperspace physics");
-        await RunAsync(loop, "tell me more about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me more about hyperspace physics");
 
         Assert.Equal(3, provider.CallCount);
         Assert.Equal(1, spend.UnexplainedColdPrefixes);
@@ -341,8 +320,8 @@ public class TurnLoopTests
             "Answered.", new LlmUsage(200, 10, CacheCreationInputTokens: 300, CacheReadInputTokens: 4_000));
         var loop = Build(BuiltinRegistry(install), provider, out _, out var spend);
 
-        await RunAsync(loop, "tell me about hyperspace physics");
-        await RunAsync(loop, "tell me more about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me more about hyperspace physics");
 
         Assert.Equal(0, spend.UnexplainedColdPrefixes);
     }
@@ -354,8 +333,8 @@ public class TurnLoopTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
-        var (lookup, _) = await RunAsync(loop, "tell me about hyperspace");
-        var (hard, _) = await RunAsync(loop, "carefully plan the cheapest route to Colonia");
+        var (lookup, _) = await RunWithTextAsync(loop, "tell me about hyperspace");
+        var (hard, _) = await RunWithTextAsync(loop, "carefully plan the cheapest route to Colonia");
 
         Assert.NotNull(hard.Effort);
         Assert.Equal(ThinkingEffort.Max, hard.Effort);
@@ -377,7 +356,7 @@ public class TurnLoopTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
-        var (result, _) = await RunAsync(loop, input);
+        var (result, _) = await RunWithTextAsync(loop, input);
 
         Assert.Equal(EffortRouter.ChooseFor(input), result.Effort);
         Assert.Equal(EffortRouter.ChooseFor(input), provider.LastRequest!.Effort);
@@ -398,7 +377,7 @@ public class TurnLoopTests
 
         loop.EffortFloor = ThinkingEffort.Xhigh;
 
-        var (result, _) = await RunAsync(loop, "tell me about hyperspace");
+        var (result, _) = await RunWithTextAsync(loop, "tell me about hyperspace");
 
         Assert.Equal(TurnRoute.Model, result.Route);
         Assert.Equal(ThinkingEffort.Xhigh, result.Effort);
@@ -420,7 +399,7 @@ public class TurnLoopTests
 
         loop.EffortCeiling = ThinkingEffort.Medium;
 
-        var (result, _) = await RunAsync(loop, "I landed carefully, what now");
+        var (result, _) = await RunWithTextAsync(loop, "I landed carefully, what now");
 
         Assert.Equal(TurnRoute.Model, result.Route);
         Assert.Equal(ThinkingEffort.Medium, result.Effort);
@@ -479,14 +458,14 @@ public class TurnLoopTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
-        await RunAsync(loop, "tell me about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me about hyperspace physics");
         Assert.Equal(2, loop.History.Count);
 
         Assert.Equal(ConversationRole.User, loop.History[0].Role);
         Assert.Equal(ConversationRole.Assistant, loop.History[1].Role);
 
         // The model's own history is what it sees next turn; the request carries it plus the new user turn.
-        await RunAsync(loop, "and what about witchspace");
+        await RunWithTextAsync(loop, "and what about witchspace");
         Assert.Equal(3, provider.LastRequest!.Prompt.History.Count);
     }
 
@@ -500,7 +479,7 @@ public class TurnLoopTests
 
         loop.Said("Commander. Elvira Martuuk is one stop away.");
 
-        await RunAsync(loop, "why would I care about that?");
+        await RunWithTextAsync(loop, "why would I care about that?");
 
         var asked = Text(provider.LastRequest!.Prompt.History[0]);
 
@@ -512,7 +491,7 @@ public class TurnLoopTests
         Assert.Contains("said-aloud", asked, StringComparison.Ordinal);
 
         // Said once.
-        await RunAsync(loop, "and now?");
+        await RunWithTextAsync(loop, "and now?");
 
         Assert.DoesNotContain(
             "Elvira Martuuk is one stop away",
@@ -538,11 +517,11 @@ public class TurnLoopTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
-        var (routed, spoken) = await RunAsync(loop, "what are you watching for");
+        var (routed, spoken) = await RunWithTextAsync(loop, "what are you watching for");
 
         Assert.Equal(TurnRoute.KeywordRouter, routed.Route);
 
-        await RunAsync(loop, "tell me about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me about hyperspace physics");
 
         Assert.Contains(
             spoken[..40],
@@ -560,7 +539,7 @@ public class TurnLoopTests
 
         for (var turn = 0; turn < TurnLoop.TranscriptKept; turn++)
         {
-            await RunAsync(loop, $"question {turn.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+            await RunWithTextAsync(loop, $"question {turn.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
             Assert.InRange(loop.History.Count, 0, TurnLoop.TranscriptKept);
         }
 
@@ -591,7 +570,7 @@ public class TurnLoopTests
         var asked = 0;
 
         async Task AskAsync() =>
-            await RunAsync(loop, $"question {(asked++).ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+            await RunWithTextAsync(loop, $"question {(asked++).ToString(System.Globalization.CultureInfo.InvariantCulture)}");
 
         // Two messages a turn: the turn that passes the ceiling is the one that trims.
         while (loop.History.Count + 2 <= TurnLoop.TranscriptKept)
@@ -627,7 +606,7 @@ public class TurnLoopTests
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
-        await RunAsync(loop, "tell me about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me about hyperspace physics");
 
         Assert.Contains(
             Guardrails.Text,
@@ -643,7 +622,7 @@ public class TurnLoopTests
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
         loop.LiveGameState = () => "Current system: Shinrarta Dezhra.";
 
-        await RunAsync(loop, "tell me about hyperspace physics");
+        await RunWithTextAsync(loop, "tell me about hyperspace physics");
 
         var prompt = provider.LastRequest!.Prompt;
         Assert.Equal("Current system: Shinrarta Dezhra.", prompt.LiveGameState);
@@ -670,7 +649,7 @@ public class TurnLoopTests
 
         var loop = Build(BuiltinRegistry(install, gameState), provider: null, out _, out _);
 
-        var (result, text) = await RunAsync(loop, "where am I");
+        var (result, text) = await RunWithTextAsync(loop, "where am I");
 
         Assert.Equal(TurnRoute.KeywordRouter, result.Route);
         Assert.Contains("Fixture Reach", text, StringComparison.Ordinal);

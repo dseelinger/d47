@@ -1,8 +1,9 @@
 using D47.Core.Capabilities;
 using D47.Core.Checklists;
 using D47.Core.Conversation;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
+using static D47.Core.Tests.Conversation.TurnLoops;
 
 namespace D47.Core.Tests.Conversation;
 
@@ -38,38 +39,6 @@ public class AnOfferIsAnsweredBeforeAnythingElseTests
         };
     }
 
-    private static TurnLoop Build(CapabilityRegistry registry, ILlmProvider? provider = null)
-    {
-        var loop = new TurnLoop(
-            registry,
-            new KeywordRouter(registry),
-            new LlmAvailabilityState(provider is not null),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            provider,
-            clock: new InstantClock());
-
-        loop.Retry = RetryPolicy.Default with { Attempts = 1 };
-        return loop;
-    }
-
-    private static async Task<TurnResult> RunAsync(TurnLoop loop, string input)
-    {
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            if (turnEvent is TurnEvent.Completed completed)
-            {
-                result = completed.Result;
-            }
-        }
-
-        Assert.NotNull(result);
-        return result;
-    }
-
     private static Offer Routing(params string[] phrases) =>
         new([.. phrases.Select(phrase => new OfferChoice(phrase, new OfferTarget.RoutePhrase(phrase, Guarded: false)))]);
 
@@ -77,7 +46,7 @@ public class AnOfferIsAnsweredBeforeAnythingElseTests
     public async Task TheSecondRoutesTheSecondPhrase()
     {
         var spy = new Spy();
-        var loop = Build(spy.Registry());
+        var loop = Build(spy.Registry(), null);
         loop.Offers.Open(Routing("run the first thing", "run the second thing"));
 
         var result = await RunAsync(loop, "the second");
@@ -90,7 +59,7 @@ public class AnOfferIsAnsweredBeforeAnythingElseTests
     public async Task GoAheadRunsTheOnlyChoice()
     {
         var spy = new Spy();
-        var loop = Build(spy.Registry());
+        var loop = Build(spy.Registry(), null);
         loop.Offers.Open(Routing("run the first thing"));
 
         await RunAsync(loop, "go ahead");
@@ -102,7 +71,7 @@ public class AnOfferIsAnsweredBeforeAnythingElseTests
     public async Task YesToTwoChoicesAsksWhichOneAndTheOfferStands()
     {
         var spy = new Spy();
-        var loop = Build(spy.Registry());
+        var loop = Build(spy.Registry(), null);
         loop.Offers.Open(Routing("run the first thing", "run the second thing"));
 
         var asked = await RunAsync(loop, "yes");
@@ -160,7 +129,7 @@ public class AnOfferIsAnsweredBeforeAnythingElseTests
         surface.ChecklistService.AddNote(ChecklistScope.Universal, "Unlock Lei Cheung");
         surface.ChecklistService.ProposeChange("Unlock Lei Cheung", ProposalKind.Remove);
 
-        var loop = Build(surface.Registry);
+        var loop = Build(surface.Registry, null);
         loop.Offers.Open(new Offer([new OfferChoice("the offer", new OfferTarget.Answer(() => new OfferAnswer("Offer taken.")))]));
 
         var result = await RunAsync(loop, "yes");
@@ -173,7 +142,7 @@ public class AnOfferIsAnsweredBeforeAnythingElseTests
     public async Task AnAnswerCanLeaveTheNextOfferStanding()
     {
         var spy = new Spy();
-        var loop = Build(spy.Registry());
+        var loop = Build(spy.Registry(), null);
         var next = Routing("run the second thing");
         loop.Offers.Open(new Offer([new OfferChoice("more", new OfferTarget.Answer(() => new OfferAnswer("Want the second?", next)))]));
 

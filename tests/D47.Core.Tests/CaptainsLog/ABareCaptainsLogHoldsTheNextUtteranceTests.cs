@@ -69,20 +69,7 @@ public class ABareCaptainsLogHoldsTheNextUtteranceTests
 
         public TurnLoop Loop { get; }
 
-        public async Task<string> SaidAsync(string input)
-        {
-            var text = new System.Text.StringBuilder();
-
-            await foreach (var turnEvent in Loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-            {
-                if (turnEvent is TurnEvent.TextDelta delta)
-                {
-                    text.Append(delta.Text);
-                }
-            }
-
-            return text.ToString();
-        }
+        public Task<string> SaidAsync(string input) => TurnRuns.SaidAsync(Loop, input);
     }
 
     [Fact]

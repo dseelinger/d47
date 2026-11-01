@@ -4,8 +4,8 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Input;
 using D47.Core.Journal;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
 
 namespace D47.Core.Tests.Conversation;
 
@@ -51,40 +51,7 @@ public class APlotVerdictIsRelayedThroughTurnLoopTests
     {
         var registry = CapabilityRegistry.Build([navigation]);
 
-        return new TurnLoop(
-            registry,
-            new KeywordRouter(registry),
-            new LlmAvailabilityState(true),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            provider,
-            clock: new InstantClock())
-        {
-            Retry = RetryPolicy.Default with { Attempts = 1 },
-        };
-    }
-
-    private static async Task<(TurnResult Result, string Spoken)> RunAsync(TurnLoop loop, string input)
-    {
-        var spoken = new System.Text.StringBuilder();
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            switch (turnEvent)
-            {
-                case TurnEvent.TextDelta delta:
-                    spoken.Append(delta.Text);
-                    break;
-                case TurnEvent.Completed completed:
-                    result = completed.Result;
-                    break;
-            }
-        }
-
-        Assert.NotNull(result);
-        return (result, spoken.ToString());
+        return TurnLoops.Build(registry, provider);
     }
 
     private static readonly string[] SpellingWords = ["spell", "spelt", "as typed", "matched"];
@@ -96,7 +63,7 @@ public class APlotVerdictIsRelayedThroughTurnLoopTests
             RoundScriptedLlmProvider.Calling("call_1", "plot_course", """{"system":"Colonia"}"""),
             RoundScriptedLlmProvider.Saying("Confirm the spelling that comes up."));
 
-        var (result, spoken) = await RunAsync(Build(provider, Navigation(confirm: false)), "plot a course to Colonia");
+        var (result, spoken) = await RunWithTextAsync(Build(provider, Navigation(confirm: false)), "plot a course to Colonia");
 
         Assert.Equal(TurnRoute.Model, result.Route);
         Assert.Single(provider.Requests);
@@ -117,7 +84,7 @@ public class APlotVerdictIsRelayedThroughTurnLoopTests
             ],
             RoundScriptedLlmProvider.Saying("Confirm the spelling that comes up."));
 
-        var (result, spoken) = await RunAsync(Build(provider, Navigation(confirm: false)), "plot a course to Colonia");
+        var (result, spoken) = await RunWithTextAsync(Build(provider, Navigation(confirm: false)), "plot a course to Colonia");
 
         Assert.Equal(TurnRoute.Model, result.Route);
         Assert.Single(provider.Requests);

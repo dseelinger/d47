@@ -5,6 +5,7 @@ using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
 
 namespace D47.Core.Tests.Conversation;
 
@@ -38,34 +39,7 @@ public class AQuestionNamesThePageItIsAboutTests
         var registry = CapabilityRegistry.Build(
             [EngineerCapability.Create(() => store.Active), JournalCapability.Create(store)]);
 
-        return new TurnLoop(
-            registry,
-            new KeywordRouter(registry),
-            new LlmAvailabilityState(true),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            provider,
-            clock: new InstantClock())
-        {
-            Retry = RetryPolicy.Default with { Attempts = 1 },
-        };
-    }
-
-    private static async Task<TurnResult> RunAsync(TurnLoop loop, string input)
-    {
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            if (turnEvent is TurnEvent.Completed completed)
-            {
-                result = completed.Result;
-            }
-        }
-
-        Assert.NotNull(result);
-        return result;
+        return TurnLoops.Build(registry, provider);
     }
 
     private static RoundScriptedLlmProvider Calling(string tool, string json) =>

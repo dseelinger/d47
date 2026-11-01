@@ -4,50 +4,15 @@ using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Input;
 using D47.Core.Journal;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Conversation.TurnRuns;
+using static D47.Core.Tests.Conversation.TurnLoops;
 
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>An utterance that misses a model-free phrase by a word is put to the Commander, not to the model.</summary>
 public class ANearMissIsOfferedRatherThanGuessedTests
 {
-    private static TurnLoop Build(
-        CapabilityRegistry registry,
-        ILlmProvider? provider = null,
-        SettingsService? settings = null)
-    {
-        var loop = new TurnLoop(
-            registry,
-            new KeywordRouter(registry),
-            new LlmAvailabilityState(provider is not null),
-            new SpendTracker(),
-            PriceTable.Default,
-            NullLogger<TurnLoop>.Instance,
-            provider,
-            settings: settings,
-            clock: new InstantClock());
-
-        loop.Retry = RetryPolicy.Default with { Attempts = 1 };
-        return loop;
-    }
-
-    private static async Task<TurnResult> RunAsync(TurnLoop loop, string input)
-    {
-        TurnResult? result = null;
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            if (turnEvent is TurnEvent.Completed completed)
-            {
-                result = completed.Result;
-            }
-        }
-
-        Assert.NotNull(result);
-        return result;
-    }
-
     private sealed record Flight(CapabilityRegistry Registry, RecordingGameInput Input);
 
     private static Flight Ship(GameStatus status)
@@ -98,7 +63,7 @@ public class ANearMissIsOfferedRatherThanGuessedTests
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("From the model.");
-        var loop = Build(surface.Registry, provider, surface.Settings);
+        var loop = Build(surface.Registry, provider, settings: surface.Settings);
 
         var result = await RunAsync(loop, "humor to");
 
@@ -156,7 +121,7 @@ public class ANearMissIsOfferedRatherThanGuessedTests
             },
         ]);
 
-        var loop = Build(registry);
+        var loop = Build(registry, null);
 
         var offered = await RunAsync(loop, "run the thing");
 
@@ -172,7 +137,7 @@ public class ANearMissIsOfferedRatherThanGuessedTests
     public async Task AnOfferedFlightActionPickedOnFootIsRefusedWithTheMode()
     {
         var ship = Ship(OnFoot());
-        var loop = Build(ship.Registry);
+        var loop = Build(ship.Registry, null);
 
         await RunAsync(loop, "put the gar down");
         var picked = await RunAsync(loop, "yes");
