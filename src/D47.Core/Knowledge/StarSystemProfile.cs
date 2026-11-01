@@ -18,12 +18,19 @@ public interface IStarSystemService
     Task<IReadOnlyList<string>> FactionNamesAsync(string typed, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<string>>([]);
 
+    /// <summary>Stations whose names have a word starting with what was typed, in the service's order.</summary>
+    Task<IReadOnlyList<StationNameMatch>> StationNamesAsync(string typed, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<StationNameMatch>>([]);
+
     /// <summary>Powerplay systems near a system, nearest first, the system itself left out.</summary>
     Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken);
 }
 
 /// <summary>A system whose name matched what was typed.</summary>
 public sealed record SystemNameMatch(string Name, long SystemAddress, StarPosition Position);
+
+/// <summary>A station whose name matched what was typed, with the position of its system.</summary>
+public sealed record StationNameMatch(string Name, long MarketId, long SystemAddress, StarPosition Position);
 
 /// <summary>One system as last reported: its politics, factions, Powerplay, stations and bodies.</summary>
 public sealed record StarSystemProfile
