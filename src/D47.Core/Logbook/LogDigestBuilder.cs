@@ -832,18 +832,22 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
 
         private static string Ship(JournalEvent journalEvent)
         {
-            // Spoken, not Named: Elite omits _Localised on plenty of ship symbols and writes them lower case,
-            // so one log would call it an "anaconda" in one line and an "Anaconda" in the next.
+            // The suit on foot; otherwise the hull table's name for the ship, with the ship's own name when it has one.
             if (JournalNames.IsOnFoot(journalEvent.Raw) && JournalNames.Suit(journalEvent.Raw, "Ship") is { } suit)
             {
                 return $"a {suit}";
             }
 
-            var type = JournalJson.Spoken(journalEvent.Named("Ship")) ?? "a ship";
+            var type = JournalNames.Hull(journalEvent.Raw, "Ship");
+
+            if (type is null)
+            {
+                return "a ship";
+            }
 
             return journalEvent.String("ShipName") is { } name && !string.IsNullOrWhiteSpace(name)
                 ? $"the {type} \"{name}\""
-                : $"a {type}";
+                : IndefiniteArticle.With(type);
         }
 
         private static string Promotion(JournalEvent journalEvent)

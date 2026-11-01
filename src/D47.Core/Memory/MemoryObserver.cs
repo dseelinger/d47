@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Ships;
 
 namespace D47.Core.Memory;
 
@@ -42,7 +43,7 @@ public sealed class MemoryObserver(MemoryBook book)
             wrote++;
         }
 
-        if (Ship(state) is { } ship && Changed(ShipKey, ship))
+        if (ShipFact(state) is { } ship && Changed(ShipKey, ship))
         {
             book.Observe(ShipKey, ship, at);
             wrote++;
@@ -87,19 +88,19 @@ public sealed class MemoryObserver(MemoryBook book)
             : $"you were last aboard in {system}.";
     }
 
-    private static string? Ship(CommanderGameState state)
+    internal static string? ShipFact(CommanderGameState state)
     {
-        var hull = state.Ship.TypeName ?? state.Ship.Type;
-
-        if (hull is not { Length: > 0 })
+        if (state.Ship.TypeSaid is not { Length: > 0 } hull)
         {
             return null;
         }
 
+        var article = IndefiniteArticle.With(hull);
+
         // The name where the Commander gave it one, because that is how they refer to the ship.
         return state.Ship.Name is { Length: > 0 } name
-            ? $"you were flying {name}, a {hull}."
-            : $"you were flying a {hull}.";
+            ? $"you were flying {name}, {article}."
+            : $"you were flying {article}.";
     }
 
     private MemoryEntry? Existing(string key) =>

@@ -15,6 +15,23 @@ public class SpeechPipelineTests
     private static SpeechPipeline Pipeline(AudioArbiter arbiter, ITtsProvider tts, string group = "turn-1") =>
         new(arbiter, tts, VoiceSelection.Default, group, NullLogger.Instance);
 
+    [Theory]
+    [InlineData("You are in a Cobra MkV. ", "You are in a Cobra Mark five.")]
+    [InlineData("You are in a Cobra Mk V. ", "You are in a Cobra Mark five.")]
+    [InlineData("You are in a Krait Mk II. ", "You are in a Krait Mark two.")]
+    public async Task AMarkNumeralReachesAnEnglishVoiceAsANumber(string said, string expected)
+    {
+        var (arbiter, _) = Build();
+        var tts = new FakeTtsProvider();
+
+        await using var pipeline = Pipeline(arbiter, tts);
+
+        pipeline.Push(said);
+        await pipeline.CompleteAsync();
+
+        Assert.Equal([expected], tts.Requested);
+    }
+
     [Fact]
     public async Task AVoiceTheProviderRefusesIsDroppedAndTheSentenceIsStillSpoken()
     {

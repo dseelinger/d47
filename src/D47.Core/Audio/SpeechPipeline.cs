@@ -310,7 +310,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         // The rewrites write English words.
         if (SpokenLanguage.IsEnglish(_voice.Language))
         {
-            spoken = SpokenUnits.Rewrite(SpokenDesignations.Rewrite(spoken));
+            spoken = SpokenUnits.Rewrite(SpokenDesignations.Rewrite(SpokenNumerals.Expand(spoken)));
 
             if (_address is not null)
             {

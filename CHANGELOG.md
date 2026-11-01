@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Ships are named from the hull table everywhere: the recap says "in a Cobra MkV" rather than "in a Cobramkv", an Anaconda Mk II takes "an", and the memory book, Captain's Log entries and the Crew page's "Posted to" column use the same name. Voices that take text, ElevenLabs among them, now say "Mk V" as "Mark five", as the local voice already did.
+
 Delivery notes no longer repeat a tone by rewording it. d47 remembers the last twelve words a speaker used in delivery notes, so "[dry]", "[dryly]" and "[dry, deadpan]" count as the same word, and asks the model to use none of them next time.
 
 Passers-by chatter is sometimes about where you are: about one exchange in three, when the system's economy, the controlling faction's state or the station's economy is known, the speakers talk about that. The same goes for a hail while docked.

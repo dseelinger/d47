@@ -147,7 +147,7 @@ public static partial class CaptainsLogCapability
             System = Known(location?.StarSystem),
             Body = Known(location?.Body) ?? Known(status?.BodyName),
             Station = location is { Docked: true } ? Known(location.StationName) : null,
-            ShipType = Known(ship?.TypeName) ?? Known(ship?.Type),
+            ShipType = Known(ship?.TypeSaid),
             ShipName = Known(ship?.Name),
             Latitude = status is { HasPosition: true } ? status.Latitude : null,
             Longitude = status is { HasPosition: true } ? status.Longitude : null,

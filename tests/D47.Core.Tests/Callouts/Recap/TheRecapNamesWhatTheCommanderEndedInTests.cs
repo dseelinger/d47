@@ -59,8 +59,8 @@ public class TheRecapNamesWhatTheCommanderEndedInTests
             JournalCorpus.Event(Evening.AddMinutes(3), "Docked", "\"StationName\":\"Suri Park\",\"StarSystem\":\"Anlave\""));
 
         Assert.False(digest.OnFoot);
-        Assert.Equal("a Imperial Cutter", digest.Ship);
-        Assert.Contains("in a Imperial Cutter", RecapCallout.Compose(digest), StringComparison.Ordinal);
+        Assert.Equal("an Imperial Cutter", digest.Ship);
+        Assert.Contains("in an Imperial Cutter", RecapCallout.Compose(digest), StringComparison.Ordinal);
         Assert.DoesNotContain("Suit", RecapCallout.Compose(digest), StringComparison.Ordinal);
     }
 

@@ -372,7 +372,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
 
         // After Ship, so an assignment is tied to the hull the Commander is actually in rather than the one
         // they were in a moment ago.
-        Crew = Crew.Apply(journalEvent, Ship.Name ?? Ship.TypeName ?? Ship.Type);
+        Crew = Crew.Apply(journalEvent, Ship.Name ?? Ship.TypeSaid);
 
         InOperationSince = journalEvent.Kind switch
         {
