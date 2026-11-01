@@ -17,10 +17,10 @@ public sealed record LogDigest
     /// <summary>The Frontier id, which is what a log is filed under.</summary>
     public string? FrontierId { get; init; }
 
-    /// <summary>The ship flown when the window closed, as a phrase such as "the Python", or null.</summary>
+    /// <summary>What the Commander was in when the window closed, a ship or a suit, as a phrase such as "the Python", or null.</summary>
     public string? Ship { get; init; }
 
-    /// <summary>Whether <see cref="Ship"/> is a suit, the Commander having loaded in on foot.</summary>
+    /// <summary>Whether <see cref="Ship"/> is a suit, the Commander being on foot when the window closed.</summary>
     public bool OnFoot { get; init; }
 
     public IReadOnlyList<LogFact> Facts { get; init; } = [];

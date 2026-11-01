@@ -318,6 +318,7 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
         private string? _lastStation;
         private string? _ship;
         private bool _loadedOnFoot;
+        private string? _suit;
         private LogSource? _lastPlace;
 
         public string? Commander { get; private set; }
@@ -355,6 +356,23 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
                         + (journalEvent.Long("Credits") is { } credits
                             ? $", {Credits(credits)} in the bank."
                             : "."));
+                    break;
+
+                case "Loadout":
+                    _ship = Ship(journalEvent);
+                    _loadedOnFoot = false;
+                    break;
+
+                case "SuitLoadout":
+                    if (JournalNames.Suit(journalEvent.Raw, "SuitName") is { } worn)
+                    {
+                        _suit = $"a {worn}";
+                        if (_loadedOnFoot)
+                        {
+                            _ship = _suit;
+                        }
+                    }
+
                     break;
 
                 case "Location":
@@ -592,6 +610,12 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
 
                 case "Disembark":
                     _onFoot.Add(journalEvent);
+                    if (_suit is not null)
+                    {
+                        _ship = _suit;
+                        _loadedOnFoot = true;
+                    }
+
                     break;
 
                 case "ApproachSettlement":
@@ -817,7 +841,7 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
 
             var type = JournalJson.Spoken(journalEvent.Named("Ship")) ?? "a ship";
 
-            return journalEvent.String("ShipName") is { Length: > 0 } name
+            return journalEvent.String("ShipName") is { } name && !string.IsNullOrWhiteSpace(name)
                 ? $"the {type} \"{name}\""
                 : $"a {type}";
         }

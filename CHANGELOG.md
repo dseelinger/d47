@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The recap of your last session now names the ship you ended in, or the suit if you ended on foot, rather than whatever you loaded in as. A session that opened on foot, boarded a ship and docked is recapped in the ship, and one that left a ship on foot is recapped in the suit you changed into.
+
 The reworded recap of your last session no longer states how long you flew or adds any figure the written line lacks. A reply with a new length of time or number is dropped and the recap is said as written.
 
 The general help pages now match the app: the overview, install, first run, conversation, In Ship, Help improve D47, choosing providers, journal file, log file, journal events, pronunciations, data retention, donate your journals, community and donation privacy pages. The In Ship page no longer says Ctrl+L clears the page or that there is a CLEAR button, the install page lists the model list refresh and the spoken voice among the requests D47 makes on its own, the conversation page shows the real provenance line and the models that use tool search, and the Help improve page describes the scrub as rules per field rather than a list of kept fields. Journal events, pronunciations, data retention and donating your journals have a How it works band.
