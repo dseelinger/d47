@@ -21,26 +21,27 @@ public partial class EveryHowToPhraseRoutesGateTests
 {
     private static readonly string[] Covered = ["flight-controls", "ship-systems", "panels", "srv", "on-foot-controls"];
 
-    /// <summary>Phrases the model answers correctly. Reviewed by hand.</summary>
+    /// <summary>Phrases the model answers correctly: reviewed by hand, or a row in the scenario routing table.</summary>
     private static readonly (string Page, string Phrase)[] ModelAnswers =
     [
         ("debrief", "from now on, give me the distance first"),
         ("memory", "remember that I hate mining"),
         ("screen", "what does that panel say"),
+        ("mining", "mining target platinum above twenty five percent"),
+        ("mining", "how many limpets for ten tonnes of osmium"),
+        ("system-names", "what does Praea Euq XV-B c1-42 tell you"),
+        ("on-foot", "what does grade 3 on my Maverick cost"),
+        ("galaxy", "find me a neutron star"),
+        ("routes", "plot a neutron route to Colonia"),
     ];
 
     /// <summary>Phrases that did not route when this gate landed. An entry stays only with an open issue that will make it route.</summary>
     private static readonly (string Page, string Phrase)[] NotYetReviewed =
     [
-        ("mining", "mining target platinum above twenty five percent"), // #1998
-        ("mining", "how many limpets for ten tonnes of osmium"), // #1998
-        ("system-names", "what does Praea Euq XV-B c1-42 tell you"), // #1998
         ("bookmarks", "rename bookmark Current CG to Colonia Bridge"), // no issue filed; see the #1903 commit
-        ("on-foot", "what does grade 3 on my Maverick cost"), // #1998
         ("commander-log", "have I met Arden Vale before"), // #2000
         ("powerplay", "what does my next Powerplay rank give me"), // #2000
         ("powerplay", "what would Edmund Mahon give me"), // #2000
-        ("exobiology", "what biology is on this body"), // #1998
         ("binding-profiles", "save these bindings as sim pit"), // no issue filed; see the #1903 commit
         ("binding-profiles", "load the sim pit bindings"), // no issue filed; see the #1903 commit
         ("reminders", "remind me to buy limpets when I next dock"),
@@ -49,18 +50,15 @@ public partial class EveryHowToPhraseRoutesGateTests
         ("reminders", "when I next dock"),
         ("reminders", "next session"),
         ("reminders", "in twenty minutes"),
-        ("galaxy", "nearest raw material trader"), // #1998: a quick search, which this router does not load
-        ("galaxy", "find me a neutron star"), // #1998
         ("focus", "bring Elite back"),
         ("utilities", "set a timer for twenty minutes called fuel scoop"),
-        ("routes", "plot a neutron route to Colonia"), // #1998
         ("vr", "put the panel down"),
         ("vr", "lock it to my head"),
         ("vr", "move it left"),
         ("vr", "bring it nearer"),
         ("commanders", "switch to Kestrel Vane"),
         ("navigation", "plot a course to Shinrarta Dezhra"), // no issue filed; see the #1903 commit
-                ("comms", "tell the wing I am on my way"), // no issue filed; see the #1903 commit
+        ("comms", "tell the wing I am on my way"), // no issue filed; see the #1903 commit
     ];
 
     private static readonly HashSet<(string Page, string Phrase)> CommsKeyPhrases = new(new EntryComparer())
@@ -158,7 +156,7 @@ public partial class EveryHowToPhraseRoutesGateTests
     private static HashSet<(string Page, string Phrase)> Listed() =>
         new([.. ModelAnswers, .. NotYetReviewed], new EntryComparer());
 
-    /// <summary>The router, with the things the pages tell the Commander to make first: a checklist line, bookmarks, a macro, a mark on the body, a carrier, a pilot on duty and a character.</summary>
+    /// <summary>The router, with the things the pages tell the Commander to make first (a checklist line, bookmarks, a macro, a mark on the body, a carrier, a pilot on duty and a character) and the fixed quick searches.</summary>
     private static KeywordRouter Router()
     {
         var surface = TestSurface.For(new MemoryInstall());
@@ -198,7 +196,8 @@ public partial class EveryHowToPhraseRoutesGateTests
                 .Concat(BookmarksCapability.Phrases(bookmarks, () => commander))
                 .Concat(MacroCapability.Phrases(macros))
                 .Concat(SurfaceGuidanceCapability.Phrases(marks, () => state))
-                .Concat(CommsCapability.ChannelPhrases(channels)));
+                .Concat(CommsCapability.ChannelPhrases(channels))
+                .Concat(D47.Core.Knowledge.QuickSearches.Phrases()));
     }
 
     private static bool Routes(KeywordRouter router, string phrase) =>

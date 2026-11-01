@@ -1,3 +1,4 @@
+using D47.Core.Configuration;
 using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Conversation;
@@ -222,9 +223,21 @@ public class LiveScenarioTests
                        $"'{ProviderId}' is not a provider in the catalog. Try one of: "
                        + string.Join(", ", LlmProviderCatalog.Ids));
 
-        return LlmProviderFactory.Create(info, Key, Endpoint ?? info.DefaultEndpoint)
+        return LlmProviderFactory.Create(info, Key ?? StoredKey(info), Endpoint ?? info.DefaultEndpoint)
                ?? throw new InvalidOperationException(
                    LlmProviderFactory.ReasonForNoClient(info)
-                   + " Set D47_SCENARIOS_KEY, or point D47_SCENARIOS_PROVIDER at an endpoint that needs no key.");
+                   + " Set D47_SCENARIOS_KEY or D47_SCENARIOS_SECRETS_FROM, or point D47_SCENARIOS_PROVIDER at an endpoint that needs no key.");
+    }
+
+    /// <summary>The provider's key from d47's own encrypted store under <c>D47_SCENARIOS_SECRETS_FROM</c>, read in this process and never written anywhere.</summary>
+    private static string? StoredKey(LlmProviderInfo info)
+    {
+        if (info.KeySecretName is not { } name || Blank(Environment.GetEnvironmentVariable("D47_SCENARIOS_SECRETS_FROM")) is not { } root)
+        {
+            return null;
+        }
+
+        var store = new SecretStore(new AppPaths(root), new DpapiSecretProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance);
+        return store.TryGet(name, out var key) ? key : null;
     }
 }

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+"What biology is on this body" is now answered without the language model, about the body most recently scanned with biology on it.
+
 d47 no longer speaks Ship chatter, NPC chatter, scene chatter, Narrator lines, story clues or story reactions while Elite is not running, so a closed game with the launcher open stays quiet. Chatter and Narrator lines already playing or queued when Elite closes are cut, and stay refused until it runs again. Greetings, reminders, GalNet and answers to you are unchanged.
 
 d47 now orders journal files by when each session started in UTC rather than by file name, which Elite writes in local time. On the night the clocks go back, a session opened in the repeated hour is followed as the newest one, so d47 no longer stops hearing the game until that session ends. When d47 catches up on loadouts and suits from the journals, it now starts at the correct file in any time zone, not only in UTC. The same order now applies to every other read of the journal history, so on the night the clocks go back, sessions in the repeated hour are no longer folded in the wrong order until the next launch.

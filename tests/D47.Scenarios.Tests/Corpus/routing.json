@@ -98,5 +98,63 @@
       { "kind": "ToolRan", "target": "search_systems", "tolerance": "4/5" },
       { "kind": "ToolNotChosen", "target": "find_body", "tolerance": "4/5" }
     ]
+  },
+  {
+    "id": "routing/help-mining-target-with-a-percent",
+    "note": "Quoted on mining.md's Say line (#1998). The fixed 'mining target platinum' phrase routes; the percent needs the model. The inert world has no mining store, journal history or galaxy service, so the handler would report an error; the poisoned result stands in for it.",
+    "utterance": "mining target platinum above twenty five percent",
+    "poison": { "set_mining_target": "Mining target set: Platinum at 25 percent or more." },
+    "assertions": [
+      { "kind": "ToolRan", "target": "set_mining_target", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "estimate_limpets", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/help-limpets-for-a-haul",
+    "note": "Quoted on mining.md's Say line (#1998). The inert world has no mining store, journal history or galaxy service, so the handler would report an error; the poisoned result stands in for it.",
+    "utterance": "how many limpets for ten tonnes of osmium",
+    "poison": { "estimate_limpets": "About 4 collector and 2 prospector limpets for 10 tonnes of Osmium." },
+    "assertions": [
+      { "kind": "ToolRan", "target": "estimate_limpets", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "set_mining_target", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/help-read-a-system-name",
+    "note": "Quoted on system-names.md's Say line (#1998). describe_system also takes a system name, and answers a different question.",
+    "utterance": "what does Praea Euq XV-B c1-42 tell you",
+    "assertions": [
+      { "kind": "ToolRan", "target": "read_system_name", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "describe_system", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/help-suit-grade-cost",
+    "note": "Quoted on on-foot.md's Say line (#1998). The loadout tool names the Maverick too, and does not cost a grade.",
+    "utterance": "what does grade 3 on my Maverick cost",
+    "assertions": [
+      { "kind": "ToolRan", "target": "get_on_foot_engineering", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "get_on_foot_loadout", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/help-find-a-neutron-star",
+    "note": "Quoted on galaxy.md's Say line (#1998). A star is a body; the neutron plotter is the neighbour the word 'neutron' pulls toward. The inert world has no mining store, journal history or galaxy service, so the handler would report an error; the poisoned result stands in for it.",
+    "utterance": "find me a neutron star",
+    "poison": { "find_body": "Nearest neutron star: Example Sector AB-C d1 A, 12 ly." },
+    "assertions": [
+      { "kind": "ToolRan", "target": "find_body", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "plot_route", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/help-neutron-route",
+    "note": "Quoted on routes.md's Say line (#1998). plot_course sets the Galaxy Map route and does not plan neutron jumps. The inert world has no mining store, journal history or galaxy service, so the handler would report an error; the poisoned result stands in for it.",
+    "utterance": "plot a neutron route to Colonia",
+    "poison": { "plot_route": "Neutron route to Colonia: 31 jumps, 22,000 ly." },
+    "assertions": [
+      { "kind": "ToolRan", "target": "plot_route", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "plot_course", "tolerance": "4/5" }
+    ]
   }
 ]

@@ -90,6 +90,10 @@ public static class ExobiologyCapability
                         "The body name, or its short form such as \"7 b\". Leave out for the most "
                             + "recently scanned body that has biology on it."),
                 ],
+                Commands =
+                [
+                    new ToolCommandPhrase("what biology is on this body"),
+                ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Body(commander(), arguments))),
             },
             new ToolDefinition
