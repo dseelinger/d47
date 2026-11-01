@@ -22,6 +22,7 @@ public sealed class ADataBackupLeavesOutDownloadsAndLogsTests
         _files.WriteText(Path.Combine(_paths.Data, "logs", "d47.log"), "log");
         _files.WriteText(Path.Combine(_paths.Data, "audio", "music", "combat", "track.mp3"), "music");
         _files.WriteText(Path.Combine(_paths.Data, "stories", "index.json"), "{}");
+        _files.WriteText(Path.Combine(_paths.MusicPack, "combat", "track.mp3"), "music");
         _files.WriteBytes(Path.Combine(_paths.Signals, "signals.tsv.gz"), [1]);
         _files.WriteBytes(Path.Combine(_paths.Backups, "data-0.109.7-local-20260908-130420.zip"), [1]);
 

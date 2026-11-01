@@ -11,10 +11,13 @@ public static class DataBackup
     private const string Prefix = "data-backup-";
     private const string Extension = ".zip";
 
-    /// <summary>Top-level folders left out: downloads, recordings, logs and the Commander's music, which are large and which a build does not change.</summary>
+    /// <summary>
+    /// Top-level folders left out: downloads, recordings, logs and music, which are large and which a build does not
+    /// change. The zip is built in memory, so what remains must stay well under 2 GB.
+    /// </summary>
     public static readonly IReadOnlySet<string> LeftOut = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        "audio", "avatar-clips", "backups", "flight", "logs", "models", "ships", "signals", "stories",
+        "audio", "avatar-clips", "backups", "flight", "logs", "models", "music-pack", "ships", "signals", "stories",
     };
 
     /// <summary>Sorts by time; <paramref name="label"/> names the build that took it.</summary>
