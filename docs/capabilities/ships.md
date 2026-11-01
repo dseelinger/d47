@@ -212,7 +212,8 @@ you, and reorder your checklist without the build forgetting what you decided.
 
 **What is actually fitted is a third thing, in a third file.** `data/loadouts.json` holds what each
 of your ships was last seen carrying, straight from the game — every ship you have sat in, not just
-the one you are in now. Intent is authored and a loadout is derived, so the two never borrow from
+the one you are in now. A purchase, sale, store, retrieve or swap of a module updates it at once,
+without waiting for the game's next loadout. Intent is authored and a loadout is derived, so the two never borrow from
 each other.
 
 **It is a cache and nothing depends on it surviving.** Delete it and Directive 47 rebuilds what it

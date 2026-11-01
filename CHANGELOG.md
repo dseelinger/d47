@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The modules fitted to your ship change as soon as you buy, sell, store, retrieve or swap one, without waiting for the game to write its next loadout. The ship page, the fleet count and the list of modules still to buy no longer show a module you have already bought.
+
 The recap of your last session now names the ship you ended in, or the suit if you ended on foot, rather than whatever you loaded in as. A session that opened on foot, boarded a ship and docked is recapped in the ship, and one that left a ship on foot is recapped in the suit you changed into.
 
 The reworded recap of your last session no longer states how long you flew or adds any figure the written line lacks. A reply with a new length of time or number is dropped and the recap is said as written.

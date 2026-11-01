@@ -297,12 +297,105 @@ public sealed record ShipLoadout
         // Engineering is the change that matters and does not re-emit Loadout.
         "EngineerCraft" => Rolled(journalEvent),
 
+        "ModuleBuy" or "ModuleSell" or "ModuleStore" or "ModuleRetrieve" or "ModuleSwap" or "MassModuleStore"
+            when !IsKnown || journalEvent.Int("ShipID") is not { } shipId || shipId != ShipId => this,
+
+        "ModuleBuy" => Fit(journalEvent.String("Slot"), new ShipModule(
+            journalEvent.String("Slot")!,
+            JournalJson.Symbol(journalEvent.String("BuyItem")) ?? "unknown",
+            Powered: true,
+            Health: null,
+            Value: journalEvent.Long("BuyPrice"))),
+
+        "ModuleSell" => Fit(journalEvent.String("Slot"), null),
+
+        "ModuleStore" => Fit(
+            journalEvent.String("Slot"),
+            JournalJson.Symbol(journalEvent.String("ReplacementItem")) is { } replacement
+                ? new ShipModule(journalEvent.String("Slot")!, replacement, Powered: true, Health: null, Value: null)
+                : null),
+
+        "ModuleRetrieve" => Fit(journalEvent.String("Slot"), Retrieved(journalEvent)),
+
+        "ModuleSwap" => Swapped(journalEvent),
+
+        "MassModuleStore" => this with
+        {
+            Modules =
+            [
+                .. Modules.Where(module => !journalEvent.Items("Items").Any(item =>
+                    string.Equals(item.String("Slot"), module.Slot, StringComparison.OrdinalIgnoreCase))),
+            ],
+        },
+
         // The id alone, and only while no Loadout has been read (<a
         // href=".com/dseelinger/d47/issues/337">#337</a>).
         "LoadGame" when !IsKnown => this with { ShipId = journalEvent.Int("ShipID") ?? ShipId },
 
         _ => this,
     };
+
+    /// <summary>The slot holds <paramref name="module"/>, or is empty where that is null.</summary>
+    private ShipLoadout Fit(string? slot, ShipModule? module)
+    {
+        if (Blank(slot) is null)
+        {
+            return this;
+        }
+
+        var kept = Modules.Where(existing =>
+            !string.Equals(existing.Slot, slot, StringComparison.OrdinalIgnoreCase)).ToList();
+        var index = Modules.ToList()
+            .FindIndex(existing => string.Equals(existing.Slot, slot, StringComparison.OrdinalIgnoreCase));
+
+        if (module is not null)
+        {
+            kept.Insert(index < 0 ? kept.Count : index, module);
+        }
+
+        return this with { Modules = kept };
+    }
+
+    private static ShipModule? Retrieved(JournalEvent journalEvent)
+    {
+        if (JournalJson.Symbol(journalEvent.String("RetrievedItem")) is not { } item)
+        {
+            return null;
+        }
+
+        var module = new ShipModule(journalEvent.String("Slot")!, item, Powered: true, Health: null, Value: null);
+
+        return Blank(journalEvent.String("EngineerModifications")) is { } blueprint
+            ? module with
+            {
+                Blueprint = blueprint,
+                BlueprintLevel = journalEvent.Int("Level"),
+                Quality = journalEvent.Double("Quality"),
+            }
+            : module;
+    }
+
+    private ShipLoadout Swapped(JournalEvent journalEvent)
+    {
+        var from = Blank(journalEvent.String("FromSlot"));
+        var to = Blank(journalEvent.String("ToSlot"));
+
+        if (from is null || to is null)
+        {
+            return this;
+        }
+
+        return this with
+        {
+            Modules =
+            [
+                .. Modules.Select(module =>
+                    string.Equals(module.Slot, from, StringComparison.OrdinalIgnoreCase) ? module with { Slot = to }
+                    : string.Equals(module.Slot, to, StringComparison.OrdinalIgnoreCase) ? module with { Slot = from }
+                    : module),
+            ],
+        };
+    }
 
     /// <summary>One slot, rewritten from the roll that just landed.</summary>
     private ShipLoadout Rolled(JournalEvent journalEvent)

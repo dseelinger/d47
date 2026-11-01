@@ -64,8 +64,6 @@ public class TheEventsD47DidNotKnowAreNarratedTests
     public void MarketIdIsNoise() => Assert.Contains("MarketID", (ISet<string>)new HashSet<string>(JournalSentence.Noise));
 
     [Theory]
-    [InlineData("ModuleSwap")]
-    [InlineData("MassModuleStore")]
     [InlineData("ClearImpound")]
     [InlineData("HoloscreenHacked")]
     [InlineData("SelfDestruct")]
