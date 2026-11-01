@@ -4,7 +4,64 @@ group: General help
 nav_order: 14
 ---
 
-What each of the 45 commonest journal events is, and what d47 does with it.
+What each of 45 journal events is, and what d47 does with it.
+
+<!--
+  The How it works band. Editing rules, both about kramdown rather than taste: no blank lines inside
+  this block, and never indent a line by four spaces or more.
+
+  Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
+-->
+<div class="d47-eli5"><div class="d47-frame">
+<p class="intro">Every entry below is a journal event Elite writes, and what d47 does with it.</p>
+<section>
+<h2><span class="num">1</span> Elite writes the line. D47 reads it.</h2>
+<svg viewBox="0 0 880 140" role="img" aria-label="Elite writes a journal line and d47 reads it">
+ <rect x="20" y="22" width="396" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="218" y="64" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">A JOURNAL LINE</text>
+ <text x="218" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">one JSON event</text>
+ <line x1="424" y1="70" x2="440" y2="70" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="454,70 438,62 438,78" fill="var(--accent-muted)"/>
+ <rect x="464" y="22" width="396" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="662" y="64" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">D47 READS IT</text>
+ <text x="662" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">never writes to the file</text>
+</svg>
+<p class="body">Each event is one JSON line in Elite's journal. d47 reads the file as it grows and never writes to it.</p>
+</section>
+<section>
+<h2><span class="num">2</span> Every event gets a sentence on the Journal page.</h2>
+<svg viewBox="0 0 880 140" role="img" aria-label="One event, one sentence on the Journal page">
+ <rect x="20" y="22" width="396" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="218" y="64" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">FSDJump</text>
+ <text x="218" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">the event name</text>
+ <line x1="424" y1="70" x2="440" y2="70" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="454,70 438,62 438,78" fill="var(--accent-muted)"/>
+ <rect x="464" y="22" width="396" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="662" y="64" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">A SENTENCE</text>
+ <text x="662" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">on the Journal page</text>
+</svg>
+<p class="body">Docking, jumping and scanning each read as a sentence on the Journal File reading, with the fields behind it.</p>
+</section>
+<section>
+<h2><span class="num">3</span> Some events also change what d47 knows.</h2>
+<svg viewBox="0 0 880 140" role="img" aria-label="Some events also change what d47 knows">
+ <rect x="20" y="22" width="248" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="144" y="64" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">FSDJump</text>
+ <text x="144" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">you arrived</text>
+ <line x1="276" y1="70" x2="292" y2="70" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="306,70 290,62 290,78" fill="var(--accent-muted)"/>
+ <rect x="316" y="22" width="248" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="440" y="64" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">CURRENT SYSTEM</text>
+ <text x="440" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">what d47 knows</text>
+ <line x1="572" y1="70" x2="588" y2="70" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
+ <polygon points="602,70 586,62 586,78" fill="var(--accent-muted)"/>
+ <rect x="612" y="22" width="248" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="736" y="64" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">CALLOUTS</text>
+ <text x="736" y="92" text-anchor="middle" font-size="14" fill="var(--text-muted)">what follows</text>
+</svg>
+<p class="body">An FSDJump sets the system d47 believes you are in, and the callouts that follow an arrival run from it. A few events, such as <code>case "FSDTarget" when _jumpingTo is { } flyingTo:</code> in <code>DangerCallout</code>, are read for one narrower purpose.</p>
+</section>
+</div></div>
 
 ## BackpackChange
 
@@ -64,11 +121,11 @@ Elite writes FSDJump when your ship arrives in a new system by hyperspace. d47 r
 
 ## FSDTarget
 
-Elite writes FSDTarget when you select the next system to jump to. d47 shows it on the Journal page and does nothing else with it.
+Elite writes FSDTarget when you select the next system to jump to. d47 shows it on the Journal page, and reads it during a jump to notice when the route did not advance because the ship was pulled out.
 
 ## FSSAllBodiesFound
 
-Elite writes FSSAllBodiesFound when every body in a system has been found with the Full Spectrum System Scanner. d47 shows it on the Journal page and does nothing else with it.
+Elite writes FSSAllBodiesFound when every body in a system has been found with the Full Spectrum System Scanner. d47 reads it to remember that the system is fully scanned. With Share with EDDN on, it also sends the result to EDDN.
 
 ## FSSDiscoveryScan
 
@@ -80,7 +137,7 @@ Elite writes FuelScoop while you scoop fuel from a star, with the amount scooped
 
 ## LaunchDrone
 
-Elite writes LaunchDrone when you launch a limpet. d47 shows it on the Journal page and does nothing else with it.
+Elite writes LaunchDrone when you launch a limpet. d47 counts the prospector and collector limpets launched in your mining run.
 
 ## Loadout
 
@@ -136,7 +193,7 @@ Elite writes ReceiveText when a message reaches you from a player, a ship or a s
 
 ## RefuelAll
 
-Elite writes RefuelAll when you refuel your ship at a station, with the cost and the amount. d47 shows it on the Journal page and does nothing else with it.
+Elite writes RefuelAll when you refuel your ship at a station, with the cost and the amount. d47 adds the cost to your spend ledger.
 
 ## Reputation
 
@@ -148,7 +205,7 @@ Elite writes Scan when you scan a star, planet or other body. d47 reads it to ke
 
 ## ScanBaryCentre
 
-Elite writes ScanBaryCentre when you scan the barycentre that a group of bodies orbits. d47 shows it on the Journal page and does nothing else with it.
+Elite writes ScanBaryCentre when you scan the barycentre that a group of bodies orbits. d47 shows it on the Journal page. With Share with EDDN on, it also sends the scan to EDDN.
 
 ## ShieldState
 
@@ -156,7 +213,7 @@ Elite writes ShieldState when your ship's shields go down or come back up. d47 r
 
 ## ShipTargeted
 
-Elite writes ShipTargeted when you target or lose a ship, with what its scan has revealed so far. d47 shows it on the Journal page and does nothing else with it.
+Elite writes ShipTargeted when you target or lose a ship, with what its scan has revealed so far. d47 reads it to remember the pilots you have targeted, and says so when you meet one again.
 
 ## StartJump
 

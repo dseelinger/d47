@@ -44,7 +44,7 @@ nav_order: 7
  <text x="440" y="216" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">LOG FILE</text>
  <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">today's file on disk, beside the executable in data\logs — never in AppData</text>
 </svg>
-<p class="body">This is where every diagnostic goes: what started, what the model was asked and what it cost, what the headset did, in-game comms, and every error with its cause.</p>
+<p class="body">Every part of the app writes into the one file in <code>data\logs</code>: startup, model requests, voice, the headset, comms and errors.</p>
 </section>
 <section>
 <h2><span class="num">2</span> It answers with nothing else working.</h2>
@@ -65,6 +65,7 @@ nav_order: 7
  <text x="440" y="162" text-anchor="middle" font-size="16" fill="var(--text)">It is a file. Nothing has to be working for it to be there and be true.</text>
  <text x="440" y="188" text-anchor="middle" font-size="15" fill="var(--text-muted)">This is the first reading to open when something is wrong, not the last.</text>
 </svg>
+<p class="body">The file exists whether or not the game, a model, a microphone or a headset does. It is the reading that still answers.</p>
 </section>
 <section>
 <h2><span class="num">3</span> Read when you open it, not tailed.</h2>
@@ -75,13 +76,14 @@ nav_order: 7
  <text x="225" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">looking at is not worth a file</text>
  <text x="225" y="138" text-anchor="middle" font-size="15" fill="var(--text-muted)">read on every tick</text>
  <rect x="450" y="26" width="410" height="128" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="655" y="62" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">CLEAR IS GREYED</text>
+ <text x="655" y="62" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">NOTHING DELETES IT</text>
  <text x="655" y="94" text-anchor="middle" font-size="15" fill="var(--text-muted)">this is a file on disk, and a</text>
  <text x="655" y="116" text-anchor="middle" font-size="15" fill="var(--text-muted)">control that appeared to empty</text>
  <text x="655" y="138" text-anchor="middle" font-size="15" fill="var(--text-muted)">it would be offering to delete it</text>
  <rect x="20" y="176" width="840" height="52" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="208" text-anchor="middle" font-size="15" fill="var(--text)">A spinner beside the picker while it reads. This is the only reading that has one, because it is the only one that waits.</text>
+ <text x="440" y="208" text-anchor="middle" font-size="15" fill="var(--text)">Search highlights every match and steps through them.</text>
 </svg>
+<p class="body">The page reads the file when you open it. Switch away and back to read it again. Each part has its own level, for example <code>public const string Capabilities = "Capabilities";</code>, and the level changes with no restart.</p>
 </section>
 <div class="next">
 <div class="next-title">Where to go next</div>
@@ -103,7 +105,7 @@ happened rather than what was said about it.
 
 Startup and composition. Which journal is being tailed. Every model request with its token counts
 and price. What the voice provider was asked for and which voice answered. What the headset did.
-In-game comms, with their sender. And every error, with its cause.
+In-game comms, with their sender. And every error, with its cause. The words of each objective change are written here too.
 
 It is the only place several of those are written down, which is deliberate: a diagnostic that also
 appeared in the conversation would be a page repeating another page, and the conversation is the
@@ -113,8 +115,7 @@ one reading that has to stay readable.
 
 **It is read when you open the page**, not tailed continuously — a log nobody is looking at is not
 worth a file read on every tick, and one you *are* looking at is open because something already
-went wrong. Switch away and back to re-read it. A spinner beside the picker shows while it reads;
-this is the only reading with one, because it is the only one that waits on a disk.
+went wrong. Switch away and back to re-read it.
 
 **Search** highlights every match, counts them, and steps forward and back through them.
 
@@ -124,9 +125,8 @@ downwards, so its arrow points down.
 **Copy**, the two overlapping squares, puts the whole file as shown on the clipboard — the same text you are looking at, and
 not something assembled for the occasion.
 
-**Clear what is shown is greyed here.** There is nothing of Directive 47's to clear: this is a file,
-and a control that appeared to empty it would be offering to delete a log. The same is true of both
-journal readings.
+**Scroll what is shown above the fold** (Ctrl+L) scrolls past what is on the page. It deletes
+nothing: no control here empties the file, and the same is true of both journal readings.
 
 **The share button** offers this reading to a bug report, because a log and the game's own journal
 are the two halves of an incident. What leaves your machine is reviewed by you first — see
@@ -151,4 +151,4 @@ the [Diagnostics](capabilities/diagnostics.html) page.
 ### Where the file is
 
 Beside the executable, in `data\logs`, never in `%APPDATA%`. Ask *"what's your status"* and
-Directive 47 names the folder along with the version and every other place it writes.
+Directive 47 names the logs folder along with the version.

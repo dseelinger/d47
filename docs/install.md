@@ -33,6 +33,7 @@ nav_order: 1
  <text x="590" y="160" text-anchor="middle" font-size="14" fill="var(--text-muted)">wherever you like</text>
  <text x="440" y="230" text-anchor="middle" font-size="14" fill="var(--text-muted)">Not into Program Files — somewhere you own, so it never needs to ask for permission.</text>
 </svg>
+<p class="body">The installer puts itself in your user folder. The zip you unpack into a folder you own. Neither needs administrator rights.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Check it is really ours.</h2>
@@ -60,6 +61,7 @@ nav_order: 1
  <text x="600" y="204" text-anchor="middle" font-size="16" font-weight="700" fill="var(--danger)">DIFFERENT — do not</text>
  <text x="440" y="252" text-anchor="middle" font-size="14" fill="var(--text-muted)">Builds are unsigned, so Windows will warn you. This is how you check instead of trusting.</text>
 </svg>
+<p class="body">Each download has a published checksum. Compare it with <code>Get-FileHash</code> before you run the file.</p>
 </section>
 <section>
 <h2><span class="num">3</span> What ends up in the folder.</h2>
@@ -81,6 +83,7 @@ nav_order: 1
  <text x="452" y="246" font-size="14" fill="var(--text-muted)">move the folder and all of it moves</text>
  <text x="440" y="308" text-anchor="middle" font-size="14" fill="var(--text-muted)">Never your Windows profile. Everything is here, beside the program.</text>
 </svg>
+<p class="body">The program, its speech libraries and the <code>data</code> folder sit together. Move the folder and everything moves.</p>
 </section>
 <section>
 <h2><span class="num">4</span> Updating itself.</h2>
@@ -103,12 +106,13 @@ nav_order: 1
  <text x="440" y="186" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">If any step fails, it puts everything back.</text>
  <text x="440" y="212" text-anchor="middle" font-size="14" fill="var(--text-muted)">You never end up with half an update.</text>
 </svg>
+<p class="body">The banner offers the update, you press it, and the download is checked against the published fingerprint: <code>ArchiveAsset = "d47.zip"</code> in <code>UpdateChecker</code>.</p>
 </section>
 </div></div>
 
 ## The details
 
-Download the installer — **`d47-setup-0.78.1.exe`**, or whatever version is current — from the
+Download the installer — **`d47-setup-X.Y.Z.exe`**, with the current version in place of X.Y.Z — from the
 [latest release](https://github.com/dseelinger/d47/releases/latest) and run it. The version is in
 the filename on purpose, so a folder with several of them in it still tells you which is which. There is no
 runtime prerequisite, and it never asks for administrator rights.
@@ -123,8 +127,9 @@ install in place rather than leaving two copies behind.
 it into a folder you own — **not** `Program Files`, which D47 could not write to without
 elevation it never asks for — and run `d47.exe`.
 
-Either way the layout is the same: one executable, plus the speech-recognition native
-libraries in a `runtimes` folder beside it. The executable is a self-contained publish, with
+Either way the layout is the same: one executable, a `runtimes` folder of speech-recognition
+native libraries beside it, and the `ships`, `portraits`, `codex-placeholders` and `voices` folders
+of pictures and voice clips the build ships. The executable is a self-contained publish, with
 the .NET runtime and every managed dependency inside it; the natives sit beside it as plain
 files because that is where their loader looks. **Keep them together** — `d47.exe` without
 its `runtimes` folder starts fine but cannot transcribe a word.
@@ -133,8 +138,9 @@ What you can rely on, installed or portable:
 
 - No .NET runtime needs to be installed first.
 - No elevation, ever.
-- Everything D47 writes lives in a `data` folder beside the executable. Move the whole
-  folder, and the program, your settings and your secrets all move together.
+- Everything D47 writes lives in a `data` folder beside the executable, except one optional Start
+  Menu shortcut. Move the whole folder, and the program, your settings and your secrets all move
+  together.
 
 ### Uninstalling
 
@@ -157,11 +163,14 @@ on the executable. Rather than ask you to trust that, every release publishes a 
 beside each download. Compare whichever you took:
 
 ```powershell
-Get-FileHash .\d47-setup-0.78.1.exe -Algorithm SHA256
+Get-FileHash .\d47-setup-X.Y.Z.exe -Algorithm SHA256
 ```
 
 Match the result against the `.sha256` file published beside it in the same release — or `d47.zip.sha256`
 if you took the zip. If it differs, do not run or unpack the file.
+
+Releases also carry a build provenance attestation for the zip and the installer, made by the
+release workflow. `gh attestation verify <file> --repo dseelinger/d47` checks a download against it.
 
 ### Where things are written
 
@@ -171,17 +180,19 @@ Everything is under `data`, beside the executable:
 d47.exe
 runtimes\
   win-x64\             speech-recognition natives — shipped with the build, not downloaded
+  vulkan\win-x64\      the Vulkan build of the speech-recognition library
 data\
-  settings.json        plain JSON, hand-editable, unknown keys named at startup and kept
+  settings.json        plain JSON, hand-editable
   secrets.json         API keys, DPAPI-encrypted for your Windows account only
-  models\              speech models — only if you chose one and agreed to the download
+  models\              speech models, and the Kokoro and Chatterbox voices — only if you chose one
   logs\
     d47-20260812.log     human-readable
+  backups\             a zip of data\, made when a new build first opens it; the newest 25 stay
 ```
 
 ### Finding it again
 
-The installer adds a Start Menu entry, so this section is mostly for the portable zip.
+The installer adds a Start Menu entry, and an optional desktop shortcut that is unchecked by default, so this section is mostly for the portable zip.
 
 Either way D47 is just the folder it lives in — the exe, its `runtimes` libraries, and
 everything it writes in `data/` beside them. Copy that folder
@@ -192,7 +203,7 @@ The cost of that is a program you can only reach by remembering where you left i
 first run offers to add a Start Menu entry — unless the installer already made one, in which
 case it stays quiet. It is one shortcut, for your account only, needs
 no elevation, and you can delete it like any other. Decline it and you will not be asked
-again; **Settings → About → Add to Start Menu** is there if you change your mind.
+again; **Add to Start Menu** under Settings › Privacy and this install › Updates and install is there if you change your mind.
 
 The shortcut points at the file rather than at a copy of it, so an in-place update leaves it
 pointing at the new build — the same reason a pinned taskbar icon keeps working.
@@ -207,17 +218,12 @@ On startup, D47 asks GitHub's public releases API for the latest tag and compare
 its own version. If a newer build exists, a banner offers **Update now**.
 
 **Update now** downloads that release's `d47.zip`, checks it against the `d47.zip.sha256`
-published beside it, and puts each file it contains where the running one is — the executable
-and the `runtimes` libraries both — renaming what it replaces to `.old` rather than
+published beside it, and puts each file it contains where the running one is, renaming what it replaces to `.old` rather than
 overwriting it, then starts the new build. The `.old` files are deleted the next time D47
 starts, and a failure part-way puts everything back; you never end up with half an update. If
 any step fails — no build attached, the download did not finish, the checksum did not match,
 the archive was not a d47 build, or the folder D47 lives in needs elevation to write — it says
 which, and opens the release page so you can do it by hand.
-
-Builds older than v0.5.14 predate the zip and cannot install it; their update banner opens the
-release page instead, and moving up is the three download-unpack-run steps at the top of this
-page once more.
 
 Nothing is downloaded unless you press the button, and D47 will only fetch a URL that is an
 asset on a release of this repository.
@@ -227,15 +233,21 @@ never fails because of it.
 
 ### Downloads and stored keys
 
-Out of the box D47 makes two kinds of outbound request of its own:
+Out of the box D47 makes three kinds of outbound request of its own, besides the speech model
+download below:
 
-- **The update check** described above. Switch it off in Settings and D47 makes no network call of
-  its own. Pressing **Update now** on the banner adds one more: downloading that release from
-  GitHub, which happens only when you press it.
-- **A speech model download**, once. D47 ships with the Base English model selected and
-  fetches it from `huggingface.co` on first run, about 142 MB; choosing a different one fetches
-  that instead. Once it is on disk, transcription runs on this machine. Set the speech model to
-  `none` if you would rather it fetched nothing.
+- **The update check** described above. Turn off **Check for updates at startup** in Settings › Privacy and this install › Updates and
+  install, and D47 makes that request only when you press Check for updates there. Pressing **Update now** on the banner adds one more: downloading that release
+  from GitHub, which happens only when you press it.
+- **The model list refresh.** **Fetch model updates** is on by default and refreshes the list of
+  language models at startup and every 24 hours.
+- **The spoken voice.** The default voice, Edge Neural, sends each spoken line to Microsoft. Choose
+  another voice, or *None*, in Settings › Providers › Speech synthesis, to change that.
+
+**A speech model download** happens once. D47 ships with the Base English model selected and
+fetches it from `huggingface.co` on first run, about 142 MB; choosing a different one fetches
+that instead. Once it is on disk, transcription runs on this machine. Set the speech model to
+`none` if you would rather it fetched nothing.
 
 `secrets.json` is encrypted with Windows DPAPI scoped to your user account. Copying it to
 another machine or another account leaves it undecryptable, and D47 treats an unreadable

@@ -6,8 +6,10 @@ nav_order: 11
 
 **Read this before you donate anything.** It says who ends up holding your data, why they are
 allowed to, what it is used for, how long it lasts and how to have it deleted. Nothing on this page
-applies unless you deliberately send something — d47 sends nothing on its own, and there is no
-setting that makes it.
+applies unless you deliberately send something — d47 sends nothing about your journal on its own, and no
+setting makes it. The one thing it sends without a press is the daily usage count, which the
+**Usage counts** switch in Privacy and egress turns off. No donation leaves without you pressing
+**Send it**.
 
 This is a statement of practice, not legal advice. The GDPR is the benchmark it was written
 against, because it is the strictest rule likely to apply and writing to it costs nothing here.
@@ -21,8 +23,7 @@ has any of it, nobody needs a basis to hold it, and deleting it is deleting a fi
 [retention policy](data-retention.html) covers all of that and it needs no notice, because nothing
 was received.
 
-**A donation is the one thing that crosses.** Since
-[#175](https://github.com/dseelinger/d47/issues/175) the review window can send what it is showing
+**A donation is the one thing that crosses.** The review window can send what it is showing
 you to a store this project runs. That is the moment data about *somebody else* — you — starts
 being held by a party who is not you, and this page is that party saying so.
 
@@ -42,24 +43,23 @@ an installation. Nothing anywhere maps it to a person, because nothing anywhere 
 them — there is no account, no email address and no sign-up.
 
 **A donation may be copied to the holder's machine to be read.** An excerpt is evidence for a
-defect and a history is test data, and neither is any use unread. The copy is one file per
+defect and a history is test data, and neither is any use unread. The copy is one zip file per
 donation, in one folder, made by a utility that holds a read-only credential and can neither write
 to the store nor delete from it. It is not a second store: when the object goes — because you asked
-for it to be deleted, or because an excerpt reached its 30 days — the copy goes with it, the next
-time that utility is opened. A history too long for one upload arrives as several donations, one file per part.
+for it to be deleted, or because an excerpt reached its 30 days — the copy goes with it, at the next
+successful listing that does not name it. A history too long for one upload arrives as several donations, one zip file per part.
 
 **What is not covered is a copy you carried somewhere yourself.** The review window can also put
 the excerpt on your clipboard or save it to a file, and where it goes after that is where it went.
 If you paste one into a public issue or a Discord channel, that copy is out of this project's
-reach: a comment on a public repository is copied to third-party archives within the hour and
+reach: a comment on a public repository is copied to third-party archives, quickly and beyond recall, and
 mailed whole to everybody watching, and deleting it recalls neither.
 
 ## On what basis
 
 **Consent, given once, per donation.** There is no standing consent, no remembered choice and no
 auto-send — a consent given once that uploads forever afterwards is telemetry wearing a consent
-form. The window closes on the send, so the next donation is a fresh decision rather than a repeat
-of this one.
+form. Once a send lands its button reads Sent and stays off, so the next donation is a fresh decision, made with a fresh press of **Send it**, rather than a repeat of this one.
 
 **The document you read in that window is the consent record**, and it is deliberately not
 described a second time here. It says, for your donation specifically, what was replaced, what was
@@ -83,8 +83,7 @@ symbols from it are ever published; no line from it, and no other value in one.
 Those are the whole purpose, and the design is what enforces it rather than the promise being the
 enforcement. There is no backend beyond an object store, nothing that indexes or searches what is
 in it, no profile of any kind, and no third party with access to the store. Purpose limitation is
-not a slogan here: it is why donating a whole journal history stayed out of scope until there was a
-stated use for one, and why there is no backend beyond the store that use needs.
+not a slogan here: a whole journal history is donated only for a stated use, and there is no backend beyond the store that use needs.
 
 ## What is never taken
 
@@ -93,8 +92,8 @@ stated use for one, and why there is no backend beyond the store that use needs.
   where there were none.
 - **Your own speech, unless you choose it.** Per donation, per incident, as a decision you make on
   the window rather than a default you have to notice.
-- **Any audio at all.** Voice is biometric, and no donation has ever carried a recording. The audio
-  audio recorder writes only to your own disk and its clips can never join a donation.
+- **Any audio at all.** Voice is biometric, and no donation carries a recording. The audio
+  recorder writes only to your own disk and its clips can never join a donation.
 - **Anything from your journal without a press.** No crash reporter and no analytics vendor, and
   the donation endpoint keeps no request log — so there is no record anywhere of who reached it or
   when. The one thing sent without a press is the daily usage count described on the privacy page:
@@ -109,7 +108,7 @@ enforces each, along with every other number in the product.
 
 ## How to have it deleted
 
-One press. **Settings → Privacy → "Forget it, and delete what was sent."** d47 asks the store to
+One press. **Settings › Privacy and this install › Privacy and egress**, group What D47 keeps, row Your donation identifier, button **Forget it, and delete what was sent**. This is an advanced row, so turn on **Show every setting** at the top of Settings to see it. d47 asks the store to
 delete everything filed under your installation identifier — the deleted objects are named on the
 receipt it writes to `data\donations\` — and then forgets the identifier locally. Withdrawal is no
 harder than consent was: the same kind of press that sent is the press that takes back.
@@ -123,11 +122,9 @@ find and delete what was already sent. Send it with the ask below.
 reaches a person directly and does not put your identifier anywhere public — a GitHub issue is a
 public archive, so if you open one, leave the object name and the identifier out of it. Your
 receipt in `data\donations\` names the exact object and its hash; failing that, the identifier
-from `data\donor-token.txt` is the whole of your prefix in the store. A human deletion has no
-stated turnaround; the press above needs none.
+from `data\donor-token.txt` is the whole of your prefix in the store. A human deletion is expected within one calendar month of the request (the erasure runbook in `worker/README.md`); the press above needs none.
 
-**What deletion reaches, and what it does not.** The data goes — the stored objects, and the
-holder's downloaded copy with them, at the next opening of the utility that fetched it. What does
+**What deletion reaches, and what it does not.** The data goes — the stored objects, and the holder's downloaded copy with them, at the next successful listing that does not name it. What does
 not go is what was decided because of it — the fix, the
 released build, the changelog line, the test that now passes. Those are the product of having read
 the data once; they are not the data, and a published release cannot be recalled in any case.

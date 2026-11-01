@@ -39,16 +39,16 @@ nav_order: 6
  <text x="440" y="190" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">[Switched to Cora]</text>
  <text x="440" y="226" text-anchor="middle" font-size="15" fill="var(--text-muted)">The badge says who spoke. A note about the conversation sits across the middle.</text>
 </svg>
-<p class="body">Other sub-tabs are from files on your disk, and each has its own help file.</p>
+<p class="body">Each turn is a message under a badge naming who spoke. A note about the conversation, such as a core change, sits across the middle.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Two ways to input your requests.</h2>
-<svg viewBox="0 0 880 288" role="img" aria-label="The ask box sends on Enter; the microphone indicator shows one of three states">
+<svg viewBox="0 0 880 288" role="img" aria-label="The ask box sends on Enter; the microphone indicator shows its state">
  <rect x="20" y="26" width="620" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="58" font-size="16" fill="var(--text-muted)">Type here, and Enter sends it</text>
  <rect x="656" y="26" width="204" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="758" y="58" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">SEND</text>
- <text x="440" y="118" text-anchor="middle" font-size="15" fill="var(--text-muted)">Or speak — and the line above the box always shows one of these three states.</text>
+ <text x="440" y="118" text-anchor="middle" font-size="15" fill="var(--text-muted)">Or speak — and the line above the box shows the state of the microphone.</text>
  <rect x="20" y="140" width="270" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="60" cy="176" r="6" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"/>
  <text x="82" y="182" font-size="15" fill="var(--text-muted)">PTT READY</text>
@@ -62,17 +62,17 @@ nav_order: 6
  <text x="652" y="182" font-size="15" fill="var(--text-muted)">MIC ON</text>
  <text x="725" y="216" text-anchor="middle" font-size="14" fill="var(--text-muted)">your voice is being kept</text>
 </svg>
-<p class="body">Besides <em>push-to-talk (PTT)</em> you can have D47 listen all the time, or on a wake-word, like "Alexa" or "Hey Google."</p>
+<p class="body">Type and press Enter, or speak. The line above the box shows whether the microphone is armed, listening, open or loading.</p>
 </section>
 <section>
 <h2><span class="num">3</span> Additional controls.</h2>
-<svg viewBox="0 0 880 320" role="img" aria-label="Copy, Search, Spend, and Clear what is shown">
+<svg viewBox="0 0 880 320" role="img" aria-label="Copy, Search, Spend, and Scroll what is shown">
  <rect x="20" y="26" width="270" height="126" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <rect x="143" y="44" width="16" height="16" fill="none" stroke="var(--text)" stroke-width="3"/>
  <rect x="151" y="52" width="16" height="16" fill="var(--surface)" stroke="var(--text)" stroke-width="3"/>
  <text x="155" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">copies the whole conversation,</text>
  <text x="155" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">not just selected text</text>
- <text x="155" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">— that is Ctrl+C</text>
+ <text x="155" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">— Ctrl+Shift+C</text>
  <rect x="305" y="26" width="270" height="126" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="64" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">SEARCH</text>
  <text x="440" y="96" text-anchor="middle" font-size="14" fill="var(--text-muted)">finds every match and</text>
@@ -84,11 +84,12 @@ nav_order: 6
  <text x="725" y="118" text-anchor="middle" font-size="14" fill="var(--text-muted)">previous sessions cost,</text>
  <text x="725" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">in detail</text>
  <rect x="20" y="180" width="840" height="76" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="212" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Ctrl+L clears the page for less cluttered viewing</text>
+ <text x="440" y="212" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">Ctrl+L scrolls past what is shown</text>
  <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">It deletes nothing — scroll back up and it's all still there for the session.</text>
  <text x="440" y="288" text-anchor="middle" font-size="15" fill="var(--text-muted)">Scroll up and a "↓ Newest" button appears to bring you back to the latest.</text>
- <text x="440" y="312" text-anchor="middle" font-size="15" fill="var(--text-muted)">Spend is on only the desktop.</text>
+ <text x="440" y="312" text-anchor="middle" font-size="15" fill="var(--text-muted)">Spend opens a window with the figures.</text>
 </svg>
+<p class="body">Copy, Search and Spend sit beside the page. The right-click menu offers <code>Header="Scroll what is shown above the fold"</code>, which deletes nothing.</p>
 </section>
 <div class="next">
 <div class="next-title">Where to go next</div>
@@ -106,9 +107,6 @@ nav_order: 6
 between you and Directive 47 — your questions and its answers, in order, with a marker where the
 core changed.
 
-It is the only reading held in memory rather than read from a file, and that one fact decides most
-of what follows.
-
 ### How it is drawn
 
 Each response is a message on the left, under a badge naming who spoke: `D47` in the theme's own
@@ -123,47 +121,45 @@ The headset's big panel does the same, and so does the mini panel.
 ### The controls
 
 **Copy**, the button showing two overlapping squares beside the search box, puts the entire
-conversation on the clipboard. The name that appears when you point at it reads *COPIED* or
-*COPY FAILED* for two seconds after. To copy only part of it, select the text and press Ctrl+C. A search query does not
+conversation on the clipboard. The name that appears when you point at it reads *Copied* or
+*Copy failed* for two seconds after. **Ctrl+Shift+C** does the same. To copy only part of it,
+select the text and press Ctrl+C. A search query does not
 narrow what it copies — you asked for the conversation, not for the matches.
 
-**Search** highlights every match, counts them, and steps forward and back through them. **CLEAR**
-beside the box empties it, and Escape does the same.
+**Search** highlights every match, counts them, and steps forward and back through them. The ✕
+inside the box empties it, and Escape does the same.
 
 **Newest** appears over the text once you have scrolled away from the live end, and takes you back
 to it. This reading grows downwards, so its arrow points down.
 
-**Clear what is shown** — on the right-click menu, and <kbd>Ctrl</kbd>+<kbd>L</kbd> — empties this
-page. It is offered here and greyed on the other three readings, which are files on disk that
-Directive 47 only reads: a control appearing to empty one would be offering to delete it.
+**Scroll what is shown above the fold** — on the right-click menu, and <kbd>Ctrl</kbd>+<kbd>L</kbd> —
+scrolls the page past everything on it, so new turns start on a clear screen. It deletes nothing:
+scroll back up and the session is still there, and it works the same on all four readings. In a
+headset it is a tile instead, since the headset has no right-click menu.
 
-It clears the page and not the record. The model still remembers the conversation, so a follow-up
-question is answered as if you had not cleared anything, and the log file on disk is untouched.
+**Hide comms traffic** and **Hide invented chatter** are checkboxes that leave those turns out of
+the page; they hide, and delete nothing.
 
-**SPEND** at the right of the status line opens the receipt for the most recent response —
-the tools it ran, the tokens and characters it spent, and the price. It opens a window, so
-it is on the desktop and not in a headset, and there is no second place these figures are shown.
+**SPEND** at the right of the status line opens the receipt for the most recent response, the
+session so far and the totals, with the price of each.
 
 It is a note rather than a coin on purpose. These are dollars on a provider account, not your
 in-game balance, and a coin in a cockpit overlay is the thing that gets read as credits.
 
 **The ask box** takes typing, and Enter sends. **SEND** beside it does the same thing and exists
-so that the first thing you do with Directive 47 is not a guess. The box grows to three lines as
-you type, then scrolls. It is on this tab only — from anywhere else, say what you want instead.
+so that the first thing you do with Directive 47 is not a guess. The box grows as you type, up to a fixed height, then scrolls. It is on this tab only — from anywhere else, say what you want instead.
 
 **The microphone line** above the box is never silent about its own state, and only its dot
 changes colour: one colour when ready, a second while listening or while the speech model loads,
 and the danger colour when no microphone is open. *PTT READY* means push-to-talk is armed and
 nothing is being kept. *LISTENING* means there is no key to hold and it is waiting to hear its
-name. *MIC ON* means your voice is being captured right now. *MIC OFF* means no microphone is open,
+name; "D47" always works as that name. *LOADING MODEL* means the speech model is still loading. *MIC ON* means your voice is being captured right now. *MIC OFF* means no microphone is open,
 and its dot is hollow — a filled dot always means a device is open, so the state stays readable if
 the colours are hard to tell apart.
 
 ### Saying where you want to go
 
-This reading answers to **"in ship"**, and to **"conversation"** and **"thread"**, which are what
-it was called before. The label on the screen answers *what am I looking at*; the spoken phrase
-answers *how do I ask for it*, and they stopped having to be the same string in 0.96.0.
+This reading answers to **"in ship"**, **"conversation"** and **"thread"**.
 
 ### What decides the answers
 

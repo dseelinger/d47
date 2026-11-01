@@ -18,7 +18,6 @@ public partial class DocumentationGateTests
 
     private static readonly HashSet<string> PagesWithALongHowItWorksBand = new(StringComparer.Ordinal)
     {
-        "general-conversation",
     };
 
     private static readonly HashSet<string> PagesWhoseHowItWorksBandCarriesAFigure = new(StringComparer.Ordinal)

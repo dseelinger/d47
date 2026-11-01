@@ -28,6 +28,7 @@ nav_order: 2
  <text x="730" y="94" text-anchor="middle" font-size="14" fill="var(--text-muted)">how it hears you</text>
  <text x="440" y="154" text-anchor="middle" font-size="14" fill="var(--text-muted)">Each one can run on your computer or on a service.</text>
 </svg>
+<p class="body">Setup offers a language model, a voice and a way of hearing you, each with a free or local option, and saves nothing until START.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Keys only for services.</h2>
@@ -39,6 +40,7 @@ nav_order: 2
  <text x="670" y="66" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Everything on your computer</text>
  <text x="670" y="90" text-anchor="middle" font-size="14" fill="var(--text-muted)">asks for nothing</text>
 </svg>
+<p class="body">A key is asked for only when a chosen provider needs one: <code>Step.Keys =&gt; ("Add your keys", KeysBody())</code> in <code>SetupWizard</code>.</p>
 </section>
 </div></div>
 
@@ -59,12 +61,20 @@ is not stored. **SKIP SETUP** and Esc close it with every setting unchanged. Not
 5. **Keys.** Appears only when a chosen provider needs a key. Each key is asked for once, however
    many choices it covers. Skip a key and that part uses the free choice until you add one in
    Settings: no AI for conversation, Edge Neural for voice, This computer for listening.
-6. **Talk button.** The button you hold to talk. The default is the Scroll Lock key, held to talk.
-   A button on a stick or throttle is easier to reach in flight. Setup says when Elite already
-   binds the same button or key to something else. The same step offers an optional **Comms key**:
+6. **Talk button.** The button you press to talk. A segment picks the mode: Hold, Toggle, Always on
+   or Wake word. The default is the Scroll Lock key, held to talk. A button on a stick or throttle
+   is easier to reach in flight. When the button or key is already bound to something else in D47
+   or in Elite, setup says so, and for a binding in D47 asks "Move this binding?" with **Move it**
+   and **Keep it**. The same step offers an optional **Comms key**:
    a second button that sends what you say to whoever your comms channel names, such as a carrier
    captain or a character, instead of to D47. See [Comms](capabilities/comms.html#choose-who-your-comms-key-reaches).
-7. **Ready.** Shows each choice. Select one to change it. **START** saves. A link under the summary opens the D47 Discord in your browser.
+7. **Ready.** Shows each choice. Select one to change it. **START** saves. If you chose a local voice
+   (Kokoro or Chatterbox), **START** then downloads it, with a progress bar and **RETRY** and
+   **CLOSE** if it fails. The summary says where to reopen this guide: Set up keys under Settings › Privacy and this install › Updates and install. A link
+   under it opens the D47 community page in your browser.
+
+With no microphone found, setup skips the Listening and Talk button steps and the Ready summary
+shows "No microphone found" for listening.
 
 ### The comms key
 
@@ -78,7 +88,7 @@ Everything setup chooses can be changed later in Settings.
 
 A key lets D47 use your account with a provider. D47 stores it encrypted for your Windows user and
 sends it only to that provider. Each provider issues its own, from the page linked below, and bills
-you directly. D47 quotes no prices; [Choosing providers](choosing-providers.html) links each
+you directly. This page quotes no prices; [Choosing providers](choosing-providers.html) links each
 provider's pricing page.
 
 | Provider | Get a key | Choices that key also covers |
@@ -90,5 +100,5 @@ provider's pricing page.
 | Groq | [console.groq.com](https://console.groq.com/keys) | Listening only. |
 | Deepgram | [console.deepgram.com](https://console.deepgram.com/) | Listening only. |
 
-The *OpenAI-compatible endpoint* conversation choice has a key box that can stay empty: a server on
-your own computer usually needs none. Setup has no key page for it.
+The *OpenAI-compatible endpoint* conversation choice needs no key in setup: a server on your own
+computer usually needs none. Setup does not ask for one; add it in Settings if your server does.

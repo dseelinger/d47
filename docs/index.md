@@ -50,6 +50,7 @@ nav_order: 0
  <text x="740" y="168" text-anchor="middle" font-size="14" fill="var(--text-muted)">knows where you are</text>
  <text x="440" y="222" text-anchor="middle" font-size="14" fill="var(--text-muted)">Nothing is added to the game. The journal is something Elite already writes.</text>
 </svg>
+<p class="body">Elite writes the journal whether or not D47 runs. D47 follows it line by line and adds nothing to the game.</p>
 </section>
 <section>
 <h2><span class="num">2</span> You talk. It talks back.</h2>
@@ -69,6 +70,7 @@ nav_order: 0
  <polygon points="240,181 260,194 258,178" fill="var(--accent-muted)"/>
  <text x="440" y="246" text-anchor="middle" font-size="14" fill="var(--text-muted)">it answers, out loud</text>
 </svg>
+<p class="body">Hold the talk key, or say its name, and D47 answers aloud and in the panel. A keyword router takes the question before any language model does.</p>
 </section>
 <section>
 <h2><span class="num">3</span> One panel. Two places to see it.</h2>
@@ -91,6 +93,7 @@ nav_order: 0
  <text x="740" y="243" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">YOUR HEADSET</text>
  <text x="440" y="266" text-anchor="middle" font-size="14" fill="var(--text-muted)">Not a copy of the window — the same panel, drawn twice.</text>
 </svg>
+<p class="body">The headset overlay builds a second view over the same view model the window shows: <code>_view = new PanelView { DataContext = model };</code> in <code>VrPanelSurface</code>.</p>
 </section>
 </div></div>
 
@@ -100,8 +103,7 @@ A voice companion for Elite Dangerous on Windows 11. It reads the journal Elite 
 writes, answers out loud, and renders the same panel to a desktop window and a SteamVR
 overlay.
 
-This site is the long form. In-app help is the short form: every settings row links to the
-page that explains it.
+This site is the long form. In-app help is the short form.
 
 ### A way back
 
@@ -111,9 +113,10 @@ Every setting has a default, and you can always get back to it.
 the way it shipped. Rows you have not touched do not have one, so the glyph doubles as a quiet
 marker of what you have actually changed.
 
-**A card you have changed grows a Reset** beside its heading. That puts back everything on that
-card in one go, which is the useful gesture when something has gone wrong and you do not know
-which of twenty-two rows did it.
+**A card with something to put back shows a ↺** beside its heading. That puts back everything on
+that card in one go, except text you typed yourself on a row that is yours rather than the
+installation's. It is the useful gesture when something has gone wrong and you do not know which
+row did it.
 
 Two things reset never touches:
 
@@ -132,8 +135,10 @@ keyboard can, and the model cannot.
 
 ### Where everything is
 
-**The nav on the left is the whole site**, grouped the way the settings panel is grouped —
-Foundation, Ship, Knowledge, Conversation, Voice, Interface, Acting on the game.
+**The nav on the left is the whole site**, grouped by the group each page declares: Foundation,
+Ship, Knowledge, Conversation, Voice, Interface and Acting on the game. The settings panel has its
+own eight areas: Your core, Other voices, Hearing and sound, Providers, You and your records,
+Acting on the game, Screens, and Privacy and this install.
 
 Two pages are worth reading before any capability page:
 
@@ -141,16 +146,20 @@ Two pages are worth reading before any capability page:
 - [Talking to Directive 47](conversation.md) — the two answer paths, running with no model, and
   what each turn reports
 
+### Getting around the window
+
+**Ctrl+Shift+F opens Find**, a box at the top of the window that searches every page, settings
+place, setting and help page at once. **Ctrl+1 to Ctrl+7** show the first to seventh tab, and
+**Ctrl+Tab** and **Ctrl+Shift+Tab** step to the next and previous tab. Alt+Left goes back, the
+same as Escape.
+
 ### Capabilities
 
-Every capability D47 registers has a page under **Capabilities** in the nav. That is enforced by
-tests rather than by habit — CI fails if a registered capability has no page, if its page does
-not quote the capability's real tool schema, if the page is filed under a different group from
-the capability, or if any published page is unreachable from the nav.
-
-There used to be a table here listing them. It listed sixteen of the thirty-three, which is what
-a hand-maintained copy of a generated list does given a few months — so the nav, which is built
-from each page's own front matter and checked against the registry, is the list now.
+Every capability D47 registers has a page under **Capabilities** in the nav. The tests fail if a registered
+capability has no page, if its page does not quote the capability's real tool schema, if the page
+is filed under a different group from the capability, or if any published page is unreachable
+from the nav. The nav is built from each page's own front matter and checked against the
+registry, so it is the list.
 
 ### Attribution
 

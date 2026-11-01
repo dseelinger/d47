@@ -51,7 +51,7 @@ nav_order: 12
  <rect x="20" y="196" width="840" height="52" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="228" text-anchor="middle" font-size="16" fill="var(--text)">Include journal history is the switch between them. Everything else on the window follows from it.</text>
 </svg>
-<p class="body">An incident is for a bug you can point at. A history is for the ones nobody has noticed yet — a callout that fires in a situation no one thought to test.</p>
+<p class="body">An incident excerpt is the minutes around one thing that went wrong. A history is many journals at once. Include journal history picks between them.</p>
 </section>
 <section>
 <h2><span class="num">2</span> You read it before it goes, and it is not the raw file.</h2>
@@ -75,15 +75,16 @@ nav_order: 12
  <text x="806" y="62" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">YOU</text>
  <text x="806" y="88" text-anchor="middle" font-size="14" fill="var(--text-muted)">press, or don't</text>
  <rect x="20" y="130" width="840" height="86" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="162" text-anchor="middle" font-size="16" fill="var(--text)">The scrub works from a list of fields it keeps, not a list of things to remove.</text>
- <text x="440" y="192" text-anchor="middle" font-size="15" fill="var(--text-muted)">Other fields are removed by default — which is the only way it stays right as Elite adds events.</text>
+ <text x="440" y="162" text-anchor="middle" font-size="16" fill="var(--text)">The scrub applies a rule to each field it knows about.</text>
+ <text x="440" y="192" text-anchor="middle" font-size="15" fill="var(--text-muted)">A line it cannot read is withheld, not sent.</text>
 </svg>
+<p class="body">The window shows the scrubbed result, not the original file. Nothing is sent until you press <strong>Send it</strong>.</p>
 </section>
 <section>
 <h2><span class="num">3</span> A history is offered as a report about itself.</h2>
 <svg viewBox="0 0 880 216" role="img" aria-label="A history is summarised into a report naming each kind of event with one real scrubbed line of each">
  <rect x="20" y="26" width="250" height="82" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="145" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">HUNDREDS OF MB</text>
+ <text x="145" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">A LARGE HISTORY</text>
  <text x="145" y="84" text-anchor="middle" font-size="14" fill="var(--text-muted)">nobody could read this</text>
  <line x1="278" y1="66" x2="318" y2="66" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="332,66 316,58 316,74" fill="var(--accent-muted)"/>
@@ -94,6 +95,7 @@ nav_order: 12
  <text x="440" y="160" text-anchor="middle" font-size="16" fill="var(--text)">So consent is possible. Reviewing the thing itself would mean agreeing to something nobody read.</text>
  <text x="440" y="184" text-anchor="middle" font-size="15" fill="var(--text-muted)">The report is what you see; the scrubbed history is what would be sent.</text>
 </svg>
+<p class="body">A history is too large to read, so you get a report: each kind of event, and one scrubbed line of it. Scrubbing runs <code>JournalScrub.Line(entry.Compact, names)</code> before any text is shown.</p>
 </section>
 <div class="next">
 <div class="next-title">Where to go next</div>
@@ -117,7 +119,7 @@ on a different page.
 Nothing here happens unless you press. There is no setting that turns any of it on, and there is no
 standing consent to withdraw, because none is ever given.
 
-**Forget sits beside Send, on both pages.** One press asks for everything this installation ever
+**Forget sits beside Send it, on both pages.** One press asks for everything this installation ever
 sent to be deleted, and the window says what came back. The same press lives on the
 [Privacy and egress](capabilities/privacy.html) page, and the two are the one call — an excerpt is
 deleted after 30 days anyway, and a donated journal history is kept until you ask for it back.
@@ -146,10 +148,13 @@ situation shows up as a pattern rather than as one Commander's bad evening.
 The **Include journal history** toggle is the switch between them, and everything else on the window
 follows from it — what is previewed, what the buttons say, and how big the result is.
 
-The toggle is there whichever reading you pressed the button on, and it starts off. It used to
-depend on where you were: pressed on the Journal page the window opened on the history, and pressed
-on Log File the toggle was missing altogether. One page now, opening on the excerpt, with the
-history one press away.
+The toggle is there whichever reading you pressed the button on, and it starts off. The window
+opens on the excerpt, with the history one press away.
+
+On an excerpt, **Include what I said out loud** adds your spoken lines; without it the excerpt
+leaves them out, and the objective-change wording in the log with them. **Copy for a bug report**
+puts the scrubbed excerpt on the clipboard, and **Save a file instead…** writes it to a file. **Stop**
+ends a read or a send part way.
 
 ### What the scrub does
 
@@ -157,17 +162,18 @@ Your Commander name and the IDs that identify you are replaced with stable stand
 of events still reads as one Commander's without naming you. Other people's words are dropped
 entirely: another Commander's chat is theirs, and you cannot consent on their behalf.
 
-**It works from a list of fields it keeps, rather than a list of fields to remove.** That is the
-part worth understanding, because it is what makes it hold: a field nobody has thought about is
-dropped by default. Frontier adds events, and a scrub written the other way round would leak every
-one of them until somebody noticed.
+**It works from a list of rules, one for each field it knows about.** A rule replaces a name or ID
+with a stand-in, blanks a message body or removes the field. A field with no rule is sent as it is,
+and any other string in the line that matches a value the scrub has already replaced is replaced
+too. A line the scrub cannot read at all is withheld rather than sent. Crew names are scrubbed,
+and a crewmate who joins or leaves is replaced the same way.
 
 The scrub runs on your machine, before anything is displayed. What you review is the scrubbed
 result, not the original.
 
 ### Why a history is shown as a report
 
-A history runs to hundreds of megabytes. Nobody can read that much before agreeing, so reviewing it
+A history can be very large. Nobody can read that much before agreeing, so reviewing it
 directly would mean agreeing to something you had not read — which is not consent.
 
 So Directive 47 builds a **report about** the history instead: it names every kind of event
@@ -180,7 +186,7 @@ An incident excerpt is small enough to show in full, so it is shown in full.
 
 **Read my journals** walks the journal folder and scrubs as it goes. It writes nothing and sends
 nothing; it can be stopped part way, and stopping leaves nothing behind. On a long history this
-takes a while, and the window says how far it has got.
+takes a while, and the window says how far it has got. A large history is sent in parts, each with its own receipt.
 
 ### If there is no send address
 

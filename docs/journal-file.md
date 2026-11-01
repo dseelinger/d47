@@ -44,6 +44,7 @@ nav_order: 8
  <text x="44" y="204" font-size="15" fill="var(--text)">13:58:03  Jumped to Shinrarta Dezhra — 29.44 ly</text>
  <text x="440" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">Newest first, which is the file's own order and the opposite of the two readings before it.</text>
 </svg>
+<p class="body">Elite appends one JSON line per event to its journal. Directive 47 reads the file and never writes to it.</p>
 </section>
 <section>
 <h2><span class="num">2</span> The line, and the fields behind it.</h2>
@@ -64,10 +65,11 @@ nav_order: 8
  <text x="645" y="184" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text-muted)">THE FIELDS, AS ELITE WROTE THEM</text>
  <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">The sentence is prose and can be wrong. The fields cannot — they are the file.</text>
 </svg>
+<p class="body">Select a sentence and the right pane shows what it says, and under <strong>EVERY FIELD</strong> the fields exactly as Elite wrote them.</p>
 </section>
 <section>
-<h2><span class="num">3</span> The Raw switch is the same events, unread.</h2>
-<svg viewBox="0 0 880 216" role="img" aria-label="The Raw switch beside the picker turns the sentences into the file's own JSON">
+<h2><span class="num">3</span> The Raw checkbox shows the same events, unread.</h2>
+<svg viewBox="0 0 880 216" role="img" aria-label="The Raw checkbox beside the picker turns the sentences into the file's own JSON">
  <rect x="20" y="24" width="300" height="46" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="170" y="53" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">Journal File</text>
  <text x="348" y="53" font-size="16" fill="var(--text-muted)">Raw</text>
@@ -81,6 +83,7 @@ nav_order: 8
  <text x="655" y="156" text-anchor="middle" font-size="14" fill="var(--text-muted)">the file itself, one event per line</text>
  <text x="440" y="206" text-anchor="middle" font-size="15" fill="var(--text-muted)">Not an entry in the picker on purpose: it is the same events seen another way, not a fourth subject.</text>
 </svg>
+<p class="body">The Raw checkbox swaps the sentences for the file's own lines. It registers one more reading: <code>new NavCrumb(RawJournalRoot, "Raw Journal")</code>.</p>
 </section>
 <div class="next">
 <div class="next-title">Where to go next</div>
@@ -110,12 +113,13 @@ where the newest line actually is. A control that names a direction has to be ri
 The list of sentences is on the left. The right pane reads the chosen event: its sentence, the
 time and how long ago, a row for each thing it says, a paragraph on what the event is, and
 **Every field**, folded, which lists every field exactly as Elite wrote it. **The divider between
-the panes can be dragged**, and where you leave it is remembered.
+the panes can be dragged.**
 
 A value Directive 47 decoded from one of Frontier's tokens is underlined with dots; hover it to see
 the token. A row label that the reading knows explains its field when hovered. An engineer, or a
 ship you still own, is a link to its page. A row with more than six values shows six and a
-**+N more** tile for the rest.
+**+N more** tile for the rest. A field that names a system, such as StarSystem or Next system,
+has a copy button to its right.
 
 The rows are Directive 47's reading and can be wrong about what an event meant; the fields cannot
 be, because they are the file. Open Every field to copy one into a bug report.
@@ -123,30 +127,36 @@ be, because they are the file. Open Every field to copy one into a bug report.
 ### Searching it
 
 **Search behaves differently here than on the other readings.** They highlight and step; this one
-**filters the list** to the matching lines and tells you how many are left — *"12 of 4,318"*. There
+**filters the list** to the matching lines and tells you how many are left — *"12 of 4318"*. There
 are no steppers, because every line on screen is a hit.
 
 It matches **the event's own name as well as the sentence**, which is worth knowing because the
 thing you are hunting is frequently the name: `ShieldState` appears nowhere in *"Shields back up"*,
 and typing it should not come back empty on the page whose whole job is showing that event.
 
-### The Raw switch
+### The Raw checkbox
 
-The switch marked **Raw** beside the picker turns the sentences into the file itself — one event
+The checkbox marked **Raw** beside the picker turns the sentences into the file itself — one event
 per line, the shape a Commander comparing it against Frontier's own documentation is expecting. It
 is a reading in its own right, called **Raw Journal**, and *"raw journal"* reaches it by voice.
 
 It is deliberately **not** an entry in the picker: it is the same events seen another way rather
-than a fourth subject, and two entries would read as two. The switch is in the headset as well as
+than a fourth subject, and two entries would read as two. The checkbox is in the headset as well as
 on the desktop.
 
-**Where you leave it is where you find it.** The switch keeps its position across launches, so a
+**Where you leave it is where you find it.** The checkbox keeps its position across launches, so a
 Commander who reads the raw file gets the raw file the next time they open the journal reading, and
-one who does not never sees it. It is the *reading* that is remembered, not the page: d47 still
-opens on the conversation whichever way the switch is set.
+one who does not never sees it. It is the *reading* that is remembered, not the page.
 
 Neither journal reading is formatted as markup. A journal carries other players' text and JSON full
 of asterisks and underscores, none of which is emphasis, so both are drawn exactly as written.
+
+### Events it reads
+
+The reading has a sentence for the events D47 acts on and for a longer list it only narrates, among
+them crew joining, leaving and changing seat, a module moved between slots, a squadron invitation,
+the passenger manifest, a self-destruct and a vehicle switch. The bare `MarketID` event is hidden as
+noise. [Journal events](journal-events.html) lists the commonest, with what D47 does with each.
 
 ### Merc Coins
 
@@ -166,10 +176,9 @@ carrying it could be made to read like one of Directive 47's own event lines. Se
 you can read the message; it is one click, and it is plainly somebody's data rather than the
 page's prose.
 
-### Clearing, and sharing
+### Scrolling, and sharing
 
-**Clear what is shown is greyed on both journal readings.** This is Elite's file, not Directive
-47's, and there is nothing here of its to empty.
+**Scroll what is shown above the fold** (Ctrl+L) works on both journal readings as on the others: it scrolls past what is on the page and deletes nothing, because this is Elite's file and not Directive 47's.
 
 **The share button** offers this reading to a bug report, alongside the log — the two are the two
 halves of an incident, which is what the game did and what Directive 47 did with it. What leaves

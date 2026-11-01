@@ -26,6 +26,7 @@ nav_order: 3
  <text x="660" y="104" text-anchor="middle" font-size="14" fill="var(--text-muted)">usually a key and a bill</text>
  <text x="660" y="126" text-anchor="middle" font-size="14" fill="var(--text-muted)">you pay the provider</text>
 </svg>
+<p class="body">Conversation, voice and listening each run on your computer or on a service. A service needs a key, except Edge Neural, which needs none but sends each spoken line to Microsoft. The default is <code>public string Provider { get; init; } = "anthropic";</code> in <code>D47Settings</code>.</p>
 </section>
 </div></div>
 
@@ -44,12 +45,18 @@ Which AI writes D47's replies.
 | [OpenAI](https://openai.com/api/pricing/) | Pay per use | Required | No |
 | OpenAI-compatible endpoint | Set by the server | Optional | If the server is on this computer |
 
-- **None (local only)** suits a Commander who wants no model and no bill. D47 answers what it understands
+- **None (local only)** suits a Commander who needs no model and no bill. D47 answers what it understands
   and says so when it cannot.
-- **Anthropic** is the default and suits a Commander who wants Claude's answers.
-- **OpenAI** suits a Commander who wants one key to cover conversation, voice and listening.
+- **Anthropic** is the default and suits a Commander who prefers Claude's answers.
+- **OpenAI** suits a Commander who prefers one key to cover conversation, voice and listening.
 - **OpenAI-compatible endpoint** suits a Commander running Ollama or LM Studio, or a gateway they
   trust. Set its address in Settings.
+
+Two more rows in Settings › Providers › Language model pick other models for the same provider:
+**Background model** writes what D47 says unprompted, such as In Ship chatter and the opening
+brief, and **Model for complex tasks** answers Talk through this build on a ship's page at high
+effort. Both show the provider's default until you choose another. **Test** checks the provider
+and key without a turn, and **Fetch model updates** refreshes the model list.
 
 ## Voice {#voice}
 
@@ -65,10 +72,10 @@ How D47 sounds.
 | [Cartesia](https://cartesia.ai/pricing) | Pay per use | Required | No |
 | None | Free | None | Yes |
 
-- **Edge Neural** is the default and suits a Commander who wants a voice with no account.
+- **Edge Neural** is the default and suits a Commander who needs a voice with no account.
 - **Kokoro** is free, with a small download.
 - **Chatterbox** is free, with a larger download.
-- **ElevenLabs** suits a Commander who wants the widest choice of voices.
+- **ElevenLabs** suits a Commander who prefers a hosted voice with its own voice library.
 - **OpenAI** and **Cartesia** suit a Commander who already holds that provider's key.
 - **None** suits a Commander who reads replies.
 
@@ -88,4 +95,4 @@ How your speech becomes text.
 - **Groq** suits a Commander whose computer is slow at Whisper.
 - **OpenAI** and **ElevenLabs** suit a Commander who already holds that key for conversation or
   voice.
-- **Deepgram** suits a Commander who wants a separate transcription service.
+- **Deepgram** suits a Commander who prefers a separate transcription service.
