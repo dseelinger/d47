@@ -84,6 +84,20 @@ public sealed class FindOpensAllResultsOnAPageTests
     }
 
     [AvaloniaFact]
+    public void TypingLetterByLetterRedrawsTheTileWithoutCrashing()
+    {
+        var (dialog, _, _) = Shown(12);
+
+        foreach (var typed in new[] { "l", "lo", "loo", "look" })
+        {
+            dialog.Query = typed;
+            Jobs();
+        }
+
+        Assert.Equal("ALL 12 RESULTS ►", dialog.TileText);
+    }
+
+    [AvaloniaFact]
     public void AQueryWithNoResultsDrawsNoTile()
     {
         var (dialog, _, _) = Shown(0);

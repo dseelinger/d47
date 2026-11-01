@@ -55,7 +55,17 @@ public sealed class FindDialog : ModalDialog
     private int _generation;
 
     private readonly Action<string, IReadOnlyList<PanelFindResult>>? _openAll;
-    private readonly TextBlock _tileText = new() { FontFamily = Fonts.ChromeFamily, FontSize = TypeScale.Tip, FontWeight = FontWeight.Medium };
+    private readonly TextBlock _tileText = new()
+    {
+        FontFamily = Fonts.ChromeFamily,
+        FontSize = TypeScale.Tip,
+        FontWeight = FontWeight.Medium,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
+
+    private readonly Border _tileBorder;
+
+    /// <summary>The All results tile while it is drawn, else null.</summary>
     private Border? _tile;
 
     private IReadOnlyList<PanelFindResult> _all = [];
@@ -68,6 +78,24 @@ public sealed class FindDialog : ModalDialog
         Action<string, IReadOnlyList<PanelFindResult>>? openAll = null)
     {
         _openAll = openAll;
+
+        _tileBorder = new Border
+        {
+            Name = TileName,
+            Padding = new Thickness(12, 4),
+            MinHeight = TypeScale.MinimumTarget,
+            Child = _tileText,
+        };
+        _tileBorder.PointerPressed += (_, e) =>
+        {
+            e.Handled = true;
+            OpenAll();
+        };
+        _tileBorder.PointerEntered += (_, _) =>
+        {
+            _selected = _shown.Count;
+            Paint();
+        };
         _search = search;
         _galaxy = galaxy;
         _open = open;
@@ -295,28 +323,8 @@ public sealed class FindDialog : ModalDialog
         if (HasTile)
         {
             _tileText.Text = $"ALL {_all.Count} RESULTS ►";
-            _tileText.VerticalAlignment = VerticalAlignment.Center;
-
-            var tile = new Border
-            {
-                Name = TileName,
-                Padding = new Thickness(12, 4),
-                MinHeight = TypeScale.MinimumTarget,
-                Child = _tileText,
-            };
-            tile.PointerPressed += (_, e) =>
-            {
-                e.Handled = true;
-                OpenAll();
-            };
-            tile.PointerEntered += (_, _) =>
-            {
-                _selected = _shown.Count;
-                Paint();
-            };
-
-            _tile = tile;
-            _list.Children.Add(tile);
+            _tile = _tileBorder;
+            _list.Children.Add(_tileBorder);
         }
 
         Paint();
