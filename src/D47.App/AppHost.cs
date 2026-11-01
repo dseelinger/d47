@@ -204,6 +204,8 @@ public sealed class AppHost : IDisposable
             Hailed = name => Volatile.Write(ref _hailedBy, name),
         };
 
+        Writer.SexOfHeard = name => Announcer.NpcsHere.Find(name)?.Sex ?? D47.Core.Audio.VoiceGender.Unlabelled;
+
         _actions = new Input.GameActions(
             _logger,
             announcement => Voice.AnnounceAsync(announcement),
@@ -2802,7 +2804,8 @@ public sealed class AppHost : IDisposable
             () => late.Host?.Announcer.NpcsHere,
             StrangerAsk(loggerFactory.CreateLogger<ChatterLine>()),
             heardAs => late.Host?.AddressedVoices.AccentHeardAs(heardAs),
-            DockedStation));
+            DockedStation,
+            givenName => late.Host?.Speech.NameAccents.SexOfGivenName(givenName)));
 
         // The held target's NPC pilot.
         turns.Lines.Add(new TargetLine(

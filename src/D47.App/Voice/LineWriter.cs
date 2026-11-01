@@ -187,6 +187,9 @@ internal sealed class LineWriter
         return reply;
     }
 
+    /// <summary>The sex recorded for an NPC heard in this system, or unlabelled; set once the announcer exists.</summary>
+    internal Func<string, D47.Core.Audio.VoiceGender> SexOfHeard { get; set; } = _ => D47.Core.Audio.VoiceGender.Unlabelled;
+
     /// <summary>The cast invented chatter is voiced from.</summary>
     internal VoiceCast NpcCast =>
         CastFor(new Announcement(NpcChatter.LineKey, string.Empty) { Voice = VoiceRole.Comms, CommsChannel = "npc" });
@@ -255,7 +258,8 @@ internal sealed class LineWriter
             docked ? location?.StationAllegiance : null,
             posts.AccentOf(posts.For(VoiceRole.TowerControl).VoiceId),
             posts.AccentOf(posts.For(VoiceRole.CarrierCaptain).VoiceId),
-            Fight.Snapshot.Dead).Rolled(_accent, Settings.Current.Speech.AccentPercent);
+            Fight.Snapshot.Dead,
+            SexOfHeard).Rolled(_accent, Settings.Current.Speech.AccentPercent);
 
         using var budget = new CancellationTokenSource(ChatterBudget);
 

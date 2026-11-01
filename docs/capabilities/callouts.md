@@ -1705,7 +1705,8 @@ without the other.
 Each invented speaker gets their own voice from the NPC pool for as long as you stay in the
 system, the same way the real traffic is cast — and keeps it through the exchange even when the
 model shortens *Courier Vance* to *Vance* on his next line, because the two spellings are read
-as one person before either is voiced. The exchange is written by the model against where
+as one person before either is voiced. The speaker's sex is settled on their first line and kept
+while they are in the system, so a reply to you does not contradict their voice. The exchange is written by the model against where
 you actually are; with no language model configured there is no chatter and these rows are absent,
 the same rule as the In Ship chatter above — there are no canned conversations, on purpose.
 

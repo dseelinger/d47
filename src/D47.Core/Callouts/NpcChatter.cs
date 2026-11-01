@@ -33,7 +33,13 @@ public enum NpcChatterKind
 /// <summary>One parsed line of an exchange: who says it, what they say, and whose voice it is.</summary>
 /// <param name="Role">The carrier post this line belongs to, or null for an invented speaker.</param>
 /// <param name="VoiceId">The voice its roster slot was cast with, or null where there was no roster.</param>
-public sealed record NpcChatterLine(string Name, string Text, VoiceRole? Role = null, string? VoiceId = null);
+/// <param name="Sex">The speaker's sex, or <see cref="Audio.VoiceGender.Unlabelled"/> where it is not settled.</param>
+public sealed record NpcChatterLine(
+    string Name,
+    string Text,
+    VoiceRole? Role = null,
+    string? VoiceId = null,
+    Audio.VoiceGender Sex = Audio.VoiceGender.Unlabelled);
 
 /// <summary>A chatter line as it will be spoken, with its exchange.</summary>
 /// <param name="Hail">Whether the exchange is a <see cref="NpcChatterKind.Hail"/>, said to the Commander.</param>
@@ -98,7 +104,8 @@ public sealed record NpcChatterRoster(
         string? allegiance = null,
         string? towerAccent = null,
         string? captainAccent = null,
-        IReadOnlySet<string>? dead = null)
+        IReadOnlySet<string>? dead = null,
+        Func<string, Audio.VoiceGender>? sexOf = null)
     {
         ArgumentNullException.ThrowIfNull(cast);
 
@@ -114,7 +121,14 @@ public sealed record NpcChatterRoster(
 
         foreach (var (name, voice) in living.Take(MostMet))
         {
-            slots.Add(new NpcChatterSlot(TagOf(slots.Count), voice, cast.AccentOf(voice), cast.GenderOf(voice), name));
+            var gender = cast.GenderOf(voice);
+
+            if (gender == Audio.VoiceGender.Unlabelled && sexOf is not null)
+            {
+                gender = sexOf(name);
+            }
+
+            slots.Add(new NpcChatterSlot(TagOf(slots.Count), voice, cast.AccentOf(voice), gender, name));
         }
 
         return new NpcChatterRoster(slots, towerAccent, captainAccent);
@@ -346,7 +360,10 @@ public static partial class NpcChatter
         "Write only the exchange, one line per speaker turn, each formatted exactly as "
         + "Name [slot]: words — the speaker's name, their slot letter in square brackets, a colon, "
         + "what they say. Each slot is one person with one name, written the same way on every line "
-        + "of theirs, and no two slots share a name. Not every slot has to speak. ";
+        + "of theirs, and no two slots share a name. Not every slot has to speak. On the first line "
+        + "of a speaker not already heard in this system, write their sex after the slot letter, as "
+        + "[A, female] or [A, male]; a woman's slot is female and a man's is male, and for a person "
+        + "you choose. ";
 
     /// <summary>The rest of the format contract every kind shares.</summary>
     private const string Contract =
@@ -1178,7 +1195,7 @@ public static partial class NpcChatter
                 continue;
             }
 
-            var (name, tag) = Tagged(raw[..split]);
+            var (name, tag, stated) = Tagged(raw[..split]);
             var text = raw[(split + 1)..].Trim().Trim('"');
 
             if (name.Length is < 2 or > 40 || text.Length == 0 || !FlavourBriefs.MayBeSpoken(text))
@@ -1188,6 +1205,7 @@ public static partial class NpcChatter
 
             var role = RoleOf(name, carrier);
             string? voice = null;
+            var sex = Audio.VoiceGender.Unlabelled;
 
             if (role is null)
             {
@@ -1215,6 +1233,7 @@ public static partial class NpcChatter
 
                 name = settled;
                 voice = slot.VoiceId;
+                sex = slot.Gender != Audio.VoiceGender.Unlabelled ? slot.Gender : stated;
             }
 
             if (MovesTheCarrier(text, role, carrier) || EscalatesIn(text, kind))
@@ -1222,26 +1241,36 @@ public static partial class NpcChatter
                 return [];
             }
 
-            lines.Add(new NpcChatterLine(name, text, role, voice));
+            lines.Add(new NpcChatterLine(name, text, role, voice, sex));
         }
 
         return lines.Count >= (kind == NpcChatterKind.Hail ? 1 : 2) ? lines : [];
     }
 
-    /// <summary>A speaker's name and the slot tag written after it in square brackets, if any.</summary>
-    private static (string Name, string? Tag) Tagged(string head)
+    /// <summary>A speaker's name, the slot tag written after it in square brackets, and the sex stated beside the tag, if any.</summary>
+    private static (string Name, string? Tag, Audio.VoiceGender Sex) Tagged(string head)
     {
         var trimmed = head.Trim().Trim('*', '-', '#', '"').Trim();
         var open = trimmed.LastIndexOf('[');
 
         if (open < 0 || !trimmed.EndsWith(']'))
         {
-            return (trimmed, null);
+            return (trimmed, null, Audio.VoiceGender.Unlabelled);
         }
 
-        var tag = trimmed[(open + 1)..^1].Trim();
+        var inside = trimmed[(open + 1)..^1].Split(',', 2, StringSplitOptions.TrimEntries);
+        var tag = inside[0];
 
-        return (trimmed[..open].Trim().Trim('*', '-', '#', '"').Trim(), tag.Length > 0 ? tag : null);
+        var sex = inside.Length > 1
+            ? inside[1].ToLowerInvariant() switch
+            {
+                "female" or "woman" or "f" => Audio.VoiceGender.Feminine,
+                "male" or "man" or "m" => Audio.VoiceGender.Masculine,
+                _ => Audio.VoiceGender.Unlabelled,
+            }
+            : Audio.VoiceGender.Unlabelled;
+
+        return (trimmed[..open].Trim().Trim('*', '-', '#', '"').Trim(), tag.Length > 0 ? tag : null, sex);
     }
 
     /// <summary>One replacement beat, read back the way <see cref="Parse"/> reads a script (#338).</summary>

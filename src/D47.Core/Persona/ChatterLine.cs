@@ -17,6 +17,7 @@ namespace D47.Core.Persona;
 /// <param name="writePersonality">Writes one NPC's personality on the background model, or null for none.</param>
 /// <param name="accentHeardAs">The accent of the voice an incoming message resolves to, or null for none.</param>
 /// <param name="station">The station the Commander is docked at, or null.</param>
+/// <param name="sexOfGivenName">The recorded sex of a given name (male, female or indeterminate), or null where unanswered.</param>
 public sealed class ChatterLine(
     Func<string?> system,
     Func<string?>? model = null,
@@ -26,7 +27,8 @@ public sealed class ChatterLine(
     Func<NpcsHeardHere?>? roster = null,
     Func<NpcHeard, CancellationToken, Task<string?>>? writePersonality = null,
     Func<Announcement, string?>? accentHeardAs = null,
-    Func<string?>? station = null) : ILine
+    Func<string?>? station = null,
+    Func<string, string?>? sexOfGivenName = null) : ILine
 {
     private const string Commander = "Commander";
 
@@ -94,6 +96,12 @@ public sealed class ChatterLine(
             if (line.Role is null)
             {
                 exchange.People[line.Name] = line.VoiceId;
+
+                if (line.Sex != Audio.VoiceGender.Unlabelled)
+                {
+                    exchange.Sexes[line.Name] = line.Sex;
+                }
+
                 _heardIn[line.Name] = exchange;
                 _heardAt[line.Name] = ++_lines;
             }
@@ -179,12 +187,19 @@ public sealed class ChatterLine(
 
         var trait = personality is null ? string.Empty : "\nYour personality: " + personality;
 
+        var sex = SexLine(sexOfGivenName?.Invoke(NameAccents.GivenNameOf(npc.Name)) switch
+        {
+            "female" => Audio.VoiceGender.Feminine,
+            "male" => Audio.VoiceGender.Masculine,
+            _ => Audio.VoiceGender.Unlabelled,
+        });
+
         var transcript = Conversation(npc.Name);
 
         var brief = $"""
                      {CannedSpeakers.For(npc.Family ?? string.Empty)}
                      You are {npc.Name}, a real contact on the comms channel. You have just called out on the open channel, in the situation described above, and the Commander is answering you.
-                     You are a human being, not an artificial intelligence, and you never claim to be one.{trait}
+                     You are a human being, not an artificial intelligence, and you never claim to be one.{sex}{trait}
                      Answer in one or two short spoken lines, as yourself: no narration, no stage directions,
                      no quotation marks. Never name or imitate a real person or another player.
                      You do not scan, interdict, target, fine or put a bounty on the Commander, grant or deny
@@ -320,8 +335,22 @@ public sealed class ChatterLine(
     private static bool In(Exchange exchange, string? system) =>
         string.Equals(exchange.System, system, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>The sentence stating a woman's or a man's sex, or nothing where it is not settled.</summary>
+    private static string SexLine(Audio.VoiceGender sex) => sex switch
+    {
+        Audio.VoiceGender.Feminine => " You are a woman.",
+        Audio.VoiceGender.Masculine => " You are a man.",
+        _ => string.Empty,
+    };
+
     private string Brief(string name, Exchange? exchange, string? rosterVoice)
     {
+        var recorded = roster?.Invoke()?.Find(name)?.Sex ?? Audio.VoiceGender.Unlabelled;
+
+        var sex = SexLine(recorded != Audio.VoiceGender.Unlabelled
+            ? recorded
+            : exchange is not null && exchange.Sexes.TryGetValue(name, out var stated) ? stated : Audio.VoiceGender.Unlabelled);
+
         var voiceId = exchange is not null && exchange.People.TryGetValue(name, out var heardIn) ? heardIn : rosterVoice;
         var accent = SpeakerAccent.Sentence(accentOf?.Invoke(voiceId));
         var personality = roster?.Invoke()?.Find(name)?.Personality is { } trait ? $"\nYour personality: {trait}" : string.Empty;
@@ -329,7 +358,7 @@ public sealed class ChatterLine(
 
         return $"""
                  You are {name}, one of the people the Commander overheard on the comms channel in this system.
-                 You are a human being, not an artificial intelligence, and you never claim to be one.{personality}
+                 You are a human being, not an artificial intelligence, and you never claim to be one.{sex}{personality}
                  The Commander is talking to you.{said}
                  Answer in one or two short spoken lines, as yourself: no narration, no stage directions,
                  no quotation marks. Never name or imitate a real person or another player.
@@ -347,6 +376,9 @@ public sealed class ChatterLine(
 
         /// <summary>Invented speakers by name, with the voice each was heard in.</summary>
         public Dictionary<string, string?> People { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>The sex stated for invented speakers by name, where one was.</summary>
+        public Dictionary<string, Audio.VoiceGender> Sexes { get; } = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>Every line so far, overheard and replied, as "Name: text".</summary>
         public List<string> Said { get; } = [];

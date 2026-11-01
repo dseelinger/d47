@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Invented NPCs now state their sex on their first line, and d47 keeps it while they are in the system. Replies to you, and later exchanges that bring them back, say so, so a reply no longer contradicts the voice. A real comms NPC's reply uses the sex of their given name where one is recorded.
+
 A cast member of the running story now knows the chapter's current objective and its reason, so asking one of them why you are going somewhere gets an answer from the story's reason instead of "no reason on my desk".
 
 Every objective in a generated chapter now states why you go, including rank, mission and other counted objectives. The reason says what you go to do or get and where in the story that comes from, and the core no longer presents the next objective as an order from someone unnamed.

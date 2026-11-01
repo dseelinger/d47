@@ -13,7 +13,7 @@ public enum NpcKind
 /// <summary>
 /// One NPC heard in the current system. The family is the canned one for a comms NPC, or null. The
 /// personality is written once for the stay, or null before it is. The role, channel and allegiance are
-/// what the NPC's message was voiced with.
+/// what the NPC's message was voiced with. The sex is <see cref="VoiceGender.Unlabelled"/> where it is not settled.
 /// </summary>
 public sealed record NpcHeard(
     string Name,
@@ -24,7 +24,8 @@ public sealed record NpcHeard(
     string? Personality = null,
     VoiceRole Role = VoiceRole.Comms,
     string? Channel = null,
-    string? Allegiance = null)
+    string? Allegiance = null,
+    VoiceGender Sex = VoiceGender.Unlabelled)
 {
     /// <summary>The message a comms NPC was heard in, with only its voice fields, or null for an invented NPC.</summary>
     public Announcement? HeardAs => Kind == NpcKind.Comms && Channel is { } channel
@@ -134,16 +135,20 @@ public sealed partial class NpcsHeardHere
 
         lock (_lock)
         {
+            var held = _heard.GetValueOrDefault(name);
+            var stated = announcement.Invented?.Line.Sex ?? VoiceGender.Unlabelled;
+
             _heard[name] = new NpcHeard(
                 name,
                 kind,
                 family,
                 voiceId,
                 at,
-                _heard.GetValueOrDefault(name)?.Personality,
+                held?.Personality,
                 announcement.Voice,
                 announcement.CommsChannel,
-                announcement.SpeakerAllegiance);
+                announcement.SpeakerAllegiance,
+                stated != VoiceGender.Unlabelled ? stated : held?.Sex ?? VoiceGender.Unlabelled);
         }
     }
 
