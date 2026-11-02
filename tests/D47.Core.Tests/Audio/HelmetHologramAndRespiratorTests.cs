@@ -77,6 +77,10 @@ public class HelmetHologramAndRespiratorTests
     [InlineData("helmet")]
     [InlineData("hologram")]
     [InlineData("respirator")]
+    [InlineData("hive")]
+    [InlineData("whisper")]
+    [InlineData("reverseReverb")]
+    [InlineData("shimmer")]
     public void TheSameLineGivesTheSameBytesAtEveryLevel(string id)
     {
         var line = GuardianVoiceTests.Voiced(150, seconds: 1.0);

@@ -29,20 +29,13 @@ public class ACombatStatsQuestionReachesItsOwnToolTests
         Assert.Equal(tool, match!.ToolName);
     }
 
-    [Fact]
-    public void TheModelMayCallTheCreditLedgerTool()
+    [Theory]
+    [InlineData("get_credit_ledger")]
+    [InlineData("get_combat_stats")]
+    public void TheModelMayCallTheTool(string name)
     {
         var registry = TestSurface.For(new MemoryInstall()).Registry;
-        var tool = registry.All.SelectMany(capability => capability.Descriptor.Tools).Single(tool => tool.Name == "get_credit_ledger");
-
-        Assert.False(tool.Protected);
-    }
-
-    [Fact]
-    public void TheModelMayCallTheTool()
-    {
-        var registry = TestSurface.For(new MemoryInstall()).Registry;
-        var tool = registry.All.SelectMany(capability => capability.Descriptor.Tools).Single(tool => tool.Name == "get_combat_stats");
+        var tool = registry.All.SelectMany(capability => capability.Descriptor.Tools).Single(tool => tool.Name == name);
 
         Assert.False(tool.Protected);
     }

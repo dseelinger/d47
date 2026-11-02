@@ -87,14 +87,20 @@ public class SettingsByVoiceTests
         Assert.True(stale.Length == 0, "Exemptions for rows that no longer exist: " + string.Join(", ", stale));
     }
 
-    /// <summary>And still routes with an opener in front of it.</summary>
     [Theory]
-    [InlineData("switch to ")]
-    [InlineData("go to ")]
-    [InlineData("set ")]
-    [InlineData("select the ")]
-    [InlineData("show me the ")]
-    public void EveryDeclaredCommandPhraseAlsoRoutesBehindAnOpener(string opener)
+    [InlineData("", "")]
+    // Behind an opener.
+    [InlineData("switch to ", "")]
+    [InlineData("go to ", "")]
+    [InlineData("set ", "")]
+    [InlineData("select the ", "")]
+    [InlineData("show me the ", "")]
+    // Before a tail: a word on the end does not lose the command, and the looser keyword route must not answer it first.
+    [InlineData("", " again")]
+    [InlineData("", " now")]
+    [InlineData("", " please")]
+    [InlineData("", " thanks")]
+    public void EveryDeclaredCommandPhraseRoutesWithAnyOpenerOrTail(string before, string after)
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
@@ -104,8 +110,9 @@ public class SettingsByVoiceTests
         {
             foreach (var command in row.Commands)
             {
-                var match = router.MatchSetting(opener + command.Phrase);
+                var match = router.MatchSetting(before + command.Phrase + after);
 
+                // A phrase declared and not matched is a phrase the Commander says into silence.
                 Assert.NotNull(match);
                 Assert.Equal(row.Key, match!.Row.Key);
                 Assert.Equal(command.Value, match.Value);
@@ -154,31 +161,6 @@ public class SettingsByVoiceTests
         Assert.Null(router.MatchSetting(spoken));
     }
 
-    /// <summary>A word on the end does not lose the command: "start calling things out again" names its phrase plainly, and the looser keyword route must not answer it first.</summary>
-    [Theory]
-    [InlineData("again")]
-    [InlineData("now")]
-    [InlineData("please")]
-    [InlineData("thanks")]
-    public void EveryDeclaredCommandPhraseAlsoRoutesBehindATail(string tail)
-    {
-        var install = new MemoryInstall();
-        var surface = TestSurface.For(install);
-        var router = new KeywordRouter(surface.Registry);
-
-        foreach (var row in surface.Settings.Sections.SelectMany(section => section.Rows))
-        {
-            foreach (var command in row.Commands)
-            {
-                var match = router.MatchSetting($"{command.Phrase} {tail}");
-
-                Assert.NotNull(match);
-                Assert.Equal(row.Key, match!.Row.Key);
-                Assert.Equal(command.Value, match.Value);
-            }
-        }
-    }
-
     /// <summary>
     /// The reported utterance itself, pinned to the row it names rather than left to the sweep above:
     /// this is the one the Commander said, and it is the one that has to keep working.
@@ -207,27 +189,6 @@ public class SettingsByVoiceTests
         var router = new KeywordRouter(TestSurface.For(install).Registry);
 
         Assert.Null(router.MatchSetting(spoken));
-    }
-
-    [Fact]
-    public void EveryDeclaredCommandPhraseActuallyRoutes()
-    {
-        var install = new MemoryInstall();
-        var surface = TestSurface.For(install);
-        var router = new KeywordRouter(surface.Registry);
-
-        foreach (var row in surface.Settings.Sections.SelectMany(section => section.Rows))
-        {
-            foreach (var command in row.Commands)
-            {
-                var match = router.MatchSetting(command.Phrase);
-
-                // A phrase declared and not matched is a phrase the Commander says into silence.
-                Assert.NotNull(match);
-                Assert.Equal(row.Key, match!.Row.Key);
-                Assert.Equal(command.Value, match.Value);
-            }
-        }
     }
 
     [Fact]

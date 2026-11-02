@@ -55,19 +55,13 @@ public class LmStudioReportsAndReloadsTheLoadedContextTests
         Assert.Null(provider.CapabilitiesFor(Model).ContextTokens);
     }
 
-    [Fact]
-    public async Task AListThatIsNotLmStudiosReportsNothing()
+    [Theory]
+    // A list of chat models, which is not LM Studio's.
+    [InlineData(HttpStatusCode.OK, LmStudioRecordings.ChatModels)]
+    [InlineData(HttpStatusCode.NotFound, LmStudioRecordings.UnknownRoute)]
+    public async Task AnAnswerThatIsNotLmStudiosLoadedListReportsNothing(HttpStatusCode status, string body)
     {
-        var server = new LmStudioStub((HttpStatusCode.OK, LmStudioRecordings.ChatModels));
-        using var provider = server.Provider();
-
-        Assert.Null(await provider.LoadedContextAsync(Model, Token));
-    }
-
-    [Fact]
-    public async Task ANotFoundReportsNothing()
-    {
-        var server = new LmStudioStub((HttpStatusCode.NotFound, LmStudioRecordings.UnknownRoute));
+        var server = new LmStudioStub((status, body));
         using var provider = server.Provider();
 
         Assert.Null(await provider.LoadedContextAsync(Model, Token));

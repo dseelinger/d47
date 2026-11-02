@@ -129,29 +129,17 @@ public sealed class TheHeadsetKeyboardSuggestsSystemNamesTests
         Assert.All(tiles, tile => Assert.True(tile.Height >= TypeScale.MinimumTarget));
     }
 
-    [AvaloniaFact]
-    public void DeletingBelowThreeCharactersEmptiesTheRow()
+    [AvaloniaTheory]
+    [InlineData("delete")]
+    [InlineData("clear")]
+    public void TheRowEmptiesWhenAKeyLeavesUnderThreeCharacters(string key)
     {
         var board = Open();
 
         Spell(board, "dia");
         board.Settle(() => board.Tiles.Length > 0);
 
-        board.Press("delete");
-        board.Settle(() => board.Tiles.Length == 0);
-
-        Assert.Empty(board.Tiles);
-    }
-
-    [AvaloniaFact]
-    public void ClearEmptiesTheRow()
-    {
-        var board = Open();
-
-        Spell(board, "dia");
-        board.Settle(() => board.Tiles.Length > 0);
-
-        board.Press("clear");
+        board.Press(key);
         board.Settle(() => board.Tiles.Length == 0);
 
         Assert.Empty(board.Tiles);

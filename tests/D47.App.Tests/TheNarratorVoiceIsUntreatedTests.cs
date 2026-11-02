@@ -6,17 +6,13 @@ namespace D47.App.Tests;
 /// <summary>A ship AI treatment, Guardian or COVAS, never reaches the Narrator or the crew.</summary>
 public class TheNarratorVoiceIsUntreatedTests
 {
-    [Fact]
-    public async Task TheNarratorIsUntreated() =>
+    [Theory]
+    [InlineData(VoiceRole.Narrator)]
+    [InlineData(VoiceRole.Crew)]
+    public async Task ANarratorOrCrewVoiceIsUntreated(VoiceRole role) =>
         Assert.Equal(
             "Scanning.",
-            await GuardianVoiceReachesOnlyTheShipAiTests.NameOfWhatWasPlayed(VoiceRole.Narrator));
-
-    [Fact]
-    public async Task TheCrewIsUntreated() =>
-        Assert.Equal(
-            "Scanning.",
-            await GuardianVoiceReachesOnlyTheShipAiTests.NameOfWhatWasPlayed(VoiceRole.Crew));
+            await GuardianVoiceReachesOnlyTheShipAiTests.NameOfWhatWasPlayed(role));
 
     [Fact]
     public async Task AnOverTheAirRoleStillGetsTheRadio() =>

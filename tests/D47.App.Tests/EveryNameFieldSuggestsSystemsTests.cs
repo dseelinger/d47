@@ -134,36 +134,17 @@ public sealed class EveryNameFieldSuggestsSystemsTests
         Assert.Equal(["Dia"], shown.Systems.Prefixes());
     }
 
-    [AvaloniaFact]
-    public void PickingANameFillsNearOnTheSystemsSearch()
+    [AvaloniaTheory]
+    [InlineData(SystemSearchPage.RootKey, GalaxySearchKind.Systems)]
+    [InlineData(StationSearchPage.RootKey, GalaxySearchKind.Stations)]
+    [InlineData(BodySearchPage.RootKey, GalaxySearchKind.Bodies)]
+    public void PickingANameFillsNearOnEachGalaxySearch(string root, GalaxySearchKind kind)
     {
-        var shown = Open(PanelTab.Search, SystemSearchPage.RootKey);
+        var shown = Open(PanelTab.Search, root);
 
         TypeAndPick(shown, "near");
 
-        Assert.Null(shown.Board.Last(GalaxySearchKind.Systems));
-        shown.Window.Close();
-    }
-
-    [AvaloniaFact]
-    public void PickingANameFillsNearOnTheStationsSearch()
-    {
-        var shown = Open(PanelTab.Search, StationSearchPage.RootKey);
-
-        TypeAndPick(shown, "near");
-
-        Assert.Null(shown.Board.Last(GalaxySearchKind.Stations));
-        shown.Window.Close();
-    }
-
-    [AvaloniaFact]
-    public void PickingANameFillsNearOnTheBodiesSearch()
-    {
-        var shown = Open(PanelTab.Search, BodySearchPage.RootKey);
-
-        TypeAndPick(shown, "near");
-
-        Assert.Null(shown.Board.Last(GalaxySearchKind.Bodies));
+        Assert.Null(shown.Board.Last(kind));
         shown.Window.Close();
     }
 

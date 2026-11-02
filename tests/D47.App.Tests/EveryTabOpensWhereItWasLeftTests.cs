@@ -73,27 +73,15 @@ public sealed class EveryTabOpensWhereItWasLeftTests
     /// A tab name nothing answers to — a hand-edited file, or a tab this build no longer furnishes —
     /// costs Transcript rather than a failure, the same as a root nothing answers to does.
     /// </summary>
-    [AvaloniaFact]
-    public void ATabNothingAnswersToLeavesThePanelOnTranscript()
+    [AvaloniaTheory]
+    [InlineData("Cartography")]
+    // A saved Utilities tab, from a build that had one.
+    [InlineData("Utilities")]
+    public void ASavedTabNothingAnswersToLeavesThePanelOnTranscript(string saved)
     {
         var store = Store();
 
-        store.Save(store.Load() with { LastTab = "Cartography" });
-
-        var (panel, window) = Shown(store);
-
-        Assert.Equal(PanelTab.Transcript, panel.Tab);
-
-        window.Close();
-    }
-
-    /// <summary>A saved Utilities tab, from a build that had one, opens on Transcript.</summary>
-    [AvaloniaFact]
-    public void AUtilitiesTabSavedByAnEarlierBuildLeavesThePanelOnTranscript()
-    {
-        var store = Store();
-
-        store.Save(store.Load() with { LastTab = "Utilities" });
+        store.Save(store.Load() with { LastTab = saved });
 
         var (panel, window) = Shown(store);
 

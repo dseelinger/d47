@@ -105,32 +105,16 @@ public class TheReworkedChromeRendersToACaptureTests
         window.CaptureRenderedFrame()!.SaveCapture(name);
     }
 
-    [AvaloniaFact]
-    public void TheWideStrip()
+    /// <summary>1200 is the wide strip, 620 the width the overlap was reported at, 380 narrow enough that the steppers carry the strip on their own.</summary>
+    [AvaloniaTheory]
+    [InlineData(1200, "chrome-wide.png")]
+    [InlineData(620, "chrome-narrow.png")]
+    [InlineData(380, "chrome-tiny.png")]
+    public void TheStripRendersToACaptureAtEachWidth(int width, string capture)
     {
-        var (window, _) = Open(1200);
+        var (window, _) = Open(width);
 
-        Save(window, "chrome-wide.png");
-        window.Close();
-    }
-
-    /// <summary>The width the overlap was reported at.</summary>
-    [AvaloniaFact]
-    public void TheNarrowStrip()
-    {
-        var (window, _) = Open(620);
-
-        Save(window, "chrome-narrow.png");
-        window.Close();
-    }
-
-    /// <summary>Narrow enough that the steppers are carrying the strip on their own.</summary>
-    [AvaloniaFact]
-    public void TheVeryNarrowStrip()
-    {
-        var (window, _) = Open(380);
-
-        Save(window, "chrome-tiny.png");
+        Save(window, capture);
         window.Close();
     }
 

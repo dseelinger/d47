@@ -44,25 +44,18 @@ public class TheSearchBoxOnlyAppearsWhereItWorksTests
 
     private static bool BoxShown(PanelView panel) => panel.GetControl<DockPanel>("SearchRow").IsVisible;
 
-    /// <summary>The transcript highlights and steps rather than filtering, which is still a search.</summary>
-    [AvaloniaFact]
-    public void TheTranscriptKeepsItsSearch()
+    [AvaloniaTheory]
+    // The transcript highlights and steps rather than filtering, which is still a search.
+    [InlineData(PanelTab.Transcript)]
+    // A list of checklist lines is narrowable, so the box belongs there.
+    [InlineData(PanelTab.Commander)]
+    // The settings page is ninety-odd rows and is the reason filtering exists at all.
+    [InlineData(PanelTab.Settings)]
+    public void ATabThatCanUseTheBoxKeepsItsSearch(PanelTab tab)
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Transcript;
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.True(BoxShown(panel));
-    }
-
-    /// <summary>A list of checklist lines is narrowable, so the box belongs there.</summary>
-    [AvaloniaFact]
-    public void AFilterablePageKeepsItsSearch()
-    {
-        var panel = Furnished();
-
-        panel.Tab = PanelTab.Commander;
+        panel.Tab = tab;
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(BoxShown(panel));
@@ -94,18 +87,6 @@ public class TheSearchBoxOnlyAppearsWhereItWorksTests
         Assert.False(BoxShown(panel));
 
         panel.Tab = PanelTab.Commander;
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.True(BoxShown(panel));
-    }
-
-    /// <summary>The settings page is ninety-odd rows and is the reason filtering exists at all.</summary>
-    [AvaloniaFact]
-    public void SettingsKeepsItsSearch()
-    {
-        var panel = Furnished();
-
-        panel.Tab = PanelTab.Settings;
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(BoxShown(panel));

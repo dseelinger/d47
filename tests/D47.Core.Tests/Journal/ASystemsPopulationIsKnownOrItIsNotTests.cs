@@ -19,31 +19,15 @@ public class ASystemsPopulationIsKnownOrItIsNotTests
         Assert.Null(JournalLocation.Unknown.Population);
     }
 
-    [Fact]
-    public void FSDJumpCarriesThePopulation()
+    [Theory]
+    [InlineData("""{"timestamp":"2026-08-18T09:00:00Z","event":"FSDJump","StarSystem":"Deciat","StarPos":[0,0,0],"Population":0}""", 0L)]
+    [InlineData("""{"timestamp":"2026-08-18T09:00:00Z","event":"Location","StarSystem":"Sol","Population":22780871309}""", 22780871309L)]
+    [InlineData("""{"timestamp":"2026-08-18T09:00:00Z","event":"CarrierJump","StarSystem":"Colonia","Population":0}""", 0L)]
+    public void AnEventThatNamesAPopulationCarriesIt(string line, long population)
     {
-        var location = JournalLocation.Unknown.Apply(Event(
-            """{"timestamp":"2026-08-18T09:00:00Z","event":"FSDJump","StarSystem":"Deciat","StarPos":[0,0,0],"Population":0}"""));
+        var location = JournalLocation.Unknown.Apply(Event(line));
 
-        Assert.Equal(0, location.Population);
-    }
-
-    [Fact]
-    public void LocationCarriesThePopulation()
-    {
-        var location = JournalLocation.Unknown.Apply(Event(
-            """{"timestamp":"2026-08-18T09:00:00Z","event":"Location","StarSystem":"Sol","Population":22780871309}"""));
-
-        Assert.Equal(22780871309, location.Population);
-    }
-
-    [Fact]
-    public void CarrierJumpCarriesThePopulation()
-    {
-        var location = JournalLocation.Unknown.Apply(Event(
-            """{"timestamp":"2026-08-18T09:00:00Z","event":"CarrierJump","StarSystem":"Colonia","Population":0}"""));
-
-        Assert.Equal(0, location.Population);
+        Assert.Equal(population, location.Population);
     }
 
     /// <summary>Assigned rather than coalesced, matching <c>ControllingPower</c>: a jump to a system the

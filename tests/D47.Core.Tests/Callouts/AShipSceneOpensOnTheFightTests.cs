@@ -52,16 +52,6 @@ public class AShipSceneOpensOnTheFightTests
     }
 
     [Fact]
-    public void APlayerInterdictionOpensNoScene()
-    {
-        var snapshot = Folded(
-            """{ "timestamp":"2026-08-29T00:00:32Z", "event":"Interdicted", "Submitted":false, "Interdictor":"Jameson", "IsPlayer":true }""")
-            .Snapshot;
-
-        Assert.Equal(SceneSnapshot.None, snapshot);
-    }
-
-    [Fact]
     public void AShipBountyIsAShipDownWithThePilotsName()
     {
         var beat = Folded(
@@ -137,14 +127,12 @@ public class AShipSceneOpensOnTheFightTests
                 Attack).Snapshot);
     }
 
-    [Fact]
-    public void ADropAtAStationOpensNoScene()
+    [Theory]
+    [InlineData("""{ "timestamp":"2026-08-29T00:00:32Z", "event":"Interdicted", "Submitted":false, "Interdictor":"Jameson", "IsPlayer":true }""")]
+    [InlineData("""{ "timestamp":"2026-09-29T15:01:08Z", "event":"SupercruiseDestinationDrop", "Type":"Parise Gateway", "Threat":0, "MarketID":3225929984 }""")]
+    public void AnEventThatIsNotAFightOpensNoScene(string line)
     {
-        var snapshot = Folded(
-            """{ "timestamp":"2026-09-29T15:01:08Z", "event":"SupercruiseDestinationDrop", "Type":"Parise Gateway", "Threat":0, "MarketID":3225929984 }""")
-            .Snapshot;
-
-        Assert.Equal(SceneSnapshot.None, snapshot);
+        Assert.Equal(SceneSnapshot.None, Folded(line).Snapshot);
     }
 
     [Fact]

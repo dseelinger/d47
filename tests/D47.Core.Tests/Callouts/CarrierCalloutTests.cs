@@ -78,28 +78,19 @@ public class CarrierCalloutTests
         Assert.Contains("Commander Fixture", said[1].Text, StringComparison.Ordinal);
     }
 
-    /// <summary>Somebody else's carrier gets nothing.</summary>
-    [Fact]
-    public void DroppingAtSomebodyElsesCarrierIsSilent()
+    [Theory]
+    // Somebody else's carrier gets nothing.
+    [InlineData("ETERNAL FLAME BNH-T2F")]
+    // An ordinary station drop is not a carrier at all.
+    [InlineData("Evans Port")]
+    public void DroppingAtAnythingButTheCommandersCarrierIsSilent(string destination)
     {
         var callout = new CarrierCallout();
 
         Assert.Empty(callout.Examine(Context(
             WithCarrier(),
             priming: false,
-            Event("SupercruiseDestinationDrop", ("Type", "ETERNAL FLAME BNH-T2F"), ("Threat", 0)))));
-    }
-
-    /// <summary>And an ordinary station drop is not a carrier at all.</summary>
-    [Fact]
-    public void DroppingAtAStationIsSilent()
-    {
-        var callout = new CarrierCallout();
-
-        Assert.Empty(callout.Examine(Context(
-            WithCarrier(),
-            priming: false,
-            Event("SupercruiseDestinationDrop", ("Type", "Evans Port"), ("Threat", 0)))));
+            Event("SupercruiseDestinationDrop", ("Type", destination), ("Threat", 0)))));
     }
 
     /// <summary>

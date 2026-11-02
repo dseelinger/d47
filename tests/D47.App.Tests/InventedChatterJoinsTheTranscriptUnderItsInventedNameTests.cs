@@ -26,20 +26,14 @@ public class InventedChatterJoinsTheTranscriptUnderItsInventedNameTests
                 kind is NpcChatterKind.Hail),
         };
 
-    [Fact]
-    public void AHailIsNamedByItsInventedName()
+    [Theory]
+    [InlineData(NpcChatterKind.Hail)]
+    [InlineData(NpcChatterKind.Controller)]
+    public void AnInventedChatterLineIsNamedByItsInventedName(NpcChatterKind kind)
     {
-        var hail = Line(NpcChatterKind.Hail, 3);
+        var line = Line(kind, 3);
 
-        Assert.Equal("Courier Vance (invented)", Announcer.ConversationSpeaker(hail, "COVAS"));
-    }
-
-    [Fact]
-    public void AControllerExchangeIsNamedByItsInventedName()
-    {
-        var controller = Line(NpcChatterKind.Controller, 3);
-
-        Assert.Equal("Courier Vance (invented)", Announcer.ConversationSpeaker(controller, "COVAS"));
+        Assert.Equal("Courier Vance (invented)", Announcer.ConversationSpeaker(line, "COVAS"));
     }
 
     [Fact]

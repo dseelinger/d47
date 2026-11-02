@@ -32,23 +32,15 @@ public class AnEmpireStationNamesItsAllegianceTests
         Assert.Null(location.StationAllegiance);
     }
 
-    [Fact]
-    public void UndockingDropsTheAllegiance()
+    [Theory]
+    [InlineData("""{"timestamp":"2026-08-18T09:05:00Z","event":"Undocked","StationName":"Zeppelin Depot"}""")]
+    // Jumping away leaves nothing of the last dock behind, allegiance included.
+    [InlineData("""{"timestamp":"2026-08-18T09:10:00Z","event":"FSDJump","StarSystem":"Sol","StarPos":[0,0,0]}""")]
+    public void LeavingTheStationDropsTheAllegiance(string leaving)
     {
         var location = JournalLocation.Unknown
             .Apply(Event("""{"timestamp":"2026-08-18T09:00:00Z","event":"Docked","StarSystem":"Achenar","StationName":"Zeppelin Depot","StationAllegiance":"Empire"}"""))
-            .Apply(Event("""{"timestamp":"2026-08-18T09:05:00Z","event":"Undocked","StationName":"Zeppelin Depot"}"""));
-
-        Assert.Null(location.StationAllegiance);
-    }
-
-    /// <summary>Jumping away leaves nothing of the last dock behind, allegiance included.</summary>
-    [Fact]
-    public void JumpingAwayDropsTheAllegiance()
-    {
-        var location = JournalLocation.Unknown
-            .Apply(Event("""{"timestamp":"2026-08-18T09:00:00Z","event":"Docked","StarSystem":"Achenar","StationName":"Zeppelin Depot","StationAllegiance":"Empire"}"""))
-            .Apply(Event("""{"timestamp":"2026-08-18T09:10:00Z","event":"FSDJump","StarSystem":"Sol","StarPos":[0,0,0]}"""));
+            .Apply(Event(leaving));
 
         Assert.Null(location.StationAllegiance);
     }

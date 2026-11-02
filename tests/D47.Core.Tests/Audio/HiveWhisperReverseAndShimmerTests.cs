@@ -116,23 +116,6 @@ public class HiveWhisperReverseAndShimmerTests
         Assert.True(Magnitude(tail, 880) > Magnitude(tail, 440) * 0.1, "the octave is lost under the note in the tail");
     }
 
-    [Theory]
-    [InlineData("hive")]
-    [InlineData("whisper")]
-    [InlineData("reverseReverb")]
-    [InlineData("shimmer")]
-    public void TheSameLineGivesTheSameBytesAtEveryLevel(string id)
-    {
-        var line = GuardianVoiceTests.Voiced(150, seconds: 1.0);
-
-        foreach (var level in new[] { GuardianVoice.LowestLevel, DefaultLevel(id), GuardianVoice.HighestLevel })
-        {
-            Assert.Equal(
-                GuardianVoice.Apply(line, TickingAt(id, level), BasePitch).Pcm.ToArray(),
-                GuardianVoice.Apply(line, TickingAt(id, level), BasePitch).Pcm.ToArray());
-        }
-    }
-
     [Fact]
     public void EachSitsAtItsDefaultPosition()
     {

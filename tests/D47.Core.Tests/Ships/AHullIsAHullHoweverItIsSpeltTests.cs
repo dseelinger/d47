@@ -47,20 +47,13 @@ public class AHullIsAHullHoweverItIsSpeltTests
         },
     };
 
-    [Fact]
-    public void ThePlanIsNotStaleWhenItNamesTheSameHullInFrontiersOtherSpelling()
+    [Theory]
+    // The reported sentence, and it was about the ship the Commander was sitting in.
+    [InlineData("Panther Clipper Mk II")]
+    [InlineData("panthermkii")]
+    public void ThePlanIsNotStaleWhenItNamesTheHullInEitherSpelling(string hull)
     {
-        // The reported sentence, and it was about the ship the Commander was sitting in.
-        var verdict = ChecklistEvaluator.Evaluate(PlannedFor("Panther Clipper Mk II"), InThePanther());
-
-        Assert.NotNull(verdict);
-        Assert.NotEqual(ChecklistState.Stale, verdict.Value.State);
-    }
-
-    [Fact]
-    public void ThePlanIsNotStaleWhenItNamesTheSymbolEither()
-    {
-        var verdict = ChecklistEvaluator.Evaluate(PlannedFor("panthermkii"), InThePanther());
+        var verdict = ChecklistEvaluator.Evaluate(PlannedFor(hull), InThePanther());
 
         Assert.NotNull(verdict);
         Assert.NotEqual(ChecklistState.Stale, verdict.Value.State);

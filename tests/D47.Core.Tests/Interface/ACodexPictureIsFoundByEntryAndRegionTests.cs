@@ -185,19 +185,14 @@ public class ACodexPictureIsFoundByEntryAndRegionTests
         Assert.Equal([Row(10, 5), Row(11, 3)], left);
     }
 
-    [Fact]
-    public void JsonThatIsNotAnArrayGivesNoRowsAndOneReason()
+    [Theory]
+    // Valid JSON that is not an array.
+    [InlineData("{\"entryId\":1}")]
+    // Broken JSON.
+    [InlineData("[{")]
+    public void JsonThatCannotBeReadAsRowsGivesNoRowsAndOneReason(string json)
     {
-        var parsed = CodexPictureIndex.Parse("{\"entryId\":1}");
-
-        Assert.Empty(parsed.Rows);
-        Assert.Single(parsed.Reasons);
-    }
-
-    [Fact]
-    public void BrokenJsonGivesNoRowsAndOneReason()
-    {
-        var parsed = CodexPictureIndex.Parse("[{");
+        var parsed = CodexPictureIndex.Parse(json);
 
         Assert.Empty(parsed.Rows);
         Assert.Single(parsed.Reasons);

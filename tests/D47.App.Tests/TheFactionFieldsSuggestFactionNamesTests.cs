@@ -129,14 +129,16 @@ public sealed class TheFactionFieldsSuggestFactionNamesTests
         Assert.Equal(["Mot"], shown.Systems.Prefixes());
     }
 
-    [AvaloniaFact]
-    public void PickingAFactionFillsControllingFactionOnTheSystemsSearch()
+    [AvaloniaTheory]
+    [InlineData(SystemSearchPage.RootKey, GalaxySearchKind.Systems)]
+    [InlineData(StationSearchPage.RootKey, GalaxySearchKind.Stations)]
+    public void PickingAFactionFillsControllingFactionOnEachGalaxySearch(string root, GalaxySearchKind kind)
     {
-        var shown = Open(SystemSearchPage.RootKey);
+        var shown = Open(root);
 
         TypeAndPick(shown, "controlling faction");
 
-        Assert.Null(shown.Board.Last(GalaxySearchKind.Systems));
+        Assert.Null(shown.Board.Last(kind));
         shown.Window.Close();
     }
 
@@ -147,17 +149,6 @@ public sealed class TheFactionFieldsSuggestFactionNamesTests
 
         TypeAndPick(shown, "a faction present");
 
-        shown.Window.Close();
-    }
-
-    [AvaloniaFact]
-    public void PickingAFactionFillsControllingFactionOnTheStationsSearch()
-    {
-        var shown = Open(StationSearchPage.RootKey);
-
-        TypeAndPick(shown, "controlling faction");
-
-        Assert.Null(shown.Board.Last(GalaxySearchKind.Stations));
         shown.Window.Close();
     }
 
