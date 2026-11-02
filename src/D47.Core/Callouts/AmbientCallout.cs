@@ -28,21 +28,14 @@ public sealed class AmbientCallout : ICallout
     /// <summary>How long a situation has to hold before it is worth remarking on.</summary>
     public TimeSpan Settle { get; set; } = TimeSpan.FromSeconds(90);
 
-    private AmbientSituation _situation = AmbientSituation.None;
+    private readonly UnpromptedPace _pace = new(0);
     private AmbientSituation _lastSpoken = AmbientSituation.None;
-    private DateTimeOffset _situationSince;
-    private DateTimeOffset _lastSpokenAt;
-    private int _picks;
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var situation = AmbientLines.Situate(context.Status);
 
-        if (situation != _situation)
-        {
-            _situation = situation;
-            _situationSince = context.Now;
-        }
+        _pace.Watch(situation, context.Now);
 
         // Priming folds the backlog.
         if (context.IsPriming || !Enabled() || StockCoreAboard() || Interval <= TimeSpan.Zero || situation == AmbientSituation.None)
@@ -50,17 +43,8 @@ public sealed class AmbientCallout : ICallout
             yield break;
         }
 
-        // The first tick of a session has _lastSpokenAt at default, which is far enough in the past that the
-        // interval passes immediately — so it is seeded here rather than special cased, and the Commander
-        // gets silence for one interval after launch rather than a remark while they are still reading the
-        // panel.
-        if (_lastSpokenAt == default)
-        {
-            _lastSpokenAt = context.Now;
-            yield break;
-        }
-
-        if (context.Now - _situationSince < Settle || context.Now - _lastSpokenAt < Gap())
+        // The first tick of a session is held, so the Commander gets silence for one interval after launch.
+        if (!_pace.Due(context.Now, Interval, Longest, Settle))
         {
             yield break;
         }
@@ -77,14 +61,14 @@ public sealed class AmbientCallout : ICallout
             yield break;
         }
 
-        if (AmbientLines.Pick(situation, _picks, context.Status, context.State?.Ship) is not { } line)
+        if (AmbientLines.Pick(situation, _pace.Picks, context.Status, context.State?.Ship) is not { } line)
         {
             yield break;
         }
 
-        var variant = _picks++;
+        var variant = _pace.Picks;
+        _pace.Spoke(context.Now);
         _lastSpoken = situation;
-        _lastSpokenAt = context.Now;
 
         yield return new Announcement($"{KeyPrefix}{situation}".ToLowerInvariant(), line)
         {
@@ -103,18 +87,5 @@ public sealed class AmbientCallout : ICallout
             // (Phase 43).
             Variant = variant,
         };
-    }
-
-    /// <summary>This cycle's wait, somewhere in [<see cref="Interval"/>, <see cref="Longest"/>].</summary>
-    private TimeSpan Gap()
-    {
-        if (Longest <= Interval)
-        {
-            return Interval;
-        }
-
-        var fraction = unchecked((uint)_picks * 2654435761u) / 4294967296.0;
-
-        return Interval + (Longest - Interval) * fraction;
     }
 }

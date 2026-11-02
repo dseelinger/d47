@@ -44,21 +44,14 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
     /// <summary>How long a situation has to hold before it is narrated.</summary>
     public TimeSpan Settle { get; set; } = TimeSpan.FromSeconds(90);
 
-    private AmbientSituation _situation = AmbientSituation.None;
-    private DateTimeOffset _situationSince;
-    private DateTimeOffset _lastSpokenAt;
-    private int _picks;
+    private readonly UnpromptedPace _pace = new(2);
     private readonly HashSet<string> _nudged = new(StringComparer.OrdinalIgnoreCase);
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var situation = AmbientLines.Situate(context.Status);
 
-        if (situation != _situation)
-        {
-            _situation = situation;
-            _situationSince = context.Now;
-        }
+        _pace.Watch(situation, context.Now);
 
         // Never in supercruise or hyperspace, which Status.json reports under the same flag, scooping included.
         if (context.IsPriming
@@ -71,13 +64,7 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
         }
 
         // The first narration of a session waits one full gap.
-        if (_lastSpokenAt == default)
-        {
-            _lastSpokenAt = context.Now;
-            yield break;
-        }
-
-        if (context.Now - _situationSince < Settle || context.Now - _lastSpokenAt < Gap())
+        if (!_pace.Due(context.Now, Interval, Longest, Settle))
         {
             yield break;
         }
@@ -97,8 +84,7 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
             yield break;
         }
 
-        _picks++;
-        _lastSpokenAt = context.Now;
+        _pace.Spoke(context.Now);
 
         if (stalled is not null)
         {
@@ -114,7 +100,7 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
             Cooldown = Interval,
             Chatter = Interval,
             Voice = VoiceRole.Narrator,
-            Variant = _picks - 1,
+            Variant = _pace.Picks - 1,
         };
     }
 
@@ -131,20 +117,4 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
         key is not null && key.StartsWith(NudgePrefix, StringComparison.Ordinal) && key.Length > NudgePrefix.Length
             ? key[NudgePrefix.Length..]
             : null;
-
-    /// <summary>This cycle's wait, somewhere in [<see cref="Interval"/>, <see cref="Longest"/>].</summary>
-    private TimeSpan Gap()
-    {
-        if (Longest <= Interval)
-        {
-            return Interval;
-        }
-
-        var fraction = unchecked((uint)(_picks + Offset) * 2654435761u) / 4294967296.0;
-
-        return Interval + (Longest - Interval) * fraction;
-    }
-
-    /// <summary>Added to the pick count so this callout's gaps differ from the ambient and chatter callouts' gaps.</summary>
-    private const int Offset = 2;
 }

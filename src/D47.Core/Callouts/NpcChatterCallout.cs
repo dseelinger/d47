@@ -32,12 +32,9 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
     /// </summary>
     public Func<bool> SceneHoldsTheFight { get; set; } = () => false;
 
-    private AmbientSituation _situation = AmbientSituation.None;
-    private DateTimeOffset _situationSince;
-    private DateTimeOffset _lastSpokenAt;
+    private readonly UnpromptedPace _pace = new(1);
     private DateTimeOffset _lastCombatAt;
     private DateTimeOffset _sceneTookKillAt;
-    private int _picks;
 
     /// <summary>Added to the exchange number that picks cast, topic and opening, so launches start at different picks.</summary>
     public int VariantOffset { get; init; }
@@ -58,11 +55,7 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
             _sceneTookKillAt = taken;
         }
 
-        if (situation != _situation)
-        {
-            _situation = situation;
-            _situationSince = context.Now;
-        }
+        _pace.Watch(situation, context.Now);
 
         // Nobody is near a ship in supercruise or hyperspace — Status.json reports both under the same
         // flag, so this one check rules out the "chair-bound" modes NpcChatterCarrier.Of already knows.
@@ -76,23 +69,15 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
 
         if (situation == AmbientSituation.NormalSpace && !sceneHolds && ReactsToKill(context))
         {
-            _picks++;
-            _lastSpokenAt = context.Now;
+            _pace.Spoke(context.Now);
             _lastCombatAt = context.Now;
 
             yield return Marker(NpcChatterKind.Combat);
             yield break;
         }
 
-        // Seeded on the first tick, exactly as the ambient callout is: the Commander gets one whole interval
-        // of silence after launch rather than theatre while they are still reading the panel.
-        if (_lastSpokenAt == default)
-        {
-            _lastSpokenAt = context.Now;
-            yield break;
-        }
-
-        if (context.Now - _situationSince < Settle || context.Now - _lastSpokenAt < Gap())
+        // The first tick of a session is held, so the Commander gets one interval of silence after launch.
+        if (!_pace.Due(context.Now, Interval, Longest, Settle))
         {
             yield break;
         }
@@ -110,7 +95,7 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
             yield break;
         }
 
-        var kind = KindFor(_picks, context.Status.Has(StatusFlags.Docked));
+        var kind = KindFor(_pace.Picks, context.Status.Has(StatusFlags.Docked));
 
         // Passersby and Hail invent people who are not there where nobody lives (#230); Controller only
         // fires docked, where a station or the Commander's own carrier already justifies the scene.
@@ -120,8 +105,7 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
             yield break;
         }
 
-        _picks++;
-        _lastSpokenAt = context.Now;
+        _pace.Spoke(context.Now);
 
         yield return Marker(kind);
     }
@@ -149,28 +133,12 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
             Urgency = CalloutUrgency.Routine,
             Origin = AnnouncementOrigin.InventedChatter,
             Cooldown = Interval,
-            Variant = VariantOffset + _picks - 1,
+            Variant = VariantOffset + _pace.Picks - 1,
 
             // Said because nothing happened, and the rate the Commander asked for it at — the flag the engine
             // spaces on and the clamp that bounds how long it may hold this (#257).
             Chatter = Interval,
         };
-
-    /// <summary>This cycle's wait, somewhere in [<see cref="Interval"/>, <see cref="Longest"/>].</summary>
-    private TimeSpan Gap()
-    {
-        if (Longest <= Interval)
-        {
-            return Interval;
-        }
-
-        var fraction = unchecked((uint)(_picks + Offset) * 2654435761u) / 4294967296.0;
-
-        return Interval + (Longest - Interval) * fraction;
-    }
-
-    /// <summary>How far this callout's spread is wound on from the ambient one's.</summary>
-    private const int Offset = 1;
 
     /// <summary>Which pairing this exchange is.</summary>
     public static NpcChatterKind KindFor(int pick, bool docked)
