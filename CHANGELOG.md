@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+While the next chapter of a stock story is being written, or its write failed, Your stories shows a card for the story with the same line the Catalogue shows, the progress bar while writing, and Write it again after a failure. Before, it showed only the Set aside fold. When the chapter is written, its own card replaces this one.
+
 Choosing a comms channel with a key or the stick is spoken and no longer written to the Conversation page. Saying "comms Tower" still shows your words and the reply there.
 
 While a stock story is on a detour, the mini panel, on the desktop and in the headset, shows the detour: its name, its step and its next objective. Before, it kept showing the paused chapter.

@@ -124,6 +124,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         if (_surface.Stories is { } director)
         {
             director.Stories.Changed += OnChanged;
+            director.WritingChanged += OnChanged;
         }
 
         Rebuild();
@@ -148,6 +149,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         if (_surface.Stories is { } director)
         {
             director.Stories.Changed -= OnChanged;
+            director.WritingChanged -= OnChanged;
         }
     }
 
@@ -209,8 +211,14 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         _problems.Text = string.Join("\n", problems.Select(problem => $"{problem.Where}: {problem.Reason}"));
 
         var standings = _surface.Book.Standings(_surface.Commander());
+        var storyCard = WritingStoryCard(standings);
 
-        if (standings.Count == 0)
+        if (storyCard is not null)
+        {
+            _list.Children.Add(storyCard);
+        }
+
+        if (standings.Count == 0 && storyCard is null)
         {
             _list.Children.Add(Muted(
                 "No stories yet. Pick one under Catalogue, or ask for a short story — D47 proposes one and waits for your yes."));
@@ -226,6 +234,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         if (!CanAsk(_surface))
         {
             _list.Children.Add(Muted(AskShutBecause()));
+        }
+
+        if (standings.Count == 0)
+        {
+            return;
         }
 
         var drafts = standings.Where(standing => standing.Adventure.IsDraft).ToList();
@@ -270,6 +283,53 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 }
             }
         }
+    }
+
+    /// <summary>A card for the Commander's stock story while its next chapter is being written or its write failed and no chapter of it is live.</summary>
+    private Control? WritingStoryCard(IReadOnlyList<AdventureStanding> standings)
+    {
+        if (_surface.Stories is not { } director)
+        {
+            return null;
+        }
+
+        var commander = _surface.Commander();
+        var writing = director.IsWriting(commander);
+
+        if (director.Stories.Current(commander) is not { } story || !(writing || director.WriteFailed(commander)))
+        {
+            return null;
+        }
+
+        if (story.CurrentChapter is { } key
+            && standings.Any(standing => standing.Adventure.Key == key
+                && !standing.Adventure.IsDraft && !standing.IsDone && !standing.IsFailed
+                && !standing.Adventure.IsAbandoned && !standing.Adventure.IsEnded))
+        {
+            return null;
+        }
+
+        var card = Row();
+        var body = (StackPanel)card.Child!;
+        body.Children.Add(RowName(story.Title));
+        body.Children.Add(RowSecondary("Your story — " + StoriesView.StandingOf(director, story, commander).Clause));
+
+        if (writing && director.Progress(commander) is { } progress)
+        {
+            var bar = new WriteProgressBar("Writing the chapter", () => director.Progress(commander));
+            bar.Show(progress);
+            body.Children.Add(bar);
+        }
+        else
+        {
+            var again = new Button { Content = "Write it again", HorizontalAlignment = HorizontalAlignment.Left };
+            again.Click += (_, _) => _ = Task.Run(() => director.WriteNextAsync(commander, _surface.Now(), CancellationToken.None));
+            body.Children.Add(Buttons(again));
+        }
+
+        card.Margin = new Thickness(0, 0, 0, 10);
+        ListRow.Opens(card, () => _nav.Drill(new NavCrumb(StoriesView.ReadPrefix + story.Id, story.Title) { Level = StoriesView.ReadPrefix }));
+        return card;
     }
 
     /// <summary>Whether the shown Commander has a story or short story under way, or a story ending waiting for an answer.</summary>
