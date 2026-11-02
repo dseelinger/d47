@@ -65,18 +65,18 @@ public sealed class EveryObjectiveStatesWhyTheCommanderGoesTests
         Assert.True(outcome.Succeeded, outcome.Refusal);
         var rank = outcome.Draft!.Beats[2];
         Assert.Equal(Reason, rank.Reason);
-        Assert.EndsWith(Reason, rank.HandOff());
+        Assert.StartsWith(Reason, rank.HandOff());
     }
 
     [Fact]
-    public void TheRewordingBriefKeepsTheReasonAndNeverPresentsAnOrder()
+    public void TheRewordingBriefNeverPresentsAnOrderAndLeavesTheHandOffToTheNarrator()
     {
         var brief = FlavourBriefs.For(
             new Announcement(AdventureCallout.KeyPrefix + "the-lantern-route", "The log is closed. Next: dock at Maren Anchorage. A reader there knows the burst."),
             personalityEnabled: true);
 
         Assert.NotNull(brief);
-        Assert.Contains("with the reason and its source when the text gives one", brief.Instruction, StringComparison.Ordinal);
+        Assert.DoesNotContain("where the Commander goes next", brief.Instruction, StringComparison.Ordinal);
         Assert.Contains("never present the next objective as an order you were given", brief.Instruction, StringComparison.Ordinal);
         Assert.Contains("\"I'm told\"", brief.Instruction, StringComparison.Ordinal);
     }

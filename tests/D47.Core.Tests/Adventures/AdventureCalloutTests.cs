@@ -1,3 +1,4 @@
+using D47.Core.Audio;
 using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Callouts;
@@ -42,17 +43,19 @@ public class AdventureCalloutTests
 
         Assert.Empty(callout.Examine(At(reached.AddSeconds(10), [])));
 
-        var said = Assert.Single(callout.Examine(At(reached.AddSeconds(20), [])));
+        var spoken = callout.Examine(At(reached.AddSeconds(20), [])).ToList();
+        var said = spoken[0];
 
         Assert.Equal("adventure.the-lantern-route.0", said.Key);
-
-        // The line, then where to go next — and for a scan, how, because "scan X" sends a Commander looking
-        // for a surface scanner they do not need.
-        Assert.Equal(
-            "Scoop here. Next: scan The Quiet Field A 2 in The Quiet Field — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before.",
-            said.Text);
+        Assert.Equal("Scoop here.", said.Text);
         Assert.Equal(0, said.Variant);
         Assert.Equal(CalloutUrgency.Routine, said.Urgency);
+
+        // Where to go next, and for a scan how, is its own announcement in the Narrator's voice.
+        var handOff = Assert.Single(spoken.Skip(1));
+        Assert.Equal("adventure-handoff.the-lantern-route.0", handOff.Key);
+        Assert.Equal(LanternHandOff, handOff.Text);
+        Assert.Equal(VoiceRole.Narrator, handOff.Voice);
     }
 
     [Fact]
@@ -62,18 +65,24 @@ public class AdventureCalloutTests
         book.Abandon("F1", "the-lantern-route", Accepted);
         book.Begin("F1", "the-lantern-route", Accepted.AddMinutes(1));
 
-        var opening = Assert.Single(callout.Examine(At(Accepted.AddMinutes(1), [])));
-        Assert.Equal("Beacons cost money. Somebody is paying. Next: arrive at Ossen's Lantern.", opening.Text);
+        var first = callout.Examine(At(Accepted.AddMinutes(1), [])).ToList();
+        Assert.Equal("Beacons cost money. Somebody is paying.", first[0].Text);
+        Assert.Equal("Next: arrive at Ossen's Lantern.", Assert.Single(first.Skip(1)).Text);
 
         var from = Accepted.AddMinutes(2);
         callout.Examine(At(from, WholeRoute(from))).ToList();
         var said = callout.Examine(At(from.AddSeconds(20), [])).ToList();
 
-        Assert.Equal(5, said.Count);
-        Assert.EndsWith("Next: dock at Maren Anchorage in Dyson's Hollow.", said[1].Text);
-        Assert.EndsWith("Next: land on Veyl 3 c in Cairn of Veyl.", said[2].Text);
-        Assert.EndsWith("Next: arrive at Tavell's Reach.", said[3].Text);
-        Assert.Equal("Eleven months left.", said[4].Text);
+        var handOffs = said.Where(a => a.Key.StartsWith(AdventureCallout.HandOffPrefix, StringComparison.Ordinal)).ToList();
+
+        Assert.Equal(9, said.Count);
+        Assert.Equal(4, handOffs.Count);
+        Assert.All(handOffs, a => Assert.Equal(VoiceRole.Narrator, a.Voice));
+        Assert.Equal("Next: dock at Maren Anchorage in Dyson's Hollow.", handOffs[1].Text);
+        Assert.Equal("Next: land on Veyl 3 c in Cairn of Veyl.", handOffs[2].Text);
+        Assert.Equal("Next: arrive at Tavell's Reach.", handOffs[3].Text);
+        Assert.Equal("Eleven months left.", said[^1].Text);
+        Assert.DoesNotContain(said.Where(a => a.Voice != VoiceRole.Narrator), a => a.Text.Contains("Next:", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -83,7 +92,7 @@ public class AdventureCalloutTests
         book.Abandon("F1", "the-lantern-route", Accepted);
         book.Begin("F1", "the-lantern-route", Accepted.AddMinutes(1));
 
-        var said = Assert.Single(callout.Examine(At(Accepted.AddMinutes(1), [])));
+        var said = callout.Examine(At(Accepted.AddMinutes(1), [])).First();
 
         Assert.Equal("adventure.the-lantern-route.opening", said.Key);
         Assert.Equal(-1, said.Variant);
@@ -103,7 +112,7 @@ public class AdventureCalloutTests
 
         held = false;
 
-        Assert.Equal("adventure.the-lantern-route.opening", Assert.Single(callout.Examine(At(Accepted.AddMinutes(3), []))).Key);
+        Assert.Equal("adventure.the-lantern-route.opening", callout.Examine(At(Accepted.AddMinutes(3), [])).First().Key);
     }
 
     private static readonly string LanternHandOff =
@@ -130,6 +139,7 @@ public class AdventureCalloutTests
 
         Assert.Equal("adventure-handoff.the-lantern-route.0", said.Key);
         Assert.Equal(LanternHandOff, said.Text);
+        Assert.Equal(VoiceRole.Narrator, said.Voice);
         Assert.Empty(callout.Examine(At(reached.AddMinutes(6), [])));
 
         // Still in the context: the fold moved.
@@ -175,6 +185,6 @@ public class AdventureCalloutTests
 
         var said = callout.Examine(At(from.AddSeconds(20), [])).ToList();
 
-        Assert.Equal([0, 1, 2], said.Select(a => a.Variant));
+        Assert.Equal([0, 1, 2], said.Where(a => a.Variant is not null).Select(a => a.Variant));
     }
 }

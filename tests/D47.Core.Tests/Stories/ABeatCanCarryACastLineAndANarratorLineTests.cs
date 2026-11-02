@@ -60,7 +60,8 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
             said.Select(announcement => announcement.Key));
         Assert.Equal("Anyone. Please.", said[0].Text);
         Assert.Equal("The channel hisses, and the yard lights stay on.", said[1].Text);
-        Assert.StartsWith("Next: dock at Maren Anchorage", said[2].Text, StringComparison.Ordinal);
+        Assert.StartsWith("Someone there knows about the burst. Next: dock at Maren Anchorage", said[2].Text, StringComparison.Ordinal);
+        Assert.Equal(VoiceRole.Narrator, said[2].Voice);
 
         var voices = said.Take(2)
             .Select(announcement => AdventureCallout.Spoken(announcement.Key)!.Value)

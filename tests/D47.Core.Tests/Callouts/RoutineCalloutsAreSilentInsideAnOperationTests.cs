@@ -122,6 +122,7 @@ public class RoutineCalloutsAreSilentInsideAnOperationTests
 
         var said = callout.Examine(At(first.Timestamp.AddSeconds(90), state)).ToList();
 
-        Assert.Equal("adventure.the-lantern-route.0", Assert.Single(said).Key);
+        Assert.Equal("adventure.the-lantern-route.0", said[0].Key);
+        Assert.Equal("adventure-handoff.the-lantern-route.0", Assert.Single(said.Skip(1)).Key);
     }
 }

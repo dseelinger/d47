@@ -289,7 +289,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
     }
 
     [Fact]
-    public async Task ACastMembersBeatSaysItsLineAndTheShipSaysWhereToGoNext()
+    public async Task ACastMembersBeatSaysItsLineAndTheNarratorSaysWhereToGoNext()
     {
         using var fixtures = new StoryFixtures(Scripted(BeatsWithSpeakers), Cast);
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
@@ -302,7 +302,8 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var handOff = Assert.Single(said, announcement => announcement.Key == $"{AdventureCallout.HandOffPrefix}{chapter}.0");
 
         Assert.Equal("Anyone. Please.", line.Text);
-        Assert.StartsWith("Next: dock at Maren Anchorage", handOff.Text, StringComparison.Ordinal);
+        Assert.StartsWith("Someone there knows about the burst. Next: dock at Maren Anchorage", handOff.Text, StringComparison.Ordinal);
+        Assert.Equal(VoiceRole.Narrator, handOff.Voice);
     }
 
     private const string OpeningWithARecording = """

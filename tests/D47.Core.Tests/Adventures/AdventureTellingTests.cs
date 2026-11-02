@@ -104,9 +104,9 @@ public class AdventureTellingTests
         Assert.Null(book.Begin("F1", "the-lantern-route", Accepted));
         engine.Tick(WhileAnotherFlies(Accepted));
 
-        var said = Assert.Single(engine.Drain());
-        Assert.Equal("adventure.the-lantern-route.opening", said.Key);
-        Assert.True(said.WhileAnotherFlies);
+        var all = engine.Drain().ToList();
+        Assert.Equal("adventure.the-lantern-route.opening", all[0].Key);
+        Assert.All(all, said => Assert.True(said.WhileAnotherFlies));
     }
 
     /// <summary>A beat reached while another Commander flies is dropped, and stops its wait.</summary>

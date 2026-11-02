@@ -382,6 +382,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                 yield return new Announcement(moment.IsStep ? moment.Key : $"{HandOffPrefix}{moment.Key[KeyPrefix.Length..]}", held)
                 {
                     Urgency = CalloutUrgency.Routine,
+                    Voice = Audio.VoiceRole.Narrator,
                 };
 
                 continue;
@@ -407,6 +408,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                     yield return new Announcement(moment.Key, next)
                     {
                         Urgency = CalloutUrgency.Routine,
+                        Voice = Audio.VoiceRole.Narrator,
                     };
                 }
 
@@ -428,17 +430,13 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                 continue;
             }
 
-            // A ship line that ends the beat carries where to go next, as one text: the hand-off is part of what the
-            // model is told to keep when it says this in the core's voice, and what plays when there is no model.
-            // An offer's phrases are their own announcement, which no model rewords.
+            // The hand-off is its own announcement, narrated as written; an offer's phrases are another, which no model rewords.
             var lines = moment.Lines;
             var offers = moment.OffersChoice;
 
             for (var index = 0; index < lines.Count; index++)
             {
-                var last = index == lines.Count - 1;
-
-                yield return new Announcement(moment.LineKey(index), last && IsShips(lines[index]) && !offers ? moment.Spoken(index) : lines[index].Text)
+                yield return new Announcement(moment.LineKey(index), lines[index].Text)
                 {
                     Urgency = CalloutUrgency.Routine,
 
@@ -459,11 +457,12 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                     WhileAnotherFlies = moment.IsOpening,
                 };
             }
-            else if (lines.Count > 0 && !IsShips(lines[^1]) && moment.HandOff is { } handOff)
+            else if (lines.Count > 0 && moment.HandOff is { } handOff)
             {
                 yield return new Announcement($"{HandOffPrefix}{moment.Key[KeyPrefix.Length..]}", handOff)
                 {
                     Urgency = CalloutUrgency.Routine,
+                    Voice = Audio.VoiceRole.Narrator,
                     WhileAnotherFlies = moment.IsOpening,
                 };
             }

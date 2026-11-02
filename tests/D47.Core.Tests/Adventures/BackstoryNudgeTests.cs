@@ -59,7 +59,7 @@ public class AMidpointBeatNudgesTheBackstoryOnceTests : BackstoryNudgeTestBase
         var said = Through(Wired(), 3);
 
         Assert.Equal(
-            ["adventure-ack.the-lantern-route.2", "adventure.the-lantern-route.2", "adventure-backstory.the-lantern-route.2"],
+            ["adventure-ack.the-lantern-route.2", "adventure.the-lantern-route.2", "adventure-handoff.the-lantern-route.2", "adventure-backstory.the-lantern-route.2"],
             said.Select(announcement => announcement.Key));
         Assert.Equal(AdventureCallout.BackstoryLine, said[^1].Text);
     }

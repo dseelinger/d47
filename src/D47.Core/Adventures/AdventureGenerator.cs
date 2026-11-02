@@ -3820,7 +3820,9 @@ public sealed class AdventureGenerator(
             + "dock, take or hand in a mission, scan, land and the like; the game has no act for meeting a person. It may name an invented "
             + "person who is at the place, such as a comms specialist who reads signals like the burst, a visiting scholar, or a doctor "
             + "who can say whether the voices are real; the Commander is told about that person and never meets them, and what the "
-            + "person said or left is the objective's line. A choice has a null reason.");
+            + "person said or left is the objective's line. The Narrator reads the reason aloud as narration: write it in the third person, "
+            + "about the Commander, and never as \"I\", \"me\" or \"we\". It may name the ship's core as a character. It never speaks to the "
+            + "Commander, and never offers or asks. A choice has a null reason.");
         text.AppendLine("Give each objective a short title — a chapter name, never a number.");
         var speakers = ask.Story is not null;
         var due = Due(ask, facts);

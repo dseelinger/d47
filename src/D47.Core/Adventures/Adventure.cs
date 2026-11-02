@@ -829,10 +829,10 @@ public sealed record BeatStep
 
     public override int GetHashCode() => HashCode.Combine(Trigger, Reason, FailsOn.Count, Options.Count);
 
-    /// <summary>The trigger's hand-off, followed by the reason when there is one; for a choice, the phrase that chooses each option.</summary>
+    /// <summary>The reason when there is one, then the trigger's hand-off; for a choice, the phrase that chooses each option.</summary>
     public string HandOff() => IsChoice
         ? BeatOption.Saying(Options)
-        : string.IsNullOrWhiteSpace(Reason) ? Trigger.HandOff() : $"{Trigger.HandOff()} {Reason.Trim()}";
+        : string.IsNullOrWhiteSpace(Reason) ? Trigger.HandOff() : $"{Reason.Trim()} {Trigger.HandOff()}";
 }
 
 /// <summary>One option of a choice: a short label, the steps it asks for, and the named ending it ends the chapter in, or none to rejoin the chapter.</summary>

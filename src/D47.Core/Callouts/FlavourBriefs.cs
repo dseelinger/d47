@@ -242,9 +242,7 @@ public static class FlavourBriefs
                         : "The Commander has just reached an objective of the story you are telling them. ")
                     + "Say this in your own voice, keeping every fact, name and number in it and adding none: "
                     + $"\"{announcement.Text}\" Show the place and what is in it; never tell the Commander "
-                    + "what they feel. Two to four sentences, spoken in a cockpit. If the text ends by saying "
-                    + "where the Commander goes next, end by saying the same place and the same act in your own "
-                    + "words, with the reason and its source when the text gives one — that is the only thing you say about "
+                    + "what they feel. Two to four sentences, spoken in a cockpit. Say nothing about "
                     + "what is ahead; do not guess at what is there or why, never present the next objective as an order you "
                     + "were given (\"I'm told\", \"I've been told\", \"we've been asked\"), and never send the Commander to find or "
                     + "speak to anyone.",

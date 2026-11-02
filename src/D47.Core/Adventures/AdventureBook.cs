@@ -62,13 +62,6 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
     /// <summary>Where the Commander goes next, said with the line rather than waited for; after a step, the next step.</summary>
     public string? HandOff => IsStep ? NextStep?.HandOff() : Next?.HandOff();
 
-    /// <summary>Line <paramref name="index"/> and the hand-off together, which is what is said when the ship speaks the last line.</summary>
-    public string Spoken(int index)
-    {
-        var line = index < Lines.Count ? Lines[index].Text : string.Empty;
-        return HandOff is { } next ? $"{line} {next}" : line;
-    }
-
     /// <summary>The announcement key of line <paramref name="index"/>: <see cref="Key"/> for the first, its own family for the rest.</summary>
     public string LineKey(int index) => index == 0
         ? Key
