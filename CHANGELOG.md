@@ -18,6 +18,8 @@ When Elite changes a route without rewriting its route file, the Progress page a
 
 A course request the keyword list does not match, such as "What's that course for home?", now reaches the course tool that sets the game's course. Before, the model could pick the neutron route planner, which plots nothing in the game, and its reply implied the course was set. The planner's reply now says the game's course was not set.
 
+The core aboard no longer remarks when you hold a ship mode, such as silent running, flight assist off or the gear down. The remarks and their Ship modes setting are removed.
+
 The Crime rating now takes effect, and every career rating runs from 0 to 100. A career rated 0 is never asked for in a story chapter, whether in an ordinary slot, a slot limited by a Federation or Empire goal, the comfort slot or an event step. Crime weighs its rating like the other seven careers, and a 1 is drawn less often than a 50. Before, Crime was held at 50 whatever it was set to, and a rating of 1 could not mean never for any career. A chapter already written keeps its objectives; the rating applies from the next one.
 
 Off a plotted route, Directive 47 now says nothing about the route. Before, a Commander who had jumped elsewhere heard "7 jumps remaining. Next is" followed by the system the route was plotted from, and the fuel warnings read the route the same way. "Route complete" is now said only in the route's last system.

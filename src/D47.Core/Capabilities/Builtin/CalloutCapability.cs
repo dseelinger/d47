@@ -95,7 +95,6 @@ public static class CalloutCapability
     public const string RemindersKey = "callouts.reminders";
     public const string DomainKey = "callouts.domain";
     public const string NotableShipsKey = "callouts.notableShips";
-    public const string ShipModesKey = "callouts.shipModes";
     public const string RouteEveryKey = "callouts.routeEveryNJumps";
     public const string LongJumpSecondsKey = "callouts.longJumpSeconds";
     public const string HomeSystemKey = "callouts.homeSystem";
@@ -1386,24 +1385,6 @@ public static class CalloutCapability
                 "notable ships",
                 s => s.Callouts.NotableShips,
                 (s, v) => s with { Callouts = s.Callouts with { NotableShips = v } }),
-
-            Toggle(
-                ShipModesKey,
-                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
-                + "open Settings › Your core › Callouts, group Plans and reminders, and find Ship modes (on by "
-                + "default). Hold the ship in a mode for a while, such as silent running, flight assist off, "
-                + "hardpoints out with nothing hostile around, the scoop left open or the gear down away from a "
-                + "station: the core remarks, once per mode per session. Say \"stop calling out ship modes\": the "
-                + "row shows off and that is no longer said. Say \"start calling out ship modes\" and the row shows "
-                + "on. The row is absent while Speak without being asked is off.",
-                "Ship modes",
-                "A remark from the core aboard when you hold the ship in a mode for a while: silent running, "
-                + "flight assist off, hardpoints out with nothing hostile around, the cargo scoop left open, "
-                + "the landing gear down away from a station, or mass locked in danger. Once per mode per session.",
-                "ship-modes",
-                "ship modes",
-                s => s.Callouts.ShipModes,
-                (s, v) => s with { Callouts = s.Callouts with { ShipModes = v } }),
 
             Toggle(
                 AmbientKey,
