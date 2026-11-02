@@ -25,8 +25,6 @@ namespace D47.App.Tests;
 [Trait("Category", "Integration")]
 public class TheChecklistIsDrawnOnTheKitTests
 {
-    private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);
-
     private sealed record Surface(Window Window, PanelView Panel, ChecklistService Checklists);
 
     private static Surface Open(double width, double height)
@@ -67,42 +65,23 @@ public class TheChecklistIsDrawnOnTheKitTests
         return new Surface(window, panel, checklists);
     }
 
-    private static string Save(Window window, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var path = name;
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.SaveCapture(path);
-        }
-
-        return path;
-    }
-
     [Trait("Category", "Integration")]
     [AvaloniaTheory]
-    [InlineData(ThemeCatalog.Elite, 1280, 860)]
-    [InlineData(ThemeCatalog.Elite, 924, 640)]
-    [InlineData(ThemeCatalog.Elite, 512, 280)]
-    [InlineData(ThemeCatalog.Dark, 1280, 860)]
-    [InlineData(ThemeCatalog.Light, 1280, 860)]
-    [InlineData(ThemeCatalog.ElitePaletteId, 1280, 860)]
+    [MemberData(nameof(CaptureMatrix.Rows), MemberType = typeof(CaptureMatrix))]
     public void TheChecklistIsCaptured(string themeId, double width, double height)
     {
-        using var look = AppLook.Put(themeId, themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
+        using var look = AppLook.PutForCapture(themeId);
 
         var surface = Open(width, height);
         var panel = surface.Panel;
 
-        var list = Save(surface.Window, $"checklist-{themeId}-{width}x{height}.png");
+        var list = surface.Window.SaveFrame($"checklist-{themeId}-{width}x{height}.png");
 
         panel.Nav.ToRoot();
-        var lists = Save(surface.Window, $"checklist-lists-{themeId}-{width}x{height}.png");
+        var lists = surface.Window.SaveFrame($"checklist-lists-{themeId}-{width}x{height}.png");
 
         panel.Nav.Drill(ChecklistPage.ListCrumb(surface.Checklists.Lists()[0]));
-        var one = Save(surface.Window, $"checklist-one-{themeId}-{width}x{height}.png");
+        var one = surface.Window.SaveFrame($"checklist-one-{themeId}-{width}x{height}.png");
 
         panel.Nav.ToRoot();
         Dispatcher.UIThread.RunJobs();
@@ -113,10 +92,10 @@ public class TheChecklistIsDrawnOnTheKitTests
         band.IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
-        var goals = Save(surface.Window, $"checklist-goals-{themeId}-{width}x{height}.png");
+        var goals = surface.Window.SaveFrame($"checklist-goals-{themeId}-{width}x{height}.png");
 
         panel.Nav.Drill(new NavCrumb(ChecklistPage.SuggestionsKey, "Suggestions"));
-        var suggestions = Save(surface.Window, $"checklist-suggestions-{themeId}-{width}x{height}.png");
+        var suggestions = surface.Window.SaveFrame($"checklist-suggestions-{themeId}-{width}x{height}.png");
 
         surface.Window.Close();
         Dispatcher.UIThread.RunJobs();
@@ -136,11 +115,11 @@ public class TheChecklistIsDrawnOnTheKitTests
         var window = new Window { Content = view, Width = 924, Height = 400 };
         window.Show();
 
-        var closed = Save(window, "checklist-settings-strip-closed.png");
+        var closed = window.SaveFrame("checklist-settings-strip-closed.png");
 
         ((Button)view.BarTool!).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
-        var open = Save(window, "checklist-settings-strip-open.png");
+        var open = window.SaveFrame("checklist-settings-strip-open.png");
 
         window.Close();
     }

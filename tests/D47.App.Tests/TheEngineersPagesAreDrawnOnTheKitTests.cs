@@ -28,8 +28,6 @@ namespace D47.App.Tests;
 [Trait("Category", "Integration")]
 public class TheEngineersPagesAreDrawnOnTheKitTests
 {
-    private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);
-
     private static readonly string[] Journal =
     [
         """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
@@ -87,49 +85,30 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
         return new Surface(window, panel);
     }
 
-    private static string Save(Window window, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var path = name;
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.SaveCapture(path);
-        }
-
-        return path;
-    }
-
     private static Engineer Named(string name) => EngineerDirectory.All.First(engineer => engineer.Name == name);
 
     [Trait("Category", "Integration")]
     [AvaloniaTheory]
-    [InlineData(ThemeCatalog.Elite, 1280, 860)]
-    [InlineData(ThemeCatalog.Elite, 924, 640)]
-    [InlineData(ThemeCatalog.Elite, 512, 280)]
-    [InlineData(ThemeCatalog.Dark, 1280, 860)]
-    [InlineData(ThemeCatalog.Light, 1280, 860)]
-    [InlineData(ThemeCatalog.ElitePaletteId, 1280, 860)]
+    [MemberData(nameof(CaptureMatrix.Rows), MemberType = typeof(CaptureMatrix))]
     public void TheEngineersPagesAreCaptured(string themeId, double width, double height)
     {
-        using var look = AppLook.Put(themeId, themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
+        using var look = AppLook.PutForCapture(themeId);
 
         var surface = Open(width, height);
         var panel = surface.Panel;
 
-        var directory = Save(surface.Window, $"engineers-directory-{themeId}-{width}x{height}.png");
+        var directory = surface.Window.SaveFrame($"engineers-directory-{themeId}-{width}x{height}.png");
 
         panel.Nav.Drill(EngineersPages.Crumb(Named("Felicity Farseer")));
-        var felicity = Save(surface.Window, $"engineers-felicity-{themeId}-{width}x{height}.png");
+        var felicity = surface.Window.SaveFrame($"engineers-felicity-{themeId}-{width}x{height}.png");
 
         panel.Nav.SelectRoot(EngineersPages.DirectoryRoot);
         panel.Nav.Drill(EngineersPages.Crumb(Named("Marco Qwent")));
-        var marco = Save(surface.Window, $"engineers-marco-{themeId}-{width}x{height}.png");
+        var marco = surface.Window.SaveFrame($"engineers-marco-{themeId}-{width}x{height}.png");
 
         panel.Nav.ToRoot();
         Assert.True(panel.Nav.Drill(EngineersPages.RouteCrumb));
-        var route = Save(surface.Window, $"engineers-route-{themeId}-{width}x{height}.png");
+        var route = surface.Window.SaveFrame($"engineers-route-{themeId}-{width}x{height}.png");
 
         surface.Window.Close();
         Dispatcher.UIThread.RunJobs();

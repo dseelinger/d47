@@ -99,20 +99,8 @@ public class CaptionSurfaceTests
     /// <summary>One pixel's alpha.</summary>
     private static byte AlphaAt(RenderTargetBitmap frame, int x, int y)
     {
+        var pixels = frame.Pixels();
         var stride = frame.PixelSize.Width * 4;
-        var pixels = new byte[stride * frame.PixelSize.Height];
-
-        unsafe
-        {
-            fixed (byte* buffer = pixels)
-            {
-                frame.CopyPixels(
-                    new PixelRect(0, 0, frame.PixelSize.Width, frame.PixelSize.Height),
-                    (IntPtr)buffer,
-                    pixels.Length,
-                    stride);
-            }
-        }
 
         return pixels[(y * stride) + (x * 4) + 3];
     }
@@ -141,26 +129,6 @@ public class CaptionsKeepArrivingTests
         }
 
         return ink;
-    }
-
-    private static byte[] Pixels(RenderTargetBitmap frame)
-    {
-        var stride = frame.PixelSize.Width * 4;
-        var pixels = new byte[stride * frame.PixelSize.Height];
-
-        unsafe
-        {
-            fixed (byte* buffer = pixels)
-            {
-                frame.CopyPixels(
-                    new PixelRect(0, 0, frame.PixelSize.Width, frame.PixelSize.Height),
-                    (IntPtr)buffer,
-                    pixels.Length,
-                    stride);
-            }
-        }
-
-        return pixels;
     }
 
     /// <summary>How much text the surface would put on the quad as it stands.</summary>

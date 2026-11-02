@@ -27,8 +27,6 @@ namespace D47.App.Tests;
 [Trait("Category", "Integration")]
 public class TheAdventuresScreenIsDrawnOnTheKitTests
 {
-    private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);
-
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 20, 0, 0, TimeSpan.Zero);
 
     private const string Here = "Shinrarta Dezhra";
@@ -127,35 +125,16 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
         return new Surface(window, panel);
     }
 
-    private static string Save(Window window, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var path = name;
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.SaveCapture(path);
-        }
-
-        return path;
-    }
-
     [Trait("Category", "Integration")]
     [AvaloniaTheory]
-    [InlineData(ThemeCatalog.Elite, 1280, 860)]
-    [InlineData(ThemeCatalog.Elite, 924, 640)]
-    [InlineData(ThemeCatalog.Elite, 512, 280)]
-    [InlineData(ThemeCatalog.Dark, 1280, 860)]
-    [InlineData(ThemeCatalog.Light, 1280, 860)]
-    [InlineData(ThemeCatalog.ElitePaletteId, 1280, 860)]
+    [MemberData(nameof(CaptureMatrix.Rows), MemberType = typeof(CaptureMatrix))]
     public void TheAdventuresScreensAreCaptured(string themeId, double width, double height)
     {
-        using var look = AppLook.Put(themeId, themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
+        using var look = AppLook.PutForCapture(themeId);
 
         var surface = Open(width, height);
         var panel = surface.Panel;
-        var saved = new List<string> { Save(surface.Window, $"adventures-{themeId}-{width}x{height}.png") };
+        var saved = new List<string> { surface.Window.SaveFrame($"adventures-{themeId}-{width}x{height}.png") };
 
         if (panel.Mode == PanelMode.Full)
         {
@@ -163,7 +142,7 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
                 .Single(button => (button.Content as string)?.StartsWith("Set aside", StringComparison.Ordinal) == true)
                 .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
-            saved.Add(Save(surface.Window, $"adventures-aside-{themeId}-{width}x{height}.png"));
+            saved.Add(surface.Window.SaveFrame($"adventures-aside-{themeId}-{width}x{height}.png"));
 
             foreach (var (key, label, name) in new[]
                      {
@@ -174,7 +153,7 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
             {
                 panel.Nav.ToRoot();
                 panel.Nav.GoTo(new NavCrumb(key, label));
-                saved.Add(Save(surface.Window, $"adventures-{name}-{themeId}-{width}x{height}.png"));
+                saved.Add(surface.Window.SaveFrame($"adventures-{name}-{themeId}-{width}x{height}.png"));
             }
         }
 

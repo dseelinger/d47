@@ -249,16 +249,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
 
         frame.Render(block);
 
-        var stride = size.Width * 4;
-        var pixels = new byte[stride * size.Height];
-
-        unsafe
-        {
-            fixed (byte* buffer = pixels)
-            {
-                frame.CopyPixels(new PixelRect(0, 0, size.Width, size.Height), (IntPtr)buffer, pixels.Length, stride);
-            }
-        }
+        var pixels = frame.Pixels();
 
         return [.. Enumerable.Range(0, size.Width * size.Height).Select(at => pixels[at * 4] > 128)];
     }

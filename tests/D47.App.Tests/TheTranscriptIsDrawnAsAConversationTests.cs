@@ -16,8 +16,6 @@ namespace D47.App.Tests;
 /// </summary>
 public class TheTranscriptIsDrawnAsAConversationTests
 {
-    private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);
-
     private static PanelView Conversation(PanelMode mode)
     {
         var model = new PanelViewModel();
@@ -39,12 +37,7 @@ public class TheTranscriptIsDrawnAsAConversationTests
     }
 
     [AvaloniaTheory]
-    [InlineData(ThemeCatalog.Elite, 1280, 860)]
-    [InlineData(ThemeCatalog.Elite, 924, 640)]
-    [InlineData(ThemeCatalog.Elite, 512, 280)]
-    [InlineData(ThemeCatalog.Dark, 1280, 860)]
-    [InlineData(ThemeCatalog.Light, 1280, 860)]
-    [InlineData(ThemeCatalog.ElitePaletteId, 1280, 860)]
+    [MemberData(nameof(CaptureMatrix.Rows), MemberType = typeof(CaptureMatrix))]
     public void TheConversationIsCaptured(string themeId, double width, double height)
     {
         // The smallest size is the mini panel, which is what the app draws there.
@@ -56,7 +49,7 @@ public class TheTranscriptIsDrawnAsAConversationTests
             themeId,
             width,
             height,
-            themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
+            AppLook.MatrixFor(themeId));
 
         Assert.True(frame.PixelSize.Width > 0);
 

@@ -25,8 +25,6 @@ namespace D47.App.Tests;
 [Trait("Category", "Integration")]
 public class TheRoutingScreensAreDrawnOnTheKitTests
 {
-    private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);
-
     private static readonly DateTimeOffset Plotted = new(2026, 9, 1, 9, 0, 0, TimeSpan.Zero);
 
     private const string Here = "Alpha Centauri";
@@ -161,31 +159,12 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
         return new Surface(window, panel);
     }
 
-    private static string Save(Window window, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var path = name;
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.SaveCapture(path);
-        }
-
-        return path;
-    }
-
     [Trait("Category", "Integration")]
     [AvaloniaTheory]
-    [InlineData(ThemeCatalog.Elite, 1280, 860)]
-    [InlineData(ThemeCatalog.Elite, 924, 640)]
-    [InlineData(ThemeCatalog.Elite, 512, 280)]
-    [InlineData(ThemeCatalog.Dark, 1280, 860)]
-    [InlineData(ThemeCatalog.Light, 1280, 860)]
-    [InlineData(ThemeCatalog.ElitePaletteId, 1280, 860)]
+    [MemberData(nameof(CaptureMatrix.Rows), MemberType = typeof(CaptureMatrix))]
     public void EveryRoutingPageIsCaptured(string themeId, double width, double height)
     {
-        using var look = AppLook.Put(themeId, themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
+        using var look = AppLook.PutForCapture(themeId);
 
         var surface = Open(width, height);
         var nav = surface.Panel.Nav;
@@ -199,16 +178,16 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
                  })
         {
             nav.SelectRoot(root);
-            saved.Add(Save(surface.Window, $"routing-{root["routing.".Length..]}-{themeId}-{width}x{height}.png"));
+            saved.Add(surface.Window.SaveFrame($"routing-{root["routing.".Length..]}-{themeId}-{width}x{height}.png"));
         }
 
         nav.SelectRoot(RoutingPages.PlanRoot);
         nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));
-        saved.Add(Save(surface.Window, $"routing-result-jump-{themeId}-{width}x{height}.png"));
+        saved.Add(surface.Window.SaveFrame($"routing-result-jump-{themeId}-{width}x{height}.png"));
 
         nav.SelectRoot(RoutingPages.TradeRoot);
         nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Trade, "Sol to Alpha Centauri"));
-        saved.Add(Save(surface.Window, $"routing-result-trade-{themeId}-{width}x{height}.png"));
+        saved.Add(surface.Window.SaveFrame($"routing-result-trade-{themeId}-{width}x{height}.png"));
 
         surface.Window.Close();
         Dispatcher.UIThread.RunJobs();

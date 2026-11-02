@@ -1,3 +1,7 @@
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using D47.Core;
 using D47.Core.Storage;
 using D47.Core.Audio;
@@ -94,6 +98,40 @@ public static class TestSurface
         var path = Path.Combine(CaptureDirectory, fileName);
         frame.Save(path, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
         return path;
+    }
+
+    /// <summary>Runs the queued UI jobs, saves <paramref name="window"/>'s rendered frame as <paramref name="name"/> and returns the name.</summary>
+    public static string SaveFrame(this Window window, string name)
+    {
+        Dispatcher.UIThread.RunJobs();
+
+        using (var frame = window.CaptureRenderedFrame()!)
+        {
+            frame.SaveCapture(name);
+        }
+
+        return name;
+    }
+
+    /// <summary>The 32-bit pixels of <paramref name="frame"/>, row by row.</summary>
+    public static byte[] Pixels(this RenderTargetBitmap frame)
+    {
+        var stride = frame.PixelSize.Width * 4;
+        var pixels = new byte[stride * frame.PixelSize.Height];
+
+        unsafe
+        {
+            fixed (byte* buffer = pixels)
+            {
+                frame.CopyPixels(
+                    new Avalonia.PixelRect(0, 0, frame.PixelSize.Width, frame.PixelSize.Height),
+                    (IntPtr)buffer,
+                    pixels.Length,
+                    stride);
+            }
+        }
+
+        return pixels;
     }
 
     /// <summary>

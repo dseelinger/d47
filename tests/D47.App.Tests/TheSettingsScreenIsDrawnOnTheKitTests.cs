@@ -20,22 +20,6 @@ namespace D47.App.Tests;
 [Trait("Category", "Integration")]
 public class TheSettingsScreenIsDrawnOnTheKitTests
 {
-    private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);
-
-    private static string Save(Window window, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var path = name;
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.SaveCapture(path);
-        }
-
-        return path;
-    }
-
     private static SettingsHost Open(double width, double height)
     {
         var (settings, viewState, paths) = TestSurface.Create();
@@ -44,15 +28,10 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
 
     [Trait("Category", "Integration")]
     [AvaloniaTheory]
-    [InlineData(ThemeCatalog.Elite, 1280, 860)]
-    [InlineData(ThemeCatalog.Elite, 924, 640)]
-    [InlineData(ThemeCatalog.Elite, 512, 280)]
-    [InlineData(ThemeCatalog.Dark, 1280, 860)]
-    [InlineData(ThemeCatalog.Light, 1280, 860)]
-    [InlineData(ThemeCatalog.ElitePaletteId, 1280, 860)]
+    [MemberData(nameof(CaptureMatrix.Rows), MemberType = typeof(CaptureMatrix))]
     public void TheSettingsAreasAreCaptured(string themeId, double width, double height)
     {
-        using var look = AppLook.Put(themeId, themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
+        using var look = AppLook.PutForCapture(themeId);
 
         var host = Open(width, height);
         var saved = new List<string>();
@@ -64,11 +43,11 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
         foreach (var area in areas)
         {
             host.View.SelectArea(SettingsLayout.Areas.ToList().IndexOf(area));
-            saved.Add(Save(host.Window, $"settings-{area.Id}-{themeId}-{width}x{height}.png"));
+            saved.Add(host.Window.SaveFrame($"settings-{area.Id}-{themeId}-{width}x{height}.png"));
         }
 
         host.View.Filter("voice");
-        saved.Add(Save(host.Window, $"settings-search-{themeId}-{width}x{height}.png"));
+        saved.Add(host.Window.SaveFrame($"settings-search-{themeId}-{width}x{height}.png"));
 
         host.Close();
         Dispatcher.UIThread.RunJobs();
@@ -141,7 +120,7 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
         foreach (var place in SettingsLayout.Areas[0].Places)
         {
             SettingsPageReading.Open(host.View, place.Id);
-            saved.Add(Save(host.Window, $"settings-page-{place.Id}-{width}x{height}.png"));
+            saved.Add(host.Window.SaveFrame($"settings-page-{place.Id}-{width}x{height}.png"));
         }
 
         host.Close();

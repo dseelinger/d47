@@ -39,36 +39,15 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
 {
     private static readonly DateTimeOffset Instant = new(2026, 9, 23, 12, 0, 0, TimeSpan.Zero);
 
-    private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);
-
-    private static string Save(Window window, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var path = name;
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.SaveCapture(path);
-        }
-
-        return path;
-    }
-
     private static Color Ink(string key) =>
         ((ISolidColorBrush)Avalonia.Application.Current!.Resources[key]!).Color;
 
     [Trait("Category", "Integration")]
     [AvaloniaTheory]
-    [InlineData(ThemeCatalog.Elite, 1280, 860)]
-    [InlineData(ThemeCatalog.Elite, 924, 640)]
-    [InlineData(ThemeCatalog.Elite, 512, 280)]
-    [InlineData(ThemeCatalog.Dark, 1280, 860)]
-    [InlineData(ThemeCatalog.Light, 1280, 860)]
-    [InlineData(ThemeCatalog.ElitePaletteId, 1280, 860)]
+    [MemberData(nameof(CaptureMatrix.Rows), MemberType = typeof(CaptureMatrix))]
     public void LearnedPhrasesAndHelpAreCaptured(string themeId, double width, double height)
     {
-        using var look = AppLook.Put(themeId, themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
+        using var look = AppLook.PutForCapture(themeId);
 
         var saved = new List<string>
         {
@@ -113,7 +92,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
         Assert.True(panel.Nav.SelectRoot(PhrasesPage.RootKey));
         Dispatcher.UIThread.RunJobs();
 
-        var path = Save(window, $"learned-phrases-{themeId}-{width}x{height}.png");
+        var path = window.SaveFrame($"learned-phrases-{themeId}-{width}x{height}.png");
         window.Close();
 
         return path;
@@ -128,7 +107,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var path = Save(window, $"help-{themeId}-{width}x{height}.png");
+        var path = window.SaveFrame($"help-{themeId}-{width}x{height}.png");
         window.Close();
 
         return path;
@@ -305,7 +284,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
     [InlineData(ThemeCatalog.ElitePaletteId)]
     public void EveryDialogIsCaptured(string themeId)
     {
-        using var look = AppLook.Put(themeId, themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
+        using var look = AppLook.PutForCapture(themeId);
 
         var saved = new List<string>();
 
@@ -315,7 +294,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
             window.Show();
             Dispatcher.UIThread.RunJobs();
 
-            saved.Add(Save(window, $"dialog-{name}-{themeId}.png"));
+            saved.Add(window.SaveFrame($"dialog-{name}-{themeId}.png"));
 
             window.Close();
             Dispatcher.UIThread.RunJobs();

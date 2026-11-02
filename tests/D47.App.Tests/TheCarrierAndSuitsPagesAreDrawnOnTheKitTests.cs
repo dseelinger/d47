@@ -26,8 +26,6 @@ namespace D47.App.Tests;
 [Trait("Category", "Integration")]
 public class TheCarrierAndSuitsPagesAreDrawnOnTheKitTests
 {
-    private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);
-
     private static readonly string[] Journal =
     [
         """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
@@ -75,48 +73,29 @@ public class TheCarrierAndSuitsPagesAreDrawnOnTheKitTests
         return new Surface(window, panel, kit);
     }
 
-    private static string Save(Window window, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var path = name;
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.SaveCapture(path);
-        }
-
-        return path;
-    }
-
     [Trait("Category", "Integration")]
     [AvaloniaTheory]
-    [InlineData(ThemeCatalog.Elite, 1280, 860)]
-    [InlineData(ThemeCatalog.Elite, 924, 640)]
-    [InlineData(ThemeCatalog.Elite, 512, 280)]
-    [InlineData(ThemeCatalog.Dark, 1280, 860)]
-    [InlineData(ThemeCatalog.Light, 1280, 860)]
-    [InlineData(ThemeCatalog.ElitePaletteId, 1280, 860)]
+    [MemberData(nameof(CaptureMatrix.Rows), MemberType = typeof(CaptureMatrix))]
     public void TheCarrierAndSuitsPagesAreCaptured(string themeId, double width, double height)
     {
-        using var look = AppLook.Put(themeId, themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
+        using var look = AppLook.PutForCapture(themeId);
 
         var surface = Open(width, height);
         var panel = surface.Panel;
 
         Assert.True(panel.Nav.SelectRoot(LoadoutPages.CarrierRoot));
-        var carrier = Save(surface.Window, $"carrier-{themeId}-{width}x{height}.png");
+        var carrier = surface.Window.SaveFrame($"carrier-{themeId}-{width}x{height}.png");
 
         var build = surface.Kit.BuildFor(OnFootKind.Suit, 7, "Maverick Suit");
         surface.Kit.Plan(build.Id, new KitPlan(OnFootBuild.GradeSlot, 5));
 
         Assert.True(panel.Nav.SelectRoot(OnFootMode.Root));
-        var suits = Save(surface.Window, $"suits-{themeId}-{width}x{height}.png");
+        var suits = surface.Window.SaveFrame($"suits-{themeId}-{width}x{height}.png");
 
         panel.Nav.GoTo(
             new NavCrumb(OnFootMode.KitPrefix + build.Id, "Maverick Suit"),
             new NavCrumb($"{OnFootMode.KitSlotPrefix}{build.Id}|{OnFootBuild.GradeSlot}", "Grade"));
-        var grade = Save(surface.Window, $"suits-grade-{themeId}-{width}x{height}.png");
+        var grade = surface.Window.SaveFrame($"suits-grade-{themeId}-{width}x{height}.png");
 
         surface.Window.Close();
         Dispatcher.UIThread.RunJobs();

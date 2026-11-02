@@ -76,6 +76,14 @@ public static class AppLook
         });
     }
 
+    private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);
+
+    /// <summary>The HUD matrix a capture of <paramref name="themeId"/> uses: blue for the Elite palette, otherwise none.</summary>
+    public static GuiColourMatrix? MatrixFor(string themeId) => themeId == ThemeCatalog.ElitePaletteId ? Blue : null;
+
+    /// <summary><see cref="Put"/> with the matrix the captures use for <paramref name="themeId"/>.</summary>
+    public static IDisposable PutForCapture(string themeId) => Put(themeId, MatrixFor(themeId));
+
     /// <summary>
     /// Points <see cref="ShipArt"/> as MainWindow does — the data folder of an empty install and the build's
     /// own <c>ships</c> folder beside the test binary — and restores what it pointed at on Dispose. Callers

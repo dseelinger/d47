@@ -27,8 +27,6 @@ namespace D47.App.Tests;
 [Collection(nameof(ShipArtCollection))]
 public class TheFleetPagesAreDrawnOnTheKitTests
 {
-    private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);
-
     private static readonly string[] Journal =
     [
         """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
@@ -78,31 +76,12 @@ public class TheFleetPagesAreDrawnOnTheKitTests
         panel.GetVisualDescendants().OfType<Button>()
             .First(button => AutomationProperties.GetName(button) == label);
 
-    private static string Save(Window window, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var path = name;
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.SaveCapture(path);
-        }
-
-        return path;
-    }
-
     [Trait("Category", "Integration")]
     [AvaloniaTheory]
-    [InlineData(ThemeCatalog.Elite, 1280, 860)]
-    [InlineData(ThemeCatalog.Elite, 924, 640)]
-    [InlineData(ThemeCatalog.Elite, 512, 280)]
-    [InlineData(ThemeCatalog.Dark, 1280, 860)]
-    [InlineData(ThemeCatalog.Light, 1280, 860)]
-    [InlineData(ThemeCatalog.ElitePaletteId, 1280, 860)]
+    [MemberData(nameof(CaptureMatrix.Rows), MemberType = typeof(CaptureMatrix))]
     public void TheFleetPagesAreCaptured(string themeId, double width, double height)
     {
-        using var look = AppLook.Put(themeId, themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
+        using var look = AppLook.PutForCapture(themeId);
         using var art = AppLook.HullArt();
 
         var (window, panel) = Open(width, height);
@@ -110,7 +89,7 @@ public class TheFleetPagesAreDrawnOnTheKitTests
         Row(panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        var ship = Save(window, $"fleet-ship-{themeId}-{width}x{height}.png");
+        var ship = window.SaveFrame($"fleet-ship-{themeId}-{width}x{height}.png");
 
         // The card of the ship being shown is filled solid, not outlined; mini draws only the ship page.
         if (panel.Mode == PanelMode.Full)
@@ -126,12 +105,12 @@ public class TheFleetPagesAreDrawnOnTheKitTests
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        var slot = Save(window, $"fleet-slot-{themeId}-{width}x{height}.png");
+        var slot = window.SaveFrame($"fleet-slot-{themeId}-{width}x{height}.png");
 
         Assert.True(panel.Nav.SelectRoot(LoadoutPages.GapRoot));
         Dispatcher.UIThread.RunJobs();
 
-        var materials = Save(window, $"fleet-materials-{themeId}-{width}x{height}.png");
+        var materials = window.SaveFrame($"fleet-materials-{themeId}-{width}x{height}.png");
 
         window.Close();
         Dispatcher.UIThread.RunJobs();

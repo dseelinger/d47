@@ -239,19 +239,6 @@ public class TheVrPanelKeepsUpTests
     private static string Frame(OffscreenSurface surface)
     {
         var rendered = surface.Render();
-        var size = rendered.PixelSize;
-        var stride = size.Width * 4;
-        var pixels = new byte[stride * size.Height];
-
-        unsafe
-        {
-            fixed (byte* buffer = pixels)
-            {
-                rendered.CopyPixels(
-                    new PixelRect(0, 0, size.Width, size.Height), (IntPtr)buffer, pixels.Length, stride);
-            }
-        }
-
-        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(pixels));
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(rendered.Pixels()));
     }
 }
