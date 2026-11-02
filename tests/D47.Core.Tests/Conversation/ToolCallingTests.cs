@@ -13,13 +13,13 @@ namespace D47.Core.Tests.Conversation;
 public class ToolCallingTests
 {
     /// <summary>Records what it was called with, so a test can assert the arguments arrived.</summary>
-    private sealed class SpyTool
+    internal sealed class SpyTool
     {
         public List<ToolArguments> Calls { get; } = [];
 
         public ToolResult Result { get; set; } = ToolResult.Ok("Sol is 0 light years away.");
 
-        public CapabilityDescriptor Describe(string toolName = "look_up_distance") => new()
+        public CapabilityDescriptor Describe(string toolName = "look_up_distance", bool withRoundTo = true) => new()
         {
             Id = "galaxy",
             Group = "Knowledge",
@@ -40,12 +40,17 @@ public class ToolCallingTests
                             Description = "The system to measure to.",
                             Required = true,
                         },
-                        new ToolParameter
-                        {
-                            Name = "round_to",
-                            Type = ToolParameterType.Integer,
-                            Description = "Decimal places.",
-                        },
+                        .. withRoundTo
+                            ? (ToolParameter[])
+                            [
+                                new ToolParameter
+                                {
+                                    Name = "round_to",
+                                    Type = ToolParameterType.Integer,
+                                    Description = "Decimal places.",
+                                },
+                            ]
+                            : [],
                     ],
                     Handler = (arguments, _) =>
                     {

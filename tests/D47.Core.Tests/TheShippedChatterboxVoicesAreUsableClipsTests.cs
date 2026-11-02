@@ -13,11 +13,11 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
     public void EveryShippedRowHasAClipOfTheRightShapeAndASource()
     {
         var folder = Path.Combine(RepositoryFolder.Root(), "assets", "voices", "chatterbox");
-        var log = new ListLogger();
+        var log = new RecordingLogger();
 
         var voices = ChatterboxVoices.Load(new DiskFileSystem(), folder, log);
 
-        Assert.Empty(log.Messages);
+        Assert.Empty(log.Lines);
         Assert.Equal(12, voices.Count);
         Assert.Equal(6, voices.Count(voice => voice.Voice.Gender == "female"));
         Assert.Equal(6, voices.Count(voice => voice.Voice.Gender == "male"));
@@ -36,15 +36,15 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
             "short\tShort\tfemale\ten\t\tsource",
             "long\tLong\tmale\ten\t\tsource",
             "fine\tFine\tmale\ten\tNarrator\tsource");
-        var log = new ListLogger();
+        var log = new RecordingLogger();
 
         var voices = ChatterboxVoices.Load(files, folder, log);
 
         var voice = Assert.Single(voices);
         Assert.Equal("fine", voice.Voice.Id);
         Assert.Equal(VoiceRole.Narrator, voice.Role);
-        Assert.Contains(log.Messages, message => message.Contains("short") && message.Contains("4.0 s"));
-        Assert.Contains(log.Messages, message => message.Contains("long") && message.Contains("8.0 s"));
+        Assert.Contains(log.Lines, message => message.Contains("short") && message.Contains("4.0 s"));
+        Assert.Contains(log.Lines, message => message.Contains("long") && message.Contains("8.0 s"));
     }
 
     [Fact]
@@ -58,14 +58,14 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
             "nosource\tA\tfemale\ten\t\t",
             "missing\tB\tmale\ten\t\tsource",
             "slow\tC\tmale\ten\t\tsource");
-        var log = new ListLogger();
+        var log = new RecordingLogger();
 
         var voices = ChatterboxVoices.Load(files, folder, log);
 
         Assert.Empty(voices);
-        Assert.Contains(log.Messages, message => message.Contains("nosource") && message.Contains("source is empty"));
-        Assert.Contains(log.Messages, message => message.Contains("missing") && message.Contains("missing"));
-        Assert.Contains(log.Messages, message => message.Contains("slow") && message.Contains("16000 Hz"));
+        Assert.Contains(log.Lines, message => message.Contains("nosource") && message.Contains("source is empty"));
+        Assert.Contains(log.Lines, message => message.Contains("missing") && message.Contains("missing"));
+        Assert.Contains(log.Lines, message => message.Contains("slow") && message.Contains("16000 Hz"));
     }
 
     private static string NewFolder() => "C:/d47-test/voices";
@@ -80,17 +80,5 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
         var format = new AudioFormat(sampleRate, 1);
         var pcm = new byte[(int)(seconds * sampleRate) * format.BytesPerFrame];
         files.WriteBytes(Path.Combine(folder, id + ".wav"), WavWriter.ToBytes(pcm, format));
-    }
-
-    private sealed class ListLogger : ILogger
-    {
-        public List<string> Messages { get; } = [];
-
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
-            Messages.Add(formatter(state, exception));
     }
 }

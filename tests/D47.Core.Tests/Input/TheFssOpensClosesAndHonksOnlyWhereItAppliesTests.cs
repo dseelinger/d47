@@ -22,35 +22,8 @@ public class TheFssOpensClosesAndHonksOnlyWhereItAppliesTests
         ],
     };
 
-    private static (CapabilityRegistry Registry, KeywordRouter Router, RecordingGameInput Input) Build(GuiFocus focus)
-    {
-        var input = new RecordingGameInput();
-        var surface = new ActionSurface
-        {
-            Binds = () => Binds,
-            Status = () => new GameStatus
-            {
-                Flags = StatusFlags.InMainShip,
-                GuiFocus = focus,
-                ReadAt = DateTimeOffset.UnixEpoch,
-            },
-            Input = input,
-            Enabled = () => true,
-        };
-
-        var registry = CapabilityRegistry.Build(ActionCapabilities.All(surface));
-
-        return (registry, new KeywordRouter(registry), input);
-    }
-
-    private static async Task<ToolResult> Say(
-        (CapabilityRegistry Registry, KeywordRouter Router, RecordingGameInput Input) rig, string phrase)
-    {
-        var match = rig.Router.MatchToolCommand(phrase);
-        Assert.NotNull(match);
-
-        return await rig.Registry.InvokeAsync(match.ToolName, match.Arguments, TestContext.Current.CancellationToken);
-    }
+    private static (CapabilityRegistry Registry, KeywordRouter Router, RecordingGameInput Input) Build(GuiFocus focus) =>
+        ActionRig.Build(Binds, focus);
 
     [Theory]
     [InlineData("open the fss", "fss_open")]
@@ -76,7 +49,7 @@ public class TheFssOpensClosesAndHonksOnlyWhereItAppliesTests
     {
         var rig = Build(GuiFocus.None);
 
-        Assert.False((await Say(rig, "open the fss")).IsError);
+        Assert.False((await ActionRig.Say(rig, "open the fss")).IsError);
         Assert.NotEmpty(rig.Input.Steps);
     }
 
@@ -84,7 +57,7 @@ public class TheFssOpensClosesAndHonksOnlyWhereItAppliesTests
     public async Task OpeningTheFssWhileItIsOpenSaysSoAndSendsNothing()
     {
         var rig = Build(GuiFocus.FssMode);
-        var result = await Say(rig, "open the fss");
+        var result = await ActionRig.Say(rig, "open the fss");
 
         Assert.True(result.IsError);
         Assert.Contains("The FSS is already open.", result.Content);
@@ -97,7 +70,7 @@ public class TheFssOpensClosesAndHonksOnlyWhereItAppliesTests
     public async Task ClosingOrScanningOutsideTheFssSaysItIsNotOpenAndSendsNothing(string phrase)
     {
         var rig = Build(GuiFocus.None);
-        var result = await Say(rig, phrase);
+        var result = await ActionRig.Say(rig, phrase);
 
         Assert.True(result.IsError);
         Assert.Contains("The FSS is not open.", result.Content);
@@ -109,7 +82,7 @@ public class TheFssOpensClosesAndHonksOnlyWhereItAppliesTests
     {
         var rig = Build(GuiFocus.FssMode);
 
-        Assert.False((await Say(rig, "discovery scan")).IsError);
+        Assert.False((await ActionRig.Say(rig, "discovery scan")).IsError);
 
         var held = rig.Input.Steps.Where(s => s.Kind == InputStepKind.Delay).Aggregate(TimeSpan.Zero, (sum, s) => sum + s.Delay);
 

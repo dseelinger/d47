@@ -43,7 +43,7 @@ public class TheUnitsAreSpokenAsWordsTests
     [Fact]
     public async Task TheTranscriptStillShowsTheAbbreviations()
     {
-        var log = new List<string>();
+        var log = new RecordingLogger();
         var arbiter = new AudioArbiter(
             new RecordingAudioSink(), NullLogger<AudioArbiter>.Instance).Start();
 
@@ -52,13 +52,13 @@ public class TheUnitsAreSpokenAsWordsTests
             new FakeTtsProvider(),
             VoiceSelection.Default,
             "turn-1",
-            new Capture(log)))
+            log))
         {
             pipeline.Push("Perez Ring is 5.79 ly out.");
             await pipeline.CompleteAsync();
         }
 
-        var said = Assert.Single(log, line => line.Contains(" said: ", StringComparison.Ordinal));
+        var said = Assert.Single(log.Lines, line => line.Contains(" said: ", StringComparison.Ordinal));
 
         Assert.Contains("5.79 ly", said, StringComparison.Ordinal);
         Assert.DoesNotContain("light year", said, StringComparison.Ordinal);
@@ -153,20 +153,5 @@ public class TheUnitsAreSpokenAsWordsTests
         };
 
         public string? Lookup(string word) => Words.GetValueOrDefault(word);
-    }
-
-    private sealed class Capture(List<string> lines) : Microsoft.Extensions.Logging.ILogger
-    {
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            Microsoft.Extensions.Logging.LogLevel logLevel,
-            Microsoft.Extensions.Logging.EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter) =>
-            lines.Add(formatter(state, exception));
     }
 }

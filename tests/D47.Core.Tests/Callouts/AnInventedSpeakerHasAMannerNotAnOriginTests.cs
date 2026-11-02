@@ -8,22 +8,7 @@ namespace D47.Core.Tests.Callouts;
 
 public class AnInventedSpeakerHasAMannerNotAnOriginTests
 {
-    private static readonly VoiceInfo[] Listed =
-    [
-        new("gb-woman", "Sonia", "en-GB", "Female"),
-        new("us-man", "Guy", "en-US", "Male"),
-        new("ie-woman", "Emily", "en-IE", "Female"),
-        new("au-man", "William", "en-AU", "Male"),
-    ];
-
-    private static VoiceCast Cast() => new()
-    {
-        Pool = VoicePool.From(Listed),
-        Feminine = VoicePool.Feminine(Listed),
-        British = VoicePool.British(Listed),
-        Voices = Listed.ToDictionary(voice => voice.Id, StringComparer.OrdinalIgnoreCase),
-        DefaultVoice = "core",
-    };
+    private static VoiceCast Cast() => VoiceFixtures.Cast(VoiceFixtures.FourVoices, "core");
 
     /// <summary>Words that describe where someone is from or how well they speak, rather than how they talk.</summary>
     private static readonly string[] Origins =

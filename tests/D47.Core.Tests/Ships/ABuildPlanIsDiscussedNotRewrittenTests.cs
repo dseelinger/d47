@@ -4,6 +4,7 @@ using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Ships;
 using D47.Core.Storage;
+using D47.Core.Tests.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -24,9 +25,9 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
           {"slot":"MainEngines","blueprint":"Dirty Drive Tuning","grade":2,"reason":"Lighter tuning, less mass."}]}
         """;
 
-    private static (ShipPlanAdvisor Advisor, ScriptedModel Model) Advisor(CommanderGameState? state, params string[] replies)
+    private static (ShipPlanAdvisor Advisor, ScriptedReplies Model) Advisor(CommanderGameState? state, params string[] replies)
     {
-        var model = new ScriptedModel(replies);
+        var model = new ScriptedReplies(replies);
 
         return (new ShipPlanAdvisor(() => model, () => "high-model", () => null, () => null, () => state, null, null, NullLogger.Instance), model);
     }
@@ -258,37 +259,5 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
 
         output.WriteLine($"{hull.Name}: {slots.Count} slots planned, {prompt.Length} characters, about {tokens} tokens");
         Assert.InRange(tokens, 1, 16000);
-    }
-
-    private sealed class ScriptedModel(params string[] replies) : ILlmProvider
-    {
-        public List<string> Requests { get; } = [];
-
-        public List<(string? Model, ThinkingEffort Effort)> Calls { get; } = [];
-
-        public string Id => "scripted";
-
-        public string DisplayName => "Scripted";
-
-        public string DefaultModel => "scripted";
-
-        public LlmProviderCapabilities CapabilitiesFor(string model) => new()
-        {
-            SupportsPromptCaching = false,
-            SupportsThinkingEffort = false,
-            SupportsOperatorSystemMessages = false,
-            MinimumCacheablePrefixTokens = 0,
-        };
-
-        public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
-            LlmRequest request,
-            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
-        {
-            Calls.Add((request.Model, request.Effort));
-            Requests.Add(string.Join("\n", request.Prompt.History.Select(message => message.ToString())));
-            yield return new LlmStreamEvent.TextDelta(replies[Math.Min(Requests.Count, replies.Length) - 1]);
-            yield return new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed);
-            await Task.CompletedTask;
-        }
     }
 }

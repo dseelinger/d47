@@ -111,7 +111,7 @@ public class ANumberInANameIsNotAQuantityTests
     [Fact]
     public async Task TheTranscriptStillShowsTheDigits()
     {
-        var log = new List<string>();
+        var log = new RecordingLogger();
         var arbiter = new AudioArbiter(
             new RecordingAudioSink(), NullLogger<AudioArbiter>.Instance).Start();
 
@@ -120,30 +120,15 @@ public class ANumberInANameIsNotAQuantityTests
             new FakeTtsProvider(),
             VoiceSelection.Default,
             "turn-1",
-            new Capture(log)))
+            log))
         {
             pipeline.Push("Plotted to HIP 3269.");
             await pipeline.CompleteAsync();
         }
 
-        var said = Assert.Single(log, line => line.Contains(" said: ", StringComparison.Ordinal));
+        var said = Assert.Single(log.Lines, line => line.Contains(" said: ", StringComparison.Ordinal));
 
         Assert.Contains("HIP 3269", said, StringComparison.Ordinal);
         Assert.DoesNotContain("three two six nine", said, StringComparison.Ordinal);
-    }
-
-    private sealed class Capture(List<string> lines) : Microsoft.Extensions.Logging.ILogger
-    {
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            Microsoft.Extensions.Logging.LogLevel logLevel,
-            Microsoft.Extensions.Logging.EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter) =>
-            lines.Add(formatter(state, exception));
     }
 }

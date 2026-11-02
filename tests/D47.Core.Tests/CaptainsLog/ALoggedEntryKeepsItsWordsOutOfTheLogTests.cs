@@ -18,20 +18,7 @@ public class ALoggedEntryKeepsItsWordsOutOfTheLogTests
 
     private static readonly DateTimeOffset Now = new(2026, 10, 21, 9, 30, 0, TimeSpan.Zero);
 
-    private sealed class CapturingLogger : ILogger<TurnLoop>
-    {
-        public List<string> Lines { get; } = [];
-
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
-            Lines.Add(formatter(state, exception));
-    }
-
-    private static (TurnLoop Loop, CapturingLogger Log) Build()
+    private static (TurnLoop Loop, RecordingLogger<TurnLoop> Log) Build()
     {
         var store = new CaptainsLogStore(
             Path.Combine(@"C:\d47-test", "data", "captains-log.json"), new MemoryFileSystem(), NullLogger<CaptainsLogStore>.Instance);
@@ -40,7 +27,7 @@ public class ALoggedEntryKeepsItsWordsOutOfTheLogTests
         [
             CaptainsLogCapability.Create(store, () => Commander, () => state, () => new GameStatus(), () => Now),
         ]);
-        var log = new CapturingLogger();
+        var log = new RecordingLogger<TurnLoop>();
 
         var loop = new TurnLoop(
             registry,

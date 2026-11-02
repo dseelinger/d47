@@ -15,7 +15,7 @@ public class TheLogSaysWhatWasSaidTests
         string? speaker,
         params string[] pushes)
     {
-        var log = new List<string>();
+        var log = new RecordingLogger();
         var arbiter = new AudioArbiter(
             new RecordingAudioSink(),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<AudioArbiter>.Instance).Start();
@@ -25,7 +25,7 @@ public class TheLogSaysWhatWasSaidTests
             tts,
             new VoiceSelection("voice-1") { Name = "George" },
             "test",
-            new Capture(log),
+            log,
             speaker: speaker))
         {
             foreach (var push in pushes)
@@ -36,7 +36,7 @@ public class TheLogSaysWhatWasSaidTests
             await speech.CompleteAsync();
         }
 
-        return log;
+        return log.Lines;
     }
 
     private static string SaidLine(IReadOnlyList<string> log) =>
@@ -85,21 +85,6 @@ public class TheLogSaysWhatWasSaidTests
         var log = await SpokenAsync("D47");
 
         Assert.DoesNotContain(log, message => message.Contains(" said: ", StringComparison.Ordinal));
-    }
-
-    private sealed class Capture(List<string> lines) : ILogger
-    {
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter) =>
-            lines.Add(formatter(state, exception));
     }
 
     /// <summary>

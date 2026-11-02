@@ -12,7 +12,7 @@ namespace D47.Core.Tests.Conversation;
 /// <summary>"Never gated behind a turn completing".</summary>
 public class InterruptingCommandTests
 {
-    private static KeywordRouter Router(MemoryInstall install, Action? onSilence = null)
+    private static CapabilityRegistry Registry(MemoryInstall install, Action? onSilence = null)
     {
         CapabilityRegistry? built = null;
 
@@ -42,6 +42,13 @@ public class InterruptingCommandTests
             TestSurface.Checklists(install.Paths)));
 
         built = registry;
+
+        return registry;
+    }
+
+    private static KeywordRouter Router(MemoryInstall install, Action? onSilence = null)
+    {
+        var registry = Registry(install, onSilence);
 
         return new KeywordRouter(registry);
     }
@@ -159,34 +166,7 @@ public class InterruptingCommandTests
     {
         var install = new MemoryInstall();
 
-        CapabilityRegistry? built = null;
-
-        var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
-            install.Paths,
-            new FakeVerbosityControl(),
-            new D47.Core.Journal.GameStateStore(),
-            TestSurface.For(install).Settings,
-            new LlmAvailabilityState(providerConfigured: false),
-            new SpendTracker(),
-            "1.0.0-test",
-            TestSurface.SilentSpeech(),
-            TestSurface.NoFleet(),
-            SpokenNamesSurface.Inert,
-            new TurnCancellation(NullLogger<TurnCancellation>.Instance),
-            new CalloutEngine(NullLogger<CalloutEngine>.Instance),
-            () => built!,
-            TestSurface.SilentListening(),
-            TestSurface.NoHeadset(),
-            ActionSurface.Inert,
-            () => "No autonomous actions in a test.",
-            NavigationSurface.Inert,
-            new D47.Core.Actions.MacroStore(
-                Path.Combine(install.Paths.Data, "macros.json"), install.Files,
-                NullLogger<D47.Core.Actions.MacroStore>.Instance),
-            new D47.Core.Persona.PersonaHost(),
-            TestSurface.Checklists(install.Paths)));
-
-        built = registry;
+        var registry = Registry(install);
 
         var interrupting =
             (from capability in registry.All
@@ -207,34 +187,7 @@ public class InterruptingCommandTests
         var install = new MemoryInstall();
         var silenced = 0;
 
-        CapabilityRegistry? built = null;
-
-        var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
-            install.Paths,
-            new FakeVerbosityControl(),
-            new D47.Core.Journal.GameStateStore(),
-            TestSurface.For(install).Settings,
-            new LlmAvailabilityState(providerConfigured: false),
-            new SpendTracker(),
-            "1.0.0-test",
-            TestSurface.SilentSpeech(() => silenced++),
-            TestSurface.NoFleet(),
-            SpokenNamesSurface.Inert,
-            new TurnCancellation(NullLogger<TurnCancellation>.Instance),
-            new CalloutEngine(NullLogger<CalloutEngine>.Instance),
-            () => built!,
-            TestSurface.SilentListening(),
-            TestSurface.NoHeadset(),
-            ActionSurface.Inert,
-            () => "No autonomous actions in a test.",
-            NavigationSurface.Inert,
-            new D47.Core.Actions.MacroStore(
-                Path.Combine(install.Paths.Data, "macros.json"), install.Files,
-                NullLogger<D47.Core.Actions.MacroStore>.Instance),
-            new D47.Core.Persona.PersonaHost(),
-            TestSurface.Checklists(install.Paths)));
-
-        built = registry;
+        var registry = Registry(install, () => silenced++);
 
         var match = new KeywordRouter(registry).MatchInterrupting("shut up");
         Assert.NotNull(match);

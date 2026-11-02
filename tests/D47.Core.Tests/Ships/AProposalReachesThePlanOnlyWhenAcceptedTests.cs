@@ -5,6 +5,7 @@ using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Ships;
 using D47.Core.Storage;
+using D47.Core.Tests.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -218,7 +219,7 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     {
         var install = new MemoryInstall();
         var bench = Set(install);
-        var model = new ScriptedModel("""
+        var model = new ScriptedReplies("""
             {"kind":"goal","reply":"Fit a bigger Frame Shift Drive. Tune the Thrusters. Cool the Power Plant. Charge the Power Distributor. Lighten the Life Support.","changes":[
               {"slot":"FrameShiftDrive","module":"Frame Shift Drive","class":5,"rating":"A","blueprint":"Increased FSD Range","grade":5,"reason":"Range."},
               {"slot":"MainEngines","blueprint":"Dirty Drive Tuning","grade":5,"reason":"Speed."},
@@ -278,31 +279,5 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     {
         Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
         return parsed!;
-    }
-
-    private sealed class ScriptedModel(string reply) : ILlmProvider
-    {
-        public string Id => "scripted";
-
-        public string DisplayName => "Scripted";
-
-        public string DefaultModel => "scripted";
-
-        public LlmProviderCapabilities CapabilitiesFor(string model) => new()
-        {
-            SupportsPromptCaching = false,
-            SupportsThinkingEffort = false,
-            SupportsOperatorSystemMessages = false,
-            MinimumCacheablePrefixTokens = 0,
-        };
-
-        public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
-            LlmRequest request,
-            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
-        {
-            yield return new LlmStreamEvent.TextDelta(reply);
-            yield return new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed);
-            await Task.CompletedTask;
-        }
     }
 }

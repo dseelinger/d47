@@ -8,7 +8,7 @@ public class TheLogSaysWhichVoiceSpokeTests
 {
     private static async Task<IReadOnlyList<string>> SpokenAsync(VoiceSelection voice, string? speaker)
     {
-        var log = new List<string>();
+        var log = new RecordingLogger();
         var arbiter = new AudioArbiter(
             new RecordingAudioSink(),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<AudioArbiter>.Instance).Start();
@@ -18,14 +18,14 @@ public class TheLogSaysWhichVoiceSpokeTests
             new FakeTtsProvider(),
             voice,
             "test",
-            new Capture(log),
+            log,
             speaker: speaker))
         {
             speech.Push("Hull integrity is nominal.");
             await speech.CompleteAsync();
         }
 
-        return log;
+        return log.Lines;
     }
 
     [Fact]
@@ -85,20 +85,5 @@ public class TheLogSaysWhichVoiceSpokeTests
 
         Assert.Contains("Spoken by Tower", line, StringComparison.Ordinal);
         Assert.Contains("the provider's own voice", line, StringComparison.Ordinal);
-    }
-
-    private sealed class Capture(List<string> lines) : ILogger
-    {
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter) =>
-            lines.Add(formatter(state, exception));
     }
 }

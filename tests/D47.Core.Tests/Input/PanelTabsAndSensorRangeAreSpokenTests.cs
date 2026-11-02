@@ -22,26 +22,8 @@ public class PanelTabsAndSensorRangeAreSpokenTests
         ],
     };
 
-    private static (CapabilityRegistry Registry, KeywordRouter Router, RecordingGameInput Input) Build(GuiFocus focus)
-    {
-        var input = new RecordingGameInput();
-        var surface = new ActionSurface
-        {
-            Binds = () => Binds,
-            Status = () => new GameStatus
-            {
-                Flags = StatusFlags.InMainShip,
-                GuiFocus = focus,
-                ReadAt = DateTimeOffset.UnixEpoch,
-            },
-            Input = input,
-            Enabled = () => true,
-        };
-
-        var registry = CapabilityRegistry.Build(ActionCapabilities.All(surface));
-
-        return (registry, new KeywordRouter(registry), input);
-    }
+    private static (CapabilityRegistry Registry, KeywordRouter Router, RecordingGameInput Input) Build(GuiFocus focus) =>
+        ActionRig.Build(Binds, focus);
 
     [Theory]
     [InlineData("next tab", "next_tab")]
@@ -88,10 +70,7 @@ public class PanelTabsAndSensorRangeAreSpokenTests
     public async Task GalaxyMapHomeOutsideTheGalaxyMapSaysItIsNotOpenAndSendsNothing()
     {
         var rig = Build(GuiFocus.None);
-        var match = rig.Router.MatchToolCommand("galaxy map home");
-        Assert.NotNull(match);
-
-        var result = await rig.Registry.InvokeAsync(match.ToolName, match.Arguments, TestContext.Current.CancellationToken);
+        var result = await ActionRig.Say(rig, "galaxy map home");
 
         Assert.True(result.IsError);
         Assert.Contains("The galaxy map is not open.", result.Content);
@@ -102,10 +81,7 @@ public class PanelTabsAndSensorRangeAreSpokenTests
     public async Task GalaxyMapHomeInsideTheGalaxyMapPressesItsKey()
     {
         var rig = Build(GuiFocus.GalaxyMap);
-        var match = rig.Router.MatchToolCommand("galaxy map home");
-        Assert.NotNull(match);
-
-        var result = await rig.Registry.InvokeAsync(match.ToolName, match.Arguments, TestContext.Current.CancellationToken);
+        var result = await ActionRig.Say(rig, "galaxy map home");
 
         Assert.False(result.IsError);
         Assert.NotEmpty(rig.Input.Steps);
@@ -115,10 +91,7 @@ public class PanelTabsAndSensorRangeAreSpokenTests
     public async Task RecentringTheHeadsetPressesItsKey()
     {
         var rig = Build(GuiFocus.None);
-        var match = rig.Router.MatchToolCommand("recentre the headset");
-        Assert.NotNull(match);
-
-        var result = await rig.Registry.InvokeAsync(match.ToolName, match.Arguments, TestContext.Current.CancellationToken);
+        var result = await ActionRig.Say(rig, "recentre the headset");
 
         Assert.False(result.IsError);
         Assert.NotEmpty(rig.Input.Steps);

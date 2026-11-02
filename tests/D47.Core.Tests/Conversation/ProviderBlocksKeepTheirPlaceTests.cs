@@ -13,35 +13,8 @@ public class ProviderBlocksKeepTheirPlaceTests
 
     private static TurnLoop Build(ILlmProvider provider)
     {
-        var registry = CapabilityRegistry.Build(
-        [
-            new CapabilityDescriptor
-            {
-                Id = "galaxy",
-                Group = "Knowledge",
-                Name = "Galaxy",
-                Summary = "Looks things up in the galaxy.",
-                Tools =
-                [
-                    new ToolDefinition
-                    {
-                        Name = "look_up_distance",
-                        Description = "How far one system is from another.",
-                        Parameters =
-                        [
-                            new ToolParameter
-                            {
-                                Name = "system",
-                                Type = ToolParameterType.String,
-                                Description = "The system to measure to.",
-                                Required = true,
-                            },
-                        ],
-                        Handler = (_, _) => Task.FromResult(ToolResult.Ok("Colonia is 22,000 light years away.")),
-                    },
-                ],
-            },
-        ]);
+        var spy = new ToolCallingTests.SpyTool { Result = ToolResult.Ok("Colonia is 22,000 light years away.") };
+        var registry = CapabilityRegistry.Build([spy.Describe(withRoundTo: false)]);
 
         var loop = new TurnLoop(
             registry,

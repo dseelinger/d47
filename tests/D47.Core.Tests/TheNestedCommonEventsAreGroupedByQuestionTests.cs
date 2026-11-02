@@ -1,6 +1,7 @@
 using System.Text.Json;
 using D47.Core.Journal;
 using Xunit;
+using static D47.Core.Tests.EventReadingFixtures;
 
 namespace D47.Core.Tests;
 
@@ -34,23 +35,6 @@ public class TheNestedCommonEventsAreGroupedByQuestionTests
 
     private static readonly string[] Events =
         [FsdJump, StarScan, PlanetScan, Loadout, Cargo, EngineerCraft, CommunityGoal, ConstructionDepot];
-
-    private static EventReading Read(string json)
-    {
-        using var document = JsonDocument.Parse(json);
-        var kind = document.RootElement.GetProperty("event").GetString()!;
-        var log = new JournalLog();
-
-        log.Add([new JournalEvent(DateTimeOffset.Parse("2025-07-04T00:00:00Z"), kind, document.RootElement.Clone())]);
-
-        return EventReadings.For(Assert.Single(log.Read(noise: true)));
-    }
-
-    private static ReadingRow Row(EventReading reading, string label) =>
-        Assert.Single(reading.Rows, row => row.Label == label);
-
-    private static string Joined(EventReading reading, string label) =>
-        string.Join(" · ", Row(reading, label).Values.Select(value => value.Text));
 
     [Fact]
     public void EachOfTheSevenKindsHasRowsAndOneEntryPerField()

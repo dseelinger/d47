@@ -143,28 +143,11 @@ public sealed class ATurnThatRunsOutOfRoomSaysSoTests
     [Fact]
     public async Task TheLogRecordsWhereEachTurnStopped()
     {
-        var log = new CapturingLogger();
+        var log = new RecordingLogger<TurnLoop>();
 
         await RunWithTextAsync(Build(FakeLlmProvider.Answering("Quiet out here."), log), "anything to report");
 
         Assert.Contains(log.Lines, line => line.StartsWith("Model turn", StringComparison.Ordinal)
                                            && line.Contains("stopped on Completed", StringComparison.Ordinal));
-    }
-
-    private sealed class CapturingLogger : ILogger<TurnLoop>
-    {
-        public List<string> Lines { get; } = [];
-
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter) =>
-            Lines.Add(formatter(state, exception));
     }
 }

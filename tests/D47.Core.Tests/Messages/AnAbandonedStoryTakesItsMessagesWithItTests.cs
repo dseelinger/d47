@@ -14,37 +14,20 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
 {
     private static readonly DateTimeOffset Noon = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
 
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-story-message-orphans", Guid.NewGuid().ToString("N"));
-
-    private readonly AdventureStore _adventures;
-    private readonly MessageStore _messages;
-    private readonly StoryStore _stories = StoryStore.InMemory();
-
-    public AnAbandonedStoryTakesItsMessagesWithItTests()
-    {
-        Directory.CreateDirectory(_folder);
-        _adventures = new AdventureStore(Path.Combine(_folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
-        _messages = new MessageStore(Path.Combine(_folder, "messages.json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
-    }
+    private readonly MessageOrphanRig _rig = new("d47-story-message-orphans");
 
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
+        _rig.Dispose();
     }
+
+    private int Sweep() => _rig.Sweep();
 
     private static string Id => StoryFixtures.Id;
 
-    private int Sweep() =>
-        _messages.RemoveOrphans(key => MessageOwnership.Owned(key, _adventures, _stories, () => StoryFixtures.Catalog));
-
     private void Pick(StoryState state, params string[] chapters) =>
-        _stories.Save("F1", new Story
+        _rig.Stories.Save("F1", new Story
         {
             Id = Id,
             Title = "The Test Story",
@@ -56,15 +39,15 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
 
     private void PostEverything(string chapter)
     {
-        _messages.Post("narrator", "beat", "x", Noon, chapter);
-        _messages.Post("narrator", "clue", "x", Noon, $"{StoryClueCallout.KeyPrefix}{Id}.0");
-        _messages.Post("narrator", "end", "x", Noon, StoryEnding.Key(Id));
-        _messages.Post("narrator", "scan", "x", Noon, StoryLines.Key(Id));
-        _messages.Post("Ren", "reaction", "x", Noon, StoryReactionCallout.Key(new StoryReactionDue(Id, 1), "dock-hand"));
+        _rig.Messages.Post("narrator", "beat", "x", Noon, chapter);
+        _rig.Messages.Post("narrator", "clue", "x", Noon, $"{StoryClueCallout.KeyPrefix}{Id}.0");
+        _rig.Messages.Post("narrator", "end", "x", Noon, StoryEnding.Key(Id));
+        _rig.Messages.Post("narrator", "scan", "x", Noon, StoryLines.Key(Id));
+        _rig.Messages.Post("Ren", "reaction", "x", Noon, StoryReactionCallout.Key(new StoryReactionDue(Id, 1), "dock-hand"));
     }
 
     private void SaveChapter(string key) =>
-        Assert.Null(_adventures.Save("F1", AdventureFixtures.LanternRoute() with { Key = key, StoryId = Id }));
+        Assert.Null(_rig.Adventures.Save("F1", AdventureFixtures.LanternRoute() with { Key = key, StoryId = Id }));
 
     [Theory]
     [InlineData(StoryState.Ended)]
@@ -72,18 +55,18 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
     public void AnAbandonedOrSwitchedStoryLosesItsMessagesAndNothingElse(StoryState state)
     {
         SaveChapter("chapter-1");
-        _adventures.Save("F1", AdventureFixtures.LanternRoute());
+        _rig.Adventures.Save("F1", AdventureFixtures.LanternRoute());
         Pick(StoryState.Running, "chapter-1");
         PostEverything("chapter-1");
-        _messages.Post("narrator", "own", "x", Noon, "the-lantern-route");
-        _messages.Post("narrator", "unkeyed", "x", Noon);
+        _rig.Messages.Post("narrator", "own", "x", Noon, "the-lantern-route");
+        _rig.Messages.Post("narrator", "unkeyed", "x", Noon);
 
         Assert.Equal(0, Sweep());
 
         Pick(state, "chapter-1");
 
         Assert.Equal(5, Sweep());
-        Assert.Equal(["own", "unkeyed"], _messages.All.Select(message => message.Subject).Order());
+        Assert.Equal(["own", "unkeyed"], _rig.Messages.All.Select(message => message.Subject).Order());
     }
 
     [Fact]
@@ -94,14 +77,14 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
         PostEverything("chapter-1");
 
         Assert.Equal(0, Sweep());
-        Assert.Equal(5, _messages.All.Count);
+        Assert.Equal(5, _rig.Messages.All.Count);
     }
 
     [Fact]
     public void ARunningStoryKeepsAListedChapterThatIsNoLongerOnFile()
     {
         Pick(StoryState.Running, "chapter-4");
-        _messages.Post("narrator", "beat", "x", Noon, "chapter-4");
+        _rig.Messages.Post("narrator", "beat", "x", Noon, "chapter-4");
 
         Assert.Equal(0, Sweep());
     }
@@ -112,22 +95,22 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
         SaveChapter("chapter-1");
         SaveChapter("chapter-2");
         Pick(StoryState.Running, "chapter-2");
-        _messages.Post("narrator", "old", "x", Noon, "chapter-1");
-        _messages.Post("narrator", "new", "x", Noon, "chapter-2");
+        _rig.Messages.Post("narrator", "old", "x", Noon, "chapter-1");
+        _rig.Messages.Post("narrator", "new", "x", Noon, "chapter-2");
 
         Assert.Equal(1, Sweep());
-        Assert.Equal("new", Assert.Single(_messages.All).Subject);
+        Assert.Equal("new", Assert.Single(_rig.Messages.All).Subject);
     }
 
     [Fact]
     public void AStoryOutsideTheCatalogLosesItsMessages()
     {
-        _stories.Save("F1", new Story { Id = "retired", Title = "Retired", PublicLayer = "x", Chapters = ["gone"], PickedAt = Noon });
-        _messages.Post("narrator", "clue", "x", Noon, $"{StoryClueCallout.KeyPrefix}retired.0");
-        _messages.Post("narrator", "beat", "x", Noon, "gone");
+        _rig.Stories.Save("F1", new Story { Id = "retired", Title = "Retired", PublicLayer = "x", Chapters = ["gone"], PickedAt = Noon });
+        _rig.Messages.Post("narrator", "clue", "x", Noon, $"{StoryClueCallout.KeyPrefix}retired.0");
+        _rig.Messages.Post("narrator", "beat", "x", Noon, "gone");
 
         Assert.Equal(2, Sweep());
-        Assert.Empty(_messages.All);
+        Assert.Empty(_rig.Messages.All);
     }
 
     [Fact]
@@ -138,12 +121,12 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
         foreach (var chapter in chapters)
         {
             SaveChapter(chapter);
-            _messages.Post("covas", "beat", "x", Noon, chapter);
+            _rig.Messages.Post("covas", "beat", "x", Noon, chapter);
         }
 
         Pick(StoryState.Ended, "my-own-mayday-4");
 
         Assert.Equal(4, Sweep());
-        Assert.Empty(_messages.All);
+        Assert.Empty(_rig.Messages.All);
     }
 }

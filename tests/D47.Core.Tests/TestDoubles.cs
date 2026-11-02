@@ -80,6 +80,8 @@ public class RecordingLogger : ILogger
 {
     public List<(LogLevel Level, string Message)> Entries { get; } = [];
 
+    public IReadOnlyList<string> Lines => [.. Entries.Select(entry => entry.Message)];
+
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
 
     public bool IsEnabled(LogLevel logLevel) => true;

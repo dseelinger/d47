@@ -65,8 +65,7 @@ public class AStoredShipsModulesAreAnswerableTooTests
         Assert.DoesNotContain("Bold Endeavour", result.Content, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public async Task AShipOwnedButNeverBoardedSaysSoRatherThanInventingAFit()
+    private static GameStateStore WithStoredShips(string storedShips)
     {
         var gameState = new GameStateStore();
 
@@ -77,9 +76,15 @@ public class AStoredShipsModulesAreAnswerableTooTests
             {"timestamp":"2026-09-05T10:01:00Z","event":"Loadout","Ship":"Anaconda","ShipID":7,"ShipName":"Bold Endeavour",
              "CargoCapacity":8,"Modules":[]}
             """);
-        Apply(
-            gameState,
-            """
+        Apply(gameState, storedShips);
+
+        return gameState;
+    }
+
+    [Fact]
+    public async Task AShipOwnedButNeverBoardedSaysSoRatherThanInventingAFit()
+    {
+        var gameState = WithStoredShips("""
             {"timestamp":"2026-09-05T10:02:00Z","event":"StoredShips","StarSystem":"Sol","StationName":"Abraham Lincoln",
              "ShipsHere":[],"ShipsRemote":[{"ShipID":41,"ShipType":"panthermkii","Name":"Campaigner","StarSystem":"Sol"}]}
             """);
@@ -94,18 +99,7 @@ public class AStoredShipsModulesAreAnswerableTooTests
     [Fact]
     public async Task AShipOwnedUnderItsLocalisedHullNameIsFoundByHullType()
     {
-        var gameState = new GameStateStore();
-
-        Apply(gameState, """{"timestamp":"2026-09-05T10:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""");
-        Apply(
-            gameState,
-            """
-            {"timestamp":"2026-09-05T10:01:00Z","event":"Loadout","Ship":"Anaconda","ShipID":7,"ShipName":"Bold Endeavour",
-             "CargoCapacity":8,"Modules":[]}
-            """);
-        Apply(
-            gameState,
-            """
+        var gameState = WithStoredShips("""
             {"timestamp":"2026-09-05T10:02:00Z","event":"StoredShips","StarSystem":"Sol","StationName":"Abraham Lincoln",
              "ShipsHere":[],"ShipsRemote":[{"ShipID":41,"ShipType":"panthermkii","ShipType_Localised":"Panther Clipper Mk II","StarSystem":"Sol"}]}
             """);
