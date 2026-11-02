@@ -13,7 +13,7 @@ namespace D47.Core.Adventures;
 /// <param name="Reason">Why a chapter failed, for a <see cref="FailedBeat"/> moment; the ending's line, for an <see cref="EndingBeat"/> one.</param>
 /// <param name="Step">The step of <paramref name="Beat"/> that was done, for a moment that is a step and not the whole beat.</param>
 /// <param name="Chosen">The option chosen in <paramref name="Beat"/>, which decides the step after <paramref name="Step"/>.</param>
-public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int Beat, DateTimeOffset At, string? Reason = null, int? Step = null, int? Chosen = null)
+public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int Beat, DateTimeOffset At, string? Reason = null, int? Step = null, int? Chosen = null, int? Counted = null)
 {
     /// <summary>The <see cref="Beat"/> of the line said when a chapter fails.</summary>
     public const int FailedBeat = -2;
@@ -21,11 +21,16 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
     /// <summary>The <see cref="Beat"/> of the line said when a chapter ends in an option's ending.</summary>
     public const int EndingBeat = -3;
 
+    /// <summary>The <see cref="Beat"/> of the line said when a counted objective's total rises without completing; <see cref="Reason"/> is the line and <see cref="Counted"/> the total.</summary>
+    public const int ProgressBeat = -4;
+
     public bool IsOpening => Beat == -1;
 
     public bool IsFailure => Beat == FailedBeat;
 
     public bool IsEnding => Beat == EndingBeat;
+
+    public bool IsProgress => Beat == ProgressBeat;
 
     /// <summary>Whether the beat this one hands over to begins with a choice, which this moment's lines offer.</summary>
     public bool OffersChoice => Next is { OpensWithChoice: true };
@@ -39,7 +44,7 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
     /// <summary>What is said, in order: the opening's lines, or the beat's.</summary>
     public IReadOnlyList<AdventureLine> Lines => IsStep
         ? []
-        : IsFailure || IsEnding
+        : IsFailure || IsEnding || IsProgress
         ? [new AdventureLine { Text = Reason ?? string.Empty }]
         : IsOpening
             ? Adventure.OpeningLines.Count > 0 ? Adventure.OpeningLines : [new AdventureLine { Text = $"{Adventure.Name} begins." }]
@@ -52,7 +57,7 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
     public BeatStep? NextStep => IsStep ? Adventure.Beats[Beat].StepsWith(Chosen).ElementAtOrDefault(Step!.Value + 1) : null;
 
     /// <summary>The beat this one hands over to — the first, after the opening — or null after the last.</summary>
-    public AdventureBeat? Next => IsFailure || IsEnding || IsStep ? null : Adventure.Beats.ElementAtOrDefault(Beat + 1);
+    public AdventureBeat? Next => IsFailure || IsEnding || IsProgress || IsStep ? null : Adventure.Beats.ElementAtOrDefault(Beat + 1);
 
     /// <summary>Where the Commander goes next, said with the line rather than waited for; after a step, the next step.</summary>
     public string? HandOff => IsStep ? NextStep?.HandOff() : Next?.HandOff();
@@ -78,6 +83,8 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
         ? $"{AdventureCallout.FailedPrefix}{Adventure.Key}"
         : IsEnding
         ? $"{AdventureCallout.EndedPrefix}{Adventure.Key}"
+        : IsProgress
+        ? CalloutKey.Join(AdventureCallout.ProgressPrefix, Adventure.Key, Counted ?? 0)
         : IsOpening
         ? $"{AdventureCallout.KeyPrefix}{Adventure.Key}.{AdventureCallout.Opening}"
         : CalloutKey.Join(AdventureCallout.KeyPrefix, Adventure.Key, Beat);
@@ -1270,6 +1277,11 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         }
         else if (after.StepFires.Count == before.StepFires.Count)
         {
+            if (after.CurrentTrigger is { } trigger && trigger.SpeaksAt(before.Counted, after.Counted))
+            {
+                _moments.Enqueue(new AdventureMoment(commander, adventure, AdventureMoment.ProgressBeat, at, trigger.Spoken(after.Counted), Counted: after.Counted));
+            }
+
             return;
         }
         else if (after.Fired.Count == before.Fired.Count)

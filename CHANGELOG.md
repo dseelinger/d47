@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story objective that counts something now has the ship's core say the running total as it rises, such as "3 of 5 bounties collected." or "1 of 2 illegal missions completed.". Several in one tick give one line with the newest total, and the one that completes the objective is left to the beat's own line. Objectives counted in tons or credits (selling, refining, colonisation deliveries and data sales) speak at each quarter of the count instead of every increase. The line is said as written, with no model call.
+
 A HOTAS switch that sets the headset view no longer pauses when Shift+Win+D fails to change the view. Directive 47 says so once, and the next flip tries again; before, the switch ignored every flip in both directions until Resume was pressed. The log line for a failed press now records the view before and after, the time since the switch's previous press, and whether Virtual Desktop stopped reporting in between.
 
 A new music folder, `combat-ground`, plays while the Commander is on foot in a ground conflict zone: from the dropship's deploy, or the first kill bond earned on foot at a settlement, until the retreat or a taxi booking, boarding their own ship, death, supercruise, a jump or a new session. It wins over the `settlement` folder and Elite's `OnFoot` and `Exploration` tracks and gives way to every other Elite track, such as `Thargoid_GroundCombat`. While it is empty nothing changes. The folder is created on the next start.

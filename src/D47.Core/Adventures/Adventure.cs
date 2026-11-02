@@ -479,6 +479,71 @@ public sealed record AdventureTrigger
         };
     }
 
+    /// <summary>Whether this kind counts tons or credits, which are said at each quarter of the count rather than at every increase.</summary>
+    private bool CountsInQuarters => Kind is TriggerKind.Sell or TriggerKind.Mine or TriggerKind.Contribute or TriggerKind.DataSale;
+
+    /// <summary>Whether a total rising from <paramref name="before"/> to <paramref name="after"/> is said: every increase, or for tons and credits a new quarter of the count.</summary>
+    public bool SpeaksAt(int before, int after)
+    {
+        if (!IsCounted || after <= before || Count is not { } count || count <= 0)
+        {
+            return false;
+        }
+
+        return !CountsInQuarters || (long)after * 4 / count > (long)before * 4 / count;
+    }
+
+    /// <summary>A counted beat's running total as a sentence — "3 of 5 bounties collected." — or null for any other kind.</summary>
+    public string? Spoken(int done)
+    {
+        if (!IsCounted)
+        {
+            return null;
+        }
+
+        var of = $"{done.ToString(CultureInfo.InvariantCulture)} of {(Count ?? 0).ToString(CultureInfo.InvariantCulture)}";
+
+        return Kind switch
+        {
+            TriggerKind.Bounty => $"{of} bounties collected.",
+            TriggerKind.Bond => $"{of} kill bonds{For()} earned.",
+            TriggerKind.OnFootBond => $"{of} kill bonds on foot earned.",
+            TriggerKind.Mission => $"{of} {Missions(one: false)}{For()} completed.",
+            TriggerKind.Sell => $"{of} t of {CommodityWord()} sold{At()}.",
+            TriggerKind.Mine => $"{of} t of {CommodityWord()} refined.",
+            TriggerKind.OnFoot => $"{of} surface disembarks made.",
+            TriggerKind.Collect => $"{of} {Items(one: false)} collected.",
+            TriggerKind.Organic => $"{of} organic analyses{Of()} made.",
+            TriggerKind.Map => $"{of} bodies mapped.",
+            TriggerKind.Signal => $"{of} bodies with {Plain()} signals surveyed.",
+            TriggerKind.Wreck => $"{of} {Wrecks(one: false)} visited.",
+            TriggerKind.Codex => $"{of} {CodexWord(one: false)} logged.",
+            TriggerKind.CodexPicture => $"{of} known codex entries pictured.",
+            TriggerKind.NewCodexPicture => $"{of} new codex entries pictured.",
+            TriggerKind.DataSale => $"{of} cr of {DataWord()} data sold.",
+            TriggerKind.Salvage => $"{of} {Cargo(one: false)} picked up.",
+            TriggerKind.Uss => $"{of} {Sources(one: false)} entered.",
+            TriggerKind.Rescue => $"{of} {Survivors(one: false)} handed in.",
+            TriggerKind.Srv => $"{of} SRV launches made.",
+            TriggerKind.Crew => $"{of} crew members hired.",
+            TriggerKind.SuitMod => $"{of} {SuitMods(one: false)} applied.",
+            TriggerKind.Livery => $"{of} livery changes made.",
+            TriggerKind.CarrierJump => $"{of} carrier jumps made.",
+            TriggerKind.Wing => $"{of} wing joins made.",
+            TriggerKind.Multicrew => $"{of} crews joined.",
+            TriggerKind.Conflict => $"{of} contributions to {WarWord()}{For()} made.",
+            TriggerKind.Faction => $"{of} influence marks for {Faction?.Trim()} earned.",
+            TriggerKind.Boost => $"{of} {BoostWord()} boosts made.",
+            TriggerKind.Footfall => $"{of} first footfalls made.",
+            TriggerKind.Discover => $"{of} {DiscoverWord(one: false)} scanned.",
+            TriggerKind.Contribute => string.IsNullOrWhiteSpace(Commodity)
+                ? $"{of} t delivered to construction sites."
+                : $"{of} t of {CommodityWord()} delivered to construction sites.",
+            TriggerKind.Event => $"{of}, {Describe()}.",
+            _ => $"{Progress(done)}.",
+        };
+    }
+
     /// <summary>
     /// The trigger as a hand-off — "Next: dock at Maren Anchorage in Dyson's Hollow." — said with the
     /// beat before it.

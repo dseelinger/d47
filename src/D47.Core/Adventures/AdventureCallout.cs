@@ -40,6 +40,9 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
     /// <summary>A beat's second or third line, keyed <c>adventure-line.&lt;story&gt;.&lt;beat&gt;.&lt;line&gt;</c>.</summary>
     public const string LinePrefix = "adventure-line.";
 
+    /// <summary>The running total of a counted objective, keyed <c>adventure-progress.&lt;story&gt;.&lt;total&gt;</c>.</summary>
+    public const string ProgressPrefix = "adventure-progress.";
+
     /// <summary>The line said when a chapter ends in an option's ending, keyed <c>adventure-ended.&lt;story&gt;</c>.</summary>
     public const string EndedPrefix = "adventure-ended.";
 
@@ -262,6 +265,20 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
         foreach (var moment in reached)
         {
+            if (moment.IsProgress)
+            {
+                if (!openingsOnly && !book.IsSilenced(moment.FrontierId, moment.Adventure, context.Now))
+                {
+                    _waiting.RemoveAll(other => other.IsProgress && SameStory(other, moment));
+                    _waiting.Add(moment with { At = context.Now });
+                }
+
+                continue;
+            }
+
+            // A beat, step or failure ends the objective a waiting total was about.
+            _waiting.RemoveAll(other => other.IsProgress && SameStory(other, moment));
+
             if (book.IsSilenced(moment.FrontierId, moment.Adventure, context.Now) || (openingsOnly && !moment.IsOpening))
             {
                 book.Quiet(moment.FrontierId, moment.Adventure.Key);
@@ -304,11 +321,32 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                        && (context.Status.Has(StatusFlags.InDanger) || context.Status.Has(StatusFlags.BeingInterdicted));
 
         var due = _waiting
-            .Where(moment => !context.InOperation && (moment.IsOpening || moment.IsFailure || context.Now - moment.At >= Settle) && !Held(moment.FrontierId))
+            .Where(moment => !context.InOperation && (moment.IsOpening || moment.IsFailure || moment.IsProgress || context.Now - moment.At >= Settle) && !Held(moment.FrontierId))
             .ToList();
 
         foreach (var moment in due)
         {
+            // A total waits out danger, and behind a beat of its story that is still to be said.
+            if (moment.IsProgress)
+            {
+                if (inDanger || _waiting.Any(other => !other.IsProgress && SameStory(other, moment)))
+                {
+                    continue;
+                }
+
+                _waiting.Remove(moment);
+
+                if (!book.IsSilenced(moment.FrontierId, moment.Adventure, context.Now))
+                {
+                    yield return new Announcement(moment.Key, moment.Line)
+                    {
+                        Urgency = CalloutUrgency.Routine,
+                    };
+                }
+
+                continue;
+            }
+
             if (inDanger && !moment.IsOpening)
             {
                 if (_held.Add(moment))
@@ -443,6 +481,9 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
             }
         }
     }
+
+    private static bool SameStory(AdventureMoment moment, AdventureMoment other) =>
+        moment.FrontierId == other.FrontierId && moment.Adventure.Key == other.Adventure.Key;
 
     private static bool IsShips(AdventureLine line) => line.Speaker is not { } speaker || speaker == Stories.StorySpeaker.Ship;
 }

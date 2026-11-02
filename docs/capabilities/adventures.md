@@ -263,7 +263,10 @@ form. The three site objectives are not authorable either.
 Every trigger after the seventh is counted except the engineer stage, the beacon-reach objective, the tech broker unlock, the PowerPlay pledge and rank, the site objectives, and the once kinds (carrier buy, squadron, squadron founding and system claim), which each fire once. A counted objective fires when its total reaches its count, and only what happens
 after the objective before it has fired counts. It has no place of its own; a chapter that needs it done
 somewhere puts an arrive or dock objective there first. The card shows the running total, such as "Kill bonds
-for LTT 7786 Labour: 3 of 8", and a catch-up after d47 was closed rebuilds it from the journal. These
+for LTT 7786 Labour: 3 of 8", and a catch-up after d47 was closed rebuilds it from the journal. The ship's core also says
+the total as each counted objective moves forward, such as "3 of 5 bounties collected.", as written and with no model call; an
+objective counted in tons or credits says it at each quarter of the count, and the increase that completes the objective
+is left to the beat's own line. These
 mission families are set aside, and no objective uses or counts them: `Mission_Massacre_Skimmer`,
 `Mission_DisableMegaship`, `Mission_RS_` and `Mission_DS_`.
 A story steers illegal missions to Anarchy space but does not enforce it. Illegal families are any whose name contains `Illegal`, `Mission_OnFoot_Heist` and `Mission_OnFoot_Sabotage`. The chapter writer is given up to five Anarchy systems within reach and must put an illegal mission objective directly after an arrive or dock objective in one of them, or use no illegal family when none is in reach. Any completion of the family still counts, whatever its target. While an illegal mission objective is current, approaching the target settlement of a live mission of that family, when a faction other than Anarchy runs it, makes d47 say once per mission that the job is a crime there.
