@@ -32,18 +32,9 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
              "Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true}]}
             """));
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(install.Root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(install.Root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => game.Active);
+        var checklists = TestSurface.EmptyChecklists(install.Root, () => game.Active);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(install.Root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => game.Active);
+        var ships = TestSurface.EmptyShipPlans(install.Root, checklists, () => game.Active);
 
         var build = ships.BuildFor(ShipId, "python");
         ships.Plan(build.Id, Engines);

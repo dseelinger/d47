@@ -14,20 +14,8 @@ public class AdoptKeepsDerivedItemsDerivedTests
     [Fact]
     public void ADerivedItemAdoptedIntoAFreshDocumentStaysDerived()
     {
-        var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, "LargeHardpoint1")
+        var item = LongRangeWeaponItem() with
         {
-            Detail = "Weapon_LongRange",
-            Grade = 5,
-        };
-
-        var item = new ChecklistItem
-        {
-            Key = ChecklistKeys.For(intent),
-            Scope = ChecklistScope.Ship(53),
-            Kind = ChecklistItemKind.Derived,
-            Source = ChecklistSource.EngineeringPlan,
-            Text = "Grade 5 Long Range Weapon on LargeHardpoint1",
-            Intent = intent,
             State = ChecklistState.Open,
             Provenance = ChecklistProvenance.Asserted,
             Hull = "anaconda",
@@ -51,21 +39,7 @@ public class AdoptKeepsDerivedItemsDerivedTests
     [Fact]
     public void ADerivedItemAlreadyHeldUnderTheSameIdIsNotDuplicated()
     {
-        var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, "LargeHardpoint1")
-        {
-            Detail = "Weapon_LongRange",
-            Grade = 5,
-        };
-
-        var item = new ChecklistItem
-        {
-            Key = ChecklistKeys.For(intent),
-            Scope = ChecklistScope.Ship(53),
-            Kind = ChecklistItemKind.Derived,
-            Source = ChecklistSource.EngineeringPlan,
-            Text = "Grade 5 Long Range Weapon on LargeHardpoint1",
-            Intent = intent,
-        };
+        var item = LongRangeWeaponItem();
 
         var mine = ChecklistDocument.For("F1", "Jameson") with { Items = [item] };
 
@@ -120,4 +94,13 @@ public class AdoptKeepsDerivedItemsDerivedTests
         Assert.Contains(mine.Items, other => other.Text == "refuel at Jameson Memorial" && other.Key == "note-1");
         Assert.Contains(mine.Items, other => other.Text == "buy limpets" && other.Key != "note-1");
     }
+
+    private static ChecklistItem LongRangeWeaponItem() => ChecklistFixtures.DerivedItem(
+        new ChecklistIntent(ChecklistIntentKind.Blueprint, "LargeHardpoint1")
+        {
+            Detail = "Weapon_LongRange",
+            Grade = 5,
+        },
+        53,
+        "Grade 5 Long Range Weapon on LargeHardpoint1");
 }

@@ -206,7 +206,8 @@ public sealed class TestSurface
     /// </summary>
     public static D47.Core.Checklists.ChecklistService EmptyChecklists(
         string folder,
-        Func<CommanderGameState?>? state = null) =>
+        Func<CommanderGameState?>? state = null,
+        Func<bool>? removeFulfilled = null) =>
         new(
             new D47.Core.Checklists.ChecklistStore(
                 Path.Combine(folder, "checklist.json"),
@@ -216,7 +217,21 @@ public sealed class TestSurface
                 Path.Combine(folder, "checklist-proposals.json"),
                 new D47.Core.Storage.MemoryFileSystem(),
                 NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
-            state ?? (() => null));
+            state ?? (() => null),
+            removeFulfilled: removeFulfilled);
+
+    /// <summary>A ship-plan service over a folder, on in-memory stores.</summary>
+    public static D47.Core.Ships.ShipPlanService EmptyShipPlans(
+        string folder,
+        D47.Core.Checklists.ChecklistService checklists,
+        Func<CommanderGameState?> state) =>
+        new(
+            new D47.Core.Ships.ShipBuildStore(
+                Path.Combine(folder, "ships.json"),
+                new D47.Core.Storage.MemoryFileSystem(),
+                NullLogger<D47.Core.Ships.ShipBuildStore>.Instance),
+            checklists,
+            state);
 
     /// <summary>A settings service over the install's in-memory files, loaded as a restart would.</summary>
     public static SettingsService SettingsFor(MemoryInstall install)

@@ -1,6 +1,7 @@
 using D47.Core.Checklists;
 using D47.Core.Journal;
 using D47.Core.Storage;
+using D47.Core.Tests.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -55,16 +56,7 @@ public class ChecklistStoreTests
             {
                 Items =
                 [
-                    new ChecklistItem
-                    {
-                        Key = ChecklistKeys.For(intent),
-                        Scope = ChecklistScope.Ship(12),
-                        Kind = ChecklistItemKind.Derived,
-                        Source = ChecklistSource.EngineeringPlan,
-                        Text = "5A Thrusters",
-                        Intent = intent,
-                        Hull = "krait_mkii",
-                    },
+                    ChecklistFixtures.DerivedItem(intent, 12, "5A Thrusters", "krait_mkii"),
                 ],
             },
         ]);
@@ -222,30 +214,8 @@ public class ChecklistStoreTests
     [Fact]
     public void AComputedTickGoingBackwardsIsSaidOnce()
     {
-        var install = new MemoryInstall();
-        var gameState = new GameStateStore();
-        var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
-
-        void Apply(string line)
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            gameState.Apply(parsed!);
-        }
-
-        Apply("""{ "timestamp":"2026-08-16T08:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""");
-
-        Apply(
-            """
-            { "timestamp":"2026-08-16T10:00:00Z", "event":"Loadout", "Ship":"krait_mkii", "ShipID":12,
-              "Modules":[ { "Slot":"MainEngines", "Item":"int_engine_size5_class5", "On":true,
-                "Engineering":{"BlueprintName":"Engine_Dirty","Level":5,"Quality":1.0} } ] }
-            """);
-
-        var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines")
-        {
-            Detail = "Engine_Dirty",
-            Grade = 5,
-        };
+        var (_, gameState, checklists, Apply) = OpenWithEngineLoadout();
+        var intent = ChecklistFixtures.DirtyDrivesIntent();
 
         checklists.List.Save(
         [
@@ -253,16 +223,7 @@ public class ChecklistStoreTests
             {
                 Items =
                 [
-                    new ChecklistItem
-                    {
-                        Key = ChecklistKeys.For(intent),
-                        Scope = ChecklistScope.Ship(12),
-                        Kind = ChecklistItemKind.Derived,
-                        Source = ChecklistSource.EngineeringPlan,
-                        Text = "Grade 5 dirty drives",
-                        Intent = intent,
-                        Hull = "krait_mkii",
-                    },
+                    ChecklistFixtures.DerivedItem(intent, 12, "Grade 5 dirty drives", "krait_mkii"),
                 ],
             },
         ]);
@@ -341,16 +302,7 @@ public class ChecklistStoreTests
             {
                 Items =
                 [
-                    new ChecklistItem
-                    {
-                        Key = ChecklistKeys.For(intent),
-                        Scope = ChecklistScope.Ship(12),
-                        Kind = ChecklistItemKind.Derived,
-                        Source = ChecklistSource.EngineeringPlan,
-                        Text = "Grade 5 reinforced shields",
-                        Intent = intent,
-                        Hull = "krait_mkii",
-                    },
+                    ChecklistFixtures.DerivedItem(intent, 12, "Grade 5 reinforced shields", "krait_mkii"),
                 ],
             },
         ]);
@@ -377,30 +329,8 @@ public class ChecklistStoreTests
     [Fact]
     public void ADocumentThatArrivedFromOutsideIsFoldedWithoutAnnouncingIt()
     {
-        var install = new MemoryInstall();
-        var gameState = new GameStateStore();
-        var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
-
-        void Apply(string line)
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            gameState.Apply(parsed!);
-        }
-
-        Apply("""{ "timestamp":"2026-08-16T08:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""");
-
-        Apply(
-            """
-            { "timestamp":"2026-08-16T10:00:00Z", "event":"Loadout", "Ship":"krait_mkii", "ShipID":12,
-              "Modules":[ { "Slot":"MainEngines", "Item":"int_engine_size5_class5", "On":true,
-                "Engineering":{"BlueprintName":"Engine_Dirty","Level":5,"Quality":1.0} } ] }
-            """);
-
-        var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines")
-        {
-            Detail = "Engine_Dirty",
-            Grade = 5,
-        };
+        var (install, _, checklists, Apply) = OpenWithEngineLoadout();
+        var intent = ChecklistFixtures.DirtyDrivesIntent();
 
         // Written through a second store over the same file, which is what a hand edit, a restored backup or
         // another process looks like from here: the running service did not write it, so its stamp moves and
@@ -411,16 +341,7 @@ public class ChecklistStoreTests
             {
                 Items =
                 [
-                    new ChecklistItem
-                    {
-                        Key = ChecklistKeys.For(intent),
-                        Scope = ChecklistScope.Ship(12),
-                        Kind = ChecklistItemKind.Derived,
-                        Source = ChecklistSource.EngineeringPlan,
-                        Text = "Grade 5 dirty drives",
-                        Intent = intent,
-                        Hull = "krait_mkii",
-                    },
+                    ChecklistFixtures.DerivedItem(intent, 12, "Grade 5 dirty drives", "krait_mkii"),
                 ],
             },
         ]);
@@ -448,29 +369,8 @@ public class ChecklistStoreTests
     [Fact]
     public void PrimingFoldsTheBacklogWithoutAnnouncingAnyOfIt()
     {
-        var install = new MemoryInstall();
-        var gameState = new GameStateStore();
-        var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
-
-        foreach (var line in new[]
-                 {
-                     """{ "timestamp":"2026-08-16T08:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""",
-                     """
-                     { "timestamp":"2026-08-16T10:00:00Z", "event":"Loadout", "Ship":"krait_mkii", "ShipID":12,
-                       "Modules":[ { "Slot":"MainEngines", "Item":"int_engine_size5_class5", "On":true,
-                         "Engineering":{"BlueprintName":"Engine_Dirty","Level":5,"Quality":1.0} } ] }
-                     """,
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            gameState.Apply(parsed!);
-        }
-
-        var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines")
-        {
-            Detail = "Engine_Dirty",
-            Grade = 5,
-        };
+        var (_, _, checklists, _) = OpenWithEngineLoadout();
+        var intent = ChecklistFixtures.DirtyDrivesIntent();
 
         checklists.List.Save(
         [
@@ -478,16 +378,7 @@ public class ChecklistStoreTests
             {
                 Items =
                 [
-                    new ChecklistItem
-                    {
-                        Key = ChecklistKeys.For(intent),
-                        Scope = ChecklistScope.Ship(12),
-                        Kind = ChecklistItemKind.Derived,
-                        Source = ChecklistSource.EngineeringPlan,
-                        Text = "Grade 5 dirty drives",
-                        Intent = intent,
-                        Hull = "krait_mkii",
-                    },
+                    ChecklistFixtures.DerivedItem(intent, 12, "Grade 5 dirty drives", "krait_mkii"),
                 ],
             },
         ]);
@@ -550,5 +441,26 @@ public class ChecklistStoreTests
         // of enum spellings.
         Assert.All(checklists.FilterAxes(), filter => Assert.NotEmpty(filter.Heading));
         Assert.DoesNotContain(checklists.FilterAxes(), filter => filter.Word == filter.Key);
+    }
+
+    /// <summary>Commander F1 aboard ship 12 with Dirty Drive Tuning at grade 5 on MainEngines.</summary>
+    private (MemoryInstall Install, GameStateStore Game, ChecklistService Checklists, Action<string> Apply) OpenWithEngineLoadout()
+    {
+        var install = new MemoryInstall();
+        var gameState = new GameStateStore();
+        var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
+
+        void Apply(string line) => gameState.Apply(JournalScript.Parse(line));
+
+        Apply("""{ "timestamp":"2026-08-16T08:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""");
+
+        Apply(
+            """
+            { "timestamp":"2026-08-16T10:00:00Z", "event":"Loadout", "Ship":"krait_mkii", "ShipID":12,
+              "Modules":[ { "Slot":"MainEngines", "Item":"int_engine_size5_class5", "On":true,
+                "Engineering":{"BlueprintName":"Engine_Dirty","Level":5,"Quality":1.0} } ] }
+            """);
+
+        return (install, gameState, checklists, Apply);
     }
 }

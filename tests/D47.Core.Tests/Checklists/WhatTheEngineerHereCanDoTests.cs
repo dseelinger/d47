@@ -2,6 +2,7 @@ using D47.Core.Checklists;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Checklists.ChecklistFixtures;
 
 namespace D47.Core.Tests.Checklists;
 
@@ -14,7 +15,7 @@ public class WhatTheEngineerHereCanDoTests
     [Fact]
     public void TheEngineerInThisSystemIsFoundWithTheWorkTheyCanDo()
     {
-        var state = Flying("Laksak", rank: 5).Active!;
+        var state = Flying("Laksak", rank: 5, secondBooster: true).Active!;
         var items = new[] { Booster("TinyHardpoint5", grade: 3) };
 
         var here = Assert.Single(EngineersHere.For(items, state));
@@ -34,7 +35,7 @@ public class WhatTheEngineerHereCanDoTests
     public void WorkBeyondTheCommandersGradeIsKeptApartRatherThanDropped()
     {
         // Grade 3, which is the top Lei Cheung offers for Heavy Duty on a Shield Booster.
-        var state = Flying("Laksak", rank: 1).Active!;
+        var state = Flying("Laksak", rank: 1, secondBooster: true).Active!;
         var items = new[] { Booster("TinyHardpoint5", grade: 3) };
 
         var here = Assert.Single(EngineersHere.For(items, state));
@@ -48,7 +49,7 @@ public class WhatTheEngineerHereCanDoTests
     [Fact]
     public void AGradeThisEngineerDoesNotOfferIsNotTheirWork()
     {
-        var state = Flying("Laksak", rank: 5).Active!;
+        var state = Flying("Laksak", rank: 5, secondBooster: true).Active!;
 
         var here = Assert.Single(EngineersHere.For([Booster("TinyHardpoint5", grade: 5)], state));
 
@@ -66,7 +67,7 @@ public class WhatTheEngineerHereCanDoTests
     [Fact]
     public void ALineOnAPlannedShipIsNotWorkForTheEngineerHere()
     {
-        var state = Flying("Laksak", rank: 5).Active!;
+        var state = Flying("Laksak", rank: 5, secondBooster: true).Active!;
         var planned = Booster("TinyHardpoint5", grade: 3) with { Scope = ChecklistScope.Build("ship-3"), Hull = "python" };
 
         Assert.Empty(EngineersHere.For([planned], state).SelectMany(here => here.Ready.Concat(here.OutOfRank)));
@@ -77,7 +78,7 @@ public class WhatTheEngineerHereCanDoTests
     [Fact]
     public void AwayFromAnyEngineerThereIsNothingToSay()
     {
-        var state = Flying("Shinrarta Dezhra", rank: 5).Active!;
+        var state = Flying("Shinrarta Dezhra", rank: 5, secondBooster: true).Active!;
 
         Assert.Empty(EngineersHere.For([Booster("TinyHardpoint5", grade: 3)], state));
     }
@@ -90,7 +91,7 @@ public class WhatTheEngineerHereCanDoTests
     public void TheReportNarrowsToWhatCanBeRetiredHere()
     {
         var install = new MemoryInstall();
-        var checklists = TestSurface.Checklists(install.Paths, Flying("Laksak", rank: 5));
+        var checklists = TestSurface.Checklists(install.Paths, Flying("Laksak", rank: 5, secondBooster: true));
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
 
@@ -174,40 +175,6 @@ public class WhatTheEngineerHereCanDoTests
         },
     };
 
-    private static ChecklistItem Booster(string slot, int grade, int shipId = 51) => new()
-    {
-        Key = $"blueprint:{slot}",
-        Scope = ChecklistScope.Ship(shipId),
-        Kind = ChecklistItemKind.Derived,
-        Source = ChecklistSource.EngineeringPlan,
-        Text = $"Grade {grade} Heavy Duty on {slot}",
-        Intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, slot)
-        {
-            Detail = "Heavy Duty",
-            Grade = grade,
-        },
-    };
-
-    /// <summary>In a system, in an Anaconda with a shield booster fitted, and known to Lei Cheung.</summary>
-    private static GameStateStore Flying(string system, int rank)
-    {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-20T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     $$"""{"timestamp":"2026-08-20T09:00:01Z","event":"Location","StarSystem":"{{system}}","Docked":true,"StationName":"Trader's Rest"}""",
-                     $$"""{"timestamp":"2026-08-20T09:00:02Z","event":"EngineerProgress","Engineers":[{"Engineer":"Lei Cheung","EngineerID":{{LeiCheung}},"Progress":"Unlocked","Rank":{{rank}}}]}""",
-                     """{"timestamp":"2026-08-20T09:00:03Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[{"Slot":"TinyHardpoint5","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0},{"Slot":"TinyHardpoint1","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0}]}""",
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        return store;
-    }
-
     /// <summary>
     /// In Laksak in an Anaconda whose utility slot holds a chaff launcher, having previously been
     /// aboard a Krait with a shield booster in the slot of the same name.
@@ -237,7 +204,7 @@ public class WhatTheEngineerHereCanDoTests
     [Fact]
     public void AnEffectFollowsItsModulesBlueprintIntoThePartialBand()
     {
-        var state = Flying("Laksak", rank: 5).Active!;
+        var state = Flying("Laksak", rank: 5, secondBooster: true).Active!;
 
         var here = Assert.Single(EngineersHere.For(
             [Booster("TinyHardpoint5", grade: 5), Effect("TinyHardpoint5", "Force Block")],
@@ -266,7 +233,7 @@ public class WhatTheEngineerHereCanDoTests
     [Fact]
     public void AnEffectBesideWorkTheEngineerCanFinishIsStillReady()
     {
-        var state = Flying("Laksak", rank: 5).Active!;
+        var state = Flying("Laksak", rank: 5, secondBooster: true).Active!;
 
         var here = Assert.Single(EngineersHere.For(
             [Booster("TinyHardpoint5", grade: 3), Effect("TinyHardpoint5", "Force Block")],
@@ -283,7 +250,7 @@ public class WhatTheEngineerHereCanDoTests
     [Fact]
     public void AnEffectDoesNotFollowItsBlueprintOutOfRank()
     {
-        var state = Flying("Laksak", rank: 1).Active!;
+        var state = Flying("Laksak", rank: 1, secondBooster: true).Active!;
 
         var here = Assert.Single(EngineersHere.For(
             [Booster("TinyHardpoint5", grade: 3), Effect("TinyHardpoint5", "Force Block")],
@@ -306,7 +273,7 @@ public class WhatTheEngineerHereCanDoTests
     public void TheHereFilterShowsWorkThisEngineerDoesEvenBelowTheRankForIt()
     {
         var install = new MemoryInstall();
-        var checklists = TestSurface.Checklists(install.Paths, Flying("Laksak", rank: 1));
+        var checklists = TestSurface.Checklists(install.Paths, Flying("Laksak", rank: 1, secondBooster: true));
 
         checklists.AdoptPlan(
             ChecklistScope.Ship(51),
@@ -336,7 +303,7 @@ public class WhatTheEngineerHereCanDoTests
     [Fact]
     public void AnEffectOnItsOwnIsUnaffected()
     {
-        var state = Flying("Laksak", rank: 5).Active!;
+        var state = Flying("Laksak", rank: 5, secondBooster: true).Active!;
 
         var here = Assert.Single(EngineersHere.For(
             [Booster("TinyHardpoint5", grade: 5), Effect("TinyHardpoint1", "Force Block")],

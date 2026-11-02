@@ -3,6 +3,7 @@ using D47.Core.Journal;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Core.Tests.Checklists.ChecklistFixtures;
 
 namespace D47.Core.Tests.Checklists;
 
@@ -169,38 +170,4 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     [Fact]
     public void TheKeyIsOneSpelling() => Assert.Equal("pinned", ChecklistService.PinnedKey);
 
-    /// <summary>One line of an engineering plan: a blueprint wanted on a slot, at a grade.</summary>
-    private static ChecklistItem Booster(string slot, int grade, int shipId = 51) => new()
-    {
-        Key = $"blueprint:{slot}",
-        Scope = ChecklistScope.Ship(shipId),
-        Kind = ChecklistItemKind.Derived,
-        Source = ChecklistSource.EngineeringPlan,
-        Text = $"Grade {grade} Heavy Duty on {slot}",
-        Intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, slot)
-        {
-            Detail = "Heavy Duty",
-            Grade = grade,
-        },
-    };
-
-    /// <summary>In a system, in an Anaconda with a shield booster fitted, and known to Lei Cheung.</summary>
-    private static GameStateStore Flying(string system, int rank)
-    {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-20T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     $$"""{"timestamp":"2026-08-20T09:00:01Z","event":"Location","StarSystem":"{{system}}","Docked":true,"StationName":"Trader's Rest"}""",
-                     $$"""{"timestamp":"2026-08-20T09:00:02Z","event":"EngineerProgress","Engineers":[{"Engineer":"Lei Cheung","EngineerID":{{LeiCheung}},"Progress":"Unlocked","Rank":{{rank}}}]}""",
-                     """{"timestamp":"2026-08-20T09:00:03Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[{"Slot":"TinyHardpoint5","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0}]}""",
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        return store;
-    }
 }

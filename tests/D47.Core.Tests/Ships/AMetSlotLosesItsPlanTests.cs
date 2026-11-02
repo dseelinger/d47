@@ -22,20 +22,11 @@ public class AMetSlotLosesItsPlanTests
         var game = new GameStateStore();
 
         game.Apply(Event("""{"timestamp":"2026-09-10T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
-        game.Apply(Loadout());
+        game.Apply(ShipPlanFixtures.Loadout(ShipId));
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(install.Root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(install.Root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => game.Active);
+        var checklists = TestSurface.EmptyChecklists(install.Root, () => game.Active);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(install.Root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => game.Active);
+        var ships = TestSurface.EmptyShipPlans(install.Root, checklists, () => game.Active);
 
         var build = ships.BuildFor(ShipId, "python");
 
@@ -50,7 +41,7 @@ public class AMetSlotLosesItsPlanTests
         var install = new MemoryInstall();
         var (game, ships) = Set(install);
 
-        game.Apply(Engineered());
+        game.Apply(ShipPlanFixtures.Engineered(ShipId));
 
         ships.DropMetSlots();
 
@@ -81,26 +72,12 @@ public class AMetSlotLosesItsPlanTests
             new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Faster Boot Sequence"));
 
         // The blueprint is rolled, and the experimental is not.
-        game.Apply(Engineered());
+        game.Apply(ShipPlanFixtures.Engineered(ShipId));
 
         ships.DropMetSlots();
 
         Assert.NotNull(ships.ForShip(ShipId)!.For("MainEngines"));
     }
-
-    private static JournalEvent Loadout() => Event(
-        $$"""
-        {"timestamp":"2026-09-10T09:05:00Z","event":"Loadout","Ship":"python","ShipID":{{ShipId}},
-         "Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true}]}
-        """);
-
-    private static JournalEvent Engineered() => Event(
-        """
-        {"timestamp":"2026-09-10T09:10:00Z","event":"Loadout","Ship":"python","ShipID":SHIPID,
-         "Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,
-           "Engineering":{"BlueprintName":"Engine_Dirty","Level":5,"Quality":1.0,
-                          "Engineer":"Felicity Farseer","EngineerID":300100}}]}
-        """.Replace("SHIPID", ShipId.ToString(System.Globalization.CultureInfo.InvariantCulture)));
 
     private static JournalEvent Event(string json)
     {

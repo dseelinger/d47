@@ -71,15 +71,7 @@ public class ALineCanBeChangedAndCarriedTests
             {
                 Items =
                 [
-                    new ChecklistItem
-                    {
-                        Key = ChecklistKeys.For(intent),
-                        Scope = ChecklistScope.Ship(12),
-                        Kind = ChecklistItemKind.Derived,
-                        Source = ChecklistSource.EngineeringPlan,
-                        Text = "Grade 5 on MainEngines",
-                        Intent = intent,
-                    },
+                    ChecklistFixtures.DerivedItem(intent, 12, "Grade 5 on MainEngines"),
                 ],
             },
         ]);
