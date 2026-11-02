@@ -265,12 +265,6 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
     {
         var source = File.ReadAllText(Path.Combine(AppSource.RepositoryRoot(), "src", "D47.App", "Panel", file));
 
-        Assert.DoesNotContain("CornerRadius", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("CardChrome", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("BorderThickness", source, StringComparison.Ordinal);
-        Assert.DoesNotMatch(@"#[0-9A-Fa-f]{6}\b", source);
-        Assert.DoesNotMatch(
-            @"ThemeManager\.(Background|Surface|SurfaceAlt|Border|Text|TextMuted|TextFaint|Accent|AccentMuted|Danger|Warn|Good|Info|Rule|FillLow|FillHigh|FillHigher|AccentBorder|AccentInk|CardFill|CardFillSelected|RowFill|TagBorder|PaneFill|PaneBorder|TagInk)Key\b",
-            source);
+        KitTokens.AssertDrawsOnlyInTheNewTokens(source, new KitTokenRules(true, false, true));
     }
 }
