@@ -1624,6 +1624,9 @@ public sealed class AdventureGenerator(
         /// <summary>The base a story chapter ends near, for a Commander with no fleet carrier who has one.</summary>
         public BaseStep? Base { get; init; }
 
+        /// <summary>The base of a story chapter the base rule exempts, for a Commander with no fleet carrier who has one.</summary>
+        public BaseStep? Away { get; init; }
+
         public bool IsEmpty => Stations.Count == 0 && Bodies.Count == 0;
     }
 
@@ -1712,17 +1715,18 @@ public sealed class AdventureGenerator(
             Sites = sites,
             InBand = await InBandAsync(search, resolver, ask, facts, cancellationToken, notes).ConfigureAwait(false),
             Pull = await PullAsync(search, resolver, ask, facts, cancellationToken, notes).ConfigureAwait(false),
-            Base = await BaseAsync(search, ask, facts, cancellationToken).ConfigureAwait(false),
+            Base = ShipBases.Applies(ask) ? await BaseAsync(search, ask, facts, cancellationToken).ConfigureAwait(false) : null,
+            Away = ShipBases.Exempts(ask) ? await BaseAsync(search, ask, facts, cancellationToken).ConfigureAwait(false) : null,
         };
     }
 
     /// <summary>
-    /// The step back to the Commander's base for a story chapter held to one, or null. A station known only by its market id is
+    /// The step back to the Commander's base for a story chapter held to one or exempt from one, or null. A station known only by its market id is
     /// named from the galaxy search's stations in its system; where none matches, or the base is the Home system setting, the step is an arrival.
     /// </summary>
     private async Task<BaseStep?> BaseAsync(IGalaxyService search, AdventureAsk ask, Facts facts, CancellationToken cancellationToken)
     {
-        if (!ShipBases.Applies(ask) || facts.Carrier.Owned)
+        if (facts.Carrier.Owned)
         {
             return null;
         }
@@ -3065,6 +3069,29 @@ public sealed class AdventureGenerator(
             + $"Write the chapter's lines so that they lead there. When the last stop is within {near} light years of {home.System}, add no such step.");
     }
 
+    /// <summary>For a chapter exempt from the base rule that starts or heads beyond the near-here reach of the base, the reason to give and the ships to transfer.</summary>
+    private static void AppendAway(StringBuilder text, BaseStep? home, AdventureAsk ask, Facts facts)
+    {
+        if (home?.Position is not { } there || facts.Position is not { } here)
+        {
+            return;
+        }
+
+        var near = ShipBases.Near(facts.Ship.MaxJumpRange);
+        var target = ChapterPull.Of(ask, here)?.There;
+
+        if (here.DistanceTo(there) <= near && (target is null || target.Value.DistanceTo(there) <= near))
+        {
+            return;
+        }
+
+        text.AppendLine();
+        text.AppendLine(
+            $"The Commander has no fleet carrier, so their ships stay {(home.Base.IsHomeSystem ? $"at their home system, {home.System}" : $"where they are stored, mostly {(home.Docks ? $"at {home.Station} in {home.System}" : $"in {home.System}")}")}, "
+            + $"and this chapter is not held to ending near them. Its opening must say why the story stays away from {home.System}, "
+            + "and tell the Commander to transfer there the ships they will need. Once the ships are moved, the base moves with them.");
+    }
+
     /// <summary>Where a last stop that has reached <paramref name="leg"/>'s target is: in the system itself, or within the leg's distance of it.</summary>
     private static string Reached(ChapterLeg leg) =>
         leg.Within <= 0 ? $"in {leg.Target} itself" : $"within {leg.Within.ToString("0", CultureInfo.InvariantCulture)} light years of {leg.Target}";
@@ -3617,6 +3644,7 @@ public sealed class AdventureGenerator(
         AppendLeg(text, ask, facts, candidates.Pull);
         AppendHeading(text, ask);
         AppendBase(text, candidates.Base, facts);
+        AppendAway(text, candidates.Away, ask, facts);
 
         if (ask.Chapter is { } chapter && !IsDrawn(ask.Story))
         {

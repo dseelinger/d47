@@ -80,4 +80,12 @@ public static class ShipBases
         return ask is { Story: { Beacon: null, FinaleChapter: null, InTheBlack: false, Home: null, Chosen: null }, Length: not AdventureLength.Short }
                && ask.Rewrite?.Heading is null;
     }
+
+    /// <summary>Whether <paramref name="ask"/> is a story chapter the base rule exempts: a long enough story chapter that <see cref="Applies"/> does not hold.</summary>
+    public static bool Exempts(AdventureAsk ask)
+    {
+        ArgumentNullException.ThrowIfNull(ask);
+
+        return ask is { Story: not null, Length: not AdventureLength.Short } && !Applies(ask);
+    }
 }

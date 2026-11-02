@@ -121,6 +121,61 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
         Assert.False(ShipBases.Applies(ask));
     }
 
+    private const string TransferLine = "tell the Commander to transfer there the ships they will need";
+
+    [Fact]
+    public async Task AnExemptChapterFarFromTheBaseTellsTheWriterToExplainAndTransfer()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+
+        await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
+
+        var brief = provider.Requests[1].Prompt.History[0].Text;
+        Assert.Contains("Its opening must say why the story stays away from Hale's Berth", brief);
+        Assert.Contains(TransferLine, brief);
+        Assert.Contains("Once the ships are moved, the base moves with them.", brief);
+    }
+
+    [Fact]
+    public async Task AnExemptChapterWithinTheReachOfTheBaseIsNotTold()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+
+        await Generator(provider, new Galaxy(), lightYears: 480).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
+
+        Assert.DoesNotContain(TransferLine, provider.Requests[1].Prompt.History[0].Text);
+    }
+
+    [Fact]
+    public async Task AnExemptChapterWithAFleetCarrierIsNotTold()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+
+        await Generator(provider, new Galaxy(), carrier: true).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
+
+        Assert.DoesNotContain(TransferLine, provider.Requests[1].Prompt.History[0].Text);
+    }
+
+    [Fact]
+    public async Task AnExemptChapterWithNoBaseIsNotTold()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+
+        await Generator(provider, new Galaxy(), stored: false).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
+
+        Assert.DoesNotContain(TransferLine, provider.Requests[1].Prompt.History[0].Text);
+    }
+
+    [Fact]
+    public async Task AChapterHeldToTheBaseIsNotToldToTransfer()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(BackToBase));
+
+        await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
+
+        Assert.DoesNotContain(TransferLine, provider.Requests[1].Prompt.History[0].Text);
+    }
+
     [Fact]
     public async Task TheObjectivesPromptNamesTheBaseAndTheStepBackToIt()
     {
