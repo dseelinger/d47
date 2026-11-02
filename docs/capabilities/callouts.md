@@ -518,8 +518,10 @@ thing it actually knows — that where you are is hostile — instead of implyin
 #### Powerplay merits {#powerplay-merits}
 
 If you fly for a Power, Directive 47 says which way the merit modifier leans the first time you
-enter normal space in a Powerplay system in a session. It says nothing in an unoccupied system, and
-nothing for a Powerplay state it has no rule for.
+enter normal space after arriving in a Powerplay system, and not again until you leave the system.
+Restarting Directive 47 or the game while you are still there does not say it again; arriving
+somewhere and coming back does. It says nothing in an unoccupied system, and nothing for a
+Powerplay state it has no rule for.
 
 ```text
 Reinforcing here earns reduced merits. Nobody has undermined this system this cycle.

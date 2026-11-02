@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Powerplay merits line is said once each time you arrive in a Powerplay system, and not again until you leave it. Before, restarting D47 or the game while still in the system said it again, so a system you stayed in could repeat it several times.
+
 With Download the D47 music library on, a music folder with files of your own plays them together with the library's tracks for that folder, shuffled as one. Before, one file of your own in a folder stopped every library track there.
 
 When a game session's journal stops without a Shutdown, D47 no longer treats that session as still running once Elite is closed or the game has started again. The break reminder is not said while Elite is not running, and the last session recap opens "Last session" rather than "Earlier this session". Before, starting D47 with only the launcher open could remind you to take a break and recap a session that ended hours ago as the current one.

@@ -116,18 +116,79 @@ public class PowerplayMeritsTests
     }
 
     [Fact]
-    public void ASystemIsSaidOncePerSession()
+    public void ASystemIsSaidOncePerVisit()
     {
         var callout = new PowerplayMeritsCallout();
         var cubeo = StateFrom(Pledge, Jump("Cubeo", "Yuri Grom", "Exploited"), Exit("Cubeo"));
 
         Assert.Single(callout.Examine(Context(cubeo)));
         Assert.Empty(callout.Examine(Context(cubeo)));
+    }
 
+    [Fact]
+    public void LeavingAndComingBackSaysItAgain()
+    {
+        var callout = new PowerplayMeritsCallout();
+        var cubeo = StateFrom(Pledge, Jump("Cubeo", "Yuri Grom", "Exploited"), Exit("Cubeo"));
         var deciat = StateFrom(Pledge, Jump("Deciat", "Yuri Grom", "Exploited"), Exit("Deciat"));
-        Assert.Single(callout.Examine(Context(deciat)));
 
-        Assert.Empty(callout.Examine(Context(cubeo)));
+        Assert.Single(callout.Examine(Context(cubeo)));
+        Assert.Single(callout.Examine(Context(deciat)));
+        Assert.Single(callout.Examine(Context(cubeo)));
+    }
+
+    [Fact]
+    public void LeavingThroughASystemWithNoLineStillEndsTheVisit()
+    {
+        var callout = new PowerplayMeritsCallout();
+        var cubeo = StateFrom(Pledge, Jump("Cubeo", "Yuri Grom", "Exploited"), Exit("Cubeo"));
+        var wolf = StateFrom(
+            Pledge,
+            """{"timestamp":"3311-01-01T00:01:00Z","event":"FSDJump","StarSystem":"Wolf 359","PowerplayState":"Unoccupied"}""",
+            Exit("Wolf 359"));
+
+        Assert.Single(callout.Examine(Context(cubeo)));
+        Assert.Empty(callout.Examine(Context(wolf)));
+        Assert.Single(callout.Examine(Context(cubeo)));
+    }
+
+    [Fact]
+    public void UndockingAfterARestartWhileDockedSaysNothing()
+    {
+        var callout = new PowerplayMeritsCallout();
+        var docked =
+            """{"timestamp":"3311-01-01T00:03:00Z","event":"Docked","StarSystem":"Deciat","StationName":"Garay Terminal"}""";
+        var undocked =
+            """{"timestamp":"3311-01-01T00:04:00Z","event":"Undocked","StationName":"Garay Terminal"}""";
+
+        var atStation = StateFrom(Pledge, Jump("Deciat", "Edmund Mahon", "Stronghold", Undermined), Exit("Deciat"), docked);
+        Assert.Equal(FlightMode.Docked, atStation.Location.Mode);
+        Assert.Empty(callout.Examine(Context(atStation, priming: true)));
+
+        var outside = StateFrom(Pledge, Jump("Deciat", "Edmund Mahon", "Stronghold", Undermined), Exit("Deciat"), docked, undocked);
+        Assert.Equal(FlightMode.Normal, outside.Location.Mode);
+        Assert.Empty(callout.Examine(Context(outside)));
+        Assert.Single(new PowerplayMeritsCallout().Examine(Context(outside)));
+    }
+
+    [Fact]
+    public void AGameRestartInTheSameSystemSaysNothing()
+    {
+        var callout = new PowerplayMeritsCallout();
+        var docked =
+            """{"timestamp":"3311-01-01T00:03:00Z","event":"Docked","StarSystem":"Deciat","StationName":"Garay Terminal"}""";
+
+        var before = StateFrom(Pledge, Jump("Deciat", "Edmund Mahon", "Stronghold", Undermined), Exit("Deciat"), docked);
+        Assert.Empty(callout.Examine(Context(before, priming: true)));
+
+        var restarted = StateFrom(
+            Pledge,
+            """{"timestamp":"3311-01-01T01:00:00Z","event":"LoadGame","Commander":"Jameson"}""",
+            "{\"timestamp\":\"3311-01-01T01:01:00Z\",\"event\":\"Location\",\"Docked\":false,\"StarSystem\":\"Deciat\","
+            + "\"ControllingPower\":\"Edmund Mahon\",\"PowerplayState\":\"Stronghold\"" + Undermined + "}");
+        Assert.Equal(FlightMode.Normal, restarted.Location.Mode);
+        Assert.Empty(callout.Examine(Context(restarted)));
+        Assert.Single(new PowerplayMeritsCallout().Examine(Context(restarted)));
     }
 
     [Fact]

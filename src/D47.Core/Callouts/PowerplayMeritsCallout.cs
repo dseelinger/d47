@@ -3,25 +3,45 @@ using D47.Core.Knowledge;
 
 namespace D47.Core.Callouts;
 
-/// <summary>Says which way the Powerplay merit modifier leans on first entering normal space in a system, once per system per session.</summary>
+/// <summary>
+/// Says which way the Powerplay merit modifier leans on first entering normal space in a system, once per visit.
+/// The system the Commander is in at priming counts as already said, so a restart of d47 or the game says nothing
+/// until the Commander leaves and arrives somewhere.
+/// </summary>
 public sealed class PowerplayMeritsCallout : ICallout
 {
     public string Id => "powerplay-merits";
 
-    private readonly HashSet<string> _seen = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>The system said this visit, or null once the Commander is in a different one.</summary>
+    private string? _said;
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var state = context.State;
         var location = state?.Location;
 
-        if (location is not { Mode: FlightMode.Normal, StarSystem: { Length: > 0 } system }
-            || !state!.Pledge.IsPledged
-            || !_seen.Add(system)
-            || context.IsPriming)
+        if (location is not { StarSystem: { Length: > 0 } system })
         {
             yield break;
         }
+
+        if (!string.Equals(_said, system, StringComparison.OrdinalIgnoreCase))
+        {
+            _said = null;
+        }
+
+        if (context.IsPriming)
+        {
+            _said = system;
+            yield break;
+        }
+
+        if (location.Mode != FlightMode.Normal || !state!.Pledge.IsPledged || _said is not null)
+        {
+            yield break;
+        }
+
+        _said = system;
 
         var text = PowerplayRules.Classify(state.Pledge, location) switch
         {
