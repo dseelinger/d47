@@ -294,7 +294,7 @@ No one on Story.
 With no channel open it says "No comms channel is open." A hail moves the selection to the hailer. Each channel keeps who you last had selected on it, and Story keeps it for each story. Coming back to a channel selects them again if they are on it. D47 keeps the selection for each Commander when it restarts, even if no one is on that channel yet.
 Push-to-talk and the Ask box always reach your core, even when you start with someone's name.
 
-After each change D47 says the selection in the fewest words:
+After each change D47 says the selection in the fewest words. A change made by key or stick button is spoken and not shown in the conversation:
 
 ```text
 Carrier, Tower.

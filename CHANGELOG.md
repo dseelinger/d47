@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Choosing a comms channel with a key or the stick is spoken and no longer written to the Conversation page. Saying "comms Tower" still shows your words and the reply there.
+
 While a stock story is on a detour, the mini panel, on the desktop and in the headset, shows the detour: its name, its step and its next objective. Before, it kept showing the paused chapter.
 
 New story chapters keep the premise and want as things that happen to the Commander and the cast, not a checklist of the objectives, call each place by its name rather than "doors" or "gates", and make a line that sets up something later understandable when heard alone.

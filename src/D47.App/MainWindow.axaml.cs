@@ -678,7 +678,7 @@ public partial class MainWindow : Window
             () => _model.Append("\n" + text + "\n"));
 
         // Anything d47 says without a turn behind it still belongs in the transcript, so what was heard and
-        // what can be read back are the same set.
+        // what can be read back are the same set, except comms selections made by key or stick.
         _host.Said += text => Avalonia.Threading.Dispatcher.UIThread.Post(
             () => _model.Append($"\n{text}\n"));
 
@@ -1517,7 +1517,7 @@ public partial class MainWindow : Window
     {
         if (_host is not null)
         {
-            _host.Announcer.SayAside(CommsCapability.Choose(_host.CommsChannels, channel, subChannel).Spoken);
+            _host.Announcer.SayAloud(CommsCapability.Choose(_host.CommsChannels, channel, subChannel).Spoken);
         }
     }
 
@@ -1529,7 +1529,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        _commsStepSpeaker ??= new CommsStepSpeaker(_host.CommsChannels, _host.Announcer.SayAside);
+        _commsStepSpeaker ??= new CommsStepSpeaker(_host.CommsChannels, _host.Announcer.SayAloud);
         _commsStepTimer ??= new Avalonia.Threading.DispatcherTimer(
             TimeSpan.FromMilliseconds(100),
             Avalonia.Threading.DispatcherPriority.Normal,

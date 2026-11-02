@@ -451,6 +451,17 @@ public sealed class Announcer : IDisposable
         Turns.Said(line);
     }
 
+    /// <summary>Speaks a line without adding it to the Conversation page or the model's history.</summary>
+    public void SayAloud(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return;
+        }
+
+        _ = Voice.AnnounceAsync(line);
+    }
+
     /// <summary>The chip the Conversation page names this speaker with.</summary>
     internal static string ConversationSpeaker(Announcement announcement, string shipName) =>
         announcement.Speaker is { Length: > 0 } speaker
