@@ -90,51 +90,12 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
             Registry = CapabilityRegistry.Build([GalaxyCapability.Create(new Galaxy(), () => "LTT 7786", Settings, searches: Board)]);
         }
 
-        public async Task<ToolResult> AskAsync(string tool, params (string Name, string Value)[] values)
-        {
-            var result = await Registry.InvokeAsync(
-                tool,
-                new ToolArguments(values.ToDictionary(v => v.Name, v => v.Value, StringComparer.Ordinal)),
-                TestContext.Current.CancellationToken);
-
-            if (result.Page is { } page)
-            {
-                Routing.Open(page);
-            }
-
-            Dispatcher.UIThread.RunJobs();
-
-            return result;
-        }
+        public Task<ToolResult> AskAsync(string tool, params (string Name, string Value)[] values) =>
+            AskedByVoice.AskAsync(Registry, Routing, tool, values);
     }
 
-    private static (PanelView Panel, Window Window) Shown(World world, bool headset = false, bool openRoot = true)
-    {
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-
-        if (headset)
-        {
-            panel.Classes.Add("headset");
-        }
-
-        panel.EnableCopy(new Clipboard());
-        panel.EnableStarSystem(world.Surface);
-        world.Routing.RouteNavigation(panel.Nav, action => action());
-
-        var window = new Window { Content = panel, Width = 1280, Height = 960 };
-        window.Bind(Window.BackgroundProperty, Avalonia.Application.Current!.Resources.GetResourceObservable(D47.App.Theming.ThemeManager.BgKey));
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        if (openRoot)
-        {
-            panel.Tab = PanelTab.Search;
-            panel.Nav.SelectRoot(OutfittingSearchPage.RootKey);
-            Dispatcher.UIThread.RunJobs();
-        }
-
-        return (panel, window);
-    }
+    private static (PanelView Panel, Window Window) Shown(World world, bool headset = false, bool openRoot = true) =>
+        SearchPanelHosting.Show(world.Surface, openRoot ? OutfittingSearchPage.RootKey : null, headset, world.Routing, new Clipboard());
 
     private static OutfittingSearchPage Page(Control root) => root.GetVisualDescendants().OfType<OutfittingSearchPage>().Single();
 

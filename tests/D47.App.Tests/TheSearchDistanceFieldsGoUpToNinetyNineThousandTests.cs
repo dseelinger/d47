@@ -54,33 +54,7 @@ public sealed class TheSearchDistanceFieldsGoUpToNinetyNineThousandTests
             "Matched.",
             AskedAt));
 
-        var history = new SearchHistory("search-history.json", new MemoryFileSystem(), NullLogger<SearchHistory>.Instance);
-        var registry = CapabilityRegistry.Build([GalaxyCapability.Create(new Galaxy(), () => "LTT 7786", settings, searches: board, history: history)]);
-        var store = new SavedSearchStore("saved-searches.json", new MemoryFileSystem(), NullLogger<SavedSearchStore>.Instance);
-
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-
-        panel.EnableStarSystem(new StarSystemSurface(
-            new Systems(),
-            () => new JournalLocation("LTT 7786", null, false, null),
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { })
-        {
-            Searches = new GalaxySearchSurface(registry, board, store, () => "F1", () => [])
-            {
-                PrefixNames = new Systems().PrefixNamesAsync,
-                SuggestionPause = TimeSpan.Zero,
-                History = history,
-            },
-        });
-
-        var window = new Window { Content = panel, Width = 1280, Height = 960 };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        panel.Tab = PanelTab.Search;
-        panel.Nav.SelectRoot(root);
-        Dispatcher.UIThread.RunJobs();
+        var (panel, window) = SearchPanelHosting.ShowSearchForm(settings, new Galaxy(), board, new Systems(), root);
 
         var arguments = panel.GetVisualDescendants().OfType<GalaxySearchPage>().Single().FormArguments();
         window.Close();

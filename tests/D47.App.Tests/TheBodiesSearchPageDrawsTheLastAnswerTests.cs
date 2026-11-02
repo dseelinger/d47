@@ -102,33 +102,8 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
             "Bodies matched.",
             AskedAt);
 
-    private static (PanelView Panel, Window Window) Shown(World world, bool headset = false, bool copy = false)
-    {
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-
-        if (headset)
-        {
-            panel.Classes.Add("headset");
-        }
-
-        if (copy)
-        {
-            panel.EnableCopy(new Clipboard());
-        }
-
-        panel.EnableStarSystem(world.Surface);
-
-        var window = new Window { Content = panel, Width = 1280, Height = 960 };
-        window.Bind(Window.BackgroundProperty, Avalonia.Application.Current!.Resources.GetResourceObservable(D47.App.Theming.ThemeManager.BgKey));
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        panel.Tab = PanelTab.Search;
-        panel.Nav.SelectRoot(BodySearchPage.RootKey);
-        Dispatcher.UIThread.RunJobs();
-
-        return (panel, window);
-    }
+    private static (PanelView Panel, Window Window) Shown(World world, bool headset = false, bool copy = false) =>
+        SearchPanelHosting.Show(world.Surface, BodySearchPage.RootKey, headset, copy: copy ? new Clipboard() : null);
 
     private static BodySearchPage Page(Control root) => root.GetVisualDescendants().OfType<BodySearchPage>().Single();
 
@@ -368,16 +343,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
-        var pressable = page.GetVisualDescendants()
-            .OfType<Control>()
-            .Where(control => control.IsEffectivelyVisible && control is Button or CheckBox or TextBox)
-            .Where(control => !control.GetVisualAncestors().OfType<Avalonia.Controls.Primitives.ScrollBar>().Any())
-            .ToList();
-
-        Assert.NotEmpty(pressable);
-        Assert.All(pressable, control => Assert.True(
-            control.Bounds.Height >= 44 - 0.5,
-            $"{control.GetType().Name} '{control.Name ?? (control as ContentControl)?.Content?.ToString()}' is {control.Bounds.Height} tall"));
+        PressTargets.AssertAtLeastFortyFourTall(page);
 
         window.Close();
     }

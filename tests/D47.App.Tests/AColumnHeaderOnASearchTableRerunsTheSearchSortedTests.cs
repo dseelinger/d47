@@ -77,34 +77,7 @@ public sealed class AColumnHeaderOnASearchTableRerunsTheSearchSortedTests
         settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var galaxy = new Galaxy();
-        var board = new GalaxySearchBoard();
-        var history = new SearchHistory("search-history.json", new MemoryFileSystem(), NullLogger<SearchHistory>.Instance);
-        var registry = CapabilityRegistry.Build([GalaxyCapability.Create(galaxy, () => "LTT 7786", settings, searches: board, history: history)]);
-        var store = new SavedSearchStore("saved-searches.json", new MemoryFileSystem(), NullLogger<SavedSearchStore>.Instance);
-
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-
-        panel.EnableStarSystem(new StarSystemSurface(
-            new Systems(),
-            () => new JournalLocation("LTT 7786", null, false, null),
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { })
-        {
-            Searches = new GalaxySearchSurface(registry, board, store, () => "F1", () => [])
-            {
-                PrefixNames = new Systems().PrefixNamesAsync,
-                SuggestionPause = TimeSpan.Zero,
-                History = history,
-            },
-        });
-
-        var window = new Window { Content = panel, Width = 1280, Height = 960 };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        panel.Tab = PanelTab.Search;
-        panel.Nav.SelectRoot(root);
-        Dispatcher.UIThread.RunJobs();
+        var (panel, window) = SearchPanelHosting.ShowSearchForm(settings, galaxy, new GalaxySearchBoard(), new Systems(), root);
 
         return (panel, window, galaxy);
     }
