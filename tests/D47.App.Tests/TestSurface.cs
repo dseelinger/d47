@@ -323,29 +323,29 @@ public static class TestSurface
 
     /// <summary>Just the settings service, for tests that need nowhere to put a view state.</summary>
     public static SettingsService Settings() => Create().Settings;
+}
 
-    private sealed class NoopProtector : ISecretProtector
+internal sealed class NoopProtector : ISecretProtector
+{
+    public byte[] Protect(byte[] plaintext) => plaintext;
+
+    public bool TryUnprotect(byte[] ciphertext, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out byte[]? plaintext)
     {
-        public byte[] Protect(byte[] plaintext) => plaintext;
-
-        public bool TryUnprotect(byte[] ciphertext, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out byte[]? plaintext)
-        {
-            plaintext = ciphertext;
-            return true;
-        }
+        plaintext = ciphertext;
+        return true;
     }
+}
 
-    private sealed class NoopVerbosity : D47.Core.Diagnostics.ILogVerbosityControl
+internal sealed class NoopVerbosity : D47.Core.Diagnostics.ILogVerbosityControl
+{
+    private readonly Dictionary<string, LogLevel> _levels =
+        D47.Core.Diagnostics.Subsystems.All.ToDictionary(s => s, _ => LogLevel.Information, StringComparer.Ordinal);
+
+    public IReadOnlyDictionary<string, LogLevel> Levels => _levels;
+
+    public void Set(string subsystem, LogLevel level) => _levels[subsystem] = level;
+
+    public void SetDefault(LogLevel level)
     {
-        private readonly Dictionary<string, LogLevel> _levels =
-            D47.Core.Diagnostics.Subsystems.All.ToDictionary(s => s, _ => LogLevel.Information, StringComparer.Ordinal);
-
-        public IReadOnlyDictionary<string, LogLevel> Levels => _levels;
-
-        public void Set(string subsystem, LogLevel level) => _levels[subsystem] = level;
-
-        public void SetDefault(LogLevel level)
-        {
-        }
     }
 }

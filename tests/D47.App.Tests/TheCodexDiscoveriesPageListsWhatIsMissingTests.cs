@@ -59,25 +59,6 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
         return JournalScript.Commander("F735466", "John Deparagon", lines);
     }
 
-    private static (Window Window, T Page) Open<T>(Func<T> make)
-        where T : Control
-    {
-        var look = AppLook.Put();
-        var page = make();
-        var window = new Window
-        {
-            Content = page,
-            Width = 1280,
-            Height = 900,
-            Background = (IBrush)Application.Current!.Resources[ThemeManager.BgKey]!,
-        };
-        window.Closed += (_, _) => look.Dispose();
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        return (window, page);
-    }
-
     private static CodexRegionPage Region(CommanderGameState state, int? id = 18, HistoryState history = HistoryState.Done, PanelNavigator? nav = null) =>
         new(() => state, () => history, () => Now, new CodexChoice(), id, false, nav, Table);
 
@@ -138,7 +119,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     [AvaloniaFact]
     public void TheRegionPageDrawsADiscoveriesRowWhoseFiguresIgnoreThePeriod()
     {
-        var (window, page) = Open(() => Region(State(Lines)));
+        var (window, page) = PageHost.Open(() => Region(State(Lines)));
 
         Assert.True(Shows(page, CodexModel.DiscoveriesRowLine));
         Assert.True(Shows(page, "3 missing · 1 of 4 on record"));
@@ -157,7 +138,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
         nav.Select(PanelTab.Commander);
         nav.Drill(CodexPage.RegionCrumb(18));
 
-        var (window, page) = Open(() => Region(State(Lines), nav: nav));
+        var (window, page) = PageHost.Open(() => Region(State(Lines), nav: nav));
 
         Row(page).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
@@ -174,7 +155,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     [AvaloniaFact]
     public void TheRowShowsUnderTheEmptyMessageForARegionWithNoEntriesInThePeriod()
     {
-        var (window, page) = Open(() => Region(State(Lines), id: 35));
+        var (window, page) = PageHost.Open(() => Region(State(Lines), id: 35));
 
         Assert.True(Shows(page, "1 missing · 0 of 1 on record"));
         Assert.True(Row(page).IsEnabled);
@@ -185,7 +166,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     [AvaloniaFact]
     public void TheRowIsDisabledForTheRegionD47CannotName()
     {
-        var (window, page) = Open(() => Region(State(Lines), id: null));
+        var (window, page) = PageHost.Open(() => Region(State(Lines), id: null));
 
         Assert.False(Row(page).IsEnabled);
         Assert.True(Shows(Row(page), CodexModel.DiscoveriesNoRegionLine));
@@ -198,11 +179,11 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     [AvaloniaFact]
     public void ARunningWalkDrawsOnlyTheRunningLine()
     {
-        var (window, page) = Open(() => Region(State(Lines), history: HistoryState.Running));
+        var (window, page) = PageHost.Open(() => Region(State(Lines), history: HistoryState.Running));
 
         Assert.DoesNotContain(In<Button>(page), button => button.Name == "CodexDiscoveries");
 
-        var (other, discoveries) = Open(() => Discoveries(State(Lines), history: HistoryState.Running));
+        var (other, discoveries) = PageHost.Open(() => Discoveries(State(Lines), history: HistoryState.Running));
 
         Assert.True(Shows(discoveries, CodexModel.RunningText));
         Assert.DoesNotContain(In<Border>(discoveries), border => border.Name?.StartsWith("CodexStrip.", StringComparison.Ordinal) == true);
@@ -216,7 +197,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     [InlineData(true)]
     public void ThePageDrawsTheLineStripFiltersNoteHeaderAndOneFlatTableOfMissingEntries(bool headset)
     {
-        var (window, page) = Open(() => Discoveries(State(Lines), headset: headset));
+        var (window, page) = PageHost.Open(() => Discoveries(State(Lines), headset: headset));
 
         Assert.True(Shows(page, CodexModel.DiscoveriesLine));
         Assert.True(Shows(page, CodexModel.DiscoveriesGroupLine(CodexStatusFilter.Missing)));
@@ -263,7 +244,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     [InlineData(true)]
     public void TheStatusFilterListsMissingOnRecordOrBothWithEachRowsStatus(bool headset)
     {
-        var (window, page) = Open(() => Discoveries(State(Lines), headset: headset));
+        var (window, page) = PageHost.Open(() => Discoveries(State(Lines), headset: headset));
 
         Pick(page, "Status", 1);
 
@@ -292,7 +273,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     [InlineData(true)]
     public void CategoryAndSubCategorySortByCategoryThenSubCategoryAndASecondPressReverses(bool headset)
     {
-        var (window, page) = Open(() => Discoveries(State(Lines), table: Wide, headset: headset));
+        var (window, page) = PageHost.Open(() => Discoveries(State(Lines), table: Wide, headset: headset));
 
         Pick(page, "Status", 2);
 
@@ -327,7 +308,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     [InlineData(true)]
     public void CategoryNarrowsTheRowsAndSubCategoryAppearsOnlyForACategoryWithSeveral(bool headset)
     {
-        var (window, page) = Open(() => Discoveries(State(Lines), table: Wide, headset: headset));
+        var (window, page) = PageHost.Open(() => Discoveries(State(Lines), table: Wide, headset: headset));
 
         Pick(page, "Status", 2);
         Pick(page, "Category", 2);
@@ -360,7 +341,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     [AvaloniaFact]
     public void ClearFiltersReturnsEveryFilterToItsDefaultAndShowsOnlyWhileOneIsOff()
     {
-        var (window, page) = Open(() => Discoveries(State(Lines), table: Wide));
+        var (window, page) = PageHost.Open(() => Discoveries(State(Lines), table: Wide));
 
         Assert.DoesNotContain(In<Button>(page), button => button.Name == "CodexDiscoveryClear" && button.IsVisible);
 
@@ -386,7 +367,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     [AvaloniaFact]
     public void TheFiltersSurviveLeavingAndComingBackButTheSortResets()
     {
-        var (window, page) = Open(() => Discoveries(State(Lines), table: Wide));
+        var (window, page) = PageHost.Open(() => Discoveries(State(Lines), table: Wide));
 
         Pick(page, "Status", 2);
         Press(page, "Category");
@@ -414,7 +395,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
         nav.Drill(CodexPage.RegionCrumb(18));
         nav.Drill(CodexPage.DiscoveriesCrumb(18));
 
-        var (window, page) = Open(() => Discoveries(State(Lines), nav: nav));
+        var (window, page) = PageHost.Open(() => Discoveries(State(Lines), nav: nav));
 
         Pick(page, "Status", 1);
         In<Button>(Rows(page)).Single(button => button.Name == "CodexMissing.2").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -429,7 +410,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     public void ARegionWithEverythingOnRecordStillShowsTheFilterAndListsEntriesOnRequest()
     {
         var state = State([.. Lines, Codex("2026-10-05T10:00:00Z", 5, 35, "Geology", true)]);
-        var (window, page) = Open(() => Discoveries(state, id: 35));
+        var (window, page) = PageHost.Open(() => Discoveries(state, id: 35));
 
         Assert.True(Shows(page, "Every entry the codex table lists for this region is on your record."));
         Assert.Empty(Names(page));
@@ -451,7 +432,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     [AvaloniaFact]
     public void AFailedWalkDrawsTheWarningAndTheTimeOfTheRecordsStart()
     {
-        var (window, page) = Open(() => Discoveries(State(Lines), history: HistoryState.Failed));
+        var (window, page) = PageHost.Open(() => Discoveries(State(Lines), history: HistoryState.Failed));
 
         Assert.Single(In<Notice>(page));
         Assert.Contains(
@@ -464,7 +445,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     [AvaloniaFact]
     public void ASearchNarrowsTheRowsAndTheCountAndAMissReadsAsNoMatch()
     {
-        var (window, page) = Open(() => Discoveries(State(Lines)));
+        var (window, page) = PageHost.Open(() => Discoveries(State(Lines)));
 
         page.Filter("delta");
         Dispatcher.UIThread.RunJobs();

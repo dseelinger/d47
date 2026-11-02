@@ -504,7 +504,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
     [AvaloniaFact]
     public void TheOverviewReadsTheRecord()
     {
-        var profile = Ltt7786Profile();
+        var profile = TheSystemPageListsItsStationsTests.Ltt7786Profile();
 
         Assert.Equal("Industrial / Refinery", StarSystemPage.Economy(profile));
         Assert.Equal("K7 V · Scoopable", StarSystemPage.MainStar(profile));
@@ -530,7 +530,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
     public void EachStateIsCaptured()
     {
         using var look = AppLook.Put();
-        var profile = Ltt7786Profile();
+        var profile = TheSystemPageListsItsStationsTests.Ltt7786Profile();
 
         Capture("system-overview-following.png", new World(), world => world.Systems.Profile = _ => Task.FromResult<StarSystemProfile?>(profile), "LAST REPORTED");
 
@@ -583,7 +583,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
 
         var world = new World();
-        var profile = Ltt7786Profile();
+        var profile = TheSystemPageListsItsStationsTests.Ltt7786Profile();
         world.Systems.Profile = _ => Task.FromResult<StarSystemProfile?>(profile);
 
         var headset = new VrPanelSurface(new PanelViewModel(), settings, _ => null, starSystem: world.Surface);
@@ -629,35 +629,5 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         frame.SaveCapture(name);
 
         window.Close();
-    }
-
-    /// <summary>LTT 7786 as Spansh had it on 2026-10-05, read through the real service.</summary>
-    private static StarSystemProfile Ltt7786Profile()
-    {
-        var root = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (root is not null && !File.Exists(Path.Combine(root.FullName, "d47.slnx")))
-        {
-            root = root.Parent;
-        }
-
-        Assert.NotNull(root);
-
-        var body = File.ReadAllText(Path.Combine(root.FullName, "tests", "D47.Knowledge.Tests", "Fixtures", "spansh-dump-ltt-7786.json"));
-
-        using var service = new SpanshStarSystemService(
-            NullLogger<SpanshStarSystemService>.Instance,
-            new HttpClient(new Answer(body)));
-
-        return service.ProfileAsync(Ltt7786, CancellationToken.None).GetAwaiter().GetResult()!;
-    }
-
-    private sealed class Answer(string body) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(body, Encoding.UTF8, "application/json"),
-            });
     }
 }

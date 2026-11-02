@@ -55,12 +55,8 @@ public class TheRecordingRowIsAbsentUnlessAskedForTests : IDisposable
         host.Close();
     }
 
-    /// <summary>
-    /// Recording, the row is there with both affordances — and the summary is the record's own, so the
-    /// row states what is actually held rather than a fixed sentence.
-    /// </summary>
-    [AvaloniaFact]
-    public void Recording_draws_the_summary_the_review_and_the_wipe()
+    /// <summary>The Privacy and egress page over a log holding one heard utterance.</summary>
+    private (RecordingLog Log, SettingsHost Host) OpenWithOneUtterance()
     {
         var log = new RecordingLog(_folder, NullLogger.Instance);
 
@@ -83,6 +79,18 @@ public class TheRecordingRowIsAbsentUnlessAskedForTests : IDisposable
         // Privacy and egress' own area (#220).
         host.View.ShowPlaceOf(D47.Core.Capabilities.Builtin.PrivacyCapability.AudioRecordingKey);
         Dispatcher.UIThread.RunJobs();
+
+        return (log, host);
+    }
+
+    /// <summary>
+    /// Recording, the row is there with both affordances — and the summary is the record's own, so the
+    /// row states what is actually held rather than a fixed sentence.
+    /// </summary>
+    [AvaloniaFact]
+    public void Recording_draws_the_summary_the_review_and_the_wipe()
+    {
+        var (log, host) = OpenWithOneUtterance();
 
         Assert.Contains(ReviewButton, ButtonNames(host.View));
         Assert.Contains(WipeButton, ButtonNames(host.View));
@@ -99,27 +107,7 @@ public class TheRecordingRowIsAbsentUnlessAskedForTests : IDisposable
     [AvaloniaFact]
     public void Pressing_the_wipe_deletes_the_recording_and_the_row_says_so()
     {
-        var log = new RecordingLog(_folder, NullLogger.Instance);
-
-        log.Add(new RecordingCapture(
-            RecordingDirection.Heard,
-            Noon,
-            WavWriter.ToBytes(new float[16_000], 16_000),
-            TimeSpan.FromSeconds(1))
-        {
-            Text = "set course for Colonia",
-        });
-
-        var (settings, viewState, paths) = TestSurface.Create(recording: log);
-
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
-            .FollowSettings(settings);
-
-        var host = SettingsHost.Open(settings, viewState, paths, recording: (log, () => Noon));
-
-        // Privacy and egress' own area (#220).
-        host.View.ShowPlaceOf(D47.Core.Capabilities.Builtin.PrivacyCapability.AudioRecordingKey);
-        Dispatcher.UIThread.RunJobs();
+        var (log, host) = OpenWithOneUtterance();
 
         var wipe = host.View.GetVisualDescendants()
             .OfType<Button>()

@@ -132,25 +132,6 @@ public class TheCodexPicturePagesCropACaptureTests
         return JournalScript.Commander("F735466", "John Deparagon", Lines);
     }
 
-    private static (Window Window, T Page) Open<T>(Func<T> make)
-        where T : Control
-    {
-        var look = AppLook.Put();
-        var page = make();
-        var window = new Window
-        {
-            Content = page,
-            Width = 1280,
-            Height = 900,
-            Background = (IBrush)Application.Current!.Resources[ThemeManager.BgKey]!,
-        };
-        window.Closed += (_, _) => look.Dispose();
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        return (window, page);
-    }
-
     private static CodexEntryPage Entry(Surface surface, int? region = 18, bool headset = false) =>
         new(State, 101, region, "Entry 101", surface.Pictures, headset, nav: surface.Nav);
 
@@ -166,7 +147,7 @@ public class TheCodexPicturePagesCropACaptureTests
     public void WithNoPictureOfTheirOwnTheCommanderCanOnlyChoose()
     {
         var surface = new Surface();
-        var (window, page) = Open(() => Entry(surface));
+        var (window, page) = PageHost.Open(() => Entry(surface));
 
         Assert.Equal(["CodexChoose"], Actions(page));
         Assert.Equal("Choose a picture", Named(page, "CodexChoose")!.Content);
@@ -180,7 +161,7 @@ public class TheCodexPicturePagesCropACaptureTests
         var surface = new Surface();
         surface.OwnPicture(new CodexPictureKey(101, 3));
 
-        var (window, page) = Open(() => Entry(surface));
+        var (window, page) = PageHost.Open(() => Entry(surface));
 
         Assert.Equal(["CodexChoose"], Actions(page));
 
@@ -196,7 +177,7 @@ public class TheCodexPicturePagesCropACaptureTests
 
         var stockOn = new CodexPictureSet(
             new CodexPictureStore(surface.Files, Folder, () => true, NullLogger.Instance, commander: () => "F1"), () => true, surface.Files, @"C:\d47\placeholders", Captures);
-        var (window, page) = Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
+        var (window, page) = PageHost.Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
 
         Assert.Equal(["CodexReplace", "CodexUseStock"], Actions(page));
         Assert.Equal("Use the stock picture", Named(page, "CodexUseStock")!.Content);
@@ -204,7 +185,7 @@ public class TheCodexPicturePagesCropACaptureTests
         window.Close();
 
         surface.OwnPictureWithSource(Key, new CropSquare(0, 0, 600));
-        var (kept, withSource) = Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
+        var (kept, withSource) = PageHost.Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
 
         Assert.Equal(["CodexRecrop", "CodexReplace", "CodexUseStock"], Actions(withSource));
 
@@ -220,7 +201,7 @@ public class TheCodexPicturePagesCropACaptureTests
         var stockOn = new CodexPictureSet(
             new CodexPictureStore(surface.Files, Folder, () => true, NullLogger.Instance, commander: () => "F1"), () => true, surface.Files, @"C:\d47\placeholders", Captures);
 
-        var (window, page) = Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
+        var (window, page) = PageHost.Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
         Press(Named(page, "CodexUseStock")!);
         Dispatcher.UIThread.RunJobs();
 
@@ -238,7 +219,7 @@ public class TheCodexPicturePagesCropACaptureTests
         var surface = new Surface();
         surface.OwnPictureWithSource(Key, new CropSquare(0, 0, 600));
 
-        var (window, page) = Open(() => Entry(surface));
+        var (window, page) = PageHost.Open(() => Entry(surface));
 
         Assert.Equal(["CodexRecrop", "CodexReplace", "CodexRemoveMine"], Actions(page));
         Assert.Equal("Remove my picture", Named(page, "CodexRemoveMine")!.Content);
@@ -258,11 +239,11 @@ public class TheCodexPicturePagesCropACaptureTests
         var surface = new Surface();
         surface.OwnPictureWithSource(Key, new CropSquare(0, 0, 600));
 
-        var (headset, big) = Open(() => Entry(surface, headset: true));
+        var (headset, big) = PageHost.Open(() => Entry(surface, headset: true));
         Assert.Empty(Actions(big));
         headset.Close();
 
-        var (none, unnumbered) = Open(() => Entry(surface, region: null));
+        var (none, unnumbered) = PageHost.Open(() => Entry(surface, region: null));
         Assert.Empty(Actions(unnumbered));
         none.Close();
     }
@@ -273,7 +254,7 @@ public class TheCodexPicturePagesCropACaptureTests
         var surface = new Surface();
         surface.OwnPictureWithSource(Key, new CropSquare(0, 0, 600));
 
-        var (window, page) = Open(() => Entry(surface));
+        var (window, page) = PageHost.Open(() => Entry(surface));
         Press(Named(page, "CodexRemoveMine")!);
         Dispatcher.UIThread.RunJobs();
 
@@ -293,7 +274,7 @@ public class TheCodexPicturePagesCropACaptureTests
         surface.Capture("capture-20261018-210900", "2026-10-18T21:09:00Z", entries: (101, 18));
         surface.Capture("capture-20261018-220000", "2026-10-18T22:00:00Z", entries: (101, 3));
 
-        var (window, page) = Open(() => new CodexChoosePage(Key, surface.Pictures, surface.Nav, surface.Work));
+        var (window, page) = PageHost.Open(() => new CodexChoosePage(Key, surface.Pictures, surface.Nav, surface.Work));
         var rows = page.GetVisualDescendants().OfType<Button>().Where(button => button.Name?.StartsWith("CodexCapture.", StringComparison.Ordinal) == true).ToList();
 
         Assert.Equal(
@@ -319,7 +300,7 @@ public class TheCodexPicturePagesCropACaptureTests
     public void WithNoCapturesTheChoiceSaysHowToTakeOne()
     {
         var surface = new Surface();
-        var (window, page) = Open(() => new CodexChoosePage(Key, surface.Pictures, surface.Nav, surface.Work));
+        var (window, page) = PageHost.Open(() => new CodexChoosePage(Key, surface.Pictures, surface.Nav, surface.Work));
 
         Assert.Contains(page.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == CodexModel.NoCapturesText);
         Assert.Equal("No captures yet. Say \"take a picture\" in game to take one.", CodexModel.NoCapturesText);
@@ -336,7 +317,7 @@ public class TheCodexPicturePagesCropACaptureTests
         surface.Nav.Drill(CodexPage.ChooseCrumb(Key));
         surface.Nav.Drill(CodexPage.CropCrumb(Key, kept: false));
 
-        var (window, crop) = Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: false));
+        var (window, crop) = PageHost.Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: false));
 
         Assert.Equal(new CropSquare(500, 0, 1000), crop.Surface!.Square);
 
@@ -372,7 +353,7 @@ public class TheCodexPicturePagesCropACaptureTests
 
         window.Close();
 
-        var (again, entry) = Open(() => Entry(surface));
+        var (again, entry) = PageHost.Open(() => Entry(surface));
         Assert.Contains(entry.GetVisualDescendants().OfType<TextBlock>(), block => string.Equals(block.Text, "Your picture", StringComparison.OrdinalIgnoreCase));
         again.Close();
     }
@@ -390,7 +371,7 @@ public class TheCodexPicturePagesCropACaptureTests
         List<CodexPictureKey> saved = [];
         surface.Pictures.PictureSaved += saved.Add;
 
-        var (window, crop) = Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept));
+        var (window, crop) = PageHost.Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept));
 
         await crop.SaveAsync();
         Dispatcher.UIThread.RunJobs();
@@ -409,7 +390,7 @@ public class TheCodexPicturePagesCropACaptureTests
         surface.Nav.Drill(CodexPage.CropCrumb(Key, kept: true));
         var before = surface.Files.ReadBytes(Path.Combine(Local, Key.FileName));
 
-        var (window, crop) = Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: true));
+        var (window, crop) = PageHost.Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: true));
 
         Assert.Equal(new CropSquare(200, 50, 500), crop.Surface!.Square);
 
@@ -431,7 +412,7 @@ public class TheCodexPicturePagesCropACaptureTests
         surface.Work.Capture = Path.Combine(Captures, "capture-20261018-210900.jpg");
         surface.OwnPictureWithSource(Key, new CropSquare(200, 50, 500));
 
-        var (window, crop) = Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept));
+        var (window, crop) = PageHost.Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept));
 
         for (var visit = 0; visit < 3; visit++)
         {
@@ -456,7 +437,7 @@ public class TheCodexPicturePagesCropACaptureTests
         surface.Capture("capture-20261018-210900", "2026-10-18T21:09:00Z", 2000, 1000);
         surface.Work.Capture = Path.Combine(Captures, "capture-20261018-210900.jpg");
 
-        var (window, crop) = Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: false));
+        var (window, crop) = PageHost.Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: false));
         var area = crop.Surface!;
         var corner = area.ToSurface(1500, 1000);
 

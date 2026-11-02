@@ -56,9 +56,7 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
             new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
         var stories = StoryStore.InMemory();
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
+        var generator = AdventureFixture.Generator();
         var director = new StoryDirector(
             stories, book, () => catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
@@ -72,15 +70,7 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
             Stories: director, Switched: signal,
             Messages: new D47.Core.Messages.MessageStore(Path.Combine(paths.Data, "messages.json"), new MemoryFileSystem(), NullLogger<D47.Core.Messages.MessageStore>.Instance));
 
-        var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
-        panel.EnableAdventures(surface);
-
-        var window = new Window { Content = panel, Width = 1280, Height = 860 };
-        window.Show();
-
-        panel.Tab = PanelTab.Stories;
-        panel.Nav.SelectRoot(StoriesView.RootKey);
-        Dispatcher.UIThread.RunJobs();
+        var (window, panel) = StoriesPanelHosting.Show(surface);
 
         tab.Window = window;
         tab.Panel = panel;

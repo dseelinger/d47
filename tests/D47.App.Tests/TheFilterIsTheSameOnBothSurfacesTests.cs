@@ -32,21 +32,6 @@ public class TheFilterIsTheSameOnBothSurfacesTests
             remember);
     }
 
-    private static (Window Window, PanelView Panel) Open(ChecklistService checklists)
-    {
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-        panel.EnableChecklist(checklists);
-
-        var window = new Window { Content = panel, Width = 900, Height = 700 };
-        window.Show();
-
-        panel.Tab = PanelTab.Commander;
-        panel.Nav.Drill(ChecklistPage.AllLists);
-        Dispatcher.UIThread.RunJobs();
-
-        return (window, panel);
-    }
-
     private static IReadOnlyList<string> Lines(PanelView panel) =>
         [.. panel.GetVisualDescendants()
             .OfType<TextBlock>()
@@ -75,8 +60,8 @@ public class TheFilterIsTheSameOnBothSurfacesTests
             },
         ]);
 
-        var (windowOne, deskPanel) = Open(checklists);
-        var (windowTwo, headsetPanel) = Open(checklists);
+        var (windowOne, deskPanel) = ChecklistPanelHosting.Show(checklists);
+        var (windowTwo, headsetPanel) = ChecklistPanelHosting.Show(checklists);
 
         Assert.Contains(Lines(deskPanel), text => text.Contains("buy limpets", StringComparison.Ordinal));
         Assert.Contains(Lines(headsetPanel), text => text.Contains("sell the cargo", StringComparison.Ordinal));
@@ -117,8 +102,8 @@ public class TheFilterIsTheSameOnBothSurfacesTests
             },
         ]);
 
-        var (windowOne, _) = Open(checklists);
-        var (windowTwo, headsetPanel) = Open(checklists);
+        var (windowOne, _) = ChecklistPanelHosting.Show(checklists);
+        var (windowTwo, headsetPanel) = ChecklistPanelHosting.Show(checklists);
 
         Dispatcher.UIThread.RunJobs();
 
@@ -169,7 +154,7 @@ public class TheFilterIsTheSameOnBothSurfacesTests
             ChecklistDocument.For(string.Empty, "Jameson") with { Items = [Note("buy limpets")] },
         ]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         panel.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();

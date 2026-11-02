@@ -46,9 +46,7 @@ public sealed class TheStoriesTabFollowsABenchSwitchTests
         var book = new AdventureBook(adventures, NullLogger<AdventureBook>.Instance);
         adventures.Changed += book.Reconcile;
 
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
+        var generator = AdventureFixture.Generator();
         var director = new StoryDirector(stories, book, () => catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance)
         {
             Archive = archive,
@@ -59,13 +57,7 @@ public sealed class TheStoriesTabFollowsABenchSwitchTests
         var surface = new AdventureSurface(
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
             Stories: director);
-        var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
-        panel.EnableAdventures(surface);
-        new Window { Content = panel, Width = 1280, Height = 860 }.Show();
-
-        panel.Tab = PanelTab.Stories;
-        panel.Nav.SelectRoot(StoriesView.RootKey);
-        Dispatcher.UIThread.RunJobs();
+        var (_, panel) = StoriesPanelHosting.Show(surface);
         Assert.DoesNotContain(Drawn(panel), text => text.StartsWith("Your story", StringComparison.OrdinalIgnoreCase));
 
         Assert.Null(storyBench.SwitchTo("test", "F1", Now));

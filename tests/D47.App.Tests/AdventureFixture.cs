@@ -10,6 +10,11 @@ namespace D47.App.Tests;
 /// <summary>The smallest adventure surface that furnishes a tab.</summary>
 internal static class AdventureFixture
 {
+    /// <summary>A generator with no provider, state or galaxy.</summary>
+    public static AdventureGenerator Generator() => new(
+        () => null, () => null, () => null, () => null, () => null, () => null,
+        () => null, () => null, null, null, NullLogger.Instance);
+
     public static AdventureSurface Surface(AppPaths? paths = null)
     {
         paths ??= new AppPaths(TestSurface.MemoryFolder("d47-adventure-fixture"));
@@ -20,13 +25,9 @@ internal static class AdventureFixture
 
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
 
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
-
         return new AdventureSurface(
             book,
-            generator,
+            Generator(),
             () => null,
             () => "F1",
             () => new DateTimeOffset(2026, 8, 24, 12, 0, 0, TimeSpan.Zero),

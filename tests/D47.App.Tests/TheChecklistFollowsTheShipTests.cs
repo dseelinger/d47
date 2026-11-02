@@ -79,22 +79,6 @@ public class TheChecklistFollowsTheShipTests
         return checklists;
     }
 
-    /// <summary>The panel, on the checklist tab, left on screen so a jump can reach it.</summary>
-    private static PanelView Showing(ChecklistService checklists)
-    {
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-        panel.EnableChecklist(checklists);
-
-        var window = new Window { Content = panel, Width = 900, Height = 700 };
-        window.Show();
-
-        panel.Tab = PanelTab.Commander;
-        panel.Nav.Drill(ChecklistPage.AllLists);
-        Dispatcher.UIThread.RunJobs();
-
-        return panel;
-    }
-
     private static IReadOnlyList<string> Drawn(PanelView panel)
     {
         Dispatcher.UIThread.RunJobs();
@@ -116,7 +100,7 @@ public class TheChecklistFollowsTheShipTests
 
         checklists.Choose(ChecklistService.HereKey);
 
-        var panel = Showing(checklists);
+        var panel = ChecklistPanelHosting.Show(checklists).Panel;
 
         // Parked where nobody works: the filter has nothing to show, and names the scope that emptied it.
         Assert.Contains(
@@ -145,7 +129,7 @@ public class TheChecklistFollowsTheShipTests
 
         checklists.Choose(ChecklistService.HereKey);
 
-        var panel = Showing(checklists);
+        var panel = ChecklistPanelHosting.Show(checklists).Panel;
 
         static bool Offered(PanelView panel) => CheckBoxes.Labelled(panel, "Include Partial Grades").Any();
 
@@ -166,7 +150,7 @@ public class TheChecklistFollowsTheShipTests
 
         checklists.Choose(ChecklistService.HereKey);
 
-        var panel = Showing(checklists);
+        var panel = ChecklistPanelHosting.Show(checklists).Panel;
 
         Assert.DoesNotContain(Drawn(panel), text => text.Contains("Lei Cheung", StringComparison.Ordinal));
 

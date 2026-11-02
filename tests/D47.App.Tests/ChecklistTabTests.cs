@@ -30,21 +30,6 @@ public class ChecklistTabTests
     }
 
     /// <summary>The panel on the Checklist tab, shown, which is what makes its controls measurable.</summary>
-    private static (Window Window, PanelView Panel) Open(ChecklistService checklists)
-    {
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-        panel.EnableChecklist(checklists);
-
-        var window = new Window { Content = panel, Width = 900, Height = 700 };
-        window.Show();
-
-        panel.Tab = PanelTab.Commander;
-        panel.Nav.Drill(ChecklistPage.AllLists);
-        Dispatcher.UIThread.RunJobs();
-
-        return (window, panel);
-    }
-
     /// <summary>The movers on screen, by the name a screen reader reads.</summary>
     private static IReadOnlyList<Button> Movers(PanelView panel, string name) =>
         [.. panel.GetVisualDescendants().OfType<Button>()
@@ -116,7 +101,7 @@ public class ChecklistTabTests
     public void TheWindowKeepsBoth()
     {
         var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         Assert.True(panel.FindControl<Control>("CommanderTab")!.IsVisible);
 
@@ -134,7 +119,7 @@ public class ChecklistTabTests
             checklists.Document with { Items = [.. checklists.Document.Items, Derived()] },
         ]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         var ticks = Ticks.On(panel);
 
@@ -154,7 +139,7 @@ public class ChecklistTabTests
         checklists.Complete(checklists.Document.Items[0].Id);
         checklists.AddNote(ChecklistScope.Universal, "fit a fuel scoop");
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         var text = panel.GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text ?? string.Empty)
@@ -176,7 +161,7 @@ public class ChecklistTabTests
         checklists.AddNote(ChecklistScope.Ship(12), "fit a fuel scoop");
         checklists.AddNote(ChecklistScope.Universal, "sell the cargo");
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         var lines = Ticks.Words(panel);
 
@@ -198,7 +183,7 @@ public class ChecklistTabTests
         // Adding selects, and this test is about a press selecting.
         checklists.Select(null);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         // Nothing is selected, so no line is carrying movers.
         Assert.Empty(Movers(panel, "Move up"));
@@ -242,7 +227,7 @@ public class ChecklistTabTests
 
         checklists.ProposeAdd(ChecklistScope.Universal, ["buy limpets"]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         // Suggestions is on the list of lists.
         panel.Nav.ToRoot();
@@ -285,7 +270,7 @@ public class ChecklistTabTests
 
         checklists.ProposeAdd(ChecklistScope.Universal, ["buy limpets"]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         // Suggestions is on the list of lists.
         panel.Nav.ToRoot();
@@ -311,7 +296,7 @@ public class ChecklistTabTests
     {
         var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         // A voice command, or a text editor.
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
@@ -335,7 +320,7 @@ public class ChecklistTabTests
         checklists.AddNote(ChecklistScope.Universal, "fit a fuel scoop");
 
         // The last line added is the selected one and what makes this test need no press of its own.
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         foreach (var name in new[] { "Move to the top", "Move up", "Move down", "Move to the bottom" })
         {
@@ -385,7 +370,7 @@ public class ChecklistTabTests
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         var glyphs = panel.GetVisualDescendants()
             .OfType<Button>()
@@ -449,7 +434,7 @@ public class ChecklistTabTests
             },
         ]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         var drawn = Lines(panel);
         Assert.Contains(drawn, line => line.Contains("Grade 3", StringComparison.Ordinal));
@@ -518,7 +503,7 @@ public class ChecklistTabTests
             },
         ]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         Assert.Contains(
             Lines(panel),
@@ -549,7 +534,7 @@ public class ChecklistTabTests
             },
         ]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         var drawn = Lines(panel);
 
@@ -642,7 +627,7 @@ public class ChecklistTabTests
             },
         ]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         var word = checklists.FilterAxes()
             .Single(filter => filter.Key == ChecklistService.HereKey).Word;
@@ -680,7 +665,7 @@ public class ChecklistTabTests
             checklists.Document with { Items = [Roll("TinyHardpoint2", grade: 5)] },
         ]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         Assert.Empty(CheckBoxes.Labelled(panel, "Include Partial Grades"));
 
@@ -694,7 +679,7 @@ public class ChecklistTabTests
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         var tick = Assert.Single(Ticks.On(panel));
 

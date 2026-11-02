@@ -48,15 +48,7 @@ public class ThePinnedFilterShowsWorkFromAnywhereTests
 
     private static IReadOnlyList<string> Drawn(ChecklistService checklists)
     {
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-        panel.EnableChecklist(checklists);
-
-        var window = new Window { Content = panel, Width = 900, Height = 700 };
-        window.Show();
-
-        panel.Tab = PanelTab.Commander;
-        panel.Nav.Drill(ChecklistPage.AllLists);
-        Dispatcher.UIThread.RunJobs();
+        var (_, panel) = ChecklistPanelHosting.Show(checklists);
 
         return [.. panel.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
     }

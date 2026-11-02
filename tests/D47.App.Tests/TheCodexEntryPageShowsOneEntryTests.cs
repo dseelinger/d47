@@ -53,34 +53,11 @@ public class TheCodexEntryPageShowsOneEntryTests
         Codex("2026-10-05T10:00:00Z", 101, 18, Organic, "Organic structures", "Beta", false),
     ];
 
-    private sealed class Release : HttpMessageHandler
-    {
-        private readonly ConcurrentDictionary<string, byte[]> _files = new();
-
-        public void Serve(CodexPictureRow row, byte[] bytes) =>
-            _files[$"/{CodexPictureIndex.Repository}/releases/download/{row.Tag}/{row.Asset}"] = bytes;
-
-        /// <summary>Holds every picture response until it is set.</summary>
-        public TaskCompletionSource Hold { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            if (!request.RequestUri!.AbsolutePath.EndsWith(CodexPictureIndex.IndexName, StringComparison.Ordinal))
-            {
-                await Hold.Task.ConfigureAwait(false);
-            }
-
-            return _files.TryGetValue(request.RequestUri.AbsolutePath, out var bytes)
-                ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) }
-                : new HttpResponseMessage(HttpStatusCode.NotFound);
-        }
-    }
-
     private sealed class Surface
     {
         public MemoryFileSystem Files { get; } = new();
 
-        public Release Release { get; } = new();
+        public HeldRelease Release { get; } = new();
 
         public bool StockOn { get; set; } = true;
 
@@ -143,25 +120,6 @@ public class TheCodexEntryPageShowsOneEntryTests
         return JournalScript.Commander("F735466", "John Deparagon", lines);
     }
 
-    private static (Window Window, T Page) Open<T>(Func<T> make)
-        where T : Control
-    {
-        var look = AppLook.Put();
-        var page = make();
-        var window = new Window
-        {
-            Content = page,
-            Width = 1280,
-            Height = 900,
-            Background = (IBrush)Application.Current!.Resources[ThemeManager.BgKey]!,
-        };
-        window.Closed += (_, _) => look.Dispose();
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        return (window, page);
-    }
-
     private static CodexEntryPage Entry(Surface surface, long entryId = 101, int? region = 18, params string[] lines) =>
         new(() => State(lines.Length == 0 ? Lines : lines), entryId, region, "Entry " + entryId, surface.Pictures);
 
@@ -180,7 +138,7 @@ public class TheCodexEntryPageShowsOneEntryTests
         surface.OwnPicture(101, 18);
         surface.StockRow(101, 18, onDisk: true);
 
-        var (window, page) = Open(() => Entry(surface));
+        var (window, page) = PageHost.Open(() => Entry(surface));
 
         Assert.Equal(Local, Side(page, "CodexPicture"));
         Assert.True(Shows(page, "Your picture"));
@@ -198,7 +156,7 @@ public class TheCodexEntryPageShowsOneEntryTests
         var surface = new Surface();
         surface.StockRow(101, 18, onDisk: true);
 
-        var (window, page) = Open(() => Entry(surface));
+        var (window, page) = PageHost.Open(() => Entry(surface));
 
         Assert.Equal(Stock, Side(page, "CodexPicture"));
         Assert.True(Shows(page, "Stock picture"));
@@ -212,7 +170,7 @@ public class TheCodexEntryPageShowsOneEntryTests
         var own = new Surface();
         own.OwnPicture(101, 35);
 
-        var (first, ownPage) = Open(() => Entry(own));
+        var (first, ownPage) = PageHost.Open(() => Entry(own));
 
         Assert.Equal(Local, Side(ownPage, "CodexPicture"));
         Assert.True(Shows(ownPage, "Your picture · from " + CodexModel.RegionName(35)));
@@ -221,7 +179,7 @@ public class TheCodexEntryPageShowsOneEntryTests
         var stock = new Surface();
         stock.StockRow(101, 35, onDisk: true);
 
-        var (second, stockPage) = Open(() => Entry(stock));
+        var (second, stockPage) = PageHost.Open(() => Entry(stock));
 
         Assert.Equal(Stock, Side(stockPage, "CodexPicture"));
         Assert.True(Shows(stockPage, "Stock picture · from " + CodexModel.RegionName(35)));
@@ -234,7 +192,7 @@ public class TheCodexEntryPageShowsOneEntryTests
         var surface = new Surface();
         surface.Placeholder("organic-structures.jpg", 24);
 
-        var (window, page) = Open(() => Entry(surface));
+        var (window, page) = PageHost.Open(() => Entry(surface));
 
         Assert.Null(Side(page, "CodexPicture"));
         Assert.Equal(24, Side(page, "CodexPlaceholder"));
@@ -258,7 +216,7 @@ public class TheCodexEntryPageShowsOneEntryTests
             Path.Combine(Placeholders, "organic-structures.jpg"),
             File.ReadAllBytes(Path.Combine(root, "assets", "codex-placeholders", "organic-structures.jpg")));
 
-        var (window, page) = Open(() => Entry(surface));
+        var (window, page) = PageHost.Open(() => Entry(surface));
 
         Assert.Equal(768, Side(page, "CodexPlaceholder"));
         Assert.True(Shows(page, CodexModel.NoPictureText));
@@ -278,7 +236,7 @@ public class TheCodexEntryPageShowsOneEntryTests
         var surface = new Surface { StockOn = false };
         surface.Placeholder("organic-structures.jpg", 24);
 
-        var (window, page) = Open(() => Entry(surface));
+        var (window, page) = PageHost.Open(() => Entry(surface));
 
         Assert.Equal(24, Side(page, "CodexPlaceholder"));
         Assert.True(Shows(page, CodexModel.StockOffText));
@@ -297,7 +255,7 @@ public class TheCodexEntryPageShowsOneEntryTests
             surface.Placeholder(file, 24);
         }
 
-        var (window, page) = Open(() => Entry(
+        var (window, page) = PageHost.Open(() => Entry(
             surface, 301, 18, "{\"timestamp\":\"2026-10-02T10:00:00Z\",\"event\":\"LoadGame\"}",
             Codex("2026-10-02T10:00:00Z", 301, 18, "$Codex_SubCategory_X;", "Something else", "Sol", true)));
 
@@ -328,7 +286,7 @@ public class TheCodexEntryPageShowsOneEntryTests
             surface.Placeholder(files[i], 20 + i);
         }
 
-        var (window, page) = Open(() => Entry(
+        var (window, page) = PageHost.Open(() => Entry(
             surface, 301, 18, Codex("2026-10-02T10:00:00Z", 301, 18, symbol, "Strukturen", "Sol", true)));
 
         Assert.Equal(20 + Array.IndexOf(files, file), Side(page, "CodexPlaceholder"));
@@ -342,7 +300,7 @@ public class TheCodexEntryPageShowsOneEntryTests
         var surface = new Surface(hold: true);
         var row = surface.StockRow(101, 18, onDisk: false);
 
-        var (window, page) = Open(() => Entry(surface));
+        var (window, page) = PageHost.Open(() => Entry(surface));
 
         Assert.Null(Side(page, "CodexPicture"));
         Assert.True(Shows(page, CodexModel.FetchingText));
@@ -362,7 +320,7 @@ public class TheCodexEntryPageShowsOneEntryTests
     public void TheFactsAndTheLoggingsInThisRegionAreListedNewestFirst()
     {
         var surface = new Surface();
-        var (window, page) = Open(() => Entry(surface));
+        var (window, page) = PageHost.Open(() => Entry(surface));
 
         Assert.True(Shows(page, "Biological and Geological"));
         Assert.True(Shows(page, "Organic structures"));
@@ -383,7 +341,7 @@ public class TheCodexEntryPageShowsOneEntryTests
     public void AnEntryNotLoggedInThisRegionSaysSo()
     {
         var surface = new Surface();
-        var (window, page) = Open(() => Entry(surface, 101, 35));
+        var (window, page) = PageHost.Open(() => Entry(surface, 101, 35));
 
         Assert.True(Shows(page, CodexModel.NotHereText));
         Assert.DoesNotContain(In<TextBlock>(page), block => block.Text?.StartsWith("2026-", StringComparison.Ordinal) == true);
@@ -400,7 +358,7 @@ public class TheCodexEntryPageShowsOneEntryTests
         nav.Drill(CodexPage.RegionCrumb(18));
 
         var state = State(Lines);
-        var (window, page) = Open(() => new CodexRegionPage(
+        var (window, page) = PageHost.Open(() => new CodexRegionPage(
             () => state, () => HistoryState.Done, () => Now, new CodexChoice { Period = (int)CodexPeriod.Everything }, 18, false, nav));
 
         In<Button>(page).First(button => button.Name == "CodexEntry.101").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
@@ -428,7 +386,7 @@ public class TheCodexEntryPageShowsOneEntryTests
         var state = State(Lines);
         var table = D47.Core.Knowledge.CodexTable.Parse(new StringReader(
             "# test\n101\tEntry 101\tBiological and Geological\tOrganic structures\t18:3\n205\tAlpha tree\tBiological and Geological\tOrganic structures\t18:9\n"));
-        var (window, page) = Open(() => new CodexDiscoveriesPage(() => state, () => HistoryState.Done, 18, table, nav: nav));
+        var (window, page) = PageHost.Open(() => new CodexDiscoveriesPage(() => state, () => HistoryState.Done, 18, table, nav: nav));
 
         In<Button>(page).First(button => button.Name == "CodexMissing.205").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 

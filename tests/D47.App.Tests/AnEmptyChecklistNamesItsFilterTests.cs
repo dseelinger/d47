@@ -23,21 +23,6 @@ public class AnEmptyChecklistNamesItsFilterTests
         return TestSurface.Checklists(paths.Data);
     }
 
-    private static (Window Window, PanelView Panel) Open(ChecklistService checklists)
-    {
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-        panel.EnableChecklist(checklists);
-
-        var window = new Window { Content = panel, Width = 900, Height = 700 };
-        window.Show();
-
-        panel.Tab = PanelTab.Commander;
-        panel.Nav.Drill(ChecklistPage.AllLists);
-        Dispatcher.UIThread.RunJobs();
-
-        return (window, panel);
-    }
-
     private static ChecklistItem Note(string text) => new()
     {
         Key = text.Replace(' ', '-').ToLowerInvariant(),
@@ -68,7 +53,7 @@ public class AnEmptyChecklistNamesItsFilterTests
     [AvaloniaFact]
     public void AnUnfilteredEmptyListStillReadsNothingHereYet()
     {
-        var (window, panel) = Open(Checklists());
+        var (window, panel) = ChecklistPanelHosting.Show(Checklists());
 
         Assert.Contains(Lines(panel), text => text.StartsWith("Nothing here yet", StringComparison.Ordinal));
 
@@ -82,7 +67,7 @@ public class AnEmptyChecklistNamesItsFilterTests
         checklists.List.Save(
             [ChecklistDocument.For(string.Empty, "Jameson") with { Items = [Note("buy limpets")] }]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         checklists.Search("thargoid sensors");
         Dispatcher.UIThread.RunJobs();
@@ -99,7 +84,7 @@ public class AnEmptyChecklistNamesItsFilterTests
         checklists.List.Save(
             [ChecklistDocument.For(string.Empty, "Jameson") with { Items = [Note("buy limpets")] }]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         checklists.Choose("complete");
         Dispatcher.UIThread.RunJobs();
@@ -118,7 +103,7 @@ public class AnEmptyChecklistNamesItsFilterTests
         checklists.List.Save(
             [ChecklistDocument.For(string.Empty, "Jameson") with { Items = [Note("buy limpets")] }]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         checklists.Choose("complete");
         checklists.Search("limpets");
@@ -140,7 +125,7 @@ public class AnEmptyChecklistNamesItsFilterTests
         checklists.List.Save(
             [ChecklistDocument.For(string.Empty, "Jameson") with { Items = [Note("buy limpets")] }]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         checklists.Choose("complete");
         checklists.Search("limpets");
@@ -164,7 +149,7 @@ public class AnEmptyChecklistNamesItsFilterTests
         checklists.List.Save(
             [ChecklistDocument.For(string.Empty, "Jameson") with { Items = [Note("buy limpets")] }]);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
 
         checklists.Search("thargoid sensors");
         Dispatcher.UIThread.RunJobs();

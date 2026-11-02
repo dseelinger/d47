@@ -200,7 +200,7 @@ public class CoverageRecorderTests
 
             Settings = new SettingsService(
                 store,
-                new SecretStore(Paths, new PlainProtector(), Files, NullLogger<SecretStore>.Instance),
+                new SecretStore(Paths, new NoopProtector(), Files, NullLogger<SecretStore>.Instance),
                 store.Load(),
                 NullLogger<SettingsService>.Instance);
 
@@ -298,16 +298,5 @@ public class CoverageRecorderTests
         public CapabilityRegistry Registry { get; }
 
         public CoverageRecorder Recorder { get; }
-    }
-
-    private sealed class PlainProtector : ISecretProtector
-    {
-        public byte[] Protect(byte[] plaintext) => plaintext;
-
-        public bool TryUnprotect(byte[] ciphertext, [NotNullWhen(true)] out byte[]? plaintext)
-        {
-            plaintext = ciphertext;
-            return true;
-        }
     }
 }

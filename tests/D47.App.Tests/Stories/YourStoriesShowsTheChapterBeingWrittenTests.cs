@@ -72,9 +72,7 @@ public sealed class YourStoriesShowsTheChapterBeingWrittenTests
         adventures.Changed += book.Reconcile;
 
         var gate = new TaskCompletionSource();
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
+        var generator = AdventureFixture.Generator();
         var director = new StoryDirector(
             stories, book, () => catalog,
             async (ask, _, _) =>

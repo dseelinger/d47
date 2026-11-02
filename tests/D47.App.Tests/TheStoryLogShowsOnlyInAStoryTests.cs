@@ -32,9 +32,7 @@ public class TheStoryLogShowsOnlyInAStoryTests
         var stories = StoryStore.InMemory();
         var messages = new MessageStore("messages.json", files, NullLogger<MessageStore>.Instance);
 
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
+        var generator = AdventureFixture.Generator();
         var director = new StoryDirector(
             stories, book, () => StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 

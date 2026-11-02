@@ -79,25 +79,6 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
             new(() => JournalScript.Commander("F1", "Test"), 101, 18, "Entry 101", Pictures, headset, null, Nav, confirm);
     }
 
-    private static (Window Window, T Page) Open<T>(Func<T> make)
-        where T : Control
-    {
-        var look = AppLook.Put();
-        var page = make();
-        var window = new Window
-        {
-            Content = page,
-            Width = 1280,
-            Height = 900,
-            Background = (IBrush)Application.Current!.Resources[ThemeManager.BgKey]!,
-        };
-        window.Closed += (_, _) => look.Dispose();
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        return (window, page);
-    }
-
     private static Button? Named(Control root, string name) =>
         root.GetVisualDescendants().OfType<Button>().FirstOrDefault(button => button.Name == name);
 
@@ -113,7 +94,7 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
         surface.OwnPicture();
         surface.Stock();
 
-        var (window, page) = Open(() => surface.Page());
+        var (window, page) = PageHost.Open(() => surface.Page());
 
         Assert.Equal("Publish", Named(page, "CodexPublish")?.Content);
         Assert.Equal("Unpublish", Named(page, "CodexUnpublish")?.Content);
@@ -128,7 +109,7 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
         surface.OwnPicture();
         surface.Stock();
 
-        var (window, page) = Open(() => surface.Page());
+        var (window, page) = PageHost.Open(() => surface.Page());
 
         Assert.Null(Named(page, "CodexPublish"));
         Assert.Null(Named(page, "CodexUnpublish"));
@@ -143,7 +124,7 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
         surface.OwnPicture();
         surface.Stock();
 
-        var (window, page) = Open(() => surface.Page(headset: true));
+        var (window, page) = PageHost.Open(() => surface.Page(headset: true));
 
         Assert.Null(Named(page, "CodexPublish"));
         Assert.Null(Named(page, "CodexUnpublish"));
@@ -157,7 +138,7 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
         var surface = new Surface();
         surface.Stock();
 
-        var (window, page) = Open(() => surface.Page());
+        var (window, page) = PageHost.Open(() => surface.Page());
 
         Assert.Null(Named(page, "CodexPublish"));
         Assert.NotNull(Named(page, "CodexUnpublish"));
@@ -172,7 +153,7 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
         surface.Stock();
         string? asked = null;
 
-        var (window, page) = Open(() => surface.Page(confirm: question =>
+        var (window, page) = PageHost.Open(() => surface.Page(confirm: question =>
         {
             asked = question;
             return Task.FromResult(false);
@@ -196,7 +177,7 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
         var surface = new Surface();
         surface.Stock();
 
-        var (window, page) = Open(() => surface.Page(confirm: _ => Task.FromResult(true)));
+        var (window, page) = PageHost.Open(() => surface.Page(confirm: _ => Task.FromResult(true)));
 
         Press(Named(page, "CodexUnpublish")!);
 
@@ -224,7 +205,7 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
         surface.OwnPicture();
         surface.Stock();
 
-        var (window, page) = Open(() => surface.Page());
+        var (window, page) = PageHost.Open(() => surface.Page());
         var running = surface.Publisher.Publish(Key)!;
         Dispatcher.UIThread.RunJobs();
 

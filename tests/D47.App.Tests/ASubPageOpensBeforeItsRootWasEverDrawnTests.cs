@@ -33,9 +33,7 @@ public class ASubPageOpensBeforeItsRootWasEverDrawnTests
             new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
         var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), new DiskFileSystem(), NullLogger<StoryStore>.Instance);
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
+        var generator = AdventureFixture.Generator();
         var director = new StoryDirector(
             stories, book, () => catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
         var surface = new AdventureSurface(

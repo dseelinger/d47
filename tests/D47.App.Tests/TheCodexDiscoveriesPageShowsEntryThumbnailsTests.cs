@@ -36,28 +36,6 @@ public class TheCodexDiscoveriesPageShowsEntryThumbnailsTests
         + "3\tGamma tree\tBiological and Geological\tOrganic structures\t18:10\n"
         + "4\tDelta tree\tBiological and Geological\tOrganic structures\t18:5\n");
 
-    private sealed class Release : HttpMessageHandler
-    {
-        private readonly ConcurrentDictionary<string, byte[]> _files = new();
-
-        public TaskCompletionSource Hold { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        public void Serve(CodexPictureRow row, byte[] bytes) =>
-            _files[$"/{CodexPictureIndex.Repository}/releases/download/{row.Tag}/{row.Asset}"] = bytes;
-
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            if (!request.RequestUri!.AbsolutePath.EndsWith(CodexPictureIndex.IndexName, StringComparison.Ordinal))
-            {
-                await Hold.Task.ConfigureAwait(false);
-            }
-
-            return _files.TryGetValue(request.RequestUri.AbsolutePath, out var bytes)
-                ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) }
-                : new HttpResponseMessage(HttpStatusCode.NotFound);
-        }
-    }
-
     private sealed class Surface
     {
         private readonly List<CodexPictureRow> _rows = [];
@@ -66,7 +44,7 @@ public class TheCodexDiscoveriesPageShowsEntryThumbnailsTests
 
         public MemoryFileSystem Files { get; } = new();
 
-        public Release Release { get; } = new();
+        public HeldRelease Release { get; } = new();
 
         public bool StockOn { get; set; } = true;
 

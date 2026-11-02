@@ -39,25 +39,6 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
         return JournalScript.Commander("F735466", "John Deparagon", lines);
     }
 
-    private static (Window Window, T Page) Open<T>(Func<T> make)
-        where T : Control
-    {
-        var look = AppLook.Put();
-        var page = make();
-        var window = new Window
-        {
-            Content = page,
-            Width = 1280,
-            Height = 900,
-            Background = (IBrush)Application.Current!.Resources[ThemeManager.BgKey]!,
-        };
-        window.Closed += (_, _) => look.Dispose();
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        return (window, page);
-    }
-
     private static CreditsPage Root(CommanderGameState state, HistoryState history, CreditsChoice? choice = null, PanelNavigator? nav = null, bool headset = false) =>
         new(() => state, () => history, () => Now, choice ?? new CreditsChoice(), nav ?? new PanelNavigator(), headset);
 
@@ -74,7 +55,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
     [AvaloniaFact]
     public void TheRootDrawsTheStripTheKindsAndTheMovedKindsBelow()
     {
-        var (window, page) = Open(() => Root(State(Lines), HistoryState.Done));
+        var (window, page) = PageHost.Open(() => Root(State(Lines), HistoryState.Done));
 
         Assert.Single(In<Segment>(page));
         Assert.Equal(["IN", "+4,812,000 CR", "earned"], Cells(page, "CreditsStrip.In"));
@@ -105,7 +86,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
         nav.Register(PanelTab.Commander, new NavCrumb(CreditsPage.PageKey, "Credits"));
         nav.Select(PanelTab.Commander);
 
-        var (window, page) = Open(() => Root(State(Lines), HistoryState.Done, nav: nav));
+        var (window, page) = PageHost.Open(() => Root(State(Lines), HistoryState.Done, nav: nav));
 
         In<Button>(page).First(button => button.Name == "CreditsKind.Trade").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Assert.Equal("credits-kind-Trade", nav.Trail[^1].Key);
@@ -121,7 +102,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
     [AvaloniaFact]
     public void WhileHistoryRunsOnlyTheReadingLineShowsAndTheSearchHasNothingToFilter()
     {
-        var (window, page) = Open(() => Root(State(Lines), HistoryState.Running));
+        var (window, page) = PageHost.Open(() => Root(State(Lines), HistoryState.Running));
 
         Assert.True(Shows(page, CreditsModel.RunningText));
         Assert.All(In<Segment>(page), segment => Assert.False(segment.IsEffectivelyVisible));
@@ -134,7 +115,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
     [AvaloniaFact]
     public void AFailedWalkShowsTheWarningAboveTheLiveRecord()
     {
-        var (window, page) = Open(() => Root(State(Lines), HistoryState.Failed));
+        var (window, page) = PageHost.Open(() => Root(State(Lines), HistoryState.Failed));
 
         var notice = Assert.Single(In<Notice>(page));
         Assert.Equal(CreditsModel.FailedLabel, notice.Label);
@@ -147,7 +128,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
     [AvaloniaFact]
     public void AnEmptyPeriodSaysSoWithNoStripAndNoSortHeader()
     {
-        var (window, page) = Open(() => Root(State(), HistoryState.Done));
+        var (window, page) = PageHost.Open(() => Root(State(), HistoryState.Done));
 
         Assert.True(Shows(page, "No credits moved in the last 7 days."));
         Assert.DoesNotContain(In<Control>(page), control => control.Name?.StartsWith("CreditsStrip.", StringComparison.Ordinal) == true);
@@ -159,7 +140,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
     [AvaloniaFact]
     public void ASearchWithNoMatchSaysSoAndANarrowedCountReadsNOfM()
     {
-        var (window, page) = Open(() => Root(State(Lines), HistoryState.Done));
+        var (window, page) = PageHost.Open(() => Root(State(Lines), HistoryState.Done));
 
         page.Filter("repair");
         Dispatcher.UIThread.RunJobs();
@@ -176,7 +157,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
     public void TheTransactionsPageDrawsTheKindsRowsAndTheGapLines()
     {
         var state = State(Lines);
-        var (window, page) = Open(() => Transactions(state));
+        var (window, page) = PageHost.Open(() => Transactions(state));
 
         Assert.True(Shows(page, "6 ENTRIES"));
         Assert.True(Shows(page, CreditsModel.GapLine));
@@ -198,7 +179,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
     [AvaloniaFact]
     public void AKindWithNothingInThePeriodSaysSo()
     {
-        var (window, page) = Open(() => Transactions(State(Lines), CreditKind.Rescue));
+        var (window, page) = PageHost.Open(() => Transactions(State(Lines), CreditKind.Rescue));
 
         Assert.True(Shows(page, "No Rescue entries in the last 7 days."));
 
@@ -216,7 +197,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
             lines.Add($$"""{"timestamp":"{{at.AddSeconds(i):yyyy-MM-ddTHH:mm:ssZ}}","event":"MarketSell","TotalSale":10}""");
         }
 
-        var (window, page) = Open(() => Transactions(State([.. lines])));
+        var (window, page) = PageHost.Open(() => Transactions(State([.. lines])));
 
         var drawn = In<Border>(In<ItemsControl>(page).First(list => list.Name == "CreditsRows")).Count(border => border.MinHeight >= 44);
 
@@ -239,7 +220,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
 
         var state = State([.. lines]);
         var now = Now;
-        var (window, page) = Open(() => new CreditTransactionsPage(() => state, () => HistoryState.Done, () => now, new CreditsChoice(), null));
+        var (window, page) = PageHost.Open(() => new CreditTransactionsPage(() => state, () => HistoryState.Done, () => now, new CreditsChoice(), null));
 
         var scroll = In<ScrollViewer>(page).First(viewer => viewer.Content is Border { Child: ItemsControl });
         scroll.Offset = new Vector(0, 2000);
@@ -264,7 +245,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
     {
         var choice = new CreditsChoice();
         var state = State(Lines);
-        var (window, panel) = Open(() => new StackPanel
+        var (window, panel) = PageHost.Open(() => new StackPanel
         {
             Children = { Root(state, HistoryState.Done, choice), Transactions(state, null, choice) },
         });

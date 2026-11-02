@@ -83,9 +83,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
             stories.Save("F1", onRecord);
         }
 
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
+        var generator = AdventureFixture.Generator();
 
         var director = new StoryDirector(
             stories, book, catalogs ?? (() => catalog ?? StoryFixture.Catalog), generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance)
@@ -99,15 +97,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
             Pictures: pictures,
             Downloads: downloads);
 
-        var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
-        panel.EnableAdventures(surface);
-
-        var window = new Window { Content = panel, Width = 1280, Height = 860 };
-        window.Show();
-
-        panel.Tab = PanelTab.Stories;
-        panel.Nav.SelectRoot(StoriesView.RootKey);
-        Dispatcher.UIThread.RunJobs();
+        var (window, panel) = StoriesPanelHosting.Show(surface);
 
         return new Surface(window, panel, director);
     }

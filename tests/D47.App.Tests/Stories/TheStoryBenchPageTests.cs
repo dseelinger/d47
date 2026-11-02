@@ -37,9 +37,7 @@ public sealed class TheStoryBenchPageTests
         var book = new AdventureBook(adventures, NullLogger<AdventureBook>.Instance);
         adventures.Changed += book.Reconcile;
 
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
+        var generator = AdventureFixture.Generator();
         var director = new StoryDirector(stories, book, () => catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance)
         {
             Archive = archive,

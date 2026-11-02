@@ -53,9 +53,7 @@ public class TheStoriesPageShowsAndFiltersRatingsTests
         var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), new DiskFileSystem(), NullLogger<StoryStore>.Instance);
         stories.Save("F1", new Story { Id = "story-1", Title = "Story 1", PublicLayer = "-", State = StoryState.Finished, Rating = 4 });
 
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
+        var generator = AdventureFixture.Generator();
         var director = new StoryDirector(
             stories, book, () => catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
@@ -68,15 +66,7 @@ public class TheStoriesPageShowsAndFiltersRatingsTests
             Stories: director, StoryFilters: new StoryFilterMemory(new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance)),
             Ratings: client);
 
-        var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
-        panel.EnableAdventures(surface);
-
-        var window = new Window { Content = panel, Width = 1280, Height = 860 };
-        window.Show();
-
-        panel.Tab = PanelTab.Stories;
-        panel.Nav.SelectRoot(StoriesView.RootKey);
-        Dispatcher.UIThread.RunJobs();
+        var (window, panel) = StoriesPanelHosting.Show(surface);
 
         return new Page(window, panel, worker, stories);
     }

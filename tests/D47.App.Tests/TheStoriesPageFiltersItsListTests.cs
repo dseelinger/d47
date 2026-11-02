@@ -53,9 +53,7 @@ public class TheStoriesPageFiltersItsListTests
             new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
         var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), new DiskFileSystem(), NullLogger<StoryStore>.Instance);
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
+        var generator = AdventureFixture.Generator();
         var director = new StoryDirector(
             stories, book, () => catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
@@ -70,15 +68,7 @@ public class TheStoriesPageFiltersItsListTests
     private static Page Open(AppPaths paths, IReadOnlyList<(string Level, string Length)>? shapes = null)
     {
         var (surface, store) = Build(paths, shapes);
-        var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
-        panel.EnableAdventures(surface);
-
-        var window = new Window { Content = panel, Width = 1280, Height = 860 };
-        window.Show();
-
-        panel.Tab = PanelTab.Stories;
-        panel.Nav.SelectRoot(StoriesView.RootKey);
-        Dispatcher.UIThread.RunJobs();
+        var (window, panel) = StoriesPanelHosting.Show(surface);
 
         return new Page(window, panel, store);
     }

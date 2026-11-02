@@ -16,25 +16,6 @@ public class APausedTickSubscriberIsOnThePageTests
 {
     private const string Label = "Paused after repeated failures";
 
-    private static TickLoop Loop(string? broken)
-    {
-        var loop = new TickLoop(NullLogger<TickLoop>.Instance);
-
-        if (broken is null)
-        {
-            return loop;
-        }
-
-        loop.Add(broken, _ => throw new InvalidOperationException("broken"));
-
-        for (var tick = 0; tick < 10; tick++)
-        {
-            loop.Tick(DateTimeOffset.UnixEpoch.AddMilliseconds(100 * tick));
-        }
-
-        return loop;
-    }
-
     private static SettingsHost Open(TickLoop ticking)
     {
         var (settings, viewState, paths, _, _) = TestSurface.CreateFull(ticking: ticking);
@@ -55,7 +36,7 @@ public class APausedTickSubscriberIsOnThePageTests
     [AvaloniaFact]
     public void TheJournalSubscriberIsNamedOnTheCard()
     {
-        var host = Open(Loop("journal"));
+        var host = Open(TickLoops.Paused("journal"));
 
         Assert.Single(Captions(host));
 
@@ -74,7 +55,7 @@ public class APausedTickSubscriberIsOnThePageTests
     [AvaloniaFact]
     public void NothingIsDrawnWhileEverySubscriberIsRunning()
     {
-        var host = Open(Loop(broken: null));
+        var host = Open(TickLoops.Paused(broken: null));
 
         Assert.Empty(Captions(host));
 

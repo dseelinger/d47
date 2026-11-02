@@ -73,9 +73,7 @@ public sealed class TheStoryPageShowsEachSpeakersPictureTests
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
         Assert.Null(book.Write("F1", story));
 
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
+        var generator = AdventureFixture.Generator();
 
         var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), fixture.Files, NullLogger<StoryStore>.Instance);
         var director = new StoryDirector(

@@ -86,9 +86,7 @@ internal static class NotForMeGroupFixture
             PickedAt = Now.AddHours(-1),
         });
 
-        var generator = new AdventureGenerator(
-            () => null, () => null, () => null, () => null, () => null, () => null,
-            () => null, () => null, null, null, NullLogger.Instance);
+        var generator = AdventureFixture.Generator();
 
         var director = new StoryDirector(
             stories, book, () => StoryFixture.Catalog, write ?? generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);

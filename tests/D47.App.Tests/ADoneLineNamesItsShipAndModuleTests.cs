@@ -53,21 +53,6 @@ public class ADoneLineNamesItsShipAndModuleTests
         return TestSurface.Checklists(paths.Data, () => state);
     }
 
-    private static (Window Window, PanelView Panel) Open(ChecklistService checklists)
-    {
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-        panel.EnableChecklist(checklists);
-
-        var window = new Window { Content = panel, Width = 900, Height = 700 };
-        window.Show();
-
-        panel.Tab = PanelTab.Commander;
-        panel.Nav.Drill(ChecklistPage.AllLists);
-        Dispatcher.UIThread.RunJobs();
-
-        return (window, panel);
-    }
-
     /// <summary>The roll from the screenshot, put on the list the way a promoted build puts it.</summary>
     private static void Roll(ChecklistService checklists)
     {
@@ -90,7 +75,7 @@ public class ADoneLineNamesItsShipAndModuleTests
         var checklists = Checklists(State());
         Roll(checklists);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
         var drawn = Drawn(panel);
 
         Assert.Contains(
@@ -112,7 +97,7 @@ public class ADoneLineNamesItsShipAndModuleTests
         var checklists = Checklists(State());
         Roll(checklists);
 
-        var (window, panel) = Open(checklists);
+        var (window, panel) = ChecklistPanelHosting.Show(checklists);
         var page = panel.GetVisualDescendants().OfType<ChecklistPage>().Single();
 
         foreach (var query in new[] { "Flamebrand", "Shield Generator", "Slot01_Size7" })

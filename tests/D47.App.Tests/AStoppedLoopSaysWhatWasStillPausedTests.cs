@@ -13,25 +13,6 @@ namespace D47.App.Tests;
 /// </summary>
 public class AStoppedLoopSaysWhatWasStillPausedTests
 {
-    private static TickLoop Loop(string? broken)
-    {
-        var loop = new TickLoop(NullLogger<TickLoop>.Instance);
-
-        if (broken is null)
-        {
-            return loop;
-        }
-
-        loop.Add(broken, _ => throw new InvalidOperationException("broken"));
-
-        for (var tick = 0; tick < 10; tick++)
-        {
-            loop.Tick(DateTimeOffset.UnixEpoch.AddMilliseconds(100 * tick));
-        }
-
-        return loop;
-    }
-
     private static IReadOnlyList<string> Stop(TickLoop loop)
     {
         var logger = new CapturingLogger();
@@ -47,13 +28,13 @@ public class AStoppedLoopSaysWhatWasStillPausedTests
     [Fact]
     public void ThePausedSubscriberIsNamedOnTheWayOut()
     {
-        var warning = Assert.Single(Stop(Loop("journal")));
+        var warning = Assert.Single(Stop(TickLoops.Paused("journal")));
 
         Assert.Contains("journal", warning, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void ALoopThatLostNothingSaysNothing() => Assert.Empty(Stop(Loop(broken: null)));
+    public void ALoopThatLostNothingSaysNothing() => Assert.Empty(Stop(TickLoops.Paused(broken: null)));
 
     private sealed class CapturingLogger : ILogger<TickDriver>
     {

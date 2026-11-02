@@ -43,25 +43,6 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
         return JournalScript.Commander("F735466", "John Deparagon", lines);
     }
 
-    private static (Window Window, T Page) Open<T>(Func<T> make)
-        where T : Control
-    {
-        var look = AppLook.Put();
-        var page = make();
-        var window = new Window
-        {
-            Content = page,
-            Width = 1280,
-            Height = 900,
-            Background = (IBrush)Application.Current!.Resources[ThemeManager.BgKey]!,
-        };
-        window.Closed += (_, _) => look.Dispose();
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        return (window, page);
-    }
-
     private static CodexPage Root(CommanderGameState state, HistoryState history, CodexChoice? choice = null, PanelNavigator? nav = null, bool headset = false) =>
         new(() => state, () => history, () => Now, choice ?? new CodexChoice(), nav ?? new PanelNavigator(), headset);
 
@@ -78,7 +59,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
     [AvaloniaFact]
     public void TheRootDrawsThePeriodTheStripAndOneRowPerRegion()
     {
-        var (window, page) = Open(() => Root(State(Lines), HistoryState.Done));
+        var (window, page) = PageHost.Open(() => Root(State(Lines), HistoryState.Done));
 
         Assert.Equal(CodexPage.SummaryText, page.Summary);
         Assert.Single(In<Segment>(page));
@@ -112,7 +93,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
         nav.Register(PanelTab.Commander, new NavCrumb(CodexPage.PageKey, "Codex"));
         nav.Select(PanelTab.Commander);
 
-        var (window, page) = Open(() => Root(State(Lines), HistoryState.Done, nav: nav));
+        var (window, page) = PageHost.Open(() => Root(State(Lines), HistoryState.Done, nav: nav));
 
         In<Button>(page).First(button => button.Name == "CodexRegion.18").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
@@ -128,7 +109,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
     [AvaloniaFact]
     public void TheRegionPageDrawsGroupsRowsAndStatus()
     {
-        var (window, page) = Open(() => Region(State(Lines)));
+        var (window, page) = PageHost.Open(() => Region(State(Lines)));
 
         Assert.Equal(CodexPage.SummaryText, page.Summary);
         Assert.True(Shows(page, "Biological and Geological · Organic structures".ToUpperInvariant()) || Shows(page, "Biological and Geological · Organic structures"));
@@ -153,7 +134,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
     public void PressingAHeadingSortsTheRowsWithinEachGroupAndTheGroupsKeepTheirOrder()
     {
         var choice = new CodexChoice { Period = (int)CodexPeriod.Everything };
-        var (window, page) = Open(() => Region(State(Lines), 18, choice));
+        var (window, page) = PageHost.Open(() => Region(State(Lines), 18, choice));
 
         IReadOnlyList<object> Items() => (IReadOnlyList<object>)In<ItemsControl>(page).First(list => list.Name == "CodexRows").ItemsSource!;
 
@@ -180,7 +161,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
     {
         var choice = new CodexChoice();
         var state = State(Lines);
-        var (window, panel) = Open(() => new StackPanel
+        var (window, panel) = PageHost.Open(() => new StackPanel
         {
             Children = { Root(state, HistoryState.Done, choice), Region(state, 18, choice) },
         });
@@ -200,7 +181,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
     [AvaloniaFact]
     public void RunningHistoryShowsOnlyItsLineWithNoControlsAndNoSearch()
     {
-        var (window, page) = Open(() => Root(State(Lines), HistoryState.Running));
+        var (window, page) = PageHost.Open(() => Root(State(Lines), HistoryState.Running));
 
         Assert.True(Shows(page, CodexModel.RunningText));
         Assert.Empty(In<Segment>(page));
@@ -220,7 +201,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
     [AvaloniaFact]
     public void AFailedWalkShowsTheWarningAboveTheLiveRecord()
     {
-        var (window, page) = Open(() => Root(State(Lines), HistoryState.Failed));
+        var (window, page) = PageHost.Open(() => Root(State(Lines), HistoryState.Failed));
 
         var notice = Assert.Single(In<Notice>(page));
         Assert.Equal(CodexModel.FailedLabel, notice.Label);
@@ -234,7 +215,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
     [AvaloniaFact]
     public void ASearchNarrowsTheCountAndWithNoMatchSaysSo()
     {
-        var (window, page) = Open(() => Root(State(Lines), HistoryState.Done));
+        var (window, page) = PageHost.Open(() => Root(State(Lines), HistoryState.Done));
 
         page.Filter("beta");
         Dispatcher.UIThread.RunJobs();
@@ -251,7 +232,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
     [AvaloniaFact]
     public void ANothingPeriodSaysSoWithNoStripAndSortsOnlyTheOtherRegions()
     {
-        var (window, page) = Open(() => Root(State(Lines[0], Lines[1], Lines[2]), HistoryState.Done));
+        var (window, page) = PageHost.Open(() => Root(State(Lines[0], Lines[1], Lines[2]), HistoryState.Done));
 
         Assert.True(Shows(page, "No codex entries since you sold exploration data on 3 October."));
         Assert.DoesNotContain(In<Control>(page), control => control.Name?.StartsWith("CodexStrip.", StringComparison.Ordinal) == true);
@@ -274,7 +255,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
         }
 
         var choice = new CodexChoice { Period = (int)CodexPeriod.Everything };
-        var (window, page) = Open(() => Region(State([.. lines]), 18, choice));
+        var (window, page) = PageHost.Open(() => Region(State([.. lines]), 18, choice));
 
         var drawn = In<Button>(In<ItemsControl>(page).First(list => list.Name == "CodexRows")).Count(button => button.MinHeight >= 44);
 

@@ -83,7 +83,7 @@ public sealed class ThePublishedModelCatalogIsFetchedTests
     {
         var paths = new AppPaths(_root);
         var store = new SettingsStore(paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
-        var secrets = new SecretStore(paths, new PlainProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance);
+        var secrets = new SecretStore(paths, new NoopProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance);
         var settings = new SettingsService(
             store,
             secrets,
@@ -111,17 +111,6 @@ public sealed class ThePublishedModelCatalogIsFetchedTests
             Requests++;
 
             return Task.FromResult(answer(request));
-        }
-    }
-
-    private sealed class PlainProtector : ISecretProtector
-    {
-        public byte[] Protect(byte[] plaintext) => plaintext;
-
-        public bool TryUnprotect(byte[] ciphertext, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out byte[]? plaintext)
-        {
-            plaintext = ciphertext;
-            return true;
         }
     }
 }
