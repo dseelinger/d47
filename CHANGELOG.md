@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When a mission's hand-in moves to the system you are in, D47 says where it moved and no longer tells you to say plot it. When it moves while you are on foot or in the SRV, the offer to plot it waits until you board your ship. Before, picking up the item for an on-foot settlement mission offered a course to the system you were already standing in.
+
 The Powerplay merits line is said once each time you arrive in a Powerplay system, and not again until you leave it. Before, restarting D47 or the game while still in the system said it again, so a system you stayed in could repeat it several times.
 
 With Download the D47 music library on, a music folder with files of your own plays them together with the library's tracks for that folder, shuffled as one. Before, one file of your own in a folder stopped every library track there.

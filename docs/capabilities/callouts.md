@@ -1499,6 +1499,13 @@ Saying "plot it", "plot the hand-in" or "set course for the hand-in" then plots 
 it to the clipboard when auto-plot is off. The offer stands until another redirect replaces it or the
 mission leaves the board, and nothing is plotted until you say so.
 
+When the new hand-in is in the system you are in, D47 says where it moved and makes no offer. When you
+are on foot or in the SRV, the offer waits until you board the ship:
+
+```text
+Hand-in for Courier 4 is in Sol. Say plot it to set the course.
+```
+
 #### Your core's own subject {#domain}
 
 Some cores pay attention to a subject of their own, and remark on it with a figure from this session

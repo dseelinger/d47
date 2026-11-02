@@ -66,10 +66,19 @@ public sealed class MissionCallout : ICallout
 
     private bool _acceptedSinceDock;
 
+    /// <summary>Whether the Commander was out of the ship as of the end of the last tick.</summary>
+    private bool? _wasOnFoot;
+
+    /// <summary>A redirect made out of the ship, offered for plotting once the Commander boards.</summary>
+    private Redirected? _deferred;
+
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var board = context.State?.Missions ?? MissionBoard.Empty;
         var hold = context.State?.Hold ?? CargoHold.Empty;
+        var onFootAtEnd = context.State?.Location.Mode == FlightMode.OnFoot;
+        var onFoot = _wasOnFoot ?? onFootAtEnd;
+        _wasOnFoot = onFootAtEnd;
 
         while (_trips.TryDequeue(out var trip))
         {
@@ -82,6 +91,7 @@ public sealed class MissionCallout : ICallout
         if (context.IsPriming)
         {
             _acceptedSinceDock = false;
+            _deferred = null;
             Prime(board, context.Now);
             yield break;
         }
@@ -91,9 +101,28 @@ public sealed class MissionCallout : ICallout
             Offer.Withdraw();
         }
 
+        if (_deferred is { } deferred && board.For(deferred.MissionId) is null)
+        {
+            _deferred = null;
+        }
+
         foreach (var journalEvent in context.Events)
         {
             var station = journalEvent.String("StationName");
+
+            if (journalEvent.Kind == "Disembark")
+            {
+                onFoot = true;
+            }
+            else if (journalEvent.Kind == "Embark")
+            {
+                onFoot = journalEvent.Bool("SRV");
+
+                if (!onFoot && Boarded(board, journalEvent.String("StarSystem") ?? context.State?.Location.StarSystem) is { } plot)
+                {
+                    yield return plot;
+                }
+            }
 
             if (journalEvent.Kind == "MissionAccepted")
             {
@@ -107,7 +136,7 @@ public sealed class MissionCallout : ICallout
 
             switch (journalEvent.Kind)
             {
-                case "MissionRedirected" when Redirect(journalEvent, board) is { } redirect:
+                case "MissionRedirected" when Redirect(journalEvent, board, context.State?.Location.StarSystem, onFoot) is { } redirect:
                     yield return redirect;
                     break;
 
@@ -241,7 +270,11 @@ public sealed class MissionCallout : ICallout
 
     private readonly record struct Trip(long MissionId, string Said);
 
-    private Announcement? Redirect(JournalEvent journalEvent, MissionBoard board)
+    /// <summary>
+    /// The new hand-in, with the plot offer only when it is in another system and the Commander is in the ship;
+    /// out of the ship the offer waits for <see cref="Boarded"/>.
+    /// </summary>
+    private Announcement? Redirect(JournalEvent journalEvent, MissionBoard board, string? here, bool onFoot)
     {
         if (journalEvent.Long("MissionID") is not { } id
             || board.For(id) is null
@@ -252,12 +285,47 @@ public sealed class MissionCallout : ICallout
 
         var title = journalEvent.String("LocalisedName") is { Length: > 0 } named ? named : board.For(id)!.Title;
         var station = journalEvent.String("NewDestinationStation");
-        Offer?.Open(id, system);
-
         var moved = station is { Length: > 0 } ? $"{station} in {system}" : system;
-        return new Announcement(
-            $"{RedirectedKey}.{id}", $"That's {title} done. Hand-in moved to {moved}. Say plot it to set the course.");
+        var said = $"That's {title} done. Hand-in moved to {moved}.";
+        _deferred = null;
+
+        if (string.Equals(here, system, StringComparison.OrdinalIgnoreCase))
+        {
+            return new Announcement($"{RedirectedKey}.{id}", said);
+        }
+
+        if (onFoot)
+        {
+            _deferred = new Redirected(id, title, system);
+            return new Announcement($"{RedirectedKey}.{id}", said);
+        }
+
+        Offer?.Open(id, system);
+        return new Announcement($"{RedirectedKey}.{id}", $"{said} Say plot it to set the course.");
     }
+
+    /// <summary>The deferred plot offer, opened on boarding the ship unless the Commander is already in its system.</summary>
+    private Announcement? Boarded(MissionBoard board, string? here)
+    {
+        if (_deferred is not { } deferred)
+        {
+            return null;
+        }
+
+        _deferred = null;
+
+        if (board.For(deferred.MissionId) is null || string.Equals(here, deferred.System, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        Offer?.Open(deferred.MissionId, deferred.System);
+        return new Announcement(
+            $"{RedirectedKey}.{deferred.MissionId}.plot",
+            $"Hand-in for {deferred.Title} is in {deferred.System}. Say plot it to set the course.");
+    }
+
+    private sealed record Redirected(long MissionId, string Title, string System);
 
     /// <summary>The count on the board and the unexpired mission due soonest, or null with an empty board.</summary>
     private static string? Slate(MissionBoard board, DateTimeOffset now)
