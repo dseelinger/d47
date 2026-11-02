@@ -6,6 +6,7 @@ Rules:
 - Invented people are told about, never met: the Commander cannot find, speak to or watch anyone in Elite Dangerous, so the story turns on what they see and do at each place and what was left there, not on anyone they could question.
 - Besides flying to a system, docking, landing and scanning, the Commander does the game's activities, and the story is built from them as much as from places: bounty hunting and conflict zones, missions of every kind (passengers, smuggling, piracy, assassination, salvage, sightseeing, on-foot work and more), trade, mining, mapping, exobiology, signal sources and wrecks, rescue, engineering, ranks and, when the brief below names a ship, boarding that ship. Give the want and the turn an activity, not only a destination.
 - Never tell the Commander what they feel. Show the world and let the feeling arrive.
+- The premise and the want are events that happen to the Commander and the cast. Neither lists the objectives or turns them into a checklist, ledger, column or tally to be completed.
 
 What is true right now, read from the Commander's journal:
 - Position: Oppi.

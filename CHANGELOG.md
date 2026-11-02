@@ -10,6 +10,8 @@
 
 While a stock story is on a detour, the mini panel, on the desktop and in the headset, shows the detour: its name, its step and its next objective. Before, it kept showing the paused chapter.
 
+New story chapters keep the premise and want as things that happen to the Commander and the cast, not a checklist of the objectives, call each place by its name rather than "doors" or "gates", and make a line that sets up something later understandable when heard alone.
+
 In a story, the Narrator now says where the Commander goes next, as its own line after the ship's line: the reason first, then "Next: …". Before, the ship read the hand-off together with its own line, and a reason written about the ship came out as the ship talking about itself. New chapters are asked for a reason written as third-person narration. Chapters already written keep their reasons.
 
 When Elite changes a route without rewriting its route file, the Progress page and both mini panels no longer draw the file's old systems as the route ahead. They show the system Elite targets next and the jumps it says are left. The galaxy map stops drawing the file's route.
