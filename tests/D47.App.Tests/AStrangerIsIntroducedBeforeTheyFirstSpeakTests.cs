@@ -97,7 +97,7 @@ public sealed class AStrangerIsIntroducedBeforeTheyFirstSpeakTests
             spend,
             PriceTable.Default,
             NullLogger<TurnLoop>.Instance,
-            replies.Length > 0 ? new Scripted(replies) : null);
+            replies.Length > 0 ? new ScriptedReplies(replies) : null);
 
         var personas = new PersonaHost();
         var gameState = new GameStateStore();
@@ -176,35 +176,5 @@ public sealed class AStrangerIsIntroducedBeforeTheyFirstSpeakTests
         Assert.Equal([Introduction, "Bay four."], first.Select(line => line.Text));
         Assert.Equal(VoiceRole.Narrator, first[0].Voice);
         Assert.Equal("Sign here.", Assert.Single(later).Text);
-    }
-
-    /// <summary>A model that says the scripted replies in order.</summary>
-    private sealed class Scripted(params string[] replies) : ILlmProvider
-    {
-        private int _asked;
-
-        public string Id => "anthropic";
-
-        public string DisplayName => "Scripted";
-
-        public string DefaultModel => "claude-sonnet-5-5";
-
-        public LlmProviderCapabilities CapabilitiesFor(string model) => new()
-        {
-            SupportsPromptCaching = false,
-            SupportsThinkingEffort = false,
-            SupportsOperatorSystemMessages = false,
-            MinimumCacheablePrefixTokens = 0,
-        };
-
-        public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
-            LlmRequest request,
-            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
-        {
-            await Task.Yield();
-
-            yield return new LlmStreamEvent.TextDelta(replies[_asked++]);
-            yield return new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed);
-        }
     }
 }

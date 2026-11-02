@@ -43,12 +43,6 @@ public class ACloudTranscriberSendsAWavAndNamesItsFailuresTests
         public string Field(string name) => Encoding.UTF8.GetString(Fields[name]);
     }
 
-    private sealed class Throws(Exception exception) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, CancellationToken cancel) => throw exception;
-    }
-
     private sealed class NeverAnswers : HttpMessageHandler
     {
         protected override async Task<HttpResponseMessage> SendAsync(
@@ -60,13 +54,13 @@ public class ACloudTranscriberSendsAWavAndNamesItsFailuresTests
     }
 
     private static OpenAiCompatibleTranscriber Transcriber(
-        HttpMessageHandler handler, CapturingLogger? log = null, string? key = Key) =>
+        HttpMessageHandler handler, RecordingLogger<OpenAiCompatibleTranscriber>? log = null, string? key = Key) =>
         new(
             "Groq",
             () => key,
             OpenAiCompatibleTranscriber.GroqEndpoint,
             OpenAiCompatibleTranscriber.GroqModel,
-            log ?? new CapturingLogger(),
+            log ?? new RecordingLogger<OpenAiCompatibleTranscriber>(),
             handler);
 
     [Fact]
@@ -165,7 +159,7 @@ public class ACloudTranscriberSendsAWavAndNamesItsFailuresTests
     [Fact]
     public async Task ANetworkFailureIsUnreachable()
     {
-        using var transcriber = Transcriber(new Throws(new HttpRequestException("No such host is known.")));
+        using var transcriber = Transcriber(TranscriberDoubles.Throws(new HttpRequestException("No such host is known.")));
 
         var thrown = await Assert.ThrowsAsync<TranscriptionUnavailableException>(
             () => transcriber.TranscribeAsync(Speech, [], TestContext.Current.CancellationToken));
@@ -176,7 +170,7 @@ public class ACloudTranscriberSendsAWavAndNamesItsFailuresTests
     [Fact]
     public async Task ATimeoutIsUnreachable()
     {
-        using var transcriber = Transcriber(new Throws(new TaskCanceledException("The request timed out.")));
+        using var transcriber = Transcriber(TranscriberDoubles.Throws(new TaskCanceledException("The request timed out.")));
 
         var thrown = await Assert.ThrowsAsync<TranscriptionUnavailableException>(
             () => transcriber.TranscribeAsync(Speech, [], TestContext.Current.CancellationToken));
@@ -226,7 +220,7 @@ public class ACloudTranscriberSendsAWavAndNamesItsFailuresTests
     [InlineData("SECRET-BODY is not JSON")]
     public async Task ARefusedKeysBodyIsNotLogged(string body)
     {
-        var log = new CapturingLogger();
+        var log = new RecordingLogger<OpenAiCompatibleTranscriber>();
         using var transcriber = Transcriber(new Endpoint(HttpStatusCode.Unauthorized, body), log);
 
         var thrown = await Assert.ThrowsAsync<TranscriptionUnavailableException>(
@@ -236,38 +230,5 @@ public class ACloudTranscriberSendsAWavAndNamesItsFailuresTests
         Assert.DoesNotContain(log.Lines, line => line.Contains("SECRET-BODY", StringComparison.Ordinal));
         Assert.DoesNotContain(log.Lines, line => line.Contains(Key, StringComparison.Ordinal));
         Assert.DoesNotContain("SECRET-BODY", thrown.Message, StringComparison.Ordinal);
-    }
-
-    private sealed class CapturingLogger : ILogger<OpenAiCompatibleTranscriber>
-    {
-        private readonly List<string> _lines = [];
-
-        public IReadOnlyList<string> Lines
-        {
-            get
-            {
-                lock (_lines)
-                {
-                    return [.. _lines];
-                }
-            }
-        }
-
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter)
-        {
-            lock (_lines)
-            {
-                _lines.Add(formatter(state, exception) + exception);
-            }
-        }
     }
 }

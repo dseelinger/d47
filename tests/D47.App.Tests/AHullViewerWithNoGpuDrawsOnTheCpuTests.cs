@@ -42,7 +42,7 @@ public class AHullViewerWithNoGpuDrawsOnTheCpuTests
     [AvaloniaFact]
     public void TheCpuDrawsAndTheReasonIsLoggedOnce()
     {
-        var log = new Captured();
+        var log = new RecordingLogger();
         HullViewer.Enable(() => true, log);
 
         try
@@ -71,7 +71,7 @@ public class AHullViewerWithNoGpuDrawsOnTheCpuTests
     [AvaloniaFact]
     public void WithTheSettingOffNothingIsLogged()
     {
-        var log = new Captured();
+        var log = new RecordingLogger();
         HullViewer.Enable(() => false, log);
 
         try
@@ -89,18 +89,5 @@ public class AHullViewerWithNoGpuDrawsOnTheCpuTests
         {
             HullViewer.Enable(() => false, NullLogger.Instance);
         }
-    }
-
-    private sealed class Captured : ILogger
-    {
-        public List<string> Lines { get; } = [];
-
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
-            Lines.Add(formatter(state, exception));
     }
 }

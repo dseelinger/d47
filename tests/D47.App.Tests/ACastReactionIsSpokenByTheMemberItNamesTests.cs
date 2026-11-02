@@ -34,7 +34,7 @@ public sealed class ACastReactionIsSpokenByTheMemberItNamesTests
     };
 
     private sealed record Built(
-        LineWriter Writer, StoryRecords Records, StoryReactionCallout Reactions, StoryDirector Director, MessageStore Messages, Scripted Model);
+        LineWriter Writer, StoryRecords Records, StoryReactionCallout Reactions, StoryDirector Director, MessageStore Messages, ScriptedReplies Model);
 
     private static Built Build(params string[] replies)
     {
@@ -59,7 +59,7 @@ public sealed class ACastReactionIsSpokenByTheMemberItNamesTests
 
         var (settings, _, _, registry, _) = TestSurface.CreateFull();
         var spend = new SpendTracker();
-        var model = new Scripted(replies);
+        var model = new ScriptedReplies(replies);
         var turns = new TurnLoop(
             registry,
             new KeywordRouter(registry),
@@ -226,36 +226,5 @@ public sealed class ACastReactionIsSpokenByTheMemberItNamesTests
         Assert.Empty(await built.Writer.WriteAsync(Marker(built)));
         Assert.False(built.Director.ReactionWindow(null)!.Reacted);
         Assert.NotNull(built.Reactions.Newest(null, new StoryReactionDue(StoryFixture.Story.Id, 1)));
-    }
-
-    /// <summary>A model that says the scripted replies in order and keeps every request.</summary>
-    private sealed class Scripted(params string[] replies) : ILlmProvider
-    {
-        public List<LlmRequest> Requests { get; } = [];
-
-        public string Id => "anthropic";
-
-        public string DisplayName => "Scripted";
-
-        public string DefaultModel => "claude-sonnet-5-5";
-
-        public LlmProviderCapabilities CapabilitiesFor(string model) => new()
-        {
-            SupportsPromptCaching = false,
-            SupportsThinkingEffort = false,
-            SupportsOperatorSystemMessages = false,
-            MinimumCacheablePrefixTokens = 0,
-        };
-
-        public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
-            LlmRequest request,
-            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
-        {
-            Requests.Add(request);
-            await Task.Yield();
-
-            yield return new LlmStreamEvent.TextDelta(replies[Requests.Count - 1]);
-            yield return new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed);
-        }
     }
 }

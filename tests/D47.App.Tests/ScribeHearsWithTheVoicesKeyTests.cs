@@ -53,15 +53,9 @@ public class ScribeHearsWithTheVoicesKeyTests
             Fields.Where(field => field.Name == name).Select(field => Encoding.UTF8.GetString(field.Value));
     }
 
-    private sealed class Throws(Exception exception) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, CancellationToken cancel) => throw exception;
-    }
-
     private static ElevenLabsScribeTranscriber Transcriber(
-        HttpMessageHandler handler, CapturingLogger? log = null, string? key = Key) =>
-        new(() => key, log ?? new CapturingLogger(), handler);
+        HttpMessageHandler handler, RecordingLogger<ElevenLabsScribeTranscriber>? log = null, string? key = Key) =>
+        new(() => key, log ?? new RecordingLogger<ElevenLabsScribeTranscriber>(), handler);
 
     [Fact]
     public async Task TheFormCarriesTheWavTheModelAndTheOptions()
@@ -190,7 +184,7 @@ public class ScribeHearsWithTheVoicesKeyTests
     [Fact]
     public async Task ANetworkFailureIsUnreachable()
     {
-        using var transcriber = Transcriber(new Throws(new HttpRequestException("No such host is known.")));
+        using var transcriber = Transcriber(TranscriberDoubles.Throws(new HttpRequestException("No such host is known.")));
 
         var thrown = await Assert.ThrowsAsync<TranscriptionUnavailableException>(
             () => transcriber.TranscribeAsync(Speech, [], TestContext.Current.CancellationToken));
@@ -201,7 +195,7 @@ public class ScribeHearsWithTheVoicesKeyTests
     [Fact]
     public async Task ATimeoutIsUnreachable()
     {
-        using var transcriber = Transcriber(new Throws(new TaskCanceledException("The request timed out.")));
+        using var transcriber = Transcriber(TranscriberDoubles.Throws(new TaskCanceledException("The request timed out.")));
 
         var thrown = await Assert.ThrowsAsync<TranscriptionUnavailableException>(
             () => transcriber.TranscribeAsync(Speech, [], TestContext.Current.CancellationToken));
@@ -229,7 +223,7 @@ public class ScribeHearsWithTheVoicesKeyTests
     [InlineData("SECRET-BODY is not JSON")]
     public async Task ARefusedKeysBodyIsNotLogged(string body)
     {
-        var log = new CapturingLogger();
+        var log = new RecordingLogger<ElevenLabsScribeTranscriber>();
         using var transcriber = Transcriber(new Endpoint(HttpStatusCode.Unauthorized, body), log);
 
         var thrown = await Assert.ThrowsAsync<TranscriptionUnavailableException>(
@@ -246,38 +240,5 @@ public class ScribeHearsWithTheVoicesKeyTests
     {
         Assert.Equal(TtsProviderCatalog.ElevenLabs.KeySecretName, SttProviderCatalog.ElevenLabs.KeySecretName);
         Assert.Equal(D47.Tts.ElevenLabsTtsProvider.KeySecretName, SttProviderCatalog.ElevenLabs.KeySecretName);
-    }
-
-    private sealed class CapturingLogger : ILogger<ElevenLabsScribeTranscriber>
-    {
-        private readonly List<string> _lines = [];
-
-        public IReadOnlyList<string> Lines
-        {
-            get
-            {
-                lock (_lines)
-                {
-                    return [.. _lines];
-                }
-            }
-        }
-
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter)
-        {
-            lock (_lines)
-            {
-                _lines.Add(formatter(state, exception) + exception);
-            }
-        }
     }
 }

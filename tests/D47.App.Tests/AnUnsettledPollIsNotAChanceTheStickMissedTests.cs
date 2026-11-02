@@ -17,21 +17,21 @@ public class AnUnsettledPollIsNotAChanceTheStickMissedTests
     public void AStickThatIsHereIsNotCalledMissingBecauseTheReaderWasSlow()
     {
         var reader = new FakeHotasReader { IsSettled = false }.Holding(Stick, 8, 0);
-        var (pushToTalk, cancel, lines) = Bound();
+        var (pushToTalk, cancel, log) = Bound();
 
         for (var tick = 0; tick < BoundButton.PollsBeforeAbsenceIsCalled * 2; tick++)
         {
-            Poll(reader, pushToTalk, cancel, lines);
+            Poll(reader, pushToTalk, cancel, log);
         }
 
         reader.IsSettled = true;
 
         for (var tick = 0; tick < BoundButton.PollsBeforeAbsenceIsCalled * 2; tick++)
         {
-            Poll(reader, pushToTalk, cancel, lines);
+            Poll(reader, pushToTalk, cancel, log);
         }
 
-        Assert.Empty(lines);
+        Assert.Empty(log.Lines);
         Assert.True(pushToTalk.DevicePresent);
     }
 
@@ -39,68 +39,53 @@ public class AnUnsettledPollIsNotAChanceTheStickMissedTests
     public void AStickThatIsGoneIsCalledMissingOnceTheSettledPollsRunOut()
     {
         var reader = new FakeHotasReader { IsSettled = true };
-        var (pushToTalk, cancel, lines) = Bound();
+        var (pushToTalk, cancel, log) = Bound();
 
         for (var tick = 0; tick < BoundButton.PollsBeforeAbsenceIsCalled - 1; tick++)
         {
-            Poll(reader, pushToTalk, cancel, lines);
+            Poll(reader, pushToTalk, cancel, log);
         }
 
-        Assert.Empty(lines);
+        Assert.Empty(log.Lines);
 
-        Poll(reader, pushToTalk, cancel, lines);
+        Poll(reader, pushToTalk, cancel, log);
 
-        Assert.Single(lines, line => line.Contains("controller that is not here", StringComparison.Ordinal));
+        Assert.Single(log.Lines, line => line.Contains("controller that is not here", StringComparison.Ordinal));
 
-        Poll(reader, pushToTalk, cancel, lines);
+        Poll(reader, pushToTalk, cancel, log);
 
-        Assert.Single(lines);
+        Assert.Single(log.Lines);
     }
 
     [Fact]
     public void TheFirstSettledTickThatReadsItDownIsAPress()
     {
         var reader = new FakeHotasReader { IsSettled = false }.Holding(Stick, 8, 3);
-        var (pushToTalk, cancel, lines) = Bound();
+        var (pushToTalk, cancel, log) = Bound();
 
         var presses = 0;
         pushToTalk.Pressed += () => presses++;
 
-        Poll(reader, pushToTalk, cancel, lines);
+        Poll(reader, pushToTalk, cancel, log);
 
         Assert.Equal(0, presses);
 
         reader.IsSettled = true;
-        Poll(reader, pushToTalk, cancel, lines);
+        Poll(reader, pushToTalk, cancel, log);
 
         Assert.Equal(1, presses);
     }
 
-    private static (BoundButton PushToTalk, BoundButton Cancel, List<string> Lines) Bound()
+    private static (BoundButton PushToTalk, BoundButton Cancel, RecordingLogger Log) Bound()
     {
         var pushToTalk = new BoundButton();
         var cancel = new BoundButton();
 
         pushToTalk.Bind(new HotasButton(Stick, 3));
 
-        return (pushToTalk, cancel, []);
+        return (pushToTalk, cancel, new RecordingLogger());
     }
 
-    private static void Poll(IHotasReader reader, BoundButton pushToTalk, BoundButton cancel, List<string> lines) =>
-        Listener.PollTheStick(reader, pushToTalk, new BoundButton(), cancel, new ActionButtons(), new Capture(lines));
-
-    private sealed class Capture(List<string> lines) : ILogger
-    {
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter) =>
-            lines.Add(formatter(state, exception));
-    }
+    private static void Poll(IHotasReader reader, BoundButton pushToTalk, BoundButton cancel, RecordingLogger log) =>
+        Listener.PollTheStick(reader, pushToTalk, new BoundButton(), cancel, new ActionButtons(), log);
 }

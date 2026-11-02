@@ -34,7 +34,7 @@ public class AnAdventureIsAskedForByVoiceTests
         var store = new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
         var state = AdventuresTabTests.State();
-        var model = canAsk ? new RecordingModel(hold ?? Task.CompletedTask, AdventuresTabTests.Spine, AdventuresTabTests.Beats) : null;
+        var model = canAsk ? RecordingModel.Replying(hold ?? Task.CompletedTask, AdventuresTabTests.Spine, AdventuresTabTests.Beats) : null;
         IGalaxyService? galaxy = canAsk ? new AdventuresTabTests.Galaxy() : null;
 
         var generator = new AdventureGenerator(
@@ -264,62 +264,4 @@ public class AnAdventureIsAskedForByVoiceTests
 
     private static void Choose(PanelView panel, string option) =>
         panel.GetVisualDescendants().OfType<RadioButton>().Single(button => Equals(button.Content, option)).IsChecked = true;
-
-    /// <summary>Replies in order once <paramref name="hold"/> completes, keeping the text of every request.</summary>
-    private sealed class RecordingModel(Task hold, params string[] replies) : ILlmProvider
-    {
-        private readonly List<string> _asked = [];
-
-        public IReadOnlyList<string> Asked
-        {
-            get
-            {
-                lock (_asked)
-                {
-                    return [.. _asked];
-                }
-            }
-        }
-
-        public string Id => "anthropic";
-
-        public string DisplayName => "Recording";
-
-        public string DefaultModel => "claude-opus-5";
-
-        public LlmProviderCapabilities CapabilitiesFor(string model) => new()
-        {
-            SupportsPromptCaching = true,
-            SupportsThinkingEffort = true,
-            SupportsOperatorSystemMessages = true,
-            MinimumCacheablePrefixTokens = 512,
-        };
-
-        public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
-            LlmRequest request,
-            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
-        {
-            var text = string.Join(
-                "\n",
-                request.Prompt.History.SelectMany(message => message.Content).OfType<ConversationContent.Text>().Select(part => part.Value));
-
-            int round;
-
-            lock (_asked)
-            {
-                round = _asked.Count;
-                _asked.Add(text);
-            }
-
-            await hold.WaitAsync(cancellationToken).ConfigureAwait(false);
-
-            if (round >= replies.Length)
-            {
-                throw new InvalidOperationException($"Round {round + 1} was asked for and {replies.Length} were scripted.");
-            }
-
-            yield return new LlmStreamEvent.TextDelta(replies[round]);
-            yield return new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed);
-        }
-    }
 }

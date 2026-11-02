@@ -199,35 +199,6 @@ public sealed class ACodexPictureIsPublishedToTheReleaseTests
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
     }
 
-    private sealed class RecordingLogger : ILogger
-    {
-        private readonly List<string> _lines = [];
-
-        public IReadOnlyList<string> Lines
-        {
-            get
-            {
-                lock (_lines)
-                {
-                    return [.. _lines];
-                }
-            }
-        }
-
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
-        {
-            lock (_lines)
-            {
-                _lines.Add(formatter(state, exception) + exception);
-            }
-        }
-    }
-
     private sealed class Surface
     {
         public MemoryFileSystem Files { get; } = new();

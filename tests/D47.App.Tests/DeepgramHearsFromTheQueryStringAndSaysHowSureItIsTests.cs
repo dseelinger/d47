@@ -38,15 +38,9 @@ public class DeepgramHearsFromTheQueryStringAndSaysHowSureItIsTests
         }
     }
 
-    private sealed class Throws(Exception exception) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, CancellationToken cancel) => throw exception;
-    }
-
     private static DeepgramTranscriber Transcriber(
-        HttpMessageHandler handler, CapturingLogger? log = null, string? key = Key) =>
-        new(() => key, log ?? new CapturingLogger(), handler);
+        HttpMessageHandler handler, RecordingLogger<DeepgramTranscriber>? log = null, string? key = Key) =>
+        new(() => key, log ?? new RecordingLogger<DeepgramTranscriber>(), handler);
 
     [Fact]
     public async Task TheOptionsAndOneKeytermPerNameAreInTheQuery()
@@ -163,7 +157,7 @@ public class DeepgramHearsFromTheQueryStringAndSaysHowSureItIsTests
     [Fact]
     public async Task ANetworkFailureIsUnreachable()
     {
-        using var transcriber = Transcriber(new Throws(new HttpRequestException("No such host is known.")));
+        using var transcriber = Transcriber(TranscriberDoubles.Throws(new HttpRequestException("No such host is known.")));
 
         var thrown = await Assert.ThrowsAsync<TranscriptionUnavailableException>(
             () => transcriber.TranscribeAsync(Speech, [], TestContext.Current.CancellationToken));
@@ -174,7 +168,7 @@ public class DeepgramHearsFromTheQueryStringAndSaysHowSureItIsTests
     [Fact]
     public async Task ATimeoutIsUnreachable()
     {
-        using var transcriber = Transcriber(new Throws(new TaskCanceledException("The request timed out.")));
+        using var transcriber = Transcriber(TranscriberDoubles.Throws(new TaskCanceledException("The request timed out.")));
 
         var thrown = await Assert.ThrowsAsync<TranscriptionUnavailableException>(
             () => transcriber.TranscribeAsync(Speech, [], TestContext.Current.CancellationToken));
@@ -202,7 +196,7 @@ public class DeepgramHearsFromTheQueryStringAndSaysHowSureItIsTests
     [InlineData("SECRET-BODY is not JSON")]
     public async Task ARefusedKeysBodyIsNotLogged(string body)
     {
-        var log = new CapturingLogger();
+        var log = new RecordingLogger<DeepgramTranscriber>();
         using var transcriber = Transcriber(new Endpoint(HttpStatusCode.Unauthorized, body), log);
 
         var thrown = await Assert.ThrowsAsync<TranscriptionUnavailableException>(
@@ -212,38 +206,5 @@ public class DeepgramHearsFromTheQueryStringAndSaysHowSureItIsTests
         Assert.DoesNotContain(log.Lines, line => line.Contains("SECRET-BODY", StringComparison.Ordinal));
         Assert.DoesNotContain(log.Lines, line => line.Contains(Key, StringComparison.Ordinal));
         Assert.DoesNotContain("SECRET-BODY", thrown.Message, StringComparison.Ordinal);
-    }
-
-    private sealed class CapturingLogger : ILogger<DeepgramTranscriber>
-    {
-        private readonly List<string> _lines = [];
-
-        public IReadOnlyList<string> Lines
-        {
-            get
-            {
-                lock (_lines)
-                {
-                    return [.. _lines];
-                }
-            }
-        }
-
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter)
-        {
-            lock (_lines)
-            {
-                _lines.Add(formatter(state, exception) + exception);
-            }
-        }
     }
 }
