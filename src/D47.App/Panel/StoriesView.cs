@@ -420,6 +420,17 @@ public sealed class StoriesView : UserControl, IPageSummary
             });
     }
 
+    /// <summary>Sets the running story's chapter aside to be written again; returns a refusal, or null.</summary>
+    internal static string? RewriteChapter(AdventureSurface surface, string? commander)
+    {
+        if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
+        {
+            return CommanderChangedRefusal;
+        }
+
+        return surface.Stories is { } director ? director.RewriteChapter(commander, surface.Now()) : "No story is running.";
+    }
+
     /// <summary>
     /// Takes the Commander's remark about the current objective and offers what it came to: on a story, a detour or a question;
     /// on a short story, a replacement to apply, keep or reword. Returns a refusal when none can be started;
@@ -662,6 +673,18 @@ public sealed class StoriesView : UserControl, IPageSummary
             }
         });
 
+        var write = Act("Write chapter again", () =>
+        {
+            if (RewriteChapter(_surface, commander) is { } refusal)
+            {
+                _status.Fail(refusal);
+            }
+            else
+            {
+                _status.Say("Writing the chapter again…");
+            }
+        });
+
         void Finish(string? refusal)
         {
             if (refusal is null)
@@ -698,7 +721,7 @@ public sealed class StoriesView : UserControl, IPageSummary
 
         var ship = ShipObjectiveButtons.For(_surface, current, _nav, _prompts);
 
-        group.Children.Add(ship is null ? AdventuresPage.Buttons(change, refuse) : AdventuresPage.Buttons(ship, change, refuse));
+        group.Children.Add(ship is null ? AdventuresPage.Buttons(change, write, refuse) : AdventuresPage.Buttons(ship, change, write, refuse));
         return group;
     }
 

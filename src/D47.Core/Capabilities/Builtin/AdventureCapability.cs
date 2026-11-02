@@ -22,6 +22,10 @@ public static class AdventureCapability
 
     public const string ChangeObjectivePhrase = "change this objective";
 
+    public const string RewriteChapterTool = "rewrite_story_chapter";
+
+    public const string RewriteChapterPhrase = "write this chapter again";
+
     public const string RefuseBeatPhrase = "never ask this";
 
     public const string MarkDoneTool = "mark_objective_done";
@@ -104,6 +108,9 @@ public static class AdventureCapability
 
         /// <summary>Opens the entry that takes the Commander's words for a different objective.</summary>
         public Func<string?> ChangeObjective { get; set; } = () => NoStory;
+
+        /// <summary>Sets the story chapter aside to be written again from where the Commander is.</summary>
+        public Func<string?> RewriteChapter { get; set; } = () => NoStory;
     }
 
     /// <summary>Says whether a story is waiting on a choice and chooses an option of it, from zero. The app sets it once the story exists.</summary>
@@ -286,6 +293,7 @@ public static class AdventureCapability
             "this objective is not for me",
             RefuseBeatPhrase,
             ChangeObjectivePhrase,
+            RewriteChapterPhrase,
             MarkDonePhrase,
             "set course for my next objective",
             "copy my next objective to my clipboard",
@@ -416,6 +424,15 @@ public static class AdventureCapability
                         + "\"What would you rather do?\"; say what you would rather do and the core "
                         + "proposes a replacement for you to use, keep or reword. The model cannot do "
                         + "this: it is refused if it asks.",
+                },
+            Desk(RewriteChapterTool, "Set the story's current chapter aside and write it again from where the Commander is now; objectives already done stay done.", [RewriteChapterPhrase], "Writing the chapter again…", desk, d => d.RewriteChapter, _ => null)
+                with
+                {
+                    Exercise =
+                        "With a story running, say \"write this chapter again\". The reply is "
+                        + "\"Writing the chapter again…\" and the chapter is written again from where you "
+                        + "are. With no story running it is refused with \"No story is running.\" The "
+                        + "model cannot do this: it is refused if it asks.",
                 },
             Recap(recapper)
                 with

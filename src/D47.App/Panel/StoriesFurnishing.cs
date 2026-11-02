@@ -56,6 +56,7 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
             desk.Reject = () => OnUi(() => Page().RejectDraft());
             desk.Ask = () => OnUi(() => Page().AskByVoice());
             desk.ChangeObjective = () => OnUi(() => Page().ChangeObjectiveByVoice());
+            desk.RewriteChapter = () => OnUi(() => Page().RewriteChapterByVoice());
         }
 
         var help = D47.Core.Capabilities.Builtin.AdventureCapability.Id;

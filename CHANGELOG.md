@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter now has a **Write chapter again** button beside **Change objective** and **Mark done**, on the chapter's page and on the Stories page, in the window and on the VR big panel. One press, or "write this chapter again", sets the chapter aside and writes it again from where you are. It works on any step, drops an open detour, keeps objectives already done and a finale's destination, and is refused when the chapter needs a beacon your ship cannot reach. A short story does not get it.
+
 A story chapter written again at the same number, after a failed chapter or a detour, now draws different activities each time. Before, a second rewrite of the same chapter drew the same ones as the first.
 
 A story's finale now waits for you to arrive when the story's last stage before it is a span in the black with a destination. With every clue given and the finale's day passed, chapters are still written and pulled toward the destination until you are within 1,000 light years of it. Without a known position the finale starts as before.

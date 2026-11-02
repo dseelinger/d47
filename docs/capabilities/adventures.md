@@ -50,7 +50,7 @@ nav_order: 115
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Wait for the game to move. If you did the objective and the story has not moved, say "mark this objective done". On a stock story chapter you can also say "never ask this" to be given a different objective, or "change this objective" to be sent on a detour, one objective of your own, before the chapter goes on.</p>
+<p class="say">Wait for the game to move. If you did the objective and the story has not moved, say "mark this objective done". On a stock story chapter you can also say "never ask this" to be given a different objective, or "change this objective" to be sent on a detour, one objective of your own, before the chapter goes on. Say "write this chapter again" to have the chapter written again from where you are.</p>
 <p class="expect">After three play sessions and seven days at the same objective, your core nudges you toward it. The nudge does not apply to a short story.</p>
 <p class="expect">A short story you have begun and not finished shows Change objective and Never ask this under NEXT on its page. They work as on a story chapter and change only that short story. Neither has a voice phrase for a short story.</p>
 <p class="expect">Mark done, under NEXT on a story chapter's page or a short story's page, moves the story on as if the journal had shown the objective. The Guardian beacon scan cannot be marked done.</p>
@@ -833,7 +833,7 @@ rule does not apply to a chapter that ends at the beacon, a finale chapter, a re
 that starts within 500 light years, or to a chapter in the black (below). The chapter also keeps one of its two place
 objectives for this stop.
 
-**Heading home from the black.** A chapter counts as changed when a **Change objective** detour interrupts it; **Never ask this** does not count. When the last two chapters were both changed and you are more than 1,000 light years from both Sol and Colonia, the story heads home: to the nearer of the two, or to Sol when you are within 1,000 light years of Colonia. Each chapter heading home uses the long-haul reach (1,500 light years, or 5,000 with a fleet carrier), may have more than two place objectives, and is told where you are going and why it travels. Its last stop must be at least three quarters of the reach nearer the target than the chapter starts (1,125 light years, or 3,750 with a fleet carrier), or within 1,000 light years of the target; a draft that misses is refused and goes back through the repair rounds. The chapter is offered the stations and landable bodies nearest a point on the way, found by a galaxy search around it, each with its distance from the target; when that search finds none or cannot be made, the chapter is not refused. The target is cleared by the first chapter written within 1,000 light years of it. Finale chapters and the chapter that ends at the beacon are not sent home. A chapter heading home is not held to the Sol band above. The changed chapters and the target are kept with the story across a restart.
+**Heading home from the black.** A chapter counts as changed when a **Change objective** detour interrupts it or it is written again with **Write chapter again**; **Never ask this** does not count. When the last two chapters were both changed and you are more than 1,000 light years from both Sol and Colonia, the story heads home: to the nearer of the two, or to Sol when you are within 1,000 light years of Colonia. Each chapter heading home uses the long-haul reach (1,500 light years, or 5,000 with a fleet carrier), may have more than two place objectives, and is told where you are going and why it travels. Its last stop must be at least three quarters of the reach nearer the target than the chapter starts (1,125 light years, or 3,750 with a fleet carrier), or within 1,000 light years of the target; a draft that misses is refused and goes back through the repair rounds. The chapter is offered the stations and landable bodies nearest a point on the way, found by a galaxy search around it, each with its distance from the target; when that search finds none or cannot be made, the chapter is not refused. The target is cleared by the first chapter written within 1,000 light years of it. Finale chapters and the chapter that ends at the beacon are not sent home. A chapter heading home is not held to the Sol band above. The changed chapters and the target are kept with the story across a restart.
 
 **Ending near your ships.** Without a fleet carrier, your base is the station holding the most of your stored ships, not counting ships in transit, with a tie going to the one nearest you; with no ship in storage it is the **Home system** setting (`Callouts.HomeSystem`); with neither there is no base (`ShipBases.Of`). When a story chapter's last stop is farther from the base than the near-here reach (the larger of 80 light years and three jumps), the last objective ends with one more step: dock at the base station, or arrive in the home system. The writer is told the base and the rule, and a draft whose last step is not that dock, by market id, or that arrival, by system address, is refused and goes back through the repair rounds, where a repair may add the step after the last one. The step may be longer than the reach, and the Sol band measures the stop before it. Where the galaxy search cannot place the base, the step is needed unless the last stop is in the base's system. A station known only by its market id is named from the galaxy search; where none matches, the step is an arrival in its system. The rule does not apply to the chapter that ends at the beacon, a finale chapter, a chapter in the black (below), however many of them a span holds, a chapter heading home from the black, a place you asked to go to, or a short story. When such a story chapter starts, or heads for a place the story or you named, farther from the base than the near-here reach, and you have no fleet carrier, the writer is told to say in the opening why the story stays away from the base and to tell you to transfer there the ships you will need; once they are moved, the base moves with them. No draft is refused for lacking it.
 
@@ -1082,6 +1082,22 @@ once the detour is done that chapter is written again, at the same number, from 
 count as a chapter. An open detour shows **Change objective**, which replaces the detour, and **Mark done**; it does
 not show **Never ask this**.
 
+**Write chapter again** sits beside **Change objective** and **Mark done** on a story chapter's page and on the Stories
+page, in the window and on the VR big panel, wherever **Change objective** shows on a story chapter, an open detour
+included. A short story does not get it. One press, or "write this chapter again", sets the chapter aside and writes it
+again from where you are; there is no question first, and the status line reads "Writing the chapter again…". It works
+on any step, the last included. Objectives already done stay done. A finale chapter keeps its destination, and a beacon
+chapter stays a beacon chapter aimed at the nearest beacon; it is refused when your ship cannot reach a beacon. It drops an
+open detour. It does not count toward the activity bar. The model is refused this tool.
+
+#### `rewrite_story_chapter`
+
+Set the story's current chapter aside and write it again from where the Commander is now; objectives already done stay done. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
 Unlike **Never ask this**, changing an objective does not bar the activity for the story. d47 counts, for each Commander, the detours applied in place of an objective that asks for an activity (arrive, dock, land and scan objectives count nothing; **Keep the current one** counts nothing). At five changes for one activity, it is barred for good: no later story chapter or short story asks for it, as **Never ask this** bars it for one story. A mission objective counts under its mission family. The counts are kept in `activity-bars.json` in the data folder. Nothing lifts a bar yet.
 A proposal is refused when the story has moved on while it was written, and the objective stays as it was. Both
 buttons are left out while an objective is being written, and for an objective that cannot be refused, such as the
@@ -1164,7 +1180,7 @@ complete, fails it too. An option either rejoins the chapter or ends it in a nam
 said when its steps are done; the next chapter is written from the ending you reached.
 
 The choice is stored in `data/adventures.json` with its time, so a restart applies it again in order with your
-journal. While the story is on an objective that begins with a choice, Change objective and Never ask this are
+journal. While the story is on an objective that begins with a choice, Change objective, Write chapter again and Never ask this are
 refused, and Mark done works only once you have chosen. The model is refused this tool. The ship does not yet write
 choices into the stories it writes; a choice runs only in a story file that holds one.
 

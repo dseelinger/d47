@@ -527,6 +527,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             row.Children.Add(Action("Change objective", () => ChangeObjective(drawnFor, shortKey)));
         }
 
+        if (standing.IsRefusable && shortKey is null && !rewriting && _surface.Stories is not null)
+        {
+            row.Children.Add(Action("Write chapter again", () => RewriteChapter(drawnFor)));
+        }
+
         if ((standing.IsRefusable || shortKey is not null) && !standing.Adventure.Detour && !rewriting && _surface.Stories is not null)
         {
             row.Children.Add(Action("Never ask this", () => StoriesView.NotForMe(
@@ -649,6 +654,22 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         _nav.Show(RootKey);
         return StoriesView.ChangeObjective(
             _surface, _prompts, _surface.Commander(), () => _surface.Say("Writing a different objective…"), SayRefusal);
+    }
+
+    /// <summary>Sets the story chapter aside to be written again; returns the refusal, or null.</summary>
+    internal string? RewriteChapter(string? drawnFor)
+    {
+        var refusal = StoriesView.RewriteChapter(_surface, drawnFor);
+        _surface.Say(refusal ?? "Writing the chapter again…");
+        return refusal;
+    }
+
+    /// <summary>Shows the Stories tab and sets the story chapter aside to be written again; returns why it cannot, or null.</summary>
+    internal string? RewriteChapterByVoice()
+    {
+        _prompts.Abandon();
+        _nav.Show(RootKey);
+        return RewriteChapter(_surface.Commander());
     }
 
     private void SayRefusal(string? refusal)
