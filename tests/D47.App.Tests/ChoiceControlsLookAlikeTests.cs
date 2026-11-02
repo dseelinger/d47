@@ -50,7 +50,7 @@ public class ChoiceControlsLookAlikeTests
     {
         var host = Open();
 
-        var tile = Row(host, "Model").GetVisualDescendants().OfType<Button>().First(button => button.Name == "DropdownTile");
+        var tile = SettingsPageReading.CompactRow(host, "Model").GetVisualDescendants().OfType<Button>().First(button => button.Name == "DropdownTile");
 
         Assert.Equal(TypeScale.MinimumTarget, tile.Bounds.Height);
     }
@@ -98,9 +98,4 @@ public class ChoiceControlsLookAlikeTests
 
         return host;
     }
-
-    private static Grid Row(SettingsHost host, string label) =>
-        host.View.GetVisualDescendants().OfType<Grid>()
-            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass))
-            .First(grid => grid.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == label));
 }

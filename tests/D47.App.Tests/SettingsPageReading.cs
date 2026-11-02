@@ -70,4 +70,14 @@ internal static class SettingsPageReading
     public static StackPanel? NothingMatches(SettingsView view) =>
         Page(view).Children.OfType<StackPanel>()
             .SingleOrDefault(panel => panel.Name == SettingsView.NothingMatchesName && panel.IsVisible);
+
+    /// <summary>The compact row carrying a label, by the class the view marks it with.</summary>
+    public static Grid CompactRow(SettingsHost host, string label, bool visibleOnly = false) =>
+        host.View
+            .GetVisualDescendants()
+            .OfType<Grid>()
+            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass) && (!visibleOnly || grid.IsEffectivelyVisible))
+            .First(grid => grid.GetVisualDescendants()
+                .OfType<TextBlock>()
+                .Any(text => text.Text == label));
 }

@@ -78,29 +78,6 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
     private static Level LevelOf(SettingsView view, string id) =>
         (Level)view.ControlFor(SpeechCapability.GuardianLevelKey(id))!;
 
-    private static void WithSaved(SettingsService settings, string name, string tickedId, int level)
-    {
-        var effects = GuardianVoice.Table
-            .Select(effect => new GuardianVoiceEffect
-            {
-                Id = effect.Id,
-                Ticked = effect.Id == tickedId,
-                Level = effect.Id == tickedId ? level : effect.DefaultLevel,
-            })
-            .ToList();
-
-        settings.Replace("test preset", s => s with
-        {
-            Speech = s.Speech with
-            {
-                GuardianVoice = s.Speech.GuardianVoice with
-                {
-                    SavedPresets = [new GuardianVoicePreset { Name = name, Effects = effects }],
-                },
-            },
-        });
-    }
-
     /// <summary>A point along a level's track, as a share of its width, in window coordinates.</summary>
     private static Point Along(SettingsHost host, Level level, double share)
     {
@@ -177,7 +154,7 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
     [AvaloniaFact]
     public void PickingASavedPresetLoadsItAndChangingItReadsChangedFromIt()
     {
-        var (host, settings) = OpenVoice(arrange: s => WithSaved(s, "Hull breach", "reverb", 3));
+        var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         Pick(host.View, "Hull breach");
 
@@ -317,7 +294,7 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
     [AvaloniaFact]
     public void TheGroupResetMakesThePickerReadOffAndClearsTheBasis()
     {
-        var (host, settings) = OpenVoice(arrange: s => WithSaved(s, "Hull breach", "reverb", 3));
+        var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         Pick(host.View, "Hull breach");
         Press(Named(Strip(host.View, "cylon"), "Decrease Cylon"));

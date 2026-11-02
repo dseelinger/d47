@@ -34,7 +34,7 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
         var host = OnElevenLabs(out _);
         host.View.ShowPlaceOf(SpeechCapability.ElevenLabsModelKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-        var stepper = Row(host, ModelLabel).GetVisualDescendants().OfType<D47.App.Controls.Stepper>().First();
+        var stepper = SettingsPageReading.CompactRow(host, ModelLabel).GetVisualDescendants().OfType<D47.App.Controls.Stepper>().First();
 
         Assert.Equal(ElevenLabsModels.All.Count, stepper.ItemsSource.Count);
     }
@@ -113,9 +113,4 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
         return host.View.GetVisualDescendants().OfType<TextBlock>()
             .Any(text => text.Text == label && text.IsEffectivelyVisible);
     }
-
-    private static Grid Row(SettingsHost host, string label) =>
-        host.View.GetVisualDescendants().OfType<Grid>()
-            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass))
-            .First(grid => grid.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == label));
 }

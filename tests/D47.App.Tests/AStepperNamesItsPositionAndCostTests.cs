@@ -27,7 +27,7 @@ public class AStepperNamesItsPositionAndCostTests
         host.View.RevealRow(ListeningCapability.ModelKey);
         Dispatcher.UIThread.RunJobs();
 
-        var stepper = Row(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
+        var stepper = SettingsPageReading.CompactRow(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
 
         Assert.Matches(@"^\d+ / \d+$", Position(stepper).Text);
         Assert.False(string.IsNullOrEmpty(Consequence(stepper).Text));
@@ -43,7 +43,7 @@ public class AStepperNamesItsPositionAndCostTests
         host.View.RevealRow(SpeechCapability.ProviderKey);
         Dispatcher.UIThread.RunJobs();
 
-        var stepper = Row(host, "Voice provider").GetVisualDescendants().OfType<Stepper>().First();
+        var stepper = SettingsPageReading.CompactRow(host, "Voice provider").GetVisualDescendants().OfType<Stepper>().First();
 
         Assert.Matches(@"^\d+ / \d+$", Position(stepper).Text);
         Assert.True(string.IsNullOrEmpty(Consequence(stepper).Text));
@@ -59,7 +59,7 @@ public class AStepperNamesItsPositionAndCostTests
         host.View.RevealRow(ListeningCapability.ModelKey);
         Dispatcher.UIThread.RunJobs();
 
-        var stepper = Row(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
+        var stepper = SettingsPageReading.CompactRow(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
         var next = stepper.GetVisualDescendants().OfType<RepeatButton>()
             .First(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Next");
 
@@ -84,7 +84,7 @@ public class AStepperNamesItsPositionAndCostTests
         host.View.RevealRow(ListeningCapability.ModelKey);
         Dispatcher.UIThread.RunJobs();
 
-        var stepper = Row(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
+        var stepper = SettingsPageReading.CompactRow(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
         var position = Position(stepper);
         var bottom = position.TranslatePoint(new Point(0, position.Bounds.Height), stepper);
 
@@ -111,7 +111,7 @@ public class AStepperNamesItsPositionAndCostTests
         host.View.RevealRow(ListeningCapability.ModelKey);
         Dispatcher.UIThread.RunJobs();
 
-        var stepper = Row(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
+        var stepper = SettingsPageReading.CompactRow(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
 
         foreach (var arrow in stepper.GetVisualDescendants().OfType<RepeatButton>())
         {
@@ -137,17 +137,4 @@ public class AStepperNamesItsPositionAndCostTests
 
         return SettingsHost.Open(settings, viewState, paths);
     }
-
-    /// <summary>
-    /// The compact row itself, by the class the view marks it with - not the first grid in the tree
-    /// that happens to contain the words, which is the whole surface.
-    /// </summary>
-    private static Grid Row(SettingsHost host, string label) =>
-        host.View
-            .GetVisualDescendants()
-            .OfType<Grid>()
-            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass))
-            .First(grid => grid.GetVisualDescendants()
-                .OfType<TextBlock>()
-                .Any(text => text.Text == label));
 }

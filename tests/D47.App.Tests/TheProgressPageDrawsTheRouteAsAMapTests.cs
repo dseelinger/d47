@@ -38,17 +38,8 @@ public class TheProgressPageDrawsTheRouteAsAMapTests
         double width = 1000,
         double height = 700)
     {
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
-
-        Application.Current!.Styles.Add(new StyleInclude((Uri?)null)
-        {
-            Source = new Uri("avares://d47/Theming/ControlKitTheme.axaml"),
-        });
-
         var page = new RouteProgressPage(route, here, null, offDuty, position);
-        var window = new Window { Content = page, Width = width, Height = height, Background = (IBrush?)Application.Current.Resources[ThemeManager.BgKey] };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
+        var window = KitWindow.Show(page, width, height);
 
         return (page, window);
     }

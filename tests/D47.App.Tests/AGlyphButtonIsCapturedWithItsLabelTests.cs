@@ -30,28 +30,7 @@ public class AGlyphButtonIsCapturedWithItsLabelTests
         var hovered = Glyph("Reset ship voices");
         var resting = Glyph("Reset ship voices");
 
-        var row = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            Children = { hovered, resting },
-        };
-
-        var window = new Window
-        {
-            Content = row,
-            Width = 480,
-            Height = 100,
-            Background = (IBrush)Application.Current!.Resources[ThemeManager.BgKey]!,
-        };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        window.MouseMove(hovered.TranslatePoint(new Point(22, 22), window)!.Value);
-        Dispatcher.UIThread.RunJobs();
-
-        var label = hovered.GetVisualDescendants().OfType<Popup>().Single(popup => popup.Name == "Label");
+        var (window, label) = GlyphHover.Open(hovered, resting);
         Assert.True(label.IsOpen);
 
         using var frame = window.CaptureRenderedFrame()!;

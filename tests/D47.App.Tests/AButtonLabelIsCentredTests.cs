@@ -14,28 +14,7 @@ namespace D47.App.Tests;
 /// <summary>A button's string label is centred in the tile whatever its width (#1486).</summary>
 public class AButtonLabelIsCentredTests
 {
-    private static Window Open(Control content)
-    {
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
-
-        // HeadlessApp leaves the control kit out, so the Button theme comes from the real file.
-        Application.Current!.Styles.Add(
-            new Avalonia.Markup.Xaml.Styling.StyleInclude((Uri?)null)
-            {
-                Source = new Uri("avares://d47/Theming/ControlKitTheme.axaml"),
-            });
-
-        var window = new Window
-        {
-            Content = new StackPanel { VerticalAlignment = VerticalAlignment.Top, Children = { content } },
-            Width = 600,
-            Height = 300,
-        };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        return window;
-    }
+    private static Window Open(Control content) => KitWindow.ShowInStrip(content);
 
     [AvaloniaFact]
     public void AWideTileCentresItsLabel()

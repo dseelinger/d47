@@ -77,29 +77,6 @@ public sealed class SaveAndRenameYourOwnVoicePresetsTests
         Jobs();
     }
 
-    private static void WithSaved(SettingsService settings, string name, string tickedId, int level)
-    {
-        var effects = GuardianVoice.Table
-            .Select(effect => new GuardianVoiceEffect
-            {
-                Id = effect.Id,
-                Ticked = effect.Id == tickedId,
-                Level = effect.Id == tickedId ? level : effect.DefaultLevel,
-            })
-            .ToList();
-
-        settings.Replace("test preset", s => s with
-        {
-            Speech = s.Speech with
-            {
-                GuardianVoice = s.Speech.GuardianVoice with
-                {
-                    SavedPresets = [new GuardianVoicePreset { Name = name, Effects = effects }],
-                },
-            },
-        });
-    }
-
     [AvaloniaFact]
     public void SaveAsIsDisabledOnEveryBuiltInAndEnabledOnCustom()
     {
@@ -122,7 +99,7 @@ public sealed class SaveAndRenameYourOwnVoicePresetsTests
     [AvaloniaFact]
     public void OneOfYourPresetsUnchangedShowsRenameNotSaveAs()
     {
-        var (host, settings) = OpenVoice(arrange: s => WithSaved(s, "Hull breach", "reverb", 3));
+        var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         Press(Named(host.View, InlinePicker.ButtonName));
         Press(host.View.GetVisualDescendants().OfType<Button>()
@@ -166,7 +143,7 @@ public sealed class SaveAndRenameYourOwnVoicePresetsTests
     [AvaloniaFact]
     public void RenameChangesTheNameInTheListAndThePickerAndShowsTheNotice()
     {
-        var (host, settings) = OpenVoice(arrange: s => WithSaved(s, "Hull breach", "reverb", 3));
+        var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         Press(Named(host.View, InlinePicker.ButtonName));
         Press(host.View.GetVisualDescendants().OfType<Button>()
@@ -191,7 +168,7 @@ public sealed class SaveAndRenameYourOwnVoicePresetsTests
     [AvaloniaFact]
     public void ARefusalFromCoreShowsInRedAndSavesNothing()
     {
-        var (host, settings) = OpenVoice(arrange: s => WithSaved(s, "Hull breach", "reverb", 3));
+        var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         Box(host.View, "cylon").IsChecked = true;
         Jobs();
@@ -256,7 +233,7 @@ public sealed class SaveAndRenameYourOwnVoicePresetsTests
     [AvaloniaFact]
     public void ASecondActionWithinSixSecondsReplacesTheNotice()
     {
-        var (host, settings) = OpenVoice(arrange: s => WithSaved(s, "Hull breach", "reverb", 3));
+        var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         Press(Named(host.View, InlinePicker.ButtonName));
         Press(host.View.GetVisualDescendants().OfType<Button>()

@@ -264,14 +264,7 @@ public class SearchTheTabTests
     [AvaloniaFact]
     public void SettingsFiltersTheOpenPageAndMarksTheNav()
     {
-        var (settings, viewState, paths) = TestSurface.Create();
-
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
-            .FollowSettings(settings);
-
-        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
-
-        var host = SettingsHost.Open(settings, viewState, paths);
+        var host = SettingsHost.OpenOnVoiceInput();
 
         var rowsBefore = Rows(host);
 
@@ -411,14 +404,7 @@ public class SearchTheTabTests
     [AvaloniaFact]
     public void SurvivingRowsMarkWhatTheQueryFound()
     {
-        var (settings, viewState, paths) = TestSurface.Create();
-
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
-            .FollowSettings(settings);
-
-        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
-
-        var host = SettingsHost.Open(settings, viewState, paths);
+        var host = SettingsHost.OpenOnVoiceInput();
 
         Assert.Empty(MarkedRuns(host));
 
@@ -455,14 +441,7 @@ public class SearchTheTabTests
     [AvaloniaFact]
     public void AKeyOnlyMatchShowsTheKeyThatMatched()
     {
-        var (settings, viewState, paths) = TestSurface.Create();
-
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
-            .FollowSettings(settings);
-
-        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
-
-        var host = SettingsHost.Open(settings, viewState, paths);
+        var host = SettingsHost.OpenOnVoiceInput();
 
         var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
         box.Text = "listening.pushToTalk";
@@ -521,18 +500,9 @@ public class SearchTheTabTests
     [AvaloniaFact]
     public void ARowIsFoundByItsKeyAsWellAsItsLabel()
     {
-        var (settings, viewState, paths) = TestSurface.Create();
+        var host = SettingsHost.OpenOnVoiceInput();
 
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
-            .FollowSettings(settings);
-
-        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
-
-        var host = SettingsHost.Open(settings, viewState, paths);
-
-        var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
-        box.Text = "listening.pushToTalk";
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        host.Search("listening.pushToTalk");
 
         Assert.Contains("Push-to-talk", VisibleRowLabels(host));
 
@@ -598,14 +568,7 @@ public class SearchTheTabTests
     [AvaloniaFact]
     public void ASectionIsFoundByItsOwnName()
     {
-        var (settings, viewState, paths) = TestSurface.Create();
-
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
-            .FollowSettings(settings);
-
-        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
-
-        var host = SettingsHost.Open(settings, viewState, paths);
+        var host = SettingsHost.OpenOnVoiceInput();
         var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
 
         box.Text = "Voice Input";

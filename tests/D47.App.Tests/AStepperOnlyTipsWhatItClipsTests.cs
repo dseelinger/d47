@@ -27,7 +27,7 @@ public class AStepperOnlyTipsWhatItClipsTests
     {
         var host = OpenWith("small.en");
 
-        var stepper = Row(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
+        var stepper = SettingsPageReading.CompactRow(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
 
         foreach (var arrow in stepper.GetVisualDescendants().OfType<RepeatButton>())
         {
@@ -50,7 +50,7 @@ public class AStepperOnlyTipsWhatItClipsTests
         Dispatcher.UIThread.RunJobs();
 
         // Provider names are a word or two, well short of the column — nothing here should ever clip.
-        var stepper = Row(host, "Voice provider").GetVisualDescendants().OfType<Stepper>().First();
+        var stepper = SettingsPageReading.CompactRow(host, "Voice provider").GetVisualDescendants().OfType<Stepper>().First();
         var value = Value(stepper);
 
         Assert.Null(ToolTip.GetTip(value));
@@ -63,7 +63,7 @@ public class AStepperOnlyTipsWhatItClipsTests
     {
         var host = OpenWith("small.en");
 
-        var stepper = Row(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
+        var stepper = SettingsPageReading.CompactRow(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
 
         Assert.Null(ToolTip.GetTip(stepper));
 
@@ -88,13 +88,4 @@ public class AStepperOnlyTipsWhatItClipsTests
 
         return host;
     }
-
-    private static Grid Row(SettingsHost host, string label) =>
-        host.View
-            .GetVisualDescendants()
-            .OfType<Grid>()
-            .Where(grid => grid.Classes.Contains(SettingsView.CompactRowClass))
-            .First(grid => grid.GetVisualDescendants()
-                .OfType<TextBlock>()
-                .Any(text => text.Text == label));
 }

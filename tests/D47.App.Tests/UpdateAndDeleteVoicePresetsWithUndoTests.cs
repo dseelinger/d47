@@ -61,36 +61,13 @@ public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
                 && Avalonia.Automation.AutomationProperties.GetName(button) == label));
     }
 
-    private static void WithSaved(SettingsService settings, string name, string tickedId, int level)
-    {
-        var effects = GuardianVoice.Table
-            .Select(effect => new GuardianVoiceEffect
-            {
-                Id = effect.Id,
-                Ticked = effect.Id == tickedId,
-                Level = effect.Id == tickedId ? level : effect.DefaultLevel,
-            })
-            .ToList();
-
-        settings.Replace("test preset", s => s with
-        {
-            Speech = s.Speech with
-            {
-                GuardianVoice = s.Speech.GuardianVoice with
-                {
-                    SavedPresets = [new GuardianVoicePreset { Name = name, Effects = effects }],
-                },
-            },
-        });
-    }
-
     private static CheckBox Box(SettingsView view, string id) =>
         (CheckBox)view.ControlFor(SpeechCapability.GuardianEffectKey(id))!;
 
     [AvaloniaFact]
     public void UpdateOnlyShowsWhenCustomIsChangedFromASavedPreset()
     {
-        var (host, settings) = OpenVoice(arrange: s => WithSaved(s, "Hull breach", "reverb", 3));
+        var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         PickSaved(host.View, "Hull breach");
         Assert.False(Update(host.View).IsVisible);
@@ -108,7 +85,7 @@ public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
     [AvaloniaFact]
     public void UpdateWritesTheCurrentEffectsIntoTheBasisAndShowsTheNotice()
     {
-        var (host, settings) = OpenVoice(arrange: s => WithSaved(s, "Hull breach", "reverb", 3));
+        var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         PickSaved(host.View, "Hull breach");
         Box(host.View, "cylon").IsChecked = true;
@@ -129,7 +106,7 @@ public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
     [AvaloniaFact]
     public void UndoAfterUpdateRestoresThePresetsPreviousEffects()
     {
-        var (host, settings) = OpenVoice(arrange: s => WithSaved(s, "Hull breach", "reverb", 3));
+        var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         PickSaved(host.View, "Hull breach");
         Box(host.View, "cylon").IsChecked = true;
@@ -151,7 +128,7 @@ public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
     [AvaloniaFact]
     public void DeleteRemovesThePresetAndShowsTheNoticeWithUndo()
     {
-        var (host, settings) = OpenVoice(arrange: s => WithSaved(s, "Hull breach", "reverb", 3));
+        var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         PickSaved(host.View, "Hull breach");
         Press(Delete(host.View));
@@ -168,7 +145,7 @@ public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
     [AvaloniaFact]
     public void UndoAfterDeleteRestoresThePresetAndTheBasis()
     {
-        var (host, settings) = OpenVoice(arrange: s => WithSaved(s, "Hull breach", "reverb", 3));
+        var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         PickSaved(host.View, "Hull breach");
         Press(Delete(host.View));
@@ -213,7 +190,7 @@ public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
     [AvaloniaFact]
     public void SaveAndRenameNoticesCarryNoUndo()
     {
-        var (host, settings) = OpenVoice(arrange: s => WithSaved(s, "Hull breach", "reverb", 3));
+        var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         PickSaved(host.View, "Hull breach");
         Press(Named(host.View, SettingsView.GuardianRenameName));

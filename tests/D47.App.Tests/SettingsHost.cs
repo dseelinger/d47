@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging.Abstractions;
+using Avalonia;
 using Avalonia.Controls;
 using D47.App.Panel;
 using D47.Core.Interface;
@@ -5,6 +7,7 @@ using D47.App.Settings;
 using D47.Core;
 using D47.Core.Configuration;
 using D47.Core.Coverage;
+using D47.App.Theming;
 using D47.Core.Listening;
 
 namespace D47.App.Tests;
@@ -108,6 +111,27 @@ internal sealed class SettingsHost
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         return new SettingsHost(window, panel, view);
+    }
+
+    /// <summary>Opens on the Voice Input place with the theme following the settings.</summary>
+    public static SettingsHost OpenOnVoiceInput()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
+
+        return Open(settings, viewState, paths);
+    }
+
+    /// <summary>Types a query into the tab's search box.</summary>
+    public void Search(string query)
+    {
+        var box = (TextBox)Panel.FindControl<Control>("SearchInput")!;
+        box.Text = query;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
     }
 
     public void Close() => Window.Close();

@@ -36,17 +36,8 @@ public class ACarrierPlanDrawsItsRouteAsAMapTests
 
     private static (RoutePlanResultPage Page, Window Window) Open(StoredRoutePlan plan, double height = 700)
     {
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
-
-        Application.Current!.Styles.Add(new StyleInclude((Uri?)null)
-        {
-            Source = new Uri("avares://d47/Theming/ControlKitTheme.axaml"),
-        });
-
         var page = new RoutePlanResultPage(plan);
-        var window = new Window { Content = page, Width = 1000, Height = height, Background = (IBrush?)Application.Current.Resources[ThemeManager.BgKey] };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
+        var window = KitWindow.Show(page, 1000, height);
 
         return (page, window);
     }
