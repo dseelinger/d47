@@ -15,7 +15,7 @@ public sealed class TheCommanderCanSetCourseForTheNextObjectiveTests
     private const string Clipboard = "clipboard";
 
     private static StoryFixtures Fixtures(params string[] answers) =>
-        new(new RoundScriptedLlmProvider(answers.Select(answer => RoundScriptedLlmProvider.Saying(answer)).ToArray()));
+        StoryFixtures.ScriptedWith(answers);
 
     private static Adventure ShortStory(string key, string name) => LanternRoute() with { Key = key, Name = name, StoryId = null };
 

@@ -33,21 +33,9 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
         ]}
         """;
 
-    private static Adventure TwoBeats(string key, string? storyId, AdventureTrigger dock) => new()
-    {
-        Key = key,
-        Name = key,
-        Source = AdventureSource.Generated,
-        Written = Now,
-        Spine = new AdventureSpine { Premise = "A debt.", Want = "To pay it.", Stake = "Whether it can be.", Turn = "It is owed to you.", Ending = "It is forgiven." },
-        Opening = "Go.",
-        StoryId = storyId,
-        Beats =
-        [
-            Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
-            Beat("The Dock", "catalyst", dock, "To one name."),
-        ],
-    };
+    private static Adventure TwoBeats(string key, string? storyId, AdventureTrigger dock) => StoryFixtures.GeneratedChapter(key, key, storyId, DebtSpine,
+        Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
+        Beat("The Dock", "catalyst", dock, "To one name."));
 
     private static readonly AdventureTrigger AtTheAnchorage =
         new() { Kind = TriggerKind.Dock, MarketId = Anchorage, System = "Dyson's Hollow", Station = "Maren Anchorage" };
@@ -58,7 +46,7 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
     /// <summary>An adventure outside a story, the Lantern reached, waiting to dock at Maren Anchorage.</summary>
     private static StoryFixtures Standalone(List<string> said, params string[] answers)
     {
-        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(answers.Select(answer => RoundScriptedLlmProvider.Saying(answer)).ToArray()));
+        var fixtures = StoryFixtures.ScriptedWith(answers);
 
         Assert.Null(fixtures.Book.Write("F1", TwoBeats(AdventureKey, null, AtTheAnchorage)));
         Assert.Null(fixtures.Book.Begin("F1", AdventureKey, Now));
@@ -73,15 +61,7 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
     {
         var fixtures = Standalone(said, answers);
 
-        fixtures.Stories.Save("F1", new Story
-        {
-            Id = Id,
-            Title = Card.Title,
-            PublicLayer = Card.Describe(),
-            PickedAt = Now.AddDays(-30),
-            BeaconScanAt = Now.AddDays(-20),
-            Chapters = ["chapter-one", ChapterKey],
-        });
+        fixtures.SaveRunning(["chapter-one", ChapterKey]);
 
         Assert.Null(fixtures.Book.Write("F1", TwoBeats(ChapterKey, Id, AtTheLanternDock)));
         Assert.Null(fixtures.Book.Begin("F1", ChapterKey, Now));

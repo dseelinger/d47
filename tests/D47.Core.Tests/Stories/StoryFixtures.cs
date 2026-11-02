@@ -6,7 +6,9 @@ using D47.Core.Persona;
 using D47.Core.Stories;
 using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Persona;
 using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
 
 namespace D47.Core.Tests.Stories;
 
@@ -387,6 +389,47 @@ internal sealed class StoryFixtures : IDisposable
         Director.Observe(AdventureFixtures.Jump(address, at), frontierId);
 
         return Director.Observe(DataScanned(at), frontierId);
+    }
+
+    /// <summary>A fixture over a provider that answers each of <paramref name="answers"/> in turn.</summary>
+    public static StoryFixtures ScriptedWith(params string[] answers) =>
+        new(new RoundScriptedLlmProvider([.. answers.Select(answer => RoundScriptedLlmProvider.Saying(answer))]));
+
+    /// <summary>Saves a running story picked thirty days before <see cref="Now"/>, its beacon scanned twenty days before, on these chapters.</summary>
+    public void SaveRunning(string[] chapters, int cluesGiven = 0, string frontierId = "F1") =>
+        Stories.Save(frontierId, new Story
+        {
+            Id = Id,
+            Title = Card.Title,
+            PublicLayer = Card.Describe(),
+            PickedAt = Now.AddDays(-30),
+            BeaconScanAt = Now.AddDays(-20),
+            Chapters = chapters,
+            CluesGiven = cluesGiven,
+        });
+
+    public static readonly AdventureSpine DebtSpine = new() { Premise = "A debt.", Want = "To pay it.", Stake = "Whether it can be.", Turn = "It is owed to you.", Ending = "It is forgiven." };
+
+    /// <summary>A generated chapter written at <see cref="Now"/> with the opening "Go.".</summary>
+    public static Adventure GeneratedChapter(string key, string name, string? storyId, AdventureSpine? spine, params AdventureBeat[] beats) => new()
+    {
+        Key = key,
+        Name = name,
+        Source = AdventureSource.Generated,
+        Written = Now,
+        Spine = spine,
+        Opening = "Go.",
+        StoryId = storyId,
+        Beats = beats,
+    };
+
+    /// <summary>Picks the story for F1 at <paramref name="now"/>, then jumps to the beacon and scans a data point there, stamped as <see cref="BeaconFixture"/> does.</summary>
+    public async Task PickAndScanTheBeaconAsync(DateTimeOffset now)
+    {
+        Assert.Null(await Director.PickAsync("F1", Id, now, CancellationToken.None));
+
+        Director.Observe(BeaconFixture.JumpTo(Beacon, BeaconAddress), "F1");
+        Director.Observe(BeaconFixture.DataPoint(), "F1");
     }
 
     /// <summary>Flies every beat of a begun chapter so it is done; the director sees a beacon scan, as in the app.</summary>

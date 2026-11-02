@@ -234,33 +234,12 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
         fixtures.WritesDrawnChapters = true;
         fixtures.Director.Game = () => Flying();
         fixtures.Director.Galaxy = () => galaxy;
-        fixtures.Stories.Save("F1", new Story
-        {
-            Id = Id,
-            Title = Card.Title,
-            PublicLayer = Card.Describe(),
-            PickedAt = Now.AddDays(-30),
-            BeaconScanAt = Now.AddDays(-20),
-            Chapters = ["chapter-one", Key],
-            CluesGiven = 2,
-        });
+        fixtures.SaveRunning(["chapter-one", Key], 2);
 
-        Assert.Null(fixtures.Book.Write("F1", new Adventure
-        {
-            Key = Key,
-            Name = "The Hard Way",
-            Source = AdventureSource.Generated,
-            Written = Now,
-            Spine = new AdventureSpine { Premise = "A debt.", Want = "To pay it.", Stake = "Whether it can be.", Turn = "It is owed.", Ending = "Forgiven." },
-            Opening = "Go.",
-            StoryId = Id,
-            Beats =
-            [
-                AdventureFixtures.Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = AdventureFixtures.Lantern, System = "Ossen's Lantern" }, "Scoop here."),
-                AdventureFixtures.Beat("First Blood", "catalyst", new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 1 }, "One."),
-                AdventureFixtures.Beat("Home", "finale", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = AdventureFixtures.Hollow, System = "Dyson's Hollow" }, "End."),
-            ],
-        }));
+        Assert.Null(fixtures.Book.Write("F1", StoryFixtures.GeneratedChapter(Key, "The Hard Way", Id, new AdventureSpine { Premise = "A debt.", Want = "To pay it.", Stake = "Whether it can be.", Turn = "It is owed.", Ending = "Forgiven." },
+            AdventureFixtures.Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = AdventureFixtures.Lantern, System = "Ossen's Lantern" }, "Scoop here."),
+            AdventureFixtures.Beat("First Blood", "catalyst", new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 1 }, "One."),
+            AdventureFixtures.Beat("Home", "finale", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = AdventureFixtures.Hollow, System = "Dyson's Hollow" }, "End."))));
         Assert.Null(fixtures.Book.Begin("F1", Key, Now));
         fixtures.Book.Observe(AdventureFixtures.Jump(AdventureFixtures.Lantern, Now.AddMinutes(1)), "F1");
         fixtures.Director.Clock = () => Now.AddHours(1);

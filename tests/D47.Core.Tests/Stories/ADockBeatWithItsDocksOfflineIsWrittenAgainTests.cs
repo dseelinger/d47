@@ -32,33 +32,13 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
     /// <summary>A story on chapter two, the Lantern reached, waiting to dock at Maren Anchorage.</summary>
     private static StoryFixtures AtTheAnchorage(List<string> said, params string[] answers)
     {
-        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(answers.Select(answer => RoundScriptedLlmProvider.Saying(answer)).ToArray()));
+        var fixtures = StoryFixtures.ScriptedWith(answers);
 
-        fixtures.Stories.Save("F1", new Story
-        {
-            Id = Id,
-            Title = Card.Title,
-            PublicLayer = Card.Describe(),
-            PickedAt = Now.AddDays(-30),
-            BeaconScanAt = Now.AddDays(-20),
-            Chapters = ["chapter-one", ChapterKey],
-        });
+        fixtures.SaveRunning(["chapter-one", ChapterKey]);
 
-        Assert.Null(fixtures.Book.Write("F1", new Adventure
-        {
-            Key = ChapterKey,
-            Name = "The Anchorage",
-            Source = AdventureSource.Generated,
-            Written = Now,
-            Spine = new AdventureSpine { Premise = "A debt.", Want = "To pay it.", Stake = "Whether it can be.", Turn = "It is owed to you.", Ending = "It is forgiven." },
-            Opening = "Go.",
-            StoryId = Id,
-            Beats =
-            [
-                Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
-                Beat("The Anchorage", "catalyst", new AdventureTrigger { Kind = TriggerKind.Dock, MarketId = Anchorage, System = "Dyson's Hollow", Station = "Maren Anchorage" }, "To one name."),
-            ],
-        }));
+        Assert.Null(fixtures.Book.Write("F1", StoryFixtures.GeneratedChapter(ChapterKey, "The Anchorage", Id, DebtSpine,
+            Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
+            Beat("The Anchorage", "catalyst", new AdventureTrigger { Kind = TriggerKind.Dock, MarketId = Anchorage, System = "Dyson's Hollow", Station = "Maren Anchorage" }, "To one name."))));
         Assert.Null(fixtures.Book.Begin("F1", ChapterKey, Now));
         fixtures.Book.Observe(Jump(Lantern, Now.AddMinutes(1)), "F1");
         fixtures.Director.Clock = () => DeniedAt;

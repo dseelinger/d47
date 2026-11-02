@@ -223,22 +223,10 @@ public sealed class ABoardingWaitsForAFreeSeatTests
             AwaitingSeat = ["rider"],
         });
 
-        var chapter = new Adventure
-        {
-            Key = "the-hard-way",
-            Name = "The Hard Way",
-            Source = AdventureSource.Generated,
-            Written = Now,
-            Spine = new AdventureSpine { Premise = "A debt.", Want = "To pay it.", Stake = "Whether it can be.", Turn = "It is owed to you.", Ending = "It is forgiven." },
-            Opening = "Go.",
-            StoryId = Id,
-            Beats =
-            [
-                Beat("First Blood", "catalyst", new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 1 }, "One."),
-                Beat("The Wing", "midpoint", new AdventureTrigger { Kind = TriggerKind.Bond, Count = 3 }, "Three bonds."),
-                Beat("Home", "finale", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Home, System = "Tavell's Reach" }, "End."),
-            ],
-        };
+        var chapter = StoryFixtures.GeneratedChapter("the-hard-way", "The Hard Way", Id, DebtSpine,
+            Beat("First Blood", "catalyst", new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 1 }, "One."),
+            Beat("The Wing", "midpoint", new AdventureTrigger { Kind = TriggerKind.Bond, Count = 3 }, "Three bonds."),
+            Beat("Home", "finale", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Home, System = "Tavell's Reach" }, "End."));
 
         Assert.Null(fixtures.Book.Write("F1", chapter));
         Assert.Null(fixtures.Book.Begin("F1", "the-hard-way", Now));

@@ -16,7 +16,7 @@ namespace D47.Core.Tests.Stories;
 public sealed class TheCommanderCanMarkAnObjectiveDoneTests
 {
     private static StoryFixtures Fixtures(params string[] answers) =>
-        new(new RoundScriptedLlmProvider(answers.Select(answer => RoundScriptedLlmProvider.Saying(answer)).ToArray()));
+        StoryFixtures.ScriptedWith(answers);
 
     /// <summary>Tells every moment owed, so the next beat can fire.</summary>
     private static void Settle(StoryFixtures fixtures, DateTimeOffset at)

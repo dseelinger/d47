@@ -84,10 +84,7 @@ public sealed class StoriesWaitForOdysseyTests
     {
         using var fixtures = Fixtures();
 
-        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
-
-        fixtures.Director.Observe(BeaconFixture.JumpTo(Beacon, BeaconAddress), "F1");
-        fixtures.Director.Observe(BeaconFixture.DataPoint(), "F1");
+        await fixtures.PickAndScanTheBeaconAsync(Now);
 
         var scan = fixtures.Stories.Current("F1")!.BeaconScanAt!.Value;
 

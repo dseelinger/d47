@@ -37,24 +37,12 @@ public sealed class ARefusedBeatIsReplacedTests
         new() { Kind = kind, Count = count, MissionFamily = family };
 
     /// <summary>Five beats: an arrival, two bounties, three kill bonds and an arrival.</summary>
-    private static Adventure Chapter() => new()
-    {
-        Key = ChapterKey,
-        Name = "The Hard Way",
-        Source = AdventureSource.Generated,
-        Written = Now,
-        Spine = new AdventureSpine { Premise = "A debt.", Want = "To pay it.", Stake = "Whether it can be.", Turn = "It is owed to you.", Ending = "It is forgiven." },
-        Opening = "Go.",
-        StoryId = Id,
-        Beats =
-        [
-            Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
-            Beat("First Blood", "catalyst", Counted(TriggerKind.Bounty, 1), "One."),
-            Beat("Second Blood", "debate", Counted(TriggerKind.Bounty, 1), "Two."),
-            Beat("The Wing", "midpoint", Counted(TriggerKind.Bond, 3), "Three bonds."),
-            Beat("Home", "finale", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Home, System = "Tavell's Reach" }, "End."),
-        ],
-    };
+    private static Adventure Chapter() => StoryFixtures.GeneratedChapter(ChapterKey, "The Hard Way", Id, DebtSpine,
+        Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
+        Beat("First Blood", "catalyst", Counted(TriggerKind.Bounty, 1), "One."),
+        Beat("Second Blood", "debate", Counted(TriggerKind.Bounty, 1), "Two."),
+        Beat("The Wing", "midpoint", Counted(TriggerKind.Bond, 3), "Three bonds."),
+        Beat("Home", "finale", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Home, System = "Tavell's Reach" }, "End."));
 
     /// <summary>The first three beats' events, in order.</summary>
     private static readonly IReadOnlyList<D47.Core.Journal.JournalEvent> BeforeTheRefusal =
@@ -65,23 +53,14 @@ public sealed class ARefusedBeatIsReplacedTests
     ];
 
     private static StoryFixtures Fixtures(params string[] answers) =>
-        new(new RoundScriptedLlmProvider(answers.Select(answer => RoundScriptedLlmProvider.Saying(answer)).ToArray()));
+        StoryFixtures.ScriptedWith(answers);
 
     /// <summary>A story on chapter two with two clues given, the chapter begun, and the first three beats flown.</summary>
     private static StoryFixtures AtTheBond(params string[] answers)
     {
         var fixtures = Fixtures(answers);
 
-        fixtures.Stories.Save("F1", new Story
-        {
-            Id = Id,
-            Title = Card.Title,
-            PublicLayer = Card.Describe(),
-            PickedAt = Now.AddDays(-30),
-            BeaconScanAt = Now.AddDays(-20),
-            Chapters = ["chapter-one", ChapterKey],
-            CluesGiven = 2,
-        });
+        fixtures.SaveRunning(["chapter-one", ChapterKey], 2);
 
         Assert.Null(fixtures.Book.Write("F1", Chapter()));
         Assert.Null(fixtures.Book.Begin("F1", ChapterKey, Now));
@@ -197,15 +176,7 @@ public sealed class ARefusedBeatIsReplacedTests
     {
         using var fixtures = Fixtures(ArriveAgainThenABounty);
 
-        fixtures.Stories.Save("F1", new Story
-        {
-            Id = Id,
-            Title = Card.Title,
-            PublicLayer = Card.Describe(),
-            PickedAt = Now.AddDays(-30),
-            BeaconScanAt = Now.AddDays(-20),
-            Chapters = ["chapter-one", ChapterKey],
-        });
+        fixtures.SaveRunning(["chapter-one", ChapterKey]);
 
         Assert.Null(fixtures.Book.Write("F1", Chapter() with
         {
@@ -244,9 +215,7 @@ public sealed class ARefusedBeatIsReplacedTests
     [Fact]
     public async Task TheBeaconScanThatEndsActOneCannotBeRefused()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+        using var fixtures = StoryFixtures.ScriptedWith(Spine, BeatsToTheBeacon);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, TestContext.Current.CancellationToken));
 

@@ -27,23 +27,11 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
         ]}
         """;
 
-    private static Adventure ShortStory(string key, string? storyId = null) => new()
-    {
-        Key = key,
-        Name = "The Anchorage Run",
-        Source = AdventureSource.Generated,
-        Written = Now,
-        Spine = new AdventureSpine { Premise = "A debt.", Want = "To pay it.", Stake = "Whether it can be.", Turn = "It is owed to you.", Ending = "It is forgiven." },
-        Opening = "Go.",
-        StoryId = storyId,
-        Beats =
-        [
-            Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
-            Beat("First Blood", "catalyst", new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 1 }, "One."),
-            Beat("The Wing", "midpoint", new AdventureTrigger { Kind = TriggerKind.Bond, Count = 3 }, "Three bonds."),
-            Beat("Home", "finale", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Home, System = "Tavell's Reach" }, "End."),
-        ],
-    };
+    private static Adventure ShortStory(string key, string? storyId = null) => StoryFixtures.GeneratedChapter(key, "The Anchorage Run", storyId, DebtSpine,
+        Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
+        Beat("First Blood", "catalyst", new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 1 }, "One."),
+        Beat("The Wing", "midpoint", new AdventureTrigger { Kind = TriggerKind.Bond, Count = 3 }, "Three bonds."),
+        Beat("Home", "finale", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Home, System = "Tavell's Reach" }, "End."));
 
     private static void Bond(StoryFixtures fixtures, int minutes) =>
         fixtures.Book.Observe(

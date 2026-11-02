@@ -72,14 +72,9 @@ public sealed class AClueWaitsForItsDayTests
     [Fact]
     public async Task TheDirectorCountsSessionsAndMarksAClueGiven()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+        using var fixtures = StoryFixtures.ScriptedWith(Spine, BeatsToTheBeacon);
 
-        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
-
-        fixtures.Director.Observe(BeaconFixture.JumpTo(Beacon, BeaconAddress), "F1");
-        fixtures.Director.Observe(BeaconFixture.DataPoint(), "F1");
+        await fixtures.PickAndScanTheBeaconAsync(Now);
 
         var scan = fixtures.Stories.Current("F1")!.BeaconScanAt!.Value;
         var due = fixtures.Director.ClueDue("F1", scan.AddDays(7));

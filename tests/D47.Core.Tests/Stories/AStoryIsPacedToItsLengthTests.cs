@@ -70,9 +70,7 @@ public sealed class AStoryIsPacedToItsLengthTests
     [Fact]
     public async Task AWeekLongStoryFinishesAfterItsSecondFinaleChapter()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+        using var fixtures = StoryFixtures.ScriptedWith(Spine, BeatsToTheBeacon);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
@@ -152,9 +150,7 @@ public sealed class AStoryIsPacedToItsLengthTests
     [Fact]
     public async Task APickedStoryKeepsItsCardsLength()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+        using var fixtures = StoryFixtures.ScriptedWith(Spine, BeatsToTheBeacon);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 

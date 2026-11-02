@@ -36,23 +36,12 @@ public sealed class ARecapSaysOnlyWhatHasHappenedTests
     };
 
     /// <summary>Chapter two: an arrival, two bounties, three kill bonds and an arrival.</summary>
-    private static Adventure ChapterTwo() => new()
-    {
-        Key = ChapterKey,
-        Name = "The Hard Way",
-        Source = AdventureSource.Generated,
-        Written = Now,
-        Opening = "Go.",
-        StoryId = Id,
-        Beats =
-        [
-            Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
-            Beat("First Blood", "catalyst", Counted(TriggerKind.Bounty, 1), "One."),
-            Beat("Second Blood", "debate", Counted(TriggerKind.Bounty, 1), "Two."),
-            Beat("The Wing", "midpoint", Counted(TriggerKind.Bond, 3), "Three bonds."),
-            Beat("Home", "finale", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Home, System = "Tavell's Reach" }, "The last line."),
-        ],
-    };
+    private static Adventure ChapterTwo() => StoryFixtures.GeneratedChapter(ChapterKey, "The Hard Way", Id, null,
+        Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
+        Beat("First Blood", "catalyst", Counted(TriggerKind.Bounty, 1), "One."),
+        Beat("Second Blood", "debate", Counted(TriggerKind.Bounty, 1), "Two."),
+        Beat("The Wing", "midpoint", Counted(TriggerKind.Bond, 3), "Three bonds."),
+        Beat("Home", "finale", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Home, System = "Tavell's Reach" }, "The last line."));
 
     /// <summary>A story on chapter two, two clues given, chapter one archived and three of chapter two's objectives fired.</summary>
     private static StoryFixtures OnChapterTwo()
