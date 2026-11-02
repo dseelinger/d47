@@ -80,7 +80,7 @@ public sealed class TradingModeCallout(ILogger<TradingModeCallout> logger) : ICa
 
         if (!_armed
             || Where(context) is not { } here
-            || Destination(context.Route, here.System) is not { } plotted
+            || Destination(context, here.System) is not { } plotted
             || Hold(context.State) is var hold && hold < Math.Max(LeastMinHold, MinHold())
             || Trade() is not { } trade)
         {
@@ -113,10 +113,15 @@ public sealed class TradingModeCallout(ILogger<TradingModeCallout> logger) : ICa
             ? (system, station)
             : null;
 
-    /// <summary>The last system on the route, or null when it ends where the Commander already is.</summary>
-    private static string? Destination(NavRoute route, string here)
+    /// <summary>
+    /// The last system on the route file, or null when it ends where the Commander already is or when Elite's
+    /// route targets say the file is no longer the route being flown.
+    /// </summary>
+    private static string? Destination(CalloutContext context, string here)
     {
-        if (route.Hops.Count == 0)
+        var route = context.Route;
+
+        if (route.Hops.Count == 0 || context.LiveRoute is { Changed: true })
         {
             return null;
         }
@@ -138,7 +143,7 @@ public sealed class TradingModeCallout(ILogger<TradingModeCallout> logger) : ICa
         && string.Equals(here.Station, found.Search.Station, StringComparison.OrdinalIgnoreCase)
         && string.Equals(here.System, found.Search.System, StringComparison.OrdinalIgnoreCase)
         && string.Equals(
-            Destination(context.Route, here.System), found.Search.Destination, StringComparison.OrdinalIgnoreCase);
+            Destination(context, here.System), found.Search.Destination, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Always queues a result, an unanswerable lookup included, because the queue is what clears the

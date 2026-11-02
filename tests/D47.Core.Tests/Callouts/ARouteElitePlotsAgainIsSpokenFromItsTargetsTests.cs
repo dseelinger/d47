@@ -81,6 +81,7 @@ public class ARouteElitePlotsAgainIsSpokenFromItsTargetsTests
             [
                 "route.hazard: Next jump is a white dwarf at LHS 4058. Throttle down on arrival.",
                 "route.progress: 3 jumps remaining. Next is LHS 4058, a white dwarf — not scoopable.",
+                "fuel.route.unscoopable: Next jump is a white dwarf — no fuel at LHS 4058.",
             ],
             arrivals[1].Said.Select(announcement => $"{announcement.Key}: {announcement.Text}"));
     }
@@ -91,7 +92,11 @@ public class ARouteElitePlotsAgainIsSpokenFromItsTargetsTests
         var said = Replay("diverging").SelectMany(tick => tick.Said).ToArray();
 
         Assert.DoesNotContain(said, announcement => announcement.Key == "route.ahead");
-        Assert.DoesNotContain(said, announcement => announcement.Key.StartsWith("fuel.", StringComparison.Ordinal));
+
+        // A fuel line speaks of the target's star only: the legs beyond it are not known.
+        Assert.All(
+            said.Where(announcement => announcement.Key.StartsWith("fuel.", StringComparison.Ordinal)),
+            announcement => Assert.Equal("fuel.route.unscoopable", announcement.Key));
         Assert.DoesNotContain(said, announcement => announcement.Text.Contains("Van Maanen", StringComparison.Ordinal));
     }
 

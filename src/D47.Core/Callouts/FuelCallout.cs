@@ -109,12 +109,6 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
             yield break;
         }
 
-        // When Elite's route target no longer matches the route file, the file's stars are not the ones ahead.
-        if (context.LiveRoute is { Changed: true })
-        {
-            yield break;
-        }
-
         // Nothing here is news to a ship that cannot scoop: see the class summary.
         var asking = FlownShipLoadout.Asked(context.Events, "the plotted route");
         var scoopFitted = state.Fitted(ShipLoadout.FuelScoop, asking, logger);
@@ -125,10 +119,31 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
         }
 
         // Once per system and route.
+        var routeEnd = context.LiveRoute is { Changed: true, Target: { } live } ? live.StarSystem : destination;
+
         if (_warnedAboutRoute is { } warned &&
             string.Equals(warned.System, current, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(warned.Destination, destination, StringComparison.OrdinalIgnoreCase))
+            string.Equals(warned.Destination, routeEnd, StringComparison.OrdinalIgnoreCase))
         {
+            yield break;
+        }
+
+        // When Elite's route target no longer matches the route file, the file's stars are not the ones ahead
+        // and the legs after the target are unknown: only the target's own scooping is said.
+        if (context.LiveRoute is { Changed: true, Target: { } target })
+        {
+            _warnedAboutRoute = (current, target.StarSystem);
+
+            if (StarClasses.IsScoopable(target.StarClass) is false)
+            {
+                yield return new Announcement(
+                    "fuel.route.unscoopable",
+                    $"Next jump is {StarClasses.Speak(target.StarClass)} — no fuel at {target.StarSystem}.")
+                {
+                    Cooldown = StrandCooldown,
+                };
+            }
+
             yield break;
         }
 

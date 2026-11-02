@@ -27,7 +27,8 @@ public static class Situation
         DateTimeOffset? now = null,
         NavRoute? route = null,
         DayOfWeek weekBoundaryDay = DayOfWeek.Thursday,
-        int weekBoundaryHourUtc = 7)
+        int weekBoundaryHourUtc = 7,
+        LiveRoute? liveRoute = null)
     {
         if (state is null)
         {
@@ -37,7 +38,7 @@ public static class Situation
         var lines = new List<string>();
 
         AppendLocation(state, lines);
-        AppendRoute(state, route, lines);
+        AppendRoute(state, route, liveRoute, lines);
         AppendShip(state, lines);
         AppendDrive(status, now, lines);
         AppendCredits(status, now, lines);
@@ -116,8 +117,24 @@ public static class Situation
     /// What is left of the plotted route, read from <c>NavRoute.json</c> — the same source the Route
     /// Progress panel reads, so the two cannot disagree.
     /// </summary>
-    private static void AppendRoute(CommanderGameState state, NavRoute? route, List<string> lines)
+    private static void AppendRoute(CommanderGameState state, NavRoute? route, LiveRoute? live, List<string> lines)
     {
+        // The file no longer describes the route Elite is flying: only the target is known.
+        if (live is { Changed: true, Target: { } target })
+        {
+            var targeted = new StringBuilder($"Next jump: {target.StarSystem}");
+
+            if (target.StarClass is { } targetClass)
+            {
+                targeted.Append($", star class {targetClass}");
+            }
+
+            targeted.Append($"; {target.JumpsRemaining} jump{(target.JumpsRemaining == 1 ? "" : "s")} left on the route");
+            lines.Add(targeted.ToString());
+
+            return;
+        }
+
         if (route is not { IsPlotted: true } || state.Location.StarSystem is not { } here)
         {
             return;

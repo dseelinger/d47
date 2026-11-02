@@ -148,6 +148,63 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
             said.Text);
     }
 
+    private static LiveRoute LiveFor(NavRoute file, string target, int jumps)
+    {
+        var live = new LiveRoute();
+
+        live.Fold(
+            [Parse($$"""{"timestamp":"2026-09-19T09:05:01Z","event":"FSDTarget","Name":"{{target}}","StarClass":"K","RemainingJumpsInRoute":{{jumps}}}""")],
+            file,
+            Home,
+            null);
+
+        return live;
+    }
+
+    [Fact]
+    public void ARouteElitePlotsAgainIsNotTheDestinationToBuyFor()
+    {
+        var (callout, trade, dispatched) = Build();
+        var route = Route(Home, "Waypoint", Far);
+        var live = LiveFor(route, "Elsewhere", 2);
+        Assert.True(live.Changed);
+
+        Assert.Empty(callout.Examine(Context(Commander(), route, lines: Plotted) with { LiveRoute = live }));
+
+        Assert.Empty(dispatched);
+        Assert.Empty(trade.Asked);
+    }
+
+    [Fact]
+    public async Task ARouteTheTargetsStillMatchIsTheDestinationToBuyFor()
+    {
+        var (callout, trade, dispatched) = Build();
+        var route = Route(Home, "Waypoint", Far);
+        var live = LiveFor(route, "Waypoint", 2);
+        Assert.False(live.Changed);
+
+        Assert.Empty(callout.Examine(Context(Commander(), route, lines: Plotted) with { LiveRoute = live }));
+        await RunDispatched(dispatched);
+
+        Assert.Equal(Far, Assert.Single(trade.Asked).Destination);
+    }
+
+    [Fact]
+    public async Task AnAnswerIsDroppedWhenEliteChangesTheRouteBeforeItArrives()
+    {
+        var (callout, _, dispatched) = Build();
+        var state = Commander();
+        var route = Route(Home, "Waypoint", Far);
+
+        Assert.Empty(callout.Examine(Context(state, route, lines: Plotted)));
+        await RunDispatched(dispatched);
+
+        var live = LiveFor(route, "Elsewhere", 2);
+        Assert.True(live.Changed);
+
+        Assert.Empty(callout.Examine(Context(state, route) with { LiveRoute = live }));
+    }
+
     [Fact]
     public async Task ASecondPlotToTheSameSystemFromTheSamePadAsksNothingMore()
     {

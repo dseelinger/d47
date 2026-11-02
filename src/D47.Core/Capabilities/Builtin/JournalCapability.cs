@@ -42,7 +42,8 @@ public static class JournalCapability
         Func<DateTimeOffset>? now = null,
         OutstandingCrimes? crimes = null,
         Func<GameStatus>? liveStatus = null,
-        Func<DateTimeOffset?>? bgsTick = null)
+        Func<DateTimeOffset?>? bgsTick = null,
+        Func<LiveRoute?>? liveRoute = null)
     {
         var state = history ?? (() => HistoryState.Done);
         var plotted = route ?? (() => NavRoute.None);
@@ -250,7 +251,7 @@ public static class JournalCapability
                         "Report the current Commander's star system, the class of its arrival star, body, docking "
                         + "state and what they are doing — supercruise, hyperspace, landed, on foot — from "
                         + "the journal.",
-                    Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeLocation(gameState, plotted()))),
+                    Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeLocation(gameState, plotted(), liveRoute?.Invoke()))),
                 },
                 new ToolDefinition
                 {
@@ -929,7 +930,7 @@ public static class JournalCapability
         return false;
     }
 
-    private static string DescribeLocation(GameStateStore gameState, NavRoute route)
+    private static string DescribeLocation(GameStateStore gameState, NavRoute route, LiveRoute? live)
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
@@ -966,7 +967,7 @@ public static class JournalCapability
             ? $" The star here is {StarClasses.Speak(starClass)}."
             : " The star class here has not been seen in the journal.");
 
-        AppendRoute(report, route, location.StarSystem);
+        AppendRoute(report, route, location.StarSystem, live);
 
         return report.ToString();
     }
@@ -975,8 +976,18 @@ public static class JournalCapability
     /// What is left of the plotted route, from <c>NavRoute.json</c> — the same source the Route Progress
     /// panel reads (#152).
     /// </summary>
-    private static void AppendRoute(StringBuilder report, NavRoute route, string here)
+    private static void AppendRoute(StringBuilder report, NavRoute route, string here, LiveRoute? live)
     {
+        // The file no longer describes the route Elite is flying: only the target is known.
+        if (live is { Changed: true, Target: { } target })
+        {
+            report.Append($" Next jump: {target.StarSystem}");
+            report.Append(target.StarClass is { } targetClass ? $" (class {targetClass})." : ".");
+            report.Append($" {target.JumpsRemaining} jump{(target.JumpsRemaining == 1 ? "" : "s")} left on the route.");
+
+            return;
+        }
+
         if (!route.IsPlotted)
         {
             return;

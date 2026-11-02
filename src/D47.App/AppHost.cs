@@ -2636,7 +2636,8 @@ public sealed class AppHost : IDisposable
                     .Where(c => !c.Aboard && c.System is { Length: > 0 })
                     .Select(c => c.System!)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList() ?? []));
+                    .ToList() ?? [],
+                liveRoute: () => loop.Feed.LiveRoute));
 
         services.BuildingRegistry.Dispose();
 
@@ -2784,7 +2785,8 @@ public sealed class AppHost : IDisposable
                     SystemWallClock.Instance.UtcNow,
                     stores.Route.Current,
                     settings.Current.Callouts.WeekBoundaryDay,
-                    settings.Current.Callouts.WeekBoundaryHourUtc),
+                    settings.Current.Callouts.WeekBoundaryHourUtc,
+                    late.Host?.LiveRoute),
                 ActionCapabilities.Describe(registry.ActionSurface),
                 MacroCapability.Live(services.Macros),
                 ChecklistCapability.Live(checklists),
@@ -3437,6 +3439,7 @@ public sealed class AppHost : IDisposable
         // it — proper-noun biasing wants the systems the Commander is about to arrive in, and those are only
         // in the route file.
         host._route = () => stores.Route.Current;
+        host.LiveRoute = loop.Feed.LiveRoute;
         host._modulePower = () => stores.ModulePower.Current;
 
         // Two sources, one gate (Phase 53).
@@ -5013,6 +5016,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The plotted route, for anything that wants to draw it (Phase 37, "Progress").</summary>
     public NavRoute Route => _route?.Invoke() ?? NavRoute.None;
+
+    /// <summary>The route file checked against Elite's route targets; set during composition.</summary>
+    public LiveRoute? LiveRoute { get; private set; }
 
     /// <summary>Set during composition, like <see cref="_route"/> and for the same reason.</summary>
     private Func<ModulePower>? _modulePower;

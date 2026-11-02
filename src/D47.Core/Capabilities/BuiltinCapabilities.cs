@@ -330,7 +330,10 @@ public static class BuiltinCapabilities
         Func<IReadOnlyList<Configuration.RunningStoryVoice>>? runningStory = null,
 
         // The systems the Commander's remote characters are in, for the galaxy search disclosure.
-        Func<IReadOnlyList<string>>? remoteCharacterSystems = null) =>
+        Func<IReadOnlyList<string>>? remoteCharacterSystems = null,
+
+        // The route file checked against Elite's route targets.
+        Func<Journal.LiveRoute?>? liveRoute = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -338,7 +341,7 @@ public static class BuiltinCapabilities
             phraseBook ?? (() => PhraseBook.From(registry(), [])),
             () => gameState.Active?.Identity.FrontierId is { Length: > 0 } fid ? learnedPhrases?.For(fid) ?? [] : []),
         DiagnosticsCapability.Create(paths, files ?? new Storage.DiskFileSystem(), verbosity, settings, version, coverage, history, ticking),
-        JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route, cartography, now, crimes, liveStatus, bgsTick),
+        JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route, cartography, now, crimes, liveStatus, bgsTick, liveRoute),
         CrewCapability.Create(() => gameState.Active),
         CarrierCapability.Create(() => gameState.Active, now ?? (() => DateTimeOffset.MinValue)),
         GalaxyCapability.Create(
