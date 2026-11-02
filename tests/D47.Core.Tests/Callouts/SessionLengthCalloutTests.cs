@@ -14,20 +14,29 @@ public class SessionLengthCalloutTests
 {
     private static readonly DateTimeOffset Start = new(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
 
-    private static JournalEvent Event(string kind, DateTimeOffset at)
+    private static JournalEvent Event(string kind, DateTimeOffset at, int? part = null)
     {
-        var json = JsonSerializer.Serialize(new Dictionary<string, object?>
+        var fields = new Dictionary<string, object?>
         {
             ["timestamp"] = at.ToString("yyyy-MM-ddTHH:mm:ssZ"),
             ["event"] = kind,
-        });
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
+        };
+
+        if (part is { } number)
+        {
+            fields["part"] = number;
+        }
+
+        Assert.True(JournalEvent.TryParse(JsonSerializer.Serialize(fields), NullLogger.Instance, out var parsed));
         return parsed!;
     }
 
     private static List<Announcement> Say(
         SessionLengthCallout callout, DateTimeOffset now, bool priming = false, params JournalEvent[] events) =>
         [.. callout.Examine(new CalloutContext(now, priming, null, GameStatus.Unknown, NavRoute.None, events))];
+
+    private static List<Announcement> SayClosed(SessionLengthCallout callout, DateTimeOffset now) =>
+        [.. callout.Examine(new CalloutContext(now, false, null, GameStatus.Unknown, NavRoute.None, []) { GameRunning = false })];
 
     [Fact]
     public void AFourHourSessionSpeaksOnceAtFourHours()
@@ -73,6 +82,42 @@ public class SessionLengthCalloutTests
         Assert.Empty(Say(callout, Start.AddHours(5), true, Event("LoadGame", Start)));
 
         Assert.Single(Say(callout, Start.AddHours(5)));
+    }
+
+    [Fact]
+    public void ASessionWithNoShutdownIsNotCountedWhileEliteIsClosed()
+    {
+        var callout = new SessionLengthCallout();
+        Say(callout, Start.AddHours(5), true, Event("LoadGame", Start));
+
+        Assert.Empty(SayClosed(callout, Start.AddHours(5)));
+        Assert.Empty(SayClosed(callout, Start.AddHours(9)));
+
+        // Elite started again, before its new journal has been read.
+        Assert.Empty(Say(callout, Start.AddHours(9.1)));
+    }
+
+    [Fact]
+    public void ANewJournalEndsASessionWithNoShutdown()
+    {
+        var callout = new SessionLengthCallout();
+        var restarted = Start.AddHours(5);
+
+        Assert.Empty(Say(callout, restarted, true, Event("LoadGame", Start), Event("Fileheader", restarted, part: 1)));
+
+        Assert.Empty(Say(callout, restarted.AddHours(1)));
+        Assert.Empty(Say(callout, restarted.AddHours(3)));
+    }
+
+    [Fact]
+    public void ALaterPartOfTheSameJournalKeepsTheSession()
+    {
+        var callout = new SessionLengthCallout();
+        Say(callout, Start, false, Event("LoadGame", Start));
+
+        Assert.Empty(Say(callout, Start.AddHours(2), false, Event("Fileheader", Start.AddHours(2), part: 2)));
+
+        Assert.Single(Say(callout, Start.AddHours(4)));
     }
 
     [Fact]

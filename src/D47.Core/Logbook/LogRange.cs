@@ -219,8 +219,9 @@ public static class LogRanges
         => ReadSession(fileSystem, before, files, logger).Range;
 
     /// <summary>
-    /// <see cref="PreviousSession"/> with whether the session's last event was a <c>Shutdown</c>, which
-    /// separates a session still running at <paramref name="before"/> from one already over.
+    /// <see cref="PreviousSession"/> with whether the session was followed by a <c>Shutdown</c> or by the first
+    /// part of a new journal, which separates a session still running at <paramref name="before"/> from one
+    /// already over.
     /// </summary>
     public static (LogRange? Range, bool Ended) ReadSession(IFileSystem fileSystem, DateTimeOffset before, IReadOnlyList<string> files, ILogger logger)
     {
@@ -248,6 +249,13 @@ public static class LogRanges
                     if (parsed.StartsSession)
                     {
                         from = parsed.Timestamp;
+                        ended = false;
+                    }
+                    else if (ended || (parsed.Kind == "Fileheader" && parsed.Int("part") == 1))
+                    {
+                        // Past a Shutdown or the first part of a new journal, the session is over until the next LoadGame.
+                        ended = from is not null;
+                        continue;
                     }
 
                     to = parsed.Timestamp;

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When a game session's journal stops without a Shutdown, D47 no longer treats that session as still running once Elite is closed or the game has started again. The break reminder is not said while Elite is not running, and the last session recap opens "Last session" rather than "Earlier this session". Before, starting D47 with only the launcher open could remind you to take a break and recap a session that ended hours ago as the current one.
+
 While the next chapter of a stock story is being written, or its write failed, Your stories shows a card for the story with the same line the Catalogue shows, the progress bar while writing, and Write it again after a failure. Before, it showed only the Set aside fold. When the chapter is written, its own card replaces this one.
 
 After D47 plots a neutron route, the reply ends by offering to set the first waypoint in the galaxy map. Say "plot the first waypoint" or "set course for the first waypoint" to do it. The offer lapses when the next route is plotted, or when you plot or clear a route in the game.

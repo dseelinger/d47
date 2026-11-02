@@ -3077,7 +3077,7 @@ public sealed class AppHost : IDisposable
             BgsLastTick = () => late.Host?.BgsTick?.Last,
             GalNetArrived = () => late.Host?.GalNet?.Arrived ?? [],
             ServerStatusAnnounce = () => late.Host?.ServerStatus?.Announce,
-            ComposeRecap = launch => ComposeRecap(foundations.Files, launch, JournalsOnDisk(foundations.Files, stores.JournalDirectory, foundations.Logger), loggerFactory),
+            ComposeRecap = (launch, running) => ComposeRecap(foundations.Files, launch, running, JournalsOnDisk(foundations.Files, stores.JournalDirectory, foundations.Logger), loggerFactory),
         });
 
         var pairing = new VoicePairer(
@@ -5591,11 +5591,11 @@ public sealed class AppHost : IDisposable
             : null;
 
     /// <summary>The plain recap for a launch at <paramref name="launch"/>, or null for none.</summary>
-    private static string? ComposeRecap(IFileSystem fileSystem, DateTimeOffset launch, IReadOnlyList<string> files, ILoggerFactory loggerFactory)
+    private static string? ComposeRecap(IFileSystem fileSystem, DateTimeOffset launch, bool gameRunning, IReadOnlyList<string> files, ILoggerFactory loggerFactory)
     {
         try
         {
-            return RecapCallout.ComposeAt(fileSystem, launch, files, loggerFactory);
+            return RecapCallout.ComposeAt(fileSystem, launch, files, loggerFactory, gameRunning);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

@@ -2,7 +2,10 @@ using D47.Core.Journal;
 
 namespace D47.Core.Callouts;
 
-/// <summary>One reminder per session when it has run for the chosen number of hours (#641).</summary>
+/// <summary>
+/// One reminder per session when it has run for the chosen number of hours (#641). A session ends at
+/// <c>Shutdown</c>, at the first part of a new journal, or when Elite is seen not running.
+/// </summary>
 public sealed class SessionLengthCallout : ICallout
 {
     public string Id => "session-length";
@@ -18,6 +21,11 @@ public sealed class SessionLengthCallout : ICallout
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
+        if (!context.IsPriming && !context.GameRunning)
+        {
+            _start = null;
+        }
+
         foreach (var journalEvent in context.Events)
         {
             switch (journalEvent.Kind)
@@ -28,6 +36,7 @@ public sealed class SessionLengthCallout : ICallout
                     break;
 
                 case "Shutdown":
+                case "Fileheader" when journalEvent.Int("part") == 1:
                     _start = null;
                     break;
             }

@@ -108,8 +108,11 @@ public static class ShippedCallouts
         /// <summary>The server state to announce after the last poll, or null.</summary>
         public Func<GameServerState?> ServerStatusAnnounce { get; init; } = () => null;
 
-        /// <summary>The recap line for the session that started before the instant given, or null; reads journal files.</summary>
-        public required Func<DateTimeOffset, string?> ComposeRecap { get; init; }
+        /// <summary>
+        /// The recap line for the session that started before the instant given, with whether Elite is running,
+        /// or null; reads journal files.
+        /// </summary>
+        public required Func<DateTimeOffset, bool, string?> ComposeRecap { get; init; }
 
         /// <summary>Runs work off the tick; <see cref="ComposeRecap"/> is called through it.</summary>
         public Action<Action> Dispatch { get; init; } = work => _ = Task.Run(work);
@@ -390,7 +393,7 @@ public static class ShippedCallouts
 
                 case RecapCallout recap:
                     recap.StockCoreAboard = services.StockCoreAboard;
-                    recap.Prepare = before => dispatch(() => recap.Supply(compose(before)));
+                    recap.Prepare = (before, running) => dispatch(() => recap.Supply(compose(before, running)));
                     break;
 
                 case SessionCallout session:

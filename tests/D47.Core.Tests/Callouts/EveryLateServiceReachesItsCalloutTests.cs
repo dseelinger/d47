@@ -73,7 +73,7 @@ public sealed class EveryLateServiceReachesItsCalloutTests
             BgsLastTick = () => wired!.BgsTick,
             GalNetArrived = () => wired!.GalNetArrived,
             ServerStatusAnnounce = () => wired!.ServerStatusAnnounce,
-            ComposeRecap = before =>
+            ComposeRecap = (before, _) =>
             {
                 wired!.RecapAsked.Add(before);
                 return recap;

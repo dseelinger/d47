@@ -33,9 +33,10 @@ public sealed class RecapCallout : ICallout
 
     /// <summary>
     /// Asked once, on the first live tick, to prepare the line for the sessions before the instant given
-    /// (the launch). Must not block: the caller answers later through <see cref="Supply"/>.
+    /// (the launch), and told whether Elite is running. Must not block: the caller answers later through
+    /// <see cref="Supply"/>.
     /// </summary>
-    public Action<DateTimeOffset>? Prepare { get; set; }
+    public Action<DateTimeOffset, bool>? Prepare { get; set; }
 
     /// <summary>The prepared line, or null for nothing to say. Safe from any thread.</summary>
     public void Supply(string? line)
@@ -57,7 +58,7 @@ public sealed class RecapCallout : ICallout
         if (_firstLiveTick == default)
         {
             _firstLiveTick = context.Now;
-            Prepare?.Invoke(context.Now);
+            Prepare?.Invoke(context.Now, context.GameRunning);
             yield break;
         }
 
@@ -98,9 +99,15 @@ public sealed class RecapCallout : ICallout
 
     /// <summary>
     /// The recap for launch at <paramref name="launch"/>: the session still running, when it holds
-    /// anything, else the session before it. Null for nothing to say.
+    /// anything, else the session before it. Null for nothing to say. A session with no <c>Shutdown</c> is
+    /// over while Elite is not running.
     /// </summary>
-    public static string? ComposeAt(IFileSystem fileSystem, DateTimeOffset launch, IReadOnlyList<string> files, ILoggerFactory loggerFactory)
+    public static string? ComposeAt(
+        IFileSystem fileSystem,
+        DateTimeOffset launch,
+        IReadOnlyList<string> files,
+        ILoggerFactory loggerFactory,
+        bool gameRunning = true)
     {
         ArgumentNullException.ThrowIfNull(fileSystem);
         ArgumentNullException.ThrowIfNull(files);
@@ -115,7 +122,7 @@ public sealed class RecapCallout : ICallout
             return null;
         }
 
-        if (ended)
+        if (ended || !gameRunning)
         {
             return Compose(builder.Build(files, latest));
         }

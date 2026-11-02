@@ -17,7 +17,7 @@ public sealed class TheRecapIsOffWhenItsSwitchIsOffTests
     private static IReadOnlyList<Announcement> Said(bool enabled)
     {
         var recap = new RecapCallout();
-        recap.Prepare = _ => recap.Supply("Last session you finished in Deciat.");
+        recap.Prepare = (_, _) => recap.Supply("Last session you finished in Deciat.");
 
         var engine = new CalloutEngine(NullLogger<CalloutEngine>.Instance).Add(recap);
         engine.SetEnabled(recap.Id, enabled, T0);

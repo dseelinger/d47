@@ -1203,8 +1203,9 @@ Last session you finished docked at Garay Terminal, Deciat in the Python "Direct
 ```
 
 Directive 47 writes that line from the journals of the session before this launch, from its
-`LoadGame` to its last event. Started while a game session is still running, D47 recaps that session
-instead, and the line opens *"Earlier this session"*. With a language model
+`LoadGame` to its last event. Started while Elite is running a game session, D47 recaps that session
+instead, and the line opens *"Earlier this session"*. A session whose journal stops without a `Shutdown`
+counts as over while Elite is not running, or once the game opens a new journal. With a language model
 and personality on, the core aboard always says it again in its own voice, keeping every name and
 figure; that is one priced call per launch, counted in spend. With no model, or personality off, the
 line is said as written. Your Backstory and the active story are not sent with it.
@@ -1340,7 +1341,8 @@ A reminder to take a break, said once, when a session has run for the length you
 You have been flying 4 hours, Commander. Time to take a break.
 ```
 
-A session starts at the latest `LoadGame` in the journal and ends at `Shutdown`. Starting the game
+A session starts at the latest `LoadGame` in the journal and ends at `Shutdown`, or when the game opens
+a new journal before the next `LoadGame`. Nothing is said while Elite is not running. Starting the game
 again re-arms the reminder. Restarting d47 in the middle of a session keeps the start the journal
 recorded. Nothing is said while d47 is catching up on a journal it did not watch being written. It is
 separate from the welcome-back line, so either can be switched off without the other.
