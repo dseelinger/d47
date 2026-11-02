@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+While a stock story is on a detour, the mini panel, on the desktop and in the headset, shows the detour: its name, its step and its next objective. Before, it kept showing the paused chapter.
+
 When Elite changes a route without rewriting its route file, the Progress page and both mini panels no longer draw the file's old systems as the route ahead. They show the system Elite targets next and the jumps it says are left. The galaxy map stops drawing the file's route.
 
 A course request the keyword list does not match, such as "What's that course for home?", now reaches the course tool that sets the game's course. Before, the model could pick the neutron route planner, which plots nothing in the game, and its reply implied the course was set. The planner's reply now says the game's course was not set.

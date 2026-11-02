@@ -230,4 +230,22 @@ public class TheStoriesMiniShowsWhatToDoThenWhatWasToldTests
 
         mini.Window.Close();
     }
+
+    [AvaloniaFact]
+    public void ADetourReplacesThePausedChapterInTheMini()
+    {
+        var mini = Open();
+        var trigger = new AdventureTrigger { Kind = TriggerKind.Arrive, System = "Anlave", SystemAddress = 1 };
+
+        Assert.Null(mini.Director.SetDetour("F1", trigger, "Travel to Anlave", "Somewhere else first.", Now));
+
+        Assert.True(Until(() => Block(mini, said => said.StartsWith("TRAVEL TO ANLAVE", StringComparison.OrdinalIgnoreCase)) is not null));
+
+        var title = Said(Block(mini, said => said.StartsWith("TRAVEL TO ANLAVE", StringComparison.OrdinalIgnoreCase))!);
+        Assert.EndsWith("Step 1 of 1", title);
+        Assert.Null(Block(mini, said => said.StartsWith("THE FIRST LIGHT", StringComparison.Ordinal)));
+        Assert.NotNull(Block(mini, said => said.StartsWith("Next: ", StringComparison.Ordinal) && said.Contains("Anlave", StringComparison.Ordinal)));
+
+        mini.Window.Close();
+    }
 }

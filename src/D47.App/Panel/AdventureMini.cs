@@ -86,9 +86,10 @@ public sealed class AdventureMini : UserControl
         var director = _surface.Stories;
         var story = director?.Stories.Current(commander);
 
-        // A stock story's current chapter is shown whether or not it is still under way: while the next one is
-        // written, after it was abandoned and once it is done.
-        var standing = story?.CurrentChapter is { } key ? _surface.Book.Standing(commander, key) : null;
+        // A stock story's open detour, else its current chapter, is shown whether or not it is still under way:
+        // while the next chapter is written, after it was abandoned and once it is done.
+        var standing = story?.Detour?.Key is { } detourKey ? _surface.Book.Standing(commander, detourKey) : null;
+        standing ??= story?.CurrentChapter is { } key ? _surface.Book.Standing(commander, key) : null;
         standing ??= _surface.Book.Active(commander).FirstOrDefault();
 
         if (story is null && standing is null)
