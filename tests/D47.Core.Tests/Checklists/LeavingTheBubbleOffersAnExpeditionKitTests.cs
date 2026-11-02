@@ -6,6 +6,7 @@ using D47.Core.Checklists;
 using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -24,46 +25,24 @@ public class LeavingTheBubbleOffersAnExpeditionKitTests
     private const string Collector = """{"Slot":"Slot04_Size3","Item":"int_dronecontrol_collection_size3_class3","On":true,"Priority":0}""";
     private const string Refinery = """{"Slot":"Slot05_Size3","Item":"int_refinery_size3_class2","On":true,"Priority":0}""";
 
-    private sealed class Routes(CarrierRoute route) : IRouteService
+    private sealed class Routes(CarrierRoute route) : StubRouteService
     {
-        public Task<PlottedRoute?> PlotAsync(RouteQuery query, CancellationToken cancellationToken) =>
+        public override Task<PlottedRoute?> PlotAsync(RouteQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<PlottedRoute?>(null);
 
-        public Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken) =>
+        public override Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<RichesRoute?>(null);
 
-        public Task<ExobiologyRoute?> PlotExobiologyAsync(ExobiologyQuery query, CancellationToken cancellationToken) =>
+        public override Task<ExobiologyRoute?> PlotExobiologyAsync(ExobiologyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<ExobiologyRoute?>(null);
 
-        public Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken) =>
+        public override Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<CarrierRoute?>(route);
     }
 
     /// <summary>The recorded Sol, Colonia, Sol plot, with spansh's x, y, z on every jump.</summary>
-    private static CarrierRoute SolColoniaSol()
-    {
-        using var document = EmbeddedFixture.Json("spansh-fleetcarrier-route-sol-colonia-sol.json");
-
-        return new CarrierRoute([.. document.RootElement.GetProperty("result").GetProperty("jumps").EnumerateArray()
-            .Select(jump => new CarrierWaypoint(
-                jump.GetProperty("name").GetString()!,
-                jump.GetProperty("distance").GetDouble(),
-                jump.GetProperty("distance_to_destination").GetDouble(),
-                jump.GetProperty("fuel_in_tank").GetInt32(),
-                jump.GetProperty("fuel_used").GetInt32(),
-                jump.GetProperty("must_restock").GetInt32() != 0,
-                jump.GetProperty("restock_amount").GetInt32(),
-                jump.GetProperty("tritium_in_market").GetInt32(),
-                jump.GetProperty("has_icy_ring").GetBoolean(),
-                jump.GetProperty("is_system_pristine").GetBoolean(),
-                jump.GetProperty("is_desired_destination").GetInt32() != 0)
-            {
-                Position = new StarPosition(
-                    jump.GetProperty("x").GetDouble(),
-                    jump.GetProperty("y").GetDouble(),
-                    jump.GetProperty("z").GetDouble()),
-            })]);
-    }
+    private static CarrierRoute SolColoniaSol() =>
+        CarrierRouteFixture.Read("spansh-fleetcarrier-route-sol-colonia-sol.json", withPosition: true);
 
     /// <summary>Sol to a system 300 ly out, which never leaves the bubble.</summary>
     private static CarrierRoute InsideTheBubble() => new(

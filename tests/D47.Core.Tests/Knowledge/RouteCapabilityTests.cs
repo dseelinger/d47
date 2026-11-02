@@ -15,7 +15,7 @@ namespace D47.Core.Tests.Knowledge;
 /// </summary>
 public class RouteCapabilityTests
 {
-    private sealed class FakeRoutes : IRouteService
+    private sealed class FakeRoutes : StubRouteService
     {
         public RouteQuery? LastRoute { get; private set; }
 
@@ -29,25 +29,25 @@ public class RouteCapabilityTests
 
         public Exception? Throws { get; set; }
 
-        public Task<PlottedRoute?> PlotAsync(RouteQuery query, CancellationToken cancellationToken)
+        public override Task<PlottedRoute?> PlotAsync(RouteQuery query, CancellationToken cancellationToken)
         {
             LastRoute = query;
             return Throws is not null ? Task.FromException<PlottedRoute?>(Throws) : Task.FromResult(Route);
         }
 
-        public Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken)
+        public override Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken)
         {
             LastRiches = query;
             return Throws is not null ? Task.FromException<RichesRoute?>(Throws) : Task.FromResult(Riches);
         }
 
         // The fifth plot type.
-        public Task<ExobiologyRoute?> PlotExobiologyAsync(
+        public override Task<ExobiologyRoute?> PlotExobiologyAsync(
             ExobiologyQuery query,
             CancellationToken cancellationToken) =>
             Task.FromResult<ExobiologyRoute?>(null);
 
-        public Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken) =>
+        public override Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<CarrierRoute?>(null);
     }
 
@@ -55,7 +55,7 @@ public class RouteCapabilityTests
     /// The trade planner, which is d47's own since Phase 36 and so a separate seam: lookups and
     /// arithmetic here, rather than a job somebody else queues.
     /// </summary>
-    private sealed class FakeTrade : ITradePlanService
+    private sealed class FakeTrade : StubTradePlanService
     {
         public TradeQuery? LastTrade { get; private set; }
 
@@ -81,7 +81,7 @@ public class RouteCapabilityTests
 
         public Exception? Throws { get; set; }
 
-        public Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken)
+        public override Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken)
         {
             LastTrade = query;
             return Throws is not null ? Task.FromException<TradeRoute?>(Throws) : Task.FromResult(Trade);
@@ -91,7 +91,7 @@ public class RouteCapabilityTests
 
         public CommodityAnswer Commodity { get; set; } = CommodityAnswer.Empty;
 
-        public Task<CommodityAnswer> FindCommodityAsync(
+        public override Task<CommodityAnswer> FindCommodityAsync(
             CommoditySearch search,
             CancellationToken cancellationToken)
         {
@@ -106,7 +106,7 @@ public class RouteCapabilityTests
 
         public SourcingAnswer Sourcing { get; set; } = SourcingAnswer.Empty;
 
-        public Task<SourcingAnswer> SourceConstructionAsync(
+        public override Task<SourcingAnswer> SourceConstructionAsync(
             SourcingSearch search,
             CancellationToken cancellationToken)
         {
@@ -117,7 +117,7 @@ public class RouteCapabilityTests
                 : Task.FromResult(Sourcing);
         }
 
-        public Task<StationQuote?> QuoteAsync(
+        public override Task<StationQuote?> QuoteAsync(
             long marketId,
             string commodity,
             CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
@@ -126,7 +126,7 @@ public class RouteCapabilityTests
 
         public BestCargoAnswer? BestCargo { get; set; }
 
-        public Task<BestCargoAnswer?> BestCargoAsync(
+        public override Task<BestCargoAnswer?> BestCargoAsync(
             BestCargoSearch search,
             CancellationToken cancellationToken)
         {

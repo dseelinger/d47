@@ -13,7 +13,7 @@ namespace D47.Core.Tests.Knowledge;
 /// </summary>
 public class MaterialSourcingTests
 {
-    private sealed class FakeGalaxy : IGalaxyService
+    private sealed class FakeGalaxy : StubGalaxyService
     {
         public GalaxyQuery? LastQuery { get; private set; }
 
@@ -60,39 +60,32 @@ public class MaterialSourcingTests
                 new StationSummary { Name = "Nowhere Dock", SystemName = "Nanomam", Distance = 12.0 },
             ]);
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             LastQuery = query;
             return Task.FromResult(Systems);
         }
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(0);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             LastStationQuery = query;
             return Task.FromResult(Stations);
         }
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
         {
             LastBodyQuery = query;
             return Task.FromResult(Bodies);
         }
 
         /// <summary>Not what this file is about.</summary>
-        public Task<ColonisationScan> ScanForColonisationAsync(
+        public override Task<ColonisationScan> ScanForColonisationAsync(
             ColonisationQuery query,
             CancellationToken cancellationToken) =>
             Task.FromResult(new ColonisationScan("Sol", 0, []));
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     private static JournalEvent Event(string json)

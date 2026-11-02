@@ -8,31 +8,10 @@ namespace D47.Core.Tests.Knowledge;
 
 public class TheAnswerSaysWhichStrongholdCarriersWereLeftOutTests
 {
-    private sealed class Answering(StationSearchResult result) : IGalaxyService
+    private sealed class Answering(StationSearchResult result) : StubGalaxyService
     {
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(result);
-
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(
-            ColonisationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(
-            MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     private static async Task<string> SaidAsync(int leftOut)

@@ -5,6 +5,7 @@ using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Persona;
+using D47.Core.Tests.Knowledge;
 using Xunit;
 
 namespace D47.Scenarios.Tests.ModelComparison;
@@ -72,25 +73,9 @@ public sealed class ChaptersWrittenTogetherKeepTheirOwnRecordsTests
             meter.View(), model, ThinkingEffort.Medium, 1, persona, world, new TimedGalaxy(new UnusedGalaxy()), null, ask, "short story", "", null);
 
     /// <summary>Present so the generator starts; with no Commander location it is never asked anything.</summary>
-    private sealed class UnusedGalaxy : IGalaxyService
+    private sealed class UnusedGalaxy : StubGalaxyService, IGalaxyService
     {
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => throw new NotSupportedException();
-
         public Task<StarPosition?> PositionAsync(string system, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
     private sealed class DelayedProvider : ILlmProvider

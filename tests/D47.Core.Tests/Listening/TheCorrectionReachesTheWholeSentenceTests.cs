@@ -6,6 +6,7 @@ using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Listening;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -91,30 +92,24 @@ public class TheCorrectionReachesTheWholeSentenceTests
     }
 
     /// <summary>Answers about one system and nothing else, so a lookup can be made to fail.</summary>
-    private sealed class OneSystem(string known) : IGalaxyService
+    private sealed class OneSystem(string known) : StubGalaxyService
     {
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new GalaxySearchResult(query.ReferenceSystem ?? string.Empty, 0, []));
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult(
                 string.Equals(to, known, StringComparison.OrdinalIgnoreCase) ? 60.4 : (double?)null);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
             throw new NotSupportedException("Not what these tests drive.");
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             throw new NotSupportedException("Not what these tests drive.");
 
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
+        public override Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
             throw new NotSupportedException("Not what these tests drive.");
 
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     /// <summary>The reported turn, through the real tool.</summary>

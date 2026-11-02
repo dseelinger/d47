@@ -13,69 +13,62 @@ public class ACarrierPlotSaysWhereTritiumIsSoldTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 7, 12, 0, 0, TimeSpan.Zero);
 
-    private sealed class OneJump : IRouteService
+    private sealed class OneJump : StubRouteService
     {
-        public Task<PlottedRoute?> PlotAsync(RouteQuery query, CancellationToken cancellationToken) =>
+        public override Task<PlottedRoute?> PlotAsync(RouteQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<PlottedRoute?>(null);
 
-        public Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken) =>
+        public override Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<RichesRoute?>(null);
 
-        public Task<ExobiologyRoute?> PlotExobiologyAsync(ExobiologyQuery query, CancellationToken cancellationToken) =>
+        public override Task<ExobiologyRoute?> PlotExobiologyAsync(ExobiologyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<ExobiologyRoute?>(null);
 
-        public Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken) =>
+        public override Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<CarrierRoute?>(new CarrierRoute(
                 [new CarrierWaypoint("Colonia", 500, 0, 1_000, 20, false, 0, 0, false, false, true)]));
     }
 
-    private sealed class Market(Func<CommoditySearch, CommodityAnswer> answer) : ITradePlanService
+    private sealed class Market(Func<CommoditySearch, CommodityAnswer> answer) : StubTradePlanService
     {
         public List<CommoditySearch> Searches { get; } = [];
 
-        public Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>
+        public override Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<TradeRoute?>(null);
 
-        public Task<CommodityAnswer> FindCommodityAsync(CommoditySearch search, CancellationToken cancellationToken)
+        public override Task<CommodityAnswer> FindCommodityAsync(CommoditySearch search, CancellationToken cancellationToken)
         {
             Searches.Add(search);
 
             return Task.FromResult(answer(search));
         }
 
-        public Task<SourcingAnswer> SourceConstructionAsync(SourcingSearch search, CancellationToken cancellationToken) =>
+        public override Task<SourcingAnswer> SourceConstructionAsync(SourcingSearch search, CancellationToken cancellationToken) =>
             Task.FromResult(SourcingAnswer.Empty);
 
-        public Task<StationQuote?> QuoteAsync(long marketId, string commodity, CancellationToken cancellationToken) =>
+        public override Task<StationQuote?> QuoteAsync(long marketId, string commodity, CancellationToken cancellationToken) =>
             Task.FromResult<StationQuote?>(null);
 
-        public Task<BestCargoAnswer?> BestCargoAsync(BestCargoSearch search, CancellationToken cancellationToken) =>
+        public override Task<BestCargoAnswer?> BestCargoAsync(BestCargoSearch search, CancellationToken cancellationToken) =>
             Task.FromResult<BestCargoAnswer?>(null);
     }
 
-    private sealed class SilentGalaxy : IGalaxyService
+    private sealed class SilentGalaxy : StubGalaxyService
     {
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new GalaxySearchResult("Colonia", 0, []));
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(null);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new StationSearchResult("Colonia", 0, []));
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult("Colonia", 0, []));
 
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
+        public override Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new ColonisationScan("Colonia", 0, []));
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     private static CommodityOffer Offer(string station, string type, DateTimeOffset reported, double distance) =>

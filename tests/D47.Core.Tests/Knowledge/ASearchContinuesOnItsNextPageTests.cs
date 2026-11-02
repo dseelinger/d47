@@ -17,13 +17,13 @@ public class ASearchContinuesOnItsNextPageTests
     private static readonly DateTimeOffset AskedAt = new(2026, 11, 1, 12, 0, 0, TimeSpan.Zero);
 
     /// <summary>Answers each page with that page's rows, and records the queries it was given.</summary>
-    private sealed class PagedGalaxy : IGalaxyService
+    private sealed class PagedGalaxy : StubGalaxyService, IGalaxyService
     {
         public List<GalaxyQuery> Asked { get; } = [];
 
         public int Total { get; set; } = 1234;
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             Asked.Add(query);
             var first = (query.Page - 1) * query.Size;
@@ -41,7 +41,7 @@ public class ASearchContinuesOnItsNextPageTests
 
         public StationSearchResult Stations { get; set; } = new("Sol", 0, []);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             LastStationQuery = query;
             return Task.FromResult(Stations);
@@ -49,11 +49,8 @@ public class ASearchContinuesOnItsNextPageTests
 
         public BodySearchResult Bodies { get; set; } = new("Sol", 0, []);
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(Bodies);
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
 
         public Task<D47.Core.Journal.StarPosition?> PositionAsync(string system, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
@@ -65,18 +62,6 @@ public class ASearchContinuesOnItsNextPageTests
             PadSize? minPad,
             int? maxReportAgeHours,
             CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
     }
 

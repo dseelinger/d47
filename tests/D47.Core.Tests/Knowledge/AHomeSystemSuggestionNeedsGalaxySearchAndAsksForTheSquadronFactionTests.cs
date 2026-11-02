@@ -18,33 +18,21 @@ public class AHomeSystemSuggestionNeedsGalaxySearchAndAsksForTheSquadronFactionT
 
     private readonly EmptyGalaxy _galaxy = new();
 
-    private sealed class EmptyGalaxy : IGalaxyService
+    private sealed class EmptyGalaxy : StubGalaxyService
     {
         public int Calls { get; private set; }
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             Calls++;
             return Task.FromResult(new GalaxySearchResult(null, 0, []));
         }
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
         {
             Calls++;
             return Task.FromResult(new BodySearchResult(null, 0, []));
         }
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
     private Task<ToolResult> SuggestAsync() =>

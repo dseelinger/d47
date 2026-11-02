@@ -11,7 +11,7 @@ namespace D47.Core.Tests.Knowledge;
 /// <summary>search_outfitting: several items at one station, the board, the history and a saved search.</summary>
 public class SearchOutfittingTakesSeveralItemsTests
 {
-    private sealed class FakeGalaxy : IGalaxyService
+    private sealed class FakeGalaxy : StubGalaxyService
     {
         public StationQuery? LastQuery { get; private set; }
 
@@ -35,33 +35,13 @@ public class SearchOutfittingTakesSeveralItemsTests
                 ControllingFaction = "Future of EZ Aquarii",
             }]);
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             LastQuery = query;
 
             return Throws is not null ? Task.FromException<StationSearchResult>(Throws) : Task.FromResult(Result);
         }
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(
-            ColonisationQuery query,
-            CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     private static readonly DateTimeOffset AskedAt = new(2026, 10, 19, 12, 0, 0, TimeSpan.Zero);

@@ -3,6 +3,7 @@ using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
@@ -322,7 +323,7 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
         };
     }
 
-    internal sealed class Galaxy : IGalaxyService
+    internal sealed class Galaxy : StubGalaxyService
     {
         public static readonly StationSummary HarbourPoint = new()
         {
@@ -374,7 +375,7 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
                 : OnlyRadius is null || OnlyRadius == radius;
         }
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             var named = string.Equals(query.ReferenceSystem, "Ossen's Lantern", StringComparison.OrdinalIgnoreCase)
                 ? new List<SystemSummary> { new() { Name = "Ossen's Lantern", SystemAddress = AdventureFixtures.Lantern, Government = "Democracy", Distance = 5 } }
@@ -383,12 +384,12 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
             return Task.FromResult(new GalaxySearchResult(query.ReferenceSystem, named.Count, named));
         }
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Down && to == "Sol"
                 ? throw new GalaxyUnavailableException("the service is down")
                 : Task.FromResult<double?>(to == "Sol" ? FromSol : 12);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             IReadOnlyList<StationSummary> found = query.ReferencePosition is { } at
                 ? Answers(at, query.MaxDistance) ? InBandStations : []
@@ -397,21 +398,11 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
             return Task.FromResult(new StationSearchResult(query.ReferenceSystem, found.Count, found));
         }
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
         {
             IReadOnlyList<BodySummary> found = query.ReferencePosition is { } at && Answers(at, query.MaxDistance) ? InBandBodies : [];
 
             return Task.FromResult(new BodySearchResult(query.ReferenceSystem, found.Count, found));
         }
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 }

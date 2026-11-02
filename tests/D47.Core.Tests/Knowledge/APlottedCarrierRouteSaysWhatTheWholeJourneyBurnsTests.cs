@@ -13,20 +13,20 @@ namespace D47.Core.Tests.Knowledge;
 public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
 {
     /// <summary>Answers with the recorded Sol, Colonia, Sol plot for the used capacity it is sent.</summary>
-    private sealed class RecordedCarrierRoutes : IRouteService
+    private sealed class RecordedCarrierRoutes : StubRouteService
     {
         public CarrierRouteQuery? Last { get; private set; }
 
-        public Task<PlottedRoute?> PlotAsync(RouteQuery query, CancellationToken cancellationToken) =>
+        public override Task<PlottedRoute?> PlotAsync(RouteQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<PlottedRoute?>(null);
 
-        public Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken) =>
+        public override Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<RichesRoute?>(null);
 
-        public Task<ExobiologyRoute?> PlotExobiologyAsync(ExobiologyQuery query, CancellationToken cancellationToken) =>
+        public override Task<ExobiologyRoute?> PlotExobiologyAsync(ExobiologyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<ExobiologyRoute?>(null);
 
-        public Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken)
+        public override Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken)
         {
             Last = query;
 
@@ -37,26 +37,7 @@ public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
                 _ => throw new InvalidOperationException($"No recording at {query.CapacityUsed} t used."),
             };
 
-            return Task.FromResult<CarrierRoute?>(Read(fixture));
-        }
-
-        private static CarrierRoute Read(string fixture)
-        {
-            using var document = EmbeddedFixture.Json(fixture);
-
-            return new CarrierRoute([.. document.RootElement.GetProperty("result").GetProperty("jumps").EnumerateArray()
-                .Select(jump => new CarrierWaypoint(
-                    jump.GetProperty("name").GetString()!,
-                    jump.GetProperty("distance").GetDouble(),
-                    jump.GetProperty("distance_to_destination").GetDouble(),
-                    jump.GetProperty("fuel_in_tank").GetInt32(),
-                    jump.GetProperty("fuel_used").GetInt32(),
-                    jump.GetProperty("must_restock").GetInt32() != 0,
-                    jump.GetProperty("restock_amount").GetInt32(),
-                    jump.GetProperty("tritium_in_market").GetInt32(),
-                    jump.GetProperty("has_icy_ring").GetBoolean(),
-                    jump.GetProperty("is_system_pristine").GetBoolean(),
-                    jump.GetProperty("is_desired_destination").GetInt32() != 0))]);
+            return Task.FromResult<CarrierRoute?>(CarrierRouteFixture.Read(fixture, withPosition: false));
         }
     }
 

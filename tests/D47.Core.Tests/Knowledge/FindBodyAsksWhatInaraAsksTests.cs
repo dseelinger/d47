@@ -9,7 +9,7 @@ namespace D47.Core.Tests.Knowledge;
 /// <summary>find_body's INARA filters, its order by material share, and its board posting (#811).</summary>
 public class FindBodyAsksWhatInaraAsksTests
 {
-    private sealed class FakeGalaxy : IGalaxyService
+    private sealed class FakeGalaxy : StubGalaxyService
     {
         public BodyQuery? LastQuery { get; private set; }
 
@@ -34,33 +34,12 @@ public class FindBodyAsksWhatInaraAsksTests
             Materials = [("Iron", 20), ("Polonium", polonium)],
         };
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
         {
             LastQuery = query;
 
             return Throws is not null ? Task.FromException<BodySearchResult>(Throws) : Task.FromResult(Result);
         }
-
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(
-            ColonisationQuery query,
-            CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     private static readonly DateTimeOffset AskedAt = new(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);

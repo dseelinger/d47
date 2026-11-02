@@ -1,5 +1,6 @@
 using D47.Core.Adventures;
 using D47.Core.Knowledge;
+using D47.Core.Tests.Knowledge;
 using Xunit;
 
 namespace D47.Core.Tests.Adventures;
@@ -59,31 +60,22 @@ public sealed class ADockBeatIsOnlyWhereTheShipFitsTests
     private static Task<Resolution> ResolveAsync(StationSummary station, PadSize needs) =>
         new AdventureResolver(new Galaxy([station])).ResolveAsync(TriggerKind.Dock, "Dyson's Hollow", station.Name, null, "Beat 1", needs, CancellationToken.None);
 
-    private sealed class Galaxy(StationSummary[] all) : IGalaxyService
+    private sealed class Galaxy(StationSummary[] all) : StubGalaxyService
     {
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new GalaxySearchResult(
                 query.ReferenceSystem, 1, [new SystemSummary { Name = "Dyson's Hollow", SystemAddress = Hollow, Distance = 0 }]));
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(1);
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(1);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new StationSearchResult(
                 query.ReferenceSystem,
                 1,
                 [.. all.Where(station => query.StationName is null || station.Name.Contains(query.StationName, StringComparison.OrdinalIgnoreCase)).Take(query.Size)]));
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));
 
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 }

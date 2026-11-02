@@ -10,39 +10,16 @@ namespace D47.Core.Tests.Knowledge;
 /// <summary>max_report_age_hours reaches the query, is refused out of range, and is named in the answer (#1769).</summary>
 public class AReportAgeBoundIsAppliedAndSaidTests
 {
-    private sealed class FakeGalaxy : IGalaxyService
+    private sealed class FakeGalaxy : StubGalaxyService
     {
         public StationQuery? LastQuery { get; private set; }
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             LastQuery = query;
 
             return Task.FromResult(new StationSearchResult("Sol", 0, []));
         }
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(
-            ColonisationQuery query,
-            CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     private static (CapabilityRegistry Registry, FakeGalaxy Galaxy) Build()

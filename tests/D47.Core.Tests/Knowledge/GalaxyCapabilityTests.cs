@@ -13,7 +13,7 @@ namespace D47.Core.Tests.Knowledge;
 public class GalaxyCapabilityTests
 {
     /// <summary>A service that answers from a script, and records what it was asked.</summary>
-    private sealed class FakeGalaxy : IGalaxyService
+    private sealed class FakeGalaxy : StubGalaxyService
     {
         public GalaxyQuery? LastQuery { get; private set; }
 
@@ -24,14 +24,14 @@ public class GalaxyCapabilityTests
 
         public Exception? Throws { get; set; }
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             LastQuery = query;
 
             return Throws is not null ? Task.FromException<GalaxySearchResult>(Throws) : Task.FromResult(Result);
         }
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Throws is not null ? Task.FromException<double?>(Throws) : Task.FromResult(Distance);
 
         public StationQuery? LastStationQuery { get; private set; }
@@ -39,7 +39,7 @@ public class GalaxyCapabilityTests
         public StationSearchResult Stations { get; set; } =
             new("Sol", 1, [new StationSummary { Name = "Jameson Memorial", SystemName = "Shinrarta Dezhra" }]);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             LastStationQuery = query;
 
@@ -53,7 +53,7 @@ public class GalaxyCapabilityTests
         public BodySearchResult Bodies { get; set; } =
             new("Sol", 1, [new BodySummary { Name = "Earth", SystemName = "Sol" }]);
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
         {
             LastBodyQuery = query;
 
@@ -63,17 +63,10 @@ public class GalaxyCapabilityTests
         }
 
         /// <summary>Not what this file is about.</summary>
-        public Task<ColonisationScan> ScanForColonisationAsync(
+        public override Task<ColonisationScan> ScanForColonisationAsync(
             ColonisationQuery query,
             CancellationToken cancellationToken) =>
             Task.FromResult(new ColonisationScan("Sol", 0, []));
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     private static (CapabilityRegistry Registry, FakeGalaxy Galaxy) Build(

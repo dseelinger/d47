@@ -10,7 +10,7 @@ namespace D47.Core.Tests.Knowledge;
 /// </summary>
 public class APositionIsAskedThroughEveryGalaxyWrapperTests
 {
-    private sealed class Placing : IGalaxyService
+    private sealed class Placing : StubGalaxyService, IGalaxyService
     {
         public List<string> Asked { get; } = [];
 
@@ -20,22 +20,6 @@ public class APositionIsAskedThroughEveryGalaxyWrapperTests
 
             return Task.FromResult<StarPosition?>(new StarPosition(1, 2, 3));
         }
-
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
     [Fact]

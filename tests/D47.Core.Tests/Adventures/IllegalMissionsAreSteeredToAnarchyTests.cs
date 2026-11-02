@@ -3,6 +3,7 @@ using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
@@ -158,7 +159,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
     }
 
     /// <summary>Oppi and Ossen's Lantern run by Democracy, Dyson's Hollow by Anarchy.</summary>
-    internal sealed class Galaxy : IGalaxyService
+    internal sealed class Galaxy : StubGalaxyService
     {
         private static readonly (string Name, long Address, string Government)[] Systems =
         [
@@ -171,7 +172,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
 
         public bool AnarchySearchFails { get; init; }
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             if (query.Criteria.Any(criterion => criterion.Filter.Name == "government"))
             {
@@ -195,22 +196,13 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
         private static SystemSummary Summary((string Name, long Address, string Government) system) =>
             new() { Name = system.Name, SystemAddress = system.Address, Government = system.Government, Distance = 5 };
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(12);
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(12);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new StationSearchResult(query.ReferenceSystem, 0, []));
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));
 
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 }

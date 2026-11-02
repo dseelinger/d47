@@ -4,6 +4,7 @@ using D47.Core.Knowledge;
 using D47.Core.Stories;
 using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Knowledge;
 using Xunit;
 using static D47.Core.Tests.Stories.StoryFixtures;
 
@@ -103,32 +104,20 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
         }
     }
 
-    private sealed class Stations(IReadOnlyList<StationSummary> found, Exception? fails = null) : IGalaxyService
+    private sealed class Stations(IReadOnlyList<StationSummary> found, Exception? fails = null) : StubGalaxyService
     {
         public List<StationQuery> Queries { get; } = [];
 
         /// <summary>The station-in-reach queries, without the separate Frontline Solutions query the on-foot bond row asks.</summary>
         public List<StationQuery> InReach => [.. Queries.Where(query => !query.Services.Contains(AdventureResolver.FrontlineSolutions))];
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             Queries.Add(query);
 
             return fails is null ? Task.FromResult(new StationSearchResult(null, found.Count, found)) : throw fails;
         }
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
     private static readonly string LockedSystem = PermitSystemTable.Names.First();

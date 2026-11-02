@@ -3,6 +3,7 @@ using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Storage;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -15,13 +16,13 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
     private const string Pad = "Home Dock";
     private const string Far = "Sothis";
 
-    private sealed class FakeTrade(BestCargoAnswer? answer = null) : ITradePlanService
+    private sealed class FakeTrade(BestCargoAnswer? answer = null) : StubTradePlanService
     {
         public List<BestCargoSearch> Asked { get; } = [];
 
         public Exception? Throws { get; set; }
 
-        public Task<BestCargoAnswer?> BestCargoAsync(
+        public override Task<BestCargoAnswer?> BestCargoAsync(
             BestCargoSearch search,
             CancellationToken cancellationToken)
         {
@@ -36,24 +37,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
                 [new CargoPick("Gold", "Newholm Station", 8_204, 280, CargoLimit.Demand)], search.Hold));
         }
 
-        public Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<CommodityAnswer> FindCommodityAsync(
-            CommoditySearch search,
-            CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<SourcingAnswer> SourceConstructionAsync(
-            SourcingSearch search,
-            CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<StationQuote?> QuoteAsync(
-            long marketId,
-            string commodity,
-            CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     private static (TradingModeCallout Callout, FakeTrade Trade, List<Func<Task>> Dispatched) Build(

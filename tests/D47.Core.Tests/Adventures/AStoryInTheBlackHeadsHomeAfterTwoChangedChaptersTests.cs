@@ -3,6 +3,7 @@ using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
@@ -160,11 +161,11 @@ public sealed class AStoryInTheBlackHeadsHomeAfterTwoChangedChaptersTests
             NullLogger.Instance);
     }
 
-    internal sealed class Galaxy : IGalaxyService
+    internal sealed class Galaxy : StubGalaxyService
     {
         public double FromSol { get; init; } = 1400;
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             var named = string.Equals(query.ReferenceSystem, "Ossen's Lantern", StringComparison.OrdinalIgnoreCase)
                 ? new List<SystemSummary> { new() { Name = "Ossen's Lantern", SystemAddress = AdventureFixtures.Lantern, Government = "Democracy", Distance = 5 } }
@@ -173,10 +174,10 @@ public sealed class AStoryInTheBlackHeadsHomeAfterTwoChangedChaptersTests
             return Task.FromResult(new GalaxySearchResult(query.ReferenceSystem, named.Count, named));
         }
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(to == "Sol" ? FromSol : 12);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new StationSearchResult(query.ReferenceSystem, 1, [WaypointStation]));
 
         private static readonly StationSummary WaypointStation = new()
@@ -184,17 +185,7 @@ public sealed class AStoryInTheBlackHeadsHomeAfterTwoChangedChaptersTests
             Name = "Halfway House", SystemName = "Waypoint", MarketId = 7, Type = "Coriolis Starport", LargePads = 2, Position = new StarPosition(1725, 0, 0),
         };
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 }

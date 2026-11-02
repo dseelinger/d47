@@ -88,11 +88,11 @@ public class OutfittingAndSignalAnswersContinueOnTheirNextPageTests
         static SignalFinding FindingAt(int n) => new("Nav Beacon", $"System {n}", n, Now, false);
     }
 
-    private sealed class OutfittingGalaxy : IGalaxyService
+    private sealed class OutfittingGalaxy : StubGalaxyService, IGalaxyService
     {
         public List<StationQuery> Asked { get; } = [];
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             Asked.Add(query);
 
@@ -108,28 +108,7 @@ public class OutfittingAndSignalAnswersContinueOnTheirNextPageTests
             });
         }
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
         public Task<StarPosition?> PositionAsync(string system, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
     }
 

@@ -17,16 +17,16 @@ public class ARaresCeilingIsTheStationsOfferTests
 
     private static readonly DateTimeOffset Now = Reported.AddHours(3);
 
-    private sealed class Quoting(StationQuote? quote) : ITradePlanService
+    private sealed class Quoting(StationQuote? quote) : StubTradePlanService
     {
         public long? MarketId { get; private set; }
 
         public CommoditySearch? Swept { get; private set; }
 
-        public Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>
+        public override Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<TradeRoute?>(null);
 
-        public Task<CommodityAnswer> FindCommodityAsync(
+        public override Task<CommodityAnswer> FindCommodityAsync(
             CommoditySearch search,
             CancellationToken cancellationToken)
         {
@@ -35,11 +35,11 @@ public class ARaresCeilingIsTheStationsOfferTests
             return Task.FromResult(new CommodityAnswer([], 30, 0, true));
         }
 
-        public Task<SourcingAnswer> SourceConstructionAsync(
+        public override Task<SourcingAnswer> SourceConstructionAsync(
             SourcingSearch search,
             CancellationToken cancellationToken) => Task.FromResult(SourcingAnswer.Empty);
 
-        public Task<StationQuote?> QuoteAsync(
+        public override Task<StationQuote?> QuoteAsync(
             long marketId,
             string commodity,
             CancellationToken cancellationToken)
@@ -49,63 +49,56 @@ public class ARaresCeilingIsTheStationsOfferTests
             return Task.FromResult(quote);
         }
 
-        public Task<BestCargoAnswer?> BestCargoAsync(
+        public override Task<BestCargoAnswer?> BestCargoAsync(
             BestCargoSearch search,
             CancellationToken cancellationToken) => Task.FromResult<BestCargoAnswer?>(null);
     }
 
     /// <summary>The index refusing the call, which leaves the station and system still answerable.</summary>
-    private sealed class Unreachable : ITradePlanService
+    private sealed class Unreachable : StubTradePlanService
     {
-        public Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>
+        public override Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<TradeRoute?>(null);
 
-        public Task<CommodityAnswer> FindCommodityAsync(
+        public override Task<CommodityAnswer> FindCommodityAsync(
             CommoditySearch search,
             CancellationToken cancellationToken) =>
             Task.FromResult(new CommodityAnswer([], 30, 0, true));
 
-        public Task<SourcingAnswer> SourceConstructionAsync(
+        public override Task<SourcingAnswer> SourceConstructionAsync(
             SourcingSearch search,
             CancellationToken cancellationToken) => Task.FromResult(SourcingAnswer.Empty);
 
-        public Task<StationQuote?> QuoteAsync(
+        public override Task<StationQuote?> QuoteAsync(
             long marketId,
             string commodity,
             CancellationToken cancellationToken) =>
             throw new GalaxyUnavailableException("The market search took too long to answer.");
 
-        public Task<BestCargoAnswer?> BestCargoAsync(
+        public override Task<BestCargoAnswer?> BestCargoAsync(
             BestCargoSearch search,
             CancellationToken cancellationToken) =>
             throw new GalaxyUnavailableException("The market search took too long to answer.");
     }
 
-    private sealed class SilentGalaxy : IGalaxyService
+    private sealed class SilentGalaxy : StubGalaxyService
     {
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new GalaxySearchResult("Ega", 0, []));
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(null);
 
-        public Task<StationSearchResult> FindStationsAsync(
+        public override Task<StationSearchResult> FindStationsAsync(
             StationQuery query,
             CancellationToken cancellationToken) => Task.FromResult(new StationSearchResult("Ega", 0, []));
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult("Ega", 0, []));
 
-        public Task<ColonisationScan> ScanForColonisationAsync(
+        public override Task<ColonisationScan> ScanForColonisationAsync(
             ColonisationQuery query,
             CancellationToken cancellationToken) => Task.FromResult(new ColonisationScan("Ega", 0, []));
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     private static async Task<string> AskAsync(

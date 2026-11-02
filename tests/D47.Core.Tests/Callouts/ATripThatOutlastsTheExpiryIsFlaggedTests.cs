@@ -2,6 +2,7 @@ using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Tests.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Tests.Knowledge;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -10,24 +11,11 @@ public class ATripThatOutlastsTheExpiryIsFlaggedTests
 {
     private static readonly DateTimeOffset Start = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
 
-    private sealed class FakeGalaxy(double? distance, Task? hold = null) : IGalaxyService
+    private sealed class FakeGalaxy(double? distance, Task? hold = null) : StubGalaxyService
     {
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             hold is null ? Task.FromResult(distance) : hold.ContinueWith(_ => distance, cancellationToken);
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
     private static JournalEvent Event(string kind, params (string Key, object? Value)[] fields) =>

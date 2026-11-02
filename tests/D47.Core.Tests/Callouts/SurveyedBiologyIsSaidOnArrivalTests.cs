@@ -3,6 +3,7 @@ using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Tests.Journal;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -15,17 +16,13 @@ public class SurveyedBiologyIsSaidOnArrivalTests
     private const long Elsewhere = 2_000_300;
     private const string System = "Fixture";
 
-    private sealed class FakeGalaxy : IGalaxyService
+    private sealed class FakeGalaxy : StubGalaxyService
     {
         public List<long> Asked { get; } = [];
 
         public Exception? Throws { get; init; }
 
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken)
+        public override Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken)
         {
             Asked.Add(systemAddress);
 
@@ -40,23 +37,6 @@ public class SurveyedBiologyIsSaidOnArrivalTests
                     [Body("Fixture 3 c", 24, 12_000_000), Body("Fixture 4 a", 30, 2_000_000), Body("Fixture 3 b", 23, 15_000_000)])
                 : new SystemBiology(systemAddress, []));
         }
-
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(
-            ColonisationQuery query,
-            CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
 
         private static SurveyedBody Body(string name, int bodyId, long value) => new(name, bodyId, value, []);
     }

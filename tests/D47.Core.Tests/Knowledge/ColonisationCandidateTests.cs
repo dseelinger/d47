@@ -9,7 +9,7 @@ namespace D47.Core.Tests.Knowledge;
 /// <summary>Finding somewhere to colonise.</summary>
 public class ColonisationCandidateTests
 {
-    private sealed class FakeGalaxy : IGalaxyService
+    private sealed class FakeGalaxy : StubGalaxyService
     {
         public ColonisationQuery? LastScan { get; private set; }
 
@@ -23,7 +23,7 @@ public class ColonisationCandidateTests
 
         public Exception? BodiesThrow { get; set; }
 
-        public Task<ColonisationScan> ScanForColonisationAsync(
+        public override Task<ColonisationScan> ScanForColonisationAsync(
             ColonisationQuery query,
             CancellationToken cancellationToken)
         {
@@ -34,7 +34,7 @@ public class ColonisationCandidateTests
                 : Task.FromResult(Scan);
         }
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
         {
             LastBodyQuery = query;
 
@@ -43,21 +43,14 @@ public class ColonisationCandidateTests
                 : Task.FromResult(Bodies);
         }
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new GalaxySearchResult("Sol", 0, []));
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(0);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new StationSearchResult("Sol", 0, []));
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     /// <summary>A system the index knows something about.</summary>

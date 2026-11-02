@@ -12,17 +12,17 @@ namespace D47.Core.Tests.Knowledge;
 public class TheStationSearchsLimitIsSaidOutLoudTests
 {
     /// <summary>Records the search it was handed, and answers nothing.</summary>
-    private sealed class Capturing : IGalaxyService
+    private sealed class Capturing : StubGalaxyService
     {
         public StationQuery? Last { get; private set; }
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new GalaxySearchResult("Eurybia", 0, []));
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(null);
 
-        public Task<StationSearchResult> FindStationsAsync(
+        public override Task<StationSearchResult> FindStationsAsync(
             StationQuery query,
             CancellationToken cancellationToken)
         {
@@ -30,31 +30,24 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
             return Task.FromResult(new StationSearchResult("Eurybia", 0, []));
         }
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult("Eurybia", 0, []));
 
-        public Task<ColonisationScan> ScanForColonisationAsync(
+        public override Task<ColonisationScan> ScanForColonisationAsync(
             ColonisationQuery query,
             CancellationToken cancellationToken) =>
             Task.FromResult(new ColonisationScan("Eurybia", 0, []));
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     /// <summary>Records the commodity search it was handed, and answers nothing.</summary>
-    private sealed class CapturingTrade : ITradePlanService
+    private sealed class CapturingTrade : StubTradePlanService
     {
         public CommoditySearch? Last { get; private set; }
 
-        public Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>
+        public override Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<TradeRoute?>(null);
 
-        public Task<CommodityAnswer> FindCommodityAsync(
+        public override Task<CommodityAnswer> FindCommodityAsync(
             CommoditySearch search,
             CancellationToken cancellationToken)
         {
@@ -62,16 +55,16 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
             return Task.FromResult(new CommodityAnswer([], 30, 0, true));
         }
 
-        public Task<SourcingAnswer> SourceConstructionAsync(
+        public override Task<SourcingAnswer> SourceConstructionAsync(
             SourcingSearch search,
             CancellationToken cancellationToken) => Task.FromResult(SourcingAnswer.Empty);
 
-        public Task<StationQuote?> QuoteAsync(
+        public override Task<StationQuote?> QuoteAsync(
             long marketId,
             string commodity,
             CancellationToken cancellationToken) => Task.FromResult<StationQuote?>(null);
 
-        public Task<BestCargoAnswer?> BestCargoAsync(
+        public override Task<BestCargoAnswer?> BestCargoAsync(
             BestCargoSearch search,
             CancellationToken cancellationToken) => Task.FromResult<BestCargoAnswer?>(null);
     }

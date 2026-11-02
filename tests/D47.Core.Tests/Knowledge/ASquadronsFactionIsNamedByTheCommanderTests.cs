@@ -35,7 +35,7 @@ public class ASquadronsFactionIsNamedByTheCommanderTests
         _settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
     }
 
-    private sealed class Galaxy : IGalaxyService
+    private sealed class Galaxy : StubGalaxyService
     {
         public HashSet<string> Known { get; } = new(StringComparer.OrdinalIgnoreCase) { "Hutton Truckers" };
 
@@ -43,7 +43,7 @@ public class ASquadronsFactionIsNamedByTheCommanderTests
 
         public int Searches { get; private set; }
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             Searches++;
 
@@ -59,19 +59,6 @@ public class ASquadronsFactionIsNamedByTheCommanderTests
                 : new GalaxySearchResult(null, 0, []));
         }
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
     private static JournalEvent Event(string kind, string fields)

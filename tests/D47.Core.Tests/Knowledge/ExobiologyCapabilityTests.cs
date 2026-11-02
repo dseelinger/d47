@@ -16,7 +16,7 @@ namespace D47.Core.Tests.Knowledge;
 /// </summary>
 public class ExobiologyCapabilityTests
 {
-    private sealed class FakeRoutes : IRouteService
+    private sealed class FakeRoutes : StubRouteService
     {
         public ExobiologyQuery? LastQuery { get; private set; }
 
@@ -36,7 +36,7 @@ public class ExobiologyCapabilityTests
                 ]),
             ]);
 
-        public Task<ExobiologyRoute?> PlotExobiologyAsync(
+        public override Task<ExobiologyRoute?> PlotExobiologyAsync(
             ExobiologyQuery query,
             CancellationToken cancellationToken)
         {
@@ -44,13 +44,13 @@ public class ExobiologyCapabilityTests
             return Task.FromResult(Route);
         }
 
-        public Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken) =>
+        public override Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<CarrierRoute?>(null);
 
-        public Task<PlottedRoute?> PlotAsync(RouteQuery q, CancellationToken t) =>
+        public override Task<PlottedRoute?> PlotAsync(RouteQuery q, CancellationToken t) =>
             Task.FromResult<PlottedRoute?>(null);
 
-        public Task<RichesRoute?> PlotRichesAsync(RichesQuery q, CancellationToken t) =>
+        public override Task<RichesRoute?> PlotRichesAsync(RichesQuery q, CancellationToken t) =>
             Task.FromResult<RichesRoute?>(null);
 
         public Task<TradeRoute?> PlotTradeAsync(TradeQuery q, CancellationToken t) =>

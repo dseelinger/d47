@@ -96,25 +96,9 @@ public class AnOutfittingRouteVisitsFewStationsTests
         Assert.Single(route.NotFound);
     }
 
-    private sealed class Outfitters(params OutfitterStation[] stations) : IGalaxyService
+    private sealed class Outfitters(params OutfitterStation[] stations) : StubGalaxyService, IGalaxyService
     {
         public List<int?> Ages { get; } = [];
-
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public Task<IReadOnlyList<OutfitterStation>> FindOutfittersAsync(
             IReadOnlyList<OutfittingItem> items,

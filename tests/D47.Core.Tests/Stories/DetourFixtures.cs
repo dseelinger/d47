@@ -2,6 +2,7 @@ using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Stories;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -48,7 +49,7 @@ internal static class DetourFixtures
     }
 
     /// <summary>Knows Anlave, Oppi, Colonia and Sol; a faction or Power search answers three systems, farthest first.</summary>
-    internal sealed class DetourGalaxy : IGalaxyService
+    internal sealed class DetourGalaxy : StubGalaxyService
     {
         private static readonly Dictionary<string, long> Systems = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -62,7 +63,7 @@ internal static class DetourFixtures
             ["Last Holding"] = 7_200_000_005,
         };
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             if (query.Criteria.Any(criterion => criterion.Filter.Name is "faction" or "power"))
             {
@@ -83,18 +84,6 @@ internal static class DetourFixtures
                 : new GalaxySearchResult(name, 1, [new SystemSummary { Name = name, SystemAddress = Systems[name], Distance = 0 }]));
         }
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(12);
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(12);
     }
 }

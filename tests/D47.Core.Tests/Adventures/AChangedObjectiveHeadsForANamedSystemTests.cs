@@ -5,6 +5,7 @@ using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
@@ -311,7 +312,7 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
         public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
-    private sealed class Galaxy : IGalaxyService
+    private sealed class Galaxy : StubGalaxyService, IGalaxyService
     {
         /// <summary>Refuses a reference system not spelt in its exact case, as the real galaxy search does.</summary>
         public bool ExactCaseOnly { get; init; }
@@ -337,7 +338,7 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
             Name = "Halfway House", SystemName = "Waypoint", MarketId = 7, Type = "Coriolis Starport", LargePads = 2, Position = new StarPosition(160, 0, 0),
         };
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             if (ExactCaseOnly && query.ReferenceSystem is { } spelt && !Known.Keys.Contains(spelt, StringComparer.Ordinal))
             {
@@ -356,10 +357,10 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
                 ? throw new GalaxyUnavailableException("The galaxy search did not answer.")
                 : Task.FromResult<StarPosition?>(Known.TryGetValue(system, out var known) ? known.Position : null);
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(to is HomeName or "Colonia" ? FromTarget : 12);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             if (query.ReferencePosition is null)
             {
@@ -370,18 +371,7 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
             return Task.FromResult(new StationSearchResult(query.ReferenceSystem, 1, [WaypointStation]));
         }
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 }

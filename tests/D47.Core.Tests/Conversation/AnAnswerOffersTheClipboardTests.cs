@@ -3,6 +3,7 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Tests.Knowledge;
 using Xunit;
 
 namespace D47.Core.Tests.Conversation;
@@ -137,13 +138,13 @@ public class AnAnswerOffersTheClipboardTests
     }
 
     /// <summary>A galaxy service that answers with exactly what a test hands it, and nothing else.</summary>
-    private sealed class StubGalaxy : IGalaxyService
+    private sealed class StubGalaxy : StubGalaxyService
     {
         public IReadOnlyList<string> Systems { get; init; } = [];
 
         public IReadOnlyList<(string Station, string System)> Stations { get; init; } = [];
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new GalaxySearchResult(
                 "Sol",
                 Systems.Count,
@@ -154,7 +155,7 @@ public class AnAnswerOffersTheClipboardTests
                     Population = 5_000_000,
                 })]));
 
-        public Task<StationSearchResult> FindStationsAsync(
+        public override Task<StationSearchResult> FindStationsAsync(
             StationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new StationSearchResult(
                 "Sol",
@@ -166,23 +167,17 @@ public class AnAnswerOffersTheClipboardTests
                     Distance = at + 1,
                 })]));
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult("Sol", 0, []));
 
         // Neither search under test calls these, and answering them with nothing is what makes that visible
         // rather than a stub silently returning something plausible.
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(null);
 
-        public Task<ColonisationScan> ScanForColonisationAsync(
+        public override Task<ColonisationScan> ScanForColonisationAsync(
             ColonisationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new ColonisationScan("Sol", 0, []));
 
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 }

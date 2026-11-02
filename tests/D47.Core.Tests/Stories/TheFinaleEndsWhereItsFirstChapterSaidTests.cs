@@ -3,6 +3,7 @@ using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -169,7 +170,7 @@ public sealed class TheFinaleEndsWhereItsFirstChapterSaidTests
     }
 
     /// <summary>Oppi, stops near it, and moons at set distances; every system has a landable moon "1 a" and a planet "1" that is not.</summary>
-    internal sealed class Galaxy : IGalaxyService
+    internal sealed class Galaxy : StubGalaxyService
     {
         private static readonly string[] Systems = ["Oppi", "Kestrel", "Closer", "Far Moon", "Too Far", "Middle", "Beyond", "Deep Moon", "Edge Moon"];
 
@@ -190,7 +191,7 @@ public sealed class TheFinaleEndsWhereItsFirstChapterSaidTests
 
         public static long Address(string system) => 1000 + Array.IndexOf(Systems, system);
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             var name = Systems.FirstOrDefault(system => string.Equals(system, query.ReferenceSystem, StringComparison.OrdinalIgnoreCase));
 
@@ -199,16 +200,16 @@ public sealed class TheFinaleEndsWhereItsFirstChapterSaidTests
                 : new GalaxySearchResult(name, 1, [new SystemSummary { Name = name, SystemAddress = Address(name), Distance = 0 }]));
         }
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(
                 Distances.TryGetValue((from, to), out var there) ? there
                 : Distances.TryGetValue((to, from), out var back) ? back
                 : 50);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new StationSearchResult(query.ReferenceSystem, 0, []));
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
         {
             IReadOnlyList<BodySummary> bodies =
             [
@@ -224,14 +225,5 @@ public sealed class TheFinaleEndsWhereItsFirstChapterSaidTests
             return Task.FromResult(new BodySearchResult(query.ReferenceSystem, bodies.Count, bodies));
         }
 
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 }

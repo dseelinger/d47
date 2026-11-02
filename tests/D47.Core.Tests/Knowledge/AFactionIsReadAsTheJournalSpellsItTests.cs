@@ -9,39 +9,18 @@ namespace D47.Core.Tests.Knowledge;
 /// <summary>A spoken faction name is corrected against the factions this Commander's journals name (#486).</summary>
 public class AFactionIsReadAsTheJournalSpellsItTests
 {
-    private sealed class Recording : IGalaxyService
+    private sealed class Recording : StubGalaxyService
     {
         public GalaxyQuery? LastQuery { get; private set; }
 
         public GalaxySearchResult Result { get; set; } =
             new("Sol", 1, [new SystemSummary { Name = "Eurybia", Distance = 12.5 }]);
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             LastQuery = query;
             return Task.FromResult(Result);
         }
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(
-            ColonisationQuery query,
-            CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 
     private static readonly string[] Met = ["Eurybia Blue Mafia", "Eurybia Purple Posse", "Mother Gaia"];

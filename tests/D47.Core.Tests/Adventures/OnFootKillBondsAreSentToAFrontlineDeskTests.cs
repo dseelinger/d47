@@ -4,6 +4,7 @@ using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Stories;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
@@ -176,7 +177,7 @@ public sealed class OnFootKillBondsAreSentToAFrontlineDeskTests
     /// <summary>
     /// Dyson's Hollow is at war and has Maren Anchorage with the desk and Plain Dock without it; Ossen's Lantern is at peace and has Quiet Port with the desk.
     /// </summary>
-    private sealed class Galaxy : IGalaxyService
+    private sealed class Galaxy : StubGalaxyService
     {
         private readonly List<StationSummary> _stations =
         [
@@ -200,7 +201,7 @@ public sealed class OnFootKillBondsAreSentToAFrontlineDeskTests
             Services = services,
         };
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             var systems = new[]
             {
@@ -219,9 +220,9 @@ public sealed class OnFootKillBondsAreSentToAFrontlineDeskTests
             return Task.FromResult(new GalaxySearchResult(query.ReferenceSystem, named.Count, named));
         }
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(12);
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(12);
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             if (query.Services.Contains(Desk) && DeskSearchFails)
             {
@@ -238,18 +239,7 @@ public sealed class OnFootKillBondsAreSentToAFrontlineDeskTests
             return Task.FromResult(new StationSearchResult(query.ReferenceSystem, found.Count, found));
         }
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
     }
 }

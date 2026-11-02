@@ -3,6 +3,7 @@ using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -439,7 +440,7 @@ public sealed class AdventureGeneratorTests
     }
 
     /// <summary>Five systems: here, two within reach, Colonia, and nothing else.</summary>
-    internal sealed class Galaxy : IGalaxyService
+    internal sealed class Galaxy : StubGalaxyService
     {
         private static readonly Dictionary<string, long> Systems = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -462,7 +463,7 @@ public sealed class AdventureGeneratorTests
         /// <summary>Bodies a search for the Guardian surface signal returns.</summary>
         public IReadOnlyList<BodySummary> GuardianBodies { get; init; } = [];
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             var reference = query.ReferenceSystem ?? string.Empty;
             var canonical = Systems.Keys.FirstOrDefault(name => string.Equals(name, reference, StringComparison.OrdinalIgnoreCase));
@@ -472,7 +473,7 @@ public sealed class AdventureGeneratorTests
                 : new GalaxySearchResult(canonical, 1, [new SystemSummary { Name = canonical, SystemAddress = Systems[canonical], Distance = 0 }]));
         }
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(
                 string.Equals(from, "Colonia", StringComparison.OrdinalIgnoreCase) || string.Equals(to, "Colonia", StringComparison.OrdinalIgnoreCase)
                     ? 21886
@@ -484,7 +485,7 @@ public sealed class AdventureGeneratorTests
         /// <summary>Whether every station search wider than a named system's reports the search down.</summary>
         public bool WideStationsUnavailable { get; set; }
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             StationQueries.Add(query);
 
@@ -516,7 +517,7 @@ public sealed class AdventureGeneratorTests
             return Task.FromResult(new StationSearchResult(query.ReferenceSystem, stations.Count, stations));
         }
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
         {
             BodyQueries.Add(query);
 
@@ -537,22 +538,16 @@ public sealed class AdventureGeneratorTests
             return Task.FromResult(new BodySearchResult(query.ReferenceSystem, bodies.Count, bodies));
         }
 
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
         /// <summary>The bodies <see cref="SystemBodiesAsync"/> reports for every system, or null to refuse the call.</summary>
         public IReadOnlyList<BodySummary>? SystemBodies { get; init; }
 
         /// <summary>The surveyed bodies <see cref="SystemBiologyAsync"/> reports for every system, or null to refuse the call.</summary>
         public IReadOnlyList<SurveyedBody>? SystemBiology { get; init; }
 
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) =>
             SystemBodies is { } bodies ? Task.FromResult(bodies) : throw new NotSupportedException();
 
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
+        public override Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
             SystemBiology is { } surveyed ? Task.FromResult(new SystemBiology(systemAddress, surveyed)) : throw new NotSupportedException();
     }
 }

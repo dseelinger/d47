@@ -78,7 +78,7 @@ public sealed class AHomeSystemSearchStaysWithinItsCallBudgetTests
 
     private sealed record Place(string Name, long Address, double Distance);
 
-    private sealed class Galaxy(int systems) : IGalaxyService
+    private sealed class Galaxy(int systems) : StubGalaxyService
     {
         public int BodyCalls { get; private set; }
 
@@ -90,7 +90,7 @@ public sealed class AHomeSystemSearchStaysWithinItsCallBudgetTests
 
         public IReadOnlyList<Place> Power { get; init; } = [];
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             bool Filtered(string name) => query.Criteria.Any(criterion => criterion.Filter.Name == name);
 
@@ -105,7 +105,7 @@ public sealed class AHomeSystemSearchStaysWithinItsCallBudgetTests
                 [.. places.Select(place => new SystemSummary { Name = place.Name, SystemAddress = place.Address, Distance = place.Distance })]));
         }
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             StationCalls++;
             var system = query.ReferenceSystem!;
@@ -116,21 +116,15 @@ public sealed class AHomeSystemSearchStaysWithinItsCallBudgetTests
                 [new StationSummary { Name = system + " Port", SystemName = system, Type = "Orbis", SmallPads = 1, MediumPads = 1, LargePads = LargePads ? 1 : 0, Services = ["Market"] }]));
         }
 
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken)
+        public override Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken)
         {
             BodyCalls++;
             return Task.FromResult<IReadOnlyList<BodySummary>>([new BodySummary { Name = "A", SystemName = "any" }]);
         }
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(50);
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(50);
     }
 }

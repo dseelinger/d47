@@ -3,6 +3,7 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -10,29 +11,29 @@ namespace D47.Core.Tests.Journal;
 
 public class CollectMissionsSayWhereToSourceTheirCargoTests
 {
-    private sealed class FakeTrade : ITradePlanService
+    private sealed class FakeTrade : StubTradePlanService
     {
         public SourcingSearch? Last { get; private set; }
 
         public SourcingAnswer Answer { get; set; } = SourcingAnswer.Empty;
 
-        public Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>
+        public override Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<TradeRoute?>(null);
 
-        public Task<CommodityAnswer> FindCommodityAsync(CommoditySearch search, CancellationToken cancellationToken) =>
+        public override Task<CommodityAnswer> FindCommodityAsync(CommoditySearch search, CancellationToken cancellationToken) =>
             Task.FromResult(CommodityAnswer.Empty);
 
-        public Task<SourcingAnswer> SourceConstructionAsync(SourcingSearch search, CancellationToken cancellationToken)
+        public override Task<SourcingAnswer> SourceConstructionAsync(SourcingSearch search, CancellationToken cancellationToken)
         {
             Last = search;
 
             return Task.FromResult(Answer);
         }
 
-        public Task<StationQuote?> QuoteAsync(long marketId, string commodity, CancellationToken cancellationToken) =>
+        public override Task<StationQuote?> QuoteAsync(long marketId, string commodity, CancellationToken cancellationToken) =>
             Task.FromResult<StationQuote?>(null);
 
-        public Task<BestCargoAnswer?> BestCargoAsync(BestCargoSearch search, CancellationToken cancellationToken) =>
+        public override Task<BestCargoAnswer?> BestCargoAsync(BestCargoSearch search, CancellationToken cancellationToken) =>
             Task.FromResult<BestCargoAnswer?>(null);
     }
 

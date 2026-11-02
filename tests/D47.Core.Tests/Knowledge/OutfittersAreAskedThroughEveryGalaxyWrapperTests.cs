@@ -5,7 +5,7 @@ namespace D47.Core.Tests.Knowledge;
 
 public class OutfittersAreAskedThroughEveryGalaxyWrapperTests
 {
-    private sealed class Outfitting : IGalaxyService
+    private sealed class Outfitting : StubGalaxyService, IGalaxyService
     {
         public List<string> Asked { get; } = [];
 
@@ -22,22 +22,6 @@ public class OutfittersAreAskedThroughEveryGalaxyWrapperTests
             return Task.FromResult<IReadOnlyList<OutfitterStation>>(
                 [new OutfitterStation(new StationSummary { Name = "Galileo", SystemName = "Sol" }, items)]);
         }
-
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
     [Fact]
