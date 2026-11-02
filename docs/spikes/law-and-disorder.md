@@ -117,9 +117,9 @@ on whether the crime journal events and `Status.json` fields change.
 ### Wrong once it ships
 
 - **The Crime rating's note.** `AdventureCapability.cs` (the `crime` rating's note) and
-  `docs/capabilities/adventures.md` (`#rating-crime`) say the rating has no effect until this
-  update. `CareerWeights` pins Crime to 50 (#1309); `HomeSystemRanking` and `HomeSystemGatherer`
-  give Crime no score (#1312). Deciding what Crime's rating does is the point of this update for
+  `docs/capabilities/adventures.md` (`#rating-crime`) once said the rating has no effect until
+  this update. The rating now weighs the chapter draw; `HomeSystemRanking` and
+  `HomeSystemGatherer` give Crime no score (#1312). Deciding what Crime's rating does is the point of this update for
   d47.
 - **Anarchy as the place for crime.** `AdventureGenerator` lists Anarchy systems for illegal beats,
   tells the model an Anarchy-run target reports no crime, and refuses illegal beats outside

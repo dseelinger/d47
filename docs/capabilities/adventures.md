@@ -922,8 +922,8 @@ a dock objective just before it, at a listed Frontline Solutions station, and th
 does not directly follow a dock at such a station.
 
 A row weighs its career's weight, and a quarter of that when the last three chapters asked for it. `CareerWeights.From`
-reads the ratings of 1 to 100; while every rating but Crime's is still 50, a career with activity in `Statistics`
-weighs 75, and Crime always weighs 50. In a comfort-zone chapter the first slot is a mission family never completed, else the least-done activity that passes
+reads the ratings of 0 to 100; while every rating but Crime's is still 50, a career with activity in `Statistics`
+weighs 75, and Crime weighs its rating. A career rated 0 is never drawn. In a comfort-zone chapter the first slot is a mission family never completed, else the least-done activity that passes
 the gates. The rest are drawn without replacement, with no two slots in one career while another career has a row
 left. Conflict and every illegal family need a place objective just before them; at most two place objectives may
 be in a chapter, counting those the chapter already has. Tons for sell and mine are 10 to 40, capped at the cargo capacity.
@@ -996,9 +996,9 @@ pledge step is offered only when `powerplay` is listed. A card without the list 
 
 ### What you like doing {#career-ratings}
 
-The Stories settings hold eight ratings, one per career, each from 1 to 100 and 50 until you set it. They are kept per
+The Stories settings hold eight ratings, one per career, each from 0 to 100 and 50 until you set it. They are kept per
 Commander, so two Commanders on one install keep separate values, and a Commander with none set reads 50 for each. They
-are the ratings `CareerWeights.From` reads when a chapter's activities are drawn. A value outside 1 to 100 is refused on the panel and by voice. Say "set my
+are the ratings `CareerWeights.From` reads when a chapter's activities are drawn. A value outside 0 to 100 is refused on the panel and by voice. A rating of 0 means that career is never asked for. Say "set my
 mining rating to 80" or "rate exploration 30", with the number in digits or words. The Commander sets a rating: it is
 not offered to the model, which is refused if it asks.
 
@@ -1032,7 +1032,7 @@ How much you like search and rescue.
 
 #### Crime {#rating-crime}
 
-How much you like crime. It has no effect until Frontier's Law and Disorder update.
+How much you like crime.
 
 ### Refusing an objective
 

@@ -235,7 +235,7 @@ public sealed class ChapterActivitiesAreDrawnFromAWeightedTableTests
         Assert.Equal(50, even.Weight(Career.Crime));
         Assert.Equal(50, rated.Weight(Career.Combat));
         Assert.Equal(80, rated.Weight(Career.Mining));
-        Assert.Equal(50, rated.Weight(Career.Crime));
+        Assert.Equal(1, rated.Weight(Career.Crime));
         Assert.Equal(75, CareerWeights.From(new Dictionary<Career, int> { [Career.Crime] = 90 }, statistics).Weight(Career.Combat));
     }
 }

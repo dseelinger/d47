@@ -111,11 +111,22 @@ public class CareerRatingsArePerCommanderTests
         Assert.Equal(20, surface.Settings.Current.CareerRatings.Mining);
     }
 
+    [Fact]
+    public void AZeroRatingIsAccepted()
+    {
+        var surface = TestSurface.For(new MemoryInstall());
+        surface.Settings.UseCommander("F1", "Alice");
+
+        var result = surface.Settings.Apply(Mining, "0", SettingsCaller.KeywordRouter);
+
+        Assert.Equal(SettingApplyStatus.Applied, result.Status);
+        Assert.Equal(0, surface.Settings.Current.CareerRatings.Mining);
+    }
+
     [Theory]
-    [InlineData("0")]
     [InlineData("101")]
     [InlineData("-5")]
-    public void AValueOutsideOneToAHundredIsRefused(string value)
+    public void AValueOutsideZeroToAHundredIsRefused(string value)
     {
         var surface = TestSurface.For(new MemoryInstall());
         surface.Settings.UseCommander("F1", "Alice");
@@ -208,7 +219,7 @@ public class EachCareerRatingSaysWhatItIsForTests
             .ToList();
 
         Assert.Equal(8, rows.Count);
-        Assert.All(rows, row => Assert.Contains("1 to 100", row.Note!(new D47Settings())));
-        Assert.Contains("Law and Disorder", rows.Single(row => row.Label == "Crime").Note!(new D47Settings()));
+        Assert.All(rows, row => Assert.Contains("0 to 100", row.Note!(new D47Settings())));
+        Assert.DoesNotContain("Law and Disorder", rows.Single(row => row.Label == "Crime").Note!(new D47Settings()));
     }
 }

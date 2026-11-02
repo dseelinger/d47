@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Crime rating now takes effect, and every career rating runs from 0 to 100. A career rated 0 is never asked for in a story chapter, whether in an ordinary slot, a slot limited by a Federation or Empire goal, the comfort slot or an event step. Crime weighs its rating like the other seven careers, and a 1 is drawn less often than a 50. Before, Crime was held at 50 whatever it was set to, and a rating of 1 could not mean never for any career. A chapter already written keeps its objectives; the rating applies from the next one.
+
 Off a plotted route, Directive 47 now says nothing about the route. Before, a Commander who had jumped elsewhere heard "7 jumps remaining. Next is" followed by the system the route was plotted from, and the fuel warnings read the route the same way. "Route complete" is now said only in the route's last system.
 
 When Elite changes a plotted route without writing a new one, Directive 47's route callouts now follow the systems Elite targets. They say the jumps left and the next system Elite has targeted, with that star's scoopability and any hazard, and says nothing about the stars further ahead. The fuel callouts then warn only when the targeted star cannot be scoopped, say nothing about fuel for the jumps beyond it, and the trading callout names no destination. "Where am I" and the situation the model sees give the next system and jumps left from the target. Before, the callouts kept reading the route as first plotted: they warned of a white dwarf ahead, with throttle and supercharge advice, when the next star was a class M, and counted progress along a route the ship had left.

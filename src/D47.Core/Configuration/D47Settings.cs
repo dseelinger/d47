@@ -162,7 +162,7 @@ public sealed record CommanderSettings
     public int? CrimeRating { get; init; }
 }
 
-/// <summary>How much the Commander likes each career, 1 to 100.</summary>
+/// <summary>How much the Commander likes each career, 0 to 100.</summary>
 public sealed record CareerRatingSettings
 {
     public const int Default = 50;

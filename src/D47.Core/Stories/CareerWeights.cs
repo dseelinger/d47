@@ -30,14 +30,14 @@ public sealed class CareerWeights
     public double Weight(Career career) => weights[career];
 
     /// <summary>
-    /// Ratings are 1 to 100, <see cref="Default"/> where absent. While every rating but Crime's is <see cref="Default"/>, a career
-    /// with activity in <paramref name="statistics"/> weighs <see cref="Used"/>. Crime weighs <see cref="Default"/>.
+    /// Ratings are 0 to 100, <see cref="Default"/> where absent. While every rating but Crime's is <see cref="Default"/>, a career
+    /// with activity in <paramref name="statistics"/> weighs <see cref="Used"/>. Crime weighs its rating.
     /// </summary>
     public static CareerWeights From(IReadOnlyDictionary<Career, int>? ratings, CareerStatistics statistics)
     {
         ArgumentNullException.ThrowIfNull(statistics);
 
-        int Rating(Career career) => Math.Clamp(ratings is not null && ratings.TryGetValue(career, out var rating) ? rating : Default, 1, 100);
+        int Rating(Career career) => Math.Clamp(ratings is not null && ratings.TryGetValue(career, out var rating) ? rating : Default, 0, 100);
 
         var untouched = Figures.Keys.All(career => Rating(career) == Default);
         var result = new Dictionary<Career, double>();
@@ -46,7 +46,7 @@ public sealed class CareerWeights
         {
             if (career == Career.Crime)
             {
-                result[career] = Default;
+                result[career] = Rating(career);
                 continue;
             }
 

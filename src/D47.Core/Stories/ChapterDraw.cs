@@ -96,7 +96,7 @@ public static class ChapterDraw
     }
 
     /// <summary>
-    /// Up to <paramref name="slots"/> activities. <paramref name="recent"/> are <c>RefusedActivities</c> keys; <paramref name="fixedPlaces"/>
+    /// Up to <paramref name="slots"/> activities; a career weighing zero is never drawn. <paramref name="recent"/> are <c>RefusedActivities</c> keys; <paramref name="fixedPlaces"/>
     /// is how many place objectives the chapter already must have. A comfort chapter's first slot is the least-done activity that
     /// passes the gates, counting ties from row <paramref name="comfortFirst"/>; a mission family in <paramref name="neverCompleted"/>
     /// that passes the gates takes that slot first. With <paramref name="stationsInReach"/> false, rows that need a station are
@@ -130,7 +130,7 @@ public static class ChapterDraw
         ArgumentNullException.ThrowIfNull(statistics);
 
         var held = ChapterActivities.Held(ranks, ship, odyssey);
-        var all = ChapterActivities.All.Where(row => Drawable(row, held, stationsInReach, refused, frontlineInReach)).ToList();
+        var all = ChapterActivities.All.Where(row => weights.Weight(row.Career) > 0 && Drawable(row, held, stationsInReach, refused, frontlineInReach)).ToList();
         var pools = Enumerable.Range(0, Math.Max(1, slots))
             .Select(slot => limits?.ElementAtOrDefault(slot) is { } limit && all.Where(limit).ToList() is { Count: > 0 } limited ? limited : all)
             .ToList();
@@ -220,7 +220,7 @@ public static class ChapterDraw
     {
         var candidates = new List<(StepEvent Row, string? Tool, string? Say)>();
 
-        foreach (var row in events.Drawable.Where(row => ChapterActivities.Passes(row.Needs, held)))
+        foreach (var row in events.Drawable.Where(row => ChapterActivities.Passes(row.Needs, held) && !(Enum.TryParse<Career>(row.Career, out var career) && weights.Weight(career) <= 0)))
         {
             if (row.Event == D47Event.ToolRun)
             {

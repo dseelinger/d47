@@ -152,30 +152,29 @@ public static class AdventureCapability
             "crime",
             "rating-crime",
             r => r.Crime,
-            (r, v) => r with { Crime = v },
-            "This rating has no effect until Frontier's Law and Disorder update."),
+            (r, v) => r with { Crime = v }),
     ];
 
     private static SettingRow CareerRatingRow(Rating rating) => new()
     {
         Key = RatingKeyPrefix + rating.Key,
         Exercise =
-            $"Open the Stories tab, settings strip, group {RatingsGroup}, and find {rating.Label} (50 by default, 1 to 100). "
+            $"Open the Stories tab, settings strip, group {RatingsGroup}, and find {rating.Label} (50 by default, 0 to 100). "
             + $"Set it to 80: the row reads 80. Say \"set my {rating.Spoken} rating to 80\": the row reads 80. "
-            + $"Say \"rate {rating.Spoken} 30\": the row reads 30. A value outside 1 to 100 is refused with "
-            + $"\"A {rating.Spoken} rating is from 1 to 100.\" A higher rating makes story chapters ask for "
+            + $"Say \"rate {rating.Spoken} 30\": the row reads 30. A value outside 0 to 100 is refused with "
+            + $"\"A {rating.Spoken} rating is from 0 to 100.\" A higher rating makes story chapters ask for "
             + $"{rating.Spoken} more often."
             + (rating.Note is null ? string.Empty : " " + rating.Note),
         Group = RatingsGroup,
-        GroupHelp = "How much you like each kind of play, from 1 to 100. Story chapters ask for the activities you rate higher more often.",
+        GroupHelp = "How much you like each kind of play, from 0 to 100. Story chapters ask for the activities you rate higher more often. 0 means never asked for.",
         Label = rating.Label,
-        Help = $"How much you like {rating.Spoken}, from 1 to 100. 50 is neutral. Say \"set my {rating.Spoken} rating to 80\" or \"rate {rating.Spoken} 30\". "
+        Help = $"How much you like {rating.Spoken}, from 0 to 100. 50 is neutral; 0 means never. Say \"set my {rating.Spoken} rating to 80\" or \"rate {rating.Spoken} 30\". "
                + (rating.Note ?? "A higher rating makes story chapters ask for it more often."),
         Kind = SettingKind.Number,
         DefaultDisplay = "50",
-        Note = _ => $"How much you like {rating.Spoken}, 1 to 100. Story chapters ask for what you rate higher more often."
+        Note = _ => $"How much you like {rating.Spoken}, 0 to 100. Story chapters ask for what you rate higher more often. 0 means never asked for."
                     + (rating.Note is null ? string.Empty : " " + rating.Note),
-        Minimum = 1,
+        Minimum = 0,
         Maximum = 100,
         DocsAnchor = rating.Anchor,
         Scope = SettingScope.Commander,
@@ -183,15 +182,15 @@ public static class AdventureCapability
         // A rating steers what the story asks of the Commander; a model may not set it.
         Protected = true,
         ValuesBySound = said => RatingHeard(said, rating.Spoken),
-        Refuses = (_, value) => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) && number is >= 1 and <= 100
+        Refuses = (_, value) => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) && number is >= 0 and <= 100
             ? null
-            : $"A {rating.Spoken} rating is from 1 to 100.",
+            : $"A {rating.Spoken} rating is from 0 to 100.",
         Binding = new SettingBinding
         {
             Read = s => rating.Read(s.CareerRatings).ToString(CultureInfo.InvariantCulture),
             Write = (s, v) => s with
             {
-                CareerRatings = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) && number is >= 1 and <= 100
+                CareerRatings = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) && number is >= 0 and <= 100
                     ? rating.Write(s.CareerRatings, number)
                     : rating.Write(s.CareerRatings, CareerRatingSettings.Default),
             },
