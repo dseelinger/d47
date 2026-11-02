@@ -34,51 +34,38 @@ public sealed class PastSearchesOpenFromTheHistoryPickerTests
         7,
         [new SystemSummary { Name = "LTT 7786", SystemAddress = Ltt7786, Distance = 0, Government = "Anarchy" }]);
 
-    private sealed class Systems : IStarSystemService
+    private sealed class Systems : StubStarSystemService
     {
-        public Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
+        public override Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
             Task.FromResult<StarSystemProfile?>(new StarSystemProfile { Name = $"System {systemAddress}", SystemAddress = systemAddress });
 
-        public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
+        public override Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
             Task.FromResult(new PowerplayNeighbourhood(0, []));
     }
 
-    private sealed class Galaxy : IGalaxyService
+    private sealed class Galaxy : StubGalaxyService
     {
         public List<StationQuery> Asked { get; } = [];
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             Asked.Add(query);
             return Task.FromResult(OneStation);
         }
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
-    private sealed class World
+    private sealed class World : GalaxySearchWorld
     {
         public World(bool entries = true)
+            : base(new Systems(), lookups: true, suggesting: false)
         {
-            Settings = TestSurface.Settings();
-            Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
             Registry = CapabilityRegistry.Build([GalaxyCapability.Create(Galaxy, () => "LTT 7786", Settings, searches: Board)]);
 
             if (!entries)
@@ -92,12 +79,6 @@ public sealed class PastSearchesOpenFromTheHistoryPickerTests
             SystemEntry = Add("describe_system", new Dictionary<string, string> { ["system"] = "LTT 7786" }, "LTT 7786", Ltt7786, null, now.AddMinutes(-10));
         }
 
-        public SettingsService Settings { get; }
-
-        public CapabilityRegistry Registry { get; }
-
-        public GalaxySearchBoard Board { get; } = new();
-
         public Galaxy Galaxy { get; } = new();
 
         public SearchHistory History { get; } = new("search-history.json", new MemoryFileSystem(), NullLogger<SearchHistory>.Instance);
@@ -108,22 +89,7 @@ public sealed class PastSearchesOpenFromTheHistoryPickerTests
 
         public SearchHistoryEntry SystemEntry { get; } = null!;
 
-        public StarSystemSurface Surface => new(
-            new Systems(),
-            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Ltt7786 },
-            () => Settings.Current.Knowledge.GalaxySearch,
-            () => { })
-        {
-            Searches = new GalaxySearchSurface(
-                Registry,
-                Board,
-                new SavedSearchStore("saved-searches.json", new MemoryFileSystem(), NullLogger<SavedSearchStore>.Instance),
-                () => Fid,
-                () => [])
-            {
-                History = History,
-            },
-        };
+        protected override SearchHistory? HistoryOnSurface => History;
 
         private SearchHistoryEntry Add(
             string tool, Dictionary<string, string> arguments, string reference, long? address, object? result, DateTimeOffset at)

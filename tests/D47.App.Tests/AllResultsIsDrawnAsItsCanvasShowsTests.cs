@@ -17,18 +17,18 @@ namespace D47.App.Tests;
 /// <summary>Find's All results tile and the All results page, with the canvas's sample data. Captures go to <see cref="TestSurface.CaptureDirectory"/>.</summary>
 public sealed class AllResultsIsDrawnAsItsCanvasShowsTests
 {
-    private sealed class Systems : IStarSystemService
+    private sealed class Systems : StubStarSystemService
     {
-        public Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
+        public override Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
             Task.FromResult<StarSystemProfile?>(new StarSystemProfile { Name = $"System {systemAddress}", SystemAddress = systemAddress });
 
-        public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
+        public override Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
             Task.FromResult(new PowerplayNeighbourhood(0, []));
     }
 

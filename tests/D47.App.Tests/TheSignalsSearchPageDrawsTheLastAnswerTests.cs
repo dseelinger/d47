@@ -37,18 +37,18 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
         public Task<SignalIndex?> GetAsync(CancellationToken cancellationToken) => Task.FromResult(index);
     }
 
-    private sealed class Systems : IStarSystemService
+    private sealed class Systems : StubStarSystemService
     {
-        public Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
+        public override Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
             Task.FromResult<StarSystemProfile?>(new StarSystemProfile { Name = $"System {systemAddress}", SystemAddress = systemAddress });
 
-        public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
+        public override Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
             Task.FromResult(new PowerplayNeighbourhood(0, []));
     }
 
@@ -57,12 +57,11 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
         public Task<bool> SetTextAsync(string text, CancellationToken cancellationToken = default) => Task.FromResult(true);
     }
 
-    private sealed class World
+    private sealed class World : GalaxySearchWorld
     {
         public World(bool indexOn = true, bool ownScans = true)
+            : base(new Systems(), lookups: false)
         {
-            Settings = TestSurface.Settings();
-            Settings.Apply(GalaxyCapability.EnabledKey, "false", SettingsCaller.Panel);
             Settings.Apply(GalaxyCapability.SignalIndexKey, indexOn ? "true" : "false", SettingsCaller.Panel);
 
             Own = new SignalSightings(new MemoryFileSystem(), NullLogger.Instance);
@@ -93,34 +92,9 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
             ]);
         }
 
-        public SettingsService Settings { get; }
-
         public SignalSightings Own { get; }
 
-        public GalaxySearchBoard Board { get; } = new();
-
-        public CapabilityRegistry Registry { get; }
-
-        public PanelRouting Routing { get; } = new(() => false, () => []);
-
-        public StarSystemSurface Surface => new(
-            new Systems(),
-            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = 633608311522 },
-            () => Settings.Current.Knowledge.GalaxySearch,
-            () => { })
-        {
-            Searches = new GalaxySearchSurface(
-                Registry,
-                Board,
-                new SavedSearchStore("saved-searches.json", new MemoryFileSystem(), NullLogger<SavedSearchStore>.Instance),
-                () => "F1",
-                () => [])
-            {
-                PrefixNames = new Systems().PrefixNamesAsync,
-                SuggestionPause = TimeSpan.Zero,
-                SignalSources = () => Settings.Current.Knowledge.SignalIndex || Own.Any,
-            },
-        };
+        protected override Func<bool>? SignalSources => () => Settings.Current.Knowledge.SignalIndex || Own.Any;
 
         public async Task<ToolResult> AskAsync(params (string Name, string Value)[] values)
         {

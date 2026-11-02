@@ -26,45 +26,32 @@ public sealed class ASearchTileOnACodexEntryRunsTheBodySearchTests
 
     private const long Unlisted = 99999999;
 
-    private sealed class Systems : IStarSystemService
+    private sealed class Systems : StubStarSystemService
     {
-        public Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
+        public override Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
             Task.FromResult<StarSystemProfile?>(null);
 
-        public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
+        public override Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
             Task.FromResult(new PowerplayNeighbourhood(0, []));
     }
 
-    private sealed class Galaxy : IGalaxyService
+    private sealed class Galaxy : StubGalaxyService
     {
         public List<BodyQuery> Asked { get; } = [];
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
         {
             Asked.Add(query);
 
             return Task.FromResult(new BodySearchResult("LTT 7786", 0, []));
         }
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
     private static (PanelView Panel, Window Window, Galaxy Galaxy) Shown(bool lookups, long entry, string name, bool headset = false)

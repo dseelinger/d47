@@ -34,7 +34,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
     private const long Sol = 10477373803;
 
     /// <summary>A service that records what it was asked and answers as each test says.</summary>
-    private sealed class Systems : IStarSystemService
+    private sealed class Systems : StubStarSystemService
     {
         public List<long> Asked { get; } = [];
 
@@ -48,7 +48,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         public Func<string, Task<IReadOnlyList<SystemNameMatch>>> Names { get; set; } =
             _ => Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken)
+        public override Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken)
         {
             lock (Asked)
             {
@@ -59,7 +59,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
             return Profile(systemAddress);
         }
 
-        public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken)
+        public override Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken)
         {
             lock (Typed)
             {
@@ -69,10 +69,10 @@ public sealed class TheSystemPageFollowsTheCommanderTests
             return Names(typed);
         }
 
-        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
+        public override Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
             Task.FromResult(new PowerplayNeighbourhood(0, []));
 
         public long[] AskedNow()

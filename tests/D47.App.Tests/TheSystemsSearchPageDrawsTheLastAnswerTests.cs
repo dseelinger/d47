@@ -61,30 +61,27 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
             },
         ]);
 
-    private sealed class Systems : IStarSystemService
+    private sealed class Systems : StubStarSystemService
     {
-        public Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
+        public override Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
             Task.FromResult<StarSystemProfile?>(new StarSystemProfile { Name = $"System {systemAddress}", SystemAddress = systemAddress });
 
-        public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
+        public override Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
             Task.FromResult(new PowerplayNeighbourhood(0, []));
     }
 
     /// <summary>A search_systems that records what it was given and answers as the test says.</summary>
-    private sealed class World
+    private sealed class World : GalaxySearchWorld
     {
         public World(bool lookups)
+            : base(new Systems(), lookups)
         {
-            Settings = TestSurface.Settings();
-            Settings.Apply(GalaxyCapability.EnabledKey, lookups ? "true" : "false", SettingsCaller.Panel);
-            Store = new SavedSearchStore("saved-searches.json", new MemoryFileSystem(), NullLogger<SavedSearchStore>.Instance);
-
             // Protected, so a call made as the model is refused and only the Commander's goes through.
             Registry = CapabilityRegistry.Build(
             [
@@ -120,34 +117,15 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
             ]);
         }
 
-        public SettingsService Settings { get; }
-
-        public SavedSearchStore Store { get; }
-
-        public CapabilityRegistry Registry { get; }
-
-        public GalaxySearchBoard Board { get; } = new();
-
         public List<Dictionary<string, string>> Asked { get; } = [];
 
         public string? Error { get; set; }
 
-        public string Here { get; set; } = "LTT 7786";
+        public string Place { get; set; } = "LTT 7786";
 
         public GalaxySearchResult Result { get; set; } = TwoSystems;
 
-        public StarSystemSurface Surface => new(
-            new Systems(),
-            () => new JournalLocation(Here, null, false, null) { SystemAddress = Ltt7786 },
-            () => Settings.Current.Knowledge.GalaxySearch,
-            () => { })
-        {
-            Searches = new GalaxySearchSurface(Registry, Board, Store, () => Fid, () => [])
-            {
-                PrefixNames = new Systems().PrefixNamesAsync,
-                SuggestionPause = TimeSpan.Zero,
-            },
-        };
+        protected override JournalLocation Here => new(Place, null, false, null) { SystemAddress = Ltt7786 };
     }
 
     private static GalaxySearchPosting Posting(IReadOnlyDictionary<string, string> arguments, GalaxySearchResult result) =>
@@ -637,7 +615,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         Assert.Contains("here", near.Classes);
         Assert.Contains(Page(panel).GetLogicalDescendants().OfType<TextBlock>(), t => t.Text == "Follows you as you jump. Type a system name to search from there instead.");
 
-        world.Here = "Sol";
+        world.Place = "Sol";
         Assert.True(panel.TickSearch());
 
         Assert.Equal("YOUR SYSTEM · SOL", near.PlaceholderText);

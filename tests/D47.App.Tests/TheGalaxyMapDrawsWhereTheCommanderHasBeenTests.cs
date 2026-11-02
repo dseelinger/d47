@@ -880,7 +880,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     }
 
     /// <summary>Galaxy search as Spansh answers it: the reference and 99 systems within 25 ly of it, and positions for the systems it knows.</summary>
-    internal sealed class Spansh : IGalaxyService
+    internal sealed class Spansh : StubGalaxyService, IGalaxyService
     {
         private readonly List<string> _positions = [];
         private int _calls;
@@ -914,7 +914,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
             Wregoe.Y,
             Wregoe.Z + (25 * Math.Sqrt(index / 99.0) * Math.Sin(index * 2.4)));
 
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             Interlocked.Increment(ref _calls);
             Interlocked.Increment(ref _searches);
@@ -950,19 +950,19 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
                 : Task.FromResult(Known.TryGetValue(system, out var at) ? at : (StarPosition?)null);
         }
 
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Unexpected<double?>();
+        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Unexpected<double?>();
 
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => Unexpected<StationSearchResult>();
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => Unexpected<StationSearchResult>();
 
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => Unexpected<BodySearchResult>();
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => Unexpected<BodySearchResult>();
 
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => Unexpected<ColonisationScan>();
+        public override Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => Unexpected<ColonisationScan>();
 
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => Unexpected<SystemBiology>();
+        public override Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => Unexpected<SystemBiology>();
 
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => Unexpected<IReadOnlyList<BodySummary>>();
+        public override Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => Unexpected<IReadOnlyList<BodySummary>>();
 
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => Unexpected<MissionStationScan>();
+        public override Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => Unexpected<MissionStationScan>();
 
         private Task<T> Unexpected<T>()
         {

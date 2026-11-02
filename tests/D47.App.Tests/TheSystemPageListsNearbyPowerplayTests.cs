@@ -31,24 +31,24 @@ public sealed class TheSystemPageListsNearbyPowerplayTests
     private const long Ltt7786 = 633608311522;
     private const long Neighbour = 99;
 
-    private sealed class Systems(StarSystemProfile profile, PowerplayNeighbourhood near) : IStarSystemService
+    private sealed class Systems(StarSystemProfile profile, PowerplayNeighbourhood near) : StubStarSystemService
     {
         public List<(string System, double Reach)> Asked { get; } = [];
 
         public Exception? Fails { get; set; }
 
-        public Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
+        public override Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
             Task.FromResult<StarSystemProfile?>(
                 systemAddress == Ltt7786 ? profile : profile with { SystemAddress = systemAddress, Name = near.Systems[0].Name, Powerplay = null });
 
-        public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>(
                 typed == near.Systems[0].Name ? [new SystemNameMatch(typed, Neighbour, new StarPosition(0, 0, 0))] : []);
 
-        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken)
+        public override Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken)
         {
             lock (Asked)
             {

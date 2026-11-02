@@ -36,13 +36,13 @@ public sealed class TheSystemPageSuggestsNamesAsYouTypeTests
         "Diadem", "Diaguan", "Diaba", "Diabak", "Diakas", "Dian Cecht",
     ];
 
-    private sealed class Systems : IStarSystemService
+    private sealed class Systems : StubStarSystemService
     {
         private readonly List<long> _asked = [];
         private readonly List<string> _typed = [];
         private readonly List<string> _prefixes = [];
 
-        public Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken)
+        public override Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken)
         {
             lock (_asked)
             {
@@ -52,7 +52,7 @@ public sealed class TheSystemPageSuggestsNamesAsYouTypeTests
             return Task.FromResult<StarSystemProfile?>(new StarSystemProfile { Name = $"System {systemAddress}", SystemAddress = systemAddress });
         }
 
-        public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken)
+        public override Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken)
         {
             lock (_typed)
             {
@@ -62,7 +62,7 @@ public sealed class TheSystemPageSuggestsNamesAsYouTypeTests
             return Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
         }
 
-        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken)
+        public override Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken)
         {
             lock (_prefixes)
             {
@@ -78,7 +78,7 @@ public sealed class TheSystemPageSuggestsNamesAsYouTypeTests
                         new StarPosition(0, 0, 0)))]);
         }
 
-        public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
+        public override Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
             Task.FromResult(new PowerplayNeighbourhood(0, []));
 
         public long[] Asked()

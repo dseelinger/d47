@@ -34,26 +34,26 @@ public sealed class TheSystemPageListsItsStationsTests
 {
     private const long Ltt7786 = 633608311522;
 
-    internal sealed class Systems(StarSystemProfile profile) : IStarSystemService
+    internal sealed class Systems(StarSystemProfile profile) : StubStarSystemService
     {
         private int _asked;
 
         public int Asked => Volatile.Read(ref _asked);
 
-        public Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken)
+        public override Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken)
         {
             Interlocked.Increment(ref _asked);
 
             return Task.FromResult<StarSystemProfile?>(profile);
         }
 
-        public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
+        public override Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
             Task.FromResult(new PowerplayNeighbourhood(0, []));
     }
 

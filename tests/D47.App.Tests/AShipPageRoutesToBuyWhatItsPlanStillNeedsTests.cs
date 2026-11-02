@@ -24,7 +24,7 @@ namespace D47.App.Tests;
 [Collection(nameof(ShipArtCollection))]
 public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
 {
-    private sealed class Outfitters : IGalaxyService
+    private sealed class Outfitters : StubGalaxyService, IGalaxyService
     {
         public List<(IReadOnlyList<OutfittingItem> Items, string Near)> Asked { get; } = [];
 
@@ -45,22 +45,6 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
                     [scoop]),
             ]);
         }
-
-        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
-
-        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) => throw new NotSupportedException();
     }

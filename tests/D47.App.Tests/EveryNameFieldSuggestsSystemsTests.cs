@@ -26,7 +26,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
 {
     private static readonly string[] Names = ["Diaguandri", "Dian", "Diabozo"];
 
-    private sealed class Systems : IStarSystemService
+    private sealed class Systems : StubStarSystemService
     {
         private readonly List<string> _prefixes = [];
 
@@ -38,13 +38,13 @@ public sealed class EveryNameFieldSuggestsSystemsTests
             }
         }
 
-        public Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
+        public override Task<StarSystemProfile?> ProfileAsync(long systemAddress, CancellationToken cancellationToken) =>
             Task.FromResult<StarSystemProfile?>(null);
 
-        public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
+        public override Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
 
-        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken)
+        public override Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken)
         {
             lock (_prefixes)
             {
@@ -57,7 +57,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
                     .Select(name => new SystemNameMatch(name, name.Length, new StarPosition(0, 0, 0)))]);
         }
 
-        public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
+        public override Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken) =>
             Task.FromResult(new PowerplayNeighbourhood(0, []));
     }
 
