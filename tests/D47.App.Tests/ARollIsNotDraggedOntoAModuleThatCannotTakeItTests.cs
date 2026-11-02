@@ -28,24 +28,14 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-20T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     """
-                     {"timestamp":"2026-08-20T09:00:00Z","event":"Loadout","Ship":"anaconda","ShipID":51,
-                      "Modules":[
-                        {"Slot":"Slot05_Size5","Item":"int_hullreinforcement_size5_class2","On":true,"Health":1.0},
-                        {"Slot":"Slot07_Size5","Item":"int_modulereinforcement_size5_class2","On":true,"Health":1.0}]}
-                     """,
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        var live = store.Active!;
+        var live = JournalScript.State(
+            """{"timestamp":"2026-08-20T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            """
+            {"timestamp":"2026-08-20T09:00:00Z","event":"Loadout","Ship":"anaconda","ShipID":51,
+             "Modules":[
+               {"Slot":"Slot05_Size5","Item":"int_hullreinforcement_size5_class2","On":true,"Health":1.0},
+               {"Slot":"Slot07_Size5","Item":"int_modulereinforcement_size5_class2","On":true,"Health":1.0}]}
+            """);
 
         var ships = new ShipPlanService(
             new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),

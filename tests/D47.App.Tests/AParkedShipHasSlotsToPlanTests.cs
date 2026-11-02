@@ -29,21 +29,11 @@ public class AParkedShipHasSlotsToPlanTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
-        var store = new GameStateStore();
+        var live = JournalScript.State(
+            """{"timestamp":"2026-08-19T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
 
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-19T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-
-                     // ShipType and ShipType_Localised both, exactly as Elite writes them.
-                     """{"timestamp":"2026-08-19T09:00:00Z","event":"StoredShips","StarSystem":"Laksak","StationName":"BNH-T2F","ShipsHere":[],"ShipsRemote":[{"ShipID":12,"ShipType":"cobramkv","ShipType_Localised":"Cobra Mk V","Name":"Reaper","Value":15450304,"StarSystem":"Laksak"}]}""",
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        var live = store.Active!;
+            // ShipType and ShipType_Localised both, exactly as Elite writes them.
+            """{"timestamp":"2026-08-19T09:00:00Z","event":"StoredShips","StarSystem":"Laksak","StationName":"BNH-T2F","ShipsHere":[],"ShipsRemote":[{"ShipID":12,"ShipType":"cobramkv","ShipType_Localised":"Cobra Mk V","Name":"Reaper","Value":15450304,"StarSystem":"Laksak"}]}""");
 
         var ships = new ShipPlanService(
             new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),

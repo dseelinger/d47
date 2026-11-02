@@ -199,7 +199,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     public void TheDesktopsSevenSubTabsFitOneRowAt1024()
     {
         using var look = AppLook.Put();
-        var view = Desktop(new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon")));
+        var view = Desktop(JournalScript.Commander("F735466", "John Deparagon"));
         var window = Show(view);
 
         SubTabsFitOneRow(view, window, "ledgers-desktop.png");
@@ -211,7 +211,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     public void TheBigPanelsSevenSubTabsFitOneRowAt1024()
     {
         using var look = AppLook.Put();
-        var view = BigPanel(new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon")));
+        var view = BigPanel(JournalScript.Commander("F735466", "John Deparagon"));
         var window = Show(view);
 
         SubTabsFitOneRow(view, window, "ledgers-big-panel.png");
@@ -223,7 +223,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     public void TheListDrillsToEachLedgerAndTheLedgersCrumbReturnsToIt()
     {
         using var look = AppLook.Put();
-        var view = Desktop(new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon")));
+        var view = Desktop(JournalScript.Commander("F735466", "John Deparagon"));
         var window = Show(view);
 
         view.Tab = PanelTab.Commander;
@@ -274,7 +274,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     public void EachLedgerIsADestinationUnderLedgersThatOpensWithTheBreadcrumb()
     {
         using var look = AppLook.Put();
-        var view = BigPanel(new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon")));
+        var view = BigPanel(JournalScript.Commander("F735466", "John Deparagon"));
         var window = Show(view);
 
         var underLedgers = view.Nav.Destinations.Where(destination => destination.Root.Key == LedgersPage.RootKey).ToList();
@@ -303,7 +303,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     public void BgsWorkAndCombatStatsStillRedrawOnTheTickUnderLedgers()
     {
         using var look = AppLook.Put();
-        var state = new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon"));
+        var state = JournalScript.Commander("F735466", "John Deparagon");
         var view = Desktop(state);
         var window = Show(view);
 

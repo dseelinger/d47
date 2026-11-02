@@ -140,15 +140,7 @@ public class TheCodexEntryPageShowsOneEntryTests
 
     private static CommanderGameState State(params string[] lines)
     {
-        var state = new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon"));
-
-        foreach (var line in lines)
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            state.Apply(parsed!);
-        }
-
-        return state;
+        return JournalScript.Commander("F735466", "John Deparagon", lines);
     }
 
     private static (Window Window, T Page) Open<T>(Func<T> make)

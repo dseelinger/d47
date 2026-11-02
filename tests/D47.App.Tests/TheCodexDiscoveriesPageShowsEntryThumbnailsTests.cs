@@ -113,7 +113,7 @@ public class TheCodexDiscoveriesPageShowsEntryThumbnailsTests
     private static (Window Window, CodexDiscoveriesPage Page) Open(Surface surface, bool headset = false)
     {
         var look = AppLook.Put();
-        var state = new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon"));
+        var state = JournalScript.Commander("F735466", "John Deparagon");
         var page = new CodexDiscoveriesPage(() => state, () => HistoryState.Done, Region, Table, headset, pictures: surface.Pictures);
         var window = new Window
         {

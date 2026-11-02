@@ -25,21 +25,11 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
-        var store = new GameStateStore();
+        var live = JournalScript.State(
+            """{"timestamp":"2026-08-24T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
 
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-24T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-
-                     // One module fitted, in Slot01.
-                     """{"timestamp":"2026-08-24T09:00:00Z","event":"Loadout","Ship":"type9","ShipID":53,"ShipName":"oxen","ShipIdent":"OX-1","HullValue":1,"ModulesValue":1,"Rebuy":1,"Modules":[{"Slot":"Slot01_Size8","Item":"int_cargorack_size8_class1","On":true,"Priority":1,"Health":1.0}]}""",
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        var live = store.Active!;
+            // One module fitted, in Slot01.
+            """{"timestamp":"2026-08-24T09:00:00Z","event":"Loadout","Ship":"type9","ShipID":53,"ShipName":"oxen","ShipIdent":"OX-1","HullValue":1,"ModulesValue":1,"Rebuy":1,"Modules":[{"Slot":"Slot01_Size8","Item":"int_cargorack_size8_class1","On":true,"Priority":1,"Health":1.0}]}""");
 
         var ships = new ShipPlanService(
             new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),

@@ -58,12 +58,7 @@ public class TheSessionScreenCountsFromTheLoadGameTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
-        var state = new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon"));
-
-        foreach (var (at, json) in events)
-        {
-            state.Apply(Event(at, json));
-        }
+        var state = JournalScript.Timed(Start, "F735466", "John Deparagon", events);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableCommanderName(() => state.Identity.Name);

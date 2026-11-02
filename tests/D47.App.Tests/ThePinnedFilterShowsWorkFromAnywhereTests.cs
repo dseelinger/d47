@@ -21,21 +21,11 @@ public class ThePinnedFilterShowsWorkFromAnywhereTests
     /// <summary>Docked at Jameson Memorial — nowhere Lei Cheung is based.</summary>
     private static CommanderGameState State()
     {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-09-01T08:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     """{"timestamp":"2026-09-01T08:00:01Z","event":"Location","StarSystem":"Shinrarta Dezhra","Docked":true,"StationName":"Jameson Memorial"}""",
-                     $$"""{"timestamp":"2026-09-01T08:00:02Z","event":"EngineerProgress","Engineers":[{"Engineer":"Lei Cheung","EngineerID":{{LeiCheung}},"Progress":"Unlocked","Rank":5}]}""",
-                     """{"timestamp":"2026-09-01T08:00:03Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[{"Slot":"TinyHardpoint5","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0}]}""",
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        return store.Active!;
+        return JournalScript.State(
+            """{"timestamp":"2026-09-01T08:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            """{"timestamp":"2026-09-01T08:00:01Z","event":"Location","StarSystem":"Shinrarta Dezhra","Docked":true,"StationName":"Jameson Memorial"}""",
+            $$"""{"timestamp":"2026-09-01T08:00:02Z","event":"EngineerProgress","Engineers":[{"Engineer":"Lei Cheung","EngineerID":{{LeiCheung}},"Progress":"Unlocked","Rank":5}]}""",
+            """{"timestamp":"2026-09-01T08:00:03Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[{"Slot":"TinyHardpoint5","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0}]}""");
     }
 
     private static ChecklistService Checklists(CommanderGameState state)

@@ -27,19 +27,9 @@ public class TheShipPageShowsFuelHardnessAndCrewTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-26T00:55:33Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     Loadout,
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        var live = store.Active!;
+        var live = JournalScript.State(
+            """{"timestamp":"2026-08-26T00:55:33Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            Loadout);
 
         var ships = new ShipPlanService(
             new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),

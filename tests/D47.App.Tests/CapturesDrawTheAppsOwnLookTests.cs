@@ -100,27 +100,17 @@ public class CapturesDrawTheAppsOwnLookTests
 
     private static CommanderGameState State()
     {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{ "timestamp":"2026-08-22T19:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""",
-                     """{ "timestamp":"2026-08-22T19:01:00Z", "event":"Location", "StarSystem":"Shinrarta Dezhra", "SystemAddress":3932277478106, "StarPos":[55.72,17.59,27.16], "Docked":true, "StationName":"Jameson Memorial", "StationType":"Coriolis", "MarketID":128666762 }""",
-                     """
-                     { "timestamp":"2026-08-22T19:02:00Z", "event":"Loadout", "Ship":"anaconda",
-                       "Ship_Localised":"Anaconda", "ShipID":51, "ShipName":"Flamebrand", "ShipIdent":"FB-01",
-                       "MaxJumpRange":32.0,
-                       "Modules":[
-                         { "Slot":"Slot01_Size7", "Item":"int_shieldgenerator_size7_class5", "On":true } ] }
-                     """,
-                     """{ "timestamp":"2026-08-22T19:03:00Z", "event":"EngineerProgress", "Engineers":[{"Engineer":"Liz Ryder","EngineerID":300080,"Progress":"Unlocked","Rank":5}] }""",
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        return store.Active!;
+        return JournalScript.State(
+            """{ "timestamp":"2026-08-22T19:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""",
+            """{ "timestamp":"2026-08-22T19:01:00Z", "event":"Location", "StarSystem":"Shinrarta Dezhra", "SystemAddress":3932277478106, "StarPos":[55.72,17.59,27.16], "Docked":true, "StationName":"Jameson Memorial", "StationType":"Coriolis", "MarketID":128666762 }""",
+            """
+            { "timestamp":"2026-08-22T19:02:00Z", "event":"Loadout", "Ship":"anaconda",
+              "Ship_Localised":"Anaconda", "ShipID":51, "ShipName":"Flamebrand", "ShipIdent":"FB-01",
+              "MaxJumpRange":32.0,
+              "Modules":[
+                { "Slot":"Slot01_Size7", "Item":"int_shieldgenerator_size7_class5", "On":true } ] }
+            """,
+            """{ "timestamp":"2026-08-22T19:03:00Z", "event":"EngineerProgress", "Engineers":[{"Engineer":"Liz Ryder","EngineerID":300080,"Progress":"Unlocked","Rank":5}] }""");
     }
 
     /// <summary>A panel with every tab furnished from the fixtures the tab tests use.</summary>

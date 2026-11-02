@@ -71,12 +71,8 @@ public class EveryCareerFigureIsOneSearchAwayTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
-        var state = new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon"));
-
-        foreach (var json in events)
-        {
-            state.Apply(Event(json));
-        }
+        var state = JournalScript.Timed(
+            DateTimeOffset.UtcNow, "F735466", "John Deparagon", [.. events.Select(json => (TimeSpan.Zero, json))]);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableCommanderName(() => state.Identity.Name);

@@ -129,15 +129,7 @@ public class TheCodexPicturePagesCropACaptureTests
 
     private static CommanderGameState State()
     {
-        var state = new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon"));
-
-        foreach (var line in Lines)
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            state.Apply(parsed!);
-        }
-
-        return state;
+        return JournalScript.Commander("F735466", "John Deparagon", Lines);
     }
 
     private static (Window Window, T Page) Open<T>(Func<T> make)

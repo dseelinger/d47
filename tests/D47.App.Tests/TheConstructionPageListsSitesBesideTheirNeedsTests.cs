@@ -82,14 +82,7 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
 
     private static CommanderGameState State(params (TimeSpan At, string Json)[] events)
     {
-        var state = new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon"));
-
-        foreach (var (at, json) in events)
-        {
-            state.Apply(Event(at, json));
-        }
-
-        return state;
+        return JournalScript.Timed(Now, "F735466", "John Deparagon", events);
     }
 
     private static SourcingPosting Posting(string site) =>

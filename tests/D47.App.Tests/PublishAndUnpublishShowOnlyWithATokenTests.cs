@@ -76,7 +76,7 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
         }
 
         public CodexEntryPage Page(bool headset = false, Func<string, Task<bool>>? confirm = null) =>
-            new(() => new CommanderGameState(new CommanderIdentity("F1", "Test")), 101, 18, "Entry 101", Pictures, headset, null, Nav, confirm);
+            new(() => JournalScript.Commander("F1", "Test"), 101, 18, "Entry 101", Pictures, headset, null, Nav, confirm);
     }
 
     private static (Window Window, T Page) Open<T>(Func<T> make)

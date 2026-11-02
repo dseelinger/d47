@@ -28,19 +28,9 @@ public class AResistanceIsShownAsItsValueTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-26T00:55:33Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     """{"timestamp":"2026-08-26T00:55:33Z","event":"Loadout","Ship":"smallcombat01_nx","ShipID":53,"ShipName":"oxen","ShipIdent":"OX-1","HullValue":1,"ModulesValue":1,"Rebuy":1,"Modules":[{"Slot":"Slot04_Size2","Item":"int_hullreinforcement_size2_class2","On":true,"Priority":1,"Health":1.0,"Engineering":{"Engineer":"Selene Jean","EngineerID":300210,"BlueprintID":128673719,"BlueprintName":"HullReinforcement_HeavyDuty","Level":5,"Quality":1.0,"Modifiers":[{"Label":"Mass","Value":2.8,"OriginalValue":2.0,"LessIsGood":1},{"Label":"DefenceModifierHealthAddition","Value":326.800018,"OriginalValue":190.0,"LessIsGood":0},{"Label":"KineticResistance","Value":15.849996,"OriginalValue":0.999999,"LessIsGood":0},{"Label":"ThermicResistance","Value":-21.200001,"OriginalValue":-20.000004,"LessIsGood":0},{"Label":"ExplosiveResistance","Value":15.849996,"OriginalValue":0.0,"LessIsGood":0}]}}]}""",
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        var live = store.Active!;
+        var live = JournalScript.State(
+            """{"timestamp":"2026-08-26T00:55:33Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            """{"timestamp":"2026-08-26T00:55:33Z","event":"Loadout","Ship":"smallcombat01_nx","ShipID":53,"ShipName":"oxen","ShipIdent":"OX-1","HullValue":1,"ModulesValue":1,"Rebuy":1,"Modules":[{"Slot":"Slot04_Size2","Item":"int_hullreinforcement_size2_class2","On":true,"Priority":1,"Health":1.0,"Engineering":{"Engineer":"Selene Jean","EngineerID":300210,"BlueprintID":128673719,"BlueprintName":"HullReinforcement_HeavyDuty","Level":5,"Quality":1.0,"Modifiers":[{"Label":"Mass","Value":2.8,"OriginalValue":2.0,"LessIsGood":1},{"Label":"DefenceModifierHealthAddition","Value":326.800018,"OriginalValue":190.0,"LessIsGood":0},{"Label":"KineticResistance","Value":15.849996,"OriginalValue":0.999999,"LessIsGood":0},{"Label":"ThermicResistance","Value":-21.200001,"OriginalValue":-20.000004,"LessIsGood":0},{"Label":"ExplosiveResistance","Value":15.849996,"OriginalValue":0.0,"LessIsGood":0}]}}]}""");
 
         var ships = new ShipPlanService(
             new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),

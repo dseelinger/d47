@@ -50,18 +50,12 @@ public class TheFleetPagesAreDrawnOnTheKitTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
-        var store = new GameStateStore();
-
-        foreach (var line in Journal)
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
+        var state = JournalScript.State(Journal);
 
         var ships = new ShipPlanService(
             new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
-            () => store.Active);
+            () => state);
 
         var build = ships.BuildFor(12, "python", "Bad Idea");
         ships.Plan(build.Id, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5));
@@ -76,9 +70,9 @@ public class TheFleetPagesAreDrawnOnTheKitTests
         var kit = new OnFootPlanService(
             new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance),
             checklists,
-            () => store.Active);
+            () => state);
 
-        panel.EnableLoadout(ships, checklists, () => store.Active, kit);
+        panel.EnableLoadout(ships, checklists, () => state, kit);
 
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();

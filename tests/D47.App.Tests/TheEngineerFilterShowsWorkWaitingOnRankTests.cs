@@ -22,25 +22,15 @@ public class TheEngineerFilterShowsWorkWaitingOnRankTests
 
     private static CommanderGameState State()
     {
-        var store = new GameStateStore();
+        return JournalScript.State(
+            """{"timestamp":"2026-09-01T08:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            """{"timestamp":"2026-09-01T08:00:01Z","event":"Location","StarSystem":"Laksak","Docked":true,"StationName":"Trader's Rest"}""",
 
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-09-01T08:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     """{"timestamp":"2026-09-01T08:00:01Z","event":"Location","StarSystem":"Laksak","Docked":true,"StationName":"Trader's Rest"}""",
+            // Unlocked, and at grade 1 — which is the whole setup: Lei Cheung takes Heavy Duty on a
+            // shield booster to 3, and grade 3 cannot be rolled at rank 1.
+            $$"""{"timestamp":"2026-09-01T08:00:02Z","event":"EngineerProgress","Engineers":[{"Engineer":"Lei Cheung","EngineerID":{{LeiCheung}},"Progress":"Unlocked","Rank":1}]}""",
 
-                     // Unlocked, and at grade 1 — which is the whole setup: Lei Cheung takes Heavy Duty on a
-                     // shield booster to 3, and grade 3 cannot be rolled at rank 1.
-                     $$"""{"timestamp":"2026-09-01T08:00:02Z","event":"EngineerProgress","Engineers":[{"Engineer":"Lei Cheung","EngineerID":{{LeiCheung}},"Progress":"Unlocked","Rank":1}]}""",
-
-                     """{"timestamp":"2026-09-01T08:00:03Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[{"Slot":"TinyHardpoint5","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0}]}""",
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        return store.Active!;
+            """{"timestamp":"2026-09-01T08:00:03Z","event":"Loadout","Ship":"anaconda","ShipID":51,"ShipName":"Flamebrand","ShipIdent":"FB-01","Modules":[{"Slot":"TinyHardpoint5","Item":"hpt_shieldbooster_size0_class5","On":true,"Priority":0,"Health":1.0}]}""");
     }
 
     private static ChecklistService Checklists(CommanderGameState state)

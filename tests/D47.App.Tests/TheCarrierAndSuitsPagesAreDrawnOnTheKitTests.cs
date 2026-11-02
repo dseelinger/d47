@@ -54,23 +54,17 @@ public class TheCarrierAndSuitsPagesAreDrawnOnTheKitTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
-        var store = new GameStateStore();
-
-        foreach (var line in Journal)
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
+        var state = JournalScript.State(Journal);
 
         var ships = new ShipPlanService(
             new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
-            () => store.Active);
+            () => state);
 
         var kit = new OnFootPlanService(
             new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance),
             checklists,
-            () => store.Active);
+            () => state);
 
         var panel = new PanelView
         {
@@ -79,7 +73,7 @@ public class TheCarrierAndSuitsPagesAreDrawnOnTheKitTests
         };
 
         panel.EnableCopy(new D47.Core.Capabilities.Builtin.RecordingClipboard());
-        panel.EnableLoadout(ships, checklists, () => store.Active, kit);
+        panel.EnableLoadout(ships, checklists, () => state, kit);
 
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();

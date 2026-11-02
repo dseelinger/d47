@@ -25,19 +25,9 @@ public class AdventuresTabTests
 
     internal static CommanderGameState State()
     {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{ "timestamp":"2026-08-22T19:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""",
-                     """{ "timestamp":"2026-08-22T19:01:00Z", "event":"Location", "StarSystem":"Shinrarta Dezhra", "SystemAddress":3932277478106, "Docked":true, "StationName":"Jameson Memorial", "StationType":"Coriolis", "MarketID":128666762, "Body":"Shinrarta Dezhra A", "BodyID":1 }""",
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        return store.Active!;
+        return JournalScript.State(
+            """{ "timestamp":"2026-08-22T19:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""",
+            """{ "timestamp":"2026-08-22T19:01:00Z", "event":"Location", "StarSystem":"Shinrarta Dezhra", "SystemAddress":3932277478106, "Docked":true, "StationName":"Jameson Memorial", "StationType":"Coriolis", "MarketID":128666762, "Body":"Shinrarta Dezhra A", "BodyID":1 }""");
     }
 
     internal static Adventure Story(DateTimeOffset? acceptedAt, AdventureSource source = AdventureSource.Commander) => new()
