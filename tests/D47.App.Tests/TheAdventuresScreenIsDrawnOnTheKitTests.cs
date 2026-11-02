@@ -138,12 +138,6 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
 
         if (panel.Mode == PanelMode.Full)
         {
-            panel.GetVisualDescendants().OfType<Button>()
-                .Single(button => (button.Content as string)?.StartsWith("Set aside", StringComparison.Ordinal) == true)
-                .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-
-            saved.Add(surface.Window.SaveFrame($"adventures-aside-{themeId}-{width}x{height}.png"));
-
             foreach (var (key, label, name) in new[]
                      {
                          (AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route", "reading"),

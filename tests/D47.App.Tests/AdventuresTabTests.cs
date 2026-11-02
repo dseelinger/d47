@@ -174,6 +174,53 @@ public class AdventuresTabTests
         Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Change something"));
     }
 
+    /// <summary>A story that is no longer under way draws no card, and the root has no list of them.</summary>
+    [AvaloniaFact]
+    public void AStoryNoLongerUnderWayDrawsNoCard()
+    {
+        var (panel, book, _) = Open(
+            Story(Now.AddHours(-1)) with { Key = "abandoned", Name = "The Abandoned Route", AbandonedAt = Now },
+            Story(Now.AddHours(-1)),
+            Story(Now.AddHours(-1)) with
+            {
+                Key = "live",
+                Name = "The Live Route",
+                Beats = [new AdventureBeat { Title = "Elsewhere", Function = "setup", Trigger = new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = 99, System = "Elsewhere" }, Line = "Not yet." }],
+            });
+
+        // Arriving then docking finishes The Lantern Route; The Live Route waits for a system never reached.
+        Arrive(book);
+        Assert.True(JournalEvent.TryParse(
+            """{ "timestamp":"2026-08-22T19:40:00Z", "event":"Docked", "StationName":"Maren Anchorage", "StarSystem":"Dyson's Hollow", "MarketID":2 }""",
+            NullLogger.Instance,
+            out var docked));
+        book.Observe(docked!, "F1");
+
+        panel.Nav.ToRoot();
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = Drawn(panel);
+
+        Assert.Contains(drawn, text => text.Contains("THE LIVE ROUTE"));
+        Assert.DoesNotContain(drawn, text => text.Contains("THE LANTERN ROUTE"));
+        Assert.DoesNotContain(drawn, text => text.Contains("ABANDONED ROUTE", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(
+            panel.GetVisualDescendants().OfType<Button>(),
+            button => (button.Content as string)?.Contains("set aside", StringComparison.OrdinalIgnoreCase) == true);
+    }
+
+    /// <summary>With every story finished or abandoned, the root says none is under way rather than drawing nothing.</summary>
+    [AvaloniaFact]
+    public void WithNoStoryUnderWayTheRootSaysSo()
+    {
+        var (panel, _, _) = Open(Story(Now.AddHours(-1)) with { AbandonedAt = Now });
+
+        var drawn = Drawn(panel);
+
+        Assert.Contains(drawn, text => text.StartsWith("No stories under way.", StringComparison.Ordinal));
+        Assert.DoesNotContain(drawn, text => text.Contains("THE LANTERN ROUTE"));
+    }
+
     [AvaloniaFact]
     public void TheReadingLevelShowsTheStorySoFarAndNothingAhead()
     {

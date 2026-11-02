@@ -346,11 +346,9 @@ it knows, and an objective waiting out its settle window is discarded. It asks f
 three objectives in is work you did, and the record goes with its messages. A short story has no
 Abandon button.
 
-A short story saved as abandoned earlier stays folded away at the foot of the list with what it
-reached. **Begin again** on it starts from the opening with a fresh stamp — nothing that happened in
-the gap counts, because a start is a start. **Remove** deletes it.
+A short story that is finished, failed or abandoned is not listed on Your stories.
 
-Both are yours alone, reachable from the panel and nowhere else.
+Remove is yours alone, reachable from the panel and nowhere else.
 
 ### Nothing here is callable by the model
 

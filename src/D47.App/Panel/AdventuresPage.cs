@@ -64,8 +64,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     /// <summary>What each draft was asked with, so a revision keeps the reach and the length.</summary>
     private readonly Dictionary<string, AdventureAsk> _asks = new(StringComparer.OrdinalIgnoreCase);
 
-    private bool _showAside;
-
     /// <summary>The Ask form's brief entry that presses Go on commit, and the form it belongs to.</summary>
     private (Action BriefThenGo, Control View)? _askForm;
 
@@ -218,33 +216,21 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             _list.Children.Add(storyCard);
         }
 
-        if (standings.Count == 0 && storyCard is null)
+        var drafts = standings.Where(standing => standing.Adventure.IsDraft).ToList();
+        var live = standings.Where(standing => !standing.Adventure.IsDraft && standing.Adventure.IsActive && !standing.IsDone && !standing.IsFailed).ToList();
+        var unbegun = standings.Where(standing => !standing.Adventure.IsDraft && !standing.Adventure.IsBegun).ToList();
+
+        if (drafts.Count + live.Count + unbegun.Count == 0 && storyCard is null)
         {
-            _list.Children.Add(Muted(
-                "No stories yet. Pick one under Catalogue, or ask for a short story — D47 proposes one and waits for your yes."));
-
-            if (!CanAsk(_surface))
-            {
-                _list.Children.Add(Muted(AskShutBecause()));
-            }
-
-            return;
+            _list.Children.Add(Muted(standings.Count == 0
+                ? "No stories yet. Pick one under Catalogue, or ask for a short story — D47 proposes one and waits for your yes."
+                : "No stories under way. Pick one under Catalogue, or ask for a short story — D47 proposes one and waits for your yes."));
         }
 
         if (!CanAsk(_surface))
         {
             _list.Children.Add(Muted(AskShutBecause()));
         }
-
-        if (standings.Count == 0)
-        {
-            return;
-        }
-
-        var drafts = standings.Where(standing => standing.Adventure.IsDraft).ToList();
-        var live = standings.Where(standing => !standing.Adventure.IsDraft && standing.Adventure.IsActive && !standing.IsDone && !standing.IsFailed).ToList();
-        var unbegun = standings.Where(standing => !standing.Adventure.IsDraft && !standing.Adventure.IsBegun).ToList();
-        var aside = standings.Where(standing => standing.Adventure.IsAbandoned || standing.Adventure.IsEnded || standing.IsFailed || standing.IsDone).ToList();
 
         foreach (var standing in drafts)
         {
@@ -254,34 +240,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         foreach (var standing in live.Concat(unbegun))
         {
             _list.Children.Add(Card(standing));
-        }
-
-        if (aside.Count > 0)
-        {
-            var fold = new Button
-            {
-                Content = _showAside
-                    ? "Hide set aside"
-                    : $"Set aside ({aside.Count.ToString(CultureInfo.InvariantCulture)})",
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 8, 0, 0),
-            };
-
-            fold.Click += (_, _) =>
-            {
-                _showAside = !_showAside;
-                Rebuild();
-            };
-
-            _list.Children.Add(fold);
-
-            if (_showAside)
-            {
-                foreach (var standing in aside)
-                {
-                    _list.Children.Add(Card(standing));
-                }
-            }
         }
     }
 
