@@ -96,6 +96,7 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
     [InlineData("beacon")]
     [InlineData("finale")]
     [InlineData("toward")]
+    [InlineData("black")]
     [InlineData("home")]
     [InlineData("chosen")]
     [InlineData("asked")]
@@ -109,6 +110,7 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
             "beacon" => new AdventureAsk(Story: Chapter with { Beacon = new AdventureBeacon(1, "B") }),
             "finale" => new AdventureAsk(Story: Chapter with { FinaleChapter = 2 }),
             "toward" => new AdventureAsk(Story: Chapter with { InTheBlack = true, Toward = "Colonia" }),
+            "black" => new AdventureAsk(Story: Chapter with { InTheBlack = true }),
             "home" => new AdventureAsk(Story: Chapter with { Home = HomeLeg.Sol }),
             "chosen" => new AdventureAsk(Story: Chapter with { Chosen = heading }),
             "asked" => new AdventureAsk(Story: Chapter, Rewrite: new AdventureRewrite(null!, 0) { Heading = heading }),

@@ -70,14 +70,14 @@ public static class ShipBases
     public static double Near(double? jumpRange) => AdventureGenerator.Radius(AdventureReach.NearHere, jumpRange, carrier: false);
 
     /// <summary>
-    /// Whether <paramref name="ask"/> is a story chapter held to the base: not the beacon or finale chapter, not travelling toward a
-    /// span's destination, home from the black or to a place the Commander asked for, and not a short story.
+    /// Whether <paramref name="ask"/> is a story chapter held to the base: not the beacon or finale chapter, not in the black,
+    /// not travelling home from the black or to a place the Commander asked for, and not a short story.
     /// </summary>
     public static bool Applies(AdventureAsk ask)
     {
         ArgumentNullException.ThrowIfNull(ask);
 
-        return ask is { Story: { Beacon: null, FinaleChapter: null, Toward: null, Home: null, Chosen: null }, Length: not AdventureLength.Short }
+        return ask is { Story: { Beacon: null, FinaleChapter: null, InTheBlack: false, Home: null, Chosen: null }, Length: not AdventureLength.Short }
                && ask.Rewrite?.Heading is null;
     }
 }
