@@ -111,18 +111,9 @@ public class ACarrierRouteIsPlottedOnItsOwnCardTests
 
         if (loadout)
         {
-            var checklists = new ChecklistService(
-                new ChecklistStore(Path.Combine(folder, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-                new ChecklistProposalStore(
-                    Path.Combine(folder, "checklist-proposals.json"),
-                    new MemoryFileSystem(),
-                    NullLogger<ChecklistProposalStore>.Instance),
-                () => null);
+            var checklists = TestSurface.Checklists(folder);
 
-            var ships = new ShipPlanService(
-                new ShipBuildStore(Path.Combine(folder, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-                checklists,
-                () => null);
+            var ships = TestSurface.ShipPlans(checklists, folder, () => null);
 
             panel.EnableLoadout(ships, checklists, () => gameState.Active);
         }

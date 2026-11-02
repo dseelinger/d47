@@ -36,12 +36,8 @@ public class MaterialsTilesAndStatisticsRowsTakeKeyboardFocusTests
 
         CommanderGameState? State() => live;
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(Path.Combine(root, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
-            State);
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance), checklists, State);
+        var checklists = TestSurface.Checklists(root, State);
+        var ships = TestSurface.ShipPlans(checklists, root, State);
         var kit = new OnFootPlanService(
             new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance), checklists, State);
 
@@ -124,10 +120,7 @@ public class MaterialsTilesAndStatisticsRowsTakeKeyboardFocusTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
         var root = TestSurface.MemoryFolder("d47-statistics-keys-tests");
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(Path.Combine(root, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(root);
 
         var state = new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon"));
         var json = """{"event":"Statistics","Combat":{"Bounties_Claimed":1842},"Crime":{"Fines":3}}""";

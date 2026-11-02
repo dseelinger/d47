@@ -119,13 +119,7 @@ public class CapturesDrawTheAppsOwnLookTests
         var (settings, viewState, paths) = TestSurface.Create();
         var state = State();
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => state);
+        var checklists = TestSurface.Checklists(paths.Data, () => state);
 
         checklists.AdoptPlan(
             ChecklistScope.Ship(51),

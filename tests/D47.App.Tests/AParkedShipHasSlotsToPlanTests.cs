@@ -21,13 +21,7 @@ public class AParkedShipHasSlotsToPlanTests
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-parked-ship-tests"));
 
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
         var live = JournalScript.State(
             """{"timestamp":"2026-08-19T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
@@ -35,10 +29,7 @@ public class AParkedShipHasSlotsToPlanTests
             // ShipType and ShipType_Localised both, exactly as Elite writes them.
             """{"timestamp":"2026-08-19T09:00:00Z","event":"StoredShips","StarSystem":"Laksak","StationName":"BNH-T2F","ShipsHere":[],"ShipsRemote":[{"ShipID":12,"ShipType":"cobramkv","ShipType_Localised":"Cobra Mk V","Name":"Reaper","Value":15450304,"StarSystem":"Laksak"}]}""");
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => live);
+        var ships = TestSurface.ShipPlans(checklists, paths.Data, () => live);
 
         return new ShipsMode(ships, checklists, () => live);
     }

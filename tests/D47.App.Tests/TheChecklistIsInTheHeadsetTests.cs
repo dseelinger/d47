@@ -29,16 +29,7 @@ public class TheChecklistIsInTheHeadsetTests
         var paths = new AppPaths(root);
         paths.EnsureCreated();
 
-        return new ChecklistService(
-            new ChecklistStore(
-                Path.Combine(paths.Data, "checklist.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        return TestSurface.Checklists(paths.Data);
     }
 
     /// <summary>

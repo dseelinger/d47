@@ -50,16 +50,7 @@ public class ADoneLineNamesItsShipAndModuleTests
     {
         var paths = new AppPaths(TestSurface.MemoryFolder("d47-checklist-naming-tests"));
 
-        return new ChecklistService(
-            new ChecklistStore(
-                Path.Combine(paths.Data, "checklist.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => state);
+        return TestSurface.Checklists(paths.Data, () => state);
     }
 
     private static (Window Window, PanelView Panel) Open(ChecklistService checklists)

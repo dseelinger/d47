@@ -20,16 +20,7 @@ public class AnEmptyChecklistNamesItsFilterTests
     {
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-empty-checklist-message"));
 
-        return new ChecklistService(
-            new ChecklistStore(
-                Path.Combine(paths.Data, "checklist.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        return TestSurface.Checklists(paths.Data);
     }
 
     private static (Window Window, PanelView Panel) Open(ChecklistService checklists)

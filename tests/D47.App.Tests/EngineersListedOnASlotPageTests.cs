@@ -23,13 +23,7 @@ public class EngineersListedOnASlotPageTests
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-slot-engineers-tests"));
 
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
         var store = new GameStateStore();
 
@@ -54,10 +48,7 @@ public class EngineersListedOnASlotPageTests
 
         var live = store.Active!;
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => live);
+        var ships = TestSurface.ShipPlans(checklists, paths.Data, () => live);
 
         var build = ships.BuildFor(12, "cobramkv", "Reaper");
 
@@ -131,13 +122,7 @@ public class EngineersListedOnASlotPageTests
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-slot-engineers-onfoot-tests"));
 
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
         var store = new GameStateStore();
 

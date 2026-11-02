@@ -55,13 +55,7 @@ public class TheChecklistOpensOnItsListsTests
 
         var state = State();
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => state);
+        var checklists = TestSurface.Checklists(paths.Data, () => state);
 
         checklists.AddNote(ChecklistScope.Universal, "Buy limpets before the Colonia run");
         checklists.AddNote(ChecklistScope.Universal, "Sell the exploration data");

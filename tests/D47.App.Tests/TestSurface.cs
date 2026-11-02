@@ -23,6 +23,30 @@ public static class TestSurface
     /// <summary>A folder path under <see cref="FakeRoot"/> that nothing creates.</summary>
     public static string MemoryFolder(string prefix) => Path.Combine(FakeRoot, prefix, Guid.NewGuid().ToString("N"));
 
+    /// <summary>A checklist service over its own two in-memory stores under <paramref name="folder"/>.</summary>
+    public static D47.Core.Checklists.ChecklistService Checklists(string folder, Func<CommanderGameState?>? state = null) =>
+        new(
+            new D47.Core.Checklists.ChecklistStore(
+                Path.Combine(folder, "checklist.json"),
+                new D47.Core.Storage.MemoryFileSystem(),
+                NullLogger<D47.Core.Checklists.ChecklistStore>.Instance),
+            new D47.Core.Checklists.ChecklistProposalStore(
+                Path.Combine(folder, "checklist-proposals.json"),
+                new D47.Core.Storage.MemoryFileSystem(),
+                NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
+            state ?? (() => null));
+
+    /// <summary>A ship plan service over an in-memory build store under <paramref name="folder"/>.</summary>
+    public static D47.Core.Ships.ShipPlanService ShipPlans(
+        D47.Core.Checklists.ChecklistService checklists, string folder, Func<CommanderGameState?> state) =>
+        new(
+            new D47.Core.Ships.ShipBuildStore(
+                Path.Combine(folder, "ships.json"),
+                new D47.Core.Storage.MemoryFileSystem(),
+                NullLogger<D47.Core.Ships.ShipBuildStore>.Instance),
+            checklists,
+            state);
+
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<AppPaths, D47.Core.Storage.MemoryFileSystem> InstallFiles = new();
 
     /// <summary>The in-memory file system the checklist stores of one install share.</summary>

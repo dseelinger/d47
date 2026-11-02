@@ -92,16 +92,9 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         var registry = CapabilityRegistry.Build(
             [RouteCapability.Create(null, null, () => game.Active, settings, plans, galaxy: galaxy)]);
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(folder, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(folder, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
-            () => game.Active);
+        var checklists = TestSurface.Checklists(folder, () => game.Active);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(folder, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => game.Active);
+        var ships = TestSurface.ShipPlans(checklists, folder, () => game.Active);
 
         var build = ships.Intend("Python")!;
         ships.Plan(build.Id, new SlotPlan("Slot01_Size6", Module: "Fuel Scoop") { Variant = "int_fuelscoop_size6_class5" });

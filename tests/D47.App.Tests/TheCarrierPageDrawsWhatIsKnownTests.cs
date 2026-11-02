@@ -41,18 +41,9 @@ public class TheCarrierPageDrawsWhatIsKnownTests
     {
         var root = TestSurface.MemoryFolder("d47-carrier-page-tests");
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(root);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => null);
+        var ships = TestSurface.ShipPlans(checklists, root, () => null);
 
         var state = new CommanderGameState(new CommanderIdentity("F735466", "TEST"));
 
@@ -188,18 +179,9 @@ public class TheCarrierPageDrawsWhatIsKnownTests
     {
         var root = TestSurface.MemoryFolder("d47-carrier-tab-tests");
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(root);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => null);
+        var ships = TestSurface.ShipPlans(checklists, root, () => null);
 
         var state = new CommanderGameState(new CommanderIdentity("F735466", "TEST"));
         var panel = new PanelView { DataContext = new PanelViewModel() };

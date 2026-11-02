@@ -30,13 +30,7 @@ public class TheOpenPowerplayGoalIsDrawnFromItsFiguresTests
     {
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-powerplay-goal-tests"));
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
         var state = new CommanderGameState(new CommanderIdentity("F1", "Jameson"));
         var text = $"{{ \"timestamp\":\"{Now.UtcDateTime:yyyy-MM-ddTHH:mm:ssZ}\", \"event\":\"Powerplay\", {fields} }}";

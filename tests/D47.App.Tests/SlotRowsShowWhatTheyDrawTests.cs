@@ -25,18 +25,10 @@ public class SlotRowsShowWhatTheyDrawTests
     {
         var root = TestSurface.MemoryFolder("d47-slot-draw-tests");
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
-
-        var store = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
+        var checklists = TestSurface.Checklists(root);
 
         var state = Flying();
-        var ships = new ShipPlanService(store, checklists, () => state);
+        var ships = TestSurface.ShipPlans(checklists, root, () => state);
 
         new Theming.ThemeManager(Application.Current!, NullLogger<Theming.ThemeManager>.Instance)
             .Apply(ThemeCatalog.Elite);

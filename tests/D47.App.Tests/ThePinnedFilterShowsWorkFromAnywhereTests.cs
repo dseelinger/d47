@@ -32,16 +32,7 @@ public class ThePinnedFilterShowsWorkFromAnywhereTests
     {
         var paths = new AppPaths(TestSurface.MemoryFolder("d47-pinned-filter-tests"));
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(
-                Path.Combine(paths.Data, "checklist.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => state);
+        var checklists = TestSurface.Checklists(paths.Data, () => state);
 
         checklists.AdoptPlan(
             ChecklistScope.Ship(51),

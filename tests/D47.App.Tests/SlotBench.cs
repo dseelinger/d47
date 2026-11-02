@@ -41,16 +41,9 @@ internal sealed class SlotBench
         var root = TestSurface.MemoryFolder("d47-slot-bench");
         var state = Flying();
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
-            () => state);
+        var checklists = TestSurface.Checklists(root, () => state);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => state);
+        var ships = TestSurface.ShipPlans(checklists, root, () => state);
 
         var kit = new OnFootPlanService(
             new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance),

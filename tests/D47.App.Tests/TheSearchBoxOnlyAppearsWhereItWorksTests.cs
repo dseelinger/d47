@@ -18,13 +18,7 @@ public class TheSearchBoxOnlyAppearsWhereItWorksTests
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-search-visibility-tests"));
 
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 

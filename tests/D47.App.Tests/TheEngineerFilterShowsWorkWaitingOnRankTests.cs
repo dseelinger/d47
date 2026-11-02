@@ -37,16 +37,7 @@ public class TheEngineerFilterShowsWorkWaitingOnRankTests
     {
         var paths = new AppPaths(TestSurface.MemoryFolder("d47-engineer-filter-rank-tests"));
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(
-                Path.Combine(paths.Data, "checklist.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => state);
+        var checklists = TestSurface.Checklists(paths.Data, () => state);
 
         // A blueprint and its effect on one slot, the way a promoted build puts them there.
         checklists.AdoptPlan(

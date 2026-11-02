@@ -17,13 +17,7 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-plan-vs-fitted-tests"));
 
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
         var live = JournalScript.State(
             """{"timestamp":"2026-08-24T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
@@ -31,10 +25,7 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
             // One module fitted, in Slot01.
             """{"timestamp":"2026-08-24T09:00:00Z","event":"Loadout","Ship":"type9","ShipID":53,"ShipName":"oxen","ShipIdent":"OX-1","HullValue":1,"ModulesValue":1,"Rebuy":1,"Modules":[{"Slot":"Slot01_Size8","Item":"int_cargorack_size8_class1","On":true,"Priority":1,"Health":1.0}]}""");
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => live);
+        var ships = TestSurface.ShipPlans(checklists, paths.Data, () => live);
 
         var build = ships.BuildFor(53, live.Ship!.Type!);
 
@@ -285,13 +276,7 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-roll-vs-plan-tests"));
 
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
         var store = new GameStateStore();
 
@@ -318,10 +303,7 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
 
         var live = store.Active!;
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => live);
+        var ships = TestSurface.ShipPlans(checklists, paths.Data, () => live);
 
         var build = ships.BuildFor(53, live.Ship!.Type!);
 

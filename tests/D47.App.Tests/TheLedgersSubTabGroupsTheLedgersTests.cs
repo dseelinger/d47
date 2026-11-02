@@ -101,13 +101,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     {
         var root = TestSurface.MemoryFolder("d47-ledgers-page-tests");
 
-        return new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        return TestSurface.Checklists(root);
     }
 
     private static CommanderRoster Roster() => new(() => null, () => 0, () => null, () => false, _ => { });

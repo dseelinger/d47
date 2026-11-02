@@ -68,13 +68,7 @@ public sealed class TheActivitiesPageListsEveryActivityTests
 
         var paths = new AppPaths(TestSurface.MemoryFolder("d47-activities-checklist"));
 
-        return new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => store.Active);
+        return TestSurface.Checklists(paths.Data, () => store.Active);
     }
 
     private static Window Open(ActivityLedger ledger, double width)

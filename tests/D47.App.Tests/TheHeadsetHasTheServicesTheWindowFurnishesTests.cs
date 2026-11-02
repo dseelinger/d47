@@ -120,10 +120,7 @@ public class TheHeadsetHasTheServicesTheWindowFurnishesTests
         Func<CommanderGameState?> state = () => start.Flying;
         var checklists = Checklists(start.Paths.Data, state);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(start.Paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            state);
+        var ships = TestSurface.ShipPlans(checklists, start.Paths.Data, state);
 
         var buildTalk = new BuildTalk(
             ships,

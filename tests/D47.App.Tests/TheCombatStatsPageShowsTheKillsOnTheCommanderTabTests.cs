@@ -142,13 +142,7 @@ public class TheCombatStatsPageShowsTheKillsOnTheCommanderTabTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
         var root = TestSurface.MemoryFolder("d47-combat-stats-page-tests");
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(root);
 
         var state = State();
         var view = new PanelView { DataContext = new PanelViewModel() };

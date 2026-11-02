@@ -47,19 +47,10 @@ public class LoadoutTabTests
     {
         var root = TestSurface.MemoryFolder("d47-loadout-tests");
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
-
-        var store = new ShipBuildStore(
-            Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
+        var checklists = TestSurface.Checklists(root);
 
         var sitting = new Sitting { State = flying ? Flying(engineered) : null };
-        var ships = new ShipPlanService(store, checklists, () => sitting.State);
+        var ships = TestSurface.ShipPlans(checklists, root, () => sitting.State);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();

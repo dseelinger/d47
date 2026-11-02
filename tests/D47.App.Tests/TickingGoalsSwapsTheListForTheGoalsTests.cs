@@ -29,13 +29,7 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-goals-mode-tests"));
 
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
         checklists.AddNote(ChecklistScope.Universal, "Get a new paint job");
         checklists.AddNote(ChecklistScope.Universal, "Buy limpets");

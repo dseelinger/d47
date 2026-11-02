@@ -20,16 +20,7 @@ public class TheEngineerFilterFocusesOnOneEngineersUnlockTests
     {
         var paths = new AppPaths(TestSurface.MemoryFolder("d47-engineer-focus-filter-tests"));
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(
-                Path.Combine(paths.Data, "checklist.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
         // Felicity Farseer needs no referral, so pressing this adds only her own invitation and
         // tribute lines — nothing else to tell apart from the note added beside it.

@@ -33,13 +33,7 @@ public class TheSlotListIsATableTests
     {
         var root = TestSurface.MemoryFolder("d47-slot-table-tests");
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(root);
 
         var sitting = new Sitting
         {
@@ -48,10 +42,7 @@ public class TheSlotListIsATableTests
                 """{"timestamp":"2026-08-25T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","HullValue":1,"ModulesValue":1,"Rebuy":1,"Modules":[{"Slot":"Slot01_Size6","Item":"int_hullreinforcement_size5_class2","On":true,"Priority":0,"Health":1.0,"Engineering":{"BlueprintName":"HullReinforcement_HeavyDuty","Level":5,"Quality":1.0,"Engineer":"Selene Jean","ExperimentalEffect":"special_armour_chunky","ExperimentalEffect_Localised":"Deep Plating"}},{"Slot":"PowerDistributor","Item":"int_powerdistributor_size7_class5","On":true,"Priority":0,"Health":1.0,"Engineering":{"BlueprintName":"PowerDistributor_PrioritySystems","Level":5,"Quality":1.0,"Engineer":"The Dweller"}},{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0}]}"""),
         };
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => sitting.State);
+        var ships = TestSurface.ShipPlans(checklists, root, () => sitting.State);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 

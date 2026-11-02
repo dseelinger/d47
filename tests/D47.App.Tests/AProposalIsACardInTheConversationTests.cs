@@ -24,12 +24,7 @@ public class AProposalIsACardInTheConversationTests
     {
         var paths = new AppPaths(TestSurface.MemoryFolder("d47-proposal-card-tests"));
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(
-                Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
         checklists.Proposals.Added += proposal => model.AppendProposal(proposal.Id, proposal.Summary);
         checklists.ProposalSettled += (id, accepted, outcome) => model.SettleProposal(id, accepted, outcome);

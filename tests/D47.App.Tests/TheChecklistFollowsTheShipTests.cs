@@ -58,16 +58,7 @@ public class TheChecklistFollowsTheShipTests
     {
         var paths = new AppPaths(TestSurface.MemoryFolder("d47-checklist-follows-the-ship-tests"));
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(
-                Path.Combine(paths.Data, "checklist.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => store.Active);
+        var checklists = TestSurface.Checklists(paths.Data, () => store.Active);
 
         checklists.Follow(store);
 

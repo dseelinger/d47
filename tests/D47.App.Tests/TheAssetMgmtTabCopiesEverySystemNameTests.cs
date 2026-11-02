@@ -111,10 +111,7 @@ public class TheAssetMgmtTabCopiesEverySystemNameTests
             new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(Path.Combine(root, "proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
             () => state.Active);
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => state.Active);
+        var ships = TestSurface.ShipPlans(checklists, root, () => state.Active);
 
         return new ShipsMode(ships, checklists, () => state.Active);
     }

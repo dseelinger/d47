@@ -20,13 +20,7 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-rollable-tests"));
 
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
         var live = JournalScript.State(
             """{"timestamp":"2026-08-20T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
@@ -37,10 +31,7 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
                {"Slot":"Slot07_Size5","Item":"int_modulereinforcement_size5_class2","On":true,"Health":1.0}]}
             """);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => live);
+        var ships = TestSurface.ShipPlans(checklists, paths.Data, () => live);
 
         var build = ships.BuildFor(51, "anaconda", "Flamebrand");
 

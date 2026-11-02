@@ -103,13 +103,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(theme);
 
         var root = TestSurface.MemoryFolder("d47-missions-page-tests");
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(root);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 

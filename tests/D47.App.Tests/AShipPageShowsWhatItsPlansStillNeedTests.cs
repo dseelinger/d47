@@ -72,10 +72,7 @@ public class AShipPageShowsWhatItsPlansStillNeedTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => live);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => live);
+        var ships = TestSurface.ShipPlans(checklists, paths.Data, () => live);
 
         return new ShipsMode(ships, checklists, () => live);
     }

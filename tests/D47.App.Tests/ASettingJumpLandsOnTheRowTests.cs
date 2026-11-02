@@ -189,16 +189,9 @@ public sealed class ASettingJumpLandsOnTheRowTests
         var (settings, viewState) = Surface();
         var root = TempFolders.Create("d47-setting-jump-tests");
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(root);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => null);
+        var ships = TestSurface.ShipPlans(checklists, root, () => null);
 
         var model = new PanelViewModel();
         var view = new PanelView { DataContext = model };
@@ -247,11 +240,7 @@ public sealed class ASettingJumpLandsOnTheRowTests
         var (settings, viewState) = Surface();
         var root = TempFolders.Create("d47-setting-jump-tests");
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(root);
 
         var model = new PanelViewModel();
         var view = new PanelView { DataContext = model };

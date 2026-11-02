@@ -77,17 +77,10 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
     {
         var root = TempFolders.Create("d47-copy-glyph-tests");
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(root);
 
-        var store = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
         var state = Flying();
-        var ships = new ShipPlanService(store, checklists, () => state);
+        var ships = TestSurface.ShipPlans(checklists, root, () => state);
         var clipboard = new RecordingClipboard();
 
         var panel = new PanelView { DataContext = new PanelViewModel() };

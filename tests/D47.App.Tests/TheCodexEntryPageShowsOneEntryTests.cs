@@ -447,11 +447,7 @@ public class TheCodexEntryPageShowsOneEntryTests
         surface.OwnPicture(101, 18);
 
         var root = TestSurface.MemoryFolder("d47-codex-entry-tests");
-        var checklists = new D47.Core.Checklists.ChecklistService(
-            new D47.Core.Checklists.ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<D47.Core.Checklists.ChecklistStore>.Instance),
-            new D47.Core.Checklists.ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(root);
 
         var state = State(Lines);
         var view = new PanelView { DataContext = new PanelViewModel() };

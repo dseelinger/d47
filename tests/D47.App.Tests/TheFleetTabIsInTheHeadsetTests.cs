@@ -72,10 +72,7 @@ public class TheFleetTabIsInTheHeadsetTests
 
         var checklists = Checklists(paths.Data, state);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            state);
+        var ships = TestSurface.ShipPlans(checklists, paths.Data, state);
 
         var onFoot = new OnFootPlanService(
             new OnFootBuildStore(Path.Combine(paths.Data, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance),
@@ -191,10 +188,7 @@ public class TheFleetTabIsInTheHeadsetTests
         var flying = Flying();
         Func<CommanderGameState?> state = () => flying;
         var checklists = Checklists(paths.Data, state);
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            state);
+        var ships = TestSurface.ShipPlans(checklists, paths.Data, state);
 
         var window = new PanelView { DataContext = new PanelViewModel() };
 

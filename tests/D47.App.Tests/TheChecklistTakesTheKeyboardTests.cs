@@ -18,16 +18,7 @@ public class TheChecklistTakesTheKeyboardTests
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-checklist-keyboard-tests"));
 
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(
-                Path.Combine(paths.Data, "checklist.json"),
-                new D47.Core.Storage.MemoryFileSystem(),
-                Microsoft.Extensions.Logging.Abstractions.NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new D47.Core.Storage.MemoryFileSystem(),
-                Microsoft.Extensions.Logging.Abstractions.NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
         foreach (var line in lines)
         {

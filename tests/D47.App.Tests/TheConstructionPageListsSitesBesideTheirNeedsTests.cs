@@ -156,17 +156,8 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         Action<string>? browse = null)
     {
         var root = TestSurface.MemoryFolder("d47-construction-page-tests");
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => null);
+        var checklists = TestSurface.Checklists(root);
+        var ships = TestSurface.ShipPlans(checklists, root, () => null);
         var kit = onFoot
             ? new OnFootPlanService(
                 new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance),

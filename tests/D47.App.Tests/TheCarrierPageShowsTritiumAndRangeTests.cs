@@ -88,18 +88,9 @@ public class TheCarrierPageShowsTritiumAndRangeTests
     /// <summary>The page drawn for a Commander whose state the panel reads live.</summary>
     private static (Window Window, PanelView Panel) Open(Func<CommanderGameState?> state)
     {
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(Root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(Root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(Root);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(Root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => null);
+        var ships = TestSurface.ShipPlans(checklists, Root, () => null);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 

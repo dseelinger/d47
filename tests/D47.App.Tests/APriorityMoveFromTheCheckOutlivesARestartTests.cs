@@ -21,13 +21,7 @@ public class APriorityMoveFromTheCheckOutlivesARestartTests
 
     private static ShipsMode Mode(string root, CommanderGameState state)
     {
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(root);
 
         var store = new ShipBuildStore(Path.Combine(root, "ships.json"), new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 

@@ -21,18 +21,9 @@ public class AnIntendedHullDoesNotBlockTheFleetTests
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-intended-hull-tests"));
 
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => null);
+        var ships = TestSurface.ShipPlans(checklists, paths.Data, () => null);
 
         // Two owned ships and one hull the Commander only intends to buy.
         ships.BuildFor(12, "CobraMkV", "Reaper");
@@ -103,18 +94,9 @@ public class AnIntendedHullDoesNotBlockTheFleetTests
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-intended-keys-tests"));
 
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(paths.Data);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => null);
+        var ships = TestSurface.ShipPlans(checklists, paths.Data, () => null);
 
         ships.BuildFor(12, "CobraMkV", "Reaper");
         ships.BuildFor(13, "Type8", "Cartage");

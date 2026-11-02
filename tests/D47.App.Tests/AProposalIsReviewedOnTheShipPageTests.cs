@@ -55,18 +55,9 @@ public class AProposalIsReviewedOnTheShipPageTests
 
         var live = store.Active!;
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            () => live);
+        var checklists = TestSurface.Checklists(paths.Data, () => live);
 
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-            checklists,
-            () => live);
+        var ships = TestSurface.ShipPlans(checklists, paths.Data, () => live);
 
         var build = ships.BuildFor(ShipId, "python", "Blue Meridian");
         ships.Plan(build.Id, Engines);

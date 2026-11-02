@@ -224,12 +224,8 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
 
         CommanderGameState? State() => store.Active;
 
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(Path.Combine(root, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
-            State);
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance), checklists, State);
+        var checklists = TestSurface.Checklists(root, State);
+        var ships = TestSurface.ShipPlans(checklists, root, State);
         var kit = new OnFootPlanService(
             new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance), checklists, State);
 
@@ -371,12 +367,8 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
         Apply("""{"event":"ColonisationConstructionDepot","MarketID":3900000001,"ConstructionProgress":0.62,"ConstructionComplete":false,"ConstructionFailed":false,"ResourcesRequired":[{"Name":"$steel_name;","Name_Localised":"Steel","RequiredAmount":20000,"ProvidedAmount":5180,"Payment":1000},{"Name":"$aluminium_name;","Name_Localised":"Aluminium","RequiredAmount":9410,"ProvidedAmount":0,"Payment":1000},{"Name":"$titanium_name;","Name_Localised":"Titanium","RequiredAmount":1150,"ProvidedAmount":0,"Payment":1000}]}""");
 
         var root = TestSurface.MemoryFolder("d47-construction-fit");
-        var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(Path.Combine(root, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
-            () => null);
-        var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance), checklists, () => null);
+        var checklists = TestSurface.Checklists(root);
+        var ships = TestSurface.ShipPlans(checklists, root, () => null);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableResizableColumns(Memory());

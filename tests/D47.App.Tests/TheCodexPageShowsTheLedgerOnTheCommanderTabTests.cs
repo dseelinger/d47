@@ -290,13 +290,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
         using var look = AppLook.Put();
 
         var root = TestSurface.MemoryFolder("d47-codex-page-tests");
-        var checklists = new D47.Core.Checklists.ChecklistService(
-            new D47.Core.Checklists.ChecklistStore(Path.Combine(root, "checklist.json"), new D47.Core.Storage.MemoryFileSystem(), NullLogger<D47.Core.Checklists.ChecklistStore>.Instance),
-            new D47.Core.Checklists.ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
-                new D47.Core.Storage.MemoryFileSystem(),
-                NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
-            () => null);
+        var checklists = TestSurface.Checklists(root);
 
         var state = State(Lines);
         var view = new PanelView { DataContext = new PanelViewModel() };

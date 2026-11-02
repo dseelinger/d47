@@ -26,16 +26,7 @@ public class ChecklistTabTests
     {
         var paths = new AppPaths(root);
 
-        return new ChecklistService(
-            new ChecklistStore(
-                Path.Combine(paths.Data, "checklist.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistStore>.Instance),
-            new ChecklistProposalStore(
-                Path.Combine(paths.Data, "checklist-proposals.json"),
-                new MemoryFileSystem(),
-                NullLogger<ChecklistProposalStore>.Instance),
-            state);
+        return TestSurface.Checklists(paths.Data, state);
     }
 
     /// <summary>The panel on the Checklist tab, shown, which is what makes its controls measurable.</summary>
