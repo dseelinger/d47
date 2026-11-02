@@ -2,7 +2,6 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Journal;
@@ -28,18 +27,8 @@ public class TheCombatStatsAnswerBreaksKillsDownTests
         "{\"timestamp\":\"" + time + "\",\"event\":\"FactionKillBond\",\"Reward\":" + reward
         + ",\"AwardingFaction\":\"Fed Navy\",\"VictimFaction\":\"Pirates\"}";
 
-    private static GameStateStore Store(params string[] events)
-    {
-        var store = new GameStateStore();
-
-        foreach (var line in new[] { Commander, Loadout, Jump }.Concat(events))
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        return store;
-    }
+    private static GameStateStore Store(params string[] events) =>
+        JournalScript.Store([Commander, Loadout, Jump, .. events]);
 
     private static async Task<string> Ask(
         GameStateStore store, string? json = null, HistoryState history = HistoryState.Done)

@@ -1,11 +1,10 @@
-using System.Text.Json;
 using D47.Core.Callouts;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using D47.Core.Tests.Conversation;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -25,22 +24,8 @@ public class ANotedOrASnoozeAnswersACarrierWarningTests
 
     public ANotedOrASnoozeAnswersACarrierWarningTests() => _fuel.Warnings = _warnings;
 
-    private static JournalEvent Event(string kind, int minutes, params (string Key, object? Value)[] fields)
-    {
-        var payload = new Dictionary<string, object?>
-        {
-            ["timestamp"] = Noon.AddMinutes(minutes).ToString("yyyy-MM-ddTHH:mm:ssZ"),
-            ["event"] = kind,
-        };
-
-        foreach (var (key, value) in fields)
-        {
-            payload[key] = value;
-        }
-
-        Assert.True(JournalEvent.TryParse(JsonSerializer.Serialize(payload), NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
+    private static JournalEvent Event(string kind, int minutes, params (string Key, object? Value)[] fields) =>
+        JournalScript.EventOf(kind, Noon.AddMinutes(minutes), fields);
 
     private static JournalEvent Stats(int fuel) =>
         Event(

@@ -1,7 +1,7 @@
 ﻿using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests.Knowledge;
@@ -13,26 +13,12 @@ namespace D47.Core.Tests.Knowledge;
 /// </summary>
 public class SystemNameCapabilityTests
 {
-    private static GameStateStore Store(params string[] lines)
-    {
-        var gameState = new GameStateStore();
-
-        gameState.Apply(Parse(
-            """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
-
-        foreach (var line in lines)
-        {
-            gameState.Apply(Parse(line));
-        }
-
-        return gameState;
-    }
-
-    private static JournalEvent Parse(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
+    private static GameStateStore Store(params string[] lines) =>
+        JournalScript.Store(
+        [
+            """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+            .. lines,
+        ]);
 
     private static Task<ToolResult> Ask(GameStateStore gameState, string json = "{}") =>
         CapabilityRegistry

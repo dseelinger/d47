@@ -1,7 +1,6 @@
-using System.Text.Json;
 using D47.Core.Callouts;
 using D47.Core.Journal;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -10,18 +9,8 @@ public class TheBoardIsBriefedOnTheWayOutTests
 {
     private static readonly DateTimeOffset Start = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
 
-    private static JournalEvent Event(string kind, params (string Key, object? Value)[] fields)
-    {
-        var payload = new Dictionary<string, object?> { ["timestamp"] = "2026-09-30T12:00:00Z", ["event"] = kind };
-
-        foreach (var (key, value) in fields)
-        {
-            payload[key] = value;
-        }
-
-        Assert.True(JournalEvent.TryParse(JsonSerializer.Serialize(payload), NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
+    private static JournalEvent Event(string kind, params (string Key, object? Value)[] fields) =>
+        JournalScript.EventOf(kind, "2026-09-30T12:00:00Z", fields);
 
     private static JournalEvent Accept(long id, string title, TimeSpan left) =>
         Event("MissionAccepted",

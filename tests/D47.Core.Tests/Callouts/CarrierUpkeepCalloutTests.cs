@@ -1,11 +1,10 @@
-using System.Text.Json;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Journal;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -23,25 +22,8 @@ public class CarrierUpkeepCalloutTests
 
     private static readonly DateTimeOffset TwoTicksLater = new(2026, 9, 10, 12, 0, 0, TimeSpan.Zero);
 
-    private static JournalEvent Event(string kind, DateTimeOffset at, params (string Key, object? Value)[] fields)
-    {
-        var payload = new Dictionary<string, object?>
-        {
-            ["timestamp"] = at.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-            ["event"] = kind,
-        };
-
-        foreach (var (key, value) in fields)
-        {
-            payload[key] = value;
-        }
-
-        Assert.True(JournalEvent.TryParse(JsonSerializer.Serialize(payload), NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
     private static JournalEvent Stats(DateTimeOffset at, long balance, string type = "FleetCarrier") =>
-        Event(
+        JournalScript.EventOf(
             "CarrierStats",
             at,
             ("CarrierType", type),
@@ -51,25 +33,18 @@ public class CarrierUpkeepCalloutTests
             ("Finance", new Dictionary<string, long> { ["CarrierBalance"] = balance }));
 
     private static JournalEvent Dock(DateTimeOffset at, string station = CallSign, long market = 3700000000L) =>
-        Event("Docked", at, ("StationName", station), ("StationType", "FleetCarrier"), ("MarketID", market));
+        JournalScript.EventOf("Docked", at, ("StationName", station), ("StationType", "FleetCarrier"), ("MarketID", market));
 
     private static JournalEvent Request(DateTimeOffset at) =>
-        Event("CarrierJumpRequest", at, ("CarrierID", 3700000000L), ("SystemName", "Sol"));
+        JournalScript.EventOf("CarrierJumpRequest", at, ("CarrierID", 3700000000L), ("SystemName", "Sol"));
 
     /// <summary>A carrier with a weekly figure of 10,000,000 and <paramref name="balance"/> recorded on 27 Aug.</summary>
     private static CommanderGameState State(long balance, string type = "FleetCarrier", params JournalEvent[] after)
     {
-        var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
-
-        state.Apply(Stats(Recorded.AddDays(-7), balance + Weekly, type));
-        state.Apply(Stats(Recorded, balance, type));
-
-        foreach (var journalEvent in after)
-        {
-            state.Apply(journalEvent);
-        }
-
-        return state;
+        return JournalScript.Commander(
+            "F1",
+            "Fixture",
+            [Stats(Recorded.AddDays(-7), balance + Weekly, type), Stats(Recorded, balance, type), .. after]);
     }
 
     private static List<Announcement> Say(
@@ -116,9 +91,7 @@ public class CarrierUpkeepCalloutTests
     public void NoWeeklyFigureIsSilent()
     {
         var request = Request(SameWeek);
-        var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
-        state.Apply(Stats(Recorded, 1_000));
-        state.Apply(request);
+        var state = JournalScript.Commander("F1", "Fixture", [Stats(Recorded, 1_000), request]);
 
         Assert.Empty(Say(new CarrierUpkeepCallout(), state, SameWeek, events: request));
     }
@@ -175,7 +148,7 @@ public class CarrierUpkeepCalloutTests
 
         Assert.Single(Say(callout, state, SameWeek, events: request));
         Assert.Single(Say(
-            callout, state, SameWeek, events: [Event("LoadGame", SameWeek.AddMinutes(3)), Request(SameWeek.AddMinutes(4))]));
+            callout, state, SameWeek, events: [JournalScript.EventOf("LoadGame", SameWeek.AddMinutes(3)), Request(SameWeek.AddMinutes(4))]));
     }
 
     [Fact]

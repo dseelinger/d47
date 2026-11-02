@@ -1,11 +1,11 @@
 using D47.Core.Checklists;
 using D47.Core.Engineers;
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Loadout;
 using D47.Core.Ships;
 using PlannedNeeds = D47.Core.Engineers.PlannedNeeds;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Engineers;
@@ -13,29 +13,17 @@ namespace D47.Core.Tests.Engineers;
 /// <summary>The engineer solver.</summary>
 public class UnlockPlannerTests
 {
-    private static JournalEvent Event(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json.ReplaceLineEndings(" "), NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
     /// <summary>A Commander sitting in Sol in a ship that jumps 30 light years, having met nobody.</summary>
     private static CommanderGameState State(params string[] extra)
     {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Location","StarSystem":"Sol","StarPos":[0.0,0.0,0.0],"Docked":true,"StationName":"Abraham Lincoln"}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","MaxJumpRange":30.0,"Modules":[]}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Liz Ryder","EngineerID":300080,"Progress":"Known"}]}""",
-                 }.Concat(extra))
-        {
-            store.Apply(Event(line));
-        }
-
-        return store.Active!;
+        return JournalScript.State(
+        [
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Location","StarSystem":"Sol","StarPos":[0.0,0.0,0.0],"Docked":true,"StationName":"Abraham Lincoln"}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","MaxJumpRange":30.0,"Modules":[]}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Liz Ryder","EngineerID":300080,"Progress":"Known"}]}""",
+            .. extra,
+        ]);
     }
 
     /// <summary>Dirty drives at grade 5, which only three people in the game roll.</summary>

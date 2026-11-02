@@ -1,8 +1,8 @@
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Loadout;
 using D47.Core.Ships;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Loadout;
@@ -10,27 +10,14 @@ namespace D47.Core.Tests.Loadout;
 /// <summary>Every ship material and ship-locker row, catalogue row by catalogue row, grouped into tracker cards.</summary>
 public class MaterialTrackerTests
 {
-    private static JournalEvent Event(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json.ReplaceLineEndings(" "), NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
     /// <summary>A Commander holding 300 iron and some Heat Exchangers, with no plan asking for either.</summary>
     private static CommanderGameState State()
     {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Materials","Raw":[{"Name":"iron","Count":300}],"Manufactured":[{"Name":"heatexchangers","Count":4}],"Encoded":[]}""",
-                 })
-        {
-            store.Apply(Event(line));
-        }
-
-        return store.Active!;
+        return JournalScript.State(
+        [
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Materials","Raw":[{"Name":"iron","Count":300}],"Manufactured":[{"Name":"heatexchangers","Count":4}],"Encoded":[]}""",
+        ]);
     }
 
     private static ShipBuild Ship() =>

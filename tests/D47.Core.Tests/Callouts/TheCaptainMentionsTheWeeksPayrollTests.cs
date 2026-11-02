@@ -1,9 +1,8 @@
-using System.Text.Json;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using D47.Core.Persona;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -19,25 +18,8 @@ public class TheCaptainMentionsTheWeeksPayrollTests
 
     private static readonly DateTimeOffset NextWeek = new(2026, 9, 3, 12, 0, 0, TimeSpan.Zero);
 
-    private static JournalEvent Event(string kind, DateTimeOffset at, params (string Key, object? Value)[] fields)
-    {
-        var payload = new Dictionary<string, object?>
-        {
-            ["timestamp"] = at.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-            ["event"] = kind,
-        };
-
-        foreach (var (key, value) in fields)
-        {
-            payload[key] = value;
-        }
-
-        Assert.True(JournalEvent.TryParse(JsonSerializer.Serialize(payload), NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
     private static JournalEvent Stats(DateTimeOffset at, string type, string? captain) =>
-        Event(
+        JournalScript.EventOf(
             "CarrierStats",
             at,
             ("CarrierType", type),
@@ -49,14 +31,11 @@ public class TheCaptainMentionsTheWeeksPayrollTests
                 : new object[] { new Dictionary<string, object> { ["CrewRole"] = "Captain", ["CrewName"] = captain, ["Activated"] = true, ["Enabled"] = true } }));
 
     private static JournalEvent DockAt(DateTimeOffset at, string station = CallSign, long market = 3700000000L) =>
-        Event("Docked", at, ("StationName", station), ("StationType", "FleetCarrier"), ("MarketID", market));
+        JournalScript.EventOf("Docked", at, ("StationName", station), ("StationType", "FleetCarrier"), ("MarketID", market));
 
     private static CommanderGameState State(JournalEvent after, string type = "FleetCarrier", string? captain = "Jane Doe")
     {
-        var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
-        state.Apply(Stats(AfterTick.AddHours(-1), type, captain));
-        state.Apply(after);
-        return state;
+        return JournalScript.Commander("F1", "Fixture", [Stats(AfterTick.AddHours(-1), type, captain), after]);
     }
 
     private static List<Announcement> Say(
@@ -139,7 +118,7 @@ public class TheCaptainMentionsTheWeeksPayrollTests
     [Fact]
     public void AJumpRequestIsSilent()
     {
-        var request = Event("CarrierJumpRequest", SameWeek, ("CarrierID", 3700000000L), ("SystemName", "Sol"));
+        var request = JournalScript.EventOf("CarrierJumpRequest", SameWeek, ("CarrierID", 3700000000L), ("SystemName", "Sol"));
 
         Assert.Empty(Say(new CarrierPayrollCallout(), request));
     }

@@ -1,8 +1,7 @@
-using System.Text.Json;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Journal;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -12,35 +11,20 @@ public class Phase15WarningTests
 {
     private static readonly DateTimeOffset Start = DateTimeOffset.Parse("3311-01-01T00:00:00Z");
 
-    private static JournalEvent Event(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
     private static JournalEvent Comms(string message, string channel = "npc", string? localised = null) =>
-        Event(JsonSerializer.Serialize(new Dictionary<string, object?>
-        {
-            ["timestamp"] = "3311-01-01T00:00:00Z",
-            ["event"] = "ReceiveText",
-            ["From"] = "$npc_name_decorate:#name=Kaiser Grendel;",
-            ["Message"] = message,
-            ["Message_Localised"] = localised,
-            ["Channel"] = channel,
-        }));
+        JournalScript.EventOf(
+            "ReceiveText",
+            "3311-01-01T00:00:00Z",
+            ("From", "$npc_name_decorate:#name=Kaiser Grendel;"),
+            ("Message", message),
+            ("Message_Localised", localised),
+            ("Channel", channel));
 
-    private static CommanderGameState StateFrom(params string[] lines)
-    {
-        var store = new GameStateStore();
-        store.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
-
-        foreach (var line in lines)
-        {
-            store.Apply(Event(line));
-        }
-
-        return store.Active!;
-    }
+    private static CommanderGameState StateFrom(params string[] lines) => JournalScript.State(
+    [
+        """{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+        .. lines,
+    ]);
 
     private static CalloutContext Context(
         CommanderGameState? state = null,
@@ -327,7 +311,7 @@ public class Phase15WarningTests
 
         Assert.Empty(callout.Examine(Context(
             state,
-            events: [Event("""{"timestamp":"3311-01-01T00:02:00Z","event":"UnderAttack","Target":"You"}""")])));
+            events: [JournalScript.Parse("""{"timestamp":"3311-01-01T00:02:00Z","event":"UnderAttack","Target":"You"}""")])));
 
         // Still exposed, still silent — the edge has been and gone.
         Assert.Empty(callout.Examine(Context(state, atSecond: 300)));

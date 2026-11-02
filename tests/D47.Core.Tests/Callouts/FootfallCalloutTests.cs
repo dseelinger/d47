@@ -1,5 +1,6 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -14,34 +15,11 @@ public class FootfallCalloutTests
     private static readonly DateTimeOffset ScannedAt = new(3311, 4, 2, 9, 0, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset DisembarkedAt = ScannedAt.AddMinutes(5);
 
-    private static CalloutContext Context(CommanderGameState state, bool priming, params string[] lines) =>
-        new(
-            DateTimeOffset.UnixEpoch,
-            IsPriming: priming,
-            State: state,
-            Status: GameStatus.Unknown,
-            Route: NavRoute.None,
-            Events: [.. lines.Select(Parse)]);
-
-    private static CommanderGameState Commander(params string[] events)
-    {
-        var store = new GameStateStore();
-        store.Apply(Parse(
-            """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
-
-        foreach (var json in events)
-        {
-            store.Apply(Parse(json));
-        }
-
-        return store.Active!;
-    }
-
-    private static JournalEvent Parse(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
+    private static CommanderGameState Commander(params string[] events) => JournalScript.State(
+    [
+        """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+        .. events,
+    ]);
 
     private static string Scan(bool? wasFootfalled, DateTimeOffset? at = null)
     {
@@ -86,7 +64,7 @@ public class FootfallCalloutTests
         var disembark = Disembark();
         var state = Commander(Scan(wasFootfalled: false), disembark);
 
-        var said = Assert.Single(new FootfallCallout().Examine(Context(state, false, disembark)));
+        var said = Assert.Single(new FootfallCallout().Examine(JournalScript.Context(state, false, disembark)));
 
         Assert.Contains(BodyName, said.Text, StringComparison.Ordinal);
     }
@@ -97,7 +75,7 @@ public class FootfallCalloutTests
         var second = Disembark(at: DisembarkedAt.AddMinutes(1));
         var state = Commander(Scan(wasFootfalled: false), Disembark(), second);
 
-        Assert.Empty(new FootfallCallout().Examine(Context(state, false, second)));
+        Assert.Empty(new FootfallCallout().Examine(JournalScript.Context(state, false, second)));
     }
 
     [Fact]
@@ -107,11 +85,11 @@ public class FootfallCalloutTests
         var second = Disembark(at: DisembarkedAt.AddMinutes(1));
         var state = Commander(Scan(wasFootfalled: false), first);
 
-        Assert.Empty(new FootfallCallout().Examine(Context(state, true, first)));
+        Assert.Empty(new FootfallCallout().Examine(JournalScript.Context(state, true, first)));
 
         state = Commander(Scan(wasFootfalled: false), first, second);
 
-        Assert.Empty(new FootfallCallout().Examine(Context(state, false, second)));
+        Assert.Empty(new FootfallCallout().Examine(JournalScript.Context(state, false, second)));
     }
 
     [Fact]
@@ -120,7 +98,7 @@ public class FootfallCalloutTests
         var disembark = Disembark();
         var state = Commander(Scan(wasFootfalled: true), disembark);
 
-        Assert.Empty(new FootfallCallout().Examine(Context(state, false, disembark)));
+        Assert.Empty(new FootfallCallout().Examine(JournalScript.Context(state, false, disembark)));
     }
 
     [Fact]
@@ -129,6 +107,6 @@ public class FootfallCalloutTests
         var disembark = Disembark();
         var state = Commander(Scan(wasFootfalled: false), disembark);
 
-        Assert.Empty(new FootfallCallout().Examine(Context(state, true, disembark)));
+        Assert.Empty(new FootfallCallout().Examine(JournalScript.Context(state, true, disembark)));
     }
 }

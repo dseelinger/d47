@@ -1,6 +1,7 @@
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -11,24 +12,11 @@ public class EveryUrgentWarningIsMarkedTests
 {
     private static readonly DateTimeOffset Start = DateTimeOffset.Parse("3311-01-01T00:00:00Z");
 
-    private static JournalEvent Event(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
-    private static CommanderGameState StateFrom(params string[] lines)
-    {
-        var store = new GameStateStore();
-        store.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
-
-        foreach (var line in lines)
-        {
-            store.Apply(Event(line));
-        }
-
-        return store.Active!;
-    }
+    private static CommanderGameState StateFrom(params string[] lines) => JournalScript.State(
+    [
+        """{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+        .. lines,
+    ]);
 
     private static GameStatus Status(StatusFlags flags, double? cargo = null) =>
         new() { Flags = flags | StatusFlags.InMainShip, Cargo = cargo, ReadAt = Start };
@@ -44,7 +32,7 @@ public class EveryUrgentWarningIsMarkedTests
             state,
             status ?? GameStatus.Unknown,
             NavRoute.None,
-            [.. (events ?? []).Select(Event)]);
+            [.. (events ?? []).Select(JournalScript.Parse)]);
 
     /// <summary>
     /// Every warning the event path can raise, driven for real rather than asserted from a list — so a

@@ -1,8 +1,8 @@
-using System.Text.Json;
 using D47.Core.Callouts;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -14,18 +14,8 @@ public class MissionCalloutTests
 {
     private static readonly DateTimeOffset Start = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
 
-    private static JournalEvent Event(string kind, params (string Key, object? Value)[] fields)
-    {
-        var payload = new Dictionary<string, object?> { ["timestamp"] = "2026-09-30T12:00:00Z", ["event"] = kind };
-
-        foreach (var (key, value) in fields)
-        {
-            payload[key] = value;
-        }
-
-        Assert.True(JournalEvent.TryParse(JsonSerializer.Serialize(payload), NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
+    private static JournalEvent Event(string kind, params (string Key, object? Value)[] fields) =>
+        JournalScript.EventOf(kind, "2026-09-30T12:00:00Z", fields);
 
     private static JournalEvent Accept(long id, string station, long reward, DateTimeOffset expiry) =>
         Event("MissionAccepted",
@@ -37,17 +27,8 @@ public class MissionCalloutTests
             ("Reward", reward),
             ("Expiry", expiry.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ")));
 
-    private static CommanderGameState Commander(params JournalEvent[] events)
-    {
-        var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
-
-        foreach (var journalEvent in events)
-        {
-            state.Apply(journalEvent);
-        }
-
-        return state;
-    }
+    private static CommanderGameState Commander(params JournalEvent[] events) =>
+        JournalScript.Commander("F1", "Fixture", events);
 
     private static List<Announcement> Run(MissionCallout callout, CommanderGameState state, DateTimeOffset now, bool priming = false, params JournalEvent[] events) =>
         [.. callout.Examine(new CalloutContext(now, priming, state, GameStatus.Unknown, NavRoute.None, events))];

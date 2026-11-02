@@ -1,6 +1,6 @@
 using D47.Core.Journal;
 using D47.Core.Listening;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests.Listening;
@@ -8,24 +8,11 @@ namespace D47.Core.Tests.Listening;
 /// <summary>The names transcription is biased towards.</summary>
 public class ProperNounTests
 {
-    private static JournalEvent Event(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
-    private static CommanderGameState StateFrom(params string[] lines)
-    {
-        var store = new GameStateStore();
-        store.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
-
-        foreach (var line in lines)
-        {
-            store.Apply(Event(line));
-        }
-
-        return store.Active!;
-    }
+    private static CommanderGameState StateFrom(params string[] lines) => JournalScript.State(
+    [
+        """{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+        .. lines,
+    ]);
 
     /// <summary>No Commander at all is no list.</summary>
     [Fact]

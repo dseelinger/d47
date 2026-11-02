@@ -1,7 +1,7 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -13,37 +13,12 @@ public class ACompletedDssNamesTheCandidateSpeciesTests
     private const int BodyId = 23;
     private const string BodyName = "Fixture 3 b";
 
-    private static CalloutContext Context(CommanderGameState state, bool priming, params string[] lines) =>
-        new(
-            DateTimeOffset.UnixEpoch,
-            IsPriming: priming,
-            State: state,
-            Status: GameStatus.Unknown,
-            Route: NavRoute.None,
-            Events: [.. lines.Select(Parse)]);
-
-    private static CommanderGameState Commander(params string[] events)
-    {
-        var store = new GameStateStore();
-        store.Apply(Parse(
-            """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
-
-        store.Apply(Parse(
-            """{"timestamp":"2026-08-16T09:00:01Z","event":"Location","StarSystem":"Fixture","SystemAddress":1000200}"""));
-
-        foreach (var json in events)
-        {
-            store.Apply(Parse(json));
-        }
-
-        return store.Active!;
-    }
-
-    private static JournalEvent Parse(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
+    private static CommanderGameState Commander(params string[] events) => JournalScript.State(
+    [
+        """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+        """{"timestamp":"2026-08-16T09:00:01Z","event":"Location","StarSystem":"Fixture","SystemAddress":1000200}""",
+        .. events,
+    ]);
 
     private static string Signals(int biological) => $$"""
         {"timestamp":"2026-08-16T10:00:00Z","event":"FSSBodySignals","BodyName":"{{BodyName}}",
@@ -96,8 +71,8 @@ public class ACompletedDssNamesTheCandidateSpeciesTests
         var scan = Scan("10:01:00");
         var dss = Dss("10:02:00", "Stratum");
 
-        var first = Assert.Single(callout.Examine(Context(Commander(Signals(2), scan), false, scan)));
-        var second = Assert.Single(callout.Examine(Context(Commander(Signals(2), scan, dss), false, dss)));
+        var first = Assert.Single(callout.Examine(JournalScript.Context(Commander(Signals(2), scan), false, scan)));
+        var second = Assert.Single(callout.Examine(JournalScript.Context(Commander(Signals(2), scan, dss), false, dss)));
 
         Assert.Equal("3 b could hold up to 18.2 million in biology: Stratum, Bacterium.", first.Text);
         Assert.StartsWith("3 b could hold 1.4 million to 16.2 million in biology: ", second.Text);
@@ -112,10 +87,10 @@ public class ACompletedDssNamesTheCandidateSpeciesTests
         var dss = Dss("10:02:00", "Stratum");
         var detailed = Scan("10:03:00");
 
-        var said = Assert.Single(callout.Examine(Context(Commander(Signals(2), scan, dss), false, dss)));
+        var said = Assert.Single(callout.Examine(JournalScript.Context(Commander(Signals(2), scan, dss), false, dss)));
 
         Assert.StartsWith("3 b could hold 1.4 million to 16.2 million in biology: ", said.Text);
-        Assert.Empty(callout.Examine(Context(Commander(Signals(2), scan, dss, detailed), false, detailed)));
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(Signals(2), scan, dss, detailed), false, detailed)));
         Assert.True(callout.Named(SystemAddress, BodyId));
     }
 
@@ -127,8 +102,8 @@ public class ACompletedDssNamesTheCandidateSpeciesTests
         var dss = Dss("10:02:00", "Stratum");
         var again = Dss("10:09:00", "Stratum");
 
-        Assert.Single(callout.Examine(Context(Commander(Signals(2), scan, dss), false, dss)));
-        Assert.Empty(callout.Examine(Context(Commander(Signals(2), scan, dss, again), false, again)));
+        Assert.Single(callout.Examine(JournalScript.Context(Commander(Signals(2), scan, dss), false, dss)));
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(Signals(2), scan, dss, again), false, again)));
     }
 
     [Fact]
@@ -137,7 +112,7 @@ public class ACompletedDssNamesTheCandidateSpeciesTests
         var scan = Scan("10:01:00", gravity: 0.3, temperature: 180);
         var dss = Dss("10:02:00", "Stratum");
 
-        Assert.Empty(new BiologyCallout().Examine(Context(Commander(Signals(2), scan, dss), false, dss)));
+        Assert.Empty(new BiologyCallout().Examine(JournalScript.Context(Commander(Signals(2), scan, dss), false, dss)));
     }
 
     [Fact]
@@ -147,7 +122,7 @@ public class ACompletedDssNamesTheCandidateSpeciesTests
         var dss = Dss("10:02:00", "Stratum");
         var callout = new BiologyCallout { AlreadySaid = (_, _) => true };
 
-        Assert.Empty(callout.Examine(Context(Commander(Signals(2), scan, dss), false, dss)));
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(Signals(2), scan, dss), false, dss)));
     }
 
     [Fact]
@@ -157,8 +132,8 @@ public class ACompletedDssNamesTheCandidateSpeciesTests
         var dss = Dss("10:02:00", "Stratum");
         var callout = new BiologyCallout();
 
-        Assert.Empty(callout.Examine(Context(Commander(Signals(2), scan, dss), true, dss)));
-        Assert.Empty(callout.Examine(Context(Commander(Signals(2), scan, dss), false, scan)));
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(Signals(2), scan, dss), true, dss)));
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(Signals(2), scan, dss), false, scan)));
     }
 
     [Fact]

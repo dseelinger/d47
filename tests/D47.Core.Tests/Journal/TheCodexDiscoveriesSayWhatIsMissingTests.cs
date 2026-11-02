@@ -3,7 +3,6 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Journal;
@@ -35,18 +34,8 @@ public class TheCodexDiscoveriesSayWhatIsMissingTests
     private static string Position(int x, int z) =>
         Line("2026-10-02T10:00:00Z", "Location", "\"StarSystem\":\"Fixture\",\"StarPos\":[" + x + ",0," + z + "]");
 
-    private static GameStateStore Store(params string[] events)
-    {
-        var store = new GameStateStore();
-
-        foreach (var line in new[] { Commander, Line("2026-07-03T09:01:00Z", "LoadGame", "\"Credits\":1") }.Concat(events))
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        return store;
-    }
+    private static GameStateStore Store(params string[] events) =>
+        JournalScript.Store([Commander, Line("2026-07-03T09:01:00Z", "LoadGame", "\"Credits\":1"), .. events]);
 
     private static CodexLedger Ledger(params string[] events) => Store(events).Active!.CodexLedger;
 

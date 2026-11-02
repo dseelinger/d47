@@ -1,5 +1,6 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -13,34 +14,11 @@ public class HighValueBiologyIsSaidOnScanTests
     private const string System = "Fixture";
     private const string BodyName = "Fixture 3 b";
 
-    private static CalloutContext Context(CommanderGameState state, bool priming, params string[] lines) =>
-        new(
-            DateTimeOffset.UnixEpoch,
-            IsPriming: priming,
-            State: state,
-            Status: GameStatus.Unknown,
-            Route: NavRoute.None,
-            Events: [.. lines.Select(Parse)]);
-
-    private static CommanderGameState Commander(params string[] events)
-    {
-        var store = new GameStateStore();
-        store.Apply(Parse(
-            """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
-
-        foreach (var json in events)
-        {
-            store.Apply(Parse(json));
-        }
-
-        return store.Active!;
-    }
-
-    private static JournalEvent Parse(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
+    private static CommanderGameState Commander(params string[] events) => JournalScript.State(
+    [
+        """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+        .. events,
+    ]);
 
     private static string Signals(int biological) => $$"""
         {"timestamp":"2026-08-16T10:00:00Z","event":"FSSBodySignals","BodyName":"{{BodyName}}",
@@ -71,7 +49,7 @@ public class HighValueBiologyIsSaidOnScanTests
         var scan = Scan();
         var state = Commander(Signals(2), scan);
 
-        var said = Assert.Single(new BiologyCallout().Examine(Context(state, false, scan)));
+        var said = Assert.Single(new BiologyCallout().Examine(JournalScript.Context(state, false, scan)));
 
         Assert.Equal("3 b could hold up to 18.2 million in biology: Stratum, Bacterium.", said.Text);
     }
@@ -82,7 +60,7 @@ public class HighValueBiologyIsSaidOnScanTests
         var scan = Scan(gravity: 0.3, temperature: 180);
         var state = Commander(Signals(2), scan);
 
-        Assert.Empty(new BiologyCallout().Examine(Context(state, false, scan)));
+        Assert.Empty(new BiologyCallout().Examine(JournalScript.Context(state, false, scan)));
     }
 
     [Fact]
@@ -91,7 +69,7 @@ public class HighValueBiologyIsSaidOnScanTests
         var scan = Scan(landable: false);
         var state = Commander(Signals(2), scan);
 
-        Assert.Empty(new BiologyCallout().Examine(Context(state, false, scan)));
+        Assert.Empty(new BiologyCallout().Examine(JournalScript.Context(state, false, scan)));
     }
 
     [Fact]
@@ -100,7 +78,7 @@ public class HighValueBiologyIsSaidOnScanTests
         var scan = Scan();
         var state = Commander(scan);
 
-        Assert.Empty(new BiologyCallout().Examine(Context(state, false, scan)));
+        Assert.Empty(new BiologyCallout().Examine(JournalScript.Context(state, false, scan)));
     }
 
     [Fact]
@@ -110,12 +88,12 @@ public class HighValueBiologyIsSaidOnScanTests
         var scan = Scan();
         var state = Commander(Signals(2), scan);
 
-        Assert.Empty(callout.Examine(Context(state, true, scan)));
+        Assert.Empty(callout.Examine(JournalScript.Context(state, true, scan)));
 
         var rescan = Scan(at: "10:05:00");
         state = Commander(Signals(2), scan, rescan);
 
-        Assert.Empty(callout.Examine(Context(state, false, rescan)));
+        Assert.Empty(callout.Examine(JournalScript.Context(state, false, rescan)));
     }
 
     [Fact]
@@ -125,8 +103,8 @@ public class HighValueBiologyIsSaidOnScanTests
         var scan = Scan();
         var rescan = Scan(at: "10:05:00");
 
-        Assert.Single(callout.Examine(Context(Commander(Signals(2), scan), false, scan)));
-        Assert.Empty(callout.Examine(Context(Commander(Signals(2), scan, rescan), false, rescan)));
+        Assert.Single(callout.Examine(JournalScript.Context(Commander(Signals(2), scan), false, scan)));
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(Signals(2), scan, rescan), false, rescan)));
     }
 
     [Fact]
@@ -135,7 +113,7 @@ public class HighValueBiologyIsSaidOnScanTests
         var scan = Scan(at: "10:05:00");
         var state = Commander(Signals(2), Genera("Stratum"), scan);
 
-        var said = Assert.Single(new BiologyCallout().Examine(Context(state, false, scan)));
+        var said = Assert.Single(new BiologyCallout().Examine(JournalScript.Context(state, false, scan)));
 
         Assert.Equal("3 b could hold 1.4 million to 16.2 million in biology: Stratum.", said.Text);
     }
@@ -148,7 +126,7 @@ public class HighValueBiologyIsSaidOnScanTests
         var engine = new CalloutEngine(NullLogger<CalloutEngine>.Instance).Add(new BiologyCallout());
 
         engine.SetEnabled("biology", false);
-        engine.Tick(Context(state, false, scan));
+        engine.Tick(JournalScript.Context(state, false, scan));
 
         Assert.Empty(engine.Drain());
     }

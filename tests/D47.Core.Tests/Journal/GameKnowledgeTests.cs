@@ -10,24 +10,11 @@ namespace D47.Core.Tests.Journal;
 /// <summary>Phase 7, folded event by event.</summary>
 public class GameKnowledgeTests
 {
-    private static JournalEvent Event(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
-    private static CommanderGameState Fold(params string[] lines)
-    {
-        var store = new GameStateStore();
-        store.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
-
-        foreach (var line in lines)
-        {
-            store.Apply(Event(line));
-        }
-
-        return store.Active!;
-    }
+    private static CommanderGameState Fold(params string[] lines) => JournalScript.State(
+    [
+        """{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+        .. lines,
+    ]);
 
     // ---- Location and flight mode -------------------------------------------------------
 
@@ -207,7 +194,7 @@ public class GameKnowledgeTests
     [Fact]
     public void ARenameBeforeAnyLoadoutIsApplied()
     {
-        var ship = new ShipLoadout().Apply(Event(
+        var ship = new ShipLoadout().Apply(JournalScript.Parse(
             """{"timestamp":"3311-01-01T00:02:00Z","event":"SetUserShipName","Ship":"Anaconda","ShipID":7,"UserShipName":"Second Wind","UserShipID":"JM-02"}"""));
 
         Assert.False(ship.IsKnown);

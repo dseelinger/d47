@@ -3,6 +3,7 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -56,26 +57,12 @@ public class ExobiologyCapabilityTests
             Task.FromResult<TradeRoute?>(null);
     }
 
-    private static GameStateStore Store(params string[] lines)
-    {
-        var gameState = new GameStateStore();
-
-        gameState.Apply(Parse(
-            """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
-
-        foreach (var line in lines)
-        {
-            gameState.Apply(Parse(line));
-        }
-
-        return gameState;
-    }
-
-    private static JournalEvent Parse(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
+    private static GameStateStore Store(params string[] lines) =>
+        JournalScript.Store(
+        [
+            """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+            .. lines,
+        ]);
 
     private static Task<ToolResult> Ask(
         GameStateStore gameState,

@@ -14,20 +14,12 @@ namespace D47.Core.Tests.Journal;
 /// </summary>
 public class ColonisationCapabilityTests
 {
-    private static GameStateStore Store(params string[] lines)
-    {
-        var gameState = new GameStateStore();
-
-        gameState.Apply(Parse(
-            """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
-
-        foreach (var line in lines)
-        {
-            gameState.Apply(Parse(line));
-        }
-
-        return gameState;
-    }
+    private static GameStateStore Store(params string[] lines) =>
+        JournalScript.Store(
+        [
+            """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+            .. lines,
+        ]);
 
     /// <summary>
     /// The same, but through a real <see cref="JournalSpine"/> over a folder holding a real
@@ -55,12 +47,6 @@ public class ColonisationCapabilityTests
         new JournalSpine(root, files, gameState, NullLoggerFactory.Instance).Poll();
 
         return gameState;
-    }
-
-    private static JournalEvent Parse(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
     }
 
     private static Task<ToolResult> Ask(GameStateStore gameState, string tool, string json = "{}") =>

@@ -1,6 +1,7 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Tests.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -17,32 +18,14 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
 
     private static readonly int Here = GalacticRegions.IdOf(GalacticRegions.Find(StarPosition.Origin)!)!.Value;
 
-    private static JournalEvent Parse(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
-    private static CalloutContext Context(CommanderGameState state, bool priming, params string[] lines) =>
-        new(
-            DateTimeOffset.UnixEpoch,
-            IsPriming: priming,
-            State: state,
-            Status: GameStatus.Unknown,
-            Route: NavRoute.None,
-            Events: [.. lines.Select(Parse)]);
-
     private static CommanderGameState Commander(bool whole, params string[] events)
     {
-        var store = new GameStateStore();
-        store.Apply(Parse("""{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
-        store.Apply(Parse(
-            """{"timestamp":"2026-08-16T09:00:01Z","event":"Location","StarSystem":"Fixture","SystemAddress":1000300,"StarPos":[0,0,0]}"""));
-
-        foreach (var json in events)
-        {
-            store.Apply(Parse(json));
-        }
+        var store = JournalScript.Store(
+        [
+            """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+            """{"timestamp":"2026-08-16T09:00:01Z","event":"Location","StarSystem":"Fixture","SystemAddress":1000300,"StarPos":[0,0,0]}""",
+            .. events,
+        ]);
 
         var state = store.Active!;
         state.CodexLedger = state.CodexLedger with { IsWhole = whole };
@@ -74,7 +57,7 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
         var scan = Scan();
         var state = Commander(true, Signals(1), scan);
 
-        var said = Assert.Single(new GeologyCallout().Examine(Context(state, false, scan)));
+        var said = Assert.Single(new GeologyCallout().Examine(JournalScript.Context(state, false, scan)));
 
         Assert.Equal(
             "B 3 could have water ice fumaroles or water ice geysers, not in your codex for this region.",
@@ -87,7 +70,7 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
         var scan = Scan();
         var state = Commander(true, Logged(WaterIceGeyser, Here), Signals(1), scan);
 
-        var said = Assert.Single(new GeologyCallout().Examine(Context(state, false, scan)));
+        var said = Assert.Single(new GeologyCallout().Examine(JournalScript.Context(state, false, scan)));
 
         Assert.Equal("B 3 could have water ice fumaroles, not in your codex for this region.", said.Text);
     }
@@ -98,7 +81,7 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
         var scan = Scan();
         var state = Commander(true, Logged(WaterIceFumarole, Here), Logged(WaterIceGeyser, Here), Signals(1), scan);
 
-        Assert.Empty(new GeologyCallout().Examine(Context(state, false, scan)));
+        Assert.Empty(new GeologyCallout().Examine(JournalScript.Context(state, false, scan)));
     }
 
     [Fact]
@@ -107,7 +90,7 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
         var scan = Scan();
         var state = Commander(true, Logged(WaterIceFumarole, Here + 1), Logged(WaterIceGeyser, Here + 1), Signals(1), scan);
 
-        var said = Assert.Single(new GeologyCallout().Examine(Context(state, false, scan)));
+        var said = Assert.Single(new GeologyCallout().Examine(JournalScript.Context(state, false, scan)));
 
         Assert.Contains("water ice fumaroles or water ice geysers", said.Text);
     }
@@ -119,11 +102,11 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
         var callout = new GeologyCallout();
         var partial = Commander(false, Signals(1), scan);
 
-        Assert.Empty(callout.Examine(Context(partial, false, scan)));
+        Assert.Empty(callout.Examine(JournalScript.Context(partial, false, scan)));
 
         var whole = Commander(true, Signals(1), scan);
 
-        Assert.Single(callout.Examine(Context(whole, false, scan)));
+        Assert.Single(callout.Examine(JournalScript.Context(whole, false, scan)));
     }
 
     [Fact]
@@ -134,8 +117,8 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
         var state = Commander(true, scan, signals);
         var callout = new GeologyCallout();
 
-        Assert.Empty(callout.Examine(Context(Commander(true, scan), false, scan)));
-        Assert.Single(callout.Examine(Context(state, false, signals)));
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(true, scan), false, scan)));
+        Assert.Single(callout.Examine(JournalScript.Context(state, false, signals)));
     }
 
     [Fact]
@@ -145,8 +128,8 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
         var state = Commander(true, Signals(1), scan);
         var callout = new GeologyCallout();
 
-        Assert.Empty(callout.Examine(Context(state, true, scan)));
-        Assert.Empty(callout.Examine(Context(state, false, scan)));
+        Assert.Empty(callout.Examine(JournalScript.Context(state, true, scan)));
+        Assert.Empty(callout.Examine(JournalScript.Context(state, false, scan)));
     }
 
     [Fact]
@@ -154,7 +137,7 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
     {
         var scan = Scan(landable: false);
 
-        Assert.Empty(new GeologyCallout().Examine(Context(Commander(true, Signals(1), scan), false, scan)));
+        Assert.Empty(new GeologyCallout().Examine(JournalScript.Context(Commander(true, Signals(1), scan), false, scan)));
     }
 
     [Fact]
@@ -162,7 +145,7 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
     {
         var scan = Scan();
 
-        Assert.Empty(new GeologyCallout().Examine(Context(Commander(true, Signals(0), scan), false, scan)));
+        Assert.Empty(new GeologyCallout().Examine(JournalScript.Context(Commander(true, Signals(0), scan), false, scan)));
     }
 
     [Fact]
@@ -170,7 +153,7 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
     {
         var scan = Scan(planetClass: "Gas giant", volcanism: "");
 
-        Assert.Empty(new GeologyCallout().Examine(Context(Commander(true, Signals(1), scan), false, scan)));
+        Assert.Empty(new GeologyCallout().Examine(JournalScript.Context(Commander(true, Signals(1), scan), false, scan)));
     }
 
     [Fact]
@@ -180,8 +163,8 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
         var state = Commander(true, Signals(1), scan);
         var callout = new GeologyCallout();
 
-        Assert.Single(callout.Examine(Context(state, false, scan)));
-        Assert.Empty(callout.Examine(Context(state, false, scan)));
+        Assert.Single(callout.Examine(JournalScript.Context(state, false, scan)));
+        Assert.Empty(callout.Examine(JournalScript.Context(state, false, scan)));
     }
 
     [Fact]
@@ -190,7 +173,7 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
         var scan = Scan(planetClass: "Rocky body", volcanism: "minor rocky magma volcanism");
         var state = Commander(true, Signals(1), scan);
 
-        var said = Assert.Single(new GeologyCallout().Examine(Context(state, false, scan)));
+        var said = Assert.Single(new GeologyCallout().Examine(JournalScript.Context(state, false, scan)));
 
         Assert.Equal(
             "B 3 could have sulphur dioxide fumaroles, silicate magma lava spouts, sulphur dioxide gas vents and one more, not in your codex for this region.",
@@ -204,7 +187,7 @@ public class GeologyMissingFromTheCodexIsSaidOnScanTests
         engine.SetEnabled("geology", false, DateTimeOffset.UnixEpoch);
         var scan = Scan();
 
-        engine.Tick(Context(Commander(true, Signals(1), scan), false, scan));
+        engine.Tick(JournalScript.Context(Commander(true, Signals(1), scan), false, scan));
 
         Assert.Empty(engine.Drain());
     }

@@ -1,8 +1,8 @@
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Loadout;
 using D47.Core.Ships;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Loadout;
@@ -10,33 +10,20 @@ namespace D47.Core.Tests.Loadout;
 /// <summary>The gap between every plan and what the Commander is carrying.</summary>
 public class PlanGapTests
 {
-    private static JournalEvent Event(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json.ReplaceLineEndings(" "), NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
     /// <summary>
     /// A Commander flying a Python, rank 5 with Farseer, holding some iron and on foot in a grade 3
     /// Maverick with nothing in the locker.
     /// </summary>
     private static CommanderGameState State()
     {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":5}]}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0}]}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Materials","Raw":[{"Name":"iron","Count":300},{"Name":"sulphur","Count":2}],"Manufactured":[],"Encoded":[]}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"SuitLoadout","SuitID":7,"SuitName":"utilitysuit_class3","LoadoutName":"Ground","SuitMods":[],"Modules":[]}""",
-                 })
-        {
-            store.Apply(Event(line));
-        }
-
-        return store.Active!;
+        return JournalScript.State(
+        [
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":5}]}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0}]}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Materials","Raw":[{"Name":"iron","Count":300},{"Name":"sulphur","Count":2}],"Manufactured":[],"Encoded":[]}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"SuitLoadout","SuitID":7,"SuitName":"utilitysuit_class3","LoadoutName":"Ground","SuitMods":[],"Modules":[]}""",
+        ]);
     }
 
     private static ShipBuild Ship(int? shipId = 12) =>
@@ -194,17 +181,12 @@ public class PlanGapTests
     [Fact]
     public void ARankGateIsCostedAtTheWorstCaseAndNamed()
     {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":2}]}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[]}""",
-                 })
-        {
-            store.Apply(Event(line));
-        }
+        var store = JournalScript.Store(
+        [
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":2}]}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[]}""",
+        ]);
 
         var report = PlanGap.Of([Ship()], [], store.Active);
 
@@ -219,16 +201,11 @@ public class PlanGapTests
     [Fact]
     public void TheSameGateOnTwoShipsCountsTwiceAndNamesEachShip()
     {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":2}]}""",
-                 })
-        {
-            store.Apply(Event(line));
-        }
+        var store = JournalScript.Store(
+        [
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":2}]}""",
+        ]);
 
         var first = Ship();
         var second = Ship() with { Id = "ship-2", ShipId = 13, Name = "Second Ship" };

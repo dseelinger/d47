@@ -1,9 +1,8 @@
-using System.Text.Json;
 using D47.Core.Callouts;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests;
@@ -12,18 +11,8 @@ public class PlotTheRedirectedHandInTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
 
-    private static JournalEvent Event(string kind, params (string Key, object Value)[] fields)
-    {
-        var payload = new Dictionary<string, object> { ["timestamp"] = "2026-09-30T12:00:00Z", ["event"] = kind };
-
-        foreach (var (key, value) in fields)
-        {
-            payload[key] = value;
-        }
-
-        Assert.True(JournalEvent.TryParse(JsonSerializer.Serialize(payload), NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
+    private static JournalEvent Event(string kind, params (string Key, object? Value)[] fields) =>
+        JournalScript.EventOf(kind, "2026-09-30T12:00:00Z", fields);
 
     private static JournalEvent Accept(long id) =>
         Event("MissionAccepted", ("MissionID", id), ("Name", "Mission_Courier"), ("LocalisedName", $"Courier {id}"),
@@ -34,17 +23,8 @@ public class PlotTheRedirectedHandInTests
         Event("MissionRedirected", ("MissionID", id), ("LocalisedName", $"Courier {id}"),
             ("NewDestinationStation", station), ("NewDestinationSystem", system));
 
-    private static CommanderGameState Commander(params JournalEvent[] events)
-    {
-        var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
-
-        foreach (var journalEvent in events)
-        {
-            state.Apply(journalEvent);
-        }
-
-        return state;
-    }
+    private static CommanderGameState Commander(params JournalEvent[] events) =>
+        JournalScript.Commander("F1", "Fixture", events);
 
     private static List<Announcement> Run(MissionCallout callout, CommanderGameState state, params JournalEvent[] events) =>
         [.. callout.Examine(new CalloutContext(Now, false, state, GameStatus.Unknown, NavRoute.None, events))];

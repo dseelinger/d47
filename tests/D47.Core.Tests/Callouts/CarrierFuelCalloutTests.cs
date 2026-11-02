@@ -1,11 +1,10 @@
-using System.Text.Json;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Journal;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -17,25 +16,8 @@ public class CarrierFuelCalloutTests
 
     private static readonly DateTimeOffset Noon = new(2026, 9, 5, 12, 0, 0, TimeSpan.Zero);
 
-    private static JournalEvent Event(string kind, DateTimeOffset at, params (string Key, object? Value)[] fields)
-    {
-        var payload = new Dictionary<string, object?>
-        {
-            ["timestamp"] = at.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-            ["event"] = kind,
-        };
-
-        foreach (var (key, value) in fields)
-        {
-            payload[key] = value;
-        }
-
-        Assert.True(JournalEvent.TryParse(JsonSerializer.Serialize(payload), NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
     private static JournalEvent Stats(int fuel, string type = "FleetCarrier", string callsign = CallSign, double max = 500, int free = 8_946) =>
-        Event(
+        JournalScript.EventOf(
             "CarrierStats",
             Noon,
             ("CarrierType", type),
@@ -47,7 +29,7 @@ public class CarrierFuelCalloutTests
             ("SpaceUsage", new Dictionary<string, int> { ["TotalCapacity"] = 17_000, ["FreeSpace"] = free }));
 
     private static JournalEvent Dock(string station = CallSign, DateTimeOffset? at = null, long market = 3700000000L) =>
-        Event(
+        JournalScript.EventOf(
             "Docked",
             at ?? Noon.AddMinutes(1),
             ("StationName", station),
@@ -55,19 +37,10 @@ public class CarrierFuelCalloutTests
             ("MarketID", market));
 
     private static JournalEvent Request(DateTimeOffset? at = null) =>
-        Event("CarrierJumpRequest", at ?? Noon.AddMinutes(1), ("CarrierID", 3700000000L), ("SystemName", "Sol"));
+        JournalScript.EventOf("CarrierJumpRequest", at ?? Noon.AddMinutes(1), ("CarrierID", 3700000000L), ("SystemName", "Sol"));
 
-    private static CommanderGameState State(params JournalEvent[] events)
-    {
-        var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
-
-        foreach (var journalEvent in events)
-        {
-            state.Apply(journalEvent);
-        }
-
-        return state;
-    }
+    private static CommanderGameState State(params JournalEvent[] events) =>
+        JournalScript.Commander("F1", "Fixture", events);
 
     private static CalloutContext Context(CommanderGameState state, bool priming, params JournalEvent[] events) =>
         new(Noon, priming, state, GameStatus.Unknown, NavRoute.None, events);
@@ -124,7 +97,7 @@ public class CarrierFuelCalloutTests
         var state = State(Stats(150, free: 17_000 - 8_054), request);
 
         Assert.Single(Say(callout, state, request));
-        Assert.Single(Say(callout, state, Event("LoadGame", Noon.AddMinutes(3)), Request(Noon.AddMinutes(4))));
+        Assert.Single(Say(callout, state, JournalScript.EventOf("LoadGame", Noon.AddMinutes(3)), Request(Noon.AddMinutes(4))));
     }
 
     [Fact]
@@ -133,7 +106,7 @@ public class CarrierFuelCalloutTests
         var request = Request();
         var state = State(
             Stats(150, free: 17_000 - 8_054),
-            Event("CarrierDepositFuel", Noon, ("Total", 400)),
+            JournalScript.EventOf("CarrierDepositFuel", Noon, ("Total", 400)),
             request);
 
         Assert.Empty(Say(new CarrierFuelCallout(), state, request));
@@ -160,7 +133,7 @@ public class CarrierFuelCalloutTests
     [Fact]
     public void ACarrierThatMovedSinceTheReadingSaysTheFigureIsOldAndHowOld()
     {
-        var move = Event("CarrierJump", Noon.AddMinutes(30), ("StarSystem", "Sol"), ("CarrierID", 3700000000L));
+        var move = JournalScript.EventOf("CarrierJump", Noon.AddMinutes(30), ("StarSystem", "Sol"), ("CarrierID", 3700000000L));
         var dock = Dock(at: Noon.AddHours(2));
         var state = State(Stats(150, free: 17_000 - 8_054), move, dock);
 

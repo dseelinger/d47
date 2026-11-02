@@ -1,6 +1,6 @@
-using System.Text.Json;
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using D47.Core.Knowledge;
 using Xunit;
 
@@ -30,18 +30,8 @@ public class ATripThatOutlastsTheExpiryIsFlaggedTests
         public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
-    private static JournalEvent Event(string kind, params (string Key, object? Value)[] fields)
-    {
-        var payload = new Dictionary<string, object?> { ["timestamp"] = "2026-09-30T12:00:00Z", ["event"] = kind };
-
-        foreach (var (key, value) in fields)
-        {
-            payload[key] = value;
-        }
-
-        Assert.True(JournalEvent.TryParse(JsonSerializer.Serialize(payload), Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
+    private static JournalEvent Event(string kind, params (string Key, object? Value)[] fields) =>
+        JournalScript.EventOf(kind, "2026-09-30T12:00:00Z", fields);
 
     private static JournalEvent Accept(TimeSpan left) =>
         Event("MissionAccepted",
@@ -51,14 +41,11 @@ public class ATripThatOutlastsTheExpiryIsFlaggedTests
             ("DestinationSystem", "Wadjuk"),
             ("Expiry", (Start + left).UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ")));
 
-    private static CommanderGameState Commander(JournalEvent accept)
-    {
-        var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
-        state.Apply(Event("Loadout", ("Ship", "python"), ("ShipID", 1), ("MaxJumpRange", 10.0)));
-        state.Apply(Event("Location", ("StarSystem", "Sol")));
-        state.Apply(accept);
-        return state;
-    }
+    private static CommanderGameState Commander(JournalEvent accept) =>
+        JournalScript.Commander(
+            "F1",
+            "Fixture",
+            [Event("Loadout", ("Ship", "python"), ("ShipID", 1), ("MaxJumpRange", 10.0)), Event("Location", ("StarSystem", "Sol")), accept]);
 
     private static (MissionCallout Callout, List<Func<Task>> Dispatched) Build(double? distance, Task? hold = null, bool searchOn = true)
     {

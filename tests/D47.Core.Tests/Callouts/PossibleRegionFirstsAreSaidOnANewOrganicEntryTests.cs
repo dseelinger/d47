@@ -1,7 +1,7 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -18,12 +18,6 @@ public class PossibleRegionFirstsAreSaidOnANewOrganicEntryTests
         + "2100102\tFonticulua Fluctus - Lime\tBiology\tOrganic\t3:2\n"
         + "2100104\tNo Regions\tBiology\tOrganic\t\n");
 
-    private static JournalEvent Parse(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
     private static string Entry(
         long id,
         string stamp = "2026-08-16T10:00:00Z",
@@ -36,13 +30,11 @@ public class PossibleRegionFirstsAreSaidOnANewOrganicEntryTests
 
     private static CommanderGameState Commander(bool whole, params string[] events)
     {
-        var store = new GameStateStore();
-        store.Apply(Parse("""{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
-
-        foreach (var json in events)
-        {
-            store.Apply(Parse(json));
-        }
+        var store = JournalScript.Store(
+        [
+            """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+            .. events,
+        ]);
 
         var state = store.Active!;
         state.CodexLedger = state.CodexLedger with { IsWhole = whole };
@@ -59,7 +51,7 @@ public class PossibleRegionFirstsAreSaidOnANewOrganicEntryTests
                 State: state,
                 Status: GameStatus.Unknown,
                 Route: NavRoute.None,
-                Events: [.. lines.Select(Parse)])),
+                Events: [.. lines.Select(JournalScript.Parse)])),
         ];
 
     private static RegionFirstCallout Callout() => new() { Table = () => Table };

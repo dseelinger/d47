@@ -1,8 +1,8 @@
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using D47.Core.Knowledge;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Knowledge;
@@ -12,18 +12,8 @@ public class APowerplayModuleNamesItsUnlockRankTests
 {
     private const string Gate = "It needs a Powerplay pledge.";
 
-    private static CommanderGameState Commander(params string[] lines)
-    {
-        var state = new CommanderGameState(new CommanderIdentity("F123", "Jameson"));
-
-        foreach (var line in lines)
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            state.Apply(parsed!);
-        }
-
-        return state;
-    }
+    private static CommanderGameState Commander(params string[] lines) =>
+        JournalScript.Commander("F123", "Jameson", lines);
 
     private static string Powerplay(string power, int rank, long merits) =>
         $$"""{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"{{power}}","Rank":{{rank}},"Merits":{{merits}}}""";

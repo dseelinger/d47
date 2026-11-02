@@ -2,6 +2,7 @@ using D47.Core.Callouts;
 using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Tests.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -86,34 +87,11 @@ public class SurveyedBiologyIsSaidOnArrivalTests
         dispatched.Clear();
     }
 
-    private static CalloutContext Context(CommanderGameState state, bool priming, params string[] lines) =>
-        new(
-            DateTimeOffset.UnixEpoch,
-            IsPriming: priming,
-            State: state,
-            Status: GameStatus.Unknown,
-            Route: NavRoute.None,
-            Events: [.. lines.Select(Parse)]);
-
-    private static CommanderGameState Commander(params string[] events)
-    {
-        var store = new GameStateStore();
-        store.Apply(Parse(
-            """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
-
-        foreach (var json in events)
-        {
-            store.Apply(Parse(json));
-        }
-
-        return store.Active!;
-    }
-
-    private static JournalEvent Parse(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
+    private static CommanderGameState Commander(params string[] events) => JournalScript.State(
+    [
+        """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+        .. events,
+    ]);
 
     private static string Jump(long address, string system, string at = "10:00:00") => $$"""
         {"timestamp":"2026-08-16T{{at}}Z","event":"FSDJump","StarSystem":"{{system}}","SystemAddress":{{address}}}
@@ -140,12 +118,12 @@ public class SurveyedBiologyIsSaidOnArrivalTests
         var jump = Jump(Here, System);
         var state = Commander(jump);
 
-        Assert.Empty(callout.Examine(Context(state, false, jump)));
+        Assert.Empty(callout.Examine(JournalScript.Context(state, false, jump)));
         await RunDispatched(dispatched);
 
         Assert.Equal(Here, Assert.Single(galaxy.Asked));
 
-        var said = Assert.Single(callout.Examine(Context(state, false)));
+        var said = Assert.Single(callout.Examine(JournalScript.Context(state, false)));
 
         Assert.Equal("Commanders have surveyed biology here: 3 b at 15 million, 3 c at 12 million.", said.Text);
     }
@@ -158,10 +136,10 @@ public class SurveyedBiologyIsSaidOnArrivalTests
         var jump = Jump(Here, System);
         var state = Commander(jump);
 
-        Assert.Empty(callout.Examine(Context(state, false, jump)));
+        Assert.Empty(callout.Examine(JournalScript.Context(state, false, jump)));
         await RunDispatched(dispatched);
 
-        Assert.Empty(callout.Examine(Context(state, false)));
+        Assert.Empty(callout.Examine(JournalScript.Context(state, false)));
     }
 
     [Fact]
@@ -170,7 +148,7 @@ public class SurveyedBiologyIsSaidOnArrivalTests
         var (callout, galaxy, dispatched) = Build(galaxySearch: false);
         var jump = Jump(Here, System);
 
-        Assert.Empty(callout.Examine(Context(Commander(jump), false, jump)));
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(jump), false, jump)));
 
         Assert.Empty(dispatched);
         Assert.Empty(galaxy.Asked);
@@ -182,7 +160,7 @@ public class SurveyedBiologyIsSaidOnArrivalTests
         var (callout, _, dispatched) = Build();
         var jump = Jump(Here, System);
 
-        Assert.Empty(callout.Examine(Context(Commander(jump), true, jump)));
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(jump), true, jump)));
 
         Assert.Empty(dispatched);
     }
@@ -195,7 +173,7 @@ public class SurveyedBiologyIsSaidOnArrivalTests
         var jump = Jump(Here, System);
 
         engine.SetEnabled("surveyed-biology", false);
-        engine.Tick(Context(Commander(jump), false, jump));
+        engine.Tick(JournalScript.Context(Commander(jump), false, jump));
 
         Assert.Empty(dispatched);
     }
@@ -207,14 +185,14 @@ public class SurveyedBiologyIsSaidOnArrivalTests
         var first = Jump(Here, System);
         var second = Jump(Elsewhere, "Elsewhere", at: "10:01:00");
 
-        Assert.Empty(callout.Examine(Context(Commander(first), false, first)));
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(first), false, first)));
 
         var moved = Commander(first, second);
 
-        Assert.Empty(callout.Examine(Context(moved, false, second)));
+        Assert.Empty(callout.Examine(JournalScript.Context(moved, false, second)));
         await RunDispatched(dispatched);
 
-        Assert.Empty(callout.Examine(Context(moved, false)));
+        Assert.Empty(callout.Examine(JournalScript.Context(moved, false)));
     }
 
     [Fact]
@@ -224,10 +202,10 @@ public class SurveyedBiologyIsSaidOnArrivalTests
         var jump = Jump(Here, System);
         var state = Commander(jump);
 
-        Assert.Empty(callout.Examine(Context(state, false, jump)));
+        Assert.Empty(callout.Examine(JournalScript.Context(state, false, jump)));
         await RunDispatched(dispatched);
 
-        Assert.Empty(callout.Examine(Context(state, false)));
+        Assert.Empty(callout.Examine(JournalScript.Context(state, false)));
     }
 
     [Fact]
@@ -236,15 +214,15 @@ public class SurveyedBiologyIsSaidOnArrivalTests
         var (callout, _, dispatched) = Build();
         var jump = Jump(Here, System);
 
-        Assert.Empty(callout.Examine(Context(Commander(jump), false, jump)));
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(jump), false, jump)));
         await RunDispatched(dispatched);
-        Assert.Single(callout.Examine(Context(Commander(jump), false)));
+        Assert.Single(callout.Examine(JournalScript.Context(Commander(jump), false)));
 
         var scan = Scan();
         var scanned = Commander(jump, Signals(), scan);
 
-        Assert.Single(new BiologyCallout().Examine(Context(scanned, false, scan)));
-        Assert.Empty(new BiologyCallout { AlreadySaid = callout.Reported }.Examine(Context(scanned, false, scan)));
+        Assert.Single(new BiologyCallout().Examine(JournalScript.Context(scanned, false, scan)));
+        Assert.Empty(new BiologyCallout { AlreadySaid = callout.Reported }.Examine(JournalScript.Context(scanned, false, scan)));
     }
 
     [Fact]
@@ -255,15 +233,15 @@ public class SurveyedBiologyIsSaidOnArrivalTests
         callout.AlreadySaid = biology.Named;
         var jump = Jump(Here, System);
 
-        Assert.Empty(callout.Examine(Context(Commander(jump), false, jump)));
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(jump), false, jump)));
 
         var scan = Scan();
         var scanned = Commander(jump, Signals(), scan);
 
-        Assert.Single(biology.Examine(Context(scanned, false, scan)));
+        Assert.Single(biology.Examine(JournalScript.Context(scanned, false, scan)));
         await RunDispatched(dispatched);
 
-        var said = Assert.Single(callout.Examine(Context(scanned, false)));
+        var said = Assert.Single(callout.Examine(JournalScript.Context(scanned, false)));
 
         Assert.Equal("Commanders have surveyed biology here: 3 c at 12 million.", said.Text);
     }

@@ -3,7 +3,7 @@ using D47.Core.Callouts;
 using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -18,12 +18,6 @@ public class PowerplayMeritsTests
     private const string Quiet = ",\"PowerplayStateReinforcement\":801,\"PowerplayStateUndermining\":0";
     private const string Undermined = ",\"PowerplayStateReinforcement\":801,\"PowerplayStateUndermining\":6977";
 
-    private static JournalEvent Event(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
     private static string Jump(string system, string power, string state, string counts = "") =>
         "{\"timestamp\":\"3311-01-01T00:01:00Z\",\"event\":\"FSDJump\",\"StarSystem\":\"" + system
         + "\",\"ControllingPower\":\"" + power + "\",\"PowerplayState\":\"" + state + "\"" + counts + "}";
@@ -32,18 +26,11 @@ public class PowerplayMeritsTests
         "{\"timestamp\":\"3311-01-01T00:02:00Z\",\"event\":\"SupercruiseExit\",\"StarSystem\":\"" + system
         + "\",\"Body\":\"" + system + " 1\"}";
 
-    private static CommanderGameState StateFrom(params string[] lines)
-    {
-        var store = new GameStateStore();
-        store.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
-
-        foreach (var line in lines)
-        {
-            store.Apply(Event(line));
-        }
-
-        return store.Active!;
-    }
+    private static CommanderGameState StateFrom(params string[] lines) => JournalScript.State(
+    [
+        """{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+        .. lines,
+    ]);
 
     private static CalloutContext Context(CommanderGameState state, bool priming = false) =>
         new(Start, priming, state, GameStatus.Unknown, NavRoute.None, []);

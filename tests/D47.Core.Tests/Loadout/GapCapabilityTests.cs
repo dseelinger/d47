@@ -3,6 +3,7 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Checklists;
 using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Core.Tests.Journal;
 using D47.Core.Loadout;
 using D47.Core.Ships;
 using D47.Core.Storage;
@@ -14,12 +15,6 @@ namespace D47.Core.Tests.Loadout;
 /// <summary>The opening sentence of "what do my plans still need" (#303).</summary>
 public class GapCapabilityTests
 {
-    private static JournalEvent Event(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json.ReplaceLineEndings(" "), NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
-
     private static ChecklistService Checklists(MemoryInstall install) =>
         new(
             new ChecklistStore(
@@ -34,20 +29,13 @@ public class GapCapabilityTests
 
     private static CommanderGameState State()
     {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":5}]}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0}]}""",
-                     """{"timestamp":"2026-08-18T09:00:00Z","event":"Materials","Raw":[],"Manufactured":[],"Encoded":[]}""",
-                 })
-        {
-            store.Apply(Event(line));
-        }
-
-        return store.Active!;
+        return JournalScript.State(
+        [
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":5}]}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0}]}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Materials","Raw":[],"Manufactured":[],"Encoded":[]}""",
+        ]);
     }
 
     private static async Task<string> Say(MemoryInstall install, bool secondShip = false)

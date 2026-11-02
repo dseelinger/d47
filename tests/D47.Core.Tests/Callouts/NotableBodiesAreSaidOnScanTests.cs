@@ -1,7 +1,7 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Tests.Journal;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -9,12 +9,6 @@ namespace D47.Core.Tests.Callouts;
 public class NotableBodiesAreSaidOnScanTests
 {
     private const long SystemAddress = 1_000_100;
-
-    private static JournalEvent Parse(string json)
-    {
-        Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
-        return parsed!;
-    }
 
     private static string Scan(int id, string name, string extra, string scanType = "Detailed") => $$"""
         {"timestamp":"3311-04-02T09:00:00Z","event":"Scan","ScanType":"{{scanType}}","SystemAddress":{{SystemAddress}},
@@ -39,22 +33,15 @@ public class NotableBodiesAreSaidOnScanTests
         ,"Landable":true,"Atmosphere":"thin argon atmosphere"
         """);
 
-    private static CommanderGameState Commander(params string[] events)
-    {
-        var store = new GameStateStore();
-        store.Apply(Parse("""{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}"""));
-
-        foreach (var json in events)
-        {
-            store.Apply(Parse(json));
-        }
-
-        return store.Active!;
-    }
+    private static CommanderGameState Commander(params string[] events) => JournalScript.State(
+    [
+        """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+        .. events,
+    ]);
 
     private static List<string> Said(NotableBodyCallout callout, CommanderGameState state, string last, bool priming = false) =>
         [.. callout.Examine(new CalloutContext(
-                DateTimeOffset.UnixEpoch, priming, state, GameStatus.Unknown, NavRoute.None, [Parse(last)]))
+                DateTimeOffset.UnixEpoch, priming, state, GameStatus.Unknown, NavRoute.None, [JournalScript.Parse(last)]))
             .Select(announcement => announcement.Text)];
 
     [Fact]

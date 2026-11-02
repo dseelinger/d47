@@ -2,7 +2,6 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Journal;
@@ -25,18 +24,8 @@ public class TheCreditLedgerAnswerSaysWhereMoneyWentTests
 
     private static string Explore(string time, long total) => Line(time, "SellExplorationData", "\"TotalEarnings\":" + total);
 
-    private static GameStateStore Store(params string[] events)
-    {
-        var store = new GameStateStore();
-
-        foreach (var line in new[] { Commander, Login("2026-09-01T09:01:00Z", 1_000_000_000) }.Concat(events))
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
-            store.Apply(parsed!);
-        }
-
-        return store;
-    }
+    private static GameStateStore Store(params string[] events) =>
+        JournalScript.Store([Commander, Login("2026-09-01T09:01:00Z", 1_000_000_000), .. events]);
 
     private static async Task<string> Ask(
         GameStateStore store, string? json = null, HistoryState history = HistoryState.Done)
