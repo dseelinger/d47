@@ -35,17 +35,9 @@ internal static class NotForMeGroupFixture
     {
         var paths = new AppPaths(TestSurface.MemoryFolder(folder));
 
-        var checklists = TestSurface.Checklists(paths.Data);
+        var bench = PlanBench.Over(paths.Data, () => null);
 
-        var builds = new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
-        var kit = new D47.Core.Loadout.OnFootBuildStore(
-            Path.Combine(paths.Data, "on-foot.json"), new MemoryFileSystem(), NullLogger<D47.Core.Loadout.OnFootBuildStore>.Instance);
-
-        return new Ships(
-            new ShipPlanService(builds, checklists, () => null),
-            checklists,
-            new D47.Core.Engineers.EngineerPlanService(builds, kit, checklists, () => null),
-            new D47.Core.Loadout.OnFootPlanService(kit, checklists, () => null));
+        return new Ships(bench.Ships, bench.Checklists, bench.Unlocks, bench.OnFoot);
     }
 
     /// <summary>The Stories surface for a one-chapter story; a ship objective reads <paramref name="fleet"/> or else the plans.</summary>

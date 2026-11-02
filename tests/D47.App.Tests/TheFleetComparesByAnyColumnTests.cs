@@ -66,10 +66,7 @@ public class TheFleetComparesByAnyColumnTests
     {
         CommanderGameState? State() => store.Active;
 
-        var checklists = TestSurface.Checklists(root, State);
-        var ships = TestSurface.ShipPlans(checklists, root, State);
-        var kit = new OnFootPlanService(
-            new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance), checklists, State);
+        var (checklists, _, _, ships, kit, _) = PlanBench.Over(root, State);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableLoadout(ships, checklists, State, kit);

@@ -36,15 +36,7 @@ public class OnFootLoadoutTabTests
 
         var state = onFoot ? OnFoot() : null;
 
-        var checklists = TestSurface.Checklists(root, () => state);
-
-        var ships = TestSurface.ShipPlans(checklists, root, () => state);
-
-        var kit = new OnFootPlanService(
-            new OnFootBuildStore(
-                Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance),
-            checklists,
-            () => state);
+        var (checklists, _, _, ships, kit, _) = PlanBench.Over(root, () => state);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
@@ -66,14 +58,7 @@ public class OnFootLoadoutTabTests
 
         var state = OnFoot();
 
-        var checklists = TestSurface.Checklists(root, () => state);
-
-        var shipStore = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
-        var onFootStore = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
-
-        var ships = new ShipPlanService(shipStore, checklists, () => state);
-        var kit = new OnFootPlanService(onFootStore, checklists, () => state);
-        var unlocks = new EngineerPlanService(shipStore, onFootStore, checklists, () => state);
+        var (checklists, _, _, ships, kit, unlocks) = PlanBench.Over(root, () => state);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 

@@ -63,16 +63,12 @@ public class HelpInTheHeadsetTests
         var root = TempFolders.Create("d47-help-in-vr");
         var state = State();
 
-        var checklists = TestSurface.Checklists(root, () => state);
+        var bench = PlanBench.Over(root, () => state);
 
-        var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
-
-        builds.Save([
+        bench.Builds.Save([
             new ShipBuild("F1", "ship-1", "python", 12, "Bad Idea",
                 [new SlotPlan("FrameShiftDrive", "Increased FSD Range", 3)]),
         ]);
-
-        var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
 
         dump ??= TestSurface.VrDump;
 
@@ -81,10 +77,10 @@ public class HelpInTheHeadsetTests
             settings,
             _ => null,
             dumpTo: dump,
-            ships: new ShipPlanService(builds, checklists, () => state),
+            ships: bench.Ships,
             gameState: () => state,
-            onFoot: new OnFootPlanService(kit, checklists, () => state),
-            unlocks: new EngineerPlanService(builds, kit, checklists, () => state));
+            onFoot: bench.OnFoot,
+            unlocks: bench.Unlocks);
 
         var view = (PanelView)typeof(VrPanelSurface)
             .GetField("_view", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!

@@ -54,12 +54,8 @@ public class EveryTabDrawsOneHeaderTests
         var root = TempFolders.Create("d47-one-header");
         var state = State();
 
-        var checklists = TestSurface.Checklists(root, () => state);
+        var (checklists, builds, kit, ships, onFoot, _) = PlanBench.Over(root, () => state);
 
-        var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
-        var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
-        var ships = new ShipPlanService(builds, checklists, () => state);
-        var onFoot = new OnFootPlanService(kit, checklists, () => state);
 
         panel.EnableLoadout(ships, checklists, () => state, onFoot);
         panel.EnableEngineers(new EngineerPlanService(builds, kit, checklists, () => state), ships, () => state, onFoot, checklists: checklists);

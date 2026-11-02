@@ -27,17 +27,10 @@ public class TheOpenEngineerIsOutlinedTests
         var root = TestSurface.MemoryFolder("d47-outlined-row-tests");
         var state = EngineersTabTests.State();
 
-        var checklists = TestSurface.Checklists(root, () => state);
+        var (_, _, _, ships, onFoot, unlocks) = PlanBench.Over(root, () => state);
 
-        var builds = new ShipBuildStore(
-            Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
-        var kit = new OnFootBuildStore(
-            Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
 
-        var ships = new ShipPlanService(builds, checklists, () => state);
-        var onFoot = new OnFootPlanService(kit, checklists, () => state);
-        var unlocks = new EngineerPlanService(builds, kit, checklists, () => state);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableEngineers(unlocks, ships, () => state, onFoot);

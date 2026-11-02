@@ -41,14 +41,7 @@ internal sealed class SlotBench
         var root = TestSurface.MemoryFolder("d47-slot-bench");
         var state = Flying();
 
-        var checklists = TestSurface.Checklists(root, () => state);
-
-        var ships = TestSurface.ShipPlans(checklists, root, () => state);
-
-        var kit = new OnFootPlanService(
-            new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance),
-            checklists,
-            () => state);
+        var (checklists, _, _, ships, kit, _) = PlanBench.Over(root, () => state);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 

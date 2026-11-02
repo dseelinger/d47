@@ -26,13 +26,8 @@ public class TheOverlayHasEveryVrMiniPageTests
         var root = TestSurface.MemoryFolder("d47-overlay-pages");
         var state = State();
 
-        var checklists = TestSurface.Checklists(root, () => state);
+        var (checklists, _, _, ships, onFoot, unlocks) = PlanBench.Over(root, () => state);
 
-        var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
-        var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
-        var ships = new ShipPlanService(builds, checklists, () => state);
-        var onFoot = new OnFootPlanService(kit, checklists, () => state);
-        var unlocks = new EngineerPlanService(builds, kit, checklists, () => state);
         var adventures = AdventureFixture.Surface(paths);
         var commanders = new CommanderRoster(() => null, () => 0, () => null, () => false, _ => { });
 

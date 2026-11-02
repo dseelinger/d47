@@ -54,9 +54,8 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
 
         var state = store.Active!;
 
-        var checklists = TestSurface.Checklists(root, () => state);
+        var (checklists, builds, _, ships, onFoot, unlocks) = PlanBench.Over(root, () => state);
 
-        var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
         builds.Save([
             new ShipBuild("F1", "ship-1", "python", 12, "Bad Idea",
@@ -66,11 +65,7 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
                 ]),
         ]);
 
-        var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
 
-        var ships = new ShipPlanService(builds, checklists, () => state);
-        var onFoot = new OnFootPlanService(kit, checklists, () => state);
-        var unlocks = new EngineerPlanService(builds, kit, checklists, () => state);
         var memory = new EngineerDirectoryMemory(
             new ViewStateStore(new D47.Core.AppPaths(root), new DiskFileSystem(), NullLogger<ViewStateStore>.Instance));
 

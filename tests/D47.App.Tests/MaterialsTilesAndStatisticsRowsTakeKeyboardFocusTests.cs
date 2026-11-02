@@ -36,10 +36,7 @@ public class MaterialsTilesAndStatisticsRowsTakeKeyboardFocusTests
 
         CommanderGameState? State() => live;
 
-        var checklists = TestSurface.Checklists(root, State);
-        var ships = TestSurface.ShipPlans(checklists, root, State);
-        var kit = new OnFootPlanService(
-            new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance), checklists, State);
+        var (checklists, _, _, ships, kit, _) = PlanBench.Over(root, State);
 
         var ship = ships.BuildFor(12, "anaconda", "Sacred Wings");
         ships.Plan(ship.Id, new SlotPlan("MainEngines") { Blueprint = "Dirty Drive Tuning", Grade = 5, Module = "Thrusters" });

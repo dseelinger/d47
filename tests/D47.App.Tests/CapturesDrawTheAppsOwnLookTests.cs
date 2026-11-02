@@ -119,7 +119,7 @@ public class CapturesDrawTheAppsOwnLookTests
         var (settings, viewState, paths) = TestSurface.Create();
         var state = State();
 
-        var checklists = TestSurface.Checklists(paths.Data, () => state);
+        var (checklists, _, _, ships, onFoot, unlocks) = PlanBench.Over(paths.Data, () => state);
 
         checklists.AdoptPlan(
             ChecklistScope.Ship(51),
@@ -130,11 +130,6 @@ public class CapturesDrawTheAppsOwnLookTests
                 [new BuildRequest("Slot01_Size7", "Reinforced Shields", 5)]),
             ["Slot01_Size7"]);
 
-        var builds = new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
-        var kit = new OnFootBuildStore(Path.Combine(paths.Data, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
-        var ships = new ShipPlanService(builds, checklists, () => state);
-        var onFoot = new OnFootPlanService(kit, checklists, () => state);
-        var unlocks = new EngineerPlanService(builds, kit, checklists, () => state);
 
         var alarms = new AlarmStore(Path.Combine(paths.Data, "alarms.json"), new DiskFileSystem(), NullLogger<AlarmStore>.Instance);
 

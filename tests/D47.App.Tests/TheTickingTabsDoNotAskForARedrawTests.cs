@@ -39,13 +39,7 @@ public class TheTickingTabsDoNotAskForARedrawTests
         // change, so every tick after the first has nothing to draw.
         CommanderGameState? state = null;
 
-        var checklists = TestSurface.Checklists(root, () => state);
-
-        var builds = new ShipBuildStore(
-            Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
-
-        var kit = new OnFootBuildStore(
-            Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
+        var bench = PlanBench.Over(root, () => state);
 
         var (settings, _, _) = TestSurface.Create();
 
@@ -53,10 +47,10 @@ public class TheTickingTabsDoNotAskForARedrawTests
             new PanelViewModel(),
             settings,
             _ => null,
-            ships: new ShipPlanService(builds, checklists, () => state),
+            ships: bench.Ships,
             gameState: () => state,
-            onFoot: new OnFootPlanService(kit, checklists, () => state),
-            unlocks: new EngineerPlanService(builds, kit, checklists, () => state));
+            onFoot: bench.OnFoot,
+            unlocks: bench.Unlocks);
 
         Assert.True(panel.Nav.Select(PanelTab.Assets), "the headset furnishes Asset Mgmt");
         Dispatcher.UIThread.RunJobs();
