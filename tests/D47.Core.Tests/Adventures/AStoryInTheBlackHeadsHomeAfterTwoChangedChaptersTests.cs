@@ -130,36 +130,8 @@ public sealed class AStoryInTheBlackHeadsHomeAfterTwoChangedChaptersTests
         Assert.DoesNotContain("heads home", provider.Requests[1].Prompt.History[0].Text);
     }
 
-    private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, double lightYears)
-    {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{ "timestamp":"2026-10-01T11:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""",
-                     """{ "timestamp":"2026-10-01T11:00:01Z", "event":"Rank", "Combat":1, "Trade":7, "Explore":5, "Soldier":0, "Exobiologist":0, "Empire":1, "Federation":1, "CQC":0 }""",
-                     $$"""{ "timestamp":"2026-10-01T11:01:00Z", "event":"Location", "StarSystem":"Oppi", "SystemAddress":3382387380970, "StarPos":[{{lightYears}},0,0], "Docked":false }""",
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed), line);
-            store.Apply(parsed!);
-        }
-
-        var state = store.Active;
-
-        return new AdventureGenerator(
-            () => provider,
-            () => null,
-            () => "You are the ship.",
-            () => "core",
-            () => null,
-            () => state,
-            () => galaxy,
-            () => null,
-            null,
-            null,
-            NullLogger.Instance);
-    }
+    private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, double lightYears) =>
+        AdventureGeneratorTests.Generator(provider, galaxy, Now, $"{lightYears},0,0");
 
     internal sealed class Galaxy : StubGalaxyService
     {

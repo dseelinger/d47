@@ -16,26 +16,8 @@ public class CarrierSquadronAndTeamBeatsTests
 
     private const string Buy = """{ "timestamp":"2026-08-22T11:00:50Z", "event":"CarrierBuy", "CarrierType":"FleetCarrier", "CarrierID":5, "Callsign":"AAA-111" }""";
 
-    private static readonly AdventureTrigger ToLantern = new() { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" };
-
-    private static AdventureStanding Fold(AdventureTrigger beat, params string[] events)
-    {
-        var adventure = LanternRoute(Accepted) with
-        {
-            Beats =
-            [
-                Beat("The Lantern", "setup", ToLantern, "Scoop here."),
-                Beat("The Beat", "catalyst", beat, "Done."),
-            ],
-        };
-
-        var standing = AdventureFold.Apply(
-            AdventureFold.Start(adventure),
-            Event($$"""{ "timestamp":"{{Stamp(Accepted.AddMinutes(1))}}", "event":"FSDJump", "SystemAddress":{{Lantern}}, "StarSystem":"Ossen's Lantern" }"""));
-
-        return events.Select((json, index) => Event(json.Replace("@", Stamp(Accepted.AddMinutes(2 + index)), StringComparison.Ordinal)))
-            .Aggregate(standing, AdventureFold.Apply);
-    }
+    private static AdventureStanding Fold(AdventureTrigger beat, params string[] events) =>
+        FoldCounting(beat, "The Beat", events);
 
     private static string Fleet(long system) =>
         $$"""{ "timestamp":"@", "event":"CarrierLocation", "CarrierType":"FleetCarrier", "CarrierID":11, "StarSystem":"X", "SystemAddress":{{system}}, "BodyID":10 }""";

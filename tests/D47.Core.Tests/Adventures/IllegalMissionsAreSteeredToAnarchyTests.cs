@@ -127,36 +127,8 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
             """;
     }
 
-    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy)
-    {
-        var store = new GameStateStore();
-
-        foreach (var line in new[]
-                 {
-                     """{ "timestamp":"2026-10-01T11:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""",
-                     """{ "timestamp":"2026-10-01T11:00:01Z", "event":"Rank", "Combat":1, "Trade":7, "Explore":5, "Soldier":0, "Exobiologist":0, "Empire":1, "Federation":1, "CQC":0 }""",
-                     """{ "timestamp":"2026-10-01T11:01:00Z", "event":"Location", "StarSystem":"Oppi", "SystemAddress":3382387380970, "StarPos":[3.68750,-44.62500,131.00000], "Docked":false }""",
-                 })
-        {
-            Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed), line);
-            store.Apply(parsed!);
-        }
-
-        var state = store.Active;
-
-        return new AdventureGenerator(
-            () => provider,
-            () => null,
-            () => "You are the ship.",
-            () => "core",
-            () => null,
-            () => state,
-            () => galaxy,
-            () => null,
-            null,
-            null,
-            NullLogger.Instance);
-    }
+    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy) =>
+        AdventureGeneratorTests.Generator(provider, galaxy, Now, "3.68750,-44.62500,131.00000");
 
     /// <summary>Oppi and Ossen's Lantern run by Democracy, Dyson's Hollow by Anarchy.</summary>
     internal sealed class Galaxy : StubGalaxyService

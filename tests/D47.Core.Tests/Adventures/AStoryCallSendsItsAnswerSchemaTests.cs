@@ -281,27 +281,13 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
         return provider.Calls;
     }
 
-    private sealed class Capturing : ILlmProvider
+    private sealed class Capturing : StoryTestProvider
     {
         public List<(string Text, LlmResponseSchema Schema)> Calls { get; } = [];
 
-        public string Id => "anthropic";
+        public override string DisplayName => "Capturing";
 
-        public string DisplayName => "Capturing";
-
-        public string DefaultModel => "claude-opus-5";
-
-        public bool RunsOnThisMachine => true;
-
-        public LlmProviderCapabilities CapabilitiesFor(string model) => new()
-        {
-            SupportsPromptCaching = false,
-            SupportsThinkingEffort = true,
-            SupportsOperatorSystemMessages = true,
-            MinimumCacheablePrefixTokens = 0,
-        };
-
-        public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
+        public override async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
             LlmRequest request,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {

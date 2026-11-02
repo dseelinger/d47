@@ -58,27 +58,13 @@ public sealed class AStoryPromptTooBigForTheContextSaysSoTests
         AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), new RecordingLogger(), TimeProvider.System)
             .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
-    private sealed class Refusing(LlmStreamEvent.Failed failure) : ILlmProvider
+    private sealed class Refusing(LlmStreamEvent.Failed failure) : StoryTestProvider
     {
         public int Calls { get; private set; }
 
-        public string Id => "anthropic";
+        public override string DisplayName => "Refusing";
 
-        public string DisplayName => "Refusing";
-
-        public string DefaultModel => "claude-opus-5";
-
-        public bool RunsOnThisMachine => true;
-
-        public LlmProviderCapabilities CapabilitiesFor(string model) => new()
-        {
-            SupportsPromptCaching = false,
-            SupportsThinkingEffort = true,
-            SupportsOperatorSystemMessages = true,
-            MinimumCacheablePrefixTokens = 0,
-        };
-
-        public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
+        public override async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
             LlmRequest request,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {

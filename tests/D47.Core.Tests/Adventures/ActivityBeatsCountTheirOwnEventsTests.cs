@@ -7,26 +7,8 @@ namespace D47.Core.Tests.Adventures;
 
 public class ActivityBeatsCountTheirOwnEventsTests
 {
-    private static readonly AdventureTrigger ToLantern = new() { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" };
-
-    private static AdventureStanding Fold(AdventureTrigger counted, params string[] events)
-    {
-        var adventure = LanternRoute(Accepted) with
-        {
-            Beats =
-            [
-                Beat("The Lantern", "setup", ToLantern, "Scoop here."),
-                Beat("The Count", "catalyst", counted, "Done."),
-            ],
-        };
-
-        var standing = AdventureFold.Apply(
-            AdventureFold.Start(adventure),
-            Event($$"""{ "timestamp":"{{Stamp(Accepted.AddMinutes(1))}}", "event":"FSDJump", "SystemAddress":{{Lantern}}, "StarSystem":"Ossen's Lantern" }"""));
-
-        return events.Select((json, index) => Event(json.Replace("@", Stamp(Accepted.AddMinutes(2 + index)), StringComparison.Ordinal)))
-            .Aggregate(standing, AdventureFold.Apply);
-    }
+    private static AdventureStanding Fold(AdventureTrigger counted, params string[] events) =>
+        FoldCounting(counted, "The Count", events);
 
     private static AdventureTrigger Of(TriggerKind kind, int count = 1, string? filter = null, bool? organic = null) =>
         new() { Kind = kind, Count = count, Filter = filter, Organic = organic };

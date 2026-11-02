@@ -15,6 +15,19 @@ internal static class AdventureFixtures
     public const long Home = 2869440911642;
     public const long Anchorage = 3700481092;
 
+    public const string SecondColumnSpine = """
+        {"name": "The Second Column", "premise": "The ledger has a sequel.", "want": "To find who signed.",
+         "stake": "Whether a name is a debt.", "turn": "The name was hers.", "ending": "It is paid."}
+        """;
+
+    public const string SecondColumnBeats = """
+        {"opening": "Somebody is paying again.", "reply": "Here it is.", "beats": [
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
+          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
+          {"title": "The Column", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+        ]}
+        """;
+
     public static readonly DateTimeOffset Accepted = new(2026, 8, 22, 19, 43, 50, TimeSpan.Zero);
 
     /// <summary>The Lantern Route: arrive, scan, dock, land, arrive.</summary>
@@ -43,6 +56,28 @@ internal static class AdventureFixtures
         ],
         AcceptedAt = acceptedAt,
     };
+
+    public static readonly AdventureTrigger ToLantern = new() { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" };
+
+    /// <summary>The Lantern Route cut to two beats, the second counting <paramref name="counted"/>, folded over arrival and then <paramref name="events"/> (each `@` is a timestamp).</summary>
+    public static AdventureStanding FoldCounting(AdventureTrigger counted, string title, params string[] events)
+    {
+        var adventure = LanternRoute(Accepted) with
+        {
+            Beats =
+            [
+                Beat("The Lantern", "setup", ToLantern, "Scoop here."),
+                Beat(title, "catalyst", counted, "Done."),
+            ],
+        };
+
+        var standing = AdventureFold.Apply(
+            AdventureFold.Start(adventure),
+            Event($$"""{ "timestamp":"{{Stamp(Accepted.AddMinutes(1))}}", "event":"FSDJump", "SystemAddress":{{Lantern}}, "StarSystem":"Ossen's Lantern" }"""));
+
+        return events.Select((json, index) => Event(json.Replace("@", Stamp(Accepted.AddMinutes(2 + index)), StringComparison.Ordinal)))
+            .Aggregate(standing, AdventureFold.Apply);
+    }
 
     public static AdventureBeat Beat(string title, string? function, AdventureTrigger trigger, string line) => new()
     {

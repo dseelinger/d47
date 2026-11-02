@@ -8,18 +8,9 @@ namespace D47.Core.Tests.Adventures;
 
 public sealed class TheChapterWriterIsToldWhatHappenedTests
 {
-    private const string Spine = """
-        {"name": "The Second Column", "premise": "The ledger has a sequel.", "want": "To find who signed.",
-         "stake": "Whether a name is a debt.", "turn": "The name was hers.", "ending": "It is paid."}
-        """;
+    private const string Spine = SecondColumnSpine;
 
-    private const string Beats = """
-        {"opening": "Somebody is paying again.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Column", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
-        ]}
-        """;
+    private const string Beats = SecondColumnBeats;
 
     private const string Died =
         """{ "timestamp":"@", "event":"Died", "KillerName":"CMDR Secret", "KillerShip":"federation_gunship", "KillerRank":"Dangerous" }""";

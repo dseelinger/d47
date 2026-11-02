@@ -22,24 +22,8 @@ public sealed class AStepCanWaitOnAnyEventTests
         Count = count,
     };
 
-    private static AdventureStanding Fold(AdventureTrigger counted, params string[] events)
-    {
-        var adventure = LanternRoute(Accepted) with
-        {
-            Beats =
-            [
-                Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
-                Beat("The Count", "catalyst", counted, "Done."),
-            ],
-        };
-
-        var standing = AdventureFold.Apply(
-            AdventureFold.Start(adventure),
-            Event($$"""{ "timestamp":"{{Stamp(Accepted.AddMinutes(1))}}", "event":"FSDJump", "SystemAddress":{{Lantern}}, "StarSystem":"Ossen's Lantern" }"""));
-
-        return events.Select((json, index) => Event(json.Replace("@", Stamp(Accepted.AddMinutes(2 + index)), StringComparison.Ordinal)))
-            .Aggregate(standing, AdventureFold.Apply);
-    }
+    private static AdventureStanding Fold(AdventureTrigger counted, params string[] events) =>
+        FoldCounting(counted, "The Count", events);
 
     private static string Organic(string genus) =>
         $$"""{ "timestamp":"@", "event":"ScanOrganic", "ScanType":"Analyse", "Genus":"{{genus}}" }""";

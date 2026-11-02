@@ -354,10 +354,10 @@ public sealed class AdventureGeneratorTests
         Assert.Null(Careers.Match(""));
     }
 
-    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, int combat = 1, params string[] more) =>
+    internal static AdventureGenerator Generator(ILlmProvider provider, IGalaxyService galaxy, int combat = 1, params string[] more) =>
         Generator(provider, galaxy, NullLogger.Instance, combat, more);
 
-    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, Microsoft.Extensions.Logging.ILogger logger, int combat = 1, params string[] more)
+    internal static AdventureGenerator Generator(ILlmProvider provider, IGalaxyService galaxy, Microsoft.Extensions.Logging.ILogger logger, int combat = 1, params string[] more)
     {
         var state = State(combat, more);
 
@@ -376,7 +376,7 @@ public sealed class AdventureGeneratorTests
     }
 
     /// <summary>As the first overload, asking for the effort <paramref name="storyEffort"/> names for the model, unless <paramref name="effort"/> overrides it.</summary>
-    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, Func<string, string, ThinkingEffort?> storyEffort, ThinkingEffort? effort = null)
+    internal static AdventureGenerator Generator(ILlmProvider provider, IGalaxyService galaxy, Func<string, string, ThinkingEffort?> storyEffort, ThinkingEffort? effort = null)
     {
         var state = State(1, []);
 
@@ -398,8 +398,8 @@ public sealed class AdventureGeneratorTests
         };
     }
 
-    /// <summary>As <see cref="Generator(ILlmProvider, Galaxy, Microsoft.Extensions.Logging.ILogger, int, string[])"/>, its call limits on <paramref name="time"/>.</summary>
-    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, Microsoft.Extensions.Logging.ILogger logger, TimeProvider time)
+    /// <summary>As <see cref="Generator(ILlmProvider, IGalaxyService, Microsoft.Extensions.Logging.ILogger, int, string[])"/>, its call limits on <paramref name="time"/>.</summary>
+    internal static AdventureGenerator Generator(ILlmProvider provider, IGalaxyService galaxy, Microsoft.Extensions.Logging.ILogger logger, TimeProvider time)
     {
         var state = State(1, []);
 
@@ -420,16 +420,39 @@ public sealed class AdventureGeneratorTests
         };
     }
 
-    /// <summary>A Commander in Oppi, where the 2026-08-22 report was made, holding Trade 7.</summary>
-    internal static CommanderGameState State(int combat, string[] more)
+    /// <summary>As the first overload, with the Commander's journal dated <paramref name="on"/> and in Oppi at <paramref name="starPos"/>, its call limits on <paramref name="time"/>.</summary>
+    internal static AdventureGenerator Generator(ILlmProvider provider, IGalaxyService galaxy, DateTimeOffset on, string starPos, TimeProvider? time = null)
     {
+        var state = State(1, [], on, starPos);
+
+        return new AdventureGenerator(
+            () => provider,
+            () => null,
+            () => "You are the ship.",
+            () => "core",
+            () => null,
+            () => state,
+            () => galaxy,
+            () => null,
+            null,
+            null,
+            NullLogger.Instance)
+        {
+            Time = time ?? TimeProvider.System,
+        };
+    }
+
+    /// <summary>A Commander in Oppi, where the 2026-08-22 report was made, holding Trade 7.</summary>
+    internal static CommanderGameState State(int combat, string[] more, DateTimeOffset? on = null, string starPos = "3.68750,-44.62500,131.00000")
+    {
+        var day = (on ?? new DateTimeOffset(2026, 8, 22, 0, 0, 0, TimeSpan.Zero)).ToString("yyyy-MM-dd");
         var store = new GameStateStore();
 
         foreach (var line in new[]
                  {
-                     """{ "timestamp":"2026-08-22T11:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""",
-                     $$"""{ "timestamp":"2026-08-22T11:00:01Z", "event":"Rank", "Combat":{{combat}}, "Trade":7, "Explore":5, "Soldier":0, "Exobiologist":0, "Empire":1, "Federation":1, "CQC":0 }""",
-                     """{ "timestamp":"2026-08-22T11:01:00Z", "event":"Location", "StarSystem":"Oppi", "SystemAddress":3382387380970, "StarPos":[3.68750,-44.62500,131.00000], "Docked":false }""",
+                     $$"""{ "timestamp":"{{day}}T11:00:00Z", "event":"Commander", "FID":"F1", "Name":"Jameson" }""",
+                     $$"""{ "timestamp":"{{day}}T11:00:01Z", "event":"Rank", "Combat":{{combat}}, "Trade":7, "Explore":5, "Soldier":0, "Exobiologist":0, "Empire":1, "Federation":1, "CQC":0 }""",
+                     $$"""{ "timestamp":"{{day}}T11:01:00Z", "event":"Location", "StarSystem":"Oppi", "SystemAddress":3382387380970, "StarPos":[{{starPos}}], "Docked":false }""",
                  }.Concat(more))
         {
             Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed), line);
