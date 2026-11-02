@@ -2946,6 +2946,18 @@ public sealed class AppHost : IDisposable
             Places = () => settings.Current.Knowledge.NotablePlaces ? notablePlaces : null,
             Ledger = () => late.Host?.Activities,
             Bars = stores.ActivityBars,
+            Detours = new D47.Core.Stories.DetourProposer(
+                () => turns.Provider,
+                () => turns.Model,
+                () => personas.RenderBlock(settings.Current.Llm.PersonalityEnabled),
+                () => gameState.Active,
+                () => settings.Current.Knowledge.GalaxySearch ? galaxy : null,
+                spend,
+                PriceTable.Default,
+                loggerFactory.CreateLogger<D47.Core.Stories.DetourProposer>())
+            {
+                HomeSystem = () => settings.Current.Callouts.HomeSystem,
+            },
             Engineers = () => late.Unlocks?.Report(),
             Mine = () => goalBook.Mine,
             Tools = () =>

@@ -15,6 +15,9 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
         // Adventure generation.
         "() => turns.Model,",
 
+        // The detour Change objective proposes on a story chapter, which the Commander waits on.
+        "() => turns.Model,",
+
         // The debrief's proposed wording.
         "Turns.Model,",
 

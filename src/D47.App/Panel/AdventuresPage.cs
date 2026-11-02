@@ -525,7 +525,10 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         if ((standing.IsRefusable || shortKey is not null) && !rewriting && _surface.Stories is not null)
         {
             row.Children.Add(Action("Change objective", () => ChangeObjective(drawnFor, shortKey)));
+        }
 
+        if ((standing.IsRefusable || shortKey is not null) && !standing.Adventure.Detour && !rewriting && _surface.Stories is not null)
+        {
             row.Children.Add(Action("Never ask this", () => StoriesView.NotForMe(
                 _surface,
                 _prompts,

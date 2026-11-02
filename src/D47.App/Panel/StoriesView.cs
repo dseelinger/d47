@@ -421,19 +421,22 @@ public sealed class StoriesView : UserControl, IPageSummary
     }
 
     /// <summary>
-    /// Takes the Commander's remark about the current objective, has a replacement written, and offers it to apply, keep or
-    /// reword. Returns a refusal when none can be started; <paramref name="done"/> gets the refusal of a later step, or null.
+    /// Takes the Commander's remark about the current objective and offers what it came to: on a story, a detour or a question;
+    /// on a short story, a replacement to apply, keep or reword. Returns a refusal when none can be started;
+    /// <paramref name="done"/> gets the refusal of a later step, or null. <paramref name="detour"/> is the held detour
+    /// proposal when the Commander answers it.
     /// </summary>
     internal static string? ChangeObjective(
         AdventureSurface surface, PanelPrompts prompts, string? commander, Action doing, Action<string?> done,
-        IReadOnlyList<D47.Core.Adventures.AdventureRemark>? exchange = null, string? adventureKey = null)
+        IReadOnlyList<D47.Core.Adventures.AdventureRemark>? exchange = null, string? adventureKey = null, DetourProposal? detour = null)
     {
         if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
         {
             return CommanderChangedRefusal;
         }
 
-        if (surface.Stories is not { } director || RefusableBeat(surface, director, commander, adventureKey) is null)
+        if (surface.Stories is not { } director
+            || (adventureKey is null ? director.ChangeableBeat(commander) : RefusableBeat(surface, director, commander, adventureKey)) is null)
         {
             return "The story is not waiting on an objective.";
         }
@@ -476,10 +479,14 @@ public sealed class StoriesView : UserControl, IPageSummary
 
                 _ = Task.Run(async () =>
                 {
-                    var outcome = adventureKey is null
-                        ? await director.ReviseObjectiveAsync(commander, remark, earlier, CancellationToken.None).ConfigureAwait(false)
-                        : await director.ReviseAdventureObjectiveAsync(commander, adventureKey, remark, earlier, CancellationToken.None).ConfigureAwait(false);
+                    if (adventureKey is null)
+                    {
+                        var proposed = await director.ProposeDetourAsync(commander, remark, detour, CancellationToken.None).ConfigureAwait(false);
+                        Dispatcher.UIThread.Post(() => ProposeDetour(surface, prompts, commander, doing, done, proposed));
+                        return;
+                    }
 
+                    var outcome = await director.ReviseAdventureObjectiveAsync(commander, adventureKey, remark, earlier, CancellationToken.None).ConfigureAwait(false);
                     Dispatcher.UIThread.Post(() => Propose(surface, prompts, commander, doing, done, outcome, adventureKey));
                 });
             });
@@ -487,9 +494,84 @@ public sealed class StoriesView : UserControl, IPageSummary
         return null;
     }
 
+    /// <summary>
+    /// Says the detour's reply and offers it: a step to use, keep or answer differently, or a question with its options, each
+    /// of which sets that detour. <paramref name="done"/> gets the refusal, or null.
+    /// </summary>
+    internal static void ProposeDetour(
+        AdventureSurface surface, PanelPrompts prompts, string? commander, Action doing, Action<string?> done, DetourOutcome outcome)
+    {
+        if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
+        {
+            surface.Stories?.DiscardDetour(commander);
+            done(CommanderChangedRefusal);
+            return;
+        }
+
+        if (outcome.Proposal is not { } proposal || surface.Stories is not { } director)
+        {
+            done(outcome.Refusal ?? "Nothing came back.");
+            return;
+        }
+
+        done(null);
+        surface.Say(proposal.Reply);
+
+        var answer = proposal.Answer;
+        List<ChoiceOption> options = answer.Step is null
+            ? [.. answer.Options.Select((option, index) => new ChoiceOption(OptionKey + index.ToString(CultureInfo.InvariantCulture), option.Title))]
+            : [new ChoiceOption("use", "Use this")];
+
+        options.Add(new ChoiceOption("keep", "Keep the current one"));
+        options.Add(new ChoiceOption("again", "Say something else"));
+
+        prompts.Choose(
+            new ChoiceRequest(
+                "story.objective.proposal",
+                "Change objective",
+                answer.Step is null ? proposal.Reply : "Use this objective?",
+                answer.Step is null ? null : proposal.Reply,
+                options,
+                null,
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
+                {
+                    director.DiscardDetour(commander);
+                    done(CommanderChangedRefusal);
+                    return;
+                }
+
+                if (option.Key == "use")
+                {
+                    done(director.ApplyDetour(commander));
+                }
+                else if (option.Key.StartsWith(OptionKey, StringComparison.Ordinal)
+                         && int.TryParse(option.Key[OptionKey.Length..], NumberStyles.None, CultureInfo.InvariantCulture, out var index))
+                {
+                    done(director.ApplyDetour(commander, index));
+                }
+                else if (option.Key == "again")
+                {
+                    if (ChangeObjective(surface, prompts, commander, doing, done, detour: proposal) is { } refusal)
+                    {
+                        done(refusal);
+                    }
+                }
+                else
+                {
+                    director.DiscardDetour(commander);
+                }
+            });
+    }
+
+    private const string OptionKey = "option";
+
+    /// <summary>Says a short story's proposed objective and offers it to apply, keep or reword; <paramref name="done"/> gets the refusal, or null.</summary>
     internal static void Propose(
         AdventureSurface surface, PanelPrompts prompts, string? commander, Action doing, Action<string?> done, ObjectiveProposalOutcome outcome,
-        string? adventureKey = null)
+        string adventureKey)
     {
         if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
         {
@@ -536,7 +618,7 @@ public sealed class StoriesView : UserControl, IPageSummary
                 switch (option.Key)
                 {
                     case "use":
-                        done(adventureKey is null ? director.ApplyObjective(commander) : director.ApplyAdventureObjective(commander, adventureKey));
+                        done(director.ApplyAdventureObjective(commander, adventureKey));
                         break;
 
                     case "again":
@@ -559,21 +641,13 @@ public sealed class StoriesView : UserControl, IPageSummary
             ? director.RefusableBeat(commander)
             : surface.Book.Standing(commander, adventureKey) is { IsShortStoryRefusable: true } standing ? standing.CurrentStepBeat : null;
 
-    private static void Discard(StoryDirector director, string? commander, string? adventureKey)
-    {
-        if (adventureKey is null)
-        {
-            director.DiscardObjective(commander);
-        }
-        else
-        {
-            director.DiscardAdventureObjective(commander, adventureKey);
-        }
-    }
+    private static void Discard(StoryDirector director, string? commander, string adventureKey) =>
+        director.DiscardAdventureObjective(commander, adventureKey);
 
+    /// <summary>The objective of <paramref name="chapterKey"/>, the chapter or detour the story waits on, with Change objective under it, and Never ask this for a chapter or Mark done for a detour.</summary>
     private Control? ObjectiveGroup(string? commander, string chapterKey)
     {
-        if (_director.RefusableBeat(commander) is null
+        if (_director.ChangeableBeat(commander) is null
             || _director.IsRewriting(commander)
             || _surface.Book.Standing(commander, chapterKey)?.NextTrigger() is not { } next)
         {
@@ -600,7 +674,7 @@ public sealed class StoriesView : UserControl, IPageSummary
             }
         }
 
-        var refuse = Act("Never ask this", () => NotForMe(
+        var refuse = _director.OnDetour(commander) ? Act("Mark done", () => MarkDetourDone(commander, chapterKey)) : Act("Never ask this", () => NotForMe(
             _surface,
             _prompts,
             commander,
@@ -626,6 +700,42 @@ public sealed class StoriesView : UserControl, IPageSummary
 
         group.Children.Add(ship is null ? AdventuresPage.Buttons(change, refuse) : AdventuresPage.Buttons(ship, change, refuse));
         return group;
+    }
+
+    /// <summary>Asks whether to mark the detour <paramref name="key"/> done, and on yes fires it.</summary>
+    private void MarkDetourDone(string? commander, string key)
+    {
+        if (!IfShown(commander, _status, () => { })
+            || _surface.Book.Standing(commander, key) is not { CurrentBeat: { } current } standing)
+        {
+            return;
+        }
+
+        if (_director.MarkDoneRefusal(commander, key) is { } refusal)
+        {
+            _status.Fail(refusal);
+            return;
+        }
+
+        var beat = standing.Current;
+
+        _prompts.Choose(
+            new ChoiceRequest(
+                "story.markDone",
+                "Mark done",
+                $"Mark \"{current.Title}\" done?",
+                "The story moves on as if the journal had shown it.",
+                [new ChoiceOption("keep", "Not yet"), new ChoiceOption("yes", "Mark it done")],
+                null,
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (option.Key == "yes" && IfShown(commander, _status, () => { })
+                    && _director.MarkObjectiveDone(commander, key, _surface.Now(), beat) is { } markRefusal)
+                {
+                    _status.Fail(markRefusal);
+                }
+            });
     }
 
     private Control CurrentCard(Story story)
@@ -680,7 +790,7 @@ public sealed class StoriesView : UserControl, IPageSummary
             parts.Add(AdventuresPage.Muted(RefusedLine(story)));
         }
 
-        if (story.CurrentChapter is { } chapterKey && ObjectiveGroup(commander, chapterKey) is { } objective)
+        if ((story.Detour?.Key ?? story.CurrentChapter) is { } waitedOn && ObjectiveGroup(commander, waitedOn) is { } objective)
         {
             parts.Add(objective);
         }

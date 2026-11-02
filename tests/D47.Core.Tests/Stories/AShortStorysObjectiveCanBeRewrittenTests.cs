@@ -107,7 +107,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
         Assert.Equal("A bounty does the same.", proposal.Reply);
         Assert.Equal(["Another Way", "Home Again"], proposal.Beats.Select(beat => beat.Title));
         Assert.Same(proposal, fixtures.Director.AdventureProposal("F1", Key));
-        Assert.Null(fixtures.Director.Proposal("F1"));
+        Assert.Null(fixtures.Director.Detour("F1"));
         Assert.Equal(["The Lantern", "First Blood", "The Wing", "Home"], Titles(fixtures));
         Assert.Null(ask.Story);
         Assert.Equal("I would rather hunt a bounty.", ask.Rewrite!.Remark);

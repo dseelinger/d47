@@ -66,6 +66,31 @@ public sealed record ObjectiveProposal(
 public sealed record ObjectiveProposalOutcome(ObjectiveProposal? Proposal, string? Refusal);
 
 /// <summary>
+/// A detour proposed for the objective the story waits on: <see cref="WaitedOn"/> is its adventure's key, <see cref="Beat"/>
+/// and <see cref="Step"/> where it stood, <see cref="Interrupted"/> its trigger. <see cref="Exchange"/> is every round so far,
+/// this one last, and <see cref="Questions"/> how many of them asked a question.
+/// </summary>
+public sealed record DetourProposal(
+    string StoryId,
+    DateTimeOffset PickedAt,
+    string WaitedOn,
+    int Beat,
+    int Step,
+    AdventureTrigger Interrupted,
+    DetourAnswer Answer,
+    IReadOnlyList<AdventureRemark> Exchange,
+    int Questions)
+{
+    public string Reply => Answer.Reply;
+
+    /// <summary>The Commander's words over every round, which the set-aside chapter is told.</summary>
+    public string Words => string.Join(" ", Exchange.Select(round => round.Remark.Trim()));
+}
+
+/// <summary>A detour proposal, or the refusal saying why none was made.</summary>
+public sealed record DetourOutcome(DetourProposal? Proposal, string? Refusal);
+
+/// <summary>
 /// Runs a stock story as a chain of adventures: Pick writes and begins chapter one, and a finished chapter has
 /// the next written and begun.
 /// </summary>
@@ -95,6 +120,9 @@ public sealed class StoryDirector(
     /// <summary>The activities Commanders have changed away from often enough to bar them, or null before it exists.</summary>
     public ActivityBars? Bars { get; set; }
 
+    /// <summary>What turns the Commander's words into a detour, or null; with none, a story objective cannot be changed.</summary>
+    public DetourProposer? Detours { get; set; }
+
     /// <summary>The engineer route a Goals story's engineers arc reads, or null; with none, that arc gives no step.</summary>
     public Func<EngineerReport?>? Engineers { get; set; }
 
@@ -114,8 +142,8 @@ public sealed class StoryDirector(
     /// <summary>Commanders with a replacement beat being written.</summary>
     private readonly HashSet<string> _rewriting = new(StringComparer.Ordinal);
 
-    /// <summary>Proposed objective changes held for a Commander, by Commander.</summary>
-    private readonly Dictionary<string, ObjectiveProposal> _proposals = new(StringComparer.Ordinal);
+    /// <summary>Proposed detours held for a Commander, by Commander.</summary>
+    private readonly Dictionary<string, DetourProposal> _detours = new(StringComparer.Ordinal);
 
     /// <summary>Proposed objective changes held for a short story, by Commander and key.</summary>
     private readonly Dictionary<string, ObjectiveProposal> _adventureProposals = new(StringComparer.Ordinal);
@@ -822,24 +850,6 @@ public sealed class StoryDirector(
     public Task<string?> RefuseBeatAsync(string? frontierId, CancellationToken cancellationToken) =>
         RefuseObjectiveAsync(new ChapterObjective(this, frontierId), cancellationToken);
 
-    /// <summary>The proposal held for this Commander, or null.</summary>
-    public ObjectiveProposal? Proposal(string? frontierId) => new ChapterObjective(this, frontierId).Held;
-
-    /// <summary>
-    /// Has the current objective and the ones after it written again from the Commander's remark, and holds the result as
-    /// the Commander's proposal, replacing any held one. <paramref name="exchange"/> is the earlier rounds, which
-    /// <see cref="ObjectiveProposal.Exchange"/> of the held proposal carries. Changes nothing in the chapter.
-    /// </summary>
-    public Task<ObjectiveProposalOutcome> ReviseObjectiveAsync(
-        string? frontierId, string remark, IReadOnlyList<AdventureRemark> exchange, CancellationToken cancellationToken) =>
-        ReviseAsync(new ChapterObjective(this, frontierId), remark, exchange, cancellationToken);
-
-    /// <summary>Replaces the current objective and the ones after it with the held proposal. Returns a refusal or null; the refused proposal is dropped.</summary>
-    public string? ApplyObjective(string? frontierId) => Apply(new ChapterObjective(this, frontierId));
-
-    /// <summary>Drops the held proposal.</summary>
-    public void DiscardObjective(string? frontierId) => new ChapterObjective(this, frontierId).Discard();
-
     /// <summary>The proposal held for this Commander's short story, or null.</summary>
     public ObjectiveProposal? AdventureProposal(string? frontierId, string key) => new ShortStoryObjective(this, frontierId, key).Held;
 
@@ -909,29 +919,16 @@ public sealed class StoryDirector(
                 return refusal;
             }
 
-            var key = UniqueKey(frontierId, story!, "detour");
-            var detour = new Adventure
+            if (BeginDetour(frontierId, story!, trigger, title, words, now) is not { } key)
             {
-                Key = key,
-                Name = title.Trim(),
-                Source = AdventureSource.Generated,
-                Written = now,
-                StoryId = story!.Id,
-                Detour = true,
-                Beats = [new AdventureBeat { Title = title.Trim(), Steps = [new BeatStep { Trigger = trigger, Reason = words.Trim() }] }],
-            };
-
-            if ((book.Write(frontierId, detour) ?? book.Begin(frontierId, key, now)) is { } written)
-            {
-                book.Remove(frontierId, key);
-                return written;
+                return "The detour could not be saved.";
             }
 
             var chapter = standing!.Adventure;
             var done = chapter.Beats.Take(standing.Current).Select(beat => beat.Title).ToList();
 
             // The detour is saved before the chapter is set aside, so the tick never sees a set-aside chapter with no detour and writes the next one.
-            stories.Save(frontierId, story with
+            stories.Save(frontierId, story! with
             {
                 Detour = new StoryDetour(key, chapter.Key, words.Trim(), now, done),
                 ChangedChapters = story.ChangedChapters.Contains(chapter.Key) ? story.ChangedChapters : [.. story.ChangedChapters, chapter.Key],
@@ -953,6 +950,261 @@ public sealed class StoryDirector(
         }
     }
 
+    /// <summary>Writes and begins a detour adventure for <paramref name="story"/>; returns its key, or null when it could not be saved.</summary>
+    private string? BeginDetour(string? frontierId, Story story, AdventureTrigger trigger, string title, string words, DateTimeOffset now)
+    {
+        var key = UniqueKey(frontierId, story, "detour");
+        var detour = new Adventure
+        {
+            Key = key,
+            Name = title.Trim(),
+            Source = AdventureSource.Generated,
+            Written = now,
+            StoryId = story.Id,
+            Detour = true,
+            Beats = [new AdventureBeat { Title = title.Trim(), Steps = [new BeatStep { Trigger = trigger, Reason = words.Trim() }] }],
+        };
+
+        if ((book.Write(frontierId, detour) ?? book.Begin(frontierId, key, now)) is { } written)
+        {
+            logger.LogWarning("{Title}: the detour could not be saved: {Why}", story.Title, written);
+            book.Remove(frontierId, key);
+            return null;
+        }
+
+        return key;
+    }
+
+    /// <summary>
+    /// Replaces the open detour of the running story with a one-step objective of <paramref name="trigger"/>. The chapter
+    /// it interrupted stays set aside. Writes files, so it never runs on the tick. Returns a refusal or null.
+    /// </summary>
+    private string? ReplaceDetour(string? frontierId, AdventureTrigger trigger, string title, string words, DateTimeOffset now)
+    {
+        if (!Claim(frontierId))
+        {
+            return "An objective is being written.";
+        }
+
+        try
+        {
+            if (stories.Current(frontierId) is not { State: StoryState.Running, Detour: { } open } story)
+            {
+                return "The story changed while the objective was being written.";
+            }
+
+            if (DetourBarred(frontierId, story, trigger) is { } barred)
+            {
+                return barred;
+            }
+
+            if (BeginDetour(frontierId, story, trigger, title, words, now) is not { } key)
+            {
+                return "The detour could not be saved.";
+            }
+
+            // The new detour is saved before the old one is removed, so the tick never finds the story's detour missing and pauses it.
+            stories.Save(frontierId, story with { Detour = open with { Key = key, Words = words.Trim(), At = now } });
+            book.Remove(frontierId, open.Key);
+            logger.LogInformation("{Title}: the detour was replaced", story.Title);
+            return null;
+        }
+        finally
+        {
+            Release(frontierId);
+        }
+    }
+
+    /// <summary>Why <paramref name="trigger"/> may not be a detour of <paramref name="story"/>: an activity it refused or the Commander barred; null otherwise.</summary>
+    private string? DetourBarred(string? frontierId, Story story, AdventureTrigger trigger)
+    {
+        if (!RefusedActivities.Refuses(WithBar(frontierId, story).Refused, trigger.Kind, trigger.MissionFamily, trigger.Event, RefusedActivities.ToolOf(trigger.Where)))
+        {
+            return null;
+        }
+
+        return RefusedActivities.Key(trigger) is { } refused
+            ? $"This story no longer asks for {RefusedActivities.Phrase(refused)}, so a detour cannot either."
+            : "This story no longer asks for that.";
+    }
+
+    /// <summary>The detour proposal held for this Commander, or null.</summary>
+    public DetourProposal? Detour(string? frontierId) => Held(_detours, frontierId);
+
+    /// <summary>
+    /// The beat the running story waits on, narrowed to its step, when Change objective may replace it with a detour: the
+    /// open detour, or a chapter objective other than the beacon scan. Null otherwise.
+    /// </summary>
+    public AdventureBeat? ChangeableBeat(string? frontierId) =>
+        stories.Current(frontierId) is { State: StoryState.Running } story
+        && WaitedOn(story) is { } key
+        && book.Standing(frontierId, key) is { IsRefusable: true } standing
+            ? standing.CurrentStepBeat
+            : null;
+
+    /// <summary>Whether the running story waits on a detour rather than a chapter.</summary>
+    public bool OnDetour(string? frontierId) => stories.Current(frontierId)?.Detour is not null;
+
+    /// <summary>
+    /// Turns the Commander's <paramref name="words"/> into a detour for the objective the story waits on, with one small model
+    /// call, and holds it as the Commander's proposal. <paramref name="earlier"/> is the held proposal when they are answering
+    /// a question or saying something else. Changes nothing in the story.
+    /// </summary>
+    public async Task<DetourOutcome> ProposeDetourAsync(string? frontierId, string words, DetourProposal? earlier, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(words))
+        {
+            return new DetourOutcome(null, "Say what you would rather do.");
+        }
+
+        if (Detours is not { } detours)
+        {
+            return new DetourOutcome(null, "A different objective needs a language model to write it, and none is configured.");
+        }
+
+        if (Changeable(frontierId) is { Refusal: { } refusal })
+        {
+            return new DetourOutcome(null, refusal);
+        }
+
+        if (!Claim(frontierId))
+        {
+            return new DetourOutcome(null, "A different objective is already being written.");
+        }
+
+        try
+        {
+            if (Changeable(frontierId) is not { Story: { } story, Standing: { CurrentTrigger: { } current } standing })
+            {
+                return new DetourOutcome(null, "The story is not waiting on an objective.");
+            }
+
+            var trimmed = words.Trim();
+            var exchange = earlier?.Exchange ?? [];
+            var questions = earlier?.Questions ?? 0;
+            logger.LogInformation("Objective change asked: {Remark}", trimmed);
+
+            var answer = await detours.ProposeAsync(
+                new DetourAsk(trimmed, exchange, questions, current, WithBar(frontierId, story).Refused), cancellationToken).ConfigureAwait(false);
+
+            var proposal = new DetourProposal(
+                story.Id, story.PickedAt, standing.Adventure.Key, standing.Current, standing.CurrentStep, current, answer,
+                [.. exchange, new AdventureRemark(trimmed, answer.Reply)], questions + (answer.IsQuestion ? 1 : 0));
+
+            if (DetourMoved(frontierId, proposal) is { } moved)
+            {
+                return new DetourOutcome(null, moved);
+            }
+
+            lock (_gate)
+            {
+                _detours[frontierId ?? AdventureStore.NoCommander] = proposal;
+            }
+
+            return new DetourOutcome(proposal, null);
+        }
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.LogError(ex, "Proposing a detour failed");
+            return new DetourOutcome(null, "The objective could not be written. Say it again and I will try a new draft.");
+        }
+        finally
+        {
+            Release(frontierId);
+        }
+    }
+
+    /// <summary>
+    /// Sets the held proposal's detour, or the option at <paramref name="option"/> of its question, in place of the objective
+    /// the story waits on: setting the chapter aside, or replacing the open detour. Returns a refusal or null; the proposal is
+    /// dropped either way.
+    /// </summary>
+    public string? ApplyDetour(string? frontierId, int? option = null)
+    {
+        if (Detour(frontierId) is not { } proposal)
+        {
+            return "There is no change to apply.";
+        }
+
+        if (Switching)
+        {
+            return Swapping;
+        }
+
+        if (IsWriting(frontierId) || IsRewriting(frontierId))
+        {
+            return "An objective is being written.";
+        }
+
+        var step = option is { } index ? proposal.Answer.Options.ElementAtOrDefault(index) : proposal.Answer.Step;
+
+        if (step is null)
+        {
+            return "There is no change to apply.";
+        }
+
+        DiscardDetour(frontierId);
+
+        var words = option is null ? proposal.Words : $"{proposal.Words} {step.Title}.";
+        var refusal = DetourMoved(frontierId, proposal)
+            ?? (OnDetour(frontierId)
+                ? ReplaceDetour(frontierId, step.Trigger, step.Title, words, Clock())
+                : SetDetour(frontierId, step.Trigger, step.Title, words, Clock()));
+
+        if (refusal is null && RefusedActivities.Key(proposal.Interrupted) is { } interrupted)
+        {
+            Bars?.Count(frontierId, interrupted);
+        }
+
+        return refusal;
+    }
+
+    /// <summary>Drops the held detour proposal.</summary>
+    public void DiscardDetour(string? frontierId)
+    {
+        lock (_gate)
+        {
+            _detours.Remove(frontierId ?? AdventureStore.NoCommander);
+        }
+    }
+
+    /// <summary>The running story and the standing it waits on, or why its objective cannot be changed now.</summary>
+    private (Story? Story, AdventureStanding? Standing, string? Refusal) Changeable(string? frontierId)
+    {
+        var story = stories.Current(frontierId);
+        var standing = story is not null && WaitedOn(story) is { } key ? book.Standing(frontierId, key) : null;
+
+        var refusal = story is null ? "No story is running."
+            : story.State != StoryState.Running ? "Resume the story first."
+            : WithoutOdyssey(frontierId) ? NeedsOdyssey
+            : standing is not { Adventure.IsActive: true, IsDone: false, CurrentBeat: not null, CurrentTrigger: not null } ? "The story is not waiting on an objective."
+            : standing.InChoice ? AdventureStanding.ChoiceRefusal
+            : !standing.IsRefusable ? "The Guardian beacon scan ends act one, so that objective cannot be changed."
+            : IsWriting(frontierId) ? "A chapter is being written."
+            : null;
+
+        return refusal is null ? (story, standing, null) : (null, null, refusal);
+    }
+
+    /// <summary>Why <paramref name="proposal"/> no longer fits the objective the story waits on, or null.</summary>
+    private string? DetourMoved(string? frontierId, DetourProposal proposal)
+    {
+        if (stories.Current(frontierId) is not { State: StoryState.Running } story
+            || story.Id != proposal.StoryId
+            || story.PickedAt != proposal.PickedAt
+            || WaitedOn(story) != proposal.WaitedOn)
+        {
+            return "The story changed while the objective was being written.";
+        }
+
+        return book.Standing(frontierId, proposal.WaitedOn) is { Adventure.IsActive: true, IsDone: false, CurrentTrigger: { } trigger } standing
+               && standing.Current == proposal.Beat
+               && standing.CurrentStep == proposal.Step
+               && trigger.Describe() == proposal.Interrupted.Describe()
+            ? null
+            : "The story has moved on from that objective.";
+    }
+
     /// <summary>Why a detour cannot be set on <paramref name="story"/>'s chapter now, or null.</summary>
     private string? DetourRefusal(string? frontierId, Story? story, AdventureStanding? standing, AdventureTrigger trigger)
     {
@@ -966,23 +1218,13 @@ public sealed class StoryDirector(
             return "A detour is already under way.";
         }
 
-        var waiting = story.State != StoryState.Running ? "Resume the story first."
+        return story.State != StoryState.Running ? "Resume the story first."
             : WithoutOdyssey(frontierId) ? NeedsOdyssey
             : standing is not { Adventure.IsActive: true, IsDone: false, CurrentBeat: not null } ? "The story is not waiting on an objective."
             : standing.InChoice ? AdventureStanding.ChoiceRefusal
             : !standing.IsRefusable ? "The Guardian beacon scan ends act one, so that objective cannot be set aside."
             : IsWriting(frontierId) ? "A chapter is being written."
-            : null;
-
-        if (waiting is not null
-            || !RefusedActivities.Refuses(WithBar(frontierId, story).Refused, trigger.Kind, trigger.MissionFamily, trigger.Event, RefusedActivities.ToolOf(trigger.Where)))
-        {
-            return waiting;
-        }
-
-        return RefusedActivities.Key(trigger) is { } refused
-            ? $"This story no longer asks for {RefusedActivities.Phrase(refused)}, so a detour cannot either."
-            : "This story no longer asks for that.";
+            : DetourBarred(frontierId, story, trigger);
     }
 
     /// <summary>
@@ -1360,7 +1602,7 @@ public sealed class StoryDirector(
     }
 
     private async Task<ObjectiveProposalOutcome> ReviseAsync(
-        ObjectiveTarget target, string remark, IReadOnlyList<AdventureRemark> exchange, CancellationToken cancellationToken)
+        RevisableTarget target, string remark, IReadOnlyList<AdventureRemark> exchange, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(exchange);
 
@@ -1420,7 +1662,7 @@ public sealed class StoryDirector(
         }
     }
 
-    private string? Apply(ObjectiveTarget target)
+    private string? Apply(RevisableTarget target)
     {
         if (target.Held is not { } proposal)
         {
@@ -1447,7 +1689,7 @@ public sealed class StoryDirector(
         return refusal;
     }
 
-    private string? ApplyHeld(ObjectiveTarget target, ObjectiveProposal proposal)
+    private string? ApplyHeld(RevisableTarget target, ObjectiveProposal proposal)
     {
         if (book.Standing(target.FrontierId, proposal.ChapterKey) is not { IsDone: false, CurrentBeat: { } beat, CurrentTrigger: { } trigger } standing
             || standing.Current != proposal.From
@@ -1474,9 +1716,8 @@ public sealed class StoryDirector(
 
     private ILogger Logger => logger;
 
-    /// <summary>The chapter or short story whose current objective is changed.</summary>
-    private abstract class ObjectiveTarget(
-        StoryDirector director, string? frontierId, Dictionary<string, ObjectiveProposal> proposals, string heldKey, AdventureStanding? standing = null)
+    /// <summary>The chapter or short story whose current objective is written again.</summary>
+    private abstract class ObjectiveTarget(StoryDirector director, string? frontierId, AdventureStanding? standing = null)
     {
         protected const string WriteAgain = "The objective could not be written. Write it again and I will try a new draft.";
 
@@ -1484,40 +1725,11 @@ public sealed class StoryDirector(
 
         public string? FrontierId => frontierId;
 
-        protected string HeldKey => heldKey;
-
         /// <summary>The standing of the objective; set by <see cref="Unrewritable"/>.</summary>
         public AdventureStanding Standing { get; protected set; } = standing!;
 
         /// <summary>The activity the current objective asks for, or null.</summary>
         protected string? RefusedKey => Standing.CurrentTrigger is { } trigger ? RefusedActivities.Key(trigger) : null;
-
-        public ObjectiveProposal? Held
-        {
-            get
-            {
-                lock (director._gate)
-                {
-                    return proposals.GetValueOrDefault(heldKey);
-                }
-            }
-        }
-
-        public void Hold(ObjectiveProposal proposal)
-        {
-            lock (director._gate)
-            {
-                proposals[heldKey] = proposal;
-            }
-        }
-
-        public void Discard()
-        {
-            lock (director._gate)
-            {
-                proposals.Remove(heldKey);
-            }
-        }
 
         /// <summary>Whether something is being written that an apply would race.</summary>
         public abstract bool Writing { get; }
@@ -1537,6 +1749,41 @@ public sealed class StoryDirector(
 
         /// <summary>Logs a failed rewrite and returns what to say.</summary>
         public abstract string WriteFailed(Exception exception);
+    }
+
+    /// <summary>A short story, whose current objective the Commander's words can have written again as a held proposal.</summary>
+    private abstract class RevisableTarget(
+        StoryDirector director, string? frontierId, Dictionary<string, ObjectiveProposal> proposals, string heldKey, AdventureStanding? standing = null)
+        : ObjectiveTarget(director, frontierId, standing)
+    {
+        protected string HeldKey => heldKey;
+
+        public ObjectiveProposal? Held
+        {
+            get
+            {
+                lock (Director._gate)
+                {
+                    return proposals.GetValueOrDefault(heldKey);
+                }
+            }
+        }
+
+        public void Hold(ObjectiveProposal proposal)
+        {
+            lock (Director._gate)
+            {
+                proposals[heldKey] = proposal;
+            }
+        }
+
+        public void Discard()
+        {
+            lock (Director._gate)
+            {
+                proposals.Remove(heldKey);
+            }
+        }
 
         /// <summary>Whether the objective a revision was written for is still the one to change.</summary>
         public abstract bool Unchanged();
@@ -1554,10 +1801,9 @@ public sealed class StoryDirector(
 
     /// <summary>The running story's chapter.</summary>
     private sealed class ChapterObjective(StoryDirector director, string? frontierId)
-        : ObjectiveTarget(director, frontierId, director._proposals, frontierId ?? AdventureStore.NoCommander)
+        : ObjectiveTarget(director, frontierId)
     {
         private Story _story = null!;
-        private Story _still = null!;
         private StorySecret _secret = null!;
 
         /// <summary>The running story, as <see cref="Unrewritable"/> found it.</summary>
@@ -1628,55 +1874,8 @@ public sealed class StoryDirector(
             return WriteAgain;
         }
 
-        public override bool Unchanged() => Director.Stories.Current(FrontierId) is { } still && Matches(still);
-
         private bool Matches(Story still) =>
             still.State == StoryState.Running && still.PickedAt == _story.PickedAt && still.Chapters.Count == _story.Chapters.Count;
-
-        public override ObjectiveProposal Proposal(Adventure draft, string reply, IReadOnlyList<AdventureRemark> exchange) =>
-            new(_story.Id, _story.PickedAt, _story.Chapters.Count, Standing.Adventure.Key, Standing.Current, Standing.CurrentBeat!, draft, reply, exchange);
-
-        public override void ReviseFailed(Exception exception) => Director.Logger.LogError(exception, "Writing a proposed objective failed");
-
-        public override string? Changed(ObjectiveProposal proposal)
-        {
-            if (Director.Stories.Current(FrontierId) is not { State: StoryState.Running } still
-                || still.Id != proposal.StoryId
-                || still.PickedAt != proposal.PickedAt
-                || still.Chapters.Count != proposal.Chapters
-                || still.CurrentChapter != proposal.ChapterKey)
-            {
-                return "The story changed while the objective was being written.";
-            }
-
-            _still = still;
-            return null;
-        }
-
-        public override string? ReplaceHeld(ObjectiveProposal proposal, AdventureStanding standing)
-        {
-            if (Director.Hidden(_still.Id) is not { } secret)
-            {
-                return $"The hidden layer of {_still.Title} is missing from this build.";
-            }
-
-            var draft = StoryIntroductions.Introduce(proposal.Draft, _still, secret, Director.Gender(), proposal.From);
-
-            if (Director.Replace(FrontierId, proposal.ChapterKey, standing, draft) is { } refusal)
-            {
-                return refusal;
-            }
-
-            var changed = _still.ChangedChapters.Contains(proposal.ChapterKey) ? _still.ChangedChapters : [.. _still.ChangedChapters, proposal.ChapterKey];
-
-            if (changed != _still.ChangedChapters || proposal.Heading is not null)
-            {
-                Director.Stories.Save(FrontierId, _still with { ChangedChapters = changed, ChosenDestination = proposal.Heading ?? _still.ChosenDestination });
-            }
-
-            Director.Logger.LogInformation("{Title}: beat {Beat} of {Chapter} was changed by the Commander", _still.Title, proposal.From + 1, proposal.Draft.Name);
-            return null;
-        }
     }
 
     /// <summary>
@@ -1684,7 +1883,7 @@ public sealed class StoryDirector(
     /// beat whose docks are offline: only the adventure is claimed, and a failed write is a warning.
     /// </summary>
     private sealed class ShortStoryObjective(StoryDirector director, string? frontierId, string key, AdventureStanding? docked = null)
-        : ObjectiveTarget(director, frontierId, director._adventureProposals, AdventureClaim(frontierId, key), docked)
+        : RevisableTarget(director, frontierId, director._adventureProposals, AdventureClaim(frontierId, key), docked)
     {
         private readonly bool _docksOffline = docked is not null;
 

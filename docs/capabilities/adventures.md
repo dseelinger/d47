@@ -50,7 +50,7 @@ nav_order: 115
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Wait for the game to move. If you did the objective and the story has not moved, say "mark this objective done". On a stock story chapter you can also say "never ask this" to be given a different objective, or "change this objective" to say what you would rather do.</p>
+<p class="say">Wait for the game to move. If you did the objective and the story has not moved, say "mark this objective done". On a stock story chapter you can also say "never ask this" to be given a different objective, or "change this objective" to be sent on a detour, one objective of your own, before the chapter goes on.</p>
 <p class="expect">After three play sessions and seven days at the same objective, your core nudges you toward it. The nudge does not apply to a short story.</p>
 <p class="expect">A short story you have begun and not finished shows Change objective and Never ask this under NEXT on its page. They work as on a story chapter and change only that short story. Neither has a voice phrase for a short story.</p>
 <p class="expect">Mark done, under NEXT on a story chapter's page or a short story's page, moves the story on as if the journal had shown the objective. The Guardian beacon scan cannot be marked done.</p>
@@ -833,7 +833,7 @@ rule does not apply to a chapter that ends at the beacon, a finale chapter, a re
 that starts within 500 light years, or to a chapter in the black (below). The chapter also keeps one of its two place
 objectives for this stop.
 
-**Heading home from the black.** A chapter counts as changed when you apply a **Change objective** replacement in it; **Never ask this** does not count. When the last two chapters were both changed and you are more than 1,000 light years from both Sol and Colonia, the story heads home: to the nearer of the two, or to Sol when you are within 1,000 light years of Colonia. Each chapter heading home uses the long-haul reach (1,500 light years, or 5,000 with a fleet carrier), may have more than two place objectives, and is told where you are going and why it travels. Its last stop must be at least three quarters of the reach nearer the target than the chapter starts (1,125 light years, or 3,750 with a fleet carrier), or within 1,000 light years of the target; a draft that misses is refused and goes back through the repair rounds. The chapter is offered the stations and landable bodies nearest a point on the way, found by a galaxy search around it, each with its distance from the target; when that search finds none or cannot be made, the chapter is not refused. The target is cleared by the first chapter written within 1,000 light years of it. Finale chapters and the chapter that ends at the beacon are not sent home. A chapter heading home is not held to the Sol band above. The changed chapters and the target are kept with the story across a restart.
+**Heading home from the black.** A chapter counts as changed when a **Change objective** detour interrupts it; **Never ask this** does not count. When the last two chapters were both changed and you are more than 1,000 light years from both Sol and Colonia, the story heads home: to the nearer of the two, or to Sol when you are within 1,000 light years of Colonia. Each chapter heading home uses the long-haul reach (1,500 light years, or 5,000 with a fleet carrier), may have more than two place objectives, and is told where you are going and why it travels. Its last stop must be at least three quarters of the reach nearer the target than the chapter starts (1,125 light years, or 3,750 with a fleet carrier), or within 1,000 light years of the target; a draft that misses is refused and goes back through the repair rounds. The chapter is offered the stations and landable bodies nearest a point on the way, found by a galaxy search around it, each with its distance from the target; when that search finds none or cannot be made, the chapter is not refused. The target is cleared by the first chapter written within 1,000 light years of it. Finale chapters and the chapter that ends at the beacon are not sent home. A chapter heading home is not held to the Sol band above. The changed chapters and the target are kept with the story across a restart.
 
 **In the black.** A story's hidden entry may mark spans of its beat sheet as in the black. A chapter whose stage hands
 the writer a beat inside a span is held to neither rule above: it has no Sol band, keeps no place objective for one,
@@ -1059,17 +1059,31 @@ Refuse the objective the Commander's story chapter is waiting on and write a dif
 Beside **Never ask this**, a story chapter's current objective has a **Change objective** button, on the chapter's
 page and on the Stories page, in the window and on the VR big panel. Say "change this objective" or "change the
 objective" to open the same page. The page asks "What would you rather do?" and takes your words by speech or
-keyboard. the core then writes the current objective and those after it again from your words, and the status
-line reads "Writing a different objective…" meanwhile. It says its reply and shows it with three buttons:
+keyboard. One short model call turns them into a detour: one objective of your own, to arrive or dock at a named
+place, or one activity with its count. The status line reads "Writing a different objective…" meanwhile, and the
+answer comes back in seconds. D47 says its reply in its own voice, not as a story line, and shows it with three
+buttons:
 
-- **Use this** replaces the current objective and those after it with the proposal.
-- **Keep the current one** drops the proposal.
-- **Say something else** opens the page again, and the AI keeps what was said so far.
+- **Use this** sets the detour.
+- **Keep the current one** drops it.
+- **Say something else** opens the page again, and what was said so far is kept.
 
-Unlike **Never ask this**, changing an objective does not bar the activity for the story. d47 counts, for each Commander, the changes applied to an objective that asks for an activity (arrive, dock, land and scan objectives count nothing; **Keep the current one** counts nothing). At five changes for one activity, it is barred for good: no later story chapter or short story asks for it, as **Never ask this** bars it for one story. A mission objective counts under its mission family. The counts are kept in `activity-bars.json` in the data folder. Nothing lifts a bar yet.
+The detour's place is checked with Galaxy search, as a chapter's places are. When your words name no place and no
+activity ("something closer to home"), or name a place Galaxy search does not know, D47 asks one short question
+instead, with up to three systems as buttons: places it knows, such as home, your fleet carrier, Sol or Colonia, or
+the nearest systems of a minor faction or Power you named. A button sets that detour. After two questions without a
+usable answer, the reply is "Name a place or an activity." A detour never asks for an activity the story refused or
+that you barred.
+
+While the detour is open, the story waits on it and writes no chapter. The chapter it interrupted is set aside, and
+once the detour is done that chapter is written again, at the same number, from where you are then. A detour does not
+count as a chapter. An open detour shows **Change objective**, which replaces the detour, and **Mark done**; it does
+not show **Never ask this**.
+
+Unlike **Never ask this**, changing an objective does not bar the activity for the story. d47 counts, for each Commander, the detours applied in place of an objective that asks for an activity (arrive, dock, land and scan objectives count nothing; **Keep the current one** counts nothing). At five changes for one activity, it is barred for good: no later story chapter or short story asks for it, as **Never ask this** bars it for one story. A mission objective counts under its mission family. The counts are kept in `activity-bars.json` in the data folder. Nothing lifts a bar yet.
 A proposal is refused when the story has moved on while it was written, and the objective stays as it was. Both
-buttons are left out while an objective is being written, and for an objective that cannot be refused. The model
-is refused this tool.
+buttons are left out while an objective is being written, and for an objective that cannot be refused, such as the
+Guardian beacon scan. The model is refused this tool.
 
 #### `change_story_objective`
 

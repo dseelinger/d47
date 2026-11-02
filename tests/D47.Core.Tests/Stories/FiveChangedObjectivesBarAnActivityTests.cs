@@ -97,34 +97,60 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
     }
 
     [Fact]
-    public async Task AnAppliedReplacementCountsTheActivityItReplacedAndAKeptOneCountsNothing()
+    public async Task AnAppliedDetourCountsTheActivityItInterruptedAndAKeptOneCountsNothing()
     {
         using var fixtures = AtTheBond();
         var bars = Bars();
         fixtures.Director.Bars = bars;
+        DetourFixtures.Give(fixtures, null, null, DetourFixtures.GoToAnlave, DetourFixtures.GoToAnlave);
 
-        await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
-        fixtures.Director.DiscardObjective("F1");
+        await fixtures.Director.ProposeDetourAsync("F1", "Go to Anlave.", null, TestContext.Current.CancellationToken);
+        fixtures.Director.DiscardDetour("F1");
         Assert.Equal(0, bars.Changed("F1", "bond"));
 
-        await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
-        Assert.Null(fixtures.Director.ApplyObjective("F1"));
+        await fixtures.Director.ProposeDetourAsync("F1", "Go to Anlave.", null, TestContext.Current.CancellationToken);
+        Assert.Null(fixtures.Director.ApplyDetour("F1"));
         Assert.Equal(1, bars.Changed("F1", "bond"));
     }
 
     [Fact]
-    public async Task ABarIsListedAsRefusedInTheNextChapterAskWithoutBeingSavedOnTheStory()
+    public async Task FiveDetoursAwayFromOneActivityBarItAndTheNextProposalOfItIsRefused()
+    {
+        using var fixtures = AtTheBond();
+        var bars = Bars();
+        fixtures.Director.Bars = bars;
+        DetourFixtures.Give(fixtures, null, null, [.. Enumerable.Repeat(DetourFixtures.HuntBounties, 7)]);
+
+        // The first detour interrupts the kill bonds; each later one interrupts the bounty detour before it.
+        for (var change = 0; change < 6; change++)
+        {
+            await fixtures.Director.ProposeDetourAsync("F1", "Hunt bounties.", null, TestContext.Current.CancellationToken);
+            Assert.Null(fixtures.Director.ApplyDetour("F1"));
+        }
+
+        Assert.Equal(1, bars.Changed("F1", "bond"));
+        Assert.Equal(["bounty"], bars.Barred("F1"));
+
+        var refused = await fixtures.Director.ProposeDetourAsync("F1", "Hunt bounties.", null, TestContext.Current.CancellationToken);
+
+        Assert.Null(refused.Proposal!.Answer.Step);
+        Assert.Empty(fixtures.Stories.Current("F1")!.Refused);
+    }
+
+    [Fact]
+    public async Task ABarIsListedAsRefusedInTheDetourAskWithoutBeingSavedOnTheStory()
     {
         using var fixtures = AtTheBond();
         var bars = Bars();
         Change(bars, "F1", "bond", 5);
         fixtures.Director.Bars = bars;
+        var model = DetourFixtures.Give(fixtures, null, null, DetourFixtures.GoToAnlave);
 
-        await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
+        await fixtures.Director.ProposeDetourAsync("F1", "Go to Anlave.", null, TestContext.Current.CancellationToken);
 
-        var prompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
+        var prompt = model.Requests[0].Prompt.History[0].Text;
 
-        Assert.Contains("no objective may ask for any of them: earn combat kill bonds", prompt);
+        Assert.Contains("Never propose these activities: " + RefusedActivities.Phrase("bond"), prompt);
         Assert.Empty(fixtures.Stories.Current("F1")!.Refused);
     }
 
