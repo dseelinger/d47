@@ -572,8 +572,8 @@ public static class AdventureCapability
                 : ToolResult.Ok("That objective is marked done.")),
     };
 
-    private static readonly string[] ObjectiveNouns = ["next objective", "my next objective", "the next objective"];
-
+    private static readonly string[] ObjectiveNouns =
+        ["objective", "my objective", "current objective", "my current objective", "next objective", "my next objective"];
     private static ToolDefinition SetCourse(ObjectiveCourse? objectiveCourse, NavigationSurface? navigation) => new()
     {
         Name = SetCourseTool,
@@ -582,7 +582,9 @@ public static class AdventureCapability
             + "chapter, or with no story running the one short story under way. The Commander's choice alone.",
         Commands =
         [
-            .. ObjectiveNouns.Select(noun => new ToolCommandPhrase($"set course for {noun}", new Dictionary<string, string>(StringComparer.Ordinal))),
+            .. from verb in new[] { "set course for", "set course to" }
+               from noun in ObjectiveNouns
+               select new ToolCommandPhrase($"{verb} {noun}", new Dictionary<string, string>(StringComparer.Ordinal)),
         ],
         SendsInput = true,
         Protected = true,

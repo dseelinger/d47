@@ -116,11 +116,18 @@ public sealed class TheCommanderCanSetCourseForTheNextObjectiveTests
     public static TheoryData<string> Phrases()
     {
         var data = new TheoryData<string>();
-        string[] nouns = ["next objective", "my next objective", "the next objective"];
+        string[] nouns =
+        [
+            "objective", "the objective", "my objective", "current objective", "the current objective", "my current objective",
+            "next objective", "my next objective", "the next objective",
+        ];
 
         foreach (var noun in nouns)
         {
-            data.Add($"set course for {noun}");
+            foreach (var verb in new[] { "set course for", "set course to" })
+            {
+                data.Add($"{verb} {noun}");
+            }
 
             foreach (var target in new[] { "the clipboard", "my clipboard", Clipboard })
             {
@@ -138,7 +145,7 @@ public sealed class TheCommanderCanSetCourseForTheNextObjectiveTests
         var router = new KeywordRouter(CapabilityRegistry.Build([AdventureCapability.Create()]));
 
         Assert.Equal(
-            said.StartsWith("set", StringComparison.Ordinal) ? AdventureCapability.SetCourseTool : AdventureCapability.CopyObjectiveTool,
+            said.StartsWith("copy", StringComparison.Ordinal) ? AdventureCapability.CopyObjectiveTool : AdventureCapability.SetCourseTool,
             router.MatchToolCommand(said)?.ToolName);
     }
 

@@ -1109,10 +1109,10 @@ Mark the objective the Commander's story is waiting on as done, as if the journa
 
 ### Setting course for the objective
 
-Say "set course for next objective", "set course for my next objective" or "set course for the next objective" to plot
-to the system the objective names, as "set course for" a system does. Say "copy next objective to clipboard" (also
-"my next objective" or "the next objective", and "to the clipboard" or "to my clipboard") to put the system name on the
-clipboard. Both take the same objective as "mark this objective done": the running story's chapter, or with no story
+Say "set course for my next objective" to plot to the system the objective names, as "set course for" a system does.
+"Set course to" works as well, and the objective can be "objective", "my objective",
+"current objective" or "next objective", with or without "the". Say "copy my objective to clipboard" (any of the same
+names for the objective, and "to the clipboard" or "to my clipboard") to put the system name on the clipboard. Both take the same objective as "mark this objective done": the running story's chapter, or with no story
 running the one short story under way. They refuse when no story is under way, when your story is paused (resume it
 first), when more than one short story is under way (d47 names them), and when the objective has no system, such as a
 rank, bounties or boarding a ship. Nothing is plotted or copied on a refusal. The model is refused these tools.
