@@ -11,9 +11,9 @@ namespace D47.Core.Tests.Adventures;
 
 public sealed class IllegalMissionsAreSteeredToAnarchyTests
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
+    internal static readonly DateTimeOffset Now = new(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private const string Spine = """
+    internal const string Spine = """
         {"name": "The Quiet Job", "premise": "A job is owed.", "want": "To finish it.",
          "stake": "Whether it can be paid for.", "turn": "The payer is the target.", "ending": "It is done."}
         """;
@@ -111,7 +111,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
     }
 
     /// <summary>Arrive in <paramref name="system"/> (or open with the mission when null), then a mission, then a rank.</summary>
-    private static string Beats(string? system, string family = "Mission_OnFoot_Heist_Covert")
+    internal static string Beats(string? system, string family = "Mission_OnFoot_Heist_Covert")
     {
         var arrive = system is null
             ? string.Empty
@@ -126,7 +126,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
             """;
     }
 
-    private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy)
+    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy)
     {
         var store = new GameStateStore();
 
@@ -158,7 +158,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
     }
 
     /// <summary>Oppi and Ossen's Lantern run by Democracy, Dyson's Hollow by Anarchy.</summary>
-    private sealed class Galaxy : IGalaxyService
+    internal sealed class Galaxy : IGalaxyService
     {
         private static readonly (string Name, long Address, string Government)[] Systems =
         [

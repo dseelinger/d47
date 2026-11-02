@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The check on a story chapter's lines is now given the Anarchy systems the chapter's writer was given, so a line that calls one of them an Anarchy is no longer refused as unconfirmed. It is also told that a line telling the Commander which missions to take states nothing to check.
+
 **Change objective** on a story chapter now proposes a detour: one objective of your own, such as arriving at a named system or collecting two bounties, done before the chapter goes on. One short model call writes it, so the proposal comes back in seconds rather than after a full chapter rewrite. When your words name no place and no activity, such as "something closer to home", Directive 47 asks one question with up to three systems as buttons, and after two questions it says "Name a place or an activity." Once the detour is done, the interrupted chapter is written again from where you are. While it is open, the detour shows **Change objective**, which replaces it, and **Mark done**, and not **Never ask this**. A detour never asks for an activity the story refused or you barred. A short story's **Change objective** works as before.
 
 "Set course to objective" now plots the story objective's system straight away, with no model turn. Setting course for the objective also accepts "set course to", and the objective can be called "objective", "my objective", "current objective" or "next objective". Copying it to the clipboard accepts the same names. Before, only "set course for my next objective" and its "the" form matched, and anything else went to the model, which could not plot it.

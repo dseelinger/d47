@@ -8,6 +8,8 @@ What is true right now, read from the Commander's journal:
 - Reach: near here — about 80 light years, the longest one hop may be. A place farther away is reached over several hops.
 - Ranks held: Combat Rank 1 of 13, Mostly Harmless, Trade Rank 7 of 13, Tycoon, Exploration Rank 5 of 13, Pathfinder, Mercenary Rank 0 of 13, Defenceless, Exobiology Rank 0 of 13, Directionless, CQC Rank 0 of 8, Helpless, Imperial Navy Rank 1 of 14, Outsider, Federal Navy Rank 1 of 14, Recruit.
 
+A line that tells the Commander which missions to take, such as a mission whose target settlement is run by an Anarchy faction, states nothing to check. A line that says the missions' targets were Anarchy-run is still a claim about how a mission went.
+
 The story's ending: The column balances.
 
 Objectives:

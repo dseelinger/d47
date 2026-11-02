@@ -807,7 +807,7 @@ public sealed class AdventureGenerator(
                 return dryRun;
             }
 
-            var objections = (await FidelityAsync(ask, facts, spine, answer.Beats, offset, cancellationToken).ConfigureAwait(false))
+            var objections = (await FidelityAsync(ask, facts, spine, answer.Beats, offset, candidates.Anarchy, cancellationToken).ConfigureAwait(false))
                 .Where(objection => !objection.Objectives.Any(passed.Contains))
                 .ToList();
 
@@ -829,9 +829,10 @@ public sealed class AdventureGenerator(
         AdventureSpine spine,
         IReadOnlyList<ReadBeat> beats,
         int offset,
+        IReadOnlyList<SystemSummary> anarchy,
         CancellationToken cancellationToken)
     {
-        var asked = await AskJsonAsync(FidelityStep, FidelityInstruction(facts, spine, beats, offset, ask.Story is not null), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+        var asked = await AskJsonAsync(FidelityStep, FidelityInstruction(facts, spine, beats, offset, ask.Story is not null, anarchy), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
 
         if (asked.Json is null)
         {
@@ -891,7 +892,7 @@ public sealed class AdventureGenerator(
             string.Join(' ', Regex.Split(text.ToLowerInvariant(), @"[^\p{L}\p{N}]+").Where(word => word.Length > 0));
     }
 
-    private static StoryCall FidelityInstruction(Facts facts, AdventureSpine spine, IReadOnlyList<ReadBeat> beats, int offset, bool story)
+    private static StoryCall FidelityInstruction(Facts facts, AdventureSpine spine, IReadOnlyList<ReadBeat> beats, int offset, bool story, IReadOnlyList<SystemSummary> anarchy)
     {
         var text = new StringBuilder();
 
@@ -906,6 +907,21 @@ public sealed class AdventureGenerator(
             + "and the game state below does not show. A line that only sets a scene or a mood states nothing to check.");
         text.AppendLine();
         text.Append(facts.Describe());
+
+        if (anarchy.Count > 0)
+        {
+            text.AppendLine("Anarchy systems within reach, from the galaxy search, which a line may state are Anarchy systems:");
+
+            foreach (var system in anarchy)
+            {
+                text.Append("- ").AppendLine(system.Name);
+            }
+        }
+
+        text.AppendLine();
+        text.AppendLine(
+            "A line that tells the Commander which missions to take, such as a mission whose target settlement is run by an Anarchy faction, "
+            + "states nothing to check. A line that says the missions' targets were Anarchy-run is still a claim about how a mission went.");
         text.AppendLine();
         text.AppendLine($"The story's ending: {spine.Ending}");
         text.AppendLine();
