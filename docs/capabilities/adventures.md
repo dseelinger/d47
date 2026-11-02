@@ -454,6 +454,12 @@ picture. The story's card never names that speaker and calls them by role ("the 
 layer names them as `{name:<cast-id>}`, and D47 puts in the version's name before any line is shown,
 spoken or sent to the chapter writer.
 
+A story whose children call the Commander Mum or Dad writes `{parent}`, the word they use for the Commander, and
+`{parent:<cast-id>}`, the word a member in two versions uses. The hidden entry gives the first as
+`"parent": {"man": "Dad", "woman": "Mum"}`, and each version carries `"parent"` beside its name and voice.
+D47 puts in the word for your Commander's gender in the same places it puts in a name. A story with these words
+needs your Commander's gender before it can be picked, as one with two versions does.
+
 For such a story, the story's page asks **Your Commander is**: **A man** or **A woman**, above **Pick**.
 **Pick** and **Switch** stay disabled until you choose, and the page says why. The choice is kept per
 Commander and is asked only by a story that needs it. The same control is on

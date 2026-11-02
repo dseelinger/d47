@@ -326,6 +326,14 @@ public sealed record StorySpeaker
     /// The member as a Commander of <paramref name="gender"/> meets them. An unset gender meets the
     /// <see cref="StorySpeakerVersions.ForMan"/> version.
     /// </summary>
+    public string? ParentWord(string? gender)
+    {
+        var woman = gender == CommanderGender.Woman;
+        return Versions is { } versions && (woman ? versions.ForWoman ?? versions.ForMan : versions.ForMan ?? versions.ForWoman) is { } version
+            ? version.Parent
+            : null;
+    }
+
     public StorySpeakerShown Shown(string storyId, string? gender)
     {
         var woman = gender == CommanderGender.Woman;
@@ -348,6 +356,17 @@ public sealed record StorySpeaker
     }
 }
 
+/// <summary>The words the story's children use for the Commander, by the Commander's gender.</summary>
+public sealed record StoryParent
+{
+    public string? Man { get; init; }
+
+    public string? Woman { get; init; }
+
+    /// <summary>The word for a Commander of <paramref name="gender"/>; an unset gender takes <see cref="Man"/>.</summary>
+    public string? For(string? gender) => gender == CommanderGender.Woman ? Woman : Man;
+}
+
 /// <summary>What the Commander has said of their Commander, for a story with a member in two versions.</summary>
 public static class CommanderGender
 {
@@ -368,6 +387,9 @@ public sealed record StorySpeakerVersion
     public string? Provider { get; init; }
 
     public required string Voice { get; init; }
+
+    /// <summary>The word this version calls the Commander, for <c>{parent:&lt;cast-id&gt;}</c>.</summary>
+    public string? Parent { get; init; }
 
     /// <summary>Properties this build does not read; <c>pinned</c> here is a fault, as it belongs on the member.</summary>
     [JsonExtensionData]
@@ -555,6 +577,9 @@ public sealed partial record StorySecret
     /// <summary>The spans of the beat sheet that take place in the black, where chapters are held to neither the Sol band nor the home leg; null or empty for none.</summary>
     public IReadOnlyList<StoryBlackSpan>? Black { get; init; }
 
+    /// <summary>The words for <c>{parent}</c>, by the Commander's gender; null for none.</summary>
+    public StoryParent? Parent { get; init; }
+
     /// <summary>Every hidden text, named by the field it is in, for the checks that it is never shown.</summary>
     public IEnumerable<(string Field, string Text)> Texts()
     {
@@ -596,12 +621,18 @@ public sealed partial record StorySecret
 
     /// <summary>
     /// This hidden layer with every <c>{name:&lt;cast-id&gt;}</c> replaced by the name a Commander of
-    /// <paramref name="gender"/> meets. Resolve before any hidden text is shown, spoken, logged or written from.
+    /// <paramref name="gender"/> meets, and every <c>{parent}</c> and <c>{parent:&lt;cast-id&gt;}</c> by the word for the
+    /// Commander. Resolve before any hidden text is shown, spoken, logged or written from.
     /// </summary>
     public StorySecret For(string? gender)
     {
-        string Resolve(string text) => NameToken().Replace(
-            text, match => Speaker(match.Groups[1].Value, gender) is { Name.Length: > 0 } shown ? shown.Name : match.Value);
+        string Parented(string text) => ParentToken().Replace(text, match =>
+            (match.Groups[1].Success
+                ? Cast.FirstOrDefault(speaker => string.Equals(speaker.Id, match.Groups[1].Value, StringComparison.Ordinal))?.ParentWord(gender)
+                : Parent?.For(gender)) is { Length: > 0 } word ? word : match.Value);
+
+        string Resolve(string text) => Parented(NameToken().Replace(
+            text, match => Speaker(match.Groups[1].Value, gender) is { Name.Length: > 0 } shown ? shown.Name : match.Value));
 
         string? Maybe(string? text) => text is null ? null : Resolve(text);
 
@@ -640,6 +671,10 @@ public sealed partial record StorySecret
     [GeneratedRegex(@"\{name:([^{}\s]+)\}")]
     public static partial Regex NameToken();
 
+    /// <summary>A <c>{parent}</c> or <c>{parent:&lt;cast-id&gt;}</c> token; group 1 is the cast id, absent for the first.</summary>
+    [GeneratedRegex(@"\{parent(?::([^{}\s]+))?\}")]
+    public static partial Regex ParentToken();
+
     /// <summary>A <c>{commander}</c>, <c>{their}</c> or <c>{they}</c> token; group 1 is the word.</summary>
     [GeneratedRegex(@"\{(commander|their|they)\}")]
     public static partial Regex CommanderToken();
@@ -648,11 +683,11 @@ public sealed partial record StorySecret
     [GeneratedRegex(@"\{[^{}]*\}")]
     private static partial Regex AnyToken();
 
-    /// <summary>A whole token a story line may carry: a Commander token or a name token.</summary>
-    [GeneratedRegex(@"^\{(?:commander|their|they|name:[^{}\s]+)\}$")]
+    /// <summary>A whole token a story line may carry: a Commander, name or parent token.</summary>
+    [GeneratedRegex(@"^\{(?:commander|their|they|parent|name:[^{}\s]+|parent:[^{}\s]+)\}$")]
     private static partial Regex KnownToken();
 
-    /// <summary>The <c>{…}</c> tokens in <paramref name="text"/> that are neither a Commander token nor a name token.</summary>
+    /// <summary>The <c>{…}</c> tokens in <paramref name="text"/> that are neither a Commander token, a name token nor a parent token.</summary>
     public static IEnumerable<string> UnknownTokens(string text) =>
         AnyToken().Matches(text).Select(match => match.Value).Where(token => !KnownToken().IsMatch(token)).Distinct(StringComparer.Ordinal);
 
@@ -1093,6 +1128,32 @@ public sealed class StoryCatalog
                     yield return $"{field} names {cast} with a token, and {cast} has no versions.";
                 }
             }
+
+            foreach (var id in StorySecret.ParentToken().Matches(text).Select(token => token.Groups[1]).Where(group => group.Success).Select(group => group.Value).Distinct(StringComparer.Ordinal))
+            {
+                if (!versioned.Contains(id))
+                {
+                    yield return $"{field} has the token {{parent:{id}}}, and {id} has no versions.";
+                }
+            }
+
+            if (StorySecret.ParentToken().Matches(text).Any(token => !token.Groups[1].Success)
+                && (string.IsNullOrWhiteSpace(secret.Parent?.Man) || string.IsNullOrWhiteSpace(secret.Parent?.Woman)))
+            {
+                yield return $"{field} has the token {{parent}}, and parent has no man and woman words.";
+            }
+        }
+
+        foreach (var speaker in secret.Cast)
+        {
+            foreach (var (key, version) in speaker.Versions?.All() ?? [])
+            {
+                if (string.IsNullOrWhiteSpace(version.Parent)
+                    && secret.Texts().Any(text => StorySecret.ParentToken().Matches(text.Text).Any(token => token.Groups[1].Success && token.Groups[1].Value == speaker.Id)))
+                {
+                    yield return $"cast.{speaker.Id}.{key} has no parent, and a text has the token {{parent:{speaker.Id}}}.";
+                }
+            }
         }
 
         if (secret.Opening is { Count: 0 })
@@ -1110,7 +1171,7 @@ public sealed class StoryCatalog
             }
             else if (StorySecret.UnknownTokens(line.Text).Any())
             {
-                yield return $"{name} has a token that is not {{commander}}, {{their}}, {{they}} or {{name:<cast-id>}}.";
+                yield return $"{name} has a token that is not {{commander}}, {{their}}, {{they}}, {{parent}}, {{parent:<cast-id>}} or {{name:<cast-id>}}.";
             }
         }
 

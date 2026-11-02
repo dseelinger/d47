@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story can now have its children call the Commander Mum or Dad. Its lines may carry `{parent}`, which becomes the word the story gives for a man or a woman Commander, and `{parent:<cast-id>}`, the word a member written in two versions uses. A story with these words asks for your Commander's gender before it can be picked.
+
 A story chapter now has a **Write chapter again** button beside **Change objective** and **Mark done**, on the chapter's page and on the Stories page, in the window and on the VR big panel. One press, or "write this chapter again", sets the chapter aside and writes it again from where you are. It works on any step, drops an open detour, keeps objectives already done and a finale's destination, and is refused when the chapter needs a beacon your ship cannot reach. A short story does not get it.
 
 A story chapter written again at the same number, after a failed chapter or a detour, now draws different activities each time. Before, a second rewrite of the same chapter drew the same ones as the first.

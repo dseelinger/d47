@@ -432,7 +432,7 @@ public sealed class StoryDirector(
             : story);
 
     /// <summary>Whether the story has a cast member in two versions, so the Commander's gender must be set to pick it.</summary>
-    public bool NeedsGenderFor(string id) => catalog().Secret(id)?.Cast.Any(speaker => speaker.Versions is not null) == true;
+    public bool NeedsGenderFor(string id) => catalog().Secret(id) is { } secret && (secret.Parent is not null || secret.Cast.Any(speaker => speaker.Versions is not null));
 
     /// <summary>A cast member of the current story as this Commander meets them, or null.</summary>
     public StorySpeakerShown? Speaker(string? frontierId, string castId) =>

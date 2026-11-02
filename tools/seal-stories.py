@@ -10,7 +10,7 @@ The card's "goalArcs", where present, is a card with "goals" true naming one or 
   opening  optional, a story of any length: one or more lines said word for word, in order, at the pick, before
            the scan line and chapter one. Left out when the story has none; never an empty list.
            An opening line may carry {commander} ("Commander" and the Commander's name), {their} (his, her or
-           their) and {they} (he, she or they), resolved as the line is spoken, and {name:<cast-id>}; no other token.
+           their) and {they} (he, she or they), resolved as the line is spoken, {name:<cast-id>}, {parent} and {parent:<cast-id>}; no other token.
   scan     a story of NARRATED lengths only: one line, the Commander's beacon scan before the story opens,
            narrated word for word at the pick. A longer story has none and flies to a real beacon.
   beats    one non-empty line for each beat of the length's sheet, keyed as in BEATS, and no other.
@@ -26,6 +26,10 @@ The card's "goalArcs", where present, is a card with "goals" true naming one or 
            {"name", "voice", "provider"?}, and then no "name" or "voice" of its own. forMan is the
            version a Commander who is a man meets; forWoman, one who is a woman. Hidden text names
            such a speaker as {name:<cast-id>}, and the card names neither the token nor either name.
+           {parent} is the word the story's children use for the Commander: the entry carries
+           "parent": {"man": "Dad", "woman": "Mum"}, both words, and the token resolves by the Commander's gender.
+           {parent:<cast-id>} is the word a member with versions uses: each version carries "parent" beside its
+           "name" and "voice". Either token needs the Commander's gender before the story can be picked.
            A speaker may carry "link", a number from 0 to 1: the signal strength of the comms link it is heard
            through. It may carry "effects", a list of {"id", "level"}: Guardian effect ids (GuardianVoice.Table),
            each at a level from 1 to 20, applied in order before the link. An id may be listed once.
@@ -93,7 +97,8 @@ VERSIONS = ("forMan", "forWoman")
 CARD_FIELDS = ("blurb", "inYourWords", "beacon")
 NAME_TOKEN = re.compile(r"\{name:([^{}\s]+)\}")
 ANY_TOKEN = re.compile(r"\{[^{}]*\}")
-OPENING_TOKEN = re.compile(r"\{(?:commander|their|they|name:[^{}\s]+)\}")
+PARENT_TOKEN = re.compile(r"\{parent(?::([^{}\s]+))?\}")
+OPENING_TOKEN = re.compile(r"\{(?:commander|their|they|parent|name:[^{}\s]+|parent:[^{}\s]+)\}")
 
 
 def text(value) -> bool:
@@ -397,6 +402,7 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
     cast = entry.get("cast") or []
     speakers = set(SPEAKERS)
     versioned = {}
+    unparented = {}
     for at, speaker in enumerate(cast):
         sid = speaker.get("id")
         versions = speaker.get("versions")
@@ -438,12 +444,26 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
                 found.append(f"cast member {sid} version {key} has no name or no voice")
                 continue
             versioned[sid].append(version["name"])
+            if not text(version.get("parent")):
+                unparented.setdefault(sid, []).append(key)
             found += voice_fault(f"cast member {sid} version {key}", version.get("provider", speaker.get("provider")), version["voice"])
 
     for field, value in hidden_texts(entry):
         for cid in sorted(set(NAME_TOKEN.findall(value or ""))):
             if cid not in versioned:
                 found.append(f"{field} has the token {{name:{cid}}}, and cast member {cid} has no versions")
+
+    parent = entry.get("parent")
+    has_parent = isinstance(parent, dict) and text(parent.get("man")) and text(parent.get("woman"))
+    for field, value in hidden_texts(entry):
+        for match in PARENT_TOKEN.finditer(value or ""):
+            cid = match.group(1)
+            if cid is None and not has_parent:
+                found.append(f"{field} has the token {{parent}}, and parent has no man and woman words")
+            elif cid is not None and cid not in versioned:
+                found.append(f"{field} has the token {{parent:{cid}}}, and cast member {cid} has no versions")
+            elif cid is not None and unparented.get(cid):
+                found.append(f"{field} has the token {{parent:{cid}}}, and cast member {cid} version {', '.join(unparented[cid])} has no parent")
 
     for field in CARD_FIELDS:
         value = (card or {}).get(field) or ""
@@ -474,7 +494,7 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
     for at, line in enumerate(opening):
         unknown = sorted({token for token in ANY_TOKEN.findall(line.get("text") or "") if not OPENING_TOKEN.fullmatch(token)})
         if unknown:
-            found.append(f"opening line {at + 1} has the token {', '.join(unknown)}, not {{commander}}, {{their}}, {{they}} or {{name:<cast-id>}}")
+            found.append(f"opening line {at + 1} has the token {', '.join(unknown)}, not {{commander}}, {{their}}, {{they}}, {{parent}}, {{parent:<cast-id>}} or {{name:<cast-id>}}")
 
     scanned = [scan] if isinstance(scan, dict) else []
     spoken = {speaker.get("id") for speaker in cast if "language" in speaker}

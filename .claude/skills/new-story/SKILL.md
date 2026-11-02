@@ -226,6 +226,11 @@ add.
   sealed entry the member carries `versions` (`forMan`, `forWoman`, each `name`, `voice` and an
   optional `provider`) and no `name` or `voice` of its own; its pictures are
   `<story-id>.<cast-id>.for-man.png` and `.for-woman.png`.
+  A child who calls the Commander Mum or Dad uses `{parent}`, the word the story's children use for the
+  Commander: the entry carries `"parent": {"man": "Dad", "woman": "Mum"}`, both words. A parent
+  written in two versions uses `{parent:<cast-id>}`: each version carries `"parent"` beside its `name`
+  and `voice`. Either token needs the Commander's gender before the story can be picked, and
+  `tools/seal-stories.py` refuses one without its words.
 - **A cast member's `role`** is shown to the Commander under the member's name, so it is public: a
   lower-case noun phrase with no closing full stop, at most 160 characters, saying who the member is
   to the Commander in the story and writing about the Commander in the third person ("the
