@@ -93,7 +93,7 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
         Assert.Contains("You wrote a short story the Commander is flying", prompt);
         Assert.Contains("Maren Anchorage's docks are offline", prompt);
         Assert.Equal(3, fixtures.Provider.CallCount);
-        Assert.Equal(["The docks at Maren Anchorage are offline.", "Next: dock at Lantern Dock in Ossen's Lantern. Someone there knows about the burst."], said);
+        Assert.Equal(["The docks at Maren Anchorage are offline.", "Someone there knows about the burst. Next: dock at Lantern Dock in Ossen's Lantern."], said);
     }
 
     [Fact]

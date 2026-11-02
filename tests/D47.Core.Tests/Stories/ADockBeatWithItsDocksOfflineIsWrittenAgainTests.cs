@@ -66,7 +66,7 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
         Assert.Equal(["The Lantern", "Another Dock"], chapter.Beats.Select(beat => beat.Title));
         Assert.Equal(1001, chapter.Beats[1].Trigger.MarketId);
         Assert.Empty(fixtures.Stories.Current("F1")!.Refused);
-        Assert.Equal(["The docks at Maren Anchorage are offline.", "Next: dock at Lantern Dock in Ossen's Lantern. Someone there knows about the burst."], said);
+        Assert.Equal(["The docks at Maren Anchorage are offline.", "Someone there knows about the burst. Next: dock at Lantern Dock in Ossen's Lantern."], said);
         Assert.False(fixtures.Director.IsRewriting("F1"));
     }
 

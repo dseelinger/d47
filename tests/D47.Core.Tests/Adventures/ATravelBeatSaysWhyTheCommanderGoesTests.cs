@@ -76,7 +76,7 @@ public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
     }
 
     [Fact]
-    public void TheHandOffSaysTheReasonAfterThePlace()
+    public void TheHandOffSaysTheReasonBeforeThePlace()
     {
         var beat = new AdventureBeat
         {
@@ -87,7 +87,7 @@ public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
             Line = "She heard it too.",
         };
 
-        Assert.Equal($"Next: dock at Sellings Holdings in HIP 97950. {Reason}", beat.HandOff());
+        Assert.Equal($"{Reason} Next: dock at Sellings Holdings in HIP 97950.", beat.HandOff());
     }
 
     [Fact]
