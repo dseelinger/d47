@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A HOTAS switch that sets the headset view no longer pauses when Shift+Win+D fails to change the view. Directive 47 says so once, and the next flip tries again; before, the switch ignored every flip in both directions until Resume was pressed. The log line for a failed press now records the view before and after, the time since the switch's previous press, and whether Virtual Desktop stopped reporting in between.
+
 A new music folder, `combat-ground`, plays while the Commander is on foot in a ground conflict zone: from the dropship's deploy, or the first kill bond earned on foot at a settlement, until the retreat or a taxi booking, boarding their own ship, death, supercruise, a jump or a new session. It wins over the `settlement` folder and Elite's `OnFoot` and `Exploration` tracks and gives way to every other Elite track, such as `Thargoid_GroundCombat`. While it is empty nothing changes. The folder is created on the next start.
 
 A new music folder, `settlement`, plays while the Commander is on foot or in the SRV at an Odyssey settlement, from the journal's settlement approach until supercruise, a jump, death, a new session or docking anywhere but the settlement's own pad. It wins over Elite's `OnFoot` and `Exploration` tracks and gives way to every other Elite track, so combat in the SRV still plays `combat-srv`. In the ship, landed at the settlement, `normal-space` plays as before, and while the folder is empty nothing changes. The folder is created on the next start.

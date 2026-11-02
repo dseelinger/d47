@@ -108,10 +108,10 @@ public class ASwitchSetsTheHeadsetViewTests
     }
 
     [Fact]
-    public void NoChangeAfterAPressPausesTheSwitch()
+    public void NoChangeAfterAPressIsSaidOnceAndTheNextFlipPressesAgain()
     {
-        const string why = "Shift+Win+D did not change the headset view. If you changed Virtual Desktop's shortcut, "
-                           + "set it back, then press Resume.";
+        const string said = "Shift+Win+D did not change the headset view. If you changed Virtual Desktop's shortcut, "
+                            + "set it back.";
 
         var view = new FakeView { Showing = HeadsetView.Vr };
         var reconciler = New(view);
@@ -123,18 +123,25 @@ public class ASwitchSetsTheHeadsetViewTests
         reconciler.HeadsetPressed("view switch", HeadsetView.Desktop, sent: true);
 
         reconciler.Poll(Tick(5, 2), switches);
+        reconciler.Poll(Tick(5, 2 + SwitchReconciler.ContestWindow.TotalSeconds + 1), switches);
+        reconciler.Poll(Tick(5, 2 + SwitchReconciler.ContestWindow.TotalSeconds + 2), switches);
+
+        Assert.False(reconciler.IsPaused("view switch"));
         Assert.Equal(SwitchHealth.Ready, reconciler.States[0].Health);
 
-        reconciler.Poll(Tick(5, 2 + SwitchReconciler.ContestWindow.TotalSeconds + 1), switches);
+        // Said on the headset's path rather than the game's.
+        var failed = Assert.Single(reconciler.Drain());
+        Assert.Equal(said, failed.Say);
+        Assert.Equal(HeadsetView.Desktop, failed.View);
 
-        Assert.True(reconciler.IsPaused("view switch"));
-        Assert.Equal(SwitchHealth.Paused, reconciler.States[0].Health);
-        Assert.Equal(why, reconciler.States[0].Note);
+        // The headset still shows VR, so back to VR presses nothing and the next flip to the desktop presses again.
+        reconciler.Poll(Tick(4, 10), switches);
+        Assert.Empty(reconciler.Drain());
 
-        // Said as well, on the headset's path rather than the game's.
-        var said = Assert.Single(reconciler.Drain());
-        Assert.Equal(why, said.Say);
-        Assert.NotNull(said.View);
+        reconciler.Poll(Tick(5, 11), switches);
+        var again = Assert.Single(reconciler.Drain());
+        Assert.Equal(HeadsetView.Desktop, again.View);
+        Assert.Null(again.Say);
     }
 
     [Fact]
@@ -161,7 +168,7 @@ public class ASwitchSetsTheHeadsetViewTests
     }
 
     [Fact]
-    public void AReadingLostAfterAPressDoesNotPause()
+    public void AReadingLostAfterAPressSaysNothing()
     {
         var view = new FakeView { Showing = HeadsetView.Vr };
         var reconciler = New(view);
@@ -177,6 +184,7 @@ public class ASwitchSetsTheHeadsetViewTests
         reconciler.Poll(Tick(5, 2 + SwitchReconciler.ContestWindow.TotalSeconds + 1), switches);
 
         Assert.False(reconciler.IsPaused("view switch"));
+        Assert.Empty(reconciler.Drain());
     }
 
     [Fact]
@@ -197,14 +205,14 @@ public class ASwitchSetsTheHeadsetViewTests
         reconciler.HeadsetPressed("view switch", HeadsetView.Desktop, sent: true);
         reconciler.Poll(Tick(5, 11), switches);
         reconciler.Poll(Tick(5, 12), switches);
-        Assert.False(reconciler.IsPaused("view switch"));
+        Assert.Empty(reconciler.Drain());
 
         reconciler.Poll(Tick(5, 11 + SwitchReconciler.ContestWindow.TotalSeconds + 1), switches);
-        Assert.True(reconciler.IsPaused("view switch"));
+        Assert.NotNull(Assert.Single(reconciler.Drain()).Say);
     }
 
     [Fact]
-    public void APressThatWasNotSentDoesNotPause()
+    public void APressThatWasNotSentSaysNothing()
     {
         var view = new FakeView { Showing = HeadsetView.Vr };
         var reconciler = New(view);

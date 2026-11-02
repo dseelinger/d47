@@ -151,6 +151,9 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
 
     private readonly Dictionary<string, ViewWatch> _viewWatching = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>When each switch's last headset press was first seen sent.</summary>
+    private readonly Dictionary<string, DateTimeOffset> _lastHeadsetPress = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>The focus each switch is moving the game to, or holding it at.</summary>
     private readonly Dictionary<string, FocusGoal> _focusGoals = new(StringComparer.OrdinalIgnoreCase);
 
@@ -1016,7 +1019,10 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
     /// <summary>How a view is named mid-sentence.</summary>
     private static string Word(HeadsetView view) => view == HeadsetView.Vr ? "SteamVR" : "the desktop view";
 
-    /// <summary>A press of Shift+Win+D that did not change the view pauses the switch.</summary>
+    /// <summary>
+    /// A press of Shift+Win+D that did not change the view is said once and logged; the switch stays ready, so the
+    /// next flip presses again.
+    /// </summary>
     private void WatchingTheHeadset(SwitchTick tick, SwitchMapping mapping, bool flipped)
     {
         if (!_viewWatching.TryGetValue(mapping.Name, out var watch))
@@ -1043,9 +1049,20 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             return;
         }
 
+        if (showing == HeadsetView.Unknown && !watch.SawUnknown)
+        {
+            watch = watch with { SawUnknown = true };
+            _viewWatching[mapping.Name] = watch;
+        }
+
         if (watch.Until is not { } until)
         {
-            _viewWatching[mapping.Name] = watch with { Until = tick.Now + ContestWindow };
+            TimeSpan? sincePrevious = _lastHeadsetPress.TryGetValue(mapping.Name, out var previous)
+                ? tick.Now - previous
+                : null;
+
+            _lastHeadsetPress[mapping.Name] = tick.Now;
+            _viewWatching[mapping.Name] = watch with { Until = tick.Now + ContestWindow, SincePrevious = sincePrevious };
             return;
         }
 
@@ -1062,14 +1079,21 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             return;
         }
 
-        const string why = "Shift+Win+D did not change the headset view. If you changed Virtual Desktop's "
-                           + "shortcut, set it back, then press Resume.";
+        const string said = "Shift+Win+D did not change the headset view. If you changed Virtual Desktop's "
+                            + "shortcut, set it back.";
 
-        _paused[mapping.Name] = why;
+        logger.LogWarning(
+            "Switch {Name} pressed Shift+Win+D for {View} and the headset view did not change: {Before} before the "
+            + "press, {After} when the watch ended, {SincePrevious} since this switch's previous headset press, "
+            + "reading lost in between: {SawUnknown}",
+            mapping.Name,
+            watch.View,
+            watch.From,
+            showing,
+            watch.SincePrevious?.ToString() ?? "no previous press",
+            watch.SawUnknown);
 
-        logger.LogWarning("Switch {Name} pressed Shift+Win+D and the headset view did not change; paused", mapping.Name);
-
-        _pending.Enqueue(new PendingReconcile(mapping.Name, Word(watch.View), [], why, View: watch.View));
+        _pending.Enqueue(new PendingReconcile(mapping.Name, Word(watch.View), [], said, View: watch.View));
     }
 
     private static PanelDestination? Page(SwitchTick tick, string key) =>
@@ -1289,5 +1313,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         HeadsetView View,
         HeadsetView From,
         bool Sent = false,
-        DateTimeOffset? Until = null);
+        DateTimeOffset? Until = null,
+        TimeSpan? SincePrevious = null,
+        bool SawUnknown = false);
 }

@@ -455,11 +455,12 @@ switch's row on the HOTAS switches page reads:
 
 > Virtual Desktop is not streaming, so the headset view was left alone.
 
-If the view has not changed four seconds after the press, the switch pauses. Virtual Desktop's
-shortcut can be changed in its settings, and Directive 47 always sends Shift+Win+D:
+If the view has not changed four seconds after the press, Directive 47 says so, and the next flip
+tries again. Virtual Desktop's shortcut can be changed in its settings, and Directive 47 always
+sends Shift+Win+D:
 
 > Shift+Win+D did not change the headset view. If you changed Virtual Desktop's shortcut, set it
-> back, then press Resume.
+> back.
 
 While the row is on, a switch sitting in a view the headset is not showing is annunciated like any
 other:
