@@ -101,6 +101,9 @@ public sealed class JournalTick(JournalTick.Sources sources)
     /// <summary>Elite's own music track: the journal's witness that the galaxy map is showing (#365), and what ambience follows.</summary>
     public EliteMusic EliteMusic { get; } = new();
 
+    /// <summary>The route file checked against Elite's route targets, folded after the file is polled.</summary>
+    public LiveRoute LiveRoute { get; } = new();
+
     /// <summary>The settlement the Commander approached and has not left, which ambience follows.</summary>
     public SettlementVisit Settlement { get; } = new();
 
@@ -136,6 +139,9 @@ public sealed class JournalTick(JournalTick.Sources sources)
         JournalLog.Add(events, journal.Receipts);
         status.Poll();
         route.Poll();
+
+        // The game's own route, so it follows the Commander Elite is running rather than the one shown.
+        LiveRoute.Fold(events, route.Current, gameState.InGame?.Location);
 
         // Elite rewrites this one on outfitting and on a module being switched off, so it is read on the same
         // terms as the other two: only when its write time moves.
@@ -187,7 +193,8 @@ public sealed class JournalTick(JournalTick.Sources sources)
             gameState,
             status.Current,
             route.Current,
-            events);
+            events,
+            LiveRoute);
 
         sources.Callouts.Tick(calloutContext);
         sources.Autonomous.Tick(calloutContext);

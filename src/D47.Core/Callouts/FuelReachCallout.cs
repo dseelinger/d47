@@ -59,7 +59,8 @@ public sealed class FuelReachCallout(ILogger? logger = null) : ICallout
             _jumpsBurned == 0 ||
             context.State is not { } state ||
             state.Location.StarSystem is not { } current ||
-            !context.Route.IsPlotted)
+            !context.Route.IsPlotted ||
+            context.LiveRoute is { Changed: true })
         {
             yield break;
         }

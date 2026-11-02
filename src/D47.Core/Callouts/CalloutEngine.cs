@@ -30,6 +30,9 @@ public readonly record struct CalloutContext(
     /// <summary>False while Elite is not running; chatter is refused then.</summary>
     public bool GameRunning { get; init; } = true;
 
+    /// <summary>The route file checked against Elite's route targets, or null where nothing checks it.</summary>
+    public LiveRoute? LiveRoute { get; init; }
+
     /// <summary>Whether the shown Commander is in an Operation.</summary>
     public bool InOperation => State?.InOperationSince is not null;
 
@@ -40,7 +43,8 @@ public readonly record struct CalloutContext(
         GameStateStore commanders,
         GameStatus status,
         NavRoute route,
-        IReadOnlyList<JournalEvent> events)
+        IReadOnlyList<JournalEvent> events,
+        LiveRoute? liveRoute = null)
     {
         ArgumentNullException.ThrowIfNull(commanders);
 
@@ -48,6 +52,7 @@ public readonly record struct CalloutContext(
         {
             AnotherFlying = !isFirst && commanders.IsAnotherFlying,
             GameRunning = commanders.IsGameRunning,
+            LiveRoute = liveRoute,
         };
     }
 }

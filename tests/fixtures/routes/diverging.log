@@ -1,0 +1,15 @@
+{ "timestamp":"2026-11-01T15:00:00Z", "event":"Fileheader", "part":1, "language":"English/UK", "Odyssey":true, "gameversion":"4.2.0.0", "build":"r000000/r0 " }
+{ "timestamp":"2026-11-01T15:00:01Z", "event":"Commander", "FID":"F2000061", "Name":"Fixture Courier" }
+{ "timestamp":"2026-11-01T15:00:02Z", "event":"LoadGame", "FID":"F2000061", "Commander":"Fixture Courier", "Horizons":true, "Odyssey":true, "Ship":"Asp Explorer", "ShipID":1, "GameMode":"Open", "Credits":100000, "Loan":0 }
+{ "timestamp":"2026-11-01T15:00:05Z", "event":"Location", "Docked":true, "StationName":"Fixture Port", "StationType":"Coriolis", "StarSystem":"Pareco", "SystemAddress":2001, "StarPos":[0.0,0.0,0.0], "Body":"Fixture Port", "BodyType":"Station" }
+{ "timestamp":"2026-11-01T15:05:38Z", "event":"NavRoute" }
+{ "timestamp":"2026-11-01T15:05:38Z", "event":"FSDTarget", "Name":"Shui Wei Sector DB-X c1-18", "StarClass":"K", "RemainingJumpsInRoute":4 }
+{ "timestamp":"2026-11-01T15:06:00Z", "event":"Undocked", "StationName":"Fixture Port", "StationType":"Coriolis" }
+{ "timestamp":"2026-11-01T15:06:31Z", "event":"StartJump", "JumpType":"Supercruise", "Taxi":false }
+{ "timestamp":"2026-11-01T15:06:31Z", "event":"FSDTarget", "Name":"Shui Wei Sector DB-X c1-18", "StarClass":"K", "RemainingJumpsInRoute":5 }
+{ "timestamp":"2026-11-01T15:07:04Z", "event":"StartJump", "JumpType":"Hyperspace", "Taxi":false, "StarSystem":"Shui Wei Sector DB-X c1-18", "StarClass":"K" }
+{ "timestamp":"2026-11-01T15:07:11Z", "event":"FSDTarget", "Name":"LP 988-175", "StarClass":"M", "RemainingJumpsInRoute":4 }
+{ "timestamp":"2026-11-01T15:07:22Z", "event":"FSDJump", "Taxi":false, "Multicrew":false, "StarSystem":"Shui Wei Sector DB-X c1-18", "StarPos":[10.0,0.0,0.0], "JumpDist":10.0, "FuelUsed":1.2, "FuelLevel":20.0 }
+{ "timestamp":"2026-11-01T15:08:42Z", "event":"StartJump", "JumpType":"Hyperspace", "Taxi":false, "StarSystem":"LP 988-175", "StarClass":"M" }
+{ "timestamp":"2026-11-01T15:08:49Z", "event":"FSDTarget", "Name":"LHS 4058", "StarClass":"DA", "RemainingJumpsInRoute":3 }
+{ "timestamp":"2026-11-01T15:09:01Z", "event":"FSDJump", "Taxi":false, "Multicrew":false, "StarSystem":"LP 988-175", "StarPos":[20.0,0.0,0.0], "JumpDist":10.0, "FuelUsed":1.2, "FuelLevel":20.0 }

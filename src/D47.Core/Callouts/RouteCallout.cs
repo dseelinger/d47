@@ -44,6 +44,21 @@ public sealed class RouteCallout(ILogger? logger = null) : ICallout
         }
 
         var current = state.Location.StarSystem;
+
+        // When Elite's route target no longer matches the route file, only the target is known: the next system
+        // and the count.
+        if (context.LiveRoute is { Changed: true, Target: { } target })
+        {
+            _lastAnnouncedSystem = current;
+
+            foreach (var announcement in Speak(state, target.StarSystem, target.StarClass, target.JumpsRemaining))
+            {
+                yield return announcement;
+            }
+
+            yield break;
+        }
+
         var ahead = context.Route.Ahead(current);
 
         if (ahead.Count == 0)
@@ -63,15 +78,44 @@ public sealed class RouteCallout(ILogger? logger = null) : ICallout
 
         _lastAnnouncedSystem = current;
 
+        var next = ahead[0];
+        var reported = false;
+
+        foreach (var announcement in Speak(state, next.StarSystem, next.StarClass, ahead.Count))
+        {
+            reported |= announcement.Key == "route.progress";
+            yield return announcement;
+        }
+
+        if (!reported)
+        {
+            yield break;
+        }
+
+        // Hazards further out, so a neutron star four jumps away is not a surprise.
+        var upcoming = ahead.Skip(1).Take(EveryNJumps).Where(hop => hop.Hazardous).ToArray();
+
+        if (upcoming.Length > 0)
+        {
+            var named = string.Join(", ", upcoming.Select(hop => $"{hop.StarSystem} ({StarClasses.Speak(hop.StarClass)})"));
+
+            yield return new Announcement("route.ahead", $"Ahead on the route: {named}.")
+            {
+                Cooldown = TimeSpan.FromMinutes(2),
+            };
+        }
+    }
+
+    /// <summary>The hazard on the next jump, and on a reporting jump the jumps left and the next system.</summary>
+    private IEnumerable<Announcement> Speak(CommanderGameState state, string nextSystem, string? nextClass, int remaining)
+    {
         // A hazard on the very next jump outranks the progress report and is said whether or not this was a
         // reporting jump.
-        var next = ahead[0];
-
-        if (next.Hazardous)
+        if (StarClasses.IsHazardous(nextClass))
         {
             yield return new Announcement(
                 "route.hazard",
-                $"Next jump is {StarClasses.Speak(next.StarClass)} at {next.StarSystem}. "
+                $"Next jump is {StarClasses.Speak(nextClass)} at {nextSystem}. "
                 + "Throttle down on arrival.",
                 CalloutUrgency.Urgent)
             {
@@ -86,18 +130,17 @@ public sealed class RouteCallout(ILogger? logger = null) : ICallout
 
         _jumpsSinceProgress = 0;
 
-        var remaining = ahead.Count;
-        var report = $"{remaining} jump{(remaining == 1 ? "" : "s")} remaining. Next is {next.StarSystem}";
+        var report = $"{remaining} jump{(remaining == 1 ? "" : "s")} remaining. Next is {nextSystem}";
 
         // Scoopability of the next star, stated only when the class is actually known.
         var scoopable = state.Fitted(ShipLoadout.FuelScoop, "FSDJump", logger) is false
             ? null
-            : next.Scoopable;
+            : StarClasses.IsScoopable(nextClass);
 
         report += scoopable switch
         {
             true => ", scoopable.",
-            false => $", {StarClasses.Speak(next.StarClass)} — not scoopable.",
+            false => $", {StarClasses.Speak(nextClass)} — not scoopable.",
             null => ".",
         };
 
@@ -105,19 +148,6 @@ public sealed class RouteCallout(ILogger? logger = null) : ICallout
         {
             Cooldown = TimeSpan.FromSeconds(20),
         };
-
-        // Hazards further out, so a neutron star four jumps away is not a surprise.
-        var upcoming = ahead.Skip(1).Take(EveryNJumps).Where(hop => hop.Hazardous).ToArray();
-
-        if (upcoming.Length > 0)
-        {
-            var named = string.Join(", ", upcoming.Select(hop => $"{hop.StarSystem} ({StarClasses.Speak(hop.StarClass)})"));
-
-            yield return new Announcement("route.ahead", $"Ahead on the route: {named}.")
-            {
-                Cooldown = TimeSpan.FromMinutes(2),
-            };
-        }
     }
 }
 

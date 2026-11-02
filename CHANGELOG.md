@@ -10,6 +10,8 @@
 
 Off a plotted route, Directive 47 now says nothing about the route. Before, a Commander who had jumped elsewhere heard "7 jumps remaining. Next is" followed by the system the route was plotted from, and the fuel warnings read the route the same way. "Route complete" is now said only in the route's last system.
 
+When Elite changes a plotted route without writing a new one, Directive 47's route callouts now follow the systems Elite targets. They say the jumps left and the next system Elite has targeted, with that star's scoopability and any hazard, and says nothing about the stars further ahead or about fuel on the route. Before, the callouts kept reading the route as first plotted: they warned of a white dwarf ahead, with throttle and supercharge advice, when the next star was a class M, and counted progress along a route the ship had left.
+
 A story can now have its children call the Commander Mum or Dad. Its lines may carry `{parent}`, which becomes the word the story gives for a man or a woman Commander, and `{parent:<cast-id>}`, the word a member written in two versions uses. A story with these words asks for your Commander's gender before it can be picked.
 
 A story chapter now has a **Write chapter again** button beside **Change objective** and **Mark done**, on the chapter's page and on the Stories page, in the window and on the VR big panel. One press, or "write this chapter again", sets the chapter aside and writes it again from where you are. It works on any step, drops an open detour, keeps objectives already done and a finale's destination, and is refused when the chapter needs a beacon your ship cannot reach. A short story does not get it.

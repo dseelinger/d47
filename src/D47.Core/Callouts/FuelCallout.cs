@@ -109,6 +109,12 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
             yield break;
         }
 
+        // When Elite's route target no longer matches the route file, the file's stars are not the ones ahead.
+        if (context.LiveRoute is { Changed: true })
+        {
+            yield break;
+        }
+
         // Nothing here is news to a ship that cannot scoop: see the class summary.
         var asking = FlownShipLoadout.Asked(context.Events, "the plotted route");
         var scoopFitted = state.Fitted(ShipLoadout.FuelScoop, asking, logger);
