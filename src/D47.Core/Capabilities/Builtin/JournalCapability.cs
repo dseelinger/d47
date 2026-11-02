@@ -982,8 +982,7 @@ public static class JournalCapability
             return;
         }
 
-        // Both RouteProgress and NavRoute.Ahead count the whole route as ahead when the Commander is not
-        // on it, so a jump count taken without this check overstates it.
+        // Off the route RouteProgress counts the whole route, so a jump count taken without this check overstates it.
         if (RouteProgress.For(route, here).OffRoute)
         {
             report.Append(" A route is plotted, but this system is not on it.");

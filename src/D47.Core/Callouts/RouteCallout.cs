@@ -48,9 +48,8 @@ public sealed class RouteCallout(ILogger? logger = null) : ICallout
 
         if (ahead.Count == 0)
         {
-            // Arriving at the end of a plotted route is worth one line, and only one — hence the guard on the
-            // system having changed.
-            if (context.Route.IsPlotted && !string.Equals(_lastAnnouncedSystem, current, StringComparison.OrdinalIgnoreCase))
+            // Said once per arrival, and only in the last system of the route.
+            if (context.Route.IsAtEnd(current) && !string.Equals(_lastAnnouncedSystem, current, StringComparison.OrdinalIgnoreCase))
             {
                 _lastAnnouncedSystem = current;
                 _jumpsSinceProgress = 0;

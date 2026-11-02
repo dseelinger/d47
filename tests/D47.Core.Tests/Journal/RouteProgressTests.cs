@@ -72,8 +72,7 @@ public class RouteProgressTests
         Assert.True(progress.OffRoute);
         Assert.Equal(-1, progress.Index);
 
-        // Every hop, because none has been reached — the same reading NavRoute.Ahead takes, and it beats
-        // claiming the route is complete.
+        // Every hop is counted, which beats claiming the route is complete.
         Assert.Equal(3, progress.JumpsRemaining);
     }
 

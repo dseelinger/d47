@@ -968,6 +968,32 @@ public class CalloutTests
         Assert.Contains("neutron", hazard.Text);
     }
 
+    [Fact]
+    public void OffTheRouteTheRouteCalloutSaysNothing()
+    {
+        var callout = new RouteCallout { EveryNJumps = 1 };
+        var route = Route(("A", "K", 0), ("B", "N", 10), ("C", "K", 20));
+        var jump = """{"timestamp":"3311-01-01T00:00:01Z","event":"FSDJump","StarSystem":"Elsewhere","JumpDist":10}""";
+
+        Assert.Empty(callout.Examine(Context(StateFrom(jump), route: route, events: [jump])));
+    }
+
+    [Fact]
+    public void RouteCompleteIsSaidOnlyInTheLastSystemOfTheRoute()
+    {
+        var callout = new RouteCallout { EveryNJumps = 1 };
+        var route = Route(("A", "K", 0), ("B", "K", 10));
+        var middle = """{"timestamp":"3311-01-01T00:00:01Z","event":"FSDJump","StarSystem":"A","JumpDist":10}""";
+        var last = """{"timestamp":"3311-01-01T00:00:02Z","event":"FSDJump","StarSystem":"B","JumpDist":10}""";
+
+        Assert.DoesNotContain(
+            callout.Examine(Context(StateFrom(middle), route: route, events: [middle])), a => a.Key == "route.arrived");
+
+        Assert.Single(
+            callout.Examine(Context(StateFrom(last), route: route, events: [last], atSecond: 1)),
+            a => a.Key == "route.arrived");
+    }
+
     // ---- Arrival ------------------------------------------------------------------------
 
     [Fact]

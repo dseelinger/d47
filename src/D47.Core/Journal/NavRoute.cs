@@ -182,12 +182,12 @@ public sealed record NavRoute
 
     public bool IsPlotted => Hops.Count > 0;
 
-    /// <summary>The hops still ahead, given where the Commander is now.</summary>
+    /// <summary>The hops after the Commander's system; empty when that system is not on the route.</summary>
     public IReadOnlyList<RouteHop> Ahead(string? currentSystem)
     {
         if (currentSystem is null)
         {
-            return Hops;
+            return [];
         }
 
         for (var index = 0; index < Hops.Count; index++)
@@ -198,9 +198,12 @@ public sealed record NavRoute
             }
         }
 
-        // Off the plotted route — the Commander jumped somewhere else.
-        return Hops;
+        return [];
     }
+
+    /// <summary>Whether the Commander is in the last system of the route.</summary>
+    public bool IsAtEnd(string? currentSystem) =>
+        IsPlotted && string.Equals(Hops[^1].StarSystem, currentSystem, StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>Where the Commander is in a plotted route, and what is left of it (Phase 37, "Progress").</summary>
@@ -237,8 +240,7 @@ public sealed record RouteProgress(int Index, int JumpsRemaining, double? Distan
             }
         }
 
-        // Off the route, everything is still ahead — the same reading NavRoute.Ahead takes, and for the same
-        // reason: none of it has been reached.
+        // Off the route the whole route is counted, for the plot confirmation and the route page.
         var from = index < 0 ? -1 : index;
 
         return new RouteProgress(

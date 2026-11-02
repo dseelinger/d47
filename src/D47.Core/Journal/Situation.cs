@@ -123,8 +123,7 @@ public static class Situation
             return;
         }
 
-        // Off the route, RouteProgress and NavRoute.Ahead both count the whole route as still ahead, so a
-        // jump count taken without this check overstates it.
+        // Off the route RouteProgress counts the whole route, so a jump count taken without this check overstates it.
         if (RouteProgress.For(route, here).OffRoute)
         {
             lines.Add("Route: a route is plotted, but the Commander is not on it.");
