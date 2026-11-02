@@ -26,6 +26,13 @@ public enum StoryState
 /// <summary>A stretch during which the Commander had the story switched off; <see cref="To"/> is null while it is still off.</summary>
 public sealed record StoryOffSpan(DateTimeOffset From, DateTimeOffset? To);
 
+/// <summary>
+/// One objective the Commander asked for, held outside the chapter count. <see cref="Key"/> is its one-step adventure,
+/// <see cref="Chapter"/> the chapter it interrupted, <see cref="Words"/> the Commander's reason, and <see cref="Done"/> the
+/// titles of that chapter's objectives already done.
+/// </summary>
+public sealed record StoryDetour(string Key, string Chapter, string Words, DateTimeOffset At, IReadOnlyList<string> Done);
+
 /// <summary>A stock story the Commander picked: a chain of chapters, each an adventure written as they play.</summary>
 public sealed record Story
 {
@@ -140,6 +147,9 @@ public sealed record Story
 
     /// <summary>The chapters, by key, in which the Commander applied a Change objective replacement.</summary>
     public IReadOnlyList<string> ChangedChapters { get; init; } = [];
+
+    /// <summary>The open detour; the chapter it interrupted is written again once it fires. Null when none.</summary>
+    public StoryDetour? Detour { get; init; }
 
     /// <summary>The system, Sol or Colonia, the story's chapters head for after changed chapters in the black; null when none.</summary>
     public string? HomeTarget { get; init; }

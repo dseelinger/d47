@@ -979,6 +979,9 @@ public sealed record Adventure
     /// <summary>The stock story this adventure is a chapter of, or null.</summary>
     public string? StoryId { get; init; }
 
+    /// <summary>Whether this is a story's detour: one step with no lines, held outside the story's chapters.</summary>
+    public bool Detour { get; init; }
+
     /// <summary>The system of the sight objective on an accepted sightseeing chapter; null otherwise.</summary>
     public string? Sight { get; init; }
 
@@ -1017,6 +1020,9 @@ public sealed record Adventure
 
     public bool IsFailed => Ending is { Name: AdventureEnding.Failed };
 
+    /// <summary>Whether the Commander set this chapter aside for a detour.</summary>
+    public bool IsSetAside => Ending is { Name: AdventureEnding.SetAside };
+
     /// <summary>A generated adventure nobody has agreed to yet.</summary>
     public bool IsDraft => Source == AdventureSource.Generated && AcceptedAt is null;
 
@@ -1029,6 +1035,9 @@ public sealed record AdventureEnding(string Name, DateTimeOffset At, string Reas
 {
     /// <summary>The name of the ending a <c>failsOn</c> trigger gives.</summary>
     public const string Failed = "Failed";
+
+    /// <summary>The name of the ending a chapter is given when the Commander sets it aside for a detour.</summary>
+    public const string SetAside = "Set aside";
 }
 
 /// <summary>A step of a beat fired without its journal event at <paramref name="At"/>; <paramref name="By"/> is the <see cref="AdventureStanding.FiredBy"/> it records, the bench when null.</summary>

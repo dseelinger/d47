@@ -216,9 +216,16 @@ internal sealed class StoryFixtures : IDisposable
 
     public IFileSystem Files { get; } = new MemoryFileSystem();
 
-    public StoryFixtures(RoundScriptedLlmProvider provider, StorySecret? secret = null, StoryCard? card = null, Microsoft.Extensions.Logging.ILogger? logger = null)
+    /// <summary>With <paramref name="reopening"/>, opens that fixture's files as a restart would, with a new book and director.</summary>
+    public StoryFixtures(RoundScriptedLlmProvider provider, StorySecret? secret = null, StoryCard? card = null, Microsoft.Extensions.Logging.ILogger? logger = null, StoryFixtures? reopening = null)
     {
         secret ??= Secret;
+
+        if (reopening is not null)
+        {
+            _folder = reopening._folder;
+            Files = reopening.Files;
+        }
 
         Provider = provider;
         Book = new AdventureBook(

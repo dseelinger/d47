@@ -52,7 +52,14 @@ public sealed record AdventureAsk(
     int Draft = 1,
     AdventureOutline? Outline = null,
     IReadOnlyList<string>? Barred = null,
-    AdventureChapter? Failed = null);
+    AdventureChapter? Failed = null,
+    AdventureSetAside? SetAside = null);
+
+/// <summary>
+/// A chapter the Commander set aside for a detour, to be written again: the chapter, the titles of its objectives already
+/// done, the Commander's words, and the system they are in now.
+/// </summary>
+public sealed record AdventureSetAside(AdventureChapter Chapter, IReadOnlyList<string> Done, string Words, string? Here);
 
 /// <summary>A draft's name and spine, kept for the next draft to write its objectives against.</summary>
 public sealed record AdventureOutline(string Name, AdventureSpine Spine);
@@ -2271,12 +2278,17 @@ public sealed class AdventureGenerator(
 
         if (ask.Chapter is { } chapter)
         {
-            AppendChapter(text, chapter, facts, !IsDrawn(ask.Story), ask.Failed is not null);
+            AppendChapter(text, chapter, facts, !IsDrawn(ask.Story), ask.Failed is not null || ask.SetAside is not null);
         }
 
         if (ask.Failed is { } failed)
         {
             AppendFailed(text, failed);
+        }
+
+        if (ask.SetAside is { } setAside)
+        {
+            AppendSetAside(text, setAside);
         }
 
         if (ask.Story is { } story)
@@ -2440,6 +2452,32 @@ public sealed class AdventureGenerator(
         text.AppendLine(
             "Write a chapter that takes its place, written from what the Commander did. Do not retell the failed "
             + "chapter or ask for its objectives again; let what happened shape this chapter's want and stake.");
+    }
+
+    /// <summary>The chapter the Commander set aside for a detour, what of it they did, where they are now, and what is asked of the chapter written in its place.</summary>
+    private static void AppendSetAside(StringBuilder text, AdventureSetAside setAside)
+    {
+        var attempt = setAside.Chapter.Previous;
+
+        text.AppendLine();
+        text.AppendLine("The Commander set an earlier version of this chapter aside to go somewhere else:");
+        AppendSpine(text, attempt.Name, attempt.Spine, whole: false);
+        text.AppendLine("Objectives: " + string.Join("; ", attempt.Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")));
+        text.AppendLine(setAside.Done.Count > 0
+            ? "Objectives already done: " + string.Join("; ", setAside.Done)
+            : "Objectives already done: none");
+        text.AppendLine($"Why they set it aside, in their words: {setAside.Words}");
+
+        if (!string.IsNullOrWhiteSpace(setAside.Here))
+        {
+            text.AppendLine($"Where the Commander is now: {setAside.Here}");
+        }
+
+        AppendNotables(text, setAside.Chapter);
+        text.AppendLine();
+        text.AppendLine(
+            "Write this chapter again from where the Commander is now. What they already did stays done; do not ask for "
+            + "those objectives again. Carry on the chapter's want and stake from here.");
     }
 
     /// <summary>Whether the chapter is written around drawn activities.</summary>
@@ -3396,6 +3434,11 @@ public sealed class AdventureGenerator(
         if (ask.Failed is { } failedAttempt)
         {
             AppendFailed(text, failedAttempt);
+        }
+
+        if (ask.SetAside is { } setAsideAttempt)
+        {
+            AppendSetAside(text, setAsideAttempt);
         }
 
         if (ask.Story?.Sights is { Count: > 0 })

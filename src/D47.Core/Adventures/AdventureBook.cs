@@ -558,6 +558,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 }
 
                 stirred = true;
+
                 return null;
             }
         }
@@ -1098,6 +1099,45 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         }
     }
 
+    /// <summary>
+    /// Ends a chapter under way with <see cref="AdventureEnding.SetAside"/> and <paramref name="reason"/>; events from
+    /// <paramref name="at"/> on do not count toward it. Returns a refusal or null.
+    /// </summary>
+    public string? SetAside(string? frontierId, string key, string reason, DateTimeOffset at)
+    {
+        lock (_rewriteGate)
+        {
+            var commander = frontierId ?? AdventureStore.NoCommander;
+
+            if (store.Find(commander, key) is not { } adventure)
+            {
+                return "There is no story by that name.";
+            }
+
+            if (!adventure.IsActive)
+            {
+                return $"{adventure.Name} is not under way.";
+            }
+
+            var ended = adventure with { Ending = new AdventureEnding(AdventureEnding.SetAside, at, reason) };
+
+            if (store.Save(commander, ended) is { } refusal)
+            {
+                return refusal;
+            }
+
+            lock (_gate)
+            {
+                if (_fold.Standings.TryGetValue(StandingKey(commander, key), out var standing))
+                {
+                    _fold.Standings[StandingKey(commander, key)] = standing with { Adventure = store.Find(commander, key) ?? ended };
+                }
+            }
+
+            return null;
+        }
+    }
+
     /// <summary>The standings of this Commander that failed or reached an option's ending and whose ending is not stored yet.</summary>
     public IReadOnlyList<AdventureStanding> Unstored(string? frontierId) =>
         [.. Standings(frontierId).Where(standing => (standing.Failure is not null || standing.Reached is not null) && standing.Adventure is { IsActive: true })];
@@ -1294,8 +1334,11 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         {
             _moments.Enqueue(new AdventureMoment(commander, adventure, after.Fired.Count - 1, at));
 
-            // From here until the line is said or dropped, the tab has something to animate.
-            Stir(commander, adventure.Key);
+            // From here until the line is said or dropped, the tab has something to animate. A beat with no line owes none.
+            if (adventure.Beats[after.Fired.Count - 1].Lines.Count > 0)
+            {
+                Stir(commander, adventure.Key);
+            }
         }
 
         Logged(before, after, at);

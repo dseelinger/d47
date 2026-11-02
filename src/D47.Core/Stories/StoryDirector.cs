@@ -737,6 +737,25 @@ public sealed class StoryDirector(
             return StoryVoices.Paused(paused.Title, missing);
         }
 
+        if (paused.Detour is { } detour && book.Standing(frontierId, detour.Key) is { } detourStanding)
+        {
+            if (detourStanding.Adventure.IsAbandoned && book.Begin(frontierId, detour.Key, now) is { } detourRefusal)
+            {
+                return detourRefusal;
+            }
+
+            stories.Save(frontierId, paused.Resumed(now));
+            Began?.Invoke();
+            return null;
+        }
+
+        if (paused.Detour is not null)
+        {
+            stories.Save(frontierId, paused.Resumed(now));
+            Began?.Invoke();
+            return await WriteChapterAsync(frontierId, now, cancellationToken).ConfigureAwait(false);
+        }
+
         if (paused.CurrentChapter is { } key && book.Store.Find(frontierId, key) is not null)
         {
             if (book.Begin(frontierId, key, now) is { } refusal)
@@ -778,6 +797,12 @@ public sealed class StoryDirector(
         if (jumped.CurrentChapter is { } key)
         {
             book.Remove(frontierId, key);
+        }
+
+        if (current.Detour is { } detour)
+        {
+            book.Remove(frontierId, detour.Key);
+            jumped = jumped with { Detour = null };
         }
 
         stories.Save(frontierId, jumped.State == StoryState.Paused ? jumped : jumped.Paused(now));
@@ -854,6 +879,113 @@ public sealed class StoryDirector(
     }
 
     /// <summary>
+    /// Sets a detour on the running story's chapter: a one-step objective of <paramref name="trigger"/> with no lines, outside
+    /// the chapter count, and the chapter set aside with <paramref name="words"/> as its reason. Once the detour fires, the
+    /// chapter is written again at the same number. Writes files, so it never runs on the tick. Returns a refusal or null.
+    /// </summary>
+    public string? SetDetour(string? frontierId, AdventureTrigger trigger, string title, string words, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(trigger);
+        ArgumentException.ThrowIfNullOrWhiteSpace(title);
+        ArgumentException.ThrowIfNullOrWhiteSpace(words);
+
+        if (Switching)
+        {
+            return Swapping;
+        }
+
+        if (!Claim(frontierId))
+        {
+            return "An objective is being written.";
+        }
+
+        try
+        {
+            var story = stories.Current(frontierId);
+            var standing = story?.CurrentChapter is { } chapterKey ? book.Standing(frontierId, chapterKey) : null;
+
+            if (DetourRefusal(frontierId, story, standing, trigger) is { } refusal)
+            {
+                return refusal;
+            }
+
+            var key = UniqueKey(frontierId, story!, "detour");
+            var detour = new Adventure
+            {
+                Key = key,
+                Name = title.Trim(),
+                Source = AdventureSource.Generated,
+                Written = now,
+                StoryId = story!.Id,
+                Detour = true,
+                Beats = [new AdventureBeat { Title = title.Trim(), Steps = [new BeatStep { Trigger = trigger, Reason = words.Trim() }] }],
+            };
+
+            if ((book.Write(frontierId, detour) ?? book.Begin(frontierId, key, now)) is { } written)
+            {
+                book.Remove(frontierId, key);
+                return written;
+            }
+
+            var chapter = standing!.Adventure;
+            var done = chapter.Beats.Take(standing.Current).Select(beat => beat.Title).ToList();
+
+            // The detour is saved before the chapter is set aside, so the tick never sees a set-aside chapter with no detour and writes the next one.
+            stories.Save(frontierId, story with
+            {
+                Detour = new StoryDetour(key, chapter.Key, words.Trim(), now, done),
+                ChangedChapters = story.ChangedChapters.Contains(chapter.Key) ? story.ChangedChapters : [.. story.ChangedChapters, chapter.Key],
+            });
+
+            if (book.SetAside(frontierId, chapter.Key, words.Trim(), now) is { } setAside)
+            {
+                stories.Save(frontierId, story);
+                book.Remove(frontierId, key);
+                return setAside;
+            }
+
+            logger.LogInformation("{Title}: {Chapter} was set aside for a detour", story.Title, chapter.Name);
+            return null;
+        }
+        finally
+        {
+            Release(frontierId);
+        }
+    }
+
+    /// <summary>Why a detour cannot be set on <paramref name="story"/>'s chapter now, or null.</summary>
+    private string? DetourRefusal(string? frontierId, Story? story, AdventureStanding? standing, AdventureTrigger trigger)
+    {
+        if (story is null)
+        {
+            return "No story is running.";
+        }
+
+        if (story.Detour is not null)
+        {
+            return "A detour is already under way.";
+        }
+
+        var waiting = story.State != StoryState.Running ? "Resume the story first."
+            : WithoutOdyssey(frontierId) ? NeedsOdyssey
+            : standing is not { Adventure.IsActive: true, IsDone: false, CurrentBeat: not null } ? "The story is not waiting on an objective."
+            : standing.InChoice ? AdventureStanding.ChoiceRefusal
+            : !standing.IsRefusable ? "The Guardian beacon scan ends act one, so that objective cannot be set aside."
+            : IsWriting(frontierId) ? "A chapter is being written."
+            : null;
+
+        if (waiting is not null
+            || !RefusedActivities.Refuses(WithBar(frontierId, story).Refused, trigger.Kind, trigger.MissionFamily, trigger.Event, RefusedActivities.ToolOf(trigger.Where)))
+        {
+            return waiting;
+        }
+
+        return RefusedActivities.Key(trigger) is { } refused
+            ? $"This story no longer asks for {RefusedActivities.Phrase(refused)}, so a detour cannot either."
+            : "This story no longer asks for that.";
+    }
+
+    /// <summary>
     /// The system the objective <see cref="MarkObjectiveDone(string?, DateTimeOffset)"/> would mark is in, or a refusal:
     /// no story, a paused story, several short stories, or an objective with no place.
     /// </summary>
@@ -880,7 +1012,8 @@ public sealed class StoryDirector(
     /// </summary>
     public ShownObjective? CurrentObjective(string? frontierId)
     {
-        if (stories.Current(frontierId) is { CurrentChapter: { } chapter } story
+        if (stories.Current(frontierId) is { } story
+            && WaitedOn(story) is { } chapter
             && book.Standing(frontierId, chapter) is { Adventure.IsActive: true, IsDone: false } standing)
         {
             return new ShownObjective(standing, story.Title, !IsRunning(frontierId));
@@ -893,9 +1026,13 @@ public sealed class StoryDirector(
         return shortStories.Count == 1 ? new ShownObjective(shortStories[0], shortStories[0].Adventure.Name, false) : null;
     }
 
+    /// <summary>The key of the adventure the story waits on: its open detour, otherwise its current chapter.</summary>
+    private static string? WaitedOn(Story story) => story.Detour?.Key ?? story.CurrentChapter;
+
     private (string? Key, string? Refusal) ObjectiveKey(string? frontierId, string pausedRefusal, string severalAdvice)
     {
-        if (stories.Current(frontierId) is { CurrentChapter: { } chapter }
+        if (stories.Current(frontierId) is { } story
+            && WaitedOn(story) is { } chapter
             && book.Standing(frontierId, chapter) is { Adventure.IsActive: true, IsDone: false })
         {
             return IsRunning(frontierId) ? (chapter, null) : (null, pausedRefusal);
@@ -990,7 +1127,7 @@ public sealed class StoryDirector(
 
         if (standing.Adventure.StoryId is not null)
         {
-            if (stories.Current(frontierId) is not { } story || !string.Equals(story.CurrentChapter, key, StringComparison.Ordinal))
+            if (stories.Current(frontierId) is not { } story || !string.Equals(WaitedOn(story), key, StringComparison.Ordinal))
             {
                 return "That chapter is not the one your story is on.";
             }
@@ -1922,6 +2059,11 @@ public sealed class StoryDirector(
             return null;
         }
 
+        if (story.Detour is { } detour)
+        {
+            return Detoured(frontierId, story, detour, now);
+        }
+
         var standing = book.Standing(frontierId, key);
 
         if (story.State == StoryState.Running && standing is { Adventure.IsFailed: true })
@@ -1977,6 +2119,47 @@ public sealed class StoryDirector(
 
         return Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
     }
+
+    /// <summary>
+    /// <see cref="Tick"/> while a detour is open: writes the interrupted chapter again once the detour is done, and pauses
+    /// and resumes on the detour as on a chapter. No chapter is written while it is open.
+    /// </summary>
+    private Task<string?>? Detoured(string? frontierId, Story story, StoryDetour detour, DateTimeOffset now)
+    {
+        var standing = book.Standing(frontierId, detour.Key);
+
+        if (story.State == StoryState.Running && standing is { IsDone: true })
+        {
+            return story.IsWithoutOdyssey || WriteFailed(frontierId) || IsWriting(frontierId)
+                ? null
+                : Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
+        }
+
+        if (story.State == StoryState.Running && standing is { Adventure.IsActive: true } && LostAVoice(frontierId, story, now))
+        {
+            book.Abandon(frontierId, detour.Key, now);
+            stories.Save(frontierId, story.Paused(now));
+            return null;
+        }
+
+        if (story.State == StoryState.Running && standing is null or { Adventure.IsAbandoned: true })
+        {
+            stories.Save(frontierId, story.Paused(now));
+            return null;
+        }
+
+        if (story.State == StoryState.Paused && standing is { Adventure.IsActive: true })
+        {
+            stories.Save(frontierId, story.Resumed(now));
+            Began?.Invoke();
+        }
+
+        return null;
+    }
+
+    /// <summary>Whether the story's detour has fired, or is no longer on file, so the chapter it interrupted may be written again.</summary>
+    private bool DetourOver(string? frontierId, Story story) =>
+        story.Detour is { } detour && book.Standing(frontierId, detour.Key) is null or { IsDone: true };
 
     /// <summary>Hands each chapter the fold failed or ended in an option's ending, and no ending is stored for, to the pool once; null when there is none.</summary>
     private Task<string?>? StoreFailures(string? frontierId)
@@ -2477,7 +2660,7 @@ public sealed class StoryDirector(
 
     private void Stop(string? frontierId, Story story, StoryState state, DateTimeOffset now, bool restoreBackstory)
     {
-        if (story.CurrentChapter is { } key && book.Standing(frontierId, key) is { Adventure.IsActive: true, IsDone: false })
+        if (WaitedOn(story) is { } key && book.Standing(frontierId, key) is { Adventure.IsActive: true, IsDone: false })
         {
             book.Abandon(frontierId, key, now);
         }
@@ -2507,13 +2690,14 @@ public sealed class StoryDirector(
     private void RestoreBackstory(Story story) => setBackstory(story.BackstoryBefore ?? "");
 
     /// <summary>
-    /// Moves every story chapter in the adventure file to the archive except the current story's last two, with when
+    /// Moves every story chapter in the adventure file to the archive except the current story's last two and its detour, with when
     /// each beat fired. Writes both files, so it never runs on the tick.
     /// </summary>
     public void ArchiveChapters(string? frontierId)
     {
         var commander = frontierId ?? AdventureStore.NoCommander;
-        var kept = stories.Current(frontierId)?.Chapters.TakeLast(2).ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+        var current = stories.Current(frontierId);
+        var kept = current?.Chapters.TakeLast(2).Append(current.Detour?.Key).OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
         var moving = book.Store.For(frontierId).Where(adventure => adventure.StoryId is not null && !kept.Contains(adventure.Key)).ToList();
 
         foreach (var adventure in moving)
@@ -2701,7 +2885,13 @@ public sealed class StoryDirector(
             return new($"The hidden layer of {story.Title} is missing from this build.");
         }
 
-        var replacing = story.CurrentChapter is { } failedKey && book.Store.Find(frontierId, failedKey) is { IsFailed: true };
+        if (story.Detour is not null && !DetourOver(frontierId, story))
+        {
+            return new("A detour is under way.");
+        }
+
+        var setAside = story.Detour is not null && story.CurrentChapter is { } asideKey && book.Store.Find(frontierId, asideKey) is { IsSetAside: true };
+        var replacing = setAside || (story.CurrentChapter is { } failedKey && book.Store.Find(frontierId, failedKey) is { IsFailed: true });
 
         if (!replacing && story.FinaleChapter >= story.Pacing.FinaleChapters)
         {
@@ -2838,7 +3028,8 @@ public sealed class StoryDirector(
             Progress: Progress(frontierId),
             Draft: draftNumber,
             Outline: outline,
-            Failed: failed);
+            Failed: setAside ? null : failed,
+            SetAside: setAside && failed is not null ? new AdventureSetAside(failed, story.Detour!.Done, story.Detour.Words, game?.Location.StarSystem) : null);
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
@@ -2877,12 +3068,19 @@ public sealed class StoryDirector(
             FinaleDestination = finaleChapter == 1 ? outcome.Destination : still.FinaleDestination,
             HomeTarget = home,
             ChosenDestination = chosen,
+            Detour = setAside ? null : still.Detour,
+            ChangedChapters = setAside ? [.. still.ChangedChapters, key] : still.ChangedChapters,
         });
         logger.LogInformation("{Title}: chapter {Number}, {Name}, begins", story.Title, number, draft.Name);
 
         if (failed is not null)
         {
             ArchiveFailed(frontierId, still, failed.Previous);
+        }
+
+        if (setAside)
+        {
+            book.Remove(frontierId, story.Detour!.Key);
         }
 
         ArchiveChapters(frontierId);

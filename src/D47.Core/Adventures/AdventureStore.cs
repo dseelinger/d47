@@ -376,7 +376,9 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                 Function = beat.Function?.Trim(),
                 Lines = beat.Lines is { Count: > 0 } lines
                     ? [.. lines.Select(line => new AdventureLine { Text = line.Text?.Trim() ?? string.Empty, Speaker = line.Speaker, Introduces = line.Introduces })]
-                    : [new AdventureLine { Text = beat.Line?.Trim() ?? string.Empty, Speaker = beat.Speaker }],
+                    : record.Detour == true && string.IsNullOrWhiteSpace(beat.Line)
+                        ? []
+                        : [new AdventureLine { Text = beat.Line?.Trim() ?? string.Empty, Speaker = beat.Speaker }],
                 Steps = steps,
                 Boards = Ids(beat.Boards),
                 Leaves = Ids(beat.Leaves),
@@ -419,6 +421,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
             Previous = record.Previous is { } previous ? FromRecord(previous, problems) : null,
             Follows = string.IsNullOrWhiteSpace(record.Follows) ? null : record.Follows.Trim(),
             StoryId = string.IsNullOrWhiteSpace(record.StoryId) ? null : record.StoryId.Trim(),
+            Detour = record.Detour == true,
             Sight = string.IsNullOrWhiteSpace(record.Sight) ? null : record.Sight.Trim(),
             Aboard = record.Aboard is { } aboard ? Ids(aboard) : null,
             OpeningBoards = Ids(record.OpeningBoards),
@@ -626,6 +629,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Previous = adventure.Previous is { } previous ? ToRecord(previous) : null,
         Follows = adventure.Follows,
         StoryId = adventure.StoryId,
+        Detour = adventure.Detour ? true : null,
         Sight = adventure.Sight,
         Aboard = adventure.Aboard is { } aboard ? [.. aboard] : null,
         OpeningBoards = adventure.OpeningBoards.Count > 0 ? [.. adventure.OpeningBoards] : null,
@@ -696,6 +700,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public string? Follows { get; set; }
 
         public string? StoryId { get; set; }
+
+        public bool? Detour { get; set; }
 
         public string? Sight { get; set; }
 

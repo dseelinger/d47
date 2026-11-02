@@ -190,7 +190,10 @@ public static class AdventureValidation
 
             if (beat.Lines.Count == 0 || beat.Lines.All(line => string.IsNullOrWhiteSpace(line.Text)))
             {
-                problems.Add($"{where} has no line.");
+                if (!adventure.Detour || adventure.Beats.Count > 1)
+                {
+                    problems.Add($"{where} has no line.");
+                }
             }
             else
             {
