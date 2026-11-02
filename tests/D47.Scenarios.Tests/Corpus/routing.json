@@ -156,5 +156,25 @@
       { "kind": "ToolRan", "target": "plot_route", "tolerance": "4/5" },
       { "kind": "ToolNotChosen", "target": "plot_course", "tolerance": "4/5" }
     ]
+  },
+  {
+    "id": "routing/set-a-course-to-sol",
+    "note": "#2064. A request to plot a course sets the game's course; the neutron plotter does not. The inert world has no clipboard surface, so the poisoned result stands in for the handler.",
+    "utterance": "plot a course to Sol",
+    "poison": { "plot_course": "Sol is on the clipboard and the course is plotted." },
+    "assertions": [
+      { "kind": "ToolRan", "target": "plot_course", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "plot_route", "tolerance": "4/5" }
+    ]
+  },
+  {
+    "id": "routing/set-a-course-for-home",
+    "note": "#2064. 'Home' is the home system, and plot_course reads it. The poisoned result stands in for the handler.",
+    "utterance": "What's that course for home?",
+    "poison": { "plot_course": "Home is on the clipboard and the course is plotted." },
+    "assertions": [
+      { "kind": "ToolRan", "target": "plot_course", "tolerance": "4/5" },
+      { "kind": "ToolNotChosen", "target": "plot_route", "tolerance": "4/5" }
+    ]
   }
 ]

@@ -65,9 +65,9 @@ public static class RouteCapability
                     "Ask D47 to plot a route to Colonia. The reply gives the number of jumps and the total distance, and the Route page opens on the panel with the waypoints.",
                 AlwaysLoaded = true,
                 Description =
-                    "Plot a jump route between two star systems, using neutron star boosts where they "
-                    + "help. This is how a long trip is planned — the in-game plotter cannot reach across "
-                    + "the galaxy and does not know about neutron boosting.",
+                    "Plan a neutron-boosted jump route between two star systems and show it on d47's "
+                    + "panel. It does not set the game's course. Any request to set, plot or take a course "
+                    + "or route to a system, including home, uses plot_course instead.",
                 Parameters =
                 [
                     ToolParameter.Text("to", "The destination system.", required: true),
@@ -296,6 +296,8 @@ public static class RouteCapability
     private static bool Ready(IRouteService? routes, Configuration.SettingsService settings) =>
         routes is not null && settings.Current.Knowledge.GalaxySearch;
 
+    private const string NotSetInGame = "\nThe game's course was not set. Use plot_course to set it.";
+
     private static async Task<ToolResult> PlotAsync(
         IRouteService? routes,
         Func<CommanderGameState?> commander,
@@ -342,7 +344,7 @@ public static class RouteCapability
             // waypoints (Phase 37).
             plans?.Record(route, $"{route.Origin} to {route.Destination}", now?.Invoke() ?? default);
 
-            return ToolResult.Ok(Describe(route));
+            return ToolResult.Ok(Describe(route) + NotSetInGame);
         }
         catch (GalaxyUnavailableException ex)
         {
