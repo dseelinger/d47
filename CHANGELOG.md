@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+With Download the D47 music library on, a music folder with files of your own plays them together with the library's tracks for that folder, shuffled as one. Before, one file of your own in a folder stopped every library track there.
+
 When a game session's journal stops without a Shutdown, D47 no longer treats that session as still running once Elite is closed or the game has started again. The break reminder is not said while Elite is not running, and the last session recap opens "Last session" rather than "Earlier this session". Before, starting D47 with only the launcher open could remind you to take a break and recap a session that ended hours ago as the current one.
 
 While the next chapter of a stock story is being written, or its write failed, Your stories shows a card for the story with the same line the Catalogue shows, the progress bar while writing, and Write it again after a failure. Before, it showed only the Set aside fold. When the chapter is written, its own card replaces this one.

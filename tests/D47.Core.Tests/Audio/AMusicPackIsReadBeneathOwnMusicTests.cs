@@ -3,17 +3,17 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
-/// <summary>A music folder with files of the Commander's plays those and not the downloaded pack's.</summary>
+/// <summary>A music folder with files of the Commander's plays those together with the downloaded pack's.</summary>
 public class AMusicPackIsReadBeneathOwnMusicTests
 {
     [Fact]
-    public void AFolderWithTracksInBothPlaysOnlyTheLaterSource()
+    public void AFolderWithTracksInBothPlaysThemTogether()
     {
         var library = Load(
             new Music(isPack: true, "docked.pack-a", "docked.pack-b"),
             new Music(isPack: false, "docked.mine"));
 
-        Assert.Equal(["mine"], library.Music("docked").Select(track => track.Name));
+        Assert.Equal(["pack-a", "pack-b", "mine"], library.Music("docked").Select(track => track.Name));
     }
 
     [Fact]
@@ -24,7 +24,7 @@ public class AMusicPackIsReadBeneathOwnMusicTests
             new Music(isPack: false, "docked.mine"));
 
         Assert.Equal(["pack-b"], library.Music("supercruise").Select(track => track.Name));
-        Assert.Equal(["mine"], library.Music("docked").Select(track => track.Name));
+        Assert.Equal(["pack-a", "mine"], library.Music("docked").Select(track => track.Name));
     }
 
     [Fact]

@@ -190,7 +190,7 @@ public sealed class CueLibrary
                 ignored.AddRange(source.Ignored);
             }
 
-            // A later source with tracks in a folder replaces what earlier sources read for it.
+            // A later source's tracks in a folder are added to what earlier sources read for it.
             var sourceMusic = new Dictionary<string, List<MusicTrack>>(StringComparer.OrdinalIgnoreCase);
             var sourceSkipped = source.IsPack ? packSkipped : skipped;
 
@@ -327,7 +327,14 @@ public sealed class CueLibrary
 
             foreach (var entry in sourceMusic)
             {
-                music[entry.Key] = entry.Value;
+                if (music.TryGetValue(entry.Key, out var earlier))
+                {
+                    earlier.AddRange(entry.Value);
+                }
+                else
+                {
+                    music[entry.Key] = entry.Value;
+                }
             }
         }
 
