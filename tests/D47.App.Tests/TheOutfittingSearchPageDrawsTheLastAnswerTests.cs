@@ -17,6 +17,7 @@ using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.ControlReading;
 
 namespace D47.App.Tests;
 
@@ -99,23 +100,8 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
 
     private static OutfittingSearchPage Page(Control root) => root.GetVisualDescendants().OfType<OutfittingSearchPage>().Single();
 
-    private static void Press(Button button)
-    {
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-    }
-
-    private static Button Named(Control root, string name) =>
-        root.GetVisualDescendants().OfType<Button>().Single(button => button.Name == name);
-
     private static List<Button> Tiles(Control root) =>
         [.. root.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains(OutfittingSearchPage.ItemClass))];
-
-    private static List<Control> Rows(Control root) =>
-        [.. root.GetVisualDescendants().OfType<Control>().Where(control => control.Classes.Contains(GalaxySearchPage.RowClass))];
-
-    private static List<string> TextOf(Control root) =>
-        [.. root.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text ?? string.Empty)];
 
     private static void Typed(OutfittingSearchPage page, string typed)
     {
@@ -230,7 +216,7 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
 
         Typed(page, "zzzzqq");
 
-        Assert.Contains(OutfittingSearchPage.NothingText, TextOf(panel));
+        Assert.Contains(OutfittingSearchPage.NothingText, VisibleText(panel));
 
         window.Close();
     }
@@ -356,7 +342,7 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(GalaxySearchView.Answer, page.View);
-        Assert.Contains("2 STATIONS", TextOf(panel));
+        Assert.Contains("2 STATIONS", VisibleText(panel));
 
         if (TestSurface.CapturesWanted)
         {
@@ -378,9 +364,9 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
 
         Assert.All(page.Suggestions.Shown, item => Assert.False(item.IsShip));
         Assert.Contains(page.Suggestions.Shown, item => item.Display == "6A Fuel Scoop");
-        Assert.Equal("ADD A MODULE", TextOf(panel).Single(text => text.StartsWith("ADD A", StringComparison.Ordinal)));
+        Assert.Equal("ADD A MODULE", VisibleText(panel).Single(text => text.StartsWith("ADD A", StringComparison.Ordinal)));
         Assert.Equal("Type a module", panel.GetVisualDescendants().OfType<TextBox>().Single(box => box.Name == OutfittingSearchPage.AddName).PlaceholderText);
-        Assert.Contains("MODULE", TextOf(panel));
+        Assert.Contains("MODULE", VisibleText(panel));
 
         if (TestSurface.CapturesWanted)
         {
@@ -426,8 +412,8 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
         world.Board.Post(new GalaxySearchPosting(GalaxySearchKind.Outfitting, new Dictionary<string, string>(StringComparer.Ordinal), TwoStations.Reference, TwoStations with { Total = 1, Stations = [TwoStations.Stations[0]] }, "Stations matched.", new DateTimeOffset(2026, 10, 10, 19, 42, 0, TimeSpan.Zero)));
         var (panel, window) = Shown(world);
 
-        Assert.Contains("1 STATION", TextOf(panel));
-        Assert.DoesNotContain("1 STATIONS", TextOf(panel));
+        Assert.Contains("1 STATION", VisibleText(panel));
+        Assert.DoesNotContain("1 STATIONS", VisibleText(panel));
 
         window.Close();
     }

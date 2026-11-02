@@ -16,6 +16,7 @@ using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.UiWait;
 
 namespace D47.App.Tests;
 
@@ -34,7 +35,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var (panel, _, _, _, model, clock, _) = Open();
 
         Press(panel, "Go");
-        Until(() => model.Asked == 2);
+        Until(() => model.Asked == 2, 10, 20);
         clock.Advance(TimeSpan.FromSeconds(27));
         Reopen(panel);
 
@@ -46,7 +47,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         Assert.False(Button(panel, "Go").IsEnabled);
         Assert.True(Button(panel, "Stop").IsVisible);
 
-        Save(panel, "short-story-writing.png");
+        ((Window)TopLevel.GetTopLevel(panel)!).SaveFrame("short-story-writing.png");
         model.Release();
     }
 
@@ -56,7 +57,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var (panel, _, _, _, model, clock, _) = Open();
 
         Press(panel, "Go");
-        Until(() => model.Asked == 2);
+        Until(() => model.Asked == 2, 10, 20);
         clock.Advance(TimeSpan.FromSeconds(10));
         Reopen(panel);
         var before = Fill(panel);
@@ -79,7 +80,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var headset = Panel(surface);
 
         Press(desktop, "Go");
-        Until(() => model.Asked == 2);
+        Until(() => model.Asked == 2, 10, 20);
         headset.Nav.SelectRoot(AdventuresPage.AskKey);
         Dispatcher.UIThread.RunJobs();
 
@@ -94,12 +95,12 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var (panel, book, surface, said, model, _, _) = Open();
 
         Press(panel, "Go");
-        Until(() => model.Asked == 2);
+        Until(() => model.Asked == 2, 10, 20);
         panel.Nav.SelectRoot(AdventuresPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         model.Release();
-        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null);
+        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null, 10, 20);
 
         Assert.True(book.Store.Find("F1", "the-unrecoverable-column")?.IsDraft);
         Assert.Equal(["Here it is."], said);
@@ -119,7 +120,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var (panel, book, surface, said, model, _, logged) = Open();
 
         Press(panel, "Go");
-        Until(() => model.Asked == 2);
+        Until(() => model.Asked == 2, 10, 20);
         Press(panel, "Stop");
 
         Assert.False(Progress(panel).IsVisible);
@@ -128,7 +129,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         Assert.Null(Status(panel).Text);
         Assert.Null(surface.Writing.Current);
 
-        Until(() => model.Cancelled);
+        Until(() => model.Cancelled, 10, 20);
         Thread.Sleep(100);
         Dispatcher.UIThread.RunJobs();
 
@@ -208,29 +209,6 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
     {
         Button(panel, label).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
-    }
-
-    private static void Save(PanelView panel, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        using var frame = TopLevel.GetTopLevel(panel)!.CaptureRenderedFrame()!;
-        frame.SaveCapture(name);
-    }
-
-    /// <summary>Pumps the UI thread while generation runs on the pool, until the condition holds.</summary>
-    private static void Until(Func<bool> condition)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(10);
-
-        while (!condition() && DateTime.UtcNow < deadline)
-        {
-            Thread.Sleep(20);
-            Dispatcher.UIThread.RunJobs();
-        }
-
-        Dispatcher.UIThread.RunJobs();
-        Assert.True(condition());
     }
 
     /// <summary>A clock that moves only when told.</summary>

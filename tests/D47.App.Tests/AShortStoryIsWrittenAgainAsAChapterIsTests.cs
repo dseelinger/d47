@@ -14,6 +14,7 @@ using D47.Core.Storage;
 using D47.Core.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.UiWait;
 
 namespace D47.App.Tests;
 
@@ -37,7 +38,7 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
         var (panel, book, said) = Open(model);
 
         Press(panel);
-        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null);
+        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null, 10, 20);
 
         Assert.True(book.Store.Find("F1", "the-unrecoverable-column")?.IsDraft);
         Assert.Equal(4, model.Asked.Count);
@@ -56,12 +57,12 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
         var (panel, book, _) = Open(model);
 
         Press(panel);
-        Until(() => model.Asked.Count == 2);
+        Until(() => model.Asked.Count == 2, 10, 20);
 
         Assert.Equal(StoryDirector.WritingAgainLine(2, told: true), Status(panel).Text);
 
         hold.SetResult();
-        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null);
+        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null, 10, 20);
     }
 
     [AvaloniaFact]
@@ -71,7 +72,7 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
         var (panel, book, said) = Open(model);
 
         Press(panel);
-        Until(() => Status(panel).Failed);
+        Until(() => Status(panel).Failed, 10, 20);
 
         Assert.Equal(StoryDirector.Drafts, model.Asked.Count);
         Assert.Equal(StoryDirector.NoDraftStood, Status(panel).Text);
@@ -88,7 +89,7 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
         var (panel, _, said) = Open(null, modelAvailable: true);
 
         Press(panel);
-        Until(() => Status(panel).Failed);
+        Until(() => Status(panel).Failed, 10, 20);
 
         Assert.Equal("No language model is configured, and a short story has to be written by one.", Status(panel).Text);
         Assert.Equal(["No language model is configured, and a short story has to be written by one."], said);
@@ -103,7 +104,7 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
         var (panel, _, said) = Open(model);
 
         Press(panel);
-        Until(() => Status(panel).Failed);
+        Until(() => Status(panel).Failed, 10, 20);
 
         Assert.Equal(2, model.Asked.Count);
         Assert.StartsWith("The model's context ran out.", Status(panel).Text, StringComparison.Ordinal);
@@ -152,21 +153,6 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
 
     private static void Press(PanelView panel) =>
         Go(panel).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-
-    /// <summary>Pumps the UI thread while generation runs on the pool, until the condition holds.</summary>
-    private static void Until(Func<bool> condition)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(10);
-
-        while (!condition() && DateTime.UtcNow < deadline)
-        {
-            Thread.Sleep(20);
-            Dispatcher.UIThread.RunJobs();
-        }
-
-        Dispatcher.UIThread.RunJobs();
-        Assert.True(condition());
-    }
 
     /// <summary>Plays one scripted round per call, keeping the text of every request; calls from <see cref="HoldFrom"/> on wait for <see cref="Hold"/>.</summary>
     private sealed class RecordingModel(params IReadOnlyList<LlmStreamEvent>[] rounds) : ILlmProvider

@@ -14,6 +14,7 @@ using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.ControlReading;
 
 namespace D47.App.Tests;
 
@@ -122,15 +123,6 @@ public sealed class PastSearchesOpenFromTheHistoryPickerTests
 
         return (panel, window);
     }
-
-    private static void Press(Button button)
-    {
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-    }
-
-    private static Button Named(Control root, string name) =>
-        root.GetVisualDescendants().OfType<Button>().Single(button => button.Name == name);
 
     private static PickerPage OpenPicker(PanelView panel)
     {

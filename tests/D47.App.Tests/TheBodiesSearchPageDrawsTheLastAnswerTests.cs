@@ -15,6 +15,7 @@ using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.ControlReading;
 
 namespace D47.App.Tests;
 
@@ -107,21 +108,6 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
 
     private static BodySearchPage Page(Control root) => root.GetVisualDescendants().OfType<BodySearchPage>().Single();
 
-    private static void Press(Button button)
-    {
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-    }
-
-    private static Button Named(Control root, string name) =>
-        root.GetVisualDescendants().OfType<Button>().Single(button => button.Name == name);
-
-    private static List<Control> Rows(Control root) =>
-        [.. root.GetVisualDescendants().OfType<Control>().Where(control => control.Classes.Contains(GalaxySearchPage.RowClass))];
-
-    private static List<string> TextOf(Control root) =>
-        [.. root.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text ?? string.Empty)];
-
     [AvaloniaFact]
     public void TheHeadsetDrawsTheAnswerViewAndTheFormViewFullWidth()
     {
@@ -187,10 +173,10 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
 
         var rows = Rows(panel);
         Assert.Equal(2, rows.Count);
-        Assert.Contains("2.35%", TextOf(rows[0]));
-        Assert.Contains("1.10%", TextOf(rows[1]));
-        Assert.Contains(TextOf(panel), text => text.StartsWith("POLONIUM ▼", StringComparison.Ordinal));
-        Assert.Contains(TextOf(panel), text => text.StartsWith("The richest in Polonium among the nearest 50", StringComparison.Ordinal));
+        Assert.Contains("2.35%", VisibleText(rows[0]));
+        Assert.Contains("1.10%", VisibleText(rows[1]));
+        Assert.Contains(VisibleText(panel), text => text.StartsWith("POLONIUM ▼", StringComparison.Ordinal));
+        Assert.Contains(VisibleText(panel), text => text.StartsWith("The richest in Polonium among the nearest 50", StringComparison.Ordinal));
 
         window.Close();
     }
@@ -222,9 +208,9 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
         var (panel, window) = Shown(world);
 
         Assert.Equal(2, Rows(panel).Count);
-        Assert.DoesNotContain(TextOf(panel), text => text.StartsWith("The richest", StringComparison.Ordinal));
-        Assert.DoesNotContain("2.35%", TextOf(panel));
-        Assert.Contains("0.18 g", TextOf(Rows(panel)[0]));
+        Assert.DoesNotContain(VisibleText(panel), text => text.StartsWith("The richest", StringComparison.Ordinal));
+        Assert.DoesNotContain("2.35%", VisibleText(panel));
+        Assert.Contains("0.18 g", VisibleText(Rows(panel)[0]));
 
         window.Close();
     }
@@ -245,7 +231,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
 
         Assert.Equal(GalaxySearchView.Refused, page.View);
         Assert.Equal(sentence, page.Sentence);
-        Assert.Contains(sentence, TextOf(panel));
+        Assert.Contains(sentence, VisibleText(panel));
         Assert.Empty(world.Galaxy.Asked);
 
         window.Close();
@@ -277,7 +263,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
         var world = new World(lookups: true);
         var (panel, window) = Shown(world);
 
-        Assert.DoesNotContain("No quick searches for bodies.", TextOf(panel));
+        Assert.DoesNotContain("No quick searches for bodies.", VisibleText(panel));
         Assert.DoesNotContain(panel.GetVisualDescendants().OfType<Button>(), button => button.IsEffectivelyVisible && Avalonia.Automation.AutomationProperties.GetName(button) == "Start from a saved search");
 
         window.Close();
@@ -370,8 +356,8 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
         world.Board.Post(Posting(new Dictionary<string, string> { ["landable"] = "true" }, TwoBodies with { Total = 1, Bodies = [TwoBodies.Bodies[0]] }));
         var (panel, window) = Shown(world);
 
-        Assert.Contains("1 BODY", TextOf(panel));
-        Assert.DoesNotContain("1 BODIES", TextOf(panel));
+        Assert.Contains("1 BODY", VisibleText(panel));
+        Assert.DoesNotContain("1 BODIES", VisibleText(panel));
 
         window.Close();
     }

@@ -46,32 +46,12 @@ public class TheBodyPageShowsBearingsToSavedPointsTests
         return state;
     }
 
-    private static string[] TextOf(Control page)
-    {
-        if (page.GetVisualParent() is null)
-        {
-            new Window { Content = page, Width = 900, Height = 900 }.Show();
-        }
-
-        Dispatcher.UIThread.RunJobs();
-
-        return
-        [
-            .. page.GetVisualDescendants()
-                .OfType<TextBlock>()
-                .Select(block => block.Inlines is { Count: > 0 } inlines
-                    ? string.Concat(inlines.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text))
-                    : block.Text ?? string.Empty)
-                .Where(text => text.Length > 0),
-        ];
-    }
-
     private static string[] Tick(BodyPage page)
     {
         page.Tick();
         Dispatcher.UIThread.RunJobs();
 
-        return TextOf(page);
+        return PageText.Of(page);
     }
 
     private static void Save(Control page, string name)
@@ -96,7 +76,7 @@ public class TheBodyPageShowsBearingsToSavedPointsTests
         marks.Add(state.Surface, null, new SurfaceFix(0.002, 0, Radius), Start + TimeSpan.FromMinutes(4));
 
         var page = new BodyPage(() => state, () => live.Status, null, null, marks);
-        var drawn = TextOf(page);
+        var drawn = PageText.Of(page);
 
         Assert.Contains("SHIP · 180° S · 17 M", drawn);
         Assert.Contains("MARK 1 · 0° N · 17 M", drawn);
@@ -111,7 +91,7 @@ public class TheBodyPageShowsBearingsToSavedPointsTests
         var live = new Live();
         var page = new BodyPage(() => state, () => live.Status, null, null, new SurfaceMarks());
 
-        Assert.Contains("SHIP · 180° S · 17 M", TextOf(page));
+        Assert.Contains("SHIP · 180° S · 17 M", PageText.Of(page));
 
         live.Status = At(0, 0.002);
 
@@ -124,7 +104,7 @@ public class TheBodyPageShowsBearingsToSavedPointsTests
         var state = Landed();
         var page = new BodyPage(() => state, () => new GameStatus(), null, null, new SurfaceMarks());
 
-        Assert.Contains("SHIP · No position", TextOf(page));
+        Assert.Contains("SHIP · No position", PageText.Of(page));
     }
 
     [AvaloniaFact]
@@ -137,7 +117,7 @@ public class TheBodyPageShowsBearingsToSavedPointsTests
 
         var page = new BodyPage(() => state, () => At(0, 0), null, null, new SurfaceMarks());
 
-        Assert.DoesNotContain(TextOf(page), text => text.StartsWith("SHIP", StringComparison.Ordinal) || text.StartsWith("MARK", StringComparison.Ordinal));
+        Assert.DoesNotContain(PageText.Of(page), text => text.StartsWith("SHIP", StringComparison.Ordinal) || text.StartsWith("MARK", StringComparison.Ordinal));
     }
 
     [AvaloniaFact]
@@ -149,7 +129,7 @@ public class TheBodyPageShowsBearingsToSavedPointsTests
         marks.Add(state.Surface, null, new SurfaceFix(0.002, 0, Radius), Start + TimeSpan.FromMinutes(4));
         var page = new BodyPage(() => state, () => live.Status, null, null, marks);
 
-        Assert.Contains(TextOf(page), text => text.StartsWith("SHIP", StringComparison.Ordinal));
+        Assert.Contains(PageText.Of(page), text => text.StartsWith("SHIP", StringComparison.Ordinal));
 
         state.Apply(Event(5, """{"event":"Liftoff","PlayerControlled":true,"Latitude":0.0,"Longitude":0.0,"SystemAddress":123,"BodyID":12}"""));
         var drawn = Tick(page);

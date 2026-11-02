@@ -18,6 +18,7 @@ using D47.Core.Knowledge;
 using D47.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.UiWait;
 
 namespace D47.App.Tests;
 
@@ -110,20 +111,6 @@ public sealed class TheSystemPageListsNearbyPowerplayTests
         Until(() => Shows(panel, "LAST REPORTED"));
 
         return (panel, window, systems);
-    }
-
-    private static void Until(Func<bool> done)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(5);
-
-        while (!done())
-        {
-            Assert.True(DateTime.UtcNow < deadline, "the page did not settle in time");
-            Dispatcher.UIThread.RunJobs();
-            Thread.Sleep(5);
-        }
-
-        Dispatcher.UIThread.RunJobs();
     }
 
     private static bool Shows(Control root, string text) =>

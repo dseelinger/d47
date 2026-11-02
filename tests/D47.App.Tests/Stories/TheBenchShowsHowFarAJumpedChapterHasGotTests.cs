@@ -12,6 +12,7 @@ using D47.Core.Storage;
 using D47.Core.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.UiWait;
 
 namespace D47.App.Tests.Stories;
 
@@ -35,7 +36,7 @@ public sealed class TheBenchShowsHowFarAJumpedChapterHasGotTests
         Assert.Contains("WRITING YOUR OBJECTIVES…", Texts(run.Page));
         Assert.Contains(Texts(run.Page), text => text?.StartsWith("Usually ready in about", StringComparison.Ordinal) == true);
 
-        Save(run.Window, "story-bench-chapter-writing.png");
+        run.Window.SaveFrame("story-bench-chapter-writing.png");
         run.Release();
     }
 
@@ -46,7 +47,7 @@ public sealed class TheBenchShowsHowFarAJumpedChapterHasGotTests
 
         Assert.NotEmpty(Bars(run.Page));
         run.Release();
-        Until(() => Bars(run.Page).Count == 0);
+        Until(() => Bars(run.Page).Count == 0, 10, 20);
     }
 
     [AvaloniaFact]
@@ -124,7 +125,7 @@ public sealed class TheBenchShowsHowFarAJumpedChapterHasGotTests
 
         var jump = page.GetVisualDescendants().OfType<Button>().First(button => button.Name == "Jump");
         jump.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Until(() => Bars(page).Count == 1);
+        Until(() => Bars(page).Count == 1, 10, 20);
 
         return new Run(window, page, director, clock, () => gate.TrySetResult(), look);
     }
@@ -138,28 +139,6 @@ public sealed class TheBenchShowsHowFarAJumpedChapterHasGotTests
 
     private static List<string?> Texts(Control control) =>
         [.. control.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text)];
-
-    private static void Save(Window window, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        using var frame = window.CaptureRenderedFrame()!;
-        frame.SaveCapture(name);
-    }
-
-    private static void Until(Func<bool> condition)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(10);
-
-        while (!condition() && DateTime.UtcNow < deadline)
-        {
-            Thread.Sleep(20);
-            Dispatcher.UIThread.RunJobs();
-        }
-
-        Dispatcher.UIThread.RunJobs();
-        Assert.True(condition());
-    }
 
     private sealed class Run(Window window, StoryBenchPage page, StoryDirector director, Clock clock, Action release, IDisposable look) : IDisposable
     {

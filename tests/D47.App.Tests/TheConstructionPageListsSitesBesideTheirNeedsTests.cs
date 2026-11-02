@@ -222,14 +222,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static void Capture(Window window, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-        using var frame = window.CaptureRenderedFrame()!;
-        var path = name;
-        frame.SaveCapture(path);
-    }
-
     [AvaloniaFact]
     public void ConstructionLandsBetweenCarrierAndMaterials()
     {
@@ -415,7 +407,7 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         Assert.True(Shows(page, ConstructionPage.NoSites));
         Assert.Empty(Rows(panel));
 
-        Capture(window, "assets-construction-empty.png");
+        window.SaveFrame("assets-construction-empty.png");
         window.Close();
     }
 
@@ -431,13 +423,13 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
 
         var (window, panel) = Open(State(Reconciled), board, Registry(new Searches(), board));
         Assert.Equal("1 site building · 1 not seen lately · carrier reconciled", Page(panel).Summary);
-        Capture(window, $"assets-construction-{theme}.png");
+        window.SaveFrame($"assets-construction-{theme}.png");
 
         window.Close();
 
         (window, panel) = Open(State(Unreconciled), board, Registry(new Searches(), board));
         Press(Rows(panel)[1]);
-        Capture(window, $"assets-construction-stale-{theme}.png");
+        window.SaveFrame($"assets-construction-stale-{theme}.png");
 
         window.Close();
     }
@@ -476,7 +468,7 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
 
         Assert.Equal([ConstructionPage.PlannerUrl("HIP 47126")], opened);
 
-        Capture(window, "assets-construction-planner-link.png");
+        window.SaveFrame("assets-construction-planner-link.png");
         window.Close();
     }
 
@@ -487,7 +479,7 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
 
         Assert.Null(PlannerButton(panel));
 
-        Capture(window, "assets-construction-no-planner-link.png");
+        window.SaveFrame("assets-construction-no-planner-link.png");
         window.Close();
     }
 }

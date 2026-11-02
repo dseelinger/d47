@@ -12,6 +12,8 @@ using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Xunit;
+using static D47.App.Tests.UiWait;
+using static D47.App.Tests.NameSuggestionReading;
 
 namespace D47.App.Tests;
 
@@ -70,28 +72,7 @@ public sealed class TheFactionFieldsSuggestFactionNamesTests
             Task.FromResult(new PowerplayNeighbourhood(0, []));
     }
 
-    private sealed record Shown(PanelView Panel, Window Window, Systems Systems, GalaxySearchBoard Board)
-    {
-        public TextBox Box(string name) =>
-            Panel.GetVisualDescendants().OfType<TextBox>().Last(box => AutomationProperties.GetName(box) == name);
-
-        public string[] Listed =>
-        [
-            .. Panel.GetVisualDescendants()
-                .OfType<Border>()
-                .Where(border => border.Name == NameSuggestions.ListName && border.IsEffectivelyVisible)
-                .SelectMany(border => border.GetVisualDescendants().OfType<Button>())
-                .Select(button => AutomationProperties.GetName(button) ?? string.Empty),
-        ];
-
-        public void Pick(string name) =>
-            Panel.GetVisualDescendants()
-                .OfType<Border>()
-                .Where(border => border.Name == NameSuggestions.ListName && border.IsEffectivelyVisible)
-                .SelectMany(border => border.GetVisualDescendants().OfType<Button>())
-                .Single(button => AutomationProperties.GetName(button) == name)
-                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-    }
+    private sealed record Shown(PanelView Panel, Window Window, Systems Systems, GalaxySearchBoard Board);
 
     private static Shown Open(string root, bool lookups = true)
     {
@@ -126,20 +107,6 @@ public sealed class TheFactionFieldsSuggestFactionNamesTests
         return new Shown(panel, window, systems, board);
     }
 
-    private static void Until(Func<bool> done)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(5);
-
-        while (!done())
-        {
-            Assert.True(DateTime.UtcNow < deadline, "the page did not settle in time");
-            Dispatcher.UIThread.RunJobs();
-            Thread.Sleep(5);
-        }
-
-        Dispatcher.UIThread.RunJobs();
-    }
-
     private static void Settle()
     {
         Dispatcher.UIThread.RunJobs();
@@ -149,16 +116,16 @@ public sealed class TheFactionFieldsSuggestFactionNamesTests
 
     private static void TypeAndPick(Shown shown, string field)
     {
-        shown.Box(field).Text = "Mot";
-        Until(() => shown.Listed.Length > 0);
+        shown.Panel.Box(field).Text = "Mot";
+        Until(() => shown.Panel.Listed().Length > 0);
 
-        Assert.Equal(Factions, shown.Listed);
+        Assert.Equal(Factions, shown.Panel.Listed());
 
-        shown.Pick("Mother Gaia");
+        shown.Panel.Pick("Mother Gaia");
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("Mother Gaia", shown.Box(field).Text);
-        Assert.Empty(shown.Listed);
+        Assert.Equal("Mother Gaia", shown.Panel.Box(field).Text);
+        Assert.Empty(shown.Panel.Listed());
         Assert.Equal(["Mot"], shown.Systems.Prefixes());
     }
 
@@ -199,10 +166,10 @@ public sealed class TheFactionFieldsSuggestFactionNamesTests
     {
         var shown = Open(SystemSearchPage.RootKey, lookups: false);
 
-        shown.Box("controlling faction").Text = "Mot";
+        shown.Panel.Box("controlling faction").Text = "Mot";
         Settle();
 
-        Assert.Empty(shown.Listed);
+        Assert.Empty(shown.Panel.Listed());
         Assert.Empty(shown.Systems.Prefixes());
         shown.Window.Close();
     }

@@ -10,6 +10,7 @@ using D47.Core.Interface;
 using D47.Core.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.UiWait;
 
 namespace D47.App.Tests;
 
@@ -37,7 +38,7 @@ public sealed class TheStoriesTabShowsHowFarAChapterHasGotTests
         Assert.Contains(Texts(run.View), text => text?.StartsWith("Usually ready in about", StringComparison.Ordinal) == true);
         Assert.InRange(Fill(run.View), 0.3, 0.95);
 
-        Save(run.Window, "stories-tab-chapter-writing.png");
+        run.Window.SaveFrame("stories-tab-chapter-writing.png");
         run.Release();
     }
 
@@ -48,7 +49,7 @@ public sealed class TheStoriesTabShowsHowFarAChapterHasGotTests
 
         Assert.NotEmpty(Bars(run.View));
         run.Release();
-        Until(() => Bars(run.View).Count == 0);
+        Until(() => Bars(run.View).Count == 0, 10, 20);
     }
 
     [AvaloniaFact]
@@ -98,7 +99,7 @@ public sealed class TheStoriesTabShowsHowFarAChapterHasGotTests
         var view = new StoriesView(surface, director, new PanelNavigator(), new PanelPrompts(new PanelNavigator(), new Avalonia.Controls.Panel()));
         var window = new Window { Content = view, Width = 640, Height = 700 };
         window.Show();
-        Until(() => Bars(view).Count == 1);
+        Until(() => Bars(view).Count == 1, 10, 20);
 
         return new Run(window, view, director, clock, () => { gate.SetResult(); task.GetAwaiter().GetResult(); }, look);
     }
@@ -112,28 +113,6 @@ public sealed class TheStoriesTabShowsHowFarAChapterHasGotTests
 
     private static List<string?> Texts(Control control) =>
         [.. control.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text)];
-
-    private static void Save(Window window, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        using var frame = window.CaptureRenderedFrame()!;
-        frame.SaveCapture(name);
-    }
-
-    private static void Until(Func<bool> condition)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(10);
-
-        while (!condition() && DateTime.UtcNow < deadline)
-        {
-            Thread.Sleep(20);
-            Dispatcher.UIThread.RunJobs();
-        }
-
-        Dispatcher.UIThread.RunJobs();
-        Assert.True(condition());
-    }
 
     private sealed class Run(Window window, StoriesView view, StoryDirector director, Clock clock, Action release, IDisposable look) : IDisposable
     {

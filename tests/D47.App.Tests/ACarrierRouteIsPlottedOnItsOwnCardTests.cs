@@ -136,14 +136,6 @@ public class ACarrierRouteIsPlottedOnItsOwnCardTests
         return new Surface(window, panel, routes, plans);
     }
 
-    private static IEnumerable<string> TextOf(Control root) =>
-        root.GetVisualDescendants()
-            .OfType<TextBlock>()
-            .Select(block => block.Inlines is { Count: > 0 } inlines
-                ? string.Concat(inlines.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text))
-                : block.Text ?? string.Empty)
-            .Where(text => text.Length > 0);
-
     /// <summary>The last box with this name: the Carrier Route card is the last card on Plan.</summary>
     private static TextBox Box(PanelView panel, string name) =>
         panel.GetVisualDescendants()
@@ -190,7 +182,7 @@ public class ACarrierRouteIsPlottedOnItsOwnCardTests
     {
         var surface = Open();
 
-        Assert.Contains("CARRIER ROUTE", TextOf(surface.Panel));
+        Assert.Contains("CARRIER ROUTE", PageText.Of(surface.Panel));
         ShowCard(surface.Panel);
         Save(surface.Window, "carrier-route-card-before.png");
 
@@ -201,7 +193,7 @@ public class ACarrierRouteIsPlottedOnItsOwnCardTests
         Assert.Equal(CarrierSystem, surface.Routes.Last?.Source);
         Assert.Equal("Sol to Colonia and back", surface.Panel.Nav.Trail[^1].Word);
 
-        var text = TextOf(surface.Panel).ToList();
+        var text = PageText.Of(surface.Panel).ToList();
 
         Assert.Contains(text, line => line.StartsWith("Carrier route, Sol to Colonia and back: 90 jumps, 6,084 t of tritium", StringComparison.Ordinal));
         Assert.Contains(text, line => line.Contains("Tank and hold read from carrier management", StringComparison.Ordinal));

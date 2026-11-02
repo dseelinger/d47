@@ -15,6 +15,7 @@ using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.ControlReading;
 
 namespace D47.App.Tests;
 
@@ -109,21 +110,6 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
 
     private static StationSearchPage Page(Control root) => root.GetVisualDescendants().OfType<StationSearchPage>().Single();
 
-    private static void Press(Button button)
-    {
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-    }
-
-    private static Button Named(Control root, string name) =>
-        root.GetVisualDescendants().OfType<Button>().Single(button => button.Name == name);
-
-    private static List<Control> Rows(Control root) =>
-        [.. root.GetVisualDescendants().OfType<Control>().Where(control => control.Classes.Contains(GalaxySearchPage.RowClass))];
-
-    private static List<string> TextOf(Control root) =>
-        [.. root.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text ?? string.Empty)];
-
     /// <summary>Ticks rows on the open services picker and takes them.</summary>
     private static void TakeServices(Control panel, params string[] services)
     {
@@ -194,7 +180,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
         Press(Named(panel, StationSearchPage.ChooseServicesName));
 
         var picker = panel.GetVisualDescendants().OfType<PickerPage>().Single();
-        Assert.Contains(StationSearchPage.ServicesHelp, TextOf(picker));
+        Assert.Contains(StationSearchPage.ServicesHelp, VisibleText(picker));
 
         TakeServices(panel, "Interstellar Factors", "Black Market");
 
@@ -248,11 +234,11 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
 
         var rows = Rows(panel);
         Assert.Equal(2, rows.Count);
-        Assert.Contains("Black Market, Interstellar Factors", TextOf(rows[0]));
-        Assert.DoesNotContain(TextOf(rows[0]), text => text.Contains("Shipyard", StringComparison.Ordinal));
-        Assert.Contains("Black Market", TextOf(rows[1]));
-        Assert.DoesNotContain(TextOf(rows[1]), text => text.Contains("Refuel", StringComparison.Ordinal));
-        Assert.Contains("2 STATIONS", TextOf(panel));
+        Assert.Contains("Black Market, Interstellar Factors", VisibleText(rows[0]));
+        Assert.DoesNotContain(VisibleText(rows[0]), text => text.Contains("Shipyard", StringComparison.Ordinal));
+        Assert.Contains("Black Market", VisibleText(rows[1]));
+        Assert.DoesNotContain(VisibleText(rows[1]), text => text.Contains("Refuel", StringComparison.Ordinal));
+        Assert.Contains("2 STATIONS", VisibleText(panel));
 
         window.Close();
     }
@@ -358,8 +344,8 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
         world.Board.Post(Posting(new Dictionary<string, string> { ["material_trader"] = "Raw" }, TwoStations with { Total = 1, Stations = [TwoStations.Stations[0]] }));
         var (panel, window) = Shown(world);
 
-        Assert.Contains("1 STATION", TextOf(panel));
-        Assert.DoesNotContain("1 STATIONS", TextOf(panel));
+        Assert.Contains("1 STATION", VisibleText(panel));
+        Assert.DoesNotContain("1 STATIONS", VisibleText(panel));
 
         window.Close();
     }

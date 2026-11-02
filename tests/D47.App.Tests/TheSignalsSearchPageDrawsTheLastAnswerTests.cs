@@ -15,6 +15,7 @@ using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.ControlReading;
 
 namespace D47.App.Tests;
 
@@ -104,21 +105,6 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
         SearchPanelHosting.Show(world.Surface, openRoot ? SignalSearchPage.RootKey : null, headset, world.Routing, new Clipboard());
 
     private static SignalSearchPage Page(Control root) => root.GetVisualDescendants().OfType<SignalSearchPage>().Single();
-
-    private static void Press(Button button)
-    {
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-    }
-
-    private static Button Named(Control root, string name) =>
-        root.GetVisualDescendants().OfType<Button>().Single(button => button.Name == name);
-
-    private static List<Control> Rows(Control root) =>
-        [.. root.GetVisualDescendants().OfType<Control>().Where(control => control.Classes.Contains(GalaxySearchPage.RowClass))];
-
-    private static List<string> TextOf(Control root) =>
-        [.. root.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text ?? string.Empty)];
 
     private static async Task RunAsync(PanelView panel, GalaxySearchBoard board)
     {
@@ -266,7 +252,7 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
 
         Assert.Equal(GalaxySearchView.LookupsOff, page.View);
         Assert.Equal(SignalSearchPage.NoSources, page.Sentence);
-        Assert.Contains(SignalSearchPage.NoSources, TextOf(panel));
+        Assert.Contains(SignalSearchPage.NoSources, VisibleText(panel));
         Assert.False(page.CanRun);
 
         if (TestSurface.CapturesWanted)
@@ -290,8 +276,8 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
         await RunAsync(panel, world.Board);
 
         Assert.Equal(GalaxySearchView.Answer, page.View);
-        Assert.Contains("Searched your own scans only; the signal index is off in Settings.", TextOf(panel));
-        Assert.Contains("YOUR SCAN", TextOf(panel));
+        Assert.Contains("Searched your own scans only; the signal index is off in Settings.", VisibleText(panel));
+        Assert.Contains("YOUR SCAN", VisibleText(panel));
 
         window.Close();
     }
@@ -336,7 +322,7 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
         await RunAsync(panel, world.Board);
 
         Assert.Equal(GalaxySearchView.Answer, page.View);
-        Assert.Contains("4 SIGNALS", TextOf(panel));
+        Assert.Contains("4 SIGNALS", VisibleText(panel));
 
         if (TestSurface.CapturesWanted)
         {
@@ -365,8 +351,8 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
         world.Board.Post(new GalaxySearchPosting(GalaxySearchKind.Signals, new Dictionary<string, string>(StringComparer.Ordinal), null, new SignalSearchResult(null, 1, [new SignalFinding("Hazardous RES", "Alpha", 3, Now, false, 1001)]), "Signals found.", Now));
         var (panel, window) = Shown(world);
 
-        Assert.Contains("1 SIGNAL", TextOf(panel));
-        Assert.DoesNotContain("1 SIGNALS", TextOf(panel));
+        Assert.Contains("1 SIGNAL", VisibleText(panel));
+        Assert.DoesNotContain("1 SIGNALS", VisibleText(panel));
 
         window.Close();
     }

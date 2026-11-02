@@ -16,6 +16,7 @@ using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.UiWait;
 
 namespace D47.App.Tests;
 
@@ -138,21 +139,6 @@ public sealed class TheSystemPageSuggestsNamesAsYouTypeTests
         Until(() => systems.Asked().Length == 1);
 
         return new Shown(panel, window, systems);
-    }
-
-    /// <summary>Pumps the UI thread until <paramref name="done"/> holds, for work that comes back from the pool.</summary>
-    private static void Until(Func<bool> done)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(5);
-
-        while (!done())
-        {
-            Assert.True(DateTime.UtcNow < deadline, "the page did not settle in time");
-            Dispatcher.UIThread.RunJobs();
-            Thread.Sleep(5);
-        }
-
-        Dispatcher.UIThread.RunJobs();
     }
 
     private static void Press(Shown shown, Key key)

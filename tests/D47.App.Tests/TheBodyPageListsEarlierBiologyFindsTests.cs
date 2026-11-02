@@ -51,26 +51,6 @@ public class TheBodyPageListsEarlierBiologyFindsTests
         return store;
     }
 
-    private static string[] TextOf(Control page)
-    {
-        if (page.GetVisualParent() is null)
-        {
-            new Window { Content = page, Width = 900, Height = 900 }.Show();
-        }
-
-        Dispatcher.UIThread.RunJobs();
-
-        return
-        [
-            .. page.GetVisualDescendants()
-                .OfType<TextBlock>()
-                .Select(block => block.Inlines is { Count: > 0 } inlines
-                    ? string.Concat(inlines.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text))
-                    : block.Text ?? string.Empty)
-                .Where(text => text.Length > 0),
-        ];
-    }
-
     private static BodyPage PageWith(CommanderGameState state, Func<EarlierFinds?> store, GameStatus? live = null)
     {
         var status = live ?? At(0.001, 0);
@@ -87,7 +67,7 @@ public class TheBodyPageListsEarlierBiologyFindsTests
             Find("Stratum Tectonicas - Red", 0.001, 0.003));
 
         var page = PageWith(Landed(), () => store);
-        var drawn = TextOf(page);
+        var drawn = PageText.Of(page);
 
         Assert.Contains("AURASUS GREEN · 0° N · 17 M", drawn);
         Assert.Contains("TECTONICAS RED · 90° E · 52 M", drawn);
@@ -105,7 +85,7 @@ public class TheBodyPageListsEarlierBiologyFindsTests
     public void FindsFollowTheSavedPointRows()
     {
         var state = Landed();
-        var drawn = TextOf(PageWith(state, () => Store(Find("Bacterium Aurasus - Green", 0.002, 0))));
+        var drawn = PageText.Of(PageWith(state, () => Store(Find("Bacterium Aurasus - Green", 0.002, 0))));
 
         Assert.True(Array.FindIndex(drawn, text => text.StartsWith("SHIP", StringComparison.Ordinal))
                     < Array.FindIndex(drawn, text => text.StartsWith("AURASUS", StringComparison.Ordinal)));
@@ -123,7 +103,7 @@ public class TheBodyPageListsEarlierBiologyFindsTests
             Find("Tussock Pennata - Lime", 0.007, 0),
             Find("Tussock Ventusa - Red", 0.008, 0));
 
-        var drawn = TextOf(PageWith(Landed(), () => store));
+        var drawn = PageText.Of(PageWith(Landed(), () => store));
 
         Assert.Contains("TECTONICAS RED · 0° N · 87 M", drawn);
         Assert.DoesNotContain(drawn, text => text.StartsWith("PENNATA", StringComparison.Ordinal));
@@ -133,7 +113,7 @@ public class TheBodyPageListsEarlierBiologyFindsTests
     [AvaloniaFact]
     public void WithNoLivePositionTheRowsSayNoPosition()
     {
-        var drawn = TextOf(PageWith(Landed(), () => Store(Find("Bacterium Aurasus - Green", 0.002, 0)), new GameStatus()));
+        var drawn = PageText.Of(PageWith(Landed(), () => Store(Find("Bacterium Aurasus - Green", 0.002, 0)), new GameStatus()));
 
         Assert.Contains("AURASUS GREEN · No position", drawn);
     }
@@ -141,8 +121,8 @@ public class TheBodyPageListsEarlierBiologyFindsTests
     [AvaloniaFact]
     public void WithTheSettingOffOrNoFindsOnThisBodyThereAreNoRows()
     {
-        var off = TextOf(PageWith(Landed(), () => null));
-        var elsewhere = TextOf(PageWith(Landed(), () => Store(Find("Bacterium Aurasus - Green", 0.002, 0, "Blae 9"))));
+        var off = PageText.Of(PageWith(Landed(), () => null));
+        var elsewhere = PageText.Of(PageWith(Landed(), () => Store(Find("Bacterium Aurasus - Green", 0.002, 0, "Blae 9"))));
 
         Assert.DoesNotContain(off, text => text.StartsWith("AURASUS", StringComparison.Ordinal));
         Assert.DoesNotContain(elsewhere, text => text.StartsWith("AURASUS", StringComparison.Ordinal));
@@ -155,12 +135,12 @@ public class TheBodyPageListsEarlierBiologyFindsTests
         var store = Store(Find("Bacterium Aurasus - Green", 0.002, 0));
         var page = PageWith(state, () => store);
 
-        Assert.Contains(TextOf(page), text => text.StartsWith("AURASUS", StringComparison.Ordinal));
+        Assert.Contains(PageText.Of(page), text => text.StartsWith("AURASUS", StringComparison.Ordinal));
 
         state.Apply(Event(3, """{"event":"LeaveBody","SystemAddress":123,"BodyID":12}"""));
         page.Tick();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.DoesNotContain(TextOf(page), text => text.StartsWith("AURASUS", StringComparison.Ordinal));
+        Assert.DoesNotContain(PageText.Of(page), text => text.StartsWith("AURASUS", StringComparison.Ordinal));
     }
 }

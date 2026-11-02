@@ -14,6 +14,8 @@ using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.UiWait;
+using static D47.App.Tests.NameSuggestionReading;
 
 namespace D47.App.Tests;
 
@@ -61,28 +63,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
             Task.FromResult(new PowerplayNeighbourhood(0, []));
     }
 
-    private sealed record Shown(PanelView Panel, Window Window, Systems Systems, GalaxySearchBoard Board, BestCargoBoard Cargo)
-    {
-        public TextBox Box(string name) =>
-            Panel.GetVisualDescendants().OfType<TextBox>().Last(box => AutomationProperties.GetName(box) == name);
-
-        public string[] Listed =>
-        [
-            .. Panel.GetVisualDescendants()
-                .OfType<Border>()
-                .Where(border => border.Name == NameSuggestions.ListName && border.IsEffectivelyVisible)
-                .SelectMany(border => border.GetVisualDescendants().OfType<Button>())
-                .Select(button => AutomationProperties.GetName(button) ?? string.Empty),
-        ];
-
-        public void Pick(string name) =>
-            Panel.GetVisualDescendants()
-                .OfType<Border>()
-                .Where(border => border.Name == NameSuggestions.ListName && border.IsEffectivelyVisible)
-                .SelectMany(border => border.GetVisualDescendants().OfType<Button>())
-                .Single(button => AutomationProperties.GetName(button) == name)
-                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-    }
+    private sealed record Shown(PanelView Panel, Window Window, Systems Systems, GalaxySearchBoard Board, BestCargoBoard Cargo);
 
     private static Shown Open(PanelTab tab, string root, bool lookups = true)
     {
@@ -130,20 +111,6 @@ public sealed class EveryNameFieldSuggestsSystemsTests
         return new Shown(panel, window, systems, board, cargo);
     }
 
-    private static void Until(Func<bool> done)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(5);
-
-        while (!done())
-        {
-            Assert.True(DateTime.UtcNow < deadline, "the page did not settle in time");
-            Dispatcher.UIThread.RunJobs();
-            Thread.Sleep(5);
-        }
-
-        Dispatcher.UIThread.RunJobs();
-    }
-
     private static void Settle()
     {
         Dispatcher.UIThread.RunJobs();
@@ -153,17 +120,17 @@ public sealed class EveryNameFieldSuggestsSystemsTests
 
     private static void TypeAndPick(Shown shown, string field)
     {
-        shown.Box(field).Text = "Dia";
-        Until(() => shown.Listed.Length > 0);
+        shown.Panel.Box(field).Text = "Dia";
+        Until(() => shown.Panel.Listed().Length > 0);
 
-        Assert.Contains("Diaguandri", shown.Listed);
-        Assert.Contains("Dian", shown.Listed);
+        Assert.Contains("Diaguandri", shown.Panel.Listed());
+        Assert.Contains("Dian", shown.Panel.Listed());
 
-        shown.Pick("Dian");
+        shown.Panel.Pick("Dian");
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("Dian", shown.Box(field).Text);
-        Assert.Empty(shown.Listed);
+        Assert.Equal("Dian", shown.Panel.Box(field).Text);
+        Assert.Empty(shown.Panel.Listed());
         Assert.Equal(["Dia"], shown.Systems.Prefixes());
     }
 
@@ -250,8 +217,8 @@ public sealed class EveryNameFieldSuggestsSystemsTests
             .Invoke(shown.Panel, ["Diaguandri"]);
         Settle();
 
-        Assert.Equal("Diaguandri", shown.Box("From, optional, filled from your carrier").Text);
-        Assert.Empty(shown.Listed);
+        Assert.Equal("Diaguandri", shown.Panel.Box("From, optional, filled from your carrier").Text);
+        Assert.Empty(shown.Panel.Listed());
         Assert.Empty(shown.Systems.Prefixes());
         shown.Window.Close();
     }
@@ -281,8 +248,8 @@ public sealed class EveryNameFieldSuggestsSystemsTests
             DateTimeOffset.UtcNow));
         Settle();
 
-        Assert.Equal("Diaguandri", shown.Box("near").Text);
-        Assert.Empty(shown.Listed);
+        Assert.Equal("Diaguandri", shown.Panel.Box("near").Text);
+        Assert.Empty(shown.Panel.Listed());
         Assert.Empty(shown.Systems.Prefixes());
         shown.Window.Close();
     }
@@ -304,8 +271,8 @@ public sealed class EveryNameFieldSuggestsSystemsTests
         })
         {
             var shown = Open(tab, root);
-            shown.Box(field).Text = "Dia";
-            Until(() => shown.Listed.Length > 0);
+            shown.Panel.Box(field).Text = "Dia";
+            Until(() => shown.Panel.Listed().Length > 0);
 
             using var frame = shown.Window.CaptureRenderedFrame()!;
             frame.SaveCapture(file);
@@ -318,10 +285,10 @@ public sealed class EveryNameFieldSuggestsSystemsTests
     {
         var shown = Open(PanelTab.Search, SystemSearchPage.RootKey, lookups: false);
 
-        shown.Box("near").Text = "Dia";
+        shown.Panel.Box("near").Text = "Dia";
         Settle();
 
-        Assert.Empty(shown.Listed);
+        Assert.Empty(shown.Panel.Listed());
         Assert.Empty(shown.Systems.Prefixes());
         shown.Window.Close();
     }

@@ -32,32 +32,12 @@ public class AnotherCommandersGameLiveDataIsNotShownTests
         Hops = [new RouteHop("Sol", "G") { Position = (0, 0, 0) }, new RouteHop("Colonia", "K") { Position = (9, 0, 0) }],
     };
 
-    private static string[] TextOf(Control page)
-    {
-        if (page.GetVisualParent() is null)
-        {
-            new Window { Content = page, Width = 900, Height = 700 }.Show();
-        }
-
-        Dispatcher.UIThread.RunJobs();
-
-        return
-        [
-            .. page.GetVisualDescendants()
-                .OfType<TextBlock>()
-                .Select(block => block.Inlines is { Count: > 0 } inlines
-                    ? string.Concat(inlines.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text))
-                    : block.Text ?? string.Empty)
-                .Where(text => text.Length > 0),
-        ];
-    }
-
     private static string[] Redrawn(Control page, Action refresh)
     {
         refresh();
         Dispatcher.UIThread.RunJobs();
 
-        return TextOf(page);
+        return PageText.Of(page, 700);
     }
 
     [AvaloniaFact]
@@ -66,7 +46,7 @@ public class AnotherCommandersGameLiveDataIsNotShownTests
         var duty = new Duty { Off = true };
         var page = new RouteProgressPage(Route, () => "Sol", null, duty.Say);
 
-        var drawn = TextOf(page);
+        var drawn = PageText.Of(page, 700);
 
         Assert.Contains(Line, drawn);
         Assert.DoesNotContain(drawn, text => text.Equals("here", StringComparison.OrdinalIgnoreCase));
@@ -91,7 +71,7 @@ public class AnotherCommandersGameLiveDataIsNotShownTests
         var duty = new Duty { Off = true };
         var page = new GalaxyMapPage(() => travel, () => state, Route, () => "Sol", duty.Say, () => Start, headset: false);
 
-        TextOf(page);
+        PageText.Of(page, 700);
 
         Assert.Equal(0, page.Framing.SelectedIndex);
         Assert.Equal(D47.Core.Knowledge.GalaxyViewport.WholeGalaxy, page.Map.Viewport);
@@ -118,7 +98,7 @@ public class AnotherCommandersGameLiveDataIsNotShownTests
     {
         var duty = new Duty { Off = true };
         var page = new RouteProgressPage(Route, () => "Sol", null, duty.Say);
-        TextOf(page);
+        PageText.Of(page, 700);
 
         duty.Off = false;
         var drawn = Redrawn(page, page.Refresh);
@@ -140,7 +120,7 @@ public class AnotherCommandersGameLiveDataIsNotShownTests
         var duty = new Duty { Off = true };
         var mini = new RouteMini(plans, Route, () => "Sol", duty.Say);
 
-        var drawn = TextOf(mini);
+        var drawn = PageText.Of(mini, 700);
 
         Assert.Contains(Line, drawn);
         Assert.DoesNotContain("Waypoint 0", drawn);
@@ -179,7 +159,7 @@ public class AnotherCommandersGameLiveDataIsNotShownTests
         var duty = new Duty { Off = true };
         var page = new BodyPage(() => state, () => live, null, duty.Say);
 
-        var drawn = TextOf(page);
+        var drawn = PageText.Of(page, 700);
 
         Assert.Contains(drawn, text => text.Equals("CMDR Kestrel Vane is in the game; their position shows when they are the Commander shown.", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(BodyPage.NoPosition, drawn);
@@ -188,7 +168,7 @@ public class AnotherCommandersGameLiveDataIsNotShownTests
         duty.Off = false;
         page.Tick();
         Dispatcher.UIThread.RunJobs();
-        drawn = TextOf(page);
+        drawn = PageText.Of(page, 700);
 
         Assert.DoesNotContain(drawn, text => text.Contains("in the game", StringComparison.Ordinal));
         Assert.Contains(drawn, text => text.EndsWith(" M", StringComparison.Ordinal));

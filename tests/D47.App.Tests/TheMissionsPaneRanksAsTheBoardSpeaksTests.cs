@@ -149,14 +149,6 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static void Capture(Window window, string name)
-    {
-        Dispatcher.UIThread.RunJobs();
-        using var frame = window.CaptureRenderedFrame()!;
-        var path = name;
-        frame.SaveCapture(path);
-    }
-
     [AvaloniaFact]
     public void MissionsIsTheCommanderTabsSecondRoot()
     {
@@ -331,7 +323,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         Assert.True(Shows(page, $"Say: “{MissionsPage.Phrase}”"));
         Assert.Empty(Rows(panel));
 
-        Capture(window, "commander-missions-empty.png");
+        window.SaveFrame("commander-missions-empty.png");
         window.Close();
     }
 
@@ -343,10 +335,10 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
     {
         using var look = AppLook.Put(theme);
         var (window, panel) = Open(State(Board), Registry(new Plots()), theme: theme);
-        Capture(window, $"commander-missions-{theme}.png");
+        window.SaveFrame($"commander-missions-{theme}.png");
 
         Press(Rows(panel).Single(row => (long)row.Tag! == Massacre));
-        Capture(window, $"commander-missions-redirected-{theme}.png");
+        window.SaveFrame($"commander-missions-redirected-{theme}.png");
 
         window.Close();
     }
@@ -358,7 +350,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         var (window, panel) = Open(State(Board), Registry(new Plots()), headset: true);
 
         Assert.Equal(2, Page(panel).GetVisualDescendants().OfType<ScrollViewer>().Count());
-        Capture(window, "commander-missions-headset.png");
+        window.SaveFrame("commander-missions-headset.png");
 
         window.Close();
     }

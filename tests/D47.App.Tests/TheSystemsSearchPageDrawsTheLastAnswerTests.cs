@@ -17,6 +17,7 @@ using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.App.Tests.ControlReading;
 
 namespace D47.App.Tests;
 
@@ -152,12 +153,6 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
 
     private static SystemSearchPage Page(Control root) => root.GetVisualDescendants().OfType<SystemSearchPage>().Single();
 
-    private static void Press(Button button)
-    {
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-    }
-
     private static InlinePicker StartFrom(Control root) =>
         root.GetVisualDescendants().OfType<InlinePicker>().First();
 
@@ -179,12 +174,6 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
 
     private static string PickerValue(Control root) =>
         string.Concat(StartFrom(root).GetVisualDescendants().OfType<TextBlock>().Single(text => text.Name == "InlinePickerValue").Inlines!.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text));
-
-    private static Button Named(Control root, string name) =>
-        root.GetVisualDescendants().OfType<Button>().Single(button => button.Name == name);
-
-    private static List<Control> Rows(Control root) =>
-        [.. root.GetVisualDescendants().OfType<Control>().Where(control => control.Classes.Contains(GalaxySearchPage.RowClass))];
 
     private static List<string> TextOf(Control root) =>
         [.. root.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text ?? string.Concat(text.Inlines?.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text) ?? []))];
