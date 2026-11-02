@@ -261,7 +261,9 @@ add.
   carrier) or within 1,000 light years of it, so Colonia is about 20 chapters from the bubble without a carrier. After
   the Commander arrives, the rest of the span plays as a span with no destination. A span with `"toward"` may not
   reach the finale or, in a story that flies to a real beacon, start before `breakIntoTwo`; a way back is a later span
-  with `"toward": "Sol"`.
+  with `"toward": "Sol"`. A span with `"toward"` that covers the last stage before the finale holds the finale until
+  the Commander arrives, so a story whose finale needs the Commander home runs its way home with `"toward": "Sol"` up
+  to `breakIntoThree`.
 - **An effect on a cast voice** (a weak comms link, static) cannot be expressed until #726 is
   decided. Describe it in `who` and record it on the page as a gap against #726.
 

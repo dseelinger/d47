@@ -51,6 +51,9 @@ The card's "goalArcs", where present, is a card with "goals" true naming one or 
   black    optional: a list of spans {"from", "to"} of the story that take place in the black, where chapters are held
            to neither the Sol band nor the home leg. Each is a beat of the length's sheet, or null for the story's start
            or end; from is included and to is not, so from comes before to. Spans do not overlap.
+           A span with "toward" (a system in StoryDestinations.cs) that covers the last stage before the finale holds the
+           finale until the Commander arrives; a finale that needs the Commander home runs its way home with
+           "toward": "Sol" up to breakIntoThree.
 Every opening line, the scan line and every clue and finale line is {"speaker", "text"} ("translation" too, as above), the speaker "ship", "narrator" or a cast id.
 The gate (EveryStoryKeepsTheFormatOfItsLengthGateTests) checks the same rules, and the persona and voice ids.
 """

@@ -3118,7 +3118,7 @@ public sealed class StoryDirector(
             return new("The chapter before is no longer on file.");
         }
 
-        var finaleFrom = replacing ? story.FinaleFrom : story.FinaleFrom ?? (FinaleDue(story, now) ? number : null);
+        var finaleFrom = replacing ? story.FinaleFrom : story.FinaleFrom ?? (FinaleDue(story, now) && !StillTravelling(secret, story, Game()?.Location.StarPos) ? number : null);
         var finaleChapter = number - finaleFrom + 1;
         var stage = finaleChapter is null ? StoryClues.Stage(story) : StoryStage.Finale;
         var reach = story.BeaconScanAt is null
@@ -3375,6 +3375,10 @@ public sealed class StoryDirector(
     private static bool Reached(AdventureHeading chosen, CommanderGameState? game) =>
         game?.Location is { } location
         && (location.SystemAddress == chosen.SystemAddress || (chosen.Home && location.StarPos is { } at && at.DistanceTo(chosen.Position) <= HomeLeg.Home));
+
+    /// <summary>Whether the story's current stage lies in a span whose destination the Commander has not reached.</summary>
+    private static bool StillTravelling(StorySecret secret, Story story, StarPosition? at) =>
+        ChapterPull.Pulls(StoryBlack.Toward(secret, StoryClues.BeatKeys(story.Pacing, StoryClues.Stage(story), true, null)), at);
 
     private bool FinaleDue(Story story, DateTimeOffset now) =>
         StoryClues.FinaleDue(story, now, story.GoalsAtPick is not null && GoalClimb.AllDone(GoalsOf(story.Id)));
