@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import sys
 import time
+import traceback
 from datetime import datetime, timedelta
 
 DATA = os.environ.get("D47_MUSIC_SOURCE")
@@ -204,6 +205,7 @@ def main():
         dit, llm = load_models()
         if dit is None:
             return
+        from acestep.inference import generate_music
 
         done = 0
         for row in todo:
@@ -211,12 +213,7 @@ def main():
                 break
             shutil.rmtree(TMP, ignore_errors=True)
             os.makedirs(TMP)
-            params = GenerationParams(
-                task_type="text2music", thinking=True, caption=row["prompt"], lyrics=row["lyrics"].replace("\\n", "\n"),
-                instrumental=True, bpm=int(row["bpm"]), keyscale=row["key"], duration=int(row["duration"]),
-                use_cot_caption=False, use_cot_metas=False, use_cot_language=False,
-                inference_steps=50, guidance_scale=7.0, shift=3.0, seed=int(row["seed"]))
-            config = GenerationConfig(batch_size=1, audio_format="mp3", use_random_seed=False, seeds=[int(row["seed"])])
+            params, config = settings(row["prompt"], row["lyrics"], row["bpm"], row["key"], row["duration"], row["seed"])
             t0 = time.time()
             try:
                 result = generate_music(dit, llm, params=params, config=config, save_dir=TMP)
@@ -241,4 +238,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        log("crashed:\n" + traceback.format_exc().rstrip())
+        raise
