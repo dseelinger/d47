@@ -11,39 +11,8 @@ public sealed class ACustomVoiceIsNamedInTheLogOnlyByItsIdTests
     private const string Name = "Secret Ally";
 
     private readonly ChatterboxTestFolder _folder = new();
-    private readonly Recorded _log = new();
+    private readonly RecordingLogger<ChatterboxTtsProvider> _log = new();
 
-    private sealed class Recorded : ILogger<ChatterboxTtsProvider>
-    {
-        public List<string> Lines { get; } = [];
-
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
-            Lines.Add(formatter(state, exception));
-    }
-
-    private sealed class Engine : IChatterboxEngine
-    {
-        public IDisposable Encode(float[] reference) => new Handle();
-
-        public float[] Speak(long[] textIds, IDisposable voice, CancellationToken cancellationToken) => new float[240];
-
-        public void Dispose()
-        {
-        }
-
-        private sealed class Handle : IDisposable
-        {
-            public void Dispose()
-            {
-            }
-        }
-    }
 
     [Fact]
     public async Task TheStandInLineHasTheIdAndNotTheName()
@@ -55,7 +24,7 @@ public sealed class ACustomVoiceIsNamedInTheLogOnlyByItsIdTests
 
         using var provider = new ChatterboxTtsProvider(
             _folder.Files,
-            _folder.Models, _folder.Voices, _folder.Fetched, _log, () => new Engine(), () => true, ChatterboxTestFolder.NoDownload, custom: custom);
+            _folder.Models, _folder.Voices, _folder.Fetched, _log, () => new SilentChatterboxEngine(240), () => true, ChatterboxTestFolder.NoDownload, custom: custom);
 
         await provider.ListVoicesAsync(TestContext.Current.CancellationToken);
         custom.Delete(id!);

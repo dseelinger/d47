@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using D47.Core.Audio;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using static D47.Tts.Tests.ElevenLabsProbeSupport;
 
 namespace D47.Tts.Tests;
 
@@ -87,7 +88,7 @@ public class ElevenLabsPhonemeProbeTests
 
                     if (result.Pcm.Length > 0)
                     {
-                        await File.WriteAllBytesAsync(Path.Combine(folder, name), Wav(result.Pcm), token);
+                        await File.WriteAllBytesAsync(Path.Combine(folder, name), Wav(result.Pcm, SampleRate), token);
                     }
 
                     var status = result.Detail is { Length: > 0 } detail
@@ -149,57 +150,5 @@ public class ElevenLabsPhonemeProbeTests
         {
             return new Outcome(0, failure.Message, [], null);
         }
-    }
-
-    /// <summary>ElevenLabs' <c>detail.message</c>, or each <c>msg</c> of a validation error list.</summary>
-    private static string? DetailOf(byte[] body)
-    {
-        try
-        {
-            using var document = JsonDocument.Parse(body);
-
-            if (!document.RootElement.TryGetProperty("detail", out var detail))
-            {
-                return null;
-            }
-
-            return detail.ValueKind switch
-            {
-                JsonValueKind.Object when detail.TryGetProperty("message", out var message) => message.GetString(),
-                JsonValueKind.String => detail.GetString(),
-                JsonValueKind.Array => string.Join("; ", detail.EnumerateArray()
-                    .Where(item => item.ValueKind == JsonValueKind.Object && item.TryGetProperty("msg", out _))
-                    .Select(item => item.GetProperty("msg").GetString())),
-                _ => null,
-            };
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
-
-    private static byte[] Wav(byte[] pcm)
-    {
-        using var stream = new MemoryStream(44 + pcm.Length);
-        using var writer = new BinaryWriter(stream);
-
-        writer.Write("RIFF"u8);
-        writer.Write(36 + pcm.Length);
-        writer.Write("WAVE"u8);
-        writer.Write("fmt "u8);
-        writer.Write(16);
-        writer.Write((short)1);
-        writer.Write((short)1);
-        writer.Write(SampleRate);
-        writer.Write(SampleRate * 2);
-        writer.Write((short)2);
-        writer.Write((short)16);
-        writer.Write("data"u8);
-        writer.Write(pcm.Length);
-        writer.Write(pcm);
-        writer.Flush();
-
-        return stream.ToArray();
     }
 }

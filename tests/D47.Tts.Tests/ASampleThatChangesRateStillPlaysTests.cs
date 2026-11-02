@@ -100,20 +100,6 @@ public class ASampleThatChangesRateStillPlaysTests
         Assert.Contains(pcm, b => b != 0);
     }
 
-    private sealed class Recorded : ILogger<ElevenLabsTtsProvider>
-    {
-        public List<(LogLevel Level, string Line)> Lines { get; } = [];
-
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
-            Lines.Add((logLevel, formatter(state, exception)));
-    }
-
     private sealed class Serves : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(
@@ -133,14 +119,14 @@ public class ASampleThatChangesRateStillPlaysTests
     [Fact]
     public async Task ASampleThatCannotBePlayedIsLoggedOnceWithTheVoiceAndItsId()
     {
-        var log = new Recorded();
+        var log = new RecordingLogger<ElevenLabsTtsProvider>();
         using var http = new HttpClient(new Serves());
         using var provider = new ElevenLabsTtsProvider(() => "sk_test", log, http);
 
         var failure = await Assert.ThrowsAsync<TtsException>(
             () => provider.PreviewAsync("zain1", TestContext.Current.CancellationToken));
 
-        var warning = Assert.Single(log.Lines, line => line.Level == LogLevel.Warning && line.Line.Contains("sample"));
+        var warning = Assert.Single(log.Entries, line => line.Level == LogLevel.Warning && line.Line.Contains("sample"));
 
         Assert.Contains("Zain", warning.Line);
         Assert.Contains("zain1", warning.Line);

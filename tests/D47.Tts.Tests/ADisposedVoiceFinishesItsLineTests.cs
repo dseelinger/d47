@@ -7,25 +7,6 @@ namespace D47.Tts.Tests;
 
 public class ADisposedVoiceFinishesItsLineTests
 {
-    private sealed class CountingEngine : IChatterboxEngine
-    {
-        public IDisposable Encode(float[] reference) => new Handle();
-
-        public float[] Speak(long[] textIds, IDisposable voice, CancellationToken cancellationToken) =>
-            new float[ChatterboxPipeline.SampleRate / 10];
-
-        public void Dispose()
-        {
-        }
-
-        private sealed class Handle : IDisposable
-        {
-            public void Dispose()
-            {
-            }
-        }
-    }
-
     [Fact]
     public void DisposeWhileALineRunsFreesOnlyWhenThatLineEnds()
     {
@@ -92,7 +73,7 @@ public class ADisposedVoiceFinishesItsLineTests
             () =>
             {
                 opened++;
-                return new CountingEngine();
+                return new SilentChatterboxEngine();
             },
             () => true,
             ChatterboxTestFolder.NoDownload);

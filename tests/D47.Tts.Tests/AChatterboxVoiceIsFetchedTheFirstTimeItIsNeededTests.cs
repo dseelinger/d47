@@ -34,24 +34,6 @@ public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests
         }
     }
 
-    private sealed class Recorded : ILogger<ChatterboxTtsProvider>
-    {
-        public List<string> Lines { get; } = [];
-
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
-        {
-            lock (Lines)
-            {
-                Lines.Add(formatter(state, exception));
-            }
-        }
-    }
 
     /// <summary>The shipped clip in the test folder is silence; this one starts at a quarter.</summary>
     private const float WrenSample = 0.25f;
@@ -61,7 +43,7 @@ public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests
 
     private readonly ChatterboxTestFolder _folder = new();
     private readonly Engine _engine = new();
-    private readonly Recorded _log = new();
+    private readonly RecordingLogger<ChatterboxTtsProvider> _log = new();
     private readonly List<Uri> _asked = [];
 
     private Func<Uri, long, CancellationToken, Task<byte[]>> _download;

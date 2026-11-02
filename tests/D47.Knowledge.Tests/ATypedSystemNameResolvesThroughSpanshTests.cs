@@ -22,33 +22,13 @@ public class ATypedSystemNameResolvesThroughSpanshTests
         {"id64":267535618593211,"name":"Shrogea TT-P d6-7786","x":975.3125,"y":866.1875,"z":21277.0625}]}
         """;
 
-    private sealed class Answer(HttpStatusCode status, string body) : HttpMessageHandler
-    {
-        public List<Uri> Requests { get; } = [];
-
-        public List<string> UserAgents { get; } = [];
-
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
-        {
-            Requests.Add(request.RequestUri!);
-            UserAgents.Add(request.Headers.UserAgent.ToString());
-
-            return Task.FromResult(new HttpResponseMessage(status)
-            {
-                Content = new StringContent(body, Encoding.UTF8, "application/json"),
-            });
-        }
-    }
-
-    private static SpanshStarSystemService Service(Answer answer) =>
+    private static SpanshStarSystemService Service(RecordingAnswer answer) =>
         new(NullLogger<SpanshStarSystemService>.Instance, new HttpClient(answer));
 
     [Fact]
     public async Task TheExactMatchComesFirstAndAtMostFiveAreReturned()
     {
-        using var service = Service(new Answer(HttpStatusCode.OK, LttAnswer));
+        using var service = Service(new RecordingAnswer(HttpStatusCode.OK, LttAnswer));
 
         var matches = await service.MatchNamesAsync("ltt 7786", TestContext.Current.CancellationToken);
 
@@ -63,7 +43,7 @@ public class ATypedSystemNameResolvesThroughSpanshTests
     [Fact]
     public async Task NoMatchIsAnEmptyList()
     {
-        using var service = Service(new Answer(HttpStatusCode.OK, """{"count":0,"query":"zzqqxxv","results":[]}"""));
+        using var service = Service(new RecordingAnswer(HttpStatusCode.OK, """{"count":0,"query":"zzqqxxv","results":[]}"""));
 
         Assert.Empty(await service.MatchNamesAsync("zzqqxxv", TestContext.Current.CancellationToken));
     }
@@ -71,7 +51,7 @@ public class ATypedSystemNameResolvesThroughSpanshTests
     [Fact]
     public async Task TheSearchIsAskedOfSpanshWithD47sUserAgent()
     {
-        var answer = new Answer(HttpStatusCode.OK, LttAnswer);
+        var answer = new RecordingAnswer(HttpStatusCode.OK, LttAnswer);
         using var service = Service(answer);
 
         await service.MatchNamesAsync(" ltt 7786 ", TestContext.Current.CancellationToken);
@@ -86,7 +66,7 @@ public class ATypedSystemNameResolvesThroughSpanshTests
     [Fact]
     public async Task ARefusalIsTheServiceBeingUnavailable()
     {
-        using var service = Service(new Answer(HttpStatusCode.TooManyRequests, "{}"));
+        using var service = Service(new RecordingAnswer(HttpStatusCode.TooManyRequests, "{}"));
 
         await Assert.ThrowsAsync<GalaxyUnavailableException>(
             () => service.MatchNamesAsync("ltt 7786", TestContext.Current.CancellationToken));

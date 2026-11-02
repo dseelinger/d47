@@ -15,26 +15,6 @@ public class ASystemsFullRecordComesFromSpanshsDumpTests
 {
     private const long Ltt7786 = 633608311522;
 
-    private sealed class Answer(HttpStatusCode status, string body) : HttpMessageHandler
-    {
-        public List<Uri> Requests { get; } = [];
-
-        public List<string> UserAgents { get; } = [];
-
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
-        {
-            Requests.Add(request.RequestUri!);
-            UserAgents.Add(request.Headers.UserAgent.ToString());
-
-            return Task.FromResult(new HttpResponseMessage(status)
-            {
-                Content = new StringContent(body, Encoding.UTF8, "application/json"),
-            });
-        }
-    }
-
     /// <summary>What <see cref="HttpClient"/> throws when its own timeout passes.</summary>
     private sealed class TimesOut : HttpMessageHandler
     {
@@ -52,7 +32,7 @@ public class ASystemsFullRecordComesFromSpanshsDumpTests
 
     private static async Task<StarSystemProfile> Profile()
     {
-        using var service = Service(new Answer(HttpStatusCode.OK, Captured()));
+        using var service = Service(new RecordingAnswer(HttpStatusCode.OK, Captured()));
 
         return (await service.ProfileAsync(Ltt7786, TestContext.Current.CancellationToken))!;
     }
@@ -111,7 +91,7 @@ public class ASystemsFullRecordComesFromSpanshsDumpTests
             ]}}
             """;
 
-        using var service = Service(new Answer(HttpStatusCode.OK, Body));
+        using var service = Service(new RecordingAnswer(HttpStatusCode.OK, Body));
 
         var profile = (await service.ProfileAsync(1, TestContext.Current.CancellationToken))!;
 
@@ -138,7 +118,7 @@ public class ASystemsFullRecordComesFromSpanshsDumpTests
     [Fact]
     public async Task ASystemWithNoPowerplayHasNone()
     {
-        using var service = Service(new Answer(HttpStatusCode.OK, """{"system":{"name":"Quiet","id64":2}}"""));
+        using var service = Service(new RecordingAnswer(HttpStatusCode.OK, """{"system":{"name":"Quiet","id64":2}}"""));
 
         var profile = (await service.ProfileAsync(2, TestContext.Current.CancellationToken))!;
 
@@ -257,7 +237,7 @@ public class ASystemsFullRecordComesFromSpanshsDumpTests
     [Fact]
     public async Task TheDumpIsAskedForFromSpanshWithD47sUserAgent()
     {
-        var answer = new Answer(HttpStatusCode.OK, Captured());
+        var answer = new RecordingAnswer(HttpStatusCode.OK, Captured());
         using var service = Service(answer);
 
         await service.ProfileAsync(Ltt7786, TestContext.Current.CancellationToken);
@@ -271,7 +251,7 @@ public class ASystemsFullRecordComesFromSpanshsDumpTests
     [Fact]
     public async Task ASystemSpanshDoesNotKnowGivesNull()
     {
-        using var service = Service(new Answer(
+        using var service = Service(new RecordingAnswer(
             HttpStatusCode.NotFound, """{"error":"Could not find record with id64 1"}"""));
 
         Assert.Null(await service.ProfileAsync(1, TestContext.Current.CancellationToken));
@@ -282,7 +262,7 @@ public class ASystemsFullRecordComesFromSpanshsDumpTests
     [InlineData(HttpStatusCode.InternalServerError)]
     public async Task ARefusalIsTheServiceBeingUnavailable(HttpStatusCode status)
     {
-        using var service = Service(new Answer(status, "{}"));
+        using var service = Service(new RecordingAnswer(status, "{}"));
 
         await Assert.ThrowsAsync<GalaxyUnavailableException>(
             () => service.ProfileAsync(Ltt7786, TestContext.Current.CancellationToken));

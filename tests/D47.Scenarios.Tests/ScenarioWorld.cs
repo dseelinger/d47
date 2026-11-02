@@ -40,7 +40,7 @@ public sealed class ScenarioWorld
         services?.Seed(_install.Files, _install.Paths.Data);
 
         var store = new SettingsStore(_install.Paths, _install.Files, NullLogger<SettingsStore>.Instance);
-        Secrets = new SecretStore(_install.Paths, new PlainProtector(), _install.Files, NullLogger<SecretStore>.Instance);
+        Secrets = new SecretStore(_install.Paths, new ReversibleProtector(), _install.Files, NullLogger<SecretStore>.Instance);
         Settings = new SettingsService(store, Secrets, store.Load(), NullLogger<SettingsService>.Instance);
 
         GameState = new GameStateStore();
@@ -100,7 +100,7 @@ public sealed class ScenarioWorld
 
         var descriptors = BuiltinCapabilities.All(
             _install.Paths,
-            new NoopVerbosity(),
+            new FakeVerbosityControl(),
             GameState,
             Settings,
             new LlmAvailabilityState(providerConfigured: true),
@@ -322,32 +322,4 @@ public sealed class ScenarioWorld
     private static string Describe(ToolArguments arguments) =>
         System.Text.Json.JsonSerializer.Serialize(
             arguments.Values.ToDictionary(pair => pair.Key, pair => pair.Value?.ToString() ?? string.Empty));
-
-    /// <summary>Keeps the secret store usable without a per-user, per-machine DPAPI blob.</summary>
-    private sealed class PlainProtector : ISecretProtector
-    {
-        public byte[] Protect(byte[] plaintext) => plaintext;
-
-        public bool TryUnprotect(
-            byte[] ciphertext,
-            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out byte[]? plaintext)
-        {
-            plaintext = ciphertext;
-            return true;
-        }
-    }
-
-    private sealed class NoopVerbosity : D47.Core.Diagnostics.ILogVerbosityControl
-    {
-        private readonly Dictionary<string, LogLevel> _levels =
-            D47.Core.Diagnostics.Subsystems.All.ToDictionary(s => s, _ => LogLevel.Information, StringComparer.Ordinal);
-
-        public IReadOnlyDictionary<string, LogLevel> Levels => _levels;
-
-        public void Set(string subsystem, LogLevel level) => _levels[subsystem] = level;
-
-        public void SetDefault(LogLevel level)
-        {
-        }
-    }
 }

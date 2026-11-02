@@ -152,7 +152,7 @@ public class ATextureSurfaceSwapsBetweenTwoTexturesTests
         var lines = new List<string>();
         var runtime = new SteamVrRuntime(
             [new FakeSurface { UploadsAsTexture = true }],
-            new Capture(lines),
+            new RecordingLogger<SteamVrRuntime>(lines),
             openVr,
             device);
 
@@ -185,7 +185,7 @@ public class ATextureSurfaceSwapsBetweenTwoTexturesTests
         var lines = new List<string>();
         var runtime = new SteamVrRuntime(
             [new FakeSurface { UploadsAsTexture = true }],
-            new Capture(lines),
+            new RecordingLogger<SteamVrRuntime>(lines),
             openVr,
             device);
 
@@ -297,20 +297,5 @@ public class ATextureSurfaceSwapsBetweenTwoTexturesTests
         {
             runtime.Stop();
         }
-    }
-
-    private sealed class Capture(List<string> lines) : ILogger<SteamVrRuntime>
-    {
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter) =>
-            lines.Add(formatter(state, exception));
     }
 }

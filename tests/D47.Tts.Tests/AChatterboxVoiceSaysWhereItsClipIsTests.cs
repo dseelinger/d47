@@ -10,25 +10,6 @@ namespace D47.Tts.Tests;
 
 public sealed class AChatterboxVoiceSaysWhereItsClipIsTests
 {
-    private sealed class Engine : IChatterboxEngine
-    {
-        public IDisposable Encode(float[] reference) => new Handle();
-
-        public float[] Speak(long[] textIds, IDisposable voice, CancellationToken cancellationToken) =>
-            new float[ChatterboxPipeline.SampleRate / 10];
-
-        public void Dispose()
-        {
-        }
-
-        private sealed class Handle : IDisposable
-        {
-            public void Dispose()
-            {
-            }
-        }
-    }
-
     /// <summary>Answers every request with one status and no body.</summary>
     private sealed class Answering(HttpStatusCode status) : HttpMessageHandler
     {
@@ -65,7 +46,7 @@ public sealed class AChatterboxVoiceSaysWhereItsClipIsTests
             _folder.Voices,
             _folder.Fetched,
             NullLogger<ChatterboxTtsProvider>.Instance,
-            () => new Engine(),
+            () => new SilentChatterboxEngine(),
             () => true,
             (url, bytes, token) => _download(url, bytes, token),
             custom: _custom);
