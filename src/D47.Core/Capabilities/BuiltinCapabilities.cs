@@ -303,6 +303,9 @@ public static class BuiltinCapabilities
         // The minor faction each Commander has named for their squadron.
         Knowledge.SquadronFactions? squadronFactions = null,
 
+        // The standing offer to plot a neutron route's first waypoint.
+        Conversation.NeutronOffer? neutronOffer = null,
+
         // Hands a Commander pick to the tick thread, which writes game state.
         Action<Journal.CommanderIdentity>? pickCommander = null,
 
@@ -382,7 +385,8 @@ public static class BuiltinCapabilities
             navigation,
             checklists,
             cargo,
-            galaxy),
+            galaxy,
+            neutronOffer),
         SpecificationCapability.Create(() => gameState.Active),
         EngineerCapability.Create(() => gameState.Active, unlocks),
         EngineeringCapability.Create(() => gameState.Active, galaxy, clipboard),

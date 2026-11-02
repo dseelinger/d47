@@ -40,7 +40,8 @@ public static class RouteCapability
         NavigationSurface? navigation = null,
         Checklists.ChecklistService? checklists = null,
         BestCargoBoard? cargo = null,
-        IGalaxyService? galaxy = null) => new()
+        IGalaxyService? galaxy = null,
+        Conversation.NeutronOffer? neutronOffer = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -83,7 +84,7 @@ public static class RouteCapability
                         + "Defaults to 60."),
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    PlotAsync(routes, commander, settings, plans, now, arguments, cancellationToken),
+                    PlotAsync(routes, commander, settings, plans, now, neutronOffer, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -304,6 +305,7 @@ public static class RouteCapability
         Configuration.SettingsService settings,
         RoutePlanBook? plans,
         Func<DateTimeOffset>? now,
+        Conversation.NeutronOffer? offer,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -344,7 +346,15 @@ public static class RouteCapability
             // waypoints (Phase 37).
             plans?.Record(route, $"{route.Origin} to {route.Destination}", now?.Invoke() ?? default);
 
-            return ToolResult.Ok(Describe(route) + NotSetInGame);
+            var described = Describe(route) + NotSetInGame;
+
+            if (offer is not null && route.Waypoints.Count > 0)
+            {
+                offer.Open(route.Waypoints[0].System);
+                described += $"\nSay '{Conversation.NeutronOffer.FirstPhrase}' to set it in the galaxy map.";
+            }
+
+            return ToolResult.Ok(described);
         }
         catch (GalaxyUnavailableException ex)
         {

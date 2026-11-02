@@ -1458,6 +1458,7 @@ public sealed class AppHost : IDisposable
         var fight = new NearbyFight();
         var scenes = new SceneTracker();
         var handInOffer = new D47.Core.Conversation.HandInOffer();
+        var neutronOffer = new D47.Core.Conversation.NeutronOffer();
         var storyClue = new D47.Core.Stories.StoryClueCallout(fight);
         var storyReaction = new D47.Core.Stories.StoryReactionCallout(fight);
 
@@ -1483,6 +1484,7 @@ public sealed class AppHost : IDisposable
                 Fight = fight,
                 Scenes = scenes,
                 HandInOffer = handInOffer,
+                NeutronOffer = neutronOffer,
                 MarketBook = marketBook,
                 PlanBook = planBook,
                 StoryClue = storyClue,
@@ -1533,6 +1535,7 @@ public sealed class AppHost : IDisposable
             GoalBook = goalBook,
             Goals = goals,
             HandInOffer = handInOffer,
+            NeutronOffer = neutronOffer,
             HeardNames = heardNames,
             History = history,
             Journal = journal,
@@ -2619,6 +2622,7 @@ public sealed class AppHost : IDisposable
                 visitedStars: services.VisitedStars,
                 searchHistory: stores.SearchHistory,
                 squadronFactions: stores.SquadronFactions,
+                neutronOffer: stores.NeutronOffer,
                 bgsTick: () => late.Host?.BgsTick?.Last,
                 signalSightings: stores.SignalSightings,
                 signalIndex: services.SignalIndexStore,
@@ -2667,6 +2671,7 @@ public sealed class AppHost : IDisposable
         IEnumerable<DynamicCommand> OtherDynamicCommands() =>
             services.ClipboardOffer.Phrases()
                 .Concat(stores.HandInOffer.Phrases())
+                .Concat(stores.NeutronOffer.Phrases())
 
                 // And "set course for my carrier", which is an instruction rather than a topic and has to
                 // out-match the "my carrier" keyword that was answering it with a position report
@@ -4014,6 +4019,8 @@ public sealed class AppHost : IDisposable
         public required D47.Core.Goals.GoalStore Goals { get; init; }
 
         public required HandInOffer HandInOffer { get; init; }
+
+        public required NeutronOffer NeutronOffer { get; init; }
 
         public required HeardNamesStore HeardNames { get; init; }
 

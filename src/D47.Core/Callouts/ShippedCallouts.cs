@@ -56,6 +56,8 @@ public static class ShippedCallouts
 
         public required HandInOffer HandInOffer { get; init; }
 
+        public NeutronOffer? NeutronOffer { get; init; }
+
         public required MarketBook MarketBook { get; init; }
 
         public required RoutePlanBook PlanBook { get; init; }
@@ -136,7 +138,7 @@ public static class ShippedCallouts
             .Add(new FuelCallout(loggers.CreateLogger<FuelCallout>()))
             .Add(new FuelReachCallout(loggers.CreateLogger<FuelReachCallout>()))
             .Add(new RebuyCallout())
-            .Add(new RouteCallout(loggers.CreateLogger<RouteCallout>()))
+            .Add(new RouteCallout(loggers.CreateLogger<RouteCallout>()) { Offer = sources.NeutronOffer })
             .Add(new LongJumpCallout())
             .Add(new ArrivalCallout())
 

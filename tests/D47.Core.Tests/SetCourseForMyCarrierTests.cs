@@ -142,7 +142,10 @@ public class SetCourseForMyCarrierTests
         var handIn = new HandInOffer();
         handIn.Open(1, "Sol");
 
-        return [.. Commands(Parked), .. CommunityGoalCourse.Phrases(lastFound), .. handIn.Phrases(), .. HomeCourse.Phrases(() => "Kestrel Reach")];
+        var neutron = new NeutronOffer();
+        neutron.Open("Waypoint 0");
+
+        return [.. Commands(Parked), .. CommunityGoalCourse.Phrases(lastFound), .. handIn.Phrases(), .. neutron.Phrases(), .. HomeCourse.Phrases(() => "Kestrel Reach")];
     }
 
     /// <summary>

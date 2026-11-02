@@ -134,6 +134,11 @@ public sealed class PhraseBook
                 .Select(phrase => Dynamic(registry, phrase, NavigationCapability.Id, "copy_to_clipboard", null)));
 
         entries.AddRange(
+            NeutronOffer.EveryPhrase
+                .Where(phrase => !claimed.Contains(phrase))
+                .Select(phrase => Dynamic(registry, phrase, NavigationCapability.Id, "plot_course", null)));
+
+        entries.AddRange(
             HandInOffer.EveryPhrase
                 .Where(phrase => !claimed.Contains(phrase))
                 .Select(phrase => Dynamic(registry, phrase, NavigationCapability.Id, "plot_course", null)));

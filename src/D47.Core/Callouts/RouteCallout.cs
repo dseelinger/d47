@@ -14,6 +14,9 @@ public sealed class RouteCallout(ILogger? logger = null) : ICallout
 {
     public string Id => "route";
 
+    /// <summary>Withdrawn when the Commander plots or clears a route in the game.</summary>
+    public Conversation.NeutronOffer? Offer { get; init; }
+
     /// <summary>How often to say how far there is left to go, in jumps.</summary>
     public int EveryNJumps { get; set; } = 5;
 
@@ -22,6 +25,11 @@ public sealed class RouteCallout(ILogger? logger = null) : ICallout
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
+        if (!context.IsPriming && context.Events.Any(e => e.Kind is "NavRoute" or "NavRouteClear"))
+        {
+            Offer?.Withdraw();
+        }
+
         if (context.State is not { } state)
         {
             yield break;
