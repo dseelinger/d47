@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter for a Commander with no fleet carrier now ends near their ships. The base is the station holding most of their stored ships, not counting ships in transit, with a tie going to the nearer one; with no ship in storage it is the **Home system** setting. When a chapter's last stop is more than the near-here reach from the base (80 light years, or three jumps if that is more), the last objective ends with one more step: docking at that station, or arriving in the home system. A draft without it is written again. The chapter that ends at the Guardian beacon, finale chapters, chapters travelling toward a destination in the black or home from it, a place you asked to go to, and short stories are not held to it.
+
 A story chapter built on missions no longer fails its check because a line says how the missions went, what their sites held or what they paid. Lines now rest on the story's own records and characters instead. A mission objective counts as the number of missions it names, and the check keeps every objection to an objective, repeats the earlier rounds' objections in the next repair, and allows two repair rounds.
 
 The check on a story chapter's lines is now given the Anarchy systems the chapter's writer was given, so a line that calls one of them an Anarchy is no longer refused as unconfirmed. It is also told that a line telling the Commander which missions to take states nothing to check.

@@ -790,7 +790,7 @@ public sealed class AdventureGenerator(
 
         async Task<Resolved> CheckAsync(ReadAnswer answer)
         {
-            var dryRun = await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, candidates.Sites, candidates.InBand, candidates.Pull, cancellationToken).ConfigureAwait(false);
+            var dryRun = await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, candidates.Sites, candidates.InBand, candidates.Pull, candidates.Base, cancellationToken).ConfigureAwait(false);
 
             outage ??= dryRun.Outage;
             return Speakers(dryRun, answer, ask);
@@ -1009,7 +1009,7 @@ public sealed class AdventureGenerator(
             Refusals =
             [
                 .. resolved.Refusals.Select(refusal =>
-                    refusal is { Objectives: [var kept], Opening: false, Destination: false }
+                    refusal is { Objectives: [var kept], Opening: false, Destination: false, Appends: null }
                     && !replaced.Contains(kept)
                     && !refusedBefore.Contains(kept)
                     && replaced.Where(index => index < kept).DefaultIfEmpty(-1).Max() is var cause and >= 0
@@ -1409,21 +1409,10 @@ public sealed class AdventureGenerator(
 
         try
         {
-            // The galaxy search matches a reference system only in its exact case; a home system is typed in any case.
-            if (Systems?.Invoke() is { } names
-                && (await names.MatchNamesAsync(system, cancellationToken).ConfigureAwait(false))
-                    .FirstOrDefault(match => string.Equals(match.Name, system, StringComparison.OrdinalIgnoreCase)) is { } named)
-            {
-                logger.LogInformation("Draft {Draft}, the changed objective asks to go to {System}", ask.Draft, named.Name);
-                return rewrite with { Heading = new AdventureHeading(named.Name, named.SystemAddress, named.Position, standIn) { AskedHome = read.Home } };
-            }
-
-            // The search answers 400 for a name it has no system for, which SearchAsync reports as an outage; a position lookup reports it as unknown.
-            if (await search.PositionAsync(system, cancellationToken).ConfigureAwait(false) is { } position
-                && await new AdventureResolver(search, facts.Standings) { Time = Time }.SystemAsync(system, cancellationToken).ConfigureAwait(false) is { } found)
+            if (await LookUpAsync(search, system, facts, cancellationToken).ConfigureAwait(false) is { } found)
             {
                 logger.LogInformation("Draft {Draft}, the changed objective asks to go to {System}", ask.Draft, found.Name);
-                return rewrite with { Heading = new AdventureHeading(found.Name, found.Address, position, standIn) { AskedHome = read.Home } };
+                return rewrite with { Heading = new AdventureHeading(found.Name, found.Address, found.Position, standIn) { AskedHome = read.Home } };
             }
         }
         catch (GalaxyUnavailableException ex)
@@ -1435,6 +1424,27 @@ public sealed class AdventureGenerator(
 
         logger.LogInformation("Draft {Draft}, the changed objective names {System}, which the galaxy search does not know", ask.Draft, system);
         return rewrite with { Unfound = system };
+    }
+
+    /// <summary>A system named in any case, as the galaxy search spells it, with its address and position; null when the search does not know it.</summary>
+    private async Task<(string Name, long Address, StarPosition Position)?> LookUpAsync(IGalaxyService search, string system, Facts facts, CancellationToken cancellationToken)
+    {
+        // The galaxy search matches a reference system only in its exact case; a home system is typed in any case.
+        if (Systems?.Invoke() is { } names
+            && (await names.MatchNamesAsync(system, cancellationToken).ConfigureAwait(false))
+                .FirstOrDefault(match => string.Equals(match.Name, system, StringComparison.OrdinalIgnoreCase)) is { } named)
+        {
+            return (named.Name, named.SystemAddress, named.Position);
+        }
+
+        // The search answers 400 for a name it has no system for, which SearchAsync reports as an outage; a position lookup reports it as unknown.
+        if (await search.PositionAsync(system, cancellationToken).ConfigureAwait(false) is { } position
+            && await new AdventureResolver(search, facts.Standings) { Time = Time }.SystemAsync(system, cancellationToken).ConfigureAwait(false) is { } found)
+        {
+            return (found.Name, found.Address, position);
+        }
+
+        return null;
     }
 
     private static StoryCall HeadingInstruction(AdventureRewrite rewrite, Facts facts, string? home)
@@ -1611,7 +1621,32 @@ public sealed class AdventureGenerator(
         /// <summary>The places around the waypoint on the way to the chapter's target, for a chapter that travels.</summary>
         public PullPlaces Pull { get; init; } = PullPlaces.NotSearched;
 
+        /// <summary>The base a story chapter ends near, for a Commander with no fleet carrier who has one.</summary>
+        public BaseStep? Base { get; init; }
+
         public bool IsEmpty => Stations.Count == 0 && Bodies.Count == 0;
+    }
+
+    /// <summary>
+    /// The step back to a <see cref="ShipBase"/>: a dock at <see cref="MarketId"/> where the station is known by name,
+    /// otherwise an arrival in the system. <see cref="Position"/> is null when the galaxy search could not place it.
+    /// </summary>
+    private sealed record BaseStep(ShipBase Base, string System, long? SystemAddress, string? Station, long? MarketId, StarPosition? Position)
+    {
+        public bool Docks => Station is not null && MarketId is not null;
+
+        /// <summary>Whether <paramref name="trigger"/> is this step.</summary>
+        public bool Is(AdventureTrigger? trigger) =>
+            Docks
+                ? trigger is { Kind: TriggerKind.Dock } && trigger.MarketId == MarketId
+                : trigger is { Kind: TriggerKind.Arrive }
+                  && (SystemAddress is { } address ? trigger.SystemAddress == address : string.Equals(trigger.System, System, StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>The step as the writer is told it.</summary>
+        public string Step => Docks ? $"\"dock\" at {Station} in {System}" : $"\"arrive\" in {System}";
+
+        /// <summary>What the base is, after its system's name.</summary>
+        public string What => Base.IsHomeSystem ? "the Commander's home system" : "where most of the Commander's stored ships are";
     }
 
     private enum InBandState
@@ -1677,7 +1712,91 @@ public sealed class AdventureGenerator(
             Sites = sites,
             InBand = await InBandAsync(search, resolver, ask, facts, cancellationToken, notes).ConfigureAwait(false),
             Pull = await PullAsync(search, resolver, ask, facts, cancellationToken, notes).ConfigureAwait(false),
+            Base = await BaseAsync(search, ask, facts, cancellationToken).ConfigureAwait(false),
         };
+    }
+
+    /// <summary>
+    /// The step back to the Commander's base for a story chapter held to one, or null. A station known only by its market id is
+    /// named from the galaxy search's stations in its system; where none matches, or the base is the Home system setting, the step is an arrival.
+    /// </summary>
+    private async Task<BaseStep?> BaseAsync(IGalaxyService search, AdventureAsk ask, Facts facts, CancellationToken cancellationToken)
+    {
+        if (!ShipBases.Applies(ask) || facts.Carrier.Owned)
+        {
+            return null;
+        }
+
+        var ships = state()?.Fleet.Ships ?? [];
+        var home = HomeSystem?.Invoke();
+        var positions = new Dictionary<string, StarPosition?>(StringComparer.OrdinalIgnoreCase);
+
+        async Task<StarPosition?> PositionAsync(string system)
+        {
+            if (!positions.TryGetValue(system, out var position))
+            {
+                try
+                {
+                    position = await search.PositionAsync(system, cancellationToken).ConfigureAwait(false);
+                }
+                catch (GalaxyUnavailableException ex)
+                {
+                    logger.LogWarning("Draft {Draft}, the galaxy search could not place {System}: {Message}", ask.Draft, system, ex.Message);
+                    position = null;
+                }
+
+                positions[system] = position;
+            }
+
+            return position;
+        }
+
+        if (ShipBases.Busiest(ships) is { Count: > 1 } tied && facts.Position is not null)
+        {
+            foreach (var system in tied.Select(station => station.System).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                await PositionAsync(system).ConfigureAwait(false);
+            }
+        }
+
+        if (ShipBases.Of(ships, carrier: false, home, system => facts.Position is { } here && positions.GetValueOrDefault(system) is { } at ? here.DistanceTo(at) : null) is not { } chosen)
+        {
+            return null;
+        }
+
+        BaseStep step;
+
+        try
+        {
+            if (chosen.IsHomeSystem)
+            {
+                step = await LookUpAsync(search, chosen.System, facts, cancellationToken).ConfigureAwait(false) is { } found
+                    ? new BaseStep(chosen, found.Name, found.Address, null, null, found.Position)
+                    : new BaseStep(chosen, chosen.System, null, null, null, null);
+            }
+            else
+            {
+                var station = chosen.MarketId is { } market && market != facts.ClosedMarketId
+                    ? (await search.FindStationsAsync(StationQuery.Near(chosen.System, 1, 20), cancellationToken).ConfigureAwait(false)).Stations
+                        .FirstOrDefault(listed => listed.MarketId == market && string.Equals(listed.SystemName, chosen.System, StringComparison.OrdinalIgnoreCase))
+                    : null;
+                var address = station?.SystemAddress
+                    ?? (await new AdventureResolver(search, facts.Standings) { Time = Time }.SystemAsync(chosen.System, cancellationToken).ConfigureAwait(false))?.Address;
+
+                step = new BaseStep(chosen, chosen.System, address, station?.Name, station?.MarketId, await PositionAsync(chosen.System).ConfigureAwait(false));
+            }
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            logger.LogWarning("Draft {Draft}, the galaxy search could not look up the base in {System}: {Message}", ask.Draft, chosen.System, ex.Message);
+            step = new BaseStep(chosen, chosen.System, null, null, null, null);
+        }
+
+        logger.LogInformation(
+            "Draft {Draft}, the chapter ends near the base in {System}: {Step}{Unplaced}",
+            ask.Draft, step.System, step.Step, step.Position is null ? "; the galaxy search could not place it, so the step is needed unless the last stop is in that system" : string.Empty);
+
+        return step;
     }
 
     /// <summary>For a chapter that travels, the open stations and landable bodies nearest the waypoint on the way to its target.</summary>
@@ -2923,6 +3042,29 @@ public sealed class AdventureGenerator(
         }
     }
 
+    /// <summary>For a chapter held to a base, where it is and the step back to it that a chapter ending far from it takes.</summary>
+    private static void AppendBase(StringBuilder text, BaseStep? home, Facts facts)
+    {
+        if (home is null)
+        {
+            return;
+        }
+
+        var near = ShipBases.Near(facts.Ship.MaxJumpRange).ToString("0", CultureInfo.InvariantCulture);
+        var far = home.Position is { } there && facts.Position is { } here
+            ? $", {here.DistanceTo(there).ToString("0", CultureInfo.InvariantCulture)} light years from here"
+            : string.Empty;
+
+        text.AppendLine();
+        text.AppendLine(home.Base.IsHomeSystem
+            ? $"The Commander has no fleet carrier and no ship in storage, and their home system is {home.System}{far}."
+            : $"The Commander has no fleet carrier, so their ships stay where they are stored, and most of them are {(home.Docks ? $"at {home.Station} in {home.System}" : $"in {home.System}")}{far}.");
+        text.AppendLine(
+            $"If the chapter's last stop, the system of its last place objective, is more than {near} light years from {home.System}, "
+            + $"the last objective ends with one more step in its \"then\": {home.Step}, back to {home.What}. That step may be longer than the reach. "
+            + $"Write the chapter's lines so that they lead there. When the last stop is within {near} light years of {home.System}, add no such step.");
+    }
+
     /// <summary>Where a last stop that has reached <paramref name="leg"/>'s target is: in the system itself, or within the leg's distance of it.</summary>
     private static string Reached(ChapterLeg leg) =>
         leg.Within <= 0 ? $"in {leg.Target} itself" : $"within {leg.Within.ToString("0", CultureInfo.InvariantCulture)} light years of {leg.Target}";
@@ -3474,6 +3616,7 @@ public sealed class AdventureGenerator(
         AppendBand(text, ask, facts, candidates.InBand);
         AppendLeg(text, ask, facts, candidates.Pull);
         AppendHeading(text, ask);
+        AppendBase(text, candidates.Base, facts);
 
         if (ask.Chapter is { } chapter && !IsDrawn(ask.Story))
         {
@@ -3738,6 +3881,11 @@ public sealed class AdventureGenerator(
         foreach (var refusal in repair.Refusals)
         {
             text.Append("- ").AppendLine(refusal.Text);
+        }
+
+        foreach (var appends in repair.Refusals.Select(refusal => refusal.Appends).OfType<string>().Distinct())
+        {
+            text.AppendLine($"{repair.Offset + repair.Beats.Count + 1}. (not yet written: a further step of the last objective above) — {appends}");
         }
 
         var numbers = repair.Replaceable.Order().Select(index => (repair.Offset + index + 1).ToString(CultureInfo.InvariantCulture)).ToList();
@@ -4331,16 +4479,19 @@ public sealed class AdventureGenerator(
 
         public bool Destination { get; init; }
 
+        /// <summary>The step a repair adds after the last one, as the writer is told it; the refusal is charged to the index one past the last.</summary>
+        public string? Appends { get; init; }
+
         public bool Chapter => Objectives.Count == 0 && !Opening && !Destination;
     }
 
     /// <summary>The objectives as written and the refusals a repair round answers; <see cref="Offset"/> objectives come before them in the chapter.</summary>
     private sealed record Repair(IReadOnlyList<ReadBeat> Beats, IReadOnlyList<Refusal> Refusals, int Offset)
     {
-        /// <summary>The indexes a replacement may take: those the refusals name, or every one when a refusal is the whole chapter's.</summary>
+        /// <summary>The indexes a replacement may take: those the refusals name, and every one when a refusal is the whole chapter's.</summary>
         public IReadOnlySet<int> Replaceable =>
             Refusals.Any(refusal => refusal.Chapter)
-                ? Enumerable.Range(0, Beats.Count).ToHashSet()
+                ? Enumerable.Range(0, Beats.Count).Union(Refusals.SelectMany(refusal => refusal.Objectives)).ToHashSet()
                 : Refusals.SelectMany(refusal => refusal.Objectives).ToHashSet();
 
         public bool Opening => Refusals.Any(refusal => refusal.Opening);
@@ -4350,7 +4501,7 @@ public sealed class AdventureGenerator(
         /// <summary>The answer with each replacement in place of the objective it numbers, and the indexes replaced; every other objective is kept as written.</summary>
         public (ReadAnswer Read, IReadOnlySet<int> Replaced) Splice(ReadAnswer read, ReadRepair answer)
         {
-            var beats = read.Beats.ToArray();
+            var beats = read.Beats.ToList();
             var replaceable = Replaceable;
             var replaced = new HashSet<int>();
 
@@ -4358,7 +4509,11 @@ public sealed class AdventureGenerator(
             {
                 var index = objective - Offset - 1;
 
-                if (replaceable.Contains(index) && replaced.Add(index))
+                if (index == read.Beats.Count && beats.Count > 0 && replaceable.Contains(index) && replaced.Add(index))
+                {
+                    beats.Add(beat with { Title = beats[^1].Title, Function = null, Lines = [], Continues = true, Boards = [], Leaves = [] });
+                }
+                else if (index >= 0 && index < read.Beats.Count && replaceable.Contains(index) && replaced.Add(index))
                 {
                     beats[index] = beats[index].Continues
                         ? beat with { Title = beats[index].Title, Function = null, Lines = [], Continues = true, Boards = [], Leaves = [] }
@@ -4409,6 +4564,7 @@ public sealed class AdventureGenerator(
         Sites sites,
         InBand inBand,
         PullPlaces pull,
+        BaseStep? home,
         CancellationToken cancellationToken)
     {
         var resolver = new AdventureResolver(galaxy()!, facts.Standings) { ClosedMarketId = facts.ClosedMarketId, Time = Time };
@@ -4460,8 +4616,16 @@ public sealed class AdventureGenerator(
             refusals.Add(new Refusal(unnamed, []) { Destination = true });
         }
 
+        // The last stop before the last step, which the chapter's other rules measure when that step is the one back to the base.
+        (string? System, int? Placed, (TriggerKind Kind, string? Before)? Place) beforeLast = (previousSystem, null, null);
+
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
+            if (index == beats.Count - 1)
+            {
+                beforeLast = (previousSystem, lastPlaced, lastPlace);
+            }
+
             var where = $"Objective {offset + index + 1} ({beat.Named})";
             var stoodBefore = lastStood;
             lastStood = null;
@@ -4772,6 +4936,7 @@ public sealed class AdventureGenerator(
                     }
                     else if (hop is { } far && far > facts.RadiusLightYears
                              && !string.Equals(place.System, arrivesAt, StringComparison.OrdinalIgnoreCase)
+                             && !(index == beats.Count - 1 && home?.Is(place) == true)
                              && !(closing && index == beats.Count - 1 && place.Kind == TriggerKind.Land && AdventureValidation.SameBody(place, destination!.Landing())))
                     {
                         Refuse(index, $"{where} is {far:0} light years from the previous stop; the reach is {facts.RadiusLightYears:0}.");
@@ -4822,6 +4987,19 @@ public sealed class AdventureGenerator(
             && await NotCloserAsync(previousSystem, destination, start, resolver, cancellationToken).ConfigureAwait(false) is { } notCloser)
         {
             refusals.Add(new Refusal(notCloser, lastPlaced is { } placedLast ? [placedLast] : []));
+        }
+
+        if (home is not null && home.Is(lastStood))
+        {
+            (previousSystem, lastPlaced, lastPlace) = beforeLast;
+        }
+        else if (home is not null
+                 && await AwayFromBaseAsync(previousSystem, home, facts, ask, resolver, cancellationToken).ConfigureAwait(false) is { } away)
+        {
+            // A last step already written for the base is replaced; otherwise a repair adds the step after the last one.
+            refusals.Add(beats.Count > 0 && beats[^1] is { Kind: TriggerKind.Dock or TriggerKind.Arrive } written && string.Equals(written.System, home.System, StringComparison.OrdinalIgnoreCase)
+                ? new Refusal(away, [beats.Count - 1])
+                : new Refusal(away, [beats.Count]) { Appends = home.Step });
         }
 
         if (inBand.Holds
@@ -5118,6 +5296,40 @@ public sealed class AdventureGenerator(
             ? $"The chapter starts {start:0} light years from Sol and its last stop is {measured:0} light years from Sol; "
               + $"its last stop must be between {band.Min:0} and {band.Max:0} light years from Sol."
             : null;
+    }
+
+    /// <summary>
+    /// The refusal for a chapter whose last stop is farther than the near-here reach from <paramref name="home"/>, or null.
+    /// A last stop that cannot be measured needs the step back unless it is in the base's system.
+    /// </summary>
+    private async Task<string?> AwayFromBaseAsync(
+        string? lastStop, BaseStep home, Facts facts, AdventureAsk ask, AdventureResolver resolver, CancellationToken cancellationToken)
+    {
+        if (lastStop is null || string.Equals(lastStop, home.System, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var near = ShipBases.Near(facts.Ship.MaxJumpRange);
+        var (measured, unavailable) = home.Position is null ? (null, null) : await MeasureAsync(resolver, lastStop, home.System, cancellationToken).ConfigureAwait(false);
+
+        if (measured is { } lightYears && lightYears <= near)
+        {
+            return null;
+        }
+
+        var step = $"the last objective must end with one more step in its \"then\": {home.Step}, back to {home.What}.";
+
+        if (measured is { } far)
+        {
+            return $"The chapter's last stop, {lastStop}, is {far:0} light years from {home.System}, {home.What}; {step}";
+        }
+
+        logger.LogInformation(
+            "Draft {Draft}, the last stop {Stop} could not be measured against the base in {System}{Why}, so the chapter must end with the step back to it",
+            ask.Draft, lastStop, home.System, unavailable is null ? string.Empty : $" ({unavailable})");
+
+        return $"The chapter's last stop, {lastStop}, could not be measured against {home.System}, {home.What}, and is not in it; {step}";
     }
 
     /// <summary>The refusal for a travelling chapter whose last stop is not far enough toward its target, or null.</summary>
