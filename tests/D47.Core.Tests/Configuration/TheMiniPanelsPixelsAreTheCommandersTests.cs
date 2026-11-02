@@ -13,13 +13,7 @@ public class TheMiniPanelsPixelsAreTheCommandersTests
     private static SettingsService Settings(string mode)
     {
         var install = new MemoryInstall();
-        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
-
-        var settings = new SettingsService(
-            store,
-            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
-            store.Load(),
-            NullLogger<SettingsService>.Instance);
+        var settings = TestSurface.SettingsFor(install);
 
         settings.Bind(Capabilities.CapabilityRegistry.Build(
         [

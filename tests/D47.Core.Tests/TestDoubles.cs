@@ -218,6 +218,18 @@ public sealed class TestSurface
                 NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
             state ?? (() => null));
 
+    /// <summary>A settings service over the install's in-memory files, loaded as a restart would.</summary>
+    public static SettingsService SettingsFor(MemoryInstall install)
+    {
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
+
+        return new SettingsService(
+            store,
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
+            store.Load(),
+            NullLogger<SettingsService>.Instance);
+    }
+
     /// <param name="loadFailed">Whether <paramref name="settings"/> are defaults standing in for a file that refused to load.</param>
     public static TestSurface For(
         MemoryInstall install,

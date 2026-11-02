@@ -136,14 +136,7 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
             Loggers = NullLoggerFactory.Instance,
         };
 
-        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
-
-        var settings = new SettingsService(
-            store,
-            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
-            store.Load(),
-            NullLogger<SettingsService>.Instance,
-            loadFailed: false);
+        var settings = TestSurface.SettingsFor(install);
 
         var registry = CapabilityRegistry.Build(
         [
