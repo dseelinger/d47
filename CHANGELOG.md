@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter written again at the same number, after a failed chapter or a detour, now draws different activities each time. Before, a second rewrite of the same chapter drew the same ones as the first.
+
 A story's finale now waits for you to arrive when the story's last stage before it is a span in the black with a destination. With every clue given and the finale's day passed, chapters are still written and pulled toward the destination until you are within 1,000 light years of it. Without a known position the finale starts as before.
 
 A story chapter for a Commander with no fleet carrier now ends near their ships. The base is the station holding most of their stored ships, not counting ships in transit, with a tie going to the nearer one; with no ship in storage it is the **Home system** setting. When a chapter's last stop is more than the near-here reach from the base (80 light years, or three jumps if that is more), the last objective ends with one more step: docking at that station, or arriving in the home system. A draft without it is written again. The chapter that ends at the Guardian beacon, finale chapters, every chapter of a span the story marks as in the black, chapters heading home from the black, a place you asked to go to, and short stories are not held to it.

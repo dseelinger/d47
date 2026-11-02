@@ -56,10 +56,11 @@ public sealed record AdventureAsk(
     AdventureSetAside? SetAside = null);
 
 /// <summary>
-/// A chapter the Commander set aside for a detour, to be written again: the chapter, the titles of its objectives already
-/// done, the Commander's words, and the system they are in now.
+/// A chapter the Commander set aside, to be written again: the chapter, the titles of its objectives already done, the
+/// Commander's words for a detour, and the system they are in now. <see cref="Words"/> is null when they asked for the
+/// chapter to be written again from where they are.
 /// </summary>
-public sealed record AdventureSetAside(AdventureChapter Chapter, IReadOnlyList<string> Done, string Words, string? Here);
+public sealed record AdventureSetAside(AdventureChapter Chapter, IReadOnlyList<string> Done, string? Words, string? Here);
 
 /// <summary>A draft's name and spine, kept for the next draft to write its objectives against.</summary>
 public sealed record AdventureOutline(string Name, AdventureSpine Spine);
@@ -2622,19 +2623,25 @@ public sealed class AdventureGenerator(
             + "chapter or ask for its objectives again; let what happened shape this chapter's want and stake.");
     }
 
-    /// <summary>The chapter the Commander set aside for a detour, what of it they did, where they are now, and what is asked of the chapter written in its place.</summary>
+    /// <summary>The chapter the Commander set aside, what of it they did, where they are now, and what is asked of the chapter written in its place.</summary>
     private static void AppendSetAside(StringBuilder text, AdventureSetAside setAside)
     {
         var attempt = setAside.Chapter.Previous;
 
         text.AppendLine();
-        text.AppendLine("The Commander set an earlier version of this chapter aside to go somewhere else:");
+        text.AppendLine(setAside.Words is null
+            ? "The Commander asked for this chapter to be written again from where they are now. The earlier version:"
+            : "The Commander set an earlier version of this chapter aside to go somewhere else:");
         AppendSpine(text, attempt.Name, attempt.Spine, whole: false);
         text.AppendLine("Objectives: " + string.Join("; ", attempt.Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")));
         text.AppendLine(setAside.Done.Count > 0
             ? "Objectives already done: " + string.Join("; ", setAside.Done)
             : "Objectives already done: none");
-        text.AppendLine($"Why they set it aside, in their words: {setAside.Words}");
+
+        if (setAside.Words is { } words)
+        {
+            text.AppendLine($"Why they set it aside, in their words: {words}");
+        }
 
         if (!string.IsNullOrWhiteSpace(setAside.Here))
         {
@@ -2643,9 +2650,11 @@ public sealed class AdventureGenerator(
 
         AppendNotables(text, setAside.Chapter);
         text.AppendLine();
-        text.AppendLine(
-            "Write this chapter again from where the Commander is now. What they already did stays done; do not ask for "
-            + "those objectives again. Carry on the chapter's want and stake from here.");
+        text.AppendLine(setAside.Words is null
+            ? "Write this chapter again from where the Commander is now. What they already did stays done; do not ask for "
+              + "those objectives again. Their activities may be asked for again. Carry on the chapter's want and stake from here."
+            : "Write this chapter again from where the Commander is now. What they already did stays done; do not ask for "
+              + "those objectives again. Carry on the chapter's want and stake from here.");
     }
 
     /// <summary>Whether the chapter is written around drawn activities.</summary>

@@ -50,7 +50,10 @@ public static class ChapterDraw
     /// <summary>The most the share of sightseeing chapters is scaled up to.</summary>
     public const double MostSightShare = 0.4;
 
-    /// <summary>An FNV-1a hash of the story id and chapter number, and of the replaced objective's index in a rewrite.</summary>
+    /// <summary>
+    /// An FNV-1a hash of the story id and chapter number, and of <paramref name="replaced"/>: the replaced objective's index in
+    /// a rewrite, or minus how many times the whole chapter has been written again.
+    /// </summary>
     public static uint Seed(string storyId, int chapter, int? replaced = null)
     {
         ArgumentNullException.ThrowIfNull(storyId);
@@ -58,12 +61,12 @@ public static class ChapterDraw
         return Hash(replaced is { } index ? $"{storyId}|{chapter}|{index}" : $"{storyId}|{chapter}");
     }
 
-    /// <summary>The seed of a chapter's sightseeing draw, apart from <see cref="Seed"/>.</summary>
-    public static uint SightSeed(string storyId, int chapter)
+    /// <summary>The seed of a chapter's sightseeing draw, apart from <see cref="Seed"/>; <paramref name="rewrites"/> is how many times the chapter was written again.</summary>
+    public static uint SightSeed(string storyId, int chapter, int rewrites = 0)
     {
         ArgumentNullException.ThrowIfNull(storyId);
 
-        return Hash($"{storyId}|{chapter}|sight");
+        return Hash(rewrites > 0 ? $"{storyId}|{chapter}|sight|{rewrites}" : $"{storyId}|{chapter}|sight");
     }
 
     /// <summary>The chance a chapter is a sightseeing chapter: scaled by the Exploration weight, capped, and reduced after a sightseeing chapter.</summary>

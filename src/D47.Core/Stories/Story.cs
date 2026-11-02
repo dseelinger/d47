@@ -33,6 +33,12 @@ public sealed record StoryOffSpan(DateTimeOffset From, DateTimeOffset? To);
 /// </summary>
 public sealed record StoryDetour(string Key, string Chapter, string Words, DateTimeOffset At, IReadOnlyList<string> Done);
 
+/// <summary>
+/// The Commander's request to write the current chapter again from where they are: <see cref="Chapter"/> is the chapter set
+/// aside, and <see cref="Done"/> the titles of its objectives already done.
+/// </summary>
+public sealed record StoryRewrite(string Chapter, DateTimeOffset At, IReadOnlyList<string> Done);
+
 /// <summary>A stock story the Commander picked: a chain of chapters, each an adventure written as they play.</summary>
 public sealed record Story
 {
@@ -150,6 +156,12 @@ public sealed record Story
 
     /// <summary>The open detour; the chapter it interrupted is written again once it fires. Null when none.</summary>
     public StoryDetour? Detour { get; init; }
+
+    /// <summary>The chapter set aside to be written again from where the Commander is; the tick writes it. Null when none.</summary>
+    public StoryRewrite? Rewrite { get; init; }
+
+    /// <summary>How many times the current chapter number has been written again; writing a new number resets it.</summary>
+    public int Rewrites { get; init; }
 
     /// <summary>The system, Sol or Colonia, the story's chapters head for after changed chapters in the black; null when none.</summary>
     public string? HomeTarget { get; init; }

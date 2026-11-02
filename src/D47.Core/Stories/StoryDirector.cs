@@ -765,6 +765,13 @@ public sealed class StoryDirector(
             return StoryVoices.Paused(paused.Title, missing);
         }
 
+        if (paused.Rewrite is not null)
+        {
+            stories.Save(frontierId, paused.Resumed(now));
+            Began?.Invoke();
+            return await WriteChapterAsync(frontierId, now, cancellationToken).ConfigureAwait(false);
+        }
+
         if (paused.Detour is { } detour && book.Standing(frontierId, detour.Key) is { } detourStanding)
         {
             if (detourStanding.Adventure.IsAbandoned && book.Begin(frontierId, detour.Key, now) is { } detourRefusal)
@@ -832,6 +839,8 @@ public sealed class StoryDirector(
             book.Remove(frontierId, detour.Key);
             jumped = jumped with { Detour = null };
         }
+
+        jumped = jumped with { Rewrite = null };
 
         stories.Save(frontierId, jumped.State == StoryState.Paused ? jumped : jumped.Paused(now));
         return ResumeAsync(frontierId, now, cancellationToken);
@@ -948,6 +957,109 @@ public sealed class StoryDirector(
         {
             Release(frontierId);
         }
+    }
+
+    /// <summary>
+    /// Sets the running story's current chapter aside to be written again, at the same number, from where the Commander is;
+    /// during an open detour, drops the detour instead. The tick writes the chapter. Works on any objective of the chapter.
+    /// Writes files, so it never runs on the tick. Returns a refusal or null.
+    /// </summary>
+    public string? RewriteChapter(string? frontierId, DateTimeOffset now)
+    {
+        if (Switching)
+        {
+            return Swapping;
+        }
+
+        if (!Claim(frontierId))
+        {
+            return "An objective is being written.";
+        }
+
+        try
+        {
+            var story = stories.Current(frontierId);
+            var standing = story is not null && WaitedOn(story) is { } waitedOn ? book.Standing(frontierId, waitedOn) : null;
+
+            if (RewriteRefusal(frontierId, story, standing) is { } refusal)
+            {
+                return refusal;
+            }
+
+            if (story!.Detour is { } detour)
+            {
+                // The marker and the dropped detour are one save, so the tick never sees both a marker and a finished detour.
+                stories.Save(frontierId, story with { Detour = null, Rewrite = new StoryRewrite(detour.Chapter, now, detour.Done) });
+                book.Remove(frontierId, detour.Key);
+                logger.LogInformation("{Title}: the detour was dropped to write its chapter again", story.Title);
+                return null;
+            }
+
+            var chapter = standing!.Adventure;
+            var done = chapter.Beats.Take(standing.Current).Select(beat => beat.Title).ToList();
+
+            // The marker is saved before the chapter is set aside, so the tick never sees a set-aside chapter with no marker and writes the next one.
+            stories.Save(frontierId, story with
+            {
+                Rewrite = new StoryRewrite(chapter.Key, now, done),
+                ChangedChapters = story.ChangedChapters.Contains(chapter.Key) ? story.ChangedChapters : [.. story.ChangedChapters, chapter.Key],
+            });
+
+            if (book.SetAside(frontierId, chapter.Key, RewriteReason, now) is { } setAside)
+            {
+                stories.Save(frontierId, story);
+                return setAside;
+            }
+
+            logger.LogInformation("{Title}: {Chapter} was set aside to be written again", story.Title, chapter.Name);
+            return null;
+        }
+        finally
+        {
+            Release(frontierId);
+        }
+    }
+
+    /// <summary>The ending reason of a chapter set aside to be written again.</summary>
+    public const string RewriteReason = "The Commander asked for this chapter to be written again from where they are.";
+
+    /// <summary>Why the running story's chapter cannot be written again now, or null.</summary>
+    private string? RewriteRefusal(string? frontierId, Story? story, AdventureStanding? standing)
+    {
+        if (story is null)
+        {
+            return "No story is running.";
+        }
+
+        if (story.State != StoryState.Running)
+        {
+            return "Resume the story first.";
+        }
+
+        if (WithoutOdyssey(frontierId))
+        {
+            return NeedsOdyssey;
+        }
+
+        if (standing is not { Adventure.IsActive: true, IsDone: false, CurrentBeat: not null })
+        {
+            return "The story is not waiting on an objective.";
+        }
+
+        if (standing.InChoice)
+        {
+            return AdventureStanding.ChoiceRefusal;
+        }
+
+        if (IsWriting(frontierId))
+        {
+            return "A chapter is being written.";
+        }
+
+        return story.BeaconScanAt is null
+            && BeaconReach.Of(here(), Game()?.Ship ?? ShipLoadout.Unknown, Game()?.Carrier.Owned == true) is { InReach: false, Why: { } why }
+            ? $"The ship you are in cannot reach a Guardian beacon: {why}."
+            : null;
     }
 
     /// <summary>Writes and begins a detour adventure for <paramref name="story"/>; returns its key, or null when it could not be saved.</summary>
@@ -2258,6 +2370,14 @@ public sealed class StoryDirector(
             return null;
         }
 
+        // The write waits for RewriteChapter's claim to be released, so the chapter is set aside before it is replaced.
+        if (story.Rewrite is not null)
+        {
+            return story.State != StoryState.Running || story.IsWithoutOdyssey || WriteFailed(frontierId) || IsWriting(frontierId) || IsRewriting(frontierId)
+                ? null
+                : Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
+        }
+
         if (story.Detour is { } detour)
         {
             return Detoured(frontierId, story, detour, now);
@@ -3089,8 +3209,10 @@ public sealed class StoryDirector(
             return new("A detour is under way.");
         }
 
-        var setAside = story.Detour is not null && story.CurrentChapter is { } asideKey && book.Store.Find(frontierId, asideKey) is { IsSetAside: true };
+        var rewriting = story.Rewrite is { } marker && marker.Chapter == story.CurrentChapter;
+        var setAside = rewriting || (story.Detour is not null && story.CurrentChapter is { } asideKey && book.Store.Find(frontierId, asideKey) is { IsSetAside: true });
         var replacing = setAside || (story.CurrentChapter is { } failedKey && book.Store.Find(frontierId, failedKey) is { IsFailed: true });
+        var rewrites = replacing ? story.Rewrites + 1 : 0;
 
         if (!replacing && story.FinaleChapter >= story.Pacing.FinaleChapters)
         {
@@ -3120,6 +3242,7 @@ public sealed class StoryDirector(
 
         var finaleFrom = replacing ? story.FinaleFrom : story.FinaleFrom ?? (FinaleDue(story, now) && !StillTravelling(secret, story, Game()?.Location.StarPos) ? number : null);
         var finaleChapter = number - finaleFrom + 1;
+        var keptDestination = rewriting && finaleChapter == 1 ? story.FinaleDestination : null;
         var stage = finaleChapter is null ? StoryClues.Stage(story) : StoryStage.Finale;
         var reach = story.BeaconScanAt is null
             ? BeaconReach.Of(here(), Game()?.Ship ?? ShipLoadout.Unknown, Game()?.Carrier.Owned == true)
@@ -3152,7 +3275,7 @@ public sealed class StoryDirector(
             && heading is null
             && !pulled
             && ChapterFit.IsLongHaul(story.Pacing, game)
-            && ChapterDraw.Sightsee(Weights(statistics), previous?.Previous.Sight is not null, ChapterDraw.SightSeed(story.Id, number)))
+            && ChapterDraw.Sightsee(Weights(statistics), previous?.Previous.Sight is not null, ChapterDraw.SightSeed(story.Id, number, rewrites)))
         {
             var earlier = (replacing ? story.Chapters.SkipLast(1) : story.Chapters).Select(chapterKey => ChapterOf(frontierId, story, chapterKey)?.Sight).OfType<string>().ToList();
 
@@ -3179,7 +3302,7 @@ public sealed class StoryDirector(
                 ChapterFit.IsComfortChapter(sinceBeacon),
                 statistics,
                 FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || homeLeg is not null || heading is not null || pulled) ? 1 : 0) + (sightseeing ? 1 : 0),
-                ChapterDraw.Seed(story.Id, number, replacing ? -1 : null),
+                ChapterDraw.Seed(story.Id, number, replacing ? -rewrites : null),
                 sinceBeacon / ChapterFit.ComfortEvery,
                 stationsInReach,
                 NeverCompleted(),
@@ -3215,7 +3338,7 @@ public sealed class StoryDirector(
                 reach?.InReach != false,
                 longHaul,
                 slots,
-                finaleChapter > 1 ? story.FinaleDestination : null,
+                finaleChapter > 1 ? story.FinaleDestination : keptDestination,
                 homeLeg,
                 goals.Count > 0 ? goals : null,
                 game?.Ship.Type,
@@ -3228,7 +3351,7 @@ public sealed class StoryDirector(
             Draft: draftNumber,
             Outline: outline,
             Failed: setAside ? null : failed,
-            SetAside: setAside && failed is not null ? new AdventureSetAside(failed, story.Detour!.Done, story.Detour.Words, game?.Location.StarSystem) : null);
+            SetAside: setAside && failed is not null ? SetAsideAsk(story, failed, game?.Location.StarSystem) : null);
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
@@ -3264,10 +3387,12 @@ public sealed class StoryDirector(
             Left = null,
             AwaitingSeat = [.. opening.AwaitingSeat, .. Unseated(ask.Story?.Due, draft, opening.AwaitingSeat)],
             FinaleFrom = finaleFrom,
-            FinaleDestination = finaleChapter == 1 ? outcome.Destination : still.FinaleDestination,
+            FinaleDestination = finaleChapter == 1 && keptDestination is null ? outcome.Destination : still.FinaleDestination,
             HomeTarget = home,
             ChosenDestination = chosen,
             Detour = setAside ? null : still.Detour,
+            Rewrite = null,
+            Rewrites = rewrites,
             ChangedChapters = setAside ? [.. still.ChangedChapters, key] : still.ChangedChapters,
         });
         logger.LogInformation("{Title}: chapter {Number}, {Name}, begins", story.Title, number, draft.Name);
@@ -3277,14 +3402,20 @@ public sealed class StoryDirector(
             ArchiveFailed(frontierId, still, failed.Previous);
         }
 
-        if (setAside)
+        if (setAside && story.Detour is { } detour)
         {
-            book.Remove(frontierId, story.Detour!.Key);
+            book.Remove(frontierId, detour.Key);
         }
 
         ArchiveChapters(frontierId);
         return new(null);
     }
+
+    /// <summary>The set-aside chapter handed to the writer: from the rewrite marker when there is one, otherwise from the detour.</summary>
+    private static AdventureSetAside SetAsideAsk(Story story, AdventureChapter chapter, string? here) =>
+        story.Rewrite is { } rewrite
+            ? new AdventureSetAside(chapter, rewrite.Done, null, here)
+            : new AdventureSetAside(chapter, story.Detour?.Done ?? [], story.Detour?.Words, here);
 
     /// <summary>The members of the boardings handed with no seat that the chapter does not place and the list does not already hold.</summary>
     private static IEnumerable<string> Unseated(IReadOnlyList<StorySwitch>? due, Adventure chapter, IReadOnlyList<string> waiting)
