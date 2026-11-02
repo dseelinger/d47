@@ -126,7 +126,22 @@ public sealed class RouteProgressPage : UserControl
         var offDuty = _offDuty?.Invoke(OffDutyNote.Route);
         var route = offDuty is null ? _route() : NavRoute.None;
         var here = offDuty is null ? _here() : null;
-        var progress = RouteProgress.For(route, here);
+        var target = route.LiveTarget;
+
+        // Elite changed the route: the file's hops are not ahead. The target is the next system, and the
+        // jump count is Elite's.
+        if (target is not null)
+        {
+            var hops = here is { Length: > 0 }
+                ? new[] { new RouteHop(here, null), new RouteHop(target.StarSystem, target.StarClass) }
+                : [new RouteHop(target.StarSystem, target.StarClass)];
+
+            route = NavRoute.None with { Hops = hops };
+        }
+
+        var progress = target is null
+            ? RouteProgress.For(route, here)
+            : new RouteProgress(here is { Length: > 0 } ? 0 : -1, target.JumpsRemaining, null);
 
         _hops.Children.Clear();
         _map.IsVisible = false;
@@ -171,15 +186,22 @@ public sealed class RouteProgressPage : UserControl
             totals.Add(Ink(" ly to go", ThemeManager.GreyKey));
         }
 
-        totals.Add(Ink(" · ", ThemeManager.GreyKey));
-        totals.Add(Number(route.Hops.Count.ToString("N0")));
-        totals.Add(Ink(route.Hops.Count == 1 ? " system on the route" : " systems on the route", ThemeManager.GreyKey));
+        if (target is null)
+        {
+            totals.Add(Ink(" · ", ThemeManager.GreyKey));
+            totals.Add(Number(route.Hops.Count.ToString("N0")));
+            totals.Add(Ink(route.Hops.Count == 1 ? " system on the route" : " systems on the route", ThemeManager.GreyKey));
+        }
 
         _totals.Inlines = totals;
 
         string? asideSystem = null;
 
-        if (progress.OffRoute)
+        if (target is not null)
+        {
+            _aside.IsVisible = false;
+        }
+        else if (progress.OffRoute)
         {
             _aside.IsVisible = true;
             _aside.Text = here is { Length: > 0 }

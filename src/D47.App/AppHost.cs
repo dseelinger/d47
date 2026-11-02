@@ -5014,8 +5014,8 @@ public sealed class AppHost : IDisposable
     /// <summary>The plotted route, for proper-noun biasing.</summary>
     private Func<NavRoute>? _route;
 
-    /// <summary>The plotted route, for anything that wants to draw it (Phase 37, "Progress").</summary>
-    public NavRoute Route => _route?.Invoke() ?? NavRoute.None;
+    /// <summary>The plotted route for the panels: the file, or only Elite's target once the route was changed in-game.</summary>
+    public NavRoute Route => LiveRoute is { } live ? live.Shown(_route?.Invoke() ?? NavRoute.None) : _route?.Invoke() ?? NavRoute.None;
 
     /// <summary>The route file checked against Elite's route targets; set during composition.</summary>
     public LiveRoute? LiveRoute { get; private set; }

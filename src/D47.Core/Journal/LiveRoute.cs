@@ -1,7 +1,11 @@
 namespace D47.Core.Journal;
 
 /// <summary>The system Elite has targeted on its route, and how many jumps it says remain counting that one.</summary>
-public sealed record RouteTarget(string StarSystem, string? StarClass, int JumpsRemaining);
+public sealed record RouteTarget(string StarSystem, string? StarClass, int JumpsRemaining)
+{
+    /// <summary>The target and the jumps left, as one line.</summary>
+    public string NextJump => $"Next jump: {StarSystem} · {JumpsRemaining} {(JumpsRemaining == 1 ? "jump" : "jumps")} left.";
+}
 
 /// <summary>
 /// <c>NavRoute.json</c> checked against the route targets Elite writes to the journal. Elite can change a
@@ -74,6 +78,13 @@ public sealed class LiveRoute
 
         Changed = Diverges(currentSystem, jumpDestination);
     }
+
+    /// <summary>
+    /// The route for panels to draw: <paramref name="file"/>, or, once Elite has changed the route, an empty route
+    /// carrying only the target.
+    /// </summary>
+    public NavRoute Shown(NavRoute file) =>
+        Changed && Target is { } target ? NavRoute.None with { LiveTarget = target } : file;
 
     private bool Diverges(string? currentSystem, string? jumpDestination)
     {

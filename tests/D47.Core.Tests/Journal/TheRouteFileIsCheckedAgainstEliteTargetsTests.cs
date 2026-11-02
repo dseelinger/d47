@@ -31,6 +31,18 @@ public class TheRouteFileIsCheckedAgainstEliteTargetsTests
     }
 
     [Fact]
+    public void ThePanelsAreGivenOnlyTheTargetOnceTheRouteChanged()
+    {
+        var changed = Folded(Target("Wolf 359", 3));
+        var matching = Folded(Target("Alpha Centauri", 2));
+
+        Assert.Equal(new RouteTarget("Wolf 359", "K", 3), changed.Shown(Plotted).LiveTarget);
+        Assert.False(changed.Shown(Plotted).IsPlotted);
+        Assert.Equal(changed.Shown(Plotted), changed.Shown(Plotted));
+        Assert.Same(Plotted, matching.Shown(Plotted));
+    }
+
+    [Fact]
     public void ATargetThatMatchesTheFileIsNotAChange()
     {
         var live = Folded(Target("Alpha Centauri", 2));

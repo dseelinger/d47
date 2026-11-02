@@ -78,7 +78,9 @@ public sealed class GalaxyMapMini : UserControl
 
         if (stops.Count == 0)
         {
-            Content = Muted("No route is plotted.");
+            Content = Muted(route.LiveTarget is { } target
+                ? target.NextJump
+                : "No route is plotted.");
             return;
         }
 

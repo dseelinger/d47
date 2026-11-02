@@ -68,7 +68,7 @@ public sealed class RouteMini : UserControl
 
         if (_plan() is not { } plan || Stops(plan) is not { Count: > 0 } stops)
         {
-            _body.Children.Add(Muted("No plan is plotted."));
+            _body.Children.Add(Muted(_route().LiveTarget is { } ahead ? ahead.NextJump : "No plan is plotted."));
             return;
         }
 
@@ -133,6 +133,11 @@ public sealed class RouteMini : UserControl
     /// <summary>Which waypoint the Commander is headed to next (#197).</summary>
     private static int NextWaypoint(PlottedRoute jump, NavRoute route, string? here)
     {
+        if (route.LiveTarget is { } target && IndexOf(jump, target.StarSystem) is var byTarget and >= 0)
+        {
+            return byTarget;
+        }
+
         if (route.IsPlotted && IndexOf(jump, route.Hops[^1].StarSystem) is var byRoute and >= 0)
         {
             return byRoute;

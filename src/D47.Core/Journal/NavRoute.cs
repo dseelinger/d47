@@ -180,6 +180,9 @@ public sealed record NavRoute
 
     public DateTimeOffset? ReadAt { get; init; }
 
+    /// <summary>Set, with no <see cref="Hops"/>, when Elite changed the route and the file no longer describes it.</summary>
+    public RouteTarget? LiveTarget { get; init; }
+
     public bool IsPlotted => Hops.Count > 0;
 
     /// <summary>The hops after the Commander's system; empty when that system is not on the route.</summary>
