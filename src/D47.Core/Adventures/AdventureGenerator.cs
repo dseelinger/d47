@@ -654,6 +654,7 @@ public sealed class AdventureGenerator(
         Asked? unusedRepair = null;
         var offset = ask.Rewrite?.From ?? 0;
         var passed = new HashSet<int>();
+        var raised = new Dictionary<int, List<string>>();
 
         string? outage = null;
         var objected = false;
@@ -809,6 +810,19 @@ public sealed class AdventureGenerator(
 
             var objections = (await FidelityAsync(ask, facts, spine, answer.Beats, offset, candidates.Anarchy, cancellationToken).ConfigureAwait(false))
                 .Where(objection => !objection.Objectives.Any(passed.Contains))
+                .Select(objection =>
+                {
+                    var index = objection.Objectives[0];
+                    var reasons = objection.Reasons ?? [];
+                    var before = raised.TryGetValue(index, out var known) ? known : [];
+                    var earlier = before.Where(reason => !reasons.Contains(reason)).ToList();
+
+                    raised[index] = [.. before, .. reasons.Where(reason => !before.Contains(reason))];
+
+                    return earlier.Count == 0
+                        ? objection
+                        : objection with { Text = Unconfirm(index + offset + 1, answer.Beats[index].Title, reasons, earlier) };
+                })
                 .ToList();
 
             passed.UnionWith(Enumerable.Range(0, answer.Beats.Count).Except(objections.SelectMany(objection => objection.Objectives)));
@@ -848,26 +862,41 @@ public sealed class AdventureGenerator(
                 return [];
             }
 
-            var refusals = new List<Refusal>();
-            var seen = new HashSet<int>();
+            var reasons = new SortedDictionary<int, List<string>>();
 
             foreach (var objection in list.EnumerateArray())
             {
                 var index = (Integer(objection, "objective") ?? 0) - offset - 1;
 
-                if (index < 0 || index >= beats.Count || !Checked(objection, beats, index) || !seen.Add(index))
+                if (index < 0 || index >= beats.Count || !Checked(objection, beats, index))
                 {
                     continue;
                 }
 
                 var reason = Text(objection, "reason") ?? "its lines state something its trigger does not confirm";
-                var number = (index + offset + 1).ToString(CultureInfo.InvariantCulture);
 
-                refusals.Add(new Refusal($"{Unconfirmed}Objective {number} ({beats[index].Title}) states something its trigger does not confirm: {reason}", [index]));
+                if (!reasons.TryGetValue(index, out var kept))
+                {
+                    reasons[index] = kept = [];
+                }
+
+                if (!kept.Contains(reason))
+                {
+                    kept.Add(reason);
+                }
             }
 
-            return refusals;
+            return reasons
+                .Select(pair => new Refusal(Unconfirm(pair.Key + offset + 1, beats[pair.Key].Title, pair.Value, []), [pair.Key]) { Reasons = pair.Value })
+                .ToList();
         }) ?? [];
+    }
+
+    private static string Unconfirm(int number, string title, IReadOnlyList<string> reasons, IReadOnlyList<string> earlier)
+    {
+        var text = $"{Unconfirmed}Objective {number.ToString(CultureInfo.InvariantCulture)} ({title}) states something its trigger does not confirm: {string.Join(" ", reasons)}";
+
+        return earlier.Count == 0 ? text : $"{text} Earlier rounds also objected: {string.Join(" ", earlier)}";
     }
 
     /// <summary>Whether an objection names one of the three checked kinds and quotes words that are in the lines its objective speaks.</summary>
@@ -957,7 +986,7 @@ public sealed class AdventureGenerator(
     public const int RepairRounds = 2;
 
     /// <summary>Rounds of replacements a draft's fidelity objections get, counted apart from <see cref="RepairRounds"/>.</summary>
-    public const int FidelityRepairRounds = 1;
+    public const int FidelityRepairRounds = 2;
 
     private void LogRefusals(AdventureAsk ask, string round, string step, IReadOnlyList<Refusal> refusals)
     {
@@ -3267,6 +3296,11 @@ public sealed class AdventureGenerator(
             {
                 text.Append("- ").AppendLine(SlotLine(slot));
             }
+
+            text.AppendLine(
+                "A mission objective confirms only that its missions were handed in, so neither the turn nor any line says how a mission went, "
+                + "what was at its site or in its cargo, or what it paid. The turn rests on the story's own fiction instead: a record, a document, "
+                + "or what a cast member says or sends.");
         }
 
         if (story.Goals is { Count: > 0 } goals)
@@ -4291,6 +4325,8 @@ public sealed class AdventureGenerator(
     /// </summary>
     private sealed record Refusal(string Text, IReadOnlyList<int> Objectives)
     {
+        public IReadOnlyList<string>? Reasons { get; init; }
+
         public bool Opening { get; init; }
 
         public bool Destination { get; init; }

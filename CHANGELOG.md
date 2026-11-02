@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter built on missions no longer fails its check because a line says how the missions went, what their sites held or what they paid. Lines now rest on the story's own records and characters instead. A mission objective counts as the number of missions it names, and the check keeps every objection to an objective, repeats the earlier rounds' objections in the next repair, and allows two repair rounds.
+
 The check on a story chapter's lines is now given the Anarchy systems the chapter's writer was given, so a line that calls one of them an Anarchy is no longer refused as unconfirmed. It is also told that a line telling the Commander which missions to take states nothing to check.
 
 **Change objective** on a story chapter now proposes a detour: one objective of your own, such as arriving at a named system or collecting two bounties, done before the chapter goes on. One short model call writes it, so the proposal comes back in seconds rather than after a full chapter rewrite. When your words name no place and no activity, such as "something closer to home", Directive 47 asks one question with up to three systems as buttons, and after two questions it says "Name a place or an activity." Once the detour is done, the interrupted chapter is written again from where you are. While it is open, the detour shows **Change objective**, which replaces it, and **Mark done**, and not **Never ask this**. A detour never asks for an activity the story refused or you barred. A short story's **Change objective** works as before.

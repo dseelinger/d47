@@ -75,8 +75,57 @@ public sealed class AFidelityObjectionGetsARepairRoundOfItsOwnTests
         var outcome = await Write(provider);
 
         Assert.False(outcome.Succeeded);
-        Assert.Equal(7, provider.CallCount);
+        Assert.Equal(8, provider.CallCount);
         Assert.StartsWith("The story states what its objectives do not confirm:", outcome.Refusal);
+    }
+
+    private const string TwoObjected = """
+        {"objections": [
+          {"objective": 2, "quote": "one name", "kind": "history", "reason": "it says the Commander has docked there before."},
+          {"objective": 2, "quote": "at a dock", "kind": "event", "reason": "it says how the hop went."}
+        ]}
+        """;
+
+    private const string DockObjected = """{"objections": [{"objective": 2, "quote": "at a dock", "kind": "action", "reason": "it says the Commander moored."}]}""";
+
+    [Fact]
+    public async Task AnObjectionToTheRepairGetsASecondRepairRoundAndIsWrittenWhenItPasses()
+    {
+        var provider = Scripted(StillLost, QuietDock, SecondObjected, QuietDock, DockObjected, QuietDock, NothingObjected);
+
+        var outcome = await Write(provider);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Equal(9, provider.CallCount);
+    }
+
+    [Fact]
+    public async Task TwoObjectionsToOneObjectiveBothReachTheRepairPrompt()
+    {
+        var provider = Scripted(StillLost, QuietDock, TwoObjected, QuietDock, NothingObjected);
+
+        var outcome = await Write(provider);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+
+        var repair = provider.Requests[5].Prompt.History[0].Text;
+
+        Assert.Contains("it says the Commander has docked there before.", repair);
+        Assert.Contains("it says how the hop went.", repair);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(repair, @"- .*Objective 2 [(]"));
+    }
+
+    [Fact]
+    public async Task AnObjectionFromAnEarlierRoundIsListedAgainInTheNextRepairPrompt()
+    {
+        var provider = Scripted(StillLost, QuietDock, SecondObjected, QuietDock, DockObjected, QuietDock, NothingObjected);
+
+        await Write(provider);
+
+        var second = provider.Requests[7].Prompt.History[0].Text;
+
+        Assert.Contains("it says the Commander moored.", second);
+        Assert.Contains("Earlier rounds also objected: it says the Commander has docked there before.", second);
     }
 
     [Fact]

@@ -17,7 +17,7 @@ internal static class TriggerConfirms
         [TriggerKind.Bounty] = "bounties were collected, anywhere — not who the targets were, their crimes or their number beyond the count",
         [TriggerKind.Bond] = "kill bonds were earned in a conflict zone, optionally for one faction — not who was killed, who won or whether a fight was broken off",
         [TriggerKind.OnFootBond] = "kill bonds were earned on foot in a ground conflict zone — not who was killed, who won or whether a fight was broken off",
-        [TriggerKind.Mission] = "a mission of this family was handed in, wherever it was taken or flown — not its target, the target's standing or how it went",
+        [TriggerKind.Mission] = "missions of this family were handed in, as many as the objective counts, wherever they were taken or flown — not their targets, the targets' standing, how they went, what was at their sites or in their cargo, or what they paid",
         [TriggerKind.Sell] = "tons were sold at a market — not the price, the buyer or where the goods came from",
         [TriggerKind.Mine] = "tons were refined from mining — not where they were mined or what they were for",
         [TriggerKind.OnFoot] = "the Commander stepped onto a planet surface — not what they did there",
@@ -74,7 +74,8 @@ internal static class TriggerConfirms
         + "confirms it or the game state given shows it. So a line never states a sum of credits the Commander was paid, a course or jump plotted, "
         + "or a place, beacon or event the Commander has never visited, scanned or seen. The story's own fiction is not checked: who the cast are, what they say, send, offer, remember "
         + "or own, documents and records in the story, and events before the story began. Objectives fire in order, so the ending may say where the "
-        + "story stands and recount what any objective confirmed, in that order; it may not say the Commander did something no objective confirms.";
+        + "story stands and recount what any objective confirmed, in that order; it may not say the Commander did something no objective confirms. "
+        + "A mission objective confirms only that its missions were handed in, so no line says how a mission went, what was at its site or in its cargo, or what it paid.";
 
     /// <summary>The kinds that have an entry.</summary>
     internal static IReadOnlyCollection<TriggerKind> Kinds => Entries.Keys;
