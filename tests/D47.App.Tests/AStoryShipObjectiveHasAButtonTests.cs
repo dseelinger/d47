@@ -149,17 +149,7 @@ public sealed class AStoryShipObjectiveHasAButtonTests
         })
         {
             var ships = Fleet("d47-story-ship-headset");
-            var (settings, _, _) = TestSurface.Create();
-            settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
-
-            using var vr = new VrPanelSurface(
-                new PanelViewModel(),
-                settings,
-                _ => null,
-                checklists: ships.Checklists,
-                ships: ships.Plans,
-                gameState: () => null,
-                adventures: Build(TriggerKind.Board, ships, Hull, fleet));
+            using var vr = NotForMeGroupFixture.Headset(ships, Build(TriggerKind.Board, ships, Hull, fleet));
 
             vr.Nav.Select(PanelTab.Stories);
             vr.Nav.SelectRoot(StoriesView.RootKey);
@@ -214,19 +204,7 @@ public sealed class AStoryShipObjectiveHasAButtonTests
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
         var ships = Fleet("d47-story-engineer-headset");
-        var (settings, _, _) = TestSurface.Create();
-        settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
-
-        using var vr = new VrPanelSurface(
-            new PanelViewModel(),
-            settings,
-            _ => null,
-            checklists: ships.Checklists,
-            ships: ships.Plans,
-            gameState: () => null,
-            onFoot: ships.OnFoot,
-            unlocks: ships.Unlocks,
-            adventures: Build(TriggerKind.Engineer, ships, engineer: "Felicity Farseer"));
+        using var vr = NotForMeGroupFixture.Headset(ships, Build(TriggerKind.Engineer, ships, engineer: "Felicity Farseer"), withEngineers: true);
 
         vr.Nav.Select(PanelTab.Stories);
         vr.Nav.SelectRoot(StoriesView.RootKey);

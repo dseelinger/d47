@@ -102,41 +102,9 @@ public class TheChecklistIsInTheHeadsetTests
         PanelPhrases.Apply("show me the checklist", panel.Nav);
         panel.Nav.Drill(ChecklistPage.AllLists);
 
-        Serve(panel);
+        panel.Serve();
 
         return (panel, view, checklists, dump);
-    }
-
-    /// <summary>One frame, into a buffer nobody reads.</summary>
-    private static void Serve(VrPanelSurface panel)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var (width, height) = panel.Size;
-        var buffer = new byte[width * height * 4];
-
-        unsafe
-        {
-            fixed (byte* pixels = buffer)
-            {
-                panel.Draw((IntPtr)pixels, width * 4);
-                panel.Draw((IntPtr)pixels, width * 4);
-            }
-        }
-
-        Dispatcher.UIThread.RunJobs();
-    }
-
-    /// <summary>Where a control is on the quad's face, in the 0..1 a ray answers in.</summary>
-    private static (float U, float V) At(Control control, PanelView view, VrPanelSurface panel)
-    {
-        var corner = control.TranslatePoint(new Point(0, 0), view);
-        Assert.NotNull(corner);
-
-        var centre = corner.Value + new Point(control.Bounds.Width / 2, control.Bounds.Height / 2);
-        var (width, height) = panel.Size;
-
-        return ((float)(centre.X / width), (float)(centre.Y / height));
     }
 
     private static ChecklistPage Page(PanelView view) =>
@@ -199,10 +167,10 @@ public class TheChecklistIsInTheHeadsetTests
         var card = Page(view).GetVisualDescendants().OfType<Border>()
             .First(border => border.Classes.Contains(D47.App.Theming.ListRow.Class) && border.Bounds.Height > 0);
 
-        var (u, v) = At(card, view, panel);
+        var (u, v) = panel.At(card, view);
 
         Assert.True(panel.Press(u, v), "the row takes the press");
-        Serve(panel);
+        panel.Serve();
 
         var targets = Page(view).GetVisualDescendants()
             .OfType<Control>()
@@ -271,11 +239,11 @@ public class TheChecklistIsInTheHeadsetTests
             Assert.InRange(toTheEnd, 0f, 1f);
 
             panel.Scroll(u, toTheEnd);
-            Serve(panel);
+            panel.Serve();
         }
 
         panel.ReleaseScroll();
-        Serve(panel);
+        panel.Serve();
 
         // Asserted on where the document actually is rather than on the bar's own Maximum, which is a
         // hundred-odd pixels past the end: the viewer clamps the offset to what there is to scroll and the
@@ -311,10 +279,10 @@ public class TheChecklistIsInTheHeadsetTests
 
         Assert.False(checklists.Document.Items.Single(item => item.Text == "buy limpets").IsComplete);
 
-        var (u, v) = At(tick, view, panel);
+        var (u, v) = panel.At(tick, view);
 
         Assert.True(panel.Press(u, v), "the tick takes the press");
-        Serve(panel);
+        panel.Serve();
 
         Assert.True(checklists.Document.Items.Single(item => item.Text == "buy limpets").IsComplete);
 
@@ -349,10 +317,10 @@ public class TheChecklistIsInTheHeadsetTests
         var row = page.GetVisualDescendants().OfType<TextBlock>()
             .First(block => (block.Text ?? string.Empty).Contains("Grade 5 dirty drives", StringComparison.Ordinal));
 
-        var (u, v) = At(row, view, panel);
+        var (u, v) = panel.At(row, view);
 
         panel.Press(u, v);
-        Serve(panel);
+        panel.Serve();
 
         Assert.False(checklists.Document.Items.Single(item => item.Text == "Grade 5 dirty drives").IsComplete);
 

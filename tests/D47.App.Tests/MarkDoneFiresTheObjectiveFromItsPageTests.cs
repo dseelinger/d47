@@ -142,17 +142,7 @@ public sealed class MarkDoneFiresTheObjectiveFromItsPageTests
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
         var ships = Fleet("d47-mark-done-headset");
-        var (settings, _, _) = TestSurface.Create();
-        settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
-
-        using var vr = new VrPanelSurface(
-            new PanelViewModel(),
-            settings,
-            _ => null,
-            checklists: ships.Checklists,
-            ships: ships.Plans,
-            gameState: () => null,
-            adventures: Build(TriggerKind.Board, ships, "cobramkiii"));
+        using var vr = NotForMeGroupFixture.Headset(ships, Build(TriggerKind.Board, ships, "cobramkiii"));
 
         vr.Nav.Select(PanelTab.Stories);
         vr.Nav.SelectRoot(AdventuresPage.RootKey);

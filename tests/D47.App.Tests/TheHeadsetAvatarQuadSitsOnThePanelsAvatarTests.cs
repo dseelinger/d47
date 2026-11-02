@@ -22,51 +22,15 @@ public class TheHeadsetAvatarQuadSitsOnThePanelsAvatarTests : IDisposable
 {
     private static readonly DateTimeOffset Start = new(2026, 10, 12, 12, 0, 0, TimeSpan.Zero);
 
-    private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-headset-avatar-quad-" + Guid.NewGuid().ToString("N"));
-    private readonly AppPaths _paths;
+    private readonly HeadsetAvatarRig _rig = new("d47-headset-avatar-quad-");
 
-    public TheHeadsetAvatarQuadSitsOnThePanelsAvatarTests()
-    {
-        Directory.CreateDirectory(_root);
-        _paths = new AppPaths(_root);
-        Directory.CreateDirectory(_paths.AvatarClips);
-    }
-
-    public void Dispose() => Directory.Delete(_root, recursive: true);
-
-    private static string Fixture() =>
-        Path.Combine(AppSource.RepositoryRoot(), "tests", "fixtures", "avatars", "clip.mp4");
+    public void Dispose() => _rig.Dispose();
 
     /// <summary>The full panel 1250×690 at zoom 80 and the mini 792×280 at 100, with every state's clip.</summary>
     private (VrPanelSurface Panel, VrAvatarSurface Avatar) Headset(string mode)
     {
-        foreach (var state in Enum.GetValues<LoopState>())
-        {
-            File.Copy(Fixture(), Path.Combine(_paths.AvatarClips, CoreClips.FileName("covas", state)), overwrite: true);
-        }
-
-        var (settings, _, _) = TestSurface.Create();
-
-        settings.Replace(
-            "test",
-            current => current with
-            {
-                Vr = current.Vr with
-                {
-                    Mode = mode,
-                    Panel = current.Vr.Panel with { Pixels = "1250x690", Zoom = 80 },
-                    Mini = current.Vr.Mini with { Pixels = "792x280", Zoom = 100 },
-                },
-            });
-
-        var panel = new VrPanelSurface(
-            new PanelViewModel { CoreId = "covas" },
-            settings,
-            _ => null,
-            avatars: AvatarLibrary.Load(new DiskFileSystem(), _paths))
-        {
-            Enabled = true,
-        };
+        var (panel, _) = _rig.Headset(mode);
+        panel.Enabled = true;
 
         Serve(panel);
 

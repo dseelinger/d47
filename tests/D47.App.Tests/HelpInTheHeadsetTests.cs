@@ -95,41 +95,9 @@ public class HelpInTheHeadsetTests
             Assert.True(view.OpenHelp(), "help opened");
         }
 
-        Serve(panel);
+        panel.Serve();
 
         return (panel, view, dump);
-    }
-
-    /// <summary>One frame, into a buffer nobody reads.</summary>
-    private static void Serve(VrPanelSurface panel)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var (width, height) = panel.Size;
-        var buffer = new byte[width * height * 4];
-
-        unsafe
-        {
-            fixed (byte* pixels = buffer)
-            {
-                panel.Draw((IntPtr)pixels, width * 4);
-                panel.Draw((IntPtr)pixels, width * 4);
-            }
-        }
-
-        Dispatcher.UIThread.RunJobs();
-    }
-
-    /// <summary>Where a control is on the quad's face, in the 0..1 a ray answers in.</summary>
-    private static (float U, float V) At(Control control, PanelView view, VrPanelSurface panel)
-    {
-        var corner = control.TranslatePoint(new Point(0, 0), view);
-        Assert.NotNull(corner);
-
-        var centre = corner.Value + new Point(control.Bounds.Width / 2, control.Bounds.Height / 2);
-        var (width, height) = panel.Size;
-
-        return ((float)(centre.X / width), (float)(centre.Y / height));
     }
 
     private static Button Mark(PanelView view) =>
@@ -161,11 +129,11 @@ public class HelpInTheHeadsetTests
     {
         var (panel, view, _) = Headset();
 
-        var (u, v) = At(Mark(view), view, panel);
+        var (u, v) = panel.At(Mark(view), view);
 
         Assert.True(panel.Press(u, v), "the mark takes the press");
 
-        Serve(panel);
+        panel.Serve();
 
         Assert.True(view.Nav.Modal, "help holds the panel until it is dismissed");
         Assert.Equal("Help", view.Nav.Trail[^1].Word);
@@ -186,9 +154,9 @@ public class HelpInTheHeadsetTests
     {
         var (panel, view, _) = Headset();
 
-        var (u, v) = At(Mark(view), view, panel);
+        var (u, v) = panel.At(Mark(view), view);
         panel.Press(u, v);
-        Serve(panel);
+        panel.Serve();
 
         var figures = view.GetVisualDescendants().OfType<HelpFigureView>().ToList();
 
@@ -225,9 +193,9 @@ public class HelpInTheHeadsetTests
     {
         var (panel, view, _) = Headset();
 
-        var (u, v) = At(Mark(view), view, panel);
+        var (u, v) = panel.At(Mark(view), view);
         panel.Press(u, v);
-        Serve(panel);
+        panel.Serve();
 
         var authored = EngineersFigures();
         var figures = view.GetVisualDescendants().OfType<HelpFigureView>().ToList();
@@ -260,14 +228,14 @@ public class HelpInTheHeadsetTests
     {
         var (panel, view, _) = Headset();
 
-        var (u, v) = At(Mark(view), view, panel);
+        var (u, v) = panel.At(Mark(view), view);
         panel.Press(u, v);
-        Serve(panel);
+        panel.Serve();
 
         Assert.True(view.Nav.Modal);
         Assert.True(view.GoBack(), "there was something to go back from");
 
-        Serve(panel);
+        panel.Serve();
 
         Assert.False(view.Nav.Modal, "the panel is handed back");
         Assert.Empty(view.GetVisualDescendants().OfType<HelpFigureView>());
@@ -312,15 +280,15 @@ public class HelpInTheHeadsetTests
                 Level = EngineersPages.WhoPrefix,
             }));
 
-        Serve(panel);
+        panel.Serve();
 
         Assert.Equal("engineers", view.Nav.Help);
         Assert.True(Mark(view).IsVisible, "the mark survives the drill");
 
-        var (u, v) = At(Mark(view), view, panel);
+        var (u, v) = panel.At(Mark(view), view);
         Assert.True(panel.Press(u, v), "and still opens the band");
 
-        Serve(panel);
+        panel.Serve();
 
         Assert.Equal("help:engineers", view.Nav.Trail[^1].Key);
 
@@ -379,7 +347,7 @@ public class HelpInTheHeadsetTests
 
         Assert.Equal("Help.", PanelPhrases.Apply("what is this", panel.Nav));
 
-        Serve(panel);
+        panel.Serve();
 
         Assert.True(view.Nav.Modal);
         Assert.Equal(EngineersFigures().Count, view.GetVisualDescendants().OfType<HelpFigureView>().Count());
@@ -387,7 +355,7 @@ public class HelpInTheHeadsetTests
         // And out again by the same word that leaves any other level.
         Assert.Equal("Back to Engineers.", PanelPhrases.Apply("back", panel.Nav));
 
-        Serve(panel);
+        panel.Serve();
 
         Assert.False(view.Nav.Modal);
         Assert.Empty(view.GetVisualDescendants().OfType<HelpFigureView>());

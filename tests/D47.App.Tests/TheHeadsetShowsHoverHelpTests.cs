@@ -234,21 +234,7 @@ public class TheHeadsetShowsHoverHelpTests
             .GetField("_view", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(panel)!;
 
-        Dispatcher.UIThread.RunJobs();
-
-        var (width, height) = panel.Size;
-        var buffer = new byte[width * height * 4];
-
-        unsafe
-        {
-            fixed (byte* pixels = buffer)
-            {
-                panel.Draw((IntPtr)pixels, width * 4);
-                panel.Draw((IntPtr)pixels, width * 4);
-            }
-        }
-
-        Dispatcher.UIThread.RunJobs();
+        panel.Serve();
 
         var tile = view.FindControl<Button>("ScrollPastReadingButton")!;
 

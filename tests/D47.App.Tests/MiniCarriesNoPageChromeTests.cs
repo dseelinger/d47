@@ -61,33 +61,9 @@ public class MiniCarriesNoPageChromeTests
             view.Nav.Drill(ChecklistPage.AllLists);
         }
 
-        Serve(panel);
+        panel.Serve();
 
         return (panel, view, checklists);
-    }
-
-    /// <summary>
-    /// One frame into a buffer nobody reads, twice — the same drive the sibling file uses, and for the
-    /// same reason: the class is applied on the way into a draw, so a single pass would test the frame
-    /// before it rather than the frame after.
-    /// </summary>
-    private static void Serve(VrPanelSurface panel)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var (width, height) = panel.Size;
-        var buffer = new byte[width * height * 4];
-
-        unsafe
-        {
-            fixed (byte* pixels = buffer)
-            {
-                panel.Draw((IntPtr)pixels, width * 4);
-                panel.Draw((IntPtr)pixels, width * 4);
-            }
-        }
-
-        Dispatcher.UIThread.RunJobs();
     }
 
     /// <summary>What a Commander can actually see to press on the furnished page, by the words on it.</summary>
@@ -229,7 +205,7 @@ public class MiniCarriesNoPageChromeTests
         Assert.DoesNotContain("Everything", DrawnWords(view));
 
         checklists.AddNote(ChecklistScope.Universal, "sell the cargo");
-        Serve(panel);
+        panel.Serve();
 
         Assert.DoesNotContain("Everything", DrawnWords(view));
 

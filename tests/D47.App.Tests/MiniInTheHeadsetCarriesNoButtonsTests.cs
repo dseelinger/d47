@@ -29,29 +29,9 @@ public class MiniInTheHeadsetCarriesNoButtonsTests
             .GetField("_view", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(panel)!;
 
-        Serve(panel);
+        panel.Serve();
 
         return (panel, view);
-    }
-
-    /// <summary>One frame into a buffer nobody reads.</summary>
-    private static void Serve(VrPanelSurface panel)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var (width, height) = panel.Size;
-        var buffer = new byte[width * height * 4];
-
-        unsafe
-        {
-            fixed (byte* pixels = buffer)
-            {
-                panel.Draw((IntPtr)pixels, width * 4);
-                panel.Draw((IntPtr)pixels, width * 4);
-            }
-        }
-
-        Dispatcher.UIThread.RunJobs();
     }
 
     /// <summary>Every exact <c>Button</c> in the tree that is currently drawn.</summary>

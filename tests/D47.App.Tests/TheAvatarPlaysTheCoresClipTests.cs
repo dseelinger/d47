@@ -14,43 +14,21 @@ namespace D47.App.Tests;
 [Trait("Category", "Integration")]
 public class TheAvatarPlaysTheCoresClipTests : IDisposable
 {
-    private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-clips-" + Guid.NewGuid().ToString("N"));
-    private readonly AppPaths _paths;
+    private readonly HeadsetAvatarRig _rig = new("d47-clips-");
 
-    public TheAvatarPlaysTheCoresClipTests()
-    {
-        Directory.CreateDirectory(_root);
-        _paths = new AppPaths(_root);
-        Directory.CreateDirectory(_paths.AvatarClips);
-    }
-
-    public void Dispose() => Directory.Delete(_root, recursive: true);
-
-    private static string Fixture()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        Assert.NotNull(directory);
-
-        return Path.Combine(directory.FullName, "tests", "fixtures", "avatars", "clip.mp4");
-    }
+    public void Dispose() => _rig.Dispose();
 
     private string Place(string core, LoopState state, byte[]? bytes = null)
     {
-        var path = Path.Combine(_paths.AvatarClips, CoreClips.FileName(core, state));
-        File.WriteAllBytes(path, bytes ?? File.ReadAllBytes(Fixture()));
+        var path = Path.Combine(_rig.Paths.AvatarClips, CoreClips.FileName(core, state));
+        File.WriteAllBytes(path, bytes ?? File.ReadAllBytes(HeadsetAvatarRig.Fixture()));
 
         return path;
     }
 
     private AvatarView Avatar(string core, LoopState state, bool still = false)
     {
-        var view = new AvatarView { Library = AvatarLibrary.Load(new DiskFileSystem(), _paths), Still = still };
+        var view = new AvatarView { Library = AvatarLibrary.Load(new DiskFileSystem(), _rig.Paths), Still = still };
 
         view.Show(state);
         view.Core = core;
@@ -85,7 +63,7 @@ public class TheAvatarPlaysTheCoresClipTests : IDisposable
     [AvaloniaFact]
     public void ATruncatedClipDrawsTheMark()
     {
-        Place("covas", LoopState.Thinking, [.. File.ReadAllBytes(Fixture()).Take(100)]);
+        Place("covas", LoopState.Thinking, [.. File.ReadAllBytes(HeadsetAvatarRig.Fixture()).Take(100)]);
 
         var view = Avatar("covas", LoopState.Thinking);
 

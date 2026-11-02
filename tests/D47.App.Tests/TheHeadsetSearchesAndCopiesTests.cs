@@ -50,25 +50,6 @@ public class TheHeadsetSearchesAndCopiesTests
         return model;
     }
 
-    private static void Serve(VrPanelSurface panel)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var (width, height) = panel.Size;
-        var buffer = new byte[width * height * 4];
-
-        unsafe
-        {
-            fixed (byte* pixels = buffer)
-            {
-                panel.Draw((IntPtr)pixels, width * 4);
-                panel.Draw((IntPtr)pixels, width * 4);
-            }
-        }
-
-        Dispatcher.UIThread.RunJobs();
-    }
-
     private static T Named<T>(PanelView view, string name)
         where T : Control =>
         view.FindControl<T>(name) ?? throw new InvalidOperationException($"no {name}");
@@ -79,7 +60,7 @@ public class TheHeadsetSearchesAndCopiesTests
         var (panel, view, _) = Headset(Said());
         using var _disposable = panel;
 
-        Serve(panel);
+        panel.Serve();
 
         var box = Named<TextBox>(view, "SearchInput");
 
@@ -102,7 +83,7 @@ public class TheHeadsetSearchesAndCopiesTests
         var (panel, view, clipboard) = Headset(Said());
         using var _disposable = panel;
 
-        Serve(panel);
+        panel.Serve();
 
         var copy = Named<Button>(view, "CopyButton");
 
@@ -120,7 +101,7 @@ public class TheHeadsetSearchesAndCopiesTests
         var (panel, view, clipboard) = Headset(Said());
         using var _disposable = panel;
 
-        Serve(panel);
+        panel.Serve();
 
         PressKey(view, KeyModifiers.Control | KeyModifiers.Shift);
 
@@ -133,7 +114,7 @@ public class TheHeadsetSearchesAndCopiesTests
         var (panel, view, clipboard) = Headset(Said());
         using var _disposable = panel;
 
-        Serve(panel);
+        panel.Serve();
 
         PressKey(view, KeyModifiers.Control);
 
@@ -152,7 +133,7 @@ public class TheHeadsetSearchesAndCopiesTests
         var (panel, view, _) = Headset(Said());
         using var _disposable = panel;
 
-        Serve(panel);
+        panel.Serve();
 
         foreach (var name in new[] { "SearchPrevious", "SearchNext", "CopyButton" })
         {
@@ -176,7 +157,7 @@ public class TheHeadsetSearchesAndCopiesTests
 
         PanelPhrases.Apply("show me the checklist", panel.Nav);
         panel.Nav.Drill(ChecklistPage.AllLists);
-        Serve(panel);
+        panel.Serve();
 
         var box = Named<TextBox>(view, "SearchInput");
 
@@ -184,7 +165,7 @@ public class TheHeadsetSearchesAndCopiesTests
         Assert.Contains("buy limpets", Drawn(view), StringComparison.Ordinal);
 
         box.Text = "scoop";
-        Serve(panel);
+        panel.Serve();
 
         Assert.DoesNotContain("buy limpets", Drawn(view), StringComparison.Ordinal);
         Assert.Contains("fuel scoop", Drawn(view), StringComparison.Ordinal);

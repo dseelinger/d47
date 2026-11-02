@@ -594,36 +594,16 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         headset.Nav.Select(PanelTab.Search);
         Until(() =>
         {
-            Serve(headset);
+            headset.Serve();
             return view.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == "LAST REPORTED");
         }, () => $"{view.Tab} {world.Systems.AskedNow().Length} " + string.Join(" | ", view.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text)));
 
-        Serve(headset);
+        headset.Serve();
 
         var (width, height) = headset.Size;
         using var frame = new RenderTargetBitmap(new Avalonia.PixelSize(width, height));
         frame.Render(view);
         frame.SaveCapture("system-headset.png");
-    }
-
-    /// <summary>One frame, into a buffer nobody reads, which lays the headset's panel out.</summary>
-    private static void Serve(VrPanelSurface headset)
-    {
-        Dispatcher.UIThread.RunJobs();
-
-        var (width, height) = headset.Size;
-        var buffer = new byte[width * height * 4];
-
-        unsafe
-        {
-            fixed (byte* pixels = buffer)
-            {
-                headset.Draw((IntPtr)pixels, width * 4);
-                headset.Draw((IntPtr)pixels, width * 4);
-            }
-        }
-
-        Dispatcher.UIThread.RunJobs();
     }
 
     private static void Capture(

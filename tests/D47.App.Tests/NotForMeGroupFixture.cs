@@ -4,10 +4,13 @@ using Avalonia.Controls.Documents;
 using Avalonia.Headless;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Headset;
 using D47.App.Panel;
 using D47.Core;
 using D47.Core.Adventures;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Checklists;
+using D47.Core.Configuration;
 using D47.Core.Ships;
 using D47.Core.Interface;
 using D47.Core.Storage;
@@ -125,6 +128,24 @@ internal static class NotForMeGroupFixture
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, surface);
+    }
+
+    /// <summary>A full-mode headset over <paramref name="ships"/> showing <paramref name="stories"/>.</summary>
+    internal static VrPanelSurface Headset(Ships ships, AdventureSurface stories, bool withEngineers = false)
+    {
+        var (settings, _, _) = TestSurface.Create();
+        settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
+
+        return new VrPanelSurface(
+            new PanelViewModel(),
+            settings,
+            _ => null,
+            checklists: ships.Checklists,
+            ships: ships.Plans,
+            gameState: () => null,
+            onFoot: withEngineers ? ships.OnFoot : null,
+            unlocks: withEngineers ? ships.Unlocks : null,
+            adventures: stories);
     }
 
     internal static void ReadChapter(Surface surface)

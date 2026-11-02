@@ -125,29 +125,6 @@ public class TheRoutingTabIsInTheHeadsetTests
         }
     }
 
-    /// <summary>How many colours the submitted buffer has, up to the point the answer is settled.</summary>
-    private static int Colours(VrPixels pixels, (int Width, int Height) size)
-    {
-        var distinct = new HashSet<uint>();
-
-        unsafe
-        {
-            var read = (uint*)pixels.Address;
-
-            for (var index = 0; index < size.Width * size.Height; index++)
-            {
-                distinct.Add(read[index]);
-
-                if (distinct.Count > 8)
-                {
-                    break;
-                }
-            }
-        }
-
-        return distinct.Count;
-    }
-
     private static Control? Pressable(VrPanelSurface panel, Func<Control, bool> wanted) =>
         panel.Board.View.GetVisualDescendants().OfType<Control>().FirstOrDefault(wanted);
 
@@ -243,7 +220,7 @@ public class TheRoutingTabIsInTheHeadsetTests
         Draw(panel, pixels, root);
 
         Assert.True(
-            Colours(pixels, panel.Size) > 8,
+            VrFrames.DistinctColours(pixels, panel.Size) > 8,
             $"The submitted buffer for {root} has one or two colours, which is a blank quad rather "
             + "than a rendered page.");
     }
