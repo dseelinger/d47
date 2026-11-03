@@ -1,4 +1,4 @@
-"""Alternates the two generators: one library track for a folder, then one sung song for the same folder.
+"""Alternates the two generators: one library track, then one sung song for the folder furthest from its quota.
 
   both.py                         run until both are done or stop.cmd is used
   both.py --until 05:00           also stop at that local wall-clock time
@@ -7,10 +7,10 @@
   both.py --out DIR               put the sung songs under DIR instead of the installed app's music folders
 
 The library track goes to tracks\\ and generated.txt for the weekly publish, as generate.py does. The sung song
-is drawn from the folder's brief with its own arrangement and goes to the own-music folder, as with-lyrics.py
-does; its lyrics are written while the library track renders. A folder whose sung songs have reached their
-quota gets library tracks only, and once the catalogue is done the run carries on with sung songs only. A usage
-or rate limit from Claude turns the sung songs off for the rest of the run.
+is drawn from its folder's brief with its own arrangement and goes to the own-music folder, as with-lyrics.py
+does; its lyrics are written while the library track renders. Sung songs follow with-lyrics.py's plan, not the
+library queue, so every folder short of its quota gets them. Once the catalogue is done the run carries on with
+sung songs only. A usage or rate limit from Claude turns the sung songs off for the rest of the run.
 """
 
 import argparse
@@ -32,6 +32,12 @@ _spec = importlib.util.spec_from_file_location("with_lyrics", os.path.join(HERE,
 lyrics = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(lyrics)
 generate.log = library_log  # library tracks, stops and waits log to generate.log; sung songs to with-lyrics.log
+
+
+def next_song(rows, out, folders, pool):
+    """A future for the next written song in the folder furthest from its quota, or None when all are done."""
+    order = lyrics.plan(rows, out, folders, 1)
+    return song_for(order[0][0], rows, out, pool) if order else None
 
 
 def song_for(folder, rows, out, pool):
@@ -100,7 +106,7 @@ def main():
                 if not go():
                     stopped = True
                     break
-                pending = song_for(row["folder"], rows, args.out, pool) if singing else None
+                pending = next_song(rows, args.out, folders, pool) if singing else None
                 tracks += generate.make(dit, row, added)
                 if pending is None:
                     continue
