@@ -90,6 +90,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         AudioFormat.Standard);
 
     private readonly Lock _gate = new();
+    private bool _listening;
     private readonly List<Pending> _queue = [];
     private readonly HashSet<string> _closed = new(StringComparer.Ordinal);
 
@@ -155,6 +156,32 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             lock (_gate)
             {
                 _mix = value;
+                Relevel();
+            }
+        }
+    }
+
+    /// <summary>Whether the microphone is open; categories with a duck value drop while it is.</summary>
+    public bool Listening
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _listening;
+            }
+        }
+
+        set
+        {
+            lock (_gate)
+            {
+                if (_listening == value)
+                {
+                    return;
+                }
+
+                _listening = value;
                 Relevel();
             }
         }
@@ -810,14 +837,14 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
     /// <summary>
     /// What a category plays at right now: its level, muted or not, times its duck factor when
-    /// something is being said over it.
+    /// something is being said over it or the microphone is open.
     /// </summary>
     private float GainFor(AudioChannel channel)
     {
         var speaking = _current?.Request.Channel is AudioChannel.Speech or AudioChannel.Alert or AudioChannel.Overheard;
 
         // Nothing ducks under itself.
-        return _mix.For(channel).GainWhile(speaking && AudioMix.Ducks(channel));
+        return _mix.For(channel).GainWhile((speaking || _listening) && AudioMix.Ducks(channel));
     }
 
     private void OnSinkFinished(long playbackId)

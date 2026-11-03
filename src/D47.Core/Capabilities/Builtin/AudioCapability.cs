@@ -568,14 +568,15 @@ public static class AudioCapability
         {
             Key = DuckKey(channel),
             Exercise = Where(channel) + $"Set Duck while D47 speaks to 0 and have D47 speak a reply while {Hear(channel)} "
-                       + "is playing: it falls silent until the sentence ends, then returns. At 1 it does not "
-                       + "drop at all. Between, it drops to that fraction of its Level while D47 speaks. "
+                       + "is playing: it falls silent until the sentence ends, then returns. Hold push-to-talk while "
+                       + "it plays and it drops the same way until you release. At 1 it does not "
+                       + "drop at all. Between, it drops to that fraction of its Level while D47 speaks or the microphone is open. "
                        + "The row appears for Thinking bed, Ambient music and Sound cues only.",
             Advanced = true,
             Protected = true,
             Label = "Duck while D47 speaks",
-            Help = "What this drops to while D47 is talking, as a fraction of its level. 1 does not duck "
-                   + "at all; 0 goes silent until the sentence ends.",
+            Help = "What this drops to while D47 is talking or the microphone is open, as a fraction of its level. "
+                   + "1 does not duck at all; 0 goes silent until the sentence ends or the microphone closes.",
             Kind = SettingKind.Number,
             Step = 0.05,
             Minimum = 0,

@@ -3221,6 +3221,7 @@ public sealed class AppHost : IDisposable
         // That the microphone is open, on both surfaces, as a property of the gate policy rather than of any
         // one capability (Phase 13).
         gate.StateChanged += state => host.Listener.ShowMicrophone(state);
+        gate.StateChanged += state => audio.Listening = state == MicrophoneState.Open;
 
         // Beside it, because a model that is still loading is not the same as a microphone that is ready
         // (#147).

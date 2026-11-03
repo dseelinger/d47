@@ -95,7 +95,7 @@ nav_order: 123
  <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">Duck while D47 speaks</text>
  <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">thinking bed, sound cues, ambient music</text>
 </svg>
-<p class="body">Each of those has a Duck value: the fraction of its level it drops to. 1 never drops. 0 is silent until the sentence ends.</p>
+<p class="body">Each of those has a Duck value: the fraction of its level it drops to. 1 never drops. 0 is silent until the sentence ends. The drop also holds while the microphone is open.</p>
 </section>
 <section>
 <h2><span class="num">3</span> Docking changes the music.</h2>
@@ -190,7 +190,9 @@ Speech, alerts and overheard chatter are what everything else ducks under, so th
 the sound cues and ambient music carry a **Duck while D47 speaks** number as well. It is a fraction of that category's level rather than a
 level of its own — turn music down and its ducked form goes down with it.
 
-`1` does not duck at all. `0` goes silent until the sentence ends. Out of the box the thinking
+The same drop applies while the microphone is open, whichever key, voice activity or wake word opened it.
+
+`1` does not duck at all. `0` goes silent until the sentence ends, or until the key is released. Out of the box the thinking
 bed sits at `0.35`, the sound cues at `1`, and music at `0.2`.
 
 Speech, alerts and overheard chatter have no duck row. A row that does not apply is absent rather
