@@ -116,10 +116,12 @@ public sealed class VoicePipeline(
             if (!value)
             {
                 arbiter.CloseGroup(SpokenGroup.InventedChatter);
+                arbiter.CloseGroup(SpokenGroup.Module);
             }
             else if (_state == LoopState.Idle)
             {
                 arbiter.OpenGroup(SpokenGroup.InventedChatter);
+                arbiter.OpenGroup(SpokenGroup.Module);
             }
         }
     }
@@ -604,10 +606,12 @@ public sealed class VoicePipeline(
         if (state is LoopState.Listening or LoopState.Thinking)
         {
             arbiter.CloseGroup(SpokenGroup.InventedChatter);
+            arbiter.CloseGroup(SpokenGroup.Module);
         }
         else if (state == LoopState.Idle && _gameRunning)
         {
             arbiter.OpenGroup(SpokenGroup.InventedChatter);
+            arbiter.OpenGroup(SpokenGroup.Module);
         }
 
         arbiter.EnterState(state, cues(), CuesEnabled && cue, BedEnabled);
@@ -652,6 +656,7 @@ public sealed class VoicePipeline(
         if (_gameRunning)
         {
             arbiter.OpenGroup(SpokenGroup.InventedChatter);
+            arbiter.OpenGroup(SpokenGroup.Module);
         }
 
         StateEntered?.Invoke(LoopState.Idle);

@@ -33,6 +33,9 @@ public static class SpokenGroup
 
     /// <summary>Invented chatter, kept apart so a turn reply can drop it and nothing else (#61).</summary>
     public const string InventedChatter = "invented-chatter";
+
+    /// <summary>Lines a module asked to have spoken; a turn reply drops them as it drops invented chatter.</summary>
+    public const string Module = "module";
 }
 
 /// <summary>Something d47 has decided to say without being asked (Phase 8).</summary>
@@ -64,9 +67,14 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
         : Overheard ? AudioChannel.Overheard
         : AudioChannel.Speech;
 
-    /// <summary>The arbiter group this is spoken in; a reply drops invented chatter by it.</summary>
+    /// <summary>The arbiter group this is spoken in; a reply drops invented chatter and module lines by it.</summary>
     public string Group =>
-        Key == NpcChatter.LineKey ? SpokenGroup.InventedChatter : SpokenGroup.Announcement;
+        Key == NpcChatter.LineKey ? SpokenGroup.InventedChatter
+        : Modules.ModuleSpeechCallout.Owns(Key) ? SpokenGroup.Module
+        : SpokenGroup.Announcement;
+
+    /// <summary>Spoken in <see cref="Voice"/>'s own voice rather than one cast for <see cref="Speaker"/>, who only names the line.</summary>
+    public bool InRoleVoice { get; init; }
 
     /// <summary>
     /// A marker played immediately ahead of the line, saying which warning this is before the sentence

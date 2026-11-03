@@ -21,7 +21,7 @@ public static class SpeakerAccent
         ArgumentNullException.ThrowIfNull(cast);
         ArgumentNullException.ThrowIfNull(announcement);
 
-        return announcement.Speaker is { Length: > 0 } speaker
+        return announcement.Speaker is { Length: > 0 } speaker && !announcement.InRoleVoice
             ? cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice, announcement.SpeakerAllegiance)
             : cast.For(announcement.Voice);
     }
@@ -31,7 +31,7 @@ public static class SpeakerAccent
     /// where it need not wait.
     /// </summary>
     public static Task? NameAnswerFor(VoiceCast cast, Announcement announcement) =>
-        announcement.Speaker is { Length: > 0 } speaker
+        announcement.Speaker is { Length: > 0 } speaker && !announcement.InRoleVoice
             ? cast.SexAnswerFor(speaker, announcement.SpeakerIsPlayer, announcement.Voice)
             : null;
 

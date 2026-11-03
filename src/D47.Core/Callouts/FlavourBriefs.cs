@@ -134,7 +134,8 @@ public static class FlavourBriefs
     {
         ArgumentNullException.ThrowIfNull(announcement);
 
-        if (!personalityEnabled || StationNotices.IsNotice(announcement.MessageKey))
+        // A module's text is spoken as the module sent it and never handed to a model.
+        if (!personalityEnabled || StationNotices.IsNotice(announcement.MessageKey) || Modules.ModuleSpeechCallout.Owns(announcement.Key))
         {
             return null;
         }

@@ -40,6 +40,21 @@ public class AModuleLineIsCappedBeforeItIsQueuedTests
     }
 
     [Fact]
+    public void DrainingOneKindLeavesTheOthersQueuedInOrder()
+    {
+        var inbox = new ModuleInbox();
+
+        inbox.Post(new ModuleResourceUpdated("ledger", "ledger://open"));
+        inbox.Post(new ModuleLine("ledger", "a", "one"));
+        inbox.Post(new ModuleResourceUpdated("ledger", "ledger://closed"));
+
+        Assert.Equal([new ModuleLine("ledger", "a", "one")], inbox.Drain<ModuleLine>());
+        Assert.Equal(
+            [new ModuleResourceUpdated("ledger", "ledger://open"), new ModuleResourceUpdated("ledger", "ledger://closed")],
+            inbox.Drain());
+    }
+
+    [Fact]
     public void AFullInboxDropsTheOldest()
     {
         var inbox = new ModuleInbox();

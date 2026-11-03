@@ -1492,6 +1492,18 @@ public sealed class AppHost : IDisposable
             },
             DateTimeOffset.Now);
 
+        // The modules start with the tick, after this is built.
+        callouts.Add(new D47.Core.Modules.ModuleSpeechCallout(new D47.Core.Modules.ModuleSpeechSources
+        {
+            Lines = () => late.Host?._modules?.Host.Inbox.Drain<D47.Core.Modules.ModuleLine>() ?? [],
+            Installed = () => late.Host?._modules?.Installed ?? [],
+            Settings = () => settings.Current,
+            AboardName = () => late.Host?.Personas.Current.Name ?? string.Empty,
+            Cores = () => [.. D47.Core.Persona.PersonaCatalog.Stocked.Select(p => (p.Id, p.Name))],
+            YourCores = () => late.Host is { } host ? [.. host.OwnPersonas.Cores.Select(c => (c.Id, c.Name))] : [],
+            Characters = () => late.Host?.Characters.CharactersOf(gameState.Active?.Identity.FrontierId) ?? [],
+        }));
+
         // Acting on the game without being asked (Phase 10, item 2).
         var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
             .Add(new HonkOnArrival(

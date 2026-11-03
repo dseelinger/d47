@@ -83,6 +83,53 @@ public class AskingCutsAheadOfInventedChatterTests
         Assert.False(sink.Played("Mind the scaffold on your left."));
     }
 
+    private static Announcement ModuleLine(string text) =>
+        new("module.ledger.tally", text) { Transcript = $"Warden [Bounty ledger]: {text}\n" };
+
+    [Fact]
+    public async Task AModuleLineBeingSpokenIsCutOffAndTheReplyIsHeard()
+    {
+        var (voice, sink) = Build();
+
+        await voice.AnnounceAsync(ModuleLine("Three bounties open."));
+        var line = sink.Started[0].Id;
+
+        await voice.RunAsync(Reply(), cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Contains(line, sink.Stopped);
+        Assert.True(sink.Played(Answer));
+    }
+
+    [Fact]
+    public async Task AQueuedModuleLineIsDroppedByAReplyAsChatterIs()
+    {
+        var (voice, sink) = Build();
+
+        await voice.AnnounceAsync(ModuleLine("Three bounties open."));
+        await voice.AnnounceAsync(ModuleLine("Two bounties open."));
+
+        await voice.RunAsync(Reply(), cancellationToken: TestContext.Current.CancellationToken);
+
+        sink.FinishEverything();
+
+        Assert.False(sink.Played("Two bounties open."));
+    }
+
+    [Fact]
+    public async Task AModuleLineIsHeardAgainOnceTheLoopSettles()
+    {
+        var (voice, sink) = Build();
+
+        voice.EnterState(LoopState.Listening);
+        await voice.AnnounceAsync(ModuleLine("Three bounties open."));
+
+        voice.EnterState(LoopState.Idle);
+        await voice.AnnounceAsync(ModuleLine("Two bounties open."));
+
+        Assert.False(sink.Played("Three bounties open."));
+        Assert.True(sink.Played("Two bounties open."));
+    }
+
     /// <summary>Words the game actually sent, and a callout the Commander switched on.</summary>
     [Fact]
     public async Task RelayedCommsAndAnOrdinaryCalloutAreLeftWhereTheyAre()

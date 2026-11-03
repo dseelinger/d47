@@ -304,7 +304,8 @@ internal sealed class ModuleRunner
     {
         if (Text(notification.Params, "key") is { } key && Text(notification.Params, "text") is { Length: > 0 } text)
         {
-            _inbox.Post(new ModuleLine(Id, key, text));
+            var urgent = string.Equals(Text(notification.Params, "urgency"), "urgent", StringComparison.OrdinalIgnoreCase);
+            _inbox.Post(new ModuleLine(Id, key, text, urgent));
         }
         else
         {

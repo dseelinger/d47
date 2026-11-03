@@ -118,9 +118,11 @@ public sealed class Announcer : IDisposable
                 && text.Contains(name, StringComparison.OrdinalIgnoreCase))
             .Select(name => name!)];
 
-    /// <summary>Whether the voice says a pronoun for a system the line names: not for a narration, and not for a line in another language.</summary>
+    /// <summary>Whether the voice says a pronoun for a system the line names: not for a narration, a module's line, or a line in another language.</summary>
     internal static bool TakesPronouns(Announcement announcement) =>
-        announcement.Voice != VoiceRole.Narrator && SpokenLanguage.IsEnglish(announcement.Language);
+        announcement.Voice != VoiceRole.Narrator
+        && !D47.Core.Modules.ModuleSpeechCallout.Owns(announcement.Key)
+        && SpokenLanguage.IsEnglish(announcement.Language);
 
     /// <summary>Says one announcement and returns what was queued to play, for a message to keep.</summary>
     internal async Task<SpokenClip?> SayAsync(Announcement announcement)
