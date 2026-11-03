@@ -254,6 +254,7 @@ public static class TestSurface
                     NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
                 () => null),
             audioDrops: () => "Nothing in the audio folder in a headless test.",
+            ownAudio: () => D47.Core.Audio.OwnAudioReport.Of([], [], []),
             controlMusic: _ => "Music in a headless test.",
             musicState: () => new D47.Core.Audio.MusicState(null, false, false),
             watchMusic: _ => () => { },

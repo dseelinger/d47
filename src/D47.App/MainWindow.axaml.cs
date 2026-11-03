@@ -1096,7 +1096,14 @@ public partial class MainWindow : Window
                 : null,
             _host.CustomVoiceEditing,
             _host.CoverageRecorder is { } clearing ? clearing.Clear : null,
-            _host.CoverageRecorder is { } exercising ? exercising.Exercise : null);
+            _host.CoverageRecorder is { } exercising ? exercising.Exercise : null,
+            () => D47.Core.Audio.OwnAudioReport.From(_host.Cues),
+            () => AppHost.OpenWithShell(_host.Paths.Audio),
+            handler =>
+            {
+                _host.AudioReloaded += handler;
+                return () => _host.AudioReloaded -= handler;
+            });
     }
 
     private ModulesSource? _modulesSource;

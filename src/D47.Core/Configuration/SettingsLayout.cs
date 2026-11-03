@@ -504,7 +504,12 @@ public static class SettingsLayout
                         {
                             Layout = SettingsGroupLayout.Mixer,
                         },
-                        G("Your own audio", "Sound files you've dropped in for D47 to use.", [E("audio.drops")]),
+                        G("Your own audio", "Sound files you've dropped in for D47 to use.", [
+                            E(Capabilities.Builtin.AudioCapability.OwnMusicKey),
+                            E(Capabilities.Builtin.AudioCapability.OwnCuesKey),
+                            E(Capabilities.Builtin.AudioCapability.OwnBedsKey),
+                            E(Capabilities.Builtin.AudioCapability.OwnFolderKey),
+                        ]),
                     ]),
             ]),
         new SettingsArea(

@@ -224,7 +224,7 @@ clip.
 Drop audio files into `data/audio` beside the executable. `.mp3`, `.m4a`, `.aac`, `.wma`,
 `.flac` and `.wav` are read, at any sample rate and channel count; D47 converts them to 48 kHz
 mono as it loads them. The folders are created at startup whenever they are missing, and **Open audio folder** on
-the **Your own audio** row opens `data\audio` in Explorer:
+the **Audio folder** row, and at the foot of the **Your own audio** page, opens `data\audio` in Explorer:
 
 ```text
 data/audio/
@@ -248,9 +248,23 @@ read.
 Files are picked up while D47 is running, without a restart, and a reload never cuts a clip that
 is already playing.
 
-The **Your own audio** row accounts for every file under `data\audio`: a count for each folder
-that has files in it, then every file that was never a candidate — in the wrong place, or not a
-format D47 reads — and finally every file that was tried and would not load:
+The **Your own audio** group is four status rows. **Music** counts the files and the situations and
+names the three `music/` folders with the most files; **Your audio** beside it opens the page.
+**Sound cues** counts what `cues/` and `alerts/` hold, and **Thinking beds** what `beds/` holds; with
+none, each says so in white and, in grey, how to add one. **Audio folder** shows `data\audio` with
+**Open audio folder**, and an amber notice under it counts the files that were ignored or skipped.
+
+```text
+Music           159 files for 38 situations: main menu 24, docked 23, supercruise 23 and 35 more   [Your audio]
+Sound cues      None of your own. D47 plays its own cues. A file in cues/<state> replaces one.
+Thinking beds   None of your own. A file in beds/ adds one.
+Audio folder    data\audio                                                    [Open audio folder]
+                1 file skipped
+```
+
+The page that **Your audio** opens, headed Your own audio, lists every folder with files under
+Music, Sound cues, Alerts and Thinking beds, most files first, and every ignored and skipped file in
+full. `get_setting audio.drops` still returns the whole account, one line per folder and per file:
 
 ```text
 cues/listening: 5 files
@@ -320,7 +334,7 @@ folder for the situation at that moment continues or starts. A track still playi
 
 With **Download the D47 music library** on, D47 also plays its music library from `data/music-pack/<folder>/`,
 with the same folder names; see [The music library](#the-music-library). Files of your own in
-`data/audio/music/<folder>/` play alongside the library's tracks for that folder, shuffled together. The "Your own audio" row counts only your files.
+`data/audio/music/<folder>/` play alongside the library's tracks for that folder, shuffled together. The Music row of **Your own audio** counts only your files.
 
 To hear this music rather than Elite's, set Elite's music volume to zero (Options, Audio).
 

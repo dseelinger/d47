@@ -55,7 +55,10 @@ internal sealed record SettingServices(
     CustomVoicesEditing? CustomVoices = null,
     Action<CoverageItem>? ClearCoverage = null,
     ViewStateStore? ViewState = null,
-    Func<CoverageItem, D47.App.Coverage.ToolExercise?>? ToolExercise = null);
+    Func<CoverageItem, D47.App.Coverage.ToolExercise?>? ToolExercise = null,
+    Func<D47.Core.Audio.OwnAudioReport>? OwnAudio = null,
+    Action? OpenAudioFolder = null,
+    Func<Action, Action>? WatchAudio = null);
 
 /// <summary>What a system-name box needs: the lookup, whether galaxy search is on, and the pause before asking.</summary>
 public sealed record SystemNameLookup(
@@ -118,6 +121,19 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
             // The persona editor page.
             case SettingKind.Info when row.Key == PersonaCapability.OwnKey && services.OwnPersonas is not null:
                 return BuildOwnPersonas(row);
+
+            // The four status rows of Your own audio, and the page the Music row opens.
+            case SettingKind.Info when row.Key == AudioCapability.OwnMusicKey && services.OwnAudio is not null:
+                return BuildOwnAudioMusic();
+
+            case SettingKind.Info when row.Key == AudioCapability.OwnCuesKey && services.OwnAudio is not null:
+                return BuildOwnAudioStatus(report => report.CuesLine(), report => report.CuesHint());
+
+            case SettingKind.Info when row.Key == AudioCapability.OwnBedsKey && services.OwnAudio is not null:
+                return BuildOwnAudioStatus(report => report.BedsLine(), report => report.BedsHint());
+
+            case SettingKind.Info when row.Key == AudioCapability.OwnFolderKey && services.OwnAudio is not null:
+                return BuildOwnAudioFolder(row);
 
             // The Custom voices page.
             case SettingKind.Info when row.Key == SpeechCapability.CustomVoicesKey && services.CustomVoices is not null:
@@ -745,6 +761,116 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
 
             return true;
         }, () => { });
+
+    /// <summary>A status line in white, with an optional grey sentence after it.</summary>
+    private (Border Inset, Action Refresh) OwnAudioLine(Func<D47.Core.Audio.OwnAudioReport, string> line, Func<D47.Core.Audio.OwnAudioReport, string?>? hint)
+    {
+        var (inset, text) = SettingsView.Report();
+
+        void Refresh()
+        {
+            var report = services.OwnAudio!();
+
+            text.Inlines ??= [];
+            text.Inlines.Clear();
+            text.Inlines.Add(new Avalonia.Controls.Documents.Run(line(report)));
+
+            if (hint?.Invoke(report) is { } sentence)
+            {
+                var grey = new Avalonia.Controls.Documents.Run(" " + sentence);
+                grey[!Avalonia.Controls.Documents.TextElement.ForegroundProperty] = new Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(ThemeManager.GreyKey);
+                text.Inlines.Add(grey);
+            }
+        }
+
+        Refresh();
+
+        return (inset, Refresh);
+    }
+
+    private (Control, Action) BuildOwnAudioStatus(Func<D47.Core.Audio.OwnAudioReport, string> line, Func<D47.Core.Audio.OwnAudioReport, string?> hint)
+    {
+        var (inset, refresh) = OwnAudioLine(line, hint);
+
+        return (inset, refresh);
+    }
+
+    private static Button OwnAudioButton(string name, string label) => new()
+    {
+        Name = name,
+        Content = label,
+        FontSize = TypeScale.Body,
+        Padding = new Thickness(8, 4),
+        VerticalAlignment = VerticalAlignment.Stretch,
+    };
+
+    private static Grid Beside(Control inset, Control button)
+    {
+        var grid = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)], ColumnSpacing = 2 };
+
+        Grid.SetColumn(button, 1);
+        grid.Children.Add(inset);
+        grid.Children.Add(button);
+
+        return grid;
+    }
+
+    /// <summary>The music line, with the tile that opens the page of every folder.</summary>
+    private (Control, Action) BuildOwnAudioMusic()
+    {
+        var (inset, refresh) = OwnAudioLine(report => report.MusicLine(), null);
+        var open = OwnAudioButton("OpenOwnAudio", "Your audio");
+
+        open.Click += async (_, _) =>
+        {
+            if (open.FindAncestorOfType<Panel.PanelView>() is { } panel)
+            {
+                await panel.Open(new Controls.OwnAudioPage(services.OwnAudio!, services.OpenAudioFolder, services.WatchAudio));
+            }
+        };
+
+        return (Beside(inset, open), refresh);
+    }
+
+    /// <summary>The folder, the button that opens it, and a warning while any file was ignored or skipped.</summary>
+    private (Control, Action) BuildOwnAudioFolder(SettingRow row)
+    {
+        var (inset, text) = SettingsView.Report();
+        text.Text = row.Binding?.Read(host.Settings.Current);
+        text.FontFamily = new FontFamily(Fonts.MonoFamily);
+
+        var notice = new Controls.Notice(Controls.NoticeLevel.Warning, inline: true) { Name = "OwnAudioWarning", IsVisible = false };
+        var stack = new StackPanel { Spacing = 8, Children = { notice } };
+
+        if (services.OpenAudioFolder is { } openFolder)
+        {
+            var open = OwnAudioButton("OpenAudioFolder", "Open audio folder");
+            open.Click += (_, _) => openFolder();
+            stack.Children.Insert(0, Beside(inset, open));
+        }
+        else
+        {
+            stack.Children.Insert(0, inset);
+        }
+
+        void Refresh()
+        {
+            var report = services.OwnAudio!();
+
+            notice.IsVisible = report.HasWarning;
+
+            if (report.HasWarning)
+            {
+                notice.Label = report.WarningLabel();
+                notice.Text = report.WarningText();
+                notice.Detail = report.WarningDetail();
+            }
+        }
+
+        Refresh();
+
+        return (stack, Refresh);
+    }
 
     /// <summary>The Commander's own cores, plus the way into the editor (remediation.md 11, item 9).</summary>
     private (Control, Action) BuildOwnPersonas(SettingRow row)

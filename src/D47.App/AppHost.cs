@@ -2593,6 +2593,7 @@ public sealed class AppHost : IDisposable
                 thumbsDownMusic: () => late.Host?.ThumbsDownMusic() ?? "Ambient music is not available.",
                 musicMaintainer: () => late.Host?.MusicMaintainer == true,
                 deleteMusicRejects: () => late.Host?.DeleteMusicRejects() ?? "Ambient music is not available.",
+                ownAudio: () => OwnAudioReport.From(late.Host?.Cues ?? services.Cues),
                 colonisationPlans: () => late.Host?.ColonisationPlans,
                 colonisationProgress: () => late.Host?.ColonisationProgress,
                 commanderLog: stores.CommanderLog,
@@ -5618,7 +5619,7 @@ public sealed class AppHost : IDisposable
             ? service.DistanceAsync(from, to, cancellationToken)
             : Task.FromResult<double?>(null);
 
-    private static void OpenWithShell(string target) =>
+    internal static void OpenWithShell(string target) =>
         System.Diagnostics.Process.Start(
             new System.Diagnostics.ProcessStartInfo(target) { UseShellExecute = true });
 

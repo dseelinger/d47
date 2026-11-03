@@ -202,6 +202,9 @@ public static class BuiltinCapabilities
         // Starts deleting the queued library tracks and returns the reply.
         Func<string>? deleteMusicRejects = null,
 
+        // What the Commander's own audio folder holds, for the status rows and their page.
+        Func<D47.Core.Audio.OwnAudioReport>? ownAudio = null,
+
         // The planner's plan for each colonisation system, where one is composed.
         Func<D47.Core.Knowledge.ColonisationPlans?>? colonisationPlans = null,
         Func<D47.Core.Knowledge.ColonisationProgress?>? colonisationProgress = null,
@@ -439,7 +442,7 @@ public static class BuiltinCapabilities
             pictureNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
-        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects),
+        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio),
         ListeningCapability.Create(settings, listening),
         LearnedPhrasesCapability.Create(
             learnedPhrases,

@@ -85,7 +85,8 @@ public static class AudioCapability
         Func<Action, Action>? watchLibrary = null,
         Func<string>? thumbsDown = null,
         Func<bool>? maintainer = null,
-        Func<string>? deleteRejects = null) => new()
+        Func<string>? deleteRejects = null,
+        Func<OwnAudioReport>? ownAudio = null) => new()
     {
         Id = Id,
         Group = "Voice",
@@ -103,7 +104,8 @@ public static class AudioCapability
             .. Enum.GetValues<AudioChannel>().SelectMany(channel => channel == AudioChannel.Music
                 ? [LibraryRow(library, watchLibrary), .. TransportRows(music, musicState, watchMusic), .. RowsFor(channel)]
                 : RowsFor(channel)),
-            .. drops is null ? Array.Empty<SettingRow>() : [DropsRow(drops, openFolder)],
+            .. drops is null ? Array.Empty<SettingRow>() : [DropsRow(drops)],
+            .. ownAudio is null ? Array.Empty<SettingRow>() : OwnAudioRows(ownAudio, openFolder),
             TokenRow,
             .. InterfaceCapability.HotkeyRows(
                 ThumbsDownHotkeyKey,
@@ -398,24 +400,61 @@ public static class AudioCapability
     private static ToolCommandPhrase Phrase(string phrase, string action) =>
         new(phrase, new Dictionary<string, string>(StringComparer.Ordinal) { ["action"] = action });
 
-    /// <summary>
-    /// What d47 found in the Commander's own folder — and, more to the point, what it could not use.
-    /// </summary>
-    private static SettingRow DropsRow(Func<string> drops, Action? openFolder) => new()
+    /// <summary>The whole account of the Commander's own folder in one string, for <c>get_setting</c>; the page draws <see cref="OwnAudioRows"/> instead.</summary>
+    private static SettingRow DropsRow(Func<string> drops) => new()
     {
         Key = DropsKey,
         Advanced = true,
+        DrawnElsewhere = true,
         Label = "Your own audio",
-        Help = "Drop .mp3, .m4a, .aac, .wma, .flac or .wav files into data\\audio, beside d47.exe: cues/<state> "
-               + "replaces a sound cue, beds/<name> adds a thinking bed, and music/<situation>/ is "
-               + "ambience. Any sample rate and channel count. They are picked up without a restart.",
+        Help = OwnAudioHelp,
         Kind = SettingKind.Info,
         Group = "Your own audio",
         DocsAnchor = "your-own-sounds",
-        PressLabel = openFolder is null ? null : "Open audio folder",
-        Press = openFolder,
         Binding = new SettingBinding { Read = _ => drops() },
     };
+
+    private const string OwnAudioHelp =
+        "Drop .mp3, .m4a, .aac, .wma, .flac or .wav files into data\\audio, beside d47.exe: cues/<state> "
+        + "replaces a sound cue, beds/<name> adds a thinking bed, and music/<situation>/ is "
+        + "ambience. Any sample rate and channel count. They are picked up without a restart.";
+
+    /// <summary>The key of the Music status row, which opens the page.</summary>
+    public const string OwnMusicKey = "audio.drops.music";
+
+    /// <summary>The key of the Audio folder row, which opens the folder.</summary>
+    public const string OwnFolderKey = "audio.drops.folder";
+
+    public const string OwnCuesKey = "audio.drops.cues";
+
+    public const string OwnBedsKey = "audio.drops.beds";
+
+    private static IEnumerable<SettingRow> OwnAudioRows(Func<OwnAudioReport> report, Action? openFolder)
+    {
+        SettingRow Status(string key, string label, Func<string> read) => new()
+        {
+            Key = key,
+            Advanced = true,
+            Label = label,
+            Help = OwnAudioHelp,
+            Kind = SettingKind.Info,
+            Group = "Your own audio",
+            DocsAnchor = "your-own-sounds",
+            Binding = new SettingBinding { Read = _ => read() },
+        };
+
+        string WithHint(string line, string? hint) => hint is null ? line : line + " " + hint;
+
+        yield return Status(OwnMusicKey, "Music", () => report().MusicLine());
+        yield return Status(OwnCuesKey, "Sound cues", () => WithHint(report().CuesLine(), report().CuesHint()));
+        yield return Status(OwnBedsKey, "Thinking beds", () => WithHint(report().BedsLine(), report().BedsHint()));
+
+        yield return Status(OwnFolderKey, "Audio folder", () => @"data\audio") with
+        {
+            PressLabel = openFolder is null ? null : "Open audio folder",
+            Press = openFolder,
+        };
+    }
 
     private static IEnumerable<SettingRow> RowsFor(AudioChannel channel)
     {

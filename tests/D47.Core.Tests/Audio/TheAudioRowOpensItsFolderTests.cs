@@ -4,11 +4,12 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
-/// <summary>The Your own audio row opens data\audio when there is a shell to open it with (#498).</summary>
+/// <summary>The Audio folder row opens data\audio when there is a shell to open it with (#498).</summary>
 public class TheAudioRowOpensItsFolderTests
 {
     private static Capabilities.SettingRow DropsRow(Action? openFolder) =>
-        AudioCapability.Create(() => "", openFolder).Settings.Single(row => row.Key == AudioCapability.DropsKey);
+        AudioCapability.Create(() => "", openFolder, ownAudio: () => OwnAudioReport.From(CueLibrary.Load())).Settings
+            .Single(row => row.Key == AudioCapability.OwnFolderKey);
 
     [Fact]
     public void AnOpenerGivesTheRowAButton()

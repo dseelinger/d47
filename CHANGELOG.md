@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Your own audio in Settings › Hearing and sound › Sounds and levels no longer prints every folder in one tall box. It is four rows: Music, Sound cues, Thinking beds and Audio folder. Music reads like "159 files for 38 situations: main menu 24, docked 23, supercruise 23 and 35 more", and the new Your audio tile opens a page listing every folder with its file count and every file that was ignored or skipped. A warning under Audio folder counts the files D47 could not use.
+
 "Thumbs down this track" now deletes your own music. With one of your own tracks from `data\audio\music` playing, "thumbs down this track", "thumbs down", the hotkey and the stick button move the file to the Recycle Bin and start the next track, for every Commander. The reply names the track; if the file cannot be deleted it says so and the track is still skipped. A library track is still queued for deletion with a Music publish token, and without one it is refused and keeps playing. The hotkey and stick-button rows now show without a token.
 
 The ambient music now has a Previous track. The previous-track media key, the volume flyout’s previous button, "previous track" by voice and a new Previous track row under Next track in Settings › Hearing and sound › Sounds and levels play the track before the current one in the folder’s shuffle, from the start. On the first track of a shuffle it restarts the track, and during a one-shot cue it ends the cue and continues the shelved track.

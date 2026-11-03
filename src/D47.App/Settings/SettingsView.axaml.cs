@@ -237,7 +237,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         SystemNameLookup? systemNames = null,
         CustomVoicesEditing? customVoices = null,
         Action<CoverageItem>? clearCoverage = null,
-        Func<CoverageItem, D47.App.Coverage.ToolExercise?>? toolExercise = null)
+        Func<CoverageItem, D47.App.Coverage.ToolExercise?>? toolExercise = null,
+        Func<D47.Core.Audio.OwnAudioReport>? ownAudio = null,
+        Action? openAudioFolder = null,
+        Func<Action, Action>? watchAudio = null)
     {
         _settings = settings;
         _viewStateStore = viewState;
@@ -265,7 +268,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 customVoices,
                 clearCoverage,
                 viewState,
-                toolExercise));
+                toolExercise,
+                ownAudio,
+                openAudioFolder,
+                watchAudio));
 
         Build();
 
