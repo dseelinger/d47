@@ -253,7 +253,7 @@ accepts for an accumulating corpus, on the same reasoning.
 
 ### What is out of scope entirely
 
-Anything on the Commander's own machine — the journal, the 14-day log, `data\backups`. Those are
+Anything on the Commander's own machine — the journal, the 14-day log. Those are
 theirs, they never left, and there is nothing to erase on request because nothing was received.
 And anything they copied or saved and carried somewhere themselves: the windows offer a clipboard
 and a file, and where those went afterwards is not reachable from here. Anything posted publicly

@@ -51,9 +51,7 @@ public sealed class AppPaths
         Pictures = Path.Combine(Data, "pictures");
         AvatarClips = Path.Combine(Data, "avatar-clips");
         BindingProfiles = Path.Combine(Data, "binding-profiles");
-        Backups = Path.Combine(Data, "backups");
         Captures = Path.Combine(Data, "captures");
-        LastBuildFile = Path.Combine(Data, "last-build.txt");
         ShippedShips = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "ships");
         ShippedPortraits = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "portraits");
         ShippedCodexPlaceholders = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "codex-placeholders");
@@ -161,14 +159,8 @@ public sealed class AppPaths
     /// <summary>The Commander's saved copies of Elite's bindings, one folder per profile name.</summary>
     public string BindingProfiles { get; }
 
-    /// <summary>The zips of the data folder taken when a different build first opens it.</summary>
-    public string Backups { get; }
-
     /// <summary>The full-size pictures of the screen the Commander asked for, each with a JSON note.</summary>
     public string Captures { get; }
-
-    /// <summary>The build that last opened the data folder.</summary>
-    public string LastBuildFile { get; }
 
     /// <summary>The card stills that came with the build, read-only, beside the executable.</summary>
     public string ShippedShips { get; }

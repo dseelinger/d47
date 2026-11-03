@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+D47 no longer zips your data folder into `data\backups` the first time a new version starts, so that start is a few seconds faster. Zips already in `data\backups` are left where they are; you can delete the folder.
+
 Your stories no longer has a Set aside button. Finished, failed and abandoned stories are not listed there. When no story is under way, the page says so.
 
 When a mission's hand-in moves to the system you are in, D47 says where it moved and no longer tells you to say plot it. When it moves while you are on foot or in the SRV, the offer to plot it waits until you board your ship. Before, picking up the item for an on-foot settlement mission offered a course to the system you were already standing in.

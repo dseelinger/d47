@@ -13,8 +13,8 @@
     A failed selftest leaves the app closed, so the restore after one passes -Start when the deploy
     closed it.
 
-    data\ is copied without the folders DataBackup.LeftOut names: downloads, recordings, logs and
-    music, which no build changes.
+    data\ is copied without the folders in $leftOut: downloads, recordings, logs and music, which no
+    build changes.
 
 .EXAMPLE
     pwsh -File .claude\skills\release\deploy-local.ps1 -Patch
@@ -51,7 +51,7 @@ $Staging = [IO.Path]::GetFullPath($Staging)
 # new build does not ship, so a mirror matches what an update does.
 $payload = 'd47.exe', 'runtimes', 'ships', 'portraits', 'voices'
 
-# DataBackup.LeftOut.
+# Folders under data\ that D47 downloads or records, and backups, which holds zips older builds wrote.
 $leftOut = 'audio', 'avatar-clips', 'backups', 'flight', 'logs', 'models', 'ships', 'stories'
 
 function Get-InstalledVersion([string]$folder) {

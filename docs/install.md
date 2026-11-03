@@ -187,7 +187,6 @@ data\
   models\              speech models, and the Kokoro and Chatterbox voices — only if you chose one
   logs\
     d47-20260812.log     human-readable
-  backups\             a zip of data\, made when a new build first opens it; the newest 25 stay
 ```
 
 ### Finding it again

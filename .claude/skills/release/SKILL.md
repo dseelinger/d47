@@ -57,8 +57,8 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .claude/skills/release/deploy-loca
 `timeout: 600000`. It computes the next version the way `release.ps1` does, publishes `D47.App` in
 Release stamped with it, closes the installed d47, backs up its payload and `data\` to
 `%LOCALAPPDATA%\d47-release-backup`, mirrors the new payload in, runs `d47.exe --selftest` on it and
-starts the app again if it was running. `data\` is backed up without the folders
-`DataBackup.LeftOut` names (downloads, recordings, logs, music, models), which no build changes.
+starts the app again if it was running. `data\` is backed up without the folders the script's
+`$leftOut` names (downloads, recordings, logs, music, models), which no build changes.
 
 Both modes refuse while any other d47 is running outside the install, such as a test drive: a Debug
 build writes the installed `data\` from wherever it runs. Report the refusal and stop; do not close

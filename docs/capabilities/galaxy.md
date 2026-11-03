@@ -237,7 +237,6 @@ D47 downloads it only when you search for a signal and the copy in `data\signals
 more than 20 hours old. Nothing about you goes with the request, and the search happens on this
 machine. A download replaces the copy on disk only once it reads as an index; one that fails
 leaves the old copy in use and is tried again on a later search, no sooner than an hour after.
-The data backups taken when a new build starts leave `data\signals` out.
 
 With this off, nothing is downloaded and a signal search answers from your own scans alone.
 
