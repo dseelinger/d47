@@ -3855,6 +3855,9 @@ public sealed class AppHost : IDisposable
         // press is not.
         tick.Add("switch-drain", _ => host._actions.CarryOutReconciles(
             reconciler, services.GameInput, services.HeadsetKey, services.Chords, host.GameState.IsOffDuty, host.PanelRouting.Show));
+
+        // Drained every tick, so page updates do not fill the shared inbox and push out module lines.
+        tick.Add("module-pages", _ => host._modules?.TakeResourceUpdates());
     }
 
     private static void StartRunning(AppHost host, FoundationParts foundations, LoopParts loop, ServiceParts services, bool startTicking)

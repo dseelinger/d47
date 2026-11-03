@@ -3,6 +3,8 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Settings;
 using D47.App.Theming;
@@ -111,7 +113,7 @@ internal sealed class ModulesInstalledPage : UserControl, IPageSummary
     }
 }
 
-/// <summary>A module's page: its state until the module sends the page itself.</summary>
+/// <summary>A module's page: the page the module sent, drawn from d47's components, or its state while there is none.</summary>
 internal sealed class ModulePageView : UserControl, IPageSummary
 {
     public const string NoticeName = "ModulePageNotice";
@@ -120,19 +122,44 @@ internal sealed class ModulePageView : UserControl, IPageSummary
     public const string SettingsName = "ModulePageSettings";
     public const string StartingName = "ModulePageStarting";
     public const string OffName = "ModulePageOff";
+    public const string ContentName = "ModulePageContent";
+
+    private const string NoAnswer = "it did not answer";
 
     private readonly ModulesSource _source;
     private readonly string _id;
+    private readonly string _pageId;
     private readonly Action<string> _openSettingsPlace;
+    private readonly Action<string> _openPage;
     private readonly StackPanel _body = new() { Spacing = 20, MaxWidth = 900, HorizontalAlignment = HorizontalAlignment.Left };
 
-    public ModulePageView(ModulesSource source, string id, Action<string> openSettingsPlace)
+    /// <summary>The last page that arrived and parsed.</summary>
+    private ModulePageContent? _content;
+
+    /// <summary>Whether the last read did not arrive or was refused.</summary>
+    private bool _failed;
+
+    private bool _loading;
+
+    /// <summary>Whether the page was asked for again while a read was under way.</summary>
+    private bool _again;
+    private ModuleStatus? _seen;
+
+    /// <param name="pageId">The manifest page to draw, or null for the module's first.</param>
+    /// <param name="openPage">Opens another of this module's pages by id.</param>
+    public ModulePageView(ModulesSource source, string id, string? pageId, Action<string> openSettingsPlace, Action<string> openPage)
     {
         _source = source;
         _id = id;
         _openSettingsPlace = openSettingsPlace;
+        _openPage = openPage;
+        _pageId = pageId ?? Module()?.Manifest.Pages.FirstOrDefault()?.Id ?? string.Empty;
 
-        Content = new DockPanel { Margin = new Thickness(14), Children = { LoadoutPages.Scrolling(_body) } };
+        // One column as wide as the page allows, up to 900, whatever the parts in it need.
+        var scroll = LoadoutPages.Scrolling(_body);
+        scroll.SizeChanged += (_, e) => _body.Width = Math.Min(_body.MaxWidth, e.NewSize.Width);
+
+        Content = new DockPanel { Margin = new Thickness(14), Children = { scroll } };
         Draw();
     }
 
@@ -145,10 +172,131 @@ internal sealed class ModulePageView : UserControl, IPageSummary
         remove { }
     }
 
+    /// <summary>The resource this view draws.</summary>
+    public string Uri => ModulePageParser.Uri(_pageId);
+
     private ReadyModule? Module() =>
         _source.Installed.OfType<ReadyModule>().FirstOrDefault(m => m.Manifest.Id == _id);
 
+    /// <summary>Reads the page again when module <paramref name="moduleId"/> says <paramref name="uri"/> changed.</summary>
+    public void Updated(string moduleId, string uri)
+    {
+        if (moduleId == _id && uri == Uri)
+        {
+            Load();
+        }
+    }
+
+    /// <summary>Draws the page for the module's status, reading it when the page opens and when the module starts running.</summary>
     public void Draw()
+    {
+        if (Module() is { } module)
+        {
+            var status = ModulesTab.StatusOf(module, _source.Statuses);
+            var opened = _seen is null;
+            var started = status == ModuleStatus.Running && _seen is not (ModuleStatus.Running or ModuleStatus.NotResponding);
+            _seen = status;
+
+            if (started || (opened && status is ModuleStatus.Running or ModuleStatus.NotResponding))
+            {
+                Load();
+                return;
+            }
+        }
+
+        Render();
+    }
+
+    /// <summary>Reads the page; asked again while a read is under way, it reads once more when that one ends.</summary>
+    private void Load()
+    {
+        if (Module() is not { } module || _source.Pages is not { } pages)
+        {
+            _failed = true;
+            Render();
+            return;
+        }
+
+        if (_loading)
+        {
+            _again = true;
+            return;
+        }
+
+        var uri = Uri;
+        var pageIds = module.Manifest.Pages.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
+        _loading = true;
+
+        if (_content is null)
+        {
+            Render();
+        }
+
+        _ = Task.Run(async () =>
+        {
+            ModulePageParse parse;
+
+            try
+            {
+                var tools = await pages.ToolsAsync(_id, CancellationToken.None).ConfigureAwait(false);
+                var text = await pages.ReadAsync(_id, uri, CancellationToken.None).ConfigureAwait(false);
+
+                parse = text is null
+                    ? ModulePageParse.Refused(NoAnswer)
+                    : ModulePageParser.Parse(text, tools.ToHashSet(StringComparer.Ordinal), pageIds);
+
+                if (parse.Refusal is { } refusal)
+                {
+                    pages.Warn(_id, $"page {uri} did not arrive", refusal);
+                }
+            }
+            catch (Exception ex)
+            {
+                parse = ModulePageParse.Refused(ex.Message);
+            }
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                _loading = false;
+                _failed = parse.Page is null;
+
+                // A read the module did not answer keeps the page that arrived last, for the not-responding state; a refused page does not.
+                _content = parse.Page ?? (parse.Refusal == NoAnswer ? _content : null);
+
+                if (_again)
+                {
+                    _again = false;
+                    Load();
+                    return;
+                }
+
+                Render();
+            });
+        });
+    }
+
+    /// <summary>Draws the page again, keeping focus on the same control: the same name, counted in the same place.</summary>
+    private void Render()
+    {
+        string? focused = null;
+        var place = -1;
+
+        if (TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is Control { Name: { } name } control
+            && control.GetVisualAncestors().Contains(_body))
+        {
+            focused = name;
+            place = _body.GetVisualDescendants().OfType<Control>().Where(c => c.Name == name).ToList().IndexOf(control);
+        }
+
+        Fill();
+
+        if (focused is not null && place >= 0)
+        {
+            _body.GetVisualDescendants().OfType<Control>().Where(c => c.Name == focused).ElementAtOrDefault(place)?.Focus();
+        }
+    }
+
+    private void Fill()
     {
         _body.Children.Clear();
 
@@ -175,6 +323,7 @@ internal sealed class ModulePageView : UserControl, IPageSummary
                     ModulesTab.NotRespondingText,
                     ModulesTab.LastAnswer(last),
                     Tile("RESTART", RestartName, restart)));
+                AddContent(module);
                 break;
 
             case ModulePageState.Stopped:
@@ -195,15 +344,35 @@ internal sealed class ModulePageView : UserControl, IPageSummary
                 break;
 
             default:
-                _body.Children.Add(Notice(
-                    NoticeLevel.Error,
-                    ModulesTab.NotArrivedLabel,
-                    ModulesTab.NotArrivedText(name),
-                    null,
-                    Tile("TRY AGAIN", TryAgainName, Draw),
-                    Tile("RESTART", RestartName, restart)));
+                if (!_failed && _content is not null)
+                {
+                    AddContent(module);
+                }
+                else if (!_loading)
+                {
+                    _body.Children.Add(Notice(
+                        NoticeLevel.Error,
+                        ModulesTab.NotArrivedLabel,
+                        ModulesTab.NotArrivedText(name),
+                        null,
+                        Tile("TRY AGAIN", TryAgainName, Load),
+                        Tile("RESTART", RestartName, restart)));
+                }
+
                 break;
         }
+    }
+
+    private void AddContent(ReadyModule module)
+    {
+        if (_content is null || _source.Pages is not { } pages)
+        {
+            return;
+        }
+
+        var drawn = new ModulePageDrawing(_id, module.Manifest.Name, pages, _openPage, Load).Draw(_content);
+        drawn.Name = ContentName;
+        _body.Children.Add(drawn);
     }
 
     private static Button Tile(string label, string name, Action press)

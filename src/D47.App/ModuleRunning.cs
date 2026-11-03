@@ -71,6 +71,25 @@ internal sealed class ModuleRunning : IModuleTools, IDisposable
         return new ModuleCallResult(result.IsError, result.Text);
     }
 
+    /// <summary>Raised on the tick for each <c>notifications/resources/updated</c>, with the module id and the uri.</summary>
+    public event Action<string, string>? ResourceUpdated;
+
+    /// <summary>The page's text, or null when the module did not answer.</summary>
+    public async Task<string?> ReadPageAsync(string id, string uri, CancellationToken cancellation) =>
+        (await Host.ReadResourceAsync(id, uri, cancellation).ConfigureAwait(false))?.Text;
+
+    public async Task<IReadOnlyList<string>> ToolNamesAsync(string id, CancellationToken cancellation) =>
+        [.. (await Host.ListToolsAsync(id, cancellation).ConfigureAwait(false)).Select(tool => tool.Name)];
+
+    /// <summary>Hands the resource updates the modules sent to <see cref="ResourceUpdated"/>; called on the tick, and does not block.</summary>
+    public void TakeResourceUpdates()
+    {
+        foreach (var update in Host.Inbox.Drain<ModuleResourceUpdated>())
+        {
+            ResourceUpdated?.Invoke(update.ModuleId, update.Uri);
+        }
+    }
+
     public void Start()
     {
         _settings.Changed += OnSettingsChanged;

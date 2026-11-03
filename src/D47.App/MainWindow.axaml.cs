@@ -1112,7 +1112,35 @@ public partial class MainWindow : Window
             () => [.. _host.Characters.CharactersOf(_host.GameState.Active?.Identity.FrontierId).Select(c => (c.Id, c.Name))],
             watch: handler => modules.Changed += handler,
             unwatch: handler => modules.Changed -= handler)
+        {
+            Pages = ModulePages(modules),
+        }
         : null;
+
+    private ModulePageServices ModulePages(ModuleRunning modules)
+    {
+        var host = _host!;
+        var logger = host.Loggers.CreateLogger<ModulePageServices>();
+
+        return new ModulePageServices
+        {
+            ReadAsync = modules.ReadPageAsync,
+            ToolsAsync = modules.ToolNamesAsync,
+            InvokeAsync = (name, arguments, caller, cancellation) => host.Capabilities.InvokeAsync(name, arguments, cancellation, caller),
+            SpeakerName = id => modules.Installed.OfType<D47.Core.Modules.ReadyModule>().FirstOrDefault(m => m.Manifest.Id == id) is { } module
+                ? D47.Core.Modules.ModuleSpeechCallout.Resolve(
+                    module.Manifest,
+                    host.Settings.Current.ModuleFor(id),
+                    host.Settings.Current,
+                    host.Personas.Current.Name,
+                    [.. D47.Core.Persona.PersonaCatalog.Stocked.Select(p => (p.Id, p.Name))],
+                    [.. host.OwnPersonas.Cores.Select(c => (c.Id, c.Name))],
+                    host.Characters.CharactersOf(host.GameState.Active?.Identity.FrontierId)).Name
+                : host.Personas.Current.Name,
+            Warn = (id, what, why) => logger.LogWarning("Module {Id} {What}: {Why}", id, what, why),
+            Watch = handler => modules.ResourceUpdated += handler,
+        };
+    }
 
     public Control BuildSettingsPage()
     {

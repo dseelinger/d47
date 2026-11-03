@@ -37,6 +37,9 @@ public sealed class ModulesSource(
 
     public IReadOnlyList<(string Id, string Name)> Characters => characters();
 
+    /// <summary>What module pages read and call; null where only the page states are drawn.</summary>
+    public ModulePageServices? Pages { get; init; }
+
     public void Restart(string id) => restart(id);
 
     /// <summary>Raised, on any thread, when the installed list or a status changes; the source listens only while someone does.</summary>

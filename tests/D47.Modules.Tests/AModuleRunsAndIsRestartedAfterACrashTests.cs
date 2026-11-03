@@ -163,6 +163,22 @@ public sealed class AModuleRunsAndIsRestartedAfterACrashTests : IDisposable
         Assert.Equal(new ModuleToolResult(false, "again"), await _host.CallToolAsync("fake", "echo", Args(("text", "again")), cancellation));
     }
 
+    [Fact]
+    public async Task APageIsReadAndAnUpdateTheModuleSendsReachesTheInbox()
+    {
+        var cancellation = TestContext.Current.CancellationToken;
+
+        _host.Apply([_module], _ => true);
+        await Until(ModuleStatus.Running, from: 0);
+
+        var page = await _host.ReadResourceAsync("fake", "d47://pages/main", cancellation);
+        Assert.Equal("""{"parts":[{"type":"DataBlock","prose":"Fake page."}]}""", page?.Text);
+        Assert.Null(ModulePageParser.Parse(page!.Text, new HashSet<string>(), new HashSet<string> { "main" }).Refusal);
+
+        Assert.Equal("sent", (await _host.CallToolAsync("fake", "touch", Args(), cancellation)).Text);
+        Assert.Equal(new ModuleResourceUpdated("fake", "d47://pages/main"), await NextNotice());
+    }
+
     private static Dictionary<string, object?> Args(params (string Name, string Value)[] pairs) =>
         pairs.ToDictionary(pair => pair.Name, pair => (object?)pair.Value);
 

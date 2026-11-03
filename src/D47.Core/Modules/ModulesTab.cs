@@ -89,7 +89,7 @@ public static class ModulesTab
     public static ModuleStatusReport? ReportOf(InstalledModule module, IReadOnlyList<ModuleStatusReport> statuses) =>
         statuses.FirstOrDefault(s => string.Equals(s.Folder, module.Folder, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>What a module's page shows for its status. Until pages arrive, a running module's page has not.</summary>
+    /// <summary>What a module's page shows for its status when there is no page to draw; a running module's page did not arrive.</summary>
     public static ModulePageState StateOf(ModuleStatus status) => status switch
     {
         ModuleStatus.Starting => ModulePageState.Starting,
@@ -101,6 +101,33 @@ public static class ModulesTab
 
     public static string PageKey(string moduleId) => "module:" + moduleId;
 
+    /// <summary>The level key of one of a module's pages after its first.</summary>
+    public static string PageKey(string moduleId, string pageId) => PageKey(moduleId) + "/" + pageId;
+
     /// <summary>The module id a level key names, or null for a key that is not a module's.</summary>
-    public static string? IdOfKey(string key) => key.StartsWith("module:", StringComparison.Ordinal) ? key["module:".Length..] : null;
+    public static string? IdOfKey(string key)
+    {
+        if (!key.StartsWith("module:", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var rest = key["module:".Length..];
+        var cut = rest.IndexOf('/', StringComparison.Ordinal);
+
+        return cut < 0 ? rest : rest[..cut];
+    }
+
+    /// <summary>The page a module's level key names, or null for the module's first page.</summary>
+    public static string? PageIdOfKey(string key)
+    {
+        if (IdOfKey(key) is not { } id)
+        {
+            return null;
+        }
+
+        var rest = key[(PageKey(id).Length)..];
+
+        return rest.StartsWith('/') ? rest[1..] : null;
+    }
 }

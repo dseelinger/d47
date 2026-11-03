@@ -14,7 +14,8 @@ internal sealed class ModulesFurnishing(IPanelTabHost host)
     private ModulesSource? _source;
     private bool _furnished;
     private ModulesInstalledPage? _installed;
-    private ModulePageView? _page;
+    /// <summary>The page views built; going back shows a view without building it again.</summary>
+    private readonly List<(string Key, ModulePageView View)> _pages = [];
 
     public void Enable(ModulesSource source)
     {
@@ -26,6 +27,13 @@ internal sealed class ModulesFurnishing(IPanelTabHost host)
         _source = source;
         Furnish();
         source.Changed += () => Dispatcher.UIThread.Post(Refresh);
+        source.Pages?.Watch?.Invoke((id, uri) => Dispatcher.UIThread.Post(() =>
+        {
+            foreach (var page in Live())
+            {
+                page.Updated(id, uri);
+            }
+        }));
     }
 
     private void Furnish()
@@ -43,7 +51,29 @@ internal sealed class ModulesFurnishing(IPanelTabHost host)
     {
         Furnish();
         _installed?.Draw();
-        _page?.Draw();
+
+        foreach (var page in Live())
+        {
+            page.Draw();
+        }
+    }
+
+    /// <summary>Drills to another of the module's pages, its crumb the title its manifest gives.</summary>
+    private void OpenPage(string id, string pageId)
+    {
+        var title = _source?.Installed.OfType<ReadyModule>().FirstOrDefault(m => m.Manifest.Id == id)?.Manifest.Pages
+            .FirstOrDefault(p => p.Id == pageId)?.Title ?? pageId;
+
+        host.Nav.Drill(PanelTab.Modules, new NavCrumb(ModulesTab.PageKey(id, pageId), title) { Whole = true });
+    }
+
+    /// <summary>The views on the Modules breadcrumb now; the rest are forgotten, so a page left behind reads nothing more.</summary>
+    private List<ModulePageView> Live()
+    {
+        var trail = host.Nav.TrailOf(PanelTab.Modules).Select(crumb => crumb.Key).ToHashSet(StringComparer.Ordinal);
+        _pages.RemoveAll(page => !trail.Contains(page.Key));
+
+        return [.. _pages.Select(page => page.View)];
     }
 
     private Control Build(NavCrumb crumb)
@@ -52,7 +82,9 @@ internal sealed class ModulesFurnishing(IPanelTabHost host)
 
         if (ModulesTab.IdOfKey(crumb.Key) is { } id)
         {
-            return _page = new ModulePageView(source, id, host.OpenSettingsPlace);
+            var view = new ModulePageView(source, id, ModulesTab.PageIdOfKey(crumb.Key), host.OpenSettingsPlace, page => OpenPage(id, page));
+            _pages.Add((crumb.Key, view));
+            return view;
         }
 
         return _installed = new ModulesInstalledPage(
