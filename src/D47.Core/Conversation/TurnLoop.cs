@@ -1818,15 +1818,19 @@ public sealed class TurnLoop(
             var context = speaker is null ? ToolContext?.Invoke() ?? Input.ControlContext.None : Input.ControlContext.None;
             var actionsEnabled = speaker is null && (ActionsEnabled?.Invoke() ?? false);
 
-            return Readable(compact
+            return WithModules(Readable(compact
                 ? ToolSurface.Compact(capabilities, context, actionsEnabled).Tools
-                : ToolSurface.ForMode(capabilities, context, actionsEnabled).Tools);
+                : ToolSurface.ForMode(capabilities, context, actionsEnabled).Tools), deferred: false);
         }
+
+        // The running modules' tools follow the built-ins, so the built-in prefix is the same whichever modules run.
+        IReadOnlyList<ToolAdvertisement> WithModules(IReadOnlyList<ToolAdvertisement> tools, bool deferred) =>
+            capabilities.Modules?.Advertise(deferred) is { Count: > 0 } modules ? [.. tools, .. modules] : tools;
 
         IReadOnlyList<ToolAdvertisement> advertised =
             !providerCapabilities.SupportsToolCalls ? []
             : speaker is { OffersTools: false } ? []
-            : searchable ? Readable(ToolSurface.Searchable(capabilities).Tools)
+            : searchable ? WithModules(Readable(ToolSurface.Searchable(capabilities).Tools), deferred: true)
             : ModeTools();
 
         // Set once a round has been refused for size even with the short list: from then on the round carries

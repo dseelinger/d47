@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Nodes;
 using D47.Core.Modules;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
@@ -122,7 +123,7 @@ public sealed class ModuleHost : IDisposable
                 async (client, token) => await client.ListToolsAsync(cancellationToken: token).ConfigureAwait(false),
                 cancellation).ConfigureAwait(false);
 
-            return [.. tools.Select(tool => new ModuleTool(id, tool.Name, tool.Description, tool.ProtocolTool.InputSchema))];
+            return [.. tools.Select(tool => new ModuleTool(id, tool.Name, tool.Description, tool.ProtocolTool.InputSchema, Phrases(tool.ProtocolTool.Meta)))];
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellation.IsCancellationRequested)
         {
@@ -204,6 +205,12 @@ public sealed class ModuleHost : IDisposable
         Task.WaitAny(Task.WhenAll(runners.Select(runner => runner.Ended)), Task.Delay(StopGrace));
         _job.Dispose();
     }
+
+    /// <summary>The strings in <c>"d47/phrases"</c>; anything else there is ignored.</summary>
+    private static IReadOnlyList<string> Phrases(JsonObject? meta) =>
+        meta?["d47/phrases"] is JsonArray phrases
+            ? [.. phrases.OfType<JsonValue>().Select(value => value.TryGetValue<string>(out var text) ? text : null).OfType<string>()]
+            : [];
 
     private static string Join(IEnumerable<string> parts)
     {

@@ -2643,6 +2643,9 @@ public sealed class AppHost : IDisposable
         services.BuildingRegistry.Dispose();
 
         late.Registry = capabilities;
+        var moduleTools = new D47.Core.Modules.ModuleTools(
+            new LateModuleTools(() => late.Host?._modules), capabilities, loggerFactory.CreateLogger<D47.Core.Modules.ModuleTools>());
+        capabilities.Modules = moduleTools;
 
         // The one late-bound edge in the composition: descriptors declare the settings rows and some
         // descriptors read settings, so the row table is supplied once the registry exists.
@@ -2727,8 +2730,14 @@ public sealed class AppHost : IDisposable
                 // And "mark buy limpets as done" / "remove buy limpets" (#1957), per line of the Commander's own.
                 .Concat(ChecklistCapability.Phrases(stores.Checklists));
 
+        // A module phrase comes last and only where no phrase of d47's own or the Commander's already says it.
         var router = new KeywordRouter(
-            capabilities, () => MacroCapability.Phrases(services.Macros).Concat(OtherDynamicCommands()));
+            capabilities,
+            () =>
+            {
+                List<DynamicCommand> others = [.. MacroCapability.Phrases(services.Macros), .. OtherDynamicCommands()];
+                return [.. others, .. moduleTools.Phrases(others)];
+            });
 
         late.Router = router;
 

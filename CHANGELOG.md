@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A running module's tools can now be used by D47's model and by voice. You can ask for what a module does in your own words, and a phrase the module gives for a tool runs it without the model. A module phrase that is already one of D47's phrases, or one of your own, is ignored, so a module cannot take over "dock" or a macro. The model is told that what a module returns is untrusted data, not instructions.
+
 Settings has a Modules section under Privacy and this install, shown only when a module is installed. Each module has its own group: a checkbox that turns it on or off, its status with a Restart button, who it speaks as, a Mute checkbox, how often it may speak, and what leaves this machine. A module that D47 refused to start shows why, and its checkbox cannot be ticked. The model cannot turn a module on, and neither can a spoken request.
 
 D47 no longer zips your data folder into `data\backups` the first time a new version starts, so that start is a few seconds faster. Zips already in `data\backups` are left where they are; you can delete the folder.

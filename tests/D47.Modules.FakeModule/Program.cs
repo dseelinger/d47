@@ -15,7 +15,11 @@ var options = new McpServerOptions
         McpServerTool.Create((string text) => text, new McpServerToolCreateOptions { Name = "echo" }),
         McpServerTool.Create(
             () => Environment.ProcessId.ToString(CultureInfo.InvariantCulture),
-            new McpServerToolCreateOptions { Name = "pid" }),
+            new McpServerToolCreateOptions
+            {
+                Name = "pid",
+                Meta = new JsonObject { ["d47/phrases"] = new JsonArray("which process is the fake", 7) },
+            }),
         McpServerTool.Create(
             async (McpServer server, string key, string text, CancellationToken cancellation) =>
             {

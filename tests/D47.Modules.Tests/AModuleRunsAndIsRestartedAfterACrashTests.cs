@@ -54,6 +54,10 @@ public sealed class AModuleRunsAndIsRestartedAfterACrashTests : IDisposable
 
         Assert.Equal(new ModuleToolResult(false, "hello"), await _host.CallToolAsync("fake", "echo", Args(("text", "hello")), cancellation));
 
+        var tools = await _host.ListToolsAsync("fake", cancellation);
+        Assert.Equal(["which process is the fake"], tools.Single(tool => tool.Name == "pid").Phrases);
+        Assert.Empty(tools.Single(tool => tool.Name == "echo").Phrases);
+
         await _host.CallToolAsync("fake", "say", Args(("key", "tally"), ("text", "Three bounties open.")), cancellation);
         Assert.Equal(new ModuleLine("fake", "tally", "Three bounties open."), await NextNotice());
 

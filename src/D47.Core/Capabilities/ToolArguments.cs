@@ -11,6 +11,9 @@ public sealed class ToolArguments(IReadOnlyDictionary<string, string> values)
 
     public IReadOnlyDictionary<string, string> Values { get; } = values;
 
+    /// <summary>The JSON object these were flattened from, or null when they were not read from JSON.</summary>
+    public string? Json { get; private init; }
+
     /// <summary>
     /// The flattening the provider seam must do for the registry: a model's JSON object becomes the flat
     /// string map every handler already reads.
@@ -58,7 +61,7 @@ public sealed class ToolArguments(IReadOnlyDictionary<string, string> values)
             return Empty;
         }
 
-        return new ToolArguments(values);
+        return new ToolArguments(values) { Json = json };
     }
 
     public bool TryGetString(string name, [NotNullWhen(true)] out string? value) =>

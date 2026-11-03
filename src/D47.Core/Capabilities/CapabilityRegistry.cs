@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using D47.Core.Modules;
 
 namespace D47.Core.Capabilities;
 
@@ -108,6 +109,9 @@ public sealed partial class CapabilityRegistry
 
     public RegisteredCapability? Find(string id) => _byId.GetValueOrDefault(id);
 
+    /// <summary>The running modules' tools, reached for a <c>mod_</c> name no capability owns; null until the host sets it.</summary>
+    public ModuleTools? Modules { get; set; }
+
     /// <summary>Raised once per tool call, after the outcome is known.</summary>
     public event Action<ToolInvocation>? ToolInvoked;
 
@@ -121,7 +125,11 @@ public sealed partial class CapabilityRegistry
     {
         if (!_byToolName.TryGetValue(toolName, out var found))
         {
-            return ToolResult.Error($"No such tool '{toolName}'.");
+            // A module tool is never protected, and its use is not announced: ToolInvoked names registered tools only.
+            return Modules is { } modules
+                   && await modules.InvokeAsync(toolName, arguments, cancellationToken).ConfigureAwait(false) is { } fromModule
+                ? fromModule
+                : ToolResult.Error($"No such tool '{toolName}'.");
         }
 
         var tool = found.Tool;
@@ -200,4 +208,6 @@ public sealed partial class CapabilityRegistry
 
     [GeneratedRegex("^[a-z0-9]+(_[a-z0-9]+)*$")]
     private static partial Regex ToolNamePattern();
+
+    internal static bool IsToolName(string name) => ToolNamePattern().IsMatch(name);
 }
