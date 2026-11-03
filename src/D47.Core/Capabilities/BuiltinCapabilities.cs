@@ -312,6 +312,9 @@ public static class BuiltinCapabilities
         // The minor faction each Commander has named for their squadron.
         Knowledge.SquadronFactions? squadronFactions = null,
 
+        // The published rare index.
+        Knowledge.IRareIndexSource? rareIndex = null,
+
         // The standing offer to plot a neutron route's first waypoint.
         Conversation.NeutronOffer? neutronOffer = null,
 
@@ -386,7 +389,8 @@ public static class BuiltinCapabilities
             signalIndex,
             signalSightings,
             () => gameState.Active?.Location.StarPos,
-            squadronFactions),
+            squadronFactions,
+            rareIndex),
         RouteCapability.Create(
             routes,
             trade,

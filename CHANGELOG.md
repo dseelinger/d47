@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+You can ask for a list of the rare goods near you. "List the rares near me, most profitable first" names the best three with where each is sold, its distance, price, profit and supply, and counts the rest; it can also order by distance, buy price or total, and page through the range. The figures come from the rare index and are not quoted live, and the answer says so when the index could not be fetched.
+
 D47 downloads the rare index, which holds each rare good's source price, stock and far sell price, from the rares-1 release on github.com when a rare is asked about and the copy in dataares is missing or more than three hours old. The Privacy and egress section lists it as Rare index, always on, with no setting; nothing about the Commander is sent.
 
 Ambient music, the thinking bed and sound cues now drop to their Duck while D47 speaks value while the microphone is open, whichever key, voice activity or the wake word opened it, and return to their Level when it closes.

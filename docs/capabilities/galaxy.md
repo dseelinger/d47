@@ -246,7 +246,7 @@ There is no setting for this one. The project builds an index of the rare goods 
 each rare's source price and stock, and the price it sells for far from its source - and publishes it
 as `rares.tsv` on the `rares-1` release on github.com.
 
-D47 downloads it only when a rare is asked about and the copy in `dataares` is missing or more than
+D47 downloads it only when a rare is asked about or listed and the copy in `dataares` is missing or more than
 3 hours old. Nothing about you goes with the request. A download replaces the copy on disk only once
 it reads as an index; one that fails leaves the old copy in use and is tried again on a later
 question, no sooner than an hour after. Until a copy exists, a rare's far sell price is the one
@@ -681,6 +681,32 @@ own scans were searched; before the journal backfill is done, it says those scan
 A name search that finds nothing says that names are matched as they were uploaded, in the
 uploader's game language. The answer is kept as the last signals search, in the search history, and
 can be saved by name.
+
+#### `list_rares`
+
+List the rare goods within reach of a system, ordered by distance, buy price, profit or total.
+
+```json
+{"type":"object","properties":{"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 200."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"order":{"type":"string","description":"asc or desc. Default is ascending for distance and price, and descending for profit and total.","enum":["asc","desc"]},"order_by":{"type":"string","description":"Nearest first, cheapest to buy, most profit per tonne, or most profit for the whole supply. Default distance.","enum":["distance","price","profit","total"]},"page":{"type":"integer","description":"Which page of results, from 1; each page holds limit results. Ask for page 2 and on only to continue the search just answered."}},"required":[],"additionalProperties":false}
+```
+
+Rows come from the rare goods d47 ships (where each is sold, and its distance from the star) joined
+to the rare index (see [Rare index](#rare-index)) by symbol. The tool asks no market for a quote.
+`near` defaults to the Commander's system; a system a rare is sold in, or the Commander's own, is
+placed from known coordinates, and any other is placed through Galaxy search, which must be on.
+`max_distance` is in light years and defaults to 200.
+
+Each row gives the rare's name, station and system, the distance in light years and from the star in
+light seconds, and from the index its supply (`Stock`), buy price and the age of the report. Profit is the far
+sell price minus the buy price, and total is supply times the far sell price; each is left out when
+either figure is missing. The far sell price is the index's, or the committed table's when the index
+has none. `order_by` is `distance`, `price`, `profit` or `total`; `order` defaults to ascending for
+distance and price and descending for profit and total. A rare with no value under the chosen order
+sorts last. A rare with no supply stays in the list, and one with no index row shows no supply or price.
+
+The answer names three rares at most, then counts the rest of the page; `limit` (default 25) and
+`page` step through the range. When the index cannot be fetched, rares still list with distance and
+far price, and the answer says supply and prices are not known.
 
 #### `distance_between`
 

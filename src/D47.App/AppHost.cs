@@ -2684,6 +2684,7 @@ public sealed class AppHost : IDisposable
                 bgsTick: () => late.Host?.BgsTick?.Last,
                 signalSightings: stores.SignalSightings,
                 signalIndex: services.SignalIndexStore,
+                rareIndex: services.RareIndexStore,
                 pickCommander: loop.Feed.Picks.Enqueue,
                 galNetArchive: () => late.Host?.GalNet?.Archive,
                 serverStatus: () => late.Host?.ServerStatus,
