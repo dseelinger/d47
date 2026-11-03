@@ -68,6 +68,9 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     private IReadOnlyList<string> _services = [];
 
+    private readonly TextBlock _origin = Prose(string.Empty, TypeScale.Tip, ThemeManager.GreyKey);
+    private IReadOnlyDictionary<string, string>? _originArguments;
+
     public StationSearchPage(
         GalaxySearchSurface searches,
         Func<bool> lookupsEnabled,
@@ -143,6 +146,19 @@ public sealed class StationSearchPage : GalaxySearchPage
     {
         _services = [.. services.Select(Canonical).OfType<string>().Distinct(StringComparer.Ordinal)];
         DrawServices();
+    }
+
+    /// <summary>
+    /// Fills the form with a rare run's <paramref name="arguments"/> and runs them, saying where they came from
+    /// for as long as the form still holds them.
+    /// </summary>
+    public void RunRareRun(IReadOnlyDictionary<string, string> arguments, string rare, bool powerOpen)
+    {
+        _origin.Text = $"Filled in from {rare}'s rare run."
+                       + (powerOpen ? " You are not pledged to a Power, so Acquiring power is left open." : string.Empty);
+        _originArguments = arguments;
+        Run(arguments);
+        Follow();
     }
 
     public override IReadOnlyDictionary<string, string> FormArguments()
@@ -332,6 +348,9 @@ public sealed class StationSearchPage : GalaxySearchPage
     {
         var form = new StackPanel { Spacing = 22 };
 
+        _origin.IsVisible = false;
+        form.Children.Add(_origin);
+
         form.Children.Add(Group(
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
@@ -388,8 +407,15 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     protected override object? Followed => _here();
 
-    protected override void Follow() =>
+    protected override void Follow()
+    {
         ShowHere(_near, _here());
+
+        _origin.IsVisible = _originArguments is { } filled
+                            && FormArguments() is var now
+                            && now.Count == filled.Count
+                            && filled.All(pair => now.TryGetValue(pair.Key, out var value) && value == pair.Value);
+    }
 
     private void DrawServices()
     {

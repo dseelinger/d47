@@ -444,6 +444,7 @@ public partial class MainWindow : Window
                         PrefixNames = systems.PrefixNamesAsync,
                         FactionNames = systems.FactionNamesAsync,
                         SignalSources = () => host.Settings.Current.Knowledge.SignalIndex || host.SignalSightings?.Any == true,
+                        PledgedPower = () => host.GameState.Active?.Pledge is { IsPledged: true, Power: { Length: > 0 } power } ? power : null,
                     },
                 };
 

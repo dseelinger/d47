@@ -133,7 +133,7 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
         var (panel, window) = Shown(new World());
 
         Assert.Equal(
-            [StarSystemPage.RootKey, SystemSearchPage.RootKey, StationSearchPage.RootKey, OutfittingSearchPage.RootKey, BodySearchPage.RootKey, SignalSearchPage.RootKey],
+            [StarSystemPage.RootKey, SystemSearchPage.RootKey, StationSearchPage.RootKey, OutfittingSearchPage.RootKey, BodySearchPage.RootKey, SignalSearchPage.RootKey, RareGoodsPage.RootKey],
             panel.Nav.Roots(PanelTab.Search).Select(root => root.Key));
 
         window.Close();

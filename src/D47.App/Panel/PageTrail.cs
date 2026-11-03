@@ -41,6 +41,7 @@ public static class PageTrail
             GalaxySearchKind.Outfitting => OutfittingSearchPage.RootKey,
             GalaxySearchKind.Bodies => BodySearchPage.RootKey,
             GalaxySearchKind.Signals => SignalSearchPage.RootKey,
+            GalaxySearchKind.Rares => RareGoodsPage.RootKey,
             _ => null,
         };
 

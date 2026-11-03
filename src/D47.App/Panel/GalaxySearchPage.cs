@@ -41,6 +41,9 @@ public sealed record GalaxySearchSurface(
 
     /// <summary>Whether a signal search has anything to read: the signal index is on or the Commander has scanned signals; null for always.</summary>
     public Func<bool>? SignalSources { get; init; }
+
+    /// <summary>The Power the Commander is pledged to, or null for none.</summary>
+    public Func<string?>? PledgedPower { get; init; }
 }
 
 /// <summary>What a search page draws where the answer goes.</summary>

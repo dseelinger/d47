@@ -72,11 +72,25 @@ public static class SearchSorts
         new(Material, "distance", true, "Richest first", "Richest first") { OneWay = true },
     ];
 
+    private static readonly IReadOnlyList<SearchSortField> Rares =
+    [
+        Near,
+        Text("name", "name", "Name"),
+        Text("station", "station", "Station"),
+        FromStar,
+        new("supply", "supply", true, "Least supply", "Most supply"),
+        new("price", "price", false, "Cheapest first", "Dearest first"),
+        new("profit", "profit", true, "Least profit first", "Most profit first"),
+        new("total", "total", true, "Smallest total first", "Largest total first"),
+        new("reported", "reported", true, "Oldest report first", "Newest report first"),
+    ];
+
     /// <summary>The fields <paramref name="kind"/> sorts on, nearest first among them.</summary>
     public static IReadOnlyList<SearchSortField> For(GalaxySearchKind kind) => kind switch
     {
         GalaxySearchKind.Stations => Stations,
         GalaxySearchKind.Bodies => Bodies,
+        GalaxySearchKind.Rares => Rares,
         _ => Systems,
     };
 

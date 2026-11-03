@@ -164,7 +164,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
         var (panel, window) = Shown(world);
 
         Assert.Equal(
-            [StarSystemPage.RootKey, SystemSearchPage.RootKey, StationSearchPage.RootKey, OutfittingSearchPage.RootKey, BodySearchPage.RootKey, SignalSearchPage.RootKey],
+            [StarSystemPage.RootKey, SystemSearchPage.RootKey, StationSearchPage.RootKey, OutfittingSearchPage.RootKey, BodySearchPage.RootKey, SignalSearchPage.RootKey, RareGoodsPage.RootKey],
             panel.Nav.Roots(PanelTab.Search).Select(root => root.Key));
 
         window.Close();

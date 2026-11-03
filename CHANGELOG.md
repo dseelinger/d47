@@ -14,7 +14,10 @@ You can plan a Powerplay rare run. "Plan a rare run" takes the five rares neares
 
 You can ask for a list of the rare goods near you. "List the rares near me, most profitable first" names the best three with where each is sold, its distance, price, profit and supply, and counts the rest; it can also order by distance, buy price or total, and page through the range. The figures come from the rare index and are not quoted live, and the answer says so when the index could not be fetched.
 
-D47 downloads the rare index, which holds each rare good's source price, stock and far sell price, from the rares-1 release on github.com when a rare is asked about and the copy in dataares is missing or more than three hours old. The Privacy and egress section lists it as Rare index, always on, with no setting; nothing about the Commander is sent.
+Search has a Rare goods page. It lists every rare within reach of a system, most profit first, with Name, Station (System), From star, LY, Supply, Price, Profit, Total and Reported, and every column sorts. Asking for a list of rares by voice opens the page with the same query. Each row's Rare run tile opens Search › Stations filled in for that rare: near its system, at least 200 light years away, in Unoccupied systems your pledged Power is acquiring, with a market. You can also sort a spoken list by name, station, distance from the star, supply or report time.
+
+D47 downloads the rare index, which holds each rare good's source price, stock and far sell price, from the rares-1 release on github.com when a rare is asked about and the copy in data
+ares is missing or more than three hours old. The Privacy and egress section lists it as Rare index, always on, with no setting; nothing about the Commander is sent.
 
 Ambient music, the thinking bed and sound cues now drop to their Duck while D47 speaks value while the microphone is open, whichever key, voice activity or the wake word opened it, and return to their Level when it closes.
 

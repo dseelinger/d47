@@ -691,10 +691,10 @@ can be saved by name.
 
 #### `list_rares`
 
-List the rare goods within reach of a system, ordered by distance, buy price, profit or total.
+List the rare goods within reach of a system, ordered by distance, name, station, distance from the star, supply, buy price, profit, total or report time.
 
 ```json
-{"type":"object","properties":{"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 200."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"order":{"type":"string","description":"asc or desc. Default is ascending for distance and price, and descending for profit and total.","enum":["asc","desc"]},"order_by":{"type":"string","description":"Nearest first, cheapest to buy, most profit per tonne, or most profit for the whole supply. Default distance.","enum":["distance","price","profit","total"]},"page":{"type":"integer","description":"Which page of results, from 1; each page holds limit results. Ask for page 2 and on only to continue the search just answered."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 200."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"order":{"type":"string","description":"asc or desc. Default is descending for supply, profit, total and report time, ascending otherwise.","enum":["asc","desc"]},"order_by":{"type":"string","description":"What to sort by. Default distance.","enum":["distance","name","station","from_star","supply","price","profit","total","reported"]},"page":{"type":"integer","description":"Which page of results, from 1; each page holds limit results. Ask for page 2 and on only to continue the search just answered."}},"required":[],"additionalProperties":false}
 ```
 
 Rows come from the rare goods d47 ships (where each is sold, and its distance from the star) joined
@@ -707,12 +707,13 @@ Each row gives the rare's name, station and system, the distance in light years 
 light seconds, and from the index its supply (`Stock`), buy price and the age of the report. Profit is the far
 sell price minus the buy price, and total is supply times the far sell price; each is left out when
 either figure is missing. The far sell price is the index's, or the committed table's when the index
-has none. `order_by` is `distance`, `price`, `profit` or `total`; `order` defaults to ascending for
-distance and price and descending for profit and total. A rare with no value under the chosen order
+has none. `order_by` is `distance`, `name`, `station`, `from_star`, `supply`, `price`, `profit`, `total` or
+`reported`; `order` defaults to descending for supply, profit, total and reported, and ascending for the rest. A rare with no value under the chosen order
 sorts last. A rare with no supply stays in the list, and one with no index row shows no supply or price.
 
 The answer names three rares at most, then counts the rest of the page; `limit` (default 25) and
-`page` step through the range. When the index cannot be fetched, rares still list with distance and
+`page` step through the range. The answer opens the Rare goods page of the Search tab, which lists every rare in reach, not one
+page, in the same order, with a Rare run tile on each row that fills in the Stations page for that rare. When the index cannot be fetched, rares still list with distance and
 far price, and the answer says supply and prices are not known.
 
 #### `find_rare_run`

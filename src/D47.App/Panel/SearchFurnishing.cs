@@ -25,6 +25,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private OutfittingSearchPage? _outfitting;
     private BodySearchPage? _bodies;
     private SignalSearchPage? _signals;
+    private RareGoodsPage? _rares;
     private StarSystemPage? _found;
     private SystemBodyPage? _body;
     private SystemStationPage? _station;
@@ -41,6 +42,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private string? _systemEntry;
     private readonly Dictionary<GalaxySearchKind, SearchHistoryEntry> _pending = [];
     private IReadOnlyDictionary<string, string>? _pendingBodies;
+    private (IReadOnlyDictionary<string, string> Arguments, string Rare, bool PowerOpen)? _pendingRareRun;
 
     public void EnableStarSystem(StarSystemSurface surface)
     {
@@ -60,6 +62,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             roots.Add(new NavCrumb(OutfittingSearchPage.RootKey, "Outfitting") { Help = GalaxyCapability.Id });
             roots.Add(new NavCrumb(BodySearchPage.RootKey, "Bodies") { Help = GalaxyCapability.Id });
             roots.Add(new NavCrumb(SignalSearchPage.RootKey, "Signals") { Help = GalaxyCapability.Id });
+            roots.Add(new NavCrumb(RareGoodsPage.RootKey, "Rare goods") { Help = GalaxyCapability.Id });
         }
 
         host.Furnish(PanelTab.Search, crumb => Build(crumb, surface), [.. roots]);
@@ -91,6 +94,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         redrawn |= _outfitting is { } outfitting && host.Nav.RootKeyOf(PanelTab.Search) == OutfittingSearchPage.RootKey && outfitting.Tick();
         redrawn |= _bodies is { } bodies && host.Nav.RootKeyOf(PanelTab.Search) == BodySearchPage.RootKey && bodies.Tick();
         redrawn |= _signals is { } signals && host.Nav.RootKeyOf(PanelTab.Search) == SignalSearchPage.RootKey && signals.Tick();
+        redrawn |= _rares is { } rares && host.Nav.RootKeyOf(PanelTab.Search) == RareGoodsPage.RootKey && rares.Tick();
 
         return redrawn;
     }
@@ -140,6 +144,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     {
         _pending.Clear();
         _pendingBodies = null;
+        _pendingRareRun = null;
         _pendingSystem = null;
         _pendingName = null;
         _pendingAddress = null;
@@ -301,6 +306,22 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             return _signals;
         }
 
+        if (crumb.Key == RareGoodsPage.RootKey && surface.Searches is { } rareSearches)
+        {
+            _rares = new RareGoodsPage(
+                rareSearches,
+                () => surface.Here()?.StarSystem,
+                () => rareSearches.PledgedPower?.Invoke(),
+                RunRare,
+                host.Copy,
+                host.Headset)
+            {
+                ColumnWidths = host.ColumnWidths,
+            };
+
+            return _rares;
+        }
+
         if (crumb.Key == AllResultsPage.PageKey)
         {
             var (query, results, open) = _allResults ?? (string.Empty, [], _ => { });
@@ -362,6 +383,17 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         ApplyPending();
 
         return _starSystem;
+    }
+
+    /// <summary>Opens Search › Stations filled in for a rare run from <paramref name="row"/>'s rare, and runs it.</summary>
+    private void RunRare(RareListingRow row)
+    {
+        var power = _surface?.Searches?.PledgedPower?.Invoke();
+
+        ClearPending();
+        _pendingRareRun = (RareRunSearch.StationArguments(row.Rare, power), row.Rare.Name, power is null);
+        host.Nav.Show(StationSearchPage.RootKey);
+        ApplyPending();
     }
 
     private void OpenHistory()
@@ -471,6 +503,12 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         Deliver(GalaxySearchKind.Outfitting, _outfitting);
         Deliver(GalaxySearchKind.Bodies, _bodies);
         Deliver(GalaxySearchKind.Signals, _signals);
+
+        if (_pendingRareRun is { } rareRun && _stations is { } stationSearch)
+        {
+            _pendingRareRun = null;
+            stationSearch.RunRareRun(rareRun.Arguments, rareRun.Rare, rareRun.PowerOpen);
+        }
 
         if (_pendingBodies is { } bodies && _bodies is { } page2)
         {

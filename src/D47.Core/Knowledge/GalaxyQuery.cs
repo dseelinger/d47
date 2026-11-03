@@ -10,6 +10,7 @@ public enum GalaxySearchKind
     Bodies,
     Outfitting,
     Signals,
+    Rares,
 }
 
 /// <summary>How one filter is shaped on the wire, which is also what makes a value valid.</summary>

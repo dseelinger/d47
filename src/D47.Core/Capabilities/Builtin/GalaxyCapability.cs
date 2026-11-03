@@ -298,10 +298,10 @@ public static class GalaxyCapability
                     "Ask D47 which rare goods are near you, most profitable first. The reply names the best three "
                     + "with their prices and says how many more there are.",
                 Description =
-                    "List the rare goods within reach of a system, ordered by distance, buy price, profit "
-                    + "(far sell price minus buy price) or total (supply times far sell price). Supply and prices "
-                    + "come from the published rare index and are not quoted live; for one named rare use "
-                    + "find_nearest_station.",
+                    "List the rare goods within reach of a system, ordered by distance, name, station, distance "
+                    + "from the star, supply, buy price, profit (far sell price minus buy price), total (supply "
+                    + "times far sell price) or report time. Supply and prices come from the published rare index "
+                    + "and are not quoted live; for one named rare use find_nearest_station.",
                 Parameters =
                 [
                     NearParameter,
@@ -310,19 +310,18 @@ public static class GalaxyCapability
                         "How far to look, in light years. Default 200."),
                     ToolParameter.OneOf(
                         "order_by",
-                        "Nearest first, cheapest to buy, most profit per tonne, or most profit for the whole supply. "
-                            + "Default distance.",
+                        "What to sort by. Default distance.",
                         RareListing.Orders),
                     ToolParameter.OneOf(
                         "order",
-                        "asc or desc. Default is ascending for distance and price, and descending for profit and total.",
+                        "asc or desc. Default is descending for supply, profit, total and report time, ascending otherwise.",
                         ["asc", "desc"]),
                     LimitParameter,
                     PageParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
                     ListRaresAsync(
-                        galaxy, currentSystem, currentPosition, settings, rareIndex, now, arguments,
+                        galaxy, currentSystem, currentPosition, settings, rareIndex, searches, now, arguments,
                         cancellationToken),
             },
             new ToolDefinition
@@ -1858,6 +1857,7 @@ public static class GalaxyCapability
         Func<Journal.StarPosition?>? currentPosition,
         Configuration.SettingsService settings,
         IRareIndexSource? rareIndex,
+        GalaxySearchBoard? searches,
         Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
@@ -1907,19 +1907,31 @@ public static class GalaxyCapability
             ? " The rare index could not be fetched, so supply and prices are not known."
             : string.Empty;
 
+        var at = now?.Invoke() ?? DateTimeOffset.UtcNow;
+
+        // The page draws every rare, not the spoken page, so a later spoken page posts the same answer.
+        searches?.Post(new GalaxySearchPosting(
+            GalaxySearchKind.Rares,
+            SearchArguments(arguments),
+            reference,
+            new RareSearchResult(rows, index is null),
+            string.Empty,
+            at));
+
+        var rares = PageRef.Search(GalaxySearchKind.Rares);
+
         if (rows.Count == 0)
         {
-            return ToolResult.Ok($"No rare good is sold within {distance} light years of {from}.{note}");
+            return ToolResult.Ok($"No rare good is sold within {distance} light years of {from}.{note}") with { Page = rares };
         }
 
         var shown = rows.Skip((page - 1) * limit).Take(limit).ToArray();
 
         if (shown.Length == 0)
         {
-            return ToolResult.Ok(NothingOnPage(page, more: false) + note);
+            return ToolResult.Ok(NothingOnPage(page, more: false) + note) with { Page = rares };
         }
 
-        var at = now?.Invoke() ?? DateTimeOffset.UtcNow;
         var said = new StringBuilder(
             $"{PageLead("Rares", page, limit, shown.Length, rows.Count)} within {distance} light years of {from}, "
             + $"by {orderBy}: ");
@@ -1938,7 +1950,7 @@ public static class GalaxyCapability
         said.Append(LastPage(page, more: page * limit < rows.Count));
         said.Append(LimitRefused(askedLimit));
 
-        return ToolResult.Ok(said.ToString());
+        return ToolResult.Ok(said.ToString()) with { Page = rares };
     }
 
     /// <summary>
@@ -1990,7 +2002,7 @@ public static class GalaxyCapability
 
     private const int MostRareRuns = 5;
 
-    private const double DefaultRareRunDistance = 200;
+    private const double DefaultRareRunDistance = RareRunSearch.DefaultMinDistance;
 
     /// <summary>Systems asked for per rare; the stations are taken from them in order.</summary>
     private const int RareRunSystems = 25;
@@ -2018,7 +2030,7 @@ public static class GalaxyCapability
         var requested = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["acquiring_power"] = arguments.Text("power")?.Trim() is { Length: > 0 } named ? named : "mine",
-            ["power_state"] = "Unoccupied",
+            ["power_state"] = RareRunSearch.PowerState,
         };
 
         if (ResolveMine(requested, gameState) is { } unpledged)

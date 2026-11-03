@@ -48,6 +48,7 @@ public abstract class GalaxySearchWorld
             PrefixNames = _suggesting ? _systems.PrefixNamesAsync : null,
             SuggestionPause = _suggesting ? TimeSpan.Zero : NameSuggestions.DefaultPause,
             SignalSources = SignalSources,
+            PledgedPower = Pledged,
             History = HistoryOnSurface,
         },
     };
@@ -55,6 +56,8 @@ public abstract class GalaxySearchWorld
     protected virtual JournalLocation Here => new("LTT 7786", null, false, null) { SystemAddress = Ltt7786 };
 
     protected virtual Func<bool>? SignalSources => null;
+
+    protected virtual Func<string?>? Pledged => null;
 
     protected virtual SearchHistory? HistoryOnSurface => null;
 }

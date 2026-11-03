@@ -14,6 +14,7 @@ internal static class ToolPlaces
         ["search_outfitting"] = OutfittingSearchPage.RootKey,
         ["find_body"] = BodySearchPage.RootKey,
         ["find_signal"] = SignalSearchPage.RootKey,
+        ["list_rares"] = RareGoodsPage.RootKey,
         ["plot_route"] = RoutingPages.PlanRoot,
         [BookmarksCapability.ListTool] = RoutingPages.BookmarksRoot,
         ["get_checklist"] = CommanderFurnishing.ChecklistRoot,
