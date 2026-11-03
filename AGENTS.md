@@ -60,13 +60,13 @@ the About dialog. The changelog is a changelog: nothing in the release chain par
 
 - **`D47.Core` depends on nothing** but `Microsoft.Extensions.Logging.Abstractions` and
   `System.Security.Cryptography.ProtectedData`. No UI, no audio hardware, no vendor SDK.
-- **Each spoke references only Core** — `D47.Audio`, `D47.Knowledge`, `D47.Llm`, `D47.Stt`,
-  `D47.Tts`, `D47.Vr`. No spoke references another spoke.
-- **`D47.App` references all seven** and is the only place they meet.
+- **Each spoke references only Core** — `D47.Audio`, `D47.Knowledge`, `D47.Llm`, `D47.Modules`,
+  `D47.Stt`, `D47.Tts`, `D47.Vr`. No spoke references another spoke.
+- **`D47.App` references all eight** and is the only place they meet.
 
 Enforced by `tests/D47.Core.Tests/CoreDependencyTests.cs`, which reflects over referenced
-assembly names and fails on `Avalonia`, `Vortice`, `NAudio`, `Whisper`, `Anthropic`, `OpenAI` or
-`Serilog.Sinks`. The rule is what makes the headless replay harness possible: break it and game
+assembly names and fails on `Avalonia`, `Vortice`, `NAudio`, `Whisper`, `Anthropic`, `OpenAI`,
+`ModelContextProtocol` or `Serilog.Sinks`. The rule is what makes the headless replay harness possible: break it and game
 logic can no longer run against journal fixtures with no game, device or network.
 
 ## The tick discipline

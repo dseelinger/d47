@@ -484,6 +484,8 @@ public sealed class AppHost : IDisposable
 
     private ModelCatalogRefresher? _modelCatalog;
 
+    private ModuleRunning? _modules;
+
     private readonly List<IDisposable> _feedSources = [];
 
     private readonly Dictionary<string, D47.Knowledge.RavenColonialPlanWriter> _colonisationPlanWriters = new(StringComparer.Ordinal);
@@ -3850,6 +3852,10 @@ public sealed class AppHost : IDisposable
             host._modelCatalog.Start();
             host.MusicPack?.Start();
             host._controllerSampler = services.SampledControllers.Start();
+
+            host._modules = new ModuleRunning(foundations.Files, foundations.Paths.Modules, settings, loggerFactory);
+            host._modules.Start();
+
             CarryStoredControllerIds(services, settings, loggerFactory.CreateLogger<AppHost>());
 
             host._ticking = StartupTimer.Time(
@@ -5728,6 +5734,10 @@ public sealed class AppHost : IDisposable
         // closed file handle on the way out.
         _ticking?.Dispose();
         _controllerSampler?.Dispose();
+
+        // Ends every module's process.
+        _modules?.Dispose();
+
         (Controllers as IDisposable)?.Dispose();
 
         // After the tick and the hotkeys, so no step comes after the last write.

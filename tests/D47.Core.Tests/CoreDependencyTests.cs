@@ -15,6 +15,7 @@ public class CoreDependencyTests
         "Whisper",       // STT
         "Anthropic",     // LLM providers
         "OpenAI",
+        "ModelContextProtocol", // module hosting
         "Serilog.Sinks", // concrete log targets; logging abstractions are fine
     ];
 

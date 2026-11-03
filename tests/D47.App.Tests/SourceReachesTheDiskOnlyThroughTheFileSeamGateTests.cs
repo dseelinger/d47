@@ -63,12 +63,13 @@ public sealed class SourceReachesTheDiskOnlyThroughTheFileSeamGateTests
 
     /// <summary>
     /// Types whose path parameters are not the app's own file I/O: path arithmetic, shell launches, a form field's
-    /// file name, and a model path handed to the ONNX runtime.
+    /// file name, a model path handed to the ONNX runtime, and a resource URI sent to a module.
     /// </summary>
     private static readonly HashSet<string> NotTheDisk =
     [
         "System.IO.Path", "System.Diagnostics.Process", "System.Diagnostics.ProcessStartInfo",
         "System.Net.Http.MultipartFormDataContent", "Microsoft.ML.OnnxRuntime.InferenceSession",
+        "ModelContextProtocol.Client.McpClient",
     ];
 
     private static readonly Lazy<IReadOnlyDictionary<string, List<string>>> Surveyed = new(Survey);

@@ -37,9 +37,10 @@ single-file `d47.exe` for `win-x64` with its native libraries beside it — the 
 `d47.zip`, with no runtime prerequisite. There is also a per-user installer that needs no
 elevation.
 
-Eight projects: `D47.Core` holds the game logic and depends on no UI, audio hardware or vendor
+Nine projects: `D47.Core` holds the game logic and depends on no UI, audio hardware or vendor
 SDK; six spokes each implement one seam it declares (`D47.Audio`, `D47.Knowledge`, `D47.Llm`,
-`D47.Stt`, `D47.Tts`, `D47.Vr`); `D47.App` is the composition root and the UI. `AGENTS.md` is the
+`D47.Stt`, `D47.Tts`, `D47.Vr`), and a seventh, `D47.Modules`, runs installed modules; `D47.App` is
+the composition root and the UI. `AGENTS.md` is the
 working guide to the tree.
 
 ## Attribution

@@ -57,7 +57,7 @@ stop. Applying `Vetted` is the maintainer's, never yours.
 Read AGENTS.md before proposing anything. The constraints are not preferences:
 
 - **Layering.** `D47.Core` depends on nothing but logging abstractions and `ProtectedData`. Each
-  spoke references only Core; no spoke references another spoke. `D47.App` references all seven and
+  spoke references only Core; no spoke references another spoke. `D47.App` references all eight and
   is the only place they meet. `CoreDependencyTests` enforces the assembly references, not the
   seams — a plan can pass that test and still be wrong.
 - **Ticking.** A tick is synchronous and must not block; all subscribers share one thread.

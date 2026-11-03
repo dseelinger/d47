@@ -5,6 +5,7 @@
     <Project Path="src/D47.Core/D47.Core.csproj" />
     <Project Path="src/D47.Knowledge/D47.Knowledge.csproj" />
     <Project Path="src/D47.Llm/D47.Llm.csproj" />
+    <Project Path="src/D47.Modules/D47.Modules.csproj" />
     <Project Path="src/D47.Stt/D47.Stt.csproj" />
     <Project Path="src/D47.Tts/D47.Tts.csproj" />
     <Project Path="src/D47.Vr/D47.Vr.csproj" />
@@ -16,6 +17,8 @@
     <Project Path="tests/D47.Donations.Tests/D47.Donations.Tests.csproj" />
     <Project Path="tests/D47.Knowledge.Tests/D47.Knowledge.Tests.csproj" />
     <Project Path="tests/D47.Llm.Tests/D47.Llm.Tests.csproj" />
+    <Project Path="tests/D47.Modules.FakeModule/D47.Modules.FakeModule.csproj" />
+    <Project Path="tests/D47.Modules.Tests/D47.Modules.Tests.csproj" />
     <Project Path="tests/D47.Scenarios.Tests/D47.Scenarios.Tests.csproj" />
     <Project Path="tests/D47.Tts.Tests/D47.Tts.Tests.csproj" />
     <Project Path="tests/D47.Vr.Tests/D47.Vr.Tests.csproj" />
