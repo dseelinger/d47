@@ -21,6 +21,12 @@ public sealed record RareEntry
 
     /// <summary>The system's galactic position, as the journal's <c>StarPos</c> writes it.</summary>
     public required StarPosition Position { get; init; }
+
+    /// <summary>The sell price most stations far from the source report; null when fewer than three agree.</summary>
+    public int? FarSellPrice { get; init; }
+
+    /// <summary>The station's distance from its star, in light seconds.</summary>
+    public double? DistanceToArrival { get; init; }
 }
 
 /// <summary>Where each rare good is sold (#115).</summary>
@@ -88,7 +94,8 @@ public static class RareCatalogue
         return entries;
     }
 
-    private static RareEntry? Read(string[] cells)
+    /// <summary>One table row, split on tabs; null when a required cell is missing.</summary>
+    internal static RareEntry? Read(string[] cells)
     {
         if (Text(cells, 0) is not { } symbol
             || Text(cells, 1) is not { } name
@@ -111,6 +118,11 @@ public static class RareCatalogue
             Station = station,
             MarketId = id,
             Position = new StarPosition(x, y, z),
+            FarSellPrice = Text(cells, 8) is { } price
+                && int.TryParse(price, NumberStyles.None, CultureInfo.InvariantCulture, out var credits)
+                    ? credits
+                    : null,
+            DistanceToArrival = Number(cells, 9),
         };
     }
 

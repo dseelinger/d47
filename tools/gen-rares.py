@@ -25,6 +25,12 @@ system name and the station name. Called once per rare at generation time, so a
 Commander asking where a rare is sold costs no network at runtime — the app never
 fetches, so this table adds no egress and needs no disclosure entry.
 
+Two more columns, both read at generation time so the app makes no request for them.
+`far_sell_price` comes from Ardent's `v2/commodity/name/<symbol>/imports?maxDaysAgo=30&fleetCarriers=false`: the sell
+price that the most stations report, leaving out fleet carriers, the higher price on a
+tie, blank when fewer than three stations agree. `distance_to_arrival` comes from EDSM's
+`api-system-v1/stations?systemName=<system>`, matched by market id.
+
 No allocation column. The per-visit quantity is set live by the station's economic
 state — a boom can raise Soontil Relics to hundreds per trip — and is read from the
 market index at answer time, not a static figure that would be a confident wrong
@@ -52,11 +58,19 @@ EDSM_MARKET = "https://www.edsm.net/api-system-v1/stations/market?marketId={mark
 
 EDSM_SYSTEM = "https://www.edsm.net/api-v1/system?systemName={name}&showCoordinates=1"
 
+ARDENT_IMPORTS = ("https://api.ardent-insight.com/v2/commodity/name/{symbol}/imports"
+                  "?maxDaysAgo=30&fleetCarriers=false")
+
+EDSM_STATIONS = "https://www.edsm.net/api-system-v1/stations?systemName={name}"
+
+MIN_AGREEING_STATIONS = 3
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MATERIALS = REPO_ROOT / "src" / "D47.Core" / "Knowledge" / "Materials.tsv"
 OUTPUT = REPO_ROOT / "src" / "D47.Core" / "Knowledge" / "Rares.tsv"
 
-COLUMNS = ["symbol", "name", "system", "station", "market_id", "x", "y", "z"]
+COLUMNS = ["symbol", "name", "system", "station", "market_id", "x", "y", "z",
+           "far_sell_price", "distance_to_arrival"]
 
 # Paced rather than fired all at once — 142 sequential lookups against a service this
 # script does not own.
@@ -120,6 +134,39 @@ def coordinates(system: str, cache: dict[str, tuple[str, str, str]]) -> tuple[st
     return cache[system]
 
 
+def far_sell_price(symbol: str) -> str:
+    """The sell price most non-carrier stations report, or blank without three that agree."""
+    rows = json.loads(fetch(ARDENT_IMPORTS.format(symbol=symbol)))
+    counts: dict[int, int] = {}
+
+    for row in rows:
+        price = row.get("sellPrice") or 0
+
+        if row.get("stationType") != "FleetCarrier" and price > 0:
+            counts[price] = counts.get(price, 0) + 1
+
+    if not counts:
+        return ""
+
+    price, agreeing = max(counts.items(), key=lambda item: (item[1], item[0]))
+    return str(price) if agreeing >= MIN_AGREEING_STATIONS else ""
+
+
+def distance_to_arrival(system: str, market_id: str, cache: dict[str, list[dict]]) -> str:
+    """The station's light seconds from its star, through EDSM; one lookup per system."""
+    if system not in cache:
+        record = json.loads(fetch(EDSM_STATIONS.format(name=urllib.parse.quote(system))))
+        cache[system] = record.get("stations") or []
+        time.sleep(PAUSE)
+
+    for station in cache[system]:
+        if str(station.get("marketId")) == market_id:
+            distance = station.get("distanceToArrival")
+            return "" if distance is None else repr(float(distance))
+
+    return ""
+
+
 def main() -> None:
     rows = list(csv.DictReader(io.StringIO(fetch(FDEV_IDS).decode("utf-8-sig"))))
     known = rare_cargo_symbols()
@@ -128,6 +175,7 @@ def main() -> None:
     unkeyed: list[str] = []
     unplaced: list[str] = []
     positions: dict[str, tuple[str, str, str]] = {}
+    stations: dict[str, list[dict]] = {}
 
     for row in rows:
         symbol = (row.get("symbol") or "").strip().lower()
@@ -147,7 +195,9 @@ def main() -> None:
             unplaced.append(f"{name} ({market_id})")
         else:
             built.append([symbol, name, system, station, market_id,
-                          *coordinates(system, positions)])
+                          *coordinates(system, positions),
+                          far_sell_price(symbol),
+                          distance_to_arrival(system, market_id, stations)])
 
         time.sleep(PAUSE)
 
@@ -177,8 +227,12 @@ def main() -> None:
         "# time, so answering where a rare is sold costs no network at runtime. No",
         "# allocation column: the per-visit quantity is set live by the station's",
         "# economic state and is read from the market index at answer time. x, y, z are",
-        "# the system's galactic coordinates in light years from EDSM. Game data",
-        "# is Frontier's, used under their media usage rules — see NOTICE.",
+        "# the system's galactic coordinates in light years from EDSM. far_sell_price is",
+        "# the sell price most non-carrier stations report, from Ardent's",
+        "# v2/commodity/name/<symbol>/imports; blank when fewer than three agree.",
+        "# distance_to_arrival is the station's light seconds from its star, from EDSM's",
+        "# api-system-v1/stations. Game data is Frontier's, used under their media usage",
+        "# rules — see NOTICE.",
         f"# Rows: {len(built)}. Built: {stamp}.",
         "\t".join(COLUMNS),
     ]
