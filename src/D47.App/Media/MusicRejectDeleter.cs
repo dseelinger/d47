@@ -159,9 +159,11 @@ internal sealed class MusicRejectDeleter
             source is not null && _files.FolderWritten(Path.Combine(source, "tracks")) is not null ? source : null,
             source is not null);
 
+        Release? release = null;
+        var stopped = false;
+
         try
         {
-            Release release;
             JsonObject manifest;
 
             try
@@ -181,6 +183,7 @@ internal sealed class MusicRejectDeleter
                 if (!await FolderAsync(queued[i], release, manifest, token, report).ConfigureAwait(false))
                 {
                     report.Untried.AddRange(queued.Skip(i + 1).Select(queue => queue.Folder));
+                    stopped = true;
                     break;
                 }
             }
@@ -189,12 +192,38 @@ internal sealed class MusicRejectDeleter
         {
             _logger.LogWarning(exception, "Deleting the music rejects stopped");
             report.Failed.Add($"It stopped on an error ({exception.GetType().Name}).");
+            stopped = true;
+        }
+
+        if (stopped && release is { Changed: true })
+        {
+            await RepairAsync(release, token, report).ConfigureAwait(false);
         }
 
         var said = report.Describe();
         _logger.LogInformation("Deleting the music rejects ended: {Said}", said);
 
         return said;
+    }
+
+    /// <summary>Lists the release again and renames any second-name asset left without its real name.</summary>
+    private async Task RepairAsync(Release stale, string token, Report report)
+    {
+        try
+        {
+            var release = await ReleaseAsync(token).ConfigureAwait(false);
+            await FinishSwapsAsync(release, token).ConfigureAwait(false);
+        }
+        catch (DeleteFailure failure)
+        {
+            _logger.LogInformation("Repairing the release after a stopped run failed: {Failure}", failure.Message);
+            report.Failed.Add("Repairing the release afterwards failed. " + failure.Message);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Repairing the release after a stopped run failed");
+            report.Failed.Add($"Repairing the release afterwards stopped on an error ({exception.GetType().Name}).");
+        }
     }
 
     /// <summary>One folder's six steps. False when GitHub refused or failed, which stops the run.</summary>
@@ -470,6 +499,7 @@ internal sealed class MusicRejectDeleter
         if (release.Assets.Remove(name, out var leftover))
         {
             await SendAsync(HttpMethod.Delete, $"{Api}/releases/assets/{leftover}", step, token, Answer).ConfigureAwait(false);
+            release.Changed = true;
         }
     }
 
@@ -479,6 +509,7 @@ internal sealed class MusicRejectDeleter
         if (release.Assets.Remove(name, out var old))
         {
             await SendAsync(HttpMethod.Delete, $"{Api}/releases/assets/{old}", step, token, Answer).ConfigureAwait(false);
+            release.Changed = true;
         }
 
         var rename = JsonSerializer.Serialize(new Dictionary<string, string> { ["name"] = name });
@@ -491,7 +522,13 @@ internal sealed class MusicRejectDeleter
                 new StringContent(rename, Encoding.UTF8, "application/json"))
             .ConfigureAwait(false);
 
+        foreach (var stale in release.Assets.Where(asset => asset.Value == uploaded).Select(asset => asset.Key).ToList())
+        {
+            release.Assets.Remove(stale);
+        }
+
         release.Assets[name] = uploaded;
+        release.Changed = true;
     }
 
     private async Task<long> UploadAsync(Release release, string name, HttpContent content, string step, TimeSpan limit, string token)
@@ -507,6 +544,7 @@ internal sealed class MusicRejectDeleter
 
         var id = ReadId(body, step);
         release.Assets[name] = id;
+        release.Changed = true;
 
         return id;
     }
@@ -620,7 +658,11 @@ internal sealed class MusicRejectDeleter
 
     private sealed record Queue(string Folder, IReadOnlyList<string> Files);
 
-    private sealed record Release(long Id, Dictionary<string, long> Assets);
+    private sealed record Release(long Id, Dictionary<string, long> Assets)
+    {
+        /// <summary>True once GitHub has accepted a change to the release's assets.</summary>
+        public bool Changed { get; set; }
+    }
 
     /// <summary>What a run did, in the words of the reply.</summary>
     /// <param name="source">The generator's data folder when it holds a tracks folder.</param>

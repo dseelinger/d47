@@ -153,6 +153,36 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
     }
 
     [Fact]
+    public async Task TwoFoldersInOneRunBothLeaveGitHubWithTheManifestIntact()
+    {
+        _rejects.Add(Situations.Docked, "docked-001.mp3");
+        _rejects.Add(Situations.Docked, "docked-002.mp3");
+        Folder(Situations.NormalSpace, 1, "normal-space-001.mp3", "normal-space-002.mp3");
+        _github.Publish();
+        _rejects.Add(Situations.NormalSpace, "normal-space-001.mp3");
+
+        var (_, said) = await Run();
+
+        Assert.StartsWith("Deleted 3 tracks: 2 from docked, 1 from normal-space.", said, StringComparison.Ordinal);
+        Assert.Contains("manifest.json", _github.Names);
+        Assert.DoesNotContain(_github.Names, name => name.Contains(".next", StringComparison.Ordinal));
+        Assert.Equal(4, (int)Entry(_github.Manifest(), Situations.Docked)["version"]!);
+        Assert.Equal(2, (int)Entry(_github.Manifest(), Situations.NormalSpace)["version"]!);
+    }
+
+    [Fact]
+    public async Task AManifestRenameThatFailsIsRepairedBeforeTheRunReplies()
+    {
+        _rejects.Add(Situations.Docked, "docked-001.mp3");
+        _github.FailRenameTo = "manifest.json";
+
+        var (_, said) = await Run();
+
+        Assert.Contains("docked was not changed. Replacing the manifest failed: Server Error", said, StringComparison.Ordinal);
+        Assert.Equal(["docked.zip", "manifest.json", "supercruise.zip"], _github.Names);
+    }
+
+    [Fact]
     public async Task AGeneratorFolderWithNoTracksFolderIsLeftAlone()
     {
         _source = @"D:\nowhere";
@@ -235,6 +265,9 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
 
         public bool FailUploads { get; set; }
 
+        /// <summary>The next rename to this name answers 500, once.</summary>
+        public string? FailRenameTo { get; set; }
+
         public IEnumerable<string> Names => _assets.Select(asset => asset.Name).Order(StringComparer.Ordinal);
 
         public void Add(string name, int version, string[] tracks)
@@ -264,8 +297,11 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
         }
 
         /// <summary>Writes the manifest with a BOM, as Windows PowerShell's <c>Set-Content -Encoding utf8</c> does.</summary>
-        public void Publish() =>
+        public void Publish()
+        {
+            _assets.RemoveAll(asset => asset.Name == "manifest.json");
             _assets.Add((_next++, "manifest.json", [.. Encoding.UTF8.GetPreamble(), .. JsonSerializer.SerializeToUtf8Bytes(new { folders = _entries })]));
+        }
 
         public void Rename(string from, string to)
         {
@@ -338,7 +374,10 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
 
             if (method == HttpMethod.Delete && path.StartsWith($"{Api}/releases/assets/", StringComparison.Ordinal))
             {
-                _assets.RemoveAll(asset => asset.Id == IdOf(path));
+                if (_assets.RemoveAll(asset => asset.Id == IdOf(path)) == 0)
+                {
+                    return Json(HttpStatusCode.NotFound, "{\"message\":\"Not Found\"}");
+                }
 
                 return new HttpResponseMessage(HttpStatusCode.NoContent);
             }
@@ -347,6 +386,13 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
             {
                 var id = IdOf(path);
                 var name = JsonDocument.Parse(body).RootElement.GetProperty("name").GetString()!;
+
+                if (FailRenameTo == name)
+                {
+                    FailRenameTo = null;
+
+                    return Json(HttpStatusCode.InternalServerError, "{\"message\":\"Server Error\"}");
+                }
 
                 if (_assets.Any(asset => asset.Name == name && asset.Id != id))
                 {

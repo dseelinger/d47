@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Deleting thumbs-down tracks from several folders in one run no longer removes the music library's manifest. A run that stops partway now renames any half-swapped file back to its real name before it replies.
+
 When a story objective fires, the quick acknowledgement now says what you did: "That's it. You docked at Ossen's Lantern." An objective with no name to say gets the stock line alone, as before.
 
 Your own audio in Settings › Hearing and sound › Sounds and levels no longer prints every folder in one tall box. It is four rows: Music, Sound cues, Thinking beds and Audio folder. Music reads like "159 files for 38 situations: main menu 24, docked 23, supercruise 23 and 35 more", and the new Your audio tile opens a page listing every folder with its file count and every file that was ignored or skipped. A warning under Audio folder counts the files D47 could not use.
