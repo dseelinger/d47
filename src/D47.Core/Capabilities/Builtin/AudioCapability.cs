@@ -215,21 +215,22 @@ public static class AudioCapability
         ["pause"] = MusicAction.Pause,
         ["resume"] = MusicAction.Resume,
         ["next"] = MusicAction.Next,
+        ["previous"] = MusicAction.Previous,
     };
 
-    /// <summary>Pause, resume and skip for the ambient music. Levels and mutes stay out of the model's reach.</summary>
+    /// <summary>Pause, resume, skip and step back for the ambient music. Levels and mutes stay out of the model's reach.</summary>
     private static ToolDefinition ManageMusic(Func<MusicAction, string>? music) => new()
     {
         Name = ManageMusicTool,
         Exercise =
             "With ambient music playing, say \"pause the music\" and it holds on the track. \"Resume "
-            + "the music\" restarts it and \"next track\" starts another track from the same folder. The "
-            + "reply says what the music did.",
+            + "the music\" restarts it, \"next track\" starts another track from the same folder and "
+            + "\"previous track\" plays the one before the current track. The reply says what the music did.",
         Description = "Pauses, resumes or skips D47's ambient music. Pause holds the track where it is; next "
-                      + "starts another track from the same folder.",
+                      + "starts another track from the same folder; previous plays the track before the current one.",
         Parameters =
         [
-            ToolParameter.OneOf("action", "What to do to the music.", ["pause", "resume", "next"], required: true),
+            ToolParameter.OneOf("action", "What to do to the music.", ["pause", "resume", "next", "previous"], required: true),
         ],
         Commands =
         [
@@ -241,12 +242,13 @@ public static class AudioCapability
             Phrase("next track", "next"),
             Phrase("skip track", "next"),
             Phrase("skip this track", "next"),
+            Phrase("previous track", "previous"),
         ],
         Handler = (arguments, _) =>
         {
             if (!arguments.TryGetString("action", out var said) || !Actions.TryGetValue(said, out var action))
             {
-                return Task.FromResult(ToolResult.Error("The action is pause, resume or next."));
+                return Task.FromResult(ToolResult.Error("The action is pause, resume, next or previous."));
             }
 
             return Task.FromResult(music is null
@@ -260,6 +262,8 @@ public static class AudioCapability
     public const string MusicLibraryKey = "audio.music.library";
 
     public const string NextTrackKey = "audio.music.next";
+
+    public const string PreviousTrackKey = "audio.music.previous";
 
     private const string MusicGroup = "Ambient music";
 
@@ -336,6 +340,27 @@ public static class AudioCapability
             PressLabel = "Next",
             PressEnabled = s => CanControl(musicState(), s),
             Press = () => music(MusicAction.Next),
+            Watch = watch,
+        };
+
+        yield return new SettingRow
+        {
+            Key = PreviousTrackKey,
+            Exercise =
+                ShowMusic + "find Previous track and press Previous while music plays: the track before the "
+                + "current one in the folder's shuffle starts and Now playing shows its file name. On the "
+                + "first track of a shuffle the same track starts again. The button is greyed out when nothing "
+                + "plays or the channel is muted. Saying \"previous track\" does the same. Needs ambient music playing.",
+            Advanced = true,
+            Label = "Previous track",
+            Help = "Plays the track before this one in the folder's shuffle.",
+            Kind = SettingKind.Info,
+            Group = MusicGroup,
+            GroupHelp = what,
+            DocsAnchor = "the-six-categories",
+            PressLabel = "Previous",
+            PressEnabled = s => CanControl(musicState(), s),
+            Press = () => music(MusicAction.Previous),
             Watch = watch,
         };
     }

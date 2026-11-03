@@ -70,6 +70,7 @@ public class AmbientMusicPlaysOnlyWhileEliteRunsTests : IDisposable
 
     [Theory]
     [InlineData(MusicAction.Resume)]
+    [InlineData(MusicAction.Previous)]
     [InlineData(MusicAction.Next)]
     public void ResumeAndNextSayEliteIsNotRunning(MusicAction action)
     {

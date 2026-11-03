@@ -8,6 +8,7 @@ public enum MusicAction
     Pause,
     Resume,
     Next,
+    Previous,
 }
 
 /// <summary>
@@ -448,6 +449,7 @@ public sealed class AmbientMusic(
             {
                 MusicAction.Pause => Pause(),
                 MusicAction.Resume => Resume(waking ? WakeFadeIn : null),
+                MusicAction.Previous => Back(),
                 _ => Skip(),
             };
         }
@@ -514,6 +516,42 @@ public sealed class AmbientMusic(
         _current = null;
         LeaveCue();
         return StartNext() ? "Next track." : NothingToPlay;
+    }
+
+    private string Back()
+    {
+        if (!_running)
+        {
+            return NotRunning;
+        }
+
+        _paused = false;
+
+        if (audio.Mix.Music.Muted)
+        {
+            return "Ambient music is muted in the Audio mixer.";
+        }
+
+        var inCue = _cue is not null;
+        audio.SkipMusic();
+
+        if (inCue)
+        {
+            _current = null;
+            LeaveCue();
+            return Continue() ? "Previous track." : NothingToPlay;
+        }
+
+        var (track, restarted) = _ambience.Previous(library(), _current);
+        _current = track;
+
+        if (track is null)
+        {
+            return NothingToPlay;
+        }
+
+        audio.PlayMusic(track, _ambience.Playing, afterGap: false, fadeIn: null);
+        return restarted ? "Restarted this track." : "Previous track.";
     }
 
     private const string NotRunning = "Elite is not running.";

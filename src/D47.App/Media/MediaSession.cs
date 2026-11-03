@@ -28,7 +28,7 @@ internal sealed class MediaSession : IDisposable
         _controls.IsPlayEnabled = true;
         _controls.IsPauseEnabled = true;
         _controls.IsNextEnabled = true;
-        _controls.IsPreviousEnabled = false;
+        _controls.IsPreviousEnabled = true;
         _controls.ButtonPressed += OnButtonPressed;
         _music.Changed += OnChanged;
 
@@ -58,6 +58,7 @@ internal sealed class MediaSession : IDisposable
             SystemMediaTransportControlsButton.Play => MusicAction.Resume,
             SystemMediaTransportControlsButton.Pause => MusicAction.Pause,
             SystemMediaTransportControlsButton.Next => MusicAction.Next,
+            SystemMediaTransportControlsButton.Previous => MusicAction.Previous,
             _ => null,
         };
 

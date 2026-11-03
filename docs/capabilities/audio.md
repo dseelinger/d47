@@ -47,8 +47,8 @@ nav_order: 123
 </section>
 <section>
 <h2><span class="num">3</span> Pause the music by voice.</h2>
-<p class="say">With music playing, say "pause the music", then "resume the music" or "next track".</p>
-<p class="expect">Pause holds the track, resume carries on, and next track starts another from the same folder.</p>
+<p class="say">With music playing, say "pause the music", then "resume the music", "next track" or "previous track".</p>
+<p class="expect">Pause holds the track, resume carries on, next track starts another from the same folder, and previous track plays the one before the current track.</p>
 <svg viewBox="0 0 880 140" role="img" aria-label="The ask row with a music command typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">pause the music</text>
@@ -117,11 +117,11 @@ nav_order: 123
 <p class="body">When you dock, Elite writes a Music event naming Starport. D47 holds the old track and plays from music/docked, continuing the docked track it held if you left less than 30 minutes ago, at the music Level, dropping to its Duck while D47 speaks.</p>
 </section>
 <section>
-<h2><span class="num">4</span> Pause, resume and next control the music only.</h2>
+<h2><span class="num">4</span> Pause, resume, next and previous control the music only.</h2>
 <svg viewBox="0 0 880 150" role="img" aria-label="One tool controls the ambient music and nothing else">
  <rect x="20" y="24" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">manage_music</text>
- <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">pause, resume, next</text>
+ <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">pause, resume, next, previous</text>
 </svg>
 <p class="body">The tool is declared as <code>Pauses, resumes or skips D47's ambient music.</code> Levels and mutes are separate rows.</p>
 </section>
@@ -362,37 +362,39 @@ failed folder is tried again at the next start.
 Off, nothing more is downloaded, the music restarts without the library, and the files stay on disk. Deleting
 `data/music-pack` reclaims the space.
 
-### Pause, resume and next track
+### Pause, resume, next and previous track
 
-The keyboard's play/pause and next-track keys control the ambient music. D47 registers as a Windows
+The keyboard's play/pause, next-track and previous-track keys control the ambient music. D47 registers as a Windows
 media session, so it also appears in the volume flyout with the current track's file name, minus its
 extension, and working buttons. Nothing else D47 plays — speech, cues, alerts or the thinking bed — answers to
 these keys.
 
 - **Pause** holds the track where it is. **Resume** continues it from that point.
 - **Next** ends the track and starts the next one in the shuffle. It also ends a pause.
+- **Previous** steps back one place in the current folder's shuffle and plays that track from the start; it does not restart the playing track first. A track queued for deletion is stepped over. On the first track of a shuffle it restarts the playing track. During a one-shot cue it ends the cue and continues the situation's shelved track. It also ends a pause.
 - While paused, a change of situation starts nothing, and the paused track is held for its folder.
   Resume continues the held track of the folder you are in now, if it has one within 30 minutes,
   and otherwise starts that folder's next track.
-- With Elite closed, resume and next reply "Elite is not running." and play nothing. Pause still
+- With Elite closed, resume, next and previous reply "Elite is not running." and play nothing. Pause still
   works.
 - Pause lasts until you resume or restart D47. It is not the **Mute** setting, which is saved and
   unchanged by these keys.
 
 The same controls are on the page. With Show every setting on, open Settings › Hearing and sound ›
-Sounds and levels; the **Ambient music** group, above Levels, holds two rows. **Now playing** shows the
+Sounds and levels; the **Ambient music** group, above Levels, holds three rows. **Now playing** shows the
 track's file name, or Paused, Muted or Nothing playing, and its button reads Pause while a track plays and
-Resume while paused. **Next track** has a Next button that starts another track from the same folder. Both
+Resume while paused. **Next track** has a Next button that starts another track from the same folder. **Previous track**
+has a Previous button that plays the track before the current one. All
 buttons are greyed out when nothing plays or the music is muted.
 
 Windows sends the media keys to whichever media session was used last. With Spotify or another
 player also open, the keys may go to that player instead.
 
-The same three actions work by voice — "pause the music", "resume the music", "next track" or
-"skip track" — through `manage_music`, which the model can also call:
+The same four actions work by voice — "pause the music", "resume the music", "next track",
+"skip track" or "previous track" — through `manage_music`, which the model can also call:
 
 ```json
-{"type":"object","properties":{"action":{"type":"string","description":"What to do to the music.","enum":["pause","resume","next"]}},"required":["action"],"additionalProperties":false}
+{"type":"object","properties":{"action":{"type":"string","description":"What to do to the music.","enum":["pause","resume","next","previous"]}},"required":["action"],"additionalProperties":false}
 ```
 
 ### Thumbs down a track {#thumbs-down-music}

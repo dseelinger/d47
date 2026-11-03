@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The ambient music now has a Previous track. The previous-track media key, the volume flyout’s previous button, "previous track" by voice and a new Previous track row under Next track in Settings › Hearing and sound › Sounds and levels play the track before the current one in the folder’s shuffle, from the start. On the first track of a shuffle it restarts the track, and during a one-shot cue it ends the cue and continues the shelved track.
+
 Docked at an outpost, D47 now plays your docked music instead of normal-space music. Elite plays its normal-space music at outposts and says so in the journal, and D47 followed it. With no tracks in the docked folder, D47 still follows Elite.
 
 The help now has a page for people who write modules. It covers the manifest and why a module is refused, the messages D47 sends and receives, the limits on spoken lines and tool results, the pages a module can draw, and what happens when a module stops answering.

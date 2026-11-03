@@ -495,6 +495,7 @@ public static class SettingsLayout
                                 E("audio.music.library"),
                                 E("audio.music.now"),
                                 E("audio.music.next"),
+                                E("audio.music.previous"),
                                 E(Capabilities.Builtin.AudioCapability.MusicPublishTokenKey),
                                 E(Capabilities.Builtin.AudioCapability.ThumbsDownHotkeyKey),
                             ],

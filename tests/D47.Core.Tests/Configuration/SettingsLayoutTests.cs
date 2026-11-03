@@ -192,15 +192,15 @@ public class SettingsLayoutTests
             rows.Select(r => r.Key));
     }
 
-    /// <summary>The output device, the two music transport rows, then every channel's Level and Mute, and Duck for the three that duck, and the Music publish token and its hotkey; only the device and the secret token row are shown.</summary>
+    /// <summary>The output device, the three music transport rows, then every channel's Level and Mute, and Duck for the three that duck, and the Music publish token and its hotkey; only the device and the secret token row are shown.</summary>
     [Fact]
     public void SoundsHoldsTheOutputDeviceTheMusicRowsAndEighteenAdvancedMixerEntriesTests()
     {
         var surface = Surface();
 
-        Assert.Equal(24, EntryCount("sounds"));
+        Assert.Equal(25, EntryCount("sounds"));
         Assert.Equal(3, ShownCount(surface.Settings, "sounds"));
-        Assert.Equal(24, surface.Settings.RowsForPlace("sounds").Count);
+        Assert.Equal(25, surface.Settings.RowsForPlace("sounds").Count);
     }
 
     [Fact]

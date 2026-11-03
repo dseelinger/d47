@@ -338,6 +338,47 @@ public sealed class Ambience(Random? shuffle = null, Func<MusicTrack, bool>? rej
         return null;
     }
 
+    /// <summary>
+    /// Steps the folder's shuffle back from <paramref name="current"/> to the nearest earlier track that is not
+    /// queued for deletion. At the first track it returns <paramref name="current"/> and says it restarted.
+    /// </summary>
+    public (MusicTrack? Track, bool Restarted) Previous(CueLibrary library, MusicTrack? current)
+    {
+        var folder = Folder(library);
+        Playing = folder;
+
+        if (current is null
+            || !_orders.TryGetValue(folder, out var order)
+            || !ReferenceEquals(order.From, library))
+        {
+            return (Next(library), false);
+        }
+
+        var at = Math.Min(order.Next, order.Tracks.Count) - 1;
+
+        while (at >= 0 && !Equals(order.Tracks[at], current))
+        {
+            at--;
+        }
+
+        if (at < 0)
+        {
+            return (Next(library), false);
+        }
+
+        for (var back = at - 1; back >= 0; back--)
+        {
+            if (rejected?.Invoke(order.Tracks[back]) != true)
+            {
+                order.Next = back + 1;
+                return (order.Tracks[back], false);
+            }
+        }
+
+        order.Next = at + 1;
+        return (current, true);
+    }
+
     private Order Fill(string folder, CueLibrary library)
     {
         var tracks = library.Music(folder).ToList();
