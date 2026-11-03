@@ -1,3 +1,4 @@
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Xunit;
 
@@ -48,6 +49,28 @@ public class ARareGoodHasOneStationToBeSoldAtTests
             Assert.False(string.IsNullOrWhiteSpace(entry.Station));
             Assert.True(entry.MarketId > 0);
         });
+    }
+
+    [Fact]
+    public void EveryRowHasAPosition()
+    {
+        using var table = new StreamReader(
+            typeof(RareCatalogue).Assembly.GetManifestResourceStream("D47.Core.Rares")!);
+
+        var rows = table.ReadToEnd().Split((char)10).Count(line =>
+            line.Length > 0 && line[0] != '#' && !line.StartsWith("symbol	", StringComparison.Ordinal));
+
+        Assert.Equal(rows, RareCatalogue.All.Count);
+
+        Assert.All(RareCatalogue.All, entry => Assert.NotEqual(StarPosition.Origin, entry.Position));
+    }
+
+    [Fact]
+    public void LavianBrandyIsPositionedAtLave()
+    {
+        var lave = RareCatalogue.Find("Lavian Brandy")!.Position;
+
+        Assert.True(lave.DistanceTo(new StarPosition(75.75, 48.75, 70.75)) < 0.1, $"{lave}");
     }
 
     [Trait("Category", "Integration")]

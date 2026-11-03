@@ -42,6 +42,7 @@ import io
 import json
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -49,11 +50,13 @@ FDEV_IDS = "https://raw.githubusercontent.com/EDCD/FDevIDs/master/rare_commodity
 
 EDSM_MARKET = "https://www.edsm.net/api-system-v1/stations/market?marketId={market_id}"
 
+EDSM_SYSTEM = "https://www.edsm.net/api-v1/system?systemName={name}&showCoordinates=1"
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MATERIALS = REPO_ROOT / "src" / "D47.Core" / "Knowledge" / "Materials.tsv"
 OUTPUT = REPO_ROOT / "src" / "D47.Core" / "Knowledge" / "Rares.tsv"
 
-COLUMNS = ["symbol", "name", "system", "station", "market_id"]
+COLUMNS = ["symbol", "name", "system", "station", "market_id", "x", "y", "z"]
 
 # Paced rather than fired all at once — 142 sequential lookups against a service this
 # script does not own.
@@ -102,6 +105,21 @@ def resolve(market_id: str) -> tuple[str, str]:
     return (record.get("name") or "", record.get("sName") or "")
 
 
+def coordinates(system: str, cache: dict[str, tuple[str, str, str]]) -> tuple[str, str, str]:
+    """The system's galactic x, y, z in light years, through EDSM; one lookup per system."""
+    if system not in cache:
+        record = json.loads(fetch(EDSM_SYSTEM.format(name=urllib.parse.quote(system))))
+        point = record.get("coords") if isinstance(record, dict) else None
+
+        if not point:
+            raise SystemExit(f"EDSM has no coordinates for {system}")
+
+        cache[system] = tuple(repr(float(point[axis])) for axis in "xyz")
+        time.sleep(PAUSE)
+
+    return cache[system]
+
+
 def main() -> None:
     rows = list(csv.DictReader(io.StringIO(fetch(FDEV_IDS).decode("utf-8-sig"))))
     known = rare_cargo_symbols()
@@ -109,6 +127,7 @@ def main() -> None:
     built: list[list[str]] = []
     unkeyed: list[str] = []
     unplaced: list[str] = []
+    positions: dict[str, tuple[str, str, str]] = {}
 
     for row in rows:
         symbol = (row.get("symbol") or "").strip().lower()
@@ -127,7 +146,8 @@ def main() -> None:
         if not system or not station:
             unplaced.append(f"{name} ({market_id})")
         else:
-            built.append([symbol, name, system, station, market_id])
+            built.append([symbol, name, system, station, market_id,
+                          *coordinates(system, positions)])
 
         time.sleep(PAUSE)
 
@@ -156,7 +176,8 @@ def main() -> None:
         "# to its system and station through EDSM's stations/market API at generation",
         "# time, so answering where a rare is sold costs no network at runtime. No",
         "# allocation column: the per-visit quantity is set live by the station's",
-        "# economic state and is read from the market index at answer time. Game data",
+        "# economic state and is read from the market index at answer time. x, y, z are",
+        "# the system's galactic coordinates in light years from EDSM. Game data",
         "# is Frontier's, used under their media usage rules — see NOTICE.",
         f"# Rows: {len(built)}. Built: {stamp}.",
         "\t".join(COLUMNS),

@@ -4,149 +4,150 @@
 # to its system and station through EDSM's stations/market API at generation
 # time, so answering where a rare is sold costs no network at runtime. No
 # allocation column: the per-visit quantity is set live by the station's
-# economic state and is read from the market index at answer time. Game data
+# economic state and is read from the market index at answer time. x, y, z are
+# the system's galactic coordinates in light years from EDSM. Game data
 # is Frontier's, used under their media usage rules — see NOTICE.
-# Rows: 142. Built: 2026-09-10.
-symbol	name	system	station	market_id
-advert1	Ultra-Compact Processor Prototypes	17 Lyrae	Langford Enterprise	3227172352
-aerialedenapple	Eden Apples of Aerial	Aerial	Andrade Legacy	128083448
-aganipperush	Aganippe Rush	Aganippe	Julian Market	128012800
-alacarakmoskinart	Alacarakmo Skin Art	Alacarakmo	Weyl Gateway	3231373824
-albinoquechuamammoth	Albino Quechua Mammoth Meat	Quechua	Crown Ring	3222822912
-alieneggs	Leathery Eggs	Zaonce	Ridley Scott	128164088
-altairianskin	Altairian Skin	Altair	Solo Orbiter	128151032
-alyabodilysoap	Alya Body Soap	Alya	Malaspina Gateway	3221638400
-anduligafireworks	Anduliga Fire Works	Anduliga	Celsius Estate	3230243584
-animaleffigies	Crom Silver Fesh	Crom	Chorel Survey	3228463360
-anynacoffee	Any Na Coffee	Any Na	Libby Orbital	3229880064
-apavietii	Apa Vietii	Upaniklis	Forester's Choice	128958681
-aroucaconventualsweets	Arouca Conventual Sweets	Arouca	Shipton Orbital	128098040
-azcancriformula42	AZ Cancri Formula 42	AZ Cancri	Fisher Station	3228400128
-bakedgreebles	Baked Greebles	38 Virginis	Bamford Ring	3229378560
-baltahsinevacuumkrill	Baltah'sine Vacuum Krill	Baltah'Sine	Baltha'Sine Station	128088056
-bankiamphibiousleather	Banki Amphibious Leather	Banki	Antonio de Andrade Vista	3228346112
-bastsnakegin	Bast Snake Gin	Bast	Hart Station	128086776
-belalansrayleather	Belalans Ray Leather	Belalans	Boscovich Ring	3223537152
-bluemilk	Azure Milk	Leesti	George Lucas	128639992
-borasetanipathogenetics	Borasetani Pathogenetics	Borasetani	Katzenstein Terminal	3229638400
-buckyballbeermats	Buckyball Beer Mats	Fullerene C60	Rebuy Prospect	128745551
-burnhambiledistillate	Burnham Bile Distillate	HIP 59533	Burnham Beacon	3230224384
-cd75catcoffee	CD-75 Kitten Brand Coffee	CD-75 661	Kirk Dock	3228566016
-centaurimegagin	Centauri Mega Gin	Alpha Centauri	Hutton Orbital	3228728832
-ceremonialheiketea	Ceremonial Heike Tea	Heike	Brunel City	3227417856
-cetiaepyornisegg	Aepyornis Egg	47 Ceti	Glushko Station	3222560256
-cetirabbits	Ceti Rabbits	47 Ceti	Kaufmanis Hub	3222560000
-chameleoncloth	Chameleon Cloth	LDS 883	Smith Reserve	3223418880
-chateaudeaegaeon	Chateau De Aegaeon	Aegaeon	Schweickart Station	3228416768
-cherbonesbloodcrystals	Cherbones Blood Crystals	Cherbones	Chalker Landing	3229594624
-chieridanimarinepaste	Chi Eridani Marine Paste	Chi Eridani	Steve Masters	128128760
-classifiedexperimentalequipment	Classified Experimental Equipment	HIP 22460	Heart of Taurus	128986325
-coquimspongiformvictuals	Coquim Spongiform Victuals	Coquim	Hirayama Installation	3223832576
-crystallinespheres	Crystalline Spheres	Bento	Snow Moon	128059402
-damnacarapaces	Damna Carapaces	Damna	Nemere Market	3227751936
-deltaphoenicispalms	Delta Phoenicis Palms	Delta Phoenicis	Trading Post	128045312
-deuringastruffles	Deuringas Truffles	Deuringas	Shukor Hub	3229713408
-disomacorn	Diso Ma Corn	Diso	Shifnalport	128161016
-duradrives	Duradrives	Anima	Cowper Dock	3223453184
-eleuthermals	Eleu Thermals	Eleu	Finney Dock	3230624768
-eraninpearlwhisky	Eranin Pearl Whisky	Eranin	Azeban City	128001536
-eshuumbrellas	Eshu Umbrellas	Eshu	Shajn Terminal	3222295552
-esusekucaviar	Esuseku Caviar	Esuseku	Savinykh Orbital	3226919680
-ethgrezeteabuds	Ethgreze Tea Buds	Ethgreze	Bloch Station	3229524992
-fujintea	Fujin Tea	Fujin	Futen Spaceport	128134392
-galactictravelguide	Galactic Travel Guide	LHS 3447	Bluford Orbital	128673074
-geawendancedust	Geawen Dance Dust	Geawen	Obruchev Legacy	3230954752
-gerasiangueuzebeer	Gerasian Gueuze Beer	Geras	Yurchikhin Port	3228047360
-giantirukamasnails	Giant Irukama Snails	Irukama	Blaauw City	3225345792
-giantverrix	Giant Verrix	Phiagre	Greeboski's Outpost	128121336
-gilyasignatureweapons	Gilya Signature Weapons	Gilya	Bell Orbital	3226857216
-gomanyauponcoffee	Goman Yaupon Coffee	Goman	Gustav Sporer Port	3224449792
-haidneblackbrew	Haiden Black Brew	Haiden	Searfoss Enterprise	3226557696
-harmasilversearum	Harma Silver Sea Rum	Harma	Gabriel Enterprise	3221575424
-havasupaidreamcatcher	Havasupai Dream Catcher	Havasupai	Lovelace Port	3221438976
-helvetitjpearls	Helvetitj Pearls	Helvetitj	Friend Orbital	3231094528
-hip10175bushmeat	HIP 10175 Bush Meat	HIP 10175	Stefanyshyn-Piper Station	3223234816
-hip118311swarm	HIP 118311 Swarm	HIP 118311	Lubbock Market	3223177472
-hip41181squid	HIP Proto-Squid	HIP 41181	Andersson Station	3227995392
-hiporganophosphates	HIP Organophosphates	HIP 80364	Stasheff Colony	3227036160
-holvaduellingblades	Holva Duelling Blades	Holva	Kreutz Orbital	3222713088
-honestypills	Honesty Pills	LP 375-25	King Gateway	3229561344
-hr7221wheat	HR 7221 Wheat	HR 7221	Veron City	3226170880
-indibourbon	Indi Bourbon	Epsilon Indi	Mansfield Orbiter	128118520
-jaquesquinentianstill	Jaques Quinentian Still	Colonia	Jaques Station	128667761
-jaradharrepuzzlebox	Jaradharre Puzzle Box	Jaradharre	Gohar Station	3230754816
-jarouarice	Jaroua Rice	Jaroua	McCool City	3224698112
-jotunmookah	Jotun Mookah	Jotun	Icelock	128078840
-kachiriginleaches	Kachirigin Filter Leeches	Kachirigin	Nowak Orbital	3221595648
-kamitracigars	Kamitra Cigars	Kamitra	Hammel Terminal	3225450752
-kamorinhistoricweapons	Kamorin Historic Weapons	Kamorin	Godwin Vision	3221669632
-karetiicouture	Karetii Couture	Karetii	Sinclair Platform	3227333120
-karsukilocusts	Karsuki Locusts	Karsuki Ti	West Market	3225028096
-kinagoinstruments	Kinago Violins	Kinago	Fozard Ring	3227394304
-konggaale	Kongga Ale	Kongga	Laplace Ring	3226978048
-korrokungpellets	Koro Kung Pellets	Korro Kung	Lonchakov Orbital	3228726272
-lavianbrandy	Lavian Brandy	Lave	Lave Station	128106744
-leestianeviljuice	Leestian Evil Juice	Leesti	George Lucas	128639992
-lftvoidextractcoffee	Void Extract Coffee	LFT 1421	Ehrlich Orbital	3229028864
-livehecateseaworms	Live Hecate Sea Worms	Hecate	RJH1972	128042496
-ltthypersweet	LTT Hyper Sweet	LTT 9360	Smeaton Orbital	3224166400
-lyraeweed	Lyrae Weed	16 Lyrae	Budrys Ring	3226417152
-masterchefs	Master Chefs	Viracocha	Pataarcy Corporate	128123640
-mechucoshightea	Mechucos High Tea	Mechucos	Brandenstein Port	3228398848
-medbstarlube	Medb Starlube	Medb	Vela Dock	3228762368
-mokojingbeastfeast	Mokojing Beast Feast	Mokojing	Noli Terminal	3229612800
-momusbogspaniel	Momus Bog Spaniel	Momus Reach	Tartarus Point	128075256
-motronaexperiencejelly	Motrona Experience Jelly	Dea Motrona	Pinzon Dock	3229750528
-mukusubiichitinos	Mukusubii Chitin-os	Mukusubii	Ledyard Dock	3221719296
-mulachigiantfungus	Mulachi Giant Fungus	Mulachi	Clark Terminal	3228892672
-nanomedicines	Nanomedicines	Kuma	Elion Dock	3226651904
-neritusberries	Neritus Berries	Neritus	Toll Ring	3228206080
-ngadandarifireopals	Ngadandari Fire Opals	Ngadandari	Napier Terminal	3226127872
-ngunamodernantiques	Nguna Modern Antiques	Nguna	Biggle Hub	3221538304
-njangarisaddles	Njangari Saddles	Njangari	Lee Hub	3222416896
-noneuclidianexotanks	Non Euclidian Exotanks	LTT 8517	Euclid Terminal	3224135424
-ochoengchillies	Ochoeng Chillies	Ochoeng	Roddenberry Gateway	3226719232
-onionhead	Onionhead	Kappa Fornacis	Harvestport	128129272
-onionheada	Onionhead Alpha Strain	Xelabara	Navigator Market	3226977024
-onionheadb	Onionhead Beta Strain	HIP 112974	la Cosa City	3223027200
-ophiuchiexinoartefacts	Ophiuch Exino Artefacts	36 Ophiuchi	Katzenstein Dock	3228939264
-orrerianviciousbrew	Orrerian Vicious Brew	Orrere	Sharon Lee Free Market	128166392
-pantaaprayersticks	Pantaa Prayer Sticks	George Pantazis	Zamka Platform	3228824064
-pavoniseargrubs	Pavonis Ear Grubs	Delta Pavonis	Hooper Relay	128117240
-personalgifts	Festive Gifts	Njambalba	Frost Dock	3223105792
-platinumaloy	Platinum Alloy	Nahuatl	Artzybasheff Terminal	3223779840
-rajukrustoves	Rajukru Multi-Stoves	Rajukru	Snyder Terminal	3227512320
-rapabaosnakeskins	Rapa Bao Snake Skins	Rapa Bao	Flagg Gateway	3222875648
-rusanioldsmokey	Rusani Old Smokey	Rusani	Fernandes Market	3229255680
-sanumameat	Sanuma Decorative Meat	Sanuma	Dunyach Gateway	3230331136
-saxonwine	Saxon Wine	9 Aurigae	Hunt Enterprise	3227986432
-shanscharisorchid	Shan's Charis Orchid	Arque	Baird Gateway	128107768
-soontillrelics	Soontill Relics	Ngurii	Cheranovsky City	3225348096
-sothiscrystallinegold	Sothis Crystalline Gold	Sothis	Newholm Station	128668557
-tanmarktranquiltea	Tanmark Tranquil Tea	Tanmark	Cassie-L-Peia	128057866
-tarachtorspice	Tarach Spice	Tarach Tor	Tranquillity	128041984
-taurichimes	Tauri Chimes	39 Tauri	Porta	128134648
-terramaterbloodbores	Terra Mater Blood Bores	Terra Mater	GR8Minds	128051466
-thehuttonmug	The Hutton Mug	Alpha Centauri	Hutton Orbital	3228728832
-thrutiscream	Thrutis Cream	Thrutis	Kingsbury Dock	3226522368
-tiegfriessynthsilk	Tiegfries Synth Silk	Tiegfries	Larbalestier Dock	3227726848
-tiolcewaste2pasteunits	Tiolce Waste2Paste Units	Tiolce	Gordon Terminal	3224141312
-toxandjivirocide	Toxandji Virocide	Toxandji	Tsunenaga Orbital	3230258688
-transgeniconionhead	Lucan Onionhead	Tanmark	Cassie-L-Peia	128057866
-uszaiantreegrub	Uszaian Tree Grub	Uszaa	Guest Installation	128164856
-utgaroarmillenialeggs	Utgaroar Millennial Eggs	Utgaroar	Fort Klarix	128037120
-uzumokulowgwings	Uzumoku Low-G Wings	Uzumoku	Sverdrup Ring	3226474496
-vanayequirhinofur	Vanayequi Ceratomorpha Fur	Vanayequi	Clauss Hub	3227289856
-vegaslimweed	Vega Slimweed	Vega	Taylor City	128149240
-vherculisbodyrub	V Herculis Body Rub	V1090 Herculis	Kaku Plant	3228959232
-vidavantianlace	Vidavantian Lace	Vidavanta	Lee Mines	3231082240
-volkhabbeedrones	Volkhab Bee Drones	Volkhab	Vernadsky Dock	3227831808
-watersofshintara	The Waters of Shintara	Shinrarta Dezhra	Jameson Memorial	128666762
-wheemetewheatcakes	Wheemete Wheat Cakes	Wheemete	Eisinga Enterprise	3225032704
-witchhaulkobebeef	Witchhaul Kobe Beef	Witchhaul	Hornby Terminal	3223358720
-wolf1301fesh	Wolf Fesh	Wolf 1301	Saunders's Dive	128084984
-wulpahyperboresystems	Wulpa Hyperbore Systems	Wulpa	Williams Gateway	3221388032
-wuthielokufroth	Wuthielo Ku Froth	Wuthielo Ku	Tarter Dock	3222155776
-xihecompanions	Xihe Biomorphic Companions	Xihe	Zhen Dock	3224133120
-yasokondileaf	Yaso Kondi Leaf	Yaso Kondi	Wheeler Market	3223088640
-zeesszeantglue	Zeessze Ant Grub Glue	Zeessze	Nicollier Hangar	128125432
+# Rows: 142. Built: 2026-11-03.
+symbol	name	system	station	market_id	x	y	z
+advert1	Ultra-Compact Processor Prototypes	17 Lyrae	Langford Enterprise	3227172352	-119.90625	25.375	58.0625
+aerialedenapple	Eden Apples of Aerial	Aerial	Andrade Legacy	128083448	100.75	-102.625	8.40625
+aganipperush	Aganippe Rush	Aganippe	Julian Market	128012800	-11.5625	43.8125	11.625
+alacarakmoskinart	Alacarakmo Skin Art	Alacarakmo	Weyl Gateway	3231373824	-32.40625	169.53125	-49.4375
+albinoquechuamammoth	Albino Quechua Mammoth Meat	Quechua	Crown Ring	3222822912	52.09375	-112.09375	-40.78125
+alieneggs	Leathery Eggs	Zaonce	Ridley Scott	128164088	80.75	48.75	69.25
+altairianskin	Altairian Skin	Altair	Solo Orbiter	128151032	-12.3125	-2.75	11.0
+alyabodilysoap	Alya Body Soap	Alya	Malaspina Gateway	3221638400	-77.28125	-57.4375	30.53125
+anduligafireworks	Anduliga Fire Works	Anduliga	Celsius Estate	3230243584	124.625	2.5	61.25
+animaleffigies	Crom Silver Fesh	Crom	Chorel Survey	3228463360	53.0625	-17.34375	8.46875
+anynacoffee	Any Na Coffee	Any Na	Libby Orbital	3229880064	125.65625	-1.71875	14.09375
+apavietii	Apa Vietii	Upaniklis	Forester's Choice	128958681	-151.21875	-25.0	77.71875
+aroucaconventualsweets	Arouca Conventual Sweets	Arouca	Shipton Orbital	128098040	104.96875	-6.53125	-4.40625
+azcancriformula42	AZ Cancri Formula 42	AZ Cancri	Fisher Station	3228400128	19.65625	26.84375	-38.09375
+bakedgreebles	Baked Greebles	38 Virginis	Bamford Ring	3229378560	44.96875	91.53125	31.53125
+baltahsinevacuumkrill	Baltah'sine Vacuum Krill	Baltah'Sine	Baltha'Sine Station	128088056	85.15625	-56.3125	40.34375
+bankiamphibiousleather	Banki Amphibious Leather	Banki	Antonio de Andrade Vista	3228346112	49.53125	15.75	-91.71875
+bastsnakegin	Bast Snake Gin	Bast	Hart Station	128086776	-36.46875	16.15625	-34.9375
+belalansrayleather	Belalans Ray Leather	Belalans	Boscovich Ring	3223537152	81.625	-94.875	-58.5625
+bluemilk	Azure Milk	Leesti	George Lucas	128639992	72.75	48.75	68.25
+borasetanipathogenetics	Borasetani Pathogenetics	Borasetani	Katzenstein Terminal	3229638400	0.21875	117.75	-18.03125
+buckyballbeermats	Buckyball Beer Mats	Fullerene C60	Rebuy Prospect	128745551	-50.5	19.28125	-203.875
+burnhambiledistillate	Burnham Bile Distillate	HIP 59533	Burnham Beacon	3230224384	122.96875	-9.0625	69.0
+cd75catcoffee	CD-75 Kitten Brand Coffee	CD-75 661	Kirk Dock	3228566016	67.875	-21.5	51.15625
+centaurimegagin	Centauri Mega Gin	Alpha Centauri	Hutton Orbital	3228728832	3.03125	-0.09375	3.15625
+ceremonialheiketea	Ceremonial Heike Tea	Heike	Brunel City	3227417856	-76.96875	71.90625	69.1875
+cetiaepyornisegg	Aepyornis Egg	47 Ceti	Glushko Station	3222560256	-14.125	-116.96875	-32.53125
+cetirabbits	Ceti Rabbits	47 Ceti	Kaufmanis Hub	3222560000	-14.125	-116.96875	-32.53125
+chameleoncloth	Chameleon Cloth	LDS 883	Smith Reserve	3223418880	-28.71875	-35.71875	-61.4375
+chateaudeaegaeon	Chateau De Aegaeon	Aegaeon	Schweickart Station	3228416768	46.90625	23.625	-59.75
+cherbonesbloodcrystals	Cherbones Blood Crystals	Cherbones	Chalker Landing	3229594624	5.1875	84.53125	-16.75
+chieridanimarinepaste	Chi Eridani Marine Paste	Chi Eridani	Steve Masters	128128760	26.28125	-51.75	4.625
+classifiedexperimentalequipment	Classified Experimental Equipment	HIP 22460	Heart of Taurus	128986325	-41.3125	-58.96875	-354.78125
+coquimspongiformvictuals	Coquim Spongiform Victuals	Coquim	Hirayama Installation	3223832576	20.75	-82.25	33.59375
+crystallinespheres	Crystalline Spheres	Bento	Snow Moon	128059402	16.46875	-31.0625	1.46875
+damnacarapaces	Damna Carapaces	Damna	Nemere Market	3227751936	-40.53125	4.375	-124.25
+deltaphoenicispalms	Delta Phoenicis Palms	Delta Phoenicis	Trading Post	128045312	53.90625	-130.6875	14.65625
+deuringastruffles	Deuringas Truffles	Deuringas	Shukor Hub	3229713408	137.3125	3.84375	-35.90625
+disomacorn	Diso Ma Corn	Diso	Shifnalport	128161016	72.15625	48.75	70.75
+duradrives	Duradrives	Anima	Cowper Dock	3223453184	57.65625	-61.1875	-36.53125
+eleuthermals	Eleu Thermals	Eleu	Finney Dock	3230624768	-29.65625	32.6875	104.84375
+eraninpearlwhisky	Eranin Pearl Whisky	Eranin	Azeban City	128001536	-22.84375	36.53125	-1.1875
+eshuumbrellas	Eshu Umbrellas	Eshu	Shajn Terminal	3222295552	120.78125	-247.1875	-16.4375
+esusekucaviar	Esuseku Caviar	Esuseku	Savinykh Orbital	3226919680	-107.875	29.5625	-20.9375
+ethgrezeteabuds	Ethgreze Tea Buds	Ethgreze	Bloch Station	3229524992	-30.03125	72.34375	-23.8125
+fujintea	Fujin Tea	Fujin	Futen Spaceport	128134392	-6.03125	-30.375	-59.03125
+galactictravelguide	Galactic Travel Guide	LHS 3447	Bluford Orbital	128673074	-43.1875	-5.28125	56.15625
+geawendancedust	Geawen Dance Dust	Geawen	Obruchev Legacy	3230954752	22.5	23.78125	171.0625
+gerasiangueuzebeer	Gerasian Gueuze Beer	Geras	Yurchikhin Port	3228047360	-7.03125	-12.875	-56.375
+giantirukamasnails	Giant Irukama Snails	Irukama	Blaauw City	3225345792	140.71875	-96.96875	67.78125
+giantverrix	Giant Verrix	Phiagre	Greeboski's Outpost	128121336	44.28125	-82.96875	52.5
+gilyasignatureweapons	Gilya Signature Weapons	Gilya	Bell Orbital	3226857216	-76.78125	51.03125	21.75
+gomanyauponcoffee	Goman Yaupon Coffee	Goman	Gustav Sporer Port	3224449792	151.875	-173.78125	25.28125
+haidneblackbrew	Haiden Black Brew	Haiden	Searfoss Enterprise	3226557696	-142.03125	-13.34375	-43.90625
+harmasilversearum	Harma Silver Sea Rum	Harma	Gabriel Enterprise	3221575424	-99.25	-100.96875	20.40625
+havasupaidreamcatcher	Havasupai Dream Catcher	Havasupai	Lovelace Port	3221438976	-88.75	-76.75	-39.625
+helvetitjpearls	Helvetitj Pearls	Helvetitj	Friend Orbital	3231094528	-23.1875	80.03125	61.84375
+hip10175bushmeat	HIP 10175 Bush Meat	HIP 10175	Stefanyshyn-Piper Station	3223234816	-45.78125	-93.5	-83.90625
+hip118311swarm	HIP 118311 Swarm	HIP 118311	Lubbock Market	3223177472	9.40625	-123.5	31.59375
+hip41181squid	HIP Proto-Squid	HIP 41181	Andersson Station	3227995392	-8.15625	74.8125	-105.125
+hiporganophosphates	HIP Organophosphates	HIP 80364	Stasheff Colony	3227036160	-101.59375	93.78125	9.90625
+holvaduellingblades	Holva Duelling Blades	Holva	Kreutz Orbital	3222713088	58.6875	-170.96875	-41.96875
+honestypills	Honesty Pills	LP 375-25	King Gateway	3229561344	9.53125	59.3125	-13.21875
+hr7221wheat	HR 7221 Wheat	HR 7221	Veron City	3226170880	58.53125	-55.8125	91.25
+indibourbon	Indi Bourbon	Epsilon Indi	Mansfield Orbiter	128118520	3.125	-8.875	7.125
+jaquesquinentianstill	Jaques Quinentian Still	Colonia	Jaques Station	128667761	-9530.5	-910.28125	19808.125
+jaradharrepuzzlebox	Jaradharre Puzzle Box	Jaradharre	Gohar Station	3230754816	39.53125	21.28125	56.625
+jarouarice	Jaroua Rice	Jaroua	McCool City	3224698112	157.53125	-110.53125	28.25
+jotunmookah	Jotun Mookah	Jotun	Icelock	128078840	-11.03125	-79.21875	-92.3125
+kachiriginleaches	Kachirigin Filter Leeches	Kachirigin	Nowak Orbital	3221595648	-105.375	-73.34375	27.75
+kamitracigars	Kamitra Cigars	Kamitra	Hammel Terminal	3225450752	5.53125	-183.40625	63.84375
+kamorinhistoricweapons	Kamorin Historic Weapons	Kamorin	Godwin Vision	3221669632	-123.875	-81.59375	45.1875
+karetiicouture	Karetii Couture	Karetii	Sinclair Platform	3227333120	-125.59375	44.03125	78.40625
+karsukilocusts	Karsuki Locusts	Karsuki Ti	West Market	3225028096	134.03125	-163.59375	71.0625
+kinagoinstruments	Kinago Violins	Kinago	Fozard Ring	3227394304	-67.40625	-7.40625	150.0625
+konggaale	Kongga Ale	Kongga	Laplace Ring	3226978048	-104.15625	82.71875	-32.375
+korrokungpellets	Koro Kung Pellets	Korro Kung	Lonchakov Orbital	3228726272	81.03125	52.84375	31.5
+lavianbrandy	Lavian Brandy	Lave	Lave Station	128106744	75.75	48.75	70.75
+leestianeviljuice	Leestian Evil Juice	Leesti	George Lucas	128639992	72.75	48.75	68.25
+lftvoidextractcoffee	Void Extract Coffee	LFT 1421	Ehrlich Orbital	3229028864	-45.46875	18.5625	12.59375
+livehecateseaworms	Live Hecate Sea Worms	Hecate	RJH1972	128042496	-56.0	-25.125	-44.28125
+ltthypersweet	LTT Hyper Sweet	LTT 9360	Smeaton Orbital	3224166400	-16.59375	-62.6875	21.40625
+lyraeweed	Lyrae Weed	16 Lyrae	Budrys Ring	3226417152	-113.53125	37.03125	25.53125
+masterchefs	Master Chefs	Viracocha	Pataarcy Corporate	128123640	14.0	-46.4375	9.65625
+mechucoshightea	Mechucos High Tea	Mechucos	Brandenstein Port	3228398848	67.03125	39.59375	-70.09375
+medbstarlube	Medb Starlube	Medb	Vela Dock	3228762368	12.78125	4.8125	39.34375
+mokojingbeastfeast	Mokojing Beast Feast	Mokojing	Noli Terminal	3229612800	73.4375	58.34375	-0.21875
+momusbogspaniel	Momus Bog Spaniel	Momus Reach	Tartarus Point	128075256	-34.9375	-44.15625	-77.34375
+motronaexperiencejelly	Motrona Experience Jelly	Dea Motrona	Pinzon Dock	3229750528	-12.15625	62.625	29.71875
+mukusubiichitinos	Mukusubii Chitin-os	Mukusubii	Ledyard Dock	3221719296	-147.46875	-64.125	46.09375
+mulachigiantfungus	Mulachi Giant Fungus	Mulachi	Clark Terminal	3228892672	6.25	-5.78125	35.9375
+nanomedicines	Nanomedicines	Kuma	Elion Dock	3226651904	-82.15625	53.71875	10.0625
+neritusberries	Neritus Berries	Neritus	Toll Ring	3228206080	75.4375	2.625	-30.875
+ngadandarifireopals	Ngadandari Fire Opals	Ngadandari	Napier Terminal	3226127872	62.75	-74.1875	109.5
+ngunamodernantiques	Nguna Modern Antiques	Nguna	Biggle Hub	3221538304	-122.78125	-102.53125	-22.5625
+njangarisaddles	Njangari Saddles	Njangari	Lee Hub	3222416896	8.875	-205.4375	64.375
+noneuclidianexotanks	Non Euclidian Exotanks	LTT 8517	Euclid Terminal	3224135424	4.0	-55.625	52.65625
+ochoengchillies	Ochoeng Chillies	Ochoeng	Roddenberry Gateway	3226719232	-139.0625	-2.3125	-6.65625
+onionhead	Onionhead	Kappa Fornacis	Harvestport	128129272	12.46875	-66.71875	-22.90625
+onionheada	Onionhead Alpha Strain	Xelabara	Navigator Market	3226977024	-93.40625	66.0625	-44.96875
+onionheadb	Onionhead Beta Strain	HIP 112974	la Cosa City	3223027200	-59.09375	-107.875	34.4375
+ophiuchiexinoartefacts	Ophiuch Exino Artefacts	36 Ophiuchi	Katzenstein Dock	3228939264	0.4375	2.09375	19.21875
+orrerianviciousbrew	Orrerian Vicious Brew	Orrere	Sharon Lee Free Market	128166392	68.84375	48.75	76.75
+pantaaprayersticks	Pantaa Prayer Sticks	George Pantazis	Zamka Platform	3228824064	-12.09375	-16.0	-14.21875
+pavoniseargrubs	Pavonis Ear Grubs	Delta Pavonis	Hooper Relay	128117240	8.375	-10.84375	14.46875
+personalgifts	Festive Gifts	Njambalba	Frost Dock	3223105792	-3.65625	-153.71875	26.46875
+platinumaloy	Platinum Alloy	Nahuatl	Artzybasheff Terminal	3223779840	65.25	-85.75	-6.15625
+rajukrustoves	Rajukru Multi-Stoves	Rajukru	Snyder Terminal	3227512320	-96.9375	143.4375	4.625
+rapabaosnakeskins	Rapa Bao Snake Skins	Rapa Bao	Flagg Gateway	3222875648	94.15625	-167.375	-23.1875
+rusanioldsmokey	Rusani Old Smokey	Rusani	Fernandes Market	3229255680	-64.75	57.21875	-82.625
+sanumameat	Sanuma Decorative Meat	Sanuma	Dunyach Gateway	3230331136	153.4375	61.4375	79.03125
+saxonwine	Saxon Wine	9 Aurigae	Hunt Enterprise	3227986432	-32.75	10.5	-78.5625
+shanscharisorchid	Shan's Charis Orchid	Arque	Baird Gateway	128107768	66.5	38.0625	61.125
+soontillrelics	Soontill Relics	Ngurii	Cheranovsky City	3225348096	169.5	-42.34375	87.0625
+sothiscrystallinegold	Sothis Crystalline Gold	Sothis	Newholm Station	128668557	-352.78125	10.5	-346.34375
+tanmarktranquiltea	Tanmark Tranquil Tea	Tanmark	Cassie-L-Peia	128057866	1.6875	-77.875	-30.09375
+tarachtorspice	Tarach Spice	Tarach Tor	Tranquillity	128041984	-13.125	-81.0	-20.28125
+taurichimes	Tauri Chimes	39 Tauri	Porta	128134648	-7.3125	-20.28125	-50.90625
+terramaterbloodbores	Terra Mater Blood Bores	Terra Mater	GR8Minds	128051466	-49.75	-19.03125	-45.0
+thehuttonmug	The Hutton Mug	Alpha Centauri	Hutton Orbital	3228728832	3.03125	-0.09375	3.15625
+thrutiscream	Thrutis Cream	Thrutis	Kingsbury Dock	3226522368	-90.6875	8.125	-79.53125
+tiegfriessynthsilk	Tiegfries Synth Silk	Tiegfries	Larbalestier Dock	3227726848	21.96875	43.0	-139.0
+tiolcewaste2pasteunits	Tiolce Waste2Paste Units	Tiolce	Gordon Terminal	3224141312	10.5	-34.78125	25.0625
+toxandjivirocide	Toxandji Virocide	Toxandji	Tsunenaga Orbital	3230258688	155.09375	-12.40625	61.0625
+transgeniconionhead	Lucan Onionhead	Tanmark	Cassie-L-Peia	128057866	1.6875	-77.875	-30.09375
+uszaiantreegrub	Uszaian Tree Grub	Uszaa	Guest Installation	128164856	68.84375	48.75	74.75
+utgaroarmillenialeggs	Utgaroar Millennial Eggs	Utgaroar	Fort Klarix	128037120	-0.15625	-102.75	-5.5625
+uzumokulowgwings	Uzumoku Low-G Wings	Uzumoku	Sverdrup Ring	3226474496	-95.21875	9.875	-74.125
+vanayequirhinofur	Vanayequi Ceratomorpha Fur	Vanayequi	Clauss Hub	3227289856	-88.5	-12.3125	98.84375
+vegaslimweed	Vega Slimweed	Vega	Taylor City	128149240	-21.90625	8.125	9.0
+vherculisbodyrub	V Herculis Body Rub	V1090 Herculis	Kaku Plant	3228959232	-44.9375	36.9375	13.46875
+vidavantianlace	Vidavantian Lace	Vidavanta	Lee Mines	3231082240	-50.9375	90.21875	65.8125
+volkhabbeedrones	Volkhab Bee Drones	Volkhab	Vernadsky Dock	3227831808	36.53125	100.0625	-135.71875
+watersofshintara	The Waters of Shintara	Shinrarta Dezhra	Jameson Memorial	128666762	55.71875	17.59375	27.15625
+wheemetewheatcakes	Wheemete Wheat Cakes	Wheemete	Eisinga Enterprise	3225032704	145.125	-140.0625	131.96875
+witchhaulkobebeef	Witchhaul Kobe Beef	Witchhaul	Hornby Terminal	3223358720	-13.25	-52.0625	-65.875
+wolf1301fesh	Wolf Fesh	Wolf 1301	Saunders's Dive	128084984	-15.4375	-34.6875	-79.40625
+wulpahyperboresystems	Wulpa Hyperbore Systems	Wulpa	Williams Gateway	3221388032	-126.09375	-83.09375	-85.5625
+wuthielokufroth	Wuthielo Ku Froth	Wuthielo Ku	Tarter Dock	3222155776	68.3125	-190.03125	12.375
+xihecompanions	Xihe Biomorphic Companions	Xihe	Zhen Dock	3224133120	-19.8125	-35.375	34.0
+yasokondileaf	Yaso Kondi Leaf	Yaso Kondi	Wheeler Market	3223088640	4.9375	-175.90625	-0.90625
+zeesszeantglue	Zeessze Ant Grub Glue	Zeessze	Nicollier Hangar	128125432	-19.8125	-3.25	-14.28125

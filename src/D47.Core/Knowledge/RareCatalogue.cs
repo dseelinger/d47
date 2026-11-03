@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Reflection;
+using D47.Core.Journal;
 
 namespace D47.Core.Knowledge;
 
@@ -17,6 +18,9 @@ public sealed record RareEntry
 
     /// <summary>Frontier's own identifier for the station.</summary>
     public required long MarketId { get; init; }
+
+    /// <summary>The system's galactic position, as the journal's <c>StarPos</c> writes it.</summary>
+    public required StarPosition Position { get; init; }
 }
 
 /// <summary>Where each rare good is sold (#115).</summary>
@@ -91,7 +95,10 @@ public static class RareCatalogue
             || Text(cells, 2) is not { } system
             || Text(cells, 3) is not { } station
             || Text(cells, 4) is not { } marketId
-            || !long.TryParse(marketId, CultureInfo.InvariantCulture, out var id))
+            || !long.TryParse(marketId, CultureInfo.InvariantCulture, out var id)
+            || Number(cells, 5) is not { } x
+            || Number(cells, 6) is not { } y
+            || Number(cells, 7) is not { } z)
         {
             return null;
         }
@@ -103,8 +110,15 @@ public static class RareCatalogue
             System = system,
             Station = station,
             MarketId = id,
+            Position = new StarPosition(x, y, z),
         };
     }
+
+    private static double? Number(string[] cells, int index) =>
+        Text(cells, index) is { } text
+        && double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : null;
 
     private static string? Text(string[] cells, int index) =>
         index < cells.Length && cells[index].Length > 0 ? cells[index] : null;
