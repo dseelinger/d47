@@ -58,10 +58,10 @@ public partial class MainWindow : Window
             AudioCapability.ThumbsDownHotkeyKey, () => Avalonia.Threading.Dispatcher.UIThread.Post(ThumbsDownMusic));
     }
 
-    /// <summary>Queues the playing library track for deletion and says what happened; UI thread.</summary>
+    /// <summary>Thumbs down the playing track and says what happened; UI thread.</summary>
     private void ThumbsDownMusic()
     {
-        if (_host is { MusicMaintainer: true })
+        if (_host is not null)
         {
             _host.Announcer.SayAside(_host.ThumbsDownMusic());
         }

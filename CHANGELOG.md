@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+"Thumbs down this track" now deletes your own music. With one of your own tracks from `data\audio\music` playing, "thumbs down this track", "thumbs down", the hotkey and the stick button move the file to the Recycle Bin and start the next track, for every Commander. The reply names the track; if the file cannot be deleted it says so and the track is still skipped. A library track is still queued for deletion with a Music publish token, and without one it is refused and keeps playing. The hotkey and stick-button rows now show without a token.
+
 The ambient music now has a Previous track. The previous-track media key, the volume flyout’s previous button, "previous track" by voice and a new Previous track row under Next track in Settings › Hearing and sound › Sounds and levels play the track before the current one in the folder’s shuffle, from the start. On the first track of a shuffle it restarts the track, and during a one-shot cue it ends the cue and continues the shelved track.
 
 Docked at an outpost, D47 now plays your docked music instead of normal-space music. Elite plays its normal-space music at outposts and says so in the journal, and D47 followed it. With no tracks in the docked folder, D47 still follows Elite.

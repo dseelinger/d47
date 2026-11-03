@@ -25,6 +25,9 @@ public interface ICueSource
     /// <summary>The file name, with its extension, behind a prefixed name; null where there is no file.</summary>
     string? FileName(string name) => null;
 
+    /// <summary>The full path of the file behind a prefixed name; null where there is no file.</summary>
+    string? FilePath(string name) => null;
+
     /// <summary>The whole clip in <see cref="AudioFormat.Standard"/>.</summary>
     AudioClip Decode(string name, string clipName)
     {
@@ -488,7 +491,7 @@ public sealed class CueLibrary
 
         return source.IsPack && source.FileName(resource) is { } file
             ? new MusicTrack(name, () => source.Stream(resource, name), situation, file)
-            : new MusicTrack(name, () => source.Stream(resource, name));
+            : new MusicTrack(name, () => source.Stream(resource, name), OwnPath: source.FilePath(resource));
     }
 
     private static bool IsSkippable(Exception ex) =>

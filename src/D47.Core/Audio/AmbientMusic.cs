@@ -26,7 +26,11 @@ public sealed record MusicState(string? Track, bool Playing, bool Paused, bool I
 /// fades back in on the next activity.
 /// </summary>
 public sealed class AmbientMusic(
-    AudioArbiter audio, Func<CueLibrary> library, Random? shuffle = null, MusicRejects? rejects = null)
+    AudioArbiter audio,
+    Func<CueLibrary> library,
+    Random? shuffle = null,
+    MusicRejects? rejects = null,
+    Func<string, bool>? deleteFile = null)
 {
     /// <summary>The longest a one-shot cue holds the slot.</summary>
     public static readonly TimeSpan CueLimit = TimeSpan.FromSeconds(60);
@@ -37,7 +41,8 @@ public sealed class AmbientMusic(
 
     private readonly Lock _gate = new();
 
-    private Ambience _ambience = new(shuffle, track => IsRejected(rejects, track));
+    private Ambience? _drawn;
+    private readonly HashSet<string> _deletedOwn = new(StringComparer.OrdinalIgnoreCase);
     private MusicTrack? _current;
     private bool _paused;
     private bool _running;
@@ -221,14 +226,14 @@ public sealed class AmbientMusic(
 
     private bool Change(string situation, DateTimeOffset now)
     {
-        if (!_ambience.Enter(situation)
-            || string.Equals(_ambience.Folder(library()), audio.MusicFolder, StringComparison.OrdinalIgnoreCase))
+        if (!CurrentAmbience.Enter(situation)
+            || string.Equals(CurrentAmbience.Folder(library()), audio.MusicFolder, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
         var from = audio.MusicFolder;
-        var to = _ambience.Folder(library());
+        var to = CurrentAmbience.Folder(library());
         var faded = audio.ShelveMusic(now, from is null ? null : Crossfade.Between(from, to));
         _current = null;
 
@@ -245,7 +250,7 @@ public sealed class AmbientMusic(
     {
         _spent = folder;
 
-        if (_paused || audio.Mix.Music.Muted || _ambience.Draw(folder, library()) is not { } track)
+        if (_paused || audio.Mix.Music.Muted || CurrentAmbience.Draw(folder, library()) is not { } track)
         {
             return false;
         }
@@ -265,8 +270,8 @@ public sealed class AmbientMusic(
     {
         var cue = _cue!;
         _cue = null;
-        _ambience.Enter(Underlying());
-        var folder = _ambience.Folder(library());
+        CurrentAmbience.Enter(Underlying());
+        var folder = CurrentAmbience.Folder(library());
         var length = fade ? Crossfade.Between(cue, folder) : (TimeSpan?)null;
         var faded = fade && audio.ShelveMusic(now, length);
         _current = null;
@@ -283,7 +288,7 @@ public sealed class AmbientMusic(
         if (_cue is not null)
         {
             _cue = null;
-            _ambience.Enter(Underlying());
+            CurrentAmbience.Enter(Underlying());
         }
     }
 
@@ -380,12 +385,17 @@ public sealed class AmbientMusic(
                 _current = null;
                 _cue = null;
                 _spent = null;
-                _ambience = new Ambience(shuffle, track => IsRejected(rejects, track));
+                _drawn = null;
             }
         }
 
         Raise();
     }
+
+    private Ambience CurrentAmbience => _drawn ??= new Ambience(shuffle, IsRejected);
+
+    private bool IsRejected(MusicTrack track) =>
+        IsRejected(rejects, track) || (track.OwnPath is { } path && _deletedOwn.Contains(path));
 
     private static bool IsRejected(MusicRejects? rejects, MusicTrack track) =>
         rejects is not null
@@ -393,20 +403,16 @@ public sealed class AmbientMusic(
         && rejects.Contains(folder, file);
 
     /// <summary>
-    /// Queues the playing library track for deletion and skips to the next one, and says what happened. A
-    /// track from the Commander's own folder is refused.
+    /// Moves the playing track from the Commander's own folder to the Recycle Bin and skips it. A library
+    /// track is queued for deletion and skipped when <paramref name="queueLibrary"/> is true, and refused
+    /// otherwise. Says what happened.
     /// </summary>
-    public string ThumbsDown()
+    public string ThumbsDown(bool queueLibrary)
     {
         string said;
 
         lock (_gate)
         {
-            if (rejects is null)
-            {
-                return "Thumbs down is not available.";
-            }
-
             var live = _current is not null && audio.Activity.MusicPlaying;
 
             if (!live)
@@ -414,24 +420,63 @@ public sealed class AmbientMusic(
                 return "No music is playing.";
             }
 
-            if (_current is not { PackFolder: { } folder, PackFile: { } file })
+            if (_current is { OwnPath: { } own } ownTrack)
             {
-                return "That track is one of your own files, so it is not queued.";
+                said = DeleteOwn(ownTrack.Name, own);
             }
+            else if (!queueLibrary || rejects is null)
+            {
+                return "Thumbs down on library tracks is for the library's maintainer.";
+            }
+            else if (_current is { PackFolder: { } folder, PackFile: { } file })
+            {
+                var added = rejects.Add(folder, file);
+                var queued = rejects.Count;
 
-            var added = rejects.Add(folder, file);
-            var queued = rejects.Count;
+                Interlocked.Exchange(ref _stirred, 1);
+                _idle = false;
+                var next = Skip();
 
-            Interlocked.Exchange(ref _stirred, 1);
-            _idle = false;
-            var next = Skip();
-
-            said = $"{(added ? "Queued" : "Already queued")} {Path.GetFileNameWithoutExtension(file)}. "
-                   + $"{queued} track{(queued == 1 ? " is" : "s are")} queued for deletion. {next}";
+                said = $"{(added ? "Queued" : "Already queued")} {Path.GetFileNameWithoutExtension(file)}. "
+                       + $"{queued} track{(queued == 1 ? " is" : "s are")} queued for deletion. {next}";
+            }
+            else
+            {
+                return "Thumbs down is not available for this track.";
+            }
         }
 
         Raise();
         return said;
+    }
+
+    private string DeleteOwn(string name, string path)
+    {
+        Interlocked.Exchange(ref _stirred, 1);
+        _idle = false;
+        audio.SkipMusic();
+        _deletedOwn.Add(path);
+
+        var deleted = false;
+
+        try
+        {
+            deleted = deleteFile?.Invoke(path) == true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Reported below as a file that could not be deleted.
+        }
+
+        if (!deleted)
+        {
+            _deletedOwn.Remove(path);
+        }
+
+        var next = Skip();
+        return deleted
+            ? $"Deleted {name} and moved it to the Recycle Bin. {next}"
+            : $"Could not delete {name}; it may be locked or read-only. {next}";
     }
 
     /// <summary>Carries out one transport action and says what happened. Any action ends idle.</summary>
@@ -542,7 +587,7 @@ public sealed class AmbientMusic(
             return Continue() ? "Previous track." : NothingToPlay;
         }
 
-        var (track, restarted) = _ambience.Previous(library(), _current);
+        var (track, restarted) = CurrentAmbience.Previous(library(), _current);
         _current = track;
 
         if (track is null)
@@ -550,7 +595,7 @@ public sealed class AmbientMusic(
             return NothingToPlay;
         }
 
-        audio.PlayMusic(track, _ambience.Playing, afterGap: false, fadeIn: null);
+        audio.PlayMusic(track, CurrentAmbience.Playing, afterGap: false, fadeIn: null);
         return restarted ? "Restarted this track." : "Previous track.";
     }
 
@@ -566,7 +611,7 @@ public sealed class AmbientMusic(
             return false;
         }
 
-        if (audio.UnshelveMusic(_ambience.Folder(library()), fadeIn) is { } shelved)
+        if (audio.UnshelveMusic(CurrentAmbience.Folder(library()), fadeIn) is { } shelved)
         {
             _current = shelved;
             return true;
@@ -586,14 +631,14 @@ public sealed class AmbientMusic(
             return false;
         }
 
-        _current = _ambience.Next(library());
+        _current = CurrentAmbience.Next(library());
 
         if (_current is null)
         {
             return false;
         }
 
-        audio.PlayMusic(_current, _ambience.Playing, afterGap, fadeIn);
+        audio.PlayMusic(_current, CurrentAmbience.Playing, afterGap, fadeIn);
         return true;
     }
 

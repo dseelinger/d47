@@ -72,8 +72,8 @@ public static class AudioCapability
     /// <param name="openFolder">Opens that folder, or null where there is no shell to open it with.</param>
     /// <param name="music">Pauses, resumes or skips the ambient music; null where nothing plays it.</param>
     /// <param name="library">The music library download's state line, or null when there is nothing to say.</param>
-    /// <param name="thumbsDown">Queues the playing library track for deletion and skips it; null where nothing plays the music.</param>
-    /// <param name="maintainer">Whether a Music publish token is present, which is what makes thumbs down reachable.</param>
+    /// <param name="thumbsDown">Recycles the playing own track, or queues the playing library track for a maintainer, and skips it; null where nothing plays the music.</param>
+    /// <param name="maintainer">Whether a Music publish token is present, which is what makes deleting the queued tracks reachable.</param>
     /// <param name="deleteRejects">Starts deleting the queued tracks and returns the reply; null where nothing deletes them.</param>
     public static CapabilityDescriptor Create(
         Func<string>? drops = null,
@@ -116,12 +116,12 @@ public static class AudioCapability
                 exercise: new(
                     "Settings › Hearing and sound › Sounds and levels, group Ambient music",
                     "(unbound)",
-                    "with a Music publish token set and a library track playing, the track is added to "
-                        + "data\\music-rejects.tsv and the next track starts. Without a token the row is not shown "
-                        + "and the key does nothing."))
-                .Select(row => row with { AppliesWhen = _ => maintainer?.Invoke() == true }),
+                    "with one of your own tracks playing, the file moves to the Recycle Bin and the next track "
+                        + "starts. With a Music publish token set and a library track playing, the track is added to "
+                        + "data\\music-rejects.tsv and the next track starts. Without a token a library track "
+                        + "keeps playing.")),
         ],
-        Tools = [ManageMusic(music), ThumbsDownMusic(thumbsDown, maintainer), DeleteMusicRejects(deleteRejects, maintainer)],
+        Tools = [ManageMusic(music), ThumbsDownMusic(thumbsDown), DeleteMusicRejects(deleteRejects, maintainer)],
     };
 
     public const string ThumbsDownTool = "thumbs_down_music";
@@ -140,12 +140,12 @@ public static class AudioCapability
             + "publish token. For the music library's maintainer only; it needs that GitHub account. The row never "
             + "shows the token back. Then say \"thumbs down this track\" while a library track plays: the track is "
             + "queued for deletion and the next one starts. Without a token, and without D47_MUSIC_PUBLISH_TOKEN in "
-            + "the environment, the phrase does nothing.",
+            + "the environment, a library track is refused and keeps playing.",
         Advanced = true,
         Label = "Music publish token",
         Help =
             "For the maintainer of the D47 music library. With a token here, \"thumbs down this track\" queues the "
-            + "library track that is playing for deletion, and skips it.\n\n"
+            + "library track that is playing for deletion, and skips it. Without one, it works only on your own tracks.\n\n"
             + "It is a fine-grained GitHub token with contents write on dseelinger/d47-music only. It is stored "
             + "encrypted for this Windows account and is write-only. Without one here, D47 reads "
             + "D47_MUSIC_PUBLISH_TOKEN from the environment.",
@@ -156,26 +156,27 @@ public static class AudioCapability
     };
 
     /// <summary>
-    /// Queues the playing library track for deletion and skips it. Reached by phrase only while a token is
-    /// present; never offered to the model.
+    /// Moves the playing own track to the Recycle Bin and skips it; with a token, queues a library track
+    /// instead. Never offered to the model.
     /// </summary>
-    private static ToolDefinition ThumbsDownMusic(Func<string>? thumbsDown, Func<bool>? maintainer) => new()
+    private static ToolDefinition ThumbsDownMusic(Func<string>? thumbsDown) => new()
     {
         Name = ThumbsDownTool,
         Exercise =
-            "With a Music publish token set and a library track playing, say \"thumbs down this track\". The "
-            + "reply says the track is queued and how many are queued, and the next track starts. For the "
-            + "maintainer of the music library.",
-        Description = "Queues the playing library music track for deletion and skips it.",
+            "With one of your own tracks playing, say \"thumbs down this track\". The reply names the track and "
+            + "says it was deleted, the file is in the Recycle Bin, and the next track starts. With a Music publish "
+            + "token set and a library track playing, the reply says the track is queued and how many are queued. "
+            + "Without a token a library track is refused and keeps playing.",
+        Description = "Moves the playing own music track to the Recycle Bin, or queues a library track for the maintainer, and skips it.",
         Protected = true,
         RefusalExample = "thumbs down this track",
         Commands =
         [
-            new ToolCommandPhrase("thumbs down this track") { When = () => maintainer?.Invoke() == true },
-            new ToolCommandPhrase("thumbs down") { When = () => maintainer?.Invoke() == true },
+            new ToolCommandPhrase("thumbs down this track"),
+            new ToolCommandPhrase("thumbs down"),
         ],
         Handler = (_, _) => Task.FromResult(
-            thumbsDown is null || maintainer?.Invoke() != true
+            thumbsDown is null
                 ? ToolResult.Error("Thumbs down is not available.")
                 : ToolResult.Ok(thumbsDown())),
     };

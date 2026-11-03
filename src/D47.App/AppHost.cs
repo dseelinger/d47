@@ -172,7 +172,7 @@ public sealed class AppHost : IDisposable
         _outputFollow = new DefaultDeviceFollowPolicy(audioSink);
         Audio = audio;
         MusicRejects = new MusicRejects(paths.MusicRejects, files);
-        Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects);
+        Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects, deleteFile: RecycleFile);
         _cues = cues;
         Voice = voice;
         _binds = binds;
@@ -431,8 +431,20 @@ public sealed class AppHost : IDisposable
     internal bool MusicMaintainer =>
         MusicPublishToken.Present(Secrets.Names.Contains(MusicPublishToken.SecretName), Environment.GetEnvironmentVariable);
 
-    /// <summary>Queues the playing library track for deletion and skips it; refused without a token.</summary>
-    internal string ThumbsDownMusic() => MusicMaintainer ? Music.ThumbsDown() : "Thumbs down is not available.";
+    /// <summary>Recycles the playing own track, or queues the playing library track with a token, and skips it.</summary>
+    internal string ThumbsDownMusic() => Music.ThumbsDown(MusicMaintainer);
+
+    private static bool RecycleFile(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return true;
+        }
+
+        Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(
+            path, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+        return !File.Exists(path);
+    }
 
     /// <summary>The library tracks the maintainer queued for deletion.</summary>
     internal MusicRejects MusicRejects { get; }

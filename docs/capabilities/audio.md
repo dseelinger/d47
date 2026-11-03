@@ -399,16 +399,19 @@ The same four actions work by voice — "pause the music", "resume the music", "
 
 ### Thumbs down a track {#thumbs-down-music}
 
-This is for the maintainer of the music library, and appears only with a Music publish token. With
-a library track playing, "thumbs down this track" or "thumbs down" adds the track's folder and file name to
+This is for everyone on your own tracks, and for the maintainer of the music library, who has a Music
+publish token, on library tracks. With one of your own tracks playing, "thumbs down this track" or "thumbs
+down" moves the file to the Recycle Bin, skips to the next track and replies with the track's name and that it
+was deleted. With a library track playing and a token, it adds the track's folder and file name to
 `data/music-rejects.tsv`, skips to the next track and replies with the number of tracks queued. The same
 happens from the **Thumbs down the playing track** hotkey, which has no default and is bound in Settings ›
 Hearing and sound › Sounds and levels, group Ambient music, or from a stick button.
 
 - A track already in the file is not added twice, and a queued track is not played again.
-- A track from your own `data/audio/music` folder is refused, with a reply saying it is one of your own files.
+- A track from your own `data/audio/music` folder is moved to the Recycle Bin and the next track starts. A
+  file that cannot be deleted gets a reply saying so, and the track is still skipped.
 - With no music playing, the reply says so.
-- Without a token the phrase is not matched, the hotkey does nothing and its row is not shown.
+- Without a token, a library track is refused and keeps playing; nothing is written to the file.
 
 The phrase reaches `thumbs_down_music`, which only you can reach: the model is never offered it.
 

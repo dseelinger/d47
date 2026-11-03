@@ -9,7 +9,10 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
-/// <summary>"Thumbs down this track" queues the playing library track for deletion and skips it (#2033).</summary>
+/// <summary>
+/// "Thumbs down this track" queues the playing library track for a maintainer (#2033) and recycles the playing
+/// own track for everyone (#2090).
+/// </summary>
 public sealed class ThumbsDownQueuesALibraryTrackTests : IDisposable
 {
     private const string Pack = @"C:\data\music-pack";
@@ -21,7 +24,9 @@ public sealed class ThumbsDownQueuesALibraryTrackTests : IDisposable
     private readonly AudioArbiter _audio;
     private readonly MusicRejects _rejects;
     private readonly AmbientMusic _music;
+    private readonly List<string> _recycled = [];
     private bool _token = true;
+    private bool _deleteWorks = true;
 
     public ThumbsDownQueuesALibraryTrackTests()
     {
@@ -38,7 +43,11 @@ public sealed class ThumbsDownQueuesALibraryTrackTests : IDisposable
             new FolderAudioSource(Pack, _files, NullLogger<FolderAudioSource>.Instance, new StubDecoder(), musicPack: true),
             new FolderAudioSource(Own, _files, NullLogger<FolderAudioSource>.Instance));
 
-        _music = new AmbientMusic(_audio, () => library, new Random(7), _rejects);
+        _music = new AmbientMusic(_audio, () => library, new Random(7), _rejects, path =>
+        {
+            _recycled.Add(path);
+            return _deleteWorks;
+        });
         _audio.MusicFinished += _music.TrackFinished;
         _music.GameRunning(running: true);
     }
@@ -77,17 +86,71 @@ public sealed class ThumbsDownQueuesALibraryTrackTests : IDisposable
     }
 
     [Fact]
-    public async Task ATrackFromTheCommandersOwnFolderIsRefusedAndNotQueued()
+    public async Task ATrackFromTheCommandersOwnFolderIsRecycledAndSkippedWithAToken()
     {
         _music.Follow(Status(StatusFlags.Supercruise | StatusFlags.InMainShip), musicTrack: null);
         var playing = Assert.Single(_sink.Started);
 
         var reply = await Say("thumbs down this track");
 
-        Assert.Contains("one of your own files", reply, StringComparison.Ordinal);
+        Assert.Contains("Deleted mine", reply, StringComparison.Ordinal);
+        Assert.Equal(Path.Combine(Own, "music", Situations.Supercruise, "mine.wav"), Assert.Single(_recycled));
+        Assert.Empty(Rows());
+        Assert.Contains(playing.Id, _sink.Stopped);
+    }
+
+    [Fact]
+    public async Task ATrackFromTheCommandersOwnFolderIsRecycledAndSkippedWithoutAToken()
+    {
+        _token = false;
+        _music.Follow(Status(StatusFlags.Supercruise | StatusFlags.InMainShip), musicTrack: null);
+        var playing = Assert.Single(_sink.Started);
+
+        var reply = await Say("thumbs down");
+
+        Assert.Contains("Deleted mine", reply, StringComparison.Ordinal);
+        Assert.Single(_recycled);
+        Assert.Empty(Rows());
+        Assert.Contains(playing.Id, _sink.Stopped);
+    }
+
+    [Fact]
+    public async Task ADeletedOwnTrackIsNotDrawnAgain()
+    {
+        _music.Follow(Status(StatusFlags.Supercruise | StatusFlags.InMainShip), musicTrack: null);
+
+        await Say("thumbs down this track");
+
+        Assert.Single(_sink.Started);
+        Assert.Single(_recycled);
+    }
+
+    [Fact]
+    public async Task AnOwnTrackThatCannotBeDeletedIsSaidSoAndStillSkipped()
+    {
+        _deleteWorks = false;
+        _music.Follow(Status(StatusFlags.Supercruise | StatusFlags.InMainShip), musicTrack: null);
+        var playing = Assert.Single(_sink.Started);
+
+        var reply = await Say("thumbs down this track");
+
+        Assert.Contains("Could not delete mine", reply, StringComparison.Ordinal);
+        Assert.Contains(playing.Id, _sink.Stopped);
+    }
+
+    [Fact]
+    public async Task WithoutATokenALibraryTrackIsRefusedAndKeepsPlaying()
+    {
+        _token = false;
+        _music.Follow(Status(StatusFlags.Docked), musicTrack: null);
+        var playing = Assert.Single(_sink.Started);
+
+        var reply = await Say("thumbs down this track");
+
+        Assert.Contains("for the library's maintainer", reply, StringComparison.Ordinal);
         Assert.Empty(Rows());
         Assert.DoesNotContain(playing.Id, _sink.Stopped);
-        Assert.Single(_sink.Started);
+        Assert.Empty(_recycled);
     }
 
     [Fact]
@@ -100,12 +163,22 @@ public sealed class ThumbsDownQueuesALibraryTrackTests : IDisposable
     }
 
     [Fact]
-    public void WithoutATokenThePhraseIsNotMatched()
+    public void WithoutATokenThePhraseIsMatched()
     {
         _token = false;
 
-        Assert.Null(Router().MatchToolCommand("thumbs down this track"));
-        Assert.Null(Router().MatchToolCommand("thumbs down"));
+        Assert.NotNull(Router().MatchToolCommand("thumbs down this track"));
+        Assert.NotNull(Router().MatchToolCommand("thumbs down"));
+    }
+
+    [Fact]
+    public void TheHotkeyRowsShowWithoutAToken()
+    {
+        _token = false;
+
+        var rows = Capability().Settings.Where(row => row.Key is AudioCapability.ThumbsDownHotkeyKey or AudioCapability.ThumbsDownButtonKey);
+
+        Assert.All(rows, row => Assert.Null(row.AppliesWhen));
     }
 
     [Fact]
@@ -139,7 +212,7 @@ public sealed class ThumbsDownQueuesALibraryTrackTests : IDisposable
     }
 
     private CapabilityDescriptor Capability() =>
-        AudioCapability.Create(thumbsDown: _music.ThumbsDown, maintainer: () => _token);
+        AudioCapability.Create(thumbsDown: () => _music.ThumbsDown(_token), maintainer: () => _token);
 
     private KeywordRouter Router() => new(CapabilityRegistry.Build([Capability()]));
 

@@ -1366,7 +1366,7 @@ public sealed record HotkeySettings
     /// <summary>The stick button for <see cref="ResizeHeadsetPanel"/>, or null.</summary>
     public string? ResizeHeadsetPanelButton { get; init; }
 
-    /// <summary>Queues the playing music-library track for deletion; shown only with a Music publish token.</summary>
+    /// <summary>Thumbs down the playing music track: recycles an own track, queues a library track with a Music publish token.</summary>
     public string? ThumbsDownMusic { get; init; }
 
     /// <summary>The stick button for <see cref="ThumbsDownMusic"/>, or null.</summary>

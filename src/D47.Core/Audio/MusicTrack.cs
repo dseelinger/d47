@@ -8,6 +8,7 @@ public interface IPcmStream : IDisposable
 
 /// <summary>
 /// An ambience track, opened afresh each time it plays and streamed rather than held. A track read from the
-/// downloaded library carries its folder and file name.
+/// downloaded library carries its folder and file name; one from the Commander's own folder carries its full path.
 /// </summary>
-public sealed record MusicTrack(string Name, Func<IPcmStream> Open, string? PackFolder = null, string? PackFile = null);
+public sealed record MusicTrack(
+    string Name, Func<IPcmStream> Open, string? PackFolder = null, string? PackFile = null, string? OwnPath = null);
