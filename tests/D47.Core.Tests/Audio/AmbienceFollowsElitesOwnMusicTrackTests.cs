@@ -159,6 +159,36 @@ public class AmbienceFollowsElitesOwnMusicTrackTests : IDisposable
         Assert.Equal(expected, Situations.For(OnFootWith(StatusFlags2.OnFootInStation), track, library));
     }
 
+    private static readonly GameStatus Docked = new()
+    {
+        Flags = StatusFlags.Docked | StatusFlags.InMainShip,
+        ReadAt = DateTimeOffset.UnixEpoch,
+    };
+
+    [Fact]
+    public void DockedAtAnOutpostPlaysTheDockedFolderOverElitesExplorationTrack()
+    {
+        var library = Library(("docked", "dock"), ("normal-space", "drift"));
+
+        Assert.Equal(Situations.Docked, Situations.For(Docked, "Exploration", library));
+    }
+
+    [Fact]
+    public void DockedWithAnEmptyDockedFolderFollowsElitesExplorationTrack()
+    {
+        var library = Library(("normal-space", "drift"));
+
+        Assert.Equal(Situations.NormalSpace, Situations.For(Docked, "Exploration", library));
+    }
+
+    [Fact]
+    public void DockedLeavesAFleetCarrierTrackPlaying()
+    {
+        var library = Library(("docked", "dock"), ("fleet-carrier", "carrier"));
+
+        Assert.Equal("fleet-carrier", Situations.For(Docked, "FleetCarrier_Managment", library));
+    }
+
     [Fact]
     public void OnFootOnAPlanetOnlyPlaysTheOnFootFolder()
     {

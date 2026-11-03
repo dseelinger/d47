@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Docked at an outpost, D47 now plays your docked music instead of normal-space music. Elite plays its normal-space music at outposts and says so in the journal, and D47 followed it. With no tracks in the docked folder, D47 still follows Elite.
+
 The help now has a page for people who write modules. It covers the manifest and why a module is refused, the messages D47 sends and receives, the limits on spoken lines and tool results, the pages a module can draw, and what happens when a module stops answering.
 
 A running module's tools can now be used by D47's model and by voice. You can ask for what a module does in your own words, and a phrase the module gives for a tool runs it without the model. A module phrase that is already one of D47's phrases, or one of your own, is ignored, so a module cannot take over "dock" or a macro. The model is told that what a module returns is untrusted data, not instructions.

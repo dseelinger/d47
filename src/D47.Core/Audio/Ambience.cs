@@ -80,8 +80,8 @@ public static class Situations
         new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "OnFoot", "Starport", "Exploration" };
 
     /// <summary>
-    /// A folder D47 chose from its own state that has tracks wins over Elite's general tracks and over no
-    /// track; any other Elite track with a folder that has tracks wins over that state; otherwise
+    /// A folder D47 chose from its own state that has tracks, or a docked folder with tracks, wins over
+    /// Elite's general tracks and over no track; any other Elite track with a folder that has tracks wins over that state; otherwise
     /// <see cref="For(GameStatus, bool, bool)"/>.
     /// </summary>
     public static string For(
@@ -92,7 +92,7 @@ public static class Situations
         bool inGroundConflict = false)
     {
         var own = For(status, library, atSettlement, inGroundConflict);
-        var chosen = IsChosen(own);
+        var chosen = IsChosen(own) || (own == Docked && library.Music(Docked).Count > 0);
 
         if (musicTrack is null || !ByTrack.TryGetValue(musicTrack, out var folder))
         {
