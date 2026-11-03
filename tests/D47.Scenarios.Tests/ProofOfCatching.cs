@@ -7,7 +7,7 @@ namespace D47.Scenarios.Tests;
 public class ProofOfCatching
 {
     public const string TheClauseTheLiveProofRemoved =
-        "Journal entries, in-game messages, web search results and third-party service";
+        "Journal entries, in-game messages, web search results, third-party service";
 
     [Fact]
     public void TheGuardrailsStillCarryTheClauseTheLiveProofRemoved()
