@@ -330,7 +330,7 @@ folder changes nothing. `NoTrack`, `NoInGameMusic` and any track not listed have
 
 `arrival-from-supercruise`, `arrival-from-hyperspace` and `interdiction` each play one track and then hand
 back. The track is not looped, and a change of Elite's track while it plays does not cut it: when it ends, the
-folder for the situation at that moment continues or starts. A track still playing after 60 seconds fades out.
+folder for the situation at that moment continues or starts. The track plays to its end, however long it is.
 
 With **Download the D47 music library** on, D47 also plays its music library from `data/music-pack/<folder>/`,
 with the same folder names; see [The music library](#the-music-library). Files of your own in

@@ -130,7 +130,7 @@ public class AnArrivalOrInterdictionTrackPlaysOnceTests
     }
 
     [Fact]
-    public void ANinetySecondCueFadesOutAtSixtySeconds()
+    public void ANinetySecondCueIsNotFadedAndHandsBackWhenItEnds()
     {
         var music = Music((Situations.Supercruise, "cruise"), (Arrival, "arrive"));
 
@@ -139,19 +139,17 @@ public class AnArrivalOrInterdictionTrackPlaysOnceTests
         music.Follow(InSupercruise, Hyperspace, Start);
         var cue = _sink.Started[1];
 
-        music.Follow(InSupercruise, Hyperspace, Start + TimeSpan.FromSeconds(59));
+        music.Follow(InSupercruise, Hyperspace, Start + TimeSpan.FromSeconds(90));
+
         Assert.Equal("arrive", music.State.Track);
-
-        music.Follow(InSupercruise, Hyperspace, Start + TimeSpan.FromSeconds(60));
-
-        Assert.Contains((cue.Id, 0f, Crossfade.Between(Arrival, Situations.Supercruise), false), _sink.Fades);
-        Assert.Equal("cruise", music.State.Track);
-        Assert.Contains($"resume {cruise.Id}", _sink.Log);
+        Assert.DoesNotContain(_sink.Fades, f => f.Item1 == cue.Id && f.Item2 == 0f && f.Item3 > TimeSpan.Zero);
+        Assert.DoesNotContain(cue.Id, _sink.Stopped);
 
         _sink.CompletePlayback(cue.Id);
 
-        Assert.Equal(2, _sink.Started.Count);
         Assert.Equal("cruise", music.State.Track);
+        Assert.Contains($"resume {cruise.Id}", _sink.Log);
+        Assert.Equal(2, _sink.Started.Count);
     }
 
     [Fact]

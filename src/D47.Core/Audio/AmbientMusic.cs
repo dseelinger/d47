@@ -21,7 +21,7 @@ public sealed record MusicState(string? Track, bool Playing, bool Paused, bool I
 /// The ambience layer and its transport: follows the situation, starts the next track, and holds the
 /// Commander's pause. Pause is session state; the mute setting is separate and saved. Nothing plays
 /// until <see cref="GameRunning"/> says Elite is running. A one-shot folder plays one cue that keeps the
-/// slot to its end, or <see cref="CueLimit"/>, then hands back to the situation current at that moment.
+/// slot to its end, then hands back to the situation current at that moment.
 /// After <see cref="IdleWatch.Threshold"/> with nothing happening the track fades out and is held, and it
 /// fades back in on the next activity.
 /// </summary>
@@ -32,9 +32,6 @@ public sealed class AmbientMusic(
     MusicRejects? rejects = null,
     Func<string, bool>? deleteFile = null)
 {
-    /// <summary>The longest a one-shot cue holds the slot.</summary>
-    public static readonly TimeSpan CueLimit = TimeSpan.FromSeconds(60);
-
     public static readonly TimeSpan IdleFadeOut = TimeSpan.FromSeconds(10);
 
     public static readonly TimeSpan WakeFadeIn = TimeSpan.FromSeconds(3);
@@ -48,7 +45,6 @@ public sealed class AmbientMusic(
     private bool _running;
     private string? _cue;
     private string? _spent;
-    private DateTimeOffset _cueStart;
     private GameStatus? _status;
     private string? _track;
     private bool _atSettlement;
@@ -124,12 +120,7 @@ public sealed class AmbientMusic(
 
             if (_cue is not null)
             {
-                if (now - _cueStart >= CueLimit)
-                {
-                    EndCue(now, fade: true);
-                    changed = true;
-                }
-                else if (oneShot && !string.Equals(target, _cue, StringComparison.OrdinalIgnoreCase))
+                if (oneShot && !string.Equals(target, _cue, StringComparison.OrdinalIgnoreCase))
                 {
                     StartCue(target, now);
                     changed = true;
@@ -261,24 +252,19 @@ public sealed class AmbientMusic(
         audio.PlayMusic(track, folder, afterGap: false, faded ? length : null);
         _current = track;
         _cue = folder;
-        _cueStart = now;
         return true;
     }
 
     /// <summary>Hands the slot back to the situation current now, continuing its shelved track if it has one.</summary>
-    private void EndCue(DateTimeOffset now, bool fade)
+    private void EndCue()
     {
-        var cue = _cue!;
         _cue = null;
         CurrentAmbience.Enter(Underlying());
-        var folder = CurrentAmbience.Folder(library());
-        var length = fade ? Crossfade.Between(cue, folder) : (TimeSpan?)null;
-        var faded = fade && audio.ShelveMusic(now, length);
         _current = null;
 
         if (!_paused)
         {
-            Continue(faded ? length : null);
+            Continue(null);
         }
     }
 
@@ -309,7 +295,7 @@ public sealed class AmbientMusic(
 
             if (_cue is not null)
             {
-                EndCue(default, fade: false);
+                EndCue();
             }
             else if (_running && !_paused && !_idle)
             {

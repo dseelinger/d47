@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Arrival and interdiction music now plays to the end of the track. It was cut with a fade at 60 seconds, which clipped the last 15 seconds of the 75-second tracks.
+
 Deleting thumbs-down tracks from several folders in one run no longer removes the music library's manifest. A run that stops partway now renames any half-swapped file back to its real name before it replies.
 
 When a story objective fires, the quick acknowledgement now says what you did: "That's it. You docked at Ossen's Lantern." An objective with no name to say gets the stock line alone, as before.
