@@ -39,7 +39,9 @@ public class AdventureCalloutTests
  // of what it is for.
         var ack = Assert.Single(callout.Examine(At(reached, [Jump(Lantern, reached)])));
         Assert.Equal("adventure-ack.the-lantern-route.0", ack.Key);
-        Assert.Contains(ack.Text, Enumerable.Range(0, AdventureAcks.Count).Select(AdventureAcks.Pick));
+        var stock = Enumerable.Range(0, AdventureAcks.Count).Select(AdventureAcks.Pick).ToList();
+        Assert.Contains(stock, line => ack.Text.StartsWith(line, StringComparison.Ordinal));
+        Assert.EndsWith("You arrived at Ossen's Lantern.", ack.Text, StringComparison.Ordinal);
 
         Assert.Empty(callout.Examine(At(reached.AddSeconds(10), [])));
 

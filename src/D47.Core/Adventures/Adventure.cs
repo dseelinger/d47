@@ -429,6 +429,86 @@ public sealed record AdventureTrigger
         _ => Kind.ToString(),
     };
 
+    /// <summary>What the Commander did, in the past tense — "You docked at Ossen's Lantern." — or null where the trigger has no resolved name or names nothing done.</summary>
+    public string? Done()
+    {
+        if (!IsResolved || Kind is TriggerKind.Choice or TriggerKind.Event)
+        {
+            return null;
+        }
+
+        string? did = Kind switch
+        {
+            TriggerKind.Arrive => Named(System) is { } system ? $"arrived at {system}" : null,
+            TriggerKind.Dock => Named(Station) is { } station ? $"docked at {station}{In()}" : null,
+            TriggerKind.Land => Named(Body) is { } body ? $"landed on {body}{In()}" : null,
+            TriggerKind.Scan => Named(Body) is { } body ? $"scanned {body}{In()}" : null,
+            TriggerKind.Rank => $"reached {Careers.RankSaid(Career, Rank)}",
+            TriggerKind.Board => ShipType is null ? null : $"boarded {Article(Knowledge.EliteSpecifications.HullName(ShipType) ?? ShipType)}",
+            TriggerKind.Reach => Named(System) is { } system ? $"fitted out a ship that can reach the beacon in {system}" : null,
+            TriggerKind.Beacon => (Named(System) ?? BeaconName(SystemAddress)) is { } system ? $"scanned the Guardian beacon in {system}" : null,
+            TriggerKind.Site => Filter switch
+            {
+                GuardianSite => Named(Body) is { } body ? $"flew to the Guardian site on {body}{In()}" : null,
+                GenerationSite => Named(SiteName) is { } site ? $"dropped out at {site}{In()}" : null,
+                _ => $"scanned a tourist beacon{In()}",
+            },
+            TriggerKind.Bounty => $"collected {Counted("bounty", "bounties")}",
+            TriggerKind.Bond => $"earned {Counted("kill bond", "kill bonds")}{For()}",
+            TriggerKind.OnFootBond => $"earned {Counted("kill bond", "kill bonds")} on foot",
+            TriggerKind.Mission => $"completed {Counted(Missions(one: true), Missions(one: false))}{For()}",
+            TriggerKind.Sell => $"sold {Tons()} of {CommodityWord()}{AtStation()}",
+            TriggerKind.Mine => $"refined {Tons()} of {CommodityWord()}",
+            TriggerKind.OnFoot => $"stepped out on foot onto a planet surface {Times()}",
+            TriggerKind.Collect => $"collected {Counted(Items(one: true), Items(one: false))}",
+            TriggerKind.Organic => $"analysed {Counted("organic sample", "organic samples")}{Of()}{In()}",
+            TriggerKind.Map => $"mapped {Counted("body", "bodies")}{In()} with the surface mapper",
+            TriggerKind.Signal => $"surveyed {Counted("body", "bodies")} with {Plain()} signals{In()}",
+            TriggerKind.Wreck => $"touched down at {Counted(Wrecks(one: true), Wrecks(one: false))}",
+            TriggerKind.Codex => $"logged {Counted(CodexWord(one: true), CodexWord(one: false))}",
+            TriggerKind.CodexPicture => $"saved your own picture for {Counted("known codex entry", "known codex entries")}",
+            TriggerKind.NewCodexPicture => $"logged {Counted("new codex entry", "new codex entries")} and saved your own picture for it",
+            TriggerKind.DataSale => $"sold {Credits()} of {DataWord()} data",
+            TriggerKind.Salvage => $"picked up {Counted(Cargo(one: true), Cargo(one: false))}",
+            TriggerKind.Uss => $"dropped into {Counted(Sources(one: true), Sources(one: false))}{In()}",
+            TriggerKind.Rescue => $"handed in {Counted(Survivors(one: true), Survivors(one: false))}",
+            TriggerKind.Engineer => $"reached {Stage?.Trim()} with {Engineer?.Trim()}",
+            TriggerKind.Srv => $"launched the SRV {Times()}",
+            TriggerKind.Crew => $"hired {Counted("crew member", "crew members")}",
+            TriggerKind.SuitMod => $"applied {Counted(SuitMods(one: true), SuitMods(one: false))}",
+            TriggerKind.Livery => $"changed your ship's livery {Times()}",
+            TriggerKind.CarrierBuy => "bought a fleet carrier",
+            TriggerKind.CarrierJump => $"jumped your fleet carrier to {Counted("new system", "new systems")}",
+            TriggerKind.Wing => $"joined a wing, or had someone join yours, {Times()}",
+            TriggerKind.Multicrew => $"joined another Commander's crew {Times()}",
+            TriggerKind.Squadron => "joined a squadron",
+            TriggerKind.SquadronFound => "founded a squadron",
+            TriggerKind.Conflict => $"took part {Times()} in {WarWord()}{For()}",
+            TriggerKind.Faction => $"earned {Counted("influence mark", "influence marks")} for {Faction?.Trim()}",
+            TriggerKind.Boost => $"supercharged your frame shift drive in {BoostStar()} jet cone {Times()}",
+            TriggerKind.Footfall => $"were the first to walk on {Counted("world", "worlds")}",
+            TriggerKind.Discover => $"were the first to scan {Counted(DiscoverWord(one: true), DiscoverWord(one: false))}",
+            TriggerKind.Contribute => $"delivered {Tons()} of {CommodityWord()} to colonisation construction sites",
+            TriggerKind.Claim => "claimed a system for colonisation",
+            TriggerKind.Unlock => Knowledge.TechBrokerCatalogue.ForName(Filter) is { } row
+                ? $"unlocked the {row.Name} at a {(row.BrokerType == Knowledge.TechBrokerCatalogue.Guardian ? "Guardian" : "human")} tech broker"
+                : null,
+            TriggerKind.Pledge => string.IsNullOrWhiteSpace(Filter) ? "pledged to a Power" : $"pledged to {Filter.Trim()}",
+            TriggerKind.PowerRank => $"reached PowerPlay rank {Rank}",
+            TriggerKind.MissionTaken => $"took one {Missions(one: true)}{For()}{AtStation()}",
+            TriggerKind.MissionDestination => $"reached the destination of the {Handle?.Trim()} mission",
+            TriggerKind.MissionComplete => $"completed the {Handle?.Trim()} mission",
+            TriggerKind.MissionAbandon => $"abandoned the {Handle?.Trim()} mission",
+            _ => null,
+        };
+
+        return did is null ? null : $"You {did}.";
+    }
+
+    private static string? Named(string? name) => string.IsNullOrWhiteSpace(name) ? null : name.Trim();
+
+    private string AtStation() => Named(Station) is { } station ? $" at {station}" : string.Empty;
+
     /// <summary>A counted beat's running total in words — "Kill bonds for LTT 7786 Labour: 3 of 8" — or null for any other kind.</summary>
     public string? Progress(int done)
     {

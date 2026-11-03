@@ -236,6 +236,16 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
         }
     }
 
+    /// <summary>The stock line, then what the Commander did when the trigger names it.</summary>
+    private static string Acknowledgement(AdventureMoment moment, int index)
+    {
+        var stock = AdventureAcks.Pick(index);
+        var steps = moment.Adventure.Beats[moment.Beat].StepsWith(moment.Chosen);
+        var trigger = moment.Step is { } step ? steps.ElementAtOrDefault(step)?.Trigger : steps.LastOrDefault()?.Trigger;
+
+        return trigger?.Done() is { } done ? $"{stock} {done}" : stock;
+    }
+
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
         var commander = context.State?.Identity.FrontierId;
@@ -294,7 +304,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
             // cref="AdventureAcks"/> for why it is split off from the beat at all.
             if (!moment.IsOpening && !moment.IsFailure && !context.InOperation)
             {
-                yield return new Announcement($"{AckPrefix}{moment.Adventure.Key}.{moment.Beat}{(moment.Step is { } step ? "." + step.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty)}", AdventureAcks.Pick(_acks++))
+                yield return new Announcement($"{AckPrefix}{moment.Adventure.Key}.{moment.Beat}{(moment.Step is { } step ? "." + step.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty)}", Acknowledgement(moment, _acks++))
                 {
                     Urgency = CalloutUrgency.Routine,
                 };

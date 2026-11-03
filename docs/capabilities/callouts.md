@@ -1224,9 +1224,11 @@ a handful of objectives, each anchored to a real place by the one thing the jour
 arrived in a system, docked at a station, landed on or scanned a body, or were promoted. The
 Stories tab is where you ask for one; this is the voice it reaches you by.
 
-**A short acknowledgement lands the moment the objective fires** — *"That's it."*, *"There it is."*,
-one of ten — so you know at once that you did the thing, rather than sitting through the wait
-below wondering. It is a stock line, never written by a model and never rewritten by one: a
+**A short acknowledgement lands the moment the objective fires** — one of ten stock lines
+(*"That's it."*, *"There it is."*) followed by what you did: *"That's it. You docked at Ossen's
+Lantern."* — so you know at once that you did the thing, rather than sitting through the wait
+below wondering. Where the objective has no name to say, you hear the stock line alone. It is never
+written by a model and never rewritten by one: a
 round trip is the delay it exists to arrive ahead of. The objective itself follows when it is ready.
 
 The objective waits twenty seconds after it fires, so the line is not read over the jump it arrived
