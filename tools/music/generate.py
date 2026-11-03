@@ -6,7 +6,8 @@
   generate.py --folders a,b       only those folders
   generate.py --smoke DIR         one 10-second test track into DIR, to check an ACE-Step update
 
-Writes the folders it added tracks to, one per line, to generated.txt in the data folder.
+Adds the folders it added tracks to, one per line, to generated.txt in the data folder. The list
+builds up across runs until weekly.cmd publishes it.
 Stops after the current track when STOP exists. Waits while Elite Dangerous is running.
 Only one copy runs at a time; a second start exits.
 """
@@ -72,6 +73,14 @@ def deadline_of(until):
     now = datetime.now()
     d = now.replace(hour=h, minute=m, second=0, microsecond=0)
     return d if d > now else d + timedelta(days=1)
+
+
+def read_generated():
+    """The folders already listed in generated.txt; empty when it is missing."""
+    if not os.path.exists(GENERATED):
+        return set()
+    with open(GENERATED, encoding="utf-8") as f:
+        return {line.strip() for line in f if line.strip()}
 
 
 def write_generated(folders):
@@ -187,8 +196,7 @@ def main():
     try:
         if os.path.exists(STOP):
             os.remove(STOP)
-        added = set()
-        write_generated(added)
+        added = read_generated()
         deadline = deadline_of(args.until)
         todo = list(queue(args.per_folder, set(filter(None, args.folders.split(",")))))
         log(f"start: {len(todo)} tracks to do" + (f", until {deadline:%Y-%m-%d %H:%M}" if deadline else ""))
