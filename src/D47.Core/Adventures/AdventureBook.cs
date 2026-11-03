@@ -130,7 +130,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     public IReadOnlyList<AdventureStanding> Audible(string? frontierId, DateTimeOffset now) =>
         [.. Standings(frontierId).Where(standing => !IsSilenced(frontierId, standing.Adventure, now))];
 
-    /// <summary>Raised when a story starts or stops being owed a line.</summary>
+    /// <summary>Raised when a story starts or stops being owed a line, or a live event or a walk moves the objective it waits on.</summary>
     public event Action? StirringChanged;
 
     /// <summary>
@@ -377,15 +377,16 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             }
 
             var before = _stirring.Count;
+            var moved = result.Folded is not null;
 
             foreach (var (journalEvent, commander) in _held)
             {
-                FoldLive(commander, journalEvent);
+                moved |= FoldLive(commander, journalEvent);
             }
 
             _held.Clear();
             _walking = false;
-            stirred = _stirring.Count != before;
+            stirred = moved || _stirring.Count != before;
         }
 
         if (result.Error is { } error)
@@ -477,8 +478,8 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             }
 
             var before = _stirring.Count;
-            FoldLive(commander, journalEvent);
-            stirred = _stirring.Count != before;
+            var moved = FoldLive(commander, journalEvent);
+            stirred = moved || _stirring.Count != before;
         }
 
         // Outside the lock: a handler that redraws a panel has no business running under the gate every other
@@ -1206,22 +1207,23 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         }
     }
 
-    /// <summary>One live event onto the book's fold state, unless the startup walk already folded it. Under the gate.</summary>
-    private void FoldLive(string commander, JournalEvent journalEvent)
+    /// <summary>One live event onto the book's fold state, unless the startup walk already folded it; true when it moved an objective. Under the gate.</summary>
+    private bool FoldLive(string commander, JournalEvent journalEvent)
     {
         if (_fold.HighWater.TryGetValue(commander, out var mark) && journalEvent.Timestamp <= mark)
         {
-            return;
+            return false;
         }
 
-        Fold(_fold, commander, journalEvent, announce: true);
+        return Fold(_fold, commander, journalEvent, announce: true);
     }
 
     /// <summary>
     /// Folds one event into <paramref name="state"/>. Announcing also queues and stirs, under the gate; without it, it
     /// touches only <paramref name="state"/>, the store and <see cref="Silenced"/>, so a walk can run it off the tick.
+    /// When announcing, true when the event changed what an objective reads.
     /// </summary>
-    private void Fold(AdventureFoldState state, string commander, JournalEvent journalEvent, bool announce)
+    private bool Fold(AdventureFoldState state, string commander, JournalEvent journalEvent, bool announce)
     {
         if (state.Newest is not { } newest || journalEvent.Timestamp > newest)
         {
@@ -1237,6 +1239,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         var world = state.World.GetValueOrDefault(commander, AdventureWorld.Empty).Apply(journalEvent);
         state.World[commander] = world;
+        var moved = false;
 
         foreach (var adventure in store.For(commander))
         {
@@ -1261,9 +1264,11 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             }
 
             Settle(state, commander, before, after, journalEvent.Timestamp, announce);
+            moved |= announce && original.NextTrigger() != after.NextTrigger();
         }
 
         state.Seen[commander] = AdventureWatch.Observe(Seen(state, commander), journalEvent).Seen;
+        return moved;
     }
 
     /// <summary>Puts <paramref name="after"/> in <paramref name="state"/> and queues or logs what it reached beyond <paramref name="before"/>. Under the gate when announcing.</summary>

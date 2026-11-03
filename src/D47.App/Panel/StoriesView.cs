@@ -87,6 +87,7 @@ public sealed class StoriesView : UserControl, IPageSummary
         base.OnAttachedToVisualTree(e);
         _director.Stories.Changed += OnChanged;
         _surface.Book.Store.Changed += OnChanged;
+        _surface.Book.StirringChanged += OnChanged;
         _director.WritingChanged += OnChanged;
         _director.WritingAgain += OnWritingAgain;
         _director.OdysseyChanged += OnChanged;
@@ -116,6 +117,7 @@ public sealed class StoriesView : UserControl, IPageSummary
         base.OnDetachedFromVisualTree(e);
         _director.Stories.Changed -= OnChanged;
         _surface.Book.Store.Changed -= OnChanged;
+        _surface.Book.StirringChanged -= OnChanged;
         _director.WritingChanged -= OnChanged;
         _director.WritingAgain -= OnWritingAgain;
         _director.OdysseyChanged -= OnChanged;
