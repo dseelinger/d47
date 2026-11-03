@@ -12,6 +12,11 @@ public class AShipNamesItsBuilderTests
     [Theory]
     [InlineData("anaconda", "Anaconda, by Faulcon DeLacy")]
     [InlineData("type9_military", "Type-10 Defender, by Lakon")]
+    [InlineData("anacondamkii", "Anaconda Mk II, by Faulcon DeLacy")]
+    [InlineData("corsair", "Corsair, by Gutamaya")]
+    [InlineData("explorer_nx", "Caspian Explorer, by Zorgon Peterson")]
+    [InlineData("mediumtransport01", "Lynx Highliner, by Zorgon Peterson")]
+    [InlineData("smallcombat01_nx", "Kestrel Mk II, by Core Dynamics")]
     public void AMeasuredHullNamesItsBuilder(string symbol, string expected)
     {
         var hull = EliteSpecifications.Ship(symbol);
@@ -20,14 +25,13 @@ public class AShipNamesItsBuilderTests
         Assert.Equal(expected, hull!.Described());
     }
 
-    /// <summary>The newest hulls have no measured row and therefore no column three to read a builder from, and they are the ones a Commander is most likely to be asking about.</summary>
     [Fact]
     public void AHullWithNoKnownBuilderIsJustNamed()
     {
-        var corsair = new ShipSpecification { Symbol = "corsair", Name = "Corsair" };
+        var hull = new ShipSpecification { Symbol = "testhull_mkx", Name = "Test Hull Mk X" };
 
-        Assert.Null(corsair.Manufacturer);
-        Assert.Equal("Corsair", corsair.Described());
+        Assert.Null(hull.Manufacturer);
+        Assert.Equal("Test Hull Mk X", hull.Described());
     }
 
     /// <summary>
@@ -40,18 +44,5 @@ public class AShipNamesItsBuilderTests
         var hull = new ShipSpecification { Symbol = "x", Name = "Something", Manufacturer = "" };
 
         Assert.Equal("Something", hull.Described());
-    }
-
-    /// <summary>And the three newest hulls really do have no builder in the shipped table — asserted so that this stops being true loudly on the day the upstream source grows them.</summary>
-    [Theory]
-    [InlineData("corsair")]
-    [InlineData("explorer_nx")]
-    [InlineData("smallcombat01_nx")]
-    public void TheThreeNewestHullsAreSilentAboutTheirBuilder(string symbol)
-    {
-        // Named from armour, so HullSaid answers even though the measured table does not.
-        Assert.NotEqual(symbol, EliteSpecifications.HullSaid(symbol));
-
-        Assert.Null(EliteSpecifications.Ship(symbol)?.Manufacturer);
     }
 }
