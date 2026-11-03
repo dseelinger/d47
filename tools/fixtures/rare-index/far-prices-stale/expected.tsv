@@ -1,0 +1,9 @@
+# built 2026-01-01T00:00:00Z
+# far prices 2026-11-03T12:00:00Z
+symbol	far_sell_price	far_reports	buy_price	stock	reported_at
+alpha	5000	4	1000	80	2026-11-03T10:00:00Z
+bravo	6000	3	2000	5	2026-11-03T10:01:00Z
+charlie			3000	6	2026-11-03T10:02:00Z
+delta	800	3			
+echo	7100	3	100	10	2026-11-02T10:00:00Z
+foxtrot	2100	3	550	40	2026-11-02T11:00:00Z

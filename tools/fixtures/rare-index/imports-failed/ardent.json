@@ -1,0 +1,32 @@
+{
+ "now": "2026-11-03T12:00:00Z",
+ "market": {
+  "1/alpha": {
+   "buyPrice": 1000,
+   "stock": 80,
+   "updatedAt": "2026-11-03T10:00:00Z"
+  },
+  "2/bravo": {
+   "buyPrice": 2000,
+   "stock": 5,
+   "updatedAt": "2026-11-03T10:01:00Z"
+  }
+ },
+ "imports": {
+  "alpha": "fail",
+  "bravo": [
+   {
+    "sellPrice": 4000,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 4000,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 4000,
+    "stationType": "Coriolis"
+   }
+  ]
+ }
+}

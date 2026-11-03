@@ -1,0 +1,8 @@
+# fixture
+symbol	name	system	station	market_id
+alpha	Alpha	Sys	Stn	1
+bravo	Bravo	Sys	Stn	2
+charlie	Charlie	Sys	Stn	3
+delta	Delta	Sys	Stn	4
+echo	Echo	Sys	Stn	5
+foxtrot	Foxtrot	Sys	Stn	6

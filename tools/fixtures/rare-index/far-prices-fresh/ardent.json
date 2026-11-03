@@ -1,0 +1,15 @@
+{
+ "now": "2026-11-03T12:00:00Z",
+ "market": {
+  "1/alpha": {
+   "buyPrice": 1000,
+   "stock": 80,
+   "updatedAt": "2026-11-03T10:00:00Z"
+  },
+  "5/echo": {
+   "buyPrice": 0,
+   "stock": 0,
+   "updatedAt": "2026-11-03T11:00:00Z"
+  }
+ }
+}

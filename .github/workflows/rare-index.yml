@@ -1,0 +1,75 @@
+name: rare-index
+
+# Builds the rare goods index that d47 sorts by profit and publishes it as the asset rares.tsv of the
+# prerelease rares-1. Each run asks Ardent about every rare, and replaces the asset only when the rows
+# differ from the published file. tools/rare-index.py describes the format.
+#
+# The first run creates the release as a prerelease with --latest=false, because UpdateChecker reads
+# releases/latest to find app updates. The last step fails if that stops being the app's tag.
+
+on:
+  schedule:
+    - cron: "23 */3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: rare-index
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE: rares-1
+      ASSET: rares.tsv
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the script on its fixture
+        run: python3 tools/rare-index.py --check tools/fixtures/rare-index
+
+      - name: Note the latest release
+        run: echo "LATEST_BEFORE=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)" >> "$GITHUB_ENV"
+
+      - name: Create the release if it does not exist
+        run: |
+          if ! gh release view "$RELEASE" > /dev/null 2>&1; then
+            gh release create "$RELEASE" --prerelease --latest=false --title "Rare index" \
+              --notes "Rare goods index built from Ardent every three hours. Not an app release."
+          fi
+
+      - name: Download the published index
+        run: |
+          mkdir work
+          names=$(gh release view "$RELEASE" --json assets --jq '.assets[].name')
+          if grep -qx "$ASSET" <<< "$names"; then
+            gh release download "$RELEASE" --pattern "$ASSET" --dir work
+          else
+            echo "No published index yet; starting empty."
+          fi
+
+      - name: Build the index
+        run: |
+          args=(--out work/new.tsv)
+          if [ -f "work/$ASSET" ]; then args+=(--previous "work/$ASSET"); fi
+          python3 tools/rare-index.py "${args[@]}"
+
+      - name: Publish the index when it changed
+        run: |
+          if [ -f "work/$ASSET" ] && diff <(grep -v '^# built ' "work/$ASSET") <(grep -v '^# built ' work/new.tsv) > /dev/null; then
+            echo "Nothing changed; not uploading."
+          else
+            mv work/new.tsv "work/$ASSET"
+            gh release upload "$RELEASE" "work/$ASSET" --clobber
+          fi
+
+      - name: Check the latest release is still the app's
+        run: |
+          now=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)
+          if [ "$now" != "$LATEST_BEFORE" ] || [ "$now" = "$RELEASE" ]; then
+            echo "releases/latest was '$LATEST_BEFORE' and is now '$now'." >&2
+            exit 1
+          fi

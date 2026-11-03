@@ -1,0 +1,145 @@
+{
+ "now": "2026-11-03T12:00:00Z",
+ "market": {
+  "1/alpha": {
+   "buyPrice": 1000,
+   "stock": 80,
+   "updatedAt": "2026-11-03T10:00:00Z"
+  },
+  "2/bravo": {
+   "buyPrice": 2000,
+   "stock": 5,
+   "updatedAt": "2026-11-03T10:01:00Z"
+  },
+  "3/charlie": {
+   "buyPrice": 3000,
+   "stock": 6,
+   "updatedAt": "2026-11-03T10:02:00Z"
+  },
+  "4/delta": "404",
+  "5/echo": "fail",
+  "6/foxtrot": {
+   "buyPrice": 550,
+   "stock": 0,
+   "updatedAt": "2026-11-03T11:00:00Z"
+  }
+ },
+ "imports": {
+  "alpha": [
+   {
+    "sellPrice": 5000,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 5000,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 5000,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 5000,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 9000,
+    "stationType": "FleetCarrier"
+   },
+   {
+    "sellPrice": 9000,
+    "stationType": "FleetCarrier"
+   },
+   {
+    "sellPrice": 9000,
+    "stationType": "FleetCarrier"
+   },
+   {
+    "sellPrice": 9000,
+    "stationType": "FleetCarrier"
+   },
+   {
+    "sellPrice": 9000,
+    "stationType": "FleetCarrier"
+   }
+  ],
+  "bravo": [
+   {
+    "sellPrice": 4000,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 4000,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 4000,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 6000,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 6000,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 6000,
+    "stationType": "Coriolis"
+   }
+  ],
+  "charlie": [
+   {
+    "sellPrice": 3000,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 3000,
+    "stationType": "Coriolis"
+   }
+  ],
+  "delta": [
+   {
+    "sellPrice": 800,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 800,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 800,
+    "stationType": "Coriolis"
+   }
+  ],
+  "echo": [
+   {
+    "sellPrice": 7100,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 7100,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 7100,
+    "stationType": "Coriolis"
+   }
+  ],
+  "foxtrot": [
+   {
+    "sellPrice": 2100,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 2100,
+    "stationType": "Coriolis"
+   },
+   {
+    "sellPrice": 2100,
+    "stationType": "Coriolis"
+   }
+  ]
+ }
+}

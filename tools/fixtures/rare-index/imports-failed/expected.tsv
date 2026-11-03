@@ -1,0 +1,5 @@
+# built 2026-01-01T00:00:00Z
+# far prices 2026-11-02T00:00:00Z
+symbol	far_sell_price	far_reports	buy_price	stock	reported_at
+alpha	5000	4	1000	80	2026-11-03T10:00:00Z
+bravo	4000	3	2000	5	2026-11-03T10:01:00Z
