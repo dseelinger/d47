@@ -486,6 +486,9 @@ public sealed class AppHost : IDisposable
 
     private ModuleRunning? _modules;
 
+    /// <summary>The installed modules, or null before the host starts ticking.</summary>
+    internal ModuleRunning? Modules => _modules;
+
     private readonly List<IDisposable> _feedSources = [];
 
     private readonly Dictionary<string, D47.Knowledge.RavenColonialPlanWriter> _colonisationPlanWriters = new(StringComparer.Ordinal);

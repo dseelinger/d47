@@ -142,7 +142,7 @@ in: what you can change by talking to it.
 The Settings tab is one scrolling page in eight areas: **Your core**, **Other voices**,
 **Hearing and sound**, **Providers**, **You and your records**, **Acting on the game**, **Screens**,
 and **Privacy and this install**. Each area
-holds a few sections, and each section is one card. The nav down the side lists the areas with
+holds a few sections, and each section is one card. **Privacy and this install** holds Privacy and egress, Updates and install and, when a module is installed, Modules: one group per module, where you turn it on, choose who it speaks as, mute it, limit how often it speaks and read what leaves this machine. Turning a module on is only done from that page; asking for it by voice does nothing. The nav down the side lists the areas with
 their sections beneath them, and marks the section at the top of the page as you scroll.
 
 A section is about one job rather than one part of Directive 47, so it can hold rows from several:

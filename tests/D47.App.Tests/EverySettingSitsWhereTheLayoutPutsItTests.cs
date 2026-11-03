@@ -69,7 +69,11 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
         // Diagnostics holds only diagnostics.paused and diagnostics.coverage, and a fresh test
         // surface has neither a paused subscriber nor coverage recording — so that place has no page
         // here and is absent from the nav (#283).
-        var expected = area.Places.Where(place => place.Id != "diagnostics").Select(place => place.Title).ToList();
+        // Modules is drawn only when a module is installed, and none is here.
+        var expected = area.Places
+            .Where(place => place.Id != "diagnostics" && place.Id != SettingsLayout.ModulesPlace)
+            .Select(place => place.Title)
+            .ToList();
 
         var nav = ((StackPanel)host.View.FindControl<Control>("NavItems")!).Children.Where(item => item.IsVisible).ToList();
         var heading = nav.FindIndex(item => item.Classes.Contains(SettingsView.NavAreaClass) && Words(item) == areaTitle);

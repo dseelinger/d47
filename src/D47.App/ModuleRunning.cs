@@ -20,11 +20,19 @@ internal sealed class ModuleRunning : IDisposable
         _settings = settings;
         _logger = loggers.CreateLogger<ModuleRunning>();
         Host = new ModuleHost(loggers);
+        Host.StatusChanged += _ => Changed?.Invoke();
     }
+
+    /// <summary>Raised on any thread when the installed list or a module's status changes.</summary>
+    public event Action? Changed;
 
     public ModuleHost Host { get; }
 
     public IReadOnlyList<InstalledModule> Installed => _catalog.Modules;
+
+    public IReadOnlyList<ModuleStatusReport> Statuses => Host.Statuses;
+
+    public void Restart(string id) => Host.Restart(id);
 
     public void Start()
     {
@@ -47,6 +55,7 @@ internal sealed class ModuleRunning : IDisposable
 
                 _loaded = true;
                 Apply();
+                Changed?.Invoke();
             }
             catch (Exception ex)
             {

@@ -29,7 +29,10 @@ public enum SettingsGroupLayout
     Mixer,
 }
 
-/// <summary>One card on the settings page, gathering rows from any number of capabilities by key.</summary>
+/// <summary>
+/// One card on the settings page, gathering rows from any number of capabilities by key.
+/// <paramref name="DrawnByApp"/> places have no groups: the App draws their content.
+/// </summary>
 public sealed record SettingsPlace(
     string Id,
     string Title,
@@ -37,7 +40,8 @@ public sealed record SettingsPlace(
     string DocsCapabilityId,
     IReadOnlyList<string> Terms,
     bool StartCollapsed,
-    IReadOnlyList<SettingsPlaceGroup> Groups);
+    IReadOnlyList<SettingsPlaceGroup> Groups,
+    bool DrawnByApp = false);
 
 /// <summary>A section of the page, holding up to <see cref="SettingsLayout.MostPlacesPerArea"/> places.</summary>
 public sealed record SettingsArea(string Id, string Title, string Sentence, IReadOnlyList<SettingsPlace> Places);
@@ -61,6 +65,9 @@ public static class SettingsLayout
 {
     /// <summary>No area holds more places than this.</summary>
     public const int MostPlacesPerArea = 6;
+
+    /// <summary>The id of the place the App draws for the installed modules.</summary>
+    public const string ModulesPlace = "modules";
 
     /// <summary>
     /// No place shows more entries than this on a fresh install, with one documented exception. An entry
@@ -883,6 +890,15 @@ public static class SettingsLayout
                                 E("about.attribution"),
                             ]),
                     ]),
+                new SettingsPlace(
+                    ModulesPlace,
+                    "Modules",
+                    "Each installed module: turn it on, who it speaks as, how often it may speak, and what leaves this machine.",
+                    "privacy",
+                    ["module", "plugin"],
+                    false,
+                    [],
+                    DrawnByApp: true),
                 new SettingsPlace(
                     "diagnostics",
                     "Diagnostics",

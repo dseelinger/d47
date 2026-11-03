@@ -45,6 +45,21 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     private SettingsNav? _nav;
 
+    private ModulesSource? _modules;
+
+    private ModulesPlaceView? _modulesView;
+
+    private int _modulesSection = -1;
+
+    /// <summary>Draws the Modules place from what is installed; call before <see cref="Attach"/>.</summary>
+    internal void EnableModules(ModulesSource source)
+    {
+        _modules = source;
+
+        // Raised on a pool thread when the catalog finishes loading or a module's status moves.
+        source.Changed += () => Dispatcher.UIThread.Post(Refresh);
+    }
+
     /// <summary>The open place's head, and the parts of it that change with the place.</summary>
     private StackPanel? _pageHead;
 
@@ -315,6 +330,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _groups.Clear();
         _tileGrids.Clear();
         _tabPlaceRows.Clear();
+        _modulesView = null;
+        _modulesSection = -1;
         _otherTabsSection = null;
         _otherTabsList = null;
         _tabStripContent = null;
@@ -485,6 +502,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         var content = new StackPanel { Spacing = 2 };
 
         var rows = new List<SettingRow>();
+
+        if (place.DrawnByApp)
+        {
+            if (place.Id == SettingsLayout.ModulesPlace && _modules is { } source)
+            {
+                _modulesView = new ModulesPlaceView(settings, source);
+                _modulesSection = index;
+                content.Children.Add(_modulesView);
+            }
+
+            return (content, rows, new Button { IsVisible = false });
+        }
 
         for (var inPlace = 0; inPlace < place.Groups.Count; inPlace++)
         {
@@ -1312,6 +1341,19 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             ShowingEverything,
             _revealedSections);
 
+        if (_modulesView is { } modules && _modulesSection >= 0 && _modulesSection < _sift.Places.Count)
+        {
+            modules.Rebuild();
+
+            var places = _sift.Places.ToArray();
+            var named = _query.Length == 0
+                        || _sections[_modulesSection].Title.Contains(_query, StringComparison.OrdinalIgnoreCase)
+                        || _sections[_modulesSection].Terms.Any(t => t.Contains(_query, StringComparison.OrdinalIgnoreCase));
+
+            places[_modulesSection] = new PlaceSift(modules.HasModules, modules.HasModules && named ? 1 : 0, 0);
+            _sift = _sift with { Places = places };
+        }
+
         _refreshing = true;
         try
         {
@@ -1490,7 +1532,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             crumb.Text = $"{active.AreaTitle(active.ActiveArea).ToUpperInvariant()} ›";
             _marker.Paint(title, section.Title.ToUpperInvariant(), _query);
 
-            legend.IsVisible = _rows.Any(row => row.Row.ShowsProtectedBar && row.Section == active.ActiveSection);
+            legend.IsVisible = _rows.Any(row => row.Row.ShowsProtectedBar && row.Section == active.ActiveSection)
+                               || (active.ActiveSection == _modulesSection && _modulesView is { HasProtectedRow: true });
 
             order.Add(head);
 

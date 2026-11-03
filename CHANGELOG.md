@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Settings has a Modules section under Privacy and this install, shown only when a module is installed. Each module has its own group: a checkbox that turns it on or off, its status with a Restart button, who it speaks as, a Mute checkbox, how often it may speak, and what leaves this machine. A module that D47 refused to start shows why, and its checkbox cannot be ticked. The model cannot turn a module on, and neither can a spoken request.
+
 D47 no longer zips your data folder into `data\backups` the first time a new version starts, so that start is a few seconds faster. Zips already in `data\backups` are left where they are; you can delete the folder.
 
 Your stories no longer has a Set aside button. Finished, failed and abandoned stories are not listed there. When no story is under way, the page says so.

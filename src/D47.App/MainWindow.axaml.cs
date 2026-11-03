@@ -1045,6 +1045,20 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (_host.Modules is { } modules)
+        {
+            var source = new ModulesSource(
+                () => modules.Installed,
+                () => modules.Statuses,
+                modules.Restart,
+                () => [.. D47.Core.Persona.PersonaCatalog.Stocked.Select(p => (p.Id, p.Name))],
+                () => [.. _host.OwnPersonas.Cores.Select(c => (c.Id, c.Name))],
+                () => [.. _host.Characters.CharactersOf(_host.GameState.Active?.Identity.FrontierId).Select(c => (c.Id, c.Name))]);
+
+            modules.Changed += source.Raise;
+            view.EnableModules(source);
+        }
+
         view.Attach(
             _host.Settings,
             _host.ViewState,

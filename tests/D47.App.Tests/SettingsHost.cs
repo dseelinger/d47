@@ -65,7 +65,10 @@ internal sealed class SettingsHost
         D47.App.Settings.CustomVoicesEditing? customVoices = null,
 
         // At the end, by the same rule.
-        Func<D47.App.Panel.PhrasesPage>? phrases = null)
+        Func<D47.App.Panel.PhrasesPage>? phrases = null,
+
+        // At the end, by the same rule.
+        ModulesSource? modules = null)
     {
         // The whole page, for every test that is about a row rather than about the
         // fold.com/dseelinger/d47/issues/60).
@@ -86,6 +89,11 @@ internal sealed class SettingsHost
         // the path this exercises too.
         panel.EnableSettings(() =>
         {
+            if (modules is not null)
+            {
+                view.EnableModules(modules);
+            }
+
             view.Attach(
                 settings,
                 viewState,
