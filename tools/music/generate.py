@@ -127,31 +127,24 @@ def wait_for_game(deadline):
 
 
 def load_models():
-    """Returns (dit, llm), or (None, None) after logging the failure."""
+    """Returns the DiT, or None after logging the failure."""
     sys.path.insert(0, ACE)
     os.chdir(ACE)
     from acestep.handler import AceStepHandler
-    from acestep.llm_inference import LLMHandler
 
     dit = AceStepHandler()
     msg, ok = dit.initialize_service(project_root=ACE, config_path="acestep-v15-xl-sft", device="auto", offload_to_cpu=True)
     if not ok:
         log(f"DiT failed: {msg}")
-        return None, None
-    llm = LLMHandler()
-    msg, ok = llm.initialize(checkpoint_dir=os.path.join(ACE, "checkpoints"), lm_model_path="acestep-5Hz-lm-1.7B",
-                             backend="pt", device="auto", offload_to_cpu=True, dtype=None)
-    if not ok:
-        log(f"LM failed: {msg}")
-        return None, None
-    return dit, llm
+        return None
+    return dit
 
 
 def settings(prompt, lyrics, bpm, key, duration, seed):
     from acestep.inference import GenerationParams, GenerationConfig
 
     params = GenerationParams(
-        task_type="text2music", thinking=True, caption=prompt, lyrics=lyrics.replace("\\n", "\n"),
+        task_type="text2music", thinking=False, caption=prompt, lyrics=lyrics.replace("\\n", "\n"),
         instrumental=True, bpm=int(bpm), keyscale=key, duration=int(duration),
         use_cot_caption=False, use_cot_metas=False, use_cot_language=False,
         inference_steps=50, guidance_scale=7.0, shift=3.0, seed=int(seed))
@@ -163,12 +156,12 @@ def smoke(out_dir):
     """Generates one 10-second track into out_dir with the run's models and settings. Exit code 0 on success."""
     from acestep.inference import generate_music
 
-    dit, llm = load_models()
+    dit = load_models()
     if dit is None:
         return 1
     params, config = settings("calm ambient pads, slow", "[Instrumental]", 70, "C minor", 10, 1)
     try:
-        result = generate_music(dit, llm, params=params, config=config, save_dir=out_dir)
+        result = generate_music(dit, None, params=params, config=config, save_dir=out_dir)
     except Exception as e:
         log(f"test track FAILED: {e}")
         return 1
@@ -202,7 +195,7 @@ def main():
         if not todo or not wait_for_game(deadline) or should_stop(deadline):
             return
 
-        dit, llm = load_models()
+        dit = load_models()
         if dit is None:
             return
         from acestep.inference import generate_music
@@ -216,7 +209,7 @@ def main():
             params, config = settings(row["prompt"], row["lyrics"], row["bpm"], row["key"], row["duration"], row["seed"])
             t0 = time.time()
             try:
-                result = generate_music(dit, llm, params=params, config=config, save_dir=TMP)
+                result = generate_music(dit, None, params=params, config=config, save_dir=TMP)
             except Exception as e:  # one bad track must not end the night
                 log(f"{row['id']} FAILED: {e}")
                 continue
