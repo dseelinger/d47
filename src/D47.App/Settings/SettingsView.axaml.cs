@@ -57,7 +57,18 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _modules = source;
 
         // Raised on a pool thread when the catalog finishes loading or a module's status moves.
-        source.Changed += () => Dispatcher.UIThread.Post(Refresh);
+        void Changed() => Dispatcher.UIThread.Post(Refresh);
+
+        AttachedToVisualTree += (_, _) =>
+        {
+            source.Changed -= Changed;
+            source.Changed += Changed;
+
+            // Whatever changed while it was not listening.
+            Changed();
+        };
+
+        DetachedFromVisualTree += (_, _) => source.Changed -= Changed;
     }
 
     /// <summary>The open place's head, and the parts of it that change with the place.</summary>

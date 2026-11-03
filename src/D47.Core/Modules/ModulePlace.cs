@@ -12,8 +12,6 @@ public sealed record ModuleStatusLine(string Lead, string Rest, ChoiceTone Tone)
 /// <summary>What the Modules settings place says and writes for each installed module.</summary>
 public static class ModulePlace
 {
-    public const string PlaceId = "modules";
-
     /// <summary>Stored in <see cref="ModuleSettings.SpeaksAs"/> for the core aboard.</summary>
     public const string Aboard = "aboard";
 

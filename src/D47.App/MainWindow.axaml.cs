@@ -1053,9 +1053,10 @@ public partial class MainWindow : Window
                 modules.Restart,
                 () => [.. D47.Core.Persona.PersonaCatalog.Stocked.Select(p => (p.Id, p.Name))],
                 () => [.. _host.OwnPersonas.Cores.Select(c => (c.Id, c.Name))],
-                () => [.. _host.Characters.CharactersOf(_host.GameState.Active?.Identity.FrontierId).Select(c => (c.Id, c.Name))]);
+                () => [.. _host.Characters.CharactersOf(_host.GameState.Active?.Identity.FrontierId).Select(c => (c.Id, c.Name))],
+                watch: handler => modules.Changed += handler,
+                unwatch: handler => modules.Changed -= handler);
 
-            modules.Changed += source.Raise;
             view.EnableModules(source);
         }
 

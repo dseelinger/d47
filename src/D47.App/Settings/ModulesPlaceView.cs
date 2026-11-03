@@ -20,8 +20,13 @@ internal sealed class ModulesSource(
     Action<string> restart,
     Func<IReadOnlyList<(string Id, string Name)>> cores,
     Func<IReadOnlyList<(string Id, string Name)>> yourCores,
-    Func<IReadOnlyList<(string Id, string Name)>> characters)
+    Func<IReadOnlyList<(string Id, string Name)>> characters,
+    Action<Action>? watch = null,
+    Action<Action>? unwatch = null)
 {
+    private Action? _changed;
+    private bool _watching;
+
     public IReadOnlyList<InstalledModule> Installed => installed();
 
     public IReadOnlyList<ModuleStatusReport> Statuses => statuses();
@@ -34,10 +39,33 @@ internal sealed class ModulesSource(
 
     public void Restart(string id) => restart(id);
 
-    /// <summary>Raised, on any thread, when the installed list or a status changes.</summary>
-    public event Action? Changed;
+    /// <summary>Raised, on any thread, when the installed list or a status changes; the source listens only while someone does.</summary>
+    public event Action? Changed
+    {
+        add
+        {
+            _changed += value;
 
-    public void Raise() => Changed?.Invoke();
+            if (!_watching)
+            {
+                _watching = true;
+                watch?.Invoke(Raise);
+            }
+        }
+
+        remove
+        {
+            _changed -= value;
+
+            if (_changed is null && _watching)
+            {
+                _watching = false;
+                unwatch?.Invoke(Raise);
+            }
+        }
+    }
+
+    public void Raise() => _changed?.Invoke();
 }
 
 /// <summary>The Modules place: one group per installed module, drawn by the App because the groups follow what is installed.</summary>
@@ -365,7 +393,7 @@ internal sealed class ModulesPlaceView : StackPanel
 
         var (view, choice) = Choice.Build(
             [.. intervals.Select(ModulePlace.IntervalLabel)],
-            selectedIndex: Math.Max(0, intervals.ToList().IndexOf(chosen.Interval)),
+            selectedIndex: ModulePlace.IntervalAllowed(chosen.Interval, manifest) ? Math.Max(0, intervals.ToList().IndexOf(chosen.Interval)) : 0,
             statuses: statuses);
 
         view.Name = IntervalName + "." + manifest.Id;
