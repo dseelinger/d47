@@ -52,7 +52,7 @@ $Staging = [IO.Path]::GetFullPath($Staging)
 $payload = 'd47.exe', 'runtimes', 'ships', 'portraits', 'voices'
 
 # Folders under data\ that D47 downloads or records, and backups, which holds zips older builds wrote.
-$leftOut = 'audio', 'avatar-clips', 'backups', 'flight', 'logs', 'models', 'ships', 'stories'
+$leftOut = 'audio', 'avatar-clips', 'backups', 'flight', 'logs', 'models', 'modules', 'ships', 'stories'
 
 function Get-InstalledVersion([string]$folder) {
     $exe = Join-Path $folder 'd47.exe'

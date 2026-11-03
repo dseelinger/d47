@@ -36,6 +36,13 @@ public sealed record D47Settings
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, StoryVoiceChoice>> StoryVoicePairings { get; init; } =
         new Dictionary<string, IReadOnlyDictionary<string, StoryVoiceChoice>>(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>What the Commander chose for each module, by module id; kept after the module is removed.</summary>
+    public IReadOnlyDictionary<string, ModuleSettings> Modules { get; init; } =
+        new Dictionary<string, ModuleSettings>(StringComparer.Ordinal);
+
+    public ModuleSettings ModuleFor(string id) =>
+        Modules.TryGetValue(id, out var chosen) ? chosen : new ModuleSettings();
+
     public LoggingSettings Logging { get; init; } = new();
 
     public LlmSettings Llm { get; init; } = new();
@@ -99,6 +106,32 @@ public sealed record D47Settings
     /// 44).
     /// </summary>
     public IReadOnlyList<CommanderSettings> Commanders { get; init; } = [];
+}
+
+/// <summary>How often a module may speak unprompted.</summary>
+public enum ModuleInterval
+{
+    Own,
+    TenMinutes,
+    ThirtyMinutes,
+    Hourly,
+}
+
+/// <summary>One module's settings; a module not yet chosen about is off.</summary>
+public sealed record ModuleSettings
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    public bool Enabled { get; init; }
+
+    /// <summary>The character the module speaks as, or null for the default.</summary>
+    public string? SpeaksAs { get; init; }
+
+    public bool Muted { get; init; }
+
+    public ModuleInterval Interval { get; init; } = ModuleInterval.Own;
 }
 
 /// <summary>One Commander's overlay over the installation's settings (Phase 44).</summary>

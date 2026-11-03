@@ -52,6 +52,7 @@ public sealed class AppPaths
         AvatarClips = Path.Combine(Data, "avatar-clips");
         BindingProfiles = Path.Combine(Data, "binding-profiles");
         Captures = Path.Combine(Data, "captures");
+        Modules = Path.Combine(Data, "modules");
         ShippedShips = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "ships");
         ShippedPortraits = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "portraits");
         ShippedCodexPlaceholders = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "codex-placeholders");
@@ -161,6 +162,9 @@ public sealed class AppPaths
 
     /// <summary>The full-size pictures of the screen the Commander asked for, each with a JSON note.</summary>
     public string Captures { get; }
+
+    /// <summary>One folder per installed module, each holding a <c>module.json</c>.</summary>
+    public string Modules { get; }
 
     /// <summary>The card stills that came with the build, read-only, beside the executable.</summary>
     public string ShippedShips { get; }
