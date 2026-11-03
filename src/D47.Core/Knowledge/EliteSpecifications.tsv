@@ -13,7 +13,7 @@
 # Ships: 49. Modules: 1221, of which bulkheads 247. Known but unmeasured: 0.
 # Slots: 1290 across 49 hulls. Modules with no type: 11.
 # coriolis-data tree 0db9234b5b9c. EDSY eddb.js as of the same day.
-# Built: 2026-11-01.
+# Built: 2026-11-02.
 [ships]
 symbol	name	manufacturer	pad	speed	boost	armour	shields	hardness	hull_mass	fuel	crew	masslock	cost	hardpoints	internals	requirement
 adder	Adder	Zorgon Peterson	small	220	320	90	60	35	35	0.36	2	7	40833	2,1,1	3,3,2,2,1,1,1	
@@ -25,7 +25,7 @@ belugaliner	Beluga Liner	Saud Kruger	large	200	280	280	280	60	950	0.81	4	18	7969
 cobramkiii	Cobra Mk III	Faulcon DeLacy	small	280	400	120	80	35	180	0.49	2	8	208372	2,2,1,1	4,4,4,2,2,2,1,1	
 cobramkiv	Cobra Mk IV	Faulcon DeLacy	small	200	300	120	120	35	210	0.51	2	8	623374	2,2,1,1,1	4,4,4,4,3,3,2,2,1,1	early-adoption
 cobramkv	Cobra Mk V	Faulcon DeLacy	small	290	410	180	160	40	150	0.49	3	8	1477085	2,2,2,1,1	5,4,4,4,3,3,3,2,1	
-corsair	Corsair		medium	280	355	270	235	65	265		2		76884160	3,3,3,2,2,2	6,6,6,5,5,5,4,3,2,1	
+corsair	Corsair	Gutamaya	medium	280	355	270	235	65	265		2		76884160	3,3,3,2,2,2	6,6,6,5,5,5,4,3,2,1	
 cutter	Imperial Cutter	Gutamaya	large	200	320	400	600	70	1100	1.16	4	27	200493413	4,3,3,2,2,2,2	8,8,6,6,6,5,5,4,3,1	empire:12
 diamondback	Diamondback Scout	Lakon	small	280	380	120	120	40	170	0.49	1	8	463926	2,2,1,1	3,3,3,2,1,1	
 diamondbackxl	Diamondback Explorer	Lakon	small	260	340	150	150	42	260	0.52	1	10	1638277	3,2,2	4,4,3,3,2,2,1,1	

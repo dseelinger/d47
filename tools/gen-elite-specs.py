@@ -85,7 +85,7 @@ import re
 import urllib.request
 from pathlib import Path
 
-from curated_ships import ARX_EARLY_ACCESS
+from curated_ships import ARX_EARLY_ACCESS, MANUFACTURERS
 
 FDEV_IDS = "https://raw.githubusercontent.com/EDCD/FDevIDs/master/"
 
@@ -338,7 +338,8 @@ def build_ships(
     `hardness`, `hull_mass`, `hardpoints` and `internals`. coriolis-data, matched on the id
     `shipyard.csv` gives the hull, supplies the other columns, and any of those eight EDSY
     leaves blank. EDSY fills `pad` and `crew` where coriolis-data does not. A hull
-    coriolis-data does not match carries no manufacturer, fuel or masslock. `cost` is coriolis-data's
+    coriolis-data does not match carries no fuel or masslock, and takes its manufacturer from
+    `MANUFACTURERS` in `curated_ships.py`. `cost` is coriolis-data's
     `hullCost`, else EDSY's `cost`, and is empty for an `arx-early-access` hull.
     """
     by_edid = {ship.get("edID"): ship for ship in documents}
@@ -349,6 +350,11 @@ def build_ships(
     if unknown_arx:
         raise SystemExit(
             f"ARX_EARLY_ACCESS in tools/curated_ships.py names a symbol not in shipyard.csv: {', '.join(unknown_arx)}")
+
+    unknown_makers = sorted(set(MANUFACTURERS) - {row["symbol"].lower() for row in shipyard})
+    if unknown_makers:
+        raise SystemExit(
+            f"MANUFACTURERS in tools/curated_ships.py names a symbol not in shipyard.csv: {', '.join(unknown_makers)}")
 
     for identity in shipyard:
         symbol = identity["symbol"].lower()
@@ -386,7 +392,7 @@ def build_ships(
         built.append([
             symbol,
             elite_hull_name(identity["name"]),
-            properties.get("manufacturer") or "",
+            properties.get("manufacturer") or MANUFACTURERS.get(symbol, ""),
             PADS.get(properties.get("class")) or PADS.get(int(figures.get("class") or 0), ""),
             pick("speed", "topspd"),
             pick("boost", "bstspd"),
