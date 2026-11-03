@@ -24,6 +24,8 @@ internal sealed class ModuleRunning : IDisposable
 
     public ModuleHost Host { get; }
 
+    public IReadOnlyList<InstalledModule> Installed => _catalog.Modules;
+
     public void Start()
     {
         _settings.Changed += OnSettingsChanged;

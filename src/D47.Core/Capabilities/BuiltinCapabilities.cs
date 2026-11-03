@@ -336,7 +336,10 @@ public static class BuiltinCapabilities
         Func<IReadOnlyList<string>>? remoteCharacterSystems = null,
 
         // The route file checked against Elite's route targets.
-        Func<Journal.LiveRoute?>? liveRoute = null) =>
+        Func<Journal.LiveRoute?>? liveRoute = null,
+
+        // The modules read from data\modules, for the egress disclosure.
+        Func<IReadOnlyList<Modules.InstalledModule>>? installedModules = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -495,7 +498,7 @@ public static class BuiltinCapabilities
         // list keeps the shape it has — no parameter inserted in the middle, which is the one edit this file
         // records as silently rebinding everything after it.
         PrivacyCapability.Create(
-            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable, files, runningStory, remoteCharacterSystems),
+            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable, files, runningStory, remoteCharacterSystems, installedModules),
         SettingsCapability.Create(settings),
         RemindersCapability.Create(
             journalReminders,

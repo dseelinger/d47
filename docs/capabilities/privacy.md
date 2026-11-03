@@ -23,7 +23,7 @@ nav_order: 150
 <section>
 <h2><span class="num">1</span> Read the destinations, one row per place.</h2>
 <p class="say">Open Settings › Privacy and this install › Privacy and egress, group What leaves this machine, and read each row.</p>
-<p class="expect">Each row names what is sent, to whom, and whether it is on right now.</p>
+<p class="expect">Each row names what is sent, to whom, and whether it is on right now. Each module that is turned on is listed after the fixed rows, saying it runs as its own program on this PC and that D47 does not see what it sends or where.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Privacy">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Privacy</text>

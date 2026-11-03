@@ -2634,7 +2634,8 @@ public sealed class AppHost : IDisposable
                     .Select(c => c.System!)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList() ?? [],
-                liveRoute: () => loop.Feed.LiveRoute));
+                liveRoute: () => loop.Feed.LiveRoute,
+                installedModules: () => late.Host?._modules?.Installed ?? []));
 
         services.BuildingRegistry.Dispose();
 

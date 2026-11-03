@@ -1,4 +1,5 @@
 ﻿using D47.Core.Conversation;
+using D47.Core.Modules;
 
 namespace D47.Core.Configuration;
 
@@ -1097,8 +1098,23 @@ public static class EgressDisclosure
         bool imagesAvailable = true,
         IReadOnlyList<RunningStoryVoice>? runningStory = null,
         bool codexPublishTokenPresent = false,
-        IReadOnlyList<string>? remoteCharacterSystems = null) =>
-        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems))];
+        IReadOnlyList<string>? remoteCharacterSystems = null,
+        IReadOnlyList<InstalledModule>? installedModules = null) =>
+        [
+            .. Ids.Select(id => Entry(id, settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems)),
+            .. ModuleEntries(settings, installedModules ?? []),
+        ];
+
+    /// <summary>One entry per installed module that is turned on, in catalog order.</summary>
+    public static IReadOnlyList<EgressEntry> ModuleEntries(D47Settings settings, IReadOnlyList<InstalledModule> installed) =>
+        [.. installed
+            .OfType<ReadyModule>()
+            .Where(m => settings.ModuleFor(m.Manifest.Id).Enabled)
+            .Select(m =>
+            {
+                var what = $"{m.Manifest.Name} runs as its own program on this PC. D47 does not see what it sends or where.";
+                return new EgressEntry($"module.{m.Manifest.Id}", m.Manifest.Name, "not known to D47", what, Active: true, Summary: what);
+            })];
 
     /// <summary>The same disclosure as prose, for the tool result and the spoken path.</summary>
     public static string Describe(
@@ -1108,9 +1124,10 @@ public static class EgressDisclosure
         bool imagesAvailable = true,
         IReadOnlyList<RunningStoryVoice>? runningStory = null,
         bool codexPublishTokenPresent = false,
-        IReadOnlyList<string>? remoteCharacterSystems = null)
+        IReadOnlyList<string>? remoteCharacterSystems = null,
+        IReadOnlyList<InstalledModule>? installedModules = null)
     {
-        var entries = For(settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems);
+        var entries = For(settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems, installedModules);
         var active = entries.Count(e => e.Active);
 
         var report = new System.Text.StringBuilder();

@@ -72,12 +72,14 @@ public static class PrivacyCapability
         Func<bool>? imagesAvailable = null,
         IFileSystem? files = null,
         Func<IReadOnlyList<RunningStoryVoice>>? runningStory = null,
-        Func<IReadOnlyList<string>>? remoteCharacterSystems = null)
+        Func<IReadOnlyList<string>>? remoteCharacterSystems = null,
+        Func<IReadOnlyList<Modules.InstalledModule>>? installedModules = null)
     {
         var canSearch = searchAvailable ?? (() => true);
         var readsImages = imagesAvailable ?? (() => true);
         var storyVoices = runningStory ?? (() => []);
         var remoteSystems = remoteCharacterSystems ?? (() => []);
+        var modules = installedModules ?? (() => []);
 
         // Presence of the key, never its value — the disclosure has to distinguish "configured and sending"
         // from "selected but inert", and that is the only bit it needs.
@@ -125,7 +127,7 @@ public static class PrivacyCapability
                         + "and exactly what is sent there.",
                     Handler = (_, _) => Task.FromResult(
                         ToolResult.Ok(EgressDisclosure.Describe(
-                            settings.Current, KeyPresent(), canSearch(), readsImages(), storyVoices(), CodexPublishTokenPresent(), remoteSystems()))),
+                            settings.Current, KeyPresent(), canSearch(), readsImages(), storyVoices(), CodexPublishTokenPresent(), remoteSystems(), modules()))),
                 },
             ],
             Settings = BuildSettingRows(
