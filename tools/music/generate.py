@@ -180,6 +180,31 @@ def smoke(out_dir):
     return 0
 
 
+def make(dit, row, added):
+    """Generates one catalogue track into tracks\\ and lists its folder in generated.txt. True on success."""
+    from acestep.inference import generate_music
+
+    shutil.rmtree(TMP, ignore_errors=True)
+    os.makedirs(TMP)
+    params, config = settings(row["prompt"], row["lyrics"], row["bpm"], row["key"], row["duration"], row["seed"])
+    t0 = time.time()
+    try:
+        result = generate_music(dit, None, params=params, config=config, save_dir=TMP)
+    except Exception as e:  # one bad track must not end the night
+        log(f"{row['id']} FAILED: {e}")
+        return False
+    if not result.success or not result.audios:
+        log(f"{row['id']} FAILED: {result.status_message}")
+        return False
+    dest = path_of(row)
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    os.replace(result.audios[0]["path"], dest)
+    added.add(row["folder"])
+    write_generated(added)
+    log(f"{row['id']} {row['duration']}s in {time.time() - t0:.0f}s")
+    return True
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--until")
@@ -206,31 +231,12 @@ def main():
         dit = load_models()
         if dit is None:
             return
-        from acestep.inference import generate_music
 
         done = 0
         for row in todo:
             if should_stop(deadline) or not wait_for_game(deadline):
                 break
-            shutil.rmtree(TMP, ignore_errors=True)
-            os.makedirs(TMP)
-            params, config = settings(row["prompt"], row["lyrics"], row["bpm"], row["key"], row["duration"], row["seed"])
-            t0 = time.time()
-            try:
-                result = generate_music(dit, None, params=params, config=config, save_dir=TMP)
-            except Exception as e:  # one bad track must not end the night
-                log(f"{row['id']} FAILED: {e}")
-                continue
-            if not result.success or not result.audios:
-                log(f"{row['id']} FAILED: {result.status_message}")
-                continue
-            dest = path_of(row)
-            os.makedirs(os.path.dirname(dest), exist_ok=True)
-            os.replace(result.audios[0]["path"], dest)
-            done += 1
-            added.add(row["folder"])
-            write_generated(added)
-            log(f"{row['id']} {row['duration']}s in {time.time() - t0:.0f}s")
+            done += make(dit, row, added)
         log(f"finished: {done} generated this run")
     finally:
         shutil.rmtree(TMP, ignore_errors=True)

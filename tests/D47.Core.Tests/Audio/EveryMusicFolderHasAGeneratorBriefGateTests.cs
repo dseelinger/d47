@@ -34,11 +34,16 @@ public class EveryMusicFolderHasAGeneratorBriefGateTests
     [Theory]
     [InlineData("run.cmd")]
     [InlineData("weekly.cmd")]
+    [InlineData("both.cmd")]
     public void ARunWritesTheCatalogueBeforeItGenerates(string script)
     {
         var text = Music(script);
         var catalogue = text.IndexOf("catalogue.py", StringComparison.Ordinal);
-        var generate = text.IndexOf("generate.py", StringComparison.Ordinal);
+        var generate = new[] { "generate.py", "both.py" }
+            .Select(name => text.IndexOf(name, StringComparison.Ordinal))
+            .Where(index => index >= 0)
+            .DefaultIfEmpty(-1)
+            .Min();
 
         Assert.True(catalogue >= 0, $"{script} never writes the catalogue.");
         Assert.True(generate >= 0, $"{script} never runs the generator.");

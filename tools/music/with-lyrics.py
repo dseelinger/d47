@@ -320,6 +320,34 @@ def render(dit, s, lyrics):
     return result.audios[0]["path"]
 
 
+def place(dit, s, song, out, rows):
+    """Renders a written song, moves it into its folder under out and adds it to the ledger. True on success."""
+    t0 = time.time()
+    path = render(dit, s, song["lyrics"])
+    if path is None:
+        return False
+    target = os.path.join(out, s["folder"])
+    os.makedirs(target, exist_ok=True)
+    name = file_name(song["title"], target)
+    shutil.move(path, os.path.join(TMP, name))
+    os.replace(os.path.join(TMP, name), os.path.join(target, name))
+    row = {"folder": s["folder"], "file": name, "title": song["title"].strip(),
+           "chorus": chorus_of(song["lyrics"]), "vocal": s["vocal"], "mood": s["mood"],
+           "seed": s["seed"], "lyrics": song["lyrics"]}
+    append_ledger(row)
+    rows.append(row)
+    log(f"{s['folder']}: {name} {s['duration']}s in {time.time() - t0:.0f}s")
+    return True
+
+
+def next_spec(folder, rows, out):
+    """The next song's arrangement for a folder, or None when the folder has its quota."""
+    have = sum(1 for r in present(rows, out) if r["folder"] == folder)
+    if have >= catalogue.BRIEFS[folder][0]:
+        return None
+    return spec(folder, sum(1 for r in rows if r["folder"] == folder), rows)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--until")
@@ -370,22 +398,7 @@ def main():
                     continue
                 if generate.should_stop(deadline) or not generate.wait_for_game(deadline):
                     break
-                t0 = time.time()
-                path = render(dit, s, song["lyrics"])
-                if path is None:
-                    continue
-                target = os.path.join(args.out, s["folder"])
-                os.makedirs(target, exist_ok=True)
-                name = file_name(song["title"], target)
-                shutil.move(path, os.path.join(TMP, name))
-                os.replace(os.path.join(TMP, name), os.path.join(target, name))
-                row = {"folder": s["folder"], "file": name, "title": song["title"].strip(),
-                       "chorus": chorus_of(song["lyrics"]), "vocal": s["vocal"], "mood": s["mood"],
-                       "seed": s["seed"], "lyrics": song["lyrics"]}
-                append_ledger(row)
-                rows.append(row)
-                done += 1
-                log(f"{s['folder']}: {name} {s['duration']}s in {time.time() - t0:.0f}s")
+                done += place(dit, s, song, args.out, rows)
             pending.cancel()
         log(f"finished: {done} songs this run")
     finally:
