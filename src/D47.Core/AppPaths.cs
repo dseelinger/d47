@@ -47,6 +47,7 @@ public sealed class AppPaths
         Stories = Path.Combine(Data, "stories");
         CodexPictures = Path.Combine(Data, "codex-pictures");
         Signals = Path.Combine(Data, "signals");
+        Rares = Path.Combine(Data, "rares");
         GalNet = Path.Combine(Data, "galnet.json");
         Pictures = Path.Combine(Data, "pictures");
         AvatarClips = Path.Combine(Data, "avatar-clips");
@@ -147,6 +148,9 @@ public sealed class AppPaths
 
     /// <summary>The daily signal index, <c>signals.tsv.gz</c>, downloaded when a signal search asks for it.</summary>
     public string Signals { get; }
+
+    /// <summary>The rare index, <c>rares.tsv</c>, downloaded when a rare is asked about.</summary>
+    public string Rares { get; }
 
     /// <summary>The kept GalNet articles, <c>galnet.json</c>.</summary>
     public string GalNet { get; }

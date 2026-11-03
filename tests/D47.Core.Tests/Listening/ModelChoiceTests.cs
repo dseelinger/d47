@@ -170,10 +170,10 @@ public class ModelChoiceTests
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);
 
-        var active = Assert.Single(entries, entry => entry.Active);
-        Assert.Equal(EgressDisclosure.Donation, active.Id);
+        var active = entries.Where(entry => entry.Active).Select(entry => entry.Id).Order().ToList();
+        Assert.Equal(new[] { EgressDisclosure.Donation, EgressDisclosure.RareIndex }.Order(), active);
         Assert.Contains(
-            $"1 of {entries.Count} destinations are active",
+            $"2 of {entries.Count} destinations are active",
             EgressDisclosure.Describe(settings, false));
     }
 

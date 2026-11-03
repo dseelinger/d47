@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+D47 downloads the rare index, which holds each rare good's source price, stock and far sell price, from the rares-1 release on github.com when a rare is asked about and the copy in dataares is missing or more than three hours old. The Privacy and egress section lists it as Rare index, always on, with no setting; nothing about the Commander is sent.
+
 Ambient music, the thinking bed and sound cues now drop to their Duck while D47 speaks value while the microphone is open, whichever key, voice activity or the wake word opened it, and return to their Level when it closes.
 
 With a Music publish token, Settings › Hearing and sound › Sounds and levels, group Ambient music, has a Thumbs-down tracks row after Music publish token. It counts the library tracks queued for deletion ("3 tracks queued for deletion", or "None queued") and updates as tracks are thumbed down and deleted. Its Delete button, pressed twice, does what "delete the thumbs-down tracks" does, and is greyed out when nothing is queued or a deletion is running.

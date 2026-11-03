@@ -2039,6 +2039,11 @@ public sealed class AppHost : IDisposable
             () => settings.Current.Knowledge.SignalIndex,
             () => DateTimeOffset.UtcNow,
             loggerFactory.CreateLogger<D47.App.Panel.SignalIndexStore>());
+        var rareIndexStore = new D47.App.Panel.RareIndexStore(
+            paths.Rares,
+            files,
+            () => DateTimeOffset.UtcNow,
+            loggerFactory.CreateLogger<D47.App.Panel.RareIndexStore>());
 
         var starSystems = new D47.Knowledge.SpanshStarSystemService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshStarSystemService>());
@@ -2155,6 +2160,7 @@ public sealed class AppHost : IDisposable
             StarSystems = starSystems,
             VisitedStars = visitedStars,
             SignalIndexStore = signalIndexStore,
+            RareIndexStore = rareIndexStore,
             StorySwitch = storySwitch,
             StoryChoice = storyChoice,
             ObjectiveCourse = objectiveCourse,
@@ -4316,6 +4322,8 @@ public sealed class AppHost : IDisposable
         public required VisitedStarsBook VisitedStars { get; init; }
 
         public required D47.App.Panel.SignalIndexStore SignalIndexStore { get; init; }
+
+        public required D47.App.Panel.RareIndexStore RareIndexStore { get; init; }
 
         public required D47.Core.Capabilities.Builtin.AdventureCapability.StorySwitch StorySwitch { get; init; }
 

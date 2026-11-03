@@ -513,7 +513,7 @@ public class SettingsSurfaceShapeTests
 public class EgressDisclosureTests
 {
     [Fact]
-    public void WithEverySwitchOffOnlyTheBuiltInDonationRoadStaysActive()
+    public void WithEverySwitchOffOnlyTheDonationRoadAndTheRareIndexStayActive()
     {
         var settings = new D47Settings
         {
@@ -536,11 +536,11 @@ public class EgressDisclosureTests
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);
         var described = EgressDisclosure.Describe(settings, false);
 
-        // One row stays active by design (2026-08-31): the donation address ships in the build, so the
-        // destination always exists and the press is its only switch.
-        var active = Assert.Single(entries, entry => entry.Active);
-        Assert.Equal(EgressDisclosure.Donation, active.Id);
-        Assert.Contains($"1 of {entries.Count} destinations are active", described, StringComparison.Ordinal);
+        // Two rows stay active by design. The donation address ships in the build, so the destination always
+        // exists and the press is its only switch. The rare index has no setting: reading outside data is always on.
+        var active = entries.Where(entry => entry.Active).Select(entry => entry.Id).Order().ToList();
+        Assert.Equal(new[] { EgressDisclosure.Donation, EgressDisclosure.RareIndex }.Order(), active);
+        Assert.Contains($"2 of {entries.Count} destinations are active", described, StringComparison.Ordinal);
 
         // Counted, never claimed.
         Assert.DoesNotContain("Nothing is leaving", described, StringComparison.Ordinal);

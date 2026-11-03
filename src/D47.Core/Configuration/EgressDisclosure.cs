@@ -80,6 +80,9 @@ public static class EgressDisclosure
     /// <summary>Downloading the daily index of FSS signals.</summary>
     public const string SignalIndex = "signalindex";
 
+    /// <summary>Downloading the published rare index.</summary>
+    public const string RareIndex = "rareindex";
+
     public const string EddnHost = "eddn.edcd.io";
 
     /// <summary>Sending the market prices the game shows to EDDN.</summary>
@@ -168,6 +171,7 @@ public static class EgressDisclosure
         ServerStatus,
         SignalIndex,
         Eddn,
+        RareIndex,
         UpdateCheck,
         ModelUpdates,
         HullArt,
@@ -208,6 +212,7 @@ public static class EgressDisclosure
         ServerStatus => "Server status",
         SignalIndex => "Signal index",
         Eddn => "EDDN",
+        RareIndex => "Rare index",
         WebSearch => "Web search",
         Screen => "Screen pictures",
         Recap => "Last session recap",
@@ -466,6 +471,18 @@ public static class EgressDisclosure
                 Eddn,
                 NameOf(Eddn),
                 "Sharing with EDDN is off, so nothing is sent."),
+
+        RareIndex => new EgressEntry(
+            RareIndex,
+            NameOf(RareIndex),
+            "github.com",
+            "A request for the published index of rare goods - their source prices, stock and far sell prices - from the "
+            + "rares-1 release, made when a rare is asked about and the copy in data\rares is missing or more than "
+            + "3 hours old - one file, a few kilobytes, at most once in 3 hours. A request that fails is tried again on a "
+            + "later question, no sooner than an hour after. Nothing about you goes with it: no position, no key, no "
+            + "Commander name, no identifier and nothing from your journal.",
+            Active: true,
+            Summary: "The rare index, at most once in 3 hours, when a rare is asked about. Nothing about you goes with it."),
 
         HullArt => settings.Ui.HullArt
             ? new EgressEntry(

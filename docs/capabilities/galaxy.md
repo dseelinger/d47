@@ -240,6 +240,18 @@ leaves the old copy in use and is tried again on a later search, no sooner than 
 
 With this off, nothing is downloaded and a signal search answers from your own scans alone.
 
+### Rare index {#rare-index}
+
+There is no setting for this one. The project builds an index of the rare goods every three hours -
+each rare's source price and stock, and the price it sells for far from its source - and publishes it
+as `rares.tsv` on the `rares-1` release on github.com.
+
+D47 downloads it only when a rare is asked about and the copy in `dataares` is missing or more than
+3 hours old. Nothing about you goes with the request. A download replaces the copy on disk only once
+it reads as an index; one that fails leaves the old copy in use and is tried again on a later
+question, no sooner than an hour after. Until a copy exists, a rare's far sell price is the one
+committed with d47.
+
 ### Share with EDDN {#eddn}
 
 A setting in **Sharing**, under **Outside sources**, off by default. While it is on, opening a

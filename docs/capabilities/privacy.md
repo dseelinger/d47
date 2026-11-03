@@ -220,6 +220,13 @@ nothing from your journal, and the search itself happens on this machine.
 **Signal index** under Outside sources in Settings ([Galaxy search](galaxy.md#signal-index)) turns it
 on; it is off by default. With it off, a signal search answers from your own scans alone.
 
+**Rare index** — `github.com`, which redirects to GitHub's asset storage, from the `rares-1`
+release. When a rare is asked about and the copy in `dataares` is missing or more than 3 hours old,
+D47 downloads the published index of rare goods: one file, a few kilobytes. A download that fails is
+tried again on a later question, no sooner than an hour after. Nothing about you goes with it: no
+position, no key, no Commander name, no identifier and nothing from your journal. There is no setting
+for it ([Galaxy search](galaxy.md#rare-index)).
+
 **EDDN** — `eddn.edcd.io`. When you open a station's commodity market, D47 sends its prices,
 with the station, its system, the game's version and a random number made on this PC for your Commander.
 Opening its outfitting or shipyard sends the names of the modules and ships it sells.
@@ -446,7 +453,7 @@ that cannot be undone.
 
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
-{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-colonisationplanner} {#egress-colonisationprogress} {#egress-bgstick} {#egress-galnet} {#egress-serverstatus} {#egress-signalindex} {#egress-eddn} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology}
+{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-colonisationplanner} {#egress-colonisationprogress} {#egress-bgstick} {#egress-galnet} {#egress-serverstatus} {#egress-signalindex} {#egress-eddn} {#egress-rareindex} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology}
 {#egress-hullart} {#egress-codexpictures} {#egress-codexpublish} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-usagecounts} {#egress-pictures} {#egress-codexcaptures} {#egress-ownvoice} {#egress-customvoices} {#egress-captainslog} {#egress-screenshots}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47

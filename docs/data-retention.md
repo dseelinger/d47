@@ -105,6 +105,7 @@ runs, so there is data here that belongs to somebody else. Who holds it and on w
 | Your own copies of what you donated | `data\donations\` | **kept until you delete it** | nothing — it is your receipt |
 | Everything else in `data\` — settings, secrets, the checklist, your ships, the spend ledger, your commander log, your own cues, and the Features record if you started d47 with `D47_COVERAGE=1` | `data\`, one file or folder each | **kept until you delete it** | nothing |
 | The signal index, if you switched it on | `data\signals\signals.tsv.gz` | **replaced** by the next download, made when a signal search or a story chapter finds it more than 20 hours old | `SignalIndexStore` |
+| The rare index | `dataaresares.tsv` | **replaced** by the next download, made when a rare is asked about and the copy is more than 3 hours old | `RareIndexStore` |
 | Downloaded voice and transcription models | `data\models\` | **kept until you delete it** | nothing — and they are the vendors', not yours |
 | The conversation itself | nowhere | **not kept**; it lives in memory and is gone when d47 closes | there is no file to enforce anything on |
 | A picture of the screen, when the model looks | nowhere | **one turn**, in memory, and never written to disk | `TurnLoop`, which drops it when the turn is committed |
