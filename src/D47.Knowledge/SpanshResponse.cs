@@ -805,11 +805,19 @@ internal static class SpanshResponse
         Population = Integer(element, "population"),
         NeedsPermit = Boolean(element, "needs_permit"),
 
-        // The station list is read for its length and then dropped.
         StationCount = element.TryGetProperty("stations", out var stations)
                        && stations.ValueKind == JsonValueKind.Array
             ? stations.GetArrayLength()
             : null,
+        Stations = stations.ValueKind == JsonValueKind.Array
+            ? [.. stations.EnumerateArray()
+                .Where(station => station.ValueKind == JsonValueKind.Object && String(station, "name") is not null)
+                .Select(station => new SystemStation(
+                    String(station, "name")!,
+                    String(station, "type"),
+                    Boolean(station, "has_market"),
+                    Number(station, "distance_to_arrival")))]
+            : [],
 
         ControllingFaction = String(element, "controlling_minor_faction"),
         ControllingPower = String(element, "controlling_power"),

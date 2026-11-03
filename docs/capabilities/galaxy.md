@@ -246,7 +246,8 @@ There is no setting for this one. The project builds an index of the rare goods 
 each rare's source price and stock, and the price it sells for far from its source - and publishes it
 as `rares.tsv` on the `rares-1` release on github.com.
 
-D47 downloads it only when a rare is asked about or listed and the copy in `dataares` is missing or more than
+D47 downloads it only when a rare is asked about or listed and the copy in `data
+ares` is missing or more than
 3 hours old. Nothing about you goes with the request. A download replaces the copy on disk only once
 it reads as an index; one that fails leaves the old copy in use and is tried again on a later
 question, no sooner than an hour after. Until a copy exists, a rare's far sell price is the one
@@ -713,6 +714,30 @@ sorts last. A rare with no supply stays in the list, and one with no index row s
 The answer names three rares at most, then counts the rest of the page; `limit` (default 25) and
 `page` step through the range. When the index cannot be fetched, rares still list with distance and
 far price, and the answer says supply and prices are not known.
+
+#### `find_rare_run`
+
+Plan a Powerplay rare run: where to sell a rare good in systems a Power is acquiring.
+
+```json
+{"type":"object","properties":{"max_rares":{"type":"number","description":"How many of the nearest rares to plan, 1 to 5. Default 5."},"min_distance":{"type":"number","description":"How far from the rare\u0027s system to sell, at least, in light years. Default 200."},"near":{"type":"string","description":"Where the nearest rares are measured from. Defaults to the Commander\u0027s system."},"power":{"type":"string","description":"The Power acquiring the systems to sell in: \u0022mine\u0022 for the Commander\u0027s pledged Power, or one of A. Lavigny-Duval, Aisling Duval, Archon Delaine, Denton Patreus, Edmund Mahon, Felicia Winters, Jerome Archer, Li Yong-Rui, Nakato Kaine, Pranav Antal, Yuri Grom, Zemina Torval. Default mine."},"rare":{"type":"string","description":"One rare good by name. Without it, the nearest rares are planned."}},"required":[],"additionalProperties":false}
+```
+
+For each rare, the tool runs one Galaxy search, measured from the rare's system, for Unoccupied
+systems with `acquiring_power` set to the Power, at least `min_distance` light years away (default
+200), nearest first. From those systems it takes the first three stations with a market, leaving out
+fleet carriers, megaships and construction sites, and gives each with its system, the system's
+distance from the rare's system and the Power's acquisition progress there.
+
+`rare` names one rare good. Without it, the tool plans the `max_rares` rares (default 5, at most 5)
+nearest `near`, which defaults to the Commander's system and is placed as `list_rares` places it.
+`power` defaults to `mine`, the Commander's pledged Power; an unpledged Commander is told so and no
+search runs. Galaxy search must be on.
+
+Each rare in the answer has its `list_rares` row and its stations. A rare with no station found
+says whether no acquisition system was reported in range, or how many were and that none had a
+station with a market. The spoken answer names three stations at most and counts the rares it
+left out.
 
 #### `distance_between`
 

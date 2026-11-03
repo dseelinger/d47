@@ -327,6 +327,41 @@ public static class GalaxyCapability
             },
             new ToolDefinition
             {
+                Name = "find_rare_run",
+                Exercise =
+                    "Pledged to a Power, ask D47 for a rare run. The reply names the nearest rare and up to three "
+                    + "stations at least 200 light years from it in systems your Power is acquiring, with each "
+                    + "system's acquisition progress.",
+                Description =
+                    "Plan a Powerplay rare run: for a rare good, or the nearest rares, the stations with a market at "
+                    + "least min_distance light years from the rare's system, in Unoccupied systems the Power is "
+                    + "acquiring, nearest first, with each system's acquisition progress.",
+                Parameters =
+                [
+                    ToolParameter.Text(
+                        "rare",
+                        "One rare good by name. Without it, the nearest rares are planned."),
+                    ToolParameter.Text(
+                        "power",
+                        "The Power acquiring the systems to sell in: \"mine\" for the Commander's pledged Power, or "
+                            + $"one of {string.Join(", ", GalaxyFilters.Powers)}. Default mine."),
+                    ToolParameter.Number(
+                        "min_distance",
+                        "How far from the rare's system to sell, at least, in light years. Default 200."),
+                    ToolParameter.Text(
+                        "near",
+                        "Where the nearest rares are measured from. Defaults to the Commander's system."),
+                    ToolParameter.Number(
+                        "max_rares",
+                        $"How many of the nearest rares to plan, 1 to {MostRareRuns}. Default {MostRareRuns}."),
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    FindRareRunAsync(
+                        galaxy, currentSystem, currentPosition, settings, rareIndex, gameState, now, arguments,
+                        cancellationToken),
+            },
+            new ToolDefinition
+            {
                 Name = "distance_between",
                 Exercise =
                     "Ask D47 how far Sol is from Alpha Centauri. The reply gives the straight-line distance "
@@ -1843,51 +1878,13 @@ public static class GalaxyCapability
 
         var descending = direction is null ? RareListing.DescendingByDefault(orderBy) : direction == "desc";
 
-        var asked = arguments.Text("near")?.Trim();
-        var here = currentSystem();
-        Journal.StarPosition origin;
-        string? reference;
+        var (origin, reference, refused) = await RareOriginAsync(
+            galaxy, currentSystem, currentPosition, settings, arguments.Text("near")?.Trim(), cancellationToken)
+            .ConfigureAwait(false);
 
-        if (string.IsNullOrEmpty(asked)
-            || (here is not null && asked.Equals(here, StringComparison.OrdinalIgnoreCase)))
+        if (refused is not null)
         {
-            if (currentPosition?.Invoke() is not { } known)
-            {
-                return ToolResult.Error(
-                    "I don't know where the Commander is right now, so I need a system to search out from.");
-            }
-
-            origin = known;
-            reference = here;
-        }
-        else if (RareCatalogue.All.FirstOrDefault(
-                     rare => rare.System.Equals(asked, StringComparison.OrdinalIgnoreCase)) is { } sold)
-        {
-            origin = sold.Position;
-            reference = sold.System;
-        }
-        else if (galaxy is not null && settings.Current.Knowledge.GalaxySearch)
-        {
-            try
-            {
-                if (await galaxy.PositionAsync(asked, cancellationToken).ConfigureAwait(false) is not { } placed)
-                {
-                    return ToolResult.Error($"No system is named {asked}.");
-                }
-
-                origin = placed;
-                reference = asked;
-            }
-            catch (GalaxyUnavailableException ex)
-            {
-                return ToolResult.Error(ex.Message);
-            }
-        }
-        else
-        {
-            return ToolResult.Error(
-                $"I don't know where {asked} is, and Galaxy search is off, so I can't look it up. The Commander "
-                + "can turn Galaxy search on in settings, or name the system a rare is sold in.");
+            return ToolResult.Error(refused);
         }
 
         var maxDistance = arguments.TryGetDouble("max_distance", out var given) && given > 0
@@ -1942,6 +1939,259 @@ public static class GalaxyCapability
         said.Append(LimitRefused(askedLimit));
 
         return ToolResult.Ok(said.ToString());
+    }
+
+    /// <summary>
+    /// Where rares are measured from: the Commander's position when <paramref name="asked"/> is empty or their
+    /// own system, a rare's system from the catalogue, or any other system through Galaxy search.
+    /// </summary>
+    private static async Task<(Journal.StarPosition Origin, string? Reference, string? Refused)> RareOriginAsync(
+        IGalaxyService? galaxy,
+        Func<string?> currentSystem,
+        Func<Journal.StarPosition?>? currentPosition,
+        Configuration.SettingsService settings,
+        string? asked,
+        CancellationToken cancellationToken)
+    {
+        var here = currentSystem();
+
+        if (string.IsNullOrEmpty(asked)
+            || (here is not null && asked.Equals(here, StringComparison.OrdinalIgnoreCase)))
+        {
+            return currentPosition?.Invoke() is { } known
+                ? (known, here, null)
+                : (default, null, "I don't know where the Commander is right now, so I need a system to search out from.");
+        }
+
+        if (RareCatalogue.All.FirstOrDefault(
+                rare => rare.System.Equals(asked, StringComparison.OrdinalIgnoreCase)) is { } sold)
+        {
+            return (sold.Position, sold.System, null);
+        }
+
+        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return (default, null,
+                $"I don't know where {asked} is, and Galaxy search is off, so I can't look it up. The Commander "
+                + "can turn Galaxy search on in settings, or name the system a rare is sold in.");
+        }
+
+        try
+        {
+            return await galaxy.PositionAsync(asked, cancellationToken).ConfigureAwait(false) is { } placed
+                ? (placed, asked, null)
+                : (default, null, $"No system is named {asked}.");
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return (default, null, ex.Message);
+        }
+    }
+
+    private const int MostRareRuns = 5;
+
+    private const double DefaultRareRunDistance = 200;
+
+    /// <summary>Systems asked for per rare; the stations are taken from them in order.</summary>
+    private const int RareRunSystems = 25;
+
+    private const int RareRunStations = 3;
+
+    private sealed record RareRunStop(string Station, string System, double Distance, double? Progress);
+
+    private static async Task<ToolResult> FindRareRunAsync(
+        IGalaxyService? galaxy,
+        Func<string?> currentSystem,
+        Func<Journal.StarPosition?>? currentPosition,
+        Configuration.SettingsService settings,
+        IRareIndexSource? rareIndex,
+        Func<Journal.CommanderGameState?>? gameState,
+        Func<DateTimeOffset>? now,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Error(Unavailable);
+        }
+
+        var requested = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["acquiring_power"] = arguments.Text("power")?.Trim() is { Length: > 0 } named ? named : "mine",
+            ["power_state"] = "Unoccupied",
+        };
+
+        if (ResolveMine(requested, gameState) is { } unpledged)
+        {
+            return ToolResult.Error(unpledged);
+        }
+
+        if (Catalogue.Match(GalaxyFilters.Powers, requested["acquiring_power"]) is not { } power)
+        {
+            return ToolResult.Error($"power is \"mine\" or one of {string.Join(", ", GalaxyFilters.Powers)}.");
+        }
+
+        requested["acquiring_power"] = power;
+
+        var minDistance = arguments.TryGetDouble("min_distance", out var given) && given > 0
+            ? given
+            : DefaultRareRunDistance;
+        requested["distance"] = $"{minDistance.ToString("0.##", CultureInfo.InvariantCulture)}-";
+
+        var index = rareIndex is null
+            ? null
+            : await rareIndex.GetAsync(cancellationToken).ConfigureAwait(false);
+
+        IReadOnlyList<RareListingRow> rares;
+        string? from;
+
+        if (arguments.Text("rare")?.Trim() is { Length: > 0 } rareName)
+        {
+            var names = RareCatalogue.All.Select(rare => rare.Name).ToArray();
+
+            if (Catalogue.Match(names, rareName) is not { } spelled)
+            {
+                return ToolResult.Error($"{rareName} is not a rare good I know.");
+            }
+
+            var entry = RareCatalogue.All.First(rare => rare.Name == spelled);
+            var reached = currentPosition?.Invoke() ?? entry.Position;
+
+            rares = [.. RareListing.Within(reached, double.MaxValue, index, "distance", descending: false)
+                .Where(row => row.Rare.Name == spelled)];
+            from = null;
+        }
+        else
+        {
+            var (origin, reference, refused) = await RareOriginAsync(
+                galaxy, currentSystem, currentPosition, settings, arguments.Text("near")?.Trim(), cancellationToken)
+                .ConfigureAwait(false);
+
+            if (refused is not null)
+            {
+                return ToolResult.Error(refused);
+            }
+
+            var count = arguments.TryGetDouble("max_rares", out var most)
+                ? Math.Clamp((int)most, 1, MostRareRuns)
+                : MostRareRuns;
+
+            rares = [.. RareListing.Within(origin, double.MaxValue, index, "distance", descending: false).Take(count)];
+            from = string.IsNullOrWhiteSpace(reference) ? "here" : reference;
+        }
+
+        var runs = new List<(RareListingRow Rare, IReadOnlyList<RareRunStop> Stops, int Searched)>();
+
+        try
+        {
+            // One at a time, so the rares are asked for nearest first and the service sees one request at once.
+            foreach (var rare in rares)
+            {
+                if (!GalaxyQuery.TryParse(rare.Rare.System, requested, RareRunSystems, out var query, out var failure))
+                {
+                    return ToolResult.Error(failure);
+                }
+
+                var found = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
+
+                runs.Add((rare, RareRunStops(found, power), found.Systems.Count));
+            }
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
+
+        var at = now?.Invoke() ?? DateTimeOffset.UtcNow;
+
+        return RareRunSaid(runs, power, minDistance, from, at, index is null);
+    }
+
+    /// <summary>The first stations with a market in fixed stations, nearest system first.</summary>
+    private static IReadOnlyList<RareRunStop> RareRunStops(GalaxySearchResult found, string power) =>
+    [
+        .. found.Systems
+            .SelectMany(system => system.Stations
+                .Where(station => station.HasMarket
+                                  && StationQuery.IsFixedType(station.Type)
+                                  && !station.Name.Contains("Construction Site:", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(station => station.DistanceToArrival ?? double.MaxValue)
+                .Select(station => new RareRunStop(
+                    station.Name,
+                    system.Name,
+                    system.Distance ?? 0,
+                    system.Acquiring.FirstOrDefault(
+                        conflict => conflict.Power.Equals(power, StringComparison.OrdinalIgnoreCase))?.Progress)))
+            .Take(RareRunStations),
+    ];
+
+    /// <summary>The rares in order with their stations, three stations at most, and a count of the rest.</summary>
+    private static ToolResult RareRunSaid(
+        IReadOnlyList<(RareListingRow Rare, IReadOnlyList<RareRunStop> Stops, int Searched)> runs,
+        string power,
+        double minDistance,
+        string? from,
+        DateTimeOffset at,
+        bool noIndex)
+    {
+        var distance = minDistance.ToString("0.##", CultureInfo.InvariantCulture);
+        var lead = $"Rare runs to systems {power} is acquiring, at least {distance} light years from each rare's system";
+
+        if (from is not null)
+        {
+            lead += $", for the {runs.Count} rare{(runs.Count == 1 ? "" : "s")} nearest {from}";
+        }
+
+        var said = new StringBuilder(lead).Append('.');
+        var named = 0;
+        var told = 0;
+
+        foreach (var (rare, stops, searched) in runs)
+        {
+            if (named >= RareRunStations)
+            {
+                break;
+            }
+
+            var shown = stops.Take(RareRunStations - named).ToArray();
+
+            said.AppendLine().AppendLine().Append(RareLine(rare, at)).Append(". ");
+            said.Append(
+                shown.Length > 0 ? "Sell at " + string.Join("; ", shown.Select(StopLine)) + "."
+                : searched == 0 ? $"No system {power} is acquiring is reported beyond {distance} light years of it."
+                : $"None of the {searched} nearest systems {power} is acquiring beyond {distance} light years of it "
+                  + "has a station with a market.");
+
+            if (stops.Count > shown.Length)
+            {
+                said.Append(CultureInfo.InvariantCulture, $" {stops.Count - shown.Length} more stations for it.");
+            }
+
+            named += shown.Length;
+            told++;
+        }
+
+        if (runs.Count > told)
+        {
+            var rest = runs.Skip(told).ToArray();
+            var stations = rest.Sum(run => run.Stops.Count);
+
+            said.AppendLine().AppendLine().Append(
+                CultureInfo.InvariantCulture,
+                $"{rest.Length} more rare{(rest.Length == 1 ? " is" : "s are")} planned, with {stations} "
+                + $"station{(stations == 1 ? "" : "s")} between them.");
+        }
+
+        if (noIndex)
+        {
+            said.AppendLine().AppendLine().Append("The rare index could not be fetched, so supply and prices are not known.");
+        }
+
+        return ToolResult.Ok(said.ToString().TrimEnd());
+
+        static string StopLine(RareRunStop stop) =>
+            $"{stop.Station} in {stop.System}, {stop.Distance.ToString("0.0", CultureInfo.InvariantCulture)} light years"
+            + (stop.Progress is { } progress ? $", acquisition {PowerConflicts.Percent(progress)}" : string.Empty);
     }
 
     /// <summary>One listed rare: name, place, distance and every figure the index holds for it.</summary>

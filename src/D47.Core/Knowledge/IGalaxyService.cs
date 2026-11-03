@@ -40,6 +40,9 @@ public sealed record SystemSummary
     /// <summary>The Powers acquiring the system and how far each has got, as last reported.</summary>
     public IReadOnlyList<PowerConflict> Acquiring { get; init; } = [];
 
+    /// <summary>The system's stations, as last reported; carriers and construction sites included.</summary>
+    public IReadOnlyList<SystemStation> Stations { get; init; } = [];
+
     /// <summary>The minor factions present, as last reported.</summary>
     public IReadOnlyList<FactionPresence> Factions { get; init; } = [];
 
@@ -49,6 +52,9 @@ public sealed record SystemSummary
     /// <summary>When the service last had a report of this system.</summary>
     public DateTimeOffset? ReportedAt { get; init; }
 }
+
+/// <summary>One station a system search lists, with its type and whether it has a market.</summary>
+public sealed record SystemStation(string Name, string? Type, bool HasMarket, double? DistanceToArrival);
 
 /// <summary>A Power acquiring a system, and its progress as a fraction of 1.</summary>
 public sealed record PowerConflict(string Power, double Progress);
