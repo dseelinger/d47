@@ -22,7 +22,7 @@ The Powerplay merits line is said once each time you arrive in a Powerplay syste
 
 With Download the D47 music library on, a music folder with files of your own plays them together with the library's tracks for that folder, shuffled as one. Before, one file of your own in a folder stopped every library track there.
 
-D47 now gives Gutamaya as the Corsair's manufacturer. Before, the Corsair had no manufacturer in D47's ship data.
+D47 now knows the manufacturer of the Corsair, Anaconda Mk II, Caspian Explorer, Lynx Highliner and Kestrel Mk II, and the mass lock factor and reserve fuel of each except the Anaconda Mk II's mass lock. Before, D47's ship data had none of these for those five hulls.
 
 When a game session's journal stops without a Shutdown, D47 no longer treats that session as still running once Elite is closed or the game has started again. The break reminder is not said while Elite is not running, and the last session recap opens "Last session" rather than "Earlier this session". Before, starting D47 with only the launcher open could remind you to take a break and recap a session that ended hours ago as the current one.
 

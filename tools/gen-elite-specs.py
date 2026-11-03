@@ -337,9 +337,9 @@ def build_ships(
     EDSY's `eddb.js`, matched by symbol, supplies `speed`, `boost`, `armour`, `shields`,
     `hardness`, `hull_mass`, `hardpoints` and `internals`. coriolis-data, matched on the id
     `shipyard.csv` gives the hull, supplies the other columns, and any of those eight EDSY
-    leaves blank. EDSY fills `pad` and `crew` where coriolis-data does not. A hull
-    coriolis-data does not match carries no fuel or masslock, and takes its manufacturer from
-    `MANUFACTURERS` in `curated_ships.py`. `cost` is coriolis-data's
+    leaves blank. EDSY fills `pad`, `crew`, `fuel` and `masslock` where coriolis-data does not.
+    A hull coriolis-data does not match takes its manufacturer from `MANUFACTURERS` in
+    `curated_ships.py`. `cost` is coriolis-data's
     `hullCost`, else EDSY's `cost`, and is empty for an `arx-early-access` hull.
     """
     by_edid = {ship.get("edID"): ship for ship in documents}
@@ -400,9 +400,9 @@ def build_ships(
             pick("baseShieldStrength", "shields"),
             pick("hardness", "hardness"),
             pick("hullMass", "mass"),
-            number(properties.get("reserveFuelCapacity")),
+            number(properties.get("reserveFuelCapacity")) or figures.get("fuelreserve", ""),
             number(properties.get("crew")) or figures.get("crew", ""),
-            number(properties.get("masslock")),
+            number(properties.get("masslock")) or figures.get("masslock", ""),
             number(properties.get("hullCost")) or ("" if symbol in ARX_EARLY_ACCESS else figures.get("cost", "")),
             sizes_of("hardpoint", "hardpoints"),
             sizes_of("internal", "internal", unrestricted=True),
@@ -1077,6 +1077,8 @@ def edsy_ships(database: str) -> dict[str, dict]:
                 "class": edsy_number(head, "class"),
                 "crew": edsy_number(head, "crew"),
                 "cost": edsy_number(head, "cost"),
+                "fuelreserve": edsy_number(head, "fuelreserve"),
+                "masslock": edsy_number(head, "masslock"),
             },
         }
 

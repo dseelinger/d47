@@ -6,4 +6,10 @@ ARX_EARLY_ACCESS: set[str] = {"anacondamkii"}
 
 # Manufacturers for hulls coriolis-data does not carry, keyed by journal symbol. coriolis-data
 # wins where it has one.
-MANUFACTURERS: dict[str, str] = {"corsair": "Gutamaya"}
+MANUFACTURERS: dict[str, str] = {
+    "anacondamkii": "Faulcon DeLacy",
+    "corsair": "Gutamaya",
+    "explorer_nx": "Zorgon Peterson",
+    "mediumtransport01": "Zorgon Peterson",
+    "smallcombat01_nx": "Core Dynamics",
+}
