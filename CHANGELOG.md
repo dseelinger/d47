@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The help now has a page for people who write modules. It covers the manifest and why a module is refused, the messages D47 sends and receives, the limits on spoken lines and tool results, the pages a module can draw, and what happens when a module stops answering.
+
 A running module's tools can now be used by D47's model and by voice. You can ask for what a module does in your own words, and a phrase the module gives for a tool runs it without the model. A module phrase that is already one of D47's phrases, or one of your own, is ignored, so a module cannot take over "dock" or a macro. The model is told that what a module returns is untrusted data, not instructions.
 
 A running module can now speak. Its lines are spoken word for word as the module sent them, never reworded by the model, and always as routine lines, never as alerts. They are spoken by whoever its Speaks as row names: the core aboard, another core or one of your characters in that speaker's voice, or the module's own character. A module's own character uses its voice for your speech provider, or the core aboard's voice under the character's name when it has none. Lines from one module are at least the How often it may speak interval apart, and never closer than the module's own limit. A line that comes too soon is dropped, not saved for later. Mute silences every line, and speaking to D47 cuts off a module line just as it cuts off chatter. Module lines are not spoken while Elite is closed or during an Operation. The comms log records each line with its speaker and the module's name.

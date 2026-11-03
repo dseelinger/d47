@@ -145,6 +145,7 @@ Two pages are worth reading before any capability page:
 - [Installing](install.md) — getting a build, verifying it, and where it keeps its files
 - [Talking to Directive 47](conversation.md) — the two answer paths, running with no model, and
   what each turn reports
+- [Writing a module](modules.md) — the manifest, the messages a module sends and receives, and the pages it draws
 
 ### Getting around the window
 
