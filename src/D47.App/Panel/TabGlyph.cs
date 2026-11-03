@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using D47.Core.Interface;
@@ -25,6 +25,7 @@ public static class TabGlyph
         [PanelTab.Commander] = "M8.5 2 H11.5 L13.5 4 V7 L11.5 9 H8.5 L6.5 7 V4 Z M3 18 V15.5 L6.5 12 H13.5 L17 15.5 V18",
         [PanelTab.Assets] = "M3 8 L5 4 H15 L17 8 M3 8 H17 V17 H3 Z M9 6.5 H11 V10.5 H9 Z",
         [PanelTab.Navigation] = "M10 2 L17 18 L10 14 L3 18 Z",
+        [PanelTab.Modules] = "M10 2 L17 6 V14 L10 18 L3 14 V6 Z M3 6 L10 10 L17 6 M10 10 V18",
         [PanelTab.Settings] = "M3 5 H5 M9 5 H17 M5 3 H9 V7 H5 Z M3 10 H11 M15 10 H17 M11 8 H15 V12 H11 Z M3 15 H7 M11 15 H17 M7 13 H11 V17 H7 Z",
     };
 

@@ -1,4 +1,4 @@
----
+﻿---
 title: Interface
 group: Interface
 nav_order: 127
@@ -22,7 +22,7 @@ nav_order: 127
 <p class="intro">Two steps to making the window your own.</p>
 <section>
 <h2><span class="num">1</span> Learn the tab strip. Everything is behind it.</h2>
-<p class="say">Press the tabs along the top: Transcript, Search, Stories, Commander, Asset Mgmt, Navigation and Settings.</p>
+<p class="say">Press the tabs along the top: Transcript, Search, Stories, Commander, Asset Mgmt, Navigation and Settings. A Modules tab sits before Settings once a module is installed; with none installed it is not there.</p>
 <p class="expect">Each tab opens its page; the headset shows the same strip without the tabs it has no room for.</p>
 <svg viewBox="0 0 880 208" role="img" aria-label="The seven tabs">
  <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
@@ -39,7 +39,7 @@ nav_order: 127
 <h2><span class="num">2</span> The two hotkeys worth knowing.</h2>
 <p class="say">Press Ctrl+comma to open Settings, or Ctrl+L to jump to the ask box.</p>
 <p class="expect">Settings opens, or the ask box takes the cursor; on the Transcript tab Ctrl+L scrolls the reading instead.</p>
-<p class="body">Ctrl+1 to Ctrl+7 show the first to seventh tab on the bar, and the same number on the tab you are on goes to the top of it. Ctrl+Tab and Ctrl+Shift+Tab step to the next and previous tab, wrapping at the ends. Alt+Left goes back. F1 opens help for the page showing, and closes it again. ? opens the list of every key and the key bound to it now, when no text box has the cursor; ? or Esc closes it, and CHANGE KEYS in it opens Settings at Window. None of these can be rebound.</p>
+<p class="body">Ctrl+1 to Ctrl+8 show the first to eighth tab on the bar, and the same number on the tab you are on goes to the top of it. Ctrl+Tab and Ctrl+Shift+Tab step to the next and previous tab, wrapping at the ends. Alt+Left goes back. F1 opens help for the page showing, and closes it again. ? opens the list of every key and the key bound to it now, when no text box has the cursor; ? or Esc closes it, and CHANGE KEYS in it opens Settings at Window. None of these can be rebound.</p>
 <p class="body">On a page of rows, Down and Up focus the first and last row, then step to the row below or above; in a grid of tiles they step down a column, and Left and Right move along a line. Enter or Space opens the focused row. Down from the page search box focuses the first row the search left.</p>
 <svg viewBox="0 0 880 250" role="img" aria-label="Hotkeys">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>

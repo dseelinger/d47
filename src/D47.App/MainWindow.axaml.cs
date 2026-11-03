@@ -222,6 +222,11 @@ public partial class MainWindow : Window
             Panel.EnableCodex(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow, host.CodexPictureSet);
             Panel.EnableCommanders(host.Commanders);
 
+            if (ModulesSource is { } modulesSource)
+            {
+                Panel.EnableModules(modulesSource);
+            }
+
             // The title bar's Commander switcher, desktop only: the headset has no title bar.
             _switcher = new CommanderSwitcher(
                 host.Commanders,
@@ -1045,19 +1050,9 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (_host.Modules is { } modules)
+        if (ModulesSource is { } modules)
         {
-            var source = new ModulesSource(
-                () => modules.Installed,
-                () => modules.Statuses,
-                modules.Restart,
-                () => [.. D47.Core.Persona.PersonaCatalog.Stocked.Select(p => (p.Id, p.Name))],
-                () => [.. _host.OwnPersonas.Cores.Select(c => (c.Id, c.Name))],
-                () => [.. _host.Characters.CharactersOf(_host.GameState.Active?.Identity.FrontierId).Select(c => (c.Id, c.Name))],
-                watch: handler => modules.Changed += handler,
-                unwatch: handler => modules.Changed -= handler);
-
-            view.EnableModules(source);
+            view.EnableModules(modules);
         }
 
         view.Attach(
@@ -1103,6 +1098,21 @@ public partial class MainWindow : Window
             _host.CoverageRecorder is { } clearing ? clearing.Clear : null,
             _host.CoverageRecorder is { } exercising ? exercising.Exercise : null);
     }
+
+    private ModulesSource? _modulesSource;
+
+    /// <summary>What the Modules tab and the Modules settings place read, shared by every surface; null when modules are not running.</summary>
+    internal ModulesSource? ModulesSource => _modulesSource ??= _host?.Modules is { } modules
+        ? new ModulesSource(
+            () => modules.Installed,
+            () => modules.Statuses,
+            modules.Restart,
+            () => [.. D47.Core.Persona.PersonaCatalog.Stocked.Select(p => (p.Id, p.Name))],
+            () => [.. _host.OwnPersonas.Cores.Select(c => (c.Id, c.Name))],
+            () => [.. _host.Characters.CharactersOf(_host.GameState.Active?.Identity.FrontierId).Select(c => (c.Id, c.Name))],
+            watch: handler => modules.Changed += handler,
+            unwatch: handler => modules.Changed -= handler)
+        : null;
 
     public Control BuildSettingsPage()
     {

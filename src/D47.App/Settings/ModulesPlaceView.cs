@@ -14,7 +14,7 @@ using D47.Core.Modules;
 namespace D47.App.Settings;
 
 /// <summary>What the Modules place reads and does: the installed modules, their status, and who a module may speak as.</summary>
-internal sealed class ModulesSource(
+public sealed class ModulesSource(
     Func<IReadOnlyList<InstalledModule>> installed,
     Func<IReadOnlyList<ModuleStatusReport>> statuses,
     Action<string> restart,

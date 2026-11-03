@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
@@ -47,6 +47,9 @@ internal interface IPanelTabHost
     bool ClearSearch();
 
     void ShowSearch();
+
+    /// <summary>Opens one place of the settings page.</summary>
+    void OpenSettingsPlace(string placeId);
 
     /// <summary>Puts <paramref name="query"/> in the search box, which filters the page showing.</summary>
     void Seek(string query);

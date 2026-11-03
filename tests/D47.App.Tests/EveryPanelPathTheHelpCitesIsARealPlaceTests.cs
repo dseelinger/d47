@@ -1,4 +1,4 @@
-using Avalonia.Headless.XUnit;
+﻿using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using D47.App.Panel;
 using D47.Core.Capabilities;
@@ -20,7 +20,10 @@ public sealed class EveryPanelPathTheHelpCitesIsARealPlaceTests
     {
         using var host = Furnished();
 
-        var bare = host.Panel.TabWords.Keys.Where(tab => host.Panel.Nav.Destinations.All(d => d.Tab != tab)).ToList();
+        // Modules is furnished only when a module is installed, and none is here.
+        var bare = host.Panel.TabWords.Keys
+            .Where(tab => tab != PanelTab.Modules && host.Panel.Nav.Destinations.All(d => d.Tab != tab))
+            .ToList();
 
         Assert.True(bare.Count == 0, "No destinations on: " + string.Join(", ", bare));
     }

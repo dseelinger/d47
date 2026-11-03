@@ -13,7 +13,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Ctrl+1 to Ctrl+7, Ctrl+Tab and Alt+Left move between tabs and back (#1494).</summary>
+/// <summary>Ctrl+1 to Ctrl+8, Ctrl+Tab and Alt+Left move between tabs and back (#1494).</summary>
 [Trait("Category", "Integration")]
 public class TheKeyboardSwitchesTabsAndGoesBackTests
 {

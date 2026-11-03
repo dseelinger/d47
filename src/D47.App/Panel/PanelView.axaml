@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:panel="clr-namespace:D47.App.Panel"
              xmlns:controls="clr-namespace:D47.App.Controls"
@@ -434,6 +434,12 @@
                          Theme="{StaticResource D47.Tab}"
                          IsVisible="False"
                          Content="NAVIGATION"
+                         Tapped="OnTabTapped"
+                         IsCheckedChanged="OnTabChecked" />
+            <RadioButton x:Name="ModulesTab"
+                         Theme="{StaticResource D47.Tab}"
+                         IsVisible="False"
+                         Content="MODULES"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
             <!--

@@ -24,6 +24,9 @@ public enum PanelTab
     /// </summary>
     Navigation,
 
+    /// <summary>The installed modules and the pages they draw; furnished only when a module is installed (#2083).</summary>
+    Modules,
+
     /// <summary>The settings surface.</summary>
     Settings,
 }

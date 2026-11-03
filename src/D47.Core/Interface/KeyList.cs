@@ -31,7 +31,7 @@ public static class KeyList
     private static readonly KeyGroup GettingAround = Fixed(
         "Getting around",
         null,
-        new KeyEntry("Show the first to seventh tab", ["Ctrl+1", "Ctrl+7"], "to"),
+        new KeyEntry("Show the first to eighth tab", ["Ctrl+1", "Ctrl+8"], "to"),
         K("Next tab", "Ctrl+Tab"),
         K("Previous tab", "Ctrl+Shift+Tab"),
         Or("Go back", "Esc", "Alt+←"),

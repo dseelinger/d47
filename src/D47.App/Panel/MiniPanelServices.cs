@@ -1,4 +1,4 @@
-using D47.Core.Interface;
+﻿using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
@@ -66,6 +66,8 @@ public sealed record MiniPanelServices
 
     public CommanderRoster? Commanders { get; init; }
 
+    public D47.App.Settings.ModulesSource? Modules { get; init; }
+
     public SpeakerPortraits? Portraits { get; init; }
 
     public CodexPictureSet? CodexPictures { get; init; }
@@ -128,6 +130,11 @@ public sealed record MiniPanelServices
         if (Commanders is not null)
         {
             view.EnableCommanders(Commanders);
+        }
+
+        if (Modules is not null)
+        {
+            view.EnableModules(Modules);
         }
 
         view.EnableRawJournal();

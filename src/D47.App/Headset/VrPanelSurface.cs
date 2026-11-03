@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -135,7 +135,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Func<D47.Core.Journal.HistoryState>? historyState = null,
 
         // Which fleet carrier model each carrier is drawn as, on the window's record.
-        Panel.CarrierHullMemory? carrierHulls = null)
+        Panel.CarrierHullMemory? carrierHulls = null,
+        D47.App.Settings.ModulesSource? modules = null)
     {
         _dumpTo = dumpTo;
 
@@ -186,6 +187,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             Galaxy = galaxy,
             StarSystem = starSystem,
             Commanders = commanders,
+            Modules = modules,
             CodexPictures = codexPictures,
             Portraits = portraits,
             AdventureDesk = adventureDesk,

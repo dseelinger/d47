@@ -86,7 +86,7 @@ public sealed class TheKeysListNamesEveryHotkeyTests
 
         Assert.Equal(
             [
-                "Show the first to seventh tab", "Next tab", "Previous tab", "Go back",
+                "Show the first to eighth tab", "Next tab", "Previous tab", "Go back",
                 "Move between the rows of a page", "Help for the page you are on", "This list, when no text box has the cursor",
             ],
             around);

@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using D47.App.Theming;
@@ -131,7 +131,8 @@ public partial class App(AppHost? host) : Application
                 spend: MainWindow.SpendDeskFor(host),
                 bgsTick: () => host.BgsTick?.Last,
                 historyState: () => host.History.State,
-                carrierHulls: new Panel.CarrierHullMemory(host.ViewState));
+                carrierHulls: new Panel.CarrierHullMemory(host.ViewState),
+                modules: window?.ModulesSource);
 
             host.Speech.Spend.Recorded += host.Vr.RefreshSessionSpend;
 
@@ -200,6 +201,7 @@ public partial class App(AppHost? host) : Application
                     Galaxy = () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null,
                     StarSystem = window?.StarSystem,
                     Commanders = host.Commanders,
+                    Modules = window?.ModulesSource,
                     Portraits = new Panel.SpeakerPortraits(host.SpeakerPictures, host.Loggers.CreateLogger<Panel.SpeakerPortraits>()),
                 });
 

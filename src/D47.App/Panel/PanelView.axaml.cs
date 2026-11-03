@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Presenters;
@@ -134,6 +134,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         _commander = new CommanderFurnishing(this);
         _assets = new AssetsFurnishing(this, PlanCarrierRoute);
         _navigation = new NavigationFurnishing(this, _carrierRoute);
+        _modules = new ModulesFurnishing(this);
         _navigation.PlanRootMiniChanged += () => Dispatcher.UIThread.Post(ApplyChrome);
         InitializeComponent();
         _selecting = new TranscriptSelection(
@@ -269,6 +270,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         _tabs[PanelTab.Commander] = CommanderTab;
         _tabs[PanelTab.Assets] = AssetsTab;
         _tabs[PanelTab.Navigation] = NavigationTab;
+        _tabs[PanelTab.Modules] = ModulesTab;
         _tabs[PanelTab.Settings] = SettingsTab;
 
         // The words the tab bar draws are the words a message names a tab by (#951), in title case for a Find path.
@@ -410,6 +412,8 @@ public partial class PanelView : UserControl, IPanelTabHost
     CarrierHullMemory? IPanelTabHost.CarrierHulls => _carrierHulls;
 
     void IPanelTabHost.ShowSearch() => ShowSearch();
+
+    void IPanelTabHost.OpenSettingsPlace(string placeId) => OpenSettingsPlace(placeId);
 
     void IPanelTabHost.Seek(string query) => SearchInput.Text = query;
 
@@ -854,6 +858,21 @@ public partial class PanelView : UserControl, IPanelTabHost
     private readonly SearchFurnishing _searchFurnishing;
     private readonly StoriesFurnishing _stories;
     private readonly NavigationFurnishing _navigation;
+    private readonly ModulesFurnishing _modules;
+
+    /// <summary>Gives this surface the Modules tab once a module is installed (#2083).</summary>
+    internal void EnableModules(D47.App.Settings.ModulesSource source) => _modules.Enable(source);
+
+    /// <summary>Takes this surface to one place of the settings page.</summary>
+    internal void OpenSettingsPlace(string placeId)
+    {
+        CloseDialogs();
+        Nav.Show(SettingsFurnishing.Root);
+
+        Dispatcher.UIThread.Post(
+            () => (_settings.Page as D47.App.Settings.SettingsView)?.RevealPlace(placeId),
+            DispatcherPriority.Loaded);
+    }
 
     /// <summary>Rebuilds every page already drawn, so none keeps the previous Commander's data or selection.</summary>
     public void CommanderPicked()
@@ -2069,7 +2088,7 @@ public partial class PanelView : UserControl, IPanelTabHost
     }
 
     /// <summary>
-    /// Ctrl+1 to Ctrl+7 show the Nth registered tab (the one already showing goes to its top), Ctrl+Tab and
+    /// Ctrl+1 to Ctrl+8 show the Nth registered tab (the one already showing goes to its top), Ctrl+Tab and
     /// Ctrl+Shift+Tab step along the bar, and Alt+Left goes back. Matched here so a focused control never sees them.
     /// </summary>
     private bool TabKey(KeyEventArgs e)
@@ -2090,7 +2109,7 @@ public partial class PanelView : UserControl, IPanelTabHost
             }
             : 0;
 
-        var number = e.KeyModifiers == KeyModifiers.Control && e.Key is >= Key.D1 and <= Key.D7 ? e.Key - Key.D0 : 0;
+        var number = e.KeyModifiers == KeyModifiers.Control && e.Key is >= Key.D1 and <= Key.D8 ? e.Key - Key.D0 : 0;
 
         if (step == 0 && number == 0)
         {

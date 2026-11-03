@@ -149,7 +149,7 @@ Two pages are worth reading before any capability page:
 ### Getting around the window
 
 **Ctrl+Shift+F opens Find**, a box at the top of the window that searches every page, settings
-place, setting and help page at once. **Ctrl+1 to Ctrl+7** show the first to seventh tab, and
+place, setting and help page at once. **Ctrl+1 to Ctrl+8** show the first to eighth tab, and
 **Ctrl+Tab** and **Ctrl+Shift+Tab** step to the next and previous tab. Alt+Left goes back, the
 same as Escape.
 
