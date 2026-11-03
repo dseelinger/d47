@@ -37,6 +37,9 @@ public sealed record SystemSummary
 
     public string? PowerState { get; init; }
 
+    /// <summary>The Powers acquiring the system and how far each has got, as last reported.</summary>
+    public IReadOnlyList<PowerConflict> Acquiring { get; init; } = [];
+
     /// <summary>The minor factions present, as last reported.</summary>
     public IReadOnlyList<FactionPresence> Factions { get; init; } = [];
 
@@ -45,6 +48,16 @@ public sealed record SystemSummary
 
     /// <summary>When the service last had a report of this system.</summary>
     public DateTimeOffset? ReportedAt { get; init; }
+}
+
+/// <summary>A Power acquiring a system, and its progress as a fraction of 1.</summary>
+public sealed record PowerConflict(string Power, double Progress);
+
+/// <summary>How an acquisition's progress is written.</summary>
+public static class PowerConflicts
+{
+    public static string Percent(double progress) =>
+        $"{(progress * 100).ToString("0", System.Globalization.CultureInfo.InvariantCulture)}%";
 }
 
 /// <summary>A minor faction present in a system, and its influence there as a fraction of 1.</summary>

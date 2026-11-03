@@ -814,6 +814,12 @@ internal static class SpanshResponse
         ControllingFaction = String(element, "controlling_minor_faction"),
         ControllingPower = String(element, "controlling_power"),
         PowerState = String(element, "power_state"),
+        Acquiring = element.TryGetProperty("power_conflict_progress", out var conflicts)
+                    && conflicts.ValueKind == JsonValueKind.Array
+            ? [.. conflicts.EnumerateArray()
+                .Where(conflict => conflict.ValueKind == JsonValueKind.Object && String(conflict, "power") is not null)
+                .Select(conflict => new PowerConflict(String(conflict, "power")!, Number(conflict, "progress") ?? 0))]
+            : [],
         Factions = element.TryGetProperty("minor_faction_presences", out var presences)
                    && presences.ValueKind == JsonValueKind.Array
             ? [.. presences.EnumerateArray()

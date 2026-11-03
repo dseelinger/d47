@@ -77,8 +77,8 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
         Assert.Equal(
             [
                 "distance", "allegiance", "government", "primary_economy", "security", "state", "faction",
-                "faction_state", "faction_government", "controlling_faction", "power", "power_state", "population",
-                "colonised",
+                "faction_state", "faction_government", "controlling_faction", "power", "acquiring_power", "power_state",
+                "population", "colonised",
             ],
             GalaxyFilters.For(GalaxySearchKind.Systems).Select(filter => filter.Name));
 
@@ -86,7 +86,7 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
             [
                 "allegiance", "government", "primary_economy", "station_economy", "station_state", "state",
                 "controlling_faction",
-                "power", "power_state", "population", "colonised",
+                "power", "acquiring_power", "power_state", "population", "colonised",
             ],
             GalaxyFilters.For(GalaxySearchKind.Stations).Select(filter => filter.Name));
         Assert.Equal(["power", "power_state"], GalaxyFilters.For(GalaxySearchKind.Bodies).Select(filter => filter.Name));

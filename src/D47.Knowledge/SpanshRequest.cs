@@ -128,7 +128,7 @@ internal static class SpanshRequest
             writer.WriteStartObject();
             writer.WriteStartObject("filters");
 
-            WriteDistance(writer, query.Unbounded ? UnboundedMax : query.MaxDistance);
+            WriteDistance(writer, query.Unbounded ? UnboundedMax : query.MaxDistance, query.MinDistance ?? 0);
 
             if (query.StationName is not null)
             {
@@ -484,10 +484,10 @@ internal static class SpanshRequest
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
-    private static void WriteDistance(Utf8JsonWriter writer, double max)
+    private static void WriteDistance(Utf8JsonWriter writer, double max, double min = 0)
     {
         writer.WriteStartObject("distance");
-        writer.WriteString("min", "0");
+        writer.WriteString("min", Number(min));
         writer.WriteString("max", Number(max));
         writer.WriteEndObject();
     }

@@ -201,6 +201,19 @@ public static class GalaxyFilters
             },
         },
         GalaxyFilter.ChoiceOf(
+            "acquiring_power",
+            "power",
+            "A Powerplay power acquiring the system, which has no controlling power yet; \"mine\" is the "
+            + "Commander's pledged power. Use with power_state Unoccupied.",
+            ["mine", .. Powers]) with
+        {
+            Fields = new Dictionary<GalaxySearchKind, string>
+            {
+                [GalaxySearchKind.Systems] = "power",
+                [GalaxySearchKind.Stations] = "system_power",
+            },
+        },
+        GalaxyFilter.ChoiceOf(
             "power_state",
             "power_state",
             "The system's Powerplay state.",

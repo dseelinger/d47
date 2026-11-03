@@ -51,6 +51,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     private readonly MaxReportAge _age = new(72);
     private readonly Dictionary<string, CheckBox> _types = StationQuery.StationTypeNames.ToDictionary(name => name, name => Tile(name), StringComparer.Ordinal);
     private readonly Stepper _pad = Choice(StationQuery.MinPads);
+    private readonly TextBox _minDistance = Field("minimum distance", mono: true);
     private readonly TextBox _fromStar = Field("from the star at most", mono: true);
     private readonly WrapPanel _serviceTiles = new() { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
     private readonly Stepper _trader = Choice(StationQuery.TraderTypes);
@@ -112,7 +113,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     private static IReadOnlyList<(string Name, IReadOnlyList<string> Choices)> PickerChoices { get; } =
     [
-        .. new[] { "allegiance", "government", "station_economy", "station_state", "state", "primary_economy", "power" }
+        .. new[] { "allegiance", "government", "station_economy", "station_state", "state", "primary_economy", "power", "acquiring_power" }
             .Select(name => (name, Vocabulary(name))),
         ("module_class", OutfittingCatalogue.Classes),
         ("module_rating", OutfittingCatalogue.Ratings),
@@ -149,6 +150,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         var arguments = new Dictionary<string, string>(StringComparer.Ordinal);
 
         PutNear(arguments, _near, _distance, DefaultDistance);
+        Put(arguments, "min_distance", _minDistance.Text);
 
         Put(arguments, "station_type", string.Join(", ", StationQuery.StationTypeNames.Where(name => _types[name].IsChecked == true)));
         Put(arguments, "min_pad", Selected(_pad));
@@ -182,7 +184,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     public override void ClearForm()
     {
-        foreach (var box in (TextBox[])[_near, _fromStar, _controllingFaction, _module, _ship])
+        foreach (var box in (TextBox[])[_near, _minDistance, _fromStar, _controllingFaction, _module, _ship])
         {
             box.Text = string.Empty;
         }
@@ -214,6 +216,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         Fill(_near, _nearNames, Get("near") ?? string.Empty);
         _age.Set(Get("max_report_age_hours"));
+        _minDistance.Text = Get("min_distance") ?? string.Empty;
         _fromStar.Text = Get("max_station_distance") ?? string.Empty;
         Fill(_controllingFaction, _controllingFactionNames, Get("controlling_faction") ?? string.Empty);
         _module.Text = Get("module") ?? string.Empty;
@@ -333,6 +336,7 @@ public sealed class StationSearchPage : GalaxySearchPage
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
             Labelled("Distance in LY", _distance),
+            Labelled("At least this far in LY", _minDistance),
             _age.Field("Max report age")));
 
         var types = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
@@ -374,6 +378,7 @@ public sealed class StationSearchPage : GalaxySearchPage
             "Its system",
             Labelled("Economy", _pickers["primary_economy"].Picker),
             Labelled("Power", _pickers["power"].Picker),
+            Labelled("Acquiring power", _pickers["acquiring_power"].Picker),
             Labelled("Powerplay state", _powerState),
             Labelled("Minimum population", _population),
             _colonised));
@@ -487,6 +492,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         "module" => _module,
         "ship" => _ship,
         "max_station_distance" => _fromStar,
+        "min_distance" => _minDistance,
         "minimum population" => _population.Box,
         _ => throw new ArgumentOutOfRangeException(nameof(name), name, "No such text field."),
     };

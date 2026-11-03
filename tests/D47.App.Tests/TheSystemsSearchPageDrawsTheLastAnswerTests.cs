@@ -260,7 +260,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         page.Type("controlling_faction", "Diamond Frogs");
         page.Type("faction", "Diamond Frogs");
 
-        foreach (var name in (string[])["allegiance", "government", "primary_economy", "security", "state", "faction_state", "faction_government", "power"])
+        foreach (var name in (string[])["allegiance", "government", "primary_economy", "security", "state", "faction_state", "faction_government", "power", "acquiring_power"])
         {
             page.Pick(name, GalaxyFilters.Find(name)!.Choices[0]);
         }

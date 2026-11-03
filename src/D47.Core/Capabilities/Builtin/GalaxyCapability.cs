@@ -155,7 +155,7 @@ public static class GalaxyCapability
                 Description =
                     "Find star systems matching some criteria, nearest first unless order_by says otherwise. Filters: "
                     + $"{GalaxyFilters.Names(GalaxySearchKind.Systems)}, and no others. Ranges take one number for an upper "
-                    + "bound (\"20\") or two separated by a dash (\"10-50\").",
+                    + "bound (\"20\"), a minimum with a trailing dash (\"200-\"), or two separated by a dash (\"10-50\").",
                 Parameters =
                 [
                     ToolParameter.Text(
@@ -169,7 +169,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchAsync(
-                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, arguments,
+                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, gameState, arguments,
                         cancellationToken),
             },
             new ToolDefinition
@@ -185,6 +185,10 @@ public static class GalaxyCapability
                 Parameters =
                 [
                     NearParameter,
+                    ToolParameter.Number(
+                        "min_distance",
+                        "At least this far from the search origin, in light years. Without max_distance, nothing "
+                            + "limits how far."),
                     MaxDistanceParameter,
                     ToolParameter.Text(
                         "station_type",
@@ -221,7 +225,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchStationsAsync(
-                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, arguments,
+                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, gameState, arguments,
                         cancellationToken),
             },
             new ToolDefinition
@@ -1110,6 +1114,7 @@ public static class GalaxyCapability
         GalaxySearchBoard? searches,
         Action<SearchHistoryEntry>? remember,
         Func<DateTimeOffset>? now,
+        Func<Journal.CommanderGameState?>? gameState,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -1121,6 +1126,11 @@ public static class GalaxyCapability
         IReadOnlyList<string> known = factions?.Invoke() is { } met ? [.. met] : [];
         var (requested, corrected, unknown) =
             ReadFilters(GalaxyFilters.For(GalaxySearchKind.Systems), arguments, known);
+
+        if (ResolveMine(requested, gameState) is { } unpledged)
+        {
+            return ToolResult.Error(unpledged);
+        }
 
         var near = arguments.Text("near") ?? currentSystem();
 
@@ -1171,6 +1181,24 @@ public static class GalaxyCapability
     /// The vocabulary filters among <paramref name="arguments"/>, with each faction name corrected against
     /// <paramref name="known"/> where it matches one.
     /// </summary>
+    /// <summary>Replaces acquiring_power "mine" with the pledged Power; returns the refusal when there is none.</summary>
+    private static string? ResolveMine(Dictionary<string, string> requested, Func<Journal.CommanderGameState?>? gameState)
+    {
+        if (!requested.TryGetValue("acquiring_power", out var asked)
+            || !string.Equals(asked.Trim(), "mine", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        if (gameState?.Invoke()?.Pledge is { IsPledged: true, Power: { Length: > 0 } power })
+        {
+            requested["acquiring_power"] = power;
+            return null;
+        }
+
+        return "The Commander isn't pledged to a Power, so there is no Power of theirs to look for. Name one instead.";
+    }
+
     private static (Dictionary<string, string> Requested, List<string> Corrected, List<string> Unknown) ReadFilters(
         IEnumerable<GalaxyFilter> filters,
         ToolArguments arguments,
@@ -1220,6 +1248,7 @@ public static class GalaxyCapability
         GalaxySearchBoard? searches,
         Action<SearchHistoryEntry>? remember,
         Func<DateTimeOffset>? now,
+        Func<Journal.CommanderGameState?>? gameState,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -1231,6 +1260,11 @@ public static class GalaxyCapability
         IReadOnlyList<string> known = factions?.Invoke() is { } met ? [.. met] : [];
         var (requested, corrected, unknown) =
             ReadFilters(GalaxyFilters.For(GalaxySearchKind.Stations), arguments, known);
+
+        if (ResolveMine(requested, gameState) is { } unpledged)
+        {
+            return ToolResult.Error(unpledged);
+        }
 
         var near = arguments.Text("near") ?? currentSystem();
 
@@ -1245,6 +1279,7 @@ public static class GalaxyCapability
         var search = new StationSearch
         {
             ReferenceSystem = near,
+            MinDistance = arguments.TryGetDouble("min_distance", out var minDistance) ? minDistance : null,
             MaxDistance = arguments.TryGetDouble("max_distance", out var maxDistance) ? maxDistance : null,
             Size = limit,
             StationTypes = Text(arguments, "station_type"),
@@ -3729,7 +3764,7 @@ public static class GalaxyCapability
             .SelectMany(criterion => criterion.Choices)
             .FirstOrDefault();
 
-        var askedPower = query.Criteria.Any(criterion => criterion.Filter.Name is "power" or "power_state");
+        var askedPower = query.Criteria.Any(criterion => criterion.Filter.Name is "power" or "power_state" or "acquiring_power");
 
         var presence = query.Criteria.Where(criterion => criterion.Filter.Presence is not null).ToList();
         var askedState = presence.FirstOrDefault(criterion => criterion.Filter.Presence == "state");
@@ -3813,6 +3848,11 @@ public static class GalaxyCapability
                 if (system.PowerState is not null)
                 {
                     facts.Add(system.PowerState);
+                }
+
+                foreach (var conflict in system.Acquiring)
+                {
+                    facts.Add($"{conflict.Power} acquiring, {PowerConflicts.Percent(conflict.Progress)}");
                 }
             }
 

@@ -271,6 +271,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
 
         page.Type("near", "Sol");
         page.Type("max_station_distance", "500");
+        page.Type("min_distance", "200");
         page.Type("module", "Frame Shift Drive");
         page.Type("ship", "Cobra Mk III");
         page.Type("controlling_faction", "Diamond Frogs");
@@ -278,7 +279,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
         page.TickType("Starport", true);
         page.ChooseServices(["Market"]);
 
-        foreach (var name in (string[])["allegiance", "government", "station_economy", "station_state", "state", "primary_economy", "power", "module_class", "module_rating"])
+        foreach (var name in (string[])["allegiance", "government", "station_economy", "station_state", "state", "primary_economy", "power", "acquiring_power", "module_class", "module_rating"])
         {
             page.Pick(name, name is "module_class" ? "5" : name is "module_rating" ? "A" : GalaxyFilters.Find(name)!.Choices[0]);
         }

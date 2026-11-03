@@ -90,7 +90,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
             }
         };
 
-        foreach (var name in (string[])["allegiance", "government", "primary_economy", "security", "state", "faction_state", "faction_government", "power"])
+        foreach (var name in (string[])["allegiance", "government", "primary_economy", "security", "state", "faction_state", "faction_government", "power", "acquiring_power"])
         {
             AddPicker(_pickers, _picked, name, Choices(name), several: true);
         }
@@ -291,7 +291,10 @@ public sealed class SystemSearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Powerplay",
             Labelled("Power", _pickers["power"].Picker),
-            Labelled("Powerplay state", _powerState)));
+            Columns2(
+                "*,*",
+                Labelled("Powerplay state", _powerState),
+                Labelled("Acquiring power", _pickers["acquiring_power"].Picker))));
 
         return form;
     }
@@ -325,7 +328,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
                 Cell(Pair(Value(system.Allegiance), Sub(system.Government)), 2),
                 Cell(Pair(Value(system.PrimaryEconomy), Sub(system.Security)), 3),
                 Cell(Right(Mono(system.Population is { } people ? people.ToString("N0", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.WhiteKey)), 4),
-                Cell(Pair(Value(system.ControllingPower), Sub(system.PowerState)), 5),
+                Cell(PowerCell(system), 5),
         ];
 
         if (!headset)
@@ -361,6 +364,20 @@ public sealed class SystemSearchPage : GalaxySearchPage
         row.Click += (_, _) => open(system);
 
         return ListRow.Dress(row);
+    }
+
+    private static StackPanel PowerCell(SystemSummary system)
+    {
+        if (system.Acquiring.Count == 0)
+        {
+            return Pair(Value(system.ControllingPower), Sub(system.PowerState));
+        }
+
+        var acquiring = string.Join(
+            " · ",
+            system.Acquiring.Select(conflict => $"{conflict.Power} {PowerConflicts.Percent(conflict.Progress)}"));
+
+        return Pair(Value(system.ControllingPower ?? acquiring), Sub(system.ControllingPower is null ? system.PowerState : $"{system.PowerState} · {acquiring}"));
     }
 
     internal static IReadOnlyList<string> Choices(string name) => GalaxyFilters.Find(name)?.Choices ?? [];

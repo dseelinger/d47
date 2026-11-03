@@ -120,6 +120,8 @@ public sealed record StationSearch
 {
     public string? ReferenceSystem { get; init; }
 
+    public double? MinDistance { get; init; }
+
     public double? MaxDistance { get; init; }
 
     public int Size { get; init; }
@@ -214,6 +216,9 @@ public sealed record StationQuery
 
     /// <summary>Centres the search on a point instead of <see cref="ReferenceSystem"/>.</summary>
     public StarPosition? ReferencePosition { get; init; }
+
+    /// <summary>Minimum light years from the reference; null sends none.</summary>
+    public double? MinDistance { get; init; }
 
     /// <summary>Maximum light years from the reference.</summary>
     public double MaxDistance { get; init; } = 50;
@@ -607,6 +612,13 @@ public sealed record StationQuery
         }
 
         var furthest = search.MaxStationDistance is > 0 ? search.MaxStationDistance : null;
+        var minimum = search.MinDistance is > 0 ? search.MinDistance : null;
+
+        if (minimum is not null && search.MaxDistance is > 0 && search.MaxDistance <= minimum)
+        {
+            failure = "min_distance has to be less than max_distance.";
+            return false;
+        }
 
         if (kinds is null && !strongholdCarriers && pad is null && furthest is null && services.Count == 0 && trader is null
             && broker is null && stock.Modules.Count == 0 && stock.Ship is null && criteria.Count == 0)
@@ -636,6 +648,8 @@ public sealed record StationQuery
             TechnologyBroker = broker,
             Criteria = criteria,
             Sort = sort,
+            MinDistance = minimum,
+            Unbounded = minimum is not null && search.MaxDistance is not > 0,
             MaxDistance = Math.Max(search.MaxDistance is > 0 ? search.MaxDistance.Value : 50, 1),
             Size = Math.Clamp(search.Size <= 0 ? GalaxyQuery.DefaultSize : search.Size, 1, GalaxyQuery.MaxSize),
         };
