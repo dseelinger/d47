@@ -198,9 +198,9 @@ public class SettingsLayoutTests
     {
         var surface = Surface();
 
-        Assert.Equal(28, EntryCount("sounds"));
+        Assert.Equal(29, EntryCount("sounds"));
         Assert.Equal(3, ShownCount(surface.Settings, "sounds"));
-        Assert.Equal(28, surface.Settings.RowsForPlace("sounds").Count);
+        Assert.Equal(29, surface.Settings.RowsForPlace("sounds").Count);
     }
 
     [Fact]

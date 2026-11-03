@@ -75,6 +75,10 @@ public static class AudioCapability
     /// <param name="thumbsDown">Recycles the playing own track, or queues the playing library track for a maintainer, and skips it; null where nothing plays the music.</param>
     /// <param name="maintainer">Whether a Music publish token is present, which is what makes deleting the queued tracks reachable.</param>
     /// <param name="deleteRejects">Starts deleting the queued tracks and returns the reply; null where nothing deletes them.</param>
+    /// <param name="rejectCount">How many tracks are queued for deletion.</param>
+    /// <param name="rejectsRunning">Whether a deletion is running.</param>
+    /// <param name="deleteRejectsNow">The Delete button's press: starts the deletion and says its replies.</param>
+    /// <param name="watchRejects">Subscribes a refresh to changes in the queue and in the running deletion.</param>
     public static CapabilityDescriptor Create(
         Func<string>? drops = null,
         Action? openFolder = null,
@@ -86,7 +90,11 @@ public static class AudioCapability
         Func<string>? thumbsDown = null,
         Func<bool>? maintainer = null,
         Func<string>? deleteRejects = null,
-        Func<OwnAudioReport>? ownAudio = null) => new()
+        Func<OwnAudioReport>? ownAudio = null,
+        Func<int>? rejectCount = null,
+        Func<bool>? rejectsRunning = null,
+        Action? deleteRejectsNow = null,
+        Func<Action, Action>? watchRejects = null) => new()
     {
         Id = Id,
         Group = "Voice",
@@ -107,6 +115,7 @@ public static class AudioCapability
             .. drops is null ? Array.Empty<SettingRow>() : [DropsRow(drops)],
             .. ownAudio is null ? Array.Empty<SettingRow>() : OwnAudioRows(ownAudio, openFolder),
             TokenRow,
+            RejectsRow(rejectCount, rejectsRunning, deleteRejectsNow, watchRejects, maintainer),
             .. InterfaceCapability.HotkeyRows(
                 ThumbsDownHotkeyKey,
                 ThumbsDownButtonKey,
@@ -157,6 +166,51 @@ public static class AudioCapability
         DocsAnchor = "music-publish-token",
     };
 
+    public const string MusicRejectsKey = "audio.music.rejects";
+
+    /// <summary>The queued tracks' count with a Delete button; drawn only with a Music publish token.</summary>
+    private static SettingRow RejectsRow(
+        Func<int>? count,
+        Func<bool>? running,
+        Action? delete,
+        Func<Action, Action>? watch,
+        Func<bool>? maintainer) => new()
+    {
+        Key = MusicRejectsKey,
+        Exercise =
+            ShowMusic + "with a Music publish token set, find Thumbs-down tracks after Music publish token. It reads "
+            + "\"None queued\", \"1 track queued for deletion\" or \"3 tracks queued for deletion\" and rises when "
+            + "you thumb down a library track. Press Delete, then press it again within a few seconds: the same "
+            + "run as saying \"delete the thumbs-down tracks\" starts, the first reply is spoken, and a second reply "
+            + "when it ends. The count falls as tracks are removed. The button is greyed out when none are queued "
+            + "and while a deletion runs. Without a token the row is not drawn.",
+        Advanced = true,
+        Label = "Thumbs-down tracks",
+        Help =
+            "For the maintainer of the D47 music library. The library tracks you thumbed down are queued, and Delete "
+            + "removes them from the library's download and from this PC. It does what saying \"delete the "
+            + "thumbs-down tracks\" does.",
+        Kind = SettingKind.Info,
+        Group = MusicGroup,
+        DocsAnchor = "delete-music-rejects",
+        AppliesWhen = _ => count is not null && maintainer?.Invoke() == true,
+        Binding = new SettingBinding { Read = _ => QueuedText(count?.Invoke() ?? 0) },
+        PressLabel = "Delete",
+        ConfirmPress = true,
+        Destructive = true,
+        PressEnabled = _ => count?.Invoke() > 0 && running?.Invoke() != true,
+        Press = delete,
+        Watch = watch,
+    };
+
+    /// <summary>How many tracks are queued, in words.</summary>
+    internal static string QueuedText(int count) => count switch
+    {
+        <= 0 => "None queued",
+        1 => "1 track queued for deletion",
+        _ => $"{count} tracks queued for deletion",
+    };
+
     /// <summary>
     /// Moves the playing own track to the Recycle Bin and skips it; with a token, queues a library track
     /// instead. Never offered to the model.
@@ -197,7 +251,7 @@ public static class AudioCapability
             + "tracks\". The reply says how many tracks in how many folders are being deleted; a second reply, when "
             + "it ends, says what was deleted and what failed. The tracks are gone from data\\music-pack and from "
             + "data\\music-rejects.tsv, and the folder's zip on the music-1 release has a new version. For the "
-            + "maintainer of the music library.",
+            + "maintainer of the music library. The Delete button on the Thumbs-down tracks row in Settings does the same.",
         Description = "Deletes the queued music tracks from the music library's release and from this PC.",
         Protected = true,
         RefusalExample = "delete the thumbs-down tracks",

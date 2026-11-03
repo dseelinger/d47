@@ -202,6 +202,12 @@ public static class BuiltinCapabilities
         // Starts deleting the queued library tracks and returns the reply.
         Func<string>? deleteMusicRejects = null,
 
+        // The Thumbs-down tracks row: the queue's size, whether a deletion runs, the button's press and the watch.
+        Func<int>? musicRejectCount = null,
+        Func<bool>? musicRejectsRunning = null,
+        Action? deleteMusicRejectsNow = null,
+        Func<Action, Action>? watchMusicRejects = null,
+
         // What the Commander's own audio folder holds, for the status rows and their page.
         Func<D47.Core.Audio.OwnAudioReport>? ownAudio = null,
 
@@ -442,7 +448,7 @@ public static class BuiltinCapabilities
             pictureNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
-        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio),
+        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects),
         ListeningCapability.Create(settings, listening),
         LearnedPhrasesCapability.Create(
             learnedPhrases,

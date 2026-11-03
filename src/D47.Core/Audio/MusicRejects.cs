@@ -40,6 +40,9 @@ public sealed class MusicRejects(string path, IFileSystem files)
 {
     private readonly Lock _gate = new();
 
+    /// <summary>Raised after a row is added or removed, on the calling thread.</summary>
+    public event Action? Changed;
+
     public int Count
     {
         get
@@ -70,8 +73,10 @@ public sealed class MusicRejects(string path, IFileSystem files)
             }
 
             files.AppendText(path, $"{folder}\t{file}\n");
-            return true;
         }
+
+        Changed?.Invoke();
+        return true;
     }
 
     /// <summary>Every queued track.</summary>
@@ -103,6 +108,8 @@ public sealed class MusicRejects(string path, IFileSystem files)
             var kept = Load().Where(row => !gone.Contains(row)).ToList();
             files.WriteText(path, string.Concat(kept.Select(row => $"{row.Folder}\t{row.File}\n")));
         }
+
+        Changed?.Invoke();
     }
 
     private HashSet<(string Folder, string File)> Load()

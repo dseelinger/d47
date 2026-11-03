@@ -60,6 +60,12 @@ internal sealed class MusicRejectDeleter
     private readonly HttpClient _http;
     private int _running;
 
+    /// <summary>Whether a run is in progress.</summary>
+    internal bool Running => Volatile.Read(ref _running) == 1;
+
+    /// <summary>Raised when a run starts and when it ends, from the thread that changed it.</summary>
+    internal event Action? RunningChanged;
+
     /// <param name="token">Read once at each run and never kept.</param>
     /// <param name="temp">A readable, writable, seekable stream for one zip, removed when it is disposed.</param>
     internal MusicRejectDeleter(
@@ -107,6 +113,7 @@ internal sealed class MusicRejectDeleter
         }
 
         var tracks = queued.Sum(folder => folder.Files.Count);
+        RunningChanged?.Invoke();
         var run = Task.Run(async () =>
         {
             try
@@ -116,6 +123,7 @@ internal sealed class MusicRejectDeleter
             finally
             {
                 Volatile.Write(ref _running, 0);
+                RunningChanged?.Invoke();
             }
         });
 

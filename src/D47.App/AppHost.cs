@@ -486,6 +486,9 @@ public sealed class AppHost : IDisposable
         return reply;
     }
 
+    /// <summary>The Delete button: the same run as the phrase, with its first reply said aside.</summary>
+    internal void DeleteMusicRejectsFromPage() => Announcer.SayAside(DeleteMusicRejects());
+
     /// <summary>Replaced whole by the audio folder watch, from the thread pool.</summary>
     private volatile CueLibrary _cues;
 
@@ -2593,6 +2596,34 @@ public sealed class AppHost : IDisposable
                 thumbsDownMusic: () => late.Host?.ThumbsDownMusic() ?? "Ambient music is not available.",
                 musicMaintainer: () => late.Host?.MusicMaintainer == true,
                 deleteMusicRejects: () => late.Host?.DeleteMusicRejects() ?? "Ambient music is not available.",
+                musicRejectCount: () => late.Host?.MusicRejects.Count ?? 0,
+                musicRejectsRunning: () => late.Host?.MusicRejectDeleter?.Running == true,
+                deleteMusicRejectsNow: () => late.Host?.DeleteMusicRejectsFromPage(),
+                watchMusicRejects: refresh =>
+                {
+                    if (late.Host is not { } host)
+                    {
+                        return () => { };
+                    }
+
+                    var deleter = host.MusicRejectDeleter;
+                    host.MusicRejects.Changed += refresh;
+
+                    if (deleter is not null)
+                    {
+                        deleter.RunningChanged += refresh;
+                    }
+
+                    return () =>
+                    {
+                        host.MusicRejects.Changed -= refresh;
+
+                        if (deleter is not null)
+                        {
+                            deleter.RunningChanged -= refresh;
+                        }
+                    };
+                },
                 ownAudio: () => OwnAudioReport.From(late.Host?.Cues ?? services.Cues),
                 colonisationPlans: () => late.Host?.ColonisationPlans,
                 colonisationProgress: () => late.Host?.ColonisationProgress,

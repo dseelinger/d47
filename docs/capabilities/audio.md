@@ -437,7 +437,7 @@ The phrase reaches `thumbs_down_music`, which only you can reach: the model is n
 
 This is for the maintainer of the music library, and works only with a Music publish token. "Delete the
 thumbs-down tracks" deletes every track in `data/music-rejects.tsv` from the library's download and from this PC.
-There is no hotkey or button for it. The reply says how many tracks in how many folders are being deleted, and a
+The **Thumbs-down tracks** row in Settings › Hearing and sound › Sounds and levels, group Ambient music, shows how many are queued and has a **Delete** button that does the same; there is no hotkey. The reply says how many tracks in how many folders are being deleted, and a
 second reply, when the work ends, says what was deleted and what failed.
 
 For each folder with queued tracks, one at a time:
