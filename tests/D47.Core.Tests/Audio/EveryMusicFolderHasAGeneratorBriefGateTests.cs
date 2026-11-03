@@ -35,6 +35,7 @@ public class EveryMusicFolderHasAGeneratorBriefGateTests
     [InlineData("run.cmd")]
     [InlineData("weekly.cmd")]
     [InlineData("both.cmd")]
+    [InlineData("library.cmd")]
     public void ARunWritesTheCatalogueBeforeItGenerates(string script)
     {
         var text = Music(script);
