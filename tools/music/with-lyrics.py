@@ -1,13 +1,13 @@
 """Sung songs for the maintainer's own music folders: new lyrics from Claude, rendered on ACE-Step, copied in.
 
-  songs.py                        run until every folder has its quota or stop.cmd is used
-  songs.py --until 05:00          also stop at that local wall-clock time
-  songs.py --count 1 --out DIR    one song into DIR/<folder>/, for a test
-  songs.py --folders a,b          only those folders
+  with-lyrics.py                        run until every folder has its quota or stop.cmd is used
+  with-lyrics.py --until 05:00          also stop at that local wall-clock time
+  with-lyrics.py --count 1 --out DIR    one song into DIR/<folder>/, for a test
+  with-lyrics.py --folders a,b          only those folders
 
 Each folder's quota is its count in catalogue.BRIEFS. A song counts while its file is still in the folder, so a
-deleted song is written again. The ledger is songs.tsv in the data folder; songs.log is the log. Nothing here
-touches tracks\\ or generated.txt, so the weekly publish never sees these songs.
+deleted song is written again. The ledger is with-lyrics.tsv in the data folder; with-lyrics.log is the log.
+Nothing here touches tracks\\ or generated.txt, so the weekly publish never sees these songs.
 Shares generate.lock with the library generator, stops after the current song when STOP exists, and waits while
 Elite Dangerous is running. A usage or rate limit from Claude ends the run.
 """
@@ -34,9 +34,9 @@ import catalogue  # noqa: E402
 import generate  # noqa: E402
 
 DATA = generate.DATA
-LEDGER = os.path.join(DATA, "songs.tsv")
-LOG = os.path.join(DATA, "songs.log")
-TMP = os.path.join(DATA, "_songs_tmp")
+LEDGER = os.path.join(DATA, "with-lyrics.tsv")
+LOG = os.path.join(DATA, "with-lyrics.log")
+TMP = os.path.join(DATA, "_with-lyrics_tmp")
 EXPERIMENT = os.path.join(DATA, "experiments", "lyrics")
 OWN = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "d47", "data", "audio", "music")
 FIELDS = ["folder", "file", "title", "chorus", "vocal", "mood", "seed", "lyrics"]
@@ -331,7 +331,7 @@ def main():
     args, _ = ap.parse_known_args()
     if os.path.normcase(os.path.abspath(args.out)) != os.path.normcase(OWN):
         global LEDGER
-        LEDGER = os.path.join(args.out, "songs.tsv")
+        LEDGER = os.path.join(args.out, "with-lyrics.tsv")
 
     if not generate.take_lock():
         print("The library generator or another song run holds the lock.")

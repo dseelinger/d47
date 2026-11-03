@@ -7,4 +7,4 @@ if "%D47_ACE_STEP%"=="" (echo D47_ACE_STEP is not set. & exit /b 1)
 title d47 music generator
 "%D47_ACE_STEP%\.venv\Scripts\python.exe" "%~dp0catalogue.py" || exit /b 1
 "%D47_ACE_STEP%\.venv\Scripts\python.exe" "%~dp0generate.py" %*
-"%D47_ACE_STEP%\.venv\Scripts\python.exe" "%~dp0songs.py" --after-library %*
+"%D47_ACE_STEP%\.venv\Scripts\python.exe" "%~dp0with-lyrics.py" --after-library %*
