@@ -33,7 +33,7 @@ internal static class ElevenLabsProbeSupport
         }
     }
 
-    public static byte[] Wav(byte[] pcm, int sampleRate)
+    public static byte[] Wav(byte[] pcm, int sampleRate, int channels = 1)
     {
         using var stream = new MemoryStream(44 + pcm.Length);
         using var writer = new BinaryWriter(stream);
@@ -44,10 +44,10 @@ internal static class ElevenLabsProbeSupport
         writer.Write("fmt "u8);
         writer.Write(16);
         writer.Write((short)1);
-        writer.Write((short)1);
+        writer.Write((short)channels);
         writer.Write(sampleRate);
-        writer.Write(sampleRate * 2);
-        writer.Write((short)2);
+        writer.Write(sampleRate * 2 * channels);
+        writer.Write((short)(2 * channels));
         writer.Write((short)16);
         writer.Write("data"u8);
         writer.Write(pcm.Length);
