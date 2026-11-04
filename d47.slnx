@@ -25,5 +25,6 @@
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/D47.Donations/D47.Donations.csproj" />
+    <Project Path="tools/D47.Replay/D47.Replay.csproj" />
   </Folder>
 </Solution>

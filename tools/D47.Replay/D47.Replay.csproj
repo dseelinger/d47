@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>d47-replay</AssemblyName>
+    <RootNamespace>D47.Replay</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\D47.Core\D47.Core.csproj" />
+  </ItemGroup>
+
+</Project>
