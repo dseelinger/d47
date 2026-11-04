@@ -25,6 +25,16 @@ public class ASwitchFlickBetweenPollsIsSeenTests
         ],
     };
 
+    /// <summary>A spring-return switch whose centre means nothing: a push up lowers the gear.</summary>
+    private static readonly SwitchMapping CentreSwitch = GearSwitch with
+    {
+        Positions =
+        [
+            new SwitchPosition(9, "landing_gear", DesiredState.On),
+            new SwitchPosition(null),
+        ],
+    };
+
     private static readonly EliteBinds Binds = new()
     {
         PresetName = "Test",
@@ -65,13 +75,30 @@ public class ASwitchFlickBetweenPollsIsSeenTests
     public void APositionDownOnlyBetweenPollsIsAFlipToIt()
     {
         var reconciler = new SwitchReconciler(NullLogger<SwitchReconciler>.Instance);
-        var switches = new[] { GearSwitch };
+        var switches = new[] { CentreSwitch };
 
         reconciler.Poll(Tick([], []), switches);
         reconciler.Poll(Tick([9], []), switches);
 
         var pending = Assert.Single(reconciler.Drain());
         Assert.NotEmpty(pending.Steps);
+    }
+
+    [Fact]
+    public void AFlickToAStateAndBackPressesForTheFlipBackToo()
+    {
+        // The flip back is decided against the flick's own press, which Status.json cannot show yet, so the gear
+        // ends where the switch rests: up.
+        var reconciler = new SwitchReconciler(NullLogger<SwitchReconciler>.Instance);
+        var switches = new[] { GearSwitch };
+
+        reconciler.Poll(Tick([], []), switches);
+        reconciler.Poll(Tick([9], []), switches);
+
+        var pending = reconciler.Drain();
+
+        Assert.Equal(2, pending.Count);
+        Assert.All(pending, reconcile => Assert.NotEmpty(reconcile.Steps));
     }
 
     [Fact]
@@ -149,30 +176,30 @@ public class ASwitchFlickBetweenPollsIsSeenTests
     }
 
     [Fact]
-    public void APausedSwitchPressesNothingForAFlick()
+    public void AFlickAfterAReversalStillPresses()
     {
         var reconciler = new SwitchReconciler(NullLogger<SwitchReconciler>.Instance);
-        var switches = new[] { GearSwitch };
+        var switches = new[] { CentreSwitch };
 
         reconciler.Poll(Tick([], []), switches);
         reconciler.Poll(Tick([9], [9]), switches);
         reconciler.Poll(Tick([9], [9], StatusFlags.LandingGearDown, Start.AddMilliseconds(300)), switches);
         reconciler.Poll(Tick([9], [9], StatusFlags.None, Start.AddMilliseconds(600)), switches);
-        Assert.True(reconciler.IsPaused(GearSwitch.Name));
+        Assert.NotNull(Assert.Single(reconciler.States).Reversed);
 
         reconciler.Poll(Tick([9], [], StatusFlags.None, Start.AddSeconds(1)), switches);
         reconciler.Drain();
 
         reconciler.Poll(Tick([9], [], StatusFlags.None, Start.AddSeconds(2)), switches);
 
-        Assert.Empty(reconciler.Drain());
+        Assert.NotEmpty(Assert.Single(reconciler.Drain()).Steps);
     }
 
     [Fact]
     public void AFlickWhosePressNeverTakesIsSaid()
     {
         var reconciler = new SwitchReconciler(NullLogger<SwitchReconciler>.Instance);
-        var switches = new[] { GearSwitch };
+        var switches = new[] { CentreSwitch };
 
         reconciler.Poll(Tick([], []), switches);
         reconciler.Poll(Tick([9], []), switches);

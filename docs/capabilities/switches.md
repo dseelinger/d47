@@ -325,7 +325,7 @@ centre could turn only one of them off. A position can instead name a **target**
 Flipping to a target presses each part that is not already in its state, in the order above, and
 nothing else; if every part is already there nothing is pressed. A target has no on/off choice.
 Every part needs a key bound in Elite, and if one has none the row says which. If a part goes back
-on its own right after D47 sets it, the switch pauses, the same as for a single action; a part
+on its own right after D47 sets it, the row notes it, the same as for a single action; a part
 that never arrives is said out loud. Analysis mode on its own is already an action, so the third
 position of the HUD layout uses it directly.
 
@@ -350,7 +350,7 @@ the cockpit; from the cockpit it presses the target's open key at once. Cockpit 
 station services, the full spectrum scanner, the codex, the orrery or the comms or role panel is
 open, the flip presses nothing and the row says what is open. A target needs the open keys bound in
 Elite, and sits behind *Let a HOTAS switch operate the ship* like any action. If the focus leaves
-the target on its own within four seconds the switch pauses, and a key that never takes is said out
+the target on its own within four seconds the row notes it, and a key that never takes is said out
 loud. A mismatch is annunciated as, for example, "the galaxy map is open".
 
 #### A position may name a split of the power distributor
@@ -376,7 +376,7 @@ Flipping to a target presses nothing if the pips already read that split. Otherw
 *balance power* and then the power keys that reach the target from balanced, as one reconcile with
 a short wait between taps. Targets are offered in the ship, a fighter and the SRV, need the
 distributor keys bound in Elite, and sit behind *Let a HOTAS switch operate the ship* like any
-action. If the pips leave the target on their own within four seconds the switch pauses, and pips
+action. If the pips leave the target on their own within four seconds the row notes it, and pips
 that never arrive are said out loud. A mismatch is annunciated as, for example, "pips are 4, 4, 4".
 
 #### A position may name a page of Directive 47's own panel instead
@@ -397,8 +397,6 @@ Two things are different, because the target is:
   rows exist because a switch that reconciles the ship reaches the keyboard. A switch that
   changes which page is drawn presses nothing, reads no binds and checks no foreground, so it
   works whether those rows are on or off.
-- **It is never paused.** Nothing else drives the panel behind Directive 47's back, so there is
-  nothing to desync with and nothing to stop reconciling for.
 
 A page may also be one of the fixed pages one level below a tab's page: Story log, Short Story,
 Catalogue and Story bench under Stories; Suggestions, Activities and All lists under Checklist;
@@ -477,8 +475,7 @@ to whatever window is in front, whether Elite is running or not.
   be held across two readings. Nothing on first seeing the switch, nothing while it stays there, and
   nothing on the way out.
 - **What it reads.** Nothing. There is no state to read back, so a chord never disagrees with
-  anything, never pauses the switch, and is never "already there". A switch paused by one of its
-  other positions presses no chord until you press Resume.
+  anything and is never "already there".
 - **What it needs.** **Let a HOTAS switch press key chords in any window** turned on. It is off until
   you turn it on, and the AI cannot turn it on. It is not behind *Let D47 press keys in Elite* or
   *Let a HOTAS switch operate the ship*. It can also be set by saying:
@@ -548,9 +545,15 @@ button in Elite, or move the switch.
 A virtual device is the case that cannot be seen. If SimApp Pro or Joystick Gremlin is publishing a
 vJoy device, Elite's binds name *that* device and nothing connects it back to your physical switch.
 
-So the symptom is watched instead. One unexplained reversal and Directive 47 **stops reconciling
-that switch** and says so, rather than fighting whatever else is there. The panel offers a
-Resume button; a restart clears it too.
+So the symptom is watched instead. When a state goes back on its own within four seconds of
+Directive 47 setting it, the switch's row on the HOTAS switches page notes it, and D47 says so the
+first time it happens to that switch. **The switch keeps acting on every flip.** D47 presses only
+on a flip, never because the game changed something by itself, so it does not fight anything; the
+next flip is decided from what `Status.json` reports.
+
+A flip made before `Status.json` shows D47's last press for that switch is decided against the
+state D47 pressed for, not the old flag. Deploy the cargo scoop and retract it within a second and
+D47 presses twice, and the scoop ends up retracted.
 
 A mode change is not counted as unexplained. Hardpoints retract by themselves when you enter
 supercruise, and that is the game doing its job.
@@ -578,7 +581,7 @@ You can also ask.
 
 #### `report_switches`
 
-Reports only. It cannot assign, change, pause or clear a switch — assignment is reachable from
+Reports only. It cannot assign, change or clear a switch — assignment is reachable from
 the panel and from nowhere else, because the AI reads untrusted text and a hostile in-game
 message must not be able to remap your throttle.
 

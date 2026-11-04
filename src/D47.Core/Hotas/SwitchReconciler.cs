@@ -16,9 +16,6 @@ public enum SwitchHealth
     /// <summary>The device it was learned on is not there.</summary>
     Reassign,
 
-    /// <summary>Something else is driving the same action, so d47 has stopped touching it.</summary>
-    Paused,
-
     /// <summary>Captured but no position names an action yet.</summary>
     Unassigned,
 
@@ -56,6 +53,12 @@ public sealed record SwitchState
     /// (#147).
     /// </summary>
     public string? Collides { get; init; }
+
+    /// <summary>
+    /// Set once something has put back what this switch set, within <see cref="SwitchReconciler.ContestWindow"/>
+    /// of D47 setting it. The switch keeps acting on every flip.
+    /// </summary>
+    public string? Reversed { get; init; }
 }
 
 /// <summary>One reconcile waiting to be carried out.</summary>
@@ -144,8 +147,8 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
     /// <summary>Where each switch was on the last poll that named a position.</summary>
     private readonly Dictionary<string, SwitchPosition> _last = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Switches d47 has stopped reconciling, and why.</summary>
-    private readonly Dictionary<string, string> _paused = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>The last reversal seen on each switch, as the row shows it.</summary>
+    private readonly Dictionary<string, string> _reversed = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly Dictionary<string, Watch> _watching = new(StringComparer.OrdinalIgnoreCase);
 
@@ -172,22 +175,6 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
     public IReadOnlyList<SwitchState> Disagreeing =>
         [.. _states.Where(state => state.Disagrees is not null)];
 
-    /// <summary>Un-pauses a switch.</summary>
-    public void Resume(string name)
-    {
-        lock (_gate)
-        {
-            _paused.Remove(name);
-            _watching.Remove(name);
-            _viewWatching.Remove(name);
-            _focusGoals.Remove(name);
-            _pipGoals.Remove(name);
-
-            // The switch is wherever it is; the next flip is the next question.
-            _last.Remove(name);
-        }
-    }
-
     /// <summary>
     /// What became of a headset press: the watch on it starts with the next poll once it was sent, and ends when
     /// it was not.
@@ -213,14 +200,6 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         }
     }
 
-    public bool IsPaused(string name)
-    {
-        lock (_gate)
-        {
-            return _paused.ContainsKey(name);
-        }
-    }
-
     /// <summary>One poll.</summary>
     public void Poll(SwitchTick tick, IReadOnlyList<SwitchMapping> mappings)
     {
@@ -235,7 +214,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             {
                 try
                 {
-                    states.Add(Examine(tick, mapping));
+                    states.Add(Examine(tick, mapping) with { Reversed = _reversed.GetValueOrDefault(mapping.Name) });
                 }
                 catch (Exception ex)
                 {
@@ -297,24 +276,17 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         var flick = Flick(mapping, reading, position);
         var flipped = position is not null && Flipped(mapping.Name, position);
 
-        // Watched before the flip is acted on, so a second flip inside the window ends the watch rather than
-        // being blamed for what the first one started — and before the pause is read below, so a switch
-        // paused on this poll reports it on this poll. A flick is a flip.
+        if (flipped || flick is not null)
+        {
+            LogFlip(tick, mapping, position!, flick);
+        }
+
+        // Watched before the flip is acted on, so a second flip inside the window is not blamed for what the
+        // first one started. A flick is a flip.
         Watching(tick, mapping, flipped || flick is not null);
         WatchingTheHeadset(tick, mapping, flipped || flick is not null);
         WatchingTheFocus(tick, mapping, flipped || flick is not null);
         var pipsInFlight = WatchingThePips(tick, mapping, flipped || flick is not null);
-
-        if (_paused.TryGetValue(mapping.Name, out var why))
-        {
-            return new SwitchState
-            {
-                Name = mapping.Name,
-                Health = SwitchHealth.Paused,
-                Position = position,
-                Note = why,
-            };
-        }
 
         if (!mapping.IsAssigned)
         {
@@ -337,6 +309,10 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             };
         }
 
+        IReadOnlyList<WatchedPart>? kept = (flipped || flick is not null) && _watching.TryGetValue(mapping.Name, out var held)
+            ? held.Parts
+            : null;
+
         // A flick is a flip to the position pressed, then a flip back.
         if (flick is not null)
         {
@@ -345,6 +321,12 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         }
 
         var state = Reconcile(tick, mapping, position, flipped, pipsInFlight);
+
+        // Only a position that presses actions decides against the unconfirmed presses; any other flip ends the watch.
+        if (kept is not null && _watching.TryGetValue(mapping.Name, out var after) && ReferenceEquals(after.Parts, kept))
+        {
+            _watching.Remove(mapping.Name);
+        }
 
         return state with
         {
@@ -390,6 +372,72 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         }
 
         return flick;
+    }
+
+    /// <summary>Logs every flip with the Status.json values it is decided on.</summary>
+    private void LogFlip(SwitchTick tick, SwitchMapping mapping, SwitchPosition position, SwitchPosition? flick)
+    {
+        var status = tick.Status;
+        var unconfirmed = Unconfirmed(tick, mapping.Name).Values;
+
+        logger.LogInformation(
+            "Switch {Name} flipped to {Position}{Through}; Status.json read at {ReadAt}: flags {Flags}, flags2 {Flags2}, "
+            + "focus {Focus}, pips {Pips}; D47's unconfirmed presses: {Unconfirmed}",
+            mapping.Name,
+            position.Describe(),
+            flick is null ? string.Empty : $" through {flick.Describe()}",
+            status.ReadAt?.ToString("O") ?? "never",
+            status.Flags,
+            $"0x{status.Flags2:X8}",
+            status.GuiFocus,
+            status.Pips?.ToString() ?? "unknown",
+            unconfirmed.Count == 0
+                ? "none"
+                : string.Join(", ", unconfirmed.Select(part => $"{part.Action.Id} {part.State}")));
+    }
+
+    /// <summary>
+    /// D47's presses for this switch that Status.json does not show yet, by action id: while one is in flight the
+    /// flag still reads the state from before it.
+    /// </summary>
+    private Dictionary<string, WatchedPart> Unconfirmed(SwitchTick tick, string name)
+    {
+        var unconfirmed = new Dictionary<string, WatchedPart>(StringComparer.Ordinal);
+
+        if (!_watching.TryGetValue(name, out var watch) || tick.Context != watch.Context || tick.Now > watch.Until)
+        {
+            return unconfirmed;
+        }
+
+        foreach (var part in watch.Parts)
+        {
+            if (!part.Arrived && part.Action.AlreadyIn(part.State, tick.Status) == false)
+            {
+                unconfirmed[part.Action.Id] = part;
+            }
+        }
+
+        return unconfirmed;
+    }
+
+    /// <summary>
+    /// Records that something put back what a switch set. The row shows it from then on; it is said once per switch.
+    /// </summary>
+    private void NoteReversal(SwitchMapping mapping, string label, string note, string what, TimeSpan sincePress)
+    {
+        var first = !_reversed.ContainsKey(mapping.Name);
+        _reversed[mapping.Name] = note;
+
+        logger.LogWarning(
+            "Switch {Name}: {What} went back on its own {Since} s after D47 set it; the switch still acts on every flip",
+            mapping.Name,
+            what,
+            sincePress.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture));
+
+        if (first)
+        {
+            _pending.Enqueue(new PendingReconcile(mapping.Name, label, [], note));
+        }
     }
 
     /// <summary>Whether this poll is a flip.</summary>
@@ -485,29 +533,36 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             return ready;
         }
 
+        // A press Status.json does not show yet is decided against the state it was for, not the flag.
+        var unconfirmed = Unconfirmed(tick, mapping.Name);
         var steps = new List<InputStep>();
 
         foreach (var (action, state, binding) in presses)
         {
-            if (action.AlreadyIn(state, tick.Status) == true)
-            {
-                logger.LogInformation(
-                    "Switch {Name} moved to {Position}; {Action} is already there, so nothing was pressed",
-                    mapping.Name,
-                    position.Describe(),
-                    action.Id);
+            var flag = action.AlreadyIn(state, tick.Status);
+            WatchedPart? inFlight = state != DesiredState.Toggle && unconfirmed.TryGetValue(action.Id, out var part)
+                ? part
+                : null;
+            var there = inFlight is { } last ? last.State == state : flag;
 
+            logger.LogInformation(
+                "Switch {Name} moved to {Position}; {Action} {State}: Status.json says already there {Flag}, "
+                + "D47 last pressed for {InFlight}; {Decision}",
+                mapping.Name,
+                position.Describe(),
+                action.Id,
+                state,
+                flag?.ToString() ?? "unknown",
+                inFlight?.State.ToString() ?? "nothing unconfirmed",
+                there == true ? "nothing pressed" : $"pressing {binding.Gesture()}");
+
+            if (there == true)
+            {
                 continue;
             }
 
-            logger.LogInformation(
-                "Switch {Name} moved to {Position}; pressing {Gesture} for {Action}",
-                mapping.Name,
-                position.Describe(),
-                binding.Gesture(),
-                action.Id);
-
-            if (steps.Count > 0)
+            // A tap straight after an unconfirmed one is kept apart from it.
+            if (steps.Count > 0 || inFlight is not null)
             {
                 steps.Add(InputStep.Wait(PartGap));
             }
@@ -516,15 +571,27 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             pressed.Add(new WatchedPart(action, state));
         }
 
-        if (pressed.Count == 0)
+        // Item 5's watch starts here, with the states the presses were for and the mode they were made in. A press
+        // still unconfirmed for an action this flip did not press stays watched.
+        List<WatchedPart> watched =
+        [
+            .. pressed,
+            .. unconfirmed.Values.Where(part => pressed.All(made => made.Action.Id != part.Action.Id)),
+        ];
+
+        if (watched.Count == 0)
         {
-            return ready;
+            _watching.Remove(mapping.Name);
+        }
+        else
+        {
+            _watching[mapping.Name] = new Watch(watched, tick.Now + ContestWindow, tick.Context);
         }
 
-        _pending.Enqueue(new PendingReconcile(mapping.Name, label, steps));
-
-        // Item 5's watch starts here, with the states the presses were for and the mode they were made in.
-        _watching[mapping.Name] = new Watch(pressed, tick.Now + ContestWindow, tick.Context);
+        if (pressed.Count > 0)
+        {
+            _pending.Enqueue(new PendingReconcile(mapping.Name, label, steps));
+        }
 
         return ready;
     }
@@ -728,7 +795,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         return ready;
     }
 
-    /// <summary>Pips that leave the target within the contest window pause the switch; pips that never reach it are said aloud.</summary>
+    /// <summary>Pips that leave the target within the contest window are noted on the switch; pips that never reach it are said aloud.</summary>
     /// <returns>True when the switch flipped before the presses for the last pip target showed in Status.json.</returns>
     private bool WatchingThePips(SwitchTick tick, SwitchMapping mapping, bool flipped)
     {
@@ -770,15 +837,15 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             return false;
         }
 
-        var why = $"Something else changed the power distributor right after D47 set it to {goal.Target.Name}. "
-                  + $"D47 has stopped reconciling {mapping.Name} rather than fight it.";
-
-        _paused[mapping.Name] = why;
         _pipGoals.Remove(mapping.Name);
 
-        logger.LogWarning("Switch {Name} contested on {Target}; reconciling paused", mapping.Name, goal.Target.Id);
-
-        _pending.Enqueue(new PendingReconcile(mapping.Name, goal.Target.Name, [], why));
+        NoteReversal(
+            mapping,
+            goal.Target.Name,
+            $"Something else changed the power distributor right after D47 set it to {goal.Target.Name}. "
+            + $"D47 still acts on every flip of {mapping.Name}.",
+            $"the pips for {goal.Target.Id}, now {pips},",
+            tick.Now - (goal.Until - ContestWindow));
 
         return false;
     }
@@ -788,7 +855,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
 
     private static string Capitalised(string text) => char.ToUpperInvariant(text[0]) + text[1..];
 
-    /// <summary>Focus that leaves its target within the contest window pauses the switch.</summary>
+    /// <summary>Focus that leaves its target within the contest window is noted on the switch.</summary>
     private void WatchingTheFocus(SwitchTick tick, SwitchMapping mapping, bool flipped)
     {
         if (!_focusGoals.TryGetValue(mapping.Name, out var goal) || goal.Stage != FocusStage.Arrived)
@@ -807,15 +874,15 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             return;
         }
 
-        var why = $"Something else took {FocusTargets.Say(goal.Target.Focus)} away right after D47 set it. "
-                  + $"D47 has stopped reconciling {mapping.Name} rather than fight it.";
-
-        _paused[mapping.Name] = why;
         _focusGoals.Remove(mapping.Name);
 
-        logger.LogWarning("Switch {Name} contested on {Target}; reconciling paused", mapping.Name, goal.Target.Id);
-
-        _pending.Enqueue(new PendingReconcile(mapping.Name, FocusTargets.Say(goal.Target.Focus), [], why));
+        NoteReversal(
+            mapping,
+            FocusTargets.Say(goal.Target.Focus),
+            $"Something else took {FocusTargets.Say(goal.Target.Focus)} away right after D47 set it. "
+            + $"D47 still acts on every flip of {mapping.Name}.",
+            $"{goal.Target.Id}, now {tick.Status.GuiFocus},",
+            tick.Now - (goal.Until - ContestWindow));
     }
 
     /// <summary>The label and the action states a position asks for; empty when it asks for none.</summary>
@@ -1118,9 +1185,27 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
 
         // A mode change explains a change back, and one of them is not hypothetical: hardpoints retract by
         // themselves on entering supercruise.
-        if (flipped || tick.Context != watch.Context)
+        if (tick.Context != watch.Context)
         {
             _watching.Remove(mapping.Name);
+            return;
+        }
+
+        // A flip keeps only the unconfirmed presses, for the flip to be decided against; a press that arrived is no
+        // longer watched for a change back.
+        if (flipped)
+        {
+            var unconfirmed = watch.Parts.Where(part => !part.Arrived).ToArray();
+
+            if (unconfirmed.Length == 0)
+            {
+                _watching.Remove(mapping.Name);
+            }
+            else
+            {
+                _watching[mapping.Name] = watch with { Parts = unconfirmed };
+            }
+
             return;
         }
 
@@ -1168,15 +1253,16 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
                 continue;
             }
 
-            var why = $"Something else is bound to {part.Action.Label}: it went back on its own right after D47 "
-                      + $"set it. D47 has stopped reconciling {mapping.Name} rather than fight it.";
-
-            _paused[mapping.Name] = why;
             _watching.Remove(mapping.Name);
 
-            logger.LogWarning("Switch {Name} contested on {Action}; reconciling paused", mapping.Name, part.Action.Id);
+            NoteReversal(
+                mapping,
+                part.Action.Label,
+                $"Something else is bound to {part.Action.Label}: it went back on its own right after D47 set it. "
+                + $"D47 still acts on every flip of {mapping.Name}.",
+                $"{part.Action.Id} {part.State} (flags {tick.Status.Flags})",
+                tick.Now - (watch.Until - ContestWindow));
 
-            _pending.Enqueue(new PendingReconcile(mapping.Name, part.Action.Label, [], why));
             return;
         }
 

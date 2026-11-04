@@ -117,7 +117,7 @@ public class ASwitchPositionCanSetSeveralThingsTests
     }
 
     [Fact]
-    public void APartThatGoesBackOnItsOwnPausesTheSwitch()
+    public void APartThatGoesBackOnItsOwnIsNotedAndTheNextFlipStillPresses()
     {
         var reconciler = New();
         var switches = new[] { LightsSwitch };
@@ -129,8 +129,13 @@ public class ASwitchPositionCanSetSeveralThingsTests
         reconciler.Poll(Tick(1, StatusFlags.LightsOn, Start.AddSeconds(1)), switches);
         reconciler.Poll(Tick(1, StatusFlags.None, Start.AddSeconds(2)), switches);
 
-        Assert.True(reconciler.IsPaused("LIGHTS"));
+        Assert.NotNull(reconciler.States.Single(state => state.Name == "LIGHTS").Reversed);
         Assert.Contains(reconciler.Drain(), pending => pending.Say?.Contains("Lights", StringComparison.OrdinalIgnoreCase) == true);
+
+        reconciler.Poll(Tick(2, StatusFlags.None, Start.AddSeconds(3)), switches);
+        reconciler.Poll(Tick(1, StatusFlags.None, Start.AddSeconds(4)), switches);
+
+        Assert.Contains(reconciler.Drain(), pending => pending.Steps.Count > 0);
     }
 
     [Fact]

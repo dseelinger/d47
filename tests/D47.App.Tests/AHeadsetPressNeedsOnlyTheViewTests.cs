@@ -70,7 +70,7 @@ public class AHeadsetPressNeedsOnlyTheViewTests
     }
 
     [Fact]
-    public void APressNotSentLeavesTheSwitchUnpaused()
+    public void APressNotSentNotesNoReversal()
     {
         // Decided against SteamVR; by the time it is carried out the headset is already on the desktop.
         var reconciler = new SwitchReconciler(NullLogger<SwitchReconciler>.Instance, new FixedView(HeadsetView.Vr));
@@ -90,7 +90,7 @@ public class AHeadsetPressNeedsOnlyTheViewTests
         reconciler.Poll(Tick(5, 2), [mapping]);
         reconciler.Poll(Tick(5, 2 + SwitchReconciler.ContestWindow.TotalSeconds + 1), [mapping]);
 
-        Assert.False(reconciler.IsPaused("view switch"));
+        Assert.Null(reconciler.States.Single(state => state.Name == "view switch").Reversed);
     }
 
     private static SwitchTick Tick(int button, double seconds)
@@ -124,11 +124,11 @@ public class AHeadsetPressNeedsOnlyTheViewTests
     }
 
     [Fact]
-    public void APauseIsSaidAndNotPressed()
+    public void ALineToSayIsSaidAndNotPressed()
     {
         var key = Key(HeadsetView.Vr);
 
-        Assert.Equal("paused", key.CarryOut(new PendingReconcile("view switch", "the desktop view", [], "paused", View: HeadsetView.Desktop), Reconciler()));
+        Assert.Equal("said", key.CarryOut(new PendingReconcile("view switch", "the desktop view", [], "said", View: HeadsetView.Desktop), Reconciler()));
         Assert.Equal(0, key.Presses);
     }
 }

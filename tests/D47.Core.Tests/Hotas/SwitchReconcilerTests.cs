@@ -279,7 +279,7 @@ public class SwitchReconcilerTests
     }
 
     [Fact]
-    public void AReconcileThatIsImmediatelyUndonePausesTheSwitchAndSaysSo()
+    public void AReconcileThatIsImmediatelyUndoneIsNotedOnTheSwitchAndSaidOnce()
     {
         // Item 5.
         var reconciler = New();
@@ -296,16 +296,19 @@ public class SwitchReconcilerTests
         reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddMilliseconds(600)), switches);
 
         var said = reconciler.Drain();
+        var state = Assert.Single(reconciler.States);
 
-        Assert.Equal(SwitchHealth.Paused, reconciler.States[0].Health);
-        Assert.True(reconciler.IsPaused("gear switch"));
+        Assert.Equal(SwitchHealth.Ready, state.Health);
+        Assert.Contains("Something else is bound to", state.Reversed ?? string.Empty, StringComparison.Ordinal);
         Assert.Single(said);
         Assert.Empty(said[0].Steps);
         Assert.Contains("Something else is bound to", said[0].Say ?? string.Empty, StringComparison.Ordinal);
+        Assert.Contains("every flip", said[0].Say ?? string.Empty, StringComparison.Ordinal);
+        Assert.DoesNotContain("stopped", said[0].Say ?? string.Empty, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public void APausedSwitchStopsReconcilingUntilItIsResumed()
+    public void AFlipAfterAReversalPressesLikeAnyOther()
     {
         var reconciler = New();
         var switches = new[] { GearSwitch() };
@@ -316,19 +319,193 @@ public class SwitchReconcilerTests
         reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddMilliseconds(600)), switches);
         reconciler.Drain();
 
-        // A flip while paused does nothing at all.
         reconciler.Poll(Tick(Held(9), StatusFlags.LandingGearDown, Start.AddSeconds(10)), switches);
-        Assert.Empty(reconciler.Drain());
-
-        reconciler.Resume("gear switch");
-
-        // Resuming presses nothing by itself — the switch is wherever it is, and the next flip is the next
-        // question.
-        reconciler.Poll(Tick(Held(9), StatusFlags.LandingGearDown, Start.AddSeconds(11)), switches);
-        Assert.Empty(reconciler.Drain());
+        Assert.NotEmpty(Assert.Single(reconciler.Drain()).Steps);
 
         reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddSeconds(12)), switches);
-        Assert.Single(reconciler.Drain());
+        Assert.NotEmpty(Assert.Single(reconciler.Drain()).Steps);
+    }
+
+    [Fact]
+    public void AFlipRightAfterAReversalIsDecidedFromTheFlag()
+    {
+        // The flag went back on its own, so it is the only truth there is: the gear reads up, and the switch asks
+        // for up.
+        var reconciler = New();
+        var switches = new[] { GearSwitch() };
+
+        reconciler.Poll(Tick(Held(9), StatusFlags.None), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.LandingGearDown, Start.AddMilliseconds(300)), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddMilliseconds(600)), switches);
+        reconciler.Drain();
+
+        reconciler.Poll(Tick(Held(9), StatusFlags.None, Start.AddMilliseconds(900)), switches);
+
+        Assert.Empty(reconciler.Drain());
+    }
+
+    [Fact]
+    public void ASecondReversalOnTheSameSwitchIsNotSaidAgain()
+    {
+        var reconciler = New();
+        var switches = new[] { GearSwitch() };
+
+        reconciler.Poll(Tick(Held(9), StatusFlags.None), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.LandingGearDown, Start.AddMilliseconds(300)), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddMilliseconds(600)), switches);
+        Assert.Contains(reconciler.Drain(), pending => pending.Say is not null);
+
+        reconciler.Poll(Tick(Held(9), StatusFlags.LandingGearDown, Start.AddSeconds(10)), switches);
+        reconciler.Poll(Tick(Held(9), StatusFlags.None, Start.AddSeconds(10.3)), switches);
+        reconciler.Poll(Tick(Held(9), StatusFlags.LandingGearDown, Start.AddSeconds(10.6)), switches);
+
+        var drained = reconciler.Drain();
+
+        Assert.Single(drained);
+        Assert.NotEmpty(drained[0].Steps);
+        Assert.Null(drained[0].Say);
+        Assert.NotNull(Assert.Single(reconciler.States).Reversed);
+    }
+
+    [Fact]
+    public void AChangeBackAfterAFlipThatPressedNothingIsNotBlamedOnTheEarlierPress()
+    {
+        var reconciler = New();
+
+        var switches = new[]
+        {
+            GearSwitch() with
+            {
+                Positions =
+                [
+                    new SwitchPosition(8, "landing_gear", DesiredState.On),
+                    new SwitchPosition(9, "landing_gear", DesiredState.Off),
+                    new SwitchPosition(10),
+                ],
+            },
+        };
+
+        reconciler.Poll(Tick(Held(9), StatusFlags.None), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.LandingGearDown, Start.AddMilliseconds(300)), switches);
+        reconciler.Drain();
+
+        reconciler.Poll(Tick(Held(10), StatusFlags.LandingGearDown, Start.AddMilliseconds(600)), switches);
+        reconciler.Poll(Tick(Held(10), StatusFlags.None, Start.AddMilliseconds(900)), switches);
+
+        Assert.Empty(reconciler.Drain());
+        Assert.Null(Assert.Single(reconciler.States).Reversed);
+    }
+
+    [Fact]
+    public void AFlipToAPositionThatPressesNothingEndsTheWatchOnAnUnconfirmedPress()
+    {
+        var reconciler = New();
+
+        var switches = new[]
+        {
+            GearSwitch() with
+            {
+                Positions =
+                [
+                    new SwitchPosition(8, "landing_gear", DesiredState.On),
+                    new SwitchPosition(9, "landing_gear", DesiredState.Off),
+                    new SwitchPosition(10),
+                ],
+            },
+        };
+
+        reconciler.Poll(Tick(Held(9), StatusFlags.None), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None), switches);
+        reconciler.Drain();
+
+        // Away before the gear shows down; then it comes down and goes back up by hand.
+        reconciler.Poll(Tick(Held(10), StatusFlags.None, Start.AddMilliseconds(200)), switches);
+        reconciler.Poll(Tick(Held(10), StatusFlags.LandingGearDown, Start.AddMilliseconds(400)), switches);
+        reconciler.Poll(Tick(Held(10), StatusFlags.None, Start.AddMilliseconds(700)), switches);
+
+        Assert.Empty(reconciler.Drain());
+        Assert.Null(Assert.Single(reconciler.States).Reversed);
+    }
+
+    /// <summary>A cargo scoop switch: button 8 deploys, button 9 retracts.</summary>
+    private static SwitchMapping HookSwitch() => GearSwitch() with
+    {
+        Name = "HOOK",
+        Positions =
+        [
+            new SwitchPosition(8, "cargo_scoop", DesiredState.On),
+            new SwitchPosition(9, "cargo_scoop", DesiredState.Off),
+        ],
+    };
+
+    private static SwitchTick HookTick(HotasReading reading, StatusFlags flags, DateTimeOffset at) =>
+        Tick(reading, flags, at) with
+        {
+            Binds = new EliteBinds
+            {
+                PresetName = "Test",
+                SourceFile = "Test.binds",
+                Bindings = [new EliteBinding("ToggleCargoScoop", "Primary", "Keyboard", "Key_Home")],
+            },
+        };
+
+    private static int KeyDowns(IEnumerable<PendingReconcile> pending) =>
+        pending.Sum(reconcile => reconcile.Steps.Count(step => step.Kind == InputStepKind.KeyDown));
+
+    [Fact]
+    public void AFlipBackBeforeTheFlagArrivesIsDecidedAgainstTheLastPress()
+    {
+        // Deploy then retract within a second, with Status.json still reading the scoop retracted throughout.
+        var reconciler = New();
+        var switches = new[] { HookSwitch() };
+
+        reconciler.Poll(HookTick(Held(9), StatusFlags.None, Start), switches);
+        reconciler.Poll(HookTick(Held(8), StatusFlags.None, Start.AddMilliseconds(100)), switches);
+        Assert.Equal(1, KeyDowns(reconciler.Drain()));
+
+        reconciler.Poll(HookTick(Held(9), StatusFlags.None, Start.AddMilliseconds(900)), switches);
+        var back = Assert.Single(reconciler.Drain());
+
+        Assert.Equal(1, KeyDowns([back]));
+
+        // Kept apart from the tap before it.
+        Assert.Equal(InputStepKind.Delay, back.Steps[0].Kind);
+    }
+
+    [Fact]
+    public void EveryQuickFlipPressesUntilTheFlagCatchesUp()
+    {
+        var reconciler = New();
+        var switches = new[] { HookSwitch() };
+
+        reconciler.Poll(HookTick(Held(9), StatusFlags.None, Start), switches);
+        reconciler.Poll(HookTick(Held(8), StatusFlags.None, Start.AddMilliseconds(100)), switches);
+        reconciler.Poll(HookTick(Held(9), StatusFlags.None, Start.AddMilliseconds(400)), switches);
+        reconciler.Poll(HookTick(Held(8), StatusFlags.None, Start.AddMilliseconds(700)), switches);
+
+        Assert.Equal(3, KeyDowns(reconciler.Drain()));
+    }
+
+    [Fact]
+    public void AFlipBackAfterTheFlagArrivesIsDecidedFromTheFlag()
+    {
+        var reconciler = New();
+        var switches = new[] { HookSwitch() };
+
+        reconciler.Poll(HookTick(Held(9), StatusFlags.None, Start), switches);
+        reconciler.Poll(HookTick(Held(8), StatusFlags.None, Start.AddMilliseconds(100)), switches);
+        reconciler.Poll(HookTick(Held(8), StatusFlags.CargoScoopDeployed, Start.AddMilliseconds(400)), switches);
+        reconciler.Drain();
+
+        // Retract, and the flag already shows the scoop in: something else retracted it in between.
+        reconciler.Poll(HookTick(Held(9), StatusFlags.None, Start.AddMilliseconds(500)), switches);
+        Assert.Equal(0, KeyDowns(reconciler.Drain()));
+
+        reconciler.Poll(HookTick(Held(8), StatusFlags.None, Start.AddMilliseconds(800)), switches);
+        Assert.Equal(1, KeyDowns(reconciler.Drain()));
     }
 
     [Fact]
@@ -359,7 +536,7 @@ public class SwitchReconcilerTests
         // Into supercruise, and the hardpoints come in by themselves.
         reconciler.Poll(Tick(Held(8), StatusFlags.Supercruise, Start.AddMilliseconds(600)), switches);
 
-        Assert.False(reconciler.IsPaused("hardpoint switch"));
+        Assert.Null(reconciler.States.Single(state => state.Name == "hardpoint switch").Reversed);
         Assert.Empty(reconciler.Drain());
     }
 
@@ -378,7 +555,7 @@ public class SwitchReconcilerTests
         // Half a minute later the Commander raises the gear themselves.
         reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddSeconds(30)), switches);
 
-        Assert.False(reconciler.IsPaused("gear switch"));
+        Assert.Null(reconciler.States.Single(state => state.Name == "gear switch").Reversed);
     }
 
     [Fact]

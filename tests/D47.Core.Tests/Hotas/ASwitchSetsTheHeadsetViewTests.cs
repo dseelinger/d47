@@ -126,7 +126,7 @@ public class ASwitchSetsTheHeadsetViewTests
         reconciler.Poll(Tick(5, 2 + SwitchReconciler.ContestWindow.TotalSeconds + 1), switches);
         reconciler.Poll(Tick(5, 2 + SwitchReconciler.ContestWindow.TotalSeconds + 2), switches);
 
-        Assert.False(reconciler.IsPaused("view switch"));
+        Assert.Null(reconciler.States.Single(state => state.Name == "view switch").Reversed);
         Assert.Equal(SwitchHealth.Ready, reconciler.States[0].Health);
 
         // Said on the headset's path rather than the game's.
@@ -163,7 +163,7 @@ public class ASwitchSetsTheHeadsetViewTests
         view.Showing = HeadsetView.Vr;
         reconciler.Poll(Tick(5, 1 + SwitchReconciler.ContestWindow.TotalSeconds + 1), switches);
 
-        Assert.False(reconciler.IsPaused("view switch"));
+        Assert.Null(reconciler.States.Single(state => state.Name == "view switch").Reversed);
         Assert.Empty(reconciler.Drain());
     }
 
@@ -183,7 +183,7 @@ public class ASwitchSetsTheHeadsetViewTests
         reconciler.Poll(Tick(5, 2), switches);
         reconciler.Poll(Tick(5, 2 + SwitchReconciler.ContestWindow.TotalSeconds + 1), switches);
 
-        Assert.False(reconciler.IsPaused("view switch"));
+        Assert.Null(reconciler.States.Single(state => state.Name == "view switch").Reversed);
         Assert.Empty(reconciler.Drain());
     }
 
@@ -200,7 +200,7 @@ public class ASwitchSetsTheHeadsetViewTests
         reconciler.Drain();
 
         reconciler.Poll(Tick(5, 10), switches);
-        Assert.False(reconciler.IsPaused("view switch"));
+        Assert.Null(reconciler.States.Single(state => state.Name == "view switch").Reversed);
 
         reconciler.HeadsetPressed("view switch", HeadsetView.Desktop, sent: true);
         reconciler.Poll(Tick(5, 11), switches);
@@ -226,7 +226,7 @@ public class ASwitchSetsTheHeadsetViewTests
         reconciler.Poll(Tick(5, 2), switches);
         reconciler.Poll(Tick(5, 2 + SwitchReconciler.ContestWindow.TotalSeconds + 1), switches);
 
-        Assert.False(reconciler.IsPaused("view switch"));
+        Assert.Null(reconciler.States.Single(state => state.Name == "view switch").Reversed);
         Assert.Empty(reconciler.Drain());
     }
 

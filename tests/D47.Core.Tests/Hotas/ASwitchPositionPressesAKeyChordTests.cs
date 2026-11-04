@@ -142,7 +142,7 @@ public class ASwitchPositionPressesAKeyChordTests
     }
 
     [Fact]
-    public void AChordPositionNeverDisagreesOrPauses()
+    public void AChordPositionNeverDisagreesOrNotesAReversal()
     {
         var reconciler = New();
         var switches = new[] { PasteButton() };
@@ -154,7 +154,7 @@ public class ASwitchPositionPressesAKeyChordTests
         var state = Assert.Single(reconciler.States);
         Assert.Equal(SwitchHealth.Ready, state.Health);
         Assert.Null(state.Disagrees);
-        Assert.False(reconciler.IsPaused("paste button"));
+        Assert.Null(state.Reversed);
     }
 
     [Fact]

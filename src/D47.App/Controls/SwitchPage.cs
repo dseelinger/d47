@@ -486,14 +486,6 @@ public sealed class SwitchPage : DialogPage
             Rebuild();
         };
 
-        var resume = new Button
-        {
-            Content = "Resume",
-            IsVisible = false,
-        };
-
-        resume.Click += (_, _) => _reconciler.Resume(mapping.Name);
-
         var health = new TextBlock
         {
             FontSize = TypeScale.Secondary,
@@ -533,7 +525,7 @@ public sealed class SwitchPage : DialogPage
                 Spacing = 4,
                 Children =
                 {
-                    new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { name, remove, resume } },
+                    new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { name, remove } },
                     positions,
                     health,
                     found,
@@ -549,8 +541,6 @@ public sealed class SwitchPage : DialogPage
         {
             var state = _reconciler.States.FirstOrDefault(s =>
                 string.Equals(s.Name, mapping.Name, StringComparison.OrdinalIgnoreCase));
-
-            resume.IsVisible = state?.Health == SwitchHealth.Paused;
 
             // A refusal is about a device that is missing, so it goes once the switch is read again.
             if (mapping.NoteIsRefusal && state?.Health is not (null or SwitchHealth.Reassign or SwitchHealth.Waiting))
@@ -572,11 +562,11 @@ public sealed class SwitchPage : DialogPage
             // the flight (#147).
             health.Text = state is null
                 ? "Not being reconciled yet — save to start."
-                : state.Collides is { } collides
+                : $"{(state.Collides is { } collides
                     ? collides
                     : state.Disagrees is { } disagrees
                         ? $"{state.Note} Sitting against the game: {disagrees}.".TrimStart()
-                        : state.Note;
+                        : state.Note)} {state.Reversed}".Trim();
 
             health.IsVisible = health.Text is { Length: > 0 };
 

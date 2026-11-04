@@ -105,7 +105,6 @@ public static class SwitchCapability
             text.Append(state.Health switch
             {
                 SwitchHealth.Reassign => "needs reassigning",
-                SwitchHealth.Paused => "paused",
                 SwitchHealth.Unassigned => "captured but not assigned",
                 SwitchHealth.Off => "not acting",
                 SwitchHealth.Waiting => "waiting for D47 to find your controllers",
@@ -123,6 +122,11 @@ public static class SwitchCapability
             else if (state.Note is { Length: > 0 } note)
             {
                 text.Append(" — ").Append(note);
+            }
+
+            if (state.Reversed is { } reversed)
+            {
+                text.Append(" — ").Append(reversed);
             }
 
             text.AppendLine();
@@ -289,7 +293,6 @@ public static class SwitchCapability
         var parts = new List<string>();
 
         var reassign = states.Count(state => state.Health == SwitchHealth.Reassign);
-        var paused = states.Count(state => state.Health == SwitchHealth.Paused);
         var against = states.Count(state => state.Disagrees is not null);
 
         parts.Add(mappings.Count == 1 ? "1 switch" : $"{mappings.Count} switches");
@@ -297,11 +300,6 @@ public static class SwitchCapability
         if (reassign > 0)
         {
             parts.Add($"{reassign} needing reassignment");
-        }
-
-        if (paused > 0)
-        {
-            parts.Add($"{paused} paused");
         }
 
         if (against > 0)

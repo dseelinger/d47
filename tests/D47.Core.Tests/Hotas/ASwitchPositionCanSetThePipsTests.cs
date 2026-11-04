@@ -340,7 +340,7 @@ public class ASwitchPositionCanSetThePipsTests
     }
 
     [Fact]
-    public void PipsThatLeaveTheTargetWithinTheContestWindowPauseTheSwitch()
+    public void PipsThatLeaveTheTargetWithinTheContestWindowAreNotedAndTheNextFlipStillPresses()
     {
         var reconciler = New();
         reconciler.Poll(Tick(2, Balanced), [Pips]);
@@ -350,12 +350,17 @@ public class ASwitchPositionCanSetThePipsTests
         reconciler.Poll(Tick(1, new PowerDistribution(2, 8, 2), 0.5), [Pips]);
         reconciler.Poll(Tick(1, Balanced, 1.5), [Pips]);
 
-        Assert.True(reconciler.IsPaused("PIPS"));
+        Assert.NotNull(reconciler.States.Single(state => state.Name == "PIPS").Reversed);
         Assert.Contains(reconciler.Drain(), pending => pending.Say is not null);
+
+        reconciler.Poll(Tick(2, Balanced, 2), [Pips]);
+        reconciler.Poll(Tick(1, Balanced, 2.5), [Pips]);
+
+        Assert.Contains(reconciler.Drain(), pending => pending.Steps.Count > 0);
     }
 
     [Fact]
-    public void PipsThatLeaveAfterTheContestWindowDoNotPauseTheSwitch()
+    public void PipsThatLeaveAfterTheContestWindowAreNotNoted()
     {
         var reconciler = New();
         reconciler.Poll(Tick(2, Balanced), [Pips]);
@@ -365,7 +370,7 @@ public class ASwitchPositionCanSetThePipsTests
         reconciler.Poll(Tick(1, new PowerDistribution(2, 8, 2), 0.5), [Pips]);
         reconciler.Poll(Tick(1, Balanced, 0.5 + SwitchReconciler.ContestWindow.TotalSeconds + 1), [Pips]);
 
-        Assert.False(reconciler.IsPaused("PIPS"));
+        Assert.Null(reconciler.States.Single(state => state.Name == "PIPS").Reversed);
     }
 
     [Fact]
