@@ -116,7 +116,7 @@ public class AnAdventureIsAskedForByVoiceTests
         var spine = model!.Asked[0];
         Assert.Contains("The Commander's brief, in their words: \"a lighthouse nobody tends\"", spine, StringComparison.Ordinal);
         Assert.Contains("Reach: a session's flying", spine, StringComparison.Ordinal);
-        Assert.Contains(AdventureGenerator.Structure(AdventureLength.Short).Sheet, model.Asked[1], StringComparison.Ordinal);
+        Assert.Contains(AdventureGenerator.Structure(AdventureLength.Short).Sheet, model.Asked[2], StringComparison.Ordinal);
     }
 
     [AvaloniaFact]
@@ -232,7 +232,7 @@ public class AnAdventureIsAskedForByVoiceTests
         hold.SetResult();
         Until(() => book.Store.Find("F1", "the-missing-freight") is not null);
 
-        Assert.Equal(3, model!.Asked.Count);
+        Assert.Equal(5, model!.Asked.Count);
         Assert.Single(book.Store.For("F1"));
     }
 
