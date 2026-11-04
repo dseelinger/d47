@@ -226,12 +226,14 @@ public static class HandledEvents
     /// <summary>
     /// Events Frontier writes that d47 deliberately answers neither block for: <c>Backpack</c> is the
     /// on-foot inventory, read from <c>Backpack.json</c> instead; <c>FCMaterials</c> is the carrier's
-    /// materials market, tabled to the carrier reminder work (#24).
+    /// materials market, tabled to the carrier reminder work (#24); <c>PowerplayVoucher</c> is the
+    /// pre-Powerplay 2.0 combat payment, which Elite no longer writes.
     /// </summary>
     public static readonly FrozenSet<string> Intentional = FrozenSet.ToFrozenSet<string>(
     [
         "Backpack",
         "FCMaterials",
+        "PowerplayVoucher",
     ], StringComparer.Ordinal);
 
     /// <summary>
@@ -284,6 +286,7 @@ public static class HandledEvents
         "ShipyardBankDeposit",
         "ShipyardRedeem",
         "SquadronApplicationApproved",
+        "SystemsShutdown",
         "TradeMicroResources",
         "UseConsumable",
         "VehicleSwitch",

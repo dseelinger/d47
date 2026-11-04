@@ -284,6 +284,7 @@ public static class JournalSentence
                 ? $"Hull damage — {health * 100:0}% remaining"
                 : "Hull damage",
             "HeatWarning" => "Heat warning",
+            "SystemsShutdown" => "Ship systems shut down",
             "HeatDamage" => "Taking heat damage",
             "CockpitBreached" => "The canopy was breached",
             "ShieldState" => raw.Bool("ShieldsUp") ? "Shields back up" : "Shields down",
