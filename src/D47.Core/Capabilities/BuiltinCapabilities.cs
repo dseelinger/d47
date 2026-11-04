@@ -351,7 +351,10 @@ public static class BuiltinCapabilities
         Func<Journal.LiveRoute?>? liveRoute = null,
 
         // The modules read from data\modules, for the egress disclosure.
-        Func<IReadOnlyList<Modules.InstalledModule>>? installedModules = null) =>
+        Func<IReadOnlyList<Modules.InstalledModule>>? installedModules = null,
+
+        // The Commander's background watches, for the list_watches tool.
+        Func<IReadOnlyList<Watches.Watch>>? watches = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -570,6 +573,8 @@ public static class BuiltinCapabilities
             now ?? (() => DateTimeOffset.MinValue)),
 
         CharactersCapability.Create(),
+
+        WatchesCapability.Create(watches ?? (() => [])),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

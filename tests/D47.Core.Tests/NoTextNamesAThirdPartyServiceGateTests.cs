@@ -72,6 +72,12 @@ public sealed partial class NoTextNamesAThirdPartyServiceGateTests
             return true;
         }
 
+        // The refusal lines a watch's save puts on its form fields.
+        if (relative == "D47.Core/Watches/WatchSetup.cs")
+        {
+            return true;
+        }
+
         foreach (var node in token.Parent!.Ancestors())
         {
             switch (node)

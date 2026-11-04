@@ -54,3 +54,22 @@ public class StubStarSystemService : IStarSystemService
         CancellationToken cancellationToken) =>
         throw new NotSupportedException();
 }
+
+/// <summary>Every member throws; a fake overrides the ones its test uses.</summary>
+public class StubTradePlanService : ITradePlanService
+{
+    public virtual Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    public virtual Task<CommodityAnswer> FindCommodityAsync(CommoditySearch search, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    public virtual Task<SourcingAnswer> SourceConstructionAsync(SourcingSearch search, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    public virtual Task<StationQuote?> QuoteAsync(long marketId, string commodity, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    public virtual Task<BestCargoAnswer?> BestCargoAsync(BestCargoSearch search, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+}

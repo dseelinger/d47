@@ -18,6 +18,7 @@ internal static class ToolPlaces
         ["plot_route"] = RoutingPages.PlanRoot,
         [BookmarksCapability.ListTool] = RoutingPages.BookmarksRoot,
         ["get_checklist"] = CommanderFurnishing.ChecklistRoot,
+        [WatchesCapability.Tool] = WatchesPage.RootKey,
     };
 
     /// <summary>The destination key for a tool, or null when no page shows what it returns.</summary>

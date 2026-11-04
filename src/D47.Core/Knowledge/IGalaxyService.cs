@@ -157,4 +157,7 @@ public interface IGalaxyService
 }
 
 /// <summary>The service could not answer.</summary>
-public sealed class GalaxyUnavailableException(string message) : Exception(message);
+public class GalaxyUnavailableException(string message) : Exception(message);
+
+/// <summary>The market index has no commodity of the name asked for.</summary>
+public sealed class UnknownCommodityException(string message) : GalaxyUnavailableException(message);

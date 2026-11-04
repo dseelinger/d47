@@ -627,7 +627,10 @@ public partial class PanelView : UserControl, IPanelTabHost
         _commander.EnableChecklist(checklists, goals, backfill, activities);
     }
 
-    /// <summary>Gives this surface Commander › Missions, after the checklist.</summary>
+    /// <summary>Gives this surface Commander › Watches, after the checklist.</summary>
+    public void EnableWatches(WatchesDesk desk) => _commander.EnableWatches(desk);
+
+    /// <summary>Gives this surface Commander › Missions, after Watches.</summary>
     public void EnableMissions(
         Func<D47.Core.Journal.CommanderGameState?> state,
         Func<DateTimeOffset> now,

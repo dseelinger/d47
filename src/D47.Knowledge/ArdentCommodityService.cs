@@ -73,7 +73,7 @@ public sealed class ArdentCommodityService : IDisposable
         {
             _logger.LogWarning("The market index lists no commodity called {Commodity}", query.Commodity);
 
-            throw new GalaxyUnavailableException(
+            throw new UnknownCommodityException(
                 $"The market index has no commodity called \"{query.Commodity}\".");
         }
 
@@ -126,7 +126,7 @@ public sealed class ArdentCommodityService : IDisposable
         {
             _logger.LogWarning("The market index lists no commodity called {Commodity}", commodity);
 
-            throw new GalaxyUnavailableException(
+            throw new UnknownCommodityException(
                 $"The market index has no commodity called \"{commodity}\".");
         }
 

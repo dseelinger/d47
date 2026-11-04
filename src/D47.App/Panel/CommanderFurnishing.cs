@@ -3,7 +3,7 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>The Commander tab: Checklist, Missions, Standing, Statistics, This session, Ledgers and Commanders.</summary>
+/// <summary>The Commander tab: Checklist, Watches, Missions, Standing, Statistics, This session, Ledgers and Commanders.</summary>
 internal sealed class CommanderFurnishing(IPanelTabHost host)
 {
     private Func<NavCrumb, Control>? _checklistBuild;
@@ -29,6 +29,8 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     private CodexDiscoveriesPage? _codexDiscoveries;
     private CodexEntryPage? _codexEntry;
     private CommandersPage? _commanders;
+    private Func<NavCrumb, Control>? _watchesBuild;
+    private WatchesPage? _watches;
     private D47.App.Controls.JournalClock? _commanderClock;
 
     public void EnableChecklist(
@@ -68,6 +70,42 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     }
 
     internal const string ChecklistRoot = "checklist";
+
+    public void EnableWatches(WatchesDesk desk)
+    {
+        _watchesBuild = crumb =>
+        {
+            if (crumb.Key == WatchesPage.NewStockKey)
+            {
+                return new WatchFormPage(desk, host.Nav, null, stock: true);
+            }
+
+            if (crumb.Key == WatchesPage.NewGoalKey)
+            {
+                return new WatchFormPage(desk, host.Nav, null, stock: false);
+            }
+
+            if (WatchesPage.EditOf(crumb.Key) is { } id)
+            {
+                return desk.Store.Watches.FirstOrDefault(watch => watch.Id == id) is { } watch
+                    ? new WatchFormPage(desk, host.Nav, watch, watch.Kind == D47.Core.Watches.WatchKind.Stock)
+                    : new TextBlock { Text = "That watch is gone." };
+            }
+
+            return _watches = new WatchesPage(desk, host.Nav);
+        };
+
+        host.Furnish(
+            PanelTab.Commander,
+            BuildCommander,
+            new NavCrumb(WatchesPage.RootKey, "Watches")
+            {
+                Help = D47.Core.Capabilities.Builtin.WatchesCapability.Id,
+            });
+    }
+
+    private static bool IsWatches(string key) =>
+        key == WatchesPage.RootKey || key == WatchesPage.NewStockKey || key == WatchesPage.NewGoalKey || WatchesPage.EditOf(key) is not null;
 
     public void EnableMissions(
         Func<D47.Core.Journal.CommanderGameState?> state,
@@ -242,6 +280,11 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         var trail = host.Nav.TrailOf(PanelTab.Commander);
         var leaf = trail.Count > 0 ? trail[^1].Key : string.Empty;
 
+        if (_watches is { } watches && root == WatchesPage.RootKey && leaf == WatchesPage.RootKey)
+        {
+            changed |= watches.Tick();
+        }
+
         if (_missions is { } missions && root == MissionsPage.RootKey)
         {
             changed |= missions.Tick();
@@ -296,7 +339,8 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
     /// <summary>Draws a Commander level: Missions, Standing, Statistics, This session, Ledgers and its ledgers, Commanders, or whatever the checklist roots draw.</summary>
     public Control BuildCommander(NavCrumb crumb) =>
-        crumb.Key == MissionsPage.RootKey && _missionsBuild is { } missions ? missions(crumb)
+        IsWatches(crumb.Key) && _watchesBuild is { } watches ? watches(crumb)
+        : crumb.Key == MissionsPage.RootKey && _missionsBuild is { } missions ? missions(crumb)
         : crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
         : crumb.Key == StatisticsPage.RootKey && _statisticsBuild is { } statistics ? statistics(crumb)
         : crumb.Key == SessionPage.RootKey && _sessionBuild is { } session ? session(crumb)

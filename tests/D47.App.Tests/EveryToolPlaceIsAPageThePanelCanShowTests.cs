@@ -47,6 +47,13 @@ public sealed class EveryToolPlaceIsAPageThePanelCanShowTests
             new ChecklistProposalStore(Path.Combine(paths.Data, "checklist-proposals.json"), fs, NullLogger<ChecklistProposalStore>.Instance),
             () => null));
 
+        var watches = new D47.Core.Watches.WatchStore(Path.Combine(paths.Data, "watches.json"), fs, NullLogger<D47.Core.Watches.WatchStore>.Instance);
+
+        panel.EnableWatches(new WatchesDesk(
+            watches,
+            new D47.Core.Watches.WatchSetup(watches, new StubGalaxyService(), new StubTradePlanService(), () => false),
+            settings));
+
         panel.EnableRouting(new RoutingSurface(() => new NavRoute(), () => null, registry, Bookmarks: new BookmarkStore(
             Path.Combine(paths.Data, "bookmarks.json"), fs, NullLogger<BookmarkStore>.Instance)));
 

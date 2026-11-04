@@ -94,7 +94,7 @@ public static class HelpTaxonomy
                     "autonomous-actions")),
             HelpNode.Category(
                 "Automation and switches",
-                "Ship actions run from a macro or a stick, and messages sent for you.",
+                "Ship actions run from a macro or a stick, messages sent for you, and conditions D47 watches for.",
                 HelpNode.Leaf(
                     "Macros",
                     "Run one of your own named sequences of ship actions.",
@@ -110,7 +110,11 @@ public static class HelpTaxonomy
                 HelpNode.Leaf(
                     "Comms",
                     "Send a message in Elite's chat, to local, system, wing or squadron.",
-                    "comms"))),
+                    "comms"),
+                HelpNode.Leaf(
+                    "Watches",
+                    "List the stock levels and new Community Goals D47 checks in the background, and when each last fired.",
+                    "watches"))),
 
         HelpNode.Category(
             "Trading and goals",

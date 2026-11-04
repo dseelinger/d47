@@ -8,11 +8,13 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Commander › Watches, after Checklist, lists the background watches and adds, edits and deletes them. Each has an Enabled checkbox and shows when it last fired, such as "3 Nov · tick 14:07". A stock watch takes a rare, which fills in its station and commodity and sends nothing on save, or any station: you type a system, find its stations and type the commodity as the market spells it, and saving looks the station up once and checks the commodity, refusing with a line on the field if either is unknown. Any station needs Look things up in the galaxy. A New Community Goal watch takes a name only. A notice with a TURN ON tile appears for each of BGS tick time, Look things up in the galaxy and GalNet news that is off. The page is the same on the big panel in VR. "List my watches" lists them, with their conditions and when each last fired, with no model.
+
 With BGS tick time on, D47 also asks tick.infomancer.uk for the BGS tick every ten minutes while a background watch is on, whether or not Elite is running.
 
-A New Community Goal watch in data\watches.json speaks when GalNet publishes an article that reads as a Community Goal launch; nothing in the app creates one yet. While GalNet news and BGS tick time are on, it says once per BGS tick: "GalNet may have a new Community Goal: <headline>." It reads GalNet's wording and can miss a launch.
+A New Community Goal watch in data\watches.json speaks when GalNet publishes an article that reads as a Community Goal launch; the Watches page creates one. While GalNet news and BGS tick time are on, it says once per BGS tick: "GalNet may have a new Community Goal: <headline>." It reads GalNet's wording and can miss a launch.
 
-Stock watches in data\watches.json are checked in the background; nothing in the app creates one yet. While Look things up in the galaxy and BGS tick time are on, D47 checks each enabled stock watch's market at most once every thirty minutes, one market at a time, and when the stock is past the watch's threshold it says so once per BGS tick: "Soontill Relics at Cheranovsky City, Ngurii: 240 in stock." Settings › Your core › Callouts, group Plans and reminders, has a Background watches row, on by default, to turn the line off.
+Stock watches in data\watches.json are checked in the background; the Watches page creates one. While Look things up in the galaxy and BGS tick time are on, D47 checks each enabled stock watch's market at most once every thirty minutes, one market at a time, and when the stock is past the watch's threshold it says so once per BGS tick: "Soontill Relics at Cheranovsky City, Ngurii: 240 in stock." Settings › Your core › Callouts, group Plans and reminders, has a Background watches row, on by default, to turn the line off.
 
 NPC chatter now plays in supercruise, as other commanders in their own ships crossing the system. It stays silent while a hyperspace jump is charging or running, and arriving by hyperspace restarts the settle before the next exchange.
 

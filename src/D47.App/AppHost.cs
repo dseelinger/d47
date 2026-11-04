@@ -518,6 +518,8 @@ public sealed class AppHost : IDisposable
     /// <summary>Checks the Commander's background watches.</summary>
     public D47.Core.Watches.WatchRunner? Watches { get; private set; }
 
+    public D47.App.Panel.WatchesDesk? WatchesDesk { get; private set; }
+
     /// <summary>The colonisation planner's plans read this session.</summary>
     public ColonisationPlans? ColonisationPlans { get; private set; }
 
@@ -2704,7 +2706,8 @@ public sealed class AppHost : IDisposable
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList() ?? [],
                 liveRoute: () => loop.Feed.LiveRoute,
-                installedModules: () => late.Host?._modules?.Installed ?? []));
+                installedModules: () => late.Host?._modules?.Installed ?? [],
+                watches: () => late.Host?.WatchesDesk?.Store.Watches ?? []));
 
         services.BuildingRegistry.Dispose();
 
@@ -3866,6 +3869,16 @@ public sealed class AppHost : IDisposable
         };
 
         tick.Add("watches", context => watches.Poll(context.Now));
+
+        host.WatchesDesk = new D47.App.Panel.WatchesDesk(
+            watchStore,
+            new D47.Core.Watches.WatchSetup(
+                watchStore,
+                services.Galaxy,
+                services.TradePlanner,
+                () => settings.Current.Knowledge.GalaxySearch),
+            settings,
+            services.StarSystems is { } starSystems ? starSystems.PrefixNamesAsync : null);
 
         var serverStatus = host.ServerStatus = new ServerStatusWatch(
             serverStatusSource,

@@ -66,6 +66,8 @@ public sealed record MiniPanelServices
 
     public CommanderRoster? Commanders { get; init; }
 
+    public WatchesDesk? Watches { get; init; }
+
     public D47.App.Settings.ModulesSource? Modules { get; init; }
 
     public SpeakerPortraits? Portraits { get; init; }
@@ -109,6 +111,11 @@ public sealed record MiniPanelServices
         if (Checklists is not null)
         {
             view.EnableChecklist(Checklists, Goals, BackfillGoals, Activities);
+        }
+
+        if (Watches is not null)
+        {
+            view.EnableWatches(Watches);
         }
 
         if (gameState is not null)

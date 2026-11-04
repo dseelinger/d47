@@ -123,6 +123,7 @@ public partial class App(AppHost? host) : Application
                 activities: host.Activities,
                 construction: window?.Construction,
                 commanders: host.Commanders,
+                watches: host.WatchesDesk,
                 codexPictures: host.CodexPictureSet,
                 learnedPhrases: host.LearnedPhrases,
                 adventureDesk: host.AdventureDesk,
@@ -201,6 +202,7 @@ public partial class App(AppHost? host) : Application
                     Galaxy = () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null,
                     StarSystem = window?.StarSystem,
                     Commanders = host.Commanders,
+                    Watches = host.WatchesDesk,
                     Modules = window?.ModulesSource,
                     Portraits = new Panel.SpeakerPortraits(host.SpeakerPictures, host.Loggers.CreateLogger<Panel.SpeakerPortraits>()),
                 });
