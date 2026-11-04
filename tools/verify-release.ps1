@@ -9,6 +9,8 @@
 
     -ZipPath compares against a local zip instead of downloading d47.zip and d47.zip.sha256.
 
+    Builds with the tag's global.json SDK from tools\install-dotnet.ps1's folder, as release.yml does.
+
 .EXAMPLE
     tools\verify-release.ps1 -Version 1.64.0
 #>
@@ -145,6 +147,8 @@ $tag = "v$Version"
 $work = Join-Path $env:TEMP "d47-verify-$Version"
 $mapped = $false
 $code = 2
+$pathBefore = $env:PATH
+$rootBefore = $env:DOTNET_ROOT
 
 try {
   do {
@@ -184,6 +188,10 @@ try {
     $clone = Join-Path $work 'src'
     git -c core.autocrlf=true -c core.longpaths=true clone --depth 1 --branch $tag https://github.com/dseelinger/d47.git $clone
     if ($LASTEXITCODE -ne 0) { throw "git clone of $tag failed with $LASTEXITCODE" }
+
+    $dotnet = & (Join-Path $PSScriptRoot 'install-dotnet.ps1') -Parent $env:TEMP -GlobalJson (Join-Path $clone 'global.json')
+    $env:PATH = "$dotnet;$env:PATH"
+    $env:DOTNET_ROOT = $dotnet
 
     subst B: $clone
     if ($LASTEXITCODE -ne 0) { throw "subst failed with $LASTEXITCODE" }
@@ -253,6 +261,8 @@ catch {
 }
 finally {
     if ($mapped) { subst B: /d | Out-Null }
+    $env:PATH = $pathBefore
+    $env:DOTNET_ROOT = $rootBefore
 }
 
 if ($code -eq 0) { Remove-Item -LiteralPath $work -Recurse -Force }

@@ -39,9 +39,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: global.json
+      # The compiler runs on the newest runtime beside it and writes that runtime into every assembly,
+      # so the SDK goes into a folder of its own. tools\verify-release.ps1 builds from the same kind of folder.
+      - name: Install the .NET SDK
+        shell: pwsh
+        run: |
+          $dotnet = ./tools/install-dotnet.ps1 -Parent $env:RUNNER_TEMP
+          Add-Content -LiteralPath $env:GITHUB_PATH -Value $dotnet
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "DOTNET_ROOT=$dotnet"
 
       # ReleaseVersion.TryParse takes exactly three integer parts and treats anything after a
       # '-' as a label, which marks the build as a local working-tree build. Refuse early.
