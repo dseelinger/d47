@@ -270,6 +270,16 @@ Never force a push, and never pull or rebase to get past a refusal. A rejected p
 `origin/main` has commits local `main` lacks; stop, and report it with the failure banner in
 **When it does not land**, naming the commits `git log --format='%h %s' main..origin/main` lists.
 
+After the push, whether it was sent or refused, shut down the idle .NET Host processes the builds
+and test runs left behind — MSBuild worker nodes and the compiler and Razor servers:
+
+```bash
+dotnet build-server shutdown
+```
+
+It stops only servers that are idle, so a build running in another session is not interrupted.
+A failure here does not change the report; mention it in one line.
+
 ## What triage chose
 
 `.claude/triage-state.json` in the main checkout holds the last triage's grid, keyed by issue
@@ -595,7 +605,7 @@ The turn where the work lands ends in this order:
 1. Commit.
 2. `/code-review` or `/prose`, when the Reviews section calls for one, with its findings amended into
    the commit.
-3. Push, as **Push** says.
+3. Push, then shut down the idle .NET Host processes, as **Push** says.
 4. `/test-drive`, when the change needs manual testing.
 5. The spoken done sentence, through `/claude-voice`'s command, unless the voice was turned off. It
    is the last tool call of the turn.
