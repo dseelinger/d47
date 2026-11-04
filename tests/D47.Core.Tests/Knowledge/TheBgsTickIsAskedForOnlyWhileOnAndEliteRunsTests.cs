@@ -25,7 +25,7 @@ public class TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests
 
         public bool Enabled { get; set; } = true;
 
-        public bool Running { get; set; } = true;
+        public bool Due { get; set; } = true;
 
         public string? Stored { get; set; }
 
@@ -34,7 +34,7 @@ public class TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests
             var watch = new BgsTickWatch(
                 Source,
                 () => Enabled,
-                () => Running,
+                () => Due,
                 () => Stored,
                 last => Stored = last,
                 NullLogger<BgsTickWatch>.Instance);
@@ -59,15 +59,26 @@ public class TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests
     }
 
     [Fact]
-    public void NothingIsAskedWhileEliteIsNotRunning()
+    public void NothingIsAskedWhileNothingIsDue()
     {
-        var rig = new Rig { Running = false };
+        var rig = new Rig { Due = false };
         var watch = rig.Watch();
 
         watch.Poll(Start);
         watch.Poll(Start + TimeSpan.FromHours(1));
 
         Assert.Equal(0, rig.Source.Calls);
+    }
+
+    [Fact]
+    public void WhenDueItAsksWhetherOrNotEliteRuns()
+    {
+        var rig = new Rig { Due = true };
+        var watch = rig.Watch();
+
+        watch.Poll(Start);
+
+        Assert.Equal(1, rig.Source.Calls);
     }
 
     [Fact]
@@ -103,13 +114,13 @@ public class TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests
     }
 
     [Fact]
-    public void EliteStartingLaterAsksOnItsFirstRunningTick()
+    public void ItBecomingDueLaterAsksOnItsFirstDueTick()
     {
-        var rig = new Rig { Running = false };
+        var rig = new Rig { Due = false };
         var watch = rig.Watch();
 
         watch.Poll(Start);
-        rig.Running = true;
+        rig.Due = true;
         watch.Poll(Start + TimeSpan.FromSeconds(2));
 
         Assert.Equal(1, rig.Source.Calls);

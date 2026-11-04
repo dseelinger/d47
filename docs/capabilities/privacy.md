@@ -191,7 +191,7 @@ other Commanders' names and Directive 47's own panel. It is never saved, and a l
 send it again. Off by default. Inactive when no model is usable or the model in use does not read
 pictures, and the picture does not leave this machine when the endpoint is a loopback address.
 
-**BGS tick** — `tick.infomancer.uk`, every ten minutes while Elite runs, for the time of the last
+**BGS tick** — `tick.infomancer.uk`, every ten minutes while Elite runs or a background watch is on, for the time of the last
 background simulation tick. Nothing about you goes with it: no key, no Commander name, no position
 and nothing from your journal. It is reached over plain HTTP, because the host answers on nothing
 else, so anyone on the network path can see that d47 asked and could change the

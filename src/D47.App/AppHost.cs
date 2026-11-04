@@ -3826,10 +3826,14 @@ public sealed class AppHost : IDisposable
         var colonisationPlanService = new D47.Knowledge.RavenColonialPlanService(
             foundations.LoggerFactory.CreateLogger<D47.Knowledge.RavenColonialPlanService>());
         host._feedSources.AddRange([bgsTickSource, galNetSource, serverStatusSource, loop.Eddn, colonisationPlanService]);
+        var watchStore = new D47.Core.Watches.WatchStore(
+            foundations.Paths.WatchesFile,
+            foundations.Files,
+            foundations.LoggerFactory.CreateLogger<D47.Core.Watches.WatchStore>());
         var bgsTick = host.BgsTick = new BgsTickWatch(
             bgsTickSource,
             () => settings.Current.Knowledge.BgsTick,
-            () => gameState.IsGameRunning,
+            () => gameState.IsGameRunning || watchStore.Watches.Any(watch => watch.Enabled),
             () => viewState.Load().BgsTickLast,
             last => viewState.Save(viewState.Load() with { BgsTickLast = last }),
             foundations.LoggerFactory.CreateLogger<BgsTickWatch>());
@@ -3849,10 +3853,7 @@ public sealed class AppHost : IDisposable
 
         // After bgs-tick, so it reads this tick's BGS tick.
         var watches = host.Watches = new D47.Core.Watches.WatchRunner(
-            new D47.Core.Watches.WatchStore(
-                foundations.Paths.WatchesFile,
-                foundations.Files,
-                foundations.LoggerFactory.CreateLogger<D47.Core.Watches.WatchStore>()),
+            watchStore,
             services.TradePlanner,
             () => bgsTick.Last,
             () => settings.Current.Knowledge.GalaxySearch,

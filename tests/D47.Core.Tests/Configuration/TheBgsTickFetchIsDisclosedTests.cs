@@ -32,6 +32,7 @@ public class TheBgsTickFetchIsDisclosedTests
         Assert.True(entry.Active);
         Assert.Equal("tick.infomancer.uk", entry.Destination);
         Assert.Contains("unencrypted", entry.What, StringComparison.Ordinal);
+        Assert.Contains("every ten minutes while Elite runs or a background watch is on", entry.What, StringComparison.Ordinal);
         Assert.Contains("no key, no Commander name, no position", entry.What, StringComparison.Ordinal);
         Assert.Contains("BGS tick → tick.infomancer.uk", EgressDisclosure.Describe(settings, false), StringComparison.Ordinal);
     }

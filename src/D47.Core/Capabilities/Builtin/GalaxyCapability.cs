@@ -742,7 +742,7 @@ public static class GalaxyCapability
                 Label = "BGS tick time",
                 Help =
                     "Lets d47 ask tick.infomancer.uk when the last BGS tick happened, every ten minutes while "
-                    + "Elite runs. Nothing about you goes with the request, and it is not encrypted. Off by "
+                    + "Elite runs or a background watch is on. Nothing about you goes with the request, and it is not encrypted. Off by "
                     + "default; see [Privacy](privacy).",
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",

@@ -381,12 +381,12 @@ public static class EgressDisclosure
                 NameOf(BgsTick),
                 BgsTickHost,
                 "One request to tick.infomancer.uk for the time of the last BGS tick, every ten minutes while "
-                + "Elite runs. Nothing about you goes with it: no key, no Commander name, no position and "
+                + "Elite runs or a background watch is on. Nothing about you goes with it: no key, no Commander name, no position and "
                 + "nothing from your journal. The request is unencrypted, so anyone on the network path can "
                 + "see that d47 asked and could change the time that comes back.",
                 Active: true,
                 Summary: "One unencrypted request for the time of the last BGS tick, every ten minutes while "
-                    + "Elite runs. Nothing about you goes with it.")
+                    + "Elite runs or a background watch is on. Nothing about you goes with it.")
             : EgressEntry.Silent(
                 BgsTick,
                 NameOf(BgsTick),

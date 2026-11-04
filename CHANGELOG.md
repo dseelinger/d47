@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+With BGS tick time on, D47 also asks tick.infomancer.uk for the BGS tick every ten minutes while a background watch is on, whether or not Elite is running.
+
 Stock watches in data\watches.json are checked in the background; nothing in the app creates one yet. While Look things up in the galaxy and BGS tick time are on, D47 checks each enabled stock watch's market at most once every thirty minutes, one market at a time, and when the stock is past the watch's threshold it says so once per BGS tick: "Soontill Relics at Cheranovsky City, Ngurii: 240 in stock." Settings › Your core › Callouts, group Plans and reminders, has a Background watches row, on by default, to turn the line off.
 
 NPC chatter now plays in supercruise, as other commanders in their own ships crossing the system. It stays silent while a hyperspace jump is charging or running, and arriving by hyperspace restarts the settle before the next exchange.

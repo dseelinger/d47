@@ -192,7 +192,7 @@ With this off, nothing is sent to Canonn.
 
 ### BGS tick time {#bgs-tick-time}
 
-A third setting, off by default, and a third host. While it is on and Elite is running, d47 asks
+A third setting, off by default, and a third host. While it is on, and Elite is running or a background watch is on, d47 asks
 the community tick detector at `tick.infomancer.uk` when the last background simulation tick
 happened: once when the setting is turned on or at startup, then every ten minutes. Nothing about
 you goes with the request — no key, no Commander name, no position and nothing from your journal.
