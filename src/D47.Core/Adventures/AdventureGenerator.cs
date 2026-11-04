@@ -387,9 +387,6 @@ public sealed class AdventureGenerator(
         _ => (5, "setup, catalyst, midpoint, all is lost, finale"),
     };
 
-    /// <summary>How many chapters before the previous one the brief names by premise; the rest are counted.</summary>
-    public const int EarlierChaptersShown = 10;
-
     /// <summary>The hop a long-haul story chapter may make: from the bubble to Sagittarius A*.</summary>
     public const double LongHaulLightYears = 30000;
 
@@ -2458,7 +2455,7 @@ public sealed class AdventureGenerator(
 
         if (ask.Chapter is { } chapter)
         {
-            AppendChapter(text, chapter, facts, !IsDrawn(ask.Story), ask.Failed is not null || ask.SetAside is not null);
+            AppendChapter(text, chapter, facts, !IsDrawn(ask.Story), ask.Story is not null, ask.Failed is not null || ask.SetAside is not null);
         }
 
         if (ask.Failed is { } failed)
@@ -2502,10 +2499,10 @@ public sealed class AdventureGenerator(
     }
 
     /// <summary>
-    /// The chapter before in full — spine, beat titles and what was said — the <see cref="EarlierChaptersShown"/>
-    /// before that as name and premise only, and how many came before those.
+    /// What the chapter before asked of the Commander, how it ended and what the Commander asked during it, and how many
+    /// chapters came before that. Its wording is not given.
     /// </summary>
-    private static void AppendChapter(StringBuilder text, AdventureChapter chapter, Facts facts, bool varied, bool replacing = false)
+    private static void AppendChapter(StringBuilder text, AdventureChapter chapter, Facts facts, bool varied, bool stock, bool replacing = false)
     {
         var previous = chapter.Previous;
 
@@ -2514,71 +2511,31 @@ public sealed class AdventureGenerator(
 
         if (chapter.Earlier.Count > 0)
         {
-            var omitted = Math.Max(0, chapter.Earlier.Count - EarlierChaptersShown);
-
-            text.AppendLine();
-            text.AppendLine("The chapters before that one, oldest first:");
-
-            foreach (var earlier in chapter.Earlier.Skip(omitted))
-            {
-                text.Append("- ").Append(earlier.Name);
-
-                if (!string.IsNullOrWhiteSpace(earlier.Spine?.Premise))
-                {
-                    text.Append(": ").Append(earlier.Spine.Premise);
-                }
-
-                text.AppendLine();
-            }
-
-            if (omitted > 0)
-            {
-                text.AppendLine(omitted == 1
-                    ? "One chapter came before them."
-                    : $"{omitted.ToString(CultureInfo.InvariantCulture)} chapters came before them.");
-            }
+            text.AppendLine(chapter.Earlier.Count == 1
+                ? "One chapter came before it."
+                : $"{chapter.Earlier.Count.ToString(CultureInfo.InvariantCulture)} chapters came before it.");
         }
 
         text.AppendLine();
         text.AppendLine("The chapter just finished:");
-        AppendSpine(text, previous.Name, previous.Spine);
 
         if (previous.Ending is { Name: not AdventureEnding.Failed } reached)
         {
             text.AppendLine($"It ended in the ending \"{reached.Name}\", one of its own: {reached.Reason} Write the next chapter from that ending.");
-
-            if (previous.Beats.SelectMany(beat => beat.Steps).SelectMany(step => step.Options).FirstOrDefault(option => option.Ending == reached.Name)?.EndingLine is { } said)
-            {
-                text.AppendLine($"What was said when it ended: {said}");
-            }
         }
 
         text.AppendLine("Objectives: " + string.Join("; ", previous.Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")));
         text.AppendLine("What those objectives asked for: " + string.Join("; ", previous.Beats.Select((beat, index) => $"{index + 1}. {string.Join(", then ", beat.Steps.Select(step => step.Trigger.Describe()))}")));
 
-        if (previous.Told.Count > 0)
+        var asides = previous.Told.Where(told => told.Kind == AdventureToldKind.Aside && told.Asked is { Length: > 0 }).ToList();
+
+        if (asides.Count > 0)
         {
-            text.AppendLine("What was said to the Commander as they flew it, oldest first:");
+            text.AppendLine("What the Commander asked during it, and the reply each got, oldest first:");
 
-            foreach (var told in previous.Told)
+            foreach (var told in asides)
             {
-                text.Append("- ");
-
-                if (told.Kind == AdventureToldKind.Aside && told.Asked is { Length: > 0 } asked)
-                {
-                    text.Append("(the Commander asked \"").Append(asked).Append("\") ");
-                }
-
-                text.AppendLine(told.Text);
-            }
-        }
-        else
-        {
-            text.AppendLine("What was written to be said as they flew it:");
-
-            foreach (var line in previous.OpeningLines.Concat(previous.Beats.SelectMany(beat => beat.Lines)))
-            {
-                text.Append("- ").AppendLine(line.Text);
+                text.AppendLine($"- The Commander asked \"{told.Asked}\": {told.Text}");
             }
         }
 
@@ -2592,9 +2549,12 @@ public sealed class AdventureGenerator(
 
         text.AppendLine();
         text.AppendLine(
-            "Write the next chapter, not a retelling. Its want follows from that chapter's turn and ending, and its "
-            + "stake is the belief that chapter left open. People, places and things it established may return; "
-            + "what it settled stays settled.");
+            stock
+                ? "Write the next chapter, not a retelling. It follows from what the Commander did in the last chapter and from "
+                    + "the story's public and hidden layers and the beat-sheet lines for its stage below. People and places in the "
+                    + "story's cast and layers may return; what it settled stays settled."
+                : "Write the next chapter, not a retelling. It follows from what the Commander did in the last chapter. "
+                    + "People and places it established may return; what it settled stays settled.");
 
         if (varied)
         {

@@ -186,10 +186,9 @@ ships: your fleet and what each hull can do, whether you have a carrier and wher
 are, who is aboard, and your ranks.
 
 **Write the next chapter** — on a finished story's page, the same form for the story that
-follows it. The AI reads the finished one in full — its spine, its objectives and what was said as you
-flew it — and each chapter before that by name and premise only. The new story's want follows from
-how the last one turned and ended, and its stake is the belief the last one left open. The draft
-card says which story it follows, and it is accepted, flown and checked like any other.
+follows it. The AI reads what the finished one asked you to do, how it ended and what you asked during it,
+and how many chapters came before. The new chapter follows from what you did and from the story, not from how the last
+one was worded. The draft card says which story it follows, and it is accepted, flown and checked like any other.
 
 #### `ask_for_adventure`
 

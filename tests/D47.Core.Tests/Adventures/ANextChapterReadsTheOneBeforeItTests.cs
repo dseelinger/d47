@@ -8,8 +8,8 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>
-/// A chapter's ask carries the chapter before it in full and the ones before that as a name and a
-/// premise, and the draft records which adventure it follows.
+/// A chapter's ask carries what the chapter before it asked of the Commander and how it ended, the
+/// ones before that as a count, and the draft records which adventure it follows.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
@@ -68,9 +68,9 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
     };
 
     [Fact]
-    public async Task TheChapterPromptHoldsThePreviousChapterInFullAndOnlyNamesTheOnesBefore()
+    public async Task TheChapterPromptHoldsWhatTheCommanderDidAndNoEarlierWording()
     {
-        var chapter = AdventureChapter.Of([First(), Second(), Third()], "third");
+        var chapter = AdventureChapter.Of([First(), Second(), Third() with { Ending = new AdventureEnding("Gone to ground", Accepted.AddMinutes(4), "It ended there.") }], "third");
 
         Assert.NotNull(chapter);
         Assert.Equal(["first", "second"], chapter.Earlier.Select(adventure => adventure.Key));
@@ -84,23 +84,28 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
 
         var prompt = provider.Requests[0].Prompt.History[0].Text;
 
-        // The previous chapter in full.
-        Assert.Contains("Title: The Third Chapter", prompt);
-        Assert.Contains("Want: Third want.", prompt);
-        Assert.Contains("Stake: Third stake.", prompt);
-        Assert.Contains("Turn: Third turn.", prompt);
-        Assert.Contains("Ending: Third ending.", prompt);
+        // What the Commander did in the previous chapter, and nothing of its wording.
         Assert.Contains("Objectives: " + string.Join("; ", LanternRoute().Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")), prompt);
-        Assert.Contains("- The beacon still runs, said aloud.", prompt);
-        Assert.Contains("- (the Commander asked \"who pays?\") Nobody paid for it.", prompt);
-        Assert.Contains("its stake is the belief that chapter left open", prompt);
+        Assert.Contains("What those objectives asked for:", prompt);
+        Assert.Contains("- The Commander asked \"who pays?\": Nobody paid for it.", prompt);
+        Assert.Contains("It ended in the ending \"Gone to ground\", one of its own: It ended there.", prompt);
+        Assert.Contains("It follows from what the Commander did in the last chapter", prompt);
 
-        // The ones before it by name and premise, oldest first, and nothing more.
-        Assert.Contains("- The First Chapter: First premise.", prompt);
-        Assert.Contains("- The Second Chapter: Second premise.", prompt);
-        Assert.True(prompt.IndexOf("The First Chapter", StringComparison.Ordinal) < prompt.IndexOf("The Second Chapter", StringComparison.Ordinal));
-        Assert.DoesNotContain("First want.", prompt);
-        Assert.DoesNotContain("Second turn.", prompt);
+        Assert.DoesNotContain("The Third Chapter", prompt);
+        Assert.DoesNotContain("Third premise.", prompt);
+        Assert.DoesNotContain("Third want.", prompt);
+        Assert.DoesNotContain("Third stake.", prompt);
+        Assert.DoesNotContain("Third turn.", prompt);
+        Assert.DoesNotContain("Third ending.", prompt);
+        Assert.DoesNotContain("The beacon still runs, said aloud.", prompt);
+        Assert.DoesNotContain("the belief that chapter left open", prompt);
+
+        // The chapters before it are a count.
+        Assert.Contains("2 chapters came before it.", prompt);
+        Assert.DoesNotContain("The First Chapter", prompt);
+        Assert.DoesNotContain("The Second Chapter", prompt);
+        Assert.DoesNotContain("First premise.", prompt);
+        Assert.DoesNotContain("Second premise.", prompt);
 
         Assert.Equal("third", outcome.Draft!.Follows);
     }
@@ -133,7 +138,7 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
     }
 
     [Fact]
-    public async Task APreviousChapterWithNothingRecordedOffersItsWrittenLines()
+    public async Task APreviousChapterWithNothingRecordedIsNotGivenItsWrittenLines()
     {
         var chapter = AdventureChapter.Of([Third() with { Told = [], Follows = null }], "third");
         var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
@@ -144,9 +149,27 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
         var prompt = provider.Requests[0].Prompt.History[0].Text;
-        Assert.Contains("What was written to be said as they flew it:", prompt);
-        Assert.Contains($"- {LanternRoute().Beats[0].Line}", prompt);
-        Assert.DoesNotContain("The chapters before that one", prompt);
+        Assert.DoesNotContain("What was written to be said as they flew it", prompt);
+        Assert.DoesNotContain($"- {LanternRoute().Beats[0].Line}", prompt);
+        Assert.DoesNotContain("chapters came before it", prompt);
+    }
+
+    [Fact]
+    public async Task AStockStoryChapterIsToldToFollowTheStoryLayersAndStageBeats()
+    {
+        var chapter = AdventureChapter.Of([Third()], "third");
+        var story = new AdventureStory("s", "S", "public layer text", "hidden layer text", 2, 10, 3);
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+
+        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
+            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: chapter, Story: story), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+
+        var prompt = provider.Requests[0].Prompt.History[0].Text;
+        Assert.Contains("from the story's public and hidden layers and the beat-sheet lines for its stage", prompt);
+        Assert.Contains("public layer text", prompt);
+        Assert.Contains("hidden layer text", prompt);
     }
 
     [Fact]

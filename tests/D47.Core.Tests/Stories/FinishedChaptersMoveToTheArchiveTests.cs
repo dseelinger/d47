@@ -90,7 +90,7 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
     }
 
     [Fact]
-    public async Task TheBriefForChapterFifteenNamesTheLastTenAndCountsTheRest()
+    public async Task TheBriefForChapterFifteenCountsTheChaptersBeforeTheLastAndNamesNone()
     {
         using var fixtures = Fixtures(15);
         await FlyTo(fixtures, 15);
@@ -98,16 +98,10 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
         // Chapter n's spine is request 3(n − 1).
         var prompt = fixtures.Provider.Requests[42].Prompt.History[0].Text;
 
-        Assert.Contains("Title: Chapter 14", prompt);
-
-        for (var number = 4; number <= 13; number++)
-        {
-            Assert.Contains($"- Chapter {number}: Chapter premise {number}.", prompt);
-        }
-
-        Assert.DoesNotContain("- Chapter 3: ", prompt);
-        Assert.DoesNotContain("- Chapter 1: ", prompt);
-        Assert.Contains("3 chapters came before them.", prompt);
+        Assert.DoesNotContain("Title: Chapter 14", prompt);
+        Assert.DoesNotContain("Chapter premise", prompt);
+        Assert.DoesNotContain("- Chapter 4: ", prompt);
+        Assert.Contains("13 chapters came before it.", prompt);
     }
 
     [Fact]
@@ -165,8 +159,9 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
         var prompt = fixtures.Provider.Requests[^3].Prompt.History[0].Text;
 
         Assert.Equal(StoryChaptersOnFile(fixtures), story.Chapters.TakeLast(2));
-        Assert.Contains("- Old 1: A new premise.", prompt);
-        Assert.Contains("- Old 2: A new premise.", prompt);
+        Assert.Contains("2 chapters came before it.", prompt);
+        Assert.DoesNotContain("Old 1", prompt);
+        Assert.DoesNotContain("A new premise.", prompt);
         Assert.DoesNotContain("Old premise", prompt);
     }
 

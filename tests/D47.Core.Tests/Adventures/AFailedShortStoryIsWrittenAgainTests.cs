@@ -87,7 +87,7 @@ public sealed class AFailedShortStoryIsWrittenAgainTests
 
         var prompt = provider.Requests[0].Prompt.History[0].Text;
         Assert.Contains("It ended in the ending \"Gone to ground\", one of its own: At \"The Survey\" the Commander chose to flee and did it. Write the next chapter from that ending.", prompt);
-        Assert.Contains("What was said when it ended: Nobody follows.", prompt);
+        Assert.DoesNotContain("Nobody follows.", prompt);
     }
 
     [Fact]
