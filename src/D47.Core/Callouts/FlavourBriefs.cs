@@ -119,9 +119,17 @@ public static class FlavourBriefs
     /// <param name="personalityEnabled">Personality off silences all of it.</param>
     /// <param name="commanderName">Used only to address the owner of a carrier.</param>
     /// <param name="fight">What the carrier knows of a fight in its system; added to the tower's and captain's briefs.</param>
-    public static FlavourBrief? For(Announcement announcement, bool personalityEnabled, string? commanderName = null, string? fight = null)
+    /// <param name="place">Where the Commander is; one idle ship remark in three may touch on the system.</param>
+    public static FlavourBrief? For(Announcement announcement, bool personalityEnabled, string? commanderName = null, string? fight = null, JournalLocation? place = null)
     {
         var brief = ForCore(announcement, personalityEnabled, commanderName);
+
+        if (brief is not null
+            && announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal)
+            && SystemTopics.For(announcement.Variant ?? 0, SystemTopics.ShipRemarkOffset, SystemTopics.TopicOffset, place) is { } topic)
+        {
+            brief = brief with { Instruction = brief.Instruction + $" If it fits, the remark may touch on {topic}." };
+        }
 
         return fight is not null
                && brief is not null

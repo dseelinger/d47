@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+In Ship chatter and settlement scene chatter now sometimes touch on the system the Commander is in, and passers-by and hails can also mention its population, the Power that holds it and its Powerplay state.
+
 Deleting the thumbs-down tracks fetches any queued folder that is behind the published library first, so one run deletes from every queued folder. A folder still behind after that is left, and the reply says it could not be brought up to date.
 
 You can search for the systems a Power is acquiring. "Acquisition systems for my power at least 200 light years from Sol" finds Unoccupied systems that Power is taking, using the new `acquiring_power` filter on system and station searches; "mine" is your pledged Power, and without a pledge D47 says so. On Search › Systems, the Powerplay group has an Acquiring power picker (Any, mine, then the twelve Powers), and the Power column shows each acquiring Power with its progress as a percentage. Station search also takes a minimum distance.

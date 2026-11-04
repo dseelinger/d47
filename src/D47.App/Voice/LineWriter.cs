@@ -176,7 +176,8 @@ internal sealed class LineWriter
             stockCoreAboard: () => Personas.Current.Stock,
             fight: () => GameState.Active is { } active
                 ? CarrierFight.Describe(Fight.Snapshot, active.Location.StarSystem, active.Carrier, D47.Core.SystemWallClock.Instance.UtcNow)
-                : null);
+                : null,
+            location: () => GameState.Active?.Location);
     }
 
     private async Task<FlavourReply> RememberingAsync(string speaker, bool directed, Task<FlavourReply> ask)
@@ -279,7 +280,8 @@ internal sealed class LineWriter
                         scenario!,
                         roster,
                         marker.Variant ?? 0,
-                        scene.Place == ScenePlace.Mission ? Stories.MissionAsides.Take(scene.Missions ?? []) : null),
+                        scene.Place == ScenePlace.Mission ? Stories.MissionAsides.Take(scene.Missions ?? []) : null,
+                        location),
                 carrier,
                 Settings.Current.Persona,
                 _humor,

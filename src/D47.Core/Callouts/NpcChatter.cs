@@ -484,7 +484,8 @@ public static partial class NpcChatter
     /// The scenario is given whatever the audience setting, as who the speakers are.
     /// </summary>
     public static string SceneInstruction(
-        SceneBeat beat, string scenario, NpcChatterRoster? roster = null, int exchangeIndex = 0, Stories.MissionAside? aside = null)
+        SceneBeat beat, string scenario, NpcChatterRoster? roster = null, int exchangeIndex = 0, Stories.MissionAside? aside = null,
+        JournalLocation? place = null)
     {
         ArgumentNullException.ThrowIfNull(beat);
 
@@ -513,7 +514,7 @@ public static partial class NpcChatter
             + $"The Commander's current scenario, which this {(aboard ? "fight" : "settlement")} is part of: " + scenario.Trim()
             + " Take from it who these people are and what is going on around them. They do not know who the "
             + "Commander is or why the Commander is there. "
-            + (aboard ? FightMoment(beat) : SceneMoment(beat))
+            + (aboard ? FightMoment(beat) : SceneMoment(beat, exchangeIndex, place))
             + (cast.Slots.Count > 0 ? Roster(cast, exchangeIndex) : UnslottedManners(NpcChatterKind.Scene, exchangeIndex))
             + (cast.Slots.Count > 0 ? Slotted : Unslotted)
             + SceneContract;
@@ -573,11 +574,12 @@ public static partial class NpcChatter
         return string.Join("; ", named) + (more > 0 ? $"; and {more} more" : string.Empty);
     }
 
-    private static string SceneMoment(SceneBeat beat) => beat.Kind switch
+    private static string SceneMoment(SceneBeat beat, int exchangeIndex, JournalLocation? place) => beat.Kind switch
     {
         SceneBeatKind.Arrived =>
             "Nothing has happened yet: they are going about their shift and do not know anyone has arrived. "
-            + "Nobody mentions an intruder or a visitor. ",
+            + "Nobody mentions an intruder or a visitor. "
+            + LocalHail(exchangeIndex, place),
 
         SceneBeatKind.Spotted =>
             "They have just found an intruder in the settlement and are shooting at them. They do not know who "
@@ -944,41 +946,15 @@ public static partial class NpcChatter
         "a question about the shortest route",
     ];
 
-    /// <summary>
-    /// One exchange in three, a topic built from the system economy, the controlling faction's state or
-    /// the station economy, whichever are known; null otherwise.
-    /// </summary>
-    internal static string? LocalTopic(int exchangeIndex, JournalLocation? place)
-    {
-        List<string> known = [];
-
-        if (place?.SystemEconomy is { Length: > 0 } system)
-        {
-            known.Add($"how the {system} trade here is going");
-        }
-
-        if (place?.StationEconomy is { Length: > 0 } station && station != place.SystemEconomy)
-        {
-            known.Add($"how the {station} trade at this station is going");
-        }
-
-        if (place?.SystemFactionState is { Length: > 0 } state)
-        {
-            known.Add($"living with the {state} the local faction is in");
-        }
-
-        return known.Count == 0 || !Pick(exchangeIndex, LocalOffset, LocalOneInThree)
-            ? null
-            : Pick(exchangeIndex, LocalTopicOffset, known.ToArray());
-    }
+    /// <summary>One exchange in three, a topic about the system; null otherwise.</summary>
+    internal static string? LocalTopic(int exchangeIndex, JournalLocation? place) =>
+        SystemTopics.For(exchangeIndex, LocalOffset, LocalTopicOffset, place);
 
     private static string LocalHail(int exchangeIndex, JournalLocation? place) =>
         LocalTopic(exchangeIndex, place) is { } topic ? $"This time the remark is about {topic}. " : string.Empty;
 
-    private static readonly bool[] LocalOneInThree = [false, false, true];
-
-    private const int LocalOffset = 41;
-    private const int LocalTopicOffset = 47;
+    private const int LocalOffset = SystemTopics.OneInThreeOffset;
+    private const int LocalTopicOffset = SystemTopics.TopicOffset;
     private const int CastOffset = 3;
     private const int TopicOffset = 7;
     private const int OpeningOffset = 13;
@@ -1001,7 +977,7 @@ public static partial class NpcChatter
     /// cref="NpcChatterCallout"/> spreads exchanges with and <see cref="Beat"/> paces lines with, so a
     /// replayed session lands on the same pick every time (#45).
     /// </summary>
-    private static T Pick<T>(int exchangeIndex, int offset, T[] options)
+    internal static T Pick<T>(int exchangeIndex, int offset, T[] options)
     {
         var fraction = unchecked((uint)(exchangeIndex + offset) * 2654435761u) / 4294967296.0;
 

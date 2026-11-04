@@ -1650,6 +1650,8 @@ the sky, the Quartermaster about what the run cost. It also knows who it is flyi
 [Backstory](conversation.md#backstory) with about one in four, so the remarks differ by who is
 flying and not just by wording.
 
+About one remark in three may touch on the system the Commander is in: its economy, the controlling faction's situation, its population or the Power that holds it.
+
 **Chatter is model-written or it is nothing.** With no language model configured there are no
 In Ship chatter at all, and these rows are absent from this page — a switch governing something
 that cannot happen would be a switch that does nothing. The ten authored lines per situation are
@@ -1668,7 +1670,7 @@ It is silent while Elite is not running.
 is your own AI and crew.
 
 Made-up radio traffic from people who do not exist: two crews on the local channel about their own
-small business (sometimes the local economy or the controlling faction's situation), the dock telling an invented pilot off when you are docked somewhere, and — about
+small business (sometimes something about the system: its economy, the controlling faction's situation, its population or the Power that holds it), the dock telling an invented pilot off when you are docked somewhere, and — about
 one exchange in four — a line or two said to *you* over the open channel. Traffic between other people
 sounds further off than a hail and has its own row, Overheard chatter, in the audio mixer.
 
@@ -1802,7 +1804,7 @@ it, these moments are heard:
 
 | Moment | When | What they know |
 | --- | --- | --- |
-| Arrival | the scene opens | nothing: they are going about their shift |
+| Arrival | the scene opens | nothing: they are going about their shift, and sometimes talk about the system |
 | Found | the first attack on you in the scene | an intruder is in the settlement |
 | A killing | a kill on foot, or a murder | who died and how many so far; if nobody has attacked you yet, nobody has seen you |
 | Your death | you are killed on foot | they got the intruder, and who fired |

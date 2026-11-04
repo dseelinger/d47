@@ -1,4 +1,5 @@
 using D47.Core.Conversation;
+using D47.Core.Journal;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Callouts;
@@ -30,7 +31,8 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
         string? commanderName,
         Func<FlavourBrief, string, CancellationToken, Task<FlavourReply>> ask,
         Func<bool>? stockCoreAboard = null,
-        Func<string?>? fight = null)
+        Func<string?>? fight = null,
+        Func<JournalLocation?>? location = null)
     {
         ArgumentNullException.ThrowIfNull(announcement);
         ArgumentNullException.ThrowIfNull(facts);
@@ -49,7 +51,7 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
             return AsWritten(announcement, "no model", ship, commanderName, checkFacts: false);
         }
 
-        if (FlavourBriefs.For(announcement, personalityEnabled, commanderName, fight?.Invoke()) is not { } brief)
+        if (FlavourBriefs.For(announcement, personalityEnabled, commanderName, fight?.Invoke(), location?.Invoke()) is not { } brief)
         {
             return AsWritten(announcement, "personality off", ship, commanderName, checkFacts: false);
         }
