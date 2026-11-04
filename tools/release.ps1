@@ -82,11 +82,35 @@ Write-Host "Dispatched v$next."
 
 # Watching is display only, and the release is already the runner's from here. A watcher that
 # cannot start says so and leaves the run alone.
+$watched = $false
 try {
     & "$PSScriptRoot\watch-release.ps1" -After ([long]$before)
-    exit $LASTEXITCODE
+    $watchCode = $LASTEXITCODE
+    $watched = $true
 }
 catch {
     Write-Warning "Could not follow the run: $_"
     Write-Host 'It is still going. Re-attach with: tools\watch-release.ps1'
 }
+
+if (-not $watched) { return }
+if ($watchCode -ne 0) { exit $watchCode }
+
+# The release is live. The comparison reports; it removes nothing.
+Write-Host "Comparing v$next with a rebuild of its tag..."
+& "$PSScriptRoot\verify-release.ps1" -Version $next
+$verifyCode = $LASTEXITCODE
+
+if ($verifyCode -eq 1) {
+    Write-Host ''
+    Write-Host '############################################################' -ForegroundColor Red
+    Write-Host "v$next IS LIVE AND DOES NOT MATCH A REBUILD OF ITS TAG" -ForegroundColor Red
+    Write-Host 'The differing entries are listed above. To take it out of releases/latest:' -ForegroundColor Red
+    Write-Host "  gh release edit v$next --draft=true" -ForegroundColor Red
+    Write-Host '############################################################' -ForegroundColor Red
+    exit 4
+}
+if ($verifyCode -ne 0) {
+    Write-Host "The comparison of v$next did not run (exit $verifyCode); the release itself succeeded." -ForegroundColor Yellow
+}
+exit 0

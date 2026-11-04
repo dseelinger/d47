@@ -172,6 +172,11 @@ if you took the zip. If it differs, do not run or unpack the file.
 Releases also carry a build provenance attestation for the zip and the installer, made by the
 release workflow. `gh attestation verify <file> --repo dseelinger/d47` checks a download against it.
 
+A release can also be rebuilt from its tag and compared with what was published. This needs git and
+the .NET SDK version in `global.json`. From a clone, run `tools\verify-release.ps1 -Version X.Y.Z`.
+The build maps the drive letter `B:` while it runs. Releases built before this report that they
+cannot be compared.
+
 ### Where things are written
 
 Everything is under `data`, beside the executable:

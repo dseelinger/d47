@@ -129,7 +129,10 @@ order:
 2. `Running the suite...`, then one `Passed!` or `Failed!` line per test project (about two minutes).
 3. `Publishing avatar clips...` and what it uploaded or skipped.
 4. `Dispatched v…`, the run URL, then each workflow step with its time as it finishes.
-5. `success in …` or `failure after …`, then `release.ps1 exited N`.
+5. `success in …` or `failure after …`.
+6. After a success, `Comparing v… with a rebuild of its tag...` and one of: `v…: N of N entries in
+   d47.zip match a rebuild of the tag`, a red block, or a line saying the comparison did not run.
+   Then `release.ps1 exited N`.
 
 The workflow alone takes about fourteen minutes. If the monitor expires while the run is going,
 the dispatch has already happened and the runner carries on. Re-arm it on the watcher, using the
@@ -186,6 +189,20 @@ gh run view <id> --log-failed
 - **"Publish the release" or the docs job.** The tag may already exist, and the workflow refuses a
   version whose tag exists. Report what failed and stop. Re-deploying the docs
   (`gh workflow run release.yml -f version=<v> -f docs_only=true`) is the maintainer's decision.
+
+### The comparison after the release
+
+`tools/verify-release.ps1` runs once the watcher reports success. It rebuilds the tag from a fresh
+clone mapped to `B:\` and only reports.
+
+- **Exit 0 with the match line**: every entry matches. Say so in the closing lines.
+- **Exit 4** (the verifier found a difference): the release is live and does not match a rebuild of
+  its tag. This is not a code defect to fix and run again. Report the differing entries the script
+  printed, including any bundle entries inside `d47.exe`, and the command it gave to take the
+  release out of `releases/latest`. Do not run that command. Leave the installed version in place
+  and stop. The verifier keeps its temporary folder; name its path.
+- **Exit 0 with `did not run`**: the release succeeded and the comparison could not run. Say so in
+  the closing lines, with the reason the script printed.
 
 ### Anything else
 
