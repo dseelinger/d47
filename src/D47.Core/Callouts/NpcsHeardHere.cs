@@ -129,6 +129,10 @@ public sealed partial class NpcsHeardHere
             {
                 family = announcement.Key[IncomingMessages.CannedKeyPrefix.Length..];
             }
+            else if (announcement.Key.StartsWith(IncomingMessages.QuipKeyPrefix, StringComparison.Ordinal))
+            {
+                family = announcement.Key[IncomingMessages.QuipKeyPrefix.Length..];
+            }
         }
         else
         {

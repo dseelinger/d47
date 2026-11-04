@@ -977,6 +977,8 @@ attitude, so a pirate's threat is still a threat, and it keeps its listener. Tha
 provider. A message another player typed is never reworded and never reaches the model, and the
 comms panel shows Elite's wording either way. No-fire zone notices are said in d47's own words and are never sent to the language model.
 
+**An NPC that repeats a line stops saying it.** Elite's NPCs cycle a few canned lines, and a patrol or a pirate can say the same one many times. Each speaker's line is spoken twice. The third time, the speaker says a short remark in its own voice about repeating itself, written by your language model with personality on and taken from a small fixed pool without it. A speaker remarks once; its other lines that reach a third time are simply dropped. After that the line stays silent until that speaker has sent no canned line for five minutes of journal time, or you jump. Station notices, your own carrier and player messages are never counted.
+
 **Five more rows, one per player channel, appear once Speak incoming messages is on** — so system
 chat can go quiet in a Community Goal system's wall of strangers while your wing and squadron stay
 spoken, which is exactly the case that could not be told apart with one switch for all of it:

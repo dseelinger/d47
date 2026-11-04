@@ -109,7 +109,7 @@ public static class FlavourBriefs
         return brief.NeedsPersona ? HumorGroup.Cores : Humor.GroupOf(announcement.Voice);
     }
 
-    private static bool IsProceduralNotice(string key) =>
+    internal static bool IsProceduralNotice(string key) =>
         key.StartsWith(IncomingMessages.CannedKeyPrefix, StringComparison.Ordinal)
         && key[IncomingMessages.CannedKeyPrefix.Length..] is { } family
         && (string.Equals(family, CannedSpeakers.StationFamily, StringComparison.OrdinalIgnoreCase)
@@ -152,9 +152,28 @@ public static class FlavourBriefs
         // gives only to a line whose `$`-key proves Frontier wrote it.
         if ((announcement.CommsChannel is not null || announcement.Transcript is not null)
             && announcement.Key is not (IncomingMessages.CarrierCannedKey or IncomingMessages.AuthorityCannedKey)
-            && !announcement.Key.StartsWith(IncomingMessages.CannedKeyPrefix, StringComparison.Ordinal))
+            && !announcement.Key.StartsWith(IncomingMessages.CannedKeyPrefix, StringComparison.Ordinal)
+            && !announcement.Key.StartsWith(IncomingMessages.QuipKeyPrefix, StringComparison.Ordinal))
         {
             return null;
+        }
+
+        // A speaker remarking on repeating a canned line.
+        if (announcement.Key.StartsWith(IncomingMessages.QuipKeyPrefix, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Speaker = CannedSpeakers.For(announcement.Key[IncomingMessages.QuipKeyPrefix.Length..]),
+                Instruction =
+                    "You have just said the same line to the pilot several times now: "
+                    + $"\"{announcement.RepeatedLine}\" Say one short, dry sentence, in character, admitting that you "
+                    + "keep repeating yourself and are done with it. Do not say the line again. Mention no game, "
+                    + "script, developer or AI. Do not ask a question and do not address anyone by name.",
+                NeedsPersona = false,
+                NeedsGameState = false,
+                NeedsAboutMe = false,
+                NeedsScenario = false,
+            };
         }
 
         // Any other NPC's canned line, in the voice its key's family names (#135). The attitude stays.

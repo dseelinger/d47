@@ -148,6 +148,9 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// </summary>
     public string? Transcript { get; init; }
 
+    /// <summary>The canned line a speaker is remarking on repeating, for a quip's flavour brief, or null.</summary>
+    public string? RepeatedLine { get; init; }
+
     /// <summary>The raw <c>$</c>-key of a Frontier-canned message from the Commander's own carrier, or null.</summary>
     public string? MessageKey { get; init; }
 

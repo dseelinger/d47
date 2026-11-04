@@ -60,6 +60,27 @@ public sealed partial class IncomingMessages : ICallout
     public const string CannedKeyPrefix = "message.canned.";
 
     /// <summary>
+    /// A speaker's remark on repeating a canned line, followed by the family. Starts with <c>message.</c>,
+    /// so the session record still writes it down.
+    /// </summary>
+    public const string QuipKeyPrefix = "message.quip.";
+
+    private readonly RepeatedLines repeats = new();
+
+    private readonly object quipLock = new();
+
+    private int lastQuip = -1;
+
+    private static readonly string[] QuipLines =
+    [
+        "That is the third time I have said that. I think you have the picture.",
+        "You know, I keep repeating myself. I will leave it there.",
+        "I have said that three times now. Nothing has changed, so I will stop.",
+        "Same line again. I can hear myself, so I will give it a rest.",
+        "At this point you could say it with me. I will stay quiet now.",
+    ];
+
+    /// <summary>
     /// The family a canned key names: the text between the leading <c>$</c> and the first <c>_</c>,
     /// <c>;</c> or <c>:</c>, with trailing digits dropped — <c>$Pirate_Scan01;</c> is <c>Pirate</c>,
     /// <c>$MinerCriticalDamage04;</c> is <c>MinerCriticalDamage</c>.
@@ -97,6 +118,11 @@ public sealed partial class IncomingMessages : ICallout
 
         foreach (var journalEvent in context.Events)
         {
+            if (journalEvent.Kind is "FSDJump" or "CarrierJump")
+            {
+                repeats.Clear();
+            }
+
             if (journalEvent.Kind is not "ReceiveText")
             {
                 continue;
@@ -241,7 +267,24 @@ public sealed partial class IncomingMessages : ICallout
             ? CannedKeyPrefix + FamilyOf(journalEvent.String("Message")!)
             : $"message.{channel}";
 
-        return VoicedAs(
+        var verdict = RepeatVerdict.Speak;
+
+        if (key.StartsWith(CannedKeyPrefix, StringComparison.Ordinal)
+            && !FlavourBriefs.IsProceduralNotice(key)
+            && !StationNotices.IsNotice(journalEvent.String("Message")))
+        {
+            verdict = repeats.Count(
+                journalEvent.String("From") ?? string.Empty,
+                LineOf(journalEvent.String("Message")!),
+                journalEvent.Timestamp);
+
+            if (verdict is RepeatVerdict.Mute)
+            {
+                return null;
+            }
+        }
+
+        var read = VoicedAs(
             sender,
 
             // A carrier's traffic is its tower talking, and the Commander has cast a voice for it.
@@ -271,6 +314,39 @@ public sealed partial class IncomingMessages : ICallout
             // No cooldown.
             Cooldown = TimeSpan.Zero,
             MessageKey = frontiers ? journalEvent.String("Message") : null,
+        };
+
+        return verdict is RepeatVerdict.Quip ? Quip(read, sender, key, journalEvent.Timestamp) : read;
+    }
+
+    /// <summary>A canned line's key without its <c>:#</c> parameters.</summary>
+    private static string LineOf(string message)
+    {
+        var end = message.IndexOf(':', StringComparison.Ordinal);
+
+        return (end < 0 ? message : message[..end]).TrimEnd(';');
+    }
+
+    /// <summary>The speaker's remark in place of <paramref name="repeated"/>, the third time it is said.</summary>
+    private Announcement Quip(Announcement repeated, string sender, string cannedKey, DateTimeOffset at)
+    {
+        int index;
+
+        lock (quipLock)
+        {
+            index = StationNotices.Pick(at, QuipLines.Length, lastQuip < 0 ? null : lastQuip);
+            lastQuip = index;
+        }
+
+        var quip = QuipLines[index];
+
+        return repeated with
+        {
+            Key = QuipKeyPrefix + cannedKey[CannedKeyPrefix.Length..],
+            Text = quip,
+            RepeatedLine = repeated.Text,
+            Transcript = sender is { Length: > 0 } named ? $"{named}: {quip}\n" : $"{quip}\n",
+            MessageKey = null,
         };
     }
 
