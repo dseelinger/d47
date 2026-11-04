@@ -1,4 +1,4 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Goals;
 using D47.Core.Hotas;
 using D47.Core.Loadout;
@@ -8,6 +8,7 @@ using D47.Core.Persona;
 using D47.Core.Ships;
 using D47.Core.Storage;
 using D47.Core.Utilities;
+using D47.Core.Watches;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -23,7 +24,7 @@ public class AStoreDoesNotOpenAnUnchangedFileTests : IDisposable
 
     public static TheoryData<string> Stores =>
     [
-        "adventures", "goals", "switches", "ship builds", "on-foot builds", "ship cores", "memory", "lore", "alarms",
+        "adventures", "goals", "switches", "ship builds", "on-foot builds", "ship cores", "memory", "lore", "alarms", "watches",
     ];
 
     public void Dispose()
@@ -76,6 +77,7 @@ public class AStoreDoesNotOpenAnUnchangedFileTests : IDisposable
         "memory" => new MemoryStore(path, new DiskFileSystem(), NullLogger<MemoryStore>.Instance).Poll,
         "lore" => new LoreStore(path, new DiskFileSystem(), NullLogger<LoreStore>.Instance).Poll,
         "alarms" => new AlarmStore(path, new DiskFileSystem(), NullLogger<AlarmStore>.Instance).Poll,
+        "watches" => new WatchStore(path, new DiskFileSystem(), NullLogger<WatchStore>.Instance).Poll,
         _ => throw new ArgumentOutOfRangeException(nameof(store)),
     };
 }

@@ -49,6 +49,7 @@ public sealed class AppPaths
         Signals = Path.Combine(Data, "signals");
         Rares = Path.Combine(Data, "rares");
         GalNet = Path.Combine(Data, "galnet.json");
+        WatchesFile = Path.Combine(Data, "watches.json");
         Pictures = Path.Combine(Data, "pictures");
         AvatarClips = Path.Combine(Data, "avatar-clips");
         BindingProfiles = Path.Combine(Data, "binding-profiles");
@@ -154,6 +155,9 @@ public sealed class AppPaths
 
     /// <summary>The kept GalNet articles, <c>galnet.json</c>.</summary>
     public string GalNet { get; }
+
+    /// <summary>The Commander's background watches, <c>watches.json</c>.</summary>
+    public string WatchesFile { get; }
 
     /// <summary>The cast pictures the Commander chose in place of a story's own, one <c>.png</c> per picture name.</summary>
     public string Pictures { get; }
