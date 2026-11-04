@@ -277,8 +277,9 @@ and test runs left behind — MSBuild worker nodes and the compiler and Razor se
 dotnet build-server shutdown
 ```
 
-It stops only servers that are idle, so a build running in another session is not interrupted.
-A failure here does not change the report; mention it in one line.
+A build or test run in another session survives it: run against a `--no-incremental` build of
+`d47.slnx` and a filtered `D47.Core.Tests` run partway through, each finished with 0 errors and the
+tests passing. A failure here does not change the report; mention it in one line.
 
 ## What triage chose
 
