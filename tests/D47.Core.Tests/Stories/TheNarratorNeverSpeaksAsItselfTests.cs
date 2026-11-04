@@ -58,7 +58,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
 
         Assert.Null(refusal);
 
-        var prompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
 
         Assert.Contains("who tells the story in the third person from outside the cockpit, never says \"I\", \"me\" or \"we\"", prompt, StringComparison.Ordinal);
         Assert.Contains("never speaks to the Commander, and never offers, asks or waits for anything", prompt, StringComparison.Ordinal);
@@ -73,7 +73,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
         Assert.Null(refusal);
         Assert.Contains(
             "it is the narrator's line and follows the same rule",
-            fixtures.Provider.Requests[1].Prompt.History[0].Text,
+            fixtures.Provider.Requests[2].Prompt.History[0].Text,
             StringComparison.Ordinal);
     }
 
@@ -87,10 +87,10 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(4, fixtures.Provider.Requests.Count);
+        Assert.Equal(6, fixtures.Provider.Requests.Count);
         Assert.Contains(
             "The narrator speaks as itself: Objective 1 is read by the narrator",
-            fixtures.Provider.Requests[2].Prompt.History[0].Text,
+            fixtures.Provider.Requests[3].Prompt.History[0].Text,
             StringComparison.Ordinal);
         Assert.Equal("Nobody is aboard but the Commander.", Chapter(fixtures).Beats[0].Lines[0].Text);
     }
@@ -102,7 +102,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Contains("The narrator speaks as itself: The opening is read", fixtures.Provider.Requests[2].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Contains("The narrator speaks as itself: The opening is read", fixtures.Provider.Requests[3].Prompt.History[0].Text, StringComparison.Ordinal);
         Assert.Equal("A voice on the open channel.", Chapter(fixtures).Opening);
     }
 
@@ -116,8 +116,8 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
         var (stock, _) = await PickAsync(Scripted(noSpeaker, Repairs.ReplacingOpening(Written()), NothingObjected), stock: true);
         using var stockFixtures = stock;
 
-        Assert.Equal(3, ownFixtures.Provider.Requests.Count);
-        Assert.Equal(4, stockFixtures.Provider.Requests.Count);
+        Assert.Equal(5, ownFixtures.Provider.Requests.Count);
+        Assert.Equal(6, stockFixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -132,9 +132,9 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
 
         Assert.Null(stockRefusal);
         Assert.Null(ownRefusal);
-        Assert.Equal(4, stockFixtures.Provider.Requests.Count);
-        Assert.Contains("The narrator speaks as itself: Objective 2 is read", stockFixtures.Provider.Requests[2].Prompt.History[0].Text, StringComparison.Ordinal);
-        Assert.Equal(3, ownFixtures.Provider.Requests.Count);
+        Assert.Equal(6, stockFixtures.Provider.Requests.Count);
+        Assert.Contains("The narrator speaks as itself: Objective 2 is read", stockFixtures.Provider.Requests[3].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Equal(5, ownFixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(5, fixtures.Provider.Requests.Count);
         Assert.Equal("dock-hand", Chapter(fixtures).Beats[0].Lines[1].Speaker);
     }
 
@@ -155,7 +155,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(5, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -165,7 +165,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(4, fixtures.Provider.Requests.Count);
+        Assert.Equal(6, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -176,7 +176,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(2 + AdventureGenerator.RepairRounds, fixtures.Provider.Requests.Count);
+        Assert.Equal(3 + AdventureGenerator.RepairRounds, fixtures.Provider.Requests.Count);
         Assert.Equal("Nobody aboard but me.", Chapter(fixtures).Beats[0].Lines[0].Text);
         Assert.Equal(StorySpeaker.Narrator, Chapter(fixtures).Beats[0].Lines[0].Speaker);
     }

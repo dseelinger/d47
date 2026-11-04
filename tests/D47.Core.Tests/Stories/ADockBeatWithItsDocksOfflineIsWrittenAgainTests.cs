@@ -99,7 +99,7 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
         Assert.NotNull(first);
         Assert.Null(second);
         Assert.Null(await first);
-        Assert.Equal(2, fixtures.Provider.CallCount);
+        Assert.Equal(3, fixtures.Provider.CallCount);
         Assert.Equal(2, said.Count);
     }
 

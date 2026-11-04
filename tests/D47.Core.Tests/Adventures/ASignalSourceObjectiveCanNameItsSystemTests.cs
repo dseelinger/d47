@@ -30,7 +30,7 @@ public sealed class ASignalSourceObjectiveCanNameItsSystemTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Drop", "function": "turn", "kind": "uss", "reason": "Someone there knows about the burst.", "count": 1, "system": {{(system is null ? "null" : $"\"{system}\"")}}, "line": "Drop in."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -116,7 +116,7 @@ public sealed class ASignalSourceObjectiveCanNameItsSystemTests
         var outcome = await Write(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Contains("names a system, \"Nowhere Atall\", that the galaxy search does not know", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains("names a system, \"Nowhere Atall\", that the galaxy search does not know", provider.Requests[3].Prompt.History[0].Text);
     }
 
     [Fact]

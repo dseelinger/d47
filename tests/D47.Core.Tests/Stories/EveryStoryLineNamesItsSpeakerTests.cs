@@ -195,7 +195,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 1, fixtures.Provider.CallCount);
+        Assert.Equal((3 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 2, fixtures.Provider.CallCount);
     }
 
     private const string BeatsWhereHarrowNamesHimself = """
@@ -219,7 +219,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
-        var rewritePrompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
+        var rewritePrompt = fixtures.Provider.Requests[3].Prompt.History[0].Text;
 
         Assert.Contains("A line names its own speaker: \"Harrow\" in objective 1", rewritePrompt, StringComparison.Ordinal);
         Assert.Equal("harrow", chapter.Beats[0].Speaker);
@@ -257,7 +257,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
 
         Assert.Equal("harrow", chapter.Beats[0].Speaker);
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(5, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -267,7 +267,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        var prompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
 
         Assert.Contains("is that person's own words, in the first person", prompt, StringComparison.Ordinal);
         Assert.Contains(PlainWords.Rule, prompt, StringComparison.Ordinal);
@@ -281,7 +281,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        var prompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
 
         Assert.Contains("\"dock-hand\": Ren — A tired dock hand, short words.", prompt, StringComparison.Ordinal);
         Assert.Contains("a \"ship\" line is read by the narrator", prompt, StringComparison.Ordinal);
@@ -329,7 +329,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.True(reopened.Poll());
         var chapter = reopened.Find("F1", key)!;
 
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(5, fixtures.Provider.Requests.Count);
         Assert.Equal(["harrow", StorySpeaker.Narrator], chapter.OpeningLines.Select(line => line.Speaker));
         Assert.Equal("This is Harrow. Two seven four, minus eleven, plus forty-one.", chapter.Opening);
         Assert.Equal(StorySpeaker.Narrator, chapter.SpeakerOf(-1, 1));
@@ -368,7 +368,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
-        var rewritePrompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
+        var rewritePrompt = fixtures.Provider.Requests[3].Prompt.History[0].Text;
 
         Assert.Contains("A line names its own speaker: \"Harrow\" in the opening", rewritePrompt, StringComparison.Ordinal);
         Assert.Equal(StorySpeaker.Narrator, chapter.OpeningSpeaker);
@@ -389,7 +389,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
 
         Assert.Equal("harrow", chapter.Beats[0].Speaker);
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(5, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -418,7 +418,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        var prompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
 
         Assert.Contains("that person's words are a line of their own, given to them; never report what they say in another speaker's line", prompt, StringComparison.Ordinal);
         Assert.Contains("The opening and each objective have one to three lines", prompt, StringComparison.Ordinal);

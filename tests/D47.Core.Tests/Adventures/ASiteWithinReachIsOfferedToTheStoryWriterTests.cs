@@ -38,7 +38,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Ruins", "function": "setup", "kind": "site", "reason": "The survey flagged a structure there.", "system": "Dyson's Hollow", "body": "Dyson's Hollow 3 b", "filter": "guardian", "line": "Stone older than the colonies."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -46,7 +46,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Ruins", "function": "setup", "kind": "site", "reason": "The survey flagged a structure there.", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "filter": "guardian", "line": "Stone older than the colonies."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -57,7 +57,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
 
         await Generator(provider, bodies: [GuardianBody], index: Source(Tsv)).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
-        foreach (var request in provider.Requests.Take(2))
+        foreach (var request in new[] { provider.Requests[0], provider.Requests[2] })
         {
             var instruction = request.Prompt.History[0].Text;
 
@@ -68,8 +68,8 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
             Assert.DoesNotContain("Too Far", instruction);
         }
 
-        Assert.Contains("\"site\"", provider.Requests[1].ResponseSchema!.SchemaJson);
-        Assert.Contains("- \"site\":", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains("\"site\"", provider.Requests[2].ResponseSchema!.SchemaJson);
+        Assert.Contains("- \"site\":", provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
 
         Assert.Contains(galaxy.BodyQueries, query => query.Signal == "Guardian" && query.Landable == true);
 
-        foreach (var request in provider.Requests.Take(2))
+        foreach (var request in new[] { provider.Requests[0], provider.Requests[2] })
         {
             var instruction = request.Prompt.History[0].Text;
 
@@ -99,7 +99,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
         await Generator(provider, bodies: [GuardianBody with { IsLandable = false }], index: null).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.All(provider.Requests, request => Assert.DoesNotContain("Sites within reach", request.Prompt.History[0].Text));
-        Assert.DoesNotContain("\"site\"", provider.Requests[1].ResponseSchema!.SchemaJson);
+        Assert.DoesNotContain("\"site\"", provider.Requests[2].ResponseSchema!.SchemaJson);
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
         var outcome = await Generator(provider, bodies: [], index: null).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.All(provider.Requests, request => Assert.DoesNotContain("Sites within reach", request.Prompt.History[0].Text));
-        Assert.DoesNotContain("\"site\"", provider.Requests[1].ResponseSchema!.SchemaJson);
+        Assert.DoesNotContain("\"site\"", provider.Requests[2].ResponseSchema!.SchemaJson);
         Assert.Contains("The signal index is off, so no tourist beacon or generation ship was offered.", outcome.Notes);
     }
 
@@ -138,7 +138,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Watch", "function": "setup", "kind": "site", "reason": "A beacon there has been logging visitors.", "system": "Ossen's Lantern", "body": null, "filter": "tourist", "line": "It logs every visitor."},
               {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
             ]}
             """;
         var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(beats));
@@ -166,7 +166,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
 
         await Generator(provider, bodies: [], index: Source(GenerationTsv)).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
-        foreach (var request in provider.Requests.Take(2))
+        foreach (var request in new[] { provider.Requests[0], provider.Requests[2] })
         {
             var instruction = request.Prompt.History[0].Text;
 
@@ -182,7 +182,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Ship", "function": "setup", "kind": "site", "reason": "A generation ship drifts there.", "system": "Ossen's Lantern", "body": null, "filter": "generation", "line": "It has been travelling for centuries."},
               {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
             ]}
             """;
         var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(beats));
@@ -205,7 +205,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var confirms = ConfirmsLines(provider.Requests[2].Prompt.History[0].Text).First();
+        var confirms = ConfirmsLines(provider.Requests[3].Prompt.History[0].Text).First();
 
         Assert.Contains("Guardian site on that body", confirms);
         Assert.DoesNotContain("tourist", confirms, StringComparison.OrdinalIgnoreCase);
@@ -218,7 +218,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Watch", "function": "setup", "kind": "site", "reason": "A beacon there has been logging visitors.", "system": "Ossen's Lantern", "body": null, "filter": "tourist", "line": "It logs every visitor."},
               {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
             ]}
             """;
         var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(beats), Saying("""{"objections": []}"""));
@@ -227,7 +227,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var confirms = ConfirmsLines(provider.Requests[2].Prompt.History[0].Text).First();
+        var confirms = ConfirmsLines(provider.Requests[3].Prompt.History[0].Text).First();
 
         Assert.Contains("tourist beacon in that system was scanned", confirms);
         Assert.DoesNotContain("Guardian", confirms);
@@ -257,7 +257,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
         var outcome = await Generator(provider, bodies: [GuardianBody], index: null).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        var repair = provider.Requests[2].Prompt.History[0].Text;
+        var repair = provider.Requests[3].Prompt.History[0].Text;
         Assert.Contains("Objective 1 (The Ruins) is a \"site\" objective that is not one of the sites listed within reach.", repair);
         Assert.Contains("Guardian site Dyson's Hollow 3 b (\"filter\": \"guardian\", \"system\": \"Dyson's Hollow\", \"body\": \"Dyson's Hollow 3 b\")", repair);
         Assert.Equal(TriggerKind.Site, outcome.Draft!.Beats[0].Trigger.Kind);

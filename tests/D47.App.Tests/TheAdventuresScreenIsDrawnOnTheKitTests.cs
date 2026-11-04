@@ -69,10 +69,10 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
     private static Adventure Draft() => Live() with
     {
         Key = "the-draft",
-        Name = "The Unrecoverable Column",
+        Name = "The Missing Freight",
         Source = AdventureSource.Generated,
         WrittenBy = "archivist",
-        Spine = new AdventureSpine { Premise = "A ledger will not balance." },
+        Spine = new AdventureSpine { Premise = "Freight went missing on the way to Maren Anchorage." },
         AcceptedAt = null,
     };
 
@@ -141,7 +141,7 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
             foreach (var (key, label, name) in new[]
                      {
                          (AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route", "reading"),
-                         (AdventuresPage.ReadPrefix + "the-draft", "The Unrecoverable Column", "reading-draft"),
+                         (AdventuresPage.ReadPrefix + "the-draft", "The Missing Freight", "reading-draft"),
                          (AdventuresPage.AskKey, "Ask", "ask"),
                      })
             {

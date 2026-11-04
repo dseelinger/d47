@@ -65,7 +65,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         Assert.Contains(Card.InYourWords, prompt);
         Assert.Contains(Secret.Secret, prompt);
 
-        var beats = fixtures.Provider.Requests[1].Prompt.History[0].Text;
+        var beats = fixtures.Provider.Requests[2].Prompt.History[0].Text;
 
         // No galaxy search, so no Frontline Solutions station is known and "onfootbond" is not offered.
         Assert.Contains("one of thirty-eight things", beats);
@@ -82,14 +82,14 @@ public sealed class ChapterOneEndsAtABeaconTests
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 1, fixtures.Provider.CallCount);
+        Assert.Equal((3 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 2, fixtures.Provider.CallCount);
         Assert.Contains($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {Beacon}", fixtures.LastRefusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
         Assert.Empty(fixtures.Stories.Current("F1")!.Chapters);
         Assert.True(fixtures.Director.WriteFailed("F1"));
 
         // The refusal went back through the turn before the Commander saw it.
-        Assert.Contains("The last objective must be", fixtures.Provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains("The last objective must be", fixtures.Provider.Requests[3].Prompt.History[0].Text);
     }
 
     [Trait("Category", "Integration")]
@@ -101,7 +101,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 1, fixtures.Provider.CallCount);
+        Assert.Equal((3 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 2, fixtures.Provider.CallCount);
         Assert.Contains("The last objective must be \"beacon\"", fixtures.LastRefusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
     }
@@ -115,7 +115,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 1, fixtures.Provider.CallCount);
+        Assert.Equal((3 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 2, fixtures.Provider.CallCount);
         Assert.Contains("Objective 1 (Too Soon) is a \"beacon\" objective; only the last objective of the chapter that ends act one may be one.", fixtures.LastRefusal);
         Assert.DoesNotContain("Beat 3", fixtures.LastRefusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
@@ -141,6 +141,6 @@ public sealed class ChapterOneEndsAtABeaconTests
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
         Assert.Contains("Objective 2 (The Beacon Again) is a \"beacon\" objective", fixtures.LastRefusal);
         Assert.Single(fixtures.Stories.Current("F1")!.Chapters);
-        Assert.DoesNotContain("\"beacon\"", fixtures.Provider.Requests[3].Prompt.History[0].Text);
+        Assert.DoesNotContain("\"beacon\"", fixtures.Provider.Requests[5].Prompt.History[0].Text);
     }
 }

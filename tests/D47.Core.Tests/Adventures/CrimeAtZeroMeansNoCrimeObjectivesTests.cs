@@ -84,7 +84,7 @@ public sealed class CrimeAtZeroMeansNoCrimeObjectivesTests
 
         await Generate(provider, new AdventureAsk(Length: AdventureLength.Short, CrimeRefused: true));
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("You set Crime to 0, so write no crime objective", brief);
         Assert.Contains("piracy", brief);
         Assert.Contains("stolen cargo", brief);

@@ -130,7 +130,7 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
         Assert.Contains($"6. {bounties.Describe()}", spine);
         Assert.Contains("Vary what the Commander does. The last chapters asked them to collect bounties.", spine);
 
-        var beats = provider.Requests[1].Prompt.History[0].Text;
+        var beats = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("The counted kinds, in no order of preference:", beats);
         Assert.Contains("Vary what the Commander does. The last chapters asked them to collect bounties.", beats);
         Assert.Contains("Mission_Smuggle", beats);

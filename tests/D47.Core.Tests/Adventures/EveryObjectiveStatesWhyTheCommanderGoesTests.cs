@@ -13,15 +13,15 @@ public sealed class EveryObjectiveStatesWhyTheCommanderGoesTests
     private const string Reason = "The third sheet's receipt was stamped in Dyson's Hollow, where the freight was last logged.";
 
     private const string Spine = """
-        {"name": "The Unrecoverable Column", "premise": "A ledger will not balance.", "want": "To find the missing freight.",
-         "stake": "Whether a debt can be owed to nobody.", "turn": "The freight was never loaded.", "ending": "The column balances."}
+        {"name": "The Missing Freight", "premise": "Freight went missing on the way to Maren Anchorage.", "want": "To find the missing freight.",
+         "stake": "Whether a debt can be owed to nobody.", "turn": "The freight was never loaded.", "ending": "The freight is found and delivered."}
         """;
 
     private const string GoodBeats = $$"""
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "The freight's last beacon ping came from here.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "A comms specialist there reads signals like the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "{{Reason}}", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "{{Reason}}", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -29,7 +29,7 @@ public sealed class EveryObjectiveStatesWhyTheCommanderGoesTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "The freight's last beacon ping came from here.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "A comms specialist there reads signals like the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -46,8 +46,8 @@ public sealed class EveryObjectiveStatesWhyTheCommanderGoesTests
             .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        var refusals = provider.Requests[2].Prompt.History[0].Text.Split("cannot stand")[1];
-        Assert.Contains("Objective 3 (The Column Will Not Balance) has no \"reason\"", refusals);
+        var refusals = provider.Requests[3].Prompt.History[0].Text.Split("cannot stand")[1];
+        Assert.Contains("Objective 3 (The Freight Delivered) has no \"reason\"", refusals);
         Assert.DoesNotContain("Objective 1 (The Lantern)", refusals);
     }
 

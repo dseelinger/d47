@@ -34,7 +34,7 @@ public class AnAdventureIsAskedForByVoiceTests
         var store = new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
         var state = AdventuresTabTests.State();
-        var model = canAsk ? RecordingModel.Replying(hold ?? Task.CompletedTask, AdventuresTabTests.Spine, AdventuresTabTests.Beats) : null;
+        var model = canAsk ? RecordingModel.Replying(hold ?? Task.CompletedTask, AdventuresTabTests.Spine, AdventuresTabTests.NoObjections, AdventuresTabTests.Beats, AdventuresTabTests.NoObjections, AdventuresTabTests.NoObjections) : null;
         IGalaxyService? galaxy = canAsk ? new AdventuresTabTests.Galaxy() : null;
 
         var generator = new AdventureGenerator(
@@ -108,10 +108,10 @@ public class AnAdventureIsAskedForByVoiceTests
 
         panel.Prompts.Hear(new Heard("a lighthouse nobody tends", 1, Final: true));
 
-        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null);
+        Until(() => book.Store.Find("F1", "the-missing-freight") is not null);
 
-        Assert.True(book.Store.Find("F1", "the-unrecoverable-column")?.IsDraft);
-        Assert.Equal(AdventuresPage.ReadPrefix + "the-unrecoverable-column", panel.Nav.Trail[^1].Key);
+        Assert.True(book.Store.Find("F1", "the-missing-freight")?.IsDraft);
+        Assert.Equal(AdventuresPage.ReadPrefix + "the-missing-freight", panel.Nav.Trail[^1].Key);
 
         var spine = model!.Asked[0];
         Assert.Contains("The Commander's brief, in their words: \"a lighthouse nobody tends\"", spine, StringComparison.Ordinal);
@@ -185,7 +185,7 @@ public class AnAdventureIsAskedForByVoiceTests
         Assert.DoesNotContain(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Clear") && button.IsEffectivelyVisible);
 
         Press(panel, button => Equals(button.Content, "Go"));
-        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null);
+        Until(() => book.Store.Find("F1", "the-missing-freight") is not null);
 
         Assert.DoesNotContain("The Commander's brief", model!.Asked[0], StringComparison.Ordinal);
     }
@@ -230,7 +230,7 @@ public class AnAdventureIsAskedForByVoiceTests
         Dispatcher.UIThread.RunJobs();
 
         hold.SetResult();
-        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null);
+        Until(() => book.Store.Find("F1", "the-missing-freight") is not null);
 
         Assert.Equal(3, model!.Asked.Count);
         Assert.Single(book.Store.For("F1"));

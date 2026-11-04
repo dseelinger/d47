@@ -43,7 +43,7 @@ public sealed class AGoalsStoryChapterHoldsItsGoalsStepTests
 
         Assert.False(outcome.Succeeded);
         Assert.Contains("has no objective for its Goals step: a \"rank\" objective for Combat Rank 2 of 13, Novice", outcome.Refusal);
-        Assert.Contains("works the Commander's goal \"Elite V in Combat\"", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains("works the Commander's goal \"Elite V in Combat\"", provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Trait("Category", "Integration")]

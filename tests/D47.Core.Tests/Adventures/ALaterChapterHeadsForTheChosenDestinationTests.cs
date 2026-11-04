@@ -74,7 +74,7 @@ public sealed class ALaterChapterHeadsForTheChosenDestinationTests
 
         await Generator(provider, new Galaxy(), Here).GenerateAsync(ChosenAsk, Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains($"The Commander asked to head for {Target}, 5000 light years away, and has not got there.", brief);
         Assert.Contains($"light years nearer {Target}", brief);
         Assert.Contains("Halfway House", brief);

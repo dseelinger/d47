@@ -90,7 +90,7 @@ public sealed class ACountedObjectiveCanNameItsSystemTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Count", "function": "turn", "kind": "{{kind}}", "reason": "Someone there knows about the burst.", "count": {{count}}, "filter": {{(filter is null ? "null" : $"\"{filter}\"")}}, "system": {{(system is null ? "null" : $"\"{system}\"")}}, "line": "Count them."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -135,7 +135,7 @@ public sealed class ACountedObjectiveCanNameItsSystemTests
         var outcome = await Write(provider, galaxy);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Contains(shortfall, provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains(shortfall, provider.Requests[3].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public sealed class ACountedObjectiveCanNameItsSystemTests
         var outcome = await Write(provider, new AdventureGeneratorTests.Galaxy());
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Contains("names a system, \"Nowhere Atall\", that the galaxy search does not know", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains("names a system, \"Nowhere Atall\", that the galaxy search does not know", provider.Requests[3].Prompt.History[0].Text);
     }
 
     [Fact]

@@ -230,14 +230,14 @@ public sealed class EventStepsAreDrawnIntoChaptersTests
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        foreach (var round in new[] { 0, 1 })
+        foreach (var round in new[] { 0, 2 })
         {
             Assert.Contains($"an \"event\" objective for the event Docked: {Described("Docked")}, count 2", PromptOf(provider, round));
         }
 
-        Assert.Contains("event", KindsOf(provider, 1));
-        Assert.True(HasTask(provider, 1));
-        Assert.Contains("\"event\": the Commander does what the drawn event objective above describes", PromptOf(provider, 1));
+        Assert.Contains("event", KindsOf(provider, 2));
+        Assert.True(HasTask(provider, 2));
+        Assert.Contains("\"event\": the Commander does what the drawn event objective above describes", PromptOf(provider, 2));
     }
 
     [Fact]
@@ -245,10 +245,10 @@ public sealed class EventStepsAreDrawnIntoChaptersTests
     {
         var (_, provider) = await Written(Chapter([Bounties]), SpineText, BeatsWith(null, Bounties));
 
-        Assert.DoesNotContain("event", KindsOf(provider, 1));
-        Assert.False(HasTask(provider, 1));
-        Assert.DoesNotContain("\"event\"", PromptOf(provider, 1));
-        Assert.DoesNotContain("\"task\"", PromptOf(provider, 1));
+        Assert.DoesNotContain("event", KindsOf(provider, 2));
+        Assert.False(HasTask(provider, 2));
+        Assert.DoesNotContain("\"event\"", PromptOf(provider, 2));
+        Assert.DoesNotContain("\"task\"", PromptOf(provider, 2));
     }
 
     [Fact]
@@ -274,7 +274,7 @@ public sealed class EventStepsAreDrawnIntoChaptersTests
         var (outcome, provider) = await Written(Chapter([Bounties, Docking]), SpineText, without, Repairs.Replacing(without, 2), Repairs.Replacing(without, 2));
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("has no objective for this one: an \"event\" objective for the event Docked", PromptOf(provider, 2));
+        Assert.Contains("has no objective for this one: an \"event\" objective for the event Docked", PromptOf(provider, 3));
     }
 
     [Fact]
@@ -283,7 +283,7 @@ public sealed class EventStepsAreDrawnIntoChaptersTests
         var (outcome, provider) = await Written(Chapter([Bounties, Logging]), SpineText, BeatsWith("say \"log this\" to note it", Bounties));
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Contains("The Commander runs it by saying \"log this\": the \"task\" must tell them to say it", PromptOf(provider, 1));
+        Assert.Contains("The Commander runs it by saying \"log this\": the \"task\" must tell them to say it", PromptOf(provider, 2));
 
         var step = Assert.Single(outcome.Draft!.Beats, beat => beat.Trigger.Kind == TriggerKind.Event);
 

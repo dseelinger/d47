@@ -15,8 +15,8 @@ public sealed class AdventureGeneratorTests
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 12, 0, 0, TimeSpan.Zero);
 
     internal const string Spine = """
-        {"name": "The Unrecoverable Column", "premise": "A ledger will not balance.", "want": "To find the missing freight.",
-         "stake": "Whether a debt can be owed to nobody.", "turn": "The freight was never loaded.", "ending": "The column balances."}
+        {"name": "The Missing Freight", "premise": "Freight went missing on the way to Maren Anchorage.", "want": "To find the missing freight.",
+         "stake": "Whether a debt can be owed to nobody.", "turn": "The freight was never loaded.", "ending": "The freight is found and delivered."}
         """;
 
     /// <summary>
@@ -27,7 +27,7 @@ public sealed class AdventureGeneratorTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Scoop here."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "body": null, "career": null, "rank": null, "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -36,7 +36,7 @@ public sealed class AdventureGeneratorTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Scoop here."},
           {"title": "Where The Freight Went", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Colonia", "station": null, "body": null, "career": null, "rank": null, "line": "Twenty-two thousand light years."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trade", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trade", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -49,10 +49,10 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(3, provider.CallCount);
+        Assert.Equal(5, provider.CallCount);
 
         // Both turns see the same list: the spine is anchored to real places before the beats are.
-        foreach (var request in provider.Requests.Take(2))
+        foreach (var request in new[] { provider.Requests[0], provider.Requests[2] })
         {
             var instruction = request.Prompt.History[0].Text;
             Assert.Contains("Real places within reach", instruction);
@@ -61,7 +61,7 @@ public sealed class AdventureGeneratorTests
         }
 
         // Nearest first, whichever list a system came from.
-        var beats = provider.Requests[1].Prompt.History[0].Text;
+        var beats = provider.Requests[2].Prompt.History[0].Text;
         Assert.True(beats.IndexOf("- Ossen's Lantern (8 ly)", StringComparison.Ordinal) < beats.IndexOf("- Dyson's Hollow (12 ly)", StringComparison.Ordinal));
 
         // The lists were asked for within the reach, and the bodies had to be landable.
@@ -92,7 +92,7 @@ public sealed class AdventureGeneratorTests
         Assert.Contains("Invented people are told about, never met", spine);
         Assert.Contains("cannot find, speak to or watch anyone", spine);
 
-        var beats = provider.Requests[1].Prompt.History[0].Text;
+        var beats = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("A line never gives the Commander a task.", beats);
         Assert.Contains("never \"ask the clerk\"", beats);
 
@@ -112,7 +112,7 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(4, provider.CallCount);
+        Assert.Equal(6, provider.CallCount);
 
         Assert.All(
             provider.Requests,
@@ -133,20 +133,20 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(4, provider.CallCount);
+        Assert.Equal(6, provider.CallCount);
         Assert.Contains(outcome.Notes, note => note.StartsWith("Rewrote 1 objective", StringComparison.Ordinal));
 
-        var retry = provider.Requests[2].Prompt.History[0].Text;
+        var retry = provider.Requests[3].Prompt.History[0].Text;
         Assert.Contains("Your draft of the objectives:", retry);
         Assert.Contains("1. The Lantern (setup) — arrive: Ossen's Lantern — reason: \"Someone there knows about the burst.\" — \"Scoop here.\"", retry);
         Assert.Contains("2. Where The Freight Went (turn) — arrive: Colonia", retry);
-        Assert.Contains("3. The Column Will Not Balance (resolution) — rank: Trade 8", retry);
+        Assert.Contains("3. The Freight Delivered (resolution) — rank: Trade 8", retry);
         Assert.Contains("Objective 2 (Where The Freight Went) is 21886 light years from the previous stop; the reach is 80.", retry);
         Assert.Contains("Write a replacement for objective 2, and for no other.", retry);
         Assert.Contains("Every objective you do not replace is kept exactly as written above", retry);
 
         // What survived is the first draft with the replacement in place of objective 2.
-        Assert.Equal(["The Lantern", "The Anchorage", "The Column Will Not Balance"], outcome.Draft!.Beats.Select(beat => beat.Title));
+        Assert.Equal(["The Lantern", "The Anchorage", "The Freight Delivered"], outcome.Draft!.Beats.Select(beat => beat.Title));
     }
 
     /// <summary>A scan of a body the story has already landed on is refused in the dry run, so it goes back through the turn with the reason rather than reaching the Commander as a story that cannot finish.</summary>
@@ -169,10 +169,10 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(4, provider.CallCount);
+        Assert.Equal(6, provider.CallCount);
         Assert.Contains(
             "Objective 3 (Disposition) scans Ossen's Lantern 2 a after Objective 2 (The Consignee) lands on it; a body is scanned on the way in, before any landing, so the scan must come before the landing or be of another body.",
-            provider.Requests[2].Prompt.History[0].Text);
+            provider.Requests[3].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -196,7 +196,7 @@ public sealed class AdventureGeneratorTests
         const string nested = """
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "rank": {"career": "Trade", "rank": "8"}, "line": "It balances."}
+              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "rank": {"career": "Trade", "rank": "8"}, "line": "The freight is delivered."}
             ]}
             """;
 
@@ -242,8 +242,8 @@ public sealed class AdventureGeneratorTests
             new AdventureAsk(Length: AdventureLength.Short, Brief: "a quiet trading story"), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(4, provider.CallCount);
-        Assert.Contains("which the Commander's brief does not name", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Equal(6, provider.CallCount);
+        Assert.Contains("which the Commander's brief does not name", provider.Requests[3].Prompt.History[0].Text);
     }
 
     private static string EngineerBeats(string engineer) => $$"""
@@ -302,7 +302,7 @@ public sealed class AdventureGeneratorTests
         const string careerless = """
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "rank": 8, "line": "It balances."}
+              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "rank": 8, "line": "The freight is delivered."}
             ]}
             """;
 
@@ -315,7 +315,7 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("Objective 2 (The Column Will Not Balance) is a rank objective but names no career; \"career\" must be one of Combat, Trade, Exploration, Mercenary, Exobiology, CQC, Imperial Navy, Federal Navy.", outcome.Refusal);
+        Assert.Contains("Objective 2 (The Freight Delivered) is a rank objective but names no career; \"career\" must be one of Combat, Trade, Exploration, Mercenary, Exobiology, CQC, Imperial Navy, Federal Navy.", outcome.Refusal);
         Assert.DoesNotContain("\"\"", outcome.Refusal);
     }
 
@@ -325,7 +325,7 @@ public sealed class AdventureGeneratorTests
         const string elite = """
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Combat", "rank": 8, "line": "It balances."}
+              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Combat", "rank": 8, "line": "The freight is delivered."}
             ]}
             """;
 

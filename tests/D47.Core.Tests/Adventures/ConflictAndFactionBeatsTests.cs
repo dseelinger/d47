@@ -263,7 +263,7 @@ public class ConflictAndFactionBeatsTests
                 Jump("Havalokul", 111, CivilWar).Replace("@", "2026-08-22T11:02:00Z", StringComparison.Ordinal))
             .GenerateAsync(new AdventureAsk(), Accepted, TestContext.Current.CancellationToken);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
 
         Assert.NotNull(outcome.Draft);
         Assert.Contains("\"conflict\"", brief);

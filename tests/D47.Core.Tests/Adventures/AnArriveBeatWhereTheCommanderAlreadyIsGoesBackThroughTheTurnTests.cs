@@ -10,15 +10,15 @@ public sealed class AnArriveBeatWhereTheCommanderAlreadyIsGoesBackThroughTheTurn
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 12, 0, 0, TimeSpan.Zero);
 
     private const string Spine = """
-        {"name": "The Unrecoverable Column", "premise": "A ledger will not balance.", "want": "To find the missing freight.",
-         "stake": "Whether a debt can be owed to nobody.", "turn": "The freight was never loaded.", "ending": "The column balances."}
+        {"name": "The Missing Freight", "premise": "Freight went missing on the way to Maren Anchorage.", "want": "To find the missing freight.",
+         "stake": "Whether a debt can be owed to nobody.", "turn": "The freight was never loaded.", "ending": "The freight is found and delivered."}
         """;
 
     private const string GoodBeats = """
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -29,7 +29,7 @@ public sealed class AnArriveBeatWhereTheCommanderAlreadyIsGoesBackThroughTheTurn
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "Home Ledger", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Oppi", "line": "Start here."},
               {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
             ]}
             """;
 
@@ -46,7 +46,7 @@ public sealed class AnArriveBeatWhereTheCommanderAlreadyIsGoesBackThroughTheTurn
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
               {"title": "The Consignee", "function": "setup", "kind": "land", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "line": "Dust."},
               {"title": "The Lantern", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
             ]}
             """;
 
@@ -68,8 +68,8 @@ public sealed class AnArriveBeatWhereTheCommanderAlreadyIsGoesBackThroughTheTurn
             .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(4, provider.CallCount);
+        Assert.Equal(6, provider.CallCount);
 
-        return provider.Requests[2].Prompt.History[0].Text;
+        return provider.Requests[3].Prompt.History[0].Text;
     }
 }

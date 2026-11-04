@@ -20,6 +20,7 @@ internal static class StoryAnswer
     internal const string ReplacementsName = "story_replacements";
     internal const string FidelityName = "story_fidelity";
     internal const string HeadingName = "story_heading";
+    internal const string PlainName = "story_plain";
 
     internal static readonly IReadOnlyList<string> SpineFields = ["name", "premise", "want", "stake", "turn", "ending"];
 
@@ -129,6 +130,27 @@ internal static class StoryAnswer
                     ("quote", Text()),
                     ("kind", new JsonObject { ["type"] = "string", ["enum"] = new JsonArray([.. StatementKinds.Select(kind => (JsonNode)JsonValue.Create(kind)!)]) }),
                     ("reason", Text()),
+                ]),
+            })]).ToJsonString());
+
+    /// <summary>What a plain-wording objection may call a quoted phrase.</summary>
+    internal static readonly IReadOnlyList<string> PlainKinds = ["figurative", "invented"];
+
+    internal const string PlainShape =
+        "{\"objections\": [{\"part\": string, \"quote\": string, \"kind\": \"figurative\" | \"invented\", \"reason\": string, \"plain\": string}]}";
+
+    internal static LlmResponseSchema PlainSchema() =>
+        new(
+            PlainName,
+            Object([("objections", new JsonObject
+            {
+                ["type"] = "array",
+                ["items"] = Object([
+                    ("part", Text()),
+                    ("quote", Text()),
+                    ("kind", new JsonObject { ["type"] = "string", ["enum"] = new JsonArray([.. PlainKinds.Select(kind => (JsonNode)JsonValue.Create(kind)!)]) }),
+                    ("reason", Text()),
+                    ("plain", Text()),
                 ]),
             })]).ToJsonString());
 

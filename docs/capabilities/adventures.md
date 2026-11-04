@@ -190,6 +190,8 @@ follows it. The AI reads what the finished one asked you to do, how it ended and
 and how many chapters came before. The new chapter follows from what you did and from the story, not from how the last
 one was worded. The draft card says which story it follows, and it is accepted, flown and checked like any other.
 
+Every chapter's wording is checked before it is shown, in a new draft and in a draft you ask to have changed. The title, the story's premise and ending, the objectives' titles, reasons and lines, a choice's options and endings, and the opening are read against the plain-language rule. A metaphor is rewritten in plain words where the check can do so, and the chapter is checked again. A feature the game does not have, or a rewrite that does not pass, is sent back to be written again. A chapter that still fails the check after its rounds is thrown away and written again.
+
 #### `ask_for_adventure`
 
 Open the Short Story page and the entry for a brief; committing the brief asks for the short story, as Go does. The Commander's choice alone.

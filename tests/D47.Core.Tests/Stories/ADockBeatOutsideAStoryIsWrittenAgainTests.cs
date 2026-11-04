@@ -92,7 +92,7 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
         Assert.DoesNotContain(adventure.Beats, beat => beat.Trigger.Station == "Maren Anchorage");
         Assert.Contains("You wrote a short story the Commander is flying", prompt);
         Assert.Contains("Maren Anchorage's docks are offline", prompt);
-        Assert.Equal(3, fixtures.Provider.CallCount);
+        Assert.Equal(4, fixtures.Provider.CallCount);
         Assert.Equal(["The docks at Maren Anchorage are offline.", "Someone there knows about the burst. Next: dock at Lantern Dock in Ossen's Lantern."], said);
     }
 
@@ -129,7 +129,7 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
         Assert.NotNull(first);
         Assert.Null(second);
         Assert.Null(await first);
-        Assert.Equal(2, fixtures.Provider.CallCount);
+        Assert.Equal(3, fixtures.Provider.CallCount);
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
 
         Assert.Equal("Another Dock", fixtures.Book.Store.Find("F1", ChapterKey)!.Beats[1].Title);
         Assert.Equal("The Dock", fixtures.Book.Store.Find("F1", AdventureKey)!.Beats[1].Title);
-        Assert.Equal(2, fixtures.Provider.CallCount);
+        Assert.Equal(3, fixtures.Provider.CallCount);
     }
 
     [Fact]
@@ -155,6 +155,6 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
 
         Assert.Equal("The Dock", fixtures.Book.Store.Find("F1", ChapterKey)!.Beats[1].Title);
         Assert.Equal("Another Dock", fixtures.Book.Store.Find("F1", AdventureKey)!.Beats[1].Title);
-        Assert.Equal(2, fixtures.Provider.CallCount);
+        Assert.Equal(3, fixtures.Provider.CallCount);
     }
 }

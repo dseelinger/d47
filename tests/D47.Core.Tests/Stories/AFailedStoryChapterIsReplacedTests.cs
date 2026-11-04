@@ -97,7 +97,7 @@ public sealed class AFailedStoryChapterIsReplacedTests
         Assert.Equal(failed, ask.Failed!.Previous.Key);
         Assert.Contains("The Lantern Again", ask.Failed.Previous.Ending!.Reason);
 
-        var prompts = fixtures.Provider.Requests.Skip(6).Select(request => request.Prompt.History[0].Text).ToList();
+        var prompts = fixtures.Provider.Requests.Skip(10).Select(request => request.Prompt.History[0].Text).ToList();
         Assert.Contains(prompts, prompt => prompt.Contains("An earlier attempt at this chapter failed", StringComparison.Ordinal));
         Assert.DoesNotContain(prompts, prompt => prompt.Contains("Write the next chapter, not a retelling", StringComparison.Ordinal));
     }

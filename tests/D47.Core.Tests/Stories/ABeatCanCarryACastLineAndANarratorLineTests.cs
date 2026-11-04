@@ -127,7 +127,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 1, fixtures.Provider.CallCount);
+        Assert.Equal((3 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 2, fixtures.Provider.CallCount);
     }
 
     [Fact]
@@ -168,7 +168,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        var prompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
 
         Assert.Contains("\"lines\": [{\"text\": string, \"speaker\": string}]", prompt, StringComparison.Ordinal);
         Assert.Contains("The opening and each objective have one to three lines, spoken in the order given.", prompt, StringComparison.Ordinal);

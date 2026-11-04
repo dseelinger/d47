@@ -66,7 +66,7 @@ public sealed class TheStageFollowsTheCluesTests
 
         Assert.Null(await fixtures.Director.WriteNextAsync("F1", Now.AddDays(200), CancellationToken.None));
 
-        var brief = fixtures.Provider.Requests[3].Prompt.History[0].Text;
+        var brief = fixtures.Provider.Requests[5].Prompt.History[0].Text;
 
         Assert.Contains("The story stands at Midpoint.", brief);
         Assert.Contains($"- midpoint: {Secret.Beats.Midpoint}", brief);

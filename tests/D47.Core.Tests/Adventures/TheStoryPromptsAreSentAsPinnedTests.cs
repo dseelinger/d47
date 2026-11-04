@@ -20,7 +20,7 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Lost Hop", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Nowhere Reached", "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -28,7 +28,7 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Tour", "function": "turn", "kind": "mission", "reason": "Someone there knows about the burst.", "count": 1, "mission": "Mission_Sightseeing", "line": "Take the tourists round."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -39,7 +39,7 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
         """;
 
     private static readonly AdventureStory Stock = new(
-        "s", "The Unrecoverable Column", "A ledger will not balance.", "The freight was never loaded.",
+        "s", "The Missing Freight", "Freight went missing on the way to Maren Anchorage.", "The freight was never loaded.",
         Chapter: 2, DaysRunning: 9, DaysSinceBeacon: null,
         Cast: [new AdventureSpeaker("tess", "Tess", "A pilot who keeps the books.")]);
 
@@ -61,7 +61,7 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
 
     [Fact]
     public async Task TheBeatsOfANewChapterOfAStockStory() =>
-        Pinned("beats-new-chapter", await Sent(new AdventureAsk(Story: Stock), 1, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats)));
+        Pinned("beats-new-chapter", await Sent(new AdventureAsk(Story: Stock), 2, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats)));
 
     [Fact]
     public async Task TheBeatsOfTheNextChapterAfterAFailedOne()
@@ -69,12 +69,12 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
         var all = new[] { Earlier(), Failed() };
         var ask = Short with { Chapter = AdventureChapter.Of(all, "first"), Failed = AdventureChapter.Of(all, "second") };
 
-        Pinned("beats-next-chapter-after-failed", await Sent(ask, 1, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats)));
+        Pinned("beats-next-chapter-after-failed", await Sent(ask, 2, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats)));
     }
 
     [Fact]
     public async Task TheBeatsOfAShortStory() =>
-        Pinned("beats-short-story", await Sent(Short, 1, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats)));
+        Pinned("beats-short-story", await Sent(Short, 2, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats)));
 
     [Fact]
     public async Task TheBeatsOfARewriteOfARefusedObjective()
@@ -94,11 +94,19 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
 
     [Fact]
     public async Task TheRepairTurnAfterARefusedDraft() =>
-        Pinned("repair-refused-draft", await Sent(Short, 2, Saying(AdventureGeneratorTests.Spine), Saying(LostHop), Saying(StillLost)));
+        Pinned("repair-refused-draft", await Sent(Short, 3, Saying(AdventureGeneratorTests.Spine), Saying(LostHop), Saying(StillLost)));
 
     [Fact]
     public async Task TheFidelityCheck() =>
-        Pinned("fidelity", await Sent(Short, 2, Saying(AdventureGeneratorTests.Spine), Saying(Sightseeing), Saying("""{"objections": []}""")));
+        Pinned("fidelity", await Sent(Short, 3, Saying(AdventureGeneratorTests.Spine), Saying(Sightseeing), Saying("""{"objections": []}""")));
+
+    [Fact]
+    public async Task ThePlainWordsCheckOfTheSpine() =>
+        Pinned("plain-spine", await Sent(Short, 1, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats)));
+
+    [Fact]
+    public async Task ThePlainWordsCheckOfTheObjectives() =>
+        Pinned("plain-beats", await Sent(Short, 4, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats), Saying("""{"objections": []}""")));
 
     private static AdventureGenerator Generator(RoundScriptedLlmProvider provider)
     {

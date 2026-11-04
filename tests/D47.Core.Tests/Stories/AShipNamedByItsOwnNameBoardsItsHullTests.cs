@@ -60,7 +60,7 @@ public sealed class AShipNamedByItsOwnNameBoardsItsHullTests
         var (result, provider) = Generate(Beats("flamebrand "));
 
         Assert.True(result.Succeeded, result.Refusal);
-        Assert.Equal(3, provider.CallCount);
+        Assert.Equal(5, provider.CallCount);
 
         var board = result.Draft!.Beats[0].Trigger;
         Assert.Equal(TriggerKind.Board, board.Kind);
@@ -74,7 +74,7 @@ public sealed class AShipNamedByItsOwnNameBoardsItsHullTests
 
         Assert.False(result.Succeeded);
         Assert.Contains("\"Emberwake\" that d47 has no name for", result.Refusal);
-        Assert.Contains("as a hull type such as Anaconda", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains("as a hull type such as Anaconda", provider.Requests[3].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -82,6 +82,6 @@ public sealed class AShipNamedByItsOwnNameBoardsItsHullTests
     {
         var (_, provider) = Generate(Beats("Anaconda"));
 
-        Assert.Contains("its hull type, one of ", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains("its hull type, one of ", provider.Requests[2].Prompt.History[0].Text);
     }
 }

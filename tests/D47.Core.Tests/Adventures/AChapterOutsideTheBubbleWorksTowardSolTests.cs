@@ -82,7 +82,7 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
 
         await Generator(provider, new Galaxy(), 588).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("588 light years from Sol", brief);
         Assert.Contains("between 288 and 488 light years from Sol", brief);
     }
@@ -94,7 +94,7 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
 
         await Generator(provider, new Galaxy(), 300).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
 
-        Assert.DoesNotContain("light years from Sol", provider.Requests[1].Prompt.History[0].Text);
+        Assert.DoesNotContain("light years from Sol", provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
         Assert.False(outcome.Redraftable);
         Assert.Contains("galaxy search is unavailable", outcome.Refusal);
         Assert.Contains("the service is down", outcome.Refusal);
-        Assert.Equal(2, provider.CallCount);
+        Assert.Equal(3, provider.CallCount);
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
 
         await Generator(provider, new Galaxy(), 588).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("Real places inside the band, from the galaxy search: each system is between 288 and 488 light years from Sol", brief);
         Assert.Contains("- Velan's Rest (438 ly from Sol, 150 ly from the Commander): stations Harbour Point (large pad); landable bodies Velan's Rest 2 a", brief);
         Assert.Contains("The places listed as inside the band meet that rule.", brief);
@@ -192,7 +192,7 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
 
         await Generator(provider, galaxy, 588).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.DoesNotContain("Far Point", brief);
         Assert.DoesNotContain("K2X", brief);
         Assert.DoesNotContain("Real places inside the band", brief);
@@ -209,7 +209,7 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
         Assert.Equal(
             [(new StarPosition(438, 0, 0), 50.0), (new StarPosition(438, 0, 0), 50.0), (new StarPosition(388, 0, 0), 100.0), (new StarPosition(388, 0, 0), 100.0)],
             galaxy.Around);
-        Assert.Contains("- Velan's Rest (438 ly from Sol, 150 ly from the Commander)", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains("- Velan's Rest (438 ly from Sol, 150 ly from the Commander)", provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -221,7 +221,7 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
             .GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Contains("No station or landable body between 288 and 488 light years from Sol was found within reach, so this chapter is not held to a distance from Sol.", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains("No station or landable body between 288 and 488 light years from Sol was found within reach, so this chapter is not held to a distance from Sol.", provider.Requests[2].Prompt.History[0].Text);
         Assert.Contains(outcome.Notes, note => note.Contains("so the chapter was not held to that band", StringComparison.Ordinal));
     }
 

@@ -66,7 +66,7 @@ public sealed class OnFootKillBondsAreSentToAFrontlineDeskTests
 
         await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("Stations with Frontline Solutions in a system at war, within reach, from the galaxy search, nearest first:", brief);
         Assert.Contains("- Maren Anchorage in Dyson's Hollow", brief);
         Assert.DoesNotContain("- Quiet Port in", brief);
@@ -82,7 +82,7 @@ public sealed class OnFootKillBondsAreSentToAFrontlineDeskTests
 
         await Generator(provider, new Galaxy { HollowAtWar = false }).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("write no \"onfootbond\" objective", brief);
         Assert.DoesNotContain("Stations with Frontline Solutions in a system at war", brief);
         Assert.DoesNotContain("- \"onfootbond\":", brief);
@@ -95,7 +95,7 @@ public sealed class OnFootKillBondsAreSentToAFrontlineDeskTests
 
         await Generator(provider, new Galaxy { DeskSearchFails = true }).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("write no \"onfootbond\" objective", brief);
         Assert.DoesNotContain("- \"onfootbond\":", brief);
     }

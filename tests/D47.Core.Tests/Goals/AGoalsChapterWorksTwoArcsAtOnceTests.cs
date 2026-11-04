@@ -166,7 +166,7 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
         };
 
         var outcome = await Generate(provider, [CombatRank, trade]);
-        var prompt = provider.Requests[1].Prompt.History[0].Text;
+        var prompt = provider.Requests[2].Prompt.History[0].Text;
 
         Assert.False(outcome.Succeeded);
         Assert.Contains("has no objective for its Goals step: a \"rank\" objective for Combat Rank 2 of 13, Novice", outcome.Refusal);
@@ -182,7 +182,7 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
         var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsWithTheTradeRankOnly));
 
         await Generate(provider, [Explore, Trade], [new DrawnActivity(TriggerKind.Map, null, 2), new DrawnActivity(TriggerKind.Sell, null, 40)]);
-        var prompt = provider.Requests[1].Prompt.History[0].Text;
+        var prompt = provider.Requests[2].Prompt.History[0].Text;
 
         Assert.Contains("The drawn activities to map bodies with the surface mapper work the Commander's goal \"Elite V in Exploration\".", prompt);
         Assert.Contains("The drawn activities to sell cargo work the Commander's goal \"Elite V in Trade\".", prompt);
@@ -207,7 +207,7 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
         var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsWithTheTradeRankOnly));
 
         await Generate(provider, [empire, federation], [Mission("Mission_Courier"), Mission("Mission_Delivery"), Mission("Mission_Collect")]);
-        var lines = provider.Requests[1].Prompt.History[0].Text.Split('\n');
+        var lines = provider.Requests[2].Prompt.History[0].Text.Split('\n');
         var courier = RefusedActivities.Phrase(TriggerKind.Mission, "Mission_Courier")!;
         var delivery = RefusedActivities.Phrase(TriggerKind.Mission, "Mission_Delivery")!;
         var collect = RefusedActivities.Phrase(TriggerKind.Mission, "Mission_Collect")!;
@@ -222,7 +222,7 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
         var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsWithTheTradeRankOnly));
 
         await Generate(provider, [Explore], [new DrawnActivity(TriggerKind.Map, null, 2)]);
-        var prompt = provider.Requests[1].Prompt.History[0].Text;
+        var prompt = provider.Requests[2].Prompt.History[0].Text;
 
         Assert.Contains("The drawn activities work the Commander's goal \"Elite V in Exploration\".", prompt);
         Assert.DoesNotContain("both goals", prompt);

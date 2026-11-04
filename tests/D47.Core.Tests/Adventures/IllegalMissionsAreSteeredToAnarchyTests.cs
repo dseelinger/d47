@@ -75,7 +75,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
 
         await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("Anarchy systems within reach, from the galaxy search, nearest first:", brief);
         Assert.Contains("- Dyson's Hollow (5 ly)", brief);
         Assert.DoesNotContain("- Ossen's Lantern (5 ly)", brief);
@@ -93,7 +93,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
 
         var outcome = await Generator(provider, galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("No Anarchy system is known within reach, so write no illegal mission objective", brief);
         Assert.DoesNotContain("Anarchy systems within reach, from the galaxy search", brief);
 

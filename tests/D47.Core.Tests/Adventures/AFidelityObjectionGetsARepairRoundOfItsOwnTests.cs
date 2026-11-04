@@ -23,7 +23,7 @@ public sealed class AFidelityObjectionGetsARepairRoundOfItsOwnTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Lost Hop", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Nowhere Reached", "line": "To one name."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -37,7 +37,7 @@ public sealed class AFidelityObjectionGetsARepairRoundOfItsOwnTests
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Tour", "function": "turn", "kind": "mission", "reason": "Someone there knows about the burst.", "count": 1, "mission": "{{family}}", "line": "Take the tourists round."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -62,9 +62,9 @@ public sealed class AFidelityObjectionGetsARepairRoundOfItsOwnTests
         var outcome = await Write(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(7, provider.CallCount);
-        Assert.Contains("Write a replacement for objective 2, and for no other.", provider.Requests[5].Prompt.History[0].Text);
-        Assert.Equal(["The Lantern", "The Quiet Dock", "The Column Will Not Balance"], outcome.Draft!.Beats.Select(beat => beat.Title));
+        Assert.Equal(9, provider.CallCount);
+        Assert.Contains("Write a replacement for objective 2, and for no other.", provider.Requests[6].Prompt.History[0].Text);
+        Assert.Equal(["The Lantern", "The Quiet Dock", "The Freight Delivered"], outcome.Draft!.Beats.Select(beat => beat.Title));
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public sealed class AFidelityObjectionGetsARepairRoundOfItsOwnTests
         var outcome = await Write(provider);
 
         Assert.False(outcome.Succeeded);
-        Assert.Equal(8, provider.CallCount);
+        Assert.Equal(9, provider.CallCount);
         Assert.StartsWith("The story states what its objectives do not confirm:", outcome.Refusal);
     }
 
@@ -96,7 +96,7 @@ public sealed class AFidelityObjectionGetsARepairRoundOfItsOwnTests
         var outcome = await Write(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(9, provider.CallCount);
+        Assert.Equal(11, provider.CallCount);
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public sealed class AFidelityObjectionGetsARepairRoundOfItsOwnTests
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var repair = provider.Requests[5].Prompt.History[0].Text;
+        var repair = provider.Requests[6].Prompt.History[0].Text;
 
         Assert.Contains("it says the Commander has docked there before.", repair);
         Assert.Contains("it says how the hop went.", repair);
@@ -122,7 +122,7 @@ public sealed class AFidelityObjectionGetsARepairRoundOfItsOwnTests
 
         await Write(provider);
 
-        var second = provider.Requests[7].Prompt.History[0].Text;
+        var second = provider.Requests[8].Prompt.History[0].Text;
 
         Assert.Contains("it says the Commander moored.", second);
         Assert.Contains("Earlier rounds also objected: it says the Commander has docked there before.", second);
@@ -136,7 +136,7 @@ public sealed class AFidelityObjectionGetsARepairRoundOfItsOwnTests
         var outcome = await Write(provider);
 
         Assert.False(outcome.Succeeded);
-        Assert.Equal(4, provider.CallCount);
+        Assert.Equal(5, provider.CallCount);
         Assert.StartsWith("The story names places that cannot stand:", outcome.Refusal);
     }
 

@@ -97,12 +97,12 @@ public class SuitModAndLiveryBeatsTests
             Now,
             CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
 
         Assert.Contains("No objective may need an ARX purchase", brief);
         Assert.Contains("\"suitmod\"", brief);
         Assert.DoesNotContain("\"livery\"", brief, StringComparison.Ordinal);
-        Assert.DoesNotContain("\"livery\"", provider.Requests[1].ResponseSchema!.SchemaJson, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"livery\"", provider.Requests[2].ResponseSchema!.SchemaJson, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -114,8 +114,8 @@ public class SuitModAndLiveryBeatsTests
 
         await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
-        Assert.DoesNotContain("\"livery\"", provider.Requests[1].Prompt.History[0].Text, StringComparison.Ordinal);
-        Assert.DoesNotContain("\"livery\"", provider.Requests[1].ResponseSchema!.SchemaJson, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"livery\"", provider.Requests[2].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"livery\"", provider.Requests[2].ResponseSchema!.SchemaJson, StringComparison.Ordinal);
     }
 
     [Fact]

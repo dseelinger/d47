@@ -35,7 +35,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var (panel, _, _, _, model, clock, _) = Open();
 
         Press(panel, "Go");
-        Until(() => model.Asked == 2, 10, 20);
+        Until(() => model.Asked == 3, 10, 20);
         clock.Advance(TimeSpan.FromSeconds(27));
         Reopen(panel);
 
@@ -57,7 +57,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var (panel, _, _, _, model, clock, _) = Open();
 
         Press(panel, "Go");
-        Until(() => model.Asked == 2, 10, 20);
+        Until(() => model.Asked == 3, 10, 20);
         clock.Advance(TimeSpan.FromSeconds(10));
         Reopen(panel);
         var before = Fill(panel);
@@ -80,7 +80,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var headset = Panel(surface);
 
         Press(desktop, "Go");
-        Until(() => model.Asked == 2, 10, 20);
+        Until(() => model.Asked == 3, 10, 20);
         headset.Nav.SelectRoot(AdventuresPage.AskKey);
         Dispatcher.UIThread.RunJobs();
 
@@ -95,21 +95,21 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var (panel, book, surface, said, model, _, _) = Open();
 
         Press(panel, "Go");
-        Until(() => model.Asked == 2, 10, 20);
+        Until(() => model.Asked == 3, 10, 20);
         panel.Nav.SelectRoot(AdventuresPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         model.Release();
-        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null, 10, 20);
+        Until(() => book.Store.Find("F1", "the-missing-freight") is not null, 10, 20);
 
-        Assert.True(book.Store.Find("F1", "the-unrecoverable-column")?.IsDraft);
+        Assert.True(book.Store.Find("F1", "the-missing-freight")?.IsDraft);
         Assert.Equal(["Here it is."], said);
         Assert.Equal(AdventuresPage.RootKey, panel.Nav.Trail[^1].Key);
 
         panel.Nav.SelectRoot(AdventuresPage.AskKey);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(AdventuresPage.ReadPrefix + "the-unrecoverable-column", panel.Nav.Trail[^1].Key);
+        Assert.Equal(AdventuresPage.ReadPrefix + "the-missing-freight", panel.Nav.Trail[^1].Key);
         Assert.Equal(["Here it is."], said);
         Assert.Null(surface.Writing.Current);
     }
@@ -120,7 +120,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var (panel, book, surface, said, model, _, logged) = Open();
 
         Press(panel, "Go");
-        Until(() => model.Asked == 2, 10, 20);
+        Until(() => model.Asked == 3, 10, 20);
         Press(panel, "Stop");
 
         Assert.False(Progress(panel).IsVisible);
@@ -147,7 +147,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var state = AdventuresTabTests.State();
         IGalaxyService galaxy = new AdventuresTabTests.Galaxy();
         var said = new List<string>();
-        var model = new HoldingModel(AdventuresTabTests.Spine, AdventuresTabTests.Beats);
+        var model = new HoldingModel(AdventuresTabTests.Spine, AdventuresTabTests.NoObjections, AdventuresTabTests.Beats, AdventuresTabTests.NoObjections, AdventuresTabTests.NoObjections);
         var clock = new Clock();
         var logged = new RecordingLogger();
 
@@ -223,7 +223,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         public void Advance(TimeSpan by) => Interlocked.Add(ref _ticks, by.Ticks);
     }
 
-    /// <summary>Answers each round in turn; the second round waits for <see cref="Release"/> or the token.</summary>
+    /// <summary>Answers each round in turn; the third round, the objectives, waits for <see cref="Release"/> or the token.</summary>
     private sealed class HoldingModel(params string[] replies) : ILlmProvider
     {
         private readonly TaskCompletionSource _hold = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -256,7 +256,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         {
             var round = Interlocked.Increment(ref _asked) - 1;
 
-            if (round == 1)
+            if (round == 2)
             {
                 try
                 {

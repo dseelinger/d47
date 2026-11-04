@@ -42,7 +42,7 @@ public sealed class AChapterIsMostlyActivityTests
         Assert.DoesNotContain("credits at the last load", outcome.Message);
         Assert.DoesNotContain("Try again in a moment", outcome.Message);
         Assert.Contains("\"beacon\" objective", outcome.Refusal);
-        Assert.Contains("\"beacon\" objective", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains("\"beacon\" objective", provider.Requests[3].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public sealed class AChapterIsMostlyActivityTests
         var outcome = await Generate(provider, chapter: 2);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.DoesNotContain("no more than two", provider.Requests[1].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("no more than two", provider.Requests[2].Prompt.History[0].Text, StringComparison.Ordinal);
     }
 
     private static Task<AdventureOutcome> Generate(RoundScriptedLlmProvider provider, int chapter) =>

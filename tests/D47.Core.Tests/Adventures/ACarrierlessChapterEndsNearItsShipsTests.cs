@@ -131,7 +131,7 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
 
         await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("Its opening must say why the story stays away from Hale's Berth", brief);
         Assert.Contains(TransferLine, brief);
         Assert.Contains("Once the ships are moved, the base moves with them.", brief);
@@ -144,7 +144,7 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
 
         await Generator(provider, new Galaxy(), lightYears: 480).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
 
-        Assert.DoesNotContain(TransferLine, provider.Requests[1].Prompt.History[0].Text);
+        Assert.DoesNotContain(TransferLine, provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -154,7 +154,7 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
 
         await Generator(provider, new Galaxy(), carrier: true).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
 
-        Assert.DoesNotContain(TransferLine, provider.Requests[1].Prompt.History[0].Text);
+        Assert.DoesNotContain(TransferLine, provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -164,7 +164,7 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
 
         await Generator(provider, new Galaxy(), stored: false).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
 
-        Assert.DoesNotContain(TransferLine, provider.Requests[1].Prompt.History[0].Text);
+        Assert.DoesNotContain(TransferLine, provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -174,7 +174,7 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
 
         await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
 
-        Assert.DoesNotContain(TransferLine, provider.Requests[1].Prompt.History[0].Text);
+        Assert.DoesNotContain(TransferLine, provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -184,7 +184,7 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
 
         await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("most of them are at Berth Station in Hale's Berth, 500 light years from here.", brief);
         Assert.Contains("is more than 80 light years from Hale's Berth, the last objective ends with one more step in its \"then\": \"dock\" at Berth Station in Hale's Berth", brief);
     }
@@ -227,7 +227,7 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
 
         var outcome = await Generator(provider, new Galaxy { FromBase = 200 }).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
 
-        var repair = provider.Requests[2].Prompt.History[0].Text;
+        var repair = provider.Requests[3].Prompt.History[0].Text;
         Assert.Contains("3. (not yet written: a further step of the last objective above) — \"dock\" at Berth Station in Hale's Berth", repair);
         Assert.Contains("Write a replacement for objective 3, and for no other.", repair);
         Assert.True(outcome.Succeeded, outcome.Refusal);
@@ -267,7 +267,7 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
         var outcome = await Generator(provider, new Galaxy { FromBase = 200 }, carrier: true).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.DoesNotContain("back to where most of the Commander's stored ships are", provider.Requests[1].Prompt.History[0].Text);
+        Assert.DoesNotContain("back to where most of the Commander's stored ships are", provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -279,7 +279,7 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
             .GenerateAsync(new AdventureAsk(Story: Chapter with { FinaleChapter = 2, FinaleChapters = 4 }), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.DoesNotContain("back to where most of the Commander's stored ships are", provider.Requests[1].Prompt.History[0].Text);
+        Assert.DoesNotContain("back to where most of the Commander's stored ships are", provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -289,7 +289,7 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
 
         var outcome = await Generator(provider, new Galaxy { FromBase = 200 }, stored: false, home: "hale's berth").GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
 
-        Assert.Contains("their home system is Hale's Berth", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains("their home system is Hale's Berth", provider.Requests[2].Prompt.History[0].Text);
         Assert.Contains("\"arrive\" in Hale's Berth, back to the Commander's home system.", outcome.Refusal);
     }
 

@@ -21,6 +21,27 @@ public sealed class AGeneratedChoiceIsOfferedByTheShipOrACharacterTests
         """;
 
     [Fact]
+    public async Task ThePlainWordsCheckReadsEachOptionsLabelEndingAndLine()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying("""{"objections": []}"""),
+            RoundScriptedLlmProvider.Saying(Chapter("ship")),
+            RoundScriptedLlmProvider.Saying("""{"objections": []}"""),
+            RoundScriptedLlmProvider.Saying("""{"objections": []}"""))
+        {
+            ScriptsPlainChecks = true,
+        };
+
+        await Generate(provider);
+
+        var plain = provider.Requests.Select(request => request.Prompt.History[0].Text).Last(text => text.Contains("You are checking the wording of a draft", StringComparison.Ordinal));
+
+        Assert.Contains("Option: flee. Ending: Gone to ground. Ending line: Nobody follows.", plain);
+        Assert.Contains("Option: fight.", plain);
+    }
+
+    [Fact]
     public async Task AChoiceIsReadWithItsOptionsAndTheirSteps()
     {
         var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Chapter("ship")));

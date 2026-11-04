@@ -51,7 +51,7 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        foreach (var round in new[] { 0, 1 })
+        foreach (var round in new[] { 0, 2 })
         {
             var prompt = PromptOf(provider, round);
 
@@ -69,13 +69,13 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
         var (_, provider) = await Written(Chapter(Three), SpineText, BeatsMeeting(Three));
         string[] placesAndMilestones = ["arrive", "dock", "land", "scan", "rank", "board", "engineer", "crew", "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "claim", "unlock"];
 
-        var kinds = KindsOf(provider, 1);
+        var kinds = KindsOf(provider, 2);
 
         Assert.Equal(["bounty", "mission", "signal"], kinds.Except(placesAndMilestones).Order());
         Assert.Contains("engineer", kinds);
         Assert.Contains("crew", kinds);
         Assert.DoesNotContain("livery", kinds);
-        Assert.DoesNotContain("onfoot", PromptOf(provider, 1).Split('\n').Where(line => line.StartsWith("- \"", StringComparison.Ordinal)).Select(line => line.Split('"')[1]));
+        Assert.DoesNotContain("onfoot", PromptOf(provider, 2).Split('\n').Where(line => line.StartsWith("- \"", StringComparison.Ordinal)).Select(line => line.Split('"')[1]));
     }
 
     [Fact]
@@ -85,8 +85,8 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
         var (outcome, provider) = await Written(Chapter(Three), SpineText, without, Repairs.Replacing(without, 2), Repairs.Replacing(without, 2));
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("has no objective for this one: ", PromptOf(provider, 2));
-        Assert.Contains("a \"mission\" objective whose family is exactly Mission_Courier, count 3", PromptOf(provider, 2));
+        Assert.Contains("has no objective for this one: ", PromptOf(provider, 3));
+        Assert.Contains("a \"mission\" objective whose family is exactly Mission_Courier, count 3", PromptOf(provider, 3));
         Assert.Contains("has no objective for this one: ", outcome.Refusal);
     }
 
@@ -149,9 +149,9 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
         Assert.Contains("Vary what the Commander does", PromptOf(plain, 0));
         Assert.DoesNotContain("drawn for it by d47", PromptOf(plain, 0));
         Assert.DoesNotContain("Vary what the Commander does", PromptOf(drawn, 0));
-        Assert.DoesNotContain("Vary what the Commander does", PromptOf(drawn, 1));
-        Assert.Contains("The counted kinds, in no order of preference", PromptOf(plain, 1));
-        Assert.DoesNotContain("in no order of preference", PromptOf(drawn, 1));
+        Assert.DoesNotContain("Vary what the Commander does", PromptOf(drawn, 2));
+        Assert.Contains("The counted kinds, in no order of preference", PromptOf(plain, 2));
+        Assert.DoesNotContain("in no order of preference", PromptOf(drawn, 2));
     }
 
     [Trait("Category", "Integration")]

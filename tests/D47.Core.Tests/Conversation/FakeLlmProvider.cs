@@ -88,6 +88,16 @@ public sealed class RoundScriptedLlmProvider(params IReadOnlyList<LlmStreamEvent
 
     public string DefaultModel => "claude-opus-5";
 
+    private const string PlainCheckMarker = "You are checking the wording of a draft";
+
+    private int _scripted;
+
+    /// <summary>Whether a chapter's plain-wording check takes a round of the script; when false it is recorded and answered with no objections.</summary>
+    public bool ScriptsPlainChecks { get; init; }
+
+    /// <summary>The plain-wording checks answered without a scripted round.</summary>
+    public int PlainChecks { get; private set; }
+
     /// <summary>Whether this endpoint searches deferred tools.</summary>
     public bool ToolSearch { get; init; }
 
@@ -109,8 +119,21 @@ public sealed class RoundScriptedLlmProvider(params IReadOnlyList<LlmStreamEvent
         LlmRequest request,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var round = _requests.Count;
         _requests.Add(request);
+
+        if (!ScriptsPlainChecks && request.Prompt.History.Count > 0 && request.Prompt.History[0].Text.Contains(PlainCheckMarker, StringComparison.Ordinal))
+        {
+            PlainChecks++;
+
+            foreach (var streamEvent in Saying("""{"objections": []}""", usage: null))
+            {
+                yield return streamEvent;
+            }
+
+            yield break;
+        }
+
+        var round = _scripted++;
 
         if (round >= rounds.Length)
         {

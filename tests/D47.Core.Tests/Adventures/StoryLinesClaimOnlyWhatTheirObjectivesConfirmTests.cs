@@ -72,7 +72,7 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
 
         await Write(provider);
 
-        var prompt = provider.Requests[1].Prompt.History[0].Text;
+        var prompt = provider.Requests[2].Prompt.History[0].Text;
         var offered = Enum.GetValues<TriggerKind>()
             .Select(kind => kind.ToString().ToLowerInvariant())
             .Where(word => prompt.Contains($"\n- \"{word}\": the Commander", StringComparison.Ordinal))
@@ -91,15 +91,15 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
         var outcome = await Write(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(3, provider.CallCount);
+        Assert.Equal(5, provider.CallCount);
 
-        var prompt = provider.Requests[2].Prompt.History[0].Text;
+        var prompt = provider.Requests[3].Prompt.History[0].Text;
 
         Assert.Contains(TriggerConfirms.Rule, prompt);
         Assert.Contains($"Confirms: {TriggerConfirms.Of(TriggerKind.Dock)}", prompt);
         Assert.Contains("\"Scoop here.\"", prompt);
         Assert.Contains("(the last objective: its lines are the ending)", prompt);
-        Assert.Equal("story_fidelity", provider.Requests[2].ResponseSchema?.Name);
+        Assert.Equal("story_fidelity", provider.Requests[3].ResponseSchema?.Name);
     }
 
     [Fact]
@@ -110,14 +110,14 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
         var outcome = await Write(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(5, provider.CallCount);
+        Assert.Equal(7, provider.CallCount);
 
-        var repair = provider.Requests[3].Prompt.History[0].Text;
+        var repair = provider.Requests[4].Prompt.History[0].Text;
 
         Assert.Contains("Objective 2 (The Anchorage) states something its trigger does not confirm: it says the Commander has docked there before.", repair);
         Assert.Contains("Write a replacement for objective 2, and for no other.", repair);
         Assert.Contains("delete that statement from the lines rather than rewording it", repair);
-        Assert.Equal(["The Lantern", "The Quiet Dock", "The Column Will Not Balance"], outcome.Draft!.Beats.Select(beat => beat.Title));
+        Assert.Equal(["The Lantern", "The Quiet Dock", "The Freight Delivered"], outcome.Draft!.Beats.Select(beat => beat.Title));
     }
 
     [Fact]
@@ -126,13 +126,13 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
         var provider = Scripted(
             SecondObjected,
             QuietDock,
-            """{"objections": [{"objective": 1, "quote": "Scoop here", "kind": "action", "reason": "it says the Commander was paid."}, {"objective": 3, "quote": "It balances", "kind": "event", "reason": "it says no beacon was scanned."}]}""");
+            """{"objections": [{"objective": 1, "quote": "Scoop here", "kind": "action", "reason": "it says the Commander was paid."}, {"objective": 3, "quote": "The freight is delivered", "kind": "event", "reason": "it says no beacon was scanned."}]}""");
 
         var outcome = await Write(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(5, provider.CallCount);
-        Assert.Equal(["The Lantern", "The Quiet Dock", "The Column Will Not Balance"], outcome.Draft!.Beats.Select(beat => beat.Title));
+        Assert.Equal(7, provider.CallCount);
+        Assert.Equal(["The Lantern", "The Quiet Dock", "The Freight Delivered"], outcome.Draft!.Beats.Select(beat => beat.Title));
     }
 
     [Theory]
@@ -146,7 +146,7 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
         var outcome = await Write(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(3, provider.CallCount);
+        Assert.Equal(5, provider.CallCount);
     }
 
     [Fact]
@@ -178,8 +178,8 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
 
         Assert.Contains("the story's Guardian cores came aboard", TriggerConfirms.Of(TriggerKind.Beacon, story: true));
         Assert.DoesNotContain("cores", TriggerConfirms.Of(TriggerKind.Beacon));
-        Assert.Contains($"- \"beacon\": {TriggerConfirms.Of(TriggerKind.Beacon, story: true)}", provider.Requests[1].Prompt.History[0].Text);
-        Assert.Contains($"Confirms: {TriggerConfirms.Of(TriggerKind.Beacon, story: true)}", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains($"- \"beacon\": {TriggerConfirms.Of(TriggerKind.Beacon, story: true)}", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains($"Confirms: {TriggerConfirms.Of(TriggerKind.Beacon, story: true)}", provider.Requests[3].Prompt.History[0].Text);
     }
 
     [Fact]

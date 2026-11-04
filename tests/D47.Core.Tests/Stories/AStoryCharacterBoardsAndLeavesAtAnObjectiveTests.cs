@@ -218,8 +218,8 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
         var chapter = fixtures.Book.Store.Find("F1", first)!;
         Assert.Empty(chapter.Aboard!);
         Assert.Equal(["rider"], chapter.Beats[0].Boards);
-        Assert.Contains("\"boards\": [\"rider\"]", fixtures.Provider.Requests[1].Prompt.History[0].Text, StringComparison.Ordinal);
-        Assert.Contains("Vale (\"rider\") comes aboard at the setUp beat.", fixtures.Provider.Requests[1].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Contains("\"boards\": [\"rider\"]", fixtures.Provider.Requests[2].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Contains("Vale (\"rider\") comes aboard at the setUp beat.", fixtures.Provider.Requests[2].Prompt.History[0].Text, StringComparison.Ordinal);
 
         var reopened = new AdventureStore(fixtures.AdventuresPath, fixtures.Files, NullLogger<AdventureStore>.Instance);
         Assert.True(reopened.Poll());
@@ -244,7 +244,7 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
         Assert.Null(story.Boarded);
         Assert.DoesNotContain("\"boarded\"", fixtures.Files.ReadText(fixtures.StoryPath)!, StringComparison.Ordinal);
         Assert.Equal(["rider"], fixtures.Book.Store.Find("F1", story.CurrentChapter!)!.Aboard);
-        Assert.Contains("Aboard the Commander's ship as this chapter opens: Vale.", fixtures.Provider.Requests[4].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Contains("Aboard the Commander's ship as this chapter opens: Vale.", fixtures.Provider.Requests[7].Prompt.History[0].Text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -264,8 +264,8 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var first = fixtures.Stories.Current("F1")!.CurrentChapter!;
-        Assert.Equal(["rider"], Ids(Beat(fixtures.Provider.Requests[1].ResponseSchema!), "boards"));
-        Assert.False(Beat(fixtures.Provider.Requests[1].ResponseSchema!).TryGetProperty("leaves", out _));
+        Assert.Equal(["rider"], Ids(Beat(fixtures.Provider.Requests[2].ResponseSchema!), "boards"));
+        Assert.False(Beat(fixtures.Provider.Requests[2].ResponseSchema!).TryGetProperty("leaves", out _));
 
         fixtures.Finish("F1", first, Now);
         Assert.Null(await fixtures.Director.Tick("F1", Now.AddDays(3))!);
@@ -274,8 +274,8 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
         Assert.Equal(2, story.Chapters.Count);
         Assert.Equal([new StorySwitch("rider", true, "setUp")], story.Switched);
         Assert.Equal(["rider"], fixtures.Book.Store.Find("F1", story.CurrentChapter!)!.Aboard);
-        Assert.False(Beat(fixtures.Provider.Requests[4].ResponseSchema!).TryGetProperty("boards", out _));
-        Assert.DoesNotContain("openingBoards", fixtures.Provider.Requests[4].ResponseSchema!.SchemaJson, StringComparison.Ordinal);
+        Assert.False(Beat(fixtures.Provider.Requests[7].ResponseSchema!).TryGetProperty("boards", out _));
+        Assert.DoesNotContain("openingBoards", fixtures.Provider.Requests[7].ResponseSchema!.SchemaJson, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -34,17 +34,17 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
     [AvaloniaFact]
     public void ADraftThatCannotBeReadIsWrittenAgainAndTheSecondIsOffered()
     {
-        var model = new RecordingModel(Says(NotAStory), Says(AdventuresTabTests.Spine), Says(AdventuresTabTests.Beats));
+        var model = new RecordingModel(Says(NotAStory), Says(AdventuresTabTests.Spine), Says(AdventuresTabTests.NoObjections), Says(AdventuresTabTests.Beats), Says(AdventuresTabTests.NoObjections), Says(AdventuresTabTests.NoObjections));
         var (panel, book, said) = Open(model);
 
         Press(panel);
-        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null, 10, 20);
+        Until(() => book.Store.Find("F1", "the-missing-freight") is not null, 10, 20);
 
-        Assert.True(book.Store.Find("F1", "the-unrecoverable-column")?.IsDraft);
-        Assert.Equal(4, model.Asked.Count);
+        Assert.True(book.Store.Find("F1", "the-missing-freight")?.IsDraft);
+        Assert.Equal(6, model.Asked.Count);
         Assert.Equal([StoryDirector.WritingAgainLine(2, told: true), "Here it is."], said);
 
-        var beats = model.Asked[2];
+        var beats = model.Asked[3];
         Assert.Contains("An earlier draft of this story could not be used", beats, StringComparison.Ordinal);
         Assert.Contains("The model's answer was not a story I could read.", beats, StringComparison.Ordinal);
     }
@@ -53,7 +53,7 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
     public void TheWritingAgainLineShowsUnderGoWhileTheNextDraftIsWritten()
     {
         var hold = new TaskCompletionSource();
-        var model = new RecordingModel(Says(NotAStory), Says(AdventuresTabTests.Spine), Says(AdventuresTabTests.Beats)) { HoldFrom = 1, Hold = hold.Task };
+        var model = new RecordingModel(Says(NotAStory), Says(AdventuresTabTests.Spine), Says(AdventuresTabTests.NoObjections), Says(AdventuresTabTests.Beats), Says(AdventuresTabTests.NoObjections), Says(AdventuresTabTests.NoObjections)) { HoldFrom = 1, Hold = hold.Task };
         var (panel, book, _) = Open(model);
 
         Press(panel);
@@ -62,7 +62,7 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
         Assert.Equal(StoryDirector.WritingAgainLine(2, told: true), Status(panel).Text);
 
         hold.SetResult();
-        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null, 10, 20);
+        Until(() => book.Store.Find("F1", "the-missing-freight") is not null, 10, 20);
     }
 
     [AvaloniaFact]
@@ -100,13 +100,14 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
     {
         var model = new RecordingModel(
             Says(AdventuresTabTests.Spine),
+            Says(AdventuresTabTests.NoObjections),
             [new LlmStreamEvent.TextDelta(CutOffBeats), new LlmStreamEvent.Completed(new LlmUsage(6084, 2108, 0, 0), LlmStopReason.MaxTokens)]);
         var (panel, _, said) = Open(model);
 
         Press(panel);
         Until(() => Status(panel).Failed, 10, 20);
 
-        Assert.Equal(2, model.Asked.Count);
+        Assert.Equal(3, model.Asked.Count);
         Assert.StartsWith("The model's context ran out.", Status(panel).Text, StringComparison.Ordinal);
         Assert.Single(said);
     }

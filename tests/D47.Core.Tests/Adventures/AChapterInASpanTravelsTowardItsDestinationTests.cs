@@ -74,7 +74,7 @@ public sealed class AChapterInASpanTravelsTowardItsDestinationTests
 
         await Generator(provider, new Galaxy(), Out(2000)).GenerateAsync(new AdventureAsk(Reach: AdventureReach.Anywhere, Story: InASpan), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("2000 light years from Colonia", brief);
         Assert.Contains("at least 1125 light years nearer Colonia", brief);
         Assert.Contains("Halfway House", brief);
@@ -112,7 +112,7 @@ public sealed class AChapterInASpanTravelsTowardItsDestinationTests
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.Contains(outcome.Notes, note => note.Contains("No station or landable body was found near the point on the way to Colonia"));
-        Assert.Contains("is not held to a distance from Colonia", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains("is not held to a distance from Colonia", provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public sealed class AChapterInASpanTravelsTowardItsDestinationTests
         var outcome = await Generator(provider, new Galaxy { FromColonia = 900 }, Out(800)).GenerateAsync(new AdventureAsk(Reach: AdventureReach.Anywhere, Story: InASpan), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Contains("has arrived at Colonia", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains("has arrived at Colonia", provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public sealed class AChapterInASpanTravelsTowardItsDestinationTests
             .GenerateAsync(new AdventureAsk(Reach: AdventureReach.Anywhere, Story: InASpan with { Toward = null }), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Contains("may be far from the bubble", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains("may be far from the bubble", provider.Requests[2].Prompt.History[0].Text);
     }
 
     private static StarPosition Out(double lightYears)

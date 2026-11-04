@@ -196,6 +196,6 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
 
         Assert.Equal(TriggerKind.Beacon, second.Beats[^1].Trigger.Kind);
         Assert.Equal(28, second.Beats[^1].Trigger.JumpRange);
-        Assert.Contains(Secret.Beats.BreakIntoTwo!, fixtures.Provider.Requests[3].Prompt.History[0].Text);
+        Assert.Contains(Secret.Beats.BreakIntoTwo!, fixtures.Provider.Requests[5].Prompt.History[0].Text);
     }
 }

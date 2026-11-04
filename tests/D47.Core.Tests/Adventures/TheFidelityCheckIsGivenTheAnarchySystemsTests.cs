@@ -18,7 +18,7 @@ public sealed class TheFidelityCheckIsGivenTheAnarchySystemsTests
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        return provider.Requests[2].Prompt.History[0].Text;
+        return provider.Requests[3].Prompt.History[0].Text;
     }
 
     [Fact]

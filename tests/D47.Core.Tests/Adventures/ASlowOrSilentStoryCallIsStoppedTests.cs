@@ -181,14 +181,14 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
     public async Task ATimedOutFirstDraftIsWrittenAgain()
     {
         var time = new ManualTime();
-        var provider = new ClockedLlmProvider(time, local: false, Stalls, Says(AdventureGeneratorTests.Spine), Says(AdventureGeneratorTests.GoodBeats));
+        var provider = new ClockedLlmProvider(time, local: false, Stalls, Says(AdventureGeneratorTests.Spine), Says(AdventureGeneratorTests.GoodBeats), Says("""{"objections": []}"""));
         var again = new List<string>();
 
         var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), new RecordingLogger(), time)
             .DraftAsync(new AdventureAsk(Length: AdventureLength.Short), Now, again.Add, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(4, provider.Calls);
+        Assert.Equal(6, provider.Calls);
         Assert.Equal([StoryDirector.WritingAgainLine(2, told: false)], again);
     }
 
@@ -228,9 +228,12 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
     /// <summary>A wait on the clock, then an event.</summary>
     private sealed record Step(TimeSpan Wait, LlmStreamEvent Event);
 
-    /// <summary>Plays one round per call, moving <see cref="ManualTime"/> a second at a time through each step's wait.</summary>
+    /// <summary>Plays one round per call, answering a plain-wording check with no objections and no round, moving <see cref="ManualTime"/> a second at a time through each step's wait.</summary>
     private sealed class ClockedLlmProvider(ManualTime time, bool local, params IReadOnlyList<Step>[] rounds) : ILlmProvider
     {
+        private int _scripted;
+
+        /// <summary>Every call, the plain-wording checks it answers without a scripted round included.</summary>
         public int Calls { get; private set; }
 
         public string Id => "anthropic";
@@ -253,7 +256,16 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
             LlmRequest request,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            var round = rounds[Calls++];
+            Calls++;
+
+            if (request.Prompt.History[0].Text.Contains("You are checking the wording of a draft", StringComparison.Ordinal))
+            {
+                yield return new LlmStreamEvent.TextDelta("""{"objections": []}""");
+                yield return Completed;
+                yield break;
+            }
+
+            var round = rounds[_scripted++];
 
             foreach (var step in round)
             {

@@ -140,7 +140,7 @@ public class CarrierSquadronAndTeamBeatsTests
                 Accepted,
                 TestContext.Current.CancellationToken);
 
-        return (outcome, provider.Requests[1].Prompt.History[0].Text);
+        return (outcome, provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]

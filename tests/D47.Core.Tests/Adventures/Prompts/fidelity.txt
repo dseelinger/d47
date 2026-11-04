@@ -10,7 +10,7 @@ What is true right now, read from the Commander's journal:
 
 A line that tells the Commander which missions to take, such as a mission whose target settlement is run by an Anarchy faction, states nothing to check. A line that says the missions' targets were Anarchy-run is still a claim about how a mission went.
 
-The story's ending: The column balances.
+The story's ending: The freight is found and delivered.
 
 Objectives:
 1. The Lantern — arrive: Ossen's Lantern
@@ -19,8 +19,8 @@ Objectives:
 2. The Tour — complete one sightseeing mission
    Confirms: a sightseeing mission was handed in, so its passengers were taken to the sights it listed — not what they made of them
    Lines: "Take the tourists round."
-3. The Column Will Not Balance (the last objective: its lines are the ending) — rank: Trade 8
+3. The Freight Delivered (the last objective: its lines are the ending) — rank: Trade 8
    Confirms: a promotion to at least that rank in that career — not how it was earned
-   Lines: "It balances."
+   Lines: "The freight is delivered."
 
 Answer with one JSON object and nothing else: {"objections": [{"objective": number, "quote": string, "kind": "action" | "history" | "event" | "fiction", "reason": string}]}. "objective" is the objective's number; "quote" is the words of its lines that make the statement, copied exactly; "kind" is "action" for what the Commander did, "history" for where the Commander has been or their history with a place, "event" for how a game event went, and "fiction" for anything the cast say, send, offer, remember or own, a record in the story, or an opinion; "reason" is one plain sentence saying what the lines state that the trigger does not confirm. Use an empty list when every objective stands.

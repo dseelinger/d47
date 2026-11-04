@@ -533,6 +533,18 @@ public sealed class AdventureGenerator(
             }
 
             (name, spine) = (readName, read);
+
+            (name, spine, var unplain) = await PlainSpineAsync(ask, facts, notable, candidates, name, spine, cancellationToken).ConfigureAwait(false);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return AdventureOutcome.Stopped;
+            }
+
+            if (unplain.Count > 0)
+            {
+                return Failed(null, NotPlain + string.Join(" ", unplain.Select(found => found.Describe())), notes, started, spineAsked);
+            }
         }
 
         Enter(ask, WriteStage.Objectives);
@@ -584,6 +596,21 @@ public sealed class AdventureGenerator(
         var revisedSpine = json is null ? null : ReadSpine(json, out var revisedName);
         var spine = revisedSpine is { IsEmpty: false } ? revisedSpine : draft.Spine ?? new AdventureSpine();
         var name = json is not null && ReadSpine(json, out var renamed) is not null && renamed is { Length: > 0 } ? renamed : draft.Name;
+
+        if (revisedSpine is { IsEmpty: false } || !string.Equals(name, draft.Name, StringComparison.Ordinal))
+        {
+            (name, spine, var unplain) = await PlainSpineAsync(ask, facts, notable, candidates, name, spine, cancellationToken).ConfigureAwait(false);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return AdventureOutcome.Stopped;
+            }
+
+            if (unplain.Count > 0)
+            {
+                return Failed(null, NotPlain + string.Join(" ", unplain.Select(found => found.Describe())), notes, started, asked);
+            }
+        }
 
         return await FinishAsync(ask, facts, notable, candidates, name, spine, asked, previous: draft, now, notes, started, cancellationToken).ConfigureAwait(false);
     }
@@ -656,7 +683,8 @@ public sealed class AdventureGenerator(
         var raised = new Dictionary<int, List<string>>();
 
         string? outage = null;
-        var objected = false;
+        var objected = Check.Places;
+        var plainPassed = new HashSet<int>();
         var resolved = await HoldToWhatTheyConfirmAsync(await CheckAsync(read).ConfigureAwait(false), read).ConfigureAwait(false);
 
         if (cancellationToken.IsCancellationRequested)
@@ -679,11 +707,55 @@ public sealed class AdventureGenerator(
         // The objectives that stood are kept; only the refused ones go back through the turn, before the Commander sees anything.
         var placeRounds = 0;
         var fidelityRounds = 0;
+        var plainRounds = 0;
 
-        while (resolved.Refusals.Count > 0 && (objected ? fidelityRounds < FidelityRepairRounds : placeRounds < RepairRounds))
+        while (resolved.Refusals.Count > 0 && (objected switch
         {
-            var forFidelity = objected;
-            var round = forFidelity ? ++fidelityRounds : ++placeRounds;
+            Check.Plain => plainRounds < PlainRepairRounds,
+            Check.Fidelity => fidelityRounds < FidelityRepairRounds,
+            _ => placeRounds < RepairRounds,
+        }))
+        {
+            var kind = objected;
+            var round = kind switch { Check.Plain => ++plainRounds, Check.Fidelity => ++fidelityRounds, _ => ++placeRounds };
+            var rewritten = new HashSet<int>();
+
+            if (kind == Check.Plain)
+            {
+                var (swapped, changed, left) = Rewritten(read, resolved.Refusals);
+
+                if (changed.Count > 0)
+                {
+                    var refusedBefore = resolved.Refusals;
+
+                    read = swapped;
+                    rewritten.UnionWith(changed.Where(index => index >= 0));
+                    passed.ExceptWith(rewritten.SelectMany(index => Group(read.Beats, index)));
+                    plainPassed.ExceptWith(changed);
+
+                    if (left.Count == 0)
+                    {
+                        resolved = await HoldToWhatTheyConfirmAsync(Blame(await CheckAsync(read).ConfigureAwait(false), refusedBefore, rewritten, offset), read).ConfigureAwait(false);
+
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            return AdventureOutcome.Stopped;
+                        }
+
+                        if (outage is not null)
+                        {
+                            return GalaxyDown(outage, notes, started);
+                        }
+
+                        LogRefusals(ask, $"plain rewrite {round.ToString(CultureInfo.InvariantCulture)}", PlainStep, resolved.Refusals);
+
+                        continue;
+                    }
+
+                    resolved = resolved with { Refusals = left };
+                }
+            }
+
             var repair = new Repair(read.Beats, resolved.Refusals, offset);
             var again = await AskJsonAsync(
                 RepairStep,
@@ -715,7 +787,14 @@ public sealed class AdventureGenerator(
 
             read = spliced;
             passed.ExceptWith(replaced.SelectMany(index => Group(read.Beats, index)));
-            resolved = await HoldToWhatTheyConfirmAsync(Blame(await CheckAsync(read).ConfigureAwait(false), before, replaced, offset), read).ConfigureAwait(false);
+            plainPassed.ExceptWith(replaced.SelectMany(index => Group(read.Beats, index)));
+
+            if (repair.Opening)
+            {
+                plainPassed.Remove(-1);
+            }
+
+            resolved = await HoldToWhatTheyConfirmAsync(Blame(await CheckAsync(read).ConfigureAwait(false), before, replaced.Union(rewritten).ToHashSet(), offset), read).ConfigureAwait(false);
 
             if (cancellationToken.IsCancellationRequested)
             {
@@ -727,7 +806,7 @@ public sealed class AdventureGenerator(
                 return GalaxyDown(outage, notes, started);
             }
 
-            LogRefusals(ask, $"{(forFidelity ? "fidelity repair" : "repair")} {round.ToString(CultureInfo.InvariantCulture)}", again.Step, resolved.Refusals);
+            LogRefusals(ask, $"{kind switch { Check.Plain => "plain repair", Check.Fidelity => "fidelity repair", _ => "repair" }} {round.ToString(CultureInfo.InvariantCulture)}", again.Step, resolved.Refusals);
         }
 
         resolved = KeepWhatTheRewriteKept(NarrateSelfNaming(resolved, ask));
@@ -736,7 +815,9 @@ public sealed class AdventureGenerator(
         {
             return Failed(
                 read.Reply,
-                (resolved.Refusals.Any(refusal => refusal.Text.StartsWith(UnknownSpeaker, StringComparison.Ordinal))
+                (resolved.Refusals.Any(refusal => refusal.Plain)
+                    ? NotPlain
+                    : resolved.Refusals.Any(refusal => refusal.Text.StartsWith(UnknownSpeaker, StringComparison.Ordinal))
                     ? "The story cannot stand: "
                     : resolved.Refusals.Any(refusal => refusal.Text.StartsWith(Unconfirmed, StringComparison.Ordinal))
                         ? "The story states what its objectives do not confirm: "
@@ -800,7 +881,7 @@ public sealed class AdventureGenerator(
         // Sets objected when the refusals returned are the check's objections.
         async Task<Resolved> HoldToWhatTheyConfirmAsync(Resolved dryRun, ReadAnswer answer)
         {
-            objected = false;
+            objected = Check.Places;
 
             if (dryRun.Refusals.Count > 0 || cancellationToken.IsCancellationRequested)
             {
@@ -826,9 +907,38 @@ public sealed class AdventureGenerator(
 
             passed.UnionWith(Enumerable.Range(0, answer.Beats.Count).Except(objections.SelectMany(objection => objection.Objectives)));
 
-            objected = objections.Count > 0;
+            if (objections.Count > 0)
+            {
+                objected = Check.Fidelity;
 
-            return objections.Count == 0 ? dryRun : dryRun with { Refusals = objections };
+                return dryRun with { Refusals = objections };
+            }
+
+            var parts = BeatParts(answer.Opening, answer.Beats, offset);
+            var unplain = (await PlainAsync(ask, parts, cancellationToken).ConfigureAwait(false))
+                .Select(found => (found, part: parts.First(part => part.Name == found.Part)))
+                .Where(pair => !plainPassed.Contains(pair.part.Index!.Value))
+                .GroupBy(pair => pair.part.Index!.Value)
+                .Select(group => new Refusal(
+                    $"{(group.Key < 0 ? "The opening" : $"Objective {offset + group.Key + 1} ({answer.Beats[group.Key].Title})")} is not plain: {string.Join(" ", group.Select(pair => pair.found.Describe()))}",
+                    group.Key < 0 ? [] : [group.Key])
+                {
+                    Plain = true,
+                    Opening = group.Key < 0,
+                    Unplain = [.. group.Select(pair => pair.found)],
+                })
+                .ToList();
+
+            plainPassed.UnionWith(parts.Select(part => part.Index!.Value).Except(unplain.SelectMany(refusal => refusal.Opening ? [-1] : refusal.Objectives)));
+
+            if (unplain.Count > 0)
+            {
+                objected = Check.Plain;
+
+                return dryRun with { Refusals = unplain };
+            }
+
+            return dryRun;
         }
     }
 
@@ -915,9 +1025,6 @@ public sealed class AdventureGenerator(
         }
 
         return Letters(string.Join(" ", beats[head].Lines.Select(line => line.Text))).Contains(quoted, StringComparison.Ordinal);
-
-        static string Letters(string text) =>
-            string.Join(' ', Regex.Split(text.ToLowerInvariant(), @"[^\p{L}\p{N}]+").Where(word => word.Length > 0));
     }
 
     private static StoryCall FidelityInstruction(Facts facts, AdventureSpine spine, IReadOnlyList<ReadBeat> beats, int offset, bool story, IReadOnlyList<SystemSummary> anarchy)
@@ -980,6 +1087,364 @@ public sealed class AdventureGenerator(
 
         return new StoryCall(text.ToString(), StoryAnswer.FidelitySchema());
     }
+
+        /// <summary>Which check raised the refusals a repair round answers; each has its own round count.</summary>
+    private enum Check
+    {
+        Places,
+        Fidelity,
+        Plain,
+    }
+
+    /// <summary>A named piece of the chapter's wording the plain check reads; <see cref="Index"/> is its objective's index in the beats as written, or -1 for the opening.</summary>
+    private sealed record PlainPart(string Name, string Text, int? Index = null);
+
+    private sealed record PlainObjection(string Part, string Quote, string Kind, string Reason)
+    {
+        /// <summary>The quoted words written plainly, to stand in their place; null when the checker gave none or the kind is "invented".</summary>
+        public string? Plain { get; init; }
+
+        public string Describe() => $"{Part}: \"{Quote}\" is {(Kind == "invented" ? "a feature the game does not have" : "figurative")}; {Reason}";
+    }
+
+    private static List<PlainPart> SpineParts(string name, AdventureSpine spine) =>
+    [
+        new("title", name),
+        new("premise", spine.Premise ?? string.Empty),
+        new("want", spine.Want ?? string.Empty),
+        new("stake", spine.Stake ?? string.Empty),
+        new("turn", spine.Turn ?? string.Empty),
+        new("ending", spine.Ending ?? string.Empty),
+    ];
+
+    private static List<PlainPart> BeatParts(IReadOnlyList<AdventureLine> opening, IReadOnlyList<ReadBeat> beats, int offset)
+    {
+        var parts = new List<PlainPart>();
+
+        if (opening.Count > 0)
+        {
+            parts.Add(new PlainPart("opening", string.Join(" ", opening.Select(line => line.Text)), -1));
+        }
+
+        for (var index = 0; index < beats.Count; index++)
+        {
+            var beat = beats[index];
+            var text = new StringBuilder();
+
+            if (!beat.Continues)
+            {
+                text.Append("Title: ").Append(beat.Title).Append(". Lines: ").Append(string.Join(" ", beat.Lines.Select(line => line.Text))).Append(' ');
+            }
+
+            text.Append("Reason: ").Append(beat.Reason).Append(" Task: ").Append(beat.Describe());
+
+            foreach (var option in beat.Options)
+            {
+                text.Append(" Option: ").Append(option.Label).Append(". Ending: ").Append(option.Ending).Append(". Ending line: ").Append(option.EndingLine).Append('.');
+
+                foreach (var step in option.Steps)
+                {
+                    text.Append(" Lines: ").Append(string.Join(" ", step.Lines.Select(line => line.Text))).Append(" Reason: ").Append(step.Reason).Append(" Task: ").Append(step.Describe());
+                }
+            }
+
+            parts.Add(new PlainPart($"objective {(offset + index + 1).ToString(CultureInfo.InvariantCulture)}", text.ToString(), index));
+        }
+
+        return parts;
+    }
+
+    private static string Letters(string text) =>
+        string.Join(' ', Regex.Split(text.ToLowerInvariant(), @"[^\p{L}\p{N}]+").Where(word => word.Length > 0));
+
+    /// <summary>
+    /// One call reading the wording of <paramref name="parts"/> against <see cref="PlainWords.Rule"/>; an objection whose quote is not
+    /// in the part it names is dropped. A reply that cannot be read objects to nothing.
+    /// </summary>
+    private async Task<IReadOnlyList<PlainObjection>> PlainAsync(AdventureAsk ask, IReadOnlyList<PlainPart> parts, CancellationToken cancellationToken)
+    {
+        if (parts.Count == 0)
+        {
+            return [];
+        }
+
+        var asked = await AskJsonAsync(PlainStep, PlainInstruction(parts), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+
+        if (asked.Json is null)
+        {
+            logger.LogInformation("Draft {Draft}, plain step not read: {Why}", ask.Draft, asked.Why);
+
+            return [];
+        }
+
+        return ReadJson<IReadOnlyList<PlainObjection>>(asked.Json, allowTrailingCommas: false, root =>
+        {
+            if (!root.TryGetProperty("objections", out var list) || list.ValueKind != JsonValueKind.Array)
+            {
+                return [];
+            }
+
+            var found = new List<PlainObjection>();
+
+            foreach (var objection in list.EnumerateArray())
+            {
+                var kind = Text(objection, "kind");
+
+                if (Text(objection, "part") is not { } named || Text(objection, "quote") is not { } quote || Letters(quote) is not { Length: > 0 } quoted
+                    || kind is not ("figurative" or "invented")
+                    || parts.FirstOrDefault(part => string.Equals(part.Name, named.Trim(), StringComparison.OrdinalIgnoreCase)) is not { } part
+                    || !Letters(part.Text).Contains(quoted, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                found.Add(new PlainObjection(part.Name, quote, kind, Text(objection, "reason") ?? "the wording is not plain")
+                {
+                    Plain = kind == "figurative" && Text(objection, "plain") is { Length: > 0 } plain ? plain.Trim() : null,
+                });
+            }
+
+            return found;
+        }) ?? [];
+    }
+
+    /// <summary>The plain-wording check on named pieces of text, as each objection's part and the words it quotes.</summary>
+    public async Task<IReadOnlyList<(string Part, string Quote)>> PlainObjectionsAsync(IReadOnlyList<(string Name, string Text)> parts, CancellationToken cancellationToken) =>
+        [.. (await PlainAsync(new AdventureAsk(), [.. parts.Select(part => new PlainPart(part.Name, part.Text))], cancellationToken).ConfigureAwait(false)).Select(found => (found.Part, found.Quote))];
+
+    /// <summary>
+    /// The title and spine checked for plain wording, the spine asked for again with the objections up to
+    /// <see cref="PlainRepairRounds"/> times; the objections left are empty when the last version passed.
+    /// </summary>
+    private async Task<(string Name, AdventureSpine Spine, IReadOnlyList<PlainObjection> Unplain)> PlainSpineAsync(
+        AdventureAsk ask, Facts facts, IReadOnlyList<NotablePlace> notable, Candidates candidates, string name, AdventureSpine spine, CancellationToken cancellationToken)
+    {
+        var plainRounds = 0;
+        var unplain = await PlainAsync(ask, SpineParts(name, spine), cancellationToken).ConfigureAwait(false);
+
+        while (unplain.Count > 0 && plainRounds < PlainRepairRounds && !cancellationToken.IsCancellationRequested)
+        {
+            plainRounds++;
+            logger.LogInformation("Draft {Draft}, plain spine round {Round}: {Objections}", ask.Draft, plainRounds, string.Join(" ", unplain.Select(found => found.Describe())));
+
+            var (swappedName, swappedSpine, left) = Rewritten(name, spine, unplain);
+            (name, spine) = (swappedName, swappedSpine);
+
+            if (left.Count == 0)
+            {
+                unplain = await PlainAsync(ask, SpineParts(name, spine), cancellationToken).ConfigureAwait(false);
+
+                continue;
+            }
+
+            unplain = left;
+
+            var again = await AskJsonAsync(SpineStep, SpineInstruction(ask, facts, notable, candidates, new PlainFix(name, spine, unplain)), SpineOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+            string? newName = null;
+            var rewritten = again.Json is null ? null : ReadSpine(again.Json, out newName);
+
+            if (rewritten is { IsEmpty: false } && newName is not null)
+            {
+                (name, spine) = (newName, rewritten);
+            }
+
+            unplain = await PlainAsync(ask, SpineParts(name, spine), cancellationToken).ConfigureAwait(false);
+        }
+
+        return (name, spine, unplain);
+    }
+
+    /// <summary>
+    /// <paramref name="text"/> with the first occurrence of <paramref name="quote"/>, ignoring case, replaced by
+    /// <paramref name="plain"/>; null when the quote is not in it.
+    /// </summary>
+    private static string? Swapped(string? text, string quote, string plain)
+    {
+        var at = text?.IndexOf(quote, StringComparison.OrdinalIgnoreCase) ?? -1;
+
+        return at < 0 ? null : string.Concat(text![..at], plain, text[(at + quote.Length)..]);
+    }
+
+    /// <summary>The lines with the quote replaced in the first line that holds it; null when none does.</summary>
+    private static IReadOnlyList<AdventureLine>? Swapped(IReadOnlyList<AdventureLine> lines, string quote, string plain)
+    {
+        for (var index = 0; index < lines.Count; index++)
+        {
+            if (Swapped(lines[index].Text, quote, plain) is { } text)
+            {
+                return [.. lines.Take(index), lines[index] with { Text = text }, .. lines.Skip(index + 1)];
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The beat with the quote replaced where its title, reason, lines or an option's words hold it; null when none does.</summary>
+    private static ReadBeat? Swapped(ReadBeat beat, string quote, string plain)
+    {
+        if (Swapped(beat.Lines, quote, plain) is { } lines)
+        {
+            return beat with { Lines = lines };
+        }
+
+        if (Swapped(beat.Title, quote, plain) is { } title)
+        {
+            return beat with { Title = title };
+        }
+
+        if (Swapped(beat.Reason, quote, plain) is { } reason)
+        {
+            return beat with { Reason = reason };
+        }
+
+        for (var index = 0; index < beat.Options.Count; index++)
+        {
+            var option = beat.Options[index];
+            var changed = Swapped(option.EndingLine, quote, plain) is { } line ? option with { EndingLine = line }
+                : Swapped(option.Ending, quote, plain) is { } ending ? option with { Ending = ending }
+                : Swapped(option.Label, quote, plain) is { } label ? option with { Label = label }
+                : null;
+
+            for (var step = 0; changed is null && step < option.Steps.Count; step++)
+            {
+                if (Swapped(option.Steps[step], quote, plain) is { } swapped)
+                {
+                    changed = option with { Steps = [.. option.Steps.Take(step), swapped, .. option.Steps.Skip(step + 1)] };
+                }
+            }
+
+            if (changed is not null)
+            {
+                return beat with { Options = [.. beat.Options.Take(index), changed, .. beat.Options.Skip(index + 1)] };
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The draft with each plain refusal's rewrites put in place, the indexes changed (-1 for the opening), and the refusals left
+    /// for the writer: any with an objection that has no rewrite or whose quote is not where the rewrite can go.
+    /// </summary>
+    private static (ReadAnswer Read, IReadOnlySet<int> Changed, IReadOnlyList<Refusal> Left) Rewritten(ReadAnswer read, IReadOnlyList<Refusal> refusals)
+    {
+        var beats = read.Beats.ToList();
+        var opening = read.Opening;
+        var changed = new HashSet<int>();
+        var left = new List<Refusal>();
+
+        foreach (var refusal in refusals)
+        {
+            if (!refusal.Plain || refusal.Unplain.Count == 0 || refusal.Unplain.Any(found => found.Plain is null))
+            {
+                left.Add(refusal);
+                continue;
+            }
+
+            var index = refusal.Opening ? -1 : refusal.Objectives[0];
+            var (trialBeats, trialOpening) = (beats.ToList(), opening);
+            var applied = true;
+
+            foreach (var found in refusal.Unplain)
+            {
+                if (index < 0)
+                {
+                    var lines = Swapped(trialOpening, found.Quote, found.Plain!);
+                    applied = lines is not null;
+                    trialOpening = lines ?? trialOpening;
+                }
+                else
+                {
+                    var beat = Swapped(trialBeats[index], found.Quote, found.Plain!);
+                    applied = beat is not null;
+                    trialBeats[index] = beat ?? trialBeats[index];
+                }
+
+                if (!applied)
+                {
+                    break;
+                }
+            }
+
+            if (!applied)
+            {
+                left.Add(refusal);
+                continue;
+            }
+
+            (beats, opening) = (trialBeats, trialOpening);
+            changed.Add(index);
+        }
+
+        return (read with { Beats = beats, Opening = opening }, changed, left);
+    }
+
+    /// <summary>The title and spine with each objection's rewrite put in place, and the objections left for the spine to be written again.</summary>
+    private static (string Name, AdventureSpine Spine, IReadOnlyList<PlainObjection> Left) Rewritten(string name, AdventureSpine spine, IReadOnlyList<PlainObjection> objections)
+    {
+        var left = new List<PlainObjection>();
+
+        foreach (var found in objections)
+        {
+            var plain = found.Plain;
+            var swapped = plain is null ? null : found.Part switch
+            {
+                "title" => Swapped(name, found.Quote, plain) is { } title ? (name = title) : null,
+                "premise" => Swapped(spine.Premise, found.Quote, plain) is { } premise ? (spine = spine with { Premise = premise }).Premise : null,
+                "want" => Swapped(spine.Want, found.Quote, plain) is { } want ? (spine = spine with { Want = want }).Want : null,
+                "stake" => Swapped(spine.Stake, found.Quote, plain) is { } stake ? (spine = spine with { Stake = stake }).Stake : null,
+                "turn" => Swapped(spine.Turn, found.Quote, plain) is { } turn ? (spine = spine with { Turn = turn }).Turn : null,
+                "ending" => Swapped(spine.Ending, found.Quote, plain) is { } ending ? (spine = spine with { Ending = ending }).Ending : null,
+                _ => null,
+            };
+
+            if (swapped is null)
+            {
+                left.Add(found);
+            }
+        }
+
+        return (name, spine, left);
+    }
+
+    private static StoryCall PlainInstruction(IReadOnlyList<PlainPart> parts)
+    {
+        var text = new StringBuilder();
+
+        text.AppendLine(
+            "You are checking the wording of a draft of a story the Commander will fly in Elite Dangerous. The words below are read or "
+            + "spoken to the Commander. The rule they were written under:");
+        text.AppendLine();
+        text.AppendLine(PlainWords.Rule);
+        text.AppendLine();
+        text.AppendLine(
+            "List a phrase only where it breaks that rule. \"figurative\" is a metaphor or an image standing for a game thing or event, "
+            + "such as a rank called a line in a book, or a closing line that counts books. \"invented\" is a feature a game system does not "
+            + "have, such as an address line on a Powerplay rank. A real object in the story, such as a logbook, a note or a station's door, "
+            + "is not an objection.");
+        text.AppendLine();
+        text.AppendLine("Parts:");
+
+        foreach (var part in parts)
+        {
+            text.AppendLine($"[{part.Name}] {part.Text}");
+        }
+
+        text.AppendLine();
+        text.AppendLine(
+            "Answer with one JSON object and nothing else: " + StoryAnswer.PlainShape
+            + ". \"part\" is the name in brackets; \"quote\" is the words that break the rule, copied exactly from that part; \"reason\" is "
+            + "one plain sentence saying what they stand for or what the game does not have; \"plain\" is the quoted words written again in "
+            + "the game's own terms, to be put in their place as they stand, so they fit the sentence around them and state nothing the part "
+            + "did not. For \"invented\", give \"\" for \"plain\". Use an empty list when every part is plain.");
+
+        return new StoryCall(text.ToString(), StoryAnswer.PlainSchema());
+    }
+
+    /// <summary>Rounds of replacements a draft's plain-wording objections get, counted apart from the other two.</summary>
+    public const int PlainRepairRounds = 2;
+
+    private const string NotPlain = "The story is not written plainly: ";
 
     /// <summary>Rounds of replacements a draft's refused objectives get before the draft fails.</summary>
     public const int RepairRounds = 2;
@@ -2358,6 +2823,7 @@ public sealed class AdventureGenerator(
     private const string BeatsStep = "beats";
     private const string RepairStep = "replacements";
     private const string FidelityStep = "fidelity";
+    private const string PlainStep = "plain";
     private const string HeadingStep = "heading";
 
     /// <summary>One model call: the step it served, the model asked, the reply, and the JSON object read out of it.</summary>
@@ -2417,7 +2883,10 @@ public sealed class AdventureGenerator(
 
     // ---- the instructions ------------------------------------------------------------------
 
-    private static StoryCall SpineInstruction(AdventureAsk ask, Facts facts, IReadOnlyList<NotablePlace> notable, Candidates candidates)
+    /// <summary>A spine draft and the wording objections to it, for the spine to be written again.</summary>
+    private sealed record PlainFix(string Name, AdventureSpine Spine, IReadOnlyList<PlainObjection> Objections);
+
+    private static StoryCall SpineInstruction(AdventureAsk ask, Facts facts, IReadOnlyList<NotablePlace> notable, Candidates candidates, PlainFix? fix = null)
     {
         var text = new StringBuilder();
 
@@ -2488,6 +2957,27 @@ public sealed class AdventureGenerator(
 
         text.AppendLine();
         text.Append(TriggerConfirms.Section(Enum.GetValues<TriggerKind>().Where(kind => kind is not (TriggerKind.Beacon or TriggerKind.Reach or TriggerKind.Site)).Select(kind => kind.ToString().ToLowerInvariant())));
+        if (fix is not null)
+        {
+            text.AppendLine();
+            text.AppendLine("Your draft of the spine:");
+            text.AppendLine($"name: {fix.Name}");
+            text.AppendLine($"premise: {fix.Spine.Premise}");
+            text.AppendLine($"want: {fix.Spine.Want}");
+            text.AppendLine($"stake: {fix.Spine.Stake}");
+            text.AppendLine($"turn: {fix.Spine.Turn}");
+            text.AppendLine($"ending: {fix.Spine.Ending}");
+            text.AppendLine();
+            text.AppendLine("Its wording is refused, for these reasons:");
+
+            foreach (var found in fix.Objections)
+            {
+                text.Append("- ").AppendLine(found.Describe());
+            }
+
+            text.AppendLine("Write the spine again with the same events, saying each refused thing in the game's own terms and not keeping the image in other words.");
+        }
+
         text.AppendLine();
         text.AppendLine(
             "Answer with one JSON object and nothing else, with these string fields: \"name\" (the story's title, a few "
@@ -3922,6 +4412,13 @@ public sealed class AdventureGenerator(
                 + "or remember, or what the trigger does confirm.");
         }
 
+        if (repair.Refusals.Any(refusal => refusal.Plain))
+        {
+            text.AppendLine(
+                "Where a reason quotes figurative or invented wording, say the same thing in the game's own terms, naming the station, "
+                + "system or rank, and do not keep the image in other words.");
+        }
+
         if (repair.Opening)
         {
             text.AppendLine("The opening is refused too: write it again as \"opening\".");
@@ -4488,6 +4985,12 @@ public sealed class AdventureGenerator(
         public bool Opening { get; init; }
 
         public bool Destination { get; init; }
+
+        /// <summary>Whether the plain-wording check raised it.</summary>
+        public bool Plain { get; init; }
+
+        /// <summary>The plain-wording objections behind it, with any rewrites the checker gave.</summary>
+        public IReadOnlyList<PlainObjection> Unplain { get; init; } = [];
 
         /// <summary>The step a repair adds after the last one, as the writer is told it; the refusal is charged to the index one past the last.</summary>
         public string? Appends { get; init; }

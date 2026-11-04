@@ -58,8 +58,8 @@ public sealed class ASightseeingChapterNamesItsSightTests
         Assert.Equal("Ossen's Lantern", outcome.Draft!.Sight);
         Assert.Equal(0, places.Calls);
         Assert.Contains("sightseeing chapter", provider.Requests[0].Prompt.History[0].Text);
-        Assert.Contains("The Lantern Spire", provider.Requests[1].Prompt.History[0].Text);
-        Assert.Contains("must contain an arrive, land or scan objective", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains("The Lantern Spire", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains("must contain an arrive, land or scan objective", provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]

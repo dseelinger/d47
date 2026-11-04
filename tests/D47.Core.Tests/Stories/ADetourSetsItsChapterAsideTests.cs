@@ -117,7 +117,7 @@ public sealed class ADetourSetsItsChapterAsideTests
         Assert.Equal(["The Lantern Again"], ask.SetAside.Done);
         Assert.Equal(Words, ask.SetAside.Words);
 
-        var prompts = fixtures.Provider.Requests.Skip(9).Select(request => request.Prompt.History[0].Text).ToList();
+        var prompts = fixtures.Provider.Requests.Skip(15).Select(request => request.Prompt.History[0].Text).ToList();
         Assert.Contains(prompts, prompt => prompt.Contains("set an earlier version of this chapter aside to go somewhere else", StringComparison.Ordinal));
         Assert.Contains(prompts, prompt => prompt.Contains("Objectives already done: The Lantern Again", StringComparison.Ordinal));
         Assert.DoesNotContain(prompts, prompt => prompt.Contains("failed", StringComparison.OrdinalIgnoreCase) && prompt.Contains("earlier attempt", StringComparison.Ordinal));

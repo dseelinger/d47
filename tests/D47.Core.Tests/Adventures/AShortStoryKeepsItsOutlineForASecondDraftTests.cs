@@ -20,8 +20,8 @@ public sealed class AShortStoryKeepsItsOutlineForASecondDraftTests
         var outcome = await Draft(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(4, provider.CallCount);
-        Assert.Equal("The Unrecoverable Column", outcome.Draft!.Name);
+        Assert.Equal(6, provider.CallCount);
+        Assert.Equal("The Missing Freight", outcome.Draft!.Name);
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public sealed class AShortStoryKeepsItsOutlineForASecondDraftTests
         var outcome = await Draft(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(6, provider.CallCount);
+        Assert.Equal(9, provider.CallCount);
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public sealed class AShortStoryKeepsItsOutlineForASecondDraftTests
         var outcome = await Draft(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(4, provider.CallCount);
+        Assert.Equal(6, provider.CallCount);
     }
 
     private static RoundScriptedLlmProvider Scripted(params string[] rounds) =>

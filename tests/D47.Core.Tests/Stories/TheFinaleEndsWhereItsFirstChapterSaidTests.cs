@@ -97,7 +97,7 @@ public sealed class TheFinaleEndsWhereItsFirstChapterSaidTests
 
         Assert.True((await Generator(provider).GenerateAsync(Ask(finale: 3, destination: DeepMoon), Now, CancellationToken.None)).Succeeded);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
 
         Assert.Contains("The story's finale ends on Deep Moon 1 a, in Deep Moon, 2500 light years from the Commander's position. One finale chapter is left after this one.", brief);
         Assert.Contains("about 360 light years, the longest one hop may be. A place farther away is reached over several hops.", brief);

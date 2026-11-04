@@ -90,7 +90,7 @@ public sealed class AStoryCanSpendSpansInTheBlackTests
         await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
             .GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("This chapter of the story takes place in the black.", brief, StringComparison.Ordinal);
         Assert.DoesNotContain("outside the bubble", brief, StringComparison.Ordinal);
     }

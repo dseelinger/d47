@@ -78,7 +78,7 @@ public class ATechBrokerUnlockObjectiveWaitsForOneItemTests
         var outcome = await generator.GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        var beats = provider.Requests[1].Prompt.History[0].Text;
+        var beats = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains($"{Remaining} (guardian broker; costs", beats);
         Assert.DoesNotContain($"{Booster} (", beats);
     }

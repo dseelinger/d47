@@ -31,7 +31,7 @@ public sealed class AFailedDraftIsWrittenAgainTests
         Assert.Null(fixtures.Asks[0].LastDraftRefused);
         Assert.Contains("The last objective must be \"beacon\"", fixtures.Asks[1].LastDraftRefused);
 
-        var beats = fixtures.Provider.Requests[4].Prompt.History[0].Text;
+        var beats = fixtures.Provider.Requests[5].Prompt.History[0].Text;
         Assert.Contains("An earlier draft of this chapter could not be used", beats);
         Assert.Contains("The last objective must be \"beacon\"", beats);
     }
@@ -103,7 +103,7 @@ public sealed class AFailedDraftIsWrittenAgainTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        Assert.Equal(4, fixtures.Provider.CallCount);
+        Assert.Equal(6, fixtures.Provider.CallCount);
         Assert.Null(fixtures.Asks[0].Outline);
         Assert.NotNull(fixtures.Asks[1].Outline);
     }
@@ -120,7 +120,7 @@ public sealed class AFailedDraftIsWrittenAgainTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        Assert.Equal(6, fixtures.Provider.CallCount);
+        Assert.Equal(9, fixtures.Provider.CallCount);
         Assert.NotNull(fixtures.Asks[1].Outline);
         Assert.Null(fixtures.Asks[2].Outline);
     }
@@ -135,7 +135,7 @@ public sealed class AFailedDraftIsWrittenAgainTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        Assert.Equal(4, fixtures.Provider.CallCount);
+        Assert.Equal(6, fixtures.Provider.CallCount);
         Assert.Null(fixtures.Asks[1].Outline);
     }
 }

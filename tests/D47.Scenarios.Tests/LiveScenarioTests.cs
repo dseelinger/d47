@@ -13,12 +13,12 @@ namespace D47.Scenarios.Tests;
 [Trait("Category", "Integration")]
 public class LiveScenarioTests
 {
-    private static bool Enabled => Environment.GetEnvironmentVariable("D47_SCENARIOS_LIVE") == "1";
+    internal static bool Enabled => Environment.GetEnvironmentVariable("D47_SCENARIOS_LIVE") == "1";
 
     private static string ProviderId =>
         Environment.GetEnvironmentVariable("D47_SCENARIOS_PROVIDER") ?? LlmProviderCatalog.OpenAiCompatibleId;
 
-    private static string? Model => Blank(Environment.GetEnvironmentVariable("D47_SCENARIOS_MODEL"));
+    internal static string? Model => Blank(Environment.GetEnvironmentVariable("D47_SCENARIOS_MODEL"));
 
     private static string? Endpoint => Blank(Environment.GetEnvironmentVariable("D47_SCENARIOS_ENDPOINT"));
 
@@ -216,7 +216,7 @@ public class LiveScenarioTests
     /// The provider, through the same factory the app uses — so a scenario cannot be answered by a
     /// client this repository does not ship.
     /// </summary>
-    private static ILlmProvider Compose()
+    internal static ILlmProvider Compose()
     {
         var info = LlmProviderCatalog.Find(ProviderId)
                    ?? throw new InvalidOperationException(

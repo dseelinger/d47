@@ -102,7 +102,7 @@ public class APowerPlayObjectiveWaitsForAPledgeOrARankTests
         var (outcome, provider) = await Draft(Beats("pledge", "\"filter\": \"edmund mahon\","), Left);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        var prompt = provider.Requests[1].Prompt.History[0].Text;
+        var prompt = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("\"pledge\":", prompt);
         Assert.DoesNotContain("\"powerrank\":", prompt);
         Assert.Equal("Edmund Mahon", Assert.Single(outcome.Draft!.Beats, beat => beat.Trigger.Kind == TriggerKind.Pledge).Trigger.Filter);
@@ -114,7 +114,7 @@ public class APowerPlayObjectiveWaitsForAPledgeOrARankTests
         var (outcome, provider) = await Draft(Beats("powerrank", "\"rank\": 5,"), PledgedLoad);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        var prompt = provider.Requests[1].Prompt.History[0].Text;
+        var prompt = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("\"powerrank\":", prompt);
         Assert.DoesNotContain("\"pledge\":", prompt);
         Assert.Equal(5, Assert.Single(outcome.Draft!.Beats, beat => beat.Trigger.Kind == TriggerKind.PowerRank).Trigger.Rank);
@@ -125,7 +125,7 @@ public class APowerPlayObjectiveWaitsForAPledgeOrARankTests
     {
         var (_, provider) = await Draft(Beats("arrive", "\"system\": \"Ossen's Lantern\","));
 
-        var prompt = provider.Requests[1].Prompt.History[0].Text;
+        var prompt = provider.Requests[2].Prompt.History[0].Text;
         Assert.DoesNotContain("\"pledge\":", prompt);
         Assert.DoesNotContain("\"powerrank\":", prompt);
     }

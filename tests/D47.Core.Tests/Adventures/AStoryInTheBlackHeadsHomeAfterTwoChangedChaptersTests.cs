@@ -81,7 +81,7 @@ public sealed class AStoryInTheBlackHeadsHomeAfterTwoChangedChaptersTests
 
         await Generator(provider, new Galaxy(), 3000).GenerateAsync(HomeAsk, Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
+        var brief = provider.Requests[2].Prompt.History[0].Text;
         Assert.Contains("3000 light years from Sol", brief);
         Assert.Contains("the story heads home to Sol", brief);
         Assert.Contains("at least 1125 light years nearer Sol", brief);
@@ -127,7 +127,7 @@ public sealed class AStoryInTheBlackHeadsHomeAfterTwoChangedChaptersTests
 
         await Generator(provider, new Galaxy(), 3000).GenerateAsync(new AdventureAsk(Story: Chapter with { FinaleChapter = 2 }), Now, CancellationToken.None);
 
-        Assert.DoesNotContain("heads home", provider.Requests[1].Prompt.History[0].Text);
+        Assert.DoesNotContain("heads home", provider.Requests[2].Prompt.History[0].Text);
     }
 
     private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, double lightYears) =>

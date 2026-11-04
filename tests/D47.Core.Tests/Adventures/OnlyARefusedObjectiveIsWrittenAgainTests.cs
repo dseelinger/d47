@@ -21,7 +21,7 @@ public sealed class OnlyARefusedObjectiveIsWrittenAgainTests
           {"title": "The Anchorage", "function": "catalyst", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
           {"title": "Where The Freight Went", "function": "midpoint", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Colonia", "line": "Twenty-two thousand light years."},
           {"title": "Back To The Lantern", "function": "all is lost", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Nothing was ever loaded."},
-          {"title": "The Column Will Not Balance", "function": "finale", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trade", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "finale", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trade", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 
@@ -52,7 +52,7 @@ public sealed class OnlyARefusedObjectiveIsWrittenAgainTests
         var outcome = await Write(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(4, provider.CallCount);
+        Assert.Equal(6, provider.CallCount);
 
         // The same objectives written in one answer, with nothing to repair, are what the kept ones must equal.
         var control = await Write(Scripted(Spliced(ThirdTooFar, Bounties)));
@@ -68,7 +68,7 @@ public sealed class OnlyARefusedObjectiveIsWrittenAgainTests
             Assert.Equal(JsonSerializer.Serialize(control.Draft!.Beats[kept]), JsonSerializer.Serialize(repaired[kept]));
         }
 
-        Assert.Equal(["The Lantern", "The Anchorage", "Back To The Lantern", "The Column Will Not Balance"], [.. new[] { 0, 1, 3, 4 }.Select(kept => repaired[kept].Title)]);
+        Assert.Equal(["The Lantern", "The Anchorage", "Back To The Lantern", "The Freight Delivered"], [.. new[] { 0, 1, 3, 4 }.Select(kept => repaired[kept].Title)]);
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public sealed class OnlyARefusedObjectiveIsWrittenAgainTests
 
         await Write(provider);
 
-        var repair = provider.Requests[2];
+        var repair = provider.Requests[3];
         var prompt = repair.Prompt.History[0].Text;
 
         Assert.Contains("3. Where The Freight Went (midpoint) — arrive: Colonia", prompt);
@@ -104,10 +104,10 @@ public sealed class OnlyARefusedObjectiveIsWrittenAgainTests
         var outcome = await Write(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(5, provider.CallCount);
+        Assert.Equal(7, provider.CallCount);
         Assert.Contains(
             "Objective 3 (The Far Column) is 21886 light years from the previous stop; the reach is 80.",
-            provider.Requests[3].Prompt.History[0].Text);
+            provider.Requests[4].Prompt.History[0].Text);
         Assert.Equal("The Collectors", outcome.Draft!.Beats[2].Title);
     }
 
@@ -120,7 +120,7 @@ public sealed class OnlyARefusedObjectiveIsWrittenAgainTests
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var second = provider.Requests[3].Prompt.History[0].Text;
+        var second = provider.Requests[4].Prompt.History[0].Text;
         Assert.Contains(
             "The replacement objective 3 leaves objective 4, which is kept, unable to stand: Objective 4 (Back To The Lantern) arrives at Ossen's Lantern, but the Commander is already there",
             second);
@@ -154,7 +154,7 @@ public sealed class OnlyARefusedObjectiveIsWrittenAgainTests
         var outcome = await Write(provider, log);
 
         Assert.False(outcome.Succeeded);
-        Assert.Equal(2 + AdventureGenerator.RepairRounds, provider.CallCount);
+        Assert.Equal(3 + AdventureGenerator.RepairRounds, provider.CallCount);
         Assert.Contains("Objective 3 (The Far Column) is 21886 light years from the previous stop", outcome.Refusal);
 
         var refusals = log.Entries.Where(entry => entry.Level == LogLevel.Information && entry.Message.Contains(" refused: ", StringComparison.Ordinal)).Select(entry => entry.Message).ToList();

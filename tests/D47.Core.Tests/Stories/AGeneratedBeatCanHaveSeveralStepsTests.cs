@@ -40,7 +40,7 @@ public sealed class AGeneratedBeatCanHaveSeveralStepsTests
             beats[0].Steps.Select(step => step.Trigger.Kind));
         Assert.Equal("Back.", beats[0].Line);
         Assert.Single(beats[1].Steps);
-        Assert.Contains("\"then\"", provider.Requests[1].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Contains("\"then\"", provider.Requests[2].Prompt.History[0].Text, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -337,7 +337,7 @@ public class AdventuresTabTests
     [AvaloniaFact]
     public void AnOfferedStoryOpensItsReadingLevelOnAWideStrip()
     {
-        var (panel, book, said) = Open(1400, new ScriptedModel(Spine, Beats), new Galaxy());
+        var (panel, book, said) = Open(1400, new ScriptedModel(Spine, NoObjections, Beats, NoObjections, NoObjections), new Galaxy());
 
         Assert.Equal(3, panel.GetVisualDescendants().OfType<DrillView>().Single().Panes);
 
@@ -361,27 +361,30 @@ public class AdventuresTabTests
 
         // A refusal leaves the form up with the reason under Go, which is what the message shows.
         Assert.True(
-            panel.Nav.Trail[^1].Key == AdventuresPage.ReadPrefix + "the-unrecoverable-column",
+            panel.Nav.Trail[^1].Key == AdventuresPage.ReadPrefix + "the-missing-freight",
             string.Join(" | ", panel.Nav.Trail.Select(crumb => crumb.Key)) + " — " + string.Join(" | ", Drawn(panel)));
-        Assert.Equal(["adventures", AdventuresPage.ReadPrefix + "the-unrecoverable-column"], panel.Nav.Trail.Select(crumb => crumb.Key));
-        Assert.NotNull(book.Store.Find("F1", "the-unrecoverable-column"));
+        Assert.Equal(["adventures", AdventuresPage.ReadPrefix + "the-missing-freight"], panel.Nav.Trail.Select(crumb => crumb.Key));
+        Assert.NotNull(book.Store.Find("F1", "the-missing-freight"));
         Assert.Contains("Here it is.", said);
 
         var drawn = Drawn(panel);
-        Assert.Contains(drawn, text => text.Contains("The Unrecoverable Column"));
+        Assert.Contains(drawn, text => text.Contains("The Missing Freight"));
         Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Accept"));
     }
 
     internal const string Spine = """
-        {"name": "The Unrecoverable Column", "premise": "A ledger will not balance.", "want": "To find the freight.",
-         "stake": "Whether a debt can be owed to nobody.", "turn": "It was never loaded.", "ending": "The column balances."}
+        {"name": "The Missing Freight", "premise": "Freight went missing on the way to Maren Anchorage.", "want": "To find the freight.",
+         "stake": "Whether a debt can be owed to nobody.", "turn": "It was never loaded.", "ending": "The freight is found and delivered."}
         """;
+
+    /// <summary>The fidelity and plain-wording checks' answer when nothing is objected to.</summary>
+    internal const string NoObjections = """{"objections": []}""";
 
     internal const string Beats = """
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Column", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trade", "rank": 1, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trade", "rank": 1, "line": "The freight is delivered."}
         ]}
         """;
 

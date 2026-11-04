@@ -37,7 +37,7 @@ public sealed class AMeasuredRefusalKeepsItsWordsTests
     private const string SiteBeats = """
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Ruins", "function": "setup", "kind": "site", "reason": "The survey flagged a structure there.", "system": "Dyson's Hollow", "body": "Dyson's Hollow 3 b", "filter": "guardian", "line": "Stone older than the colonies."},
-          {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "It balances."}
+          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
         ]}
         """;
 

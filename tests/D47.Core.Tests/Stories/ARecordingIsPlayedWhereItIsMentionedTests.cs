@@ -52,7 +52,7 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
         Assert.Null(refusal);
         Assert.Contains(
             "never say one was played, or played before the story began, without them",
-            fixtures.Provider.Requests[1].Prompt.History[0].Text,
+            fixtures.Provider.Requests[2].Prompt.History[0].Text,
             StringComparison.Ordinal);
     }
 
@@ -66,10 +66,10 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(4, fixtures.Provider.Requests.Count);
+        Assert.Equal(6, fixtures.Provider.Requests.Count);
         Assert.Contains(
             "A recording is mentioned and not played: Objective 2",
-            fixtures.Provider.Requests[2].Prompt.History[0].Text,
+            fixtures.Provider.Requests[3].Prompt.History[0].Text,
             StringComparison.Ordinal);
         Assert.Equal("The anchorage is quiet.", Chapter(fixtures).Beats[1].Lines[0].Text);
     }
@@ -81,7 +81,7 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Contains("A recording is mentioned and not played: The opening", fixtures.Provider.Requests[2].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Contains("A recording is mentioned and not played: The opening", fixtures.Provider.Requests[3].Prompt.History[0].Text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(5, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(5, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -111,7 +111,7 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(5, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -122,7 +122,7 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(2 + AdventureGenerator.RepairRounds, fixtures.Provider.Requests.Count);
+        Assert.Equal(3 + AdventureGenerator.RepairRounds, fixtures.Provider.Requests.Count);
         Assert.Equal("A message is heard over comms.", Chapter(fixtures).Beats[1].Lines[0].Text);
     }
 }

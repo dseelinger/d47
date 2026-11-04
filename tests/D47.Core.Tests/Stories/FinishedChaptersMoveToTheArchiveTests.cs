@@ -95,8 +95,8 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
         using var fixtures = Fixtures(15);
         await FlyTo(fixtures, 15);
 
-        // Chapter n's spine is request 3(n − 1).
-        var prompt = fixtures.Provider.Requests[42].Prompt.History[0].Text;
+        // Chapter n's spine is request 5(n − 1).
+        var prompt = fixtures.Provider.Requests[70].Prompt.History[0].Text;
 
         Assert.DoesNotContain("Title: Chapter 14", prompt);
         Assert.DoesNotContain("Chapter premise", prompt);
@@ -156,7 +156,7 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
 
         // The rerun's chapters carry the earlier run's names, and so its keys.
         var story = fixtures.Stories.Current("F1")!;
-        var prompt = fixtures.Provider.Requests[^3].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[^5].Prompt.History[0].Text;
 
         Assert.Equal(StoryChaptersOnFile(fixtures), story.Chapters.TakeLast(2));
         Assert.Contains("2 chapters came before it.", prompt);

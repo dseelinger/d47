@@ -52,7 +52,7 @@ public sealed class APermitSystemIsNeverAStopTests
         Assert.DoesNotContain(outcome.Draft!.Beats, beat => beat.Trigger.System == "Shinrarta Dezhra");
         Assert.Contains(
             "Objective 2 (The Memorial) is in Shinrarta Dezhra, which needs a permit the Commander may not hold",
-            provider.Requests[2].Prompt.History[0].Text);
+            provider.Requests[3].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class APermitSystemIsNeverAStopTests
         Assert.DoesNotContain(outcome.Draft!.Beats, beat => beat.Trigger.System == "Shinrarta Dezhra");
         Assert.Contains(
             "Objective 2 (The Memorial) is in Shinrarta Dezhra, which needs a permit the Commander may not hold",
-            provider.Requests[2].Prompt.History[0].Text);
+            provider.Requests[3].Prompt.History[0].Text);
         Assert.DoesNotContain("Jameson Memorial", provider.Requests[0].Prompt.History[0].Text);
     }
 
@@ -94,7 +94,7 @@ public sealed class APermitSystemIsNeverAStopTests
 
         Assert.Contains("- Dyson's Hollow (12 ly): stations Maren Anchorage (large pad)", spine);
         Assert.DoesNotContain("Jameson Memorial", spine);
-        Assert.DoesNotContain("Jameson Memorial", provider.Requests[1].Prompt.History[0].Text);
+        Assert.DoesNotContain("Jameson Memorial", provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -111,7 +111,7 @@ public sealed class APermitSystemIsNeverAStopTests
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.Contains(
             "Objective 2 (The Memorial) is in HIP 97950, a starter system the Commander can no longer enter. Move objective 2 to Maren Anchorage in Dyson's Hollow; rewrite its lines for that place.",
-            provider.Requests[2].Prompt.History[0].Text);
+            provider.Requests[3].Prompt.History[0].Text);
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public sealed class APermitSystemIsNeverAStopTests
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.Contains(
             "Objective 2 (The Memorial) is in Shinrarta Dezhra, which needs a permit the Commander may not hold. Move objective 2 to Maren Anchorage in Dyson's Hollow; rewrite its lines for that place.",
-            provider.Requests[2].Prompt.History[0].Text);
+            provider.Requests[3].Prompt.History[0].Text);
         Assert.Contains(outcome.Draft!.Beats, beat => beat.Trigger.Station == "Maren Anchorage");
     }
 
@@ -146,7 +146,7 @@ public sealed class APermitSystemIsNeverAStopTests
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.Contains(
             "Objective 2 (The Memorial) is in Shinrarta Dezhra, which needs a permit the Commander may not hold; use a system without one.",
-            provider.Requests[2].Prompt.History[0].Text);
+            provider.Requests[3].Prompt.History[0].Text);
     }
 
     [Fact]
