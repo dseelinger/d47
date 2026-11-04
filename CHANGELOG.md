@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When the market index answers with an empty commodity list, saving a stock watch on the Watches page now says Ardent could not be reached to check the commodity, and a commodity search reports that the index sent no commodity list. Before, both said the index had no commodity of that name.
+
 A next chapter is written from what you did in the last one and from the story, not from how the last chapter was worded. The writer is given the last chapter's objectives and what they asked for, the ending it reached and the reason, and what you asked during it with the reply each got; its title, premise, want, stake, turn, ending and spoken lines are no longer given, and earlier chapters are given as a count. This stops figures and images from one chapter being copied into the next. A stock story's chapter is told to follow the story's public and hidden layers and the beat-sheet lines for its stage.
 
 Every writer in d47 now follows one plain-language rule: it names the station, the system and the rank in the game's own terms, and does not use a book, ledger, file or address to stand for a rank, a goal or a record. This covers story chapters, recaps, reminders, cast lines, reactions, clues, radio chatter, story asides, ship build advice, detours, the commander log and your ship's AI in conversation.

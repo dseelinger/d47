@@ -167,7 +167,7 @@ public class ARaresQuantityIsTheStationsLastReportTests
     {
         using var commodities = Commodities(new Index(HttpStatusCode.OK, LavianBrandy));
 
-        var failure = await Assert.ThrowsAsync<GalaxyUnavailableException>(() =>
+        var failure = await Assert.ThrowsAsync<UnknownCommodityException>(() =>
             commodities.QuoteAsync(128106744, "Unobtainium", TestContext.Current.CancellationToken));
 
         Assert.Equal("The market index has no commodity called \"Unobtainium\".", failure.Message);
@@ -226,7 +226,7 @@ public class ARaresQuantityIsTheStationsLastReportTests
         var index = new Index(HttpStatusCode.OK, LavianBrandy);
         using var commodities = Commodities(index);
 
-        await Assert.ThrowsAsync<GalaxyUnavailableException>(() =>
+        await Assert.ThrowsAsync<UnknownCommodityException>(() =>
             commodities.QuoteAsync(128106744, "  ", TestContext.Current.CancellationToken));
 
         Assert.Empty(index.Urls);

@@ -323,13 +323,15 @@ public sealed class ArdentCommodityService : IDisposable
             }
         }
 
-        // Only an answer worth keeping is kept.
-        if (names.Count > 0)
+        // An empty list is the index failing to answer, not a catalogue without the commodity; it is not kept.
+        if (names.Count == 0)
         {
-            lock (_gate)
-            {
-                _catalogue = names;
-            }
+            throw new GalaxyUnavailableException("The market index sent no commodity list.");
+        }
+
+        lock (_gate)
+        {
+            _catalogue = names;
         }
 
         return names;
