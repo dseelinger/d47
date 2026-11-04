@@ -117,6 +117,7 @@ public sealed class ACommanderCanChangeAnObjectiveTests
 
         var prompt = model.Requests[0].Prompt.History[0].Text;
 
+        Assert.Contains(PlainWords.Rule, prompt);
         Assert.Contains("The objective they are leaving: earn 3 kill bonds.", prompt);
         Assert.Contains("What the Commander says now: \"Go to Anlave.\"", prompt);
         Assert.Contains("Where they are now: Oppi.", prompt);

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Every writer in d47 now follows one plain-language rule: it names the station, the system and the rank in the game's own terms, and does not use a book, ledger, file or address to stand for a rank, a goal or a record. This covers story chapters, recaps, reminders, cast lines, reactions, clues, radio chatter, story asides, ship build advice, detours, the commander log and your ship's AI in conversation.
+
 With Crime set to 0, no story chapter, detour or short story asks you to commit a crime: no illegal mission, piracy, smuggling or event step on stolen cargo, items or goods. A draft that contains one is sent back to the writer, the writer is told you set Crime to 0 and is given no Anarchy systems, and a detour that asks for a crime is refused. Ratings above 0 work as before.
 
 A HOTAS switch is never paused now: every flip makes the game match the switch's new position. The Resume button on the HOTAS switches page is gone. When something puts back what a switch set within four seconds, the switch's row notes it and D47 says so the first time it happens to that switch, then carries on acting on every flip. A flip made before Status.json shows D47's last press for that switch is decided against the state D47 pressed for: deploy the cargo scoop and retract it within a second and D47 presses twice, and the scoop ends up retracted. A spring-return switch flicked and released between two readings now presses once for the flick and once for the release when its resting position also names a state, so the game ends in the state the resting position names. The log records every flip with the Status.json flags it was decided on.

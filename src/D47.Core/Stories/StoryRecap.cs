@@ -88,11 +88,11 @@ public static class StoryRecap
         ArgumentNullException.ThrowIfNull(facts);
 
         var text = new StringBuilder(
-            "Recap the Commander's story so far, as its narrator. Two to four sentences, in the third person and the past tense, "
-            + "the way a novel's narrator writes. Refer to the Commander by the name the character sheet gives, with the pronouns it "
+            "Recap the Commander's story so far, as its narrator. Two to four sentences, in the third person and the past tense. "
+            + "Refer to the Commander by the name the character sheet gives, with the pronouns it "
             + "gives; where it gives no pronouns, use the name and no pronouns. Never say \"I\", \"me\" or \"we\", never speak to "
             + "the Commander, and never offer, ask or wait for anything. Say only what the facts below say: invent no events, say "
-            + "nothing of what comes later, and write no dialogue. End on where the story waits now, when the facts say.");
+            + "nothing of what comes later, and write no dialogue. End on where the story waits now, when the facts say. " + PlainWords.Rule);
 
         text.AppendLine().AppendLine();
         text.AppendLine(CultureInfo.InvariantCulture, $"The story: {facts.Title}.");

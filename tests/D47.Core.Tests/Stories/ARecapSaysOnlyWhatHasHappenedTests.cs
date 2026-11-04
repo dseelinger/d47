@@ -92,6 +92,18 @@ public sealed class ARecapSaysOnlyWhatHasHappenedTests
     }
 
     [Fact]
+    public void TheInstructionCarriesThePlainWordsRuleAndKeepsThirdPersonPastTense()
+    {
+        using var fixtures = OnChapterTwo();
+
+        var prompt = StoryRecap.Ask(fixtures.Director.Recap("F1")!, "Commander Test.").Instruction;
+
+        Assert.Contains(PlainWords.Rule, prompt);
+        Assert.DoesNotContain("novel's narrator", prompt);
+        Assert.Contains("in the third person and the past tense. ", prompt);
+    }
+
+    [Fact]
     public void ThePromptNamesWhereTheStoryWaitsAsThePlaceAndTheAct()
     {
         using var fixtures = OnChapterTwo();

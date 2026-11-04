@@ -254,6 +254,7 @@ public static class StoryClues
             $"The hidden story of \"{story.Title}\", the stock story the Commander is playing. They do not know it; "
             + "you do.");
         text.AppendLine(Rule);
+        text.AppendLine(PlainWords.Rule);
         StoryCard.Line(text, "The secret", secret.Secret);
         StoryCard.Line(text, "Where it ends", secret.End);
 

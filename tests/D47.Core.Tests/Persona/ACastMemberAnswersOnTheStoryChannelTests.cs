@@ -88,6 +88,7 @@ public class ACastMemberAnswersOnTheStoryChannelTests
         Assert.False(prompt.ToolsSearchable);
         Assert.False(provider.LastRequest.WebSearch);
         Assert.DoesNotContain(ShipAiBrief, prompt.Persona, StringComparison.Ordinal);
+        Assert.Contains(D47.Core.Stories.PlainWords.Rule, prompt.Persona, StringComparison.Ordinal);
         Assert.Contains($"You are {Mara.Name}", prompt.Persona, StringComparison.Ordinal);
         Assert.Contains(Mara.Who, prompt.Persona, StringComparison.Ordinal);
         Assert.Contains("first person", prompt.Persona, StringComparison.Ordinal);

@@ -40,6 +40,10 @@ public sealed class ACastMemberReactsOnceASessionTests
         new(now, false, null, status, NavRoute.None, events, null);
 
     [Fact]
+    public void TheReactionBriefCarriesThePlainWordsRule() =>
+        Assert.Contains(PlainWords.Rule, StoryReactions.Asking(new Notable(NotableKind.Interdicted, Now, "Pulled out of supercruise."), Cast).Instruction, StringComparison.Ordinal);
+
+    [Fact]
     public void AJapaneseMemberIsNamedAsSuchAndTheReplyShapeIsAskedForOnlyThen()
     {
         var notable = new Notable(NotableKind.Interdicted, Now, "Pulled out of supercruise.");

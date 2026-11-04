@@ -295,7 +295,7 @@ public static partial class NpcChatter
         + "or a model, and never break the fiction. A speaker's manner is how they talk, never where "
         + "they are from: every line is in standard English grammar, and no accent or origin is ever "
         + "shown through phonetic spelling, dropped articles, broken or non-native grammar, or "
-        + "imperfect English.";
+        + "imperfect English. " + Stories.PlainWords.Rule;
 
     /// <summary>
     /// How a speaker talks: pace, register, formality, verbal habits. An entry never names a

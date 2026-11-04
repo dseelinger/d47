@@ -93,6 +93,7 @@ public static class LogPrompt
 
         text.AppendLine("VOICE");
         text.AppendLine(Voice(voice));
+        text.AppendLine(Stories.PlainWords.Rule);
         text.AppendLine();
 
         text.AppendLine("SHAPE");
@@ -126,13 +127,13 @@ public static class LogPrompt
 
         LogVoice.FirstPersonWithCommentary =>
             "The body of the log is the Commander's own, in the first person — 'I dropped into Deciat'. You "
-            + "are writing it as them, plainly and without flourish. Then, no more than three times in the "
+            + "are writing it as them. Then, no more than three times in the "
             + "whole log, add one line of your own in your own character, as the core, set off as a "
             + "markdown blockquote on its own line starting with '> '. Those lines are the only place your "
             + "personality appears; they still carry their citations, and they still may not invent anything.",
 
         _ =>
-            "Write as the Commander, in the first person — 'I dropped into Deciat'. Plain, unshowy, the way "
+            "Write as the Commander, in the first person — 'I dropped into Deciat'. The way "
             + "somebody writes up their own evening. You are not a character here and you do not appear in "
             + "the log at all.",
     };

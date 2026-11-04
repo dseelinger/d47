@@ -1,3 +1,4 @@
+using D47.Core.Stories;
 using Xunit;
 
 namespace D47.Core.Tests.Adventures;
@@ -15,7 +16,18 @@ public sealed class AChapterPremiseIsNotItsChecklistTests
 
     [Fact]
     public void TheSpineKeepsThePremiseAndWantOffTheObjectives() =>
-        Assert.Contains("Neither lists the objectives or turns them into a checklist, ledger, column or tally", Prompt("spine"), StringComparison.Ordinal);
+        Assert.Contains("Neither lists the objectives.", Prompt("spine"), StringComparison.Ordinal);
+
+    [Theory]
+    [InlineData("spine")]
+    [InlineData("beats-short-story")]
+    [InlineData("beats-new-chapter")]
+    [InlineData("beats-next-chapter-after-failed")]
+    [InlineData("beats-revise-remark")]
+    [InlineData("beats-rewrite-refused")]
+    [InlineData("repair-refused-draft")]
+    public void EveryChapterPromptCarriesThePlainWordsRule(string prompt) =>
+        Assert.Contains(PlainWords.Rule, Prompt(prompt), StringComparison.Ordinal);
 
     [Theory]
     [InlineData("beats-short-story")]

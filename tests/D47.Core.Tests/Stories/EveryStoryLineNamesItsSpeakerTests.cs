@@ -270,7 +270,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var prompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
 
         Assert.Contains("is that person's own words, in the first person", prompt, StringComparison.Ordinal);
-        Assert.Contains("Write every line plainly", prompt, StringComparison.Ordinal);
+        Assert.Contains(PlainWords.Rule, prompt, StringComparison.Ordinal);
     }
 
     [Fact]

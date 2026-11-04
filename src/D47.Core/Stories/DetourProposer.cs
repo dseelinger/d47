@@ -254,6 +254,7 @@ public sealed class DetourProposer(
             "The Commander is flying a story in Elite Dangerous and wants to step away from its current objective to do one thing "
             + "first. The story waits until that one thing is done. Read what they said and turn it into exactly one objective, or, "
             + "when it is too vague to be one, ask one short question.");
+        text.AppendLine(PlainWords.Rule);
         text.AppendLine();
         text.AppendLine($"The objective they are leaving: {ask.Current.Describe()}.");
         text.AppendLine();

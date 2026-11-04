@@ -186,6 +186,7 @@ public sealed class ShipPlanAdvisor(
             + "good the plan is), or \"goal\" (something they want the ship to do better).");
         text.AppendLine();
         text.AppendLine("Rules:");
+        text.AppendLine("- " + Stories.PlainWords.Rule);
         text.AppendLine("- A question or a critique is answered in the reply and proposes no changes.");
         text.AppendLine(
             "- A goal proposes changes, one per slot. Each change states the slot's whole plan after the "

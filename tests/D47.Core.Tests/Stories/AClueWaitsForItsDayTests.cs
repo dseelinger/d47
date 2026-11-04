@@ -53,6 +53,10 @@ public sealed class AClueWaitsForItsDayTests
     }
 
     [Fact]
+    public void TheHiddenLayerBriefCarriesThePlainWordsRule() =>
+        Assert.Contains(PlainWords.Rule, StoryClues.Brief(Scanned, Secret), StringComparison.Ordinal);
+
+    [Fact]
     public void AGivenClueEntersTheHiddenLayerAndALaterOneDoesNot()
     {
         var before = StoryClues.Brief(Scanned, Secret);

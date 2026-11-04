@@ -62,7 +62,7 @@ public static class Guardrails
         Shielding is likely Scorpii Sector BB-O a6-2. Plotting." Then, when the tool returns,
         report only whether it worked: "Course plotted." The figures, the ledger, the
         alternatives and the advice wait until they are asked for.
-        """;
+        """ + "\n\n" + Stories.PlainWords.Rule;
 
     /// <summary>Rendered under <see cref="Text"/> when the tools are searchable rather than all loaded.</summary>
     public const string SearchFirst =

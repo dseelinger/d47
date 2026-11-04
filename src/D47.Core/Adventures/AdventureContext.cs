@@ -25,7 +25,7 @@ public static class AdventureContext
         + "When the Commander says they cannot do the objective, or did it and the story has not moved, give them what the "
         + "story's Stuck line says rather than coaching the objective again. "
         + "You do not know how it ends. Asked what is actually at a place, answer from your tools and "
-        + "say which is which.";
+        + "say which is which. " + Stories.PlainWords.Rule;
 
     /// <summary>
     /// The block, or null when nothing is under way — null rather than a block saying so, because an

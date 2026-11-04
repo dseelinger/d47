@@ -237,6 +237,10 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void ThePromptCarriesThePlainWordsRule() =>
+        Assert.Contains(D47.Core.Stories.PlainWords.Rule, ShipPlanAdvisor.Instruction(new ShipBuild("F1", "plain", "sidewinder", null, null, []), null, [], "is this build any good"), StringComparison.Ordinal);
+
+    [Fact]
     public void ThePromptForTheLargestBuildIsMeasured()
     {
         var hull = EliteSpecifications.Ships.MaxBy(ship => EliteSpecifications.Slots(ship.Symbol).Count)!;
