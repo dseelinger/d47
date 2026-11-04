@@ -56,10 +56,23 @@ jobs:
             throw "Tag v$v already exists. A published tag never moves; pick another version."
           }
 
+      # The checkout path is written into the shipped binaries, so Build, Test and Publish run from
+      # the fixed root B:\ and a rebuild from any clone gives the same d47.exe.
+      - name: Map the build root
+        shell: pwsh
+        run: |
+          subst B: $env:GITHUB_WORKSPACE
+          if ($LASTEXITCODE -ne 0) { throw "subst failed with $LASTEXITCODE" }
+
       # Built once, with the version being released, so the suite runs against the binaries that
       # ship and Publish below has nothing left to compile.
       - name: Build
-        run: dotnet build d47.slnx -c Release -p:Version=${{ inputs.version }}
+        shell: pwsh
+        working-directory: B:\
+        run: |
+          if (-not (Test-Path 'B:\d47.slnx')) { throw 'B:\d47.slnx is missing; the subst mapping did not carry over.' }
+          dotnet build d47.slnx -c Release -p:Version=${{ inputs.version }}
+          if ($LASTEXITCODE -ne 0) { throw "Build failed with $LASTEXITCODE" }
 
       # The gate. Everything below this line only runs on a green suite.
       #
@@ -74,7 +87,9 @@ jobs:
       # anything sharing the machine.
       - name: Test
         shell: pwsh
+        working-directory: B:\
         run: |
+          if (-not (Test-Path 'B:\d47.slnx')) { throw 'B:\d47.slnx is missing; the subst mapping did not carry over.' }
           $projects = Get-ChildItem tests -Filter *.csproj -Recurse -Depth 1 |
               Where-Object BaseName -ne 'D47.App.Tests'
           foreach ($project in $projects) {
@@ -85,7 +100,12 @@ jobs:
       # No -o: PublishDir is already bin\$(Configuration)\publish\, which is exactly where
       # installer\d47.iss reads from. Passing one breaks the installer's paths.
       - name: Publish
-        run: dotnet publish src/D47.App/D47.App.csproj -c Release -p:Version=${{ inputs.version }} --no-restore
+        shell: pwsh
+        working-directory: B:\
+        run: |
+          if (-not (Test-Path 'B:\d47.slnx')) { throw 'B:\d47.slnx is missing; the subst mapping did not carry over.' }
+          dotnet publish src/D47.App/D47.App.csproj -c Release -p:Version=${{ inputs.version }} --no-restore
+          if ($LASTEXITCODE -ne 0) { throw "Publish failed with $LASTEXITCODE" }
 
       - name: Build the installer
         shell: pwsh
