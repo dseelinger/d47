@@ -156,9 +156,7 @@ public sealed class ABodyPageIsDrawnAsItsCanvasShowsTests
         panel.EnableCodex(() => null, () => HistoryState.Done, () => Reported, new CodexPictureSet(store, () => true, files, Placeholders));
         panel.EnableStarSystem(new StarSystemSurface(
             new Systems(),
-            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Address },
-            () => true,
-            () => { })
+            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Address })
         {
             SurfaceMining = (_, body) => body == 4 ? Mined() : null,
         });

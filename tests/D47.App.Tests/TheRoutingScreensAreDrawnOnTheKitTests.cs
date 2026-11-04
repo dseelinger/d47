@@ -143,8 +143,6 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
             () => Here,
             CapabilityRegistry.Build([]),
             Plans(folder),
-            () => true,
-            () => { },
             Board(),
             JumpRange: () => 64.2,
             Clipboard: new D47.Core.Capabilities.Builtin.RecordingClipboard(),

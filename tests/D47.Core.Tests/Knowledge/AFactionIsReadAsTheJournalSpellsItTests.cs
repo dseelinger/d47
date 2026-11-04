@@ -32,7 +32,6 @@ public class AFactionIsReadAsTheJournalSpellsItTests
     {
         var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var galaxy = new Recording();
 

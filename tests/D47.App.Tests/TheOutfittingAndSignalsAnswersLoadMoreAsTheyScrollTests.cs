@@ -46,7 +46,6 @@ public sealed class TheOutfittingAndSignalsAnswersLoadMoreAsTheyScrollTests
         {
             _kind = kind;
             Settings = TestSurface.Settings();
-            Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
             var name = kind == GalaxySearchKind.Signals ? "find_signal" : "search_outfitting";
 
@@ -87,9 +86,7 @@ public sealed class TheOutfittingAndSignalsAnswersLoadMoreAsTheyScrollTests
 
         public StarSystemSurface Surface => new(
             new Systems(),
-            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Ltt7786 },
-            () => Settings.Current.Knowledge.GalaxySearch,
-            () => { })
+            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Ltt7786 })
         {
             Searches = new GalaxySearchSurface(Registry, Board, null, () => "F1", () => []),
         };

@@ -67,7 +67,6 @@ public sealed class AStationOrBodyResultOpensItsSystemOnItsSectionTests
     private static (PanelView Panel, Window Window) Shown(string root, bool headset = false)
     {
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
         var store = new SavedSearchStore("saved-searches.json", new MemoryFileSystem(), NullLogger<SavedSearchStore>.Instance);
         var board = new GalaxySearchBoard();
         var registry = CapabilityRegistry.Build([GalaxyCapability.Create(new Galaxy(), () => "LTT 7786", settings, searches: board)]);
@@ -84,9 +83,7 @@ public sealed class AStationOrBodyResultOpensItsSystemOnItsSectionTests
 
         panel.EnableStarSystem(new StarSystemSurface(
             new Systems(),
-            () => new JournalLocation("LTT 7786", null, false, null),
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { })
+            () => new JournalLocation("LTT 7786", null, false, null))
         {
             Searches = new GalaxySearchSurface(registry, board, store, () => Fid, () => [])
             {

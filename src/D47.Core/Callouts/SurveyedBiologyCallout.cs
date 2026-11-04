@@ -14,7 +14,7 @@ public sealed class SurveyedBiologyCallout(ILogger<SurveyedBiologyCallout> logge
 
     public string Id => "surveyed-biology";
 
-    /// <summary>The service to ask, or null when galaxy search is off.</summary>
+    /// <summary>The service to ask, or null when there is none.</summary>
     public Func<IGalaxyService?> Galaxy { get; set; } = () => null;
 
     /// <summary>The least value, in credits, that is said.</summary>

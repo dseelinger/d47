@@ -356,31 +356,31 @@ public static class ShippedCallouts
             switch (callout)
             {
                 case MissionCallout missions:
-                    missions.Galaxy = () => services.Settings.Current.Knowledge.GalaxySearch ? galaxy : null;
+                    missions.Galaxy = () => galaxy;
                     missions.StoryAsides = services.StoryAsides;
                     break;
 
                 case BgsTickCallout bgs:
-                    bgs.LastTick = () => services.Settings.Current.Knowledge.BgsTick ? services.BgsLastTick() : null;
+                    bgs.LastTick = () => services.BgsLastTick();
                     break;
 
                 case GalNetCallout galNet:
-                    galNet.Arrived = () => services.Settings.Current.Knowledge.GalNet ? services.GalNetArrived() : [];
+                    galNet.Arrived = () => services.GalNetArrived();
                     galNet.OpeningDone = () =>
                         (!engine.IsEnabled(continuityCallout.Id) || continuityCallout.Opened)
                         && (!engine.IsEnabled(recapCallout.Id) || recapCallout.Done);
                     break;
 
                 case ServerStatusCallout serverStatus:
-                    serverStatus.Announce = () => services.Settings.Current.Knowledge.ServerStatus ? services.ServerStatusAnnounce() : null;
+                    serverStatus.Announce = () => services.ServerStatusAnnounce();
                     break;
 
                 case WatchCallout watches:
-                    watches.Ready = () => services.Settings.Current.Knowledge is { GalaxySearch: true, BgsTick: true } ? services.WatchesReady() : [];
+                    watches.Ready = () => services.WatchesReady();
                     break;
 
                 case SurveyedBiologyCallout surveyed:
-                    surveyed.Galaxy = () => services.Settings.Current.Knowledge.GalaxySearch ? galaxy : null;
+                    surveyed.Galaxy = () => galaxy;
                     break;
 
                 case EarlierFindsCallout earlier:
@@ -389,7 +389,7 @@ public static class ShippedCallouts
                     break;
 
                 case TradingModeCallout trading:
-                    trading.Trade = () => services.Settings.Current.Knowledge.GalaxySearch ? trade : null;
+                    trading.Trade = () => trade;
                     break;
 
                 case AmbientCallout ambient:

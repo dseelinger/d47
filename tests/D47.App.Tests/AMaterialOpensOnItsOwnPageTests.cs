@@ -171,12 +171,12 @@ public class AMaterialOpensOnItsOwnPageTests
     }
 
     [AvaloniaFact]
-    public void WithGalaxySearchOffTheNearestSectionSaysHowToTurnItOn()
+    public void WithNoGalaxyServiceTheNearestSectionSaysSo()
     {
         var surface = Open(searchOn: false);
         var shown = Text(Drill(surface, "polonium"));
 
-        Assert.Contains(MaterialDetailPage.TurnItOn, shown);
+        Assert.Contains(MaterialDetailPage.NoGalaxy, shown);
         Assert.Equal(0, surface.Galaxy.Calls);
 
         surface.Window.Close();
@@ -199,7 +199,7 @@ public class AMaterialOpensOnItsOwnPageTests
     }
 
     [AvaloniaFact]
-    public void TurningTheSettingOnWhileThePageIsOpenStartsTheSearch()
+    public void TheSearchStartsWhenTheGalaxyBecomesAvailableWhileThePageIsOpen()
     {
         var surface = Open(searchOn: false);
         var detail = Drill(surface, "polonium");
@@ -211,7 +211,7 @@ public class AMaterialOpensOnItsOwnPageTests
         Settle(() => Text(detail).Contains("FAR 1"));
 
         Assert.Equal(1, surface.Galaxy.Calls);
-        Assert.DoesNotContain(MaterialDetailPage.TurnItOn, Text(detail));
+        Assert.DoesNotContain(MaterialDetailPage.NoGalaxy, Text(detail));
 
         surface.Window.Close();
     }

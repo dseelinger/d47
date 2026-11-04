@@ -125,7 +125,7 @@ public sealed class TheSystemPageSuggestsNamesAsYouTypeTests
     {
         var systems = new Systems();
         JournalLocation here = new("LTT 7786", null, false, null) { SystemAddress = Ltt7786 };
-        var surface = new StarSystemSurface(systems, () => here, () => true) { SuggestionPause = TimeSpan.Zero };
+        var surface = new StarSystemSurface(systems, () => here) { SuggestionPause = TimeSpan.Zero };
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableStarSystem(surface);

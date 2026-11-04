@@ -85,7 +85,6 @@ public class ACarrierRouteIsPlottedOnItsOwnCardTests
     {
         var folder = TempFolders.Create("d47-carrier-route");
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, "true", D47.Core.Configuration.SettingsCaller.Panel);
 
         var gameState = new GameStateStore();
 
@@ -123,7 +122,6 @@ public class ACarrierRouteIsPlottedOnItsOwnCardTests
             () => gameState.Active?.Location.StarSystem,
             registry,
             plans,
-            () => true,
             Commander: () => gameState.Active));
 
         var window = new Window { Content = panel, Width = 1280, Height = 860 };

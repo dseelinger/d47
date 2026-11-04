@@ -15,13 +15,9 @@ namespace D47.App.Panel;
 /// <summary>What the Search tab's System page reads.</summary>
 /// <param name="Systems">Where a system's record comes from.</param>
 /// <param name="Here">Where the Commander is, from the journal.</param>
-/// <param name="LookupsEnabled">Whether the galaxy setting is on.</param>
-/// <param name="OpenSettings">A way to the row that turns it on, where the surface has one.</param>
 public sealed record StarSystemSurface(
     IStarSystemService Systems,
-    Func<JournalLocation?> Here,
-    Func<bool> LookupsEnabled,
-    Action? OpenSettings = null)
+    Func<JournalLocation?> Here)
 {
     /// <summary>What the Systems search page runs its searches through, or null for no Systems page.</summary>
     public GalaxySearchSurface? Searches { get; init; }
@@ -77,7 +73,6 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     private bool _following = true;
     private bool _redrawn;
     private bool _seen;
-    private bool _seenEnabled;
     private long? _seenAddress;
     private string? _seenName;
 
@@ -122,7 +117,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             _name,
             surface.Systems.PrefixNamesAsync,
             match => match.Name,
-            surface.LookupsEnabled,
+            () => true,
             Choose,
             surface.SuggestionPause);
         _suggestions.Changed += (_, _) => _redrawn = true;
@@ -148,7 +143,6 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
 
     private enum View
     {
-        Off,
         NoJournal,
         Loading,
         Ready,
@@ -222,36 +216,23 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
 
     private void Check()
     {
-        var enabled = _surface.LookupsEnabled();
         var here = _surface.Here();
         var address = here?.SystemAddress;
         var name = here?.StarSystem;
 
-        if (_seen && enabled == _seenEnabled && address == _seenAddress && name == _seenName)
+        if (_seen && address == _seenAddress && name == _seenName)
         {
             return;
         }
 
-        var switchedOn = !_seen || enabled != _seenEnabled;
-        var moved = !_seen || address != _seenAddress;
+        var first = !_seen;
+        var moved = first || address != _seenAddress;
 
         _seen = true;
-        _seenEnabled = enabled;
         _seenAddress = address;
         _seenName = name;
 
-        if (!enabled)
-        {
-            Cancel();
-            _suggestions.Close();
-            _view = View.Off;
-        }
-        else if (switchedOn && !_following && _opened is { } opened)
-        {
-            Open(opened.Address, opened.Name, following: false);
-            return;
-        }
-        else if (switchedOn || (_following && moved))
+        if (first || (_following && moved))
         {
             _following = true;
             Follow();
@@ -261,17 +242,9 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         Draw();
     }
 
-    /// <summary>
-    /// Opens one system and stops following the Commander, as typing its name does; false while lookups are
-    /// off. Call on the UI thread.
-    /// </summary>
+    /// <summary>Opens one system and stops following the Commander, as typing its name does. Call on the UI thread.</summary>
     public bool OpenSystem(long address)
     {
-        if (!_surface.LookupsEnabled())
-        {
-            return false;
-        }
-
         _suggestions.SetText(string.Empty);
         Open(address, address.ToString(CultureInfo.InvariantCulture), following: false);
 
@@ -284,11 +257,6 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     /// <summary>As <see cref="OpenSystem(long)"/>, on the Stations section narrowed to <paramref name="station"/>.</summary>
     public bool OpenSystemStation(long address, string station)
     {
-        if (!_surface.LookupsEnabled())
-        {
-            return false;
-        }
-
         _stationFilter = new StationFilter { Query = station };
 
         return OpenSystemOn(address, Section.Stations);
@@ -329,7 +297,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     {
         typed = typed.Trim();
 
-        if (typed.Length == 0 || !_surface.LookupsEnabled())
+        if (typed.Length == 0)
         {
             return;
         }
@@ -532,16 +500,6 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         _body.Children.Clear();
         _stationTable = null;
         _neighbourList = null;
-
-        if (_view == View.Off)
-        {
-            _body.Children.Add(RoutingKit.SwitchedOff(
-                "System lookups are off",
-                "Looking up a star system is switched off. It shares the galaxy search setting, so turning on "
-                + "“Look things up in the galaxy” switches it on.",
-                _surface.OpenSettings));
-            return;
-        }
 
         _body.Children.Add(FieldRow());
 

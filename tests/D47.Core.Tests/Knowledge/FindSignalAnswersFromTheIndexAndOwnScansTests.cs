@@ -86,8 +86,6 @@ public class FindSignalAnswersFromTheIndexAndOwnScansTests
         FakeSystems Systems);
 
     private static World Build(
-        bool indexOn = true,
-        bool galaxyOn = false,
         bool ownFolded = true,
         FakeSystems? systems = null,
         string? text = null)
@@ -99,9 +97,6 @@ public class FindSignalAnswersFromTheIndexAndOwnScansTests
             NullLogger<SearchHistory>.Instance);
         var settings = TestSurface.For(new MemoryInstall()).Settings;
         var fakeSystems = systems ?? new FakeSystems();
-
-        settings.Apply(GalaxyCapability.EnabledKey, galaxyOn ? "true" : "false", SettingsCaller.Panel);
-        settings.Apply(GalaxyCapability.SignalIndexKey, indexOn ? "true" : "false", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
         [
@@ -192,7 +187,7 @@ public class FindSignalAnswersFromTheIndexAndOwnScansTests
     [Fact]
     public async Task ANearSystemOnlyTheIndexHasIsPlacedWithoutSpansh()
     {
-        var world = Build(galaxyOn: true);
+        var world = Build();
 
         var result = await Ask(world, ("signal", "Hazardous RES"), ("near", "Gamma"), ("max_distance", "10"));
 
@@ -210,40 +205,13 @@ public class FindSignalAnswersFromTheIndexAndOwnScansTests
     public async Task ANearSystemNeitherSourceHasIsLookedUpWhileGalaxySearchIsOn()
     {
         var systems = new FakeSystems(_ => [new SystemNameMatch("Elsewhere", 9, new StarPosition(0, 0, 58))]);
-        var world = Build(galaxyOn: true, systems: systems);
+        var world = Build(systems: systems);
 
         var result = await Ask(world, ("signal", "Hazardous RES"), ("near", "Elsewhere"), ("max_distance", "5"));
 
         Assert.False(result.IsError, result.Content);
         Assert.Equal(["Elsewhere"], systems.Asked);
         Assert.Equal("Gamma", Assert.Single(Posted(world).Signals).System);
-    }
-
-    [Fact]
-    public async Task ANearSystemNeitherSourceHasIsRefusedWhileGalaxySearchIsOff()
-    {
-        var world = Build(galaxyOn: false);
-
-        var result = await Ask(world, ("signal", "Hazardous RES"), ("near", "Elsewhere"));
-
-        Assert.True(result.IsError);
-        Assert.Contains("I don't know where Elsewhere is", result.Content, StringComparison.Ordinal);
-        Assert.Contains("turn Galaxy search on in settings", result.Content, StringComparison.Ordinal);
-        Assert.Empty(world.Systems.Asked);
-        Assert.Null(world.Board.Last(GalaxySearchKind.Signals));
-    }
-
-    [Fact]
-    public async Task WithTheIndexOffOnlyTheOwnScansAreSearched()
-    {
-        var world = Build(indexOn: false);
-
-        var result = await Ask(world, ("signal", "Hazardous RES"));
-
-        Assert.Contains(
-            "Searched your own scans only; the signal index is off in Settings.", result.Content, StringComparison.Ordinal);
-        Assert.Equal(["Delta", "Alpha"], Posted(world).Signals.Select(f => f.System));
-        Assert.All(Posted(world).Signals, f => Assert.True(f.OwnScan));
     }
 
     [Fact]
@@ -309,7 +277,7 @@ public class FindSignalAnswersFromTheIndexAndOwnScansTests
     [Fact]
     public async Task NearSetToTheCommandersOwnSystemNeedsNoLookup()
     {
-        var world = Build(galaxyOn: false);
+        var world = Build();
 
         var result = await Ask(world, ("signal", "Hazardous RES"), ("near", "sol"));
 

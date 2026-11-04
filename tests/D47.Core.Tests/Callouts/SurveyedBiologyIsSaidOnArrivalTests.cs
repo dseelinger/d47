@@ -229,7 +229,7 @@ public class SurveyedBiologyIsSaidOnArrivalTests
     [Fact]
     public void TheGalaxySearchDisclosureNamesTheArrivalLookup()
     {
-        var settings = new D47Settings { Knowledge = new KnowledgeSettings { GalaxySearch = true } };
+        var settings = new D47Settings();
         var quiet = settings with { Callouts = settings.Callouts with { SurveyedBiology = false } };
 
         var on = EgressDisclosure.Entry(EgressDisclosure.GalaxySearch, settings, llmKeyPresent: false);

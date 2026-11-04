@@ -59,7 +59,7 @@ public class TheStoriesPageFiltersItsListTests
 
         var store = new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance);
         var surface = new AdventureSurface(
-            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
+            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => null, () => { },
             Stories: director, StoryFilters: new StoryFilterMemory(store));
 
         return (surface, store);

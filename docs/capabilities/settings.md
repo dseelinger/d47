@@ -152,8 +152,8 @@ leaves Home system, the character sheet, About me and the scenario as you typed 
 has its own reset. A section's **?** opens the page for the part of Directive 47 it is mostly about.
 
 A few rows are on the tab they concern instead, under **Page settings**: Rescan my
-journals and Hull pictures on Asset Mgmt › Ships, the captain and tower's names and voices, and the carrier's humor, on Asset Mgmt ›
-Carrier, and Notable places for short stories on Stories.
+journals and Hull pictures on Asset Mgmt › Ships, and the captain and tower's names and voices, and the carrier's humor, on Asset Mgmt ›
+Carrier.
 
 ### Ask for it
 

@@ -565,11 +565,9 @@ public static class BuiltinCapabilities
         CommanderLogCapability.Create(commanderLog, () => gameState.Active?.Identity.FrontierId ?? string.Empty),
         ScreenshotsCapability.Create(),
         GalNetCapability.Create(
-            galNetArchive ?? (() => null),
-            () => settings.Current.Knowledge.GalNet),
+            galNetArchive ?? (() => null)),
         ServerStatusCapability.Create(
             serverStatus ?? (() => null),
-            () => settings.Current.Knowledge.ServerStatus,
             now ?? (() => DateTimeOffset.MinValue)),
 
         CharactersCapability.Create(),

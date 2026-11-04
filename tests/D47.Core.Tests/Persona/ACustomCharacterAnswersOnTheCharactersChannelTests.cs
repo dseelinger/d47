@@ -146,7 +146,7 @@ public class ACustomCharacterAnswersOnTheCharactersChannelTests
     [Fact]
     public void TheGalaxySearchDisclosureNamesRemoteCharacterSystemsOnlyWhileOneExists()
     {
-        var settings = D47Settings.Defaults with { Knowledge = D47Settings.Defaults.Knowledge with { GalaxySearch = true } };
+        var settings = D47Settings.Defaults;
 
         var without = EgressDisclosure.Entry(EgressDisclosure.GalaxySearch, settings, llmKeyPresent: false);
         var with = EgressDisclosure.Entry(

@@ -65,7 +65,7 @@ public sealed class PastSearchesOpenFromTheHistoryPickerTests
     private sealed class World : GalaxySearchWorld
     {
         public World(bool entries = true)
-            : base(new Systems(), lookups: true, suggesting: false)
+            : base(new Systems(), suggesting: false)
         {
             Registry = CapabilityRegistry.Build([GalaxyCapability.Create(Galaxy, () => "LTT 7786", Settings, searches: Board)]);
 

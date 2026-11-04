@@ -143,7 +143,6 @@ public class RouteCapabilityTests
 
     private static (CapabilityRegistry Registry, FakeRoutes Routes, FakeTrade Trade, GameStateStore GameState) Build(
         MemoryInstall install,
-        bool enabled = true,
         bool docked = true,
         RoutePlanBook? plans = null,
         NavigationSurface? navigation = null,
@@ -168,7 +167,6 @@ public class RouteCapabilityTests
         var trade = new FakeTrade();
         var settings = TestSurface.For(install).Settings;
 
-        settings.Apply(GalaxyCapability.EnabledKey, enabled ? "true" : "false", SettingsCaller.Panel);
         configureSettings?.Invoke(settings);
 
         return (
@@ -397,7 +395,6 @@ public class RouteCapabilityTests
         var routes = new FakeRoutes();
         var trade = new FakeTrade();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
         [
@@ -709,22 +706,6 @@ public class RouteCapabilityTests
         Assert.False(result.IsError);
         Assert.Contains("over 4 jumps, including the jumps back to Sol.", result.Content, StringComparison.Ordinal);
         Assert.DoesNotContain(" and back", result.Content, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task PlottingIsOffWithTheGalaxySearchAndSaysWhichSettingItIs()
-    {
-        var install = new MemoryInstall();
-        var (registry, routes, trade, _) = Build(install, enabled: false);
-
-        var result = await registry.InvokeAsync(
-            "plot_route",
-            Args(("to", "Colonia")),
-            TestContext.Current.CancellationToken);
-
-        Assert.True(result.IsError);
-        Assert.Contains("galaxy search setting", result.Content, StringComparison.Ordinal);
-        Assert.Null(routes.LastRoute);
     }
 
     [Fact]

@@ -62,7 +62,7 @@ public class TheStoriesPageShowsAndFiltersRatingsTests
         client.Open().GetAwaiter().GetResult();
 
         var surface = new AdventureSurface(
-            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
+            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => null, () => { },
             Stories: director, StoryFilters: new StoryFilterMemory(new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance)),
             Ratings: client);
 

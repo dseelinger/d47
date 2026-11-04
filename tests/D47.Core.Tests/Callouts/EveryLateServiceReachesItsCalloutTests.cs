@@ -90,9 +90,6 @@ public sealed class EveryLateServiceReachesItsCalloutTests
         return wired;
     }
 
-    private static void GalaxySearch(SettingsService settings, bool on) =>
-        settings.Replace("test", current => current with { Knowledge = current.Knowledge with { GalaxySearch = on } });
-
     [Fact]
     public void EveryCalloutThatAsksAfterAStockCoreIsToldWhetherOneIsAboard()
     {
@@ -122,89 +119,49 @@ public sealed class EveryLateServiceReachesItsCalloutTests
     }
 
     [Fact]
-    public void TheGalaxyAndTradeServicesFollowTheGalaxySearchSwitch()
+    public void TheGalaxyAndTradeServicesReachTheirCallouts()
     {
         var wired = Connected();
-        var missions = wired.Shipped<MissionCallout>();
-        var surveyed = wired.Shipped<SurveyedBiologyCallout>();
-        var trading = wired.Shipped<TradingModeCallout>();
 
-        GalaxySearch(wired.Settings, on: true);
-        Assert.Same(wired.Services.Galaxy, missions.Galaxy());
-        Assert.Same(wired.Services.Galaxy, surveyed.Galaxy());
-        Assert.Same(wired.Services.Trade, trading.Trade());
-
-        GalaxySearch(wired.Settings, on: false);
-        Assert.Null(missions.Galaxy());
-        Assert.Null(surveyed.Galaxy());
-        Assert.Null(trading.Trade());
-
-        GalaxySearch(wired.Settings, on: true);
-        Assert.Same(wired.Services.Galaxy, missions.Galaxy());
-        Assert.Same(wired.Services.Galaxy, surveyed.Galaxy());
-        Assert.Same(wired.Services.Trade, trading.Trade());
+        Assert.Same(wired.Services.Galaxy, wired.Shipped<MissionCallout>().Galaxy());
+        Assert.Same(wired.Services.Galaxy, wired.Shipped<SurveyedBiologyCallout>().Galaxy());
+        Assert.Same(wired.Services.Trade, wired.Shipped<TradingModeCallout>().Trade());
     }
 
     [Fact]
-    public void TheBgsTickIsReadOnlyWhileItsKnowledgeSettingIsOn()
+    public void TheBgsTickReachesItsCallout()
     {
         var wired = Connected();
-        var callout = wired.Shipped<BgsTickCallout>();
         wired.BgsTick = Start;
 
-        wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { BgsTick = true } });
-        Assert.Equal(Start, callout.LastTick());
-
-        wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { BgsTick = false } });
-        Assert.Null(callout.LastTick());
+        Assert.Equal(Start, wired.Shipped<BgsTickCallout>().LastTick());
     }
 
     [Fact]
-    public void GalNetHeadlinesAreReadOnlyWhileTheirKnowledgeSettingIsOn()
+    public void GalNetHeadlinesReachTheirCallout()
     {
         var wired = Connected();
-        var callout = wired.Shipped<GalNetCallout>();
         wired.GalNetArrived = [new GalNetArticle("a", "Title", ["Body."], Start, "3311")];
 
-        wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { GalNet = true } });
-        Assert.Single(callout.Arrived());
-
-        wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { GalNet = false } });
-        Assert.Empty(callout.Arrived());
+        Assert.Single(wired.Shipped<GalNetCallout>().Arrived());
     }
 
     [Fact]
-    public void ServerStatusLinesAreReadOnlyWhileTheirKnowledgeSettingIsOn()
+    public void ServerStatusLinesReachTheirCallout()
     {
         var wired = Connected();
-        var callout = wired.Shipped<ServerStatusCallout>();
         wired.ServerStatusAnnounce = GameServerState.Maintenance;
 
-        wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { ServerStatus = true } });
-        Assert.Equal(GameServerState.Maintenance, callout.Announce());
-
-        wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { ServerStatus = false } });
-        Assert.Null(callout.Announce());
+        Assert.Equal(GameServerState.Maintenance, wired.Shipped<ServerStatusCallout>().Announce());
     }
 
     [Fact]
-    public void WatchLinesAreReadOnlyWhileGalaxySearchAndBgsTickTimeAreBothOn()
+    public void WatchLinesReachTheirCallout()
     {
         var wired = Connected();
-        var callout = wired.Shipped<WatchCallout>();
         wired.WatchesReady = [new D47.Core.Watches.WatchNotice(Guid.NewGuid(), "Gold: 1 in stock.")];
 
-        void Knowledge(bool galaxy, bool tick) =>
-            wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { GalaxySearch = galaxy, BgsTick = tick } });
-
-        Knowledge(galaxy: true, tick: true);
-        Assert.Single(callout.Ready());
-
-        Knowledge(galaxy: false, tick: true);
-        Assert.Empty(callout.Ready());
-
-        Knowledge(galaxy: true, tick: false);
-        Assert.Empty(callout.Ready());
+        Assert.Single(wired.Shipped<WatchCallout>().Ready());
     }
 
     [Fact]

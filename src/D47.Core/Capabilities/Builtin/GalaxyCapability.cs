@@ -624,7 +624,6 @@ public static class GalaxyCapability
                 Commands = [.. BgsTickQuestions.Select(phrase => new ToolCommandPhrase(phrase))],
                 Handler = (_, _) => Task.FromResult(
                     ToolResult.Ok(DescribeBgsTick(
-                        settings.Current.Knowledge.BgsTick,
                         bgsTick?.Invoke(),
                         now?.Invoke() ?? DateTimeOffset.UtcNow))),
             },
@@ -667,160 +666,6 @@ public static class GalaxyCapability
         [
             new SettingRow
             {
-                Key = EnabledKey,
-                Exercise =
-                    "Open Settings › Providers › Outside sources, group Outside sources, and leave Look things up in "
-                    + "the galaxy off (the default). Ask D47 to describe Sol: the reply says galaxy search is "
-                    + "switched off and can be turned on in settings. Turn the row on and ask again: the reply gives "
-                    + "its government, allegiance, economy and population, and the System page opens on the panel. "
-                    + "Needs a network connection to spansh.co.uk.",
-                Label = "Look things up in the galaxy",
-                Help =
-                    "Lets d47 answer questions about star systems, stations and bodies, and plot routes, "
-                    + "by asking spansh.co.uk. System names you ask about, and where you are when the "
-                    + "question is relative to you, leave this machine. Off by default; see [Privacy](privacy) for "
-                    + "exactly what is sent.",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                DocsAnchor = "look-things-up-in-the-galaxy",
-                Binding = SettingBinding.Toggle(
-                    s => s.Knowledge.GalaxySearch,
-                    (s, on) => s with { Knowledge = s.Knowledge with { GalaxySearch = on } }),
-            },
-            new SettingRow
-            {
-                Key = NotablePlacesKey,
-                Exercise =
-                    "Open the Stories tab, settings strip, and turn Notable places for short stories on (it is off by"
-                    + " default). Also turn on Look things up in the galaxy, which a generated short story needs. Ask "
-                    + "D47 for a new short story: its stops are real places and the generation notes do not say the "
-                    + "catalogue could not be read. Needs a network connection to edastro.com. With the row off the "
-                    + "stops come from the galaxy search alone.",
-                Label = "Notable places for short stories",
-                Help =
-                    "Lets a generated short story pick its stops from the Galactic Exploration Catalog at "
-                    + "edastro.com. One request fetches the whole catalogue and the choosing happens here, so "
-                    + "where you are never leaves this machine. Off by default; see [Privacy](privacy).",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                DocsAnchor = "notable-places-for-short-stories",
-                Binding = SettingBinding.Toggle(
-                    s => s.Knowledge.NotablePlaces,
-                    (s, on) => s with { Knowledge = s.Knowledge with { NotablePlaces = on } }),
-            },
-            new SettingRow
-            {
-                Key = CommunityBiologyKey,
-                Exercise =
-                    "Open Settings › Providers › Outside sources, group Outside sources, and turn Earlier biology "
-                    + "finds from Canonn on (it is off by default). In the game, map a body with biological signals in "
-                    + "a system where other Commanders have logged biology: D47 says \"Commanders have logged earlier "
-                    + "finds on this body\" followed by the variants. The Earlier biology finds on mapping row under "
-                    + "Settings › Your core › Exploring appears only while this row is on. With the row off nothing is "
-                    + "asked or said. Needs a network connection to Canonn.",
-                Label = "Earlier biology finds from Canonn",
-                Help =
-                    "Lets d47 ask Canonn which biology other Commanders logged in a system, when you map a body "
-                    + "there that has biological signals. Only the system's name is sent, once a session for each "
-                    + "system. Off by default; see [Privacy](privacy).",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                DocsAnchor = "earlier-biology-finds-from-canonn",
-                Binding = SettingBinding.Toggle(
-                    s => s.Knowledge.CommunityBiology,
-                    (s, on) => s with { Knowledge = s.Knowledge with { CommunityBiology = on } }),
-            },
-            new SettingRow
-            {
-                Key = BgsTickKey,
-                Exercise =
-                    "Open Settings › Providers › Outside sources, group Outside sources, and turn BGS tick time on "
-                    + "(it is off by default). Say \"when was the last tick\": the reply gives the time of the last BGS"
-                    + " tick in UTC and how long ago it was. Right after the row is turned on it may say it has not "
-                    + "read the tick time yet; ask again later. With the row off the reply says BGS tick time is off "
-                    + "and can be turned on under Outside sources. Needs a network connection to tick.infomancer.uk.",
-                Label = "BGS tick time",
-                Help =
-                    "Lets d47 ask tick.infomancer.uk when the last BGS tick happened, every ten minutes while "
-                    + "Elite runs or a background watch is on. Nothing about you goes with the request, and it is not encrypted. Off by "
-                    + "default; see [Privacy](privacy).",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                DocsAnchor = "bgs-tick-time",
-                Binding = SettingBinding.Toggle(
-                    s => s.Knowledge.BgsTick,
-                    (s, on) => s with { Knowledge = s.Knowledge with { BgsTick = on } }),
-            },
-            new SettingRow
-            {
-                Key = GalNetKey,
-                Exercise =
-                    "Open Settings › Providers › Outside sources, group Outside sources, and turn GalNet news on (it "
-                    + "is off by default). After the fetch, say \"what's on galnet\": the reply names the three newest "
-                    + "articles kept on this PC. Say \"read the latest galnet article\" to hear one in full. Needs a "
-                    + "network connection to cms.zaonce.net; the first fetch also takes up to two years of older "
-                    + "articles, so allow time.",
-                Label = "GalNet news",
-                Help =
-                    "Lets d47 fetch GalNet articles from Frontier's server, cms.zaonce.net, at startup and "
-                    + "every hour while it runs, and keep them on this PC. The first time it fetches up to two "
-                    + "years of older articles. Nothing about you goes with the request. Off by default; see "
-                    + "[Privacy](privacy).",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                DocsAnchor = "galnet-news",
-                Binding = SettingBinding.Toggle(
-                    s => s.Knowledge.GalNet,
-                    (s, on) => s with { Knowledge = s.Knowledge with { GalNet = on } }),
-            },
-            new SettingRow
-            {
-                Key = ServerStatusKey,
-                Exercise =
-                    "Open Settings › Providers › Outside sources, group Outside sources, and turn Server status on "
-                    + "(it is off by default). The title bar shows SERVERS with ONLINE, MAINTENANCE, OFFLINE or "
-                    + "UNKNOWN. Say \"are the servers up\": the reply gives the state and how long ago it was checked; "
-                    + "with the row off it says the setting is off. When the state changes D47 says \"Elite's servers "
-                    + "are down for maintenance\", \"Elite's servers are offline\" or \"Elite's servers are back up\". "
-                    + "Needs a network connection to ed-server-status.orerve.net.",
-                Label = "Server status",
-                Help =
-                    "Lets d47 ask ed-server-status.orerve.net whether Elite's servers are up, at startup and "
-                    + "then every ten minutes while they are, or every minute while they are not, whether or not "
-                    + "Elite is running. Shows the answer in the title bar. Nothing about you goes with the "
-                    + "request. Off by default; see [Privacy](privacy).",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                DocsAnchor = "server-status",
-                Binding = SettingBinding.Toggle(
-                    s => s.Knowledge.ServerStatus,
-                    (s, on) => s with { Knowledge = s.Knowledge with { ServerStatus = on } }),
-            },
-            new SettingRow
-            {
-                Key = SignalIndexKey,
-                Exercise =
-                    "Open Settings › Providers › Outside sources, group Outside sources, and turn Signal index on (it"
-                    + " is off by default). Ask D47 for the nearest nav beacon: the reply names a system holding one "
-                    + "and its distance in light years, from the downloaded index as well as your own scans. The index "
-                    + "downloads from this project's releases on github.com when the copy on this PC is more than 20 "
-                    + "hours old. With the row off the reply says it searched your own scans only and the signal index "
-                    + "is off in Settings.",
-                Label = "Signal index",
-                Help =
-                    "Lets d47 download the daily index of signals other Commanders have scanned, from this "
-                    + "project's releases on github.com, when you search for a signal and the copy on this PC is "
-                    + "more than 20 hours old. Nothing about you goes with the request. Off by default; see "
-                    + "[Privacy](privacy).",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                DocsAnchor = "signal-index",
-                Binding = SettingBinding.Toggle(
-                    s => s.Knowledge.SignalIndex,
-                    (s, on) => s with { Knowledge = s.Knowledge with { SignalIndex = on } }),
-            },
-            new SettingRow
-            {
                 Key = EddnKey,
                 Exercise =
                     "Open Settings › Providers › Outside sources, group Sharing, and turn Share with EDDN on (it is "
@@ -853,27 +698,9 @@ public static class GalaxyCapability
         Display = new CapabilityDisplay { PanelTitle = "Galaxy search", Order = 47 },
     };
 
-    public const string EnabledKey = "knowledge.galaxy";
-
     public const string SetSquadronFactionTool = "set_squadron_faction";
 
     public const string SuggestHomeSystemTool = "suggest_home_system";
-
-    /// <summary>The catalogue of notable places a generated adventure may draw on (Phase 47).</summary>
-    public const string NotablePlacesKey = "knowledge.notablePlaces";
-
-    /// <summary>Asking Canonn for the biology logged in a system.</summary>
-    public const string CommunityBiologyKey = "knowledge.communityBiology";
-
-    /// <summary>Reading the time of the last BGS tick from tick.infomancer.uk.</summary>
-    public const string BgsTickKey = "knowledge.bgsTick";
-
-    public const string GalNetKey = "knowledge.galNet";
-
-    public const string ServerStatusKey = "knowledge.serverStatus";
-
-    /// <summary>Downloading the daily signal index.</summary>
-    public const string SignalIndexKey = "knowledge.signalIndex";
 
     /// <summary>Sending market prices to EDDN.</summary>
     public const string EddnKey = "contribution.eddn";
@@ -905,13 +732,8 @@ public static class GalaxyCapability
     ];
 
     /// <summary>The answer to a question about the last BGS tick; in-game time is UTC.</summary>
-    internal static string DescribeBgsTick(bool enabled, DateTimeOffset? last, DateTimeOffset now)
+    internal static string DescribeBgsTick(DateTimeOffset? last, DateTimeOffset now)
     {
-        if (!enabled)
-        {
-            return "BGS tick time is off, so I don't know when the tick was. It can be turned on under Outside sources.";
-        }
-
         if (last is not { } tick)
         {
             return "I haven't read the tick time yet.";
@@ -971,10 +793,10 @@ public static class GalaxyCapability
         SquadronFactions? squadronFactions,
         CancellationToken cancellationToken)
     {
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return ToolResult.Error(
-                "Suggesting a home system needs galaxy search, which is switched off. The Commander can turn it on in settings.");
+                "Suggesting a home system needs galaxy search, which is not available.");
         }
 
         if (currentSystem() is not { Length: > 0 } here)
@@ -1096,10 +918,10 @@ public static class GalaxyCapability
             return ToolResult.Error("Which minor faction is it?");
         }
 
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return ToolResult.Error(
-                "Checking a faction name needs galaxy search, which is switched off. The Commander can turn it on in settings.");
+                "Checking a faction name needs galaxy search, which is not available.");
         }
 
         var given = said.Trim();
@@ -1152,7 +974,7 @@ public static class GalaxyCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -1286,7 +1108,7 @@ public static class GalaxyCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -1385,7 +1207,7 @@ public static class GalaxyCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -1516,7 +1338,7 @@ public static class GalaxyCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -1588,10 +1410,10 @@ public static class GalaxyCapability
             address = current;
             name = here ?? current.ToString(CultureInfo.InvariantCulture);
         }
-        else if (systems is null || !settings.Current.Knowledge.GalaxySearch)
+        else if (systems is null)
         {
             return ToolResult.Error(
-                "Galaxy lookups are off, so I can only check the system the Commander is in"
+                "Galaxy lookups are not available, so I can only check the system the Commander is in"
                 + (here is null ? "." : $", {here}."));
         }
         else
@@ -1693,8 +1515,7 @@ public static class GalaxyCapability
             return ToolResult.Error("Say which signal to look for, such as a Hazardous RES or a nav beacon.");
         }
 
-        var indexOn = settings.Current.Knowledge.SignalIndex;
-        var index = indexOn && signalIndex is not null
+        var index = signalIndex is not null
             ? await signalIndex.GetAsync(cancellationToken).ConfigureAwait(false)
             : null;
         var own = signals?.Snapshot() ?? [];
@@ -1728,7 +1549,7 @@ public static class GalaxyCapability
             origin = placed;
             reference = asked;
         }
-        else if (systems is not null && settings.Current.Knowledge.GalaxySearch)
+        else if (systems is not null)
         {
             try
             {
@@ -1756,9 +1577,8 @@ public static class GalaxyCapability
         else
         {
             return ToolResult.Error(
-                $"I don't know where {asked} is: no signal I hold is in that system, and Galaxy search is off, so I "
-                + "can't look it up. The Commander can turn Galaxy search on in settings, or name a system a signal "
-                + "has been seen in.");
+                $"I don't know where {asked} is: no signal I hold is in that system, and Galaxy search is not available, "
+                + "so I can't look it up. The Commander can name a system a signal has been seen in.");
         }
 
         var maxDistance = arguments.TryGetDouble("max_distance", out var given) && given > 0
@@ -1784,11 +1604,9 @@ public static class GalaxyCapability
         var distance = maxDistance.ToString("0.##", CultureInfo.InvariantCulture);
         var from = string.IsNullOrWhiteSpace(reference) ? "here" : reference;
 
-        var source = !indexOn
-            ? " Searched your own scans only; the signal index is off in Settings."
-            : index is null
-                ? " Searched your own scans only; the signal index could not be loaded."
-                : string.Empty;
+        var source = index is null
+            ? " Searched your own scans only; the signal index could not be loaded."
+            : string.Empty;
 
         if (signals is { HistoryFolded: false })
         {
@@ -1981,11 +1799,11 @@ public static class GalaxyCapability
             return (sold.Position, sold.System, null);
         }
 
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return (default, null,
-                $"I don't know where {asked} is, and Galaxy search is off, so I can't look it up. The Commander "
-                + "can turn Galaxy search on in settings, or name the system a rare is sold in.");
+                $"I don't know where {asked} is, and Galaxy search is not available, so I can't look it up. The "
+                + "Commander can name the system a rare is sold in.");
         }
 
         try
@@ -2022,7 +1840,7 @@ public static class GalaxyCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -2266,7 +2084,7 @@ public static class GalaxyCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (systems is null || !settings.Current.Knowledge.GalaxySearch)
+        if (systems is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -2477,7 +2295,7 @@ public static class GalaxyCapability
             var answer = await RareAsync(rare, trade, settings, now, cancellationToken).ConfigureAwait(false);
 
             // Where a rare can be sold is a different question, and the index does answer that one.
-            if (!selling || galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+            if (!selling || galaxy is null)
             {
                 return ToolResult.Ok(answer);
             }
@@ -2520,7 +2338,7 @@ public static class GalaxyCapability
             }
         }
 
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -3194,7 +3012,7 @@ public static class GalaxyCapability
     {
         var where = $"{rare.Name} is a rare good, sold at {rare.Station} in {rare.System} and nowhere else.";
 
-        var quote = trade is not null && settings.Current.Knowledge.GalaxySearch
+        var quote = trade is not null
             ? await QuoteOrNothing(trade, rare, cancellationToken).ConfigureAwait(false)
             : null;
 
@@ -3243,7 +3061,7 @@ public static class GalaxyCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -3362,7 +3180,7 @@ public static class GalaxyCapability
 
         var said = HowToGetSaid(acquisition, gameState?.Invoke()?.Pledge);
 
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return ToolResult.Ok(said);
         }
@@ -4015,7 +3833,7 @@ public static class GalaxyCapability
     }
 
     internal const string Unavailable =
-        "Galaxy search is switched off, so I can't look that up. The Commander can turn it on in settings.";
+        "Galaxy search is not available, so I can't look that up.";
 
     /// <summary>The result as prose.</summary>
     internal static string Describe(GalaxySearchResult result, GalaxyQuery query)

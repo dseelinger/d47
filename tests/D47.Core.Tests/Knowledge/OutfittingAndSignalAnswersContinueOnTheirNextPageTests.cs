@@ -118,7 +118,6 @@ public class OutfittingAndSignalAnswersContinueOnTheirNextPageTests
         var galaxy = new OutfittingGalaxy();
         var board = new GalaxySearchBoard();
         var settings = TestSurface.For(new MemoryInstall()).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
             [GalaxyCapability.Create(galaxy, () => "Sol", settings, now: () => Now, searches: board)]);

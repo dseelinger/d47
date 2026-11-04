@@ -65,7 +65,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
 
     private sealed record Shown(PanelView Panel, Window Window, Systems Systems, GalaxySearchBoard Board, BestCargoBoard Cargo);
 
-    private static Shown Open(PanelTab tab, string root, bool lookups = true)
+    private static Shown Open(PanelTab tab, string root)
     {
         var systems = new Systems();
         var board = new GalaxySearchBoard();
@@ -77,9 +77,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
 
         panel.EnableStarSystem(new StarSystemSurface(
             systems,
-            () => new JournalLocation("LTT 7786", null, false, null),
-            () => lookups,
-            () => { })
+            () => new JournalLocation("LTT 7786", null, false, null))
         {
             Searches = new GalaxySearchSurface(registry, board, null, () => string.Empty, () => [])
             {
@@ -93,7 +91,6 @@ public sealed class EveryNameFieldSuggestsSystemsTests
             () => "LTT 7786",
             registry,
             plans,
-            () => lookups,
             Cargo: cargo)
         {
             PrefixNames = systems.PrefixNamesAsync,
@@ -261,16 +258,4 @@ public sealed class EveryNameFieldSuggestsSystemsTests
         }
     }
 
-    [AvaloniaFact]
-    public void WithGalaxySearchOffTheFieldsListNothingAndSendNothing()
-    {
-        var shown = Open(PanelTab.Search, SystemSearchPage.RootKey, lookups: false);
-
-        shown.Panel.Box("near").Text = "Dia";
-        Settle();
-
-        Assert.Empty(shown.Panel.Listed());
-        Assert.Empty(shown.Systems.Prefixes());
-        shown.Window.Close();
-    }
 }

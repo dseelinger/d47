@@ -8,19 +8,12 @@ namespace D47.App.Panel;
 /// <summary>What a ship page needs to plot an outfitting route and say why it cannot.</summary>
 /// <param name="Registry">How the plot is made: the same tool the voice calls.</param>
 /// <param name="Plans">Read before and after a plot, to tell whether it stored a new plan.</param>
-/// <param name="LookupsEnabled">Whether "Look things up in the galaxy" is on.</param>
 /// <param name="Here">The Commander's system, for the hint.</param>
 public sealed record OutfittingPlotter(
     CapabilityRegistry Registry,
     RoutePlanBook Plans,
-    Func<bool> LookupsEnabled,
     Func<string?> Here)
 {
-    /// <summary>The reason shown, and set as the tooltip, while the galaxy setting is off.</summary>
-    public const string SwitchedOff =
-        "Route planning is switched off. It shares the galaxy search setting, so turning on "
-        + "“Look things up in the galaxy” switches both on.";
-
     /// <summary>The tool's search radius when the call names none.</summary>
     private const int Radius = 50;
 
@@ -44,14 +37,12 @@ public sealed record OutfittingPlotter(
                 : "Planned modules not fitted in their slot";
 
         var from = Here() is { Length: > 0 } system ? system : "where you are";
-        var enabled = LookupsEnabled();
 
         return new LoadoutToBuy(
             subhead,
             Summary(names),
             $"Plots from {from}, within {Radius} ly, and opens the route on Navigation › Plan.",
             purchases.StorageChecked,
-            enabled ? null : SwitchedOff,
             Plot: async cancellationToken =>
             {
                 var before = Plans.Last(RoutePlanKind.Outfitting);
@@ -147,14 +138,12 @@ public sealed record OutfittingPlotter(
 /// <param name="Summary">The items, three named and the rest counted.</param>
 /// <param name="Hint">Where the route starts and what pressing the button does.</param>
 /// <param name="StorageChecked">False until module storage has been seen.</param>
-/// <param name="Unavailable">Why the button is disabled, or null when it is not.</param>
 /// <param name="Plot">Plots the route and says what happened.</param>
 public sealed record LoadoutToBuy(
     string Subhead,
     string Summary,
     string Hint,
     bool StorageChecked,
-    string? Unavailable,
     Func<CancellationToken, Task<LoadoutToBuyOutcome>> Plot);
 
 /// <summary>What a plot said, and the result page to open when it stored a new plan.</summary>

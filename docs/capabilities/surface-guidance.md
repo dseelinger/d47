@@ -128,7 +128,7 @@ A point on another body is never used.
 > "guide me to the nearest earlier find"
 > "which way to the nearest Aurasus"
 
-With Earlier biology finds from Canonn on and the finds for this system already fetched, D47 picks
+With Canonn's earlier finds for this system already fetched, D47 picks
 the find on this body nearest your position and gives it in the same wording, such as "The nearest
 earlier Bacterium Aurasus - Green find is 2.4 kilometres away, bearing 210, south-west." A name
 after "nearest" must appear in the variant name and goes through the model. Without a match D47

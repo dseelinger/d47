@@ -115,8 +115,8 @@ public partial class App(AppHost? host) : Application
                 // And a tab's own settings strip (#218), on the same terms as the settings page above.
                 window is null ? null : window.BuildSettingsStrip,
 
-                // And the galaxy search material detail runs, while its setting is on.
-                galaxy: () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null,
+                // And the galaxy search material detail runs.
+                galaxy: () => host.Galaxy,
 
                 // And the Search tab's System page, on the window's record.
                 starSystem: window?.StarSystem,
@@ -199,7 +199,7 @@ public partial class App(AppHost? host) : Application
                     Clipboard = host.Clipboard,
                     Known = host.SystemsInPlay,
                     BuildSettingsStrip = window is null ? null : window.BuildSettingsStrip,
-                    Galaxy = () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null,
+                    Galaxy = () => host.Galaxy,
                     StarSystem = window?.StarSystem,
                     Commanders = host.Commanders,
                     Watches = host.WatchesDesk,

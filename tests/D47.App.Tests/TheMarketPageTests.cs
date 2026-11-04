@@ -55,7 +55,7 @@ public class TheMarketPageTests
     }
 
     private static PanelView Furnished(
-        CommodityBoard board, bool lookups = true, D47.Core.Capabilities.Builtin.IClipboard? clipboard = null)
+        CommodityBoard board, D47.Core.Capabilities.Builtin.IClipboard? clipboard = null)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
@@ -65,8 +65,6 @@ public class TheMarketPageTests
                 () => "Sol",
                 D47.Core.Capabilities.CapabilityRegistry.Build([]),
                 Plans: null,
-                LookupsEnabled: () => lookups,
-                OpenSettings: null,
                 Commodities: board,
                 Clipboard: clipboard),
             plan: false,
@@ -198,24 +196,6 @@ public class TheMarketPageTests
         Assert.Contains(TextOf(panel), text => text.Contains("you saw it", StringComparison.Ordinal));
     }
 
-    /// <summary>
-    /// Switched off is a state rather than an error, and the page says which row turns it on — the same
-    /// answer the tool gives, for the reason Phase 3 states.
-    /// </summary>
-    [AvaloniaFact]
-    public void WithLookupsOffThePageSaysSoRatherThanDrawingAnEmptyTable()
-    {
-        var panel = Furnished(Board(Market("Somewhere", "Sol", 0, 500, 1000)), lookups: false);
-
-        panel.Tab = PanelTab.Navigation;
-        Dispatcher.UIThread.RunJobs();
-
-        var drawn = TextOf(panel);
-
-        Assert.Contains(drawn, text => text.Contains("switched off", StringComparison.OrdinalIgnoreCase));
-        Assert.DoesNotContain(drawn, text => text.Contains("Somewhere", StringComparison.Ordinal));
-    }
-
     [AvaloniaFact]
     public void WithNothingAskedYetThereIsAFormAndNoTable()
     {
@@ -322,8 +302,6 @@ public class TheMarketPageTests
                     },
                 ]),
                 Plans: null,
-                LookupsEnabled: () => true,
-                OpenSettings: null,
                 Commodities: new CommodityBoard()),
             plan: false,
             progress: false);

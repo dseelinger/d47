@@ -280,7 +280,7 @@ shield anywhere" works without the full catalogue name.
 
 This is your own storage read off disk, and it is a different question from where a module can be
 *bought*: that one is [galaxy search](galaxy.md) and it leaves the machine. This one works with
-the galaxy search switched off, which is what a fresh install is.
+no network connection.
 
 Where Elite writes no readable name, Directive 47 keeps the symbol's words rather than inventing a
 friendly one — `int powerplant size6 class5` above is ugly and true, and a guessed "6A Power

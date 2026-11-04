@@ -65,7 +65,7 @@ public class CopyGlyphsOnMapPowerplayAndStoriesMiniTests
     {
         var clipboard = new RecordingClipboard();
         var page = new StarSystemPage(
-            new StarSystemSurface(new Systems(), () => new JournalLocation("Sol", null, false, null), () => TestSurface.Settings().Current.Knowledge.GalaxySearch, () => { }),
+            new StarSystemSurface(new Systems(), () => new JournalLocation("Sol", null, false, null)),
             copy ? (text => clipboard.SetTextAsync(text)) : null);
 
         var table = page.NeighbourTable(new PowerplayNeighbourhood(2,
@@ -178,7 +178,7 @@ public class CopyGlyphsOnMapPowerplayAndStoriesMiniTests
             () => null, () => null, () => null, () => null, () => null, () => state,
             () => null, () => null, null, null, NullLogger.Instance);
         var surface = new AdventureSurface(
-            book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => false, () => null, () => { });
+            book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => null, () => { });
 
         var clipboard = new RecordingClipboard();
         var mini = new AdventureMini(surface, null, () => copy ? (text => clipboard.SetTextAsync(text)) : null);

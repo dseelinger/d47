@@ -85,13 +85,10 @@ public class ColonisationCandidateTests
     };
 
     private static (CapabilityRegistry Registry, FakeGalaxy Galaxy) Build(
-        MemoryInstall install,
-        bool enabled = true)
+        MemoryInstall install)
     {
         var galaxy = new FakeGalaxy();
         var settings = TestSurface.For(install).Settings;
-
-        settings.Apply(GalaxyCapability.EnabledKey, enabled ? "true" : "false", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
             [ColonisationCapability.Create(() => null, galaxy, settings)]);
@@ -319,18 +316,6 @@ public class ColonisationCandidateTests
         await Find(registry, ("near", "Sol"), ("max_distance", "80"));
 
         Assert.Equal(ColonisationQuery.ClaimRange, galaxy.LastScan!.MaxDistance);
-    }
-
-    [Fact]
-    public async Task TheGalaxySwitchGovernsThisTheSameAsEveryOtherQuestionThatLeavesTheMachine()
-    {
-        var install = new MemoryInstall();
-        var (registry, galaxy) = Build(install, enabled: false);
-
-        var result = await Find(registry, ("near", "Sol"));
-
-        Assert.True(result.IsError);
-        Assert.Null(galaxy.LastScan);
     }
 
     /// <summary>

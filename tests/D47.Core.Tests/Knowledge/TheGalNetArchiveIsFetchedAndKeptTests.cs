@@ -26,9 +26,9 @@ public class TheGalNetArchiveIsFetchedAndKeptTests
         }
     }
 
-    private static GalNetWatch Watch(Source source, GalNetArchive archive, Func<bool>? enabled = null)
+    private static GalNetWatch Watch(Source source, GalNetArchive archive)
     {
-        var watch = new GalNetWatch(source, archive, enabled ?? (() => true), NullLogger<GalNetWatch>.Instance);
+        var watch = new GalNetWatch(source, archive, NullLogger<GalNetWatch>.Instance);
         watch.Dispatch = work => work().GetAwaiter().GetResult();
         return watch;
     }
@@ -37,17 +37,6 @@ public class TheGalNetArchiveIsFetchedAndKeptTests
         new(ArchivePath, files ?? new MemoryFileSystem(), NullLogger<GalNetArchive>.Instance);
 
     private static GalNetPage Page(bool older, params GalNetArticle[] articles) => new(articles, older);
-
-    [Fact]
-    public void NothingIsDispatchedWhileTheSettingIsOff()
-    {
-        var source = new Source();
-        var watch = Watch(source, Archive(), () => false);
-
-        watch.Poll(Start);
-
-        Assert.Empty(source.Offsets);
-    }
 
     [Fact]
     public void ItFetchesOnTheFirstPollAndThenOnceAnHour()

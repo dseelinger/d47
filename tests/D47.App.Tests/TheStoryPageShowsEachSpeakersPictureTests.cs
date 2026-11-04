@@ -80,7 +80,7 @@ public sealed class TheStoryPageShowsEachSpeakersPictureTests
             stories, book, () => new StoryCatalog([StoryFixture.Story], () => [Secret]), generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
         var surface = new AdventureSurface(
-            book, generator, () => null, () => "F1", () => Now, _ => { }, () => false, () => false, () => null, () => { },
+            book, generator, () => null, () => "F1", () => Now, _ => { }, () => false, () => null, () => { },
             Stories: director,
             Pictures: fixture.Portraits.Pictures,
             ShipPicture: () => Ship);

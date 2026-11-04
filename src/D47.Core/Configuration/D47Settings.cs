@@ -284,35 +284,8 @@ public sealed record KnowledgeSettings
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Extra { get; init; }
 
-    /// <summary>Whether d47 may reach the galaxy search.</summary>
-    public bool GalaxySearch { get; init; }
-
-    /// <summary>Whether d47 may read colonisation plans from Raven Colonial.</summary>
-    public bool ColonisationPlanner { get; init; }
-
     /// <summary>Whether d47 may send the Commander's live colonisation progress to Raven Colonial.</summary>
     public bool ColonisationProgress { get; init; }
-
-    /// <summary>
-    /// Whether a generated adventure may fetch the catalogue of notable places from edastro.com (Phase
-    /// 47).
-    /// </summary>
-    public bool NotablePlaces { get; init; }
-
-    /// <summary>Whether d47 may ask Canonn which biology other Commanders logged in a system you map a body in.</summary>
-    public bool CommunityBiology { get; init; }
-
-    /// <summary>Whether d47 may ask tick.infomancer.uk for the time of the last BGS tick.</summary>
-    public bool BgsTick { get; init; }
-
-    /// <summary>Whether d47 may fetch GalNet articles from Frontier's server and keep them.</summary>
-    public bool GalNet { get; init; }
-
-    /// <summary>Whether d47 may ask ed-server-status.orerve.net whether Elite's servers are up.</summary>
-    public bool ServerStatus { get; init; }
-
-    /// <summary>Whether d47 may download the daily index of FSS signals from the <c>signals-1</c> release.</summary>
-    public bool SignalIndex { get; init; }
 }
 
 /// <summary>What d47 may send to community sites.</summary>
@@ -764,24 +737,17 @@ public sealed record CalloutSettings
     /// <summary>A new organic codex entry the shipped Canonn table does not list for the region, said when logged.</summary>
     public bool RegionFirst { get; init; } = true;
 
-    /// <summary>
-    /// On arrival, the bodies Spansh has surveyed biology on that reach <see cref="BiologyThreshold"/>. Needs
-    /// <see cref="KnowledgeSettings.GalaxySearch"/>.
-    /// </summary>
+    /// <summary>On arrival, the bodies Spansh has surveyed biology on that reach <see cref="BiologyThreshold"/>.</summary>
     public bool SurveyedBiology { get; init; } = true;
 
-    /// <summary>
-    /// On mapping a body with biology, the variants Canonn has earlier finds of there. Needs
-    /// <see cref="KnowledgeSettings.CommunityBiology"/>.
-    /// </summary>
+    /// <summary>On mapping a body with biology, the variants Canonn has earlier finds of there.</summary>
     public bool EarlierFinds { get; init; } = true;
 
     /// <summary>The least value, in credits, the two biology callouts say.</summary>
     public long BiologyThreshold { get; init; } = 10_000_000;
 
     /// <summary>
-    /// Docked with a route plotted: what to buy here for the system at the end of it. Needs
-    /// <see cref="KnowledgeSettings.GalaxySearch"/>, and uses the filters saved in
+    /// Docked with a route plotted: what to buy here for the system at the end of it, with the filters saved in
     /// <see cref="TradeSettings"/>.
     /// </summary>
     public bool TradingMode { get; init; }

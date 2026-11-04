@@ -67,13 +67,11 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
 
     public OutfittingSearchPage(
         GalaxySearchSurface searches,
-        Func<bool> lookupsEnabled,
         Func<string?> here,
         Action<string, long?> openSystem,
         Func<string, Task<bool>>? copy,
-        Action? openSettings,
         bool headset)
-        : base(searches, lookupsEnabled, openSettings, headset)
+        : base(searches, headset)
     {
         _here = here;
         _openSystem = openSystem;

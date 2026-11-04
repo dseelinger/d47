@@ -1116,10 +1116,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
         };
         ThemeInk.Bind(_distanceText, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
-        var galaxy = _host.Settings.Current.Knowledge.GalaxySearch;
-        var hint = Plain(galaxy
-            ? $"Out of comms range beyond {CarrierComms.RangeLightYears:N0} ly."
-            : "Distance unknown with Galaxy search off.");
+        var hint = Plain($"Out of comms range beyond {CarrierComms.RangeLightYears:N0} ly.");
         hint.HorizontalAlignment = HorizontalAlignment.Right;
         hint.VerticalAlignment = VerticalAlignment.Center;
 
@@ -1190,7 +1187,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
         _distance = null;
         _distanceKnown = false;
 
-        if (!_host.Settings.Current.Knowledge.GalaxySearch || string.IsNullOrWhiteSpace(there))
+        if (string.IsNullOrWhiteSpace(there))
         {
             _distanceKnown = true;
             ShowDistance();

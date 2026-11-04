@@ -59,7 +59,7 @@ public sealed class TheSystemPageListsItsStationsTests
     }
 
     private static StarSystemSurface Surface(Systems systems, Func<long, int, SurfaceMiningSite?>? surfaceMining = null) =>
-        new(systems, () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Ltt7786 }, () => true)
+        new(systems, () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Ltt7786 })
         {
             SurfaceMining = surfaceMining,
         };

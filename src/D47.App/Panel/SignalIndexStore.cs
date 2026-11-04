@@ -32,7 +32,6 @@ public sealed class SignalIndexStore : ISignalIndexSource
 
     private readonly string _path;
     private readonly IFileSystem _files;
-    private readonly Func<bool> _allowed;
     private readonly Func<DateTimeOffset> _now;
     private readonly Func<CancellationToken, Task<byte[]?>> _fetch;
     private readonly ILogger _logger;
@@ -43,19 +42,16 @@ public sealed class SignalIndexStore : ISignalIndexSource
     private DateTimeOffset? _lastAttempt;
 
     /// <param name="folder"><c>AppPaths.Signals</c>.</param>
-    /// <param name="allowed">Read at each request, so turning the setting off stops the next fetch.</param>
     /// <param name="fetch">The download, returning the file's bytes or null; the release by default.</param>
     public SignalIndexStore(
         string folder,
         IFileSystem files,
-        Func<bool> allowed,
         Func<DateTimeOffset> now,
         ILogger logger,
         Func<CancellationToken, Task<byte[]?>>? fetch = null)
     {
         _path = Path.Combine(folder, FileName);
         _files = files;
-        _allowed = allowed;
         _now = now;
         _logger = logger;
         _fetch = fetch ?? FetchAsync;
@@ -63,11 +59,6 @@ public sealed class SignalIndexStore : ISignalIndexSource
 
     public async Task<SignalIndex?> GetAsync(CancellationToken cancellationToken)
     {
-        if (!_allowed())
-        {
-            return null;
-        }
-
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
 
         try

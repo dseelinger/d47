@@ -71,13 +71,10 @@ public class GalaxyCapabilityTests
 
     private static (CapabilityRegistry Registry, FakeGalaxy Galaxy) Build(
         MemoryInstall install,
-        bool enabled = true,
         string? currentSystem = "Sol")
     {
         var galaxy = new FakeGalaxy();
         var settings = TestSurface.For(install).Settings;
-
-        settings.Apply(GalaxyCapability.EnabledKey, enabled ? "true" : "false", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
             [GalaxyCapability.Create(galaxy, () => currentSystem, settings)]);
@@ -198,22 +195,6 @@ public class GalaxyCapabilityTests
 
         Assert.True(result.IsError);
         Assert.Contains("couldn't reach", result.Content, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task SwitchedOffIsACapabilityBeingOffRatherThanAFailure()
-    {
-        var install = new MemoryInstall();
-        var (registry, galaxy) = Build(install, enabled: false);
-
-        var result = await registry.InvokeAsync(
-            "search_systems",
-            Args(("distance", "20")),
-            TestContext.Current.CancellationToken);
-
-        Assert.True(result.IsError);
-        Assert.Contains("switched off", result.Content, StringComparison.Ordinal);
-        Assert.Null(galaxy.LastQuery);
     }
 
     [Fact]
@@ -504,21 +485,5 @@ public class GalaxyCapabilityTests
 
         // A body search about surfaces should not spend its answer on the other question's rings.
         Assert.DoesNotContain("A Ring", result.Content, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task ABodySearchIsOffWithTheRestOfTheGalaxySearch()
-    {
-        var install = new MemoryInstall();
-        var (registry, galaxy) = Build(install, enabled: false);
-
-        var result = await registry.InvokeAsync(
-            "find_body",
-            Args(("body_type", "Neutron Star")),
-            TestContext.Current.CancellationToken);
-
-        Assert.True(result.IsError);
-        Assert.Contains("switched off", result.Content, StringComparison.Ordinal);
-        Assert.Null(galaxy.LastBodyQuery);
     }
 }

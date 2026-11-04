@@ -372,7 +372,7 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableResizableColumns(Memory());
-        panel.EnableLoadout(ships, checklists, () => state, null, construction: new ConstructionSurface(() => state, () => now, null, new SourcingBoard(), () => true));
+        panel.EnableLoadout(ships, checklists, () => state, null, construction: new ConstructionSurface(() => state, () => now, null, new SourcingBoard()));
 
         var window = new Window { Content = panel, Width = 1280, Height = 900 };
         window.Show();

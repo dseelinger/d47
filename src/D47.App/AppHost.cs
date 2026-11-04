@@ -2041,7 +2041,6 @@ public sealed class AppHost : IDisposable
         var signalIndexStore = new D47.App.Panel.SignalIndexStore(
             paths.Signals,
             files,
-            () => settings.Current.Knowledge.SignalIndex,
             () => DateTimeOffset.UtcNow,
             loggerFactory.CreateLogger<D47.App.Panel.SignalIndexStore>());
         var rareIndexStore = new D47.App.Panel.RareIndexStore(
@@ -3004,13 +3003,13 @@ public sealed class AppHost : IDisposable
             () => settings.Current.Llm.PersonalityEnabled ? personas.Current.Id : null,
             () => CommanderStory.Compose(settings.Current.Llm.CharacterSheet, settings.Current.Llm.AboutMe, withStory: true),
             () => gameState.Active,
-            () => settings.Current.Knowledge.GalaxySearch ? galaxy : null,
-            () => settings.Current.Knowledge.NotablePlaces ? notablePlaces : null,
+            () => galaxy,
+            () => notablePlaces,
             spend,
             PriceTable.Default,
             loggerFactory.CreateLogger<D47.Core.Adventures.AdventureGenerator>(),
             (providerId, chosen) => ModelCatalogSource.Shared.TraitsFor(providerId, chosen).StoryEffort,
-            () => settings.Current.Knowledge.SignalIndex ? services.SignalIndexStore : null,
+            () => services.SignalIndexStore,
             services.VisitedStars);
 
         // A stock story picked on the Stories page; each chapter is an adventure the generator writes.
@@ -3024,8 +3023,8 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Core.Stories.StoryDirector>())
         {
             Archive = stores.StoryArchive,
-            Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null,
-            Places = () => settings.Current.Knowledge.NotablePlaces ? notablePlaces : null,
+            Galaxy = () => galaxy,
+            Places = () => notablePlaces,
             Ledger = () => late.Host?.Activities,
             Bars = stores.ActivityBars,
             Detours = new D47.Core.Stories.DetourProposer(
@@ -3033,7 +3032,7 @@ public sealed class AppHost : IDisposable
                 () => turns.Model,
                 () => personas.RenderBlock(settings.Current.Llm.PersonalityEnabled),
                 () => gameState.Active,
-                () => settings.Current.Knowledge.GalaxySearch ? galaxy : null,
+                () => galaxy,
                 spend,
                 PriceTable.Default,
                 loggerFactory.CreateLogger<D47.Core.Stories.DetourProposer>())
@@ -3144,7 +3143,7 @@ public sealed class AppHost : IDisposable
             Settings = settings,
             Galaxy = galaxy,
             Trade = services.TradePlanner,
-            CommunityBiology = () => settings.Current.Knowledge.CommunityBiology ? services.CommunityBiology : null,
+            CommunityBiology = () => services.CommunityBiology,
             EarlierFinds = services.EarlierFinds,
             StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId),
             StoryAsides = storyDirector.MissionAsides,
@@ -3835,7 +3834,6 @@ public sealed class AppHost : IDisposable
             foundations.LoggerFactory.CreateLogger<D47.Core.Watches.WatchStore>());
         var bgsTick = host.BgsTick = new BgsTickWatch(
             bgsTickSource,
-            () => settings.Current.Knowledge.BgsTick,
             () => gameState.IsGameRunning || watchStore.Watches.Any(watch => watch.Enabled),
             () => viewState.Load().BgsTickLast,
             last => viewState.Save(viewState.Load() with { BgsTickLast = last }),
@@ -3849,7 +3847,6 @@ public sealed class AppHost : IDisposable
                 foundations.Paths.GalNet,
                 foundations.Files,
                 foundations.LoggerFactory.CreateLogger<GalNetArchive>()),
-            () => settings.Current.Knowledge.GalNet,
             foundations.LoggerFactory.CreateLogger<GalNetWatch>());
 
         tick.Add("galnet", context => galNet.Poll(context.Now));
@@ -3859,10 +3856,7 @@ public sealed class AppHost : IDisposable
             watchStore,
             services.TradePlanner,
             () => bgsTick.Last,
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => settings.Current.Knowledge.BgsTick,
             () => galNet.Arrived,
-            () => settings.Current.Knowledge.GalNet,
             foundations.LoggerFactory.CreateLogger<D47.Core.Watches.WatchRunner>())
         {
             Audible = () => settings.Current.Callouts is { Enabled: true, Watches: true },
@@ -3875,22 +3869,17 @@ public sealed class AppHost : IDisposable
             new D47.Core.Watches.WatchSetup(
                 watchStore,
                 services.Galaxy,
-                services.TradePlanner,
-                () => settings.Current.Knowledge.GalaxySearch),
-            settings,
+                services.TradePlanner),
             services.StarSystems is { } starSystems ? starSystems.PrefixNamesAsync : null);
 
         var serverStatus = host.ServerStatus = new ServerStatusWatch(
             serverStatusSource,
-            () => settings.Current.Knowledge.ServerStatus,
             foundations.LoggerFactory.CreateLogger<ServerStatusWatch>());
 
         tick.Add("server-status", context => serverStatus.Poll(context.Now));
 
-        // Built whether or not the switch is on; it sends nothing while off.
         var colonisationPlans = host.ColonisationPlans = new ColonisationPlans(
             colonisationPlanService,
-            () => settings.Current.Knowledge.ColonisationPlanner,
             () => gameState.Active,
             foundations.LoggerFactory.CreateLogger<ColonisationPlans>());
 
@@ -5694,7 +5683,7 @@ public sealed class AppHost : IDisposable
 
     private static Func<string, string, CancellationToken, Task<double?>> GatedDistance(
         SettingsService settings, Func<D47.Core.Knowledge.IGalaxyService?> galaxy) =>
-        (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch && galaxy() is { } service
+        (from, to, cancellationToken) => galaxy() is { } service
             ? service.DistanceAsync(from, to, cancellationToken)
             : Task.FromResult<double?>(null);
 

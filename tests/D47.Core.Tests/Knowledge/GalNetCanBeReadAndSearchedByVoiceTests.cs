@@ -22,8 +22,8 @@ public class GalNetCanBeReadAndSearchedByVoiceTests
         return archive;
     }
 
-    private static CapabilityRegistry Registry(GalNetArchive archive, bool enabled = true) =>
-        CapabilityRegistry.Build([GalNetCapability.Create(() => archive, () => enabled)]);
+    private static CapabilityRegistry Registry(GalNetArchive archive) =>
+        CapabilityRegistry.Build([GalNetCapability.Create(() => archive)]);
 
     private static async Task<string> Ask(CapabilityRegistry registry, string tool, string? name = null, string? value = null)
     {
@@ -102,22 +102,12 @@ public class GalNetCanBeReadAndSearchedByVoiceTests
         Assert.Equal("get_galnet_article", match.ToolName);
     }
 
-    [Theory]
-    [InlineData(false, "GalNet news is off. Turn it on under Galaxy search in Settings to keep the articles.")]
-    [InlineData(true, "No GalNet articles are kept yet.")]
-    public async Task AnEmptyArchiveSaysWhy(bool enabled, string expected)
-    {
-        var registry = Registry(Archive(), enabled);
-
-        Assert.Equal(expected, await Ask(registry, "search_galnet"));
-        Assert.Equal(expected, await Ask(registry, "get_galnet_article"));
-    }
-
     [Fact]
-    public async Task KeptArticlesAreReadWithTheSettingOff()
+    public async Task AnEmptyArchiveSaysWhy()
     {
-        var registry = Registry(Archive(Article(1, "Kept")), enabled: false);
+        var registry = Registry(Archive());
 
-        Assert.StartsWith("Kept", await Ask(registry, "get_galnet_article"));
+        Assert.Equal("No GalNet articles are kept yet.", await Ask(registry, "search_galnet"));
+        Assert.Equal("No GalNet articles are kept yet.", await Ask(registry, "get_galnet_article"));
     }
 }

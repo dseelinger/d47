@@ -46,15 +46,12 @@ public sealed class TheSearchDistanceFieldIsWideEnoughForFiveDigitsTests
     private static (PanelView Panel, Window Window) Shown(string root, bool headset)
     {
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
         var board = new GalaxySearchBoard();
         var registry = CapabilityRegistry.Build([GalaxyCapability.Create(new Galaxy(), () => Here, settings, searches: board)]);
 
         var surface = new StarSystemSurface(
             new Systems(),
-            () => new JournalLocation(Here, null, false, null),
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { })
+            () => new JournalLocation(Here, null, false, null))
         {
             Searches = new GalaxySearchSurface(
                 registry,

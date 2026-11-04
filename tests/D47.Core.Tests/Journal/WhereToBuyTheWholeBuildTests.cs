@@ -105,7 +105,6 @@ public class WhereToBuyTheWholeBuildTests
 
     private static async Task<(string Said, FakeTrade Trade, SourcingBoard Board)> AskAsync(
         MemoryInstall install,
-        bool lookups = true,
         SourcingAnswer? answer = null)
     {
         var gameState = Store();
@@ -113,10 +112,6 @@ public class WhereToBuyTheWholeBuildTests
         var board = new SourcingBoard();
 
         var settings = Settings(install);
-
-        settings.Replace(
-            "the test",
-            current => current with { Knowledge = current.Knowledge with { GalaxySearch = lookups } });
 
         var registry = CapabilityRegistry.Build(
         [
@@ -230,21 +225,6 @@ public class WhereToBuyTheWholeBuildTests
         Assert.NotNull(board.Last);
         Assert.Equal("Ratraii", board.Last.Near);
         Assert.Contains("Ratraii", board.Last.Site, StringComparison.Ordinal);
-    }
-
-    /// <summary>The gate.</summary>
-    [Fact]
-    public async Task WithLookupsOffItSaysSoAndTheHaulingListStillArrives()
-    {
-        var install = new MemoryInstall();
-
-        var (said, trade, _) = await AskAsync(install, lookups: false);
-
-        Assert.Contains("switched off", said, StringComparison.Ordinal);
-        Assert.Null(trade.Last);
-
-        // The half that reads only the Commander's own disk is untouched by the switch.
-        Assert.Contains("Aluminium", said, StringComparison.Ordinal);
     }
 
     /// <summary>And without the parameter, the tool answers exactly as it did before.</summary>

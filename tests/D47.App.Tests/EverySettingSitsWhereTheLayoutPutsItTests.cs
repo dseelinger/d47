@@ -117,7 +117,6 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
     /// </summary>
     [AvaloniaTheory]
     [InlineData(ShipsCapability.HullArtKey)]
-    [InlineData(GalaxyCapability.NotablePlacesKey)]
     public void ARowPlacedOnATabIsNotOnTheSettingsPage(string key)
     {
         var host = Open(out _);
@@ -127,21 +126,6 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
         Jobs();
 
         Assert.Empty(SettingsPageReading.Counted(host.View));
-
-        host.Close();
-    }
-
-    [AvaloniaTheory]
-    [InlineData("knowledge.bgsTick", "Outside sources")]
-    public void TheSettingsSearchFindsARowMovedOntoThePage(string key, string place)
-    {
-        var host = Open(out _);
-        var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;
-
-        box.Text = key;
-        Jobs();
-
-        Assert.Equal([place], SettingsPageReading.Counted(host.View).Keys);
 
         host.Close();
     }

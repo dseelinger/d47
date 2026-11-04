@@ -262,70 +262,60 @@ public static class EgressDisclosure
         TextToSpeech => TextToSpeechEntry(settings, runningStory ?? []),
         SpeechRecognition => SpeechRecognitionFor(Listening.SttProviderCatalog.Selected(settings.Listening.Provider)),
 
-        GalaxySearch => settings.Knowledge.GalaxySearch
-            ? new EgressEntry(
-                GalaxySearch,
-                NameOf(GalaxySearch),
-                "spansh.co.uk and api.ardent-insight.com",
-                "System names you ask about, and the filters of a search — an allegiance, a distance, an "
-                + "economy, a minor faction's name, the faction states or governments of a mission type you ask where to find, "
-                + "the modules or ship you want to buy, a body type, a codex entry or a mining material. Where you are goes "
-                + "with it whenever a question is relative to you, because "
-                + "\"the nearest high tech system\" cannot be asked without saying where from. Plotting a "
-                + "route also sends your ship's jump range. Plotting a carrier route sends where it starts and ends "
-                + "and four figures from your carrier's last management reading: its tank, the tritium in its "
-                + "hold, its capacity and how much of it is used. It also asks api.ardent-insight.com where tritium is "
-                + "sold around the destination, sending the destination and the distance. A trade route sends the system you are in and "
-                + "how far to look, and nothing else: the prices come back and the planning happens here, "
-                + "so how much your hold carries and the figure you gave to trade with never leave this "
-                + "machine — and neither does your actual balance, which is never read. Asking where to "
-                + "buy or sell one named commodity goes to the second host instead, and sends the same "
-                + "three things: the commodity, the system to search out from, and how far to look. "
-                + (settings.Callouts is { Enabled: true, SurveyedBiology: true }
-                    ? "Arriving in a system sends that system's address to spansh.co.uk, to ask what biology "
-                    + "has been surveyed there; switching off the surveyed biology callout stops it. "
-                    : string.Empty)
-                + (settings.Callouts is { Enabled: true, TradingMode: true }
-                    ? "With Trading Mode on, plotting a route while docked sends the destination system's "
-                    + "name to spansh.co.uk; switching Trading Mode off stops it. "
-                    : string.Empty)
-                + "While the Search tab's System page is open and following you, arriving in a system sends "
-                + "that system's address to spansh.co.uk, to read its record. "
-                + "While the Navigation tab's Galaxy map page is open, opening it and arriving in a system send that "
-                + "system's name to spansh.co.uk, to ask for the hundred systems nearest it; and opening it sends the "
-                + "names of systems holding your bookmarks, your carrier or your stored ships that you have never "
-                + "visited, one at a time, to find where they are. "
-                + "Typing three or more letters into a field that suggests system, station or faction names sends those letters "
-                + "to spansh.co.uk as you type. "
-                + "Asking for a home system suggestion sends the names of systems you have claimed for colonisation, "
-                + "your pledged Power, your squadron's minor faction and your position for a search within 200 light years. "
-                + (remoteCharacterSystems is { Count: > 0 } remote
-                    ? $"Addressing a character who is not aboard sends your system and theirs, to measure the distance: the systems your remote characters are in ({string.Join(", ", remote)}). "
-                    : string.Empty)
-                + "No key and no identifier goes with any of it.",
-                Active: true,
-                Summary: "Sends the system name and search filters you ask about, and your location "
-                    + "when a question is relative to you.")
-            : EgressEntry.Silent(
-                GalaxySearch,
-                NameOf(GalaxySearch),
-                "Galaxy search is off, so no system name and no search leaves this machine."),
-        ColonisationPlanner => settings.Knowledge.ColonisationPlanner
-            ? new EgressEntry(
-                ColonisationPlanner,
-                NameOf(ColonisationPlanner),
-                "ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net (Raven Colonial)",
-                "The names of the systems you have claimed for colonisation or docked at a construction site in, "
-                + "and the project ids the planner returns for them. Not your Commander name, no key, and "
-                + "nothing else from your journal. What comes back includes other Commanders' names and notes: "
-                + "d47 counts the Commanders and carriers rather than reading their names, and leaves the notes there.",
-                Active: true,
-                Summary: "The names of your colonisation systems, to read their plans. Nothing about you goes with it.")
-            : EgressEntry.Silent(
-                ColonisationPlanner,
-                NameOf(ColonisationPlanner),
-                "Colonisation plans are off, so no system name is sent to the planner."),
-        ColonisationProgress => settings.Knowledge is { ColonisationPlanner: true, ColonisationProgress: true }
+        GalaxySearch => new EgressEntry(
+            GalaxySearch,
+            NameOf(GalaxySearch),
+            "spansh.co.uk and api.ardent-insight.com",
+            "System names you ask about, and the filters of a search — an allegiance, a distance, an "
+            + "economy, a minor faction's name, the faction states or governments of a mission type you ask where to find, "
+            + "the modules or ship you want to buy, a body type, a codex entry or a mining material. Where you are goes "
+            + "with it whenever a question is relative to you, because "
+            + "\"the nearest high tech system\" cannot be asked without saying where from. Plotting a "
+            + "route also sends your ship's jump range. Plotting a carrier route sends where it starts and ends "
+            + "and four figures from your carrier's last management reading: its tank, the tritium in its "
+            + "hold, its capacity and how much of it is used. It also asks api.ardent-insight.com where tritium is "
+            + "sold around the destination, sending the destination and the distance. A trade route sends the system you are in and "
+            + "how far to look, and nothing else: the prices come back and the planning happens here, "
+            + "so how much your hold carries and the figure you gave to trade with never leave this "
+            + "machine — and neither does your actual balance, which is never read. Asking where to "
+            + "buy or sell one named commodity goes to the second host instead, and sends the same "
+            + "three things: the commodity, the system to search out from, and how far to look. "
+            + (settings.Callouts is { Enabled: true, SurveyedBiology: true }
+                ? "Arriving in a system sends that system's address to spansh.co.uk, to ask what biology "
+                + "has been surveyed there; switching off the surveyed biology callout stops it. "
+                : string.Empty)
+            + (settings.Callouts is { Enabled: true, TradingMode: true }
+                ? "With Trading Mode on, plotting a route while docked sends the destination system's "
+                + "name to spansh.co.uk; switching Trading Mode off stops it. "
+                : string.Empty)
+            + "While the Search tab's System page is open and following you, arriving in a system sends "
+            + "that system's address to spansh.co.uk, to read its record. "
+            + "While the Navigation tab's Galaxy map page is open, opening it and arriving in a system send that "
+            + "system's name to spansh.co.uk, to ask for the hundred systems nearest it; and opening it sends the "
+            + "names of systems holding your bookmarks, your carrier or your stored ships that you have never "
+            + "visited, one at a time, to find where they are. "
+            + "Typing three or more letters into a field that suggests system, station or faction names sends those letters "
+            + "to spansh.co.uk as you type. "
+            + "Asking for a home system suggestion sends the names of systems you have claimed for colonisation, "
+            + "your pledged Power, your squadron's minor faction and your position for a search within 200 light years. "
+            + (remoteCharacterSystems is { Count: > 0 } remote
+                ? $"Addressing a character who is not aboard sends your system and theirs, to measure the distance: the systems your remote characters are in ({string.Join(", ", remote)}). "
+                : string.Empty)
+            + "No key and no identifier goes with any of it.",
+            Active: true,
+            Summary: "Sends the system name and search filters you ask about, and your location "
+                + "when a question is relative to you."),
+        ColonisationPlanner => new EgressEntry(
+            ColonisationPlanner,
+            NameOf(ColonisationPlanner),
+            "ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net (Raven Colonial)",
+            "The names of the systems you have claimed for colonisation or docked at a construction site in, "
+            + "and the project ids the planner returns for them. Not your Commander name, no key, and "
+            + "nothing else from your journal. What comes back includes other Commanders' names and notes: "
+            + "d47 counts the Commanders and carriers rather than reading their names, and leaves the notes there.",
+            Active: true,
+            Summary: "The names of your colonisation systems, to read their plans. Nothing about you goes with it."),
+        ColonisationProgress => settings.Knowledge.ColonisationProgress
             ? new EgressEntry(
                 ColonisationProgress,
                 NameOf(ColonisationProgress),
@@ -340,111 +330,77 @@ public static class EgressDisclosure
                 ColonisationProgress,
                 NameOf(ColonisationProgress),
                 "Colonisation progress is not sent to the planner."),
-        NotablePlaces => settings.Knowledge.NotablePlaces
-            ? new EgressEntry(
-                NotablePlaces,
-                NameOf(NotablePlaces),
-                "edastro.com",
-                "One request for the whole Galactic Exploration Catalog — about two megabytes, every point "
-                + "of interest it lists — made when a short story or a story chapter is written. Nothing about you "
-                + "goes with it: no position, no key, no identifier and nothing from your journal. The "
-                + "choosing by distance happens on this machine. The catalogue's descriptions are read as "
-                + "information and never written into D47's own tables; its content is CC BY-NC-SA 3.0, "
-                + "acknowledged in NOTICE.",
-                Active: true,
-                Summary: "One ~2 MB request for the whole exploration catalogue, made when a short story "
-                    + "or a story chapter is written. Nothing about you goes with it.")
-            : EgressEntry.Silent(
-                NotablePlaces,
-                NameOf(NotablePlaces),
-                "Notable places are off, so no catalogue is fetched, a generated short story chooses its "
-                + "stops from the galaxy search alone, and no story chapter is a sightseeing chapter.",
-                summary: "Notable places are off, so no catalogue is fetched; a short story's stops come "
-                    + "from galaxy search alone."),
-        CommunityBiology => settings.Knowledge.CommunityBiology
-            ? new EgressEntry(
-                CommunityBiology,
-                NameOf(CommunityBiology),
-                CanonnHost,
-                "The name of the system you are in, when you map a body there that has biological signals, or ask what has been found on a body. "
-                + "No commander name, key or identifier goes with it. Each system is asked at most once a session.",
-                Active: true,
-                Summary: "The name of the system you map a biology body in. Nothing else about you goes with it.")
-            : EgressEntry.Silent(
-                CommunityBiology,
-                NameOf(CommunityBiology),
-                "Earlier biology finds are off, so no system name is sent to Canonn."),
+        NotablePlaces => new EgressEntry(
+            NotablePlaces,
+            NameOf(NotablePlaces),
+            "edastro.com",
+            "One request for the whole Galactic Exploration Catalog — about two megabytes, every point "
+            + "of interest it lists — made when a short story or a story chapter is written. Nothing about you "
+            + "goes with it: no position, no key, no identifier and nothing from your journal. The "
+            + "choosing by distance happens on this machine. The catalogue's descriptions are read as "
+            + "information and never written into D47's own tables; its content is CC BY-NC-SA 3.0, "
+            + "acknowledged in NOTICE.",
+            Active: true,
+            Summary: "One ~2 MB request for the whole exploration catalogue, made when a short story "
+                + "or a story chapter is written. Nothing about you goes with it."),
+        CommunityBiology => new EgressEntry(
+            CommunityBiology,
+            NameOf(CommunityBiology),
+            CanonnHost,
+            "The name of the system you are in, when you map a body there that has biological signals, or ask what has been found on a body. "
+            + "No commander name, key or identifier goes with it. Each system is asked at most once a session.",
+            Active: true,
+            Summary: "The name of the system you map a biology body in. Nothing else about you goes with it."),
 
-        BgsTick => settings.Knowledge.BgsTick
-            ? new EgressEntry(
-                BgsTick,
-                NameOf(BgsTick),
-                BgsTickHost,
-                "One request to tick.infomancer.uk for the time of the last BGS tick, every ten minutes while "
-                + "Elite runs or a background watch is on. Nothing about you goes with it: no key, no Commander name, no position and "
-                + "nothing from your journal. The request is unencrypted, so anyone on the network path can "
-                + "see that d47 asked and could change the time that comes back.",
-                Active: true,
-                Summary: "One unencrypted request for the time of the last BGS tick, every ten minutes while "
-                    + "Elite runs or a background watch is on. Nothing about you goes with it.")
-            : EgressEntry.Silent(
-                BgsTick,
-                NameOf(BgsTick),
-                "BGS tick time is off, so nothing is requested and d47 does not know when the tick happened."),
+        BgsTick => new EgressEntry(
+            BgsTick,
+            NameOf(BgsTick),
+            BgsTickHost,
+            "One request to tick.infomancer.uk for the time of the last BGS tick, every ten minutes while "
+            + "Elite runs or a background watch is on. Nothing about you goes with it: no key, no Commander name, no position and "
+            + "nothing from your journal. The request is unencrypted, so anyone on the network path can "
+            + "see that d47 asked and could change the time that comes back.",
+            Active: true,
+            Summary: "One unencrypted request for the time of the last BGS tick, every ten minutes while "
+                + "Elite runs or a background watch is on. Nothing about you goes with it."),
 
-        GalNet => settings.Knowledge.GalNet
-            ? new EgressEntry(
-                GalNet,
-                NameOf(GalNet),
-                GalNetHost,
-                "One request to Frontier's GalNet server, cms.zaonce.net, for the newest articles at startup and "
-                + "every hour while d47 runs, and for up to two years of older articles the first time. Nothing "
-                + "about you goes with it: no key, no Commander name and nothing from your journal. When your "
-                + "language model searches or reads the kept articles, their text goes to it.",
-                Active: true,
-                Summary: "One request for the newest GalNet articles at startup and every hour, and up to two "
-                    + "years of older ones the first time. Nothing about you goes with it.")
-            : EgressEntry.Silent(
-                GalNet,
-                NameOf(GalNet),
-                "GalNet news is off, so nothing is requested. Articles already kept stay on this machine; if your language model "
-                + "searches or reads them, their text goes to it."),
+        GalNet => new EgressEntry(
+            GalNet,
+            NameOf(GalNet),
+            GalNetHost,
+            "One request to Frontier's GalNet server, cms.zaonce.net, for the newest articles at startup and "
+            + "every hour while d47 runs, and for up to two years of older articles the first time. Nothing "
+            + "about you goes with it: no key, no Commander name and nothing from your journal. When your "
+            + "language model searches or reads the kept articles, their text goes to it.",
+            Active: true,
+            Summary: "One request for the newest GalNet articles at startup and every hour, and up to two "
+                + "years of older ones the first time. Nothing about you goes with it."),
 
-        ServerStatus => settings.Knowledge.ServerStatus
-            ? new EgressEntry(
-                ServerStatus,
-                NameOf(ServerStatus),
-                ServerStatusHost,
-                "One request to Frontier's server status page, ed-server-status.orerve.net, when d47 starts, "
-                + "then every ten minutes while the servers are up and every minute while they are not, "
-                + "whether or not Elite is running. Nothing about you goes with it: no key, no Commander "
-                + "name and nothing from your journal.",
-                Active: true,
-                Summary: "One request at startup, then every ten minutes (every minute while the servers are "
-                    + "down), even with Elite closed. Nothing about you goes with it.")
-            : EgressEntry.Silent(
-                ServerStatus,
-                NameOf(ServerStatus),
-                "Server status is off, so nothing is requested and the title bar shows no server state."),
+        ServerStatus => new EgressEntry(
+            ServerStatus,
+            NameOf(ServerStatus),
+            ServerStatusHost,
+            "One request to Frontier's server status page, ed-server-status.orerve.net, when d47 starts, "
+            + "then every ten minutes while the servers are up and every minute while they are not, "
+            + "whether or not Elite is running. Nothing about you goes with it: no key, no Commander "
+            + "name and nothing from your journal.",
+            Active: true,
+            Summary: "One request at startup, then every ten minutes (every minute while the servers are "
+                + "down), even with Elite closed. Nothing about you goes with it."),
 
-        SignalIndex => settings.Knowledge.SignalIndex
-            ? new EgressEntry(
-                SignalIndex,
-                NameOf(SignalIndex),
-                "github.com",
-                "A request for the daily index of signals Commanders have uploaded to EDDN, from the signals-1 "
-                + "release, made when you search for a signal or a story chapter is written and the copy in data\\signals is missing or more than "
-                + "20 hours old - one file, several megabytes, at most once in 20 hours. A request that fails is "
-                + "tried again on a later search, no sooner than an hour after. Nothing about you goes with it: no "
-                + "position, no key, no Commander name, no identifier and nothing from your journal. The search "
-                + "itself happens on this machine.",
-                Active: true,
-                Summary: "The daily signal index, at most once in 20 hours, when you search for a signal or a story chapter is written. Nothing "
-                    + "about you goes with it.")
-            : EgressEntry.Silent(
-                SignalIndex,
-                NameOf(SignalIndex),
-                "The signal index is off, so no index is fetched and a signal search answers from your own scans alone."),
+        SignalIndex => new EgressEntry(
+            SignalIndex,
+            NameOf(SignalIndex),
+            "github.com",
+            "A request for the daily index of signals Commanders have uploaded to EDDN, from the signals-1 "
+            + "release, made when you search for a signal or a story chapter is written and the copy in data\\signals is missing or more than "
+            + "20 hours old - one file, several megabytes, at most once in 20 hours. A request that fails is "
+            + "tried again on a later search, no sooner than an hour after. Nothing about you goes with it: no "
+            + "position, no key, no Commander name, no identifier and nothing from your journal. The search "
+            + "itself happens on this machine.",
+            Active: true,
+            Summary: "The daily signal index, at most once in 20 hours, when you search for a signal or a story chapter is written. Nothing "
+                + "about you goes with it."),
 
         Eddn => settings.Contribution.Eddn
             ? new EgressEntry(

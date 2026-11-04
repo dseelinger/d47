@@ -39,8 +39,6 @@ public sealed class GalaxyMapPage : UserControl
     public const string CentreHere = "Centre here";
     public const string Bookmark = "Bookmark";
     public const string ClearSelection = "Clear selection";
-    public const string GalaxySearchOff = "Galaxy search draws the stars you have not visited, and it is off in Settings.";
-    public const string PlacedWhenOn = "Galaxy search places them, and it is off in Settings.";
 
     private const int MostNamed = 3;
 
@@ -1033,7 +1031,7 @@ public sealed class GalaxyMapPage : UserControl
 
     /// <summary>
     /// What the map could not place, as "2 bookmarks, your carrier and 1 stored ship are in systems you have not
-    /// visited.", a sentence for each reason it could not; with galaxy search off, that galaxy search would place them.
+    /// visited.", a sentence for each reason it could not.
     /// </summary>
     private void Unplaced(Placement placement, bool lookups)
     {
@@ -1057,7 +1055,6 @@ public sealed class GalaxyMapPage : UserControl
         if (!lookups)
         {
             Say(placement.Unplaced, " is in a system you have not visited.", " are in systems you have not visited.");
-            runs.Add(Ink(runs.Count > 0 ? " " + PlacedWhenOn : GalaxySearchOff));
         }
         else
         {

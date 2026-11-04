@@ -100,8 +100,7 @@ public sealed class TheSystemPageListsNearbyPowerplayTests
         panel.EnableSearch();
         panel.EnableStarSystem(new StarSystemSurface(
             systems,
-            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Ltt7786 },
-            () => true));
+            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Ltt7786 }));
 
         var window = new Window { Content = panel, Width = 1280, Height = 1180 };
         window.Show();

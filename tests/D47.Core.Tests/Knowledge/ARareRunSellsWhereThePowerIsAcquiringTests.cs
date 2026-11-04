@@ -62,7 +62,6 @@ public class ARareRunSellsWhereThePowerIsAcquiringTests
         params (string Name, string Value)[] values)
     {
         var settings = TestSurface.For(new MemoryInstall()).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
         [

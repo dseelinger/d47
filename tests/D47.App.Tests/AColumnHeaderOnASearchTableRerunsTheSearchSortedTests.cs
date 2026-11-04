@@ -74,7 +74,6 @@ public sealed class AColumnHeaderOnASearchTableRerunsTheSearchSortedTests
     private static (PanelView Panel, Window Window, Galaxy Galaxy) Shown(string root)
     {
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var galaxy = new Galaxy();
         var (panel, window) = SearchPanelHosting.ShowSearchForm(settings, galaxy, new GalaxySearchBoard(), new Systems(), root);

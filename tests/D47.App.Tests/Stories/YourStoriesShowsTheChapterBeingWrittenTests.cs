@@ -97,7 +97,7 @@ public sealed class YourStoriesShowsTheChapterBeingWrittenTests
         });
 
         var surface = new AdventureSurface(
-            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
+            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => null, () => { },
             Stories: director);
 
         var look = AppLook.Put();

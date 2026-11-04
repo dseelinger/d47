@@ -139,7 +139,7 @@ public sealed class DetourProposer(
         {
             if (galaxy() is not { } search)
             {
-                return Asked(ask, "Galaxy search is off, so no place can be checked. Name an activity instead.", []);
+                return Asked(ask, "Galaxy search is not available, so no place can be checked. Name an activity instead.", []);
             }
 
             var resolved = await new AdventureResolver(search) { Time = Time }

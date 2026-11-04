@@ -43,7 +43,6 @@ public sealed class TheSearchDistanceFieldsGoUpToNinetyNineThousandTests
     private static IReadOnlyDictionary<string, string> Filled(GalaxySearchKind kind, string root, object result, string distance)
     {
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var board = new GalaxySearchBoard();
         board.Post(new GalaxySearchPosting(

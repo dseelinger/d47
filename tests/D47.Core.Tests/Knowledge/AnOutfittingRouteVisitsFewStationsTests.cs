@@ -119,7 +119,6 @@ public class AnOutfittingRouteVisitsFewStationsTests
     {
         var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var plans = new RoutePlanBook(
             Path.Combine(install.Root, "route-plans.json"), new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
@@ -162,7 +161,6 @@ public class AnOutfittingRouteVisitsFewStationsTests
     {
         var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var plans = new RoutePlanBook(
             Path.Combine(install.Root, "route-plans.json"), new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
@@ -192,7 +190,6 @@ public class AnOutfittingRouteVisitsFewStationsTests
     {
         var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var plans = new RoutePlanBook(
             Path.Combine(install.Root, "route-plans.json"), new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);

@@ -4,7 +4,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Knowledge;
 
-public class TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests
+public class TheBgsTickIsAskedForOnlyWhileDueTests
 {
     internal sealed class Source : IBgsTickSource
     {
@@ -23,8 +23,6 @@ public class TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests
     {
         public Source Source { get; } = new();
 
-        public bool Enabled { get; set; } = true;
-
         public bool Due { get; set; } = true;
 
         public string? Stored { get; set; }
@@ -33,7 +31,6 @@ public class TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests
         {
             var watch = new BgsTickWatch(
                 Source,
-                () => Enabled,
                 () => Due,
                 () => Stored,
                 last => Stored = last,
@@ -45,18 +42,6 @@ public class TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests
     }
 
     internal static readonly DateTimeOffset Start = new(2026, 10, 16, 12, 0, 0, TimeSpan.Zero);
-
-    [Fact]
-    public void NothingIsAskedWhileTheSettingIsOff()
-    {
-        var rig = new Rig { Enabled = false };
-        var watch = rig.Watch();
-
-        watch.Poll(Start);
-        watch.Poll(Start + TimeSpan.FromHours(1));
-
-        Assert.Equal(0, rig.Source.Calls);
-    }
 
     [Fact]
     public void NothingIsAskedWhileNothingIsDue()
@@ -95,21 +80,6 @@ public class TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests
         Assert.Equal(1, rig.Source.Calls);
 
         watch.Poll(Start + BgsTickWatch.Interval);
-        Assert.Equal(2, rig.Source.Calls);
-    }
-
-    [Fact]
-    public void TurningTheSettingOnAsksOnTheNextTick()
-    {
-        var rig = new Rig();
-        var watch = rig.Watch();
-
-        watch.Poll(Start);
-        rig.Enabled = false;
-        watch.Poll(Start + TimeSpan.FromMinutes(1));
-        rig.Enabled = true;
-        watch.Poll(Start + TimeSpan.FromMinutes(2));
-
         Assert.Equal(2, rig.Source.Calls);
     }
 
@@ -157,11 +127,11 @@ public class TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests
 
 public class ABgsTickAnswerIsUsedOnlyInsideItsWindowTests
 {
-    private static readonly DateTimeOffset Start = TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests.Start;
+    private static readonly DateTimeOffset Start = TheBgsTickIsAskedForOnlyWhileDueTests.Start;
 
     private static DateTimeOffset? Answer(TimeSpan fromStart, string? stored = null)
     {
-        var rig = new TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests.Rig { Stored = stored };
+        var rig = new TheBgsTickIsAskedForOnlyWhileDueTests.Rig { Stored = stored };
         var watch = rig.Watch();
         rig.Source.Answers.Enqueue(() => Start + fromStart);
 
@@ -199,7 +169,7 @@ public class ABgsTickAnswerIsUsedOnlyInsideItsWindowTests
     public void NoAnswerLeavesTheHeldTimeAlone()
     {
         var held = Start - TimeSpan.FromHours(1);
-        var rig = new TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests.Rig { Stored = BgsTickWatch.Format(held) };
+        var rig = new TheBgsTickIsAskedForOnlyWhileDueTests.Rig { Stored = BgsTickWatch.Format(held) };
         var watch = rig.Watch();
 
         watch.Poll(Start);
@@ -211,12 +181,12 @@ public class ABgsTickAnswerIsUsedOnlyInsideItsWindowTests
 
 public class TheBgsTickSurvivesARestartTests
 {
-    private static readonly DateTimeOffset Start = TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests.Start;
+    private static readonly DateTimeOffset Start = TheBgsTickIsAskedForOnlyWhileDueTests.Start;
 
     [Fact]
     public void AnAcceptedTimeIsStoredAndReadBackByTheNextWatch()
     {
-        var rig = new TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests.Rig();
+        var rig = new TheBgsTickIsAskedForOnlyWhileDueTests.Rig();
         var tick = Start - TimeSpan.FromHours(3);
         rig.Source.Answers.Enqueue(() => tick);
 
@@ -226,7 +196,7 @@ public class TheBgsTickSurvivesARestartTests
 
         Assert.Equal("2026-10-16T09:00:00.0000000Z", rig.Stored);
 
-        rig.Enabled = false;
+        rig.Due = false;
 
         Assert.Equal(tick, rig.Watch().Last);
     }
@@ -234,7 +204,7 @@ public class TheBgsTickSurvivesARestartTests
     [Fact]
     public void AnUnreadableStoredTimeIsNoTime()
     {
-        var rig = new TheBgsTickIsAskedForOnlyWhileOnAndEliteRunsTests.Rig { Stored = "yesterday" };
+        var rig = new TheBgsTickIsAskedForOnlyWhileDueTests.Rig { Stored = "yesterday" };
 
         Assert.Null(rig.Watch().Last);
     }

@@ -16,9 +16,6 @@ public sealed class SignalSearchPage : GalaxySearchPage
 
     public const string Help = "Signals from the daily index and from your own scans.";
 
-    public const string NoSources =
-        "You have no signal scans of your own yet. Turn on “Signal index” in Settings and D47 will search the daily index of signals too.";
-
     public const string NameName = "SignalName";
 
     public const string Unset = "Choose a signal";
@@ -58,13 +55,11 @@ public sealed class SignalSearchPage : GalaxySearchPage
 
     public SignalSearchPage(
         GalaxySearchSurface searches,
-        Func<bool> namesEnabled,
         Func<string?> here,
         Action<string, long?> openSystem,
         Func<string, Task<bool>>? copy,
-        Action? openSettings,
         bool headset)
-        : base(searches, searches.SignalSources ?? (() => true), openSettings, headset, namesEnabled)
+        : base(searches, headset)
     {
         _here = here;
         _openSystem = openSystem;
@@ -93,10 +88,6 @@ public sealed class SignalSearchPage : GalaxySearchPage
 
     protected override string Noun => "Signals";
     protected override string NounOne => "Signal";
-
-    protected override string OffSentence => NoSources;
-
-    protected override string OffTip => "Turn on “Signal index” in Settings to search the daily index.";
 
     protected override string RunningText => "Searching signals";
 

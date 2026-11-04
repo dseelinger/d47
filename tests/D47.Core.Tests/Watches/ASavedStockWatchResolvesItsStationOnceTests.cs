@@ -18,8 +18,8 @@ public class ASavedStockWatchResolvesItsStationOnceTests
     private static StockDraft Any(string system = "Sample", string station = "Sample Port", string commodity = "Tritium") =>
         new(string.Empty, true, null, system, station, commodity, StockComparison.Below, "5000");
 
-    private static WatchSetup Setup(WatchStore store, IGalaxyService galaxy, ITradePlanService trade, bool galaxySearch = true) =>
-        new(store, galaxy, trade, () => galaxySearch);
+    private static WatchSetup Setup(WatchStore store, IGalaxyService galaxy, ITradePlanService trade) =>
+        new(store, galaxy, trade);
 
     [Fact]
     public async Task PickingSoontillRelicsStoresItsMarketAndSendsNothing()
@@ -29,7 +29,7 @@ public class ASavedStockWatchResolvesItsStationOnceTests
         Assert.NotNull(rare);
 
         var draft = new StockDraft(string.Empty, true, rare, string.Empty, string.Empty, string.Empty, StockComparison.Above, "200");
-        var result = await Setup(store, new StubGalaxyService(), new StubTradePlanService(), galaxySearch: false)
+        var result = await Setup(store, new StubGalaxyService(), new StubTradePlanService())
             .SaveStockAsync(null, draft, TestContext.Current.CancellationToken);
 
         Assert.True(result.Saved);
@@ -79,16 +79,6 @@ public class ASavedStockWatchResolvesItsStationOnceTests
         Assert.False(result.Saved);
         Assert.DoesNotContain("lists no commodity", result.Message, StringComparison.Ordinal);
         Assert.Empty(store.Watches);
-    }
-
-    [Fact]
-    public async Task AnyStationNeedsGalaxySearchAndSendsNothingWithItOff()
-    {
-        var result = await Setup(Store(), new StubGalaxyService(), new StubTradePlanService(), galaxySearch: false)
-            .SaveStockAsync(null, Any(), TestContext.Current.CancellationToken);
-
-        Assert.False(result.Saved);
-        Assert.Equal(WatchField.System, result.Field);
     }
 
     [Fact]

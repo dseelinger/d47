@@ -454,7 +454,7 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
     [Fact]
     public void TheGalaxySearchDisclosureNamesTheDestinationLookup()
     {
-        var settings = new D47Settings { Knowledge = new KnowledgeSettings { GalaxySearch = true } };
+        var settings = new D47Settings();
         var trading = settings with { Callouts = settings.Callouts with { TradingMode = true } };
 
         var on = EgressDisclosure.Entry(EgressDisclosure.GalaxySearch, trading, llmKeyPresent: false);

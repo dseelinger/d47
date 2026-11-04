@@ -29,17 +29,11 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
         bool big = false,
         RunningCast? story = null,
         Func<string, string, CancellationToken, Task<double?>>? distance = null,
-        bool galaxy = false,
         Func<string, Task<bool>>? copy = null,
         bool carrier = false)
     {
         var look = AppLook.Put();
         var settings = TestSurface.Settings();
-
-        if (galaxy)
-        {
-            Assert.True(settings.Apply("knowledge.galaxy", "true", SettingsCaller.Panel).Ok);
-        }
 
         var store = new CharacterStore(
             Path.Combine(TestSurface.MemoryFolder("characters"), "characters.json"),
@@ -345,7 +339,7 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
     [AvaloniaFact]
     public void ACharacterAwayShowsItsSystemAndTheDistanceFromHere()
     {
-        var surface = Open(galaxy: true);
+        var surface = Open();
 
         Assert.Null(surface.Store.Set("F1", new CustomCharacter("0a1b2c3d", "Harlan Voss", null, null, false, "Shinrarta Dezhra")));
         surface.Page.Select("custom:0a1b2c3d");
@@ -356,20 +350,6 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
         Assert.Contains("Out of comms range beyond 500 ly.", Text(surface.Page));
 
         Capture(surface, "characters-window.png");
-        Close(surface);
-    }
-
-    [AvaloniaFact]
-    public void WithGalaxySearchOffTheDistanceIsUnknownAndSaysSo()
-    {
-        var surface = Open();
-
-        Assert.Null(surface.Store.Set("F1", new CustomCharacter("0a1b2c3d", "Harlan Voss", null, null, false, "Shinrarta Dezhra")));
-        surface.Page.Select("custom:0a1b2c3d");
-
-        Assert.Equal("unknown", Named<TextBlock>(surface.Page, CharactersPage.DistanceName).Text);
-        Assert.Contains("Distance unknown with Galaxy search off.", Text(surface.Page));
-
         Close(surface);
     }
 

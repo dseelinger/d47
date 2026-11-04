@@ -11,9 +11,8 @@ public sealed record WatchNotice(Guid WatchId, string Text);
 
 /// <summary>
 /// Checks stock watches against the market index, one market at a time and each watch at most once every
-/// <see cref="Interval"/>, only while Galaxy search and BGS tick time are on, a BGS tick is known and the line
-/// would be said.
-/// A New Community Goal watch speaks for GalNet launches while GalNet news and BGS tick time are on.
+/// <see cref="Interval"/>, only while a BGS tick is known and the line would be said.
+/// A New Community Goal watch speaks for GalNet launches.
 /// The quote runs on the pool. Tick thread only.
 /// </summary>
 public sealed class WatchRunner
@@ -23,10 +22,7 @@ public sealed class WatchRunner
     private readonly WatchStore _store;
     private readonly ITradePlanService _trade;
     private readonly Func<DateTimeOffset?> _lastTick;
-    private readonly Func<bool> _galaxySearch;
-    private readonly Func<bool> _bgsTick;
     private readonly Func<IReadOnlyList<GalNetArticle>> _arrived;
-    private readonly Func<bool> _galNet;
     private readonly ILogger<WatchRunner> _logger;
 
     /// <summary>One entry per finished quote; the quote is null when the index has no report or the check failed.</summary>
@@ -42,19 +38,13 @@ public sealed class WatchRunner
         WatchStore store,
         ITradePlanService trade,
         Func<DateTimeOffset?> lastTick,
-        Func<bool> galaxySearch,
-        Func<bool> bgsTick,
         Func<IReadOnlyList<GalNetArticle>> arrived,
-        Func<bool> galNet,
         ILogger<WatchRunner> logger)
     {
         _store = store;
         _trade = trade;
         _lastTick = lastTick;
-        _galaxySearch = galaxySearch;
-        _bgsTick = bgsTick;
         _arrived = arrived;
-        _galNet = galNet;
         _logger = logger;
     }
 
@@ -73,7 +63,7 @@ public sealed class WatchRunner
         _store.Poll();
 
         var ready = new List<WatchNotice>();
-        var allowed = _galaxySearch() && _bgsTick() && Audible();
+        var allowed = Audible();
         var tick = _lastTick();
 
         while (_answers.TryDequeue(out var answer))
@@ -145,7 +135,7 @@ public sealed class WatchRunner
     {
         var watch = _store.Watches.FirstOrDefault(w => w is { Enabled: true, Kind: WatchKind.NewCommunityGoal });
 
-        if (watch is null || !_galNet() || !_bgsTick())
+        if (watch is null)
         {
             _launches.Clear();
             return null;

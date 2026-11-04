@@ -76,7 +76,7 @@ internal static class MissionStations
 
         var ranks = RankNote(names, state?.Ranks);
 
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return ToolResult.Error(ranks + GalaxyCapability.Unavailable);
         }

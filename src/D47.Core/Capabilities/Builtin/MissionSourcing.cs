@@ -29,9 +29,9 @@ internal static class MissionSourcing
             return "You have no collect missions on your board, so there is nothing to source.";
         }
 
-        if (trade is null || settings is null || !settings.Current.Knowledge.GalaxySearch)
+        if (trade is null || settings is null)
         {
-            return "Looking markets up is switched off, so I cannot say where to buy any of it.";
+            return "Looking markets up is not available, so I cannot say where to buy any of it.";
         }
 
         var needs = Needs(state!, collect, out var aboard);

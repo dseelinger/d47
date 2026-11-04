@@ -806,16 +806,14 @@ public static class CalloutCapability
                 + "on arrival (on by default). Arrive in a system where Spansh has surveyed biology reaching the "
                 + "figure in Call out biology from: D47 names the bodies. Say \"stop calling out surveyed "
                 + "biology\": the row shows off and that is no longer said. Say \"start calling out surveyed "
-                + "biology\" and the row shows on. The row is absent while Speak without being asked is off. The "
-                + "row appears only while Look things up in the galaxy is on.",
+                + "biology\" and the row shows on. The row is absent while Speak without being asked is off.",
                 "Surveyed biology on arrival",
                 "On arriving in a system, the bodies Spansh has surveyed biology on that reach the threshold "
-                + "below. Needs galaxy search.",
+                + "below.",
                 "surveyed-biology",
                 "surveyed biology",
                 s => s.Callouts.SurveyedBiology,
-                (s, v) => s with { Callouts = s.Callouts with { SurveyedBiology = v } },
-                appliesWhen: s => s.Knowledge.GalaxySearch),
+                (s, v) => s with { Callouts = s.Callouts with { SurveyedBiology = v } }),
 
             Toggle(
                 EarlierFindsKey,
@@ -824,16 +822,13 @@ public static class CalloutCapability
                 + "finds on mapping (on by default). Map a body with biology that Canonn has earlier finds on: "
                 + "D47 names the variants found there. Say \"stop calling out earlier biology finds\": the row "
                 + "shows off and that is no longer said. Say \"start calling out earlier biology finds\" and the "
-                + "row shows on. The row is absent while Speak without being asked is off. The row appears only "
-                + "while Earlier biology finds from Canonn is on.",
+                + "row shows on. The row is absent while Speak without being asked is off.",
                 "Earlier biology finds on mapping",
-                "On mapping a body with biology, the variants Canonn has earlier finds of there. Needs "
-                + "earlier biology finds from Canonn.",
+                "On mapping a body with biology, the variants Canonn has earlier finds of there.",
                 "earlier-finds",
                 "earlier biology finds",
                 s => s.Callouts.EarlierFinds,
-                (s, v) => s with { Callouts = s.Callouts with { EarlierFinds = v } },
-                appliesWhen: s => s.Knowledge.CommunityBiology),
+                (s, v) => s with { Callouts = s.Callouts with { EarlierFinds = v } }),
 
             Toggle(
                 TradingModeKey,
@@ -842,17 +837,15 @@ public static class CalloutCapability
                 + "is off by default). Dock with a route plotted: D47 says the best cargo to buy here for the "
                 + "system at the end of it, using the filters saved on the Trade route page. Say \"stop calling "
                 + "out trading mode\": the row shows off and that is no longer said. Say \"start calling out "
-                + "trading mode\" and the row shows on. The row is absent while Speak without being asked is off. "
-                + "The row appears only while Look things up in the galaxy is on.",
+                + "trading mode\" and the row shows on. The row is absent while Speak without being asked is off.",
                 "Trading Mode",
                 "Docked with a route plotted, the best cargo to buy here for the system at the end of it. "
-                + "Needs galaxy search, and uses the filters saved on the Trade route page.",
+                + "Uses the filters saved on the Trade route page.",
                 "trading-mode",
                 "trading mode",
                 s => s.Callouts.TradingMode,
                 (s, v) => s with { Callouts = s.Callouts with { TradingMode = v } },
-                defaultOn: false,
-                appliesWhen: s => s.Knowledge.GalaxySearch),
+                defaultOn: false),
 
             Toggle(
                 AnnouncedAttackKey,
@@ -968,15 +961,13 @@ public static class CalloutCapability
                 + "open Settings › Your core › Callouts, group Plans and reminders, and find BGS tick (on by "
                 + "default). When the BGS ticks while D47 runs, D47 says so. Say \"stop calling out BGS tick\": the "
                 + "row shows off and that is no longer said. Say \"start calling out BGS tick\" and the row shows "
-                + "on. The row is absent while Speak without being asked is off. The row appears only while BGS "
-                + "tick time under Outside sources is on.",
+                + "on. The row is absent while Speak without being asked is off.",
                 "BGS tick",
-                "When the BGS ticks, says so. Needs BGS tick time under Outside sources.",
+                "When the BGS ticks, says so.",
                 "bgs-tick",
                 "BGS tick",
                 s => s.Callouts.BgsTick,
-                (s, v) => s with { Callouts = s.Callouts with { BgsTick = v } },
-                appliesWhen: s => s.Knowledge.BgsTick),
+                (s, v) => s with { Callouts = s.Callouts with { BgsTick = v } }),
 
             Toggle(
                 GalNetKey,
@@ -984,15 +975,13 @@ public static class CalloutCapability
                 + "open Settings › Your core › Callouts, group Plans and reminders, and find GalNet headlines (on "
                 + "by default). When new GalNet articles arrive, D47 says their headlines. Say \"stop calling out "
                 + "GalNet headlines\": the row shows off and that is no longer said. Say \"start calling out GalNet "
-                + "headlines\" and the row shows on. The row is absent while Speak without being asked is off. The "
-                + "row appears only while GalNet news under Outside sources is on.",
+                + "headlines\" and the row shows on. The row is absent while Speak without being asked is off.",
                 "GalNet headlines",
-                "When new GalNet articles arrive, says their headlines. Needs GalNet news under Outside sources.",
+                "When new GalNet articles arrive, says their headlines.",
                 "galnet",
                 "GalNet headlines",
                 s => s.Callouts.GalNet,
-                (s, v) => s with { Callouts = s.Callouts with { GalNet = v } },
-                appliesWhen: s => s.Knowledge.GalNet),
+                (s, v) => s with { Callouts = s.Callouts with { GalNet = v } }),
 
             Toggle(
                 ServerStatusKey,
@@ -1001,14 +990,13 @@ public static class CalloutCapability
                 + "default). When Elite's servers go down for maintenance, go offline or come back, D47 says so. "
                 + "Say \"stop calling out Server status\": the row shows off and that is no longer said. Say \"start "
                 + "calling out Server status\" and the row shows on. The row is absent while Speak without being "
-                + "asked is off. The row appears only while Server status under Outside sources is on.",
+                + "asked is off.",
                 "Server status",
-                "When Elite's servers go down for maintenance, go offline or come back, says so. Needs Server status under Outside sources.",
+                "When Elite's servers go down for maintenance, go offline or come back, says so.",
                 "server-status",
                 "Server status",
                 s => s.Callouts.ServerStatus,
-                (s, v) => s with { Callouts = s.Callouts with { ServerStatus = v } },
-                appliesWhen: s => s.Knowledge.ServerStatus),
+                (s, v) => s with { Callouts = s.Callouts with { ServerStatus = v } }),
 
             Toggle(
                 WatchesKey,
@@ -1018,15 +1006,13 @@ public static class CalloutCapability
                 + "check: D47 says the commodity, the station, the system and the stock, once per BGS tick. Say "
                 + "\"stop calling out background watches\": the row shows off and that is no longer said. Say "
                 + "\"start calling out background watches\" and the row shows on. The row is absent while Speak "
-                + "without being asked is off. The row appears only while Look things up in the galaxy and BGS "
-                + "tick time under Outside sources are both on.",
+                + "without being asked is off.",
                 "Background watches",
-                "When a stock watch's condition holds, says the stock, once per BGS tick. Needs Look things up in the galaxy and BGS tick time under Outside sources.",
+                "When a stock watch's condition holds, says the stock, once per BGS tick.",
                 "watches",
                 "background watches",
                 s => s.Callouts.Watches,
-                (s, v) => s with { Callouts = s.Callouts with { Watches = v } },
-                appliesWhen: s => s.Knowledge.GalaxySearch && s.Knowledge.BgsTick),
+                (s, v) => s with { Callouts = s.Callouts with { Watches = v } }),
 
             Toggle(
                 FriendsOnlineKey,
@@ -1872,7 +1858,7 @@ public static class CalloutCapability
                 + "open Settings › Your core › Exploring, group Exploration callouts, and set Call out biology "
                 + "from (credits) to 10000000. Scan a landable body whose biology could reach less than that: "
                 + "nothing is said. Scan one that could reach more: D47 says so. The row appears while High-value "
-                + "biology is on, or Surveyed biology on arrival is on with Look things up in the galaxy.",
+                + "biology or Surveyed biology on arrival is on.",
             Advanced = true,
             Label = "Call out biology from (credits)",
             Help = "The least a body's biology could reach at best, or was surveyed at, before it is said.",
@@ -1880,7 +1866,7 @@ public static class CalloutCapability
             DefaultDisplay = "10000000",
             DocsAnchor = "biology-threshold",
             AppliesWhen = s => s.Callouts is { Enabled: true } callouts
-                && (callouts.Biology || (callouts.SurveyedBiology && s.Knowledge.GalaxySearch)),
+                && (callouts.Biology || callouts.SurveyedBiology),
             Binding = new SettingBinding
             {
                 Read = s => s.Callouts.BiologyThreshold.ToString(CultureInfo.InvariantCulture),
@@ -1906,15 +1892,14 @@ public static class CalloutCapability
                 + "open Settings › Your core › Callouts, group Plans and reminders, with Trading Mode on, and set "
                 + "Trading Mode requires a cargo capacity of at least (tonnes) to 25. Dock with a route plotted "
                 + "in a ship with 25 or more tonnes free of limpets: D47 names the best cargo to buy. In a ship "
-                + "with less, Trading Mode says nothing. The row appears only while Look things up in the galaxy "
-                + "is on.",
+                + "with less, Trading Mode says nothing. The row appears only while Trading Mode is on.",
             Advanced = true,
             Label = "Trading Mode requires a cargo capacity of at least (tonnes)",
             Help = "1 to 50: cargo capacity less the limpets aboard. Below this, Trading Mode says nothing.",
             Kind = SettingKind.Number,
             DefaultDisplay = "25",
             DocsAnchor = "trading-mode-min-hold",
-            AppliesWhen = s => s.Callouts is { Enabled: true, TradingMode: true } && s.Knowledge.GalaxySearch,
+            AppliesWhen = s => s.Callouts is { Enabled: true, TradingMode: true },
             Binding = new SettingBinding
             {
                 Read = s => s.Callouts.TradingModeMinHold.ToString(CultureInfo.InvariantCulture),

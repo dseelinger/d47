@@ -33,7 +33,6 @@ public class ASpokenSearchNamesItsKindsPageTests
     private static CapabilityRegistry Build(GalaxySearchBoard board, FakeGalaxy? galaxy = null)
     {
         var settings = TestSurface.For(new MemoryInstall()).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         return CapabilityRegistry.Build(
             [GalaxyCapability.Create(galaxy ?? new FakeGalaxy(), () => "Sol", settings, now: () => At, searches: board)]);

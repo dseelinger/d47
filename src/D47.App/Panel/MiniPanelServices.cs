@@ -150,7 +150,7 @@ public sealed record MiniPanelServices
 
         if (Routing is not null)
         {
-            view.EnableRouting(Routing with { OpenSettings = () => view.Tab = PanelTab.Settings });
+            view.EnableRouting(Routing);
         }
 
         if (Adventures is not null)
@@ -189,13 +189,13 @@ public sealed record MiniPanelServices
                 status: Routing?.Status,
                 construction: Construction,
                 outfitting: Routing is { Registry: { } registry, Plans: { } planBook } routing
-                    ? new OutfittingPlotter(registry, planBook, routing.LookupsEnabled ?? (() => false), routing.Here)
+                    ? new OutfittingPlotter(registry, planBook, routing.Here)
                     : null);
         }
 
         if (StarSystem is not null)
         {
-            view.EnableStarSystem(StarSystem with { OpenSettings = () => view.Tab = PanelTab.Settings });
+            view.EnableStarSystem(StarSystem);
         }
 
         if (Unlocks is not null && Ships is not null && gameState is not null)

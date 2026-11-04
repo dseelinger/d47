@@ -57,7 +57,6 @@ public class SearchOutfittingTakesSeveralItemsTests
             NullLogger<SearchHistory>.Instance);
         var settings = TestSurface.For(install).Settings;
 
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
         [
@@ -175,7 +174,7 @@ public class SearchOutfittingTakesSeveralItemsTests
     [Fact]
     public void TheEgressTextNamesModulesAndShips()
     {
-        var settings = new D47Settings { Knowledge = new KnowledgeSettings { GalaxySearch = true } };
+        var settings = new D47Settings();
 
         var entry = EgressDisclosure.Entry(EgressDisclosure.GalaxySearch, settings, llmKeyPresent: false);
 

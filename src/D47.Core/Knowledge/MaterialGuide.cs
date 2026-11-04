@@ -160,7 +160,7 @@ public static class MaterialGuide
     /// <summary>
     /// The nearest places for a raw material (landable bodies, richest first) or a high-grade-emission
     /// material (systems). Makes no request and returns <see cref="MaterialPlaces.None"/> when
-    /// <paramref name="galaxy"/> is null, which is how the caller says Knowledge.GalaxySearch is off. Throws
+    /// <paramref name="galaxy"/> is null. Throws
     /// <see cref="GalaxyUnavailableException"/> when the search fails. Not for a tick.
     /// </summary>
     public static async Task<MaterialPlaces> NearestAsync(

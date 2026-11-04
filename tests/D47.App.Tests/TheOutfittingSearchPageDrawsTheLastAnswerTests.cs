@@ -86,7 +86,7 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
     private sealed class World : GalaxySearchWorld
     {
         public World()
-            : base(new Systems(), lookups: true)
+            : base(new Systems())
         {
             Registry = CapabilityRegistry.Build([GalaxyCapability.Create(new Galaxy(), () => "LTT 7786", Settings, searches: Board)]);
         }

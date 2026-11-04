@@ -152,8 +152,8 @@ if (selected is not { Channel: CommsChannel.Carrier, SubChannel.Key: CommsChanne
 core. The core is told each exchange as one it overheard, so it can refer to it, but the captain's
 answers are not added to the core's own conversation.
 
-With galaxy search on, a carrier more than 500 light years from you is out of range: the core
-says so and gives the distance, and no model is asked. With galaxy search off, or when the distance
+A carrier more than 500 light years from you is out of range: the core
+says so and gives the distance, and no model is asked. When the distance
 cannot be found, the captain answers. The captain cannot be reached until a carrier you own and its
 system have been seen in the journal.
 

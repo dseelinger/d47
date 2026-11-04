@@ -12,11 +12,10 @@ using D47.Core.Interface;
 namespace D47.App.Controls;
 
 /// <summary>
-/// Where Find asks the galaxy for names: whether to, the request, and how its answer is ranked with the local results.
+/// Where Find asks the galaxy for names: the request, and how its answer is ranked with the local results.
 /// The pause is how long typing stops before the request is sent.
 /// </summary>
 public sealed record GalaxyFind(
-    Func<bool> Enabled,
     Func<string, CancellationToken, Task<IReadOnlyList<PanelFindName>>> Ask,
     Func<string, IReadOnlyList<PanelFindName>, IReadOnlyList<PanelFindResult>> Rank)
 {
@@ -336,7 +335,7 @@ public sealed class FindDialog : ModalDialog
     {
         var query = text.Trim();
 
-        if (_galaxy is not { } galaxy || query.Length < NameSuggestions.MinimumLength || !galaxy.Enabled())
+        if (_galaxy is not { } galaxy || query.Length < NameSuggestions.MinimumLength)
         {
             return;
         }

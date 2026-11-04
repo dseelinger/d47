@@ -19,25 +19,9 @@ nav_order: 105
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Two steps to looking something up in the galaxy.</p>
+<p class="intro">One step to looking something up in the galaxy.</p>
 <section>
-<h2><span class="num">1</span> Turn galaxy lookups on. They are off out of the box.</h2>
-<p class="say">Turn on Look things up in the galaxy, in the Outside sources group of the Providers settings.</p>
-<p class="expect">The row shows on; it is off until you switch it, and the Privacy page lists the sites it may reach.</p>
-<svg viewBox="0 0 880 252" role="img" aria-label="Outside sources">
- <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Outside sources</text>
- <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">Look things up in the galaxy</text>
- <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
- <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="154" font-size="16" fill="var(--text)">Which sites it may reach</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">listed on the Privacy page</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">This is the first thing D47 does that leaves your machine.</text>
-</svg>
-</section>
-<section>
-<h2><span class="num">2</span> Ask.</h2>
+<h2><span class="num">1</span> Ask.</h2>
 <p class="say">Say "nearest raw material trader" or "find me a neutron star".</p>
 <p class="expect">D47 answers with the distance from your system and, where it has one, the date the data was reported.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -50,12 +34,12 @@ nav_order: 105
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Turn Look things up in the galaxy on before you ask.</p>
-<p class="expect">The lookup runs; with it off D47 says galaxy search is switched off rather than inventing an answer.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="Off means off, and the answer says so.">
+<p class="say">Ask while this PC is online.</p>
+<p class="expect">The lookup runs; with no connection D47 says it couldn't reach the galaxy search rather than inventing an answer.</p>
+<svg viewBox="0 0 880 152" role="img" aria-label="No connection, no lookup, and the answer says so.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Off means off, and the answer says so.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">With it off D47 refuses the lookup rather than inventing one.</text>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">No connection, no lookup, and the answer says so.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Offline, D47 says it couldn't reach the site rather than inventing an answer.</text>
 </svg>
 </section>
 </div></div>
@@ -71,20 +55,16 @@ nav_order: 105
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Looking things up in the galaxy — the first thing D47 does that needs the internet.</p>
 <section>
-<h2><span class="num">1</span> Off until you turn it on.</h2>
-<svg viewBox="0 0 880 236" role="img" aria-label="Two separate switches, both off by default">
- <rect x="20" y="24" width="410" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <rect x="52" y="52" width="66" height="32" fill="var(--background)" stroke="var(--border)" stroke-width="2"/>
- <circle cx="69" cy="68" r="10" fill="var(--text-muted)"/>
- <text x="136" y="76" font-size="19" font-weight="800" fill="var(--text)">GALAXY SEARCH</text>
+<h2><span class="num">1</span> On from the first launch.</h2>
+<svg viewBox="0 0 880 236" role="img" aria-label="Two outside sources, both read from the first launch, with no switch">
+ <rect x="20" y="24" width="410" height="120" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="52" y="76" font-size="19" font-weight="800" fill="var(--text)">GALAXY SEARCH</text>
  <text x="52" y="118" font-size="16" fill="var(--text-muted)">asking spansh.co.uk about a system</text>
- <rect x="450" y="24" width="410" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <rect x="482" y="52" width="66" height="32" fill="var(--background)" stroke="var(--border)" stroke-width="2"/>
- <circle cx="499" cy="68" r="10" fill="var(--text-muted)"/>
- <text x="566" y="76" font-size="19" font-weight="800" fill="var(--text)">NOTABLE PLACES</text>
+ <rect x="450" y="24" width="410" height="120" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="482" y="76" font-size="19" font-weight="800" fill="var(--text)">NOTABLE PLACES</text>
  <text x="482" y="118" font-size="16" fill="var(--text-muted)">the catalogue a short story picks stops from</text>
- <text x="440" y="184" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Two switches, both off out of the box, and neither turns the other on.</text>
- <text x="440" y="214" text-anchor="middle" font-size="16" fill="var(--text-muted)">Switched off, asking gets you “I can't look that up” — a capability that is off, not an error.</text>
+ <text x="440" y="184" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">D47 reads both from the first launch. There is no switch to find.</text>
+ <text x="440" y="214" text-anchor="middle" font-size="16" fill="var(--text-muted)">Offline, asking gets you “I couldn't reach” the site — an answer that says so, not an invented one.</text>
 </svg>
 </section>
 <section>
@@ -129,16 +109,12 @@ Look up star systems, and work out how far apart two of them are.
 This is the first thing d47 does that needs the internet. It asks
 [spansh.co.uk](https://spansh.co.uk), which indexes the galaxy from data Commanders share — and,
 for one commodity's prices, [Ardent Insight](https://ardent-insight.com), which applies the same
-Commanders' reports as each one arrives. Both are behind the one setting below, and it is
-**off until you turn it on**.
+Commanders' reports as each one arrives. d47 reads both from the first launch; there is no
+setting to turn them off.
 
 ### Look things up in the galaxy
 
-The one setting. Off by default.
-
-When it is off, asking about a system gets you "Galaxy search is switched off, so I can't look
-that up" — a capability that is off, not an error, so the conversation carries on. When it is
-on, three things leave this machine:
+Asking about a system, a station or a body asks spansh.co.uk. Three things leave this machine:
 
 - the system name you asked about, and any filters — an allegiance, a distance, an economy
 - **where you are**, whenever the question is relative to you, because "the nearest high tech
@@ -152,11 +128,9 @@ on, three things leave this machine:
 No key and no identifier goes with any of it. The Privacy section computes this same
 list rather than repeating it by hand, so it cannot go stale.
 
-Turning it on takes effect immediately. There is no restart.
-
 ### Notable places for short stories {#notable-places-for-short-stories}
 
-A second setting, off by default, with a second host. When the
+A second host. When the
 core writes you a short story it may pick the story's stops from the
 [Galactic Exploration Catalog](https://edastro.com/gec/) on edastro.com — the community
 catalogue of nebulae, notable bodies, wrecks, memorials and tourist sites that the Galactic
@@ -172,29 +146,24 @@ offered — two sources, and a disagreement refuses the place. Its content is CC
 acknowledged in `NOTICE`; d47 is non-commercial.
 
 A long-haul story's chapter may also be a sightseeing chapter, which sends you to one of these places. The same
-request serves it, and the choosing by distance is again done on this machine. With this off, or when the catalogue
-cannot be reached, no chapter is a sightseeing chapter and the chapter is still written.
-
-With this off, a generated short story still works, choosing its stops from the galaxy search and
-the model's own knowledge. With galaxy search off, no short story can be generated at all, because
-the places in a story have to be real and this is the thing that checks.
+request serves it, and the choosing by distance is again done on this machine. When the catalogue
+cannot be reached, no chapter is a sightseeing chapter and the chapter is still written, and a generated
+short story chooses its stops from the galaxy search and the model's own knowledge.
 
 ### Earlier biology finds from Canonn {#earlier-biology-finds-from-canonn}
 
-A setting off by default, and a host of its own. With it on, mapping a body that has biological
+A host of its own. Mapping a body that has biological
 signals sends the name of the system you are in to Canonn's query API at
 `us-central1-canonn-api-236217.cloudfunctions.net`, which answers with the codex entries other
 Commanders logged there. Nothing else goes with it: no Commander name, key or identifier. A system
 is asked at most once a session, and never on arrival. The
 [earlier finds callout](callouts.md#earlier-finds) says what comes back.
 
-With this off, nothing is sent to Canonn.
-
 ### BGS tick time {#bgs-tick-time}
 
-A third setting, off by default, and a third host. While it is on, and Elite is running or a background watch is on, d47 asks
+A third host. While Elite is running or a background watch is on, d47 asks
 the community tick detector at `tick.infomancer.uk` when the last background simulation tick
-happened: once when the setting is turned on or at startup, then every ten minutes. Nothing about
+happened: at startup, then every ten minutes. Nothing about
 you goes with the request — no key, no Commander name, no position and nothing from your journal.
 
 The host answers only over plain HTTP, so the request is **not encrypted**: anyone on the network
@@ -205,30 +174,29 @@ is kept across restarts.
 
 ### GalNet news {#galnet-news}
 
-Off by default, with a host of its own. While it is on, d47 asks Frontier's GalNet server at
+A host of its own. d47 asks Frontier's GalNet server at
 `cms.zaonce.net` for the newest articles when it starts and every hour while it runs, whether or not
 Elite is running. The first time, it also reads back up to two years of older articles. Nothing about
 you goes with the request: no key, no Commander name and nothing from your journal.
 
 The articles are kept in `data\galnet.json` on this PC and never pruned. An article Frontier edits
-replaces the kept copy. A fetch that fails leaves the file as it was. Turning the setting off stops the
-requests; the kept articles stay.
+replaces the kept copy. A fetch that fails leaves the file as it was.
 
 ### Server status {#server-status}
 
-Off by default, with a host of its own. While it is on, d47 asks Frontier's server status page at
+A host of its own. d47 asks Frontier's server status page at
 `ed-server-status.orerve.net` whether Elite's servers are up when it starts, then every ten minutes while the
 answer is Online and every minute otherwise, whether or not Elite is running. Nothing about you goes with the
 request: no key, no Commander name and nothing from your journal.
 
 The title bar shows the latest answer left of HELP as **SERVERS ONLINE**, **MAINTENANCE**, **OFFLINE** or
-**UNKNOWN**; Unknown means the request failed or the answer could not be read. Nothing is shown while the
-setting is off or before the first answer. Frontier's `Good` is Online, `Maintenance` is Maintenance and any
-other status is Offline. Turning the setting off stops the requests and hides the readout.
+**UNKNOWN**; Unknown means the request failed or the answer could not be read. Nothing is shown before the
+first answer. Frontier's `Good` is Online, `Maintenance` is Maintenance and any
+other status is Offline.
 
 ### Signal index {#signal-index}
 
-A fourth setting, off by default. While it is on, a signal search can also answer from a daily
+A signal search can also answer from a daily
 index of the signals other Commanders have scanned and uploaded to EDDN — nav beacons, resource
 extraction sites, megaships, installations and the like. The project builds the index once a day
 and publishes it as `signals.tsv.gz` on the `signals-1` release on github.com.
@@ -237,8 +205,7 @@ D47 downloads it only when you search for a signal and the copy in `data\signals
 more than 20 hours old. Nothing about you goes with the request, and the search happens on this
 machine. A download replaces the copy on disk only once it reads as an index; one that fails
 leaves the old copy in use and is tried again on a later search, no sooner than an hour after.
-
-With this off, nothing is downloaded and a signal search answers from your own scans alone.
+When no copy can be read, a signal search answers from your own scans alone and says so.
 
 ### Rare index {#rare-index}
 
@@ -476,7 +443,7 @@ arrives. While one of your own searches is shown, **FORGET THIS SEARCH** sits un
 
 Eleven fixed searches run by phrase with no model involved, measured from the Commander's own
 system. Each has four phrases: "{name} search", "run the {name} search", "nearest {name}" and
-"find the nearest {name}". They run only while "Look things up in the galaxy" is on.
+"find the nearest {name}".
 
 | Name | Tool | Arguments |
 | --- | --- | --- |
@@ -669,13 +636,13 @@ Find the nearest signal of a kind, such as a Hazardous RES, a nav beacon or a me
 ```
 
 `signal` is a kind's display name or "Any RES", tried first, or any part of a signal's name, such as
-`unauthorised`, `memorial` or `Natalie Fraser`. The tool is not gated on Galaxy search: it answers on
-this machine from the daily signal index, when the **Signal index** setting is on, and the
+`unauthorised`, `memorial` or `Natalie Fraser`. It answers on
+this machine from the daily signal index and the
 Commander's own scans together. A signal held by both appears once, with the later date, and a
 megaship appears once, where it was last seen.
 
 `near` is placed from, in order: where the Commander is, when it is left out; a signal of the index
-or of the Commander's own scans in that system; Spansh, while Galaxy search is on. Otherwise the
+or of the Commander's own scans in that system; Spansh. Otherwise the
 search is refused, saying the system's position is unknown. `max_distance` is in light years and
 defaults to 100. `max_report_age_hours` (1 to 8,760) drops sightings last seen earlier than that many
 hours ago, from the index and from the Commander's own scans, before ranking; absent or 0 applies no bound,
@@ -795,25 +762,24 @@ A system the file does not list is answered as no record of a visit, not as neve
 file d47 cannot read, or one whose header does not match the layout it knows, is said to be
 unreadable rather than guessed at.
 
-With no `system`, or the name of the system the Commander is in, it checks that system and works
-with galaxy lookups off. Any other name has to be turned into a system address by Spansh, so with
-lookups off d47 says it can only check the system the Commander is in.
+With no `system`, or the name of the system the Commander is in, it checks that system without asking
+Spansh. Any other name has to be turned into a system address by Spansh, so without it d47 says it can
+only check the system the Commander is in.
 
 #### `get_bgs_tick`
 
-When the last BGS tick was. It reads the time held by BGS tick time and fetches nothing.
+When the last BGS tick was. It reads the time held from the tick detector and fetches nothing.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
 Asking "when was the last tick", "when was the bgs tick" or "has the bgs ticked" is answered
-without a language model. The time is in-game time, which is UTC. With a time held, and then under
-the setting being off or nothing read yet:
+without a language model. The time is in-game time, which is UTC. With a time held, and then with
+nothing read yet:
 
 ```csharp
 "The last BGS tick was at 16:14 UTC on 15 October, 23 hours ago."
-"BGS tick time is off, so I don't know when the tick was. It can be turned on under Outside sources."
 "I haven't read the tick time yet."
 ```
 
@@ -842,7 +808,7 @@ When the Commander is in a squadron with no stored minor faction, the answer say
 was skipped so the model can ask for the faction.
 
 ```csharp
-"Suggesting a home system needs galaxy search, which is switched off. The Commander can turn it on in settings."
+"Suggesting a home system needs galaxy search, which is not available."
 ```
 
 #### `set_squadron_faction`
@@ -863,7 +829,7 @@ Leaving the squadron or joining another one returns no faction until one is name
 ```csharp
 "Your squadron's minor faction is Hutton Truckers."
 "I found no minor faction called Hutton Trukers, so I have not stored it."
-"Checking a faction name needs galaxy search, which is switched off. The Commander can turn it on in settings."
+"Checking a faction name needs galaxy search, which is not available."
 ```
 
 #### `find_nearest_station`
@@ -879,7 +845,7 @@ since it has one selling station and no other.
 ([#118](https://github.com/dseelinger/d47/issues/118)). Each of the 142 rares is sold at exactly one
 station, which is usually far outside any radius worth searching, so asking the index for markets
 near you returns nothing useful. The station and system come from the shipped table, which
-needs no web access and answers with the galaxy search setting off. How much is on offer per visit
+needs no web access and answers when the galaxy search cannot be reached. How much is on offer per visit
 is the one thing the table cannot hold — it is set by that station's economic state and can be far
 higher during a boom — so it is read as the market's own last report and given with its age. Where
 there is no report, or no web access to ask for one, the station is still named and the quantity is

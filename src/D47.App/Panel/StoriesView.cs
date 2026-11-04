@@ -401,11 +401,9 @@ public sealed class StoriesView : UserControl, IPageSummary
                     return;
                 }
 
-                if (!surface.ModelAvailable() || !surface.GalaxySearchOn())
+                if (!surface.ModelAvailable())
                 {
-                    done(!surface.ModelAvailable()
-                        ? "A different objective needs a language model to write it, and none is configured."
-                        : "A different objective needs galaxy search, so its places can be checked. It is off in Settings.");
+                    done("A different objective needs a language model to write it, and none is configured.");
                     return;
                 }
 
@@ -462,11 +460,6 @@ public sealed class StoriesView : UserControl, IPageSummary
         if (!surface.ModelAvailable())
         {
             return "A different objective needs a language model to write it, and none is configured.";
-        }
-
-        if (!surface.GalaxySearchOn())
-        {
-            return "A different objective needs galaxy search, so its places can be checked. It is off in Settings.";
         }
 
         var earlier = exchange ?? [];
@@ -1315,11 +1308,9 @@ public sealed class StoriesView : UserControl, IPageSummary
             return;
         }
 
-        if (!_surface.ModelAvailable() || !_surface.GalaxySearchOn())
+        if (!_surface.ModelAvailable())
         {
-            status.Fail(!_surface.ModelAvailable()
-                ? "A story needs a language model to write its chapters, and none is configured."
-                : "A story needs galaxy search, so its chapters' places can be checked. It is off in Settings.");
+            status.Fail("A story needs a language model to write its chapters, and none is configured.");
             return;
         }
 

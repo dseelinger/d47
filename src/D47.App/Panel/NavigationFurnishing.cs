@@ -209,7 +209,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                         host.Headset,
                         surface.Bookmarks,
                         surface.Clipboard is { } clipboard ? text => clipboard.SetTextAsync(text) : null,
-                        () => surface.LookupsEnabled?.Invoke() == true ? surface.Galaxy?.Invoke() : null,
+                        () => surface.Galaxy?.Invoke(),
                         surface.MapLookups,
                         surface.Plans,
                         _planOnMap);

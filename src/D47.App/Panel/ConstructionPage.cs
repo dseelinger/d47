@@ -15,7 +15,6 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>What Asset Mgmt › Construction reads and drives.</summary>
-/// <param name="LookupsEnabled">Whether “Look things up in the galaxy” is on, which the market search needs.</param>
 /// <param name="Plans">The planner's plan held for each system; empty while the planner is off.</param>
 /// <param name="Want">Asks for a system's plan; returns at once.</param>
 public sealed record ConstructionSurface(
@@ -23,7 +22,6 @@ public sealed record ConstructionSurface(
     Func<DateTimeOffset> Now,
     CapabilityRegistry? Registry,
     SourcingBoard? Sourcing,
-    Func<bool> LookupsEnabled,
     Func<IReadOnlyDictionary<string, SystemPlan>>? Plans = null,
     Action<string, DateTimeOffset>? Want = null);
 
@@ -87,9 +85,6 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
     public const string AllFinished =
         "Every construction site in your journals is finished or has failed. Dock at a new one and it appears here, with what it still needs.";
-
-    public const string LookupsOff =
-        "Looking markets up is switched off. Turn on “Look things up in the galaxy” in Settings to search.";
 
     /// <summary>Below this width the detail is drawn under the list.</summary>
     public const double StackBelow = 900;
@@ -402,7 +397,6 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             state?.Hold,
             state?.Carrier,
             state?.Location.StarSystem,
-            _surface.LookupsEnabled(),
             now.ToLocalTime().Date,
             state is null ? 0 : state.Colonisation.Current(now).Count);
     }
@@ -1008,25 +1002,16 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             section.Children.Add(Prose(line, TypeScale.Small, ThemeManager.WhiteKey));
         }
 
-        var lookups = _surface.LookupsEnabled() && _surface.Registry is not null;
+        var lookups = _surface.Registry is not null;
         _search.IsEnabled = lookups && _inFlight is null;
 
         var actions = RoutingKit.Actions(_search, _cancel);
         actions.Margin = new Thickness(0, 12, 0, 0);
         section.Children.Add(actions);
 
-        if (!_surface.LookupsEnabled())
-        {
-            var off = Prose(LookupsOff, TypeScale.Small, ThemeManager.GreyKey);
-            off.Margin = new Thickness(0, 6, 0, 0);
-            section.Children.Add(off);
-        }
-        else
-        {
-            var say = Hint($"Say: “where can I buy what {station} needs”");
-            say.Margin = new Thickness(0, 6, 0, 0);
-            section.Children.Add(say);
-        }
+        var say = Hint($"Say: “where can I buy what {station} needs”");
+        say.Margin = new Thickness(0, 6, 0, 0);
+        section.Children.Add(say);
 
         section.Children.Add(_status);
 
@@ -1173,7 +1158,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         {
             _inFlight = null;
             inFlight.Dispose();
-            _search.IsEnabled = _surface.LookupsEnabled();
+            _search.IsEnabled = true;
             _cancel.IsVisible = false;
         }
     }

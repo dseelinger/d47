@@ -47,7 +47,6 @@ public sealed class ASearchAnswerLoadsMoreAsItScrollsTests
         public World()
         {
             Settings = TestSurface.Settings();
-            Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
             Registry = CapabilityRegistry.Build(
             [
@@ -94,9 +93,7 @@ public sealed class ASearchAnswerLoadsMoreAsItScrollsTests
 
         public StarSystemSurface Surface => new(
             new Systems(),
-            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Ltt7786 },
-            () => Settings.Current.Knowledge.GalaxySearch,
-            () => { })
+            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Ltt7786 })
         {
             Searches = new GalaxySearchSurface(Registry, Board, null, () => "F1", () => []),
         };

@@ -73,14 +73,12 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     public StationSearchPage(
         GalaxySearchSurface searches,
-        Func<bool> lookupsEnabled,
         Func<string?> here,
         Action<IReadOnlyList<string>, Action<IReadOnlyList<string>>> chooseServices,
         Action<StationSummary>? open,
         Func<string, Task<bool>>? copy,
-        Action? openSettings,
         bool headset)
-        : base(searches, lookupsEnabled, openSettings, headset)
+        : base(searches, headset)
     {
         _here = here;
         _open = open;

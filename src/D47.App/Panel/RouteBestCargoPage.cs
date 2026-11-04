@@ -21,9 +21,6 @@ public enum BestCargoView
     /// <summary>The Commander is not docked.</summary>
     NotDocked,
 
-    /// <summary>“Look things up in the galaxy” is off.</summary>
-    LookupsOff,
-
     /// <summary>Docked, with no search for this station yet.</summary>
     Unasked,
 
@@ -46,9 +43,6 @@ public sealed class RouteBestCargoPage : UserControl
 
     public const string NotDockedText =
         "Best cargo reads the market at the station you are docked at. Dock somewhere with a commodity market and this page fills in.";
-
-    public const string LookupsOffText =
-        "Best cargo looks up prices in other systems. Turn on “Look things up in the galaxy” in Settings and D47 will search.";
 
     public const string MarketUnseenText =
         "Nobody has reported this market's prices, and you have not opened it while D47 was watching. Open the commodity market once and D47 will have them.";
@@ -91,10 +85,8 @@ public sealed class RouteBestCargoPage : UserControl
     private readonly Func<CommanderGameState?> _commander;
     private readonly Func<NavRoute> _route;
     private readonly Func<string, string?>? _offDuty;
-    private readonly Func<bool> _lookupsEnabled;
     private readonly ColumnWidthMemory? _columnWidths;
     private readonly SettingsService? _settings;
-    private readonly Action? _openSettings;
     private readonly Action? _changeFilters;
 
     private readonly TextBox _sellIn;
@@ -112,9 +104,7 @@ public sealed class RouteBestCargoPage : UserControl
         BestCargoBoard board,
         Func<CommanderGameState?> commander,
         Func<NavRoute> route,
-        Func<bool> lookupsEnabled,
         SettingsService? settings = null,
-        Action? openSettings = null,
         Action? changeFilters = null,
         Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? prefixNames = null,
         TimeSpan? suggestionPause = null,
@@ -130,9 +120,7 @@ public sealed class RouteBestCargoPage : UserControl
         _board = board;
         _commander = commander;
         _route = route;
-        _lookupsEnabled = lookupsEnabled;
         _settings = settings;
-        _openSettings = openSettings;
         _changeFilters = changeFilters;
 
         _sellIn = new TextBox
@@ -154,7 +142,7 @@ public sealed class RouteBestCargoPage : UserControl
                 _sellIn,
                 prefixNames,
                 match => match.Name,
-                lookupsEnabled,
+                () => true,
                 match => _suggestions!.SetText(match.Name),
                 suggestionPause);
         }
@@ -211,7 +199,7 @@ public sealed class RouteBestCargoPage : UserControl
         $"stations within {Number((long)trade.MaxStationDistance)} ls",
     ];
 
-    /// <summary>Redraws when the dock, the route or the setting has moved; true when it did.</summary>
+    /// <summary>Redraws when the dock or the route has moved; true when it did.</summary>
     public bool Tick()
     {
         if (Equals(Stamp(), _seen))
@@ -306,7 +294,7 @@ public sealed class RouteBestCargoPage : UserControl
     {
         var location = _commander()?.Location;
 
-        return (location?.Docked, location?.StationName, location?.StarSystem, RouteEndNow(), _lookupsEnabled(), _board.Last);
+        return (location?.Docked, location?.StationName, location?.StarSystem, RouteEndNow(), _board.Last);
     }
 
     private void Draw()
@@ -316,14 +304,12 @@ public sealed class RouteBestCargoPage : UserControl
         var state = _commander();
         var location = state?.Location;
         var docked = location is { Docked: true, StationName: { Length: > 0 }, StarSystem: { Length: > 0 } };
-        var lookups = _lookupsEnabled();
 
         RouteEnd = RouteEndNow();
 
         var posting = docked && _board.Last is { } last && Same(last.Search, location!) ? last : null;
 
         View = !docked ? BestCargoView.NotDocked
-            : !lookups ? BestCargoView.LookupsOff
             : posting is null ? BestCargoView.Unasked
             : posting.Answer is null ? BestCargoView.MarketUnseen
             : posting.Answer.Picks.Count == 0 ? BestCargoView.NoProfit
@@ -331,7 +317,7 @@ public sealed class RouteBestCargoPage : UserControl
 
         Rows = View == BestCargoView.Picks ? _head.Sort(posting!.Answer!.Picks) : [];
 
-        _find.IsEnabled = docked && lookups && _inFlight is null;
+        _find.IsEnabled = docked && _inFlight is null;
 
         Detach(_sellIn);
 
@@ -356,7 +342,7 @@ public sealed class RouteBestCargoPage : UserControl
             body.Children.Add(_suggestions.List);
         }
 
-        if (docked && lookups && _settings is { } settings)
+        if (docked && _settings is { } settings)
         {
             var filters = FiltersLine(settings.Current.Trade);
             filters.Margin = new Thickness(0, 10, 0, 0);
@@ -370,19 +356,6 @@ public sealed class RouteBestCargoPage : UserControl
         {
             case BestCargoView.NotDocked:
                 body.Children.Add(Notice("Not docked", NotDockedText));
-                break;
-
-            case BestCargoView.LookupsOff:
-                var off = Notice("Galaxy lookups are off", LookupsOffText);
-
-                if (_openSettings is { } open)
-                {
-                    var settingsTile = new Button { Content = "Open settings" };
-                    settingsTile.Click += (_, _) => open();
-                    off.Actions.Add(settingsTile);
-                }
-
-                body.Children.Add(off);
                 break;
 
             case BestCargoView.MarketUnseen:

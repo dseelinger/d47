@@ -39,11 +39,11 @@ public class TheBgsWorkPageShowsTheWorkOnTheCommanderTabTests
     }
 
     private static (Window Window, BgsWorkPage Page) Open(
-        CommanderGameState state, DateTimeOffset? tick, Action<string>? openSettings = null, bool headset = false)
+        CommanderGameState state, DateTimeOffset? tick, bool headset = false)
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
-        var page = new BgsWorkPage(() => state, () => tick, () => Now, openSettings, headset);
+        var page = new BgsWorkPage(() => state, () => tick, () => Now, headset);
         var window = new Window
         {
             Content = page,
@@ -78,32 +78,15 @@ public class TheBgsWorkPageShowsTheWorkOnTheCommanderTabTests
     }
 
     [AvaloniaFact]
-    public void WithNoTickTimeTheNoticeOffersTheOutsideSourcesSettingOnTheDesktop()
+    public void WithNoTickTimeTheNoticeSaysTheTickIsUnknown()
     {
-        string? opened = null;
-        var (window, page) = Open(State(), null, id => opened = id);
+        var (window, page) = Open(State(), null);
 
         var notice = Assert.Single(In<Notice>(page));
         Assert.Equal(NoticeLevel.Warning, notice.Level);
         Assert.Equal(BgsWorkPage.UnknownTickLabel, notice.Label);
         Assert.Equal(BgsWorkPage.UnknownTickText, notice.Text);
         Assert.True(Shows(page, "No BGS work in the last 24 hours."));
-
-        var tile = In<Button>(notice).Single();
-        Assert.Equal("OUTSIDE SOURCES", tile.Content);
-        tile.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Assert.Equal(GalaxyCapability.Id, opened);
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void OnTheBigPanelTheNoticeHasNoTile()
-    {
-        var (window, page) = Open(State(), null, headset: true);
-
-        Assert.Single(In<Notice>(page));
-        Assert.DoesNotContain(In<Button>(page), button => Equals(button.Content, "OUTSIDE SOURCES"));
 
         window.Close();
     }

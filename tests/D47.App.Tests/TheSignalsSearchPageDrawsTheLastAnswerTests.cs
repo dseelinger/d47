@@ -60,11 +60,9 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
 
     private sealed class World : GalaxySearchWorld
     {
-        public World(bool indexOn = true, bool ownScans = true)
-            : base(new Systems(), lookups: false)
+        public World(bool ownScans = true)
+            : base(new Systems())
         {
-            Settings.Apply(GalaxyCapability.SignalIndexKey, indexOn ? "true" : "false", SettingsCaller.Panel);
-
             Own = new SignalSightings(new MemoryFileSystem(), NullLogger.Instance);
 
             if (ownScans)
@@ -94,8 +92,6 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
         }
 
         public SignalSightings Own { get; }
-
-        protected override Func<bool>? SignalSources => () => Settings.Current.Knowledge.SignalIndex || Own.Any;
 
         public Task<ToolResult> AskAsync(params (string Name, string Value)[] values) =>
             AskedByVoice.AskAsync(Registry, Routing, "find_signal", values);
@@ -239,45 +235,6 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
 
         var copies = panel.GetVisualDescendants().OfType<Button>().Select(CopyGlyph.GetCopies).OfType<string>().ToList();
         Assert.Equal(["LTT 7786", "Delta", "Alpha", "Beta", "Gamma"], copies);
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void WithTheIndexOffAndNoScansThePagePointsAtTheSetting()
-    {
-        var world = new World(indexOn: false, ownScans: false);
-        var (panel, window) = Shown(world);
-        var page = Page(panel);
-
-        Assert.Equal(GalaxySearchView.LookupsOff, page.View);
-        Assert.Equal(SignalSearchPage.NoSources, page.Sentence);
-        Assert.Contains(SignalSearchPage.NoSources, VisibleText(panel));
-        Assert.False(page.CanRun);
-
-        if (TestSurface.CapturesWanted)
-        {
-            Save(window, "signals-index-off.png");
-        }
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public async Task OwnScansAloneLetThePageSearchAndTheSourceSentenceShowsAboveTheTable()
-    {
-        var world = new World(indexOn: false);
-        var (panel, window) = Shown(world);
-        var page = Page(panel);
-
-        Assert.True(page.CanRun);
-
-        page.Pick("Hazardous RES");
-        await RunAsync(panel, world.Board);
-
-        Assert.Equal(GalaxySearchView.Answer, page.View);
-        Assert.Contains("Searched your own scans only; the signal index is off in Settings.", VisibleText(panel));
-        Assert.Contains("YOUR SCAN", VisibleText(panel));
 
         window.Close();
     }

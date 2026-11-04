@@ -112,7 +112,7 @@ public sealed class TheBenchShowsHowFarAJumpedChapterHasGotTests
 
         var bench = new StoryBench(paths.Data, files, stories, adventures, archive, NullLogger<StoryBench>.Instance) { Director = director };
         var surface = new AdventureSurface(
-            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
+            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => null, () => { },
             Stories: director, Bench: bench);
 
         var look = AppLook.Put();

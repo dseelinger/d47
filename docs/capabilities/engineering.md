@@ -506,4 +506,4 @@ not the nearest and not the first. Where nobody unlocked can reach it, an outsta
 mentioned instead, because that is the next step rather than a dead end.
 
 The blueprint, roll and farming answers have no setting and send nothing off the machine. The
-material and trader searches use the galaxy search, and say so when it is switched off.
+material and trader searches use the galaxy search, and say so when it cannot be reached.

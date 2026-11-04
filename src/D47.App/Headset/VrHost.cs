@@ -249,7 +249,6 @@ public sealed class VrHost : IDisposable
             host.Configure();
 
             if (change.Key == ShipsCapability.HullArtKey
-                || change.Key == GalaxyCapability.EnabledKey
                 || change.Key.StartsWith("speech.", StringComparison.Ordinal))
             {
                 panel.InvalidateLoadout();

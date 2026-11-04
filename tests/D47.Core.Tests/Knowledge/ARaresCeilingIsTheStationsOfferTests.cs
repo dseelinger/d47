@@ -104,14 +104,11 @@ public class ARaresCeilingIsTheStationsOfferTests
     private static async Task<string> AskAsync(
         IGalaxyService? galaxy,
         ITradePlanService? trade,
-        bool galaxySearch = true,
         params (string Key, string Value)[] arguments)
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
-        surface.Settings.Apply(
-            GalaxyCapability.EnabledKey, galaxySearch ? "true" : "false", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
         [
@@ -185,28 +182,13 @@ public class ARaresCeilingIsTheStationsOfferTests
         Assert.Contains("no recent report of it", said, StringComparison.Ordinal);
     }
 
-    /// <summary>
-    /// The station is in a table d47 ships, so it needs no web access. The quote does, and is not asked
-    /// for with the setting off.
-    /// </summary>
-    [Fact]
-    public async Task TheStationIsAnsweredWithGalaxySearchOffAndTheIndexIsNotAsked()
-    {
-        var trade = new Quoting(new StationQuote(24, 3, 3_500, 1, 3_500, Reported));
-
-        var said = await AskAsync(new SilentGalaxy(), trade, galaxySearch: false);
-
-        Assert.Contains("Lave Station", said, StringComparison.Ordinal);
-        Assert.Null(trade.MarketId);
-    }
-
     /// <summary>Where a rare can be sold is a different question, and the radius sweep answers it.</summary>
     [Fact]
     public async Task SellingOneStillSweepsTheRadiusAfterTheStationIsNamed()
     {
         var trade = new Quoting(new StationQuote(24, 3, 3_500, 1, 3_500, Reported));
 
-        var said = await AskAsync(new SilentGalaxy(), trade, galaxySearch: true, ("selling", "true"));
+        var said = await AskAsync(new SilentGalaxy(), trade, ("selling", "true"));
 
         Assert.Contains("Lave Station", said, StringComparison.Ordinal);
         Assert.NotNull(trade.Swept);

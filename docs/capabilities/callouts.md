@@ -597,8 +597,7 @@ this one off with the Powerplay cycle row.
 
 #### BGS tick {#bgs-tick}
 
-When the BGS ticks, once per tick, soon after the tick detector reports it. Needs *BGS tick time*
-under Outside sources ([#1212](https://github.com/dseelinger/d47/issues/1212)).
+When the BGS ticks, once per tick, soon after the [tick detector](galaxy.md#bgs-tick-time) reports it.
 
 ```text
 The BGS has ticked.
@@ -612,7 +611,7 @@ Turn this one off with the BGS tick row.
 #### Background watches {#watches}
 
 When a stock watch's condition holds, the commodity, the station, the system and the stock, at most once per BGS
-tick. Needs **Look things up in the galaxy** and **BGS tick time** under Outside sources.
+tick.
 
 ```text
 Soontill Relics at Cheranovsky City, Ngurii: 240 in stock.
@@ -656,8 +655,7 @@ Turn this one off with the Wing changes row.
 
 #### GalNet headlines {#galnet}
 
-When new GalNet articles arrive, the headlines, newest first and never the articles. Needs **GalNet news**
-under Outside sources.
+When new GalNet articles arrive, the headlines, newest first and never the articles.
 
 ```text
 GalNet: Faulcon DeLacy Announces Anaconda Mk II.
@@ -667,14 +665,13 @@ Two articles are *"New on GalNet: {title}; and {title}."* Three are *"New on Gal
 the three newest: *"Five new GalNet articles. The latest: {title}; {title}; and {title}."* An article counts
 as new when it is new to the archive, so a restart does not repeat a headline, and articles published while
 d47 was closed are said at the next start. Nothing is said for the first backfill, and articles that arrive
-while this is off are not said when it is switched back on. At launch, headlines wait for the opening lines: the
+while this callout is off are not said when it is switched back on. At launch, headlines wait for the opening lines: the
 greeting and the recap, when those are on. They are said right after the recap, or after the greeting when the
 recap is off. Turn this one off with the GalNet headlines row.
 
 #### Server status {#server-status}
 
-When Elite's servers go down or come back. Needs **Server status** under Outside sources, and works with Elite
-closed.
+When Elite's servers go down or come back. It works with Elite closed.
 
 ```text
 Elite's servers are down for maintenance.
@@ -1114,7 +1111,7 @@ machine.
 
 #### Surveyed biology on arrival {#surveyed-biology}
 
-When you arrive in a system and [galaxy search](galaxy.md) is on:
+When you arrive in a system, from the [galaxy search](galaxy.md):
 
 ```text
 Commanders have surveyed biology here: 3 b at 15 million, 3 c at 12 million.
@@ -1131,8 +1128,8 @@ The lookup sends the system's address to spansh.co.uk on every jump while this c
 
 #### Earlier biology finds on mapping {#earlier-finds}
 
-When you map a body with biological signals and [earlier biology finds from Canonn](galaxy.md#earlier-biology-finds-from-canonn)
-is on, the Science Officer names the variants other Commanders have logged on it:
+When you map a body with biological signals, the Science Officer names the variants other Commanders have
+logged on it in [Canonn's records](galaxy.md#earlier-biology-finds-from-canonn):
 
 ```text
 Commanders have logged earlier finds on this body: Bacterium Aurasus - Green, Stratum Tectonicas - Lime, Osseus Fractus - Indigo and two more.
@@ -1140,8 +1137,7 @@ Commanders have logged earlier finds on this body: Bacterium Aurasus - Green, St
 
 The variants with the most finds come first. Up to three are named and the rest are a count. A body
 with no finds says nothing, and each body is named once a session. The line is said once the answer
-arrives, if you are still in that system. It does nothing while earlier biology finds from Canonn
-is off. The setting is "Earlier biology finds on mapping", on by default.
+arrives, if you are still in that system. The setting is "Earlier biology finds on mapping", on by default.
 
 Directive 47 asks when a body's surface signals are found, not on arrival, so the name of a system you
 only pass through is not sent. One request covers the system, and a system is asked at most once a
@@ -1149,7 +1145,7 @@ session. The **Privacy and egress** section of the panel lists it as Earlier bio
 
 #### Trading Mode {#trading-mode}
 
-When you are docked with a route plotted and [galaxy search](galaxy.md) is on:
+When you are docked with a route plotted, from the [galaxy search](galaxy.md):
 
 ```text
 Best cargo for Sothis: Gold to Sothis Mining Post, 8,204 Cr a tonne, 2.3 million for 280 tonnes; then Silver to Newholm Station, 5,110 Cr a tonne, 1.4 million for 280 tonnes.
@@ -1503,7 +1499,7 @@ five minutes a jump. Only when that is longer than the time left does it speak:
 Wadjuk is about 40 jumps. That's tight for a 12-hour deadline.
 ```
 
-A trip that fits, a destination whose position cannot be found, and Galaxy search being off all say
+A trip that fits and a destination whose position cannot be found both say
 nothing. The lookup runs off the game's tick, so it never delays other callouts.
 
 When a mission is redirected, D47 also says where the hand-in moved

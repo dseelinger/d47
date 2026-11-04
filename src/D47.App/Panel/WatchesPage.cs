@@ -28,27 +28,10 @@ public sealed class WatchesPage : UserControl
 
     public const string GoalSub = "Reads GalNet launch articles · can miss or misread one";
 
-    public const string BgsTickLabel = "BGS tick time is off";
-
-    public const string BgsTickText =
-        "Every watch counts from the BGS tick, so none of them is checked until BGS tick time is on under Outside sources.";
-
-    public const string GalaxyLabel = "Galaxy search is off";
-
-    public const string GalaxyText =
-        "A stock watch reads the station's market through Galaxy search, so it is not checked until Galaxy search is on under Outside sources.";
-
-    public const string GalNetLabel = "GalNet news is off";
-
-    public const string GalNetText =
-        "This watch reads GalNet articles, so it hears nothing until GalNet news is on under Outside sources.";
-
-    public const string TurnOn = "TURN ON";
-
     private readonly WatchesDesk _desk;
     private readonly PanelNavigator _nav;
     private readonly StackPanel _body = new();
-    private (IReadOnlyList<Watch> Watches, IReadOnlyList<WatchProblem> Problems, bool Galaxy, bool Bgs, bool GalNet) _seen;
+    private (IReadOnlyList<Watch> Watches, IReadOnlyList<WatchProblem> Problems) _seen;
 
     public WatchesPage(WatchesDesk desk, PanelNavigator nav)
     {
@@ -84,7 +67,7 @@ public sealed class WatchesPage : UserControl
             CultureInfo.InvariantCulture,
             $"{(watch.Comparison == StockComparison.Below ? "Below" : "Above")} {watch.Threshold} · {watch.Station}, {watch.System}");
 
-    /// <summary>Redraws when the watches or a gate have changed since the last draw.</summary>
+    /// <summary>Redraws when the watches have changed since the last draw.</summary>
     public bool Tick()
     {
         if (Seen().Equals(_seen))
@@ -94,20 +77,6 @@ public sealed class WatchesPage : UserControl
 
         Draw();
         return true;
-    }
-
-    internal static Notice Gate(string label, string text, Action turnOn, Action redraw)
-    {
-        var notice = new Notice(NoticeLevel.Warning) { Label = label, Text = text };
-        var tile = new Button { Content = TurnOn, Height = TypeScale.MinimumTarget };
-        tile.Click += (_, _) =>
-        {
-            turnOn();
-            redraw();
-        };
-        notice.Actions.Add(tile);
-
-        return notice;
     }
 
     internal static TextBlock Text(string text, string family, double size, string key)
@@ -125,8 +94,8 @@ public sealed class WatchesPage : UserControl
         return block;
     }
 
-    private (IReadOnlyList<Watch>, IReadOnlyList<WatchProblem>, bool, bool, bool) Seen() =>
-        (_desk.Store.Watches, _desk.Store.Problems, _desk.GalaxySearch, _desk.BgsTick, _desk.GalNet);
+    private (IReadOnlyList<Watch>, IReadOnlyList<WatchProblem>) Seen() =>
+        (_desk.Store.Watches, _desk.Store.Problems);
 
     private void Draw()
     {
@@ -140,11 +109,6 @@ public sealed class WatchesPage : UserControl
 
         _body.Children.Add(TitleText.Screen("Watches"));
 
-        if (!_desk.BgsTick)
-        {
-            _body.Children.Add(Gate(BgsTickLabel, BgsTickText, _desk.TurnOnBgsTick, Draw));
-        }
-
         var intro = Text(Intro, Fonts.ProseFamily, TypeScale.Body, ThemeManager.GreyKey);
         intro.TextWrapping = TextWrapping.Wrap;
         _body.Children.Add(intro);
@@ -154,8 +118,8 @@ public sealed class WatchesPage : UserControl
             _body.Children.Add(new Notice(NoticeLevel.Error) { Label = "A watch was not read", Text = $"{problem.Where}: {problem.Reason}" });
         }
 
-        _body.Children.Add(Section("Stock", stock, _desk.GalaxySearch ? null : (GalaxyLabel, GalaxyText, _desk.TurnOnGalaxySearch)));
-        _body.Children.Add(Section("New Community Goal", goals, _desk.GalNet ? null : (GalNetLabel, GalNetText, _desk.TurnOnGalNet)));
+        _body.Children.Add(Section("Stock", stock));
+        _body.Children.Add(Section("New Community Goal", goals));
 
         var full = watches.Count >= WatchStore.MaxWatches;
         var footer = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile };
@@ -177,7 +141,7 @@ public sealed class WatchesPage : UserControl
         return tile;
     }
 
-    private StackPanel Section(string heading, List<Watch> watches, (string Label, string Text, Action TurnOn)? gate)
+    private StackPanel Section(string heading, List<Watch> watches)
     {
         var section = new StackPanel { Spacing = Gaps.Tile };
 
@@ -191,11 +155,6 @@ public sealed class WatchesPage : UserControl
         Grid.SetColumn(count, 1);
         head.Children.Add(count);
         section.Children.Add(head);
-
-        if (gate is { } off && watches.Count > 0)
-        {
-            section.Children.Add(Gate(off.Label, off.Text, off.TurnOn, Draw));
-        }
 
         foreach (var watch in watches)
         {

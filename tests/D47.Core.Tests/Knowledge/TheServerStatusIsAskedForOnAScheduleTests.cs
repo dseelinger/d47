@@ -4,7 +4,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Knowledge;
 
-public class TheServerStatusIsAskedForWhileOnTests
+public class TheServerStatusIsAskedForOnAScheduleTests
 {
     private sealed class Source : IServerStatusSource
     {
@@ -23,13 +23,11 @@ public class TheServerStatusIsAskedForWhileOnTests
     {
         public Source Source { get; } = new();
 
-        public bool Enabled { get; set; } = true;
-
         public ServerStatusWatch Watch { get; }
 
         public Rig()
         {
-            Watch = new ServerStatusWatch(Source, () => Enabled, NullLogger<ServerStatusWatch>.Instance)
+            Watch = new ServerStatusWatch(Source, NullLogger<ServerStatusWatch>.Instance)
             {
                 Dispatch = work => work().GetAwaiter().GetResult(),
             };
@@ -37,18 +35,6 @@ public class TheServerStatusIsAskedForWhileOnTests
     }
 
     private static readonly DateTimeOffset Start = new(2026, 10, 21, 12, 0, 0, TimeSpan.Zero);
-
-    [Fact]
-    public void NothingIsAskedWhileTheSettingIsOff()
-    {
-        var rig = new Rig { Enabled = false };
-
-        rig.Watch.Poll(Start);
-        rig.Watch.Poll(Start + TimeSpan.FromHours(1));
-
-        Assert.Equal(0, rig.Source.Calls);
-        Assert.Null(rig.Watch.Shown);
-    }
 
     [Fact]
     public void ItAsksOnTheFirstPollWhetherOrNotEliteRuns()
@@ -125,26 +111,5 @@ public class TheServerStatusIsAskedForWhileOnTests
         rig.Watch.Poll(Start + TimeSpan.FromMinutes(10) + TimeSpan.FromSeconds(1));
 
         Assert.Equal([GameServerState.Online, GameServerState.Unknown], shown);
-    }
-
-    [Fact]
-    public void TurningTheSettingOffClearsTheReadoutAndOnAsksAgain()
-    {
-        var rig = new Rig();
-        var shown = new List<GameServerState?>();
-        rig.Watch.ShownChanged += shown.Add;
-        rig.Source.Answers.Enqueue(GameServerState.Online);
-        rig.Source.Answers.Enqueue(GameServerState.Maintenance);
-
-        rig.Watch.Poll(Start);
-        rig.Watch.Poll(Start + TimeSpan.FromSeconds(1));
-        rig.Enabled = false;
-        rig.Watch.Poll(Start + TimeSpan.FromSeconds(2));
-        rig.Enabled = true;
-        rig.Watch.Poll(Start + TimeSpan.FromSeconds(3));
-        rig.Watch.Poll(Start + TimeSpan.FromSeconds(4));
-
-        Assert.Equal(2, rig.Source.Calls);
-        Assert.Equal([GameServerState.Online, null, GameServerState.Maintenance], shown);
     }
 }

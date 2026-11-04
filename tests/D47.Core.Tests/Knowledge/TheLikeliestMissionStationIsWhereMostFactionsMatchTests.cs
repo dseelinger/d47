@@ -158,7 +158,6 @@ public class TheLikeliestMissionStationIsWhereMostFactionsMatchTests
     {
         var settings = TestSurface.For(new MemoryInstall()).Settings;
 
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         return CapabilityRegistry.Build([GalaxyCapability.Create(galaxy, () => "Sol", settings, gameState: () => state)]);
     }

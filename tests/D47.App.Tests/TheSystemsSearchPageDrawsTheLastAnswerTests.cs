@@ -80,8 +80,8 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     /// <summary>A search_systems that records what it was given and answers as the test says.</summary>
     private sealed class World : GalaxySearchWorld
     {
-        public World(bool lookups)
-            : base(new Systems(), lookups)
+        public World()
+            : base(new Systems())
         {
             // Protected, so a call made as the model is refused and only the Commander's goes through.
             Registry = CapabilityRegistry.Build(
@@ -181,7 +181,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void SearchOffersSystemThenSystemsThenStationsThenBodiesAndSystemStillFollowsTheCommander()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Independent" }, TwoSystems));
         var (panel, window) = Shown(world, systems: false);
 
@@ -215,7 +215,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void RunSearchSendsTheFormAsTheCommanderAndDrawsTheAnswer()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
@@ -234,7 +234,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public async Task TheProbeRefusesTheModelSoTheFormMustCallAsTheCommander()
     {
-        var world = new World(lookups: true);
+        var world = new World();
 
         var refused = await world.Registry.InvokeAsync(
             "search_systems",
@@ -249,7 +249,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheFormSendsEveryParameterTheToolTakes()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
@@ -291,7 +291,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public async Task AVoicePostingRedrawsAnOpenPage()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
 
         Assert.Empty(Rows(panel));
@@ -308,7 +308,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void RefreshRerunsThePostingsArgumentsWithNearLeftOut()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var asked = new Dictionary<string, string> { ["allegiance"] = "Empire", ["distance"] = "50" };
         world.Board.Post(Posting(asked, TwoSystems));
         var (panel, window) = Shown(world);
@@ -326,26 +326,11 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     }
 
     [AvaloniaFact]
-    public void WithLookupsOffRunSearchIsDisabledAndTheSettingIsNamed()
-    {
-        var world = new World(lookups: false);
-        var (panel, window) = Shown(world);
-        var page = Page(panel);
-
-        Assert.Equal(GalaxySearchView.LookupsOff, page.View);
-        Assert.False(page.CanRun);
-        Assert.Contains(GalaxySearchPage.LookupsOffText, TextOf(panel));
-        Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => button.Name == GalaxySearchPage.OpenSettingName);
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
     public void AnUnavailableServiceDrawsItsSentence()
     {
         const string Unreachable = "I couldn't reach the galaxy search — check the network connection.";
 
-        var world = new World(lookups: true) { Error = Unreachable };
+        var world = new World() { Error = Unreachable };
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
@@ -365,7 +350,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     {
         const string Refusal = "I can't read 'far' as a distance.";
 
-        var world = new World(lookups: true) { Error = Refusal };
+        var world = new World() { Error = Refusal };
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
@@ -381,7 +366,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void NoResultsDrawsTheToolsSentence()
     {
-        var world = new World(lookups: true) { Result = new GalaxySearchResult("LTT 7786", 0, []) };
+        var world = new World() { Result = new GalaxySearchResult("LTT 7786", 0, []) };
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
@@ -399,7 +384,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void SavingAddsToSavedAndTheStoreAndForgettingRemovesIt()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["faction"] = "Diamond Frogs", ["state"] = "Boom" }, TwoSystems));
         var (panel, window) = Shown(world);
 
@@ -445,7 +430,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void ASavedSearchRunsWhenPressed()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
 
         Pick(panel, "anarchy outbreak");
@@ -461,7 +446,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void ThePickedNameGoesBackOnceTheFormIsEditedOrCleared()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
 
         Pick(panel, "anarchy outbreak");
@@ -482,7 +467,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheHeadsetDrawsTheAnswerViewAndTheFormViewFullWidth()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Independent" }, TwoSystems));
         var (panel, window) = Shown(world, headset: true);
         var page = Page(panel);
@@ -515,7 +500,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheHeadsetOpensOnTheFormWhenNothingWasAsked()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world, headset: true);
 
         Assert.False(Page(panel).ShowsAnswer);
@@ -533,7 +518,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheHeadsetFormRunsASavedSearchAndShowsTheAnswer()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world, headset: true);
 
         Pick(panel, "anarchy outbreak");
@@ -549,22 +534,9 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     }
 
     [AvaloniaFact]
-    public void TheHeadsetFormDrawsRunDisabledWhenLookupsAreOff()
-    {
-        var world = new World(lookups: false);
-        var (panel, window) = Shown(world, headset: true);
-
-        Assert.False(Page(panel).ShowsAnswer);
-        Assert.False(Named(panel, GalaxySearchPage.RunName).IsEnabled);
-        Assert.Equal("Turn on “Look things up in the galaxy” in Settings to search.", ToolTip.GetTip(Named(panel, GalaxySearchPage.RunName)));
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
     public void ASpokenListOfStatesStaysInTheForm()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["faction_state"] = "Boom,Bust" }, TwoSystems));
         var (panel, window) = Shown(world);
 
@@ -576,7 +548,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void NearSaysWhereTheCommanderIsAfterAJump()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
         var near = Page(panel).GetLogicalDescendants().OfType<TextBox>().First();
 
@@ -595,7 +567,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void ATypedFormSurvivesLeavingTheTab()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Independent" }, TwoSystems));
         var (panel, window) = Shown(world);
 
@@ -614,7 +586,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void EveryPressableControlIsAtLeastFortyFourTall()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Independent" }, TwoSystems));
         var (panel, window) = Shown(world);
         var page = Page(panel);
@@ -629,7 +601,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     {
         using var look = AppLook.Put();
 
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["faction"] = "Diamond Frogs", ["distance"] = "50" }, TwoSystems) with { Notes = "Read as Diamond Frogs." });
         world.Store.Add("Frogs in boom", "search_systems", new Dictionary<string, string> { ["state"] = "Boom" }, AskedAt, []);
         var (panel, window) = Shown(world);
@@ -651,16 +623,6 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         Assert.Single(window.GetVisualDescendants().OfType<SaveSearchDialog>());
 
         window.Close();
-
-        var off = new World(lookups: false);
-        var (_, offWindow) = Shown(off);
-
-        using (var frame = offWindow.CaptureRenderedFrame()!)
-        {
-            frame.SaveCapture("search-systems-lookups-off.png");
-        }
-
-        offWindow.Close();
     }
 
     [AvaloniaFact]
@@ -668,7 +630,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     {
         using var look = AppLook.Put();
 
-        var world = new World(lookups: true);
+        var world = new World();
         world.Settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
         world.Board.Post(Posting(new Dictionary<string, string> { ["faction"] = "Diamond Frogs", ["distance"] = "50" }, TwoSystems));
         world.Store.Add("Frogs in boom", "search_systems", new Dictionary<string, string> { ["state"] = "Boom" }, AskedAt, []);
@@ -724,7 +686,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void AnAnswerOfOneUsesTheSingularNoun()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Independent" }, TwoSystems with { Total = 1, Systems = [TwoSystems.Systems[0]] }));
         var (panel, window) = Shown(world);
 
@@ -747,7 +709,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [InlineData(true)]
     public void EverySystemNameCarriesACopyGlyph(bool headset)
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Independent" }, TwoSystems));
         var (panel, window) = Shown(world, headset, copy: true);
 
@@ -759,7 +721,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheAnswerHeaderCarriesACopyGlyphAfterTheReference()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["distance"] = "50" }, TwoSystems));
         var (panel, window) = Shown(world, copy: true);
 
@@ -771,7 +733,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void WithoutACopyDelegateNoGlyphIsDrawn()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["distance"] = "50" }, TwoSystems));
         var (panel, window) = Shown(world);
 
@@ -783,7 +745,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void PressingTheGlyphCopiesTheNameAndDoesNotOpenTheSystem()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Independent" }, TwoSystems));
         var (panel, window) = Shown(world, copy: true);
 

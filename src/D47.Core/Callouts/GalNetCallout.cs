@@ -14,7 +14,7 @@ public sealed class GalNetCallout : ICallout
     /// <summary>Headlines said in one line; more articles are a count.</summary>
     public const int TitlesSaid = 3;
 
-    /// <summary>The articles that arrived in the last poll, newest first; empty while GalNet news is off.</summary>
+    /// <summary>The articles that arrived in the last poll, newest first.</summary>
     public Func<IReadOnlyList<GalNetArticle>> Arrived { get; set; } = () => [];
 
     /// <summary>Whether the opening lines are over; headlines wait until it is true, and it stays true once seen.</summary>

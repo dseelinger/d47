@@ -18,7 +18,6 @@ public class TheAnswerSaysWhichStrongholdCarriersWereLeftOutTests
     {
         var surface = TestSurface.For(new MemoryInstall());
 
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var station = new StationSummary { Name = "Hutton Orbital", SystemName = "Alpha Centauri" };
         var galaxy = new Answering(new StationSearchResult("Sol", 1, [station]) { LeftOut = leftOut });

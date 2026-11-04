@@ -101,10 +101,6 @@ public class SeventyFiveKnobsTests
     /// <summary>The rows that decide what leaves this machine stay on the calm page, named one by one.</summary>
     [Theory]
     [InlineData("llm.webSearch")]
-    [InlineData("knowledge.galaxy")]
-    [InlineData("knowledge.notablePlaces")]
-    [InlineData("knowledge.bgsTick")]
-    [InlineData("knowledge.signalIndex")]
     [InlineData("privacy.memory")]
     [InlineData("memory.enabled")]
     public void ARowThatDecidesWhatLeavesThisMachineIsNeverFolded(string key)

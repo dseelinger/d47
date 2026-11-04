@@ -25,8 +25,7 @@ public sealed class MaterialDetailPage : UserControl
 
     public const string TraderHint = "What you give, and what you get.";
 
-    public const string TurnItOn =
-        "Turn on “Look things up in the galaxy” in Settings and D47 will search for the nearest places it's found.";
+    public const string NoGalaxy = "The galaxy search is not available, so D47 cannot look for the nearest places it's found.";
 
     public const string Searching = "Searching the galaxy…";
 
@@ -184,8 +183,8 @@ public sealed class MaterialDetailPage : UserControl
     }
 
     /// <summary>
-    /// Starts a search when galaxy search is on and none has run from the current system; cancels one when it
-    /// is off. The search runs on the pool and posts its answer back.
+    /// Starts a search when galaxy search is available and none has run from the current system; cancels one when it
+    /// is not. The search runs on the pool and posts its answer back.
     /// </summary>
     private void Search()
     {
@@ -438,12 +437,12 @@ public sealed class MaterialDetailPage : UserControl
         return Row("*,110,110", name, need, shortfall);
     }
 
-    /// <summary>The search results nearest first, the turn-it-on line, or what the search said.</summary>
+    /// <summary>The search results nearest first, the unavailable line, or what the search said.</summary>
     private Control Nearest()
     {
         if (_gap.Galaxy() is null)
         {
-            return Slab(Prose(TurnItOn, ThemeManager.GreyKey));
+            return Slab(Prose(NoGalaxy, ThemeManager.GreyKey));
         }
 
         if (_failure is { } failure)

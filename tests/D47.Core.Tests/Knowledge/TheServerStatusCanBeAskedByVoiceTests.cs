@@ -15,9 +15,9 @@ public class TheServerStatusCanBeAskedByVoiceTests
         public Task<GameServerState> ReadAsync(CancellationToken cancellationToken) => Task.FromResult(state);
     }
 
-    private static ServerStatusWatch Watch(GameServerState state, bool enabled = true)
+    private static ServerStatusWatch Watch(GameServerState state)
     {
-        var watch = new ServerStatusWatch(new Source(state), () => enabled, NullLogger<ServerStatusWatch>.Instance)
+        var watch = new ServerStatusWatch(new Source(state), NullLogger<ServerStatusWatch>.Instance)
         {
             Dispatch = work => work().GetAwaiter().GetResult(),
         };
@@ -26,9 +26,9 @@ public class TheServerStatusCanBeAskedByVoiceTests
         return watch;
     }
 
-    private static async Task<string> Ask(ServerStatusWatch? watch, bool enabled, DateTimeOffset now)
+    private static async Task<string> Ask(ServerStatusWatch? watch, DateTimeOffset now)
     {
-        var registry = CapabilityRegistry.Build([ServerStatusCapability.Create(() => watch, () => enabled, () => now)]);
+        var registry = CapabilityRegistry.Build([ServerStatusCapability.Create(() => watch, () => now)]);
         var result = await registry.InvokeAsync("get_server_status", new ToolArguments(new Dictionary<string, string>()));
         Assert.False(result.IsError);
         return result.Content;
@@ -41,7 +41,7 @@ public class TheServerStatusCanBeAskedByVoiceTests
     [InlineData(GameServerState.Unknown, "Unknown")]
     public async Task TheStateIsSaidWithHowOldItIs(GameServerState state, string word)
     {
-        var said = await Ask(Watch(state), true, Start.AddMinutes(3));
+        var said = await Ask(Watch(state), Start.AddMinutes(3));
 
         Assert.Equal($"{word}. Checked 3 minutes ago.", said);
     }
@@ -49,34 +49,26 @@ public class TheServerStatusCanBeAskedByVoiceTests
     [Fact]
     public async Task AFreshAnswerIsLessThanAMinuteOld()
     {
-        Assert.Equal("Online. Checked less than a minute ago.", await Ask(Watch(GameServerState.Online), true, Start.AddSeconds(20)));
-    }
-
-    [Fact]
-    public async Task WithTheSettingOffItSaysSo()
-    {
-        var said = await Ask(Watch(GameServerState.Online, enabled: false), false, Start);
-
-        Assert.StartsWith("Server status is off.", said);
+        Assert.Equal("Online. Checked less than a minute ago.", await Ask(Watch(GameServerState.Online), Start.AddSeconds(20)));
     }
 
     [Fact]
     public async Task BeforeTheFirstAnswerItSaysNothingHasBeenChecked()
     {
-        var watch = new ServerStatusWatch(new Source(GameServerState.Online), () => true, NullLogger<ServerStatusWatch>.Instance)
+        var watch = new ServerStatusWatch(new Source(GameServerState.Online), NullLogger<ServerStatusWatch>.Instance)
         {
             Dispatch = _ => { },
         };
         watch.Poll(Start);
 
-        Assert.Equal("Server status has not been checked yet.", await Ask(watch, true, Start));
-        Assert.Equal("Server status has not been checked yet.", await Ask(null, true, Start));
+        Assert.Equal("Server status has not been checked yet.", await Ask(watch, Start));
+        Assert.Equal("Server status has not been checked yet.", await Ask(null, Start));
     }
 
     [Fact]
     public void TheQuestionNeedsNoModelAndMakesNoRequest()
     {
-        var tool = ServerStatusCapability.Create(() => null, () => true, () => Start).Tools.Single();
+        var tool = ServerStatusCapability.Create(() => null, () => Start).Tools.Single();
 
         Assert.Contains(tool.Commands, c => c.Phrase == "are the servers up");
         Assert.Empty(tool.Parameters);

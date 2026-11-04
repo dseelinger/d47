@@ -52,11 +52,10 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
     private sealed record Bench(
         ItemPage Page, PanelNavigator Nav, Outfitters Galaxy, RoutePlanBook Plans, string BuildId, ShipsMode Mode, OutfittingPlotter Plotter);
 
-    private static Bench Set(bool lookups, bool twoScoops = false)
+    private static Bench Set(bool twoScoops = false)
     {
         var folder = TempFolders.Create("d47-ship-to-buy");
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, lookups ? "true" : "false", SettingsCaller.Panel);
 
         var game = new GameStateStore();
 
@@ -92,7 +91,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         nav.Register(PanelTab.Assets, new NavCrumb(LoadoutPages.FleetRoot, "Ships"));
         nav.Register(PanelTab.Navigation, new NavCrumb(RoutingPages.PlanRoot, "Plan"));
 
-        var plotter = new OutfittingPlotter(registry, plans, () => lookups, () => game.Active?.Location.StarSystem);
+        var plotter = new OutfittingPlotter(registry, plans, () => game.Active?.Location.StarSystem);
         var mode = new ShipsMode(ships, checklists, () => game.Active, outfitting: plotter);
 
         return new Bench(new ItemPage(mode, nav, build.Id), nav, galaxy, plans, build.Id, mode, plotter);
@@ -123,7 +122,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
     public async Task PressingPlotAsksForTheListedItemsAndOpensTheRouteOnThePlanPage()
     {
         using var kit = AppLook.ControlKit();
-        var bench = Set(lookups: true);
+        var bench = Set();
         Show(bench.Page);
 
         var toBuy = bench.Mode.ToBuy(bench.BuildId)!;
@@ -158,7 +157,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
     public async Task ARepeatedItemIsCountedOnceInTheSummaryAndAskedForOnce()
     {
         using var kit = AppLook.ControlKit();
-        var bench = Set(lookups: true, twoScoops: true);
+        var bench = Set(twoScoops: true);
         Show(bench.Page);
 
         Assert.Equal("3 items to buy: Python and 2 × 6A Fuel Scoop.", bench.Mode.ToBuy(bench.BuildId)!.Summary);
@@ -172,25 +171,6 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         }
 
         Assert.Equal(["Python", "6A Fuel Scoop"], Assert.Single(bench.Galaxy.Asked).Items.Select(item => item.Display));
-    }
-
-    [AvaloniaFact]
-    public void WithLookupsOffTheButtonIsDisabledAndTheReasonIsShown()
-    {
-        using var kit = AppLook.ControlKit();
-        var bench = Set(lookups: false);
-        var window = Show(bench.Page);
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.SaveCapture("to-buy-lookups-off.png");
-        }
-
-        Assert.False(Plot(bench.Page).IsEnabled);
-        Assert.Equal(OutfittingPlotter.SwitchedOff, ToolTip.GetTip(Plot(bench.Page)));
-        Assert.Contains(
-            bench.Page.GetVisualDescendants().OfType<TextBlock>(),
-            block => block.Text == OutfittingPlotter.SwitchedOff);
     }
 
     [AvaloniaFact]
@@ -262,7 +242,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
     public void TheOutfittingResultShowsItsAgeASearchButtonAndEachStopsReportDate()
     {
         using var kit = AppLook.ControlKit();
-        var bench = Set(lookups: true);
+        var bench = Set();
         bench.Plans.Record(SeedRoute(72), "1 stop for 1 of 2 items", new DateTimeOffset(2026, 10, 28, 19, 42, 0, TimeSpan.Zero));
 
         var page = ResultPage(bench);
@@ -285,7 +265,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
     public void AStopWithNoReportDateSaysSo()
     {
         using var kit = AppLook.ControlKit();
-        var bench = Set(lookups: true);
+        var bench = Set();
         var route = new OutfittingRoute([new OutfittingStop("Eravate", "Ackerman Market", 12.4, ["6A Fuel Scoop"])], []);
         bench.Plans.Record(route, "1 stop", default);
 
@@ -299,7 +279,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
     public void AnOutfittingPlanStoredWithNoAgeShowsAnyInThePicker()
     {
         using var kit = AppLook.ControlKit();
-        var bench = Set(lookups: true);
+        var bench = Set();
         bench.Plans.Record(SeedRoute(null), "1 stop", default);
 
         var page = ResultPage(bench);
@@ -312,7 +292,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
     public void OtherKindsOfPlanShowNeitherThePickerNorSearch()
     {
         using var kit = AppLook.ControlKit();
-        var bench = Set(lookups: true);
+        var bench = Set();
         var plan = new StoredRoutePlan { Kind = RoutePlanKind.Trade, Headline = "Trade" };
 
         var page = new RoutePlanResultPage(plan, plans: bench.Plans, outfittingPlotter: bench.Plotter);
@@ -326,7 +306,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
     public async Task SearchPlotsTheSamePlanAgainWithThePickedAgeAndRedraws()
     {
         using var kit = AppLook.ControlKit();
-        var bench = Set(lookups: true);
+        var bench = Set();
         bench.Plans.Record(SeedRoute(72), "old", new DateTimeOffset(2026, 10, 28, 19, 42, 0, TimeSpan.Zero));
         var before = bench.Plans.Last(RoutePlanKind.Outfitting);
 
@@ -365,22 +345,6 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         Assert.Null(after!.Outfitting!.MaxReportAgeHours);
         Assert.Equal(50, after.Outfitting.MaxDistance);
         Assert.True(after.Outfitting.StorageChecked);
-    }
-
-    [AvaloniaFact]
-    public void WithLookupsOffSearchIsDisabledAndSaysWhy()
-    {
-        using var kit = AppLook.ControlKit();
-        var bench = Set(lookups: false);
-        bench.Plans.Record(SeedRoute(72), "old", default);
-
-        var page = ResultPage(bench);
-        Show(page);
-
-        var search = SearchButton(page)!;
-
-        Assert.False(search.IsEnabled);
-        Assert.Equal(OutfittingPlotter.SwitchedOff, ToolTip.GetTip(search));
     }
 
     [Fact]

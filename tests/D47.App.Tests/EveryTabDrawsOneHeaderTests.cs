@@ -60,7 +60,7 @@ public class EveryTabDrawsOneHeaderTests
         panel.EnableLoadout(ships, checklists, () => state, onFoot);
         panel.EnableEngineers(new EngineerPlanService(builds, kit, checklists, () => state), ships, () => state, onFoot, checklists: checklists);
         panel.EnableChecklist(checklists);
-        panel.EnableRouting(new RoutingSurface(() => new NavRoute(), () => "Sol", CapabilityRegistry.Build([]), Plans: null, () => true));
+        panel.EnableRouting(new RoutingSurface(() => new NavRoute(), () => "Sol", CapabilityRegistry.Build([]), Plans: null));
 
         var book = new AdventureBook(
             new AdventureStore(Path.Combine(root, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
@@ -71,7 +71,7 @@ public class EveryTabDrawsOneHeaderTests
             () => null, () => null, null, null, NullLogger.Instance);
 
         panel.EnableAdventures(new AdventureSurface(
-            book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => false, () => null, () => { }));
+            book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => null, () => { }));
     }
 
     /// <summary>The desktop panel, 1280 wide unless told otherwise, with every tab furnished from real pages.</summary>

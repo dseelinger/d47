@@ -30,13 +30,11 @@ public class ColonisationPlansAreFetchedOffTheTickTests
     {
         public Service Service { get; } = new();
 
-        public bool Enabled { get; set; } = true;
-
         public CommanderGameState State { get; } = new(new CommanderIdentity("F1", "Tester"));
 
         public ColonisationPlans Plans()
         {
-            var plans = new ColonisationPlans(Service, () => Enabled, () => State, NullLogger<ColonisationPlans>.Instance)
+            var plans = new ColonisationPlans(Service, () => State, NullLogger<ColonisationPlans>.Instance)
             {
                 Dispatch = work => _ = work(),
             };
@@ -194,7 +192,7 @@ public class ColonisationPlansAreFetchedOffTheTickTests
         var other = new CommanderGameState(new CommanderIdentity("F2", "Other"));
         other.Colonisation = rig.State.Colonisation;
         var active = rig.State;
-        var plans = new ColonisationPlans(rig.Service, () => true, () => active, NullLogger<ColonisationPlans>.Instance)
+        var plans = new ColonisationPlans(rig.Service, () => active, NullLogger<ColonisationPlans>.Instance)
         {
             Dispatch = work => _ = work(),
         };
@@ -239,48 +237,11 @@ public class ColonisationPlansAreFetchedOffTheTickTests
     }
 
     [Fact]
-    public async Task WithTheSwitchOffNothingIsFetchedAndNothingIsHeld()
-    {
-        var rig = new Rig { Enabled = false };
-        rig.Docked(Start);
-        var plans = rig.Plans();
-
-        plans.Poll(Start);
-        plans.Want(System, Start);
-        var answer = await plans.GetAsync(System, Start, TestContext.Current.CancellationToken);
-
-        Assert.Null(answer);
-        Assert.Empty(rig.Service.Asked);
-        Assert.Empty(plans.Snapshot);
-    }
-
-    [Fact]
-    public void TurningTheSwitchOffDropsThePlansAndTurningItOnFetchesAgain()
-    {
-        var rig = new Rig();
-        rig.Docked(Start);
-        var plans = rig.Plans();
-
-        plans.Poll(Start);
-        Assert.NotEmpty(plans.Snapshot);
-
-        rig.Enabled = false;
-        plans.Poll(Start + TimeSpan.FromMinutes(1));
-        Assert.Empty(plans.Snapshot);
-
-        rig.Enabled = true;
-        plans.Poll(Start + TimeSpan.FromMinutes(2));
-
-        Assert.Equal([System, System], rig.Service.Asked);
-        Assert.NotEmpty(plans.Snapshot);
-    }
-
-    [Fact]
     public void WithNoServiceNothingIsFetched()
     {
         var rig = new Rig();
         rig.Docked(Start);
-        var plans = new ColonisationPlans(null, () => true, () => rig.State, NullLogger<ColonisationPlans>.Instance);
+        var plans = new ColonisationPlans(null, () => rig.State, NullLogger<ColonisationPlans>.Instance);
 
         plans.Poll(Start);
         plans.Want(System, Start);

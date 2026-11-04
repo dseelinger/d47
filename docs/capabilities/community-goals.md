@@ -149,7 +149,7 @@ I have seen." and adds that there may be some where you have not been.
 One saved search, run again and again. It looks for where to buy the goal's commodity, Palladium: from the
 goal's own system, nearest first, within 250 light years, prices under eight hours old, a large pad, a
 station within 50,000 light seconds of the star and at least 10,000 in stock. Fleet carriers are left out,
-as in any galaxy search. It is a Look things up in the galaxy search, so that setting must be on.
+as in any galaxy search.
 
 Say "community goal search" or "CG search" to run it. The keyword router takes the phrase whole and points
 the galaxy tool at it with the arguments already filled in, so no model reinterprets it.

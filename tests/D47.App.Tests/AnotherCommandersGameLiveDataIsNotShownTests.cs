@@ -137,7 +137,7 @@ public class AnotherCommandersGameLiveDataIsNotShownTests
     {
         var duty = new Duty { Off = true };
         var page = new RouteBestCargoPage(
-            CapabilityRegistry.Build([]), new BestCargoBoard(), () => null, Route, () => false, offDuty: duty.Say);
+            CapabilityRegistry.Build([]), new BestCargoBoard(), () => null, Route, offDuty: duty.Say);
 
         Assert.Null(page.RouteEnd);
 

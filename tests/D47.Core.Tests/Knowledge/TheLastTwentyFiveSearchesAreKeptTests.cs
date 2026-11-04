@@ -193,7 +193,6 @@ public class TheLastTwentyFiveSearchesAreKeptTests
     private (SearchHistory History, ToolDefinition Tool) Tool(string name, string? frontierId = "F1")
     {
         var settings = TestSurface.For(new MemoryInstall()).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
         var history = Store();
         var state = frontierId is null ? null : new CommanderGameState(new CommanderIdentity(frontierId, "Tester"));
 

@@ -301,12 +301,10 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             || store.All.Any(message => MessagesView.IsWaiting(message, surface));
     }
 
-    /// <summary>Whether a short story can be asked for: a model to write it and galaxy search to check its places.</summary>
-    internal static bool CanAsk(AdventureSurface surface) => surface.ModelAvailable() && surface.GalaxySearchOn();
+    /// <summary>Whether a short story can be asked for: a model is available to write it.</summary>
+    internal static bool CanAsk(AdventureSurface surface) => surface.ModelAvailable();
 
-    private string AskShutBecause() => !_surface.ModelAvailable()
-        ? "A short story needs a language model, and none is configured."
-        : "A short story needs galaxy search, so the story's places can be checked. It is off in Settings.";
+    private static string AskShutBecause() => "A short story needs a language model, and none is configured.";
 
     private Control Card(AdventureStanding standing)
     {
@@ -781,7 +779,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         intro.LineHeight = TypeScale.Body * 1.5;
         page.Children.Add(intro);
 
-        var shut = !_surface.ModelAvailable() || !_surface.GalaxySearchOn();
+        var shut = !_surface.ModelAvailable();
 
         if (shut)
         {
@@ -971,7 +969,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 return;
             }
 
-            if (!_surface.ModelAvailable() || !_surface.GalaxySearchOn())
+            if (!_surface.ModelAvailable())
             {
                 status.Say(AskShutBecause());
                 return;

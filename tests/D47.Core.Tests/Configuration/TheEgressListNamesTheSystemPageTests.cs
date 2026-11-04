@@ -20,34 +20,22 @@ public class TheEgressListNamesTheSystemPageTests
     private static string What(D47Settings settings) =>
         EgressDisclosure.Entry(EgressDisclosure.GalaxySearch, settings, llmKeyPresent: false).What;
 
-    private static D47Settings GalaxyOn(bool callouts)
+    private static D47Settings Callouts(bool on)
     {
         var settings = new D47Settings();
 
-        return settings with
-        {
-            Knowledge = settings.Knowledge with { GalaxySearch = true },
-            Callouts = settings.Callouts with { Enabled = callouts },
-        };
+        return settings with { Callouts = settings.Callouts with { Enabled = on } };
     }
 
     [Fact]
     public void TheGalaxyEntryNamesIt() =>
-        Assert.Contains(Sentence, What(GalaxyOn(callouts: true)), StringComparison.Ordinal);
+        Assert.Contains(Sentence, What(Callouts(on: true)), StringComparison.Ordinal);
 
     [Fact]
     public void TheGalaxyEntryNamesTheLettersSentAsYouType() =>
-        Assert.Contains(Typing, What(GalaxyOn(callouts: true)), StringComparison.Ordinal);
-
-    [Fact]
-    public void WithGalaxySearchOffNothingIsSentAsYouType()
-    {
-        var settings = new D47Settings();
-
-        Assert.DoesNotContain(Typing, What(settings with { Knowledge = settings.Knowledge with { GalaxySearch = false } }), StringComparison.Ordinal);
-    }
+        Assert.Contains(Typing, What(Callouts(on: true)), StringComparison.Ordinal);
 
     [Fact]
     public void ItIsNamedWhateverTheCalloutsAre() =>
-        Assert.Contains(Sentence, What(GalaxyOn(callouts: false)), StringComparison.Ordinal);
+        Assert.Contains(Sentence, What(Callouts(on: false)), StringComparison.Ordinal);
 }

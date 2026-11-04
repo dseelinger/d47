@@ -90,7 +90,6 @@ public class LeavingTheBubbleOffersAnExpeditionKitTests
         }
 
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var checklists = TestSurface.Checklists(install.Paths, gameState);
         var plans = new RoutePlanBook(Path.Combine(install.Root, "data", "route-plans.json"), install.Files, NullLogger<RoutePlanBook>.Instance);

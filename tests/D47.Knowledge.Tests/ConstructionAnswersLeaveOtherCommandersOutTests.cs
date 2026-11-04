@@ -63,7 +63,7 @@ public class ConstructionAnswersLeaveOtherCommandersOutTests
         using var service = new RavenColonialPlanService(
             NullLogger<RavenColonialPlanService>.Instance, new HttpClient(new Fake()), () => Now);
 
-        var plans = new ColonisationPlans(service, () => true, () => gameState.Active, NullLogger<ColonisationPlans>.Instance);
+        var plans = new ColonisationPlans(service, () => gameState.Active, NullLogger<ColonisationPlans>.Instance);
         var registry = CapabilityRegistry.Build([ColonisationCapability.Create(() => gameState.Active, now: () => Now, plans: () => plans)]);
 
         foreach (var tool in new[] { "get_construction_sites", "get_construction_needs" })

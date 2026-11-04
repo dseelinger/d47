@@ -2263,7 +2263,7 @@ public sealed class StoryDirector(
 
     /// <summary>
     /// Whether a fixed station with a pad for the ship aboard, in a system needing no permit, lies within the chapter's reach.
-    /// True when it cannot be told: galaxy search off, no known position, or the query failed.
+    /// True when it cannot be told: no galaxy search, no known position, or the query failed.
     /// </summary>
     private async Task<bool> StationsInReachAsync(CommanderGameState? game, CancellationToken cancellationToken)
     {
@@ -2293,7 +2293,7 @@ public sealed class StoryDirector(
 
     /// <summary>
     /// Whether an open fixed station with Frontline Solutions, in a system at war, lies within the chapter's reach.
-    /// False when it cannot be told: galaxy search off, no known position, or the query failed.
+    /// False when it cannot be told: no galaxy search, no known position, or the query failed.
     /// </summary>
     private async Task<bool> FrontlineInReachAsync(CommanderGameState? game, CancellationToken cancellationToken)
     {

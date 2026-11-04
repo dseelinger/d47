@@ -23,10 +23,6 @@ public class ACommunityGoalWatchSpeaksOncePerTickTests
 
         public DateTimeOffset? LastTick { get; set; } = Tick;
 
-        public bool GalNet { get; set; } = true;
-
-        public bool BgsTick { get; set; } = true;
-
         public IReadOnlyList<WatchNotice> Poll(DateTimeOffset at, params GalNetArticle[] arrived)
         {
             Arrived = arrived;
@@ -45,10 +41,7 @@ public class ACommunityGoalWatchSpeaksOncePerTickTests
             store,
             new StubTradePlanService(),
             () => rig!.LastTick,
-            () => true,
-            () => rig!.BgsTick,
             () => rig!.Arrived,
-            () => rig!.GalNet,
             NullLogger<WatchRunner>.Instance);
 
         return rig = new Rig { Runner = runner, Store = store };
@@ -98,27 +91,5 @@ public class ACommunityGoalWatchSpeaksOncePerTickTests
         var notice = Assert.Single(rig.Poll(Now.AddDays(1)));
 
         Assert.Equal("GalNet may have a new Community Goal: Colonia Calls for Assistance.", notice.Text);
-    }
-
-    [Fact]
-    public void NothingHappensWhileGalNetNewsIsOff()
-    {
-        var rig = Build();
-        rig.GalNet = false;
-
-        Assert.Empty(rig.Poll(Now, Launch("Wreaken Calls for Tests")));
-
-        rig.GalNet = true;
-        Assert.Empty(rig.Poll(Now.AddHours(1)));
-    }
-
-    [Fact]
-    public void NothingHappensWhileBgsTickTimeIsOff()
-    {
-        var rig = Build();
-        rig.BgsTick = false;
-
-        Assert.Empty(rig.Poll(Now, Launch("Wreaken Calls for Tests")));
-        Assert.Null(rig.Store.Watches.Single().FiredForTick);
     }
 }

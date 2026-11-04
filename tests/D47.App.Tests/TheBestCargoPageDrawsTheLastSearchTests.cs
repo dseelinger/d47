@@ -73,7 +73,6 @@ public class TheBestCargoPageDrawsTheLastSearchTests
 
     private static Opened Open(
         bool docked = true,
-        bool lookups = true,
         NavRoute? route = null,
         double width = 1280,
         bool trade = true,
@@ -83,7 +82,6 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Directory.CreateDirectory(folder);
 
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, lookups ? "true" : "false", SettingsCaller.Panel);
         settings.Replace("test", current => current with
         {
             Trade = current.Trade with
@@ -119,8 +117,6 @@ public class TheBestCargoPageDrawsTheLastSearchTests
             () => gameState.Active?.Location.StarSystem,
             registry,
             plans,
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { },
             new CommodityBoard(),
             Settings: settings,
             Commander: () => gameState.Active,
@@ -278,16 +274,6 @@ public class TheBestCargoPageDrawsTheLastSearchTests
 
     [Trait("Category", "Integration")]
     [AvaloniaFact]
-    public void LookupsOffDisablesFindCargo()
-    {
-        using var opened = Open(lookups: false);
-
-        Assert.Equal(BestCargoView.LookupsOff, opened.Page.View);
-        Assert.False(opened.Page.CanFind);
-    }
-
-    [Trait("Category", "Integration")]
-    [AvaloniaFact]
     public void ANullAnswerSaysTheMarketsPricesAreUnknown()
     {
         using var opened = Open();
@@ -382,12 +368,6 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         using (var notDocked = Open(docked: false))
         {
             Save(notDocked.Window, "best-cargo-03-not-docked.png");
-        }
-
-        using (var off = Open(lookups: false))
-        {
-            off.Page.SellIn = "Diaguandri";
-            Save(off.Window, "best-cargo-04-lookups-off.png");
         }
 
         using (var unseen = Open())

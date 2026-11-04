@@ -83,7 +83,6 @@ public class AReversedCommoditySearchRanksTheWholeAnswerTheOtherWayTests
     {
         var trade = new Capturing();
         var surface = TestSurface.For(new MemoryInstall());
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build([GalaxyCapability.Create(new NoGalaxy(), () => "Ega", surface.Settings, trade)]);
 

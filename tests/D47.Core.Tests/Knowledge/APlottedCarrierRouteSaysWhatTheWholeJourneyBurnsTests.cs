@@ -70,7 +70,6 @@ public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
 
         var routes = new RecordedCarrierRoutes();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var plans = new RoutePlanBook(
             Path.Combine(install.Root, "data", "route-plans.json"),

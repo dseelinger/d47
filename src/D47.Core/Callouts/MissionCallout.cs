@@ -52,7 +52,7 @@ public sealed class MissionCallout : ICallout
     /// <summary>The running story's asides, or null when stories are not wired.</summary>
     public StoryMissionAsides? StoryAsides { get; set; }
 
-    /// <summary>The service to ask, or null when galaxy search is off.</summary>
+    /// <summary>The service to ask, or null when there is none.</summary>
     public Func<IGalaxyService?> Galaxy { get; set; } = () => null;
 
     /// <summary>Starts the lookup off the tick thread; must return without waiting for it.</summary>

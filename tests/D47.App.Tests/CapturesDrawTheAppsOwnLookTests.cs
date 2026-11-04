@@ -158,9 +158,9 @@ public class CapturesDrawTheAppsOwnLookTests
         panel.EnableLoadout(ships, checklists, () => state, onFoot);
         panel.EnableEngineers(unlocks, ships, () => state, onFoot, checklists: checklists);
         panel.EnableChecklist(checklists);
-        panel.EnableRouting(new RoutingSurface(() => route, () => "Alpha Centauri", CapabilityRegistry.Build([]), plans, () => true));
+        panel.EnableRouting(new RoutingSurface(() => route, () => "Alpha Centauri", CapabilityRegistry.Build([]), plans));
         panel.EnableAdventures(new AdventureSurface(
-            book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => false, () => null, () => { }));
+            book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => null, () => { }));
 
         var view = new SettingsView();
         panel.EnableSettings(() =>

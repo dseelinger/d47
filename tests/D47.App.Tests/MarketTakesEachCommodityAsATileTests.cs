@@ -29,8 +29,6 @@ public sealed class MarketTakesEachCommodityAsATileTests
                 () => "Sol",
                 CapabilityRegistry.Build([]),
                 Plans: null,
-                LookupsEnabled: () => true,
-                OpenSettings: null,
                 Commodities: new CommodityBoard())
             {
                 SuggestionPause = TimeSpan.Zero,

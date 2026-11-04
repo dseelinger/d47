@@ -92,7 +92,7 @@ internal static class NotForMeGroupFixture
             stories, book, () => StoryFixture.Catalog, write ?? generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
         return new AdventureSurface(
-            book, generator, () => null, commander ?? (() => "F1"), () => Now, _ => { }, () => true, () => true, () => null, () => { },
+            book, generator, () => null, commander ?? (() => "F1"), () => Now, _ => { }, () => true, () => null, () => { },
             Stories: director,
             Fleet: fleet is not null ? () => fleet : ships is null ? null : ships.Plans.Fleet,
             Intend: ships is null ? null : hull => ships.Plans.Intend(hull));

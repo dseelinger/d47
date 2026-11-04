@@ -19,7 +19,7 @@ public sealed class GapSource(
 
     public CommanderGameState? State() => state();
 
-    /// <summary>The galaxy service, or null while "Look things up in the galaxy" is off.</summary>
+    /// <summary>The galaxy service, or null when there is none.</summary>
     public D47.Core.Knowledge.IGalaxyService? Galaxy() => galaxy?.Invoke();
 
     /// <summary>Every catalogue material grouped into ledger cards, needs taken from <paramref name="gap"/>.</summary>

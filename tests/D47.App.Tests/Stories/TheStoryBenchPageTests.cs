@@ -59,7 +59,7 @@ public sealed class TheStoryBenchPageTests
             : null;
 
         var surface = new AdventureSurface(
-            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
+            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => null, () => { },
             Stories: director, Bench: bench);
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
         panel.EnableAdventures(surface);

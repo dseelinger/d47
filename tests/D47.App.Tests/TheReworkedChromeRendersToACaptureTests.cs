@@ -76,8 +76,7 @@ public class TheReworkedChromeRendersToACaptureTests
             () => Plotted,
             () => "Alpha Centauri",
             CapabilityRegistry.Build([]),
-            Plans(),
-            () => true));
+            Plans()));
 
         panel.Furnish(PanelTab.Commander, _ => new TextBlock { Text = "checklist" }, new NavCrumb("checklist", "Checklist"));
         panel.Furnish(

@@ -44,7 +44,6 @@ public sealed class TheSearchPagesOfferAMaxReportAgeTests
     private static IReadOnlyDictionary<string, string> Filled(GalaxySearchKind kind, string root, object result, string age)
     {
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var board = new GalaxySearchBoard();
         board.Post(new GalaxySearchPosting(
@@ -63,9 +62,7 @@ public sealed class TheSearchPagesOfferAMaxReportAgeTests
 
         panel.EnableStarSystem(new StarSystemSurface(
             new Systems(),
-            () => new JournalLocation("LTT 7786", null, false, null),
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { })
+            () => new JournalLocation("LTT 7786", null, false, null))
         {
             Searches = new GalaxySearchSurface(registry, board, store, () => "F1", () => [])
             {

@@ -4,8 +4,8 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Knowledge;
 
 /// <summary>
-/// Keeps <see cref="GalNetArchive"/> current: one fetch when switched on, then one every <see cref="Interval"/>
-/// while the setting is on. The fetch, merge and save run on the pool. Tick thread only.
+/// Keeps <see cref="GalNetArchive"/> current: one fetch on the first poll, then one every <see cref="Interval"/>.
+/// The fetch, merge and save run on the pool. Tick thread only.
 /// </summary>
 public sealed class GalNetWatch
 {
@@ -19,21 +19,18 @@ public sealed class GalNetWatch
 
     private readonly IGalNetSource _source;
     private readonly GalNetArchive _archive;
-    private readonly Func<bool> _enabled;
     private readonly ILogger<GalNetWatch> _logger;
 
     /// <summary>One entry per finished fetch: the articles new to the archive, empty after a failure or a first backfill.</summary>
     private readonly ConcurrentQueue<IReadOnlyList<GalNetArticle>> _answers = new();
 
     private bool _fetching;
-    private bool _wasEnabled;
     private DateTimeOffset? _fetchedAt;
 
-    public GalNetWatch(IGalNetSource source, GalNetArchive archive, Func<bool> enabled, ILogger<GalNetWatch> logger)
+    public GalNetWatch(IGalNetSource source, GalNetArchive archive, ILogger<GalNetWatch> logger)
     {
         _source = source;
         _archive = archive;
-        _enabled = enabled;
         _logger = logger;
     }
 
@@ -58,16 +55,7 @@ public sealed class GalNetWatch
 
         Arrived = [.. arrived.OrderByDescending(article => article.Published)];
 
-        var enabled = _enabled();
-
-        if (enabled && !_wasEnabled)
-        {
-            _fetchedAt = null;
-        }
-
-        _wasEnabled = enabled;
-
-        if (!enabled || _fetching)
+        if (_fetching)
         {
             return;
         }

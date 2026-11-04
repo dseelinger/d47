@@ -74,7 +74,6 @@ public sealed class TheSearchTablesFitTheirColumnsTests
     private static (PanelView Panel, Window Window, Galaxy Galaxy) Shown(string root)
     {
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var galaxy = new Galaxy();
         var board = new GalaxySearchBoard();
@@ -86,9 +85,7 @@ public sealed class TheSearchTablesFitTheirColumnsTests
 
         panel.EnableStarSystem(new StarSystemSurface(
             new Systems(),
-            () => new JournalLocation("LTT 7786", null, false, null),
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { })
+            () => new JournalLocation("LTT 7786", null, false, null))
         {
             Searches = new GalaxySearchSurface(registry, board, store, () => "F1", () => [])
             {

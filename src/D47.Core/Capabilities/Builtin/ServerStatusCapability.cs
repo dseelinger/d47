@@ -7,7 +7,7 @@ public static class ServerStatusCapability
 {
     public const string Id = "server-status";
 
-    public static CapabilityDescriptor Create(Func<ServerStatusWatch?> watch, Func<bool> enabled, Func<DateTimeOffset> now) => new()
+    public static CapabilityDescriptor Create(Func<ServerStatusWatch?> watch, Func<DateTimeOffset> now) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -22,11 +22,10 @@ public static class ServerStatusCapability
                 Name = "get_server_status",
                 Exercise =
                     "Say \"are the servers up\". The reply says whether the game servers are online, in "
-                    + "maintenance, offline or unknown and how long ago that was checked; with the Server "
-                    + "status setting off, it says so.",
+                    + "maintenance, offline or unknown and how long ago that was checked.",
                 Description =
                     "Say whether Elite's game servers are online, in maintenance, offline or unknown, and how long ago "
-                    + "that was checked. Makes no request; says so when the Server status setting is off.",
+                    + "that was checked. Makes no request.",
                 Parameters = [],
                 Commands =
                 [
@@ -34,18 +33,13 @@ public static class ServerStatusCapability
                     new ToolCommandPhrase("is elite down"),
                     new ToolCommandPhrase("server status"),
                 ],
-                Handler = (_, _) => Task.FromResult(Answer(watch(), enabled(), now())),
+                Handler = (_, _) => Task.FromResult(Answer(watch(), now())),
             },
         ],
     };
 
-    private static ToolResult Answer(ServerStatusWatch? watch, bool enabled, DateTimeOffset now)
+    private static ToolResult Answer(ServerStatusWatch? watch, DateTimeOffset now)
     {
-        if (!enabled)
-        {
-            return ToolResult.Ok("Server status is off. Turn it on under Outside sources in Settings to check the servers.");
-        }
-
         if (watch?.Shown is not { } state)
         {
             return ToolResult.Ok("Server status has not been checked yet.");

@@ -61,7 +61,6 @@ public class TheBiologyAndRichesCardsSendJumpRangeAndFarthestTests
     {
         var folder = TempFolders.Create("d47-biology-card");
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, "true", D47.Core.Configuration.SettingsCaller.Panel);
 
         var gameState = new GameStateStore();
 
@@ -91,7 +90,6 @@ public class TheBiologyAndRichesCardsSendJumpRangeAndFarthestTests
             () => gameState.Active?.Location.StarSystem,
             registry,
             plans,
-            () => true,
             Commander: () => gameState.Active));
 
         var window = new Window { Content = panel, Width = 1280, Height = 1400 };

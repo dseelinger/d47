@@ -17,7 +17,6 @@ public sealed class FindAsksTheGalaxyAsYouTypeTests
     {
         public List<(string Typed, TaskCompletionSource<IReadOnlyList<PanelFindName>> Answer, CancellationToken Token)> Calls { get; } = [];
 
-        public bool On { get; set; } = true;
     }
 
     private static void Jobs()
@@ -35,7 +34,6 @@ public sealed class FindAsksTheGalaxyAsYouTypeTests
         window.Show();
 
         var galaxy = new GalaxyFind(
-            () => asked.On,
             (typed, token) =>
             {
                 var answer = new TaskCompletionSource<IReadOnlyList<PanelFindName>>();
@@ -71,19 +69,6 @@ public sealed class FindAsksTheGalaxyAsYouTypeTests
 
         Assert.Empty(asked.Calls);
         Assert.Equal("1 RESULT", dialog.Count);
-    }
-
-    [AvaloniaFact]
-    public void GalaxySearchOffSendsNothingAndNeverSaysAsking()
-    {
-        var (dialog, asked) = Shown();
-        asked.On = false;
-
-        dialog.Query = "dark";
-        Jobs();
-
-        Assert.Empty(asked.Calls);
-        Assert.DoesNotContain("ASKING", dialog.Count);
     }
 
     [AvaloniaFact]
@@ -145,7 +130,6 @@ public sealed class FindAsksTheGalaxyAsYouTypeTests
         var window = new Window { Content = new Grid(), Width = 900, Height = 700 };
         window.Show();
         var galaxy = new GalaxyFind(
-            () => true,
             (typed, token) =>
             {
                 var answer = new TaskCompletionSource<IReadOnlyList<PanelFindName>>();

@@ -35,7 +35,7 @@ nav_order: 118
 <section>
 <h2><span class="num">2</span> Read which half the answer came from.</h2>
 <p class="say">Listen for which half of the answer came from where.</p>
-<p class="expect">Species values come from the shipped tables. What other Commanders logged on the body needs the Earlier biology finds from Canonn setting and the network.</p>
+<p class="expect">Species values come from the shipped tables. What other Commanders logged on the body comes from Canonn and needs the network.</p>
 <svg viewBox="0 0 880 308" role="img" aria-label="Bacterium Aurasus">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Bacterium Aurasus</text>
@@ -358,8 +358,7 @@ body's conditions admit, with each one's value: a prediction from the conditions
 #### `get_earlier_finds`
 
 What other Commanders have logged on a body, from other Commanders' logged finds: each variant and how many finds there are
-of it, most first. Needs the Earlier biology finds from Canonn setting; with it off the answer says
-how to turn it on.
+of it, most first, from Canonn.
 
 ```json
 {"type":"object","properties":{"body":{"type":"string","description":"The body name, or its short form such as \u00227 b\u0022. Leave out for the body the Commander is at, or else the most recently scanned body that has biology on it."}},"required":[],"additionalProperties":false}

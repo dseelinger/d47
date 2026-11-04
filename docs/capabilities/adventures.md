@@ -909,12 +909,12 @@ An activity is excluded unless the ship aboard and the Commander pass its gate:
 The station gate is checked once per chapter, before the draw. `StoryDirector` asks the galaxy search for fixed stations
 within the chapter's reach of the Commander's system (300 light years or more, or the long-haul reach) and counts one that
 needs no permit and has a pad for the ship aboard. With none, the rows in the last gate row are never drawn, and a comfort
-chapter's first slot can only be mine or organic. When the galaxy search is off, the position is unknown or the query
+chapter's first slot can only be mine or organic. When the position is unknown or the query
 fails, the draw is not gated. A redrawn slot after **Never ask this** follows the same gate.
 
 The Frontline Solutions gate is checked beside it. `StoryDirector` asks the galaxy search for fixed stations within the same
 reach that list Frontline Solutions, and counts one that needs no permit, has a pad for the ship aboard and is in a system the
-galaxy search or the Commander's own reading puts at war or civil war. It is not skipped when the galaxy search is off, the
+galaxy search or the Commander's own reading puts at war or civil war. It is not skipped when the
 position is unknown or the query fails: with no station checked, onfootbond is never drawn. A drawn onfootbond slot asks for
 a dock objective just before it, at a listed Frontline Solutions station, and the dry run refuses an onfootbond objective that
 does not directly follow a dock at such a station.

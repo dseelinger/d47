@@ -39,9 +39,6 @@ public sealed record GalaxySearchSurface(
     /// <summary>How long typing has to stop before names are suggested.</summary>
     public TimeSpan SuggestionPause { get; init; } = NameSuggestions.DefaultPause;
 
-    /// <summary>Whether a signal search has anything to read: the signal index is on or the Commander has scanned signals; null for always.</summary>
-    public Func<bool>? SignalSources { get; init; }
-
     /// <summary>The Power the Commander is pledged to, or null for none.</summary>
     public Func<string?>? PledgedPower { get; init; }
 }
@@ -51,9 +48,6 @@ public enum GalaxySearchView
 {
     /// <summary>No search of this kind has been answered this session.</summary>
     Unasked,
-
-    /// <summary>“Look things up in the galaxy” is off.</summary>
-    LookupsOff,
 
     /// <summary>A search from this page is waiting on the service.</summary>
     Running,
@@ -78,9 +72,6 @@ public enum GalaxySearchView
 /// </summary>
 public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 {
-    public const string LookupsOffText =
-        "Turn on “Look things up in the galaxy” in Settings and D47 will search the galaxy for star systems, stations and bodies.";
-
     public const double DefaultFormWidth = 360;
 
     public const double FormMinWidth = 300;
@@ -112,8 +103,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     public const string SortedName = "SortedBy";
 
-    public const string OpenSettingName = "OpenTheSetting";
-
     public const string ForgetName = "ForgetSearch";
 
     /// <summary>What the START FROM button shows while no saved or quick search is picked.</summary>
@@ -126,9 +115,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private static readonly TimeSpan Budget = TimeSpan.FromSeconds(70);
 
     private readonly GalaxySearchSurface _searches;
-    private readonly Func<bool> _lookupsEnabled;
-    private readonly Func<bool> _namesEnabled;
-    private readonly Action? _openSettings;
     private readonly bool _headset;
 
     private readonly Button _run = new() { Name = RunName, Content = "RUN SEARCH", Height = TypeScale.MinimumTarget, HorizontalAlignment = HorizontalAlignment.Stretch };
@@ -176,12 +162,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     private const string YourSystem = "your system";
 
-    protected GalaxySearchPage(GalaxySearchSurface searches, Func<bool> lookupsEnabled, Action? openSettings, bool headset, Func<bool>? namesEnabled = null)
+    protected GalaxySearchPage(GalaxySearchSurface searches, bool headset)
     {
         _searches = searches;
-        _lookupsEnabled = lookupsEnabled;
-        _namesEnabled = namesEnabled ?? lookupsEnabled;
-        _openSettings = openSettings;
         _headset = headset;
         _history = new HistoryTile(searches);
 
@@ -272,15 +255,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>The singular of <see cref="Noun"/>, upper case.</summary>
     protected abstract string NounOne { get; }
 
-    /// <summary>The sentence drawn while the page cannot search.</summary>
-    protected virtual string OffSentence => LookupsOffText;
-
-    /// <summary>Why the page cannot search, for the RUN SEARCH tooltip.</summary>
-    protected virtual string OffTip => LookupsOffTip;
-
-    /// <summary>The RUN SEARCH tooltip while “Look things up in the galaxy” is off.</summary>
-    public const string LookupsOffTip = "Turn on “Look things up in the galaxy” in Settings to search.";
-
     /// <summary>The label of the box drawn while a search runs.</summary>
     protected virtual string RunningText => "Asking the galaxy search";
 
@@ -301,7 +275,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     {
     }
 
-    /// <summary>Redraws when the setting or the Commander's system changed; true when it did.</summary>
+    /// <summary>Redraws when the Commander's system changed; true when it did.</summary>
     public bool Tick()
     {
         var tileChanged = _history.Refresh();
@@ -335,7 +309,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>Runs <see cref="Tool"/> with <paramref name="arguments"/> as the Commander; the answer arrives through the board.</summary>
     public async Task RunAsync(IReadOnlyDictionary<string, string> arguments)
     {
-        if (!_lookupsEnabled() || _inFlight is not null)
+        if (_inFlight is not null)
         {
             return;
         }
@@ -393,7 +367,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         }
 
         SystemNameSuggestions<SystemNameMatch>? names = null;
-        names = new SystemNameSuggestions<SystemNameMatch>(field, lookup, match => match.Name, _namesEnabled, match => names!.SetText(match.Name), _searches.SuggestionPause);
+        names = new SystemNameSuggestions<SystemNameMatch>(field, lookup, match => match.Name, () => true, match => names!.SetText(match.Name), _searches.SuggestionPause);
 
         return names;
     }
@@ -427,7 +401,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         }
 
         SystemNameSuggestions<string>? names = null;
-        names = new SystemNameSuggestions<string>(field, lookup, name => name, _lookupsEnabled, name => names!.SetText(name), _searches.SuggestionPause);
+        names = new SystemNameSuggestions<string>(field, lookup, name => name, () => true, name => names!.SetText(name), _searches.SuggestionPause);
 
         return names;
     }
@@ -917,7 +891,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private GalaxySearchPosting? Latest => _fromHistory ?? _searches.Board.Last(Kind);
 
     /// <summary>What a redraw follows. A later page added to the answer keeps its arguments, so it is not a change here.</summary>
-    private object Stamp() => (_lookupsEnabled(), Latest?.Arguments, Latest?.AskedAt, _searches.FrontierId(), Followed);
+    private object Stamp() => (Latest?.Arguments, Latest?.AskedAt, _searches.FrontierId(), Followed);
 
     /// <summary>Shows the form with the values the shown answer was asked with.</summary>
     private void Edit()
@@ -945,11 +919,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         _showingAnswer ??= Latest is not null;
 
-        var lookups = _lookupsEnabled();
         var last = Latest;
 
-        View = !lookups ? GalaxySearchView.LookupsOff
-            : _running is not null ? GalaxySearchView.Running
+        View = _running is not null ? GalaxySearchView.Running
             : _failure is { } failure ? failure.View
             : last is null ? GalaxySearchView.Unasked
             : Count(last) == 0 ? GalaxySearchView.NoResults
@@ -957,14 +929,12 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         Sentence = View switch
         {
-            GalaxySearchView.LookupsOff => OffSentence,
             GalaxySearchView.Unavailable or GalaxySearchView.Refused => _failure!.Value.Text,
             GalaxySearchView.NoResults => Described(last!),
             _ => null,
         };
 
-        _run.IsEnabled = lookups && _running is null;
-        ToolTip.SetTip(_run, lookups ? null : OffTip);
+        _run.IsEnabled = _running is null;
 
         DrawStamp(last);
         _answer.Content = AnswerBlock(last);
@@ -1148,7 +1118,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         }
 
         _startFrom.Show(entries, _picked ?? string.Empty, _picked ?? NoPickText, _picked is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey, null);
-        _startFrom.IsEnabled = _lookupsEnabled() && _running is null;
+        _startFrom.IsEnabled = _running is null;
 
         _forget.IsVisible = _picked is not null && _pickedIsOwn;
         Avalonia.Automation.AutomationProperties.SetName(_forget, $"Forget the {_picked} search");
@@ -1240,19 +1210,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         switch (View)
         {
             case GalaxySearchView.Unasked:
-                break;
-
-            case GalaxySearchView.LookupsOff:
-                block.Children.Add(Head(Noun, null, refresh: null, save: false));
-                block.Children.Add(Prose(OffSentence, TypeScale.Secondary, ThemeManager.WhiteKey));
-
-                if (_openSettings is { } open)
-                {
-                    var setting = new Button { Name = OpenSettingName, Content = "OPEN THE SETTING", Height = TypeScale.MinimumTarget, HorizontalAlignment = HorizontalAlignment.Left };
-                    setting.Click += (_, _) => open();
-                    block.Children.Add(setting);
-                }
-
                 break;
 
             case GalaxySearchView.Running:
@@ -1476,7 +1433,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         if (refresh is not null || disabled)
         {
             var again = refresh;
-            var button = new Button { Name = RefreshName, Content = "REFRESH", Height = TypeScale.MinimumTarget, IsEnabled = !disabled && _lookupsEnabled() };
+            var button = new Button { Name = RefreshName, Content = "REFRESH", Height = TypeScale.MinimumTarget, IsEnabled = !disabled };
             button.Click += (_, _) =>
             {
                 if (again is not null)

@@ -87,7 +87,6 @@ public sealed class AStationOpensItsOwnPageUnderItsSystemTests
     private static (PanelView Panel, Window Window, Systems Systems) Shown(string root, bool headset = false)
     {
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
         var store = new SavedSearchStore("saved-searches.json", new MemoryFileSystem(), NullLogger<SavedSearchStore>.Instance);
         var board = new GalaxySearchBoard();
         var registry = CapabilityRegistry.Build([GalaxyCapability.Create(new Galaxy(), () => "LTT 7786", settings, searches: board)]);
@@ -105,9 +104,7 @@ public sealed class AStationOpensItsOwnPageUnderItsSystemTests
 
         panel.EnableStarSystem(new StarSystemSurface(
             systems,
-            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Address },
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { })
+            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Address })
         {
             Searches = new GalaxySearchSurface(registry, board, store, () => Fid, () => [])
             {
@@ -163,7 +160,7 @@ public sealed class AStationOpensItsOwnPageUnderItsSystemTests
 
     private static SystemStationPage Page(PanelView panel) => panel.GetVisualDescendants().OfType<SystemStationPage>().Single();
 
-    private static StarSystemSurface Surface(Systems? systems = null) => new(systems ?? new Systems(), () => null, () => true);
+    private static StarSystemSurface Surface(Systems? systems = null) => new(systems ?? new Systems(), () => null);
 
     private static SystemStationPage Drawn(out Window window, StarSystemProfile? profile = null)
     {

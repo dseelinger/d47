@@ -37,7 +37,7 @@ public sealed class TheHomeSystemBoxSuggestsSystemNamesTests
                 .SelectMany(border => border.GetVisualDescendants().OfType<Button>());
     }
 
-    private static Shown Open(bool lookups)
+    private static Shown Open()
     {
         var (settings, viewState, _) = TestSurface.Create();
         settings.Apply(InterfaceCapability.ShowEverySettingKey, "true", SettingsCaller.Panel);
@@ -61,7 +61,6 @@ public sealed class TheHomeSystemBoxSuggestsSystemNamesTests
                             .Where(name => name.StartsWith(typed, StringComparison.OrdinalIgnoreCase))
                             .Select(name => new SystemNameMatch(name, name.Length, new StarPosition(0, 0, 0)))]);
                 },
-                () => lookups,
                 TimeSpan.Zero));
 
         var window = new Window { Content = view, Width = 900, Height = 700 };
@@ -84,7 +83,7 @@ public sealed class TheHomeSystemBoxSuggestsSystemNamesTests
     [AvaloniaFact]
     public void PickingANameFromTheHomeSystemListStoresIt()
     {
-        var shown = Open(lookups: true);
+        var shown = Open();
         var box = shown.Box(CalloutCapability.HomeSystemKey);
 
         Type(box, "Dia");
@@ -103,28 +102,9 @@ public sealed class TheHomeSystemBoxSuggestsSystemNamesTests
     }
 
     [AvaloniaFact]
-    public void WithGalaxySearchOffTheHomeSystemBoxListsNothingAndStillSaves()
-    {
-        var shown = Open(lookups: false);
-        var box = shown.Box(CalloutCapability.HomeSystemKey);
-
-        Type(box, "Dia");
-
-        Assert.Empty(shown.Listed(CalloutCapability.HomeSystemKey));
-        Assert.Empty(shown.Asked);
-
-        box.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.Equal("Dia", shown.Settings.Current.Callouts.HomeSystem);
-
-        shown.Window.Close();
-    }
-
-    [AvaloniaFact]
     public void AnotherTextBoxDrawsNoList()
     {
-        var shown = Open(lookups: true);
+        var shown = Open();
         var box = shown.Box(ListeningCapability.WakeWordsKey);
 
         Type(box, "Dia");

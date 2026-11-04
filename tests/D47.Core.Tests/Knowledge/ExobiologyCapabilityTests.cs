@@ -68,12 +68,10 @@ public class ExobiologyCapabilityTests
         GameStateStore gameState,
         string tool,
         string json = "{}",
-        IRouteService? routes = null,
-        bool galaxySearch = true)
+        IRouteService? routes = null)
     {
         var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, galaxySearch ? "true" : "false", SettingsCaller.Panel);
 
         return CapabilityRegistry
             .Build([ExobiologyCapability.Create(routes, () => gameState.Active, settings)])
@@ -383,7 +381,6 @@ public class ExobiologyCapabilityTests
     {
         var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var plans = new RoutePlanBook(
             Path.Combine(install.Root, "data", "route-plans.json"),
@@ -467,23 +464,5 @@ public class ExobiologyCapabilityTests
 
         var body = await Ask(gameState, "get_body_biology");
         Assert.Contains("Brain Trees", body.Content, StringComparison.Ordinal);
-    }
-
-    /// <summary>The plotter shares the galaxy search setting the same way the other route tools do (#523).</summary>
-    [Fact]
-    public async Task WithGalaxySearchOffThePlotterMakesNoCallAndSaysSo()
-    {
-        var routes = new FakeRoutes();
-
-        var result = await Ask(
-            Store("""{"timestamp":"2026-08-16T09:05:00Z","event":"FSDJump","StarSystem":"Sol"}"""),
-            "plot_exobiology_route",
-            "{}",
-            routes,
-            galaxySearch: false);
-
-        Assert.True(result.IsError);
-        Assert.Contains("switched off", result.Content, StringComparison.Ordinal);
-        Assert.Null(routes.LastQuery);
     }
 }

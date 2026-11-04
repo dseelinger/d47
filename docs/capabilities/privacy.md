@@ -196,29 +196,25 @@ background simulation tick. Nothing about you goes with it: no key, no Commander
 and nothing from your journal. It is reached over plain HTTP, because the host answers on nothing
 else, so anyone on the network path can see that d47 asked and could change the
 time that comes back; d47 keeps only that time, and only when it falls in a plausible window.
-**BGS tick time** under Outside sources in Settings ([Galaxy search](galaxy.md#bgs-tick-time)) turns it on; it is off
-by default.
+There is no setting for it ([Galaxy search](galaxy.md#bgs-tick-time)).
 
 **GalNet news** — `cms.zaonce.net`, Frontier's GalNet server, for the newest articles at startup and every
 hour while d47 runs, and for up to two years of older articles the first time. Nothing about you goes with
 it: no key, no Commander name and nothing from your journal. The articles are kept in `data\galnet.json`
-on this PC. **GalNet news** under Outside sources in Settings ([Galaxy search](galaxy.md#galnet-news)) turns
-it on; it is off by default. With it off, nothing is requested and articles already kept stay on this PC.
+on this PC. There is no setting for it ([Galaxy search](galaxy.md#galnet-news)).
 
 **Server status** — `ed-server-status.orerve.net`, Frontier's server status page, once when d47 starts and then
 every ten minutes while the servers are up and every minute while they are not, whether or not Elite is
-running. Nothing about you goes with it: no key, no Commander name and nothing from your journal. **Server
-status** under Outside sources in Settings ([Galaxy search](galaxy.md#server-status)) turns it on; it is off by
-default. With it off, nothing is requested.
+running. Nothing about you goes with it: no key, no Commander name and nothing from your journal. There is
+no setting for it ([Galaxy search](galaxy.md#server-status)).
 
 **Signal index** — `github.com`, which redirects to GitHub's asset storage, from the `signals-1`
 release. When you search for a signal and the copy in `data\signals` is missing or more than 20
 hours old, D47 downloads the daily index of signals Commanders have uploaded to EDDN: one file,
 several megabytes. A download that fails is tried again on a later search, no sooner than an hour
 after. Nothing about you goes with it: no position, no key, no Commander name, no identifier and
-nothing from your journal, and the search itself happens on this machine.
-**Signal index** under Outside sources in Settings ([Galaxy search](galaxy.md#signal-index)) turns it
-on; it is off by default. With it off, a signal search answers from your own scans alone.
+nothing from your journal, and the search itself happens on this machine. There is no setting for it
+([Galaxy search](galaxy.md#signal-index)).
 
 **Rare index** — `github.com`, which redirects to GitHub's asset storage, from the `rares-1`
 release. When a rare is asked about and the copy in `dataares` is missing or more than 3 hours old,

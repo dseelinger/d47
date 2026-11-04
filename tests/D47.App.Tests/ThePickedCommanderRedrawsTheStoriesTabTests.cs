@@ -66,7 +66,7 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
         var signal = new CommanderSignal();
         var tab = new Tab { Stories = stories, Signal = signal };
         var surface = new AdventureSurface(
-            book, generator, () => null, () => tab.Shown, () => Now, _ => { }, () => true, () => true, () => null, () => { },
+            book, generator, () => null, () => tab.Shown, () => Now, _ => { }, () => true, () => null, () => { },
             Stories: director, Switched: signal,
             Messages: new D47.Core.Messages.MessageStore(Path.Combine(paths.Data, "messages.json"), new MemoryFileSystem(), NullLogger<D47.Core.Messages.MessageStore>.Instance));
 

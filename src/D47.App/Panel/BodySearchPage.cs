@@ -49,13 +49,11 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     public BodySearchPage(
         GalaxySearchSurface searches,
-        Func<bool> lookupsEnabled,
         Func<string?> here,
         Action<BodySummary>? open,
         Func<string, Task<bool>>? copy,
-        Action? openSettings,
         bool headset)
-        : base(searches, lookupsEnabled, openSettings, headset)
+        : base(searches, headset)
     {
         _here = here;
         _open = open;

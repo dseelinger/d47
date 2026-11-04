@@ -55,7 +55,7 @@ public sealed class TheStoriesTabFollowsABenchSwitchTests
         Assert.Null(storyBench.Create("test"));
 
         var surface = new AdventureSurface(
-            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
+            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => null, () => { },
             Stories: director);
         var (_, panel) = StoriesPanelHosting.Show(surface);
         Assert.DoesNotContain(Drawn(panel), text => text.StartsWith("Your story", StringComparison.OrdinalIgnoreCase));

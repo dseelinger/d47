@@ -13,22 +13,19 @@ internal sealed class PlanReading
 {
     public const int LabelLimit = 60;
 
-    public static readonly PlanReading None = new(false, false, new Dictionary<string, SystemPlan>(), []);
+    public static readonly PlanReading None = new(false, new Dictionary<string, SystemPlan>(), []);
 
     private readonly IReadOnlyDictionary<string, SystemPlan> _plans;
 
-    private PlanReading(bool composed, bool switchedOff, IReadOnlyDictionary<string, SystemPlan> plans, IReadOnlyList<string> missing)
+    private PlanReading(bool composed, IReadOnlyDictionary<string, SystemPlan> plans, IReadOnlyList<string> missing)
     {
         Composed = composed;
-        SwitchedOff = switchedOff;
         _plans = plans;
         Missing = missing;
     }
 
     /// <summary>Whether a plan holder exists; without one, answers say nothing about plans.</summary>
     public bool Composed { get; }
-
-    public bool SwitchedOff { get; }
 
     /// <summary>Systems asked for that returned no plan.</summary>
     public IReadOnlyList<string> Missing { get; }
@@ -43,7 +40,6 @@ internal sealed class PlanReading
 
     public static async Task<PlanReading> ReadAsync(
         ColonisationPlans? plans,
-        bool switchedOff,
         IEnumerable<string?> systems,
         DateTimeOffset now,
         CancellationToken cancellationToken)
@@ -59,18 +55,12 @@ internal sealed class PlanReading
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        if (switchedOff)
-        {
-            return new PlanReading(true, true, new Dictionary<string, SystemPlan>(), wanted);
-        }
-
         var read = await Task.WhenAll(wanted.Select(async system =>
                 (system, plan: await plans.GetAsync(system, now, cancellationToken).ConfigureAwait(false))))
             .ConfigureAwait(false);
 
         return new PlanReading(
             true,
-            false,
             read.Where(pair => pair.plan is not null)
                 .ToDictionary(pair => pair.system, pair => pair.plan!, StringComparer.OrdinalIgnoreCase),
             [.. read.Where(pair => pair.plan is null).Select(pair => pair.system)]);
@@ -83,7 +73,6 @@ internal sealed class PlanReading
     /// <summary>One line saying why part of an answer comes from the journal alone, or null when nothing is missing.</summary>
     public string? Note() =>
         !Composed ? null
-        : SwitchedOff ? "Reading colonisation plans is switched off, so this is from your journal alone."
         : Missing.Count > 0
             ? $"The plan could not be read from the colonisation planner for {string.Join(", ", Missing)}, so that part is "
                 + "from your journal alone."

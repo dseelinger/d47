@@ -34,10 +34,9 @@ public sealed class TheSignalIndexIsDownloadedOnlyWhenStaleTests
         return buffer.ToArray();
     }
 
-    private SignalIndexStore Store(bool allowed = true) => new(
+    private SignalIndexStore Store() => new(
         Folder,
         _files,
-        () => allowed,
         () => _now,
         NullLogger.Instance,
         _ =>
@@ -76,17 +75,6 @@ public sealed class TheSignalIndexIsDownloadedOnlyWhenStaleTests
 
         Assert.Empty(_fetches);
         Assert.Equal("Old Depot", Only(index));
-    }
-
-    [Fact]
-    public async Task WithTheSwitchOffNothingIsAskedForAndNoIndexIsGiven()
-    {
-        HeldFor(TimeSpan.FromHours(21));
-
-        var index = await Store(allowed: false).GetAsync(TestContext.Current.CancellationToken);
-
-        Assert.Empty(_fetches);
-        Assert.Null(index);
     }
 
     [Fact]

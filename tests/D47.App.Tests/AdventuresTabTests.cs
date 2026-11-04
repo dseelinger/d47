@@ -94,7 +94,6 @@ public class AdventuresTabTests
             () => Now,
             said.Add,
             () => provider is not null,
-            () => galaxy is not null,
             () => null,
             () => { });
 

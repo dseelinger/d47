@@ -49,7 +49,7 @@ public sealed class TheRareGoodsPageDrawsTheLastAnswerTests
     private sealed class World : GalaxySearchWorld
     {
         public World()
-            : base(new Systems(), lookups: false)
+            : base(new Systems())
         {
             var symbols = RareCatalogue.All.Take(3).Select(rare => rare.Symbol).ToArray();
             var rows = symbols.Select((symbol, at) => $"{symbol}\t{20000 + (at * 1000)}\t3\t{10000 + (at * 100)}\t{at * 5}\t2026-11-03T08:00:00Z");

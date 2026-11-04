@@ -60,10 +60,9 @@ internal sealed record SettingServices(
     Action? OpenAudioFolder = null,
     Func<Action, Action>? WatchAudio = null);
 
-/// <summary>What a system-name box needs: the lookup, whether galaxy search is on, and the pause before asking.</summary>
+/// <summary>What a system-name box needs: the lookup and the pause before asking.</summary>
 public sealed record SystemNameLookup(
     Func<string, CancellationToken, Task<IReadOnlyList<D47.Core.Knowledge.SystemNameMatch>>> Lookup,
-    Func<bool> Enabled,
     TimeSpan? Pause = null);
 
 internal readonly record struct SettingControl(Control Control, Action Refresh, (Control Block, string Words)? Under = null)

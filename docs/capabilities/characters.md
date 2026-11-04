@@ -85,7 +85,7 @@ field shows the reason:
 ADD A CHARACTER opens an empty NEW CHARACTER with SAVE and CANCEL. REMOVE CHARACTER asks first, in place, and
 cannot be undone: the name, voice, picture and notes are forgotten.
 
-Away from the ship, the distance is looked up with Galaxy search. With Galaxy search off the page says the
+Away from the ship, the distance is looked up with Galaxy search. When it cannot be found the page says the
 distance is unknown, and the character is clear on the radio. A character is stored in `data\characters.json`
 for each Commander; their picture is `character.<id>` in the pictures folder.
 

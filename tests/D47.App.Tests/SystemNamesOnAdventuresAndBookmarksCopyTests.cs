@@ -95,7 +95,7 @@ public class SystemNamesOnAdventuresAndBookmarksCopyTests
             () => null, () => null, null, null, NullLogger.Instance);
 
         var surface = new AdventureSurface(
-            book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => false, () => null, () => { });
+            book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => null, () => { });
 
         var clipboard = new RecordingClipboard();
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };

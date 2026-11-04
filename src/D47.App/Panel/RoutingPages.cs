@@ -14,12 +14,6 @@ namespace D47.App.Panel;
 /// <param name="Here">Where the Commander is, for Progress.</param>
 /// <param name="Registry">How every button on this tab acts.</param>
 /// <param name="Plans">The last plan of each kind, written by whoever plotted it.</param>
-/// <param name="LookupsEnabled">
-/// Whether the galaxy setting is on, for the Plan page's gate.
-/// </param>
-/// <param name="OpenSettings">
-/// A way to the row that turns it on, where the surface has one.
-/// </param>
 /// <param name="Commodities">
 /// The last commodity answer (Phase 49), written by whoever asked — by voice or from the Market page —
 /// so both routes show one answer rather than two searches that could disagree.
@@ -30,8 +24,6 @@ public sealed record RoutingSurface(
     Func<string?> Here,
     CapabilityRegistry? Registry = null,
     RoutePlanBook? Plans = null,
-    Func<bool>? LookupsEnabled = null,
-    Action? OpenSettings = null,
     CommodityBoard? Commodities = null,
 
     // The jump range of the ship being flown, for the placeholder that says d47 will supply it (#253).
@@ -205,8 +197,6 @@ public static class RoutingPages
                 registry,
                 plans,
                 nav,
-                surface.LookupsEnabled ?? (() => false),
-                surface.OpenSettings,
                 surface.Here,
                 surface.JumpRange,
                 () => surface.Commander?.Invoke()?.Carrier.StarSystem,
@@ -220,8 +210,6 @@ public static class RoutingPages
             ? new RouteMarketPage(
                 registry,
                 board,
-                surface.LookupsEnabled ?? (() => false),
-                surface.OpenSettings,
                 Copy(surface),
                 columnWidths,
                 surface.Here,
@@ -235,9 +223,7 @@ public static class RoutingPages
                 board,
                 surface.Commander ?? (() => null),
                 surface.Route,
-                surface.LookupsEnabled ?? (() => false),
                 surface.Settings,
-                surface.OpenSettings,
                 nav.Roots(PanelTab.Navigation).Any(root => root.Key == TradeRoot)
                     ? () => nav.SelectRoot(PanelTab.Navigation, TradeRoot)
                     : null,
@@ -254,9 +240,7 @@ public static class RoutingPages
                 registry,
                 plans,
                 nav,
-                surface.LookupsEnabled ?? (() => false),
-                settings,
-                surface.OpenSettings)
+                settings)
             : Missing("The Trade route page is not available on this surface.");
 
     private static Control Bookmarks(RoutingSurface surface, PanelPrompts prompts) =>
@@ -276,7 +260,7 @@ public static class RoutingPages
         }
 
         var plotter = surface.Registry is { } registry
-            ? new OutfittingPlotter(registry, plans, surface.LookupsEnabled ?? (() => false), surface.Here)
+            ? new OutfittingPlotter(registry, plans, surface.Here)
             : null;
 
         return new RoutePlanResultPage(plan, Copy(surface), plans, surface.Here, surface.OffDuty, showOnGalaxyMap, plotter);

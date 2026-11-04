@@ -61,13 +61,11 @@ public sealed class HaveIBeenThereIsAnsweredFromElitesOwnListTests
     private Task<ToolResult> CallAsync(
         string tool,
         Dictionary<string, string> arguments,
-        bool lookups = true,
         string frontierId = "F735466",
         long here = Sol)
     {
         var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, lookups ? "true" : "false", SettingsCaller.Panel);
 
         var systems = new FakeSystems();
         systems.Matches.Add(new SystemNameMatch("Lave", Lave, new StarPosition(0, 0, 0)));
@@ -122,19 +120,6 @@ public sealed class HaveIBeenThereIsAnsweredFromElitesOwnListTests
 
         Assert.True(result.IsError);
         Assert.Equal("I can't read Elite's list of visited systems for this Commander on this PC.", result.Content);
-    }
-
-    [Fact]
-    public async Task WithLookupsOffOnlyTheCurrentSystemCanBeChecked()
-    {
-        var elsewhere = await CallAsync("system_visits", new() { ["system"] = "Lave" }, lookups: false);
-        var here = await CallAsync("system_visits", new() { ["system"] = "Lave" }, lookups: false, here: Lave);
-
-        Assert.True(elsewhere.IsError);
-        Assert.Equal(
-            "Galaxy lookups are off, so I can only check the system the Commander is in, Sol.",
-            elsewhere.Content);
-        Assert.Equal("Yes. The Commander has been to Lave 3 times, last on 2 October 2026.", here.Content);
     }
 
     [Fact]

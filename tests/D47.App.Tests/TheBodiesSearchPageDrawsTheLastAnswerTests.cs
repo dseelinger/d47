@@ -83,8 +83,8 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
 
     private sealed class World : GalaxySearchWorld
     {
-        public World(bool lookups)
-            : base(new Systems(), lookups)
+        public World()
+            : base(new Systems())
         {
             Registry = CapabilityRegistry.Build([GalaxyCapability.Create(Galaxy, () => "LTT 7786", Settings, searches: Board)]);
         }
@@ -111,7 +111,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheHeadsetDrawsTheAnswerViewAndTheFormViewFullWidth()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["landable"] = "true" }, TwoBodies));
         var (panel, window) = Shown(world, headset: true);
         var page = Page(panel);
@@ -139,7 +139,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void SearchOffersBodiesAfterStations()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
 
         Assert.Equal(
@@ -152,7 +152,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void PressingTheShareColumnAsksForTheRichestAndTheShareColumnReadsPolonium()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
@@ -184,7 +184,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void AnOrderByMaterialShowsAllFiftyItChoosesFromAndANearestSearchComesAPageAtATime()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
 
         Page(panel).Run(new Dictionary<string, string> { ["material"] = "Polonium", ["limit"] = "5" });
@@ -203,7 +203,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void ANearestSearchDrawsNoShareColumnAndNoRichestLine()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["landable"] = "true" }, TwoBodies));
         var (panel, window) = Shown(world);
 
@@ -218,7 +218,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void AMisspelledVolcanismShowsTheToolsSentence()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
@@ -240,7 +240,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public async Task AVoicePostingRedrawsAnOpenPage()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
 
         Assert.Empty(Rows(panel));
@@ -260,7 +260,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheBodiesPageDrawsNoSavedSearchSectionWhenThereAreNone()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
 
         Assert.DoesNotContain("No quick searches for bodies.", VisibleText(panel));
@@ -272,7 +272,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheFormSendsEveryParameterTheToolTakes()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
@@ -324,7 +324,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void EveryPressableControlIsAtLeastFortyFourTall()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["material"] = "Polonium", ["order_by"] = "material" }, TwoBodies));
         var (panel, window) = Shown(world);
         var page = Page(panel);
@@ -339,7 +339,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     {
         using var look = AppLook.Put();
 
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["material"] = "Polonium", ["order_by"] = "material" }, TwoBodies));
         var (_, window) = Shown(world);
 
@@ -352,7 +352,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void AnAnswerOfOneUsesTheSingularNoun()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["landable"] = "true" }, TwoBodies with { Total = 1, Bodies = [TwoBodies.Bodies[0]] }));
         var (panel, window) = Shown(world);
 
@@ -375,7 +375,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [InlineData(true)]
     public void EverySystemNameCarriesACopyGlyph(bool headset)
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["landable"] = "true" }, TwoBodies));
         var (panel, window) = Shown(world, headset, copy: true);
 
@@ -387,7 +387,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheAnswerHeaderCarriesACopyGlyphAfterTheReference()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["max_distance"] = "50" }, TwoBodies));
         var (panel, window) = Shown(world, copy: true);
 
@@ -399,7 +399,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void WithoutACopyDelegateNoGlyphIsDrawn()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["max_distance"] = "50" }, TwoBodies));
         var (panel, window) = Shown(world);
 

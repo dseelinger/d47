@@ -40,12 +40,9 @@ public class AListOfRaresComesFromTheRareIndexTests
     private static async Task<ToolResult> ListAsync(
         IRareIndexSource? source,
         Dictionary<string, string> arguments,
-        IGalaxyService? galaxy = null,
-        bool galaxySearch = true)
+        IGalaxyService? galaxy = null)
     {
         var settings = TestSurface.For(new MemoryInstall()).Settings;
-
-        settings.Apply(GalaxyCapability.EnabledKey, galaxySearch ? "true" : "false", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
         [
@@ -225,18 +222,5 @@ public class AListOfRaresComesFromTheRareIndexTests
         Assert.False(result.IsError, result.Content);
         Assert.Equal(["Some Other System"], galaxy.Asked);
         Assert.Contains(Home.Name, result.Content, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task AnUnplacedSystemIsRefusedWithGalaxySearchOff()
-    {
-        var result = await ListAsync(
-            new FakeIndex(Index()),
-            new() { ["near"] = "Some Other System" },
-            new Galaxy(Home.Position),
-            galaxySearch: false);
-
-        Assert.True(result.IsError);
-        Assert.Contains("Galaxy search is off", result.Content, StringComparison.Ordinal);
     }
 }

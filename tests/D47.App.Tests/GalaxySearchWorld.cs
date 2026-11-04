@@ -19,12 +19,11 @@ public abstract class GalaxySearchWorld
 
     private readonly bool _suggesting;
 
-    protected GalaxySearchWorld(IStarSystemService systems, bool lookups, bool suggesting = true)
+    protected GalaxySearchWorld(IStarSystemService systems, bool suggesting = true)
     {
         _systems = systems;
         _suggesting = suggesting;
         Settings = TestSurface.Settings();
-        Settings.Apply(GalaxyCapability.EnabledKey, lookups ? "true" : "false", SettingsCaller.Panel);
     }
 
     public SettingsService Settings { get; }
@@ -39,23 +38,18 @@ public abstract class GalaxySearchWorld
 
     public StarSystemSurface Surface => new(
         _systems,
-        () => Here,
-        () => Settings.Current.Knowledge.GalaxySearch,
-        () => { })
+        () => Here)
     {
         Searches = new GalaxySearchSurface(Registry, Board, Store, () => "F1", () => [])
         {
             PrefixNames = _suggesting ? _systems.PrefixNamesAsync : null,
             SuggestionPause = _suggesting ? TimeSpan.Zero : NameSuggestions.DefaultPause,
-            SignalSources = SignalSources,
             PledgedPower = Pledged,
             History = HistoryOnSurface,
         },
     };
 
     protected virtual JournalLocation Here => new("LTT 7786", null, false, null) { SystemAddress = Ltt7786 };
-
-    protected virtual Func<bool>? SignalSources => null;
 
     protected virtual Func<string?>? Pledged => null;
 

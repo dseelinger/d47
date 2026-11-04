@@ -23,9 +23,7 @@ public sealed class RouteTradePage : UserControl
     private readonly CapabilityRegistry _registry;
     private readonly RoutePlanBook _plans;
     private readonly PanelNavigator _nav;
-    private readonly Func<bool> _lookupsEnabled;
     private readonly SettingsService _settings;
-    private readonly Action? _openSettings;
 
     private readonly StackPanel _cards = new();
 
@@ -33,16 +31,12 @@ public sealed class RouteTradePage : UserControl
         CapabilityRegistry registry,
         RoutePlanBook plans,
         PanelNavigator nav,
-        Func<bool> lookupsEnabled,
-        SettingsService settings,
-        Action? openSettings = null)
+        SettingsService settings)
     {
         _registry = registry;
         _plans = plans;
         _nav = nav;
-        _lookupsEnabled = lookupsEnabled;
         _settings = settings;
-        _openSettings = openSettings;
 
         Content = new ScrollViewer
         {
@@ -55,28 +49,15 @@ public sealed class RouteTradePage : UserControl
         Build();
     }
 
-    /// <summary>Redraws — after a plot, or after the setting behind the whole page moved.</summary>
+    /// <summary>Redraws, after a plot.</summary>
     public void Refresh() => Dispatcher.UIThread.Post(Build);
 
     private void Build()
     {
         _cards.Children.Clear();
 
-        if (!_lookupsEnabled())
-        {
-            _cards.Children.Add(SwitchedOff());
-            return;
-        }
-
         _cards.Children.Add(TradeCard());
     }
-
-    private Control SwitchedOff() =>
-        RoutingKit.SwitchedOff(
-            "Plotting is off",
-            "Route planning is switched off. It shares the galaxy search setting, so turning on "
-            + "“Look things up in the galaxy” switches both on.",
-            _openSettings);
 
     /// <summary>The page behind this card's question mark.</summary>
     public const string TradeHelp = D47.Core.Help.HelpLibrary.GeneralPrefix + "trade-run";

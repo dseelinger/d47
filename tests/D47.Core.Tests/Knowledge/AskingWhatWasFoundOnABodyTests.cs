@@ -39,7 +39,6 @@ public class AskingWhatWasFoundOnABodyTests
     private static CapabilityRegistry Registry(
         FakeCommunity community,
         EarlierFinds store,
-        bool on = true,
         string? body = null)
     {
         var gameState = new GameStateStore();
@@ -58,7 +57,6 @@ public class AskingWhatWasFoundOnABodyTests
         }
 
         var settings = TestSurface.For(new MemoryInstall()).Settings;
-        settings.Apply(GalaxyCapability.CommunityBiologyKey, on ? "true" : "false", SettingsCaller.Panel);
 
         return CapabilityRegistry.Build(
         [
@@ -98,18 +96,6 @@ public class AskingWhatWasFoundOnABodyTests
         var answer = await Ask(Registry(new FakeCommunity(Finds()), new EarlierFinds()), """{"body":"B 2"}""");
 
         Assert.Equal("No Commander has logged earlier finds on B 2.", answer);
-    }
-
-    [Fact]
-    public async Task WithTheSettingOffItRefusesAndAsksNothing()
-    {
-        var community = new FakeCommunity(Finds());
-        var answer = await Ask(Registry(community, new EarlierFinds(), on: false), """{"body":"C 3 a"}""");
-
-        Assert.Equal(
-            "Earlier biology finds are off. Turn on Earlier biology finds in Settings to ask.",
-            answer);
-        Assert.Equal(0, community.Requests);
     }
 
     [Fact]

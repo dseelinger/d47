@@ -58,7 +58,6 @@ public class ANegativeAnswerSaysHowFarItLookedTests
     {
         var surface = TestSurface.For(install);
 
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
         [

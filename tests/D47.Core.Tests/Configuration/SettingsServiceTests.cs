@@ -513,7 +513,7 @@ public class SettingsSurfaceShapeTests
 public class EgressDisclosureTests
 {
     [Fact]
-    public void WithEverySwitchOffOnlyTheDonationRoadAndTheRareIndexStayActive()
+    public void WithEverySwitchOffOnlyTheDonationRoadAndTheOutsideReadsStayActive()
     {
         var settings = new D47Settings
         {
@@ -536,11 +536,18 @@ public class EgressDisclosureTests
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);
         var described = EgressDisclosure.Describe(settings, false);
 
-        // Two rows stay active by design. The donation address ships in the build, so the destination always
-        // exists and the press is its only switch. The rare index has no setting: reading outside data is always on.
+        // The donation address ships in the build, so the destination always exists and the press is its only
+        // switch. The outside reads have no setting: reading outside data is always on (#2109).
         var active = entries.Where(entry => entry.Active).Select(entry => entry.Id).Order().ToList();
-        Assert.Equal(new[] { EgressDisclosure.Donation, EgressDisclosure.RareIndex }.Order(), active);
-        Assert.Contains($"2 of {entries.Count} destinations are active", described, StringComparison.Ordinal);
+        string[] always =
+        [
+            EgressDisclosure.Donation, EgressDisclosure.RareIndex, EgressDisclosure.GalaxySearch,
+            EgressDisclosure.ColonisationPlanner, EgressDisclosure.NotablePlaces, EgressDisclosure.CommunityBiology,
+            EgressDisclosure.BgsTick, EgressDisclosure.GalNet, EgressDisclosure.ServerStatus,
+            EgressDisclosure.SignalIndex,
+        ];
+        Assert.Equal(always.Order(), active);
+        Assert.Contains($"{always.Length} of {entries.Count} destinations are active", described, StringComparison.Ordinal);
 
         // Counted, never claimed.
         Assert.DoesNotContain("Nothing is leaving", described, StringComparison.Ordinal);

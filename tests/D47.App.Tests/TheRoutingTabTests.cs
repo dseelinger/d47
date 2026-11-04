@@ -179,8 +179,6 @@ public class TheRoutingTabTests
     private static PanelView FullyFurnished(
         NavRoute route,
         RoutePlanBook plans,
-        bool lookups = true,
-        Action? openSettings = null,
         D47.Core.Capabilities.Builtin.IClipboard? clipboard = null,
         string? here = null,
         D47.Core.Configuration.SettingsService? settings = null)
@@ -192,8 +190,6 @@ public class TheRoutingTabTests
             () => here,
             CapabilityRegistry.Build([]),
             plans,
-            () => lookups,
-            openSettings,
             Clipboard: clipboard,
             Settings: settings));
 
@@ -261,8 +257,7 @@ public class TheRoutingTabTests
                 () => Route(Hop("Sol"), Hop("Colonia", 9)),
                 () => "Sol",
                 CapabilityRegistry.Build([]),
-                Book(folder),
-                () => true));
+                Book(folder)));
 
             Laid(panel, 1280);
             panel.Tab = PanelTab.Navigation;
@@ -339,32 +334,6 @@ public class TheRoutingTabTests
         Assert.Equal([RoutingPages.PlanRoot], panel.Nav.Trail.Select(crumb => crumb.Key));
     }
 
-    /// <summary>With galaxy lookups off, Plan still offers Progress, and Progress draws the plotted route.</summary>
-    [Trait("Category", "Integration")]
-    [AvaloniaFact]
-    public void WithLookupsOffPlanStillOpensProgress()
-    {
-        var folder = Scratch();
-
-        try
-        {
-            var panel = FullyFurnished(Route(Hop("Sol"), Hop("Colonia", 9)), Book(folder), lookups: false);
-
-            panel.Tab = PanelTab.Navigation;
-            Dispatcher.UIThread.RunJobs();
-
-            var drawn = TextOf(panel).ToArray();
-
-            Assert.Contains(drawn, text => text.Contains("Route planning is switched off", StringComparison.Ordinal));
-            Assert.NotNull(ProgressTile(panel));
-            Assert.Contains("Colonia", drawn);
-        }
-        finally
-        {
-            Directory.Delete(folder, recursive: true);
-        }
-    }
-
     /// <summary>A jump redraws Progress while the tab is showing.</summary>
     [AvaloniaFact]
     public void AJumpRedrawsProgressWhileTheTabIsShowing()
@@ -388,39 +357,9 @@ public class TheRoutingTabTests
         Assert.Contains("Achenar", TextOf(panel));
     }
 
-    /// <summary>
-    /// Plotting off is a capability that is off rather than an error, and it says which setting turns
-    /// it on — the same answer the tool gives.
-    /// </summary>
     [Trait("Category", "Integration")]
     [AvaloniaFact]
-    public void PlanSaysPlottingIsOffRatherThanFailing()
-    {
-        var folder = Scratch();
-
-        try
-        {
-            var opened = 0;
-            var panel = FullyFurnished(NavRoute.None, Book(folder), lookups: false, () => opened++);
-
-            panel.Tab = PanelTab.Navigation;
-            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
-            Dispatcher.UIThread.RunJobs();
-
-            var drawn = TextOf(panel).ToArray();
-
-            Assert.Contains(drawn, text => text.Contains("switched off", StringComparison.Ordinal));
-            Assert.Contains(drawn, text => text.Contains("Look things up in the galaxy", StringComparison.Ordinal));
-        }
-        finally
-        {
-            Directory.Delete(folder, recursive: true);
-        }
-    }
-
-    [Trait("Category", "Integration")]
-    [AvaloniaFact]
-    public void PlanOffersTheTwoPlannersWhenLookupsAreOn()
+    public void PlanOffersTheTwoPlanners()
     {
         var folder = Scratch();
 
@@ -869,32 +808,6 @@ public class TheRoutingTabTests
         }
     }
 
-    /// <summary>Galaxy search being off does not hide this run's plan (#197, #1926).</summary>
-    [Trait("Category", "Integration")]
-    [AvaloniaFact]
-    public void MiniShowsAStoredPlanEvenWithGalaxySearchOff()
-    {
-        var folder = Scratch();
-
-        try
-        {
-            var plans = Book(folder);
-            var panel = FullyFurnished(NavRoute.None, plans, lookups: false);
-
-            panel.Tab = PanelTab.Navigation;
-            panel.Nav.SelectRoot(RoutingPages.PlanRoot);
-            panel.Mode = PanelMode.Mini;
-            Dispatcher.UIThread.RunJobs();
-            PlotJumpPlan(plans);
-
-            Assert.Contains("Waypoint 0", TextOf(panel));
-        }
-        finally
-        {
-            Directory.Delete(folder, recursive: true);
-        }
-    }
-
     /// <summary>The mark follows the Commander without leaving mini, on the same tick every other reading uses (#197).</summary>
     [Trait("Category", "Integration")]
     [AvaloniaFact]
@@ -1324,11 +1237,6 @@ public class TheRoutingTabTests
     {
         var settings = TestSurface.Settings();
 
-        settings.Apply(
-            D47.Core.Capabilities.Builtin.GalaxyCapability.EnabledKey,
-            "true",
-            D47.Core.Configuration.SettingsCaller.Panel);
-
         var gameState = new D47.Core.Journal.GameStateStore();
 
         Assert.True(D47.Core.Journal.JournalEvent.TryParse(
@@ -1358,7 +1266,7 @@ public class TheRoutingTabTests
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
-        panel.EnableRouting(new RoutingSurface(() => NavRoute.None, () => "Sol", registry, plans, () => true));
+        panel.EnableRouting(new RoutingSurface(() => NavRoute.None, () => "Sol", registry, plans));
 
         Laid(panel);
         panel.Tab = PanelTab.Navigation;

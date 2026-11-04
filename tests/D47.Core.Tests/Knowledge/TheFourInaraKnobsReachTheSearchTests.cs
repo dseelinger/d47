@@ -79,7 +79,6 @@ public class TheFourInaraKnobsReachTheSearchTests
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var trade = new Capturing(answer);
 
@@ -237,7 +236,6 @@ public class TheFourInaraKnobsReachTheSearchTests
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var typed = new CommunityGoalSearch().Arguments();
         var trade = new Capturing(new CommodityAnswer(
@@ -280,7 +278,6 @@ public class TheFourInaraKnobsReachTheSearchTests
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var trade = new Capturing(new CommodityAnswer([], 0, 0, true));
         var lastFound = new LastFoundSystem();

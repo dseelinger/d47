@@ -33,7 +33,6 @@ internal static class AdventureFixture
             () => new DateTimeOffset(2026, 8, 24, 12, 0, 0, TimeSpan.Zero),
             _ => { },
             () => false,
-            () => false,
             () => null,
             () => { });
     }

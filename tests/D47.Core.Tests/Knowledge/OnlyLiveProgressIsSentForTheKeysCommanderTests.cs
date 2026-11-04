@@ -63,7 +63,7 @@ public class OnlyLiveProgressIsSentForTheKeysCommanderTests
 
     private sealed class Rig
     {
-        public Rig(bool reads = true, bool writes = true, bool hasKey = true)
+        public Rig(bool writes = true, bool hasKey = true)
         {
             if (hasKey)
             {
@@ -72,10 +72,10 @@ public class OnlyLiveProgressIsSentForTheKeysCommanderTests
 
             Settings = new D47Settings
             {
-                Knowledge = new KnowledgeSettings { ColonisationPlanner = reads, ColonisationProgress = writes },
+                Knowledge = new KnowledgeSettings { ColonisationProgress = writes },
             };
 
-            Plans = new ColonisationPlans(new Service(), () => true, () => null, NullLogger<ColonisationPlans>.Instance)
+            Plans = new ColonisationPlans(new Service(), () => null, NullLogger<ColonisationPlans>.Instance)
             {
                 Dispatch = work => _ = work(),
             };
@@ -218,25 +218,12 @@ public class OnlyLiveProgressIsSentForTheKeysCommanderTests
     }
 
     [Fact]
-    public void WithReadsOffNothingIsBuiltOrSent()
-    {
-        var rig = new Rig(reads: false);
-        rig.Prime();
-
-        rig.Tick([Depot(), Contribution()]);
-
-        Assert.Equal(0, rig.Built);
-        Assert.Empty(rig.Writer.Calls);
-    }
-
-    [Fact]
-    public void WithReadsOffTheWriteRowIsDisabled()
+    public void TheWriteRowIsAlwaysAvailableAndProtected()
     {
         var row = ColonisationCapability.Create(() => null).Settings
             .Single(setting => setting.Key == ColonisationCapability.ProgressKey);
 
-        Assert.True(row.DisabledFor(new D47Settings()));
-        Assert.False(row.DisabledFor(new D47Settings { Knowledge = new KnowledgeSettings { ColonisationPlanner = true } }));
+        Assert.False(row.DisabledFor(new D47Settings()));
         Assert.True(row.Protected);
     }
 

@@ -25,7 +25,6 @@ public sealed class EveryToolPlaceIsAPageThePanelCanShowTests
     public void EveryToolPlaceNamesARegisteredToolAndAShowablePage()
     {
         var (settings, _, paths, registry, _) = TestSurface.CreateFull(coverage: () => "x");
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var panel = Furnished(settings, paths, registry);
         var tools = registry.All.SelectMany(capability => capability.Descriptor.Tools).Select(tool => tool.Name).ToHashSet();
@@ -51,17 +50,14 @@ public sealed class EveryToolPlaceIsAPageThePanelCanShowTests
 
         panel.EnableWatches(new WatchesDesk(
             watches,
-            new D47.Core.Watches.WatchSetup(watches, new StubGalaxyService(), new StubTradePlanService(), () => false),
-            settings));
+            new D47.Core.Watches.WatchSetup(watches, new StubGalaxyService(), new StubTradePlanService())));
 
         panel.EnableRouting(new RoutingSurface(() => new NavRoute(), () => null, registry, Bookmarks: new BookmarkStore(
             Path.Combine(paths.Data, "bookmarks.json"), fs, NullLogger<BookmarkStore>.Instance)));
 
         panel.EnableStarSystem(new StarSystemSurface(
             new NoSystems(),
-            () => new JournalLocation("Sol", null, false, null),
-            () => true,
-            () => { })
+            () => new JournalLocation("Sol", null, false, null))
         {
             Searches = new GalaxySearchSurface(
                 registry,

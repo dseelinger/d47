@@ -50,7 +50,6 @@ public class ConstructionAnswersReadThePlanTests
     private static ColonisationPlans Plans(GameStateStore gameState, params PlannedSite[] sites) =>
         new(
             new FakePlanner(system => new SystemPlan(system, sites, Now)),
-            () => true,
             () => gameState.Active,
             NullLogger<ColonisationPlans>.Instance);
 
@@ -132,7 +131,6 @@ public class ConstructionAnswersReadThePlanTests
         var gameState = Store(1000);
         var silent = new ColonisationPlans(
             new FakePlanner(_ => null),
-            () => true,
             () => gameState.Active,
             NullLogger<ColonisationPlans>.Instance);
 

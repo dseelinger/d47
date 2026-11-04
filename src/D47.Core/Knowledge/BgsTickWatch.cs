@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Knowledge;
 
 /// <summary>
-/// Holds the time of the last BGS tick, asking <see cref="IBgsTickSource"/> once when switched on and then
-/// every <see cref="Interval"/>, only while the setting is on and <c>due</c> returns true. Tick thread only.
+/// Holds the time of the last BGS tick, asking <see cref="IBgsTickSource"/> every <see cref="Interval"/> while
+/// <c>due</c> returns true. Tick thread only.
 /// </summary>
 public sealed class BgsTickWatch
 {
@@ -19,7 +19,6 @@ public sealed class BgsTickWatch
     public static readonly TimeSpan MostBehind = TimeSpan.FromDays(7);
 
     private readonly IBgsTickSource _source;
-    private readonly Func<bool> _enabled;
     private readonly Func<bool> _due;
     private readonly Action<string> _remember;
     private readonly ILogger<BgsTickWatch> _logger;
@@ -28,21 +27,18 @@ public sealed class BgsTickWatch
     private readonly ConcurrentQueue<DateTimeOffset?> _answers = new();
 
     private bool _fetching;
-    private bool _wasEnabled;
     private DateTimeOffset? _fetchedAt;
 
     /// <param name="stored">The time held from the last session, read once here.</param>
     /// <param name="remember">Stores <see cref="Last"/> when it changes.</param>
     public BgsTickWatch(
         IBgsTickSource source,
-        Func<bool> enabled,
         Func<bool> due,
         Func<string?> stored,
         Action<string> remember,
         ILogger<BgsTickWatch> logger)
     {
         _source = source;
-        _enabled = enabled;
         _due = due;
         _remember = remember;
         _logger = logger;
@@ -68,16 +64,7 @@ public sealed class BgsTickWatch
             }
         }
 
-        var enabled = _enabled();
-
-        if (enabled && !_wasEnabled)
-        {
-            _fetchedAt = null;
-        }
-
-        _wasEnabled = enabled;
-
-        if (!enabled || _fetching || !_due())
+        if (_fetching || !_due())
         {
             return;
         }

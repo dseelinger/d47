@@ -170,10 +170,18 @@ public class ModelChoiceTests
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);
 
+        // The outside reads have no switch (#2109), so they stay active with the donation road.
         var active = entries.Where(entry => entry.Active).Select(entry => entry.Id).Order().ToList();
-        Assert.Equal(new[] { EgressDisclosure.Donation, EgressDisclosure.RareIndex }.Order(), active);
+        string[] always =
+        [
+            EgressDisclosure.Donation, EgressDisclosure.RareIndex, EgressDisclosure.GalaxySearch,
+            EgressDisclosure.ColonisationPlanner, EgressDisclosure.NotablePlaces, EgressDisclosure.CommunityBiology,
+            EgressDisclosure.BgsTick, EgressDisclosure.GalNet, EgressDisclosure.ServerStatus,
+            EgressDisclosure.SignalIndex,
+        ];
+        Assert.Equal(always.Order(), active);
         Assert.Contains(
-            $"2 of {entries.Count} destinations are active",
+            $"{always.Length} of {entries.Count} destinations are active",
             EgressDisclosure.Describe(settings, false));
     }
 

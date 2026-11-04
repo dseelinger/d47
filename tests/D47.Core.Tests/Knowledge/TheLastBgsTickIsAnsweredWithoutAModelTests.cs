@@ -13,7 +13,7 @@ public sealed class TheLastBgsTickIsAnsweredWithoutAModelTests
 {
     private static readonly DateTimeOffset Tick = new(2026, 10, 15, 16, 14, 0, TimeSpan.Zero);
 
-    private static CapabilityDescriptor Capability(bool enabled, DateTimeOffset? held, DateTimeOffset now)
+    private static CapabilityDescriptor Capability(DateTimeOffset? held, DateTimeOffset now)
     {
         var install = new MemoryInstall();
         var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
@@ -21,7 +21,7 @@ public sealed class TheLastBgsTickIsAnsweredWithoutAModelTests
         var settings = new SettingsService(
             store,
             secrets,
-            new D47Settings { Knowledge = new KnowledgeSettings { BgsTick = enabled } },
+            new D47Settings(),
             NullLogger<SettingsService>.Instance);
 
         return GalaxyCapability.Create(null, () => null, settings, now: () => now, bgsTick: () => held);
@@ -34,7 +34,7 @@ public sealed class TheLastBgsTickIsAnsweredWithoutAModelTests
     [Fact]
     public async Task ATimeHeldIsSaidInUtcWithHoursSince()
     {
-        var said = await Ask(Capability(true, Tick, Tick.AddHours(23).AddMinutes(10)));
+        var said = await Ask(Capability(Tick, Tick.AddHours(23).AddMinutes(10)));
 
         Assert.Equal("The last BGS tick was at 16:14 UTC on 15 October, 23 hours ago.", said);
     }
@@ -42,7 +42,7 @@ public sealed class TheLastBgsTickIsAnsweredWithoutAModelTests
     [Fact]
     public async Task UnderAnHourItIsMinutes()
     {
-        var said = await Ask(Capability(true, Tick, Tick.AddMinutes(40)));
+        var said = await Ask(Capability(Tick, Tick.AddMinutes(40)));
 
         Assert.Equal("The last BGS tick was at 16:14 UTC on 15 October, 40 minutes ago.", said);
     }
@@ -50,25 +50,15 @@ public sealed class TheLastBgsTickIsAnsweredWithoutAModelTests
     [Fact]
     public async Task ATimeHeldInAnotherOffsetIsSaidInUtc()
     {
-        var said = await Ask(Capability(true, Tick.ToOffset(TimeSpan.FromHours(2)), Tick.AddMinutes(1)));
+        var said = await Ask(Capability(Tick.ToOffset(TimeSpan.FromHours(2)), Tick.AddMinutes(1)));
 
         Assert.Equal("The last BGS tick was at 16:14 UTC on 15 October, 1 minute ago.", said);
     }
 
     [Fact]
-    public async Task TheSettingOffSaysSoAndWhereToTurnItOn()
-    {
-        var said = await Ask(Capability(false, Tick, Tick.AddHours(1)));
-
-        Assert.Equal(
-            "BGS tick time is off, so I don't know when the tick was. It can be turned on under Outside sources.",
-            said);
-    }
-
-    [Fact]
     public async Task TheSettingOnWithNothingReadSaysSo()
     {
-        var said = await Ask(Capability(true, null, Tick));
+        var said = await Ask(Capability(null, Tick));
 
         Assert.Equal("I haven't read the tick time yet.", said);
     }

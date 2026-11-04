@@ -762,7 +762,7 @@ internal sealed partial class SettingControls
                 box,
                 lookup.Lookup,
                 match => match.Name,
-                lookup.Enabled,
+                () => true,
                 match =>
                 {
                     names!.SetText(match.Name);

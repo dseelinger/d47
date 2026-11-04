@@ -46,8 +46,6 @@ public class TheRoutingTabIsInTheHeadsetTests
             registry,
             plans ?? new RoutePlanBook(
                 Path.Combine(folder, "route-plans.json"), new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance),
-            () => true,
-            null,
             new CommodityBoard(),
             () => 34.5,
             Clipboard: clipboard);

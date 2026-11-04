@@ -56,7 +56,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     private CodexLedger? _seenLedger;
     private HistoryState _seenHistory;
     private string _query = string.Empty;
-    private bool? _seenLookups;
+    private bool _seenSearch;
 
     public CodexDiscoveriesPage(
         Func<CommanderGameState?> state,
@@ -131,7 +131,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     /// <summary>Redraws when the record or the history walk has changed.</summary>
     public bool Tick()
     {
-        if (ReferenceEquals(_state()?.CodexLedger, _seenLedger) && _history() == _seenHistory && Lookups() == _seenLookups)
+        if (ReferenceEquals(_state()?.CodexLedger, _seenLedger) && _history() == _seenHistory && HasSearch() == _seenSearch)
         {
             return false;
         }
@@ -149,11 +149,11 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         _seenLedger = _state()?.CodexLedger;
         _seenHistory = _history();
 
-        var lookups = Lookups();
+        var hasSearch = HasSearch();
 
-        if (lookups != _seenLookups)
+        if (hasSearch != _seenSearch)
         {
-            _seenLookups = lookups;
+            _seenSearch = hasSearch;
             _shown = [];
         }
 
@@ -261,7 +261,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
 
     private TableLayout NewLayout() => new(TableId, ColumnList, _columnWidths, _headset ? 12 : 16);
 
-    private bool? Lookups() => _bodySearch?.Invoke()?.Enabled();
+    private bool HasSearch() => _bodySearch?.Invoke() is not null;
 
     private Grid RowView(CodexMissingRow row)
     {
@@ -302,7 +302,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         return line;
     }
 
-    /// <summary>The row's Search tile: for an entry the codex table lists, disabled while the galaxy lookups are off.</summary>
+    /// <summary>The row's Search tile: for an entry the codex table lists.</summary>
     private Button? SearchTile(CodexMissingRow row)
     {
         if (_bodySearch?.Invoke() is not { } link || _table.Entry(row.EntryId) is not { } entry)
@@ -310,20 +310,16 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
             return null;
         }
 
-        var enabled = link.Enabled();
         var tile = new Button
         {
             Name = "CodexSearch." + row.EntryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
             Content = "Search",
-            IsEnabled = enabled,
             Width = SearchWidth,
             MinHeight = TypeScale.MinimumTarget,
             Margin = Gaps.TileBefore,
             VerticalAlignment = VerticalAlignment.Stretch,
         };
         Avalonia.Automation.AutomationProperties.SetName(tile, "Search " + row.Name);
-        ToolTip.SetShowOnDisabled(tile, true);
-        ToolTip.SetTip(tile, enabled ? null : GalaxySearchPage.LookupsOffTip);
         tile.Click += (_, _) => link.Run(new Dictionary<string, string>(StringComparer.Ordinal) { ["codex_entry"] = entry.Name });
 
         return tile;

@@ -88,13 +88,9 @@ public sealed class TheSystemPageFollowsTheCommanderTests
     {
         public JournalLocation? Here { get; set; } = At("LTT 7786", Ltt7786);
 
-        public bool Enabled { get; set; } = true;
-
-        public int SettingsOpened { get; set; }
-
         public Systems Systems { get; } = new();
 
-        public StarSystemSurface Surface => new(Systems, () => Here, () => Enabled, () => SettingsOpened++);
+        public StarSystemSurface Surface => new(Systems, () => Here);
     }
 
     private static JournalLocation At(string system, long address) =>
@@ -432,29 +428,6 @@ public sealed class TheSystemPageFollowsTheCommanderTests
     }
 
     [AvaloniaFact]
-    public void LookupsOffSaySoAndAskForNothing()
-    {
-        var world = new World { Enabled = false };
-        var (panel, window) = Shown(world);
-
-        Assert.True(Shows(panel, "SYSTEM LOOKUPS ARE OFF"));
-        Assert.True(Shows(panel, "Looking up a star system is switched off. It shares the galaxy search setting, so turning on “Look things up in the galaxy” switches it on."));
-
-        Press(Buttons(Page(panel)).Single(button => button.Content as string == "Open settings"));
-        Assert.Equal(1, world.SettingsOpened);
-        Assert.Empty(world.Systems.AskedNow());
-        NoRetry(panel);
-
-        world.Enabled = true;
-        panel.TickSearch();
-        Settle(world, 1);
-
-        Assert.Equal([Ltt7786], world.Systems.AskedNow());
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
     public void AnUnansweredLookupSaysSpanshDidNotAnswer()
     {
         var world = new World();
@@ -568,9 +541,6 @@ public sealed class TheSystemPageFollowsTheCommanderTests
             "Close names:");
 
         Capture("system-no-match.png", new World(), _ => { }, "ECONOMY", panel => Type(panel, "Qwerty 12"), "none has a close name");
-
-        Capture("system-lookups-off.png", new World { Enabled = false }, _ => { }, "LOOKUPS ARE OFF");
-
         Capture("system-no-journal.png", new World { Here = null }, _ => { }, "hasn't read a journal");
     }
 

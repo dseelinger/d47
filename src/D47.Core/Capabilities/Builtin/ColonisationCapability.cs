@@ -13,8 +13,6 @@ public static class ColonisationCapability
 {
     public const string Id = "colonisation";
 
-    public const string PlannerKey = "knowledge.colonisationPlanner";
-
     public const string ProgressKey = "knowledge.colonisationProgress";
 
     public const string KeyRow = "knowledge.ravenColonialKey";
@@ -159,34 +157,10 @@ public static class ColonisationCapability
         [
             new SettingRow
             {
-                Key = PlannerKey,
-                Exercise =
-                    "Open Settings › Providers › Outside sources, group Outside sources, and turn Read colonisation "
-                    + "plans from Raven Colonial on (it is off by default). Needs a system with an unfinished "
-                    + "construction site or a claim in your journals. Ask \"what does my construction site still "
-                    + "need\": the answer includes the planner's figures, such as tonnes on linked carriers and the "
-                    + "number of Commanders and carriers on the project. With the row off the answer comes from the "
-                    + "journal and says the plan could not be read. Needs a network connection to Raven Colonial. "
-                    + "Turning this off also greys out Send my colonisation progress.",
-                Label = "Read colonisation plans from Raven Colonial",
-                Help =
-                    "Lets d47 read the plan Raven Colonial holds for a system you are building in. The names of "
-                    + "those systems leave this machine; your Commander name does not. Off by default; see "
-                    + "[Privacy](privacy) for exactly what is sent.",
-                Kind = SettingKind.Toggle,
-                DefaultDisplay = "off",
-                DocsAnchor = "read-colonisation-plans-from-raven-colonial",
-                Binding = SettingBinding.Toggle(
-                    s => s.Knowledge.ColonisationPlanner,
-                    (s, on) => s with { Knowledge = s.Knowledge with { ColonisationPlanner = on } }),
-            },
-            new SettingRow
-            {
                 Key = ProgressKey,
                 Exercise =
                     "Open Settings › Providers › Outside sources, group Sharing, and turn Send my colonisation "
-                    + "progress to Raven Colonial on. It is greyed out while Read colonisation plans from Raven "
-                    + "Colonial is off. It is a protected setting, so the model cannot change it; set it by hand. Needs"
+                    + "progress to Raven Colonial on. It is a protected setting, so the model cannot change it; set it by hand. Needs"
                     + " a Raven Colonial key (see that row) and a construction site that already has a project on Raven"
                     + " Colonial. The line under the switch reads one of \"Sending as CMDR <name>\", \"No Raven "
                     + "Colonial key is set\", \"Raven Colonial refused the key\", \"This key belongs to CMDR <name>, so"
@@ -198,14 +172,13 @@ public static class ColonisationCapability
                 Label = "Send my colonisation progress to Raven Colonial",
                 Help =
                     "Sends what you deliver to a construction site, and what it still needs, to that site's "
-                    + "project on Raven Colonial as it happens. Needs reading plans on, and a Raven Colonial key. "
+                    + "project on Raven Colonial as it happens. Needs a Raven Colonial key. "
                     + "Raven Colonial asks that only one app sends your colonisation progress. If another app you "
                     + "run already does, leave this off or turn it off there.",
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
                 Protected = true,
-                DisabledWhen = s => !s.Knowledge.ColonisationPlanner,
-                Note = s => s.Knowledge is { ColonisationPlanner: true, ColonisationProgress: true }
+                Note = s => s.Knowledge.ColonisationProgress
                     ? progress?.Invoke()?.Note
                     : null,
                 Watch = refresh =>
@@ -269,7 +242,6 @@ public static class ColonisationCapability
         var read = await PlanReading
             .ReadAsync(
                 plans,
-                settings is not null && !settings.Current.Knowledge.ColonisationPlanner,
                 PlanReading.SystemsOf(state.Colonisation),
                 now,
                 cancellationToken)
@@ -400,7 +372,6 @@ public static class ColonisationCapability
         var read = await PlanReading
             .ReadAsync(
                 plans,
-                settings is not null && !settings.Current.Knowledge.ColonisationPlanner,
                 chosen is not null ? [chosen.StarSystem] : PlanReading.SystemsOf(state.Colonisation),
                 at,
                 cancellationToken)
@@ -632,9 +603,9 @@ public static class ColonisationCapability
         IReadOnlyList<ConstructionNeeds> needs,
         CancellationToken cancellationToken)
     {
-        if (trade is null || settings is null || !settings.Current.Knowledge.GalaxySearch)
+        if (trade is null || settings is null)
         {
-            return "Looking markets up is switched off, so I cannot say where to buy any of it.";
+            return "Looking markets up is not available, so I cannot say where to buy any of it.";
         }
 
         if (state.Location.StarSystem is not { Length: > 0 } near)
@@ -882,11 +853,9 @@ public static class ColonisationCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (galaxy is null || settings is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
-            return ToolResult.Error(
-                "Galaxy search is switched off, so I can't look for anywhere to colonise. The Commander "
-                + "can turn it on in settings.");
+            return ToolResult.Error("Galaxy search is not available, so I can't look for anywhere to colonise.");
         }
 
         var near = arguments.Text("near") ?? commander()?.Location.StarSystem;

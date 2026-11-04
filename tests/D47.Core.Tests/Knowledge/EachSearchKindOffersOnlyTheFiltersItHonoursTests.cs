@@ -47,7 +47,6 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
         var board = new GalaxySearchBoard();
         var settings = TestSurface.For(install).Settings;
 
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
             [GalaxyCapability.Create(galaxy, () => "Sol", settings, now: () => AskedAt, searches: board)]);
@@ -217,7 +216,6 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
         var install = new MemoryInstall();
         var board = new GalaxySearchBoard();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
         [

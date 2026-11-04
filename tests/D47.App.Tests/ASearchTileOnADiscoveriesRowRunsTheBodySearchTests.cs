@@ -35,7 +35,7 @@ public sealed class ASearchTileOnADiscoveriesRowRunsTheBodySearchTests
     public void PressingSearchRunsTheEntrySearchAndLeavesTheRowToOpenThePage()
     {
         var asked = new List<IReadOnlyDictionary<string, string>>();
-        var (window, page) = Shown(new BodySearchLink(() => true, asked.Add));
+        var (window, page) = Shown(new BodySearchLink(asked.Add));
 
         var tile = Assert.IsType<Button>(Find(page, "CodexSearch.2"));
         Assert.True(tile.IsEnabled);
@@ -44,20 +44,6 @@ public sealed class ASearchTileOnADiscoveriesRowRunsTheBodySearchTests
 
         Assert.Equal("Beta tree", Assert.Single(asked)["codex_entry"]);
         Assert.NotNull(Find(page, "CodexMissing.2"));
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void WithLookupsOffTheTileIsDisabledAndSaysWhy()
-    {
-        var asked = new List<IReadOnlyDictionary<string, string>>();
-        var (window, page) = Shown(new BodySearchLink(() => false, asked.Add));
-
-        var tile = Assert.IsType<Button>(Find(page, "CodexSearch.1"));
-        Assert.False(tile.IsEnabled);
-        Assert.Equal(GalaxySearchPage.LookupsOffTip, ToolTip.GetTip(tile));
-        Assert.Empty(asked);
 
         window.Close();
     }

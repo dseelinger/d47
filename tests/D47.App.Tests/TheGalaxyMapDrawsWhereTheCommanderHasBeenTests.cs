@@ -40,7 +40,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
         public string? OffDuty { get; set; }
 
-        public bool GalaxySearch { get; set; }
+        public bool GalaxyOffered { get; set; }
 
         public Spansh Galaxy { get; } = new();
 
@@ -164,7 +164,6 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
             () => game.OffDuty is null ? game.Commander.Location.StarSystem : null,
             CapabilityRegistry.Build([]),
             new RoutePlanBook(Path.Combine(folder, "route-plans.json"), files, NullLogger<RoutePlanBook>.Instance),
-            LookupsEnabled: () => game.GalaxySearch,
             Commodities: new CommodityBoard(),
             Settings: TestSurface.Settings(),
             Bookmarks: game.Bookmarks,
@@ -175,7 +174,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         {
             Travel = () => game.Travel,
             Now = () => Now,
-            Galaxy = () => game.Galaxy,
+            Galaxy = () => game.GalaxyOffered ? game.Galaxy : null,
             MapLookups = game.Lookups,
         });
 
@@ -750,15 +749,15 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     {
         var (_, _, page) = InWindow(Keeping());
 
-        Assert.Equal("1 bookmark and 1 stored ship are in systems you have not visited. " + GalaxyMapPage.PlacedWhenOn, page.UnplacedLine);
+        Assert.Equal("1 bookmark and 1 stored ship are in systems you have not visited.", page.UnplacedLine);
 
         page.BookmarkSwitch.IsChecked = false;
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal("1 stored ship is in a system you have not visited. " + GalaxyMapPage.PlacedWhenOn, page.UnplacedLine);
+        Assert.Equal("1 stored ship is in a system you have not visited.", page.UnplacedLine);
 
         page.ShipSwitch.IsChecked = false;
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal(GalaxyMapPage.GalaxySearchOff, page.UnplacedLine);
+        Assert.Equal(string.Empty, page.UnplacedLine);
     }
 
     [AvaloniaFact]
@@ -771,12 +770,12 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         game.Commander.Apply(Event("""{"timestamp":"2026-10-21T11:01:00Z","event":"StoredShips","StarSystem":"Sol","StationName":"X","ShipsHere":[],"ShipsRemote":[{"ShipID":14,"ShipType":"anaconda","Name":"Big Slow","Value":1,"StarSystem":"Nowhere Known"}]}"""));
         var (_, _, page) = InWindow(game);
 
-        Assert.Equal("2 bookmarks, your carrier and 1 stored ship are in systems you have not visited. " + GalaxyMapPage.PlacedWhenOn, page.UnplacedLine);
+        Assert.Equal("2 bookmarks, your carrier and 1 stored ship are in systems you have not visited.", page.UnplacedLine);
 
         page.BookmarkSwitch.IsChecked = false;
         page.ShipSwitch.IsChecked = false;
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal("Your carrier is in a system you have not visited. " + GalaxyMapPage.PlacedWhenOn, page.UnplacedLine);
+        Assert.Equal("Your carrier is in a system you have not visited.", page.UnplacedLine);
     }
 
     [AvaloniaFact]
@@ -976,7 +975,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     private static Game Searching()
     {
         var game = Played();
-        game.GalaxySearch = true;
+        game.GalaxyOffered = true;
         game.Galaxy.Known["Nowhere Known"] = new StarPosition(Wregoe.X + 12, Wregoe.Y, Wregoe.Z - 9);
         game.Bookmarks.Add("F1", "Lost cause", "Nowhere Known", Now);
         game.Bookmarks.Add("F1", "Lost for good", "Nowhere Else", Now);
@@ -1076,25 +1075,6 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     }
 
     [AvaloniaFact]
-    public void WithGalaxySearchOffNothingIsSentAndUnvisitedIsDisabledAndUnchecked()
-    {
-        var game = Searching();
-        game.GalaxySearch = false;
-        var (window, _, page) = InWindow(game);
-
-        Landed(page);
-
-        Assert.Equal(0, game.Galaxy.Calls);
-        Assert.False(page.UnvisitedSwitch.IsEnabled);
-        Assert.False(page.UnvisitedSwitch.IsChecked);
-        Assert.False(page.Map.Drawn.Unvisited);
-        Assert.Equal("2 bookmarks are in systems you have not visited. " + GalaxyMapPage.PlacedWhenOn, page.UnplacedLine);
-
-        using var frame = window.CaptureRenderedFrame()!;
-        frame.SaveCapture("galaxy-map-window-galaxy-search-off.png");
-    }
-
-    [AvaloniaFact]
     public void ReopeningThePageInTheSameSystemAsksForNothingAgain()
     {
         var game = Searching();
@@ -1188,7 +1168,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     public void AtMostTwentyFiveSystemsAreLookedUpPerOpening()
     {
         var game = Played();
-        game.GalaxySearch = true;
+        game.GalaxyOffered = true;
 
         foreach (var index in Enumerable.Range(1, 27))
         {

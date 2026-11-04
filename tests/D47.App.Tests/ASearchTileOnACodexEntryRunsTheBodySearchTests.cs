@@ -54,10 +54,9 @@ public sealed class ASearchTileOnACodexEntryRunsTheBodySearchTests
 
     }
 
-    private static (PanelView Panel, Window Window, Galaxy Galaxy) Shown(bool lookups, long entry, string name, bool headset = false)
+    private static (PanelView Panel, Window Window, Galaxy Galaxy) Shown(long entry, string name, bool headset = false)
     {
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, lookups ? "true" : "false", SettingsCaller.Panel);
         var board = new GalaxySearchBoard();
         var galaxy = new Galaxy();
         var store = new SavedSearchStore("saved-searches.json", new MemoryFileSystem(), NullLogger<SavedSearchStore>.Instance);
@@ -65,9 +64,7 @@ public sealed class ASearchTileOnACodexEntryRunsTheBodySearchTests
 
         var surface = new StarSystemSurface(
             new Systems(),
-            () => new JournalLocation("LTT 7786", null, false, null),
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { })
+            () => new JournalLocation("LTT 7786", null, false, null))
         {
             Searches = new GalaxySearchSurface(registry, board, store, () => "F1", () => [])
             {
@@ -110,7 +107,7 @@ public sealed class ASearchTileOnACodexEntryRunsTheBodySearchTests
     [InlineData(true)]
     public void PressingSearchOpensBodiesWithTheEntryFilledAndTheSearchRun(bool headset)
     {
-        var (panel, window, galaxy) = Shown(lookups: true, Listed, ListedName, headset);
+        var (panel, window, galaxy) = Shown(Listed, ListedName, headset);
 
         var tile = Assert.IsType<Button>(Tile(panel));
         Assert.True(tile.IsEnabled);
@@ -131,22 +128,9 @@ public sealed class ASearchTileOnACodexEntryRunsTheBodySearchTests
     }
 
     [AvaloniaFact]
-    public void WithLookupsOffTheTileIsDisabledAndSaysWhy()
-    {
-        var (panel, window, galaxy) = Shown(lookups: false, Listed, ListedName);
-
-        var tile = Assert.IsType<Button>(Tile(panel));
-        Assert.False(tile.IsEnabled);
-        Assert.Equal(GalaxySearchPage.LookupsOffTip, ToolTip.GetTip(tile));
-        Assert.Empty(galaxy.Asked);
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
     public void AnEntryTheCodexTableDoesNotListHasNoSearchTile()
     {
-        var (panel, window, _) = Shown(lookups: true, Unlisted, "Unknown entry");
+        var (panel, window, _) = Shown(Unlisted, "Unknown entry");
 
         Assert.Null(Tile(panel));
 

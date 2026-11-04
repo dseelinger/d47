@@ -80,7 +80,7 @@ public sealed partial class ComparisonRunner(
 
     /// <summary>The Commander's own settings that change what a turn can do, as the installed app has them.</summary>
     private static readonly string[] CommandersSettings =
-        ["knowledge.galaxy", "llm.lookAtScreen", "llm.webSearch", "actions.keyboard", "actions.autoPlot"];
+        ["llm.lookAtScreen", "llm.webSearch", "actions.keyboard", "actions.autoPlot"];
 
     /// <summary>A fresh world over the seed data, with the whole journal folded in.</summary>
     public ScenarioWorld NewWorld()

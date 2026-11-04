@@ -19,7 +19,7 @@ public static class GalNetCapability
     private static readonly char[] Separators =
         [' ', '\t', '\r', '\n', ',', '.', ';', ':', '!', '?', '"', '(', ')', '-', '–', '—'];
 
-    public static CapabilityDescriptor Create(Func<GalNetArchive?> archive, Func<bool> enabled) => new()
+    public static CapabilityDescriptor Create(Func<GalNetArchive?> archive) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -51,7 +51,7 @@ public static class GalNetCapability
                 Handler = (arguments, _) =>
                 {
                     arguments.TryGetString("query", out var query);
-                    return Task.FromResult(Search(archive(), enabled(), query));
+                    return Task.FromResult(Search(archive(), query));
                 },
             },
             new ToolDefinition
@@ -76,19 +76,19 @@ public static class GalNetCapability
                 Handler = (arguments, _) =>
                 {
                     arguments.TryGetString("title", out var title);
-                    return Task.FromResult(Read(archive(), enabled(), title));
+                    return Task.FromResult(Read(archive(), title));
                 },
             },
         ],
     };
 
-    private static ToolResult Search(GalNetArchive? archive, bool enabled, string? query)
+    private static ToolResult Search(GalNetArchive? archive, string? query)
     {
         var all = archive?.All() ?? [];
 
         if (all.Count == 0)
         {
-            return Empty(enabled);
+            return Empty;
         }
 
         var words = Words(query);
@@ -130,13 +130,13 @@ public static class GalNetCapability
         return ToolResult.Ok(said.ToString().TrimEnd());
     }
 
-    private static ToolResult Read(GalNetArchive? archive, bool enabled, string? title)
+    private static ToolResult Read(GalNetArchive? archive, string? title)
     {
         var all = archive?.All() ?? [];
 
         if (all.Count == 0)
         {
-            return Empty(enabled);
+            return Empty;
         }
 
         if (string.IsNullOrWhiteSpace(title))
@@ -160,9 +160,7 @@ public static class GalNetCapability
             : ToolResult.Ok(Full(best));
     }
 
-    private static ToolResult Empty(bool enabled) => ToolResult.Ok(enabled
-        ? "No GalNet articles are kept yet."
-        : "GalNet news is off. Turn it on under Galaxy search in Settings to keep the articles.");
+    private static ToolResult Empty => ToolResult.Ok("No GalNet articles are kept yet.");
 
     private static string Full(GalNetArticle article) =>
         string.Join(Environment.NewLine, [$"{article.Title}, {article.GameDate}", .. article.Body]);

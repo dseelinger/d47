@@ -257,8 +257,7 @@ public partial class MainWindow : Window
                     () => DateTimeOffset.Now,
                     host.Announcer.SayAside,
                     () => host.Turns.Provider is not null,
-                    () => host.Settings.Current.Knowledge.GalaxySearch,
-                    () => host.Galaxy is { } galaxy && host.Settings.Current.Knowledge.GalaxySearch
+                    () => host.Galaxy is { } galaxy
                         ? new D47.Core.Adventures.AdventureResolver(galaxy)
                         : null,
                     OpenSettings,
@@ -310,7 +309,6 @@ public partial class MainWindow : Window
                 () => DateTimeOffset.Now,
                 host.Capabilities,
                 host.Sourcing,
-                () => host.Settings.Current.Knowledge.GalaxySearch,
                 () => host.ColonisationPlans?.Snapshot ?? ConstructionPage.NoPlans,
                 (system, now) => host.ColonisationPlans?.Want(system, now));
 
@@ -323,7 +321,7 @@ public partial class MainWindow : Window
                 () => host.Settings.Current.Ui.HullArt,
                 settingsStrip: () => BuildSettingsStrip(LoadoutPages.FleetRoot),
                 carrierSettingsStrip: () => BuildSettingsStrip(LoadoutPages.CarrierRoot),
-                galaxy: () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null,
+                galaxy: () => host.Galaxy,
                 characters: host.CharactersHost,
                 talk: host.BuildTalk,
                 status: () => host.LiveStatus,
@@ -332,7 +330,6 @@ public partial class MainWindow : Window
                     ? new OutfittingPlotter(
                         host.Capabilities,
                         planBook,
-                        () => host.Settings.Current.Knowledge.GalaxySearch,
                         () => host.GameState.Active?.Location.StarSystem)
                     : null);
 
@@ -365,8 +362,6 @@ public partial class MainWindow : Window
                 () => host.GameState.Active?.Location.StarSystem,
                 host.Capabilities,
                 host.Plans,
-                () => host.Settings.Current.Knowledge.GalaxySearch,
-                OpenSettings,
 
                 // And the Market page beside them (Phase 49).
                 host.Commodities,
@@ -389,7 +384,7 @@ public partial class MainWindow : Window
                 Status: () => host.LiveStatus,
                 WorthIfMapped: (system, body) => host.History.Cartography?.IfMapped(system, body),
                 SurfaceMarks: host.SurfaceMarks,
-                EarlierFinds: () => host.Settings.Current.Knowledge.CommunityBiology ? host.EarlierFinds : null,
+                EarlierFinds: () => host.EarlierFinds,
 
                 // Unsold data (#556).
                 Exobiology: () => host.History.Exobiology,
@@ -418,9 +413,7 @@ public partial class MainWindow : Window
             {
                 StarSystem = new StarSystemSurface(
                     systems,
-                    () => host.GameState.Active?.Location,
-                    () => host.Settings.Current.Knowledge.GalaxySearch,
-                    OpenSettings)
+                    () => host.GameState.Active?.Location)
                 {
                     ColumnWidths = ((IPanelTabHost)Panel).ColumnWidths,
                     SurfaceMining = (address, bodyId) => host.GameState.Active?.SurfaceMining.At(address, bodyId),
@@ -448,7 +441,6 @@ public partial class MainWindow : Window
                         History = host.SearchHistory,
                         PrefixNames = systems.PrefixNamesAsync,
                         FactionNames = systems.FactionNamesAsync,
-                        SignalSources = () => host.Settings.Current.Knowledge.SignalIndex || host.SignalSightings?.Any == true,
                         PledgedPower = () => host.GameState.Active?.Pledge is { IsPledged: true, Power: { Length: > 0 } power } ? power : null,
                     },
                 };
@@ -739,7 +731,6 @@ public partial class MainWindow : Window
             }
 
             if (change.Key == ShipsCapability.HullArtKey
-                || change.Key == GalaxyCapability.EnabledKey
                 || change.Key.StartsWith("speech.", StringComparison.Ordinal))
             {
                 Panel.InvalidateLoadout();
@@ -1001,7 +992,6 @@ public partial class MainWindow : Window
         }
 
         return new GalaxyFind(
-            () => host.Settings.Current.Knowledge.GalaxySearch,
             async (typed, cancellation) =>
             {
                 var here = host.GameState.Active?.Location.StarPos;
@@ -1098,7 +1088,7 @@ public partial class MainWindow : Window
             _host.Vr,
             _host.BindingProfiles,
             _host.StarSystems is { } systems
-                ? new SystemNameLookup(systems.PrefixNamesAsync, () => _host.Settings.Current.Knowledge.GalaxySearch)
+                ? new SystemNameLookup(systems.PrefixNamesAsync)
                 : null,
             _host.CustomVoiceEditing,
             _host.CoverageRecorder is { } clearing ? clearing.Clear : null,

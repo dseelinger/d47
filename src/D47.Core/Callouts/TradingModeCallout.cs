@@ -33,7 +33,7 @@ public sealed class TradingModeCallout(ILogger<TradingModeCallout> logger) : ICa
 
     public string Id => "trading-mode";
 
-    /// <summary>The service to ask, or null when galaxy search is off.</summary>
+    /// <summary>The service to ask, or null when there is none.</summary>
     public Func<ITradePlanService?> Trade { get; set; } = () => null;
 
     /// <summary>The least free hold, in tonnes, that is worth a lookup.</summary>

@@ -101,7 +101,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
 
     /// <summary>The way to run a body search from another tab, or null where this surface has no search.</summary>
     public BodySearchLink? BodySearch =>
-        _surface is { Searches: not null } surface ? new BodySearchLink(surface.LookupsEnabled, SearchBodies) : null;
+        _surface is { Searches: not null } surface ? new BodySearchLink(SearchBodies) : null;
 
     private void SearchBodies(IReadOnlyDictionary<string, string> arguments)
     {
@@ -214,11 +214,9 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         {
             _systems = new SystemSearchPage(
                 searches,
-                surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 OpenFound,
                 host.Copy,
-                surface.OpenSettings,
                 host.Headset)
             {
                 PaneWidths = host.PaneWidths,
@@ -233,12 +231,10 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         {
             _stations = new StationSearchPage(
                 stationSearches,
-                surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 ChooseServices,
                 OpenResult,
                 host.Copy,
-                surface.OpenSettings,
                 host.Headset)
             {
                 PaneWidths = host.PaneWidths,
@@ -253,11 +249,9 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         {
             _outfitting = new OutfittingSearchPage(
                 outfittingSearches,
-                surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 OpenFound,
                 host.Copy,
-                surface.OpenSettings,
                 host.Headset)
             {
                 PaneWidths = host.PaneWidths,
@@ -272,11 +266,9 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         {
             _bodies = new BodySearchPage(
                 bodySearches,
-                surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 OpenResult,
                 host.Copy,
-                surface.OpenSettings,
                 host.Headset)
             {
                 PaneWidths = host.PaneWidths,
@@ -291,11 +283,9 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         {
             _signals = new SignalSearchPage(
                 signalSearches,
-                surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 OpenFound,
                 host.Copy,
-                surface.OpenSettings,
                 host.Headset)
             {
                 PaneWidths = host.PaneWidths,

@@ -37,7 +37,7 @@ public class TheStoryLogShowsOnlyInAStoryTests
             stories, book, () => StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
         var surface = new AdventureSurface(
-            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
+            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => null, () => { },
             Messages: messages, Stories: director);
 
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };

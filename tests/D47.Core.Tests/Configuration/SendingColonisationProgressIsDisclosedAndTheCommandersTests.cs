@@ -7,10 +7,10 @@ namespace D47.Core.Tests.Configuration;
 
 public class SendingColonisationProgressIsDisclosedAndTheCommandersTests
 {
-    private static EgressEntry Entry(bool reads, bool writes) =>
+    private static EgressEntry Entry(bool writes) =>
         EgressDisclosure.Entry(
             EgressDisclosure.ColonisationProgress,
-            new D47Settings { Knowledge = new KnowledgeSettings { ColonisationPlanner = reads, ColonisationProgress = writes } },
+            new D47Settings { Knowledge = new KnowledgeSettings { ColonisationProgress = writes } },
             llmKeyPresent: false);
 
     [Fact]
@@ -22,7 +22,7 @@ public class SendingColonisationProgressIsDisclosedAndTheCommandersTests
     [Fact]
     public void OnItNamesTheHostAndWhatIsSent()
     {
-        var entry = Entry(reads: true, writes: true);
+        var entry = Entry(writes: true);
 
         Assert.True(entry.Active);
         Assert.Equal(
@@ -39,13 +39,10 @@ public class SendingColonisationProgressIsDisclosedAndTheCommandersTests
         Assert.Contains(EgressDisclosure.ColonisationProgress, EgressDisclosure.Ids);
     }
 
-    [Theory]
-    [InlineData(false, false)]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    public void OffOrWithoutReadsNothingIsSent(bool reads, bool writes)
+    [Fact]
+    public void OffNothingIsSent()
     {
-        var entry = Entry(reads, writes);
+        var entry = Entry(writes: false);
 
         Assert.False(entry.Active);
         Assert.Equal("Colonisation progress is not sent to the planner.", entry.What);

@@ -81,9 +81,7 @@ public sealed class AllResultsIsDrawnAsItsCanvasShowsTests
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableStarSystem(new StarSystemSurface(
             new Systems(),
-            () => new JournalLocation("LTT 7786", null, false, null),
-            () => true,
-            () => { }));
+            () => new JournalLocation("LTT 7786", null, false, null)));
 
         var window = new Window { Content = panel, Width = 1280, Height = 2000 };
         window.Show();

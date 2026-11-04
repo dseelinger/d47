@@ -5,21 +5,11 @@ namespace D47.Core.Tests.Configuration;
 
 public class TheServerStatusFetchIsDisclosedTests
 {
-    [Fact]
-    public void OffByDefaultItSaysNothingIsRequested()
-    {
-        var entry = Assert.Single(
-            EgressDisclosure.For(new D47Settings(), llmKeyPresent: false),
-            entry => entry.Id == EgressDisclosure.ServerStatus);
-
-        Assert.False(entry.Active);
-        Assert.Contains("nothing is requested", entry.What, StringComparison.Ordinal);
-    }
 
     [Fact]
-    public void OnItNamesTheHostAndSaysItAsksWithEliteClosed()
+    public void OnADefaultInstallItNamesTheHostAndSaysItAsksWithEliteClosed()
     {
-        var settings = new D47Settings { Knowledge = new KnowledgeSettings { ServerStatus = true } };
+        var settings = new D47Settings();
 
         var entry = Assert.Single(
             EgressDisclosure.For(settings, llmKeyPresent: false),

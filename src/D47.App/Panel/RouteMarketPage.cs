@@ -52,8 +52,6 @@ public sealed class RouteMarketPage : UserControl
 
     private readonly CapabilityRegistry _registry;
     private readonly CommodityBoard _board;
-    private readonly Func<bool> _lookupsEnabled;
-    private readonly Action? _openSettings;
     private readonly Func<string, Task<bool>>? _copy;
     private readonly Func<string?> _here;
 
@@ -96,8 +94,6 @@ public sealed class RouteMarketPage : UserControl
     public RouteMarketPage(
         CapabilityRegistry registry,
         CommodityBoard board,
-        Func<bool> lookupsEnabled,
-        Action? openSettings = null,
         Func<string, Task<bool>>? copy = null,
         ColumnWidthMemory? columnWidths = null,
         Func<string?>? here = null,
@@ -106,8 +102,6 @@ public sealed class RouteMarketPage : UserControl
         _columnWidths = columnWidths;
         _registry = registry;
         _board = board;
-        _lookupsEnabled = lookupsEnabled;
-        _openSettings = openSettings;
         _copy = copy;
         _here = here ?? (() => null);
 
@@ -215,30 +209,17 @@ public sealed class RouteMarketPage : UserControl
         return new ToolArguments(values);
     }
 
-    /// <summary>Redraws, after a search or after the setting behind the page moved.</summary>
+    /// <summary>Redraws, after a search.</summary>
     public void Refresh() => Dispatcher.UIThread.Post(Build);
 
     private void Build()
     {
         _body.Children.Clear();
 
-        if (!_lookupsEnabled())
-        {
-            _body.Children.Add(SwitchedOff());
-            return;
-        }
-
         _body.Children.Add(SearchCard());
         DrawResults();
         _body.Children.Add(_results);
     }
-
-    private Control SwitchedOff() =>
-        RoutingKit.SwitchedOff(
-            "Market lookups are off",
-            "Looking up markets is switched off. It shares the galaxy search setting, so turning on "
-            + "“Look things up in the galaxy” switches both on.",
-            _openSettings);
 
     private Control SearchCard()
     {
@@ -567,7 +548,7 @@ public sealed class RouteMarketPage : UserControl
 
     private async Task AskAsync(ToolArguments arguments)
     {
-        if (!_lookupsEnabled() || _sorting)
+        if (_sorting)
         {
             return;
         }

@@ -12,30 +12,20 @@ public class TheEgressListNamesTheGalaxyMapTests
         + "holding your bookmarks, your carrier or your stored ships that you have never visited, one at a time, to "
         + "find where they are.";
 
-    private static EgressEntry Entry(bool galaxySearch)
-    {
-        var settings = new D47Settings();
-
-        return EgressDisclosure.Entry(
-            EgressDisclosure.GalaxySearch,
-            settings with { Knowledge = settings.Knowledge with { GalaxySearch = galaxySearch } },
-            llmKeyPresent: false);
-    }
+    private static EgressEntry Entry() =>
+        EgressDisclosure.Entry(EgressDisclosure.GalaxySearch, new D47Settings(), llmKeyPresent: false);
 
     [Fact]
-    public void WithGalaxySearchOnTheEntryNamesIt() =>
-        Assert.Contains(Sentence, Entry(galaxySearch: true).What, StringComparison.Ordinal);
+    public void TheGalaxyEntryNamesIt() =>
+        Assert.Contains(Sentence, Entry().What, StringComparison.Ordinal);
 
     [Fact]
     public void ItComesAfterTheSystemPages()
     {
-        var what = Entry(galaxySearch: true).What;
+        var what = Entry().What;
 
         Assert.True(
             what.IndexOf("Search tab's System page", StringComparison.Ordinal) < what.IndexOf(Sentence, StringComparison.Ordinal));
     }
 
-    [Fact]
-    public void WithGalaxySearchOffItIsNotNamed() =>
-        Assert.DoesNotContain("Galaxy map", Entry(galaxySearch: false).What, StringComparison.Ordinal);
 }

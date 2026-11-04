@@ -2054,12 +2054,10 @@ public sealed class ItemPage : LoadoutPage
         {
             Name = "PlotToBuy",
             Content = "Plot a route to buy them",
-            IsEnabled = !plotting && toBuy.Unavailable is null && planRoot,
+            IsEnabled = !plotting && planRoot,
             MinHeight = TypeScale.MinimumTarget,
         };
 
-        ToolTip.SetShowOnDisabled(plot, true);
-        ToolTip.SetTip(plot, toBuy.Unavailable);
         plot.Click += async (_, _) => await PlotToBuy(toBuy);
 
         var cancel = new Button { Name = "CancelToBuy", Content = "Cancel", IsVisible = plotting, MinHeight = TypeScale.MinimumTarget };
@@ -2076,7 +2074,7 @@ public sealed class ItemPage : LoadoutPage
         block.Children.Add(ListRow.Head("To buy"));
         block.Children.Add(subhead);
         block.Children.Add(row);
-        block.Children.Add(LoadoutPages.Muted(toBuy.Unavailable ?? toBuy.Hint));
+        block.Children.Add(LoadoutPages.Muted(toBuy.Hint));
 
         if (!toBuy.StorageChecked)
         {

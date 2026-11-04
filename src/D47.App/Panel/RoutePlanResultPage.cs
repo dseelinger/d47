@@ -121,7 +121,7 @@ public sealed class RoutePlanResultPage : UserControl
             _searchStatus,
             TimeSpan.FromSeconds(70),
             "Searching…",
-            () => _planSeen?.Outfitting is not null && _plotter?.LookupsEnabled() == true,
+            () => _planSeen?.Outfitting is not null && _plotter is not null,
             token => _plotter!.Replot(_planSeen!.Outfitting!, _planSeen.Bought, _age.Value, token),
             _ => { });
 
@@ -205,11 +205,7 @@ public sealed class RoutePlanResultPage : UserControl
                 _searchStatus.Clear();
             }
 
-            var enabled = _plotter.LookupsEnabled();
-
-            _search.IsEnabled = enabled && !_stop.IsVisible;
-            ToolTip.SetShowOnDisabled(_search, true);
-            ToolTip.SetTip(_search, enabled ? null : OutfittingPlotter.SwitchedOff);
+            _search.IsEnabled = !_stop.IsVisible;
 
             _stack.Children.Add(_searchBar);
         }

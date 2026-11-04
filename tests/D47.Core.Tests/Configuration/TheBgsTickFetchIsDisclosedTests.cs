@@ -6,24 +6,11 @@ namespace D47.Core.Tests.Configuration;
 
 public class TheBgsTickFetchIsDisclosedTests
 {
+
     [Fact]
-    public void OffByDefaultItSaysNothingIsSent()
+    public void OnADefaultInstallItNamesTheHostAndSaysTheRequestIsUnencrypted()
     {
         var settings = new D47Settings();
-
-        var entry = Assert.Single(
-            EgressDisclosure.For(settings, llmKeyPresent: false),
-            entry => entry.Id == EgressDisclosure.BgsTick);
-
-        Assert.False(entry.Active);
-        Assert.Contains("nothing is requested", entry.What, StringComparison.Ordinal);
-        Assert.Contains("BGS tick → nothing sent", EgressDisclosure.Describe(settings, false), StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void OnItNamesTheHostAndSaysTheRequestIsUnencrypted()
-    {
-        var settings = new D47Settings { Knowledge = new KnowledgeSettings { BgsTick = true } };
 
         var entry = Assert.Single(
             EgressDisclosure.For(settings, llmKeyPresent: false),

@@ -76,7 +76,6 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
     {
         var surface = TestSurface.For(install);
 
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var galaxy = new Capturing();
 
@@ -110,7 +109,6 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
     {
         var surface = TestSurface.For(install);
 
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var trade = new CapturingTrade();
 

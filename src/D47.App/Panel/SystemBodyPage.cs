@@ -221,15 +221,6 @@ public sealed class SystemBodyPage : UserControl, IPageSummary
         _loading = true;
         Draw();
 
-        if (!_surface.LookupsEnabled())
-        {
-            _loading = false;
-            _inFlight = null;
-            request.Dispose();
-            Draw();
-            return;
-        }
-
         _ = Read(request);
     }
 
@@ -289,16 +280,6 @@ public sealed class SystemBodyPage : UserControl, IPageSummary
         {
             _page.Children.Add(Heading(null, null));
             _page.Children.Add(Unavailable(failure));
-            return;
-        }
-
-        if (_profile is null && !_surface.LookupsEnabled())
-        {
-            _page.Children.Add(RoutingKit.SwitchedOff(
-                "System lookups are off",
-                "Looking up a star system is switched off. It shares the galaxy search setting, so turning on "
-                + "“Look things up in the galaxy” switches it on.",
-                _surface.OpenSettings));
             return;
         }
 

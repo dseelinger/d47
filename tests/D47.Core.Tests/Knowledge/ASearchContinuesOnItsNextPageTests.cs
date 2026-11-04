@@ -83,7 +83,6 @@ public class ASearchContinuesOnItsNextPageTests
             NullLogger<SearchHistory>.Instance);
         var settings = TestSurface.For(new MemoryInstall()).Settings;
 
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
         [

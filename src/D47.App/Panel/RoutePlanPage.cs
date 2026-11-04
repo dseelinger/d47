@@ -22,8 +22,6 @@ public sealed class RoutePlanPage : UserControl
     private readonly CapabilityRegistry _registry;
     private readonly RoutePlanBook _plans;
     private readonly PanelNavigator _nav;
-    private readonly Func<bool> _lookupsEnabled;
-    private readonly Action? _openSettings;
     private readonly Func<string?>? _here;
     private readonly Func<double?>? _jumpRange;
     private readonly Func<string?>? _carrierHere;
@@ -57,8 +55,6 @@ public sealed class RoutePlanPage : UserControl
         CapabilityRegistry registry,
         RoutePlanBook plans,
         PanelNavigator nav,
-        Func<bool> lookupsEnabled,
-        Action? openSettings = null,
         Func<string?>? here = null,
         Func<double?>? jumpRange = null,
         Func<string?>? carrierHere = null,
@@ -71,8 +67,6 @@ public sealed class RoutePlanPage : UserControl
         _registry = registry;
         _plans = plans;
         _nav = nav;
-        _lookupsEnabled = lookupsEnabled;
-        _openSettings = openSettings;
         _here = here;
         _jumpRange = jumpRange;
         _carrierHere = carrierHere;
@@ -155,16 +149,7 @@ public sealed class RoutePlanPage : UserControl
     {
         _cards.Children.Clear();
 
-        // Drawn with lookups off as well: Progress reads the route Elite wrote and needs none.
         _cards.Children.Add(_progress);
-
-        if (!_lookupsEnabled())
-        {
-            // A capability that is off rather than an error, which is the same answer the tool gives and for
-            // the reason Phase 3 states.
-            _cards.Children.Add(SwitchedOff());
-            return;
-        }
 
         // Cleared with the cards, or a rebuild leaves the previous set of fields in here to be refreshed
         // forever after they stopped being on screen.
@@ -176,15 +161,8 @@ public sealed class RoutePlanPage : UserControl
         TakeCarrierRoute();
     }
 
-    /// <summary>Redraws — after a plot, or after the setting behind the whole page moved.</summary>
+    /// <summary>Redraws, after a plot.</summary>
     public void Refresh() => Dispatcher.UIThread.Post(Build);
-
-    private Control SwitchedOff() =>
-        RoutingKit.SwitchedOff(
-            "Plotting is off",
-            "Route planning is switched off. It shares the galaxy search setting, so turning on "
-            + "“Look things up in the galaxy” switches both on.",
-            _openSettings);
 
     private Control JumpCard()
     {
@@ -464,7 +442,7 @@ public sealed class RoutePlanPage : UserControl
     private readonly TimeSpan? _suggestionPause;
 
     private FormField Names(FormField field) =>
-        _prefixNames is null ? field : field.Suggest(_prefixNames, _lookupsEnabled, _suggestionPause);
+        _prefixNames is null ? field : field.Suggest(_prefixNames, () => true, _suggestionPause);
 
     private FormField Field(
         string label,

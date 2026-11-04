@@ -36,7 +36,7 @@ public sealed record StockDraft(
     string Units);
 
 /// <summary>Resolves a stock watch's station and commodity once, on save, and writes it to the store.</summary>
-public sealed class WatchSetup(WatchStore store, IGalaxyService galaxy, ITradePlanService trade, Func<bool> galaxySearch)
+public sealed class WatchSetup(WatchStore store, IGalaxyService galaxy, ITradePlanService trade)
 {
     public const string DefaultCommunityGoalName = "New Community Goals";
 
@@ -100,10 +100,6 @@ public sealed class WatchSetup(WatchStore store, IGalaxyService galaxy, ITradePl
                 return WatchSaveResult.Refused(WatchField.Commodity, "type a commodity.");
             }
 
-            if (!galaxySearch())
-            {
-                return WatchSaveResult.Refused(WatchField.System, "Galaxy search is off, and an any-station watch needs it.");
-            }
 
             var found = await ResolveAsync(system, station, cancellationToken).ConfigureAwait(false);
 
@@ -148,10 +144,10 @@ public sealed class WatchSetup(WatchStore store, IGalaxyService galaxy, ITradePl
         return Write(existing, watch);
     }
 
-    /// <summary>The names of the fixed stations in <paramref name="system"/>, or none where Galaxy search is off or the lookup fails.</summary>
+    /// <summary>The names of the fixed stations in <paramref name="system"/>, or none where the lookup fails.</summary>
     public async Task<IReadOnlyList<string>> StationsInAsync(string system, CancellationToken cancellationToken)
     {
-        if (!galaxySearch() || string.IsNullOrWhiteSpace(system))
+        if (string.IsNullOrWhiteSpace(system))
         {
             return [];
         }

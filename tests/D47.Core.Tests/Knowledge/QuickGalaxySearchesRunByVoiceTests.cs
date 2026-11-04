@@ -29,14 +29,10 @@ public class QuickGalaxySearchesRunByVoiceTests
         }
     }
 
-    private static CapabilityRegistry Build(MemoryInstall install, FakeGalaxy galaxy, bool lookupsOn)
+    private static CapabilityRegistry Build(MemoryInstall install, FakeGalaxy galaxy)
     {
         var settings = TestSurface.For(install).Settings;
 
-        if (lookupsOn)
-        {
-            settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
-        }
 
         return CapabilityRegistry.Build([GalaxyCapability.Create(galaxy, () => "Sol", settings)]);
     }
@@ -80,7 +76,7 @@ public class QuickGalaxySearchesRunByVoiceTests
     {
         var install = new MemoryInstall();
         var galaxy = new FakeGalaxy();
-        var registry = Build(install, galaxy, lookupsOn: true);
+        var registry = Build(install, galaxy);
 
         foreach (var search in QuickSearches.All)
         {
@@ -107,25 +103,5 @@ public class QuickGalaxySearchesRunByVoiceTests
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         Assert.DoesNotContain(QuickSearches.Phrases().Select(command => command.Phrase), taken.Contains);
-    }
-
-    [Fact]
-    public async Task ASearchWithLookupsOffAnswersWithTheSwitchedOffSentence()
-    {
-        var install = new MemoryInstall();
-        var galaxy = new FakeGalaxy();
-        var registry = Build(install, galaxy, lookupsOn: false);
-        var search = QuickSearches.All[0];
-
-        var result = await registry.InvokeAsync(
-            search.Tool,
-            new ToolArguments(search.Arguments),
-            TestContext.Current.CancellationToken);
-
-        Assert.True(result.IsError);
-        Assert.Equal(
-            "Galaxy search is switched off, so I can't look that up. The Commander can turn it on in settings.",
-            result.Content);
-        Assert.Equal(0, galaxy.Searches);
     }
 }

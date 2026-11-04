@@ -70,7 +70,6 @@ public class DescribeSystemAnswersAndOpensItsPageTests
     {
         var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
             [GalaxyCapability.Create(null, () => "Sol", settings, systems: systems, currentAddress: () => Sol)]);
@@ -109,7 +108,6 @@ public class DescribeSystemAnswersAndOpensItsPageTests
     {
         var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var tool = GalaxyCapability.Create(null, () => "Sol", settings, systems: systems, currentAddress: () => Sol)
             .Tools.Single(tool => tool.Name == "describe_system");

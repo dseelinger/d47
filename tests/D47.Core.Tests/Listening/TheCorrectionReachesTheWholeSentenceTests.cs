@@ -122,7 +122,6 @@ public class TheCorrectionReachesTheWholeSentenceTests
 
         // Off out of the box, and every one of these is about what a lookup says when it fails rather than
         // about the switch.
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
         var watch = new MishearingWatch();
         var learned = new List<(string Heard, string Meant)>();
 
@@ -164,7 +163,6 @@ public class TheCorrectionReachesTheWholeSentenceTests
 
         // Off out of the box, and every one of these is about what a lookup says when it fails rather than
         // about the switch.
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var galaxy = GalaxyCapability.Create(
             new OneSystem("Eurybia"),
@@ -200,7 +198,6 @@ public class TheCorrectionReachesTheWholeSentenceTests
 
         // Off out of the box, and every one of these is about what a lookup says when it fails rather than
         // about the switch.
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var galaxy = GalaxyCapability.Create(new OneSystem("Eurybia"), () => "Sol", surface.Settings);
 

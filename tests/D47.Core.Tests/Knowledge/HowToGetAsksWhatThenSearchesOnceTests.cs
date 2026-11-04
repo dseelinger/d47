@@ -70,12 +70,10 @@ public class HowToGetAsksWhatThenSearchesOnceTests
     }
 
     private static (CapabilityRegistry Registry, FakeGalaxy Galaxy) Build(
-        MemoryInstall install, ITradePlanService? trade = null, bool enabled = true, string? currentSystem = "Sol")
+        MemoryInstall install, ITradePlanService? trade = null, string? currentSystem = "Sol")
     {
         var galaxy = new FakeGalaxy();
         var settings = TestSurface.For(install).Settings;
-
-        settings.Apply(GalaxyCapability.EnabledKey, enabled ? "true" : "false", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
             [GalaxyCapability.Create(galaxy, () => currentSystem, settings, trade)]);
@@ -165,7 +163,6 @@ public class HowToGetAsksWhatThenSearchesOnceTests
     {
         var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build([GalaxyCapability.Create(null, () => "Sol", settings)]);
 

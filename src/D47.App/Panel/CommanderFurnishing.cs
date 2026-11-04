@@ -181,7 +181,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     {
         var headset = host.Headset;
 
-        _bgsWorkBuild = _ => _bgsWork = new BgsWorkPage(state, tick, now, host.SettingsJump, headset, host.ColumnWidths, host.Copy);
+        _bgsWorkBuild = _ => _bgsWork = new BgsWorkPage(state, tick, now, headset, host.ColumnWidths, host.Copy);
 
         DeclareLedger(new NavCrumb(BgsWorkPage.PageKey, "BGS work"));
     }

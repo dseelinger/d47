@@ -84,7 +84,6 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
     {
         var surface = TestSurface.For(install);
 
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var trade = new Capturing(answer);
 

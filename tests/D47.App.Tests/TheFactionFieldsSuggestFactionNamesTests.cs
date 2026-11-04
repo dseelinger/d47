@@ -74,7 +74,7 @@ public sealed class TheFactionFieldsSuggestFactionNamesTests
 
     private sealed record Shown(PanelView Panel, Window Window, Systems Systems, GalaxySearchBoard Board);
 
-    private static Shown Open(string root, bool lookups = true)
+    private static Shown Open(string root)
     {
         var systems = new Systems();
         var board = new GalaxySearchBoard();
@@ -84,9 +84,7 @@ public sealed class TheFactionFieldsSuggestFactionNamesTests
 
         panel.EnableStarSystem(new StarSystemSurface(
             systems,
-            () => new JournalLocation("LTT 7786", null, false, null),
-            () => lookups,
-            () => { })
+            () => new JournalLocation("LTT 7786", null, false, null))
         {
             Searches = new GalaxySearchSurface(registry, board, null, () => string.Empty, () => [])
             {
@@ -149,19 +147,6 @@ public sealed class TheFactionFieldsSuggestFactionNamesTests
 
         TypeAndPick(shown, "a faction present");
 
-        shown.Window.Close();
-    }
-
-    [AvaloniaFact]
-    public void WithGalaxySearchOffTheFactionFieldsListNothingAndSendNothing()
-    {
-        var shown = Open(SystemSearchPage.RootKey, lookups: false);
-
-        shown.Panel.Box("controlling faction").Text = "Mot";
-        Settle();
-
-        Assert.Empty(shown.Panel.Listed());
-        Assert.Empty(shown.Systems.Prefixes());
         shown.Window.Close();
     }
 

@@ -32,7 +32,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     private string? _seenSystem;
     private CodexPictureKey? _pending;
     private string? _failure;
-    private bool? _seenLookups;
+    private bool _seenSearch;
 
     public CodexEntryPage(
         Func<CommanderGameState?> state,
@@ -77,7 +77,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     {
         if (ReferenceEquals(_state()?.CodexLedger, _seenLedger)
             && _state()?.Location.StarSystem == _seenSystem
-            && _bodySearch?.Invoke()?.Enabled() == _seenLookups)
+            && (_bodySearch?.Invoke() is not null) == _seenSearch)
         {
             return false;
         }
@@ -136,7 +136,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         var state = _state();
         _seenLedger = state?.CodexLedger;
         _seenSystem = state?.Location.StarSystem;
-        _seenLookups = _bodySearch?.Invoke()?.Enabled();
+        _seenSearch = _bodySearch?.Invoke() is not null;
 
         var view = CodexModel.EntryPage(
             state?.CodexLedger ?? CodexLedger.None,
@@ -223,10 +223,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
             return;
         }
 
-        var enabled = link.Enabled();
-        var button = new Button { Name = "CodexSearch", Content = "Search", IsEnabled = enabled };
-        ToolTip.SetShowOnDisabled(button, true);
-        ToolTip.SetTip(button, enabled ? null : GalaxySearchPage.LookupsOffTip);
+        var button = new Button { Name = "CodexSearch", Content = "Search" };
         button.Click += (_, _) => link.Run(new Dictionary<string, string>(StringComparer.Ordinal) { ["codex_entry"] = entry.Name });
         column.Children.Add(button);
     }

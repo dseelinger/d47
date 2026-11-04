@@ -11,7 +11,6 @@ public class FindNamesFromTheGalaxyTests
     private static PanelFind Find()
     {
         var (_, settings, nav) = FindRanksPagesSettingsAndHelpTests.Build();
-        settings.Replace("test", current => current with { Knowledge = current.Knowledge with { GalaxySearch = true } });
 
         return new PanelFind(nav, settings, new Dictionary<PanelTab, string>());
     }

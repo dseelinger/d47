@@ -2528,7 +2528,7 @@ public static class JournalCapability
         var report = new StringBuilder();
 
         report.AppendLine(tickTime is null
-            ? "In the last 24 hours. d47 does not know when the BGS tick was; the BGS tick time setting in Galaxy lets it ask."
+            ? "In the last 24 hours. d47 has not read the time of the BGS tick yet."
             : $"Since the BGS tick at {tickTime} UTC, {Ago(now - from)}:");
 
         var named = faction is null && system is null ? pairs.Take(BgsPairsNamed).ToList() : pairs;

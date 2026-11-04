@@ -68,9 +68,7 @@ public static class SearchPanelHosting
 
         var surface = new StarSystemSurface(
             systems,
-            () => new JournalLocation("LTT 7786", null, false, null),
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { })
+            () => new JournalLocation("LTT 7786", null, false, null))
         {
             Searches = new GalaxySearchSurface(registry, board, store, () => "F1", () => [])
             {

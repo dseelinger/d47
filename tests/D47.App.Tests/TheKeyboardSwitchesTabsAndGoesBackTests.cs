@@ -40,9 +40,7 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
         EveryTabDrawsOneHeaderTests.FurnishEveryTabButSettings(host.Panel);
         host.Panel.EnableStarSystem(new StarSystemSurface(
             new Systems(),
-            () => new JournalLocation("Sol", null, false, null),
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { }));
+            () => new JournalLocation("Sol", null, false, null)));
         Dispatcher.UIThread.RunJobs();
 
         return host;

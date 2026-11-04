@@ -19,14 +19,11 @@ public sealed class WatchFormPage : UserControl
 
     public const string WhenHelp = "Market readings older than 8 hours don't count.";
 
-    public const string AnyStationOff = "Any station looks the station up through Galaxy search, which is off.";
-
     private readonly WatchesDesk _desk;
     private readonly PanelNavigator _nav;
     private readonly Watch? _existing;
     private readonly bool _stock;
     private readonly StackPanel _body = new() { Spacing = 20 };
-    private readonly StackPanel _gate = new();
     private readonly Segment _source = new() { ItemsSource = ["A rare", "Any station"] };
     private readonly Segment _comparison = new() { ItemsSource = ["Above", "Below"] };
     private readonly InlinePicker _rarePicker = new() { Label = "Rare" };
@@ -165,7 +162,7 @@ public sealed class WatchFormPage : UserControl
 
         if (_desk.SystemNames is { } names)
         {
-            _system.Suggest(names, () => _desk.GalaxySearch);
+            _system.Suggest(names, () => true);
         }
 
         _rarePicker.Picked += (_, symbol) =>
@@ -187,8 +184,6 @@ public sealed class WatchFormPage : UserControl
         var find = new Button { Content = "FIND STATIONS", HorizontalAlignment = HorizontalAlignment.Left };
         find.Click += async (_, _) => await FindStationsAsync();
         _findRow.Children.Add(find);
-
-        _body.Children.Add(_gate);
 
         if (_existing is { } watch)
         {
@@ -239,8 +234,6 @@ public sealed class WatchFormPage : UserControl
             ThemeManager.GreyKey);
         note.TextWrapping = TextWrapping.Wrap;
 
-        _body.Children.Add(_gate);
-
         if (_existing is { } watch)
         {
             _body.Children.Add(Group(
@@ -251,7 +244,6 @@ public sealed class WatchFormPage : UserControl
 
         _body.Children.Add(Group("Watch", string.Empty, Row("Name", _name), note, _enabled));
         _body.Children.Add(Footer());
-        DrawGate();
     }
 
     private Control Footer()
@@ -292,28 +284,6 @@ public sealed class WatchFormPage : UserControl
         _findRow.IsVisible = any;
         _stationRow.IsVisible = any;
         _commodityRow.IsVisible = any;
-        _source.SetOptionEnabled(1, _desk.GalaxySearch || any);
-
-        DrawGate();
-    }
-
-    private void DrawGate()
-    {
-        _gate.Children.Clear();
-
-        if (_stock && !_desk.GalaxySearch)
-        {
-            _gate.Children.Add(WatchesPage.Gate("Galaxy search is off", AnyStationOff, _desk.TurnOnGalaxySearch, ShowMode));
-        }
-        else if (!_stock && !_desk.GalNet)
-        {
-            _gate.Children.Add(WatchesPage.Gate(WatchesPage.GalNetLabel, WatchesPage.GalNetText, _desk.TurnOnGalNet, DrawGate));
-        }
-
-        if (!_desk.BgsTick)
-        {
-            _gate.Children.Add(WatchesPage.Gate(WatchesPage.BgsTickLabel, WatchesPage.BgsTickText, _desk.TurnOnBgsTick, DrawGate));
-        }
     }
 
     private void ShowRare()
@@ -354,7 +324,7 @@ public sealed class WatchFormPage : UserControl
     {
         var system = _system.Text?.Trim() ?? string.Empty;
 
-        if (system.Length == 0 || !_desk.GalaxySearch)
+        if (system.Length == 0)
         {
             return;
         }

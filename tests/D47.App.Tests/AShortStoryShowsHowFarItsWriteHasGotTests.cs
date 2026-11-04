@@ -156,7 +156,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
             () => galaxy, () => null, null, null, logged);
 
         var surface = new AdventureSurface(
-            book, generator, () => state, () => "F1", () => Now, said.Add, () => true, () => true, () => null, () => { })
+            book, generator, () => state, () => "F1", () => Now, said.Add, () => true, () => null, () => { })
         {
             Writing = new ShortStoryWriting(clock),
         };

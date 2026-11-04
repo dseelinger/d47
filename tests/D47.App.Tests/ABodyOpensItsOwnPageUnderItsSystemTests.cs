@@ -104,7 +104,6 @@ public sealed class ABodyOpensItsOwnPageUnderItsSystemTests
     private static (PanelView Panel, Window Window, Systems Systems) Shown(string root, bool headset = false)
     {
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
         var store = new SavedSearchStore("saved-searches.json", new MemoryFileSystem(), NullLogger<SavedSearchStore>.Instance);
         var board = new GalaxySearchBoard();
         var registry = CapabilityRegistry.Build([GalaxyCapability.Create(new Galaxy(), () => "LTT 7786", settings, searches: board)]);
@@ -122,9 +121,7 @@ public sealed class ABodyOpensItsOwnPageUnderItsSystemTests
 
         panel.EnableStarSystem(new StarSystemSurface(
             systems,
-            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Address },
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { })
+            () => new JournalLocation("LTT 7786", null, false, null) { SystemAddress = Address })
         {
             Searches = new GalaxySearchSurface(registry, board, store, () => Fid, () => [])
             {
@@ -301,7 +298,7 @@ public sealed class ABodyOpensItsOwnPageUnderItsSystemTests
             Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.NotFound));
     }
 
-    private static StarSystemSurface Surface() => new(new Systems(), () => null, () => true);
+    private static StarSystemSurface Surface() => new(new Systems(), () => null);
 
     private static byte[] Png(int side)
     {

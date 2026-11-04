@@ -19,7 +19,6 @@ public sealed class ColonisationPlans
         new Dictionary<string, SystemPlan>(StringComparer.OrdinalIgnoreCase);
 
     private readonly IColonisationPlanService? _service;
-    private readonly Func<bool> _enabled;
     private readonly Func<CommanderGameState?> _state;
     private readonly ILogger<ColonisationPlans> _logger;
 
@@ -28,22 +27,18 @@ public sealed class ColonisationPlans
     private readonly Dictionary<string, Task<SystemPlan?>> _inFlight = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, DateTimeOffset> _attemptedAt = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, DateTimeOffset> _failedAt = new(StringComparer.OrdinalIgnoreCase);
-    private int _generation;
 
     // Tick thread only.
     private readonly HashSet<string> _swept = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<long, DateTimeOffset> _seenAt = [];
     private string? _sweptFor;
-    private bool _wasEnabled;
 
     public ColonisationPlans(
         IColonisationPlanService? service,
-        Func<bool> enabled,
         Func<CommanderGameState?> state,
         ILogger<ColonisationPlans> logger)
     {
         _service = service;
-        _enabled = enabled;
         _state = state;
         _logger = logger;
     }
@@ -68,7 +63,7 @@ public sealed class ColonisationPlans
         }
     }
 
-    private bool On => _service is not null && _enabled();
+    private bool On => _service is not null;
 
     /// <summary>Asks for a system's plan if what is held is older than the refresh age; returns at once.</summary>
     public void Want(string systemName, DateTimeOffset now)
@@ -104,16 +99,7 @@ public sealed class ColonisationPlans
     /// <summary>Starts the fetches that are due. Never blocks.</summary>
     public void Poll(DateTimeOffset now)
     {
-        var enabled = On;
-
-        if (enabled != _wasEnabled)
-        {
-            Reset();
-        }
-
-        _wasEnabled = enabled;
-
-        if (!enabled || _state() is not { } state)
+        if (!On || _state() is not { } state)
         {
             return;
         }
@@ -152,22 +138,6 @@ public sealed class ColonisationPlans
         }
     }
 
-    /// <summary>Clears everything held when the switch changes, so turning it on fetches every system again.</summary>
-    private void Reset()
-    {
-        _sweptFor = null;
-        _swept.Clear();
-        _seenAt.Clear();
-
-        lock (_lock)
-        {
-            _generation++;
-            _held.Clear();
-            _inFlight.Clear();
-            _attemptedAt.Clear();
-            _failedAt.Clear();
-        }
-    }
 
     private bool Failed(string system)
     {
@@ -184,7 +154,6 @@ public sealed class ColonisationPlans
     private Task<SystemPlan?>? Start(string system, DateTimeOffset now, TimeSpan age)
     {
         TaskCompletionSource<SystemPlan?> answer;
-        int generation;
 
         lock (_lock)
         {
@@ -200,16 +169,15 @@ public sealed class ColonisationPlans
             }
 
             answer = new TaskCompletionSource<SystemPlan?>(TaskCreationOptions.RunContinuationsAsynchronously);
-            generation = _generation;
             _attemptedAt[system] = now;
             _inFlight[system] = answer.Task;
         }
 
-        Dispatch(() => Fetch(system, now, generation, answer));
+        Dispatch(() => Fetch(system, now, answer));
         return answer.Task;
     }
 
-    private async Task Fetch(string system, DateTimeOffset startedAt, int generation, TaskCompletionSource<SystemPlan?> answer)
+    private async Task Fetch(string system, DateTimeOffset startedAt, TaskCompletionSource<SystemPlan?> answer)
     {
         SystemPlan? plan = null;
         var failed = false;
@@ -231,34 +199,27 @@ public sealed class ColonisationPlans
 
         lock (_lock)
         {
-            if (generation != _generation)
+            _inFlight.Remove(system);
+
+            if (failed)
             {
-                result = null;
+                _failedAt[system] = startedAt;
             }
             else
             {
-                _inFlight.Remove(system);
+                _failedAt.Remove(system);
 
-                if (failed)
+                if (plan is null)
                 {
-                    _failedAt[system] = startedAt;
+                    _held.Remove(system);
                 }
                 else
                 {
-                    _failedAt.Remove(system);
-
-                    if (plan is null)
-                    {
-                        _held.Remove(system);
-                    }
-                    else
-                    {
-                        _held[system] = plan;
-                    }
+                    _held[system] = plan;
                 }
-
-                result = _held.GetValueOrDefault(system);
             }
+
+            result = _held.GetValueOrDefault(system);
         }
 
         answer.SetResult(result);

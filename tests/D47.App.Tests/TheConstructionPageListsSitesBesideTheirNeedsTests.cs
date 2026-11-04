@@ -151,7 +151,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         CommanderGameState state,
         SourcingBoard? board = null,
         CapabilityRegistry? registry = null,
-        bool lookups = true,
         bool onFoot = false,
         Action<string>? browse = null)
     {
@@ -178,7 +177,7 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
             checklists,
             () => state,
             kit,
-            construction: new ConstructionSurface(() => state, () => Now, registry, board ?? new SourcingBoard(), () => lookups));
+            construction: new ConstructionSurface(() => state, () => Now, registry, board ?? new SourcingBoard()));
 
         var window = new Window
         {
@@ -240,7 +239,7 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         var state = State(Reconciled);
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
-        panel.EnableConstruction(new ConstructionSurface(() => state, () => Now, null, null, () => true));
+        panel.EnableConstruction(new ConstructionSurface(() => state, () => Now, null, null));
 
         Assert.Equal(["Construction"], panel.Nav.Roots(PanelTab.Assets).Select(root => root.Word));
     }
@@ -360,19 +359,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         Assert.Equal("true", asked["where_to_buy"]);
         Assert.True(Shows(Page(panel), "BRESNIK HUB"));
         Assert.True(Shows(Page(panel), "2 stops cover it."));
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
-    public void WithLookupsOffTheSearchTileIsDisabledAndSaysWhy()
-    {
-        var board = new SourcingBoard();
-        var (window, panel) = Open(State(Reconciled), board, Registry(new Searches(), board), lookups: false);
-
-        var search = Page(panel).GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, ConstructionPage.SearchLabel));
-        Assert.False(search.IsEnabled);
-        Assert.True(Shows(Page(panel), ConstructionPage.LookupsOff));
 
         window.Close();
     }

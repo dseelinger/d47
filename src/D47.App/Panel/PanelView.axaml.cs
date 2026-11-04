@@ -735,7 +735,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         // The captain and tower's own settings, on the tab they only affect (#218, #305).
         Func<Control?>? carrierSettingsStrip = null,
 
-        // The galaxy service while "Look things up in the galaxy" is on, else null; material detail searches it.
+        // The galaxy service, or null for none; material detail searches it.
         Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
 
         // The conversation about each build's plan, on a ship's page (#570).

@@ -200,10 +200,6 @@ public class ConstructionNeedsAreNettedAndOldSitesAreSetAsideTests
         var trade = new FakeTrade();
         var settings = TestSurface.SettingsFor(install);
 
-        settings.Replace(
-            "the test",
-            current => current with { Knowledge = current.Knowledge with { GalaxySearch = true } });
-
         var registry = CapabilityRegistry.Build(
             [ColonisationCapability.Create(() => gameState.Active, null, settings, trade, null, () => Now)]);
 

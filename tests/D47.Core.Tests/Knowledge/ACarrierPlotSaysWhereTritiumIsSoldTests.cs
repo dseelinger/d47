@@ -106,7 +106,6 @@ public class ACarrierPlotSaysWhereTritiumIsSoldTests
         }
 
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var registry = CapabilityRegistry.Build(
         [
@@ -192,7 +191,6 @@ public class ACarrierPlotSaysWhereTritiumIsSoldTests
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var market = new Market(search => search.Query.IncludeCarriers
             ? Answer(Offer("Carrier A", "FleetCarrier", Now.AddDays(-1), 5))
@@ -219,7 +217,6 @@ public class ACarrierPlotSaysWhereTritiumIsSoldTests
     {
         var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var entry = EgressDisclosure.Entry(EgressDisclosure.GalaxySearch, settings.Current, llmKeyPresent: false);
 

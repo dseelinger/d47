@@ -57,7 +57,6 @@ public sealed class AColumnHeaderOnRouteMarketRerunsTheSearchRankedTests
     private static (PanelView Panel, Window Window, Trade Trade) Furnished(TradeSide side = TradeSide.Buying, int? tonnes = null)
     {
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var trade = new Trade();
         var board = new CommodityBoard();
@@ -83,8 +82,6 @@ public sealed class AColumnHeaderOnRouteMarketRerunsTheSearchRankedTests
                 () => "Sol",
                 registry,
                 Plans: null,
-                LookupsEnabled: () => true,
-                OpenSettings: null,
                 Commodities: board,
                 Clipboard: null),
             plan: false,

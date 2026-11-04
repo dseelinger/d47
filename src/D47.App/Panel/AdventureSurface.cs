@@ -17,7 +17,6 @@ public sealed record AdventureSurface(
     Func<DateTimeOffset> Now,
     Action<string> Say,
     Func<bool> ModelAvailable,
-    Func<bool> GalaxySearchOn,
     Func<AdventureResolver?> Resolver,
     Action OpenSettings,
     MessageStore? Messages = null,

@@ -38,12 +38,12 @@ nav_order: 162
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Turn on GalNet news, in Settings › Providers › Outside sources. It is off out of the box.</p>
-<p class="expect">With nothing kept yet, D47 says "GalNet news is off" and where to turn it on; the articles arrive after the setting is on.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="With GalNet news off and nothing kept there is nothing to read.">
+<p class="say">Give the first fetch time after the first launch. It reads up to two years of articles.</p>
+<p class="expect">Before the first fetch finishes, D47 says "No GalNet articles are kept yet."; ask again once it has.</p>
+<svg viewBox="0 0 880 152" role="img" aria-label="Before the first fetch there is nothing to read.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Off and empty means nothing to read.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Articles already kept can still be read with the setting off.</text>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Nothing kept yet means nothing to read.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">D47 fetches at start and every hour, and keeps what it fetches.</text>
 </svg>
 </section>
 </div></div>
@@ -105,11 +105,8 @@ make no network request.
 The latest on GalNet: Faulcon DeLacy Announces Anaconda Mk II, 12 MAR 3310; Aegis Reports Thargoid Activity, 11 MAR 3310; and Pilots Federation Updates Rank Titles, 10 MAR 3310.
 ```
 
-Both tools answer from the kept articles whether **GalNet news** is on or off; off only stops new
-articles arriving. With nothing kept, D47 says "No GalNet articles are kept yet." when the setting is
-on, and "GalNet news is off. Turn it on under Galaxy search in Settings to keep the articles." when
-it is off. The setting is in Settings › Providers › Outside sources; the message names the
-older place. D47 fetches new articles at start and every hour while it runs, and the first time also
+Both tools answer from the kept articles. With nothing kept, D47 says "No GalNet articles are kept
+yet." D47 fetches new articles at start and every hour while it runs, and the first time also
 up to two years of older ones.
 
 ### What Directive 47 can do about it

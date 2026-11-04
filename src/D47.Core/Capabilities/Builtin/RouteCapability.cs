@@ -290,12 +290,7 @@ public static class RouteCapability
             phrase,
             new Dictionary<string, string>(StringComparer.Ordinal) { ["kind"] = kind }));
 
-    internal const string Unavailable =
-        "Route planning is switched off, so I can't plot that. It shares the galaxy search setting, "
-        + "which the Commander can turn on in settings.";
-
-    private static bool Ready(IRouteService? routes, Configuration.SettingsService settings) =>
-        routes is not null && settings.Current.Knowledge.GalaxySearch;
+    internal const string Unavailable = "Route planning is not available, so I can't plot that.";
 
     private const string NotSetInGame = "\nThe game's course was not set. Use plot_course to set it.";
 
@@ -309,7 +304,7 @@ public static class RouteCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (!Ready(routes, settings))
+        if (routes is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -428,7 +423,7 @@ public static class RouteCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (!Ready(routes, settings))
+        if (routes is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -552,7 +547,7 @@ public static class RouteCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (!Ready(routes, settings))
+        if (routes is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -759,7 +754,7 @@ public static class RouteCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (trade is null || !settings.Current.Knowledge.GalaxySearch)
+        if (trade is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -847,7 +842,7 @@ public static class RouteCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        if (galaxy is null)
         {
             return ToolResult.Error(Unavailable);
         }
@@ -969,7 +964,7 @@ public static class RouteCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (trade is null || !settings.Current.Knowledge.GalaxySearch)
+        if (trade is null)
         {
             return ToolResult.Error(Unavailable);
         }

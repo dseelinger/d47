@@ -88,7 +88,6 @@ public class SeveralCommoditiesAreSearchedAtOneStationTests
     {
         var surface = TestSurface.For(new MemoryInstall());
 
-        surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var trade = new Capturing(answer);
 

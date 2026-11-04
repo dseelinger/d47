@@ -330,12 +330,6 @@ public static class ExobiologyCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (!settings.Current.Knowledge.CommunityBiology)
-        {
-            return ToolResult.Ok(
-                "Earlier biology finds are off. Turn on Earlier biology finds in Settings to ask.");
-        }
-
         if (state is null)
         {
             return ToolResult.Ok("No Elite Dangerous journal has been detected yet.");
@@ -587,11 +581,6 @@ public static class ExobiologyCapability
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
-        if (!settings.Current.Knowledge.GalaxySearch)
-        {
-            return ToolResult.Error(RouteCapability.Unavailable);
-        }
-
         if (routes is null)
         {
             return ToolResult.Ok(

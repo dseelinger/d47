@@ -66,11 +66,11 @@ internal sealed class PanelPathFixture : IDisposable
 
         panel.EnableLoadout(
             ships, checklists, state, onFoot,
-            construction: new ConstructionSurface(state, () => DateTimeOffset.UtcNow, null, null, () => true),
+            construction: new ConstructionSurface(state, () => DateTimeOffset.UtcNow, null, null),
             characters: characters);
         panel.EnableEngineers(new EngineerPlanService(builds, kit, checklists, state), ships, state, onFoot, checklists: checklists);
         panel.EnableChecklist(checklists);
-        panel.EnableRouting(new RoutingSurface(() => new NavRoute(), () => "Sol", CapabilityRegistry.Build([]), Plans: null, () => true));
+        panel.EnableRouting(new RoutingSurface(() => new NavRoute(), () => "Sol", CapabilityRegistry.Build([]), Plans: null));
 
         var book = new AdventureBook(
             new AdventureStore(Path.Combine(root, "adventures.json"), memory(), NullLogger<AdventureStore>.Instance),
@@ -81,7 +81,7 @@ internal sealed class PanelPathFixture : IDisposable
             () => null, () => null, null, null, NullLogger.Instance);
 
         panel.EnableAdventures(new AdventureSurface(
-            book, generator, state, () => "F1", () => DateTimeOffset.UtcNow, _ => { }, () => false, () => false, () => null, () => { }));
+            book, generator, state, () => "F1", () => DateTimeOffset.UtcNow, _ => { }, () => false, () => null, () => { }));
 
         var now = () => DateTimeOffset.UtcNow;
 
@@ -95,7 +95,7 @@ internal sealed class PanelPathFixture : IDisposable
         panel.EnableCodex(state, () => HistoryState.Done, now);
         panel.EnableRawJournal();
         panel.EnableStarSystem(new StarSystemSurface(
-            new Systems(), () => new JournalLocation("Sol", null, false, null), () => true, () => { }));
+            new Systems(), () => new JournalLocation("Sol", null, false, null)));
 
         // Roots the window shows only while the Commander owns a carrier or is in a story.
         panel.Nav.SetVisible(PanelTab.Assets, LoadoutPages.CarrierRoot, true);

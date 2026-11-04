@@ -84,10 +84,6 @@ public class StockWatchesAreCheckedInTheBackgroundTests
 
         public DateTimeOffset? LastTick { get; set; } = Tick;
 
-        public bool GalaxySearch { get; set; } = true;
-
-        public bool BgsTick { get; set; } = true;
-
         /// <summary>Finishes every quote started so far.</summary>
         public void Finish()
         {
@@ -120,10 +116,7 @@ public class StockWatchesAreCheckedInTheBackgroundTests
             store,
             trade,
             () => rig!.LastTick,
-            () => rig!.GalaxySearch,
-            () => rig!.BgsTick,
             () => [],
-            () => false,
             NullLogger<WatchRunner>.Instance)
         {
             Dispatch = work => rig!.Pending.Add(work),
@@ -194,30 +187,6 @@ public class StockWatchesAreCheckedInTheBackgroundTests
     }
 
     [Fact]
-    public void NothingIsRequestedWhileGalaxySearchIsOff()
-    {
-        var rig = Build();
-        Assert.Null(rig.Store.Add(Relics()));
-        rig.GalaxySearch = false;
-
-        rig.Check(Start);
-
-        Assert.Empty(rig.Trade.Asked);
-    }
-
-    [Fact]
-    public void NothingIsRequestedWhileBgsTickTimeIsOff()
-    {
-        var rig = Build();
-        Assert.Null(rig.Store.Add(Relics()));
-        rig.BgsTick = false;
-
-        rig.Check(Start);
-
-        Assert.Empty(rig.Trade.Asked);
-    }
-
-    [Fact]
     public void NothingIsRequestedWhileNoTickIsKnown()
     {
         var rig = Build();
@@ -264,7 +233,7 @@ public class StockWatchesAreCheckedInTheBackgroundTests
         rig.Trade.Answer = _ => Stock(240, Start);
 
         rig.Runner.Poll(Start);
-        rig.GalaxySearch = false;
+        rig.Runner.Audible = () => false;
         rig.Finish();
         rig.Runner.Poll(Start.AddMilliseconds(100));
 

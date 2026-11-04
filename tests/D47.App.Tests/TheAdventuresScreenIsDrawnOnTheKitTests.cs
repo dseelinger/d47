@@ -106,7 +106,7 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
             () => null, () => null, null, null, NullLogger.Instance);
 
         var surface = new AdventureSurface(
-            book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => false, () => null, () => { });
+            book, generator, () => state, () => "F1", () => Now, _ => { }, () => false, () => null, () => { });
 
         var panel = new PanelView
         {

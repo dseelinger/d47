@@ -5,25 +5,11 @@ namespace D47.Core.Tests.Configuration;
 
 public class AColonisationPlanReadIsDisclosedTests
 {
-    [Fact]
-    public void TheSwitchIsOffByDefault()
-    {
-        Assert.False(new D47Settings().Knowledge.ColonisationPlanner);
-    }
 
     [Fact]
-    public void OffItSaysNoSystemNameIsSent()
+    public void OnADefaultInstallItNamesTheHostAndWhatIsSent()
     {
-        var entry = EgressDisclosure.Entry(EgressDisclosure.ColonisationPlanner, new D47Settings(), llmKeyPresent: false);
-
-        Assert.False(entry.Active);
-        Assert.Contains("Colonisation plans are off, so no system name is sent to the planner.", entry.What, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void OnItNamesTheHostAndWhatIsSent()
-    {
-        var settings = new D47Settings { Knowledge = new KnowledgeSettings { ColonisationPlanner = true } };
+        var settings = new D47Settings();
 
         var entry = EgressDisclosure.Entry(EgressDisclosure.ColonisationPlanner, settings, llmKeyPresent: false);
 

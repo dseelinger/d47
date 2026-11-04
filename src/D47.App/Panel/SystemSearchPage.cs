@@ -57,13 +57,11 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
     public SystemSearchPage(
         GalaxySearchSurface searches,
-        Func<bool> lookupsEnabled,
         Func<string?> here,
         Action<SystemSummary>? open,
         Func<string, Task<bool>>? copy,
-        Action? openSettings,
         bool headset)
-        : base(searches, lookupsEnabled, openSettings, headset)
+        : base(searches, headset)
     {
         _here = here;
         Copy = copy;

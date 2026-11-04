@@ -127,12 +127,9 @@ public sealed class PanelFind(
             .Select(name => name.Title)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        if (settings.Current.Knowledge.GalaxySearch)
+        foreach (var system in SystemNameTable.Names.Where(system => !galaxySystems.Contains(system)))
         {
-            foreach (var system in SystemNameTable.Names.Where(system => !galaxySystems.Contains(system)))
-            {
-                yield return new PanelFindName(PanelFindKind.StarSystem, system, "Star system", system);
-            }
+            yield return new PanelFindName(PanelFindKind.StarSystem, system, "Star system", system);
         }
 
         foreach (var engineer in EngineerDirectory.All)

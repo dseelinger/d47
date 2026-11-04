@@ -19,25 +19,9 @@ nav_order: 106
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Three steps to a route worth flying.</p>
+<p class="intro">Two steps to a route worth flying.</p>
 <section>
-<h2><span class="num">1</span> Turn galaxy lookups on. Routes are worked out by Spansh.</h2>
-<p class="say">Turn on Look things up in the galaxy, in the Outside sources group of the Providers settings.</p>
-<p class="expect">The row shows on. With it off, D47 answers that route planning is switched off.</p>
-<svg viewBox="0 0 880 252" role="img" aria-label="Outside sources">
- <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Outside sources</text>
- <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="68" y="98" font-size="16" fill="var(--text)">Look things up in the galaxy</text>
- <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">on</text>
- <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="154" font-size="16" fill="var(--text)">Which sites</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">named on the Privacy page</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">Route planning shares this setting with galaxy search.</text>
-</svg>
-</section>
-<section>
-<h2><span class="num">2</span> Ask for the kind of route you want.</h2>
+<h2><span class="num">1</span> Ask for the kind of route you want.</h2>
 <p class="say">Say "plot a neutron route to Colonia", or ask for a Road to Riches loop or a trade run.</p>
 <p class="expect">D47 plans the route for the ship you are in and reads you the stops.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
@@ -49,7 +33,7 @@ nav_order: 106
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> Fly it one stop at a time.</h2>
+<h2><span class="num">2</span> Fly it one stop at a time.</h2>
 <p class="say">Say "plot next neutron jump".</p>
 <p class="expect">D47 sets the next stop in the galaxy map and says which stop it is, such as "Stop 2 of 21".</p>
 <svg viewBox="0 0 880 208" role="img" aria-label="The ask row with the next-stop phrase typed into it">
@@ -159,7 +143,7 @@ nav_order: 106
 <div class="next-title">Where to go next</div>
 <div class="cards">
 <a class="card" href="navigation.html"><span class="ct">Navigation →</span><span class="cd">Getting the first waypoint out of the plan and into the galaxy map.</span></a>
-<a class="card" href="galaxy.html"><span class="ct">Galaxy search →</span><span class="cd">The same service and the same switch, asked a different kind of question.</span></a>
+<a class="card" href="galaxy.html"><span class="ct">Galaxy search →</span><span class="cd">The same service, asked a different kind of question.</span></a>
 <a class="card" href="exobiology.html"><span class="ct">Exobiology →</span><span class="cd">The fourth plot, and the one that says what it structurally cannot contain.</span></a>
 </div>
 </div>
@@ -185,9 +169,7 @@ to my carrier" — plots in the map instead, because that is what a Commander me
 > "find me a trade route with fifty million"
 
 This asks [spansh.co.uk](https://spansh.co.uk), the same service the
-[galaxy search](galaxy.md) uses, and it shares that one setting. Turn on **Look things up in the
-galaxy** and plotting works; leave it off and you get "route planning is switched off", which is a
-capability that is off rather than an error.
+[galaxy search](galaxy.md) uses.
 
 ### Plotting is not searching
 

@@ -22,7 +22,7 @@ public class ServerStateChangesAreSaidTests
     private static List<string> Said(params GameServerState[] answers)
     {
         var source = new Source();
-        var watch = new ServerStatusWatch(source, () => true, NullLogger<ServerStatusWatch>.Instance)
+        var watch = new ServerStatusWatch(source, NullLogger<ServerStatusWatch>.Instance)
         {
             Dispatch = work => work().GetAwaiter().GetResult(),
         };
@@ -109,9 +109,5 @@ public class ServerStateChangesAreSaidTests
     }
 
     [Fact]
-    public void TheRowIsOnByDefaultAndTheFetchOffByDefault()
-    {
-        Assert.True(new CalloutSettings().ServerStatus);
-        Assert.False(new KnowledgeSettings().ServerStatus);
-    }
+    public void TheRowIsOnByDefault() => Assert.True(new CalloutSettings().ServerStatus);
 }

@@ -26,12 +26,12 @@ nav_order: 163
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Turn on Server status, in Settings › Providers › Outside sources. It is off out of the box.</p>
-<p class="expect">With the setting off, D47 says "Server status is off" and checks nothing. With it on, the title bar shows SERVERS with the state.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="With Server status off there is no answer.">
+<p class="say">Ask once D47 has been running a moment. It checks at start.</p>
+<p class="expect">Before the first check D47 says "Server status has not been checked yet."; after it, the title bar shows SERVERS with the state.</p>
+<svg viewBox="0 0 880 152" role="img" aria-label="Before the first check there is no answer.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Off means no answer.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">D47 only checks while the setting is on.</text>
+ <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">No check yet means no answer.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">D47 checks at start, then every ten minutes, or every minute while the servers are down.</text>
 </svg>
 </section>
 </div></div>
@@ -88,8 +88,7 @@ D47 reads the state from its server status check. These tools make no network re
 Online. Checked 3 minutes ago.
 ```
 
-With **Server status** off, D47 says "Server status is off. Turn it on under Outside sources in Settings
-to check the servers." The setting is off by default. Once on, D47 asks Frontier at start, then every ten
+D47 asks Frontier at start, then every ten
 minutes while the servers are up and every minute while they are not, whether or not Elite is running. Before the first check it says "Server status has not been checked yet."
 
 ### What Directive 47 can do about it

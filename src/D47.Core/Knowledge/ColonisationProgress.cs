@@ -8,12 +8,12 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Knowledge;
 
 /// <summary>
-/// Sends the shown Commander's live colonisation events to the planner while both
-/// <see cref="KnowledgeSettings.ColonisationPlanner"/> and <see cref="KnowledgeSettings.ColonisationProgress"/>
-/// are on, and only while the shown Commander is the one the key belongs to. The key is the shown
+/// Sends the shown Commander's live colonisation events to the planner while
+/// <see cref="KnowledgeSettings.ColonisationProgress"/> is on, and only while the shown Commander is the one the
+/// key belongs to. The key is the shown
 /// Commander's own secret, or the installation secret until its Commander is shown, when it moves to them.
 /// <see cref="Tick"/> is for the tick thread and never waits; <see cref="KeyChanged"/> may be called from
-/// any thread. The queue is built the first time the switches are found on.
+/// any thread. The queue is built the first time the switch is found on.
 /// </summary>
 public sealed class ColonisationProgress
 {
@@ -83,7 +83,7 @@ public sealed class ColonisationProgress
         Func<long, string?> systemOf,
         DateTimeOffset now)
     {
-        if (_settings().Knowledge is not { ColonisationPlanner: true, ColonisationProgress: true })
+        if (!_settings().Knowledge.ColonisationProgress)
         {
             _on = false;
             Publish(null);

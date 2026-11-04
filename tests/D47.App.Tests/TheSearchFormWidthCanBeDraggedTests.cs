@@ -50,15 +50,12 @@ public sealed class TheSearchFormWidthCanBeDraggedTests
     private static (PanelView Panel, Window Window, ViewStateStore Store) Shown(string root, bool headset, bool granted, double? remembered = null)
     {
         var settings = TestSurface.Settings();
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
         var board = new GalaxySearchBoard();
         var registry = CapabilityRegistry.Build([GalaxyCapability.Create(new Galaxy(), () => Here, settings, searches: board)]);
 
         var surface = new StarSystemSurface(
             new Systems(),
-            () => new JournalLocation(Here, null, false, null),
-            () => settings.Current.Knowledge.GalaxySearch,
-            () => { })
+            () => new JournalLocation(Here, null, false, null))
         {
             Searches = new GalaxySearchSurface(
                 registry,

@@ -128,7 +128,7 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
             () => galaxy, () => null, null, null, NullLogger.Instance);
 
         var surface = new AdventureSurface(
-            book, generator, () => state, () => "F1", () => Now, said.Add, () => modelAvailable || model is not null, () => true, () => null, () => { });
+            book, generator, () => state, () => "F1", () => Now, said.Add, () => modelAvailable || model is not null, () => null, () => { });
 
         new D47.App.Theming.ThemeManager(Application.Current!, NullLogger<D47.App.Theming.ThemeManager>.Instance)
             .Apply(TestSurface.Settings().Current.Ui.Theme);

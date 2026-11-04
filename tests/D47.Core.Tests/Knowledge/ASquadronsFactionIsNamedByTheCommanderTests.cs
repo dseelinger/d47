@@ -32,7 +32,6 @@ public class ASquadronsFactionIsNamedByTheCommanderTests
     {
         _store = new SquadronFactions("squadron-factions.json", _files, NullLogger<SquadronFactions>.Instance);
         _settings = TestSurface.For(new MemoryInstall()).Settings;
-        _settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
     }
 
     private sealed class Galaxy : StubGalaxyService
@@ -174,19 +173,6 @@ public class ASquadronsFactionIsNamedByTheCommanderTests
         var (said, _, _) = await SaidAsync("my squadron's faction is Nobody At All");
 
         Assert.Contains("found no minor faction called Nobody At All", said, StringComparison.Ordinal);
-        Assert.Null(Stored);
-    }
-
-    [Fact]
-    public async Task WithGalaxySearchOffTheNameIsRefusedAndSaysWhy()
-    {
-        _settings.Apply(GalaxyCapability.EnabledKey, "false", SettingsCaller.Panel);
-        Journal("SquadronStartup", Startup);
-
-        var (said, _, _) = await SaidAsync("my squadron's faction is Hutton Truckers");
-
-        Assert.Contains("needs galaxy search", said, StringComparison.Ordinal);
-        Assert.Equal(0, _galaxy.Searches);
         Assert.Null(Stored);
     }
 

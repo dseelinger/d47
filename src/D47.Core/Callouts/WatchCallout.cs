@@ -10,7 +10,7 @@ public sealed class WatchCallout : ICallout
     /// <summary>The announcement key of one watch's line.</summary>
     public static string Key(Guid watchId) => $"watch.{watchId}";
 
-    /// <summary>The lines made ready in the last poll; empty while Galaxy search or BGS tick time is off.</summary>
+    /// <summary>The lines made ready in the last poll.</summary>
     public Func<IReadOnlyList<WatchNotice>> Ready { get; set; } = () => [];
 
     public IEnumerable<Announcement> Examine(CalloutContext context)

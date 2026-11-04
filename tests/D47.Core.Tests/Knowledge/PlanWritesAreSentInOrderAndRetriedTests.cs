@@ -63,7 +63,7 @@ public class PlanWritesAreSentInOrderAndRetriedTests
     {
         public Rig()
         {
-            Plans = new ColonisationPlans(Service, () => true, () => null, NullLogger<ColonisationPlans>.Instance)
+            Plans = new ColonisationPlans(Service, () => null, NullLogger<ColonisationPlans>.Instance)
             {
                 Dispatch = work => _ = work(),
             };

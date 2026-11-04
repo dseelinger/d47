@@ -426,7 +426,7 @@ and so did asking for `"banana"`. Neither flag is ever sent.
 
 ### Read colonisation plans from Raven Colonial {#read-colonisation-plans-from-raven-colonial}
 
-A setting, off by default. While it is on, d47 can read the plan that Raven Colonial, the colonisation
+d47 reads the plan that Raven Colonial, the colonisation
 planner, holds for a system you are building in: each site's status, what each building project
 still needs, the tonnes on the carriers linked to it, and how many Commanders and carriers are
 attached. It asks by system name, for systems your journal already names, and never by Commander name.
@@ -435,8 +435,8 @@ What goes out is those system names and the project ids the planner returns for 
 Commander name go with it. What comes back includes other Commanders' names and notes; d47 counts the
 Commanders and carriers and leaves the names and notes where they are.
 
-With the setting on, d47 asks for every system you have claimed or have an unfinished construction
-site in, once when the setting is turned on or d47 starts, and again when you dock at a depot there,
+d47 asks for every system you have claimed or have an unfinished construction
+site in, once when d47 starts, and again when you dock at a depot there,
 at most every two minutes. A failed request is not repeated for ten minutes. The plans are kept until
 d47 closes and are never written to disk.
 
@@ -451,16 +451,14 @@ With a plan held, `get_construction_sites` and `get_construction_needs` read it:
   matches a planner site's name or build type; for one you have not docked at, the needs are the
   planner's alone and the answer says so.
 - Notes, links and Commander names are never passed on. A build type is spoken title-cased.
-- With the setting off, or Raven Colonial unreachable, both answer from the journal and say the plan
+- With Raven Colonial unreachable, both answer from the journal and say the plan
   could not be read. Neither fetches from the tick.
 
-This is a different host from galaxy search and has its own switch, so using one does not turn on the
-other. The Privacy and egress section lists it as "nothing sent" while it is off.
+This is a different host from galaxy search. The Privacy and egress section lists it as Colonisation plans.
 
 ### Send my colonisation progress to Raven Colonial {#send-colonisation-progress-to-raven-colonial}
 
-A second setting, off by default, and greyed out while reading plans is off: d47 finds each site's
-project through the plan it read, so turning reading off also stops the sending. The model cannot
+A setting, off by default. d47 finds each site's project through the plan it read. The model cannot
 turn it on; the settings panel can.
 
 Raven Colonial asks that only one app sends your colonisation progress. If another app you run

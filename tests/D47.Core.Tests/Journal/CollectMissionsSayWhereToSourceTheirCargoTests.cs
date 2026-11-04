@@ -75,7 +75,7 @@ public class CollectMissionsSayWhereToSourceTheirCargoTests
                 StringComparer.OrdinalIgnoreCase),
         };
 
-    private static SettingsService Settings(MemoryInstall install, bool lookups)
+    private static SettingsService Settings(MemoryInstall install)
     {
         var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
         var settings = new SettingsService(
@@ -84,17 +84,13 @@ public class CollectMissionsSayWhereToSourceTheirCargoTests
             store.Load(),
             NullLogger<SettingsService>.Instance);
 
-        settings.Replace(
-            "the test",
-            current => current with { Knowledge = current.Knowledge with { GalaxySearch = lookups } });
-
         return settings;
     }
 
-    private static async Task<string> AskAsync(GameStateStore store, FakeTrade trade, bool lookups = true)
+    private static async Task<string> AskAsync(GameStateStore store, FakeTrade trade)
     {
         var registry = CapabilityRegistry.Build(
-            [MissionsCapability.Create(() => store.Active, () => DateTimeOffset.MinValue, trade, Settings(new MemoryInstall(), lookups))]);
+            [MissionsCapability.Create(() => store.Active, () => DateTimeOffset.MinValue, trade, Settings(new MemoryInstall()))]);
 
         var result = await registry.InvokeAsync(
             MissionsCapability.Tool,
@@ -149,17 +145,6 @@ public class CollectMissionsSayWhereToSourceTheirCargoTests
 
         Assert.Null(trade.Last);
         Assert.Contains("no collect missions", said);
-    }
-
-    [Fact]
-    public async Task ASwitchedOffGalaxySearchSendsNothing()
-    {
-        var store = Store(Collect(1, "Mission_Collect", "Algae", 20, "Alpha", "Alpha Port"));
-        var trade = new FakeTrade();
-        var said = await AskAsync(store, trade, lookups: false);
-
-        Assert.Null(trade.Last);
-        Assert.Contains("switched off", said);
     }
 
     [Fact]

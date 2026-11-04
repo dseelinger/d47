@@ -333,22 +333,4 @@ internal static class RoutingKit
         return line;
     }
 
-    /// <summary>What a page says in place of its form when the galaxy setting is off.</summary>
-    public static Control SwitchedOff(string heading, string text, Action? openSettings)
-    {
-        var body = new StackPanel { Spacing = 8 };
-
-        body.Children.Add(Section(heading));
-        body.Children.Add(Ink(text, TypeScale.Body, ThemeManager.GreyKey, wrap: true));
-
-        if (openSettings is { } open)
-        {
-            var button = new Button { Content = "Open settings" };
-            button.Click += (_, _) => open();
-            body.Children.Add(Actions(button));
-        }
-
-        return body;
-    }
-
 }

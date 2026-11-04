@@ -64,15 +64,14 @@ public class TheBgsWorkAnswerCoversTheTimeSinceTheTickTests
     }
 
     [Fact]
-    public async Task WithoutATickTheLastDayIsReportedAndTheSettingIsNamed()
+    public async Task WithoutATickTheLastDayIsReportedAndSaysTheTickIsNotRead()
     {
         var now = DateTimeOffset.Parse("2026-10-11T12:00:00Z");
         var store = Store(Commander, Docked, EarlySale, Mission("2026-10-11T09:00:00Z", "Beta Union", "DownBad", "+"));
 
         var said = await Ask(store, null, now);
 
-        Assert.StartsWith("In the last 24 hours. d47 does not know when the BGS tick was;", said, StringComparison.Ordinal);
-        Assert.Contains("the BGS tick time setting in Galaxy lets it ask.", said, StringComparison.Ordinal);
+        Assert.StartsWith("In the last 24 hours. d47 has not read the time of the BGS tick yet.", said, StringComparison.Ordinal);
         Assert.Contains("missions -1", said, StringComparison.Ordinal);
         Assert.DoesNotContain("Alpha Mining", said, StringComparison.Ordinal);
     }

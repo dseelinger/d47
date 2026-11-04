@@ -50,7 +50,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
 
     public const string UnknownTickText =
         "D47 doesn't know when the BGS last ticked, so this shows the last 24 hours. "
-        + "Turn on BGS tick time under Outside sources to count from the tick and see influence.";
+        + "It counts from the tick and shows influence once the tick time has been read.";
 
     private const string Dash = "—";
     private const int InfluenceColumn = 5;
@@ -81,7 +81,6 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<DateTimeOffset?> _tick;
     private readonly Func<DateTimeOffset> _now;
-    private readonly Action<string>? _openSettings;
     private readonly Func<string, Task<bool>>? _copy;
     private readonly bool _headset;
     private readonly ColumnWidthMemory? _columnWidths;
@@ -99,7 +98,6 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         Func<CommanderGameState?> state,
         Func<DateTimeOffset?> tick,
         Func<DateTimeOffset> now,
-        Action<string>? openSettings = null,
         bool headset = false,
         ColumnWidthMemory? columnWidths = null,
         Func<string, Task<bool>>? copy = null)
@@ -108,7 +106,6 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         _state = state;
         _tick = tick;
         _now = now;
-        _openSettings = openSettings;
         _headset = headset;
         _columnWidths = columnWidths;
 
@@ -362,13 +359,6 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
             Text = UnknownTickText,
             Margin = new Thickness(0, 0, 0, 14),
         };
-
-        if (_openSettings is { } open)
-        {
-            var tile = new Button { Content = "OUTSIDE SOURCES", Height = TypeScale.MinimumTarget };
-            tile.Click += (_, _) => open(GalaxyCapability.Id);
-            notice.Actions.Add(tile);
-        }
 
         return notice;
     }

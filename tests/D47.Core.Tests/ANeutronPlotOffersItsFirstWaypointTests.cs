@@ -31,7 +31,6 @@ public class ANeutronPlotOffersItsFirstWaypointTests
     {
         var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
-        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var plans = new RoutePlanBook(
             Path.Combine(install.Root, "data", "route-plans.json"), install.Files, NullLogger<RoutePlanBook>.Instance);

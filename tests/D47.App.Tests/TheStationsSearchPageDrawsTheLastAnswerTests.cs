@@ -85,8 +85,8 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
 
     private sealed class World : GalaxySearchWorld
     {
-        public World(bool lookups)
-            : base(new Systems(), lookups)
+        public World()
+            : base(new Systems())
         {
             Registry = CapabilityRegistry.Build([GalaxyCapability.Create(Galaxy, () => "LTT 7786", Settings, searches: Board)]);
         }
@@ -127,7 +127,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheHeadsetDrawsTheAnswerViewAndTheFormViewFullWidth()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["material_trader"] = "Raw" }, TwoStations));
         var (panel, window) = Shown(world, headset: true);
         var page = Page(panel);
@@ -160,7 +160,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void SearchOffersStationsAfterSystemsAndBodiesAfterThem()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
 
         Assert.Equal(
@@ -173,7 +173,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void ChoosingTwoServicesShowsTwoTilesAndRunSearchSendsThem()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
@@ -204,7 +204,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void NoTypeTickedSendsNoTypeAndTheAnswerLeavesOutCarriers()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
@@ -228,7 +228,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheAskedForColumnListsOnlyTheAskedForServicesEachStationHas()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["services"] = "Black Market, Interstellar Factors" }, TwoStations));
         var (panel, window) = Shown(world);
 
@@ -246,7 +246,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public async Task AVoicePostingRedrawsAnOpenPage()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
 
         Assert.Empty(Rows(panel));
@@ -265,7 +265,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheFormSendsEveryParameterTheToolTakes()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
@@ -311,7 +311,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void EveryPressableControlIsAtLeastFortyFourTall()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["services"] = "Black Market" }, TwoStations));
         var (panel, window) = Shown(world);
         var page = Page(panel);
@@ -328,7 +328,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     {
         using var look = AppLook.Put();
 
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["services"] = "Black Market, Interstellar Factors" }, TwoStations));
         var (_, window) = Shown(world);
 
@@ -341,7 +341,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void AnAnswerOfOneUsesTheSingularNoun()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["material_trader"] = "Raw" }, TwoStations with { Total = 1, Stations = [TwoStations.Stations[0]] }));
         var (panel, window) = Shown(world);
 
@@ -364,7 +364,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     [InlineData(true)]
     public void EverySystemNameCarriesACopyGlyph(bool headset)
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["material_trader"] = "Raw" }, TwoStations));
         var (panel, window) = Shown(world, headset, copy: true);
 
@@ -376,7 +376,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void TheAnswerHeaderCarriesACopyGlyphAfterTheReference()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["max_distance"] = "50" }, TwoStations));
         var (panel, window) = Shown(world, copy: true);
 
@@ -388,7 +388,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     [AvaloniaFact]
     public void WithoutACopyDelegateNoGlyphIsDrawn()
     {
-        var world = new World(lookups: true);
+        var world = new World();
         world.Board.Post(Posting(new Dictionary<string, string> { ["max_distance"] = "50" }, TwoStations));
         var (panel, window) = Shown(world);
 

@@ -9,7 +9,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Knowledge;
 
-/// <summary>suggest_home_system sends nothing with galaxy search off and says when the squadron case was skipped (#1313).</summary>
+/// <summary>suggest_home_system says when the squadron case was skipped (#1313).</summary>
 public class AHomeSystemSuggestionNeedsGalaxySearchAndAsksForTheSquadronFactionTests
 {
     private readonly CommanderGameState _state = new(new CommanderIdentity("F1", "Fixture"));
@@ -44,19 +44,8 @@ public class AHomeSystemSuggestionNeedsGalaxySearchAndAsksForTheSquadronFactionT
                 ToolCaller.Model);
 
     [Fact]
-    public async Task WithGalaxySearchOffTheToolSaysSoAndSendsNothing()
-    {
-        var result = await SuggestAsync();
-
-        Assert.True(result.IsError);
-        Assert.Contains("needs galaxy search", result.Content, StringComparison.Ordinal);
-        Assert.Equal(0, _galaxy.Calls);
-    }
-
-    [Fact]
     public async Task ASquadronMemberWithNoStoredFactionIsToldTheSquadronCaseWasSkipped()
     {
-        _settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
         Assert.True(JournalEvent.TryParse(
             "{ \"timestamp\":\"2026-10-19T12:00:00Z\", \"event\":\"SquadronStartup\", \"SquadronName\":\"GREYBEARD DELTA\", \"SquadronID\":1234 }",
             NullLogger.Instance,

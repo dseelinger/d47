@@ -91,7 +91,6 @@ public class ThePlannedGroupListsSitesNoDepotHasSeenTests
                 () => Now,
                 null,
                 null,
-                () => false,
                 () => plans.Snapshot,
                 (system, _) => plans.Wanted.Add(system)));
 

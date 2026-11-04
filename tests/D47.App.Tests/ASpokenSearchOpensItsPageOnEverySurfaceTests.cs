@@ -61,7 +61,7 @@ public sealed class ASpokenSearchOpensItsPageOnEverySurfaceTests
     private sealed class World : GalaxySearchWorld
     {
         public World()
-            : base(new Systems(), lookups: true, suggesting: false)
+            : base(new Systems(), suggesting: false)
         {
             Registry = CapabilityRegistry.Build(
                 [GalaxyCapability.Create(new Galaxy(), () => "LTT 7786", Settings, searches: Board)]);

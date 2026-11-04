@@ -20,8 +20,8 @@ nav_order: 165
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Add a watch with BGS tick time, Galaxy search or GalNet news turned off.</p>
-<p class="expect">The watch saves, and the page shows a notice with Turn on. Nothing is checked until the setting is on.</p>
+<p class="say">Add a watch soon after D47 starts.</p>
+<p class="expect">The watch saves. Nothing is checked until D47 has read the time of the last BGS tick.</p>
 </section>
 </div></div>
 </details>
@@ -40,7 +40,7 @@ nav_order: 165
 </section>
 <section>
 <h2><span class="num">3</span> Once per BGS tick.</h2>
-<p class="body">When a watch holds, D47 says so once and not again until the next BGS tick. Every watch needs BGS tick time; a stock watch also needs Galaxy search, and a Community Goal watch needs GalNet news.</p>
+<p class="body">When a watch holds, D47 says so once and not again until the next BGS tick. A stock watch reads the market index; a Community Goal watch reads GalNet.</p>
 </section>
 </div></div>
 </details>
@@ -55,7 +55,7 @@ Soontill Relics at Cheranovsky City: Soontill Relics above 200 at Cheranovsky Ci
 ```
 
 The file holds at most 32 watches. Saving a stock watch for an any-station choice sends the system and
-station name to Spansh and the commodity name to Ardent once, and only with Galaxy search on; a rare sends
+station name to Spansh and the commodity name to Ardent once; a rare sends
 nothing on save. A change to the station, commodity, comparison or number clears the stored firing, so the
 watch can fire again in the same tick.
 
