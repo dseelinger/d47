@@ -25,11 +25,13 @@ public sealed record NpcHeard(
     VoiceRole Role = VoiceRole.Comms,
     string? Channel = null,
     string? Allegiance = null,
-    VoiceGender Sex = VoiceGender.Unlabelled)
+    VoiceGender Sex = VoiceGender.Unlabelled,
+    SenderKind SpeakerKind = SenderKind.Person,
+    DateTimeOffset? SentAt = null)
 {
-    /// <summary>The message a comms NPC was heard in, with only its voice fields, or null for an invented NPC.</summary>
+    /// <summary>The message a comms NPC was last heard in, with only its voice fields, or null for an invented NPC.</summary>
     public Announcement? HeardAs => Kind == NpcKind.Comms && Channel is { } channel
-        ? IncomingMessages.VoicedAs(Name, Role, channel, isPlayer: false, Allegiance)
+        ? IncomingMessages.VoicedAs(Name, Role, channel, isPlayer: false, Allegiance, SpeakerKind, SentAt)
         : null;
 }
 
@@ -148,7 +150,9 @@ public sealed partial class NpcsHeardHere
                 announcement.Voice,
                 announcement.CommsChannel,
                 announcement.SpeakerAllegiance,
-                stated != VoiceGender.Unlabelled ? stated : held?.Sex ?? VoiceGender.Unlabelled);
+                stated != VoiceGender.Unlabelled ? stated : held?.Sex ?? VoiceGender.Unlabelled,
+                announcement.SpeakerKind,
+                announcement.SentAt);
         }
     }
 

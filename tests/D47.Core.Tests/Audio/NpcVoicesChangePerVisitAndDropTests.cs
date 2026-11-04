@@ -9,7 +9,7 @@ namespace D47.Core.Tests.Audio;
 
 /// <summary>
 /// How long an NPC's voice lasts: a person for one arrival, a station for one drop, a group ship for one message,
-/// and an NPC who interdicted the Commander for the session (#2129).
+/// and an NPC who interdicted the Commander for the session.
 /// </summary>
 public class NpcVoicesChangePerVisitAndDropTests
 {
@@ -80,7 +80,45 @@ public class NpcVoicesChangePerVisitAndDropTests
         stamped.EnteredSystem("Sol", Nine.AddMinutes(20));
 
         Assert.Equal(stamped.ForSender("Ilse Bruhn", isPlayer: false).VoiceId, VoiceAfter(3));
-        Assert.Equal(VoiceAfter(3), VoiceAfter(3));
+    }
+
+    [Fact]
+    public void ARelogInTheSameSystemKeepsTheVoicesAndALocationElsewhereDoesNot()
+    {
+        var casting = new VoiceCasting();
+        var cast = casting.Of("edge");
+        cast.Pool = Cast().Pool;
+
+        casting.Observe([Event("Location", Nine, ("StarSystem", "Lave"))]);
+        cast.ForSender("Ilse Bruhn", isPlayer: false);
+
+        casting.Observe([Event("Location", Nine.AddMinutes(30), ("StarSystem", "Lave"))]);
+        Assert.Equal(Nine, cast.Arrival);
+        Assert.Equal(Nine.AddMinutes(30), cast.Drop);
+        Assert.Contains(cast.MetHere, met => met.Name == "Ilse Bruhn");
+
+        casting.Observe([Event("Location", Nine.AddMinutes(60), ("StarSystem", "Leesti"))]);
+        Assert.Equal(Nine.AddMinutes(60), cast.Arrival);
+        Assert.DoesNotContain(cast.MetHere, met => met.Name == "Ilse Bruhn");
+    }
+
+    [Fact]
+    public void AReplyToAStationIsInTheVoiceTheStationWasHeardIn()
+    {
+        var cast = Cast();
+        cast.EnteredSystem("Lave", Nine);
+        cast.Dropped(Nine.AddMinutes(1));
+
+        var read = new IncomingMessages { Enabled = () => true, IncludeNpcs = () => true }
+            .Read(Message("Lave Station", "Welcome.", Nine.AddMinutes(2)))!;
+        var voice = SpeakerAccent.VoiceOf(cast, read).VoiceId;
+
+        var npcs = new NpcsHeardHere();
+        npcs.Heard(read, voice, Nine.AddMinutes(2));
+        var heardAs = npcs.Find("Lave Station")!.HeardAs!;
+
+        Assert.Equal(voice, SpeakerAccent.VoiceOf(cast, heardAs).VoiceId);
+        Assert.Single(cast.MetHere, met => met.Name == "Lave Station");
     }
 
     [Fact]
@@ -156,8 +194,9 @@ public class NpcVoicesChangePerVisitAndDropTests
             Event("FSDJump", Nine.AddMinutes(5), ("StarSystem", "Leesti")),
         ]);
 
-        Assert.Contains(cast.MetHere, met => met.Name == "Richy Reay" && met.VoiceId == pirate);
-        Assert.DoesNotContain(cast.MetHere, met => met.Name == "Ilse Bruhn");
+        // Nobody is met in the new system until they speak there, and nobody else is given the pirate's voice.
+        Assert.Empty(cast.MetHere);
+        Assert.NotEqual(pirate, cast.ForSender("Ilse Bruhn", isPlayer: false).VoiceId);
         Assert.Equal(pirate, cast.ForSender("Richy Reay", isPlayer: false).VoiceId);
     }
 

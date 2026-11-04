@@ -46,7 +46,7 @@ public static class VoiceRoles
 /// <summary>Which voice fills each role, and which voice belongs to which sender.</summary>
 public sealed class VoiceCast
 {
-    /// <summary>NPC voices, cleared on arrival in a system except for the NPCs in <see cref="_followers"/>.</summary>
+    /// <summary>NPC voices, cleared on arrival in a system.</summary>
     private readonly Dictionary<string, string> _perSystem = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Station voices, cleared on arrival, on a drop into normal space and on leaving it.</summary>
@@ -61,10 +61,16 @@ public sealed class VoiceCast
     /// <summary>NPCs who interdicted the Commander, whose voices outlast an arrival.</summary>
     private readonly HashSet<string> _followers = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>The voices of <see cref="_followers"/> carried out of earlier systems, given back when they speak again.</summary>
+    private readonly Dictionary<string, string> _carried = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Voices kept for the whole session, surviving hyperspace.</summary>
     private readonly Dictionary<string, string> _lasting = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly Dictionary<VoiceRole, string> _roleVoices = new();
+
+    /// <summary>Held over every read and write of the NPC tables: the tick changes scopes while speech casts.</summary>
+    private readonly Lock _gate = new();
 
     /// <summary>The voices a sender may be assigned, in a stable order.</summary>
     public IReadOnlyList<string> Pool { get; set; } = [];
@@ -110,6 +116,14 @@ public sealed class VoiceCast
     /// </summary>
     public Task? SexAnswerFor(string sender, bool isPlayer, VoiceRole role, string? own = null, SenderKind kind = SenderKind.Person)
     {
+        lock (_gate)
+        {
+            return SexAnswerForLocked(sender, isPlayer, role, own, kind);
+        }
+    }
+
+    private Task? SexAnswerForLocked(string sender, bool isPlayer, VoiceRole role, string? own, SenderKind kind)
+    {
         if (isPlayer
             || role != VoiceRole.Comms
             || own is not null
@@ -129,7 +143,7 @@ public sealed class VoiceCast
     {
         SenderKind.Station => _perDrop.ContainsKey(sender),
         SenderKind.GroupShip => _groupLatest.ContainsKey(sender),
-        _ => _perSystem.ContainsKey(sender),
+        _ => _perSystem.ContainsKey(sender) || _carried.ContainsKey(sender),
     };
 
     /// <summary>The accent a voice is heard in, or null where its listing names none.</summary>
@@ -224,6 +238,21 @@ public sealed class VoiceCast
         SenderKind kind = SenderKind.Person,
         DateTimeOffset? sentAt = null)
     {
+        lock (_gate)
+        {
+            return ForSenderLocked(sender, isPlayer, role, allegiance, own, kind, sentAt);
+        }
+    }
+
+    private VoiceSelection ForSenderLocked(
+        string sender,
+        bool isPlayer,
+        VoiceRole role,
+        string? allegiance,
+        string? own,
+        SenderKind kind,
+        DateTimeOffset? sentAt)
+    {
         if (own is not null && (Voices.Count == 0 || Voices.ContainsKey(own)))
         {
             return Of(own, role);
@@ -250,6 +279,12 @@ public sealed class VoiceCast
         if (assignments.TryGetValue(key, out var already))
         {
             return Of(already, role);
+        }
+
+        if (!lasts && npcKind == SenderKind.Person && _carried.TryGetValue(sender, out var carried))
+        {
+            _perSystem[sender] = carried;
+            return Of(carried, role);
         }
 
         if (Pool.Count == 0)
@@ -307,9 +342,11 @@ public sealed class VoiceCast
 
         // Voices already spoken for are stepped past rather than reused, so a system with four NPCs in it has
         // four distinct voices as long as there are four to give out.
-        var spokenFor = lasts ? _lasting.Values : HeardHere().Select(met => met.VoiceId);
+        var spokenFor = lasts
+            ? new HashSet<string>(_lasting.Values, StringComparer.OrdinalIgnoreCase)
+            : VoicesHeardHere();
         var free = drawnFrom
-            .Where(voice => !spokenFor.Contains(voice, StringComparer.OrdinalIgnoreCase))
+            .Where(voice => !spokenFor.Contains(voice))
             .ToList();
 
         // They are all spoken for, so this sender shares one, still of the sex chosen; a group ship still steps past
@@ -351,6 +388,10 @@ public sealed class VoiceCast
     private IEnumerable<(string Name, string VoiceId)> HeardHere() =>
         _perSystem.Concat(_perDrop).Concat(_groupLatest).Select(pair => (pair.Key, pair.Value));
 
+    /// <summary>The voices <see cref="HeardHere"/> holds, and those carried for an interdictor.</summary>
+    private HashSet<string> VoicesHeardHere() =>
+        new(HeardHere().Select(met => met.VoiceId).Concat(_carried.Values), StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// The accent and sex a name is recorded as suggesting, or null. A name with no answer yet is reported to
     /// <see cref="NameUnknown"/>; other Commanders and roles other than comms are never looked up.
@@ -374,10 +415,25 @@ public sealed class VoiceCast
     }
 
     /// <summary>Gives an NPC in this system a voice chosen before their name was known.</summary>
-    public void Keep(string sender, string voiceId) => _perSystem[sender] = voiceId;
+    public void Keep(string sender, string voiceId)
+    {
+        lock (_gate)
+        {
+            _perSystem[sender] = voiceId;
+        }
+    }
 
     /// <summary>The NPCs holding a voice here, with it: people in this system, stations in this drop and each group ship's latest.</summary>
-    public IReadOnlyList<(string Name, string VoiceId)> MetHere => [.. HeardHere()];
+    public IReadOnlyList<(string Name, string VoiceId)> MetHere
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return [.. HeardHere()];
+            }
+        }
+    }
 
     /// <summary>
     /// Voices for people not yet named, one per slot: the Commander's voice for comms where they cast
@@ -385,6 +441,14 @@ public sealed class VoiceCast
     /// British first at an Empire station (#68), alternating by gender where the pool is labelled.
     /// </summary>
     public IReadOnlyList<string> Roster(int count, uint seed, string? allegiance = null)
+    {
+        lock (_gate)
+        {
+            return RosterLocked(count, seed, allegiance);
+        }
+    }
+
+    private IReadOnlyList<string> RosterLocked(int count, uint seed, string? allegiance)
     {
         if (count <= 0)
         {
@@ -402,9 +466,8 @@ public sealed class VoiceCast
             .Where(voice => !Aboard(voice))
             .ToList();
 
-        var unused = walked
-            .Where(voice => !HeardHere().Any(met => string.Equals(met.VoiceId, voice, StringComparison.OrdinalIgnoreCase)))
-            .ToList();
+        var heard = VoicesHeardHere();
+        var unused = walked.Where(voice => !heard.Contains(voice)).ToList();
 
         var candidates = unused.Count >= count ? unused : walked;
 
@@ -468,38 +531,65 @@ public sealed class VoiceCast
     /// </summary>
     public void EnteredSystem(string? system = null, DateTimeOffset? at = null)
     {
-        System = system;
-        Arrival = at;
-
-        foreach (var name in _perSystem.Keys.Where(name => !_followers.Contains(name)).ToList())
+        lock (_gate)
         {
-            _perSystem.Remove(name);
-        }
+            System = system;
+            Arrival = at;
 
-        _perMessage.Clear();
-        _groupLatest.Clear();
-        LeftNormalSpace();
+            foreach (var (name, voice) in _perSystem.Where(pair => _followers.Contains(pair.Key)))
+            {
+                _carried[name] = voice;
+            }
+
+            _perSystem.Clear();
+
+            _perMessage.Clear();
+            _groupLatest.Clear();
+            Drop = null;
+            _perDrop.Clear();
+        }
     }
 
     /// <summary>A drop into normal space at journal time <paramref name="at"/>: stations are drawn new voices.</summary>
     public void Dropped(DateTimeOffset at)
     {
-        Drop = at;
-        _perDrop.Clear();
+        lock (_gate)
+        {
+            Drop = at;
+            _perDrop.Clear();
+        }
     }
 
     /// <summary>Normal space is left: stations' voices are cleared.</summary>
     public void LeftNormalSpace()
     {
-        Drop = null;
-        _perDrop.Clear();
+        lock (_gate)
+        {
+            Drop = null;
+            _perDrop.Clear();
+        }
     }
 
     /// <summary>An NPC interdicted the Commander: it keeps the voice it has, or is given next, for the session.</summary>
-    public void Interdicted(string interdictor) => _followers.Add(interdictor);
+    public void Interdicted(string interdictor)
+    {
+        lock (_gate)
+        {
+            _followers.Add(interdictor);
+        }
+    }
 
     /// <summary>How many senders currently hold a voice.</summary>
-    public (int Lasting, int PerSystem) Assignments => (_lasting.Count, _perSystem.Count);
+    public (int Lasting, int PerSystem) Assignments
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return (_lasting.Count, _perSystem.Count);
+            }
+        }
+    }
 
     /// <summary>A seed and slot mixed so that nearby seeds and consecutive slots give unrelated indexes.</summary>
     private static uint Mixed(uint seed, uint slot)
