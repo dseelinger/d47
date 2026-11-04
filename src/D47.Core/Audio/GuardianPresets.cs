@@ -63,7 +63,6 @@ public static class GuardianPresets
         },
         new GuardianBuiltinPreset { Id = "hive-chorus", Label = "Hive chorus", TickedIds = ["hive", "reverb"] },
         new GuardianBuiltinPreset { Id = "ghost", Label = "Ghost", TickedIds = ["whisper", "reverseReverb"] },
-        new GuardianBuiltinPreset { Id = "telepathy", Label = "Telepathy", TickedIds = ["volumeSwell", "delay"] },
         new GuardianBuiltinPreset { Id = "shimmer-core", Label = "Shimmer core", TickedIds = ["shimmer", "chorus"] },
         new GuardianBuiltinPreset { Id = "helmet-comms", Label = "Helmet comms", TickedIds = ["helmet"] },
         new GuardianBuiltinPreset

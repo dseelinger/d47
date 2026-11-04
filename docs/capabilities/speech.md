@@ -622,7 +622,6 @@ The built-in presets tick their effects at the default order and default levels:
 | Stepped synth | Stepped pitch, Chorus |
 | Hive chorus | Hive, Reverb |
 | Ghost | Whisper, Reverse reverb |
-| Telepathy | Volume swell, Delay |
 | Shimmer core | Chorus, Shimmer |
 | Helmet comms | Helmet |
 | Respirator | Pitch down, Respirator, Reverb |
@@ -744,19 +743,6 @@ the default, 20, is all treated.
 The line put through a comms link, as if it arrived as a projection rather than in the room.
 Signal is the link's strength: 5% a level, 30% at the default of 6; a weaker link narrows the band,
 raises the static and loses stretches of the voice.
-
-##### Volume swell: attack {#guardian-voice-volume-swell}
-
-Each word that follows a pause fades in from silence instead of starting at full volume, as with a
-guitar volume pedal; the word then holds at full volume until the next pause. Attack is how long the
-fade takes: 6 ms a level, 96 ms at the default of 16. The start of a line is held back by up to
-0.3 seconds while the first word is found, and the line keeps its length.
-
-##### Delay: mix {#guardian-voice-delay}
-
-Repeating echoes of the voice, 280 ms apart, each quieter and darker than the last, followed by
-a tail of up to a second and a half after the sentence ends. Mix is the echoes' volume against the
-dry voice: 1.5% a level, 24% at the default of 16.
 
 ##### Reverse reverb: mix {#guardian-voice-reverse-reverb}
 

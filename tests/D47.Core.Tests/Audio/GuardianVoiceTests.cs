@@ -17,7 +17,7 @@ public class GuardianVoiceTests
 
     /// <summary>The effects that add to the clip's length.</summary>
     internal static readonly string[] Lengthening =
-        ["stutter", "delay", "reverseReverb", "shimmer", "reverb", "helmet", "hologram", "respirator"];
+        ["stutter", "reverseReverb", "shimmer", "reverb", "helmet", "hologram", "respirator"];
 
     /// <summary>
     /// The effects that put static onto a silent channel of their own accord, rather than leaking it

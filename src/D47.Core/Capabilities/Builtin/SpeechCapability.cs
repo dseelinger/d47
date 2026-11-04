@@ -2052,8 +2052,6 @@ public static class SpeechCapability
         "glitch" => ("breaks the voice with short damaged stretches", "the breaks come more often"),
         "helmet" => ("puts the voice through a comms link, with a click at the start and end", "more of the line is the comms-link version"),
         "hologram" => ("puts the voice through a weak comms link, losing stretches under static", "the link is stronger and fewer stretches are lost"),
-        "volumeSwell" => ("fades each word in after a pause", "each word takes longer to fade in"),
-        "delay" => ("adds fading echoes after each word", "the echoes are louder"),
         "reverseReverb" => ("makes a reverb tail swell into each word", "the reverb is louder"),
         "shimmer" => ("adds a high octave to the reverb tail", "the high layer is louder"),
         "reverb" => ("adds a half-second room tail", "the tail is louder"),
