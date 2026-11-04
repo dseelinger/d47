@@ -58,15 +58,71 @@ public sealed class AnnouncedAttackCallout : ICallout
             "attack.hitman",
             "Someone has been paid to find us, and they have. This one is not after the cargo.",
             AlertCue.BountyHunter),
+
+        // A hunter that has found a Commander in supercruise. Over the corpus, repeats within two minutes
+        // counted as one event: 161 events, 39 interdicted, 122 left first, none stayed uninterdicted.
+        // Interdiction follows a median 44 seconds later, within 29 seconds a quarter of the time.
+        new(
+            "Pirate_HunterHostileSC_Relevant",
+            HunterPirateKey,
+            HunterPirateText,
+            AlertCue.Interdiction),
+
+        // Two events, neither interdicted; both left first.
+        new(
+            "CargoHunter_HunterHostileSC",
+            HunterPirateKey,
+            HunterPirateText,
+            AlertCue.Interdiction),
+
+        // 127 events: 52 interdicted, 73 left first, 2 stayed with nothing happening.
+        new(
+            "Hitman_HunterHostileSC_Relevant",
+            HunterHitmanKey,
+            HunterHitmanText,
+            AlertCue.BountyHunter),
+
+        // Three events, all interdicted.
+        new(
+            "PirateHitman_HunterHostileSC_Relevant",
+            HunterHitmanKey,
+            HunterHitmanText,
+            AlertCue.BountyHunter),
+
+        // Eight events: 2 interdicted, 6 left first.
+        new(
+            "BountyHunter_HunterHostileSC_Relevant",
+            HunterHitmanKey,
+            HunterHitmanText,
+            AlertCue.BountyHunter),
     ];
 
-    /// <summary>
-    /// The families where a hunter is talking about the Commander and an alarm would be wrong (#137).
-    /// </summary>
+    private const string HunterPirateKey = "attack.hunter-pirate";
+    private const string HunterHitmanKey = "attack.hunter-hitman";
+
+    private const string HunterPirateText =
+        "Pirate on our tail, after the cargo. About thirty seconds, maybe less. Jump out now, or get ready to submit or fight.";
+
+    private const string HunterHitmanText =
+        "Someone is hunting us and has us on scanner. About thirty seconds, maybe less. Jump out now, or get ready to fight.";
+
+    /// <summary>The families where a hunter is talking about the Commander and an alarm would be wrong (#137).</summary>
     private static readonly string[] Hunted =
     [
-        "Hitman_HunterHostileSC_Relevant",
         "HitmanMissionFailure_Attack",
+    ];
+
+    /// <summary>The key of the in-character remark that follows a hunter's warning.</summary>
+    public const string HunterAsideKey = "attack.hunter-aside";
+
+    /// <summary>Once per hunt.</summary>
+    private static readonly TimeSpan HunterAsideCooldown = TimeSpan.FromMinutes(10);
+
+    private static readonly string[] HunterAsideLines =
+    [
+        "They have been on our trail for a while.",
+        "Somebody knew where to look for us.",
+        "So that is who has been following our wake.",
     ];
 
     /// <summary>The one key every hunted reaction shares, so a burst of chatter is one remark (#137).</summary>
@@ -84,6 +140,7 @@ public sealed class AnnouncedAttackCallout : ICallout
     ];
 
     private int _reactions;
+    private int _asides;
 
     /// <summary>The channel NPC lines arrive on.</summary>
     private const string NpcChannel = "npc";
@@ -107,6 +164,20 @@ public sealed class AnnouncedAttackCallout : ICallout
             if (Read(journalEvent) is { } warning)
             {
                 yield return warning;
+
+                if (IsHunterWarning(warning))
+                {
+                    var aside = _asides++;
+
+                    yield return new Announcement(
+                        HunterAsideKey,
+                        HunterAsideLines[aside % HunterAsideLines.Length],
+                        CalloutUrgency.Routine)
+                    {
+                        Cooldown = HunterAsideCooldown,
+                        Variant = aside,
+                    };
+                }
             }
             else if (Reacted(journalEvent) is { } remark)
             {
@@ -157,6 +228,10 @@ public sealed class AnnouncedAttackCallout : ICallout
             Variant = variant,
         };
     }
+
+    private static bool IsHunterWarning(Announcement warning) =>
+        string.Equals(warning.Key, HunterPirateKey, StringComparison.Ordinal)
+        || string.Equals(warning.Key, HunterHitmanKey, StringComparison.Ordinal);
 
     /// <summary>One message, or null if it announces nothing worth warning about.</summary>
     public static Announcement? Read(JournalEvent journalEvent)

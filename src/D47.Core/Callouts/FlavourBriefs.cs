@@ -96,7 +96,8 @@ public static class FlavourBriefs
 
         if (announcement.Urgency == CalloutUrgency.Urgent
             || announcement.Voice == VoiceRole.Narrator
-            || string.Equals(announcement.Key, AnnouncedAttackCallout.HuntedKey, StringComparison.Ordinal))
+            || string.Equals(announcement.Key, AnnouncedAttackCallout.HuntedKey, StringComparison.Ordinal)
+            || string.Equals(announcement.Key, AnnouncedAttackCallout.HunterAsideKey, StringComparison.Ordinal))
         {
             return null;
         }
@@ -300,6 +301,23 @@ public static class FlavourBriefs
                 NeedsGameState = true,
 
                 // The sheet, so it is addressed to somebody.
+                NeedsAboutMe = true,
+                NeedsScenario = true,
+            };
+        }
+
+        // A hunter has just been warned about; the Ship's Core adds one remark.
+        if (string.Equals(announcement.Key, AnnouncedAttackCallout.HunterAsideKey, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Instruction =
+                    "Someone is hunting the Commander and has just been warned about. Say this once, in "
+                    + $"your own voice, keeping what it means: \"{announcement.Text}\" One or two sentences. "
+                    + "Do not give a number, an instruction or a question. Do not say who the hunter is or "
+                    + "why they are there: you do not know, and guessing would be inventing it.",
+                NeedsPersona = true,
+                NeedsGameState = true,
                 NeedsAboutMe = true,
                 NeedsScenario = true,
             };

@@ -236,7 +236,9 @@ Pirate lining up an interdiction. Boost or high-wake now.
 ```
 
 In the journals measured for it (the figures are recorded in a comment in `AnnouncedAttackCallout.cs`), that line came a **median of six seconds** before the first shot and was
-right **88%** of the time. A pirate demanding cargo is right 67%. Each
+right **88%** of the time. A pirate demanding cargo is right 67%. A hunter that has found you in
+supercruise is followed by an interdiction a **median of 44 seconds** later, and within 29 seconds a
+quarter of the time. Each
 situation gets its own sentence and its own sound, so you can tell an interdiction from a cargo
 demand from somebody who is here for you before the sentence has finished.
 
@@ -245,11 +247,16 @@ is the same one, and cargo will not buy either of them off. That was measured th
 rest: the family that fires when a hunter spots you is followed by an attack **7 times out of 7**,
 the strongest signal in the whole corpus.
 
+**A hunter that finds you in supercruise warns about thirty seconds ahead.** A pirate gets the
+interdiction sound and a bounty hunter or hitman gets the bounty hunter's, each with a line that
+says to jump out now or get ready to fight. Every repeat of the hunter's line warns again, and your
+core adds one remark of its own, once per hunt.
+
 ##### Being hunted, which is not an emergency {#hunted}
 
-Two other hitman families are a hunter *talking about you* rather than closing on you — the one that
-produced *"the eagle is in the nest"* is seldom followed by an attack. Warning you about those would
-be a false alarm most times, so Directive 47 does not.
+One hitman family is a hunter *talking about you* rather than closing on you, such as a line
+reporting a hit on you. Warning you about it would be a false alarm most times, so Directive 47 does
+not.
 
 It does not ignore them either. Being hunted is a situation rather than an event, so you get a
 remark on it in your core's own voice — no alarm, never interrupting, and once every ten minutes

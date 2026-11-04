@@ -69,17 +69,13 @@ public class AHunterIsAnsweredInCharacterTests
 
     // ---- The two that must not ------------------------------------------------------------
 
-    /// <summary>35% and 15%, both under the 66% of the weakest line that ships.</summary>
-    [Theory]
-    [InlineData("$Hitman_HunterHostileSC_Relevant04;")]
-    [InlineData("$Hitman_HunterHostileSC_Relevant05;")]
-    [InlineData("$HitmanMissionFailure_Attack03;")]
-    public void TheOnesTheCommanderNoticedAreNotAttackWarnings(string message) =>
-        Assert.Null(AnnouncedAttackCallout.Read(Comms(message)));
+    /// <summary>A hunter talking about the Commander rather than closing on them.</summary>
+    [Fact]
+    public void AHunterTalkingAboutTheCommanderIsNotAnAttackWarning() =>
+        Assert.Null(AnnouncedAttackCallout.Read(Comms("$HitmanMissionFailure_Attack03;")));
 
-    /// <summary>They produce a reaction instead, and it is not an alarm.</summary>
+    /// <summary>It produces a reaction instead, and it is not an alarm.</summary>
     [Theory]
-    [InlineData("$Hitman_HunterHostileSC_Relevant04;")]
     [InlineData("$HitmanMissionFailure_Attack03;")]
     public void BeingHuntedProducesAnInCharacterLineRatherThanAWarning(string message)
     {
@@ -101,7 +97,7 @@ public class AHunterIsAnsweredInCharacterTests
         var said = Assert.Single(new AnnouncedAttackCallout().Examine(Context(
         [
             Comms(
-                "$Hitman_HunterHostileSC_Relevant04;",
+                "$HitmanMissionFailure_Attack03;",
                 localised: "Finally! Found you. Come to me lil' fishy."),
         ])));
 
@@ -122,7 +118,7 @@ public class AHunterIsAnsweredInCharacterTests
         var said = Assert.Single(new AnnouncedAttackCallout().Examine(Context(
         [
             Comms(
-                "$Hitman_HunterHostileSC_Relevant04;",
+                "$HitmanMissionFailure_Attack03;",
                 localised: "The eagle is in the nest, repeat, the eagle is in the nest."),
         ])));
 
@@ -137,7 +133,7 @@ public class AHunterIsAnsweredInCharacterTests
     [Fact]
     public void TheReactionIsForbiddenFromInventingAReason()
     {
-        var said = Assert.Single(Heard(new AnnouncedAttackCallout(), "$Hitman_HunterHostileSC_Relevant04;"));
+        var said = Assert.Single(Heard(new AnnouncedAttackCallout(), "$HitmanMissionFailure_Attack03;"));
         var brief = FlavourBriefs.For(said, personalityEnabled: true)!;
 
         Assert.Contains("why", brief.Instruction, StringComparison.OrdinalIgnoreCase);
@@ -157,7 +153,7 @@ public class AHunterIsAnsweredInCharacterTests
     [Fact]
     public void WithPersonalityOffTheAuthoredReactionIsSaidAsWritten()
     {
-        var said = Assert.Single(Heard(new AnnouncedAttackCallout(), "$Hitman_HunterHostileSC_Relevant04;"));
+        var said = Assert.Single(Heard(new AnnouncedAttackCallout(), "$HitmanMissionFailure_Attack03;"));
 
         Assert.Null(FlavourBriefs.For(said, personalityEnabled: false));
     }
@@ -172,7 +168,7 @@ public class AHunterIsAnsweredInCharacterTests
     [InlineData("player")]
     public void AnotherCommanderCannotStageAHuntByTypingTheId(string channel) =>
         Assert.Empty(new AnnouncedAttackCallout().Examine(Context(
-            [Comms("$Hitman_HunterHostileSC_Relevant04;", channel)])));
+            [Comms("$HitmanMissionFailure_Attack03;", channel)])));
 
     // ---- One reaction, not seven -----------------------------------------------------------
 
@@ -185,7 +181,7 @@ public class AHunterIsAnsweredInCharacterTests
 
         for (var second = 0; second < 7; second++)
         {
-            engine.Tick(Context([Comms("$Hitman_HunterHostileSC_Relevant04;")], atSecond: second * 20));
+            engine.Tick(Context([Comms("$HitmanMissionFailure_Attack03;")], atSecond: second * 20));
         }
 
         Assert.Single(engine.Drain());
@@ -201,7 +197,7 @@ public class AHunterIsAnsweredInCharacterTests
         var callout = new AnnouncedAttackCallout();
         var engine = new CalloutEngine(NullLogger<CalloutEngine>.Instance).Add(callout);
 
-        engine.Tick(Context([Comms("$Hitman_HunterHostileSC_Relevant04;")]));
+        engine.Tick(Context([Comms("$HitmanMissionFailure_Attack03;")]));
         engine.Tick(Context([Comms("$HitmanMissionFailure_Attack03;")], atSecond: 1_800));
 
         Assert.Equal(2, engine.Drain().Count);
@@ -217,7 +213,7 @@ public class AHunterIsAnsweredInCharacterTests
         var callout = new AnnouncedAttackCallout();
 
         var said = Enumerable.Range(0, 3)
-            .Select(n => Assert.Single(Heard(callout, "$Hitman_HunterHostileSC_Relevant04;", atSecond: n)))
+            .Select(n => Assert.Single(Heard(callout, "$HitmanMissionFailure_Attack03;", atSecond: n)))
             .ToList();
 
         Assert.Equal(3, said.Select(line => line.Text).Distinct(StringComparer.Ordinal).Count());
@@ -237,7 +233,7 @@ public class AHunterIsAnsweredInCharacterTests
             null,
             GameStatus.Unknown,
             NavRoute.None,
-            [Comms("$Hitman_HunterHostileSC_Relevant04;")])));
+            [Comms("$HitmanMissionFailure_Attack03;")])));
     }
 
     /// <summary>Nothing outside the two hunted families reacts.</summary>

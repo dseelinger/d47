@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A pirate, bounty hunter or hitman that has found you in supercruise now gets a warning with a sound, about thirty seconds before the interdiction: a pirate's line sounds the interdiction alarm and says to jump out or get ready to submit or fight, and a hitman's or bounty hunter's sounds the bounty hunter alarm and says to jump out or get ready to fight. Every repeat of the hunter's line warns again, and your Ship's Core adds one remark in its own voice, once per ten minutes. Before, a pirate's line was read as chatter with no warning, and a hitman's only drew a calm remark.
+
 NPCs that repeat a canned line now notice. With Include NPC chatter on, a speaker's line is spoken twice; the third time the speaker says a short remark about repeating itself, once per speaker, and after that the line is silent until the speaker has been quiet for five minutes or you jump. Before, a cruise liner or patrol could say the same line over and over.
 
 NPC voices on comms now last as long as the sender does. A station gets a new voice each time you drop into normal space and keeps it until you enter supercruise or jump. An authority or navy ship, such as a System Authority Vessel, speaks each message in a new voice. Other NPCs keep their voice while you are in the system and get a new one on your next arrival, including a return to a system you visited before. An NPC who interdicts you keeps its voice for the rest of the session, across jumps. Before, every NPC kept one voice per system, so a station sounded the same on every visit and a pirate who followed you through a jump changed voice.
