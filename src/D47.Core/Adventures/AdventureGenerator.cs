@@ -37,7 +37,7 @@ public enum AdventureLength
 /// What the Commander decided on the form, and the brief they spoke (Phase 47). <see cref="LastDraftRefused"/> is why
 /// the draft before this one could not be used, for the writer to avoid. <see cref="Draft"/> is this draft's number, for the log.
 /// When <see cref="Outline"/> is set, the spine step is skipped and the objectives are written against it.
-/// <see cref="Barred"/> are activities a short story may not ask for.
+/// <see cref="Barred"/> are activities a short story may not ask for. <see cref="CrimeRefused"/> is set when the Commander's Crime rating is 0.
 /// </summary>
 public sealed record AdventureAsk(
     AdventureReach Reach = AdventureReach.NearHere,
@@ -53,7 +53,8 @@ public sealed record AdventureAsk(
     AdventureOutline? Outline = null,
     IReadOnlyList<string>? Barred = null,
     AdventureChapter? Failed = null,
-    AdventureSetAside? SetAside = null);
+    AdventureSetAside? SetAside = null,
+    bool CrimeRefused = false);
 
 /// <summary>
 /// A chapter the Commander set aside, to be written again: the chapter, the titles of its objectives already done, the
@@ -1689,7 +1690,7 @@ public sealed class AdventureGenerator(
             return Candidates.None;
         }
 
-        var anarchy = await AnarchyAsync(search, facts, here, cancellationToken, notes).ConfigureAwait(false);
+        IReadOnlyList<SystemSummary> anarchy = ask.CrimeRefused ? [] : await AnarchyAsync(search, facts, here, cancellationToken, notes).ConfigureAwait(false);
         var sites = await SitesAsync(search, facts, here, cancellationToken, notes).ConfigureAwait(false);
         var resolver = new AdventureResolver(search, facts.Standings);
         var frontline = await FrontlineAsync(search, facts, here, resolver, cancellationToken, notes).ConfigureAwait(false);
@@ -2181,11 +2182,19 @@ public sealed class AdventureGenerator(
     }
 
     /// <summary>The Anarchy systems and the rule for illegal mission beats, or the instruction to write none.</summary>
-    private static void AppendAnarchy(StringBuilder text, IReadOnlyList<SystemSummary> anarchy)
+    private static void AppendAnarchy(StringBuilder text, IReadOnlyList<SystemSummary> anarchy, bool crimeRefused)
     {
-        var illegal = "any family with " + MissionFamilies.IllegalMarker + " in its name, and " + string.Join(", ", MissionFamilies.Illegal);
-
         text.AppendLine();
+
+        if (crimeRefused)
+        {
+            text.AppendLine(
+                "You set Crime to 0, so write no crime objective: no illegal mission, no piracy, no smuggling, "
+                + "and no event step that collects or sells stolen cargo or items.");
+            return;
+        }
+
+        var illegal = "any family with " + MissionFamilies.IllegalMarker + " in its name, and " + string.Join(", ", MissionFamilies.Illegal);
 
         if (anarchy.Count == 0)
         {
@@ -3641,7 +3650,7 @@ public sealed class AdventureGenerator(
         AppendInBand(text, candidates.InBand, ask, facts);
         AppendPull(text, candidates.Pull, ask, facts);
         AppendSites(text, candidates.Sites);
-        AppendAnarchy(text, candidates.Anarchy);
+        AppendAnarchy(text, candidates.Anarchy, ask.CrimeRefused);
         AppendFrontline(text, candidates.Frontline, ask.Story?.Slots?.Any(slot => slot.Kind == TriggerKind.OnFootBond) == true);
 
         if (ask.Story is { } story)
@@ -5138,6 +5147,13 @@ public sealed class AdventureGenerator(
                     index,
                     $"Objective {offset + index + 1} ({beat.Named}) asks the Commander to {BeatPhrase(beat)}, "
                     + "which they have changed away from too often to be asked again; use another kind of objective.");
+            }
+            else if (ask.CrimeRefused && CrimeObjectives.Is(beat.Kind, beat.MissionFamily, beat.Event, beat.Where))
+            {
+                Refuse(
+                    index,
+                    $"Objective {offset + index + 1} ({beat.Named}) is a crime, and the Commander's Crime rating is 0, "
+                    + "so no objective may be one: no illegal mission, piracy, smuggling or stolen goods; use another kind of objective.");
             }
         }
 

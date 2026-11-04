@@ -28,7 +28,7 @@ public sealed record DetourAnswer(string Reply, DetourStep? Step, IReadOnlyList<
 /// The Commander's latest <see cref="Words"/>, the rounds before them, how many questions were already asked, the
 /// objective they would leave, and the activities the story may not ask for.
 /// </summary>
-public sealed record DetourAsk(string Words, IReadOnlyList<AdventureRemark> Exchange, int Questions, AdventureTrigger Current, IReadOnlyList<string> Refused);
+public sealed record DetourAsk(string Words, IReadOnlyList<AdventureRemark> Exchange, int Questions, AdventureTrigger Current, IReadOnlyList<string> Refused, bool CrimeRefused = false);
 
 /// <summary>
 /// Turns the Commander's words about a story objective into one detour step, or a clarifying question, with one small model
@@ -170,6 +170,11 @@ public sealed class DetourProposer(
                 logger.LogInformation("Detour step refused: {Problem}", problem);
                 return Asked(ask, "How many, and of what?", []);
             }
+        }
+
+        if (ask.CrimeRefused && CrimeObjectives.Is(trigger))
+        {
+            return Asked(ask, "You set Crime to 0, so a detour cannot ask you to commit a crime. Name a place, or a different activity.", []);
         }
 
         if (RefusedActivities.Refuses(ask.Refused, trigger.Kind, trigger.MissionFamily))

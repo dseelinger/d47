@@ -265,7 +265,15 @@ public static class ChapterDraw
             var field = withValues[random.Next(withValues.Count)];
             var options = events.DrawableValuesOf(chosen.Row.Event, field);
 
-            pair = new EventFilter([new EventField(field, options[random.Next(options.Count)])]);
+            if (weights.Weight(Career.Crime) <= 0)
+            {
+                options = [.. options.Where(value => !CrimeObjectives.Is(TriggerKind.Event, null, chosen.Row.Event, new EventFilter([new EventField(field, value)])))];
+            }
+
+            if (options.Count > 0)
+            {
+                pair = new EventFilter([new EventField(field, options[random.Next(options.Count)])]);
+            }
         }
 
         return new DrawnActivity(TriggerKind.Event, null, chosen.Row.Source == StepEventCatalogue.JournalSource ? 1 + random.Next(MostEventCount) : 1)

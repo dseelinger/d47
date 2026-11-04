@@ -73,12 +73,6 @@ public static class ChapterActivities
 
     private static readonly string[] Passenger = ["Mission_PassengerBulk", "Mission_PassengerVIP", "Mission_Sightseeing", "Mission_LongDistanceExpedition"];
 
-    /// <summary>Crime families, besides every <see cref="MissionFamilies.IsIllegal"/> family.</summary>
-    private static readonly string[] Crimes =
-    [
-        "Mission_Smuggle", "Mission_OnFoot_Smuggle", "Mission_Piracy", "Mission_OnFoot_Heist", "Mission_OnFoot_ProductionHeist", "Mission_OnFoot_Sabotage",
-    ];
-
     /// <summary>Every drawable activity, in table order.</summary>
     public static IReadOnlyList<DrawableActivity> All { get; } = Build();
 
@@ -212,7 +206,7 @@ public static class ChapterActivities
             rows.Add(Mission(family, Career.SearchAndRescue));
         }
 
-        foreach (var family in Crimes.Concat(MissionFamilies.Offered.Where(MissionFamilies.IsIllegal)).Distinct(StringComparer.Ordinal))
+        foreach (var family in CrimeObjectives.Families.Concat(MissionFamilies.Offered.Where(MissionFamilies.IsIllegal)).Distinct(StringComparer.Ordinal))
         {
             rows.Add(Mission(family, Career.Crime));
         }

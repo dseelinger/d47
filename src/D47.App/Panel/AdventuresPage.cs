@@ -995,7 +995,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 }
             }
 
-            var ask = new AdventureAsk(reach, length, thisShipOnly, string.IsNullOrWhiteSpace(brief) ? null : brief, chapter) { Failed = failed };
+            var ask = new AdventureAsk(reach, length, thisShipOnly, string.IsNullOrWhiteSpace(brief) ? null : brief, chapter) { Failed = failed, CrimeRefused = _surface.Stories?.CrimeRefused() == true };
 
             status.Clear();
 
@@ -1363,7 +1363,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             value => string.IsNullOrWhiteSpace(value) ? EntryVerdict.No("Say what should change.") : EntryVerdict.Ok),
         remark =>
         {
-            var ask = _asks.GetValueOrDefault(draft.Key) ?? new AdventureAsk();
+            var ask = (_asks.GetValueOrDefault(draft.Key) ?? new AdventureAsk()) with { CrimeRefused = _surface.Stories?.CrimeRefused() == true };
             var exchange = _exchanges.GetValueOrDefault(draft.Key) ?? [];
 
             var drawnFor = _surface.Commander();

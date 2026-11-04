@@ -1130,6 +1130,11 @@ public sealed class StoryDirector(
     /// <summary>Why <paramref name="trigger"/> may not be a detour of <paramref name="story"/>: an activity it refused or the Commander barred; null otherwise.</summary>
     private string? DetourBarred(string? frontierId, Story story, AdventureTrigger trigger)
     {
+        if (CrimeRefused() && CrimeObjectives.Is(trigger))
+        {
+            return "You set Crime to 0, so a detour cannot ask you to commit a crime.";
+        }
+
         if (!RefusedActivities.Refuses(WithBar(frontierId, story).Refused, trigger.Kind, trigger.MissionFamily, trigger.Event, RefusedActivities.ToolOf(trigger.Where)))
         {
             return null;
@@ -1197,7 +1202,7 @@ public sealed class StoryDirector(
             logger.LogInformation("Objective change asked: {Remark}", trimmed);
 
             var answer = await detours.ProposeAsync(
-                new DetourAsk(trimmed, exchange, questions, current, WithBar(frontierId, story).Refused), cancellationToken).ConfigureAwait(false);
+                new DetourAsk(trimmed, exchange, questions, current, WithBar(frontierId, story).Refused, CrimeRefused()), cancellationToken).ConfigureAwait(false);
 
             var proposal = new DetourProposal(
                 story.Id, story.PickedAt, standing.Adventure.Key, standing.Current, standing.CurrentStep, current, answer,
@@ -2048,7 +2053,8 @@ public sealed class StoryDirector(
                 AdventureReach.Session,
                 Chapter: rewrite.Chapter.Follows is { } follows ? Director.Book.ChapterOf(FrontierId, follows) : null,
                 Rewrite: rewrite,
-                Barred: barred);
+                Barred: barred,
+                CrimeRefused: Director.CrimeRefused());
             return Task.FromResult<(AdventureAsk?, string?)>((ask, null));
         }
 
@@ -2171,7 +2177,8 @@ public sealed class StoryDirector(
                 hull: game?.Ship.Type,
                 inTheBlack: StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter)),
                 sights: sightseeing ? sights : null),
-            Rewrite: rewrite);
+            Rewrite: rewrite,
+            CrimeRefused: CrimeRefused());
     }
 
     /// <summary>The index of the chapter's first arrive, land or scan objective in its sight's system; null for a chapter with no sight.</summary>
@@ -2332,6 +2339,9 @@ public sealed class StoryDirector(
     /// <summary>The place objectives a finale chapter must already have: the landing of the last one, or the stop nearer the destination.</summary>
     private static int FixedPlaces(Story story, int? finaleChapter) =>
         finaleChapter is { } finale && (finale > 1 || story.Pacing.FinaleChapters <= 1) ? 1 : 0;
+
+    /// <summary>Whether the Commander's Crime rating is 0, so no chapter, detour or short story may ask for a crime.</summary>
+    public bool CrimeRefused() => Ratings() is { Crime: <= 0 };
 
     private CareerWeights Weights(CareerStatistics statistics)
     {
@@ -3351,7 +3361,8 @@ public sealed class StoryDirector(
             Draft: draftNumber,
             Outline: outline,
             Failed: setAside ? null : failed,
-            SetAside: setAside && failed is not null ? SetAsideAsk(story, failed, game?.Location.StarSystem) : null);
+            SetAside: setAside && failed is not null ? SetAsideAsk(story, failed, game?.Location.StarSystem) : null,
+            CrimeRefused: CrimeRefused());
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 

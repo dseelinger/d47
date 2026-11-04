@@ -212,6 +212,19 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     }
 
     [Fact]
+    public async Task ACrimeDetourIsRefusedWithCrimeAtZero()
+    {
+        using var fixtures = AtTheBond();
+        fixtures.Director.Ratings = () => new D47.Core.Configuration.CareerRatingSettings { Crime = 0 };
+        DetourFixtures.Give(fixtures, null, null, HuntBounties.Replace("\"kind\": \"bounty\"", "\"kind\": \"mission\"", StringComparison.Ordinal).Replace("\"mission\": null", "\"mission\": \"Mission_Piracy\"", StringComparison.Ordinal));
+
+        var outcome = await fixtures.Director.ProposeDetourAsync("F1", "Pirate someone.", null, TestContext.Current.CancellationToken);
+
+        Assert.Null(outcome.Proposal!.Answer.Step);
+        Assert.Contains("Crime to 0", outcome.Proposal.Reply, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task AnActivityTheCommanderBarredIsNotProposed()
     {
         using var fixtures = AtTheBond();
