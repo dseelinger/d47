@@ -949,10 +949,21 @@ message arriving in your companion's voice reads as your companion saying it.
 and turning this on sends it to your voice provider to be synthesised. That is egress you should
 opt into rather than discover.
 
-Once a sender has a voice they keep it. Other Commanders keep theirs for the whole session and
-across jumps — a wingmate whose voice changed every time you jumped would read as a bug rather
-than as variety. NPCs keep theirs only while you are in the system, because the cast turns over
-when you leave.
+Other Commanders keep their voice for the whole session and across jumps. NPC voices last as
+long as the game's sender does:
+
+- **A station**, settlement or another Commander's carrier keeps one voice from the moment you
+  drop into normal space until you enter supercruise or jump. The next drop gets a new voice.
+- **An authority or navy ship** — a System Authority Vessel, a security service, a navy or
+  Powerplay security ship — gets a new voice for every message, because there are usually several
+  in a system and more than one person aboard each.
+- **Every other NPC**, named pilots and liners included, keeps one voice while you are in the
+  system and gets a new one when you next arrive, even in a system you have visited before.
+- **An NPC who interdicts you** keeps the voice it already has for the rest of the session, so a
+  pirate who follows you through a jump sounds the same on arrival.
+
+The voices are chosen from the journal's own timestamps, so replaying the same journal gives the
+same voices.
 
 **Include NPC chatter** is a second switch, because the volume is completely different. A station
 approach produces a steady stream of NPC traffic, so hearing your wing does not imply hearing

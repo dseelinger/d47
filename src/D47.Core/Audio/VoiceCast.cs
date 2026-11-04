@@ -1,4 +1,5 @@
-﻿using D47.Core.Speech;
+﻿using System.Globalization;
+using D47.Core.Speech;
 
 namespace D47.Core.Audio;
 
@@ -45,8 +46,20 @@ public static class VoiceRoles
 /// <summary>Which voice fills each role, and which voice belongs to which sender.</summary>
 public sealed class VoiceCast
 {
-    /// <summary>NPC voices, cleared on arrival in a new system.</summary>
+    /// <summary>NPC voices, cleared on arrival in a system except for the NPCs in <see cref="_followers"/>.</summary>
     private readonly Dictionary<string, string> _perSystem = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Station voices, cleared on arrival, on a drop into normal space and on leaving it.</summary>
+    private readonly Dictionary<string, string> _perDrop = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Group ship voices by sender and message time, cleared on arrival.</summary>
+    private readonly Dictionary<string, string> _perMessage = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Each group ship's latest voice in this system, cleared on arrival.</summary>
+    private readonly Dictionary<string, string> _groupLatest = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>NPCs who interdicted the Commander, whose voices outlast an arrival.</summary>
+    private readonly HashSet<string> _followers = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Voices kept for the whole session, surviving hyperspace.</summary>
     private readonly Dictionary<string, string> _lasting = new(StringComparer.OrdinalIgnoreCase);
@@ -95,7 +108,7 @@ public sealed class VoiceCast
     /// wait: another Commander, a role other than comms, a role the Commander has cast, a sender already voiced
     /// here, or a given name with nothing to wait for.
     /// </summary>
-    public Task? SexAnswerFor(string sender, bool isPlayer, VoiceRole role, string? own = null)
+    public Task? SexAnswerFor(string sender, bool isPlayer, VoiceRole role, string? own = null, SenderKind kind = SenderKind.Person)
     {
         if (isPlayer
             || role != VoiceRole.Comms
@@ -103,13 +116,21 @@ public sealed class VoiceCast
             || GivenNameAnswer is null
             || Pool.Count == 0
             || _roleVoices.ContainsKey(role)
-            || _perSystem.ContainsKey(sender))
+            || HeardAlready(sender, kind))
         {
             return null;
         }
 
         return GivenNameAnswer(sender);
     }
+
+    /// <summary>Whether an NPC of this kind has been given a voice in its current scope.</summary>
+    private bool HeardAlready(string sender, SenderKind kind) => kind switch
+    {
+        SenderKind.Station => _perDrop.ContainsKey(sender),
+        SenderKind.GroupShip => _groupLatest.ContainsKey(sender),
+        _ => _perSystem.ContainsKey(sender),
+    };
 
     /// <summary>The accent a voice is heard in, or null where its listing names none.</summary>
     public string? AccentOf(string? voiceId) =>
@@ -183,7 +204,9 @@ public sealed class VoiceCast
             || voice.Description?.Contains("narrat", StringComparison.OrdinalIgnoreCase) == true);
 
     /// <summary>
-    /// What one sender sounds like, assigning them a voice the first time and keeping it after that.
+    /// What one sender sounds like, assigning them a voice the first time and keeping it for as long as
+    /// <paramref name="kind"/> lasts: another Commander and a role for the session, a person until the next
+    /// arrival, a station until normal space is left, and a group ship for one message.
     /// </summary>
     /// <param name="sender">The name as the game reported it.</param>
     /// <param name="isPlayer">Whether this is another Commander.</param>
@@ -191,12 +214,15 @@ public sealed class VoiceCast
     /// The docked station's <c>StationAllegiance</c>, or null — most stations have none (#68).
     /// </param>
     /// <param name="own">The sender's own voice, spoken in when this cast lists it.</param>
+    /// <param name="sentAt">The message's journal timestamp: a group ship's voice is seeded from it and kept for it.</param>
     public VoiceSelection ForSender(
         string sender,
         bool isPlayer,
         VoiceRole role = VoiceRole.Comms,
         string? allegiance = null,
-        string? own = null)
+        string? own = null,
+        SenderKind kind = SenderKind.Person,
+        DateTimeOffset? sentAt = null)
     {
         if (own is not null && (Voices.Count == 0 || Voices.ContainsKey(own)))
         {
@@ -210,9 +236,18 @@ public sealed class VoiceCast
             return For(role);
         }
 
-        var assignments = Lasts(isPlayer, role) ? _lasting : _perSystem;
+        var lasts = Lasts(isPlayer, role);
+        var npcKind = lasts ? SenderKind.Person : kind;
 
-        if (assignments.TryGetValue(sender, out var already))
+        var (assignments, key, scopeStart) = lasts ? (_lasting, sender, (DateTimeOffset?)null)
+            : npcKind switch
+            {
+                SenderKind.Station => (_perDrop, sender, Drop ?? Arrival),
+                SenderKind.GroupShip => (_perMessage, PerMessageKey(sender, sentAt), sentAt ?? Drop ?? Arrival),
+                _ => (_perSystem, sender, Arrival),
+            };
+
+        if (assignments.TryGetValue(key, out var already))
         {
             return Of(already, role);
         }
@@ -223,8 +258,8 @@ public sealed class VoiceCast
         }
 
         // Seeded rather than random so a replay gives the live run's voices. A lasting sender is seeded from
-        // the name alone; an NPC from the name and the system, so the same name sounds different per system.
-        var seed = Lasts(isPlayer, role) || System is null ? Hash(sender) : Hash(sender + "\u001f" + System);
+        // the name alone; an NPC from the name, the system and the journal time its scope opened.
+        var seed = lasts ? Hash(sender) : Scoped(sender, System, scopeStart);
         var start = (int)(seed % (uint)Pool.Count);
 
         // Everything this sender could be given, in the order they would be walked.
@@ -272,21 +307,49 @@ public sealed class VoiceCast
 
         // Voices already spoken for are stepped past rather than reused, so a system with four NPCs in it has
         // four distinct voices as long as there are four to give out.
+        var spokenFor = lasts ? _lasting.Values : HeardHere().Select(met => met.VoiceId);
         var free = drawnFrom
-            .Where(voice => !assignments.Values.Contains(voice, StringComparer.OrdinalIgnoreCase))
+            .Where(voice => !spokenFor.Contains(voice, StringComparer.OrdinalIgnoreCase))
             .ToList();
 
-        if (free.Count > 0)
+        // They are all spoken for, so this sender shares one, still of the sex chosen; a group ship still steps past
+        // the voice its last message was in.
+        var previous = npcKind == SenderKind.GroupShip ? _groupLatest.GetValueOrDefault(sender) : null;
+        var besidesPrevious = drawnFrom.Where(voice => !string.Equals(voice, previous, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        var chosen = free.Count > 0 ? free[(int)(Mixed(seed, 0) % (uint)free.Count)]
+            : previous is not null && besidesPrevious.Count > 0 ? besidesPrevious[(int)(Mixed(seed, 0) % (uint)besidesPrevious.Count)]
+            : drawnFrom[0];
+
+        assignments[key] = chosen;
+
+        if (npcKind == SenderKind.GroupShip && !lasts)
         {
-            var chosenVoice = free[(int)(Mixed(seed, 0) % (uint)free.Count)];
-            assignments[sender] = chosenVoice;
-            return Of(chosenVoice, role);
+            _groupLatest[sender] = chosen;
         }
 
-        // They are all spoken for, so this sender shares one — still of the sex chosen.
-        assignments[sender] = drawnFrom[0];
-        return Of(drawnFrom[0], role);
+        return Of(chosen, role);
     }
+
+    /// <summary>The key a group ship's voice for one message is kept under.</summary>
+    private static string PerMessageKey(string sender, DateTimeOffset? sentAt) =>
+        sentAt is { } at ? sender + "\u001f" + at.UtcTicks.ToString(CultureInfo.InvariantCulture) : sender;
+
+    /// <summary>
+    /// An NPC's seed from its name, the system and the journal time its scope opened; the name alone where neither is
+    /// known, and the name and system where only the time is not.
+    /// </summary>
+    private static uint Scoped(string sender, string? system, DateTimeOffset? opened) =>
+        (system, opened) switch
+        {
+            (null, null) => Hash(sender),
+            (_, null) => Hash(sender + "\u001f" + system),
+            (_, { } at) => Hash(sender + "\u001f" + system + "\u001f" + at.UtcTicks.ToString(CultureInfo.InvariantCulture)),
+        };
+
+    /// <summary>Every NPC voiced in the current scopes, with their voice: people, stations and each group ship's latest.</summary>
+    private IEnumerable<(string Name, string VoiceId)> HeardHere() =>
+        _perSystem.Concat(_perDrop).Concat(_groupLatest).Select(pair => (pair.Key, pair.Value));
 
     /// <summary>
     /// The accent and sex a name is recorded as suggesting, or null. A name with no answer yet is reported to
@@ -313,9 +376,8 @@ public sealed class VoiceCast
     /// <summary>Gives an NPC in this system a voice chosen before their name was known.</summary>
     public void Keep(string sender, string voiceId) => _perSystem[sender] = voiceId;
 
-    /// <summary>The NPCs given a voice in this system so far, with it.</summary>
-    public IReadOnlyList<(string Name, string VoiceId)> MetHere =>
-        [.. _perSystem.Select(pair => (pair.Key, pair.Value))];
+    /// <summary>The NPCs holding a voice here, with it: people in this system, stations in this drop and each group ship's latest.</summary>
+    public IReadOnlyList<(string Name, string VoiceId)> MetHere => [.. HeardHere()];
 
     /// <summary>
     /// Voices for people not yet named, one per slot: the Commander's voice for comms where they cast
@@ -341,7 +403,7 @@ public sealed class VoiceCast
             .ToList();
 
         var unused = walked
-            .Where(voice => !_perSystem.Values.Contains(voice, StringComparer.OrdinalIgnoreCase))
+            .Where(voice => !HeardHere().Any(met => string.Equals(met.VoiceId, voice, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
         var candidates = unused.Count >= count ? unused : walked;
@@ -394,12 +456,47 @@ public sealed class VoiceCast
     /// <summary>The system NPC voices are currently drawn for, or null before one is known.</summary>
     public string? System { get; set; }
 
-    /// <summary>A new system: NPC voices are cleared and drawn again for <paramref name="system"/>.</summary>
-    public void EnteredSystem(string? system = null)
+    /// <summary>The journal time of the arrival in <see cref="System"/>, or null where it is not known.</summary>
+    public DateTimeOffset? Arrival { get; private set; }
+
+    /// <summary>The journal time of the drop into normal space, or null outside it.</summary>
+    public DateTimeOffset? Drop { get; private set; }
+
+    /// <summary>
+    /// An arrival in <paramref name="system"/> at journal time <paramref name="at"/>: NPC voices other than those of an
+    /// NPC who interdicted the Commander are cleared and drawn again, and normal space is left.
+    /// </summary>
+    public void EnteredSystem(string? system = null, DateTimeOffset? at = null)
     {
         System = system;
-        _perSystem.Clear();
+        Arrival = at;
+
+        foreach (var name in _perSystem.Keys.Where(name => !_followers.Contains(name)).ToList())
+        {
+            _perSystem.Remove(name);
+        }
+
+        _perMessage.Clear();
+        _groupLatest.Clear();
+        LeftNormalSpace();
     }
+
+    /// <summary>A drop into normal space at journal time <paramref name="at"/>: stations are drawn new voices.</summary>
+    public void Dropped(DateTimeOffset at)
+    {
+        Drop = at;
+        _perDrop.Clear();
+    }
+
+    /// <summary>Normal space is left: stations' voices are cleared.</summary>
+    public void LeftNormalSpace()
+    {
+        Drop = null;
+        _perDrop.Clear();
+    }
+
+    /// <summary>An NPC interdicted the Commander: it keeps the voice it has, or is given next, for the session.</summary>
+    public void Interdicted(string interdictor) => _followers.Add(interdictor);
 
     /// <summary>How many senders currently hold a voice.</summary>
     public (int Lasting, int PerSystem) Assignments => (_lasting.Count, _perSystem.Count);

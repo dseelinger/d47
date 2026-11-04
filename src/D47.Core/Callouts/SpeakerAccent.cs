@@ -22,7 +22,13 @@ public static class SpeakerAccent
         ArgumentNullException.ThrowIfNull(announcement);
 
         return announcement.Speaker is { Length: > 0 } speaker && !announcement.InRoleVoice
-            ? cast.ForSender(speaker, announcement.SpeakerIsPlayer, announcement.Voice, announcement.SpeakerAllegiance)
+            ? cast.ForSender(
+                speaker,
+                announcement.SpeakerIsPlayer,
+                announcement.Voice,
+                announcement.SpeakerAllegiance,
+                kind: announcement.SpeakerKind,
+                sentAt: announcement.SentAt)
             : cast.For(announcement.Voice);
     }
 
@@ -32,7 +38,7 @@ public static class SpeakerAccent
     /// </summary>
     public static Task? NameAnswerFor(VoiceCast cast, Announcement announcement) =>
         announcement.Speaker is { Length: > 0 } speaker && !announcement.InRoleVoice
-            ? cast.SexAnswerFor(speaker, announcement.SpeakerIsPlayer, announcement.Voice)
+            ? cast.SexAnswerFor(speaker, announcement.SpeakerIsPlayer, announcement.Voice, kind: announcement.SpeakerKind)
             : null;
 
     /// <summary>Splits a batch into the lines to speak now and the first lines from NPCs that wait, each with its answer.</summary>

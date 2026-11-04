@@ -3921,7 +3921,7 @@ public sealed class AppHost : IDisposable
             context.Now));
 
         // NPC voices are scoped to the system, so something has to notice the system changing.
-        tick.Add("voice-scope", _ => host.FollowSystemForVoices());
+        tick.Add("voice-scope", _ => host.FollowSystemForVoices(feed.Arrived));
 
         // After the journal, the adventures and voice-scope, which clears the roster on a new system.
         tick.Add("comms-channels", _ => host.FeedCommsChannels());
@@ -5427,8 +5427,8 @@ public sealed class AppHost : IDisposable
 
     private string? _voiceScopeSystem;
 
-    /// <summary>Drops the NPC voice assignments when the Commander arrives somewhere new.</summary>
-    private void FollowSystemForVoices()
+    /// <summary>Opens and closes NPC voice scopes from this tick's journal events, and on a change of system.</summary>
+    private void FollowSystemForVoices(IReadOnlyList<JournalEvent> arrived)
     {
         // The Commander's own name, so their own messages are not read back to them.
         if (GameState.Active?.Identity.Name is { Length: > 0 } commander)
@@ -5454,6 +5454,8 @@ public sealed class AppHost : IDisposable
             }
         }
 
+        Speech.Casting.Observe(arrived);
+
         var system = GameState.Active?.Location.StarSystem;
 
         if (system is null || string.Equals(system, _voiceScopeSystem, StringComparison.Ordinal))
@@ -5461,13 +5463,17 @@ public sealed class AppHost : IDisposable
             return;
         }
 
-        // Not on the first sample.
+        // Not on the first sample. A change no event carried, such as another Commander shown, still clears.
         if (_voiceScopeSystem is not null)
         {
-            Speech.Casting.EnteredSystem(system);
+            if (!string.Equals(system, Speech.Casting.System, StringComparison.Ordinal))
+            {
+                Speech.Casting.EnteredSystem(system);
+            }
+
             Announcer.NpcsHere.EnteredSystem();
         }
-        else
+        else if (Speech.Casting.System is null)
         {
             Speech.Casting.InSystem(system);
         }

@@ -124,6 +124,12 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// <summary>Whether <see cref="Speaker"/> is a player rather than an NPC.</summary>
     public bool SpeakerIsPlayer { get; init; }
 
+    /// <summary>What kind of NPC <see cref="Speaker"/> is, which decides how long its voice lasts.</summary>
+    public Audio.SenderKind SpeakerKind { get; init; }
+
+    /// <summary>The journal timestamp of the message this speaks, or null for a line that is not one.</summary>
+    public DateTimeOffset? SentAt { get; init; }
+
     /// <summary>
     /// The docked station's <c>StationAllegiance</c> when <see cref="Speaker"/> is that station, or null
     /// — most stations have none, and every other speaker is unaffected (#68).

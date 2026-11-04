@@ -1,3 +1,6 @@
+using D47.Core.Callouts;
+using D47.Core.Journal;
+
 namespace D47.Core.Audio;
 
 /// <summary>
@@ -8,14 +11,33 @@ public sealed class VoiceCasting
 {
     private readonly Dictionary<string, VoiceCast> _casts = new(StringComparer.OrdinalIgnoreCase);
 
-    private string? _system;
+    private readonly HashSet<string> _interdictors = new(StringComparer.OrdinalIgnoreCase);
+
+    private DateTimeOffset? _arrival;
+
+    private DateTimeOffset? _drop;
+
+    /// <summary>The system NPC voices are drawn for, or null before one is known.</summary>
+    public string? System { get; private set; }
 
     /// <summary>The cast for one provider, made on first use.</summary>
     public VoiceCast Of(string providerId)
     {
         if (!_casts.TryGetValue(providerId, out var cast))
         {
-            cast = new VoiceCast { System = _system };
+            cast = new VoiceCast();
+            cast.EnteredSystem(System, _arrival);
+
+            if (_drop is { } drop)
+            {
+                cast.Dropped(drop);
+            }
+
+            foreach (var interdictor in _interdictors)
+            {
+                cast.Interdicted(interdictor);
+            }
+
             _casts[providerId] = cast;
         }
 
@@ -25,7 +47,7 @@ public sealed class VoiceCasting
     /// <summary>Records the system without clearing anyone's voice, for the first one seen.</summary>
     public void InSystem(string? system)
     {
-        _system = system;
+        System = system;
 
         foreach (var cast in _casts.Values)
         {
@@ -33,14 +55,91 @@ public sealed class VoiceCasting
         }
     }
 
-    /// <summary>A new system, for all of them.</summary>
-    public void EnteredSystem(string? system = null)
+    /// <summary>A new system, for all of them, arrived in at journal time <paramref name="at"/> where it is known.</summary>
+    public void EnteredSystem(string? system = null, DateTimeOffset? at = null)
     {
-        _system = system;
+        System = system;
+        _arrival = at;
+        _drop = null;
 
         foreach (var cast in _casts.Values)
         {
-            cast.EnteredSystem(system);
+            cast.EnteredSystem(system, at);
+        }
+    }
+
+    /// <summary>
+    /// Opens and closes NPC voice scopes from the Commander's journal events, in order: an arrival from
+    /// <c>FSDJump</c>, <c>CarrierJump</c> or <c>Location</c>; a drop into normal space from <c>SupercruiseExit</c>,
+    /// <c>CarrierJump</c> or <c>Location</c>; leaving it on <c>SupercruiseEntry</c>; and an NPC interdictor kept from
+    /// <c>Interdicted</c> or <c>EscapeInterdiction</c>.
+    /// </summary>
+    public void Observe(IEnumerable<JournalEvent> events)
+    {
+        ArgumentNullException.ThrowIfNull(events);
+
+        foreach (var journalEvent in events)
+        {
+            switch (journalEvent.Kind)
+            {
+                case "FSDJump":
+                    EnteredSystem(journalEvent.String("StarSystem") ?? System, journalEvent.Timestamp);
+                    break;
+
+                case "CarrierJump" or "Location":
+                    EnteredSystem(journalEvent.String("StarSystem") ?? System, journalEvent.Timestamp);
+                    Dropped(journalEvent.Timestamp);
+                    break;
+
+                case "SupercruiseExit":
+                    Dropped(journalEvent.Timestamp);
+                    break;
+
+                case "SupercruiseEntry":
+                    LeftNormalSpace();
+                    break;
+
+                case "Interdicted" or "EscapeInterdiction"
+                    when !journalEvent.Bool("IsPlayer")
+                         && (journalEvent.String("Interdictor_Localised") ?? journalEvent.String("Interdictor")) is { Length: > 0 } interdictor:
+                    Interdicted(IncomingMessages.Undecorate(interdictor));
+                    break;
+            }
+        }
+    }
+
+    private void Dropped(DateTimeOffset at)
+    {
+        _drop = at;
+
+        foreach (var cast in _casts.Values)
+        {
+            cast.Dropped(at);
+        }
+    }
+
+    private void LeftNormalSpace()
+    {
+        _drop = null;
+
+        foreach (var cast in _casts.Values)
+        {
+            cast.LeftNormalSpace();
+        }
+    }
+
+    private void Interdicted(string interdictor)
+    {
+        if (interdictor.Length == 0)
+        {
+            return;
+        }
+
+        _interdictors.Add(interdictor);
+
+        foreach (var cast in _casts.Values)
+        {
+            cast.Interdicted(interdictor);
         }
     }
 

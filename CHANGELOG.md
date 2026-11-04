@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+NPC voices on comms now last as long as the sender does. A station gets a new voice each time you drop into normal space and keeps it until you enter supercruise or jump. An authority or navy ship, such as a System Authority Vessel, speaks each message in a new voice. Other NPCs keep their voice while you are in the system and get a new one on your next arrival, including a return to a system you visited before. An NPC who interdicts you keeps its voice for the rest of the session, across jumps. Before, every NPC kept one voice per system, so a station sounded the same on every visit and a pirate who followed you through a jump changed voice.
+
 Invented radio chatter now picks each voice with equal chance from the voices that fit (the wanted gender, British at an Empire station, the accent a name suggests). Before, a voice that followed a long run of voices of the other gender was picked far more often, so the same few voices kept coming back.
 
 When the market index answers with an empty commodity list, saving a stock watch on the Watches page now says Ardent could not be reached to check the commodity, and a commodity search reports that the index sent no commodity list. Before, both said the index had no commodity of that name.

@@ -193,6 +193,9 @@ public sealed partial class IncomingMessages : ICallout
         var sender = Undecorate(
             journalEvent.String("From_Localised") ?? journalEvent.String("From") ?? "Unknown");
 
+        // Read from the raw `From`, which still says what kind of sender this is.
+        var kind = KindOf(journalEvent.String("From"), channel);
+
         // Elite echoes what you send back to you on the same channel.
         if (CommanderName is { Length: > 0 } own
             && sender.Contains(own, StringComparison.OrdinalIgnoreCase))
@@ -223,7 +226,7 @@ public sealed partial class IncomingMessages : ICallout
             && authority.StartsWith("$ShipName_Police", StringComparison.OrdinalIgnoreCase)
             && frontiers)
         {
-            return VoicedAs(sender, VoiceRole.Comms, channel, isPlayer: false, allegiance: null) with
+            return VoicedAs(sender, VoiceRole.Comms, channel, isPlayer: false, allegiance: null, kind, journalEvent.Timestamp) with
             {
                 Key = AuthorityCannedKey,
                 Text = text,
@@ -252,7 +255,9 @@ public sealed partial class IncomingMessages : ICallout
                 && DockedStationName() is { Length: > 0 } docked
                 && string.Equals(docked, sender, StringComparison.OrdinalIgnoreCase)
                 ? DockedStationAllegiance()
-                : null) with
+                : null,
+            kind,
+            journalEvent.Timestamp) with
         {
             Key = key,
             Text = Spoken(sender, text, isPlayer),
@@ -277,15 +282,48 @@ public sealed partial class IncomingMessages : ICallout
     /// Which slot pays for the line, which <paramref name="isPlayer"/> does not decide: a squadron mate and a stranger
     /// in local are both players (Phase 57).
     /// </param>
-    public static Announcement VoicedAs(string sender, VoiceRole voice, string channel, bool isPlayer, string? allegiance) =>
+    public static Announcement VoicedAs(
+        string sender,
+        VoiceRole voice,
+        string channel,
+        bool isPlayer,
+        string? allegiance,
+        SenderKind kind = SenderKind.Person,
+        DateTimeOffset? sentAt = null) =>
         new($"message.{channel}", string.Empty)
         {
             Voice = voice,
             Speaker = sender,
             SpeakerIsPlayer = isPlayer,
             SpeakerAllegiance = allegiance,
+            SpeakerKind = kind,
+            SentAt = sentAt,
             CommsChannel = channel,
         };
+
+    /// <summary>
+    /// What kind of sender a raw <c>From</c> names: an authority, navy or Powerplay security ship is a group ship, a
+    /// plain name on the <c>npc</c> channel is a station, and everyone else is a person.
+    /// </summary>
+    public static SenderKind KindOf(string? from, string channel)
+    {
+        if (from is not { Length: > 0 })
+        {
+            return SenderKind.Person;
+        }
+
+        if (!from.StartsWith('$'))
+        {
+            return string.Equals(channel, "npc", StringComparison.OrdinalIgnoreCase) ? SenderKind.Station : SenderKind.Person;
+        }
+
+        return GroupShipPrefixes.Any(prefix => from.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            ? SenderKind.GroupShip
+            : SenderKind.Person;
+    }
+
+    /// <summary>The raw <c>From</c> keys of ships with more than one person aboard.</summary>
+    private static readonly string[] GroupShipPrefixes = ["$ShipName_Police_", "$ShipName_Military_", "$ShipName_PowersSecurity"];
 
     /// <summary>What is actually said out loud.</summary>
     private static string Spoken(string sender, string text, bool isPlayer) =>

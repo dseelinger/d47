@@ -128,12 +128,13 @@ public class VoiceCastTests
     }
 
     [Fact]
-    public void AnNpcInTheSameSystemGetsTheSameVoiceOnEveryRun()
+    public void AnNpcArrivedAtTheSameTimeGetsTheSameVoiceOnEveryRun()
     {
+        var arrived = new DateTimeOffset(2026, 11, 4, 9, 0, 0, TimeSpan.Zero);
         var first = Cast();
         var second = Cast();
-        first.EnteredSystem("Sol");
-        second.EnteredSystem("Sol");
+        first.EnteredSystem("Sol", arrived);
+        second.EnteredSystem("Sol", arrived);
 
         Assert.Equal(
             first.ForSender("Ilse Bruhn", isPlayer: false).VoiceId,
@@ -444,14 +445,15 @@ public class AnEmpireStationSoundsLikeTheEmpireTests
         Assert.NotNull(alliance);
     }
 
-    /// <summary>The same station keeps its voice across docks in the same session.</summary>
+    /// <summary>The same station keeps its voice across docks within one drop into normal space.</summary>
     [Fact]
     public void TheSameStationKeepsTheSameVoiceAcrossDocks()
     {
         var cast = Cast();
+        cast.Dropped(new DateTimeOffset(2026, 11, 4, 9, 0, 0, TimeSpan.Zero));
 
-        var first = cast.ForSender("Zeppelin Depot", isPlayer: false, allegiance: "Empire").VoiceId;
-        var second = cast.ForSender("Zeppelin Depot", isPlayer: false, allegiance: "Empire").VoiceId;
+        var first = cast.ForSender("Zeppelin Depot", isPlayer: false, allegiance: "Empire", kind: SenderKind.Station).VoiceId;
+        var second = cast.ForSender("Zeppelin Depot", isPlayer: false, allegiance: "Empire", kind: SenderKind.Station).VoiceId;
 
         Assert.Equal(first, second);
     }
