@@ -456,8 +456,8 @@ For each folder with queued tracks, one at a time:
 
 Nothing is deleted from this PC until GitHub has the folder's new zip and manifest.
 
-- A folder whose download here is older than the published version is left, with a reply saying to let the
-  download finish first, because a zip built from it would drop tracks.
+- A folder whose download here is older than the published version is fetched first. If it is still older after
+  that, it is left and the reply says so, because a zip built from it would drop tracks.
 - A folder whose every track is queued is left, since a folder cannot be emptied.
 - When an upload fails, that folder keeps its rows and its files, and the work stops. The reply names the folder,
   GitHub's message, and the folders that were not tried. Saying the phrase again continues with the folders left.

@@ -56,6 +56,7 @@ internal sealed class MusicRejectDeleter
     private readonly Func<string?> _token;
     private readonly Func<string, string?> _environment;
     private readonly Func<Stream> _temp;
+    private readonly Func<Task> _download;
     private readonly ILogger _logger;
     private readonly HttpClient _http;
     private int _running;
@@ -68,6 +69,7 @@ internal sealed class MusicRejectDeleter
 
     /// <param name="token">Read once at each run and never kept.</param>
     /// <param name="temp">A readable, writable, seekable stream for one zip, removed when it is disposed.</param>
+    /// <param name="download">Starts the library download and returns the running download.</param>
     internal MusicRejectDeleter(
         string pack,
         MusicRejects rejects,
@@ -75,6 +77,7 @@ internal sealed class MusicRejectDeleter
         Func<string?> token,
         Func<string, string?> environment,
         Func<Stream> temp,
+        Func<Task> download,
         ILogger logger,
         HttpMessageHandler? handler = null)
     {
@@ -84,6 +87,7 @@ internal sealed class MusicRejectDeleter
         _token = token;
         _environment = environment;
         _temp = temp;
+        _download = download;
         _logger = logger;
         _http = handler is null ? new HttpClient() : new HttpClient(handler);
         _http.Timeout = Timeout.InfiniteTimeSpan;
@@ -186,6 +190,11 @@ internal sealed class MusicRejectDeleter
                 return "Nothing was deleted. " + failure.Message;
             }
 
+            if (queued.Any(queue => IsBehind(queue.Folder, manifest)))
+            {
+                await _download().ConfigureAwait(false);
+            }
+
             for (var i = 0; i < queued.Count; i++)
             {
                 if (!await FolderAsync(queued[i], release, manifest, token, report).ConfigureAwait(false))
@@ -248,7 +257,7 @@ internal sealed class MusicRejectDeleter
 
         if (LocalVersion(here) is not { } local || local < published)
         {
-            report.Failed.Add($"{folder} is behind the published library, so it was left. Let the download finish first.");
+            report.Failed.Add($"{folder} is behind the published library and could not be brought up to date, so it was left.");
             return true;
         }
 
@@ -399,6 +408,11 @@ internal sealed class MusicRejectDeleter
             from.CopyTo(to);
         }
     }
+
+    private bool IsBehind(string folder, JsonObject manifest) =>
+        Entry(manifest, folder) is { } entry
+        && Number(entry["version"]) is { } published
+        && (LocalVersion(Path.Combine(_pack, folder)) is not { } local || local < published);
 
     private int? LocalVersion(string folder) =>
         _files.ReadText(Path.Combine(folder, MusicPackStore.VersionFile)) is { } text

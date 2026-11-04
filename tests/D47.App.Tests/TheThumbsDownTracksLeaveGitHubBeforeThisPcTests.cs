@@ -25,6 +25,8 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
     private readonly MusicRejects _rejects;
     private readonly FakeRelease _github = new();
     private string? _source;
+    private int _downloads;
+    private Action _onDownload = () => { };
 
     public TheThumbsDownTracksLeaveGitHubBeforeThisPcTests()
     {
@@ -95,18 +97,42 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
     }
 
     [Fact]
-    public async Task AFolderBehindTheManifestVersionIsRefused()
+    public async Task AFolderBehindTheManifestVersionIsFetchedThenDeletedFrom()
+    {
+        _files.WriteText(Path.Combine(Pack, Situations.Docked, MusicPackStore.VersionFile), "2");
+        _onDownload = () => _files.WriteText(Path.Combine(Pack, Situations.Docked, MusicPackStore.VersionFile), "3");
+        _rejects.Add(Situations.Docked, "docked-001.mp3");
+
+        var (_, said) = await Run();
+
+        Assert.Equal(1, _downloads);
+        Assert.StartsWith("Deleted 1 track: 1 from docked.", said, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AFolderStillBehindAfterTheDownloadIsLeft()
     {
         _files.WriteText(Path.Combine(Pack, Situations.Docked, MusicPackStore.VersionFile), "2");
         _rejects.Add(Situations.Docked, "docked-001.mp3");
 
         var (_, said) = await Run();
 
-        Assert.Contains("docked is behind the published library", said, StringComparison.Ordinal);
-        Assert.Contains("Let the download finish first.", said, StringComparison.Ordinal);
+        Assert.Equal(1, _downloads);
+        Assert.Contains("docked is behind the published library and could not be brought up to date", said, StringComparison.Ordinal);
+        Assert.DoesNotContain("Let the download finish first", said, StringComparison.Ordinal);
         Assert.Empty(_github.Uploaded);
         Assert.Single(_rejects.Rows);
         Assert.Equal(3, _files.Enumerate(Path.Combine(Pack, Situations.Docked), "*.mp3").Count);
+    }
+
+    [Fact]
+    public async Task FoldersAllCurrentDoNotStartTheDownload()
+    {
+        _rejects.Add(Situations.Docked, "docked-001.mp3");
+
+        await Run();
+
+        Assert.Equal(0, _downloads);
     }
 
     [Fact]
@@ -219,6 +245,13 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
         () => Token,
         name => name == MusicRejectDeleter.SourceVariable ? _source : null,
         () => new MemoryStream(),
+        () =>
+        {
+            _downloads++;
+            _onDownload();
+
+            return Task.CompletedTask;
+        },
         NullLogger.Instance,
         _github);
 
