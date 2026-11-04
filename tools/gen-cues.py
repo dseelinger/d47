@@ -74,6 +74,80 @@ def _normalise(signal, peak):
     return signal * (peak / highest) if highest > 0 else signal
 
 
+def _whoop(f_start, f_end, duration=0.42, attack=0.005, release=0.030, gap=0.060):
+    """One rising whoop: band-limited sawtooth plus half a band-limited square an octave below.
+
+    Frequency rises exponentially from f_start to f_end. Harmonics stop at 18 kHz so the
+    oscillators do not alias. Followed by `gap` seconds of silence.
+    """
+    n = int(SAMPLE_RATE * duration)
+    t = np.arange(n) / SAMPLE_RATE
+    ratio = f_end / f_start
+    freq = f_start * ratio ** (t / duration)
+    phase = 2 * np.pi * f_start * duration / np.log(ratio) * (ratio ** (t / duration) - 1)
+
+    saw = np.zeros(n)
+    for k in range(1, int(18_000 / f_start) + 1):
+        saw += np.where(k * freq < 18_000, np.sin(k * phase) / k, 0.0)
+    saw *= 2 / np.pi
+
+    square = np.zeros(n)
+    for k in range(1, int(18_000 / (f_start / 2)) + 1, 2):
+        square += np.where(k * freq / 2 < 18_000, np.sin(k * phase / 2) / k, 0.0)
+    square *= 4 / np.pi
+
+    out = saw + 0.5 * square
+    attack_n = int(SAMPLE_RATE * attack)
+    release_n = int(SAMPLE_RATE * release)
+    out[:attack_n] *= np.linspace(0, 1, attack_n)
+    out[-release_n:] *= np.linspace(1, 0, release_n)
+    return np.concatenate([out, np.zeros(int(SAMPLE_RATE * gap))])
+
+
+def _feedback_comb(signal, delay, feedback):
+    """y[n] = x[n] + feedback * y[n - delay], in blocks of `delay` samples."""
+    out = signal.copy()
+    for start in range(delay, len(out), delay):
+        stop = min(start + delay, len(out))
+        out[start:stop] += feedback * out[start - delay:stop - delay]
+    return out
+
+
+def _allpass(signal, delay, gain):
+    """y[n] = -gain * x[n] + x[n - delay] + gain * y[n - delay], in blocks of `delay` samples."""
+    out = -gain * signal
+    for start in range(0, len(out), delay):
+        stop = min(start + delay, len(out))
+        if start >= delay:
+            out[start:stop] += signal[start - delay:stop - delay] + gain * out[start - delay:stop - delay]
+    return out
+
+
+def _room(signal):
+    """CovasVoice's reverb: four combs averaged, two allpasses, dry 1.0 and wet 0.6."""
+    combs = ((29.7, 0.774), (37.1, 0.726), (41.1, 0.701), (43.7, 0.686))
+    wet = sum(
+        _feedback_comb(signal, max(1, round(ms / 1000 * SAMPLE_RATE)), fb) for ms, fb in combs
+    ) / len(combs)
+    for ms in (5, 1.7):
+        wet = _allpass(wet, max(1, round(ms / 1000 * SAMPLE_RATE)), 0.7)
+    return signal + 0.6 * wet
+
+
+def _whoops(count, f_start, f_end, tail=0.35, fade=0.25, peak_dbfs=-1.0):
+    """`count` whoops, soft-clipped, through the room, ended `tail` seconds after the last one."""
+    run = np.concatenate([_whoop(f_start, f_end) for _ in range(count)])
+    run = np.tanh(2 * _normalise(run, 1.0)) / np.tanh(2)
+    padded = np.concatenate([run, np.zeros(int(SAMPLE_RATE * 1.5))])
+    wet = _room(padded)
+
+    whoop_end = len(run) - int(SAMPLE_RATE * 0.060)
+    wet = wet[:whoop_end + int(SAMPLE_RATE * tail)]
+    fade_n = int(SAMPLE_RATE * fade)
+    wet[-fade_n:] *= (np.linspace(1, 0, fade_n)) ** 2
+    return _normalise(wet, 10 ** (peak_dbfs / 20))
+
+
 def _bed(freq, duration, cycles_am, peak=0.08, depth=0.35):
     """A seamless loop.
 
@@ -146,8 +220,8 @@ def main():
     # trouble, and all four of these are trouble; what separates them is *which* trouble,
     # carried by the interval rather than by the volume. A Commander should be able to tell a
     # bounty hunter from a pirate without waiting for the sentence.
-    _write("alerts/interdiction.wav", _sequence([("A4", 0.09), ("F#4", 0.09), ("D3", 0.30)], 0.55, peak=0.62))
-    _write("alerts/piracy.wav", _sequence([("G4", 0.11), ("D4", 0.26)], 0.46, peak=0.52))
+    _write("alerts/interdiction.wav", _whoops(3, 380, 950))
+    _write("alerts/piracy.wav", _whoops(2, 285, 712))
     _write("alerts/bountyhunter.wav", _sequence([("C5", 0.07), ("C5", 0.07), ("F#4", 0.26)], 0.52, peak=0.55))
     _write("alerts/rivalterritory.wav", _sequence([("D4", 0.16), ("A2", 0.40)], 0.70, peak=0.34))
 

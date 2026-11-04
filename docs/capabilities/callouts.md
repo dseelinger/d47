@@ -201,7 +201,7 @@ sentence has finished arriving. There are three, and which you hear tells you wh
 
 | Sound | What it means | The answer |
 |---|---|---|
-| The interdiction alert | Something is pulling you out of supercruise, or about to | Boost, high-wake, or follow the escape vector |
+| Three rising whoops | Something is pulling you out of supercruise, or about to | Boost, high-wake, or follow the escape vector |
 | Falling three-note tumble | Somebody is hurting you — shot at, shields gone, hull opened | Fight, run, or high-wake |
 | Three pulses on one note | The ship is cooking itself | The throttle, not the trigger |
 
