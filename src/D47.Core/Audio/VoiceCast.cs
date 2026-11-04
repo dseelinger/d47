@@ -272,13 +272,15 @@ public sealed class VoiceCast
 
         // Voices already spoken for are stepped past rather than reused, so a system with four NPCs in it has
         // four distinct voices as long as there are four to give out.
-        foreach (var candidate in drawnFrom)
+        var free = drawnFrom
+            .Where(voice => !assignments.Values.Contains(voice, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+
+        if (free.Count > 0)
         {
-            if (!assignments.Values.Contains(candidate, StringComparer.OrdinalIgnoreCase))
-            {
-                assignments[sender] = candidate;
-                return Of(candidate, role);
-            }
+            var chosenVoice = free[(int)(Mixed(seed, 0) % (uint)free.Count)];
+            assignments[sender] = chosenVoice;
+            return Of(chosenVoice, role);
         }
 
         // They are all spoken for, so this sender shares one — still of the sex chosen.
@@ -363,10 +365,10 @@ public sealed class VoiceCast
                 continue;
             }
 
-            var pick = left
-                .OrderBy(voice => empire && !British.Contains(voice) ? 1 : 0)
-                .ThenBy(voice => Feminine.Contains(voice) == wantFeminine ? 0 : 1)
-                .First();
+            var tier = empire && left.Any(British.Contains) ? left.Where(British.Contains).ToList() : left;
+            var sexed = tier.Where(voice => Feminine.Contains(voice) == wantFeminine).ToList();
+            var from = sexed.Count > 0 ? sexed : tier;
+            var pick = from[(int)(Mixed(seed, (uint)chosen.Count) % (uint)from.Count)];
             chosen.Add(pick);
             wantFeminine = !wantFeminine;
         }
@@ -401,6 +403,16 @@ public sealed class VoiceCast
 
     /// <summary>How many senders currently hold a voice.</summary>
     public (int Lasting, int PerSystem) Assignments => (_lasting.Count, _perSystem.Count);
+
+    /// <summary>A seed and slot mixed so that nearby seeds and consecutive slots give unrelated indexes.</summary>
+    private static uint Mixed(uint seed, uint slot)
+    {
+        var x = unchecked((seed + slot * 0x9E3779B9u) * 2654435761u);
+        x ^= x >> 15;
+        x = unchecked(x * 2246822519u);
+        x ^= x >> 13;
+        return x;
+    }
 
     /// <summary>FNV-1a.</summary>
     private static uint Hash(string value)
