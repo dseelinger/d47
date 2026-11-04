@@ -12,6 +12,11 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode Condition="'$(GITHUB_ACTIONS)' == 'true'">true</RestoreLockedMode>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <Version Condition="'$(Version)' == ''">0.1.0</Version>
     <Product>d47</Product>
     <Authors>Doug Seelinger</Authors>

@@ -45,6 +45,9 @@ change affects, and the gate filters. An unfiltered `D47.App.Tests` run is part 
 When fixing a failing test, never weaken it: deleting it, skipping it, loosening an assertion or widening a tolerance ships the defect. If the test makes a wrong claim, name the claim and say why it is wrong before changing it. A test that fails in a larger run and passes alone is shared state or ordering; report it, do not call it green.
 A unit test does not cross a process boundary or touch the file system; an integration test does either. Integration tests carry `[Trait("Category", "Integration")]`; `Category=Gate` tests count as integration.
 
+- Every project has a committed `packages.lock.json`. A `PackageReference` change also changes that
+  project's lock file (restore rewrites it), and both are committed together. GitHub Actions restores
+  in locked mode and fails on a mismatch; `nuget.config` allows nuget.org only.
 - `global.json` pins the SDK exactly (`rollForward: disable`) because the suite runs partly here
   and partly on the runner and the two must agree on a toolchain.
 - **`TreatWarningsAsErrors`** is on (`Directory.Build.props`). A warning is a build break. There is
