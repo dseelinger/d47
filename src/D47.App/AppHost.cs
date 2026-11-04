@@ -3858,6 +3858,8 @@ public sealed class AppHost : IDisposable
             () => bgsTick.Last,
             () => settings.Current.Knowledge.GalaxySearch,
             () => settings.Current.Knowledge.BgsTick,
+            () => galNet.Arrived,
+            () => settings.Current.Knowledge.GalNet,
             foundations.LoggerFactory.CreateLogger<D47.Core.Watches.WatchRunner>())
         {
             Audible = () => settings.Current.Callouts is { Enabled: true, Watches: true },

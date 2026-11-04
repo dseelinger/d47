@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
+using D47.Core.Callouts;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging;
 
@@ -12,6 +13,7 @@ public sealed record WatchNotice(Guid WatchId, string Text);
 /// Checks stock watches against the market index, one market at a time and each watch at most once every
 /// <see cref="Interval"/>, only while Galaxy search and BGS tick time are on, a BGS tick is known and the line
 /// would be said.
+/// A New Community Goal watch speaks for GalNet launches while GalNet news and BGS tick time are on.
 /// The quote runs on the pool. Tick thread only.
 /// </summary>
 public sealed class WatchRunner
@@ -23,12 +25,16 @@ public sealed class WatchRunner
     private readonly Func<DateTimeOffset?> _lastTick;
     private readonly Func<bool> _galaxySearch;
     private readonly Func<bool> _bgsTick;
+    private readonly Func<IReadOnlyList<GalNetArticle>> _arrived;
+    private readonly Func<bool> _galNet;
     private readonly ILogger<WatchRunner> _logger;
 
     /// <summary>One entry per finished quote; the quote is null when the index has no report or the check failed.</summary>
     private readonly ConcurrentQueue<Answer> _answers = new();
 
     private readonly Dictionary<Guid, DateTimeOffset> _checkedAt = [];
+
+    private readonly List<GalNetArticle> _launches = [];
 
     private bool _fetching;
 
@@ -38,6 +44,8 @@ public sealed class WatchRunner
         Func<DateTimeOffset?> lastTick,
         Func<bool> galaxySearch,
         Func<bool> bgsTick,
+        Func<IReadOnlyList<GalNetArticle>> arrived,
+        Func<bool> galNet,
         ILogger<WatchRunner> logger)
     {
         _store = store;
@@ -45,6 +53,8 @@ public sealed class WatchRunner
         _lastTick = lastTick;
         _galaxySearch = galaxySearch;
         _bgsTick = bgsTick;
+        _arrived = arrived;
+        _galNet = galNet;
         _logger = logger;
     }
 
@@ -76,6 +86,11 @@ public sealed class WatchRunner
             }
         }
 
+        if (GalNetLaunchNotice(allowed, tick) is { } launch)
+        {
+            ready.Add(launch);
+        }
+
         Ready = ready;
 
         if (!allowed || _fetching || tick is null)
@@ -102,6 +117,18 @@ public sealed class WatchRunner
         Dispatch(() => Fetch(request));
     }
 
+    /// <summary>The spoken line for held launches, titles joined as the GalNet headlines are.</summary>
+    public static string LaunchLine(IReadOnlyList<GalNetArticle> launches)
+    {
+        ArgumentNullException.ThrowIfNull(launches);
+
+        var titles = launches.Select(article => article.Title.Trim().TrimEnd('.')).ToList();
+
+        return titles.Count == 1
+            ? $"GalNet may have a new Community Goal: {titles[0]}."
+            : $"GalNet may have new Community Goals: {GalNetCallout.Join(titles)}.";
+    }
+
     /// <summary>The spoken line: the commodity, the station, the system and the stock; a missing station or system is left out.</summary>
     public static string Line(Watch watch, StationQuote quote)
     {
@@ -112,6 +139,41 @@ public sealed class WatchRunner
         var stock = $"{quote.Stock.ToString("N0", CultureInfo.InvariantCulture)} in stock.";
 
         return place.Length == 0 ? $"{watch.Commodity}: {stock}" : $"{watch.Commodity} at {place}: {stock}";
+    }
+
+    private WatchNotice? GalNetLaunchNotice(bool allowed, DateTimeOffset? tick)
+    {
+        var watch = _store.Watches.FirstOrDefault(w => w is { Enabled: true, Kind: WatchKind.NewCommunityGoal });
+
+        if (watch is null || !_galNet() || !_bgsTick())
+        {
+            _launches.Clear();
+            return null;
+        }
+
+        foreach (var article in _arrived())
+        {
+            if (CommunityGoalLaunch.Recognises(article) && !_launches.Contains(article))
+            {
+                _launches.Add(article);
+            }
+        }
+
+        if (_launches.Count == 0 || !allowed || tick is not { } current || !WatchRule.MayFire(current, watch.FiredForTick))
+        {
+            return null;
+        }
+
+        var line = LaunchLine([.. _launches.OrderByDescending(article => article.Published)]);
+
+        // Held until the firing is stored, so a file that cannot be written does not drop the launches.
+        if (!_store.MarkFired(watch.Id, current))
+        {
+            return null;
+        }
+
+        _launches.Clear();
+        return new WatchNotice(watch.Id, line);
     }
 
     private WatchNotice? Fires(Answer answer, DateTimeOffset tick, DateTimeOffset now)

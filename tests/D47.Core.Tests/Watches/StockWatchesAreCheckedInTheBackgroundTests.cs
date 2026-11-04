@@ -122,6 +122,8 @@ public class StockWatchesAreCheckedInTheBackgroundTests
             () => rig!.LastTick,
             () => rig!.GalaxySearch,
             () => rig!.BgsTick,
+            () => [],
+            () => false,
             NullLogger<WatchRunner>.Instance)
         {
             Dispatch = work => rig!.Pending.Add(work),

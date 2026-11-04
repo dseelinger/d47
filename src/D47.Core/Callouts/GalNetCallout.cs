@@ -60,7 +60,7 @@ public sealed class GalNetCallout : ICallout
         yield return new Announcement(Key, text) { Cooldown = TimeSpan.Zero };
     }
 
-    private static string Join(List<string> titles) => titles.Count switch
+    internal static string Join(List<string> titles) => titles.Count switch
     {
         1 => titles[0],
         2 => $"{titles[0]}; and {titles[1]}",
