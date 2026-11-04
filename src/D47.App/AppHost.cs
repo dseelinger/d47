@@ -515,6 +515,9 @@ public sealed class AppHost : IDisposable
 
     public ServerStatusWatch? ServerStatus { get; private set; }
 
+    /// <summary>Checks the Commander's background watches.</summary>
+    public D47.Core.Watches.WatchRunner? Watches { get; private set; }
+
     /// <summary>The colonisation planner's plans read this session.</summary>
     public ColonisationPlans? ColonisationPlans { get; private set; }
 
@@ -3146,6 +3149,7 @@ public sealed class AppHost : IDisposable
             BgsLastTick = () => late.Host?.BgsTick?.Last,
             GalNetArrived = () => late.Host?.GalNet?.Arrived ?? [],
             ServerStatusAnnounce = () => late.Host?.ServerStatus?.Announce,
+            WatchesReady = () => late.Host?.Watches?.Ready ?? [],
             ComposeRecap = (launch, running) => ComposeRecap(foundations.Files, launch, running, JournalsOnDisk(foundations.Files, stores.JournalDirectory, foundations.Logger), loggerFactory),
         });
 
@@ -3842,6 +3846,23 @@ public sealed class AppHost : IDisposable
             foundations.LoggerFactory.CreateLogger<GalNetWatch>());
 
         tick.Add("galnet", context => galNet.Poll(context.Now));
+
+        // After bgs-tick, so it reads this tick's BGS tick.
+        var watches = host.Watches = new D47.Core.Watches.WatchRunner(
+            new D47.Core.Watches.WatchStore(
+                foundations.Paths.WatchesFile,
+                foundations.Files,
+                foundations.LoggerFactory.CreateLogger<D47.Core.Watches.WatchStore>()),
+            services.TradePlanner,
+            () => bgsTick.Last,
+            () => settings.Current.Knowledge.GalaxySearch,
+            () => settings.Current.Knowledge.BgsTick,
+            foundations.LoggerFactory.CreateLogger<D47.Core.Watches.WatchRunner>())
+        {
+            Audible = () => settings.Current.Callouts is { Enabled: true, Watches: true },
+        };
+
+        tick.Add("watches", context => watches.Poll(context.Now));
 
         var serverStatus = host.ServerStatus = new ServerStatusWatch(
             serverStatusSource,

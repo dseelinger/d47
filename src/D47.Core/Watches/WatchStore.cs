@@ -18,6 +18,9 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
 
     private readonly Lock _gate = new();
 
+    /// <summary>Held across each read, change and write, so two writers on different threads do not drop each other's change.</summary>
+    private readonly Lock _write = new();
+
     private IReadOnlyList<Watch> _watches = [];
     private IReadOnlyList<WatchProblem> _problems = [];
 
@@ -50,50 +53,59 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
     }
 
     /// <summary>Re-reads if the file changed.</summary>
-    public bool Poll() => _file.Poll(
-        () =>
+    public bool Poll()
+    {
+        lock (_write)
         {
-            lock (_gate)
-            {
-                _watches = [];
-                _problems = [];
-            }
+            return _file.Poll(
+                () =>
+                {
+                    lock (_gate)
+                    {
+                        _watches = [];
+                        _problems = [];
+                    }
 
-            Changed?.Invoke();
-        },
-        Reload);
+                    Changed?.Invoke();
+                },
+                Reload);
+        }
+    }
 
     /// <summary>Adds a watch; returns why it was refused, or null when it was written.</summary>
     public string? Add(Watch watch)
     {
-        ArgumentNullException.ThrowIfNull(watch);
-
-        Poll();
-
-        if (Refusal(watch) is { } reason)
+        lock (_write)
         {
-            return reason;
-        }
+            ArgumentNullException.ThrowIfNull(watch);
 
-        IReadOnlyList<Watch> next;
+            Poll();
 
-        lock (_gate)
-        {
-            if (_watches.Count >= MaxWatches)
+            if (Refusal(watch) is { } reason)
             {
-                return $"the file already holds {MaxWatches} watches.";
+                return reason;
             }
 
-            if (_watches.Any(existing => existing.Id == watch.Id))
+            IReadOnlyList<Watch> next;
+
+            lock (_gate)
             {
-                return "a watch with that id is already held.";
+                if (_watches.Count >= MaxWatches)
+                {
+                    return $"the file already holds {MaxWatches} watches.";
+                }
+
+                if (_watches.Any(existing => existing.Id == watch.Id))
+                {
+                    return "a watch with that id is already held.";
+                }
+
+                next = [.. _watches, watch];
             }
 
-            next = [.. _watches, watch];
+            Save(next);
+            return null;
         }
-
-        Save(next);
-        return null;
     }
 
     /// <summary>
@@ -102,79 +114,87 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
     /// </summary>
     public string? Update(Watch watch)
     {
-        ArgumentNullException.ThrowIfNull(watch);
-
-        Poll();
-
-        if (Refusal(watch) is { } reason)
+        lock (_write)
         {
-            return reason;
-        }
+            ArgumentNullException.ThrowIfNull(watch);
 
-        IReadOnlyList<Watch> next;
+            Poll();
 
-        lock (_gate)
-        {
-            if (_watches.FirstOrDefault(existing => existing.Id == watch.Id) is not { } stored)
+            if (Refusal(watch) is { } reason)
             {
-                return "no watch has that id.";
+                return reason;
             }
 
-            var retriggered = stored.Kind != watch.Kind
-                || stored.MarketId != watch.MarketId
-                || !string.Equals(stored.Commodity, watch.Commodity, StringComparison.Ordinal)
-                || stored.Comparison != watch.Comparison
-                || stored.Threshold != watch.Threshold;
+            IReadOnlyList<Watch> next;
 
-            var updated = watch with { FiredForTick = retriggered ? null : stored.FiredForTick };
-            next = [.. _watches.Select(existing => existing.Id == watch.Id ? updated : existing)];
+            lock (_gate)
+            {
+                if (_watches.FirstOrDefault(existing => existing.Id == watch.Id) is not { } stored)
+                {
+                    return "no watch has that id.";
+                }
+
+                var retriggered = stored.Kind != watch.Kind
+                    || stored.MarketId != watch.MarketId
+                    || !string.Equals(stored.Commodity, watch.Commodity, StringComparison.Ordinal)
+                    || stored.Comparison != watch.Comparison
+                    || stored.Threshold != watch.Threshold;
+
+                var updated = watch with { FiredForTick = retriggered ? null : stored.FiredForTick };
+                next = [.. _watches.Select(existing => existing.Id == watch.Id ? updated : existing)];
+            }
+
+            Save(next);
+            return null;
         }
-
-        Save(next);
-        return null;
     }
 
     /// <summary>Removes the watch; false when no watch has that id.</summary>
     public bool Delete(Guid id)
     {
-        Poll();
-
-        IReadOnlyList<Watch> next;
-
-        lock (_gate)
+        lock (_write)
         {
-            if (_watches.All(existing => existing.Id != id))
+            Poll();
+
+            IReadOnlyList<Watch> next;
+
+            lock (_gate)
             {
-                return false;
+                if (_watches.All(existing => existing.Id != id))
+                {
+                    return false;
+                }
+
+                next = [.. _watches.Where(existing => existing.Id != id)];
             }
 
-            next = [.. _watches.Where(existing => existing.Id != id)];
+            Save(next);
+            return true;
         }
-
-        Save(next);
-        return true;
     }
 
-    /// <summary>Records the BGS tick the watch notified for; false when no watch has that id.</summary>
+    /// <summary>Records the BGS tick the watch notified for; false when no watch has that id or the file could not be written.</summary>
     public bool MarkFired(Guid id, DateTimeOffset tick)
     {
-        Poll();
-
-        var stamp = BgsTickWatch.Format(tick);
-        IReadOnlyList<Watch> next;
-
-        lock (_gate)
+        lock (_write)
         {
-            if (_watches.All(existing => existing.Id != id))
+            Poll();
+
+            var stamp = BgsTickWatch.Format(tick);
+            IReadOnlyList<Watch> next;
+
+            lock (_gate)
             {
-                return false;
+                if (_watches.All(existing => existing.Id != id))
+                {
+                    return false;
+                }
+
+                next = [.. _watches.Select(existing => existing.Id == id ? existing with { FiredForTick = stamp } : existing)];
             }
 
-            next = [.. _watches.Select(existing => existing.Id == id ? existing with { FiredForTick = stamp } : existing)];
+            return Save(next);
         }
-
-        Save(next);
-        return true;
     }
 
     /// <summary>Why a watch cannot be held, or null when it can.</summary>
@@ -210,7 +230,8 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
         return threshold < 0 ? "the threshold is negative." : null;
     }
 
-    private void Save(IReadOnlyList<Watch> watches)
+    /// <summary>Writes the set; false when the file could not be written.</summary>
+    private bool Save(IReadOnlyList<Watch> watches)
     {
         var file = new WatchFile
         {
@@ -239,10 +260,11 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             logger.LogWarning(ex, "Could not write the watch file");
-            return;
+            return false;
         }
 
         Reload(text);
+        return true;
     }
 
     private bool Reload(string text)

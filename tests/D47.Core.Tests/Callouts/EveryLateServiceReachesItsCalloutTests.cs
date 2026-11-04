@@ -52,6 +52,8 @@ public sealed class EveryLateServiceReachesItsCalloutTests
 
         public GameServerState? ServerStatusAnnounce { get; set; }
 
+        public IReadOnlyList<D47.Core.Watches.WatchNotice> WatchesReady { get; set; } = [];
+
         public List<DateTimeOffset> RecapAsked { get; } = [];
 
         public T Shipped<T>() => Engine.Callouts.OfType<T>().Single();
@@ -73,6 +75,7 @@ public sealed class EveryLateServiceReachesItsCalloutTests
             BgsLastTick = () => wired!.BgsTick,
             GalNetArrived = () => wired!.GalNetArrived,
             ServerStatusAnnounce = () => wired!.ServerStatusAnnounce,
+            WatchesReady = () => wired!.WatchesReady,
             ComposeRecap = (before, _) =>
             {
                 wired!.RecapAsked.Add(before);
@@ -182,6 +185,26 @@ public sealed class EveryLateServiceReachesItsCalloutTests
 
         wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { ServerStatus = false } });
         Assert.Null(callout.Announce());
+    }
+
+    [Fact]
+    public void WatchLinesAreReadOnlyWhileGalaxySearchAndBgsTickTimeAreBothOn()
+    {
+        var wired = Connected();
+        var callout = wired.Shipped<WatchCallout>();
+        wired.WatchesReady = [new D47.Core.Watches.WatchNotice(Guid.NewGuid(), "Gold: 1 in stock.")];
+
+        void Knowledge(bool galaxy, bool tick) =>
+            wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { GalaxySearch = galaxy, BgsTick = tick } });
+
+        Knowledge(galaxy: true, tick: true);
+        Assert.Single(callout.Ready());
+
+        Knowledge(galaxy: false, tick: true);
+        Assert.Empty(callout.Ready());
+
+        Knowledge(galaxy: true, tick: false);
+        Assert.Empty(callout.Ready());
     }
 
     [Fact]

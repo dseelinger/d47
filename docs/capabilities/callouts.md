@@ -609,6 +609,22 @@ A tick more than fifteen minutes old is said with its age, rounded to the neares
 gap stays quiet. A tick within an hour after the one already said is treated as the same tick and is not said again.
 Turn this one off with the BGS tick row.
 
+#### Background watches {#watches}
+
+When a stock watch's condition holds, the commodity, the station, the system and the stock, at most once per BGS
+tick. Needs **Look things up in the galaxy** and **BGS tick time** under Outside sources.
+
+```text
+Soontill Relics at Cheranovsky City, Ngurii: 240 in stock.
+```
+
+Watches are checked against the market index at `api.ardent-insight.com`, one market at a time and each watch at most
+once every thirty minutes, whether or not Elite is running. A watch is checked only while it has not yet spoken for the
+current BGS tick, so after it speaks it is next checked once the BGS ticks again. The condition holds when the stock is
+above or below the watch's threshold, by a report no older than eight hours; a market with no report does not
+hold. A commodity the index does not know, or a failed check, says nothing. Turn this one off with the Background
+watches row; while it or all callouts are off, no watch is checked.
+
 #### Friends online {#friends}
 
 When a friend comes online, once, with a five-second wait so a burst is one line. Going offline is

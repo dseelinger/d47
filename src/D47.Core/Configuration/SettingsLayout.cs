@@ -239,6 +239,7 @@ public static class SettingsLayout
                                 E("callouts.metBefore"),
                                 E("callouts.galNet"),
                                 E("callouts.serverStatus"),
+                                E("callouts.watches"),
                                 E("callouts.missions"),
                                 E("callouts.outstandingCrimes"),
                                 E("callouts.reminders"),

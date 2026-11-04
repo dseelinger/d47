@@ -108,6 +108,9 @@ public static class ShippedCallouts
         /// <summary>The server state to announce after the last poll, or null.</summary>
         public Func<GameServerState?> ServerStatusAnnounce { get; init; } = () => null;
 
+        /// <summary>The lines background watches made ready in the last poll.</summary>
+        public Func<IReadOnlyList<D47.Core.Watches.WatchNotice>> WatchesReady { get; init; } = () => [];
+
         /// <summary>
         /// The recap line for the session that started before the instant given, with whether Elite is running,
         /// or null; reads journal files.
@@ -234,6 +237,8 @@ public static class ShippedCallouts
             .Add(new WingCallout())
 
             .Add(new ServerStatusCallout())
+
+            .Add(new WatchCallout())
 
             // Phase 23.
             .Add(new LoreCallout(sources.Lore, sources.LoreVisits))
@@ -370,6 +375,10 @@ public static class ShippedCallouts
                     serverStatus.Announce = () => services.Settings.Current.Knowledge.ServerStatus ? services.ServerStatusAnnounce() : null;
                     break;
 
+                case WatchCallout watches:
+                    watches.Ready = () => services.Settings.Current.Knowledge is { GalaxySearch: true, BgsTick: true } ? services.WatchesReady() : [];
+                    break;
+
                 case SurveyedBiologyCallout surveyed:
                     surveyed.Galaxy = () => services.Settings.Current.Knowledge.GalaxySearch ? galaxy : null;
                     break;
@@ -459,6 +468,7 @@ public static class ShippedCallouts
         engine.SetEnabled("wing", callouts.Wing, now);
         engine.SetEnabled("galnet", callouts.GalNet, now);
         engine.SetEnabled("server-status", callouts.ServerStatus, now);
+        engine.SetEnabled("watches", callouts.Watches, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("sampling-range", callouts.SamplingRange, now);
         engine.SetEnabled("sampling-abandoned", callouts.SamplingAbandoned, now);

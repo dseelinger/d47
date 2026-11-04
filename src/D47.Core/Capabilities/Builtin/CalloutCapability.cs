@@ -76,6 +76,7 @@ public static class CalloutCapability
     public const string WingKey = "callouts.wing";
     public const string GalNetKey = "callouts.galNet";
     public const string ServerStatusKey = "callouts.serverStatus";
+    public const string WatchesKey = "callouts.watches";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
 
@@ -1008,6 +1009,24 @@ public static class CalloutCapability
                 s => s.Callouts.ServerStatus,
                 (s, v) => s with { Callouts = s.Callouts with { ServerStatus = v } },
                 appliesWhen: s => s.Knowledge.ServerStatus),
+
+            Toggle(
+                WatchesKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Background watches "
+                + "(on by default). With a stock watch whose condition holds at its market, wait for the next "
+                + "check: D47 says the commodity, the station, the system and the stock, once per BGS tick. Say "
+                + "\"stop calling out background watches\": the row shows off and that is no longer said. Say "
+                + "\"start calling out background watches\" and the row shows on. The row is absent while Speak "
+                + "without being asked is off. The row appears only while Look things up in the galaxy and BGS "
+                + "tick time under Outside sources are both on.",
+                "Background watches",
+                "When a stock watch's condition holds, says the stock, once per BGS tick. Needs Look things up in the galaxy and BGS tick time under Outside sources.",
+                "watches",
+                "background watches",
+                s => s.Callouts.Watches,
+                (s, v) => s with { Callouts = s.Callouts with { Watches = v } },
+                appliesWhen: s => s.Knowledge.GalaxySearch && s.Knowledge.BgsTick),
 
             Toggle(
                 FriendsOnlineKey,

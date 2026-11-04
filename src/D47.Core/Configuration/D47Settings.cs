@@ -676,6 +676,9 @@ public sealed record CalloutSettings
     /// <summary>Elite's servers going down, going offline or coming back.</summary>
     public bool ServerStatus { get; init; } = true;
 
+    /// <summary>A background watch whose condition holds, once per BGS tick.</summary>
+    public bool Watches { get; init; } = true;
+
     /// <summary>
     /// A checklist item the journal has just changed its mind about, the last unit a plan needed, and a
     /// watched line ticked by its event.
