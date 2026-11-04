@@ -145,30 +145,40 @@ public class NpcChatterCalloutTests
         Assert.Equal(NpcChatterKind.Hail, NpcChatterCallout.KindFor(7, docked: false));
     }
 
-    /// <summary>
-    /// Nobody is near a ship in supercruise or hyperspace (#43) — no exchange until it drops back to
-    /// normal space, whatever the interval says is due.
-    /// </summary>
     [Fact]
-    public void SupercruiseIsSilenceUntilItDropsBackToNormalSpace()
+    public void SupercruiseGetsChatterOnceTheIntervalHasPassed()
     {
         var callout = Callout();
+        var flags = StatusFlags.Supercruise | StatusFlags.InMainShip;
 
-        Assert.Empty(callout.Examine(Context(T0, StatusFlags.Supercruise | StatusFlags.InMainShip)));
-        Assert.Empty(callout.Examine(Context(
-            T0 + TimeSpan.FromMinutes(21), StatusFlags.Supercruise | StatusFlags.InMainShip)));
+        Assert.Empty(callout.Examine(Context(T0, flags)));
+        Assert.Single(callout.Examine(Context(T0 + TimeSpan.FromMinutes(21), flags)));
+    }
 
-        // Dropping out of supercruise is the first tick the gate lets through, and it seeds the clock
-        // exactly as launch does; the exchange arrives one interval after that.
-        var emitted = callout.Examine(Context(
-            T0 + TimeSpan.FromMinutes(42), StatusFlags.InMainShip)).ToList();
+    [Fact]
+    public void HyperspaceIsSilentUntilArrival()
+    {
+        var callout = Callout();
+        var tunnel = StatusFlags.Supercruise | StatusFlags.FsdJump | StatusFlags.InMainShip;
+        var charging = StatusFlags.Supercruise | StatusFlags.FsdCharging | StatusFlags.InMainShip;
 
-        Assert.Empty(emitted);
+        Assert.Empty(callout.Examine(Context(T0, tunnel)));
+        Assert.Empty(callout.Examine(Context(T0 + TimeSpan.FromMinutes(21), tunnel)));
+        Assert.Empty(callout.Examine(Context(T0 + TimeSpan.FromMinutes(22), charging)));
+    }
 
-        emitted = callout.Examine(Context(
-            T0 + TimeSpan.FromMinutes(63), StatusFlags.InMainShip)).ToList();
+    [Fact]
+    public void ArrivingByHyperspaceRestartsTheSettle()
+    {
+        var callout = Callout();
+        callout.Settle = TimeSpan.FromSeconds(90);
+        var cruise = StatusFlags.Supercruise | StatusFlags.InMainShip;
+        var tunnel = cruise | StatusFlags.FsdJump;
 
-        Assert.Single(emitted);
+        Assert.Empty(callout.Examine(Context(T0, cruise)));
+        Assert.Empty(callout.Examine(Context(T0 + TimeSpan.FromMinutes(25), tunnel)));
+        Assert.Empty(callout.Examine(Context(T0 + TimeSpan.FromMinutes(25) + TimeSpan.FromSeconds(30), cruise)));
+        Assert.Single(callout.Examine(Context(T0 + TimeSpan.FromMinutes(25) + TimeSpan.FromSeconds(30 + 91), cruise)));
     }
 
     /// <summary>

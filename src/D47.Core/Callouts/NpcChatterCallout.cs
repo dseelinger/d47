@@ -55,14 +55,19 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
             _sceneTookKillAt = taken;
         }
 
+        // Status.json sets the supercruise flag in the hyperspace tunnel too; a charging or running jump counts
+        // as no situation, so arrival restarts the settle.
+        if (context.Status.Has(StatusFlags.FsdJump) || context.Status.Has(StatusFlags.FsdCharging))
+        {
+            situation = AmbientSituation.None;
+        }
+
         _pace.Watch(situation, context.Now);
 
-        // Nobody is near a ship in supercruise or hyperspace — Status.json reports both under the same
-        // flag, so this one check rules out the "chair-bound" modes NpcChatterCarrier.Of already knows.
         if (context.IsPriming
             || !Enabled()
             || Interval <= TimeSpan.Zero
-            || situation is AmbientSituation.None or AmbientSituation.Supercruise)
+            || situation is AmbientSituation.None)
         {
             yield break;
         }

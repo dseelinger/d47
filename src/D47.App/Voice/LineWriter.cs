@@ -236,6 +236,14 @@ internal sealed class LineWriter
             return [];
         }
 
+        // A jump started charging, or the ship is in hyperspace, since the marker was made.
+        var live = LiveStatus();
+
+        if (live.Has(StatusFlags.FsdJump) || live.Has(StatusFlags.FsdCharging))
+        {
+            return [];
+        }
+
         // The kind was picked from the Docked flag when the marker was made; the exchange is composed
         // later. A controller needs a dock to be at — one lifted off in between is worse than silence
         // (#43).
@@ -274,7 +282,8 @@ internal sealed class LineWriter
             NpcChatter.WithHumor(
                 scene is null
                     ? NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType, roster, Fight.Snapshot,
-                        NpcChatter.ScenarioFor(Settings.Current.Llm.ScenarioAudience, scenario), location)
+                        NpcChatter.ScenarioFor(Settings.Current.Llm.ScenarioAudience, scenario), location,
+                        live.Has(StatusFlags.Supercruise))
                     : NpcChatter.SceneInstruction(
                         scene,
                         scenario!,

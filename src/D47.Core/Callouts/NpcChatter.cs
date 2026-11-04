@@ -453,13 +453,14 @@ public static partial class NpcChatter
         NpcChatterRoster? roster = null,
         FightSnapshot? fight = null,
         string? scenario = null,
-        JournalLocation? place = null)
+        JournalLocation? place = null,
+        bool supercruise = false)
     {
         var about = carrier ?? NpcChatterCarrier.None;
         var cast = roster ?? NpcChatterRoster.None;
 
-        return Situation(docked, stationType)
-            + Scene(kind, about, docked, exchangeIndex, fight, stationType, place)
+        return Situation(docked, supercruise, stationType)
+            + Scene(kind, about, docked, supercruise, exchangeIndex, fight, stationType, place)
             + (cast.Slots.Count > 0 ? Roster(cast, exchangeIndex) : UnslottedManners(kind, exchangeIndex))
             + (cast.Slots.Count > 0 ? Slotted : Unslotted)
             + Contract
@@ -741,9 +742,14 @@ public static partial class NpcChatter
     /// The one sentence of live state the model cannot misread (#43): said in words, because a prompt
     /// handed dock vocabulary invents a dock even where the scene never asked for one.
     /// </summary>
-    private static string Situation(bool docked, string? stationType) => docked
-        ? "The Commander's ship is docked at a station. " + MailSlot(stationType)
-        : "The Commander's ship is in normal space, under its own power, with no station nearby. ";
+    private static string Situation(bool docked, bool supercruise, string? stationType) =>
+        docked
+            ? "The Commander's ship is docked at a station. " + MailSlot(stationType)
+            : supercruise
+                ? "The Commander's ship is in supercruise, crossing a system between destinations. "
+                    + "The speakers are other commanders in their own ships, also in supercruise in this system, "
+                    + "talking on the open channel. "
+                : "The Commander's ship is in normal space, under its own power, with no station nearby. ";
 
     /// <summary>
     /// Whether the dock has a mail slot, said in words (#314): a fleet carrier, an outpost, a surface
@@ -756,7 +762,7 @@ public static partial class NpcChatter
                 + "slot. ";
 
     private static string Scene(
-        NpcChatterKind kind, NpcChatterCarrier carrier, bool docked, int exchangeIndex, FightSnapshot? fight,
+        NpcChatterKind kind, NpcChatterCarrier carrier, bool docked, bool supercruise, int exchangeIndex, FightSnapshot? fight,
         string? stationType, JournalLocation? place) =>
         kind switch
         {
@@ -777,6 +783,12 @@ public static partial class NpcChatter
                 + $"{ControllerScene(exchangeIndex)} {ControllerPilotFlies(exchangeIndex, stationType)}Procedure with a human edge. The Commander is not "
                 + "part of it. ",
 
+            NpcChatterKind.Hail when supercruise =>
+                "One invented commander, also in supercruise in this system, says one or two lines to the "
+                + "Commander over the open channel — a compliment on the ship, a warning about a system ahead, "
+                + "a rumour picked up on the way. No pad, no dock, no queue: there is no station here. "
+                + "Statements only: they are not starting a conversation. ",
+
             NpcChatterKind.Hail when !docked =>
                 "One invented person nearby says one or two lines to the Commander over the open "
                 + "channel — a compliment on the ship, a warning about a system ahead, a rumour "
@@ -789,7 +801,7 @@ public static partial class NpcChatter
                 + "the bar. Statements only: they are not starting a conversation. "
                 + LocalHail(exchangeIndex, place),
 
-            _ => PassersbyScene(exchangeIndex, docked, stationType, place),
+            _ => PassersbyScene(exchangeIndex, docked, supercruise, stationType, place),
         };
 
     private static string CombatScene(FightSnapshot fight)
@@ -816,9 +828,9 @@ public static partial class NpcChatter
     /// <paramref name="exchangeIndex"/>, and the completions that shape is known to reach for are
     /// named off limits.
     /// </summary>
-    private static string PassersbyScene(int exchangeIndex, bool docked, string? stationType, JournalLocation? place)
+    private static string PassersbyScene(int exchangeIndex, bool docked, bool supercruise, string? stationType, JournalLocation? place)
     {
-        var cast = Pick(exchangeIndex, CastOffset, docked ? DockedCasts : OpenSpaceCasts);
+        var cast = Pick(exchangeIndex, CastOffset, docked ? DockedCasts : supercruise ? SupercruiseCasts : OpenSpaceCasts);
         var topic = LocalTopic(exchangeIndex, place) ?? Pick(exchangeIndex, TopicOffset, Topics);
         var opening = Pick(exchangeIndex, OpeningOffset, Openings);
 
@@ -830,7 +842,11 @@ public static partial class NpcChatter
             ? "The Commander may be noticed in passing, nothing more. "
             : "The Commander is not part of it, and is not mentioned. ";
 
-        return $"Two invented people near the Commander — {cast} — exchange 2 to 4 short lines, "
+        var who = supercruise
+            ? "Two invented commanders in supercruise near the Commander"
+            : "Two invented people near the Commander";
+
+        return $"{who} — {cast} — exchange 2 to 4 short lines, "
             + $"opening on {opening}, about {topic}. "
             + PassersbyFly(exchangeIndex, stationType)
             + noStation
@@ -910,6 +926,17 @@ public static partial class NpcChatter
         "two passengers' liner crew",
         "a salvage crew",
         "a courier and a scout",
+    ];
+
+    /// <summary>Cast pairs for supercruise: commanders in their own ships, no crew or station staff.</summary>
+    internal static readonly string[] SupercruiseCasts =
+    [
+        "two commanders heading for the same station",
+        "a commander on a long haul and one just arrived",
+        "two commanders racing to the same body",
+        "a commander in a hurry and one in no hurry at all",
+        "two commanders comparing the same route",
+        "a commander on a first trip here and one who has flown it for years",
     ];
 
     /// <summary>What the pair's own small business is about.</summary>

@@ -1674,6 +1674,8 @@ small business (sometimes something about the system: its economy, the controlli
 one exchange in four — a line or two said to *you* over the open channel. Traffic between other people
 sounds further off than a hail and has its own row, Overheard chatter, in the audio mixer.
 
+It plays docked, in normal space and in supercruise, and never in a hyperspace jump. In supercruise the voices are other commanders crossing the system.
+
 **You can answer them on comms.** Everyone you hear is on the System
 [comms channel](comms.md#choose-who-your-comms-key-reaches) until you jump or they sign off, and a
 hail moves the selection to the hailer. What you say on the comms push-to-talk goes to whoever the
