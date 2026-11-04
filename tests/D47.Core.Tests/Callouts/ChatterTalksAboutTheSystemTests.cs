@@ -43,6 +43,26 @@ public class ChatterTalksAboutTheSystemTests
     }
 
     [Fact]
+    public void AllegianceGovernmentSecuritySecondEconomyAndFactionAreTopics()
+    {
+        var known = SystemTopics.Known(JournalLocation.Unknown with
+        {
+            SystemAllegiance = "Independent",
+            SystemGovernment = "Democracy",
+            SystemSecurity = "High Security",
+            SystemSecondEconomy = "Extraction",
+            SystemFaction = "C.O.N.T.R.A.I.L",
+        });
+
+        Assert.Contains("the Independent stance here", known);
+        Assert.Contains("life under a Democracy", known);
+        Assert.Contains("being in a High Security system", known);
+        Assert.Contains("the Extraction side of the economy", known);
+        Assert.Contains("how C.O.N.T.R.A.I.L runs things", known);
+        Assert.Contains("life under an Anarchy", SystemTopics.Known(JournalLocation.Unknown with { SystemGovernment = "Anarchy" }));
+    }
+
+    [Fact]
     public void AFieldThatIsNullOrNoneGivesNoTopic()
     {
         Assert.Empty(SystemTopics.Known(JournalLocation.Unknown));

@@ -1650,7 +1650,7 @@ the sky, the Quartermaster about what the run cost. It also knows who it is flyi
 [Backstory](conversation.md#backstory) with about one in four, so the remarks differ by who is
 flying and not just by wording.
 
-About one remark in three may touch on the system the Commander is in: its economy, the controlling faction's situation, its population or the Power that holds it.
+About one remark in three may touch on the system the Commander is in: its economy, the controlling faction's situation, its population, the Power that holds it, its government, its security.
 
 **Chatter is model-written or it is nothing.** With no language model configured there are no
 In Ship chatter at all, and these rows are absent from this page — a switch governing something

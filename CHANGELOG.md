@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-In Ship chatter and settlement scene chatter now sometimes touch on the system the Commander is in, and passers-by and hails can also mention its population, the Power that holds it and its Powerplay state.
+In Ship chatter and settlement scene chatter now sometimes touch on the system the Commander is in, and passers-by and hails can also mention its population, the Power that holds it and its Powerplay state, its allegiance, government, security, second economy and controlling faction.
 
 Deleting the thumbs-down tracks fetches any queued folder that is behind the published library first, so one run deletes from every queued folder. A folder still behind after that is left, and the reply says it could not be brought up to date.
 

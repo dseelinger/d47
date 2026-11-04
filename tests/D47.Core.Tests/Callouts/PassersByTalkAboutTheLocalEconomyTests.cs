@@ -56,7 +56,7 @@ public class PassersByTalkAboutTheLocalEconomyTests
     [Fact]
     public void AKnownEconomyIsNamedInOneExchangeInThreeAndNeverOtherwise()
     {
-        var place = Known with { SystemFactionState = null };
+        var place = Known with { SystemFactionState = null, SystemFaction = null };
         var named = Enumerable.Range(0, 300)
             .Count(index => NpcChatter.Instruction(NpcChatterKind.Passersby, exchangeIndex: index, place: place)
                 .Contains("the High Tech trade here", StringComparison.Ordinal));
@@ -85,7 +85,7 @@ public class PassersByTalkAboutTheLocalEconomyTests
     [Fact]
     public void ADockedHailCanBeAboutTheLocalEconomy()
     {
-        var place = Known with { SystemFactionState = null };
+        var place = Known with { SystemFactionState = null, SystemFaction = null };
         Assert.Contains(
             Enumerable.Range(0, 100).Select(index =>
                 NpcChatter.Instruction(NpcChatterKind.Hail, docked: true, exchangeIndex: index, place: place)),

@@ -102,6 +102,31 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
     /// <summary>The docked station's economy, or null when not docked or the journal gives none.</summary>
     public string? StationEconomy { get; init; }
 
+    /// <summary>The system's allegiance (Federation, Empire, Independent and so on), or null where the journal gives none.</summary>
+    public string? SystemAllegiance { get; init; }
+
+    /// <summary>The system's government as Elite words it, or null where it has none.</summary>
+    public string? SystemGovernment { get; init; }
+
+    /// <summary>The system's security level as Elite words it, or null where the journal gives none.</summary>
+    public string? SystemSecurity { get; init; }
+
+    /// <summary>The system's second economy, or null where it has none.</summary>
+    public string? SystemSecondEconomy { get; init; }
+
+    /// <summary>The name of the controlling faction, or null where the journal gives none.</summary>
+    public string? SystemFaction { get; init; }
+
+    private static string? Meaningful(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+        || JournalJson.IsPlaceholder(value)
+        || string.Equals(value, "None", StringComparison.OrdinalIgnoreCase)
+            ? null
+            : value;
+
+    private static string? FactionName(JournalEvent journalEvent) =>
+        journalEvent.Object("SystemFaction") is { } faction ? Meaningful(faction.String("Name")) : null;
+
     private static string? FactionState(JournalEvent journalEvent) =>
         journalEvent.Object("SystemFaction") is { } faction
         && faction.String("FactionState") is { Length: > 0 } state
@@ -161,6 +186,11 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Population = journalEvent.Long("Population"),
             SystemEconomy = journalEvent.Named("SystemEconomy"),
             SystemFactionState = FactionState(journalEvent),
+            SystemAllegiance = Meaningful(journalEvent.String("SystemAllegiance")),
+            SystemGovernment = Meaningful(journalEvent.Named("SystemGovernment")),
+            SystemSecurity = Meaningful(journalEvent.Named("SystemSecurity")),
+            SystemSecondEconomy = Meaningful(journalEvent.Named("SystemSecondEconomy")),
+            SystemFaction = FactionName(journalEvent),
             StationEconomy = journalEvent.Bool("Docked") ? journalEvent.Named("StationEconomy") : null,
 
             // Neither event carries a star class, and both can move the Commander somewhere new — so a class
@@ -195,6 +225,11 @@ public sealed record JournalLocation(string? StarSystem, string? Body, bool Dock
             Population = journalEvent.Long("Population"),
             SystemEconomy = journalEvent.Named("SystemEconomy"),
             SystemFactionState = FactionState(journalEvent),
+            SystemAllegiance = Meaningful(journalEvent.String("SystemAllegiance")),
+            SystemGovernment = Meaningful(journalEvent.Named("SystemGovernment")),
+            SystemSecurity = Meaningful(journalEvent.Named("SystemSecurity")),
+            SystemSecondEconomy = Meaningful(journalEvent.Named("SystemSecondEconomy")),
+            SystemFaction = FactionName(journalEvent),
             StationEconomy = null,
 
             // Not discarded on arrival — moved. StartJump named this system and its class when the jump

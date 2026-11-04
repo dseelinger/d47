@@ -49,8 +49,36 @@ internal static class SystemTopics
                 : $"being in a {powerplay} system");
         }
 
+        if (place?.SystemAllegiance is { Length: > 0 } allegiance)
+        {
+            known.Add($"the {allegiance} stance here");
+        }
+
+        if (place?.SystemGovernment is { Length: > 0 } government)
+        {
+            known.Add($"life under {Article(government)}");
+        }
+
+        if (place?.SystemSecurity is { Length: > 0 } security)
+        {
+            known.Add($"being in {Article(security)} system");
+        }
+
+        if (place?.SystemSecondEconomy is { Length: > 0 } second)
+        {
+            known.Add($"the {second} side of the economy");
+        }
+
+        if (place?.SystemFaction is { Length: > 0 } faction)
+        {
+            known.Add($"how {faction} runs things");
+        }
+
         return known;
     }
+
+    private static string Article(string noun) =>
+        (noun[0] is 'A' or 'E' or 'I' or 'O' or 'U' ? "an " : "a ") + noun;
 
     /// <summary>One topic for the exchange at <paramref name="index"/>, on one index in three; null otherwise.</summary>
     internal static string? For(int index, int oneInThreeOffset, int topicOffset, JournalLocation? place)
