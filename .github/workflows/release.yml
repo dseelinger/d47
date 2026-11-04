@@ -178,6 +178,15 @@ jobs:
             "installer/d47-setup-${{ inputs.version }}.exe" `
             "installer/d47-setup-${{ inputs.version }}.exe.sha256"
 
+      # Reports only. Engine verdicts on an unsigned single-file app vary too much to gate on.
+      - name: Report VirusTotal results
+        continue-on-error: true
+        shell: pwsh
+        env:
+          VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
+        run: |
+          & tools/virustotal-report.ps1 d47.zip "installer/d47-setup-${{ inputs.version }}.exe"
+
   # Docs go out after the release is live, never before. Pages source must be set to "GitHub
   # Actions" rather than "deploy from a branch" — that is what stops a Pages run firing on
   # every push to main.
