@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>#787: the effects that read no sample after the one they emit run on a clip as it arrives.</summary>
-public class TwelveGuardianEffectsRunAsTheClipArrivesTests
+public class ThirteenGuardianEffectsRunAsTheClipArrivesTests
 {
     private const double BasePitch = 200;
 
@@ -12,7 +12,7 @@ public class TwelveGuardianEffectsRunAsTheClipArrivesTests
 
     public static TheoryData<string, int> EachStreamingEffectAtEachLevel => GuardianStages.EachLevel(
         "chorus", "flanger", "phaser", "wah", "comb", "ringMod", "deepRingMod", "tremolo", "overdrive", "glitch",
-        "respirator", "reverb");
+        "respirator", "reverb", "delay");
 
     private static IGuardianStage Start(string id, int level) =>
         GuardianStages.Start(id, level, BasePitch, Line.Format.SampleRate);

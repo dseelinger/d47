@@ -281,6 +281,28 @@ public static partial class GuardianVoice
         },
         new GuardianEffect
         {
+            Id = "volumeSwell",
+            Label = "Volume swell",
+            Help = "Each word after a pause fades in from silence, as with a volume pedal; attack is how long the fade takes.",
+            Parameter = "Attack",
+            Unit = "ms",
+            DefaultLevel = 16,
+            Value = level => level * 6.0,
+            Start = (attackMs, _, rate) => new VolumeSwellStage(attackMs, rate),
+        },
+        new GuardianEffect
+        {
+            Id = "delay",
+            Label = "Delay",
+            Help = "Repeating echoes, each quieter and darker than the last, with a tail after the line; mix is how loud the echoes are.",
+            Parameter = "Mix",
+            Unit = "%",
+            DefaultLevel = 16,
+            Value = level => level * 0.015,
+            Start = (wet, _, rate) => new DelayStage(wet, rate),
+        },
+        new GuardianEffect
+        {
             Id = "reverseReverb",
             Label = "Reverse reverb",
             Help = "Reverb run backwards, so its tail swells into each word; mix is how loud the reverb is.",
@@ -431,6 +453,10 @@ public static partial class GuardianVoice
 
     /// <summary>The reversed reverb's tail, added at the front of the clip and the length its swell is cut to; every line's first word waits this long.</summary>
     private const double ReverseTailSeconds = 0.3;
+
+    private const double DelayMs = 280;
+    private const double DelayFeedback = 0.4;
+    private const double DelayTailSeconds = 1.5;
 
     /// <summary>The shimmer reverb's share of the output, fixed at Reverb's default mix.</summary>
     private const double ShimmerWet = 0.45;

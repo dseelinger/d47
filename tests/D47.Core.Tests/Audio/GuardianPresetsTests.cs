@@ -42,6 +42,7 @@ public class GuardianPresetsTests
     [InlineData("stepped-synth", "steppedPitch", "chorus")]
     [InlineData("hive-chorus", "hive", "reverb")]
     [InlineData("ghost", "whisper", "reverseReverb")]
+    [InlineData("telepathy", "volumeSwell", "delay")]
     [InlineData("shimmer-core", "chorus", "shimmer")]
     public void WritingABuiltinTicksExactlyItsEffectsAtDefaultOrderAndLevels(string id, params string[] ticked)
     {
