@@ -148,6 +148,12 @@ jobs:
             Set-Content -Path "$file.sha256" -Value "$hash  $name" -Encoding ascii
           }
 
+      - name: Scan the artifacts with Defender
+        shell: pwsh
+        run: |
+          & tools/scan-release.ps1 src/D47.App/bin/Release/publish d47.zip "installer/d47-setup-${{ inputs.version }}.exe"
+          if ($LASTEXITCODE -ne 0) { throw "Defender scan failed with exit $LASTEXITCODE" }
+
       - name: Attest the artifacts
         uses: actions/attest-build-provenance@v2
         with:

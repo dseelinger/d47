@@ -101,6 +101,37 @@ Write-Host "Comparing v$next with a rebuild of its tag..."
 & "$PSScriptRoot\verify-release.ps1" -Version $next
 $verifyCode = $LASTEXITCODE
 
+Write-Host "Scanning v$next with Defender..."
+$scanDir = Join-Path ([IO.Path]::GetTempPath()) "d47-scan-$next"
+$scanCode = 2
+try {
+    Remove-Item -LiteralPath $scanDir -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Path $scanDir | Out-Null
+    gh release download "v$next" --pattern d47.zip --pattern 'd47-setup-*.exe' --dir $scanDir
+    if ($LASTEXITCODE -eq 0) {
+        & "$PSScriptRoot\scan-release.ps1" $scanDir
+        $scanCode = $LASTEXITCODE
+    }
+    else {
+        Write-Host 'Could not download the release assets to scan.' -ForegroundColor Yellow
+    }
+}
+finally {
+    Remove-Item -LiteralPath $scanDir -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+if ($scanCode -eq 1) {
+    Write-Host ''
+    Write-Host '############################################################' -ForegroundColor Red
+    Write-Host "DEFENDER FLAGGED A FILE IN v$next. THE RELEASE IS LIVE." -ForegroundColor Red
+    Write-Host 'The file and threat are listed above. Submit the file to Microsoft as a false positive:' -ForegroundColor Red
+    Write-Host '  https://www.microsoft.com/en-us/wdsi/filesubmission' -ForegroundColor Red
+    Write-Host '############################################################' -ForegroundColor Red
+}
+elseif ($scanCode -ne 0) {
+    Write-Host "The Defender scan of v$next did not run (exit $scanCode); the release itself succeeded." -ForegroundColor Yellow
+}
+
 if ($verifyCode -eq 1) {
     Write-Host ''
     Write-Host '############################################################' -ForegroundColor Red
@@ -113,4 +144,5 @@ if ($verifyCode -eq 1) {
 if ($verifyCode -ne 0) {
     Write-Host "The comparison of v$next did not run (exit $verifyCode); the release itself succeeded." -ForegroundColor Yellow
 }
+if ($scanCode -eq 1) { exit 3 }
 exit 0

@@ -160,7 +160,7 @@ below describes how things stand today.
 
 Builds are unsigned, so Windows SmartScreen will likely warn — on the installer as readily as
 on the executable. Rather than ask you to trust that, every release publishes a SHA-256
-beside each download. Compare whichever you took:
+beside each download, and each release is scanned with Microsoft Defender before it is published. Compare whichever you took:
 
 ```powershell
 Get-FileHash .\d47-setup-X.Y.Z.exe -Algorithm SHA256

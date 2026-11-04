@@ -204,6 +204,21 @@ clone mapped to `B:\` and only reports.
 - **Exit 0 with `did not run`**: the release succeeded and the comparison could not run. Say so in
   the closing lines, with the reason the script printed.
 
+### Defender detections
+
+`tools/scan-release.ps1` scans with Microsoft Defender in two places. A detection is a verdict on
+the shipped bytes, not a code defect: never change code or re-run to get past it.
+
+- **On the runner**, the step "Scan the artifacts with Defender" fails the run before the tag
+  exists. Read its log for the file and threat. If it names a detection: restore the backup, report
+  the file and threat to the maintainer, and stop. If the scan could not run (`NOT SCANNED`, no
+  `MpCmdRun.exe`), report that and stop as well; the runner's Defender state is unverified.
+- **On this PC**, after the release is live, `release.ps1` scans the downloaded `d47.zip` and
+  installer. A detection prints a red block with the file, the threat and the Microsoft submission
+  page, and the script exits 3. Report the same facts, leave the installed version in place, and
+  stop. Do not edit or delete the release. A line saying the scan did not run is reported and the
+  release stands.
+
 ### Anything else
 
 A refusal from the script's own checks, a `publish-avatars.ps1` error (ffmpeg, upload), a dispatch
