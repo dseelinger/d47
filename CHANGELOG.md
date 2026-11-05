@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The New Community Goal watch now recognises GalNet articles that say pilots can "sign up at" a station, or that a faction is "recruiting" pilots. Before, it missed launches worded that way.
+
 Settings › Acting on the game › Macros and switches now saves and loads binding profiles with buttons: a name box and **Save** on the Saved binding profiles row, and a **Load** button beside **Delete** on each profile. Before, saving and loading were by voice only. Both are refused while Elite is running, and the reply shows on the row.
 
 Ambient music now plays in stereo. Before, both channels were averaged into one, which dulled reverb, wide pads and high frequencies. Speech, cues, alerts and the bed are unchanged.

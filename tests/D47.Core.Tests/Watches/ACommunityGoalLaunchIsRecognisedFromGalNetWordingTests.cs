@@ -18,6 +18,10 @@ public class ACommunityGoalLaunchIsRecognisedFromGalNetWordingTests
     [InlineData("October Consortium Seeks Guardian Artefacts for New Study", "The consortium has called upon Commanders with ancient relics to help.")]
     [InlineData("Exploration Data Requested for New Deep-Space Station", "Pilots wishing to register their interest can do so at Hutton Orbital.")]
     [InlineData("Radicoida Unica Begins Blooming as New Research Initiative Announced", "Those who wish to take part are registering at Bluford Orbital.")]
+    [InlineData("Corporate Forces Trigger Counterattack Against Lady Zi", "Pilots willing to join the defence can sign up at Worlidge Hub in Exphiay and Hencke Orbital in Sorbago respectively.")]
+    [InlineData("Lady Zi Declares 'Counter-Megacorporation' Assault", "The Fire Lotus Coalition megaships are seemingly recruiting independent pilots to join her cause.")]
+    [InlineData("Core Dynamics Unveils Kestrel Fighter", "Core Dynamics has called for interested independent pilots to sign up at Polyakov Station.")]
+    [InlineData("Trading Blocs Compete in Alliance Space", "Trade pilots looking to help Nakato Kaine's trade bloc can sign up at Fuca Dock in Apura.")]
     public void ALaunchTitleWithACallToActionIsRecognised(string title, string last) =>
         Assert.True(CommunityGoalLaunch.Recognises(Article(title, last)));
 

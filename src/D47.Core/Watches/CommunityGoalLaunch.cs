@@ -12,7 +12,7 @@ public static partial class CommunityGoalLaunch
     public const int ClosingParagraphs = 3;
 
     [GeneratedRegex(
-        @"register at|registering at|register their interest|sign up for|should head to|should make their way to|invited to support|calling on\b.{0,120}?\bto deliver|called upon commanders",
+        @"register at|registering at|register their interest|sign up for|sign up at|signing up at|recruiting\b.{0,40}?\bpilots|should head to|should make their way to|invited to support|calling on\b.{0,120}?\bto deliver|called upon commanders",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
         matchTimeoutMilliseconds: 1000)]
     private static partial Regex CallToAction();
