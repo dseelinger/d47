@@ -74,7 +74,7 @@ public class TheLikeliestMissionStationIsWhereMostFactionsMatchTests
     [Fact]
     public void ATypeWithNoStatesFiltersOnItsGovernmentsAndATypeWithNeitherOnNothing()
     {
-        var name = new MissionName("mission_x", "Mission_X", "Combat", "x", "", "Prison Colony", "", "", "", "", []);
+        var name = new MissionName("mission_x", "Mission_X", "Combat", "x", "", "Prison Colony", "", "", "", "", [], []);
 
         Assert.True(MissionStationQuery.TryParse("Sol", [name], null, out var governed, out _));
         Assert.False(governed.FiltersOnStates);
@@ -105,7 +105,7 @@ public class TheLikeliestMissionStationIsWhereMostFactionsMatchTests
     [Fact]
     public void AGovernmentMatchScoresOneForEachFactionUnderIt()
     {
-        var name = new MissionName("mission_x", "Mission_X", "Combat", "x", "", "Prison Colony", "", "", "", "", []);
+        var name = new MissionName("mission_x", "Mission_X", "Combat", "x", "", "Prison Colony", "", "", "", "", [], []);
         Assert.True(MissionStationQuery.TryParse("Sol", [name], null, out var query, out _));
 
         var scan = new MissionStationScan("Sol", 1,

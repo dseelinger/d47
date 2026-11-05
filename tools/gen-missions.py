@@ -80,7 +80,7 @@ def row_for(name: str, problems: list[str]) -> list[str] | None:
         problems.append(f"{name}: no family")
         return None
 
-    group, words, station_state = curated.FAMILIES[family]
+    group, words, station_state, faction_states = curated.FAMILIES[family]
     found: dict[str, str] = {}
     variants: list[str] = []
 
@@ -102,7 +102,7 @@ def row_for(name: str, problems: list[str]) -> list[str] | None:
 
     return [name, family, group, words, found.get("state", ""), found.get("government", ""),
             found.get("economy", ""), found.get("rank", ""), found.get("engineer", ""),
-            station_state, ",".join(variants)]
+            station_state, ",".join(variants), ",".join(faction_states)]
 
 
 def main() -> None:

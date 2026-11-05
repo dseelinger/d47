@@ -11,7 +11,7 @@ public class AMissionStationSearchFiltersEveryFactionPresentTests
     private static readonly string[] DisableStates = ["Civil Unrest", "Civil War", "Expansion", "Lockdown", "Retreat", "War"];
 
     private static MissionName Name(string family, string state = "", string government = "", string economy = "") =>
-        new(family.ToLowerInvariant(), family, "Combat", "x", state, government, economy, "", "", "", []);
+        new(family.ToLowerInvariant(), family, "Combat", "x", state, government, economy, "", "", "", [], []);
 
     private static MissionStationQuery Query(params MissionName[] names)
     {
