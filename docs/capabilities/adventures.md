@@ -508,7 +508,7 @@ the waking line, and the Story log says it came aboard. A
 core you choose afterwards stays; the story does not bring its own back. Pausing, abandoning or finishing
 the story leaves the core aboard as it is.
 
-One story runs at a time, kept in `data/story.json`. A story needs a language model and galaxy search,
+One story runs at a time, kept in `data/story.json`. When a story is picked again, the earlier run stays in `data/story.json`. A story needs a language model and galaxy search,
 the same as asking for a short story.
 
 Stories need Elite Dangerous: Odyssey, because most chapters use it: on-foot missions, settlements,

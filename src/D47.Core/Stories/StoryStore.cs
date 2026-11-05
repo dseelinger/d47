@@ -74,7 +74,7 @@ public sealed class StoryStore
         Changed?.Invoke();
     }
 
-    /// <summary>This Commander's stories, in the order they were first picked.</summary>
+    /// <summary>This Commander's story runs, in the order they were first picked.</summary>
     public IReadOnlyList<Story> For(string? frontierId)
     {
         lock (_gate)
@@ -86,8 +86,15 @@ public sealed class StoryStore
     /// <summary>The running or paused story, or null.</summary>
     public Story? Current(string? frontierId) => For(frontierId).FirstOrDefault(story => story.IsCurrent);
 
-    public Story? Find(string? frontierId, string id) =>
-        For(frontierId).FirstOrDefault(story => string.Equals(story.Id, id, StringComparison.OrdinalIgnoreCase));
+    /// <summary>The newest run of the story with <paramref name="id"/>, by <see cref="Story.PickedAt"/>.</summary>
+    public Story? Find(string? frontierId, string id) => Newest(For(frontierId), id);
+
+    private static Story? Newest(IReadOnlyList<Story> stories, string id) => stories
+        .Where(story => string.Equals(story.Id, id, StringComparison.OrdinalIgnoreCase))
+        .MaxBy(story => story.PickedAt);
+
+    private static bool SameRun(Story a, Story b) =>
+        string.Equals(a.Id, b.Id, StringComparison.OrdinalIgnoreCase) && a.PickedAt == b.PickedAt;
 
     /// <summary>Every Commander's stories, in any state.</summary>
     public IReadOnlyList<(string FrontierId, Story Story)> All()
@@ -183,7 +190,7 @@ public sealed class StoryStore
         }
     }
 
-    /// <summary>Adds the story or replaces the one with its id.</summary>
+    /// <summary>Adds the run or replaces the one with its id and <see cref="Story.PickedAt"/>.</summary>
     public void Save(string? frontierId, Story story)
     {
         ArgumentNullException.ThrowIfNull(story);
@@ -195,12 +202,12 @@ public sealed class StoryStore
             lock (_gate)
             {
                 var existing = _byCommander.GetValueOrDefault(commander, []);
-                var replacing = existing.Any(other => string.Equals(other.Id, story.Id, StringComparison.OrdinalIgnoreCase));
+                var replacing = existing.Any(other => SameRun(other, story));
 
                 _byCommander = new Dictionary<string, IReadOnlyList<Story>>(_byCommander, StringComparer.Ordinal)
                 {
                     [commander] = replacing
-                        ? [.. existing.Select(other => string.Equals(other.Id, story.Id, StringComparison.OrdinalIgnoreCase) ? story : other)]
+                        ? [.. existing.Select(other => SameRun(other, story) ? story : other)]
                         : [.. existing, story],
                 };
             }
@@ -211,7 +218,7 @@ public sealed class StoryStore
         Changed?.Invoke();
     }
 
-    /// <summary>Replaces the story with <paramref name="id"/> by what <paramref name="change"/> makes of it. No other write runs between the two.</summary>
+    /// <summary>Replaces the newest run of the story with <paramref name="id"/> by what <paramref name="change"/> makes of it. No other write runs between the two.</summary>
     public void Update(string? frontierId, string id, Func<Story, Story> change)
     {
         ArgumentNullException.ThrowIfNull(change);
@@ -222,7 +229,7 @@ public sealed class StoryStore
         {
             var existing = For(commander);
 
-            if (existing.FirstOrDefault(story => string.Equals(story.Id, id, StringComparison.OrdinalIgnoreCase)) is not { } before)
+            if (Newest(existing, id) is not { } before)
             {
                 return;
             }

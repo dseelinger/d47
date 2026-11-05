@@ -3041,6 +3041,8 @@ public sealed class StoryDirector(
 
     /// <summary>The most recently finished story the Commander has not answered, or null.</summary>
     private Story? Unanswered(string? frontierId) => stories.For(frontierId)
+        .GroupBy(story => story.Id, StringComparer.OrdinalIgnoreCase)
+        .Select(runs => runs.MaxBy(run => run.PickedAt)!)
         .Where(story => story is { State: StoryState.Finished, EndingChoice: null })
         .OrderByDescending(story => story.StoppedAt)
         .FirstOrDefault();
@@ -3706,11 +3708,15 @@ public sealed class StoryDirector(
     /// <summary>The hidden layer with every name token resolved for this Commander.</summary>
     private StorySecret? Hidden(string id) => catalog().Secret(id)?.For(Gender());
 
-    /// <summary>A key used by no adventure on file and no chapter of the story, archived ones and this run's failed ones included.</summary>
+    /// <summary>A key used by no adventure on file, no chapter of any run of the Commander's stories and no archived chapter of the story.</summary>
     private string UniqueKey(string? frontierId, Story story, string wanted)
     {
-        var existing = book.Store.For(frontierId).Select(adventure => adventure.Key).Concat(story.Chapters)
-            .Concat(Archive.For(frontierId).Where(chapter => chapter.Of(story)).Select(chapter => chapter.Adventure.Key))
+        var existing = book.Store.For(frontierId).Select(adventure => adventure.Key)
+            .Concat(story.Chapters)
+            .Concat(stories.For(frontierId).SelectMany(run => run.Chapters))
+            .Concat(Archive.For(frontierId)
+                .Where(chapter => string.Equals(chapter.StoryId, story.Id, StringComparison.OrdinalIgnoreCase))
+                .Select(chapter => chapter.Adventure.Key))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         return AdventureKeys.Unique(wanted, "chapter", existing.Contains);

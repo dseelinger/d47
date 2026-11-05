@@ -129,4 +129,16 @@ public class AStoppedStoryKeepsItsMessagesTests : IDisposable
         Assert.Equal(3, Sweep());
         Assert.Equal("my-own-mayday-4", Assert.Single(_rig.Messages.All).AdventureKey);
     }
+
+    [Fact]
+    public void AnEarlierRunKeepsItsMessagesAfterTheStoryIsPickedAgain()
+    {
+        SaveChapter("chapter-1");
+        _rig.Stories.Save("F1", new Story { Id = Id, Title = "The Test Story", PublicLayer = "x", Chapters = ["chapter-1"], State = StoryState.Finished, PickedAt = Noon });
+        _rig.Stories.Save("F1", new Story { Id = Id, Title = "The Test Story", PublicLayer = "x", Chapters = [], State = StoryState.Running, PickedAt = Noon.AddDays(3) });
+        _rig.Messages.Post("narrator", "beat", "x", Noon, "chapter-1");
+
+        Assert.Equal(0, Sweep());
+        Assert.Single(_rig.Messages.All);
+    }
 }
