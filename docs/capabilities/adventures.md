@@ -414,7 +414,7 @@ The messages live in `data/messages.json`. The file holds the most recent 200; p
 message goes first. A stock story's lines are also kept in the story's own record in `data/story-runs/`,
 which has no limit; see [Spoken messages keep their clip](speech.md#kept-clips).
 
-Abandoning a story, or switching to another, keeps the messages it posted, as finishing one does: its objectives,
+Abandoning a story, or shelving it by switching to another, keeps the messages it posted, as finishing one does: its objectives,
 nudges, clues, beacon scan and ending. An ending question from a stopped story is not listed as waiting for an answer. The messages of a short story you asked for stay
 when you abandon it.
 
@@ -476,7 +476,17 @@ chapter ends at the beacon. When it cannot, the chapter has no beacon objective,
 flying, and works toward a ship that can make the trip; the chapter writer is told the beacon, its
 distance, and whether the missing fuel scoop, the missing laser or railgun or both stand in the way. The chapter's last line is said before
 the core wakes, in the voice that was aboard. Each chapter is a story on this tab. When one finishes, the next is written from it
-and begins. **Switch** abandons the running story and picks another.
+and begins. **Switch** shelves the running story and picks another; it never abandons one.
+
+#### A shelved story
+
+You have one active story at a time, running or paused. Switching to another story shelves the active one:
+the chapter under way is abandoned and the story is switched off. A shelved story gives no objectives, nudges
+or clues, holds back no Guardian cores, has no objective on the panel, and its days do not count; its
+messages and its last two chapters are kept. Any number of stories can be shelved. Picking a shelved story,
+or switching to it, makes that same run active again rather than starting it over. It comes back paused,
+and **Resume** writes the chapter that was under way again from where you are. A shelved story's chapter
+offers no **Begin again** on its page. To end a shelved story, make it active and **Abandon** it.
 
 A story of 3 days, 1 week or 2 weeks has no trip to a beacon: it begins after you have scanned one. At
 **Pick**, the scan is narrated in the words the story was written with, posted to the Story log from its
@@ -499,7 +509,7 @@ were on record; it never changes the story you are running. A real scan in that 
 that scan is on record from then on. Unticking before you pick restores the remembered opening. Only the
 panel sets it; it is not a tool.
 **Abandon** ends the story, and so does finishing it; either puts your Backstory back to the one you
-had before your first story, or to empty. Switch passes that earlier Backstory on to the new story.
+had before your first story, or to empty. Switch passes that earlier Backstory on to the story it makes active.
 Neither changes your Guardian cores. **Abandon** on the current chapter's page ends the story, as it
 does on the Catalogue; that page also has **Story on**, which pauses the story.
 
@@ -1376,8 +1386,9 @@ be up to date the moment you open it.
 
 A stock story keeps only its current chapter and the one before it in `data/adventures.json`. When a
 chapter begins, every earlier chapter of the story moves to `data/story-chapters.jsonl`, one chapter
-per line, with when each of its objectives fired; when a story is abandoned, switched or finished, all of
-its chapters move there. Archived chapters leave the list on the Stories tab, the chapter writer still reads
+per line, with when each of its objectives fired; when a story is abandoned or finished, all of
+its chapters move there. A shelved story keeps its last two chapters in `data/adventures.json`, so Resume can
+write the one under way again. Archived chapters leave the list on the Stories tab, the chapter writer still reads
 the last ten of them by name and premise, and your log still lists their objectives. Story chapters do not
 count toward the 40 stories of your own that the file holds.
 

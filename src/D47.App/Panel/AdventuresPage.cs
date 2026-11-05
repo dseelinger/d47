@@ -706,7 +706,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         var bar = Buttons();
         bar.Margin = new Thickness(0, 10, 0, 0);
 
-        foreach (var label in standing.ReadingButtons())
+        // A shelved story's chapter, or one waiting for Resume to write it again, is not begun from here.
+        var held = adventure.StoryId is { } storyId
+            && _surface.Stories?.Stories.Find(drawnFor, storyId) is { State: StoryState.Shelved } or { State: StoryState.Paused, Rewrite: not null };
+
+        foreach (var label in standing.ReadingButtons().Where(label => !held || label is not ("Begin" or "Begin again")))
         {
             bar.Children.Add(label switch
             {

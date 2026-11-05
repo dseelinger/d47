@@ -185,4 +185,19 @@ public class AStoryChapterShowsNoPremiseTests
 
         surface.Window.Close();
     }
+
+    [AvaloniaFact]
+    public void AShelvedStorysChapterOffersNoBeginAgain()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var surface = Open();
+        Assert.Null(surface.Director.ShelveCurrent("F1", Now));
+        Assert.True(surface.Book.Store.Find("F1", "the-first-light")!.IsAbandoned);
+
+        Read(surface.Panel, "the-first-light", "The First Light");
+        Assert.DoesNotContain("Begin again", Buttons(surface.Panel));
+
+        surface.Window.Close();
+    }
 }

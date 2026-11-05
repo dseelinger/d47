@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D47.Core.Stories;
 
-/// <summary>The stories each Commander picked — <c>data/story.json</c>. At most one per Commander is current.</summary>
+/// <summary>The stories each Commander picked — <c>data/story.json</c>. At most one per Commander is current; any number are shelved.</summary>
 public sealed class StoryStore
 {
     private static readonly JsonSerializerOptions Json = StoreJson.OmittingNulls;
@@ -105,12 +105,12 @@ public sealed class StoryStore
         }
     }
 
-    /// <summary>The running or paused stories of every Commander.</summary>
-    public IReadOnlyList<Story> AllCurrent()
+    /// <summary>The running, paused or shelved stories of every Commander.</summary>
+    public IReadOnlyList<Story> AllCurrentOrShelved()
     {
         lock (_gate)
         {
-            return [.. _byCommander.Values.SelectMany(stories => stories).Where(story => story.IsCurrent)];
+            return [.. _byCommander.Values.SelectMany(stories => stories).Where(story => story.IsCurrentOrShelved)];
         }
     }
 

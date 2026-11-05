@@ -146,8 +146,9 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
 
         await FlyTo(fixtures, 3);
 
-        Assert.Null(await fixtures.Director.SwitchAsync("F1", Other.Id, Now.AddDays(10), CancellationToken.None));
+        Assert.Null(fixtures.Director.Abandon("F1", Now.AddDays(10)));
         Assert.DoesNotContain(fixtures.Book.Store.For("F1"), adventure => adventure.StoryId == Id);
+        Assert.Null(await fixtures.Director.PickAsync("F1", Other.Id, Now.AddDays(10), CancellationToken.None));
 
         var again = Now.AddDays(20);
 
@@ -158,7 +159,13 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
         var story = fixtures.Stories.Current("F1")!;
         var prompt = fixtures.Provider.Requests[^5].Prompt.History[0].Text;
 
-        Assert.Equal(StoryChaptersOnFile(fixtures), story.Chapters.TakeLast(2));
+        var onFile = StoryChaptersOnFile(fixtures)
+            .GroupBy(key => fixtures.Book.Store.Find("F1", key)!.StoryId!)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        Assert.Equal(new[] { Id, Other.Id }.Order(), onFile.Keys.Order());
+        Assert.Equal(story.Chapters.TakeLast(2), onFile[Id]);
+        Assert.Equal(fixtures.Stories.Find("F1", Other.Id)!.Chapters, onFile[Other.Id]);
         Assert.Contains("2 chapters came before it.", prompt);
         Assert.DoesNotContain("Old 1", prompt);
         Assert.DoesNotContain("A new premise.", prompt);

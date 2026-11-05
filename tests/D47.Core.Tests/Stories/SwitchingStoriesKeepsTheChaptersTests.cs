@@ -7,7 +7,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Stories;
 
-/// <summary>Switch and Abandon stop a story, keep its chapters in the archive, and leave the cores to the story that is current.</summary>
+/// <summary>Switch shelves a story and Abandon ends it; both leave the cores to the story that is current.</summary>
 [Trait("Category", "Integration")]
 public sealed class SwitchingStoriesKeepsTheChaptersTests
 {
@@ -20,7 +20,7 @@ public sealed class SwitchingStoriesKeepsTheChaptersTests
         RoundScriptedLlmProvider.Saying(NothingObjected)));
 
     [Fact]
-    public async Task SwitchingAbandonsTheOldStoryAndKeepsItsChapter()
+    public async Task SwitchingShelvesTheOldStoryAndKeepsItsChapterOnFile()
     {
         using var fixtures = Fixtures();
 
@@ -30,10 +30,10 @@ public sealed class SwitchingStoriesKeepsTheChaptersTests
         Assert.Null(await fixtures.Director.SwitchAsync("F1", Other.Id, Now.AddDays(1), CancellationToken.None));
 
         var old = fixtures.Stories.Find("F1", Id)!;
-        Assert.Equal(StoryState.Abandoned, old.State);
+        Assert.Equal(StoryState.Shelved, old.State);
         Assert.Equal([first], old.Chapters);
-        Assert.DoesNotContain(fixtures.Book.Store.For("F1"), adventure => adventure.StoryId == Id);
-        Assert.True(Assert.Single(fixtures.Director.Archive.For("F1")).Adventure.IsAbandoned);
+        Assert.True(fixtures.Book.Store.Find("F1", first)!.IsAbandoned);
+        Assert.Empty(fixtures.Director.Archive.For("F1"));
 
         var current = fixtures.Stories.Current("F1")!;
         Assert.Equal(Other.Id, current.Id);

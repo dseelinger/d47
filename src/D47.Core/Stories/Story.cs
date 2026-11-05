@@ -13,7 +13,7 @@ public enum StoryState
     /// <summary>The current chapter was abandoned on the Adventures page; Resume begins it again.</summary>
     Paused,
 
-    /// <summary>Stopped by Switch, for another story.</summary>
+    /// <summary>Stopped by Switch, for another story; read in a saved story, never written.</summary>
     Abandoned,
 
     /// <summary>Stopped by Abandon.</summary>
@@ -21,6 +21,9 @@ public enum StoryState
 
     /// <summary>Its last finale chapter is done.</summary>
     Finished,
+
+    /// <summary>Set aside by Switch or No story: switched off, with the chapter under way dropped, until it is made active again.</summary>
+    Shelved,
 }
 
 /// <summary>A stretch during which the Commander had the story switched off; <see cref="To"/> is null while it is still off.</summary>
@@ -183,9 +186,13 @@ public sealed record Story
     [JsonIgnore]
     public bool IsOff => OffSpans.Count > 0 && OffSpans[^1].To is null;
 
-    /// <summary>Running or paused: the Commander's current story.</summary>
+    /// <summary>Running or paused: the Commander's current story. A Commander has at most one.</summary>
     [JsonIgnore]
     public bool IsCurrent => State is StoryState.Running or StoryState.Paused;
+
+    /// <summary>Current or shelved: a run that can still be played.</summary>
+    [JsonIgnore]
+    public bool IsCurrentOrShelved => IsCurrent || State == StoryState.Shelved;
 
     /// <summary>
     /// The beacons scanned: a narrated scan and then each system, the remembered scans and then each system, or the
@@ -245,6 +252,12 @@ public sealed record Story
         PausedAt = null,
         PausedFor = PausedFor + (BeaconScanAt is { } scan ? PausedSince(scan, now) : TimeSpan.Zero),
     };
+
+    /// <summary>Shelves the story: an open pause is folded into <see cref="PausedFor"/> and an off span opens, so no time is both.</summary>
+    public Story Shelved(DateTimeOffset now) => (State == StoryState.Paused ? Resumed(now) : this).SwitchedOff(now) with { State = StoryState.Shelved };
+
+    /// <summary>Makes a shelved story active again, paused: the off span closes and a pause opens.</summary>
+    public Story Unshelved(DateTimeOffset now) => SwitchedOn(now).Paused(now);
 
     /// <summary>Whether the story was switched off at this moment.</summary>
     public bool WasOffAt(DateTimeOffset at) => OffSpans.Any(span => at >= span.From && (span.To is not { } end || at < end));

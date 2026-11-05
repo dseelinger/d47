@@ -1416,7 +1416,7 @@ public sealed class AppHost : IDisposable
         // Replaced before the Stories page redraws, because the page subscribes after this does.
         storyDownloads.Landed += () => storyCatalog = LoadStories();
 
-        _ = storyDownloads.FetchMissing(storyStore.AllCurrent().Select(story => story.Id));
+        _ = storyDownloads.FetchMissing(storyStore.AllCurrentOrShelved().Select(story => story.Id));
 
         var storyRatings = new StoryRatingClient(
             storyStore,

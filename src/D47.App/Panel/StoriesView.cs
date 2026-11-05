@@ -1052,9 +1052,11 @@ public sealed class StoriesView : UserControl, IPageSummary
         bar.Margin = new Thickness(0, 10, 0, 0);
         gated = null;
 
+        var shelved = IsShelved(commander, card);
+
         if (current is null || !string.Equals(current.Id, card.Id, StringComparison.OrdinalIgnoreCase))
         {
-            stack.Children.Add(AdventuresPage.Muted(_director.Remembers(commander, card) ? PickingLineRemembered : PickingLine));
+            stack.Children.Add(AdventuresPage.Muted(shelved ? ShelvedLine : _director.Remembers(commander, card) ? PickingLineRemembered : PickingLine));
         }
 
         if (current is null)
@@ -1073,10 +1075,7 @@ public sealed class StoriesView : UserControl, IPageSummary
                 "story.switch",
                 "Switch",
                 $"Switch from {current.Title} to {card.Title}?",
-                $"{current.Title} is abandoned and its chapters leave the list on the Stories tab. Your Backstory becomes this "
-                + (_director.Remembers(commander, card)
-                    ? "story's words, and it opens with your last beacon scan behind you."
-                    : "story's words, and the Guardian cores wait for its own beacon scan."),
+                SwitchBody(current.Title, card.Title, shelved, _director.Remembers(commander, card)),
                 "Switch",
                 () => Start(card, switching: true, status, switchTo, commander)));
             switchTo.IsEnabled = !withoutOdyssey && GenderReady(card) && missing == 0;
@@ -1125,8 +1124,8 @@ public sealed class StoriesView : UserControl, IPageSummary
         });
     }
 
-    /// <summary>Shows and says a refusal, or shows <paramref name="begun"/> and opens the chapter.</summary>
-    private void Written(string? refusal, StatusLine status, string? commander, string begun)
+    /// <summary>Shows and says a refusal, or shows <paramref name="begun"/> and, when <paramref name="open"/>, opens the chapter.</summary>
+    private void Written(string? refusal, StatusLine status, string? commander, string begun, bool open = true)
     {
         if (refusal is not null)
         {
@@ -1137,7 +1136,8 @@ public sealed class StoriesView : UserControl, IPageSummary
 
         status.Say(begun);
 
-        if (string.Equals(commander, _surface.Commander(), StringComparison.Ordinal)
+        if (open
+            && string.Equals(commander, _surface.Commander(), StringComparison.Ordinal)
             && _director.Stories.Current(commander)?.CurrentChapter is { } key
             && _surface.Book.Store.Find(commander, key) is { } chapter)
         {
@@ -1368,6 +1368,21 @@ public sealed class StoriesView : UserControl, IPageSummary
         "Picking one makes its words your Backstory until it stops, and has the core write chapter one. You scanned a Guardian beacon in an "
         + "earlier story, so this one opens with that scan behind you and its core comes aboard as it begins.";
 
+    internal const string ShelvedLine =
+        "You shelved this story. Picking it brings it back paused where you left it, with its words as your Backstory; "
+        + "Resume writes its chapter again from where you are.";
+
+    /// <summary>The Switch confirmation's text: the current story is shelved, and the other is picked or comes back.</summary>
+    internal static string SwitchBody(string from, string to, bool toShelved, bool remembers) =>
+        $"{from} is shelved: its chapter under way is dropped, and it waits, switched off, until you switch back to it. "
+        + (toShelved
+            ? $"{to} comes back paused, with its words as your Backstory; Resume writes its chapter again from where you are."
+            : "Your Backstory becomes this story's words, and "
+              + (remembers ? "it opens with your last beacon scan behind you." : "the Guardian cores wait for its own beacon scan."));
+
+    private bool IsShelved(string? commander, StoryCard card) =>
+        _director.Stories.Find(commander, card.Id) is { State: StoryState.Shelved };
+
     internal const string DownloadFailed = "The story could not be downloaded. Check your connection and pick it again.";
 
     private void Begin(StoryCard card, bool switching, StatusLine status, string? commander)
@@ -1379,8 +1394,9 @@ public sealed class StoriesView : UserControl, IPageSummary
         }
 
         var now = _surface.Now();
+        var shelved = IsShelved(commander, card);
 
-        status.Say("Writing chapter one…");
+        status.Say(shelved ? "Bringing the story back…" : "Writing chapter one…");
 
         _ = Task.Run(async () =>
         {
@@ -1388,7 +1404,8 @@ public sealed class StoriesView : UserControl, IPageSummary
                 ? await _director.SwitchAsync(commander, card.Id, now, CancellationToken.None).ConfigureAwait(false)
                 : await _director.PickAsync(commander, card.Id, now, CancellationToken.None).ConfigureAwait(false);
 
-            Dispatcher.UIThread.Post(() => Written(refusal, status, commander, "Chapter one has begun."));
+            Dispatcher.UIThread.Post(() => Written(
+                refusal, status, commander, shelved ? $"{card.Title} is your story again. Resume it to write its chapter." : "Chapter one has begun.", open: !shelved));
         });
     }
 

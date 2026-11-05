@@ -107,6 +107,45 @@ public sealed partial class StoryBench
         return null;
     }
 
+    /// <summary>
+    /// Queues the deletion of every checkpoint, after the checkpoints already queued, and forgets the last one queued so
+    /// the next chapter is taken. A checkpoint holds every run's <c>story.json</c>, so rewinding past a switch would undo it.
+    /// </summary>
+    private void ClearCheckpoints()
+    {
+        lock (_queueGate)
+        {
+            _queued = null;
+            _tail = _tail.ContinueWith(_ => DeleteAll(), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+        }
+    }
+
+    private void DeleteAll()
+    {
+        var deleted = false;
+
+        try
+        {
+            lock (_gate)
+            {
+                foreach (var item in ReadAll(CheckpointRoot()))
+                {
+                    DeleteCheckpoint(item.Folder);
+                    deleted = true;
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogError(ex, "Could not delete the story bench checkpoints");
+        }
+
+        if (deleted)
+        {
+            CheckpointsChanged?.Invoke();
+        }
+    }
+
     /// <summary>Queues a checkpoint when the current story has a chapter none has been taken for. Does no file I/O.</summary>
     private void Evaluate()
     {

@@ -45,7 +45,7 @@ public sealed partial class StoryBench
         _stories.Changed += Evaluate;
     }
 
-    /// <summary>Holds off the director's tick and writes during a rewind.</summary>
+    /// <summary>Holds off the director's tick and writes during a rewind; a story it shelves clears the checkpoints.</summary>
     public StoryDirector? Director
     {
         get => _director;
@@ -54,6 +54,7 @@ public sealed partial class StoryBench
             if (_director is not null)
             {
                 _director.WritingChanged -= Evaluate;
+                _director.Shelved -= ClearCheckpoints;
             }
 
             _director = value;
@@ -61,6 +62,7 @@ public sealed partial class StoryBench
             if (value is not null)
             {
                 value.WritingChanged += Evaluate;
+                value.Shelved += ClearCheckpoints;
             }
         }
     }

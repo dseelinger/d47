@@ -551,7 +551,10 @@ public sealed class StoryDirector(
     /// <summary>Whether the last chapter could not be written and waits for <see cref="WriteNextAsync"/>.</summary>
     public bool WriteFailed(string? frontierId) => Holds(_failed, frontierId);
 
-    /// <summary>Starts a story when none is current: sets the Backstory and writes chapter one. Returns a refusal or null.</summary>
+    /// <summary>
+    /// Starts a story when none is current: sets the Backstory and writes chapter one, or makes its shelved run active
+    /// again, paused, without writing. Returns a refusal or null.
+    /// </summary>
     public Task<string?> PickAsync(string? frontierId, string id, DateTimeOffset now, CancellationToken cancellationToken) =>
         PickAsync(frontierId, id, now, cancellationToken, null);
 
@@ -582,6 +585,12 @@ public sealed class StoryDirector(
         if (Unready(card.Id, card.Title) is { } unready)
         {
             return Task.FromResult<string?>(unready);
+        }
+
+        if (stories.Find(frontierId, card.Id) is { State: StoryState.Shelved } shelved)
+        {
+            Unshelve(frontierId, card, shelved, now);
+            return Task.FromResult<string?>(null);
         }
 
         var before = carried ?? BackstoryBeforePick();
@@ -671,7 +680,7 @@ public sealed class StoryDirector(
         return !card.Pacing.NarratedScan && BeaconsOnRecord(frontierId, card) > 0;
     }
 
-    /// <summary>Abandons the current story, moving its chapters to the archive, and picks another.</summary>
+    /// <summary>Shelves the current story and picks another, or makes the other's shelved run active again.</summary>
     public Task<string?> SwitchAsync(string? frontierId, string id, DateTimeOffset now, CancellationToken cancellationToken)
     {
         if (WithoutOdyssey(frontierId))
@@ -693,16 +702,86 @@ public sealed class StoryDirector(
                 return Task.FromResult<string?>($"{current.Title} is already your story.");
             }
 
-            if (catalog().Find(id) is { } card && Unready(card.Id, card.Title) is { } unready)
+            if (catalog().Find(id) is not { } card)
             {
-                return Task.FromResult<string?>(unready);
+                return Task.FromResult<string?>("There is no story by that name.");
+            }
+
+            if ((Unready(card.Id, card.Title) ?? ShelveRefusal(frontierId)) is { } refusal)
+            {
+                return Task.FromResult<string?>(refusal);
             }
 
             carried = current.BackstoryBefore ?? "";
-            Stop(frontierId, current, StoryState.Abandoned, now, restoreBackstory: false);
+            Shelve(frontierId, current, now);
         }
 
         return PickAsync(frontierId, id, now, cancellationToken, carried);
+    }
+
+    /// <summary>No story: shelves the current story and leaves none active. Writes files, so it never runs on the tick. Returns a refusal or null.</summary>
+    public string? ShelveCurrent(string? frontierId, DateTimeOffset now)
+    {
+        if (stories.Current(frontierId) is not { } current)
+        {
+            return "No story is running.";
+        }
+
+        if (ShelveRefusal(frontierId) is { } refusal)
+        {
+            return refusal;
+        }
+
+        Shelve(frontierId, current, now);
+        return null;
+    }
+
+    /// <summary>Raised after a story is shelved, by a switch or by <see cref="ShelveCurrent"/>.</summary>
+    public event Action? Shelved;
+
+    private string? ShelveRefusal(string? frontierId) =>
+        Switching ? Swapping
+        : IsWriting(frontierId) || IsRewriting(frontierId) ? "A chapter is being written."
+        : null;
+
+    /// <summary>
+    /// Shelves the story: drops the chapter or detour under way, leaving a marker so Resume writes that chapter again
+    /// from where the Commander is, and switches the story off.
+    /// </summary>
+    private void Shelve(string? frontierId, Story story, DateTimeOffset now)
+    {
+        var standing = WaitedOn(story) is { } key ? book.Standing(frontierId, key) : null;
+        var rewrite = story.Rewrite ?? (story.Detour is { } detour
+            ? new StoryRewrite(detour.Chapter, now, detour.Done)
+            : standing is { IsDone: false } underWay
+                ? new StoryRewrite(underWay.Adventure.Key, now, [.. underWay.Adventure.Beats.Take(underWay.Current).Select(beat => beat.Title)])
+                : null);
+
+        // Saved before the chapter is abandoned, so the tick never sees a running story with an abandoned chapter and pauses it.
+        stories.Update(frontierId, story.Id, saved => saved.PickedAt == story.PickedAt && saved.IsCurrent
+            ? saved.Shelved(now) with { Detour = null, Rewrite = rewrite }
+            : saved);
+
+        if (story.Detour is { } open)
+        {
+            book.Remove(frontierId, open.Key);
+        }
+        else if (rewrite is not null && standing is { Adventure.IsActive: true })
+        {
+            book.Abandon(frontierId, standing.Adventure.Key, now);
+        }
+
+        logger.LogInformation("{Title} is shelved", story.Title);
+        Shelved?.Invoke();
+    }
+
+    /// <summary>Makes a shelved run active again, paused, and sets the Backstory to its card's words.</summary>
+    private void Unshelve(string? frontierId, StoryCard card, Story shelved, DateTimeOffset now)
+    {
+        setBackstory(card.InYourWords);
+        stories.Update(frontierId, card.Id, saved => saved.PickedAt == shelved.PickedAt && saved.State == StoryState.Shelved ? saved.Unshelved(now) : saved);
+        logger.LogInformation("{Title} is active again", card.Title);
+        Began?.Invoke();
     }
 
     /// <summary>Ends the current story and moves its chapters to the archive.</summary>
@@ -797,6 +876,13 @@ public sealed class StoryDirector(
             stories.Save(frontierId, paused.Resumed(now));
             Began?.Invoke();
             return await WriteChapterAsync(frontierId, now, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (paused.CurrentChapter is { } doneKey && book.Standing(frontierId, doneKey) is { IsDone: true, Adventure.IsActive: true })
+        {
+            stories.Save(frontierId, paused.Resumed(now));
+            Began?.Invoke();
+            return null;
         }
 
         if (paused.CurrentChapter is { } key && book.Store.Find(frontierId, key) is not null)
@@ -3152,14 +3238,17 @@ public sealed class StoryDirector(
     private void RestoreBackstory(Story story) => setBackstory(story.BackstoryBefore ?? "");
 
     /// <summary>
-    /// Moves every story chapter in the adventure file to the archive except the current story's last two and its detour, with when
-    /// each beat fired. Writes both files, so it never runs on the tick.
+    /// Moves every story chapter in the adventure file to the archive except the last two of the current story and of each
+    /// shelved one, and the current story's detour, with when each beat fired. Writes both files, so it never runs on the tick.
     /// </summary>
     public void ArchiveChapters(string? frontierId)
     {
         var commander = frontierId ?? AdventureStore.NoCommander;
-        var current = stories.Current(frontierId);
-        var kept = current?.Chapters.TakeLast(2).Append(current.Detour?.Key).OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+        var kept = stories.For(frontierId)
+            .Where(story => story.IsCurrentOrShelved)
+            .SelectMany(story => story.Chapters.TakeLast(2).Append(story.Detour?.Key))
+            .OfType<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var moving = book.Store.For(frontierId).Where(adventure => adventure.StoryId is not null && !kept.Contains(adventure.Key)).ToList();
 
         foreach (var adventure in moving)

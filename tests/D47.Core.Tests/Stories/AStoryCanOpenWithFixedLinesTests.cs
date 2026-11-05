@@ -98,7 +98,8 @@ public sealed class AStoryCanOpenWithFixedLinesTests
         await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
         Assert.NotNull(fixtures.Director.TakeOpening("F1"));
 
-        await fixtures.Director.SwitchAsync("F1", Other.Id, Now.AddDays(1), CancellationToken.None);
+        Assert.Null(fixtures.Director.Abandon("F1", Now.AddDays(1)));
+        await fixtures.Director.PickAsync("F1", Other.Id, Now.AddDays(1), CancellationToken.None);
         Assert.Null(fixtures.Director.TakeOpening("F1"));
 
         await fixtures.Director.SwitchAsync("F1", Id, Now.AddDays(2), CancellationToken.None);
