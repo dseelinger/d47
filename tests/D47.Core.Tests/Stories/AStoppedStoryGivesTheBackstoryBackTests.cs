@@ -69,19 +69,6 @@ public sealed class AStoppedStoryGivesTheBackstoryBackTests
     }
 
     [Fact]
-    public async Task AStoryPickedBeforeTheBackstoryWasKeptRestoresEmpty()
-    {
-        using var fixtures = Fixtures();
-        fixtures.Backstory = "X";
-
-        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
-        fixtures.Stories.Update("F1", Id, story => story with { BackstoryBefore = null });
-
-        Assert.Null(fixtures.Director.Abandon("F1", Now.AddDays(1)));
-        Assert.Equal("", fixtures.Backstory);
-    }
-
-    [Fact]
     public async Task ABackstoryThatIsAStoryCardsWordsCountsAsNone()
     {
         using var fixtures = Fixtures();

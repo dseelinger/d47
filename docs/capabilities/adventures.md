@@ -466,8 +466,8 @@ Commander and is asked only by a story that needs it. The same control is on
 the page of your running story; changing it there takes effect from the story's next line.
 
 **Pick** makes the card's words your Backstory until the story stops, and has the core write
-chapter one, which then begins. D47 keeps the Backstory you had before; a Backstory that is some
-story's own words counts as none. Edits you make to the Backstory while a story runs are not kept. Act one ends when you scan the Guardian beacon nearest to you with the ship's data-link
+chapter one, which then begins. D47 keeps the Backstory you had before as your default; a Backstory that is some
+story's own words counts as none. Each story keeps the Backstory it had when you shelved it or switched it off, edits included. Act one ends when you scan the Guardian beacon nearest to you with the ship's data-link
 scanner; arriving in the beacon's system is not enough. The beacon's three pylons must be charged by laser
 or railgun fire, all within a few minutes, before the scan opens its core; the objective's hand-off says so. Before each act-one chapter D47 checks whether
 the ship you are in can reach that beacon: it can when a laser or railgun is fitted in any mount and either you own a fleet carrier or a fuel scoop is fitted. Jump range
@@ -508,8 +508,8 @@ record. Ticking it makes the next story of 1 month or longer you pick fly to its
 were on record; it never changes the story you are running. A real scan in that story clears the tick, and
 that scan is on record from then on. Unticking before you pick restores the remembered opening. Only the
 panel sets it; it is not a tool.
-**Abandon** ends the story, and so does finishing it; either puts your Backstory back to the one you
-had before your first story, or to empty. Switch passes that earlier Backstory on to the story it makes active.
+**Abandon** ends the story, and so does finishing it; either puts your Backstory back to your default, the one you
+had before your first story, or to empty. Switch saves the Backstory with the story it shelves and brings back the one saved with the story it makes active.
 Neither changes your Guardian cores. **Abandon** on the current chapter's page ends the story, as it
 does on the Catalogue; that page also has **Story on**, which pauses the story.
 
@@ -1222,7 +1222,7 @@ Clear **Story on**, on the Stories page or on the chapter's page, or say "pause 
 running stock story goes quiet until you switch it on again. While it is off no objective is said, no
 nudge or clue is owed, nothing from the story is posted to the Story log, missions get no story aside, and the
 hidden layer is left out of every prompt, so the Narrator, the core aboard and chatter do not hint at it. The clue clock stops.
-Narration and chatter work as they always do, and your Backstory, cores and persona are unchanged.
+Narration and chatter work as they always do, and your Backstory goes back to your default, with your cores and persona unchanged. Switching the story on again brings back its own Backstory.
 
 A place you visit while the story is off does not count. Its objective waits for the next visit. The
 switch is kept in `data/story.json`, so it lasts across restarts. Say "resume the story" or tick

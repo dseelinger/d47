@@ -23,6 +23,7 @@ public sealed class StoryStore
     private Dictionary<string, IReadOnlyList<Story>> _byCommander;
     private Dictionary<string, string> _voters;
     private HashSet<string> _forgotten;
+    private Dictionary<string, string> _defaults;
 
     private StoryStore(
         string? path,
@@ -30,6 +31,7 @@ public sealed class StoryStore
         Dictionary<string, IReadOnlyList<Story>> byCommander,
         Dictionary<string, string> voters,
         HashSet<string> forgotten,
+        Dictionary<string, string> defaults,
         IFileSystem files)
     {
         _path = path;
@@ -38,17 +40,18 @@ public sealed class StoryStore
         _byCommander = byCommander;
         _voters = voters;
         _forgotten = forgotten;
+        _defaults = defaults;
     }
 
     /// <summary>Held in memory only.</summary>
     public static StoryStore InMemory() =>
-        new(null, null, new(StringComparer.Ordinal), new(StringComparer.Ordinal), new(StringComparer.Ordinal), new MemoryFileSystem());
+        new(null, null, new(StringComparer.Ordinal), new(StringComparer.Ordinal), new(StringComparer.Ordinal), new(StringComparer.Ordinal), new MemoryFileSystem());
 
     public static StoryStore Open(string path, IFileSystem files, ILogger<StoryStore> logger)
     {
-        var (byCommander, voters, forgotten) = Read(path, files, logger);
+        var (byCommander, voters, forgotten, defaults) = Read(path, files, logger);
 
-        return new(path, logger, byCommander, voters, forgotten, files);
+        return new(path, logger, byCommander, voters, forgotten, defaults, files);
     }
 
     public event Action? Changed;
@@ -60,7 +63,7 @@ public sealed class StoryStore
 
         lock (_writeGate)
         {
-            var (byCommander, voters, forgotten) = Read(path, _files, _logger ?? NullLogger.Instance);
+            var (byCommander, voters, forgotten, defaults) = Read(path, _files, _logger ?? NullLogger.Instance);
 
             lock (_gate)
             {
@@ -68,6 +71,7 @@ public sealed class StoryStore
                 _byCommander = byCommander;
                 _voters = voters;
                 _forgotten = forgotten;
+                _defaults = defaults;
             }
         }
 
@@ -112,6 +116,39 @@ public sealed class StoryStore
         {
             return [.. _byCommander.Values.SelectMany(stories => stories).Where(story => story.IsCurrentOrShelved)];
         }
+    }
+
+    /// <summary>The Backstory the Commander had before their first story, or null when none is kept.</summary>
+    public string? DefaultBackstory(string? frontierId)
+    {
+        lock (_gate)
+        {
+            return _defaults.GetValueOrDefault(frontierId ?? AdventureStore.NoCommander);
+        }
+    }
+
+    public void SetDefaultBackstory(string? frontierId, string backstory)
+    {
+        ArgumentNullException.ThrowIfNull(backstory);
+
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        lock (_writeGate)
+        {
+            lock (_gate)
+            {
+                if (_defaults.TryGetValue(commander, out var existing) && existing == backstory)
+                {
+                    return;
+                }
+
+                _defaults = new Dictionary<string, string>(_defaults, StringComparer.Ordinal) { [commander] = backstory };
+            }
+
+            Write();
+        }
+
+        Changed?.Invoke();
     }
 
     /// <summary>The Commander's voter token, or null until they first rate a story.</summary>
@@ -257,7 +294,7 @@ public sealed class StoryStore
 
     /// <summary>
     /// Deletes the Commander's stories picked at or before <paramref name="at"/>, and with them the Commander's voter and
-    /// forgotten beacon, which exist only beside a story. Returns the stories deleted.
+    /// forgotten beacon, which exist only beside a story, and the default Backstory when no story is left. Returns the stories deleted.
     /// </summary>
     public IReadOnlyList<Story> RemovePickedBy(string? frontierId, DateTimeOffset at)
     {
@@ -286,6 +323,12 @@ public sealed class StoryStore
                 _voters.Remove(commander);
                 _forgotten = new HashSet<string>(_forgotten, StringComparer.Ordinal);
                 _forgotten.Remove(commander);
+
+                if (_byCommander[commander].Count == 0)
+                {
+                    _defaults = new Dictionary<string, string>(_defaults, StringComparer.Ordinal);
+                    _defaults.Remove(commander);
+                }
             }
 
             Write();
@@ -310,14 +353,16 @@ public sealed class StoryStore
                 .. _byCommander.Keys
                     .Concat(_voters.Keys)
                     .Concat(_forgotten)
+                    .Concat(_defaults.Keys)
                     .Distinct(StringComparer.Ordinal)
                     .Order(StringComparer.Ordinal)
-                    .Where(key => _byCommander.GetValueOrDefault(key)?.Count > 0 || _voters.ContainsKey(key) || _forgotten.Contains(key))
+                    .Where(key => _byCommander.GetValueOrDefault(key)?.Count > 0 || _voters.ContainsKey(key) || _forgotten.Contains(key) || _defaults.ContainsKey(key))
                     .Select(key => new CommanderRecord
                     {
                         FrontierId = key,
                         Voter = _voters.GetValueOrDefault(key),
                         BeaconForgotten = _forgotten.Contains(key),
+                        DefaultBackstory = _defaults.GetValueOrDefault(key),
                         Stories = _byCommander.GetValueOrDefault(key) ?? [],
                     }),
             ],
@@ -333,24 +378,36 @@ public sealed class StoryStore
         }
     }
 
-    private static (Dictionary<string, IReadOnlyList<Story>> Stories, Dictionary<string, string> Voters, HashSet<string> Forgotten) Read(string path, IFileSystem files, ILogger logger)
+    private static (Dictionary<string, IReadOnlyList<Story>> Stories, Dictionary<string, string> Voters, HashSet<string> Forgotten, Dictionary<string, string> Defaults) Read(string path, IFileSystem files, ILogger logger)
     {
         var loaded = new Dictionary<string, IReadOnlyList<Story>>(StringComparer.Ordinal);
         var voters = new Dictionary<string, string>(StringComparer.Ordinal);
         var forgotten = new HashSet<string>(StringComparer.Ordinal);
+        var defaults = new Dictionary<string, string>(StringComparer.Ordinal);
 
         try
         {
             if (files.ReadText(path) is not { } text)
             {
-                return (loaded, voters, forgotten);
+                return (loaded, voters, forgotten, defaults);
             }
 
             foreach (var commander in JsonSerializer.Deserialize<Document>(text, Json)?.Commanders ?? [])
             {
                 var key = commander.FrontierId ?? AdventureStore.NoCommander;
 
-                loaded[key] = commander.Stories ?? [];
+                var stories = commander.Stories ?? [];
+
+                if (commander.DefaultBackstory is { } kept)
+                {
+                    defaults[key] = kept;
+                }
+                else if (stories.Where(story => story.BackstoryBefore is not null).OrderByDescending(story => story.IsCurrent).ThenByDescending(story => story.PickedAt).FirstOrDefault() is { } older)
+                {
+                    defaults[key] = older.BackstoryBefore!;
+                }
+
+                loaded[key] = [.. stories.Select(story => story.BackstoryBefore is null ? story : story with { BackstoryBefore = null })];
 
                 if (DonorToken.IsWellFormed(commander.Voter))
                 {
@@ -368,7 +425,7 @@ public sealed class StoryStore
             logger.LogError(ex, "Could not read {Path}; no story is running", path);
         }
 
-        return (loaded, voters, forgotten);
+        return (loaded, voters, forgotten, defaults);
     }
 
     private sealed class Document
@@ -384,6 +441,8 @@ public sealed class StoryStore
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool BeaconForgotten { get; set; }
+
+        public string? DefaultBackstory { get; set; }
 
         public IReadOnlyList<Story>? Stories { get; set; }
     }

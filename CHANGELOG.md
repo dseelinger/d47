@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Each story now keeps its own Backstory. Shelving a story or switching it off saves the Backstory it had, edits included, and No story or switching the story off brings back your default, the one you had before your first story. Switching or picking the story again, or switching it on, brings its Backstory back. Abandoning or finishing a story still puts your default back, and erasing pilot data removes the default and the saved Backstories with the stories.
+
 Switching to another story now shelves the one you had instead of abandoning it. A shelved story's chapter under way is dropped, and the story waits switched off: no objectives, nudges or clues, no Guardian cores held back, and its days do not count. Its messages and its last two chapters are kept, and any number of stories can be shelved. Picking or switching back to a shelved story brings that same run back, paused, and **Resume** writes its chapter again from where you are. The Switch confirmation says so. **Abandon** still ends a story.
 
 Each time a stock story is picked, its lines and their spoken clips are now also kept in that run's own folder under `data\story-runs\`, with the clips compressed. This record has no 200-message limit, so a line that leaves the Story log is still kept there. Deleting your recording or a custom voice deletes the clips spoken in it there too, and erasing your pilot data deletes the records of the stories it removes. At start, a stock story run picked before this existed, and so with no record, gets one filled once from the lines already in your messages, clips included; Short Story lines are not copied and your messages are not changed.

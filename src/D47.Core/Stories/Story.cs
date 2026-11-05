@@ -78,7 +78,10 @@ public sealed record Story
     /// <summary>The beacon scans carried over at the pick from the Commander's earlier stories, in no system; 0 when the story flies to its own beacon.</summary>
     public int BeaconsRemembered { get; init; }
 
-    /// <summary>The Commander's Backstory before the first story of the chain was picked, restored when the chain stops; null in a story saved without it, which restores empty.</summary>
+    /// <summary>The Backstory in force when the story was shelved or switched off; null until then, when the card's words apply.</summary>
+    public string? Backstory { get; init; }
+
+    /// <summary>Read from older files only: the Commander's default Backstory, which <see cref="StoryStore"/> moves to the Commander on load.</summary>
     public string? BackstoryBefore { get; init; }
 
     /// <summary>When it was abandoned, ended or finished.</summary>

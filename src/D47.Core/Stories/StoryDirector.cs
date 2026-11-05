@@ -556,9 +556,9 @@ public sealed class StoryDirector(
     /// again, paused, without writing. Returns a refusal or null.
     /// </summary>
     public Task<string?> PickAsync(string? frontierId, string id, DateTimeOffset now, CancellationToken cancellationToken) =>
-        PickAsync(frontierId, id, now, cancellationToken, null);
+        PickAsync(frontierId, id, now, cancellationToken, false);
 
-    private Task<string?> PickAsync(string? frontierId, string id, DateTimeOffset now, CancellationToken cancellationToken, string? carried)
+    private Task<string?> PickAsync(string? frontierId, string id, DateTimeOffset now, CancellationToken cancellationToken, bool switching)
     {
         if (catalog().Find(id) is not { } card)
         {
@@ -593,7 +593,11 @@ public sealed class StoryDirector(
             return Task.FromResult<string?>(null);
         }
 
-        var before = carried ?? BackstoryBeforePick();
+        if (!switching)
+        {
+            stories.SetDefaultBackstory(frontierId, BackstoryBeforePick());
+        }
+
         setBackstory(card.InYourWords);
 
         var narrated = card.Pacing.NarratedScan;
@@ -608,7 +612,6 @@ public sealed class StoryDirector(
             BeaconScanAt = narrated || remembered > 0 ? now : null,
             BeaconNarrated = narrated,
             BeaconsRemembered = remembered,
-            BackstoryBefore = before,
             GoalsAtPick = card.Goals ? GoalClimb.Overall(GoalClimb.Listed(Goals(), card.GoalArcs)) : null,
         };
 
@@ -693,7 +696,7 @@ public sealed class StoryDirector(
             return Task.FromResult<string?>(NeedsGender);
         }
 
-        string? carried = null;
+        var switching = false;
 
         if (stories.Current(frontierId) is { } current)
         {
@@ -712,11 +715,11 @@ public sealed class StoryDirector(
                 return Task.FromResult<string?>(refusal);
             }
 
-            carried = current.BackstoryBefore ?? "";
+            switching = true;
             Shelve(frontierId, current, now);
         }
 
-        return PickAsync(frontierId, id, now, cancellationToken, carried);
+        return PickAsync(frontierId, id, now, cancellationToken, switching);
     }
 
     /// <summary>No story: shelves the current story and leaves none active. Writes files, so it never runs on the tick. Returns a refusal or null.</summary>
@@ -733,6 +736,7 @@ public sealed class StoryDirector(
         }
 
         Shelve(frontierId, current, now);
+        RestoreBackstory(frontierId);
         return null;
     }
 
@@ -759,7 +763,7 @@ public sealed class StoryDirector(
 
         // Saved before the chapter is abandoned, so the tick never sees a running story with an abandoned chapter and pauses it.
         stories.Update(frontierId, story.Id, saved => saved.PickedAt == story.PickedAt && saved.IsCurrent
-            ? saved.Shelved(now) with { Detour = null, Rewrite = rewrite }
+            ? saved.Shelved(now) with { Detour = null, Rewrite = rewrite, Backstory = saved.IsOff ? saved.Backstory : Backstory() }
             : saved);
 
         if (story.Detour is { } open)
@@ -775,10 +779,10 @@ public sealed class StoryDirector(
         Shelved?.Invoke();
     }
 
-    /// <summary>Makes a shelved run active again, paused, and sets the Backstory to its card's words.</summary>
+    /// <summary>Makes a shelved run active again, paused, and brings back the Backstory saved with it, or its card's words.</summary>
     private void Unshelve(string? frontierId, StoryCard card, Story shelved, DateTimeOffset now)
     {
-        setBackstory(card.InYourWords);
+        setBackstory(shelved.Backstory ?? card.InYourWords);
         stories.Update(frontierId, card.Id, saved => saved.PickedAt == shelved.PickedAt && saved.State == StoryState.Shelved ? saved.Unshelved(now) : saved);
         logger.LogInformation("{Title} is active again", card.Title);
         Began?.Invoke();
@@ -806,6 +810,7 @@ public sealed class StoryDirector(
     {
         ArgumentNullException.ThrowIfNull(frontierId);
 
+        var defaultBackstory = stories.DefaultBackstory(frontierId);
         var stopped = stories.RemovePickedBy(frontierId, erasedAt);
         var kept = stories.For(frontierId);
 
@@ -826,7 +831,7 @@ public sealed class StoryDirector(
             && catalog().Find(current.Id) is { } card
             && string.Equals(Backstory(), card.InYourWords, StringComparison.Ordinal))
         {
-            RestoreBackstory(current);
+            setBackstory(defaultBackstory ?? "");
         }
 
         if (stopped.Count + adventures + chapters > 0)
@@ -2657,7 +2662,7 @@ public sealed class StoryDirector(
 
             return Task.Run(() =>
             {
-                RestoreBackstory(story);
+                RestoreBackstory(frontierId);
                 ArchiveChapters(frontierId);
                 return (string?)null;
             });
@@ -2932,8 +2937,19 @@ public sealed class StoryDirector(
             return "No story is running.";
         }
 
-        stories.Update(frontierId, current.Id, story => on ? story.SwitchedOn(now) : story.SwitchedOff(now));
+        if (on && current.IsOff)
+        {
+            stories.SetDefaultBackstory(frontierId, BackstoryBeforePick());
+            setBackstory(current.Backstory ?? catalog().Find(current.Id)?.InYourWords ?? "");
+        }
+
+        stories.Update(frontierId, current.Id, story => on ? story.SwitchedOn(now) : story.IsOff ? story : story.SwitchedOff(now) with { Backstory = Backstory() });
         logger.LogInformation("{Title} is switched {State}", current.Title, on ? "on" : "off");
+
+        if (!on && !current.IsOff)
+        {
+            RestoreBackstory(frontierId);
+        }
 
         if (on)
         {
@@ -3218,7 +3234,7 @@ public sealed class StoryDirector(
 
         if (restoreBackstory)
         {
-            RestoreBackstory(story);
+            RestoreBackstory(frontierId);
         }
 
         ArchiveChapters(frontierId);
@@ -3235,7 +3251,7 @@ public sealed class StoryDirector(
             : current;
     }
 
-    private void RestoreBackstory(Story story) => setBackstory(story.BackstoryBefore ?? "");
+    private void RestoreBackstory(string? frontierId) => setBackstory(stories.DefaultBackstory(frontierId) ?? "");
 
     /// <summary>
     /// Moves every story chapter in the adventure file to the archive except the last two of the current story and of each

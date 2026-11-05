@@ -25,7 +25,6 @@ public sealed class ErasedPilotDataDeletesStoriesAndAdventuresTests
         State = state,
         PickedAt = at,
         Chapters = chapters,
-        BackstoryBefore = "My own words.",
     };
 
     private static Adventure Chapter(string key, string? storyId, DateTimeOffset accepted) =>
@@ -39,6 +38,7 @@ public sealed class ErasedPilotDataDeletesStoriesAndAdventuresTests
         fixtures.Stories.Save(frontierId, Picked(Card.Id, StoryState.Finished, Erased.AddDays(-20), "old-chapter") with { StoppedAt = Erased.AddDays(-10) });
         fixtures.Stories.Save(frontierId, Picked(Other.Id, StoryState.Running, Erased.AddDays(-5), "running-chapter", "late-chapter"));
         fixtures.Stories.Save(frontierId, Picked(Later, StoryState.Finished, Erased.AddHours(1), "later-chapter") with { StoppedAt = Erased.AddHours(3) });
+        fixtures.Stories.SetDefaultBackstory(frontierId, "My own words.");
         fixtures.Stories.EnsureVoter(frontierId);
         fixtures.Stories.SetBeaconForgotten(frontierId, true);
 

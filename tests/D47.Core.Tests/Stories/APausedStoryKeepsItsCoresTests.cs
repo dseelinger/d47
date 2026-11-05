@@ -4,12 +4,12 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Stories;
 
-/// <summary>Switching the story off changes nothing the Commander keeps: the Backstory, the chapters and the story's place.</summary>
+/// <summary>Switching the story off keeps the chapters and the story's place, and swaps the story's Backstory for the default.</summary>
 [Trait("Category", "Integration")]
 public sealed class APausedStoryKeepsItsCoresTests
 {
     [Fact]
-    public void TheBackstoryAndTheChaptersAreUntouched()
+    public void TheChaptersAreUntouchedAndTheBackstoryFollowsTheSwitch()
     {
         using var fixtures = PauseSupport.Picked(out var chapter);
         var before = fixtures.Stories.Current("F1")!;
@@ -17,7 +17,7 @@ public sealed class APausedStoryKeepsItsCoresTests
         fixtures.Director.SetOn("F1", false, Now);
         var off = fixtures.Stories.Current("F1")!;
 
-        Assert.Equal(Card.InYourWords, fixtures.Backstory);
+        Assert.Equal("", fixtures.Backstory);
         Assert.Equal(StoryState.Running, off.State);
         Assert.Equal(before.Chapters, off.Chapters);
         Assert.Equal(before.PickedAt, off.PickedAt);
