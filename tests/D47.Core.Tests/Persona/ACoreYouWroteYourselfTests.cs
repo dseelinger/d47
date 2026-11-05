@@ -70,6 +70,14 @@ public class ACoreYouWroteYourselfTests : IDisposable
         Assert.Contains("you like mining", block, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void ItIsToldToSpeakOfItselfAsI()
+    {
+        var block = Written("Rusty").AsPersona().RenderBlock();
+
+        Assert.Contains("You speak of yourself as \"I\", never by your own name", block, StringComparison.Ordinal);
+    }
+
     /// <summary>
     /// An empty tool result answers its own question, not whatever else the Commander asked
     /// (#104) — restated here because a core that writes its own body still gets it.

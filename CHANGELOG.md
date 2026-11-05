@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Your ship's AI now speaks of itself as "I". Before, a core such as Sentinel could say its own name as if it were someone else ("Sentinel would have counted them") or write it in a delivery note. Sentinel also now knows its name is not the Guardian Sentinels you meet at Guardian sites.
+
 A mission station search for the reboot and restore power missions now looks for stations whose factions are in one of the ten states those missions require, and the mission type answer says they are only offered there. Before, the search had no state filter for them.
 
 The headset panel no longer flickers when it redraws, such as while you scroll it with a motion controller, while d47 is composing or while a chapter is written. Before, each redraw could flash.

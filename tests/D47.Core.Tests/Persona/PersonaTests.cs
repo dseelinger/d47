@@ -31,6 +31,23 @@ public class PersonaCatalogTests
     }
 
     [Fact]
+    public void EveryCoreIsToldToSpeakOfItselfAsI()
+    {
+        foreach (var persona in PersonaCatalog.Stocked)
+        {
+            Assert.Contains(SelfReference, persona.RenderBlock(), StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void SentinelIsToldItsNameIsNotAKindOfUnit()
+    {
+        Assert.Contains("your own name, not a kind of unit", PersonaCatalog.Sentinel.Body, StringComparison.Ordinal);
+    }
+
+    private const string SelfReference = "You speak of yourself as \"I\", never by your own name";
+
+    [Fact]
     public void EveryCoreCarriesEverythingItIsAskedFor()
     {
         // A core with an empty intro is a core that says nothing when you pick it, which reads as a core that
