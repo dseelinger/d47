@@ -64,6 +64,9 @@ public sealed class TheHeadsetMiniPanelRedrawsAsAChapterIsWrittenTests
         Assert.NotEqual(before, ClockText(panel));
         Assert.False(panel.TickAdventures());
 
+        clock.Advance(TimeSpan.FromMilliseconds(300));
+        Assert.False(panel.TickAdventures());
+
         gate.SetResult();
         task.GetAwaiter().GetResult();
         window.Close();
