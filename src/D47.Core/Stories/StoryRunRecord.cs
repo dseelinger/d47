@@ -357,6 +357,26 @@ public sealed class StoryRunRecord(
     public void ForgetCustomVoice(string voiceId) =>
         Forget(line => string.Equals(line.Voice?.Id, voiceId, StringComparison.Ordinal));
 
+    /// <summary>The bytes of the clips this run's folder holds.</summary>
+    public long ClipBytes(string? frontierId, Story run)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        lock (_gate)
+        {
+            try
+            {
+                return files.Enumerate(RunFolder(frontierId, run), "*")
+                    .Where(path => !string.Equals(Path.GetFileName(path), LinesFile, StringComparison.OrdinalIgnoreCase))
+                    .Sum(path => files.Stat(path)?.Length ?? 0);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                return 0;
+            }
+        }
+    }
+
     /// <summary>Deletes the run's folder with its lines and clips.</summary>
     public void Delete(string? frontierId, Story run)
     {

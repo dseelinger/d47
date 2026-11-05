@@ -178,7 +178,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         if (crumb.Key.StartsWith(StoryRunPage.Prefix, StringComparison.Ordinal) && _surface.Stories is { } runs)
         {
             return StoryRunPage.Find(runs, _surface.Commander(), crumb.Key) is { } run
-                ? new StoryRunPage(_surface, runs, _entries, run, _headset)
+                ? new StoryRunPage(_surface, runs, _entries, run, _headset, _prompts, _nav)
                 : Muted(StoryRunPage.GoneText);
         }
 

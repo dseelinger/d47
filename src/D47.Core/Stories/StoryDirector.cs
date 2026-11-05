@@ -800,6 +800,57 @@ public sealed class StoryDirector(
         return null;
     }
 
+    /// <summary>The refusal for deleting the active run.</summary>
+    public const string ActiveRunRefusal = "The active story's run cannot be deleted.";
+
+    /// <summary>The refusal for deleting a shelved run.</summary>
+    public const string ShelvedRunRefusal = "A shelved story can come back, so its run cannot be deleted. Abandon it first.";
+
+    /// <summary>
+    /// Deletes a finished or stopped run: its record in the story file, its folder of lines and clips, and its archived chapters.
+    /// Refuses the active run and a shelved one. Writes files, so it never runs on the tick. Returns a refusal or null.
+    /// </summary>
+    public string? DeleteRun(string? frontierId, Story run)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        if (stories.For(frontierId).FirstOrDefault(saved => saved.Id == run.Id && saved.PickedAt == run.PickedAt) is not { } saved)
+        {
+            return "That story run is no longer on file.";
+        }
+
+        if (saved.IsCurrent)
+        {
+            return ActiveRunRefusal;
+        }
+
+        if (saved.State == StoryState.Shelved)
+        {
+            return ShelvedRunRefusal;
+        }
+
+        stories.Remove(frontierId, saved);
+        Records?.Delete(frontierId, saved);
+        Archive.RemoveWhere(frontierId, chapter => chapter.Of(saved));
+        book.Store.RemoveWhere(frontierId, adventure => saved.Chapters.Contains(adventure.Key, StringComparer.OrdinalIgnoreCase));
+        logger.LogInformation("Deleted the run of {Title} picked {PickedAt}", saved.Title, saved.PickedAt);
+        return null;
+    }
+
+    /// <summary>Ends a shelved run. Writes files, so it never runs on the tick. Returns a refusal or null.</summary>
+    public string? AbandonShelved(string? frontierId, Story run, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        if (stories.For(frontierId).FirstOrDefault(saved => saved.Id == run.Id && saved.PickedAt == run.PickedAt) is not { State: StoryState.Shelved } shelved)
+        {
+            return "That story run is not shelved.";
+        }
+
+        Stop(frontierId, shelved, StoryState.Abandoned, now, restoreBackstory: false);
+        return null;
+    }
+
     /// <summary>
     /// Deletes what the Commander had before erasing their pilot data at <paramref name="erasedAt"/>: stories picked at or
     /// before it, their chapters filed and archived, and adventures accepted or written at or before it. An archived

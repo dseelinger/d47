@@ -295,6 +295,37 @@ public sealed class StoryStore
         Changed?.Invoke();
     }
 
+    /// <summary>Removes the run with this id and <see cref="Story.PickedAt"/>, and with it that run's local rating vote. Returns whether it was there.</summary>
+    public bool Remove(string? frontierId, Story run)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        lock (_writeGate)
+        {
+            var existing = For(commander);
+
+            if (!existing.Any(other => SameRun(other, run)))
+            {
+                return false;
+            }
+
+            lock (_gate)
+            {
+                _byCommander = new Dictionary<string, IReadOnlyList<Story>>(_byCommander, StringComparer.Ordinal)
+                {
+                    [commander] = [.. existing.Where(other => !SameRun(other, run))],
+                };
+            }
+
+            Write();
+        }
+
+        Changed?.Invoke();
+        return true;
+    }
+
     /// <summary>
     /// Deletes the Commander's stories picked at or before <paramref name="at"/>, and with them the Commander's voter and
     /// forgotten beacon, which exist only beside a story, and the default Backstory when no story is left. Returns the stories deleted.

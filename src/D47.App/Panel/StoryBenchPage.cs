@@ -375,9 +375,20 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         else
         {
             end.Children.Add(open);
+            end.Children.Add(DeleteTile(run, busy));
         }
 
         return Line(cells, end, active);
+    }
+
+    private Button DeleteTile(Story run, bool busy)
+    {
+        var delete = Tile("DeleteRun", StoryRunDeletion.DeleteLabel, BeatButtonWidth, !busy);
+        delete.Classes.Add(Settings.SettingsView.DestructiveClass);
+        delete.Click += (_, _) => StoryRunDeletion.Ask(
+            _prompts, _director, _surface.Commander, _surface.Now, run,
+            (doing, work, done) => Act(doing, () => Task.FromResult(work()), done));
+        return delete;
     }
 
     private Border NoStoryRow(string? commander, bool busy)

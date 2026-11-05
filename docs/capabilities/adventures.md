@@ -465,6 +465,13 @@ is shown for reading instead: half a second a word, at least four seconds, and t
 reads **Shown for reading · 25 of 142** with a countdown, and a **No voice for this line** notice says why, with the
 provider's error. Pause and Skip work as for a spoken line; Play after a pause shows the line again from the start of its time.
 
+**Delete** is on every Finished and Stopped row and on the page of every run but the active one. It asks first:
+**Delete this run of** the story's title, with the run's line count and **Clips on disk**. **Delete run** removes the run
+from the story file, its folder of lines and clips, its archived chapters and its local rating vote; a vote already
+sent is not withdrawn. The story stays in the Catalogue, and picking it again starts a new run. The active run cannot be
+deleted. **Delete** on a shelved run's page opens **Abandon it first**, because a shelved story can come back; **Abandon**
+there abandons the run, and it can be deleted afterwards. Deletion cannot be undone.
+
 With no runs the page says so and offers **Open the Catalogue**. Started with `D47_STORY_BENCH=1`, the Jump,
 Beats and Checkpoints sections for testing the active story follow the list; without it they are absent.
 

@@ -87,9 +87,16 @@ public sealed class StoryRunPage : UserControl, IPageSummary
     private TextBlock? _countdown;
     private StoryRunEntry? _marked;
     private Button? _playAll;
+    private readonly PanelPrompts? _prompts;
+    private readonly PanelNavigator? _nav;
+    private bool _deleting;
 
-    internal StoryRunPage(AdventureSurface surface, StoryDirector director, ToldEntries entries, Story run, bool headset)
+    internal StoryRunPage(
+        AdventureSurface surface, StoryDirector director, ToldEntries entries, Story run, bool headset,
+        PanelPrompts? prompts = null, PanelNavigator? nav = null)
     {
+        _prompts = prompts;
+        _nav = nav;
         _surface = surface;
         _director = director;
         _entries = entries;
@@ -254,6 +261,11 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         _top.Children.Add(_status);
         _top.Children.Add(Strip(run, lines));
 
+        if (_prompts is not null && StoryRunDeletion.Offers(run))
+        {
+            _top.Children.Add(DeleteRow(run));
+        }
+
         if (lines.Count == 0)
         {
             _sections = [];
@@ -309,6 +321,60 @@ public sealed class StoryRunPage : UserControl, IPageSummary
                 StatTile.Build("Picked · last line", $"{StoryBenchPage.Day(run.PickedAt)} · {last}", StatInk.Number),
             ],
             maxColumns: 5);
+    }
+
+    private Button DeleteRow(Story run)
+    {
+        var delete = new Button
+        {
+            Name = "DeleteThisRun",
+            Content = StoryRunDeletion.DeleteLabel,
+            Width = 140,
+            MinHeight = TypeScale.MinimumTarget,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            IsEnabled = !_deleting,
+        };
+        delete.Classes.Add(Settings.SettingsView.DestructiveClass);
+        delete.Click += (_, _) => StoryRunDeletion.Ask(_prompts!, _director, _surface.Commander, _surface.Now, run, Act);
+        return delete;
+    }
+
+    private void Act(string doing, Func<string?> work, string done)
+    {
+        if (_deleting)
+        {
+            return;
+        }
+
+        _deleting = true;
+        _status.Say(doing);
+
+        _ = Task.Run(() =>
+        {
+            var refusal = work();
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                _deleting = false;
+
+                if (refusal is not null)
+                {
+                    _status.Fail(refusal);
+                }
+                else
+                {
+                    _status.Say(done);
+                }
+
+                _drawn = null;
+                Rebuild();
+
+                if (refusal is null && _run is null)
+                {
+                    _nav?.Back();
+                }
+            });
+        });
     }
 
     // ---- Jump to ---------------------------------------------------------------------------
