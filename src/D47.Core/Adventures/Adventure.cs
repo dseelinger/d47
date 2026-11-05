@@ -1,4 +1,5 @@
 using System.Globalization;
+using D47.Core.Knowledge;
 using D47.Core.Persona;
 
 namespace D47.Core.Adventures;
@@ -248,6 +249,9 @@ public sealed record AdventureTrigger
     public long? MarketId { get; init; }
 
     public int? BodyId { get; init; }
+
+    /// <summary>The largest pad a <see cref="TriggerKind.Dock"/> station is known to have; null where no pad count is known.</summary>
+    public PadSize? LargestPad { get; init; }
 
     /// <summary>One of <see cref="Journal.RankState.Careers"/>, in the journal's own spelling.</summary>
     public string? Career { get; init; }

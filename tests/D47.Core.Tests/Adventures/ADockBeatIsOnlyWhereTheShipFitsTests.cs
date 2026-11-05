@@ -36,6 +36,22 @@ public sealed class ADockBeatIsOnlyWhereTheShipFitsTests
     }
 
     [Fact]
+    public async Task AResolvedDockTriggerCarriesTheStationsLargestPad()
+    {
+        var resolution = await ResolveAsync(new StationSummary { Name = "Pebble Dock", SystemName = "Dyson's Hollow", MarketId = 1, Type = "Outpost", SmallPads = 4, MediumPads = 2, LargePads = 0 }, PadSize.Small);
+
+        Assert.Equal(PadSize.Medium, resolution.Trigger!.LargestPad);
+    }
+
+    [Fact]
+    public async Task AResolvedDockTriggerWithNoPadCountCarriesNoLargestPad()
+    {
+        var resolution = await ResolveAsync(new StationSummary { Name = "Mystery Port", SystemName = "Dyson's Hollow", MarketId = 3, Type = "Coriolis Starport" }, PadSize.Large);
+
+        Assert.Null(resolution.Trigger!.LargestPad);
+    }
+
+    [Fact]
     public void AStationListsTheSizesItHas()
     {
         var station = new StationSummary { Name = "Pebble Dock", SystemName = "Dyson's Hollow", SmallPads = 2, MediumPads = 0, LargePads = 1 };

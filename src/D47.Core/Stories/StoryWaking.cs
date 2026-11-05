@@ -46,6 +46,9 @@ public sealed class StoryWaking(
             _ = storyDirector.DockOffline(journalEvent, inGame);
         }
 
+        // A dock objective the ship aboard cannot use is said once per ship.
+        storyDirector.WarnPadMismatch(inGame, gameState.InGame?.Ship.Type);
+
         if (storyDirector.TakeSteppedWaking(commander) is { } stepped)
         {
             var chapter = storyStore.Current(commander)?.CurrentChapter;

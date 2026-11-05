@@ -1617,6 +1617,49 @@ public sealed class StoryDirector(
         });
     }
 
+    private readonly HashSet<(string Key, int Step, string Hull)> _padWarned = [];
+
+    /// <summary>
+    /// Says once per adventure, step and hull when the ship aboard cannot use a pad at the station of a current dock
+    /// objective, for the running chapter and each active short story. Reads stored state only; does not block.
+    /// </summary>
+    public void WarnPadMismatch(string? frontierId, string? hull)
+    {
+        if (EliteSpecifications.Ship(hull) is not { Pad: { } pad } ship
+            || !Enum.TryParse<PadSize>(pad, ignoreCase: true, out var needed))
+        {
+            return;
+        }
+
+        var chapter = Stories.Current(frontierId) is { State: StoryState.Running, CurrentChapter: { } chapterKey }
+            ? chapterKey
+            : null;
+
+        foreach (var standing in book.Active(frontierId))
+        {
+            if (standing is not { IsDone: false, CurrentTrigger: { Kind: TriggerKind.Dock, LargestPad: { } largest } trigger }
+                || largest >= needed)
+            {
+                continue;
+            }
+
+            var isChapter = standing.Adventure.Key == chapter;
+
+            if ((!isChapter && standing.Adventure.StoryId is not null)
+                || !_padWarned.Add((standing.Adventure.Key, standing.CurrentStep, ship.Symbol)))
+            {
+                continue;
+            }
+
+            var ending = isChapter
+                ? "say \"never ask this\" for a different objective."
+                : "use Never ask this on its page.";
+
+            Says?.Invoke(
+                $"{trigger.Station ?? "That station"} has {largest.ToString().ToLowerInvariant()} pads at most, and your {ship.Name} needs a {needed.ToString().ToLowerInvariant()} one. Swap to a ship that fits, or {ending}");
+        }
+    }
+
     /// <summary>Says the hand-off of the beat that replaced the one at <paramref name="key"/>, or why none could be written.</summary>
     private async Task<string?> HandOffAfter(string? frontierId, string key, Task<string?> rewrite)
     {

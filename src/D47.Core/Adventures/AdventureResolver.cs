@@ -248,6 +248,7 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
                         SystemAddress = found.Address,
                         System = found.Name,
                         Station = match.Name,
+                        LargestPad = match.KnownPads.Count > 0 ? match.KnownPads[^1] : null,
                     });
                 }
 

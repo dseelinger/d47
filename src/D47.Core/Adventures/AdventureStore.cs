@@ -525,6 +525,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         SystemAddress = record.SystemAddress,
         MarketId = record.MarketId,
         BodyId = record.BodyId,
+        LargestPad = Enum.TryParse<PadSize>(record.LargestPad, ignoreCase: true, out var pad) ? pad : null,
         Career = Careers.Match(record.Career) ?? record.Career?.Trim(),
         Rank = record.Rank,
         ShipType = EliteSpecifications.HullSymbol(record.ShipType) ?? record.ShipType?.Trim(),
@@ -556,6 +557,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         SystemAddress = trigger.SystemAddress,
         MarketId = trigger.MarketId,
         BodyId = trigger.BodyId,
+        LargestPad = trigger.LargestPad?.ToString().ToLowerInvariant(),
         Career = trigger.Career,
         Rank = trigger.Rank,
         ShipType = trigger.ShipType,
@@ -848,6 +850,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public long? MarketId { get; set; }
 
         public int? BodyId { get; set; }
+
+        public string? LargestPad { get; set; }
 
         public string? Career { get; set; }
 

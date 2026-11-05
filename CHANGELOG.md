@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+d47 now says so when the ship you are in cannot dock at the station of the current dock objective, in a story chapter or a short story. Before, you learned it from the station's refusal after the flight. The line names the station, its largest pad and your ship, and the objective stays in place.
+
 A dock objective in a story chapter now checks the station's pads against the ship you will be flying at that point: the ship named by an earlier board objective in the chapter, otherwise the ship you are in. Before, it needed only the smallest pad in your fleet, so a chapter could send a Cutter pilot to a small-pad outpost.
 
 The New Community Goal watch now recognises GalNet articles that say pilots can "sign up at" a station, or that a faction is "recruiting" pilots. Before, it missed launches worded that way.

@@ -915,6 +915,8 @@ fails, the draw is not gated. A redrawn slot after **Never ask this** follows th
 
 A dock objective's station must have a pad for the ship the Commander will be flying at that point in the chapter: the ship named by the latest earlier board objective in the same draft, otherwise the ship aboard when the chapter is written. The list of candidate stations is filtered on the ship aboard.
 
+On each adventures tick, when the current dock objective of the running chapter or of an active short story names a station whose largest pad is smaller than the pad the ship aboard needs, d47 says so once per objective step and ship: the station, its largest pad, the ship, and what to do (say "never ask this" for a chapter, or use Never ask this on the short story's page). The objective is not rewritten. A dock objective saved before this check has no recorded pad and is never warned about.
+
 The Frontline Solutions gate is checked beside it. `StoryDirector` asks the galaxy search for fixed stations within the same
 reach that list Frontline Solutions, and counts one that needs no permit, has a pad for the ship aboard and is in a system the
 galaxy search or the Commander's own reading puts at war or civil war. It is not skipped when the
