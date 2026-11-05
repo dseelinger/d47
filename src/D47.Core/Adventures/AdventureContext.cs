@@ -129,6 +129,7 @@ public static class AdventureContext
         var how = step.Trigger.Kind switch
         {
             TriggerKind.Rescue => $" {step.Trigger.RescueHowTo()}",
+            TriggerKind.Bond => $" {AdventureTrigger.BondWhere}",
             TriggerKind.Mission or TriggerKind.MissionTaken when MissionHowTo.For(step.Trigger.MissionFamily) is { } line => $" {line}{(MissionHowTo.StatesLine(step.Trigger.MissionFamily) is { } states ? " " + states : string.Empty)}",
             _ => string.Empty,
         };

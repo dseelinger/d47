@@ -646,9 +646,13 @@ public sealed record AdventureTrigger
         TriggerKind.Mission or TriggerKind.MissionTaken => WithHowTo(IsCounted
             ? $"Next: {Describe()}, counted from now. {Progress(0)}."
             : $"Next: {Describe()}."),
+        TriggerKind.Bond => $"Next: {Describe()}, counted from now. {Progress(0)}. {BondWhere}",
         _ when IsCounted => $"Next: {Describe()}, counted from now. {Progress(0)}.",
         _ => $"Next: {Describe()}.",
     };
+
+    /// <summary>Where a space kill bond is earned.</summary>
+    public const string BondWhere = "Kill bonds are earned in a conflict zone, in a system at war or in civil war.";
 
     private string WithHowTo(string next) => MissionHowTo.For(MissionFamily) is { } line
         ? $"{next} {line}{(MissionHowTo.StatesLine(MissionFamily) is { } states ? " " + states : string.Empty)}"

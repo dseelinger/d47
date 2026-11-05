@@ -2255,7 +2255,8 @@ public sealed class StoryDirector(
                 ChapterDraw.Seed(story.Id, number, rewrite.From),
                 stationsInReach: await StationsInReachAsync(game, cancellationToken).ConfigureAwait(false),
                 frontlineInReach: await FrontlineInReachAsync(game, cancellationToken).ConfigureAwait(false),
-                stateFamiliesInReach: await StateFamiliesInReachAsync(game, cancellationToken).ConfigureAwait(false));
+                stateFamiliesInReach: await StateFamiliesInReachAsync(game, cancellationToken).ConfigureAwait(false),
+                warInReach: await WarInReachAsync(game, cancellationToken).ConfigureAwait(false));
 
             others.AddRange(redrawn.Take(1));
         }
@@ -2333,6 +2334,42 @@ public sealed class StoryDirector(
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogWarning(ex, "The galaxy search could not list the Frontline Solutions stations within reach of a story chapter, so on-foot kill bonds are not drawn");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Whether a system at war or in civil war lies within the chapter's reach.
+    /// False when it cannot be told: no galaxy search, no known position, or the query failed.
+    /// </summary>
+    private async Task<bool> WarInReachAsync(CommanderGameState? game, CancellationToken cancellationToken)
+    {
+        if (Galaxy?.Invoke() is not { } search || game?.Location.StarSystem is not { Length: > 0 } system)
+        {
+            return false;
+        }
+
+        var radius = AdventureGenerator.Radius(AdventureReach.Session, game.Ship.MaxJumpRange, game.Carrier.Owned);
+        var requested = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["distance"] = $"0-{radius.ToString("0", System.Globalization.CultureInfo.InvariantCulture)}",
+            ["faction_state"] = "War,Civil War",
+        };
+
+        if (!GalaxyQuery.TryParse(system, requested, 20, out var query, out _))
+        {
+            return false;
+        }
+
+        try
+        {
+            var found = await search.SearchAsync(query, cancellationToken).ConfigureAwait(false);
+
+            return found.Systems.Any(candidate => candidate.AtWar);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "The galaxy search could not list the systems at war within reach of a story chapter, so space kill bonds are not drawn");
             return false;
         }
     }
@@ -3158,6 +3195,9 @@ public sealed class StoryDirector(
             var stateFamiliesInReach = stories.Current(frontierId) is { BeaconScanAt: not null }
                 ? await StateFamiliesInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
                 : null;
+            var warInReach = stories.Current(frontierId) is { BeaconScanAt: not null }
+                ? await WarInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
+                : true;
 
             for (var draft = 1; draft <= Drafts; draft++)
             {
@@ -3171,7 +3211,7 @@ public sealed class StoryDirector(
                 // A throw counts as a failure, so the tick does not start another paid write on every pass.
                 try
                 {
-                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, draft == 2 ? attempt.Outline : null, stationsInReach, frontlineInReach, stateFamiliesInReach, cancellationToken).ConfigureAwait(false);
+                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, draft == 2 ? attempt.Outline : null, stationsInReach, frontlineInReach, stateFamiliesInReach, warInReach, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -3248,7 +3288,7 @@ public sealed class StoryDirector(
     private sealed record Attempt(string? Refusal, bool Retry = false, string? Detail = null, AdventureOutline? Outline = null);
 
     private async Task<Attempt> WriteAsync(
-        string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, AdventureOutline? outline, bool stationsInReach, bool frontlineInReach, IReadOnlySet<string>? stateFamiliesInReach, CancellationToken cancellationToken)
+        string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, AdventureOutline? outline, bool stationsInReach, bool frontlineInReach, IReadOnlySet<string>? stateFamiliesInReach, bool warInReach, CancellationToken cancellationToken)
     {
         if (stories.Current(frontierId) is not { State: StoryState.Running } story)
         {
@@ -3344,7 +3384,7 @@ public sealed class StoryDirector(
                 GoalClimb.Listed(GoalClimb.Standings(game, Mine?.Invoke()), goalsCard.GoalArcs),
                 game,
                 Engineers?.Invoke(),
-                row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused, frontlineInReach, stateFamiliesInReach))
+                row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused, frontlineInReach, stateFamiliesInReach, warInReach))
             : [];
         var slots = story.BeaconScanAt is null
             ? null
@@ -3367,7 +3407,8 @@ public sealed class StoryDirector(
                 GoalClimb.Slots(goals),
                 GoalClimb.Limits(goals),
                 frontlineInReach,
-                stateFamiliesInReach) is { Count: > 0 } drawn
+                stateFamiliesInReach,
+                warInReach) is { Count: > 0 } drawn
                 ? drawn
                 : null;
 

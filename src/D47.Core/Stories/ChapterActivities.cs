@@ -143,6 +143,9 @@ public static class ChapterActivities
     /// <summary>Whether the row can only be done after docking at a station with Frontline Solutions in a system at war: the on-foot bond.</summary>
     public static bool NeedsFrontline(DrawableActivity activity) => activity.Kind == TriggerKind.OnFootBond;
 
+    /// <summary>Whether the row can only be done in a conflict zone, which needs a system at war or in civil war: the space kill bond.</summary>
+    public static bool NeedsWar(DrawableActivity activity) => activity.Kind == TriggerKind.Bond;
+
     /// <summary>The mission families whose names require faction states.</summary>
     public static IReadOnlySet<string> StateGatedFamilies { get; } =
         MissionCatalogue.All.Where(name => name.RequiredStates.Count > 0).Select(name => name.Family).ToHashSet(StringComparer.OrdinalIgnoreCase);

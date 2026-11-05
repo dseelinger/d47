@@ -100,7 +100,7 @@ public static class ChapterDraw
     /// is how many place objectives the chapter already must have. A comfort chapter's first slot is the least-done activity that
     /// passes the gates, counting ties from row <paramref name="comfortFirst"/>; a mission family in <paramref name="neverCompleted"/>
     /// that passes the gates takes that slot first. With <paramref name="stationsInReach"/> false, rows that need a station are
-    /// never drawn, and with <paramref name="frontlineInReach"/> false, so is the on-foot bond row. A mission family that requires faction states is drawn only when <paramref name="stateFamiliesInReach"/> holds it; null does not gate. <paramref name="limits"/> holds each slot's limit by index: a limited slot draws only rows its limit accepts,
+    /// never drawn, and with <paramref name="frontlineInReach"/> false, so is the on-foot bond row, and with <paramref name="warInReach"/> false, so is the space bond row. A mission family that requires faction states is drawn only when <paramref name="stateFamiliesInReach"/> holds it; null does not gate. <paramref name="limits"/> holds each slot's limit by index: a limited slot draws only rows its limit accepts,
     /// unless that leaves no row the gates allow, when it draws from the whole table. A slot whose rows are all drawn takes the
     /// first later slot's rows that are not. No event slot is drawn while a limit holds.
     /// </summary>
@@ -123,7 +123,8 @@ public static class ChapterDraw
         int slots = Slots,
         IReadOnlyList<Func<DrawableActivity, bool>>? limits = null,
         bool frontlineInReach = true,
-        IReadOnlySet<string>? stateFamiliesInReach = null)
+        IReadOnlySet<string>? stateFamiliesInReach = null,
+        bool warInReach = true)
     {
         ArgumentNullException.ThrowIfNull(weights);
         ArgumentNullException.ThrowIfNull(ship);
@@ -131,7 +132,7 @@ public static class ChapterDraw
         ArgumentNullException.ThrowIfNull(statistics);
 
         var held = ChapterActivities.Held(ranks, ship, odyssey);
-        var all = ChapterActivities.All.Where(row => weights.Weight(row.Career) > 0 && Drawable(row, held, stationsInReach, refused, frontlineInReach, stateFamiliesInReach)).ToList();
+        var all = ChapterActivities.All.Where(row => weights.Weight(row.Career) > 0 && Drawable(row, held, stationsInReach, refused, frontlineInReach, stateFamiliesInReach, warInReach)).ToList();
         var pools = Enumerable.Range(0, Math.Max(1, slots))
             .Select(slot => limits?.ElementAtOrDefault(slot) is { } limit && all.Where(limit).ToList() is { Count: > 0 } limited ? limited : all)
             .ToList();
@@ -200,12 +201,12 @@ public static class ChapterDraw
         return result;
     }
 
-    /// <summary>Whether <see cref="Draw"/> may draw <paramref name="row"/>: its gates are held, it needs no station out of reach, it needs no Frontline Solutions station out of reach, a state-gated mission family is in <paramref name="stateFamiliesInReach"/> (null does not gate), and it is not refused.</summary>
-    public static bool Drawable(DrawableActivity row, ActivityGate held, bool stationsInReach, IReadOnlyList<string>? refused, bool frontlineInReach = true, IReadOnlySet<string>? stateFamiliesInReach = null)
+    /// <summary>Whether <see cref="Draw"/> may draw <paramref name="row"/>: its gates are held, it needs no station out of reach, it needs no Frontline Solutions station out of reach, it needs no war out of reach, a state-gated mission family is in <paramref name="stateFamiliesInReach"/> (null does not gate), and it is not refused.</summary>
+    public static bool Drawable(DrawableActivity row, ActivityGate held, bool stationsInReach, IReadOnlyList<string>? refused, bool frontlineInReach = true, IReadOnlySet<string>? stateFamiliesInReach = null, bool warInReach = true)
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        return ChapterActivities.Passes(row, held) && (stationsInReach || !ChapterActivities.NeedsStation(row)) && (frontlineInReach || !ChapterActivities.NeedsFrontline(row))
+        return ChapterActivities.Passes(row, held) && (stationsInReach || !ChapterActivities.NeedsStation(row)) && (frontlineInReach || !ChapterActivities.NeedsFrontline(row)) && (warInReach || !ChapterActivities.NeedsWar(row))
             && (stateFamiliesInReach is null || !ChapterActivities.NeedsStateInReach(row) || stateFamiliesInReach.Contains(row.Family!)) && !RefusedActivities.Refuses(refused, row.Kind, row.Family);
     }
 

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter now draws a space kill bond only when a system at war or in civil war lies within reach, and the step says kill bonds are earned in a conflict zone in such a system. Before, it could draw bonds with no war nearby and not say where they are earned.
+
 A story chapter now draws a reboot or restore mission only when a station within reach has a faction in one of the states those missions require. Before, it could draw the mission and leave you with a step that no nearby station offers.
 
 A story step that asks for reboot or restore missions now says which faction states offer them, naming three and counting the rest, and says the missions are on the concourse mission board.
