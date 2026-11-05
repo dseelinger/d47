@@ -33,6 +33,9 @@ public interface IFileSystem
     /// <summary>Removes the file; does nothing when it is missing.</summary>
     void Delete(string path);
 
+    /// <summary>Removes the folder and everything in it; does nothing when it is missing.</summary>
+    void DeleteFolder(string folder);
+
     /// <summary>Overwrites the destination and creates its folder; throws when the source is missing.</summary>
     void Copy(string from, string to);
 

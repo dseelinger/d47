@@ -137,4 +137,19 @@ public sealed class TheDiskFileSystemReplacesAtomicallyAndReadsSharedFilesTests 
 
         Assert.Null(_files.Stat(path));
     }
+
+    [Fact]
+    public void AFolderDeleteRemovesEverythingUnderItAndToleratesAMissingFolder()
+    {
+        var run = Path.Combine(_folder, "runs", "one");
+        _files.WriteText(Path.Combine(run, "lines.jsonl"), "a");
+        _files.WriteBytes(Path.Combine(run, "clips", "a.m4a"), [1]);
+        _files.WriteText(Path.Combine(_folder, "runs", "two", "lines.jsonl"), "b");
+
+        _files.DeleteFolder(run);
+        _files.DeleteFolder(Path.Combine(_folder, "no-such-folder"));
+
+        Assert.False(Directory.Exists(run));
+        Assert.True(File.Exists(Path.Combine(_folder, "runs", "two", "lines.jsonl")));
+    }
 }

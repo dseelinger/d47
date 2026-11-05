@@ -134,6 +134,17 @@ public sealed class DiskFileSystem : IFileSystem
         }
     }
 
+    public void DeleteFolder(string folder)
+    {
+        try
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+        catch (DirectoryNotFoundException)
+        {
+        }
+    }
+
     public void Copy(string from, string to)
     {
         CreateFolderOf(to);

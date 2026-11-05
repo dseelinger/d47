@@ -28,6 +28,8 @@ internal sealed class ReadOnlyFileSystem(IFileSystem inner) : IFileSystem
 
     public void Delete(string path) => throw Refused(path);
 
+    public void DeleteFolder(string folder) => throw Refused(folder);
+
     public void Copy(string from, string to) => throw Refused(to);
 
     private static InvalidOperationException Refused(string path) =>

@@ -62,6 +62,8 @@ public class TheOldJsonLogIsDeletedAtStartupTests
 
         public void CreateFolder(string folder) => inner.CreateFolder(folder);
 
+        public void DeleteFolder(string folder) => inner.DeleteFolder(folder);
+
         public void Delete(string path)
         {
             if (path.EndsWith("20260901.jsonl", StringComparison.Ordinal))

@@ -218,6 +218,8 @@ public class BgsWorkIsFoldedPerFactionTests
 
         public void CreateFolder(string folder) => inner.CreateFolder(folder);
 
+        public void DeleteFolder(string folder) => inner.DeleteFolder(folder);
+
         public void Delete(string path) => inner.Delete(path);
 
         public void Copy(string from, string to) => inner.Copy(from, to);

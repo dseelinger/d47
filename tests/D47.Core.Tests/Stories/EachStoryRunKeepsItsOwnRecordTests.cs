@@ -245,7 +245,7 @@ public sealed class EachStoryRunKeepsItsOwnRecordTests
     }
 
     [Fact]
-    public void AnEraseDeletesTheRecordsOfTheRunsItRemoves()
+    public void AnEraseDeletesTheRecordFoldersOfTheRunsItRemoves()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider([]));
         var erased = Run(Picked, StoryState.Finished, "chapter-one");
@@ -263,7 +263,7 @@ public sealed class EachStoryRunKeepsItsOwnRecordTests
         fixtures.Director.ForgetErased(Commander, Picked.AddDays(5));
 
         var erasedFolder = Path.Combine(Folder, StoryRunRecord.FolderName(Commander, StoryId, erased.PickedAt));
-        Assert.Empty(fixtures.Files.Enumerate(erasedFolder, "*", recursive: true));
+        Assert.Null(fixtures.Files.FolderWritten(erasedFolder));
         Assert.Single(record.Read(Commander, later));
     }
 

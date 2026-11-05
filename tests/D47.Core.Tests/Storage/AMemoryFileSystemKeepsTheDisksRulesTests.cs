@@ -183,4 +183,23 @@ public sealed class AMemoryFileSystemKeepsTheDisksRulesTests
 
         Assert.Null(_files.FolderWritten(Folder));
     }
+
+    [Fact]
+    public void AFolderDeleteRemovesEverythingUnderItAndNothingBeside()
+    {
+        var run = Path.Combine(Folder, "runs", "one");
+        _files.WriteText(Path.Combine(run, "lines.jsonl"), "a");
+        _files.WriteBytes(Path.Combine(run, "clips", "a.m4a"), [1]);
+        _files.WriteText(Path.Combine(Folder, "runs", "two", "lines.jsonl"), "b");
+        _files.WriteText(Path.Combine(Folder, "runs", "one-more.json"), "c");
+
+        _files.DeleteFolder(run);
+        _files.DeleteFolder(Path.Combine(Folder, "no-such-folder"));
+
+        Assert.Null(_files.FolderWritten(run));
+        Assert.Null(_files.FolderWritten(Path.Combine(run, "clips")));
+        Assert.Equal(
+            ["one-more.json", "lines.jsonl"],
+            _files.Enumerate(Path.Combine(Folder, "runs"), "*", recursive: true).Select(Path.GetFileName));
+    }
 }

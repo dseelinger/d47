@@ -109,6 +109,29 @@ public sealed class MemoryFileSystem : IFileSystem
         }
     }
 
+    public void DeleteFolder(string folder)
+    {
+        var full = Full(folder);
+
+        lock (_gate)
+        {
+            foreach (var path in _files.Keys.Where(path => IsUnder(path, full)).ToList())
+            {
+                _files.Remove(path);
+            }
+
+            foreach (var under in _folders.Keys.Where(under => IsUnder(under, full)).ToList())
+            {
+                _folders.Remove(under);
+            }
+
+            if (_folders.Remove(full) && Path.GetDirectoryName(full) is { } parent && _folders.ContainsKey(parent))
+            {
+                _folders[parent] = Tick();
+            }
+        }
+    }
+
     public void Copy(string from, string to)
     {
         var source = Full(from);

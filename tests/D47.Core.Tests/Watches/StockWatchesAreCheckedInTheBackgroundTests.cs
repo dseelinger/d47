@@ -64,6 +64,8 @@ public class StockWatchesAreCheckedInTheBackgroundTests
 
         public void CreateFolder(string folder) => _inner.CreateFolder(folder);
 
+        public void DeleteFolder(string folder) => _inner.DeleteFolder(folder);
+
         public void Delete(string path) => _inner.Delete(path);
 
         public void Copy(string from, string to) => _inner.Copy(from, to);

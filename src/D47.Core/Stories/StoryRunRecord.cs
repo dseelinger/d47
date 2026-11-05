@@ -164,7 +164,7 @@ public sealed class StoryRunRecord(
     public void ForgetCustomVoice(string voiceId) =>
         Forget(line => string.Equals(line.Voice?.Id, voiceId, StringComparison.Ordinal));
 
-    /// <summary>Deletes the run's lines and clips.</summary>
+    /// <summary>Deletes the run's folder with its lines and clips.</summary>
     public void Delete(string? frontierId, Story run)
     {
         ArgumentNullException.ThrowIfNull(run);
@@ -175,10 +175,7 @@ public sealed class StoryRunRecord(
         {
             try
             {
-                foreach (var path in files.Enumerate(runFolder, "*", recursive: true))
-                {
-                    files.Delete(path);
-                }
+                files.DeleteFolder(runFolder);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
