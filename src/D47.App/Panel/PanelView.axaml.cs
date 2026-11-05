@@ -797,7 +797,7 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     private readonly AssetsFurnishing _assets;
 
-    /// <summary>Beats the working pulses on the Stories and Assets tabs, from the host's tick.</summary>
+    /// <summary>Beats the working pulses and refreshes the write bars on the Stories and Assets tabs, from the host's tick; true when either drew something new.</summary>
     public bool TickAdventures()
     {
         if (Tab is not (PanelTab.Stories or PanelTab.Assets))
@@ -812,6 +812,14 @@ public partial class PanelView : UserControl, IPanelTabHost
             if (pulse.IsEffectivelyVisible)
             {
                 moved |= pulse.Beat();
+            }
+        }
+
+        foreach (var bar in this.GetVisualDescendants().OfType<WriteProgressBar>())
+        {
+            if (bar.IsEffectivelyVisible)
+            {
+                moved |= bar.Refresh();
             }
         }
 

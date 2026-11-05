@@ -16,6 +16,7 @@ internal sealed class WriteProgressBar : StackPanel
     private readonly Grid _track = Gauge.Track(0, ThemeManager.AKey);
     private readonly TextBlock _hint = AdventuresPage.Muted("");
     private readonly Func<StoryProgress?> _source;
+    private (WriteStage Stage, string Clock, double Fill, string Hint)? _drawn;
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(250) };
 
     public WriteProgressBar(string automationName, Func<StoryProgress?> source)
@@ -43,21 +44,23 @@ internal sealed class WriteProgressBar : StackPanel
         _timer.Stop();
     }
 
-    /// <summary>Shows what the source returns now; keeps the last reading when it returns null.</summary>
-    internal void Refresh()
-    {
-        if (_source() is { } progress)
-        {
-            Show(progress);
-        }
-    }
+    /// <summary>Shows what the source returns now, keeping the last reading when it returns null; true when the drawn reading changed.</summary>
+    internal bool Refresh() => _source() is { } progress && Show(progress);
 
-    public void Show(StoryProgress progress)
+    public bool Show(StoryProgress progress)
     {
+        var reading = (progress.Stage, Clock(progress.Elapsed), progress.Fill, progress.Hint);
+        if (_drawn == reading)
+        {
+            return false;
+        }
+
+        _drawn = reading;
         Children[0] = Gauge.Heading(AdventuresPage.Doing(progress.Stage), Clock(progress.Elapsed), ThemeManager.AKey);
         Gauge.Fill(_track, progress.Fill);
         _hint.Text = progress.Hint;
         _hint.IsVisible = _hint.Text.Length > 0;
+        return true;
     }
 
     private static string Clock(TimeSpan elapsed) =>

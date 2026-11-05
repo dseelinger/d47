@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The headset's mini panel now moves the chapter-writing bar as the write goes on: the stage words, the clock and the gauge update about once a second. Before, the bar stayed where it was drawn until something else redrew the overlay.
+
 d47 no longer crashes when the transcript is redrawn while a reply is being added to it. Before, a reply being spoken could end the app with an index out of range error.
 
 The Journal File reading now has a line for a ship systems shutdown: "Ship systems shut down". Before, the event was not named anywhere in d47.
