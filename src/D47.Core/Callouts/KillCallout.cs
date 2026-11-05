@@ -6,7 +6,7 @@ namespace D47.Core.Callouts;
 
 /// <summary>
 /// A remark on a notable kill: a milestone on record, the first of the game session, the best reward so far,
-/// one within thirty seconds of the last, and every fifth.
+/// one within thirty seconds of the last, and every fifth. Kills on foot are counted apart and remarked on every 25th, by the total.
 /// </summary>
 public sealed class KillCallout : ICallout
 {
@@ -29,7 +29,10 @@ public sealed class KillCallout : ICallout
     private readonly Dictionary<string, (string Line, DateTimeOffset At)> _lastLines =
         new(StringComparer.OrdinalIgnoreCase);
 
+    private const int OnFootRemarkEvery = 25;
+
     private int _kills;
+    private int _onFootKills;
     private long _bestReward;
     private DateTimeOffset? _lastKillAt;
     private int _quickRun;
@@ -47,6 +50,7 @@ public sealed class KillCallout : ICallout
             {
                 case "LoadGame" when journalEvent.StartsSession:
                     _kills = 0;
+                    _onFootKills = 0;
                     _bestReward = 0;
                     _lastKillAt = null;
                     _quickRun = 0;
@@ -75,7 +79,9 @@ public sealed class KillCallout : ICallout
                     var order = seen.GetValueOrDefault(journalEvent.Timestamp);
                     seen[journalEvent.Timestamp] = order + 1;
 
-                    var record = context.IsPriming ? null : RecordMilestone(context, journalEvent, order);
+                    var record = context.IsPriming || IsOnFoot(journalEvent)
+                        ? null
+                        : RecordMilestone(context, journalEvent, order);
 
                     if (Counted(journalEvent, record) is { } announcement && !context.IsPriming)
                     {
@@ -164,9 +170,21 @@ public sealed class KillCallout : ICallout
         return null;
     }
 
+    private bool IsOnFoot(JournalEvent journalEvent) =>
+        journalEvent.Kind == "FactionKillBond" ? _afoot : OnFoot(journalEvent);
+
     /// <summary>Counts one kill, and returns the remark when it is a notable one.</summary>
     private Announcement? Counted(JournalEvent journalEvent, string? record)
     {
+        if (IsOnFoot(journalEvent))
+        {
+            _onFootKills++;
+
+            return _onFootKills % OnFootRemarkEvery == 0
+                ? new Announcement(CountKey, $"{Number(_onFootKills)} kills on foot this session.") { OnFoot = true }
+                : null;
+        }
+
         var bond = journalEvent.Kind == "FactionKillBond";
         var reward = (bond ? journalEvent.Long("Reward") : journalEvent.Long("TotalReward")) ?? 0;
         var at = journalEvent.Timestamp;
@@ -194,23 +212,17 @@ public sealed class KillCallout : ICallout
 
         var credits = reward.ToString("N0", CultureInfo.InvariantCulture);
         var pilot = bond ? null : PilotOf(journalEvent);
-        var onFoot = bond ? _afoot : OnFoot(journalEvent);
 
         var victim = bond
             ? Resolved(journalEvent.Named("VictimFaction")) is { } faction
-                ? $"{faction} {(onFoot ? "soldier" : "ship")}"
-                : onFoot ? "Soldier" : "Ship"
-            : onFoot
-                ? pilot ?? Resolved(journalEvent.String("Target_Localised")) ?? "Target"
-                : ShipOf(journalEvent) is { } ship
-                    ? pilot is null ? ship : $"{pilot}'s {ship}"
-                    : pilot ?? "Target";
+                ? $"{faction} ship"
+                : "Ship"
+            : ShipOf(journalEvent) is { } ship
+                ? pilot is null ? ship : $"{pilot}'s {ship}"
+                : pilot ?? "Target";
 
-        var outcome = onFoot ? "down" : "destroyed";
-
-        return new Announcement(chosen.Key, $"{chosen.Reason} {victim} {outcome}, {credits} credits.")
+        return new Announcement(chosen.Key, $"{chosen.Reason} {victim} destroyed, {credits} credits.")
         {
-            OnFoot = onFoot,
             Callback = pilot is not null
                 && _lastLines.TryGetValue(pilot, out var said)
                 && at - said.At <= CallbackWindow

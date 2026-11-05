@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Your core no longer remarks on every kill you make on foot. Kills on foot are counted apart, and only every 25th in a session gets a remark, which says the total and nothing else. Before, a ground fight had it naming people and saying "quick succession" on almost every kill. Ship kills are unchanged, and kills on foot no longer count toward them.
+
 Your ship's AI now speaks of itself as "I". Before, a core such as Sentinel could say its own name as if it were someone else ("Sentinel would have counted them") or write it in a delivery note. Sentinel also now knows its name is not the Guardian Sentinels you meet at Guardian sites.
 
 A mission station search for the reboot and restore power missions now looks for stations whose factions are in one of the ten states those missions require, and the mission type answer says they are only offered there. Before, the search had no state filter for them.

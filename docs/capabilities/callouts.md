@@ -290,7 +290,7 @@ Commander Arden Vale — you met three weeks ago in Shinrarta Dezhra; they assau
 
 #### Notable kills {#kills}
 
-When you destroy a ship or take down someone on foot, your core remarks on it if the kill is a notable one:
+When you destroy a ship, your core remarks on it if the kill is a notable one:
 
 - the first kill of the game session
 - a reward bigger than any other this session
@@ -299,12 +299,12 @@ When you destroy a ship or take down someone on foot, your core remarks on it if
 - across every journal on this PC: the 100th, 250th and 500th kill and every 1,000th, the first of a
   ship type, and a reward bigger than any before it
 
+Kills on foot are counted apart and are not remarked on one by one: only every 25th kill on foot of
+the session, which says the total and nothing else. They do not count toward the ship rules above.
+
 Other kills pass without a word. The line names the ship, the pilot when Elite gives one, and the
-reward. A combat bond names the faction instead, because Elite writes no pilot or ship for it, and a
-combat bond earned on foot names a soldier of that faction rather than a ship. A kill on foot names the
-person, not a ship. Another player is called "A Commander", because their name is
-one they chose and it is not passed to the language model. When
-it is not reworded in your core's voice, it is said like this:
+reward. A combat bond names the faction instead, because Elite writes no pilot or ship for it. Another player is called "A Commander", because their name is
+one they chose and it is not passed to the language model. When it is not reworded in your core's voice, it is said like this:
 
 ```text
 First kill of the session. Tarun Okafor's Eagle destroyed, 59,330 credits.

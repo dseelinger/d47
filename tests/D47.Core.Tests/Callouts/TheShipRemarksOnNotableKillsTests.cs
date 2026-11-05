@@ -124,48 +124,67 @@ public class TheShipRemarksOnNotableKillsTests
             Assert.Single(said).Said.Text);
     }
 
-    [Fact]
-    public void AnOnFootKillIsAPersonDownNotAShipDestroyed()
-    {
-        var said = Replay(
-            new KillCallout(),
-            [Event(Bounty("14:00:00", "Hugh Juarez", "lightassaultsuitai_class1", "Scout", 750))]);
+    private static string[] OnFootKills(int count) =>
+        Enumerable.Range(0, count)
+            .Select(n => Bounty($"14:{n / 60:D2}:{n % 60:D2}", $"Hugh Juarez {n}", "lightassaultsuitai_class1", "Scout", 750 + n))
+            .ToArray();
 
-        Assert.Equal("First kill of the session. Hugh Juarez down, 750 credits.", Assert.Single(said).Said.Text);
+    [Fact]
+    public void TwentyFourKillsOnFootSayNothing()
+    {
+        Assert.Empty(Replay(new KillCallout(), OnFootKills(24).Select(Event).ToList()));
+    }
+
+    [Fact]
+    public void TheTwentyFifthKillOnFootSaysTheTotalAlone()
+    {
+        var said = Replay(new KillCallout(), OnFootKills(25).Select(Event).ToList());
+
+        var announcement = Assert.Single(said).Said;
+
+        Assert.Equal("25 kills on foot this session.", announcement.Text);
+        Assert.True(announcement.OnFoot);
+        Assert.Null(announcement.Callback);
+    }
+
+    [Fact]
+    public void TheFiftiethKillOnFootSaysTheTotalAgain()
+    {
+        var said = Replay(new KillCallout(), OnFootKills(50).Select(Event).ToList());
+
+        Assert.Equal(["25 kills on foot this session.", "50 kills on foot this session."], said.Select(s => s.Said.Text));
+    }
+
+    [Fact]
+    public void AShipKillAfterKillsOnFootIsStillTheFirstKill()
+    {
+        var events = OnFootKills(10).Append(Bounty("15:00:00", "Paul Curnow", "eagle", null, 1000)).Select(Event).ToList();
+
+        Assert.Equal(
+            "First kill of the session. Paul Curnow's Eagle destroyed, 1,000 credits.",
+            Assert.Single(Replay(new KillCallout(), events)).Said.Text);
     }
 
     private const string Bond =
         """{"timestamp":"2026-09-24T14:00:00Z","event":"FactionKillBond","Reward":80000,"AwardingFaction":"Lavigny's Legion","VictimFaction":"Arakang Purple Drug Empire"}""";
 
     [Fact]
-    public void ACombatBondOnFootIsASoldierDownNotAShipDestroyed()
+    public void ACombatBondOnFootCountsAsAKillOnFoot()
     {
-        var said = Replay(
-            new KillCallout(),
-            [
-                Event("""{"timestamp":"2026-09-24T13:59:00Z","event":"Disembark","SRV":false,"OnPlanet":true}"""),
-                Event(Bond),
-            ]);
+        var events = new List<JournalEvent>
+        {
+            Event("""{"timestamp":"2026-09-24T13:59:00Z","event":"Disembark","SRV":false,"OnPlanet":true}"""),
+        };
 
-        var announcement = Assert.Single(said).Said;
+        for (var n = 0; n < 25; n++)
+        {
+            events.Add(Event(Bond.Replace("14:00:00", $"14:00:{n:D2}", StringComparison.Ordinal)));
+        }
 
-        Assert.Equal(
-            "First kill of the session. Arakang Purple Drug Empire soldier down, 80,000 credits.",
-            announcement.Text);
+        var announcement = Assert.Single(Replay(new KillCallout(), events)).Said;
+
+        Assert.Equal("25 kills on foot this session.", announcement.Text);
         Assert.True(announcement.OnFoot);
-    }
-
-    [Fact]
-    public void ACombatBondWithAnUnresolvedFactionOnFootIsSoldierDown()
-    {
-        var said = Replay(
-            new KillCallout(),
-            [
-                Event("""{"timestamp":"2026-09-24T13:59:00Z","event":"Disembark","SRV":false}"""),
-                Event("""{"timestamp":"2026-09-24T14:00:00Z","event":"FactionKillBond","Reward":500}"""),
-            ]);
-
-        Assert.Equal("First kill of the session. Soldier down, 500 credits.", Assert.Single(said).Said.Text);
     }
 
     [Fact]
@@ -199,11 +218,9 @@ public class TheShipRemarksOnNotableKillsTests
     }
 
     [Fact]
-    public void TheBriefForAnOnFootKillSaysAPersonNotAShip()
+    public void TheBriefForTheOnFootTotalAsksForTheTotalAndCarriesNoCallback()
     {
-        var onFoot = Replay(
-            new KillCallout(),
-            [Event(Bounty("14:00:00", "Hugh Juarez", "lightassaultsuitai_class1", "Scout", 750))]).Single().Said;
+        var onFoot = Replay(new KillCallout(), OnFootKills(25).Select(Event).ToList()).Single().Said;
         var ship = Replay(new KillCallout(), [Event(Bounty("14:00:00", "Paul Curnow", "eagle", null, 1000))])
             .Single().Said;
 
@@ -212,7 +229,8 @@ public class TheShipRemarksOnNotableKillsTests
 
         Assert.NotNull(onFootBrief);
         Assert.NotNull(shipBrief);
-        Assert.Contains("on foot", onFootBrief.Instruction, StringComparison.Ordinal);
+        Assert.Contains("total", onFootBrief.Instruction, StringComparison.Ordinal);
+        Assert.DoesNotContain("name", onFootBrief.Instruction, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("ship", onFootBrief.Instruction, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("destroyed a ship", shipBrief.Instruction, StringComparison.Ordinal);
     }
@@ -222,9 +240,9 @@ public class TheShipRemarksOnNotableKillsTests
     {
         var said = Replay(
             new KillCallout(),
-            [Event(Bounty("14:00:00", null, "assaultsuitai_class2", "$AssaultSuitAI_Class1_Name;", 750))]);
+            [Event(Bounty("14:00:00", null, "python", "$Python_Name;", 750))]);
 
-        Assert.Equal("First kill of the session. Target down, 750 credits.", Assert.Single(said).Said.Text);
+        Assert.Equal("First kill of the session. Python destroyed, 750 credits.", Assert.Single(said).Said.Text);
     }
 
     [Fact]
