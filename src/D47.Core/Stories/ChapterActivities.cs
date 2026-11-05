@@ -1,5 +1,6 @@
 using D47.Core.Adventures;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Stories;
 
@@ -141,6 +142,14 @@ public static class ChapterActivities
 
     /// <summary>Whether the row can only be done after docking at a station with Frontline Solutions in a system at war: the on-foot bond.</summary>
     public static bool NeedsFrontline(DrawableActivity activity) => activity.Kind == TriggerKind.OnFootBond;
+
+    /// <summary>The mission families whose names require faction states.</summary>
+    public static IReadOnlySet<string> StateGatedFamilies { get; } =
+        MissionCatalogue.All.Where(name => name.RequiredStates.Count > 0).Select(name => name.Family).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Whether the row is a mission of a family that requires faction states.</summary>
+    public static bool NeedsStateInReach(DrawableActivity activity) =>
+        activity.Kind == TriggerKind.Mission && activity.Family is { } family && StateGatedFamilies.Contains(family);
 
     /// <summary>Whether every gate named in a step event row's <c>needs</c> is in <paramref name="held"/>; a name that is no gate is never held.</summary>
     public static bool Passes(IReadOnlyList<string> needs, ActivityGate held) =>

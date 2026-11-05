@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter now draws a reboot or restore mission only when a station within reach has a faction in one of the states those missions require. Before, it could draw the mission and leave you with a step that no nearby station offers.
+
 A story step that asks for reboot or restore missions now says which faction states offer them, naming three and counting the rest, and says the missions are on the concourse mission board.
 
 Your core no longer remarks on every kill you make on foot. Kills on foot are counted apart, and only every 25th in a session gets a remark, which says the total and nothing else. Before, a ground fight had it naming people and saying "quick succession" on almost every kill. Ship kills are unchanged, and kills on foot no longer count toward them.

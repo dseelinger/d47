@@ -2254,7 +2254,8 @@ public sealed class StoryDirector(
                 FixedPlaces(story, finaleChapter) + others.Count(slot => slot.PlaceBefore) + (sightseeing ? 1 : 0),
                 ChapterDraw.Seed(story.Id, number, rewrite.From),
                 stationsInReach: await StationsInReachAsync(game, cancellationToken).ConfigureAwait(false),
-                frontlineInReach: await FrontlineInReachAsync(game, cancellationToken).ConfigureAwait(false));
+                frontlineInReach: await FrontlineInReachAsync(game, cancellationToken).ConfigureAwait(false),
+                stateFamiliesInReach: await StateFamiliesInReachAsync(game, cancellationToken).ConfigureAwait(false));
 
             others.AddRange(redrawn.Take(1));
         }
@@ -2334,6 +2335,48 @@ public sealed class StoryDirector(
             logger.LogWarning(ex, "The galaxy search could not list the Frontline Solutions stations within reach of a story chapter, so on-foot kill bonds are not drawn");
             return false;
         }
+    }
+
+    /// <summary>
+    /// The state-gated mission families with a ranked station in the chapter's reach whose system has a faction in a required state.
+    /// Empty when it cannot be told: no galaxy search, no known position, or the query failed.
+    /// </summary>
+    private async Task<IReadOnlySet<string>> StateFamiliesInReachAsync(CommanderGameState? game, CancellationToken cancellationToken)
+    {
+        var inReach = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        if (Galaxy?.Invoke() is not { } search || game?.Location.StarSystem is not { Length: > 0 } system)
+        {
+            return inReach;
+        }
+
+        var radius = AdventureGenerator.Radius(AdventureReach.Session, game.Ship.MaxJumpRange, game.Carrier.Owned);
+
+        foreach (var family in ChapterActivities.StateGatedFamilies)
+        {
+            var names = MissionCatalogue.All.Where(name => string.Equals(name.Family, family, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (!MissionStationQuery.TryParse(system, names, radius, out var query, out _))
+            {
+                continue;
+            }
+
+            try
+            {
+                var scan = await search.FindMissionStationsAsync(query, cancellationToken).ConfigureAwait(false);
+
+                if (MissionStationRanking.Rank(query, scan, MissionStationQuery.Size).Any(candidate => candidate.MatchingStates > 0))
+                {
+                    inReach.Add(family);
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogWarning(ex, "The galaxy search could not list the stations within reach of a story chapter for the mission family {Family}, so it is not drawn", family);
+            }
+        }
+
+        return inReach;
     }
 
     /// <summary>The place objectives a finale chapter must already have: the landing of the last one, or the stop nearer the destination.</summary>
@@ -3112,6 +3155,9 @@ public sealed class StoryDirector(
             var frontlineInReach = stories.Current(frontierId) is { BeaconScanAt: not null }
                 ? await FrontlineInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
                 : true;
+            var stateFamiliesInReach = stories.Current(frontierId) is { BeaconScanAt: not null }
+                ? await StateFamiliesInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
+                : null;
 
             for (var draft = 1; draft <= Drafts; draft++)
             {
@@ -3125,7 +3171,7 @@ public sealed class StoryDirector(
                 // A throw counts as a failure, so the tick does not start another paid write on every pass.
                 try
                 {
-                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, draft == 2 ? attempt.Outline : null, stationsInReach, frontlineInReach, cancellationToken).ConfigureAwait(false);
+                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, draft == 2 ? attempt.Outline : null, stationsInReach, frontlineInReach, stateFamiliesInReach, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -3202,7 +3248,7 @@ public sealed class StoryDirector(
     private sealed record Attempt(string? Refusal, bool Retry = false, string? Detail = null, AdventureOutline? Outline = null);
 
     private async Task<Attempt> WriteAsync(
-        string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, AdventureOutline? outline, bool stationsInReach, bool frontlineInReach, CancellationToken cancellationToken)
+        string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, AdventureOutline? outline, bool stationsInReach, bool frontlineInReach, IReadOnlySet<string>? stateFamiliesInReach, CancellationToken cancellationToken)
     {
         if (stories.Current(frontierId) is not { State: StoryState.Running } story)
         {
@@ -3298,7 +3344,7 @@ public sealed class StoryDirector(
                 GoalClimb.Listed(GoalClimb.Standings(game, Mine?.Invoke()), goalsCard.GoalArcs),
                 game,
                 Engineers?.Invoke(),
-                row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused, frontlineInReach))
+                row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused, frontlineInReach, stateFamiliesInReach))
             : [];
         var slots = story.BeaconScanAt is null
             ? null
@@ -3320,7 +3366,8 @@ public sealed class StoryDirector(
                 Tools?.Invoke(),
                 GoalClimb.Slots(goals),
                 GoalClimb.Limits(goals),
-                frontlineInReach) is { Count: > 0 } drawn
+                frontlineInReach,
+                stateFamiliesInReach) is { Count: > 0 } drawn
                 ? drawn
                 : null;
 
