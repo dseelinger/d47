@@ -3383,6 +3383,25 @@ public sealed class AppHost : IDisposable
         messageStore.Record = runRecords;
         storyDirector.Records = runRecords;
 
+        // Runs from before the record existed are filled once, off the tick, when the Commander is known.
+        var backfillStarted = 0;
+
+        void BackfillRunRecords()
+        {
+            if (gameState.Active?.Identity.FrontierId is null || Interlocked.Exchange(ref backfillStarted, 1) == 1)
+            {
+                return;
+            }
+
+            _ = Task.Run(() => runRecords.Backfill(
+                messageStore.All,
+                D47.Core.Stories.StoryRunRecord.StoredClips(
+                    new D47.Core.Messages.MessageClips(files, Path.Combine(paths.Data, "messages"), new DpapiSecretProtector()))));
+        }
+
+        BackfillRunRecords();
+        gameState.CommanderChanged += _ => BackfillRunRecords();
+
         // Deleting the recording deletes every clip spoken in it; the messages keep their text.
         host.OwnVoice.Changed += () =>
         {

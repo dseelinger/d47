@@ -159,6 +159,102 @@ public sealed class StoryRunRecord(
         }
     }
 
+    /// <summary>
+    /// Fills the record of each run that has none from <paramref name="messages"/>, by the keys <see cref="Posted"/> uses, and
+    /// returns the number of runs filled. A run with a record is left alone. Lines keep their time and order; a line whose
+    /// clip <paramref name="clipOf"/> returns null is recorded without one. The lines file is written last, so a run
+    /// interrupted before that is filled again.
+    /// </summary>
+    public int Backfill(IReadOnlyList<D47Message> messages, Func<D47Message, SpokenClip?> clipOf)
+    {
+        ArgumentNullException.ThrowIfNull(messages);
+        ArgumentNullException.ThrowIfNull(clipOf);
+
+        var byRun = new Dictionary<string, List<D47Message>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var message in messages.OrderBy(message => message.Sent))
+        {
+            if (message.AdventureKey is { } key && RunOf(key) is var (frontierId, run))
+            {
+                var runFolder = RunFolder(frontierId, run);
+
+                if (!byRun.TryGetValue(runFolder, out var lines))
+                {
+                    byRun[runFolder] = lines = [];
+                }
+
+                lines.Add(message);
+            }
+        }
+
+        var filled = 0;
+
+        foreach (var (runFolder, lines) in byRun)
+        {
+            lock (_gate)
+            {
+                try
+                {
+                    if (files.Stat(Path.Combine(runFolder, LinesFile)) is not null)
+                    {
+                        continue;
+                    }
+
+                    var recorded = new List<StoryRunLine>(lines.Count);
+
+                    foreach (var message in lines)
+                    {
+                        var line = new StoryRunLine
+                        {
+                            Sent = message.Sent,
+                            From = message.From,
+                            Cast = message.Cast,
+                            Picture = message.Picture,
+                            Subject = message.Subject,
+                            Body = message.Body,
+                            Key = message.Key,
+                            AdventureKey = message.AdventureKey,
+                        };
+
+                        if (clipOf(message) is { } spoken
+                            && Encode(message.Key, spoken) is var (file, bytes)
+                            && Keep(runFolder, message.Key, file, bytes))
+                        {
+                            line = line with { Clip = file, Voice = new MessageVoice(spoken.Provider, spoken.VoiceId) };
+                        }
+
+                        recorded.Add(line);
+                    }
+
+                    files.WriteText(
+                        Path.Combine(runFolder, LinesFile),
+                        string.Concat(recorded.Select(line => JsonSerializer.Serialize(line, Json) + "\n")));
+                    filled++;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    logger.LogWarning(ex, "Could not fill the record in {Folder}", runFolder);
+                }
+            }
+        }
+
+        return filled;
+    }
+
+    /// <summary>The clip of a message in <c>data\messages\</c> as a <see cref="SpokenClip"/>; null when it has none or cannot be read.</summary>
+    public static Func<D47Message, SpokenClip?> StoredClips(MessageClips clips) => message =>
+    {
+        if (message.Clip is not { } file || clips.Load(file, message.Key) is not { } clip)
+        {
+            return null;
+        }
+
+        var voiceId = message.Voice?.Id;
+        var own = MessageClips.IsProtected(file);
+
+        return new SpokenClip([clip], message.Voice?.Provider ?? string.Empty, own && !MessageStore.SpokenInOwnVoice(message.Voice) ? OwnVoice.VoiceId : voiceId);
+    };
+
     public void ForgetOwnVoice() => Forget(line => MessageStore.SpokenInOwnVoice(line.Voice));
 
     public void ForgetCustomVoice(string voiceId) =>
