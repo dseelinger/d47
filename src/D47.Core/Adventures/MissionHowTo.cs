@@ -44,9 +44,9 @@ public static class MissionHowTo
         ["Mission_OnFoot_Salvage"] =
             "On-foot salvage missions are done on foot: take the named item from the crash site the mission marks and hand it in at the station that issued the mission.",
         ["Mission_OnFoot_Reboot"] =
-            "On-foot reboot missions are done on foot: restore power at the named settlement, which takes a power regulator, then hand the mission in at the station that issued it.",
+            "On-foot reboot missions are done on foot: restore power at the named settlement, which takes a power regulator, then hand the mission in at the station that issued it. The missions are on the concourse mission board, and the settlement is one the state has taken offline.",
         ["Mission_OnFoot_RebootRestore"] =
-            "On-foot restore missions are done on foot: restore power at the named settlement with a power regulator and prepare it for operation, then hand the mission in at the station that issued it.",
+            "On-foot restore missions are done on foot: restore power at the named settlement with a power regulator and prepare it for operation, then hand the mission in at the station that issued it. The missions are on the concourse mission board, and the settlement is one the state has taken offline.",
         ["Mission_Smuggle"] =
             "Smuggling missions are flown and need free cargo space: the issuing station loads illegal cargo, and the mission completes when it is handed in at the named station. A completed security scan on the way brings a fine.",
         ["Mission_OnFoot_Smuggle"] =
@@ -72,4 +72,48 @@ public static class MissionHowTo
     /// <summary>The line for this exact family, ignoring case, or null for a family with none.</summary>
     public static string? For(string? family) =>
         family is not null && Lines.TryGetValue(family.Trim(), out var line) ? line : null;
+
+    private const int StatesNamed = 3;
+
+    /// <summary>The sentence naming the faction states the family requires, or null when it requires none.</summary>
+    public static string? StatesLine(string? family)
+    {
+        if (family is null)
+        {
+            return null;
+        }
+
+        var states = Knowledge.MissionCatalogue.All
+            .Where(name => string.Equals(name.Family, family.Trim(), StringComparison.OrdinalIgnoreCase))
+            .SelectMany(name => name.RequiredStates)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (states.Count == 0)
+        {
+            return null;
+        }
+
+        var named = states.Take(StatesNamed).ToList();
+        var rest = states.Count - named.Count;
+        var list = rest > 0
+            ? $"{string.Join(", ", named)} or {(rest == 1 ? "one other state" : $"one of {Words(rest)} other states")}"
+            : named.Count == 1 ? named[0] : $"{string.Join(", ", named.Take(named.Count - 1))} or {named[^1]}";
+
+        return $"They are only offered by a faction in {list}.";
+    }
+
+    private static string Words(int count) => count switch
+    {
+        2 => "two",
+        3 => "three",
+        4 => "four",
+        5 => "five",
+        6 => "six",
+        7 => "seven",
+        8 => "eight",
+        9 => "nine",
+        10 => "ten",
+        _ => count.ToString(System.Globalization.CultureInfo.InvariantCulture),
+    };
 }

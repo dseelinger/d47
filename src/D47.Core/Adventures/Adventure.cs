@@ -650,7 +650,9 @@ public sealed record AdventureTrigger
         _ => $"Next: {Describe()}.",
     };
 
-    private string WithHowTo(string next) => MissionHowTo.For(MissionFamily) is { } line ? $"{next} {line}" : next;
+    private string WithHowTo(string next) => MissionHowTo.For(MissionFamily) is { } line
+        ? $"{next} {line}{(MissionHowTo.StatesLine(MissionFamily) is { } states ? " " + states : string.Empty)}"
+        : next;
 
     /// <summary>What counts as a rescue item and where it is found and handed in; the filter's item alone when it has one.</summary>
     public string RescueHowTo()

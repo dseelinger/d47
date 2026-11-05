@@ -64,4 +64,35 @@ public sealed class AMissionBeatSaysWhatTheCommanderDoesTests
 
         Assert.Contains(MissionHowTo.For("Mission_Collect")!, block, StringComparison.Ordinal);
     }
+
+    private const string RebootStates =
+        "They are only offered by a faction in Civil Unrest, Bust, Infrastructure Failure or one of seven other states.";
+
+    [Fact]
+    public void ARebootMissionHandOffNamesThreeStatesAndCountsTheRest()
+    {
+        var trigger = new AdventureTrigger { Kind = TriggerKind.MissionTaken, Handle = "grid", MissionFamily = "Mission_OnFoot_Reboot" };
+
+        Assert.EndsWith(" " + RebootStates, trigger.HandOff(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheNowLineForARebootMissionNamesTheStates()
+    {
+        var route = LanternRoute(Accepted);
+        var trigger = new AdventureTrigger { Kind = TriggerKind.Mission, Count = 2, MissionFamily = "Mission_OnFoot_Reboot" };
+        var adventure = route with { Beats = [Beat("The Grid", "setup", trigger, "Restore it."), .. route.Beats.Skip(1)] };
+        var block = AdventureContext.Describe([AdventureFold.Start(adventure)], _ => null, Now)!;
+
+        Assert.Contains(RebootStates, block, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ASalvageMissionNamesNoStates()
+    {
+        var trigger = new AdventureTrigger { Kind = TriggerKind.Mission, Count = 2, MissionFamily = "Mission_OnFoot_Salvage" };
+
+        Assert.DoesNotContain("only offered", trigger.HandOff(), StringComparison.Ordinal);
+        Assert.Null(MissionHowTo.StatesLine("Mission_OnFoot_Salvage"));
+    }
 }
