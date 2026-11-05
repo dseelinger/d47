@@ -84,10 +84,10 @@ public static class BindingProfilesCapability
     {
         Key = ListKey,
         Label = "Saved binding profiles",
-        Help = "Named copies of Elite's bindings. Say \"save these bindings as\" and a name, or \"load the\" "
-               + "name \"bindings\", with Elite closed.",
+        Help = "Named copies of Elite's bindings. Save and Load here, or say \"save these bindings as\" and a "
+               + "name, or \"load the\" name \"bindings\". Elite must be closed.",
         Kind = SettingKind.Info,
-        DocsAnchor = "deleting-one",
+        DocsAnchor = "saving-loading-and-deleting",
         Binding = new SettingBinding { Read = _ => Summarise(profiles) },
     };
 

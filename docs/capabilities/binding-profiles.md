@@ -99,11 +99,13 @@ while Elite is running, with the reason:
 Elite is running. It reads its bindings only when it starts, so close Elite first and ask again.
 ```
 
-### Deleting one
+### Saving, loading and deleting
 
-**Settings › Acting on the game › Macros and switches**, row **Saved binding profiles**, lists every
-saved profile with a **Delete** button. Deleting removes the copy under `data\`; Elite's own files are not touched.
-There is no voice command for deleting.
+**Settings › Acting on the game › Macros and switches**, row **Saved binding profiles**, saves, loads
+and deletes profiles as well as voice. Type a name in the box and press **Save**; each saved profile
+has a **Load** button and a **Delete** button. **Save** and **Load** show the reply on the row,
+including the refusal while Elite is running. Deleting removes the copy under `data\`; Elite's own
+files are not touched. There is no voice command for deleting.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>

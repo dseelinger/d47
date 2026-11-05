@@ -56,6 +56,66 @@ public sealed class SavedBindingProfilesAreListedWithADeleteTests
         host.Close();
     }
 
+    [AvaloniaFact]
+    public void SaveAndLoadButtonsActOnTheStoreAndShowTheReply()
+    {
+        var folder = TempFolders.Create("d47-binding-profiles-buttons");
+        var (settings, viewState, paths) = TestSurface.Create(root: folder);
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
+
+        var bindings = TestSurface.BindingsFolder(paths);
+        Directory.CreateDirectory(bindings);
+        File.WriteAllText(Path.Combine(bindings, "StartPreset.4.start"), "Custom\nCustom\nCustom\nCustom");
+        File.WriteAllText(Path.Combine(bindings, "Custom.4.2.binds"), "<Root />");
+
+        var running = false;
+        var store = new D47.Core.Input.BindingProfiles(bindings, paths.BindingProfiles, () => running, NullLogger.Instance);
+
+        var host = SettingsHost.Open(settings, viewState, paths, bindingProfiles: store);
+        host.View.ShowPlaceOf(BindingProfilesCapability.ListKey);
+        Jobs();
+
+        var row = Assert.IsAssignableFrom<Control>(host.View.ControlFor(BindingProfilesCapability.ListKey));
+        var box = row.GetVisualDescendants().OfType<TextBox>().Single();
+        var save = Buttons(row, "Save").Single();
+        Assert.False(save.IsEnabled);
+
+        box.Text = "   ";
+        Jobs();
+        Assert.False(save.IsEnabled);
+
+        running = true;
+        box.Text = "desk";
+        Jobs();
+        Assert.True(save.IsEnabled);
+        save.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Jobs();
+        Assert.Contains(D47.Core.Input.BindingProfiles.EliteIsRunning, Texts(row));
+        Assert.Empty(store.Names);
+
+        running = false;
+        save.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Jobs();
+        Assert.Equal(["desk"], store.Names);
+        Assert.Contains("Saved your bindings as \"desk\".", Texts(row));
+        Assert.Single(Buttons(row, "Load"));
+
+        running = true;
+        Buttons(row, "Load")[0].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Jobs();
+        Assert.Contains(D47.Core.Input.BindingProfiles.EliteIsRunning, Texts(row));
+
+        running = false;
+        Buttons(row, "Load")[0].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Jobs();
+        Assert.Contains(Texts(row), text => text.StartsWith("Loaded the \"desk\" bindings.", StringComparison.Ordinal));
+
+        host.Close();
+    }
+
+    private static List<Button> Buttons(Control row, string label) =>
+        [.. row.GetVisualDescendants().OfType<Button>().Where(button => button.Content as string == label)];
+
     private static List<Button> Deletes(Control row) =>
         [.. row.GetVisualDescendants().OfType<Button>().Where(button => button.Content as string == "Delete")];
 

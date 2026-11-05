@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Settings › Acting on the game › Macros and switches now saves and loads binding profiles with buttons: a name box and **Save** on the Saved binding profiles row, and a **Load** button beside **Delete** on each profile. Before, saving and loading were by voice only. Both are refused while Elite is running, and the reply shows on the row.
+
 Ambient music now plays in stereo. Before, both channels were averaged into one, which dulled reverb, wide pads and high frequencies. Speech, cues, alerts and the bed are unchanged.
 
 A story chapter now draws a space kill bond only when a system at war or in civil war lies within reach, and the step says kill bonds are earned in a conflict zone in such a system. Before, it could draw bonds with no war nearby and not say where they are earned.

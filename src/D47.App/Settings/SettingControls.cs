@@ -413,11 +413,54 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
         return (control, refresh);
     }
 
-    /// <summary>The binding profile summary, and one line per saved profile with a Delete button (#80).</summary>
+    /// <summary>The binding profile summary, a save box, and one line per saved profile with Load and Delete buttons (#80, #2135).</summary>
     private (Control, Action) BuildBindingProfiles(SettingRow row)
     {
         var (inset, refreshSummary) = BuildInfo(row);
         var list = new StackPanel { Name = "BindingProfiles", Spacing = 4, Margin = new Thickness(14, 0, 0, 0) };
+
+        var outcome = new TextBlock
+        {
+            Name = "BindingProfileOutcome",
+            FontSize = TypeScale.Body,
+            TextWrapping = TextWrapping.Wrap,
+            IsVisible = false,
+            Margin = new Thickness(14, 0, 0, 0),
+        };
+
+        void Show(D47.Core.Input.BindingProfileOutcome result)
+        {
+            outcome.Text = result.Reply;
+            outcome.IsVisible = true;
+        }
+
+        var nameBox = new TextBox { Name = "BindingProfileName", Width = 240, PlaceholderText = "Profile name" };
+
+        var save = new Button
+        {
+            Content = "Save",
+            FontSize = TypeScale.Body,
+            Padding = new Thickness(8, 4),
+            IsEnabled = false,
+        };
+
+        nameBox.TextChanged += (_, _) => save.IsEnabled = !string.IsNullOrWhiteSpace(nameBox.Text);
+
+        save.Click += (_, _) =>
+        {
+            if (services.BindingProfiles is { } store && !string.IsNullOrWhiteSpace(nameBox.Text))
+            {
+                Show(store.Save(nameBox.Text));
+            }
+        };
+
+        var saveLine = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 12,
+            Margin = new Thickness(14, 0, 0, 0),
+            Children = { nameBox, save },
+        };
 
         void Refresh()
         {
@@ -449,12 +492,21 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
 
                 delete.Click += (_, _) => profiles.Delete(name);
 
-                var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { label, delete } };
+                var load = new Button
+                {
+                    Content = "Load",
+                    FontSize = TypeScale.Body,
+                    Padding = new Thickness(8, 4),
+                };
+
+                load.Click += (_, _) => Show(profiles.Load(name));
+
+                var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { label, load, delete } };
                 list.Children.Add(line);
             }
         }
 
-        var stack = new StackPanel { Spacing = 8, Children = { inset, list } };
+        var stack = new StackPanel { Spacing = 8, Children = { inset, saveLine, outcome, list } };
 
         if (services.BindingProfiles is { } store)
         {
