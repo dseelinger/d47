@@ -10,6 +10,8 @@
 
 Each time a stock story is picked, its lines and their spoken clips are now also kept in that run's own folder under `data\story-runs\`, with the clips compressed. This record has no 200-message limit, so a line that leaves the Story log is still kept there. Deleting your recording or a custom voice deletes the clips spoken in it there too, and erasing your pilot data deletes the records of the stories it removes.
 
+The Story Bench (on while `D47_STORY_BENCH=1`) no longer has slots. The Slots section, New slot, Switch to and Back to my story are gone, and the bench always works on the story in the data folder, with Jump, Next beat and Checkpoints with Rewind unchanged. At the next start, the slot folders under `data\story-bench\` and `bench.json` are deleted; the checkpoints stay. Stories are rated and unused messages are cleaned up the same way with the bench on as off.
+
 Picking a story again now keeps the earlier run of it in `data/story.json` beside the new one. Before, the new pick replaced the old run, with its chapters and when it stopped. Chapter keys of the earlier run are not reused.
 
 The Story log now keeps the lines and clips of a story you abandoned or switched away from. Before, they were deleted when the story stopped. A stopped story's unanswered ending question is no longer listed as waiting for an answer.

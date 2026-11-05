@@ -75,7 +75,7 @@ public sealed class TheBenchShowsHowFarAJumpedChapterHasGotTests
 
         var files = new DiskFileSystem();
         var catalog = new StoryCatalog([StoryFixture.Story], () => [StoryFixture.Secret]);
-        var mine = StorySlotFiles.In(paths.Data);
+        var mine = (Stories: Path.Combine(paths.Data, "story.json"), Adventures: Path.Combine(paths.Data, "adventures.json"), Chapters: Path.Combine(paths.Data, "story-chapters.jsonl"));
         var stories = StoryStore.Open(mine.Stories, files, NullLogger<StoryStore>.Instance);
         var adventures = new AdventureStore(mine.Adventures, files, NullLogger<AdventureStore>.Instance);
         var archive = StoryChapterArchive.Open(files, mine.Chapters, NullLogger<StoryChapterArchive>.Instance);
@@ -116,7 +116,7 @@ public sealed class TheBenchShowsHowFarAJumpedChapterHasGotTests
             Stories: director, Bench: bench);
 
         var look = AppLook.Put();
-        var page = new StoryBenchPage(surface, bench, director, new PanelPrompts(new PanelNavigator(), new Avalonia.Controls.Panel()));
+        var page = new StoryBenchPage(surface, bench, director);
         var window = new Window { Content = page, Width = 640, Height = 700 };
         window.Show();
         Dispatcher.UIThread.RunJobs();

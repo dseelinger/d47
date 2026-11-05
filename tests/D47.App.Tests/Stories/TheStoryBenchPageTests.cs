@@ -30,7 +30,7 @@ public sealed class TheStoryBenchPageTests
 
         var files = new DiskFileSystem();
         var catalog = new StoryCatalog([StoryFixture.Story], () => [StoryFixture.Secret]);
-        var mine = StorySlotFiles.In(paths.Data);
+        var mine = (Stories: Path.Combine(paths.Data, "story.json"), Adventures: Path.Combine(paths.Data, "adventures.json"), Chapters: Path.Combine(paths.Data, "story-chapters.jsonl"));
         var stories = StoryStore.Open(mine.Stories, files, NullLogger<StoryStore>.Instance);
         var adventures = new AdventureStore(mine.Adventures, files, NullLogger<AdventureStore>.Instance);
         var archive = StoryChapterArchive.Open(files, mine.Chapters, NullLogger<StoryChapterArchive>.Instance);
@@ -99,14 +99,13 @@ public sealed class TheStoryBenchPageTests
     public void WithNothingUnderWayTheBeatsSectionSaysSo()
     {
         var rig = Build(benchOn: true);
-        Assert.Null(rig.Bench!.Create("empty"));
-        Assert.Null(rig.Bench.SwitchTo("empty", "F1", Now));
+        rig.Stories.RemovePickedBy("F1", Now);
 
         rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         var drawn = Drawn(rig.Panel);
-        Assert.Contains(StoryBenchPage.NothingUnderWay("empty"), drawn);
+        Assert.Contains(StoryBenchPage.NothingUnderWay, drawn);
         Assert.Contains(drawn, text => string.Equals(text, StoryBenchPage.UnderWayHead, StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(StoryBenchPage.NoBeatsNotice, drawn);
         Assert.DoesNotContain(StoryBenchPage.NoCheckpointsNotice, drawn);
@@ -184,32 +183,10 @@ public sealed class TheStoryBenchPageTests
         rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.NotNull(Find(rig.Panel, "NewSlot"));
-        Assert.Contains(Drawn(rig.Panel), text => string.Equals(text, "My story", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(Drawn(rig.Panel), text => string.Equals(text, "Active", StringComparison.OrdinalIgnoreCase));
+        Assert.NotNull(Find(rig.Panel, "Jump"));
+        Assert.Null(Find(rig.Panel, "NewSlot"));
         Assert.Null(Find(rig.Panel, "SwitchTo"));
-    }
-
-    [AvaloniaFact]
-    public void SwitchingAndGoingBackRedrawTheSlotList()
-    {
-        var rig = Build(benchOn: true);
-        Assert.Null(rig.Bench!.Create("test"));
-
-        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
-        Dispatcher.UIThread.RunJobs();
-
-        Press(Find(rig.Panel, "SwitchTo")!);
-        Settle(() => rig.Bench.Active == "test");
-        Assert.Contains(Drawn(rig.Panel), text => string.Equals(text, "Active", StringComparison.OrdinalIgnoreCase));
-        Assert.DoesNotContain(Drawn(rig.Panel), text => text.Contains("(active)", StringComparison.OrdinalIgnoreCase));
-        Assert.Equal("Back to my story", Find(rig.Panel, "SwitchTo")!.Content);
-        Assert.Single(rig.Panel.GetVisualDescendants().OfType<Button>(), button => button.Name == "SwitchTo");
-
-        Press(Find(rig.Panel, "SwitchTo")!);
-        Settle(() => rig.Bench.Active is null);
-        Assert.Contains(Drawn(rig.Panel), text => string.Equals(text, "Active", StringComparison.OrdinalIgnoreCase));
-        Assert.Equal("Switch to", Find(rig.Panel, "SwitchTo")!.Content);
+        Assert.DoesNotContain(Drawn(rig.Panel), text => string.Equals(text, "Slots", StringComparison.OrdinalIgnoreCase));
     }
 
     [AvaloniaFact]
@@ -268,12 +245,11 @@ public sealed class TheStoryBenchPageTests
         frame.SaveCapture("story-bench-beats.png");
 
         rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
-        Assert.Null(rig.Bench!.Create("beacon"));
         rig.Stories.Update("F1", StoryFixture.Story.Id, story => story with { CluesGiven = 1 });
-        Settle(() => rig.Bench.Checkpoints("F1").Count == 1);
+        Settle(() => rig.Bench!.Checkpoints("F1").Count == 1);
         Dispatcher.UIThread.RunJobs();
         using var slots = ((Window)TopLevel.GetTopLevel(rig.Panel)!).CaptureRenderedFrame()!;
-        slots.SaveCapture("story-bench-slots.png");
+        slots.SaveCapture("story-bench-checkpoints.png");
     }
 
     [AvaloniaFact]
@@ -285,7 +261,7 @@ public sealed class TheStoryBenchPageTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Single(Drawn(rig.Panel), text => string.Equals(text, StoryBenchPage.PageName, StringComparison.OrdinalIgnoreCase));
-        Assert.Contains("Test a story: switch slots, jump ahead, fire beats, rewind a chapter.", Drawn(rig.Panel));
+        Assert.Contains("Test a story: jump ahead, fire beats, rewind a chapter.", Drawn(rig.Panel));
     }
 
     [AvaloniaFact]
@@ -321,22 +297,21 @@ public sealed class TheStoryBenchPageTests
     }
 
     [AvaloniaFact]
-    public void EverySlotAndCheckpointNameIsDrawnInAnInk()
+    public void EveryCheckpointNameIsDrawnInAnInk()
     {
         using var look = AppLook.Put();
         var rig = Build(benchOn: true);
-        Assert.Null(rig.Bench!.Create("test"));
         rig.Stories.Update("F1", StoryFixture.Story.Id, story => story with { CluesGiven = 1 });
-        Settle(() => rig.Bench.Checkpoints("F1").Count == 1);
+        Settle(() => rig.Bench!.Checkpoints("F1").Count == 1);
 
         rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         var names = rig.Panel.GetVisualDescendants().OfType<TextBlock>()
-            .Where(block => block.IsEffectivelyVisible && block.Text is "MY STORY" or "TEST" or "CHAPTER 1")
+            .Where(block => block.IsEffectivelyVisible && block.Text is "CHAPTER 1")
             .ToList();
 
-        Assert.Equal(3, names.Count);
+        Assert.Single(names);
         Assert.All(names, block => Assert.NotNull(block.Foreground));
     }
 

@@ -13,7 +13,7 @@ using D47.Core.Stories;
 
 namespace D47.App.Panel;
 
-/// <summary>The maintainer's page for testing stories: bench slots and jumping the current story. Reachable only while the bench is on.</summary>
+/// <summary>The maintainer's page for testing stories: jumping the current story, firing beats and rewinding. Reachable only while the bench is on.</summary>
 public sealed class StoryBenchPage : UserControl, IPageSummary
 {
     public const string RootKey = "stories.bench";
@@ -24,7 +24,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
 
     public static NavCrumb Crumb => new(RootKey, PageName);
 
-    public string Summary => "Test a story: switch slots, jump ahead, fire beats, rewind a chapter.";
+    public string Summary => "Test a story: jump ahead, fire beats, rewind a chapter.";
 
     event EventHandler? IPageSummary.SummaryChanged
     {
@@ -32,25 +32,23 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         remove { }
     }
 
-    private const double SlotButtonWidth = 180;
+    private const double ButtonWidth = 180;
     private const double BeatButtonWidth = 150;
     private const double Bar = 3;
 
     private readonly AdventureSurface _surface;
     private readonly StoryBench _bench;
     private readonly StoryDirector _director;
-    private readonly PanelPrompts _prompts;
     private readonly StackPanel _body = new() { Spacing = 28, MaxWidth = ContentWidth, HorizontalAlignment = HorizontalAlignment.Left };
     private readonly StatusLine _status = new();
     private bool _acting;
     private string? _jumpLabel;
 
-    public StoryBenchPage(AdventureSurface surface, StoryBench bench, StoryDirector director, PanelPrompts prompts)
+    public StoryBenchPage(AdventureSurface surface, StoryBench bench, StoryDirector director)
     {
         _surface = surface;
         _bench = bench;
         _director = director;
-        _prompts = prompts;
 
         Content = new ScrollViewer
         {
@@ -65,7 +63,6 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _bench.Switched += OnChanged;
         _bench.CheckpointsChanged += OnChanged;
         _director.Stories.Changed += OnChanged;
         _director.WritingChanged += OnChanged;
@@ -76,7 +73,6 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
-        _bench.Switched -= OnChanged;
         _bench.CheckpointsChanged -= OnChanged;
         _director.Stories.Changed -= OnChanged;
         _director.WritingChanged -= OnChanged;
@@ -100,16 +96,12 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             _body.Children.Add(WritingBlock(commander));
         }
 
-        var slots = _bench.Summaries(commander);
-        _body.Children.Add(SlotSection(slots, commander, busy));
-
         var story = _director.Stories.Current(commander);
         var active = _surface.Book.Active(commander);
 
         if (story is null && active.Count == 0)
         {
-            var slot = slots.FirstOrDefault(entry => entry.Active)?.Name ?? StoryBench.MyStory;
-            _body.Children.Add(Section(UnderWayHead, null, null, Slab(NothingUnderWay(slot))));
+            _body.Children.Add(Section(UnderWayHead, null, null, Slab(NothingUnderWay)));
             return;
         }
 
@@ -118,7 +110,6 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         _body.Children.Add(Section("Checkpoints", CheckpointsNote, null, CheckpointSection(commander, story, busy)));
     }
 
-    internal const string SlotsNote = "Each slot keeps its own story files. Leaving one switches its story off until you come back.";
     internal const string JumpNote = "Moves the story so the chosen clue, or the finale, is due now, and writes its chapter.";
     internal const string BeatsNote = "Next beat fires the waiting beat without its journal event.";
     internal const string CheckpointsNote = "One is taken as each chapter begins. Rewind restores it and pauses the story.";
@@ -128,8 +119,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     internal const string NoCheckpointsNotice = "No checkpoints yet.";
     internal const string StirringNotice = "Next beat returns once D47 has said the last one.";
 
-    internal static string NothingUnderWay(string slot) =>
-        $"No story or Short Story is running in {slot}. Jump, beats and checkpoints show here once one starts.";
+    internal const string NothingUnderWay = "No story or Short Story is running. Jump, beats and checkpoints show here once one starts.";
 
     private static StackPanel Section(string name, string? note, Control? end, Control body)
     {
@@ -394,104 +384,6 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         return holder;
     }
 
-    // ---- slots -------------------------------------------------------------------------------
-
-    private StackPanel SlotSection(IReadOnlyList<BenchSlotSummary> slots, string? commander, bool busy)
-    {
-        var create = Tile("NewSlot", "New slot", BeatButtonWidth, !busy);
-        create.Click += (_, _) => NewSlot();
-
-        var rows = new StackPanel();
-
-        for (var index = 0; index < slots.Count; index++)
-        {
-            rows.Children.Add(SlotRow(slots[index], commander, busy, first: index == 0));
-        }
-
-        return Section("Slots", SlotsNote, create, rows);
-    }
-
-    private Border SlotRow(BenchSlotSummary slot, string? commander, bool busy, bool first)
-    {
-        var name = ListRow.Name(new TextBlock { Text = slot.Name, TextWrapping = TextWrapping.Wrap });
-        var detail = new TextBlock { FontSize = TypeScale.ControlLarge, TextWrapping = TextWrapping.Wrap };
-        ThemeInk.Bind(detail, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-        detail.Inlines = DescribeRuns(slot);
-
-        var text = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { name, detail } };
-
-        Control end;
-
-        if (slot.Active)
-        {
-            end = Chrome("Active", ListRow.AsideSize, ThemeManager.CyanKey, FontWeight.SemiBold);
-            ((TextBlock)end).TextAlignment = TextAlignment.Center;
-            ((TextBlock)end).Width = SlotButtonWidth;
-        }
-        else
-        {
-            var go = Tile("SwitchTo", slot.Name == StoryBench.MyStory ? "Back to my story" : "Switch to", SlotButtonWidth, !busy);
-            var target = slot.Name == StoryBench.MyStory ? null : slot.Name;
-            go.Click += (_, _) => Act(
-                $"Switching to {slot.Name}…",
-                () => Task.FromResult(_bench.SwitchTo(target, commander, _surface.Now())),
-                $"Switched to {slot.Name}.");
-            end = go;
-        }
-
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
-            ColumnSpacing = 16,
-            MinHeight = 60,
-            Children = { text, end },
-        };
-        Grid.SetColumn(end, 1);
-
-        var content = new Border { Padding = new Thickness(9, 6, 0, 6), Child = grid };
-        Inks(content, slot.Active ? ThemeManager.CyanKey : ThemeManager.WhiteKey, ThemeManager.GreyKey);
-
-        return slot.Active
-            ? Row(content, first, ThemeManager.CyanKey, ThemeManager.CyanGroundKey)
-            : Row(content, first);
-    }
-
-    /// <summary><see cref="Describe"/> as runs: the title in White, the numbers in mono.</summary>
-    internal static InlineCollection DescribeRuns(BenchSlotSummary slot)
-    {
-        if (slot.Title is null)
-        {
-            return [new Run("No story.")];
-        }
-
-        static Run Piece(string text, string? fontFamily = null, string? key = null)
-        {
-            var run = new Run(text);
-
-            if (fontFamily is not null)
-            {
-                run.FontFamily = new FontFamily(fontFamily);
-            }
-
-            if (key is not null)
-            {
-                run.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(key));
-            }
-
-            return run;
-        }
-
-        return
-        [
-            Piece(slot.Title, key: ThemeManager.WhiteKey),
-            Piece($" · {slot.Length} · "),
-            Piece(slot.CluesGiven.ToString(CultureInfo.InvariantCulture), Fonts.MonoFamily),
-            Piece(" of "),
-            Piece(slot.Clues.ToString(CultureInfo.InvariantCulture), Fonts.MonoFamily),
-            Piece(" clues given"),
-        ];
-    }
-
     // ---- jump --------------------------------------------------------------------------------
 
     /// <summary>The jump choices for a story: each clue not yet given, by number and day, then the finale; empty once the story is in its finale, and for a Goals story.</summary>
@@ -548,7 +440,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         view.IsEnabled = !busy;
         choice.SelectionChanged += (_, _) => _jumpLabel = choice.SelectedItem;
 
-        var jump = Tile("Jump", "Jump", SlotButtonWidth, !busy);
+        var jump = Tile("Jump", "Jump", ButtonWidth, !busy);
         jump.Margin = new Thickness(2, 0, 0, 0);
         jump.Click += (_, _) =>
         {
@@ -569,29 +461,6 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         holder.Children.Add(new DockPanel { Margin = new Thickness(0, 4, 0, 0), Children = { jump, view } });
         return holder;
     }
-
-    private void NewSlot() => _prompts.Enter(
-        new EntryRequest(
-            "stories.bench.new",
-            "New slot",
-            "Name the slot",
-            "1 to 40 letters, digits, spaces, hyphens or underscores.",
-            string.Empty,
-            EntrySurface.Voice,
-            value => string.IsNullOrWhiteSpace(value) ? EntryVerdict.No("Give the slot a name.") : EntryVerdict.Ok),
-        name =>
-        {
-            if (_bench.Create(name) is { } refusal)
-            {
-                _status.Fail(refusal);
-            }
-            else
-            {
-                _status.Say($"Made the slot {name.Trim()}.");
-            }
-
-            Rebuild();
-        });
 
     /// <summary>Runs <paramref name="work"/> on the pool, with every button off until it returns, and shows its refusal or <paramref name="done"/>.</summary>
     private void Act(string doing, Func<Task<string?>> work, string done)

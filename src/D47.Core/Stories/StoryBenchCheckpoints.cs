@@ -4,14 +4,15 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Stories;
 
-/// <summary>One checkpoint of the active slot's current story, as the bench page lists it.</summary>
+/// <summary>One checkpoint of the current story, as the bench page lists it.</summary>
 public sealed record BenchCheckpoint(int Chapter, string Stage, DateTimeOffset At);
 
 public sealed partial class StoryBench
 {
     private const string MetaFile = "checkpoint.json";
     private const string CheckpointFolder = "checkpoints";
-    private const string MyStoryFolder = "mine";
+    private const string CheckpointOwner = "mine";
+    private const string StateFile = "bench.json";
 
     /// <summary>Held only to queue a checkpoint and to read <see cref="_queued"/>.</summary>
     private readonly Lock _queueGate = new();
@@ -30,7 +31,7 @@ public sealed partial class StoryBench
         }
     }
 
-    /// <summary>The active slot's checkpoints of the story <paramref name="frontierId"/> has current, oldest chapter first.</summary>
+    /// <summary>The checkpoints of the story <paramref name="frontierId"/> has current, oldest chapter first.</summary>
     public IReadOnlyList<BenchCheckpoint> Checkpoints(string? frontierId)
     {
         if (_stories.Current(frontierId) is not { } story)
@@ -40,7 +41,7 @@ public sealed partial class StoryBench
 
         return
         [
-            .. ReadAll(CheckpointRoot(Active))
+            .. ReadAll(CheckpointRoot())
                 .Where(item => SameStory(item.Meta, story))
                 .OrderBy(item => item.Meta.Chapter)
                 .Select(item => new BenchCheckpoint(item.Meta.Chapter, item.Meta.Stage, item.Meta.At)),
@@ -48,7 +49,7 @@ public sealed partial class StoryBench
     }
 
     /// <summary>
-    /// Restores the active slot's checkpoint for <paramref name="chapter"/>: copies its files over the slot's, rereads them,
+    /// Restores the checkpoint for <paramref name="chapter"/>: copies its files over the data folder's, rereads them,
     /// abandons the restored chapter's adventure and pauses the story at <paramref name="now"/>, with the time since the
     /// checkpoint counted as switched off. Writes files, so it never runs on the tick. Returns a refusal or null.
     /// </summary>
@@ -56,9 +57,7 @@ public sealed partial class StoryBench
     {
         lock (_gate)
         {
-            var slot = Active;
-
-            var found = ReadAll(CheckpointRoot(slot)).FirstOrDefault(item => item.Meta.Chapter == chapter);
+            var found = ReadAll(CheckpointRoot()).FirstOrDefault(item => item.Meta.Chapter == chapter);
 
             if (found.Folder is null)
             {
@@ -79,13 +78,13 @@ public sealed partial class StoryBench
 
             try
             {
-                var files = ActiveFiles(slot);
+                var files = StoryFiles.In(_data);
 
-                CopyFiles(StorySlotFiles.In(found.Folder), files);
+                CopyFiles(StoryFiles.In(found.Folder), files);
 
                 lock (_queueGate)
                 {
-                    _queued = Token(slot, meta.FrontierId, meta.StoryId, meta.PickedAt, meta.Chapter, meta.Key);
+                    _queued = Token(meta.FrontierId, meta.StoryId, meta.PickedAt, meta.Chapter, meta.Key);
                 }
 
                 _archive.Reopen(files.Chapters);
@@ -121,9 +120,8 @@ public sealed partial class StoryBench
             return;
         }
 
-        var slot = Active;
         var story = entry.Story;
-        var token = Token(slot, entry.FrontierId, story.Id, story.PickedAt, story.Chapters.Count, story.CurrentChapter!);
+        var token = Token(entry.FrontierId, story.Id, story.PickedAt, story.Chapters.Count, story.CurrentChapter!);
 
         lock (_queueGate)
         {
@@ -133,11 +131,11 @@ public sealed partial class StoryBench
             }
 
             _queued = token;
-            _tail = _tail.ContinueWith(_ => Take(slot, token), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+            _tail = _tail.ContinueWith(_ => Take(token), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
         }
     }
 
-    private void Take(string? slot, string token)
+    private void Take(string token)
     {
         var taken = false;
 
@@ -145,8 +143,7 @@ public sealed partial class StoryBench
         {
             lock (_gate)
             {
-                if (!string.Equals(Active, slot, StringComparison.Ordinal)
-                    || Current() is not { } entry
+                if (Current() is not { } entry
                     || Director is { } director && (director.IsWriting(entry.FrontierId) || director.IsRewriting(entry.FrontierId)))
                 {
                     Forget(token);
@@ -156,7 +153,7 @@ public sealed partial class StoryBench
                 var story = entry.Story;
                 var chapter = story.Chapters.Count;
 
-                if (Token(slot, entry.FrontierId, story.Id, story.PickedAt, chapter, story.CurrentChapter ?? string.Empty) != token)
+                if (Token(entry.FrontierId, story.Id, story.PickedAt, chapter, story.CurrentChapter ?? string.Empty) != token)
                 {
                     Forget(token);
                     return;
@@ -170,7 +167,7 @@ public sealed partial class StoryBench
                     story.CurrentChapter!,
                     StoryClues.StageName(StoryClues.Stage(story)),
                     Director?.Clock() ?? DateTimeOffset.UtcNow);
-                var root = CheckpointRoot(slot);
+                var root = CheckpointRoot();
                 var existing = ReadAll(root);
 
                 if (existing.Any(item => item.Meta.Chapter == chapter && item.Meta.Key == meta.Key && SameStory(item.Meta, story)))
@@ -185,7 +182,7 @@ public sealed partial class StoryBench
 
                 var folder = Path.Combine(root, chapter.ToString(CultureInfo.InvariantCulture));
 
-                CopyFiles(ActiveFiles(slot), StorySlotFiles.In(folder));
+                CopyFiles(StoryFiles.In(_data), StoryFiles.In(folder));
                 _files.WriteText(Path.Combine(folder, MetaFile), JsonSerializer.Serialize(meta, Json));
                 taken = true;
             }
@@ -280,7 +277,7 @@ public sealed partial class StoryBench
     {
         _files.Delete(Path.Combine(folder, MetaFile));
 
-        var files = StorySlotFiles.In(folder);
+        var files = StoryFiles.In(folder);
 
         _files.Delete(files.Stories);
         _files.Delete(files.Adventures);
@@ -288,7 +285,7 @@ public sealed partial class StoryBench
     }
 
     /// <summary>Copies each of the three files, and removes the destination's when the source has none.</summary>
-    private void CopyFiles(StorySlotFiles from, StorySlotFiles to)
+    private void CopyFiles(StoryFiles from, StoryFiles to)
     {
         CopyOrDelete(from.Stories, to.Stories);
         CopyOrDelete(from.Adventures, to.Adventures);
@@ -307,15 +304,21 @@ public sealed partial class StoryBench
         }
     }
 
-    private StorySlotFiles ActiveFiles(string? slot) => StorySlotFiles.In(slot is null ? _data : SlotFolder(_data, slot));
-
-    private string CheckpointRoot(string? slot) => Path.Combine(_data, Folder, slot ?? MyStoryFolder, CheckpointFolder);
+    private string CheckpointRoot() => Path.Combine(_data, Folder, CheckpointOwner, CheckpointFolder);
 
     private static bool SameStory(Meta meta, Story story) =>
         string.Equals(meta.StoryId, story.Id, StringComparison.OrdinalIgnoreCase) && meta.PickedAt == story.PickedAt;
 
-    private static string Token(string? slot, string frontierId, string storyId, DateTimeOffset pickedAt, int chapter, string key) =>
-        string.Join('|', slot ?? string.Empty, frontierId, storyId, pickedAt.UtcTicks.ToString(CultureInfo.InvariantCulture), chapter.ToString(CultureInfo.InvariantCulture), key);
+    private static string Token(string frontierId, string storyId, DateTimeOffset pickedAt, int chapter, string key) =>
+        string.Join('|', frontierId, storyId, pickedAt.UtcTicks.ToString(CultureInfo.InvariantCulture), chapter.ToString(CultureInfo.InvariantCulture), key);
+
+    private sealed record StoryFiles(string Stories, string Adventures, string Chapters)
+    {
+        public static StoryFiles In(string folder) => new(
+            Path.Combine(folder, "story.json"),
+            Path.Combine(folder, "adventures.json"),
+            Path.Combine(folder, "story-chapters.jsonl"));
+    }
 
     private sealed record Meta(int Chapter, string FrontierId, string StoryId, DateTimeOffset PickedAt, string Key, string Stage, DateTimeOffset At);
 }

@@ -64,7 +64,7 @@ public sealed class YourStoriesShowsTheChapterBeingWrittenTests
 
         var files = new DiskFileSystem();
         var catalog = new StoryCatalog([StoryFixture.Story], () => [StoryFixture.Secret]);
-        var mine = StorySlotFiles.In(paths.Data);
+        var mine = (Stories: Path.Combine(paths.Data, "story.json"), Adventures: Path.Combine(paths.Data, "adventures.json"), Chapters: Path.Combine(paths.Data, "story-chapters.jsonl"));
         var stories = StoryStore.Open(mine.Stories, files, NullLogger<StoryStore>.Instance);
         var adventures = new AdventureStore(mine.Adventures, files, NullLogger<AdventureStore>.Instance);
         var archive = StoryChapterArchive.Open(files, mine.Chapters, NullLogger<StoryChapterArchive>.Instance);

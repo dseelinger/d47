@@ -1363,11 +1363,12 @@ public sealed class AppHost : IDisposable
 
         // The story bench is a maintainer's tool for testing stories, on only while D47_STORY_BENCH is 1.
         var storyBenchOn = Environment.GetEnvironmentVariable("D47_STORY_BENCH") == "1";
-        var storyFiles = D47.Core.Stories.StoryBench.FilesFor(paths.Data, storyBenchOn, files);
+
+        D47.Core.Stories.StoryBench.RemoveSlots(paths.Data, files);
 
         // The stories the Commander flies (Phase 47).
         var adventureStore = new D47.Core.Adventures.AdventureStore(
-            storyFiles.Adventures,
+            foundations.Data("adventures.json"),
             files,
             loggerFactory.CreateLogger<D47.Core.Adventures.AdventureStore>());
 
@@ -1381,13 +1382,13 @@ public sealed class AppHost : IDisposable
 
         // Read before the catch-up in PrimeGameLoop: a place visited while the Commander had the story off is not remembered.
         var storyStore = D47.Core.Stories.StoryStore.Open(
-            storyFiles.Stories,
+            foundations.Data("story.json"),
             files,
             loggerFactory.CreateLogger<D47.Core.Stories.StoryStore>());
 
         var storyArchive = D47.Core.Stories.StoryChapterArchive.Open(
             files,
-            storyFiles.Chapters,
+            foundations.Data("story-chapters.jsonl"),
             loggerFactory.CreateLogger<D47.Core.Stories.StoryChapterArchive>());
 
         var storyBench = storyBenchOn
@@ -1420,19 +1421,14 @@ public sealed class AppHost : IDisposable
         var storyRatings = new StoryRatingClient(
             storyStore,
             () => settings.Current.Ui.StoryRatings,
-            loggerFactory.CreateLogger<StoryRatingClient>(),
-            onBench: () => storyBench?.OnBench == true);
+            loggerFactory.CreateLogger<StoryRatingClient>());
 
         void SweepOrphanMessages() => messageStore.RemoveOrphans(
             key => D47.Core.Messages.MessageOwnership.Owned(key, adventureStore, storyStore, () => storyCatalog));
 
-        // Messages are shared across bench slots and ownership reads only the active one, so the bench sweeps none.
-        if (storyBench is null)
-        {
-            SweepOrphanMessages();
-            adventureStore.Changed += SweepOrphanMessages;
-            storyStore.Changed += SweepOrphanMessages;
-        }
+        SweepOrphanMessages();
+        adventureStore.Changed += SweepOrphanMessages;
+        storyStore.Changed += SweepOrphanMessages;
 
         var goalMiner = new D47.Core.Goals.GoalMiner(
             files,
@@ -3059,31 +3055,27 @@ public sealed class AppHost : IDisposable
         // After the startup catch-up, so each chapter moved keeps when its beats fired.
         storyDirector.ArchiveChapters();
 
-        // Raised by the history walk at start and by a live NewCommander on the tick; the bench's slots are left alone.
-        if (stores.StoryBench is null)
-        {
-            var erasing = new Lock();
+        // Raised by the history walk at start and by a live NewCommander on the tick.
+        var erasing = new Lock();
 
-            stores.CommanderErases.Changed += (frontierId, erasedAt) => _ = Task.Run(() =>
+        stores.CommanderErases.Changed += (frontierId, erasedAt) => _ = Task.Run(() =>
+        {
+            try
             {
-                try
+                lock (erasing)
                 {
-                    lock (erasing)
-                    {
-                        storyDirector.ForgetErased(frontierId, erasedAt);
-                    }
+                    storyDirector.ForgetErased(frontierId, erasedAt);
                 }
-                catch (Exception ex)
-                {
-                    foundations.Logger.LogError(ex, "Could not delete the stories and adventures of an erased Commander");
-                }
-            });
-        }
+            }
+            catch (Exception ex)
+            {
+                foundations.Logger.LogError(ex, "Could not delete the stories and adventures of an erased Commander");
+            }
+        });
 
         if (stores.StoryBench is { } storyBench)
         {
             storyBench.Director = storyDirector;
-            storyBench.SetBackstory = backstory => settings.Apply("llm.aboutMe", backstory, SettingsCaller.Panel);
         }
 
         goalBook.Story = () =>

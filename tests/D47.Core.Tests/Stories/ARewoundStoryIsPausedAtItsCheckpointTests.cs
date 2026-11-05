@@ -24,7 +24,7 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
 
     public ARewoundStoryIsPausedAtItsCheckpointTests()
     {
-        var mine = StorySlotFiles.In(Data);
+        var mine = (Stories: Path.Combine(Data, "story.json"), Adventures: Path.Combine(Data, "adventures.json"), Chapters: Path.Combine(Data, "story-chapters.jsonl"));
 
         _stories = StoryStore.Open(mine.Stories, _files, NullLogger<StoryStore>.Instance);
         _adventures = new AdventureStore(mine.Adventures, _files, NullLogger<AdventureStore>.Instance);
@@ -94,7 +94,7 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
         Assert.Equal(StoryState.Paused, story.State);
         Assert.Equal([Key(1), Key(2)], story.Chapters);
         Assert.Empty(_archive.For("F1"));
-        Assert.DoesNotContain("chapter-1", _files.ReadText(StorySlotFiles.In(Data).Chapters) ?? string.Empty);
+        Assert.DoesNotContain("chapter-1", _files.ReadText(Path.Combine(Data, "story-chapters.jsonl")) ?? string.Empty);
         Assert.NotNull(_adventures.Find("F1", Key(1)));
         Assert.Null(_adventures.Find("F1", Key(3)));
         Assert.True(_adventures.Find("F1", Key(2))!.IsAbandoned);
@@ -194,15 +194,15 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
     public async Task ABeaconBeatWithNoAddressIsRefusedAndChangesNothing()
     {
         await BeaconChapter(Beacon(StoryFixtures.BeaconAddress));
-        var path = StorySlotFiles.In(Data).Adventures;
+        var path = Path.Combine(Data, "adventures.json");
         _files.WriteText(path, _files.ReadText(path)!.Replace(StoryFixtures.BeaconAddress.ToString(), "0"));
         _adventures.Poll();
-        var adventures = _files.ReadText(StorySlotFiles.In(Data).Adventures);
+        var adventures = _files.ReadText(Path.Combine(Data, "adventures.json"));
         var story = _stories.Current("F1");
 
         Assert.NotNull(_bench.Step("F1", Key(1), Now.AddHours(2)));
 
-        Assert.Equal(adventures, _files.ReadText(StorySlotFiles.In(Data).Adventures));
+        Assert.Equal(adventures, _files.ReadText(Path.Combine(Data, "adventures.json")));
         Assert.Equal(story, _stories.Current("F1"));
         Assert.Null(_director.TakeSteppedWaking("F1"));
     }
@@ -215,10 +215,10 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
         var picking = _director.PickAsync("F2", Id, Now, CancellationToken.None);
         Assert.True(_director.IsWriting("F2"));
 
-        var adventures = _files.ReadText(StorySlotFiles.In(Data).Adventures);
+        var adventures = _files.ReadText(Path.Combine(Data, "adventures.json"));
 
         Assert.Equal(StoryBench.Writing, _bench.Step("F2", Key(1), Now.AddHours(3)));
-        Assert.Equal(adventures, _files.ReadText(StorySlotFiles.In(Data).Adventures));
+        Assert.Equal(adventures, _files.ReadText(Path.Combine(Data, "adventures.json")));
 
         _write.SetResult(new AdventureOutcome(null, null, "No.", []));
         await picking;
@@ -268,11 +268,11 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
 
         var picking = _director.PickAsync("F2", Id, Now, CancellationToken.None);
         Assert.True(_director.IsWriting("F2"));
-        var before = _files.ReadText(StorySlotFiles.In(Data).Stories);
+        var before = _files.ReadText(Path.Combine(Data, "story.json"));
 
         Assert.Equal(StoryBench.Writing, _bench.Rewind(1, Now.AddHours(3)));
 
-        Assert.Equal(before, _files.ReadText(StorySlotFiles.In(Data).Stories));
+        Assert.Equal(before, _files.ReadText(Path.Combine(Data, "story.json")));
         Assert.Equal(StoryState.Running, _stories.Current("F1")!.State);
 
         _write.SetResult(new AdventureOutcome(null, null, "No.", []));
@@ -295,24 +295,6 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
 
         Assert.Equal([1, 2], _bench.Checkpoints("F1").Select(checkpoint => checkpoint.Chapter));
         Assert.Contains("alternative-2", _files.ReadText(Path.Combine(CheckpointFolder("mine", 2), "story.json")));
-    }
-
-    [Fact]
-    public async Task ASlotKeepsItsOwnCheckpointsAndASwitchTakesNone()
-    {
-        await WriteChapter(1, Now.AddHours(1));
-
-        Assert.Null(_bench.Create("test"));
-        Assert.Null(_bench.SwitchTo("test", "F1", Now.AddHours(2)));
-        await _bench.Settled();
-
-        Assert.Empty(_bench.Checkpoints("F1"));
-        Assert.Empty(_files.Enumerate(Path.Combine(Data, StoryBench.Folder, "test"), "checkpoint.json", recursive: true));
-
-        Assert.Null(_bench.SwitchTo(null, "F1", Now.AddHours(3)));
-        await _bench.Settled();
-
-        Assert.Equal([1], _bench.Checkpoints("F1").Select(checkpoint => checkpoint.Chapter));
     }
 
     [Fact]

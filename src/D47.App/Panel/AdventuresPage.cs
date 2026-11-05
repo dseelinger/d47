@@ -174,7 +174,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         if (crumb.Key == StoryBenchPage.RootKey)
         {
             return _surface.Stories is { } stories && _surface.Bench is { } bench
-                ? _benchPage ??= new StoryBenchPage(_surface, bench, stories, _prompts)
+                ? _benchPage ??= new StoryBenchPage(_surface, bench, stories)
                 : null;
         }
 
