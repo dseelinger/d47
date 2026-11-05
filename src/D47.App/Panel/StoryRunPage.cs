@@ -33,6 +33,18 @@ public sealed class StoryRunPage : UserControl, IPageSummary
     public const string SilencedText = "Other speech is silenced while this plays.";
     public const string PushToTalkText = "Paused for push-to-talk. Press PLAY to carry on.";
     public const string PausedText = "Paused. Press PLAY to carry on.";
+    public const string NoClipNote = "No clip kept. Played, it is spoken again in the speaker's current voice.";
+    public const string SpeakingAgainLabel = "Speaking again";
+    public const string ShownForReadingLabel = "Shown for reading";
+    public const string HeldText = "No voice to speak this. Play all moves on when the time is up.";
+    public const string NoVoiceLabel = "No voice for this line";
+    public const string GeneratingText = "GENERATING · voice provider";
+
+    /// <summary>What the bar says under a line being spoken again.</summary>
+    public static string SpeakingAgainText(string speaker) => $"Speaking again in {speaker}'s current voice. The new clip is kept.";
+
+    /// <summary>Marks the countdown of a line held for reading.</summary>
+    public const string CountdownName = "HeldCountdown";
 
     /// <summary>Marks the playback bar.</summary>
     public const string BarName = "StoryRunPlayback";
@@ -68,7 +80,11 @@ public sealed class StoryRunPage : UserControl, IPageSummary
     private object? _drawn;
     private List<StoryRunEntry> _entriesInOrder = [];
     private readonly Dictionary<StoryRunEntry, Border> _lineRows = [];
-    private readonly Border _bar = new() { Name = BarName, IsVisible = false, BorderThickness = new Thickness(3, 0, 0, 0), Padding = new Thickness(14, 8, 8, 8) };
+    private readonly Border _bar = new() { Name = BarName, BorderThickness = new Thickness(3, 0, 0, 0), Padding = new Thickness(14, 8, 8, 8) };
+    private readonly StackPanel _barBelow = new() { Spacing = 8 };
+    private readonly StackPanel _barArea;
+    private readonly DispatcherTimer _countdownTick = new() { Interval = TimeSpan.FromSeconds(1) };
+    private TextBlock? _countdown;
     private StoryRunEntry? _marked;
     private Button? _playAll;
 
@@ -93,6 +109,9 @@ public sealed class StoryRunPage : UserControl, IPageSummary
                 _ => null,
             }),
         };
+
+        _barArea = new StackPanel { IsVisible = false, Spacing = 8, Children = { _bar, _barBelow } };
+        _countdownTick.Tick += (_, _) => ShowCountdown();
 
         _chapterPicker.Picked += (_, id) => PickChapter(int.Parse(id, CultureInfo.InvariantCulture));
         _beatPicker.Picked += (_, id) => PickBeat(int.Parse(id, CultureInfo.InvariantCulture));
@@ -152,6 +171,11 @@ public sealed class StoryRunPage : UserControl, IPageSummary
             player.Changed += OnPlayerChanged;
         }
 
+        if (_surface.RunVoicing is { } voicing)
+        {
+            voicing.Kept += OnKept;
+        }
+
         Rebuild();
     }
 
@@ -169,9 +193,24 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         {
             player.Changed -= OnPlayerChanged;
         }
+
+        if (_surface.RunVoicing is { } voicing)
+        {
+            voicing.Kept -= OnKept;
+        }
+
+        _countdownTick.Stop();
     }
 
     private void OnChanged() => Dispatcher.UIThread.Post(Rebuild);
+
+    private void OnKept(Story run)
+    {
+        if (string.Equals(run.Id, _storyId, StringComparison.OrdinalIgnoreCase) && run.PickedAt == _pickedAt)
+        {
+            Dispatcher.UIThread.Post(Rebuild);
+        }
+    }
 
     private void OnPlayerChanged() => Dispatcher.UIThread.Post(ShowPlayback);
 
@@ -239,7 +278,7 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         }
 
         _top.Children.Add(JumpRow());
-        _top.Children.Add(Detached(_bar));
+        _top.Children.Add(Detached(_barArea));
         ShowPickers();
         ShowPlayback();
     }
@@ -379,33 +418,54 @@ public sealed class StoryRunPage : UserControl, IPageSummary
 
         if (playback is null)
         {
-            _bar.IsVisible = false;
+            _barArea.IsVisible = false;
             _bar.Child = null;
+            _barBelow.Children.Clear();
+            _countdown = null;
+            _countdownTick.Stop();
             return;
         }
 
-        _bar.IsVisible = true;
-        ThemeInk.Bind(_bar, Border.BorderBrushProperty, playback.IsPaused ? ThemeManager.AKey : ThemeManager.CyanKey);
-        ThemeInk.Bind(_bar, Border.BackgroundProperty, playback.IsPaused ? ThemeManager.TileKey : ThemeManager.CyanGroundKey);
+        var state = playback.IsPaused ? (StoryRunLineState?)null : playback.State;
+        var edgeKey = playback.IsPaused ? ThemeManager.AKey : state == StoryRunLineState.Held ? ThemeManager.GreyKey : ThemeManager.CyanKey;
+        var groundKey = playback.IsPaused ? ThemeManager.TileKey : state == StoryRunLineState.Held ? ThemeManager.SlabKey : ThemeManager.CyanGroundKey;
+        var labelKey = playback.IsPaused ? ThemeManager.AKey : state == StoryRunLineState.Held ? ThemeManager.WhiteKey : ThemeManager.CyanKey;
+
+        _barArea.IsVisible = true;
+        ThemeInk.Bind(_bar, Border.BorderBrushProperty, edgeKey);
+        ThemeInk.Bind(_bar, Border.BackgroundProperty, groundKey);
 
         var line = playback.Line;
-        var place = $"{(playback.Index + 1).ToString(CultureInfo.InvariantCulture)} of {playback.Lines.Count.ToString(CultureInfo.InvariantCulture)} · {MessagesView.Sender(line.From)}";
+        var speaker = MessagesView.Sender(line.From);
+        var place = $"{(playback.Index + 1).ToString(CultureInfo.InvariantCulture)} of {playback.Lines.Count.ToString(CultureInfo.InvariantCulture)} · {speaker}";
         var label = Typeset.Chrome(
-            (playback.IsPaused ? $"Paused · {place}" : $"Playing {place}").ToUpperInvariant(),
+            (state switch
+            {
+                null => $"Paused · {place}",
+                StoryRunLineState.SpeakingAgain => $"{SpeakingAgainLabel} · {place}",
+                StoryRunLineState.Held => $"{ShownForReadingLabel} · {place}",
+                _ => $"Playing {place}",
+            }).ToUpperInvariant(),
             TypeScale.Meta,
-            playback.IsPaused ? ThemeManager.AKey : ThemeManager.CyanKey,
+            labelKey,
             weight: FontWeight.SemiBold,
             tracking: TypeScale.Meta * Fonts.ChromeTracking);
         var text = Typeset.Prose(line.Body, TypeScale.Description, ThemeManager.WhiteKey, trimming: TextTrimming.CharacterEllipsis);
         var sub = Typeset.Prose(
             playback.Pause switch
             {
-                StoryRunPause.None => SilencedText,
                 StoryRunPause.PushToTalk => PushToTalkText,
+                StoryRunPause.None => state switch
+                {
+                    StoryRunLineState.SpeakingAgain => SpeakingAgainText(speaker),
+                    StoryRunLineState.Held => HeldText,
+                    _ => SilencedText,
+                },
                 _ => PausedText,
             },
             TypeScale.Meta,
             ThemeManager.GreyKey);
+        sub.TextWrapping = TextWrapping.Wrap;
 
         var middle = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, Children = { label, text, sub } };
         var player = _surface.RunPlayer!;
@@ -417,12 +477,61 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         skip.Name = "PlaybackSkip";
         stop.Name = "PlaybackStop";
 
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 14 };
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 14 };
         grid.Children.Add(_entries.Pictured(middle, StoryRunPlayer.PictureOf(line)));
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { pause, skip, stop } };
-        Grid.SetColumn(actions, 1);
+        Grid.SetColumn(actions, 2);
         grid.Children.Add(actions);
+        _barBelow.Children.Clear();
+        _countdown = null;
+
+        if (state == StoryRunLineState.Held)
+        {
+            _countdown = Typeset.Mono(string.Empty, TypeScale.Meta, ThemeManager.WhiteKey);
+            _countdown.Name = CountdownName;
+            _countdown.VerticalAlignment = VerticalAlignment.Center;
+            Grid.SetColumn(_countdown, 1);
+            grid.Children.Add(_countdown);
+            ShowCountdown();
+            _countdownTick.Start();
+
+            _barBelow.Children.Add(new Notice(NoticeLevel.Warning, inline: true)
+            {
+                Label = NoVoiceLabel,
+                Text = StoryRunVoicing.Why(playback.Hold),
+                Detail = playback.HoldDetail,
+            });
+        }
+        else
+        {
+            _countdownTick.Stop();
+        }
+
+        if (state == StoryRunLineState.SpeakingAgain)
+        {
+            var track = Gauge.Track(playback.Progress, ThemeManager.AKey);
+            track.Width = 220;
+            track.VerticalAlignment = VerticalAlignment.Center;
+            var generating = Typeset.Mono(GeneratingText, TypeScale.Meta, ThemeManager.GreyKey);
+            generating.VerticalAlignment = VerticalAlignment.Center;
+            _barBelow.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { track, generating } });
+        }
+
+        _barBelow.IsVisible = _barBelow.Children.Count > 0;
         _bar.Child = grid;
+    }
+
+    /// <summary>Shows the reading time a held line has left, in minutes and seconds.</summary>
+    private void ShowCountdown()
+    {
+        if (_countdown is null || Playback is not { State: StoryRunLineState.Held, HeldUntil: { } until } || _surface.RunPlayer is not { } player)
+        {
+            _countdownTick.Stop();
+            return;
+        }
+
+        var left = Math.Max(0, (int)Math.Ceiling((until - player.Time.GetUtcNow()).TotalSeconds));
+        _countdown.Text = $"{(left / 60).ToString(CultureInfo.InvariantCulture)}:{(left % 60).ToString("00", CultureInfo.InvariantCulture)}";
     }
 
     private static Button BarButton(string label, Action act)
@@ -562,6 +671,15 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         text.Margin = new Thickness(0, 4, 0, 0);
 
         var words = new StackPanel { Children = { head, text } };
+
+        if (line.Clip is null && (_surface.PlayRunLine is not null || _surface.RunPlayer is not null))
+        {
+            var note = Typeset.Prose(NoClipNote, TypeScale.Meta, ThemeManager.GreyKey);
+            note.Name = "NoClipNote";
+            note.TextWrapping = TextWrapping.Wrap;
+            note.Margin = new Thickness(0, 6, 0, 0);
+            words.Children.Add(note);
+        }
         var pictured = _entries.Pictured(words, StoryRunPlayer.PictureOf(line));
 
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 14 };
@@ -593,7 +711,7 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         }
         else
         {
-            if (line.Clip is not null && _surface.PlayRunLine is { } play && _run is { } run)
+            if (_surface.PlayRunLine is { } play && _run is { } run)
             {
                 var button = new Button { Name = "PlayLine", Content = "Play", MinHeight = TypeScale.MinimumTarget };
                 button.Click += async (_, _) =>

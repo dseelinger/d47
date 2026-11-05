@@ -171,7 +171,14 @@ public sealed class AppHost : IDisposable
         _audioSink = audioSink;
         _outputFollow = new DefaultDeviceFollowPolicy(audioSink);
         Audio = audio;
-        RunPlayer = new StoryRunPlayer(audio, RunLineClip);
+        RunVoicing = new StoryRunVoicing(
+            () => Stories?.Records,
+            () => GameState.Active?.Identity.FrontierId,
+            AddressedVoices.LineSpeech,
+            ForgottenVoice,
+            (speech, text, progress) => voice.RenderAsync(text, speech.Role, speech.Voice, speech.Pinned, progress),
+            _logger);
+        RunPlayer = new StoryRunPlayer(audio, RunLineClip, speakAgain: RunVoicing.SpeakAsync);
         MusicRejects = new MusicRejects(paths.MusicRejects, files);
         Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects, deleteFile: RecycleFile);
         _cues = cues;
@@ -420,6 +427,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Play all on a story run's page; it keeps playing when the page is left.</summary>
     public StoryRunPlayer RunPlayer { get; }
+
+    /// <summary>Speaks again a story run's line that kept no clip, and keeps the clip it makes.</summary>
+    public StoryRunVoicing RunVoicing { get; }
 
     /// <summary>The ambience layer and its pause, next and resume (Phase 12).</summary>
     public AmbientMusic Music { get; }
@@ -5211,19 +5221,25 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>
-    /// Plays the clip a story run's record kept for <paramref name="line"/>, as <see cref="PlayMessage"/> plays a message's.
-    /// Returns why it cannot, or null once it is queued. Reads the file, so call it off the UI thread.
+    /// Plays the clip a story run's record kept for <paramref name="line"/>, as <see cref="PlayMessage"/> plays a message's, or
+    /// one made now in the speaker's current voice when it kept none. Returns why it cannot, or null once it is queued.
+    /// Reads the file, so call it off the UI thread.
     /// </summary>
-    public string? PlayRunLine(D47.Core.Stories.Story run, D47.Core.Stories.StoryRunLine line)
+    public async Task<string?> PlayRunLine(D47.Core.Stories.Story run, D47.Core.Stories.StoryRunLine line)
     {
         ArgumentNullException.ThrowIfNull(run);
         ArgumentNullException.ThrowIfNull(line);
 
         if (RunLineClip(run, line) is not { } clip)
         {
-            return line.Clip is null
-                ? "That line was not spoken."
-                : "Its recording could not be read on this PC.";
+            var spoken = await RunVoicing.SpeakAsync(run, line).ConfigureAwait(false);
+
+            if (spoken.Clip is null)
+            {
+                return StoryRunVoicing.Why(spoken.Hold) + (spoken.Detail is { Length: > 0 } detail ? $" {detail}" : string.Empty);
+            }
+
+            clip = spoken.Clip;
         }
 
         RunPlayer.Stop();
@@ -5239,6 +5255,12 @@ public sealed class AppHost : IDisposable
 
         return null;
     }
+
+    /// <summary>Whether <paramref name="voiceId"/> is the Commander's own or custom voice and has been deleted.</summary>
+    private bool ForgottenVoice(string voiceId) =>
+        string.Equals(voiceId, D47.Core.Audio.OwnVoice.VoiceId, StringComparison.OrdinalIgnoreCase)
+            ? !OwnVoice.Exists
+            : D47.Core.Audio.CustomVoices.IsId(voiceId) && CustomVoices.List().All(voice => voice.Id != voiceId);
 
     /// <summary>The clip a story run's record kept for a line, in the standard format, or null. Reads the file.</summary>
     private AudioClip? RunLineClip(D47.Core.Stories.Story run, D47.Core.Stories.StoryRunLine line) =>

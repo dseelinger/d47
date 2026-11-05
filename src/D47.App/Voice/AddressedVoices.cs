@@ -155,6 +155,37 @@ internal sealed class AddressedVoices(
     public string? SpeakerPicture(VoiceRole role) =>
         D47.Core.Interface.SpeakerPictures.ByVoice(role, RoleGender(role), Flying);
 
+    /// <summary>
+    /// Who speaks a story run's recorded line now: a cast member in the voice they speak in today, the Narrator in the
+    /// Narrator's voice, and anyone else in the ship's. Null for a cast member no story on disk has.
+    /// </summary>
+    public StoryLineSpeech? LineSpeech(StoryRunLine line)
+    {
+        ArgumentNullException.ThrowIfNull(line);
+
+        if (line.Cast is { } key)
+        {
+            if (stories()?.CastMember(key) is not { } member)
+            {
+                return null;
+            }
+
+            var spoken = new Announcement(StoryLines.KeyPrefix, string.Empty)
+            {
+                Voice = VoiceRole.Crew,
+                Speaker = member.Shown.Name,
+                Pinned = member.Speaks,
+            };
+
+            return new StoryLineSpeech(VoiceRole.Crew, SpeakerAccent.VoiceOf(CastFor(spoken), spoken) with { Language = member.Language }, member.Speaks);
+        }
+
+        var role = line.From == D47.Core.Messages.MessageStore.Narrator ? VoiceRole.Narrator : VoiceRole.ShipAi;
+        var said = new Announcement(role == VoiceRole.Narrator ? NarratorCallout.KeyPrefix : string.Empty, string.Empty) { Voice = role };
+
+        return new StoryLineSpeech(role, CastFor(said).For(role));
+    }
+
     /// <summary>The voice of the running story's cast member answering a turn, or null for any other speaker.</summary>
     private StoryLineVoice? CastVoice(TurnEvent.Addressed addressed) =>
         addressed.Cast is { } castId && stories()?.LineVoice(gameState.Active?.Identity.FrontierId, castId) is { Cast: not null } cast

@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.App.Voice;
 
+/// <summary>A line rendered without playing it: the clip, or the provider's reason it could not be; both null when nothing can speak it.</summary>
+public sealed record RenderedLine(SpokenClip? Clip, string? Failure);
+
 /// <summary>One turn, made audible.</summary>
 /// <param name="cues">
 /// Asked for each time rather than held, because the library is rebuilt when the Commander drops a file
@@ -401,6 +404,81 @@ public sealed class VoicePipeline(
         }
 
         return new D47.Core.Stories.FallingBackTtsProvider(client, story, fallbackVoice, Failed);
+    }
+
+    /// <summary>
+    /// Renders <paramref name="text"/> with the client and treatment a line spoken as <paramref name="role"/>, or by a cast member
+    /// in <paramref name="pinned"/>, gets, without queuing it to play or counting a failure against a slot.
+    /// </summary>
+    /// <param name="voice">The voice for the role, or for a cast member in the crew voice.</param>
+    /// <param name="progress">Raised with the share of sentences rendered so far, on any thread.</param>
+    public async Task<RenderedLine> RenderAsync(
+        string text, VoiceRole role, VoiceSelection voice, D47.Core.Stories.PinnedVoice? pinned, Action<double>? progress = null)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        ArgumentNullException.ThrowIfNull(voice);
+
+        ITtsProvider? provider;
+        Func<AudioClip, AudioClip>? colour;
+
+        if (pinned is { IsCrewVoice: true, Fallback: null } crew)
+        {
+            provider = Speaker(VoiceGroup.Aboard);
+            colour = D47.Core.Stories.CastVoice.Treatment(crew);
+        }
+        else if (pinned is not null)
+        {
+            provider = CastSpeaker(pinned);
+            voice = new VoiceSelection(pinned.VoiceId) { Language = voice.Language };
+            colour = D47.Core.Stories.CastVoice.Treatment(pinned);
+        }
+        else
+        {
+            provider = Speaker(VoiceGroups.Of(role, null));
+            colour = Colour(role);
+        }
+
+        if (provider is null)
+        {
+            return new RenderedLine(null, null);
+        }
+
+        string? failure = null;
+        var splitter = new SentenceSplitter();
+        var sentences = Math.Max(1, splitter.Push(text).Count + (splitter.Flush() is null ? 0 : 1));
+        var rendered = 0;
+
+        void Noted(SynthesisNote note)
+        {
+            Synthesised?.Invoke(note);
+            progress?.Invoke(Math.Min(1, (double)Interlocked.Increment(ref rendered) / sentences));
+        }
+
+        // No running filter: an arriving clip is awaited whole and coloured, since nothing plays it as it arrives.
+        await using var speech = new SpeechPipeline(
+            arbiter,
+            provider,
+            Introduce(voice),
+            "story-line-render",
+            loggers.CreateLogger<SpeechPipeline>(),
+            AudioChannel.Speech,
+            colour,
+            role.ToString(),
+            captioned: false,
+            Noted,
+            address: _address,
+            guardianTreated: IsGuardianTreated(role, colour),
+            keep: true,
+            voiceRow: SpeechCapability.VoiceRowFor(role),
+            queue: false);
+
+        speech.SynthesisFailed += said => failure ??= said.Text;
+        speech.Push(text);
+        await speech.CompleteAsync().ConfigureAwait(false);
+
+        return speech.Failures == 0 && speech.Kept is { } kept
+            ? new RenderedLine(kept, null)
+            : new RenderedLine(null, failure ?? $"{provider.Name} returned no audio.");
     }
 
     /// <summary>Speaks through <paramref name="provider"/> with the treatment already chosen, and returns what was queued.</summary>

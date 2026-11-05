@@ -437,13 +437,12 @@ length, chapters so far, clues given, and the days it was picked and last spoke.
 record holds, in order, in one section per chapter with the chapter's name and the day of its first line. A clue,
 reaction, ending or other story line said between chapters is listed under the chapter before it. Each line shows
 the speaker's picture and name, its kind (Chapter beat, Clue, Reaction, Ending or Story line), the time and the
-text, with **Play** when its clip was kept; Play plays it as a message's Play does, a clip in your own voice
-included. **Jump to** has two lists that open in the page: **Chapter**, then **Beat** within that chapter.
+text, and **Play**. Play plays a kept clip as a message's Play does, a clip in your own voice included. **Jump to** has two lists that open in the page: **Chapter**, then **Beat** within that chapter.
 Choosing one scrolls the page to it. A run from before the record was kept says **No lines kept** and shows each
 chapter's text as it was told instead.
 
 **Play all**, on every line and at the end of the Jump to row, plays the run's lines in order from that line, or from
-the chosen chapter or beat. A line with no kept clip is skipped. The line playing is marked **▶ Playing** on a cyan
+the chosen chapter or beat. The line playing is marked **▶ Playing** on a cyan
 ground, and a bar under Jump to shows the speaker's picture, **Playing 23 of 142** with the speaker's name, the line,
 and **Pause**, **Skip** and **Stop**. While it plays, other speech is silenced: an answer, a callout or radio chatter
 from anywhere else is dropped, not saved for later. Music, ambience and cues play as usual. A danger alert pauses
@@ -451,6 +450,20 @@ playback and is spoken; so does pressing push-to-talk, whose turn runs and whose
 **Paused for push-to-talk. Press PLAY to carry on.** Playback stays paused until you press **Play**, which plays the
 paused line again from its start. It keeps playing when you leave the page. The shut-up control, or **Play** on a
 single line or message, stops it.
+
+A line whose clip was not kept says **No clip kept. Played, it is spoken again in the speaker's current voice.** That
+covers a line posted with speech off, one whose synthesis failed, one in a voice you deleted, and a clip file that is
+missing or cannot be read. Play or Play all speaks it in the voice its speaker has now: a cast member in the voice chosen
+for them or else the story's own, the Narrator's and a core's from the current voices. Each one is billed as speaking any line
+is, by the provider that voice belongs to. The new clip is kept in the run's record, so the line is synthesised once. During
+Play all the next such line is made while the line before it plays, and while a line is made the bar reads
+**Speaking again · 24 of 142** with the speaker and a gauge. A line in a voice you asked to forget, your own
+recording or a deleted custom voice, is never spoken again in it.
+
+A line that cannot be spoken, because no voice provider is set up, the provider fails, or its voice was forgotten,
+is shown for reading instead: half a second a word, at least four seconds, and then Play all moves on. The bar
+reads **Shown for reading · 25 of 142** with a countdown, and a **No voice for this line** notice says why, with the
+provider's error. Pause and Skip work as for a spoken line; Play after a pause shows the line again from the start of its time.
 
 With no runs the page says so and offers **Open the Catalogue**. Started with `D47_STORY_BENCH=1`, the Jump,
 Beats and Checkpoints sections for testing the active story follow the list; without it they are absent.

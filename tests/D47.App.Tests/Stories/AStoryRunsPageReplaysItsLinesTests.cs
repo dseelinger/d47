@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -58,7 +59,7 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
 
     private static SpokenClip Spoken() => new([new AudioClip("line", new byte[960], AudioFormat.Standard)], "kokoro", "voice-a");
 
-    private static Rig Open(bool lines = true, bool headset = false)
+    private static Rig Open(bool lines = true, bool headset = false, Func<Story, StoryRunLine, Action<double>, Task<SpokenAgain>>? speakAgain = null)
     {
         var files = new MemoryFileSystem();
         var book = new AdventureBook(
@@ -106,7 +107,8 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         var player = new StoryRunPlayer(
             new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start(),
             (_, line) => line.Clip is null ? null : new AudioClip(line.Body, new byte[960], AudioFormat.Standard),
-            work => work());
+            work => work(),
+            speakAgain);
         var surface = new AdventureSurface(
             book, generator, () => null, () => Commander, () => Now, _ => { }, () => true, () => null, () => { },
             Messages: messages, Stories: director,
@@ -117,7 +119,7 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
                     played.Add(line);
                 }
 
-                return null;
+                return Task.FromResult<string?>(null);
             },
             RunPlayer: player);
 
@@ -253,14 +255,19 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
     }
 
     [AvaloniaFact]
-    public void PlayPlaysTheLinesRecordedClipAndALineWithoutOneHasNoPlay()
+    public void PlayPlaysTheLinesRecordedClipAndALineWithoutOneHasPlayAndTheNoClipNote()
     {
         var rig = Open();
         var page = Opened(rig);
 
         var plays = page.GetVisualDescendants().OfType<Button>().Where(button => button.Name == "PlayLine" && button.IsEffectivelyVisible).ToList();
+        var notes = page.GetVisualDescendants().OfType<TextBlock>().Count(text => text.Text == StoryRunPage.NoClipNote && text.IsEffectivelyVisible);
+
         Assert.NotEmpty(plays);
-        Assert.True(plays.Count < page.Rows.OfType<StoryRunEntry>().Count());
+        Assert.True(notes > 0);
+        Assert.Equal(
+            page.GetVisualDescendants().OfType<Button>().Count(button => button.Name == "PlayAllLine" && button.IsEffectivelyVisible),
+            plays.Count);
 
         Press(plays[0]);
 
@@ -321,6 +328,61 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         Assert.Contains("PLAYING " + Place(page, 9), Drawn(page));
         Assert.Equal(["ch1 The lights go out 0", "ch1 The second ring 0"], rig.Sink.Names);
 
+        rig.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ALineWithNoClipShowsSpeakingAgainThenShownForReading()
+    {
+        var asked = new Dictionary<string, TaskCompletionSource<SpokenAgain>>(StringComparer.Ordinal);
+        var rig = Open(speakAgain: (_, line, _) =>
+        {
+            lock (asked)
+            {
+                if (!asked.TryGetValue(line.Body, out var answer))
+                {
+                    asked[line.Body] = answer = new TaskCompletionSource<SpokenAgain>();
+                }
+
+                return answer.Task;
+            }
+        });
+        var page = Opened(rig);
+
+        // The second line keeps no clip.
+        Press(page.GetVisualDescendants().OfType<Button>().Where(button => button.Name == "PlayAllLine" && button.IsEffectivelyVisible).ElementAt(1));
+
+        var drawn = Drawn(page);
+        Assert.Contains($"{StoryRunPage.SpeakingAgainLabel} · {Place(page, 2)}".ToUpperInvariant(), drawn);
+        Assert.Contains(StoryRunPage.SpeakingAgainText(MessagesView.Sender(MessageStore.Narrator)), drawn);
+        Assert.Contains(StoryRunPage.GeneratingText, drawn);
+        using (var frame = ((Window)TopLevel.GetTopLevel(page)!).CaptureRenderedFrame()!)
+        {
+            frame.SaveCapture("story-run-speaking-again.png");
+        }
+
+        asked["ch1 The lights go out 1"].SetResult(SpokenAgain.Held(StoryLineHold.Failed, "HTTP 503 · ELEVENLABS"));
+        var held = $"{StoryRunPage.ShownForReadingLabel} · {Place(page, 2)}".ToUpperInvariant();
+
+        for (var attempt = 0; attempt < 200 && !Drawn(page).Contains(held); attempt++)
+        {
+            Thread.Sleep(5);
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        drawn = Drawn(page);
+        Assert.Contains($"{StoryRunPage.ShownForReadingLabel} · {Place(page, 2)}".ToUpperInvariant(), drawn);
+        Assert.Contains(StoryRunPage.HeldText, drawn);
+        Assert.Contains("0:04", drawn);
+        Assert.Contains(StoryRunPage.NoVoiceLabel, drawn, StringComparer.OrdinalIgnoreCase);
+        Assert.Contains(StoryRunVoicing.Why(StoryLineHold.Failed), drawn);
+        Assert.Contains(drawn, text => text.Contains("HTTP 503", StringComparison.Ordinal));
+        using (var frame = ((Window)TopLevel.GetTopLevel(page)!).CaptureRenderedFrame()!)
+        {
+            frame.SaveCapture("story-run-shown-for-reading.png");
+        }
+
+        rig.Player.Stop();
         rig.Window.Close();
     }
 

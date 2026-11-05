@@ -294,7 +294,8 @@ public partial class MainWindow : Window
                         ToolCaller.Commander),
                     () => host.ShipPicture,
                     host.PlayRunLine,
-                    host.RunPlayer);
+                    host.RunPlayer,
+                    host.RunVoicing);
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey), desk: host.AdventureDesk);

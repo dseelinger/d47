@@ -220,6 +220,42 @@ public sealed class StoryRunRecord(
         }
     }
 
+    /// <summary>Keeps <paramref name="spoken"/> as the clip of a recorded line; the line with it, or null when it could not be kept.</summary>
+    public StoryRunLine? KeepClip(string? frontierId, Story run, StoryRunLine line, SpokenClip spoken)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        ArgumentNullException.ThrowIfNull(line);
+        ArgumentNullException.ThrowIfNull(spoken);
+
+        if (Encode(line.Key, spoken) is not var (file, bytes))
+        {
+            return null;
+        }
+
+        var runFolder = RunFolder(frontierId, run);
+        var voice = new MessageVoice(spoken.Provider, spoken.VoiceId);
+        var entry = new StoryRunLine { Key = line.Key, Clip = file, Voice = voice };
+
+        lock (_gate)
+        {
+            try
+            {
+                if (!Keep(runFolder, line.Key, file, bytes))
+                {
+                    return null;
+                }
+
+                files.AppendText(Path.Combine(runFolder, LinesFile), JsonSerializer.Serialize(entry, Json) + "\n");
+                return line with { Clip = file, Voice = voice };
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                logger.LogWarning(ex, "Could not record the clip of message {Key} in {Folder}", line.Key, runFolder);
+                return null;
+            }
+        }
+    }
+
     /// <summary>
     /// Fills the record of each run that has none from <paramref name="messages"/>, by the keys <see cref="Posted"/> uses, and
     /// returns the number of runs filled. A run with a record is left alone. Lines keep their time and order; a line whose

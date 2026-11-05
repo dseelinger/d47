@@ -22,6 +22,9 @@ public sealed record SynthesisNote(
 public sealed class SpeechPipeline : IAsyncDisposable
 {
     private readonly AudioArbiter _arbiter;
+
+    /// <summary>Whether rendered clips are queued to play; when false they are only kept, and a silence does not abandon them.</summary>
+    private readonly bool _queue;
     private readonly ITtsProvider _tts;
 
     /// <summary>The voice in force.</summary>
@@ -149,9 +152,11 @@ public sealed class SpeechPipeline : IAsyncDisposable
         Func<IPcmFilter>? running = null,
         string? voiceRow = null,
         string? picture = null,
-        string? utteranceCaption = null)
+        string? utteranceCaption = null,
+        bool queue = true)
     {
         _arbiter = arbiter;
+        _queue = queue;
         _tts = tts;
         _voice = voice;
         _group = group;
@@ -171,7 +176,10 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _utteranceCaption = utteranceCaption is { Length: > 0 } ? utteranceCaption : null;
 
         // Shut up has to reach synthesis, not just the queue.
-        _arbiter.Silenced += Abandon;
+        if (_queue)
+        {
+            _arbiter.Silenced += Abandon;
+        }
 
         _drain = DrainAsync();
     }
@@ -562,15 +570,18 @@ public sealed class SpeechPipeline : IAsyncDisposable
 
                 firstRequest = false;
 
-                _arbiter.Enqueue(new AudioRequest
+                if (_queue)
                 {
-                    Channel = _channel,
-                    Clip = spoken.Clip,
-                    Arriving = spoken.Arriving,
-                    Group = _group,
-                    Caption = caption,
-                    Picture = _picture,
-                });
+                    _arbiter.Enqueue(new AudioRequest
+                    {
+                        Channel = _channel,
+                        Clip = spoken.Clip,
+                        Arriving = spoken.Arriving,
+                        Group = _group,
+                        Caption = caption,
+                        Picture = _picture,
+                    });
+                }
 
                 var whole = spoken.Arriving?.Whole ?? Task.FromResult(spoken.Clip!);
 
@@ -597,7 +608,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// <summary>Writes down what was spoken, beside <see cref="Record"/>'s note of who spoke it.</summary>
     private void Said(System.Text.StringBuilder said)
     {
-        if (said.Length == 0)
+        if (said.Length == 0 || !_queue)
         {
             return;
         }
