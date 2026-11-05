@@ -3379,6 +3379,18 @@ public sealed class AppHost : IDisposable
         // A story's opening is said before any beat of its chapter one.
         late.StoryOpening = commander => storyDirector.OpeningWaits(commander) || host.Narration.IsSayingOpening;
 
+        // Wired while the story bench runs too; runs are told apart by when they were picked.
+        var runRecords = new D47.Core.Stories.StoryRunRecord(
+            files,
+            foundations.Data("story-runs"),
+            stores.StoryStore,
+            () => gameState.Active?.Identity.FrontierId,
+            host.ClipCompressor,
+            new DpapiSecretProtector(),
+            foundations.Log<D47.Core.Stories.StoryRunRecord>());
+        messageStore.Record = runRecords;
+        storyDirector.Records = runRecords;
+
         // Deleting the recording deletes every clip spoken in it; the messages keep their text.
         host.OwnVoice.Changed += () =>
         {

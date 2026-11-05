@@ -1,0 +1,400 @@
+using System.Collections.Concurrent;
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text.Json;
+using D47.Core.Audio;
+using D47.Core.Configuration;
+using D47.Core.Messages;
+using D47.Core.Storage;
+using Microsoft.Extensions.Logging;
+
+namespace D47.Core.Stories;
+
+/// <summary>One line a story run posted, as its record keeps it.</summary>
+public sealed record StoryRunLine
+{
+    public DateTimeOffset Sent { get; init; }
+
+    public string From { get; init; } = string.Empty;
+
+    public string? Cast { get; init; }
+
+    public string? Picture { get; init; }
+
+    public string Subject { get; init; } = string.Empty;
+
+    public string Body { get; init; } = string.Empty;
+
+    /// <summary>The message key it was posted under.</summary>
+    public string Key { get; init; } = string.Empty;
+
+    public string? AdventureKey { get; init; }
+
+    /// <summary>The clip's file name in the run's folder.</summary>
+    public string? Clip { get; init; }
+
+    /// <summary>The provider and voice that spoke the clip.</summary>
+    public MessageVoice? Voice { get; init; }
+}
+
+/// <summary>
+/// Each stock story run's own record in <c>data\story-runs\&lt;run&gt;\</c>: the lines it posted, appended to
+/// <see cref="LinesFile"/>, and their clips compressed, a clip in the Commander's own voice protected. Lines of no stock story
+/// are not kept.
+/// </summary>
+public sealed class StoryRunRecord(
+    IFileSystem files,
+    string folder,
+    StoryStore stories,
+    Func<string?> commander,
+    IClipCompressor? compressor,
+    ISecretProtector protector,
+    ILogger logger) : IMessageRecord
+{
+    public const string LinesFile = "lines.jsonl";
+
+    private const string NoCommanderSegment = "none";
+
+    private static readonly JsonSerializerOptions Json = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+    };
+
+    private readonly Lock _gate = new();
+
+    /// <summary>The run folder of each line posted this session, by message key, for a clip attached after the post.</summary>
+    private readonly ConcurrentDictionary<string, string> _runOf = new(StringComparer.Ordinal);
+
+    /// <summary>The run's folder name: the Commander, the story id and <see cref="Story.PickedAt"/> to the tick, in UTC.</summary>
+    public static string FolderName(string? frontierId, string storyId, DateTimeOffset pickedAt)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(storyId);
+
+        var who = string.IsNullOrEmpty(frontierId) ? NoCommanderSegment : frontierId;
+        var at = pickedAt.UtcDateTime.ToString("yyyyMMdd'T'HHmmssfffffff'Z'", CultureInfo.InvariantCulture);
+
+        return $"{Segment(who)}_{Segment(storyId)}_{at}";
+    }
+
+    /// <summary>The run's lines in the order they were posted, each with the newest clip attached to it.</summary>
+    public IReadOnlyList<StoryRunLine> Read(string? frontierId, Story run)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        lock (_gate)
+        {
+            return Fold(Path.Combine(RunFolder(frontierId, run), LinesFile));
+        }
+    }
+
+    public void Posted(D47Message message, SpokenClip? spoken)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        if (message.AdventureKey is not { } key || RunOf(key) is not var (frontierId, run))
+        {
+            return;
+        }
+
+        var runFolder = RunFolder(frontierId, run);
+        var clip = spoken is null ? null : Encode(message.Key, spoken);
+
+        var line = new StoryRunLine
+        {
+            Sent = message.Sent,
+            From = message.From,
+            Cast = message.Cast,
+            Picture = message.Picture,
+            Subject = message.Subject,
+            Body = message.Body,
+            Key = message.Key,
+            AdventureKey = key,
+        };
+
+        _runOf[message.Key] = runFolder;
+
+        lock (_gate)
+        {
+            try
+            {
+                if (clip is var (file, bytes) && Keep(runFolder, message.Key, file, bytes))
+                {
+                    line = line with { Clip = file, Voice = new MessageVoice(spoken!.Provider, spoken.VoiceId) };
+                }
+
+                files.AppendText(Path.Combine(runFolder, LinesFile), JsonSerializer.Serialize(line, Json) + "\n");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                logger.LogWarning(ex, "Could not record message {Key} in {Folder}", message.Key, runFolder);
+            }
+        }
+    }
+
+    public void Attached(string messageKey, SpokenClip spoken)
+    {
+        ArgumentNullException.ThrowIfNull(spoken);
+
+        if (!_runOf.TryGetValue(messageKey, out var runFolder) || Encode(messageKey, spoken) is not var (file, bytes))
+        {
+            return;
+        }
+
+        var entry = new StoryRunLine { Key = messageKey, Clip = file, Voice = new MessageVoice(spoken.Provider, spoken.VoiceId) };
+
+        lock (_gate)
+        {
+            try
+            {
+                if (Keep(runFolder, messageKey, file, bytes))
+                {
+                    files.AppendText(Path.Combine(runFolder, LinesFile), JsonSerializer.Serialize(entry, Json) + "\n");
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                logger.LogWarning(ex, "Could not record the clip of message {Key} in {Folder}", messageKey, runFolder);
+            }
+        }
+    }
+
+    public void ForgetOwnVoice() => Forget(line => MessageStore.SpokenInOwnVoice(line.Voice));
+
+    public void ForgetCustomVoice(string voiceId) =>
+        Forget(line => string.Equals(line.Voice?.Id, voiceId, StringComparison.Ordinal));
+
+    /// <summary>Deletes the run's lines and clips.</summary>
+    public void Delete(string? frontierId, Story run)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        var runFolder = RunFolder(frontierId, run);
+
+        lock (_gate)
+        {
+            try
+            {
+                foreach (var path in files.Enumerate(runFolder, "*", recursive: true))
+                {
+                    files.Delete(path);
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                logger.LogWarning(ex, "Could not delete the record in {Folder}", runFolder);
+            }
+        }
+
+        foreach (var pair in _runOf.Where(pair => string.Equals(pair.Value, runFolder, StringComparison.OrdinalIgnoreCase)))
+        {
+            _runOf.TryRemove(pair);
+        }
+    }
+
+    /// <summary>
+    /// The run a line belongs to: for a story-level key, the Commander's current run of that story or else its newest;
+    /// for a chapter key, the run that lists the chapter.
+    /// </summary>
+    private (string? FrontierId, Story Run)? RunOf(string key)
+    {
+        var frontierId = commander();
+
+        if (StoryLog.StoryIdOf(key) is { } storyId)
+        {
+            var current = stories.Current(frontierId);
+            var run = current is not null && string.Equals(current.Id, storyId, StringComparison.OrdinalIgnoreCase)
+                ? current
+                : stories.Find(frontierId, storyId);
+
+            return run is null ? null : (frontierId, run);
+        }
+
+        if (stories.For(frontierId).FirstOrDefault(run => run.Chapters.Contains(key, StringComparer.Ordinal)) is { } mine)
+        {
+            return (frontierId, mine);
+        }
+
+        foreach (var (other, run) in stories.All())
+        {
+            if (run.Chapters.Contains(key, StringComparer.Ordinal))
+            {
+                return (other, run);
+            }
+        }
+
+        return null;
+    }
+
+    private string RunFolder(string? frontierId, Story run) => Path.Combine(folder, FolderName(frontierId, run.Id, run.PickedAt));
+
+    /// <summary>The clip compressed, or as a WAV when compression fails; protected when it is in the Commander's own voice.</summary>
+    private (string File, byte[] Bytes)? Encode(string messageKey, SpokenClip spoken)
+    {
+        if (spoken.Parts.Count == 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            var clip = spoken.Joined(messageKey);
+            var compressed = compressor?.Compress(clip);
+            var bytes = compressed?.Bytes ?? WavWriter.ToBytes(clip.Pcm.Span, clip.Format);
+            var file = messageKey + (compressed?.Extension ?? MessageClips.PlainExtension);
+
+            if (spoken.Own)
+            {
+                var plain = bytes;
+                bytes = protector.Protect(plain);
+                Array.Clear(plain);
+                file += MessageClips.ProtectedExtension;
+            }
+
+            return (file, bytes);
+        }
+        catch (CryptographicException ex)
+        {
+            logger.LogWarning(ex, "Could not protect the clip of message {Key}", messageKey);
+            return null;
+        }
+    }
+
+    /// <summary>Writes the clip, replacing any other clip of the message. Called holding <see cref="_gate"/>.</summary>
+    private bool Keep(string runFolder, string messageKey, string file, byte[] bytes)
+    {
+        try
+        {
+            foreach (var earlier in files.Enumerate(runFolder, messageKey + ".*"))
+            {
+                if (!string.Equals(Path.GetFileName(earlier), file, StringComparison.OrdinalIgnoreCase))
+                {
+                    files.Delete(earlier);
+                }
+            }
+
+            files.WriteBytes(Path.Combine(runFolder, file), bytes);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(ex, "Could not keep the clip of message {Key} in {Folder}", messageKey, runFolder);
+            return false;
+        }
+    }
+
+    /// <summary>Deletes every protected clip <paramref name="spokenInIt"/> picks, in every run, and clears its line's clip and voice.</summary>
+    private void Forget(Func<StoryRunLine, bool> spokenInIt)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<string> records;
+
+            try
+            {
+                records = files.Enumerate(folder, LinesFile, recursive: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                logger.LogWarning(ex, "Could not list the story run records in {Folder}", folder);
+                return;
+            }
+
+            foreach (var path in records)
+            {
+                var runFolder = Path.GetDirectoryName(path)!;
+                var lines = Fold(path).ToList();
+                var changed = false;
+
+                for (var i = 0; i < lines.Count; i++)
+                {
+                    if (lines[i].Clip is { } clip && MessageClips.IsProtected(clip) && spokenInIt(lines[i]))
+                    {
+                        lines[i] = lines[i] with { Clip = null, Voice = null };
+                        changed = true;
+
+                        try
+                        {
+                            files.Delete(Path.Combine(runFolder, Path.GetFileName(clip)));
+                        }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                        {
+                            logger.LogWarning(ex, "Could not delete clip {Clip} in {Folder}", clip, runFolder);
+                        }
+                    }
+                }
+
+                if (!changed)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    files.WriteText(path, string.Concat(lines.Select(line => JsonSerializer.Serialize(line, Json) + "\n")));
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    logger.LogWarning(ex, "Could not write {Path}", path);
+                }
+            }
+        }
+    }
+
+    /// <summary>The lines file read as lines in posting order; an entry for a key already read sets that line's clip and voice.</summary>
+    private List<StoryRunLine> Fold(string path)
+    {
+        string? text;
+
+        try
+        {
+            text = files.ReadText(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(ex, "Could not read {Path}", path);
+            return [];
+        }
+
+        var lines = new List<StoryRunLine>();
+        var at = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        foreach (var raw in (text ?? string.Empty).Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            StoryRunLine? entry;
+
+            try
+            {
+                entry = JsonSerializer.Deserialize<StoryRunLine>(raw, Json);
+            }
+            catch (JsonException)
+            {
+                continue;
+            }
+
+            if (entry is null)
+            {
+                continue;
+            }
+
+            if (at.TryGetValue(entry.Key, out var index))
+            {
+                lines[index] = lines[index] with { Clip = entry.Clip, Voice = entry.Voice };
+            }
+            else
+            {
+                at[entry.Key] = lines.Count;
+                lines.Add(entry);
+            }
+        }
+
+        return lines;
+    }
+
+    private static string Segment(string part)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+
+        return string.Concat(part.Select(c => invalid.Contains(c) || c == '_' ? '-' : c));
+    }
+}

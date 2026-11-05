@@ -411,7 +411,8 @@ lines are bold. Opening a line marks it read. A message that was spoken has a **
 plays the clip it was spoken in; see [Spoken messages keep their clip](speech.md#kept-clips).
 
 The messages live in `data/messages.json`. The file holds the most recent 200; past that the oldest read
-message goes first.
+message goes first. A stock story's lines are also kept in the story's own record in `data/story-runs/`,
+which has no limit; see [Spoken messages keep their clip](speech.md#kept-clips).
 
 Abandoning a story, or switching to another, keeps the messages it posted, as finishing one does: its objectives,
 nudges, clues, beacon scan and ending. An ending question from a stopped story is not listed as waiting for an answer. The messages of a short story you asked for stay

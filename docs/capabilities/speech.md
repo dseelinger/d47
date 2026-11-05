@@ -1180,6 +1180,11 @@ keeps its clip encrypted for your Windows user, like the recording; every other 
 message leaves the Story log, at the 200 limit or with its story, its clip is deleted. Deleting your
 recording deletes every clip spoken in it and keeps those messages' text.
 
+A stock story's lines and their clips are also kept in `data\story-runs\`, in one folder for each time
+the story was picked. These clips are compressed, a clip in your own voice is encrypted the same way,
+and there is no 200 limit: a line leaving the Story log stays there. Deleting your recording or a custom
+voice also deletes the clips there spoken in it, and keeps those lines' text.
+
 #### What the voice providers receive {#egress}
 
 The row states whether anybody else's words are leaving, and to whom, and then which slot is

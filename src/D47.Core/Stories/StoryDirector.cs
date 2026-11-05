@@ -185,6 +185,9 @@ public sealed class StoryDirector(
     /// <summary>Where a story's chapters go once they are neither the current chapter nor the one before it.</summary>
     public StoryChapterArchive Archive { get; set; } = StoryChapterArchive.InMemory();
 
+    /// <summary>Each run's own record of its lines and clips, or null when none is kept.</summary>
+    public StoryRunRecord? Records { get; set; }
+
     /// <summary>The Commander's gender as settings hold it: <see cref="CommanderGender.Man"/>, <see cref="CommanderGender.Woman"/> or null.</summary>
     public Func<string?> Gender { get; set; } = () => null;
 
@@ -726,6 +729,11 @@ public sealed class StoryDirector(
 
         var stopped = stories.RemovePickedBy(frontierId, erasedAt);
         var kept = stories.For(frontierId);
+
+        foreach (var run in stopped)
+        {
+            Records?.Delete(frontierId, run);
+        }
 
         var adventures = book.Store.RemoveWhere(frontierId, adventure =>
             (adventure.AcceptedAt ?? adventure.Written) is not { } at

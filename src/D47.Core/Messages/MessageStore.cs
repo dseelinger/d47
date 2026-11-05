@@ -29,6 +29,9 @@ public sealed class MessageStore(string path, IFileSystem files, ILogger<Message
 
     public event Action? Changed;
 
+    /// <summary>Also keeps what is posted and attached, and forgets voices there too; null keeps nothing more.</summary>
+    public IMessageRecord? Record { get; set; }
+
     /// <summary>Every message, newest first.</summary>
     public IReadOnlyList<D47Message> All
     {
@@ -95,6 +98,7 @@ public sealed class MessageStore(string path, IFileSystem files, ILogger<Message
         }
 
         Changed?.Invoke();
+        Record?.Posted(message, spoken);
         return message;
     }
 
@@ -105,6 +109,8 @@ public sealed class MessageStore(string path, IFileSystem files, ILogger<Message
     public bool Attach(string key, SpokenClip spoken)
     {
         ArgumentNullException.ThrowIfNull(spoken);
+
+        Record?.Attached(key, spoken);
 
         if (SaveClip(key, spoken) is not { } file)
         {
@@ -146,13 +152,24 @@ public sealed class MessageStore(string path, IFileSystem files, ILogger<Message
     /// <summary>
     /// Deletes every clip spoken in the Commander's own voice and keeps those messages' text; returns the count.
     /// </summary>
-    public int ForgetOwnVoice() =>
-        Forget(message => message.Voice?.Id is not { } id
-                          || string.Equals(id, OwnVoice.VoiceId, StringComparison.OrdinalIgnoreCase));
+    public int ForgetOwnVoice()
+    {
+        Record?.ForgetOwnVoice();
+
+        return Forget(message => SpokenInOwnVoice(message.Voice));
+    }
 
     /// <summary>Deletes every clip spoken in custom voice <paramref name="voiceId"/> and keeps those messages' text.</summary>
-    public int ForgetCustomVoice(string voiceId) =>
-        Forget(message => string.Equals(message.Voice?.Id, voiceId, StringComparison.Ordinal));
+    public int ForgetCustomVoice(string voiceId)
+    {
+        Record?.ForgetCustomVoice(voiceId);
+
+        return Forget(message => string.Equals(message.Voice?.Id, voiceId, StringComparison.Ordinal));
+    }
+
+    /// <summary>Whether a protected clip with this voice counts as the Commander's own; one with no voice does.</summary>
+    public static bool SpokenInOwnVoice(MessageVoice? voice) =>
+        voice?.Id is not { } id || string.Equals(id, OwnVoice.VoiceId, StringComparison.OrdinalIgnoreCase);
 
     private int Forget(Func<D47Message, bool> spokenInIt)
     {

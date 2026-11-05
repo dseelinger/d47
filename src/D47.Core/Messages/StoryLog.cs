@@ -63,23 +63,28 @@ public sealed record StoryLog(IReadOnlyList<D47Message> Waiting, IReadOnlyList<S
         return new StoryLog(waitingNow, groups);
     }
 
-    private static string ResolverKey(string key)
+    private static string ResolverKey(string key) => StoryIdOf(key) is { } storyId ? StoryGoal.KeyPrefix + storyId : key;
+
+    /// <summary>The story a line, ending, reaction or clue key belongs to; null for any other key, a chapter's included.</summary>
+    public static string? StoryIdOf(string key)
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         if (key.StartsWith(StoryEnding.KeyPrefix, StringComparison.Ordinal))
         {
-            return StoryGoal.KeyPrefix + key[StoryEnding.KeyPrefix.Length..];
+            return key[StoryEnding.KeyPrefix.Length..];
         }
 
         if (key.StartsWith(StoryLines.KeyPrefix, StringComparison.Ordinal))
         {
-            return StoryGoal.KeyPrefix + key[StoryLines.KeyPrefix.Length..];
+            return key[StoryLines.KeyPrefix.Length..];
         }
 
         if (StoryReactionCallout.Parse(key) is var (reaction, _))
         {
-            return StoryGoal.KeyPrefix + reaction.StoryId;
+            return reaction.StoryId;
         }
 
-        return StoryClueCallout.Parse(key) is { } clue ? StoryGoal.KeyPrefix + clue.StoryId : key;
+        return StoryClueCallout.Parse(key)?.StoryId;
     }
 }
