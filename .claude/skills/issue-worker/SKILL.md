@@ -493,18 +493,18 @@ are standing instructions, as the push is for code issues.
 - **Where.** In the scratchpad, whatever the lanes say. No worktree, build, test run, changelog
   entry, commit or test drive. Hidden text is never written into the tree
   (`NoSealedTextAppearsInTheTreeTests`).
-- **Rules.** Read The rules, The format and The length in `/new-story`. Every line the change adds
+- **Rules.** Read The rules, The format and The length in `/storytime`. Every line the change adds
   or rewrites keeps the twelve rules.
 - **Each story.** `python tools/unpack-story.py <id> <scratchpad>/<id>`, edit `card.json` and
   `hidden.json` there, then `python tools/publish-story.py <scratchpad>/<id> --replace --dry-run`.
   Fix every fault it prints.
 - **Review.**
   - A named story whose change adds or rewrites a sentence in the hidden layer goes on a draft page
-    first, as `/new-story`'s draft page does, showing each changed field before and after. It is
+    first, as `/storytime`'s draft page does, showing each changed field before and after. It is
     published only on the maintainer's word.
   - A change to fields only (`aboard`, `recorded`, `link`, `effects`, `primary`, `pinned`, and card
     flags such as `goals` and `beaconTrip`) is published without stopping.
-- **Surprise stories.** Map the id to its story as `/new-story`'s Writing one does. In chat, voice,
+- **Surprise stories.** Map the id to its story as `/storytime`'s Writing one does. In chat, voice,
   the report and any artifact, the story appears only as ids, faults by field, and issue numbers.
   Nothing is shown for review, and the story is published without stopping.
 - **Publish.**

@@ -13,7 +13,7 @@ might read until phase 1 is on disk. Then send phase 2 as a message to the same 
 > is wrong. A premise earns a "keep" only if you cannot find a real problem with it. When a
 > premise is genuinely good, say keep; harshness for its own sake is a failure too.
 >
-> Read the rules and background first: `C:\dev\d47\.claude\skills\new-story\reviewer-prompt.md`.
+> Read the rules and background first: `C:\dev\d47\.claude\skills\storytime\reviewer-prompt.md`.
 > Ignore everything in it about base64, secrecy, attachments and the reply format. Use its
 > sections on what d47 stories are, the cores, the twelve rules, and how to review.
 >

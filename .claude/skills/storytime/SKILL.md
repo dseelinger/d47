@@ -1,6 +1,6 @@
 ---
-name: new-story
-description: Develop one d47 stock story with the maintainer — a pitch of premise, secret and twist to accept or reject, then both layers, or straight to a drafted story with its cast pictures when the argument supplies the length, level, genre, core and premise — on a draft page of its own, revise it until he approves, then publish it to the stories release; or, for surprise stories he does not read, encoded premises reviewed by other AIs and then written and published unseen. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
+name: storytime
+description: Develop one d47 stock story with the maintainer — a pitch of premise, secret and twist to accept or reject, then both layers, or straight to a drafted story with its cast pictures when the argument supplies the length, level, genre, core and premise — on a draft page of its own, revise it until he approves, then publish it to the stories release; or, for surprise stories he does not read, encoded premises reviewed by other AIs and then written and published unseen. Use when the user invokes /storytime, /storytime <premise or title>, or says "storytime", "new story", "write a stock story", "let's work on the next story", "continue the story".
 ---
 
 # New story
@@ -10,10 +10,10 @@ He reads both layers, the card and the hidden layer, before anything ships. Noth
 him; the sealing keeps the hidden layer out of the tree's plain text, not out of his sight. A
 surprise story (Surprise stories, below) is the exception: he asked not to read it.
 
-`/new-story <anything>` has named the work, so start on it in that same turn: a pitch (below),
+`/storytime <anything>` has named the work, so start on it in that same turn: a pitch (below),
 built from whatever the argument fixes. An argument that fixes everything the pitch table needs goes
-straight to the draft instead, with no pitch to accept (Straight to the draft, below). `/new-story` with a surprise id such as `N-3D-A`, or with
-"surprise" or "premises", is surprise work (below). A bare `/new-story` looks for draft pages first (below): if
+straight to the draft instead, with no pitch to accept (Straight to the draft, below). `/storytime` with a surprise id such as `N-3D-A`, or with
+"surprise" or "premises", is surprise work (below). A bare `/storytime` looks for draft pages first (below): if
 there are any, ask whether to continue one or start another; if there are none, pitch one.
 
 A change to an already published story is a story issue for `/issue-worker`, not work for this skill.
@@ -380,7 +380,7 @@ applies except where this section says otherwise.
 2. Encode the round:
 
    ```bash
-   python .claude/skills/new-story/premise-packet.py encode <scratchpad>/premises --round N --out <scratchpad>/d47-premises-roundN.txt
+   python .claude/skills/storytime/premise-packet.py encode <scratchpad>/premises --round N --out <scratchpad>/d47-premises-roundN.txt
    ```
 
    From round 2, pass `--changes` (a JSON object of id to what changed and why) and `--settled`
@@ -394,7 +394,7 @@ applies except where this section says otherwise.
    the scratchpad and tally them:
 
    ```bash
-   python .claude/skills/new-story/premise-packet.py tally <reply>... --round N --out <scratchpad>/reviews-roundN.json
+   python .claude/skills/storytime/premise-packet.py tally <reply>... --round N --out <scratchpad>/reviews-roundN.json
    ```
 
    A reply that does not decode is reported by reviewer name, and he asks that reviewer again.
@@ -425,7 +425,7 @@ and go into the final packet.
 
 ### Writing one
 
-`/new-story <id>` writes that premise's story:
+`/storytime <id>` writes that premise's story:
 
 - Read the packet page with the Artifact tool's `read` action and decode the final packet. No
   pitch and no stop for an accept: the reviewers' agreement stands in for it. An id is already
@@ -433,7 +433,7 @@ and go into the final packet.
 - No draft page. The layers live only in `<scratchpad>/<story-id>/`.
 - Before step 6, check the draft against all twelve rules and every place name, and fix what
   fails. Nobody else reads it.
-- `/new-story <id>` is his permission to generate the cast pictures and to publish to
+- `/storytime <id>` is his permission to generate the cast pictures and to publish to
   `stories-1`. Ask nothing: generate the pictures, look at each one and show none of them, then
   run the dry run and publish (`--via-actions` in a cloud session; a local publish holds
   `.git/d47-merge.lock`).
