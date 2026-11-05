@@ -180,7 +180,7 @@ public class ACountedBeatCountsWhatComesAfterItTests : IDisposable
     {
         var trigger = new AdventureTrigger { Kind = TriggerKind.Bond, Count = 8, Faction = Labour };
 
-        Assert.Equal($"Next: earn 8 kill bonds for {Labour}, counted from now. Kill bonds for {Labour}: 0 of 8.", trigger.HandOff());
+        Assert.Equal($"Next: earn 8 kill bonds for {Labour}, counted from now. Kill bonds for {Labour}: 0 of 8. {AdventureTrigger.BondWhere}", trigger.HandOff());
     }
 
     [Fact]
