@@ -420,7 +420,7 @@ Abandoning a story, or shelving it by switching to another, keeps the messages i
 nudges, clues, beacon scan and ending. An ending question from a stopped story is not listed as waiting for an answer. The messages of a short story you asked for stay
 when you abandon it.
 
-### Story bench
+### Story bench {#story-bench}
 
 Open **Story bench** on the Stories tab, after Short Story. It lists your stock-story runs in four groups:
 **Active**, **Shelved**, **Finished** and **Stopped**, the last naming whether the run was abandoned or ended.
@@ -441,6 +441,16 @@ text, with **Play** when its clip was kept; Play plays it as a message's Play do
 included. **Jump to** has two lists that open in the page: **Chapter**, then **Beat** within that chapter.
 Choosing one scrolls the page to it. A run from before the record was kept says **No lines kept** and shows each
 chapter's text as it was told instead.
+
+**Play all**, on every line and at the end of the Jump to row, plays the run's lines in order from that line, or from
+the chosen chapter or beat. A line with no kept clip is skipped. The line playing is marked **▶ Playing** on a cyan
+ground, and a bar under Jump to shows the speaker's picture, **Playing 23 of 142** with the speaker's name, the line,
+and **Pause**, **Skip** and **Stop**. While it plays, other speech is silenced: an answer, a callout or radio chatter
+from anywhere else is dropped, not saved for later. Music, ambience and cues play as usual. A danger alert pauses
+playback and is spoken; so does pressing push-to-talk, whose turn runs and whose reply is spoken, and the bar says
+**Paused for push-to-talk. Press PLAY to carry on.** Playback stays paused until you press **Play**, which plays the
+paused line again from its start. It keeps playing when you leave the page. The shut-up control, or **Play** on a
+single line or message, stops it.
 
 With no runs the page says so and offers **Open the Catalogue**. Started with `D47_STORY_BENCH=1`, the Jump,
 Beats and Checkpoints sections for testing the active story follow the list; without it they are absent.

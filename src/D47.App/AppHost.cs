@@ -171,6 +171,7 @@ public sealed class AppHost : IDisposable
         _audioSink = audioSink;
         _outputFollow = new DefaultDeviceFollowPolicy(audioSink);
         Audio = audio;
+        RunPlayer = new StoryRunPlayer(audio, RunLineClip);
         MusicRejects = new MusicRejects(paths.MusicRejects, files);
         Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects, deleteFile: RecycleFile);
         _cues = cues;
@@ -345,6 +346,7 @@ public sealed class AppHost : IDisposable
     /// <summary>Cancel: stop talking, and abandon the turn that is running (#221).</summary>
     public bool CancelNow()
     {
+        RunPlayer.Stop();
         Audio.Silence();
         return Cancellation.Cancel();
     }
@@ -415,6 +417,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The one queue every audible thing goes through.</summary>
     public AudioArbiter Audio { get; }
+
+    /// <summary>Play all on a story run's page; it keeps playing when the page is left.</summary>
+    public StoryRunPlayer RunPlayer { get; }
 
     /// <summary>The ambience layer and its pause, next and resume (Phase 12).</summary>
     public AmbientMusic Music { get; }
@@ -3564,6 +3569,7 @@ public sealed class AppHost : IDisposable
 
         // That d47 is listening, said both ways.
         gate.Started += () => host.Voice.EnterState(Core.Audio.LoopState.Listening);
+        gate.Started += () => host.RunPlayer.Pause(StoryRunPause.PushToTalk);
 
         // Only the discarded case.
         gate.Ended += reason =>
@@ -5190,6 +5196,7 @@ public sealed class AppHost : IDisposable
                 : "Its recording could not be read on this PC.";
         }
 
+        RunPlayer.Stop();
         Audio.DropGroup(MessagePlaybackGroup);
         Audio.Enqueue(new AudioRequest
         {
@@ -5212,25 +5219,30 @@ public sealed class AppHost : IDisposable
         ArgumentNullException.ThrowIfNull(run);
         ArgumentNullException.ThrowIfNull(line);
 
-        if (Stories?.Records?.Clip(GameState.Active?.Identity.FrontierId, run, line) is not { } clip)
+        if (RunLineClip(run, line) is not { } clip)
         {
             return line.Clip is null
                 ? "That line was not spoken."
                 : "Its recording could not be read on this PC.";
         }
 
+        RunPlayer.Stop();
         Audio.DropGroup(MessagePlaybackGroup);
         Audio.Enqueue(new AudioRequest
         {
             Channel = AudioChannel.Speech,
-            Clip = PcmConverter.ToStandard(clip),
+            Clip = clip,
             Group = MessagePlaybackGroup,
             Caption = line.Body,
-            Picture = line.Picture ?? (line.From == D47.Core.Messages.MessageStore.Narrator ? D47.Core.Interface.SpeakerPictures.Narrator : null),
+            Picture = StoryRunPlayer.PictureOf(line),
         });
 
         return null;
     }
+
+    /// <summary>The clip a story run's record kept for a line, in the standard format, or null. Reads the file.</summary>
+    private AudioClip? RunLineClip(D47.Core.Stories.Story run, D47.Core.Stories.StoryRunLine line) =>
+        Stories?.Records?.Clip(GameState.Active?.Identity.FrontierId, run, line) is { } clip ? PcmConverter.ToStandard(clip) : null;
 
     /// <summary>Puts what the microphone is doing in front of the Commander, on both surfaces.</summary>
     private void ShowSwitches(string? against) => Panel.SwitchesText = against;

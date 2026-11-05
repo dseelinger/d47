@@ -7,6 +7,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.App.Voice;
 using D47.Core.Adventures;
 using D47.Core.Interface;
 using D47.Core.Messages;
@@ -27,6 +28,14 @@ public sealed class StoryRunPage : UserControl, IPageSummary
     public const string NoLinesText = "Lines from before this version were not kept, so there is nothing to play. Each chapter's text was kept, and is below.";
     public const string GoneText = "That story run is no longer on file.";
     public const string BeforeChapters = "Before the first chapter";
+    public const string PlayAllLabel = "Play all";
+    public const string PlayingMark = "▶ Playing";
+    public const string SilencedText = "Other speech is silenced while this plays.";
+    public const string PushToTalkText = "Paused for push-to-talk. Press PLAY to carry on.";
+    public const string PausedText = "Paused. Press PLAY to carry on.";
+
+    /// <summary>Marks the playback bar.</summary>
+    public const string BarName = "StoryRunPlayback";
 
     /// <summary>Marks the list of sections and lines, for a test to find it.</summary>
     public const string ListName = "StoryRunLines";
@@ -57,6 +66,11 @@ public sealed class StoryRunPage : UserControl, IPageSummary
     private int _chapter = -1;
     private int _beat = -1;
     private object? _drawn;
+    private List<StoryRunEntry> _entriesInOrder = [];
+    private readonly Dictionary<StoryRunEntry, Border> _lineRows = [];
+    private readonly Border _bar = new() { Name = BarName, IsVisible = false, BorderThickness = new Thickness(3, 0, 0, 0), Padding = new Thickness(14, 8, 8, 8) };
+    private StoryRunEntry? _marked;
+    private Button? _playAll;
 
     internal StoryRunPage(AdventureSurface surface, StoryDirector director, ToldEntries entries, Story run, bool headset)
     {
@@ -133,6 +147,11 @@ public sealed class StoryRunPage : UserControl, IPageSummary
             messages.Changed += OnChanged;
         }
 
+        if (_surface.RunPlayer is { } player)
+        {
+            player.Changed += OnPlayerChanged;
+        }
+
         Rebuild();
     }
 
@@ -145,9 +164,16 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         {
             messages.Changed -= OnChanged;
         }
+
+        if (_surface.RunPlayer is { } player)
+        {
+            player.Changed -= OnPlayerChanged;
+        }
     }
 
     private void OnChanged() => Dispatcher.UIThread.Post(Rebuild);
+
+    private void OnPlayerChanged() => Dispatcher.UIThread.Post(ShowPlayback);
 
     /// <summary>The section rows and line rows the list draws, in order.</summary>
     internal IReadOnlyList<object> Rows => _rows;
@@ -192,6 +218,7 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         if (lines.Count == 0)
         {
             _sections = [];
+            _entriesInOrder = [];
             _rows = [.. KeptChapters(commander, run)];
             _list.ItemsSource = _rows;
             _top.Children.Add(new Notice(NoticeLevel.Warning) { Label = NoLinesLabel, Text = NoLinesText });
@@ -199,6 +226,9 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         }
 
         _sections = StoryRunLog.Of(run, lines, key => ChapterOf(commander, run, key));
+        _entriesInOrder = [.. _sections.SelectMany(section => section.Entries)];
+        _lineRows.Clear();
+        _marked = null;
         _rows = [.. _sections.SelectMany(section => new object[] { section }.Concat(section.Entries))];
         _list.ItemsSource = _rows;
 
@@ -209,7 +239,9 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         }
 
         _top.Children.Add(JumpRow());
+        _top.Children.Add(Detached(_bar));
         ShowPickers();
+        ShowPlayback();
     }
 
     // ---- the strip -------------------------------------------------------------------------
@@ -256,7 +288,7 @@ public sealed class StoryRunPage : UserControl, IPageSummary
     private static List<int> BeatsOf(StoryRunSection section) =>
         [.. section.Entries.Select(entry => entry.Beat).Where(beat => beat >= 0).Distinct().Order()];
 
-    private StackPanel JumpRow()
+    private Grid JumpRow()
     {
         var label = Typeset.Chrome(
             JumpLabel.ToUpperInvariant(), TypeScale.Meta, ThemeManager.GreyKey,
@@ -267,12 +299,137 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         _chapterPicker.VerticalAlignment = VerticalAlignment.Top;
         _beatPicker.VerticalAlignment = VerticalAlignment.Top;
 
-        return new StackPanel
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto,Auto,*,Auto"), ColumnSpacing = 2 };
+        row.Children.Add(Detached(label));
+        Grid.SetColumn(Detached(_chapterPicker), 1);
+        row.Children.Add(_chapterPicker);
+        Grid.SetColumn(Detached(_beatPicker), 2);
+        row.Children.Add(_beatPicker);
+
+        if (_surface.RunPlayer is not null)
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 2,
-            Children = { Detached(label), Detached(_chapterPicker), Detached(_beatPicker) },
-        };
+            var playAll = new Button
+            {
+                Name = "PlayAllFromJump",
+                Content = PlayAllLabel,
+                Width = 140,
+                MinHeight = TypeScale.MinimumTarget,
+                VerticalAlignment = VerticalAlignment.Top,
+            };
+            playAll.Click += (_, _) => PlayAllFrom(JumpStart());
+            _playAll = playAll;
+            Grid.SetColumn(playAll, 4);
+            row.Children.Add(playAll);
+        }
+
+        return row;
+    }
+
+    /// <summary>The first line of the chosen beat, or else of the chosen chapter.</summary>
+    private StoryRunEntry? JumpStart()
+    {
+        var section = _sections.FirstOrDefault(found => found.Number == _chapter);
+        return _beat >= 0 && section?.Entries.FirstOrDefault(entry => entry.Beat == _beat) is { } beat ? beat : section?.Entries.FirstOrDefault();
+    }
+
+    /// <summary>Plays the run's lines in page order from <paramref name="entry"/>.</summary>
+    internal void PlayAllFrom(StoryRunEntry? entry)
+    {
+        if (entry is null || _run is not { } run || _surface.RunPlayer is not { } player)
+        {
+            return;
+        }
+
+        var from = _entriesInOrder.IndexOf(entry);
+
+        if (from >= 0)
+        {
+            _status.Clear();
+            player.Play(run, [.. _entriesInOrder.Select(each => each.Line)], from);
+        }
+    }
+
+    // ---- playback --------------------------------------------------------------------------
+
+    private static bool SameLine(StoryRunLine left, StoryRunLine right) =>
+        left.Sent == right.Sent && string.Equals(left.Key, right.Key, StringComparison.Ordinal);
+
+    /// <summary>What the player is doing with this run, or null when it plays nothing of it.</summary>
+    private StoryRunPlayback? Playback =>
+        _surface.RunPlayer?.Now is { } now && _run is { } run && now.Of(run) ? now : null;
+
+    private StoryRunEntry? PlayingEntry(StoryRunPlayback? playback) =>
+        playback is null ? null : _entriesInOrder.FirstOrDefault(entry => SameLine(entry.Line, playback.Line));
+
+    /// <summary>Draws the playback bar and moves the playing mark.</summary>
+    private void ShowPlayback()
+    {
+        var playback = Playback;
+        var playing = PlayingEntry(playback);
+
+        if (!ReferenceEquals(playing, _marked))
+        {
+            var was = _marked;
+            _marked = playing;
+            Refill(was);
+        }
+
+        Refill(playing);
+        _playAll?.Classes.Set("selected", playback is { IsPaused: false });
+
+        if (playback is null)
+        {
+            _bar.IsVisible = false;
+            _bar.Child = null;
+            return;
+        }
+
+        _bar.IsVisible = true;
+        ThemeInk.Bind(_bar, Border.BorderBrushProperty, playback.IsPaused ? ThemeManager.AKey : ThemeManager.CyanKey);
+        ThemeInk.Bind(_bar, Border.BackgroundProperty, playback.IsPaused ? ThemeManager.TileKey : ThemeManager.CyanGroundKey);
+
+        var line = playback.Line;
+        var place = $"{(playback.Index + 1).ToString(CultureInfo.InvariantCulture)} of {playback.Lines.Count.ToString(CultureInfo.InvariantCulture)} · {MessagesView.Sender(line.From)}";
+        var label = Typeset.Chrome(
+            (playback.IsPaused ? $"Paused · {place}" : $"Playing {place}").ToUpperInvariant(),
+            TypeScale.Meta,
+            playback.IsPaused ? ThemeManager.AKey : ThemeManager.CyanKey,
+            weight: FontWeight.SemiBold,
+            tracking: TypeScale.Meta * Fonts.ChromeTracking);
+        var text = Typeset.Prose(line.Body, TypeScale.Description, ThemeManager.WhiteKey, trimming: TextTrimming.CharacterEllipsis);
+        var sub = Typeset.Prose(
+            playback.Pause switch
+            {
+                StoryRunPause.None => SilencedText,
+                StoryRunPause.PushToTalk => PushToTalkText,
+                _ => PausedText,
+            },
+            TypeScale.Meta,
+            ThemeManager.GreyKey);
+
+        var middle = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, Children = { label, text, sub } };
+        var player = _surface.RunPlayer!;
+
+        var pause = BarButton(playback.IsPaused ? "Play" : "Pause", playback.IsPaused ? player.Resume : () => player.Pause(StoryRunPause.Commander));
+        var skip = BarButton("Skip", player.Skip);
+        var stop = BarButton("Stop", player.Stop);
+        pause.Name = "PlaybackPause";
+        skip.Name = "PlaybackSkip";
+        stop.Name = "PlaybackStop";
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 14 };
+        grid.Children.Add(_entries.Pictured(middle, StoryRunPlayer.PictureOf(line)));
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { pause, skip, stop } };
+        Grid.SetColumn(actions, 1);
+        grid.Children.Add(actions);
+        _bar.Child = grid;
+    }
+
+    private static Button BarButton(string label, Action act)
+    {
+        var button = new Button { Content = label, MinHeight = TypeScale.MinimumTarget };
+        button.Click += (_, _) => act();
+        return button;
     }
 
     private static Control Detached(Control control)
@@ -365,47 +522,118 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         return head;
     }
 
-    private Control LineRow(StoryRunEntry entry)
+    private Border LineRow(StoryRunEntry entry)
+    {
+        var row = new Border { BorderThickness = new Thickness(0, 0, 0, 1) };
+        ThemeInk.Bind(row, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        _lineRows[entry] = row;
+        Fill(row, entry);
+        return row;
+    }
+
+    /// <summary>Draws a line's row again if the list holds one, so the playing mark follows the player.</summary>
+    private void Refill(StoryRunEntry? entry)
+    {
+        if (entry is not null && _lineRows.TryGetValue(entry, out var row))
+        {
+            Fill(row, entry);
+        }
+    }
+
+    private void Fill(Border row, StoryRunEntry entry)
     {
         var line = entry.Line;
+        var playback = Playback;
+        var playing = playback is not null && SameLine(playback.Line, line);
 
         var who = Typeset.Chrome(MessagesView.Sender(line.From), TypeScale.ControlLarge, ThemeManager.WhiteKey, weight: FontWeight.Medium);
         var kind = Typeset.Mono(entry.Kind.ToUpperInvariant(), TypeScale.Caption, ThemeManager.GreyKey);
         var time = Typeset.Mono(StoryBenchPage.Minute(line.Sent), TypeScale.Meta, ThemeManager.GreyKey);
         var head = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { who, kind, time } };
 
+        if (playing)
+        {
+            head.Children.Add(Typeset.Chrome(
+                PlayingMark.ToUpperInvariant(), TypeScale.MetaSmall, ThemeManager.CyanKey,
+                weight: FontWeight.SemiBold, tracking: TypeScale.MetaSmall * Fonts.ChromeTracking, vertical: VerticalAlignment.Center));
+        }
+
         var text = AdventuresPage.Text(line.Body, TypeScale.Body);
         text.Margin = new Thickness(0, 4, 0, 0);
 
         var words = new StackPanel { Children = { head, text } };
-        var pictured = _entries.Pictured(words, line.Picture ?? (line.From == MessageStore.Narrator ? SpeakerPictures.Narrator : null));
+        var pictured = _entries.Pictured(words, StoryRunPlayer.PictureOf(line));
 
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 14 };
         grid.Children.Add(pictured);
 
-        if (line.Clip is not null && _surface.PlayRunLine is { } play && _run is { } run)
-        {
-            var button = new Button { Name = "PlayLine", Content = "Play", VerticalAlignment = VerticalAlignment.Top, MinHeight = TypeScale.MinimumTarget };
-            button.Click += async (_, _) =>
-            {
-                var refusal = await Task.Run(() => play(run, line));
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Top };
 
-                if (refusal is null)
+        if (playing && _surface.RunPlayer is { } player)
+        {
+            var hold = new Button
+            {
+                Name = "PauseLine",
+                Content = playback!.IsPaused ? "Play" : "Pause",
+                MinHeight = TypeScale.MinimumTarget,
+            };
+            hold.Classes.Add("selected");
+            hold.Click += (_, _) =>
+            {
+                if (player.Now is { IsPaused: true })
                 {
-                    _status.Clear();
+                    player.Resume();
                 }
                 else
                 {
-                    _status.Fail(refusal);
+                    player.Pause(StoryRunPause.Commander);
                 }
             };
-            Grid.SetColumn(button, 1);
-            grid.Children.Add(button);
+            actions.Children.Add(hold);
+        }
+        else
+        {
+            if (line.Clip is not null && _surface.PlayRunLine is { } play && _run is { } run)
+            {
+                var button = new Button { Name = "PlayLine", Content = "Play", MinHeight = TypeScale.MinimumTarget };
+                button.Click += async (_, _) =>
+                {
+                    var refusal = await Task.Run(() => play(run, line));
+
+                    if (refusal is null)
+                    {
+                        _status.Clear();
+                    }
+                    else
+                    {
+                        _status.Fail(refusal);
+                    }
+                };
+                actions.Children.Add(button);
+            }
+
+            if (_surface.RunPlayer is not null)
+            {
+                var all = new Button { Name = "PlayAllLine", Content = PlayAllLabel, MinHeight = TypeScale.MinimumTarget };
+                all.Click += (_, _) => PlayAllFrom(entry);
+                actions.Children.Add(all);
+            }
         }
 
-        var row = new Border { Padding = new Thickness(11, 10, 0, 10), BorderThickness = new Thickness(0, 0, 0, 1), Child = grid };
-        ThemeInk.Bind(row, Border.BorderBrushProperty, ThemeManager.Line2Key);
-        return row;
+        Grid.SetColumn(actions, 1);
+        grid.Children.Add(actions);
+
+        // A 3px left edge, cyan on cyan ground while the line plays and clear otherwise.
+        var mark = new Border { Padding = new Thickness(8, 10, 0, 10), BorderThickness = new Thickness(3, 0, 0, 0), Child = grid };
+
+        if (playing)
+        {
+            mark.Name = "PlayingLine";
+            ThemeInk.Bind(mark, Border.BackgroundProperty, ThemeManager.CyanGroundKey);
+            ThemeInk.Bind(mark, Border.BorderBrushProperty, ThemeManager.CyanKey);
+        }
+
+        row.Child = mark;
     }
 
     // ---- no lines --------------------------------------------------------------------------

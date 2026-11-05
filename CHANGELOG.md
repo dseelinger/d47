@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story run's page on the Story bench has **Play all**, on every line and on the Jump to row, which plays the run's lines in order from there, skipping lines whose clip was not kept. The line playing is marked, and a bar under Jump to shows who is speaking, **Playing 23 of 142**, the line, and **Pause**, **Skip** and **Stop**. While it plays no other speech is heard: answers, callouts and radio chatter are dropped, not saved. A danger alert or push-to-talk pauses it, the alert or your turn's reply is spoken, and **Play** carries on from the paused line. It keeps playing when you leave the page; the shut-up control stops it.
+
 Every run on the Story bench has **Open**, which shows that run's page: its state, length, chapters, clues and dates, then every line it has spoken, in order, in one section per chapter. Each line shows the speaker's picture and name, what kind of line it is, the time and the text, with **Play** when its clip was kept, own-voice clips included. **Jump to** scrolls the page to the chapter and beat you choose, and works in the headset. A run from before its lines were kept says so and shows each chapter's text instead.
 
 The Story log sub-tab is gone. The first Stories sub-tab is now called **Your story**. Endings waiting for your answer are at its top, with their answers, Play and Change voice, and under **Other lines** it lists the lines that belong to no stock story run, newest first, such as a Short Story's lines.

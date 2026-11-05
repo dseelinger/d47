@@ -293,7 +293,8 @@ public partial class MainWindow : Window
                         CancellationToken.None,
                         ToolCaller.Commander),
                     () => host.ShipPicture,
-                    host.PlayRunLine);
+                    host.PlayRunLine,
+                    host.RunPlayer);
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey), desk: host.AdventureDesk);

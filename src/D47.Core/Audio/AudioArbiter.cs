@@ -64,6 +64,19 @@ public sealed record AudioActivity(
     long? Utterance = null,
     string? Picture = null);
 
+/// <summary>Whether a playback holds the speech channels.</summary>
+public enum PlaybackHold
+{
+    /// <summary>No playback; speech plays as usual.</summary>
+    Off,
+
+    /// <summary>Speech and Overheard from any other group are dropped, not queued.</summary>
+    Playing,
+
+    /// <summary>Held but paused; speech plays as usual until playback resumes.</summary>
+    Paused,
+}
+
 /// <summary>The one queue in front of every audible thing.</summary>
 public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) : IDisposable
 {
@@ -114,6 +127,10 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     /// <summary>The group of the most recently started routine or alert line, or null before the first.</summary>
     private string? _lastSpokenGroup;
 
+    /// <summary>The group a playback holds the speech channels for, or null when none does.</summary>
+    private string? _playbackGroup;
+    private bool _playbackPaused;
+
     private sealed record Pending(long Id, AudioRequest Request);
 
     private sealed record Playing(long Id, AudioRequest Request);
@@ -128,6 +145,12 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
     /// <summary>Raised when an ambience track reached its end on its own.</summary>
     public event Action? MusicFinished;
+
+    /// <summary>Raised when a queued request played to its own end; not for one stopped, dropped or superseded.</summary>
+    public event Action<AudioRequest>? Played;
+
+    /// <summary>Raised when an alert or <see cref="Silence"/> paused a playing playback.</summary>
+    public event Action? PlaybackPaused;
 
     public AudioActivity Activity
     {
@@ -187,6 +210,104 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
+    /// <summary>Whether a playback holds the speech channels, and whether it is paused.</summary>
+    public PlaybackHold Playback
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _playbackGroup is null ? PlaybackHold.Off : _playbackPaused ? PlaybackHold.Paused : PlaybackHold.Playing;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Holds the speech channels for <paramref name="group"/>, or resumes a paused hold: Speech and Overheard
+    /// in any other group, queued or playing, are dropped now and refused until <see cref="PausePlayback"/>
+    /// or <see cref="EndPlayback"/>.
+    /// </summary>
+    public void HoldSpeechFor(string group)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(group);
+        AudioActivity activity;
+
+        lock (_gate)
+        {
+            _playbackGroup = group;
+            _playbackPaused = false;
+
+            _queue.RemoveAll(pending => IsOtherSpeech(pending.Request, group));
+
+            if (_current is { } playing && IsOtherSpeech(playing.Request, group))
+            {
+                sink.Stop(playing.Id);
+                _current = null;
+            }
+
+            Pump();
+            activity = Snapshot();
+        }
+
+        ActivityChanged?.Invoke(activity);
+    }
+
+    /// <summary>Pauses the hold: its group is dropped and refused until it resumes, and other speech plays again.</summary>
+    public void PausePlayback()
+    {
+        AudioActivity activity;
+
+        lock (_gate)
+        {
+            if (_playbackGroup is null || _playbackPaused)
+            {
+                return;
+            }
+
+            PauseHeld();
+            Pump();
+            activity = Snapshot();
+        }
+
+        ActivityChanged?.Invoke(activity);
+    }
+
+    /// <summary>Ends the hold and drops what its group has queued or playing.</summary>
+    public void EndPlayback()
+    {
+        string group;
+
+        lock (_gate)
+        {
+            if (_playbackGroup is not { } held)
+            {
+                return;
+            }
+
+            group = held;
+            _playbackGroup = null;
+            _playbackPaused = false;
+        }
+
+        DropGroup(group);
+    }
+
+    private static bool IsOtherSpeech(AudioRequest request, string group) =>
+        request.Channel is AudioChannel.Speech or AudioChannel.Overheard && request.Group != group;
+
+    private void PauseHeld()
+    {
+        var group = _playbackGroup;
+        _playbackPaused = true;
+        _queue.RemoveAll(pending => pending.Request.Group == group);
+
+        if (_current is { } playing && playing.Request.Group == group)
+        {
+            sink.Stop(playing.Id);
+            _current = null;
+        }
+    }
+
     /// <summary>Whether anything is queued or playing, the bed aside.</summary>
     public bool IsSpeaking
     {
@@ -227,6 +348,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
 
         AudioActivity activity;
+        var paused = false;
 
         lock (_gate)
         {
@@ -234,6 +356,27 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             {
                 logger.LogDebug("{Group} is closed; {Clip} is not queued", closed, request.Name);
                 return;
+            }
+
+            if (_playbackGroup is { } pausedGroup && _playbackPaused && request.Group == pausedGroup)
+            {
+                logger.LogDebug("Playback for {Group} is paused; {Clip} is not queued", pausedGroup, request.Name);
+                return;
+            }
+
+            if (_playbackGroup is { } held && !_playbackPaused)
+            {
+                if (IsOtherSpeech(request, held))
+                {
+                    logger.LogDebug("Playback holds speech for {Group}; {Clip} is not queued", held, request.Name);
+                    return;
+                }
+
+                if (request.Channel == AudioChannel.Alert)
+                {
+                    PauseHeld();
+                    paused = true;
+                }
             }
 
             if (request.Channel == AudioChannel.Bed)
@@ -276,6 +419,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
                 Pump();
                 activity = Snapshot();
             }
+        }
+
+        if (paused)
+        {
+            PlaybackPaused?.Invoke();
         }
 
         ActivityChanged?.Invoke(activity);
@@ -327,15 +475,22 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
-    /// <summary>Shut up (Phase 5).</summary>
+    /// <summary>Shut up (Phase 5). A playing playback is paused, not ended.</summary>
     public void Silence()
     {
         AudioActivity activity;
         var hadSomething = false;
+        var paused = false;
 
         lock (_gate)
         {
             hadSomething = _current is not null || _bed is not null || _music is not null || _queue.Count > 0;
+
+            if (_playbackGroup is not null && !_playbackPaused)
+            {
+                _playbackPaused = true;
+                paused = true;
+            }
 
             _queue.Clear();
             _current = null;
@@ -352,6 +507,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         if (hadSomething)
         {
             logger.LogInformation("Silenced");
+        }
+
+        if (paused)
+        {
+            PlaybackPaused?.Invoke();
         }
 
         Silenced?.Invoke();
@@ -851,6 +1011,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     {
         AudioActivity activity;
         var trackEnded = false;
+        AudioRequest? played = null;
 
         lock (_gate)
         {
@@ -883,6 +1044,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
                     _lastSpokenGroup = _current.Request.Group;
                 }
 
+                played = _current.Request;
                 _current = null;
                 Pump();
                 activity = Snapshot();
@@ -901,6 +1063,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         if (trackEnded)
         {
             MusicFinished?.Invoke();
+        }
+
+        if (played is not null)
+        {
+            Played?.Invoke(played);
         }
     }
 

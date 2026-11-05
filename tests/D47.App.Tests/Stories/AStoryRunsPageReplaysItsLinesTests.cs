@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Panel;
+using D47.App.Voice;
 using D47.Core.Adventures;
 using D47.Core.Audio;
 using D47.Core.Interface;
@@ -35,7 +36,7 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         Chapters = ["ch1", "ch2", "ch3", "ch4"],
     };
 
-    private sealed record Rig(Window Window, PanelView Panel, List<StoryRunLine> Played, MessageStore Messages);
+    private sealed record Rig(Window Window, PanelView Panel, List<StoryRunLine> Played, MessageStore Messages, StoryRunPlayer Player, SteppedSink Sink);
 
     private static Adventure Chapter(string key, string name, params string[] beats) => new()
     {
@@ -101,6 +102,11 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         }
 
         var played = new List<StoryRunLine>();
+        var sink = new SteppedSink();
+        var player = new StoryRunPlayer(
+            new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start(),
+            (_, line) => line.Clip is null ? null : new AudioClip(line.Body, new byte[960], AudioFormat.Standard),
+            work => work());
         var surface = new AdventureSurface(
             book, generator, () => null, () => Commander, () => Now, _ => { }, () => true, () => null, () => { },
             Messages: messages, Stories: director,
@@ -112,7 +118,8 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
                 }
 
                 return null;
-            });
+            },
+            RunPlayer: player);
 
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
         Window window;
@@ -136,7 +143,7 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         }
 
         Dispatcher.UIThread.RunJobs();
-        return new Rig(window, panel, played, messages);
+        return new Rig(window, panel, played, messages, player, sink);
     }
 
     private static void Press(Button button)
@@ -280,6 +287,106 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         Assert.Contains("Chapter 1 · Low tide", drawn, StringComparer.OrdinalIgnoreCase);
         Assert.Contains("The text of Low tide.", drawn);
         Assert.DoesNotContain(rig.Panel.GetVisualDescendants().OfType<InlinePicker>(), picker => picker.IsEffectivelyVisible);
+
+        rig.Window.Close();
+    }
+
+    private static Button Named(Control page, string name) =>
+        page.GetVisualDescendants().OfType<Button>().First(button => button.Name == name && button.IsEffectivelyVisible);
+
+    private static string Place(StoryRunPage page, int number) =>
+        $"{number} of {page.Rows.OfType<StoryRunEntry>().Count()} · {MessagesView.Sender(MessageStore.Narrator)}".ToUpperInvariant();
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PlayAllMarksThePlayingLineAndShowsTheBar(bool headset)
+    {
+        var rig = Open(headset: headset);
+        var page = Opened(rig);
+
+        Press(Named(page, "PlayAllLine"));
+
+        var drawn = Drawn(page);
+        Assert.Contains("PLAYING " + Place(page, 1), drawn);
+        Assert.Contains(StoryRunPage.SilencedText, drawn);
+        Assert.Contains(StoryRunPage.PlayingMark.ToUpperInvariant(), drawn);
+        Assert.Single(page.GetVisualDescendants().OfType<Border>(), border => border.Name == "PlayingLine");
+        Assert.Equal(["ch1 The lights go out 0"], rig.Sink.Names);
+
+        // Lines 2 to 8 keep no clip, so the next played is line 9.
+        rig.Sink.FinishCurrent();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("PLAYING " + Place(page, 9), Drawn(page));
+        Assert.Equal(["ch1 The lights go out 0", "ch1 The second ring 0"], rig.Sink.Names);
+
+        rig.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PushToTalkPausesItSaysSoAndPlayCarriesOn()
+    {
+        var rig = Open();
+        var page = Opened(rig);
+        Press(Named(page, "PlayAllLine"));
+
+        rig.Player.Pause(StoryRunPause.PushToTalk);
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = Drawn(page);
+        Assert.Contains("PAUSED · " + Place(page, 1), drawn);
+        Assert.Contains(StoryRunPage.PushToTalkText, drawn);
+        Assert.Equal("Play", Named(page, "PlaybackPause").Content);
+
+        Press(Named(page, "PlaybackPause"));
+
+        Assert.Contains(StoryRunPage.SilencedText, Drawn(page));
+        Assert.Equal(["ch1 The lights go out 0", "ch1 The lights go out 0"], rig.Sink.Names);
+
+        rig.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void StopEndsItAndClearsTheMark()
+    {
+        var rig = Open();
+        var page = Opened(rig);
+        Press(Named(page, "PlayAllLine"));
+
+        Press(Named(page, "PlaybackStop"));
+
+        Assert.Null(rig.Player.Now);
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Border>(), border => border.Name is "PlayingLine" or StoryRunPage.BarName && border.IsEffectivelyVisible);
+
+        rig.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PlayAllOnTheJumpToRowWithNoBeatChosenStartsAtTheChaptersFirstLine()
+    {
+        var rig = Open();
+        var page = Opened(rig);
+
+        Pick(page, StoryRunPage.ChapterPickerName, "Chapter 2 · Static from Ross");
+        Press(Named(page, "PlayAllFromJump"));
+
+        Assert.Equal("ch2 A voice 0", rig.Player.Now!.Line.Body);
+
+        rig.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PlayAllOnTheJumpToRowStartsAtTheChosenBeat()
+    {
+        var rig = Open();
+        var page = Opened(rig);
+
+        Pick(page, StoryRunPage.ChapterPickerName, "Chapter 2 · Static from Ross");
+        Pick(page, StoryRunPage.BeatPickerName, "Beat 2 · Silence");
+        Press(Named(page, "PlayAllFromJump"));
+
+        Assert.Equal("ch2 Silence 0", rig.Player.Now!.Line.Body);
 
         rig.Window.Close();
     }

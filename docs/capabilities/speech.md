@@ -1169,7 +1169,9 @@ Nothing on the page is a tool: D47's model cannot record, import, rename or dele
 A story line that is posted as it is said, such as a story beat, a clue, a nudge, a beacon scan or an
 ending, keeps the audio that was played. Press **Play** beside it, on the story's page on the Story bench or
 on Your story, to hear it again, on the speech channel and captioned with the message's text. Pressing **Play** on another
-message stops the first. A message that was not spoken has no **Play** button.
+message stops the first. A message that was not spoken has no **Play** button. Playing back a story with
+**Play all** on its page silences other speech until it is paused or stopped; see
+[Story bench](adventures.md#story-bench).
 
 Play does not synthesise the line again, so a paid provider is not billed twice, the line sounds the
 same, and a voice you have since removed can still be heard. Each message records the provider and

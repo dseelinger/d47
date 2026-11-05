@@ -35,7 +35,8 @@ public sealed record AdventureSurface(
     Func<string, D47.Core.Ships.ShipBuild?>? Intend = null,
     Func<int, Task<ToolResult>>? Choose = null,
     Func<string?>? ShipPicture = null,
-    Func<D47.Core.Stories.Story, D47.Core.Stories.StoryRunLine, string?>? PlayRunLine = null)
+    Func<D47.Core.Stories.Story, D47.Core.Stories.StoryRunLine, string?>? PlayRunLine = null,
+    D47.App.Voice.StoryRunPlayer? RunPlayer = null)
 {
     /// <summary>The short story being written, shared by the desktop window and the VR big panel.</summary>
     public ShortStoryWriting Writing { get; init; } = new();
