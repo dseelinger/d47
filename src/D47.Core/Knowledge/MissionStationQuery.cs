@@ -1,4 +1,4 @@
-namespace D47.Core.Knowledge;
+﻿namespace D47.Core.Knowledge;
 
 /// <summary>One system from a mission station search, with every faction present and every station.</summary>
 public sealed record MissionSystem(SystemSummary System, IReadOnlyList<StationSummary> Stations);
@@ -75,7 +75,7 @@ public sealed record MissionStationQuery
         {
             ReferenceSystem = referenceSystem.Trim(),
             MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : DefaultDistance, 1, MaxDistanceCeiling),
-            States = Distinct(names, name => name.State),
+            States = Required(names) is { Count: > 0 } required ? required : Distinct(names, name => name.State),
             Governments = Distinct(names, name => name.Government),
             Economies = Distinct(names, name => name.Economy),
             OnFoot = names.All(name => name.Family.StartsWith("Mission_OnFoot_", StringComparison.OrdinalIgnoreCase)),
@@ -83,6 +83,9 @@ public sealed record MissionStationQuery
 
         return true;
     }
+
+    private static List<string> Required(IReadOnlyCollection<MissionName> names) =>
+        [.. names.SelectMany(name => name.RequiredStates).Distinct(StringComparer.OrdinalIgnoreCase)];
 
     private static string[] Distinct(IEnumerable<MissionName> names, Func<MissionName, string> pick) =>
         [.. names.Select(pick).Where(value => value.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase)

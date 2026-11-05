@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using D47.Core.Adventures;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -61,7 +61,8 @@ internal static class MissionTypes
             said.Append(howTo).Append(' ');
         }
 
-        var states = Distinct(names, name => name.State);
+        var required = names.SelectMany(name => name.RequiredStates).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var states = required.Count > 0 ? required : Distinct(names, name => name.State);
         var governments = Distinct(names, name => name.Government);
         var economies = Distinct(names, name => name.Economy);
         var navies = Distinct(names, name => name.Rank);
@@ -74,7 +75,7 @@ internal static class MissionTypes
 
         if (states.Count > 0)
         {
-            said.Append($"They turn up where a faction is in {JoinAnd(states)}. ");
+            said.Append($"They {(required.Count > 0 ? "are only offered" : "turn up")} where a faction is in {JoinAnd(states)}. ");
         }
 
         if (governments.Count > 0)

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A mission station search for the reboot and restore power missions now looks for stations whose factions are in one of the ten states those missions require, and the mission type answer says they are only offered there. Before, the search had no state filter for them.
+
 The headset panel no longer flickers when it redraws, such as while you scroll it with a motion controller, while d47 is composing or while a chapter is written. Before, each redraw could flash.
 
 The headset's mini panel now moves the chapter-writing bar as the write goes on: the stage words, the clock and the gauge update about once a second, not on every tick. Before, the bar stayed where it was drawn until something else redrew the overlay.
