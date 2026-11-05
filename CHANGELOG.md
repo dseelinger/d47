@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The headset panel no longer flickers when it redraws, such as while you scroll it with a motion controller, while d47 is composing or while a chapter is written. Before, each redraw could flash.
+
 The headset's mini panel now moves the chapter-writing bar as the write goes on: the stage words, the clock and the gauge update about once a second, not on every tick. Before, the bar stayed where it was drawn until something else redrew the overlay.
 
 d47 no longer crashes when the transcript is redrawn while a reply is being added to it. Before, a reply being spoken could end the app with an index out of range error.

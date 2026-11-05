@@ -374,6 +374,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// </summary>
     public bool TakesPointer => true;
 
+    /// <summary>Through <c>SetOverlayRaw</c> a redraw flickers; if no texture can be made the runtime logs it and goes up raw.</summary>
+    public bool UploadsAsTexture => true;
+
     /// <summary>Where this surface goes and what it looks like.</summary>
     public SurfacePlacement Placement
     {
