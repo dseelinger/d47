@@ -168,7 +168,7 @@ public sealed class CastLine(
         return said;
     }
 
-    /// <summary>The Story log body of one reply: what the Commander said, then the answer.</summary>
+    /// <summary>The kept body of one reply: what the Commander said, then the answer.</summary>
     public static string Logged(string asked, string answer) => $"You: {asked.Trim()}\n\n{answer.Trim()}";
 
     private static string Brief(AdventureSpeaker speaking, List<string> exchange)

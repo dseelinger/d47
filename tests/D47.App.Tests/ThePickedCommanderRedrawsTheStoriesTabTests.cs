@@ -94,7 +94,7 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
         [.. panel.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text ?? string.Empty)];
 
     [AvaloniaFact]
-    public void TheSubTabsReadYourStoriesCatalogueShortStoryStoryLog()
+    public void TheSubTabsReadYourStoryCatalogueShortStoryStoryBench()
     {
         var tab = Open();
 
@@ -103,7 +103,7 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
 
         var bar = tab.Panel.Nav.Roots(PanelTab.Stories).Select(root => root.Word).ToList();
 
-        Assert.Equal(["Your stories", "Catalogue", "Short Story", "Story bench", "Story log"], bar);
+        Assert.Equal(["Your story", "Catalogue", "Short Story", "Story bench"], bar);
 
         tab.Window.Close();
     }

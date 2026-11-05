@@ -112,17 +112,18 @@ public sealed class StoriesAdventuresAndMessagesRowsOpenByKeyboardTests
         store.Post("narrator", "First", "One.", Now);
         store.Post("narrator", "Second", "Two.", Now.AddMinutes(1));
 
-        var (window, panel) = Open(MessagesView.RootKey, store);
+        var (window, panel) = Open(AdventuresPage.RootKey, store);
         var rows = Rows(panel);
 
-        Assert.True(rows.Count >= 2, $"rows: {rows.Count}");
+        Assert.True(rows.Count >= 3, $"rows: {rows.Count}");
 
-        rows[0].Focus(NavigationMethod.Tab);
+        var first = rows.Count - 2;
+        rows[first].Focus(NavigationMethod.Tab);
         Dispatcher.UIThread.RunJobs();
         Press(window, Key.Down);
-        Assert.Equal(1, Rows(panel).IndexOf((Control)window.FocusManager!.GetFocusedElement()!));
+        Assert.Equal(first + 1, Rows(panel).IndexOf((Control)window.FocusManager!.GetFocusedElement()!));
 
-        EnterOpensTheFocusedRow(window, panel, rows[0], MessagesView.ReadPrefix);
+        EnterOpensTheFocusedRow(window, panel, rows[first], MessagesView.ReadPrefix);
 
         window.Close();
     }

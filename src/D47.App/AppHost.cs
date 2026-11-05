@@ -5203,6 +5203,35 @@ public sealed class AppHost : IDisposable
         return null;
     }
 
+    /// <summary>
+    /// Plays the clip a story run's record kept for <paramref name="line"/>, as <see cref="PlayMessage"/> plays a message's.
+    /// Returns why it cannot, or null once it is queued. Reads the file, so call it off the UI thread.
+    /// </summary>
+    public string? PlayRunLine(D47.Core.Stories.Story run, D47.Core.Stories.StoryRunLine line)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        ArgumentNullException.ThrowIfNull(line);
+
+        if (Stories?.Records?.Clip(GameState.Active?.Identity.FrontierId, run, line) is not { } clip)
+        {
+            return line.Clip is null
+                ? "That line was not spoken."
+                : "Its recording could not be read on this PC.";
+        }
+
+        Audio.DropGroup(MessagePlaybackGroup);
+        Audio.Enqueue(new AudioRequest
+        {
+            Channel = AudioChannel.Speech,
+            Clip = PcmConverter.ToStandard(clip),
+            Group = MessagePlaybackGroup,
+            Caption = line.Body,
+            Picture = line.Picture ?? (line.From == D47.Core.Messages.MessageStore.Narrator ? D47.Core.Interface.SpeakerPictures.Narrator : null),
+        });
+
+        return null;
+    }
+
     /// <summary>Puts what the microphone is doing in front of the Commander, on both surfaces.</summary>
     private void ShowSwitches(string? against) => Panel.SwitchesText = against;
 
@@ -5508,7 +5537,7 @@ public sealed class AppHost : IDisposable
         _voiceScopeSystem = system;
     }
 
-    /// <summary>A cast member's answer, posted to the Story log with the clip it was spoken in, once the turn has been spoken.</summary>
+    /// <summary>A cast member's answer, posted to Messages and its story run's record with the clip it was spoken in, once the turn has been spoken.</summary>
     public void NoteCastReply(TurnEvent.Addressed addressed, string asked, TurnResult? result)
     {
         if (addressed.Cast is { } castId && result is { Outcome: TurnOutcome.Answered, Text.Length: > 0 })

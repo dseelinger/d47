@@ -32,6 +32,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
     public const string RootKey = "adventures";
 
+    public const string RootName = "Your story";
+
     public const string ReadPrefix = "adventure.read.";
 
     public const string AskKey = "adventure.ask";
@@ -41,15 +43,18 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     /// <summary>The ask form for the next chapter of the finished adventure keyed after it.</summary>
     public const string NextPrefix = "adventure.next.";
 
-    /// <summary>Whether a Stories-tab level is one Commander's page: a chapter or its next-chapter form.</summary>
+    /// <summary>Whether a Stories-tab level is one Commander's page: a chapter, its next-chapter form or a story run.</summary>
     internal static bool BelongsToACommander(string key) =>
-        key.StartsWith(ReadPrefix, StringComparison.Ordinal) || key.StartsWith(NextPrefix, StringComparison.Ordinal);
+        key.StartsWith(ReadPrefix, StringComparison.Ordinal)
+        || key.StartsWith(NextPrefix, StringComparison.Ordinal)
+        || key.StartsWith(StoryRunPage.Prefix, StringComparison.Ordinal);
 
     private readonly AdventureSurface _surface;
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
     private readonly Func<Func<string, Task<bool>>?>? _copy;
     private readonly ToldEntries _entries;
+    private readonly bool _headset;
 
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly Notice _problems = new() { IsVisible = false };
@@ -69,8 +74,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
     public AdventuresPage(
         AdventureSurface surface, PanelNavigator nav, PanelPrompts prompts, Control? settingsStrip = null,
-        Func<Func<string, Task<bool>>?>? copy = null, SpeakerPortraits? portraits = null)
+        Func<Func<string, Task<bool>>?>? copy = null, SpeakerPortraits? portraits = null, bool headset = false)
     {
+        _headset = headset;
         _copy = copy;
         _entries = new ToldEntries(surface, () => portraits);
         BarTool = PageChrome.ToolOf(settingsStrip);
@@ -164,11 +170,16 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             return BuildAsk(follows: crumb.Key[NextPrefix.Length..]);
         }
 
-        if (_surface.Messages is { } inbox
-            && (crumb.Key == MessagesView.RootKey || crumb.Key.StartsWith(MessagesView.ReadPrefix, StringComparison.Ordinal)))
+        if (Inbox() is { } inbox && crumb.Key.StartsWith(MessagesView.ReadPrefix, StringComparison.Ordinal))
         {
-            _inbox ??= new MessagesView(inbox, _nav, _surface, _prompts);
-            return crumb.Key == MessagesView.RootKey ? _inbox : _inbox.Build(crumb);
+            return inbox.Build(crumb);
+        }
+
+        if (crumb.Key.StartsWith(StoryRunPage.Prefix, StringComparison.Ordinal) && _surface.Stories is { } runs)
+        {
+            return StoryRunPage.Find(runs, _surface.Commander(), crumb.Key) is { } run
+                ? new StoryRunPage(_surface, runs, _entries, run, _headset)
+                : Muted(StoryRunPage.GoneText);
         }
 
         if (crumb.Key == StoryBenchPage.RootKey)
@@ -193,6 +204,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         return null;
     }
 
+    private MessagesView? Inbox() =>
+        _surface.Messages is { } messages ? _inbox ??= new MessagesView(messages, _nav, _surface, _prompts, _entries) : null;
+
     private void OnChanged() => Dispatcher.UIThread.Post(Rebuild);
 
     /// <summary>Redraws the root after something it reads outside the book has changed.</summary>
@@ -207,6 +221,14 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         var problems = _surface.Book.Store.Problems;
         _problems.IsVisible = problems.Count > 0;
         _problems.Text = string.Join("\n", problems.Select(problem => $"{problem.Where}: {problem.Reason}"));
+
+        var log = Inbox()?.Log();
+
+        if (log is not null && _inbox!.Waiting(log) is { } waiting)
+        {
+            waiting.Margin = new Thickness(0, 0, 0, 22);
+            _list.Children.Add(waiting);
+        }
 
         var standings = _surface.Book.Standings(_surface.Commander());
         var storyCard = WritingStoryCard(standings);
@@ -240,6 +262,12 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         foreach (var standing in live.Concat(unbegun))
         {
             _list.Children.Add(Card(standing));
+        }
+
+        if (log is not null && _inbox!.Other(log) is { } other)
+        {
+            other.Margin = new Thickness(0, 22, 0, 0);
+            _list.Children.Add(other);
         }
     }
 
@@ -288,17 +316,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         card.Margin = new Thickness(0, 0, 0, 10);
         ListRow.Opens(card, () => _nav.Drill(new NavCrumb(StoriesView.ReadPrefix + story.Id, story.Title) { Level = StoriesView.ReadPrefix }));
         return card;
-    }
-
-    /// <summary>Whether the shown Commander has a story or short story under way, or a story ending waiting for an answer.</summary>
-    internal static bool InAStory(AdventureSurface surface, D47.Core.Messages.MessageStore store)
-    {
-        var commander = surface.Commander();
-
-        return surface.Stories?.Stories.Current(commander) is not null
-            || surface.Book.Standings(commander).Any(standing =>
-                !standing.Adventure.IsDraft && standing.Adventure.IsActive && !standing.IsDone)
-            || store.All.Any(message => MessagesView.IsWaiting(message, surface));
     }
 
     /// <summary>Whether a short story can be asked for: a model is available to write it.</summary>

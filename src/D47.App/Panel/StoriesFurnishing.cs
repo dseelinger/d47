@@ -15,7 +15,7 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
     /// <summary>The next objective, drawn under the title rule of every tab of the full panel.</summary>
     public ObjectiveStrip? Strip { get; private set; }
 
-    /// <summary>Shows or hides Short Story and Story log as the settings and the book change, and redraws the strip when the system does.</summary>
+    /// <summary>Shows or hides Short Story as the settings change, and redraws the strip when the system does.</summary>
     public bool Tick() => ShowConditionalRoots() | (Strip?.Refresh() ?? false);
 
     private bool ShowConditionalRoots()
@@ -26,9 +26,7 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
         }
 
         var ask = AdventuresPage.CanAsk(surface);
-        var log = surface.Messages is { } store && AdventuresPage.InAStory(surface, store);
         var changed = host.Nav.SetVisible(PanelTab.Stories, AdventuresPage.AskKey, ask);
-        changed |= host.Nav.SetVisible(PanelTab.Stories, MessagesView.RootKey, log);
 
         if (_askShown != ask)
         {
@@ -44,7 +42,7 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
     {
         AdventuresPage? page = null;
 
-        AdventuresPage Page() => page ??= new AdventuresPage(surface, host.Nav, host.Prompts, settingsStrip?.Invoke(), () => host.Copy, host.Portraits);
+        AdventuresPage Page() => page ??= new AdventuresPage(surface, host.Nav, host.Prompts, settingsStrip?.Invoke(), () => host.Copy, host.Portraits, host.Headset);
 
         if (desk is not null)
         {
@@ -60,7 +58,7 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
         }
 
         var help = D47.Core.Capabilities.Builtin.AdventureCapability.Id;
-        List<NavCrumb> roots = [new NavCrumb(AdventuresPage.RootKey, "Your stories") { Help = help }];
+        List<NavCrumb> roots = [new NavCrumb(AdventuresPage.RootKey, AdventuresPage.RootName) { Help = help }];
 
         if (surface.Stories is not null)
         {
@@ -73,8 +71,6 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
         {
             roots.Add(StoryBenchPage.Crumb with { Help = help });
         }
-
-        roots.Add(MessagesView.Crumb with { Help = help });
 
         host.Furnish(
             PanelTab.Stories,

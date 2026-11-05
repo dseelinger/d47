@@ -76,7 +76,7 @@ public class PanelPhrasesTests
     public void TheStoriesTabAnswersToStory(string spoken)
     {
         var nav = Furnished();
-        nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Your stories"));
+        nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Your story"));
 
         Assert.Equal("Stories.", PanelPhrases.Apply(spoken, nav));
         Assert.Equal(PanelTab.Stories, nav.Tab);
@@ -88,12 +88,12 @@ public class PanelPhrasesTests
     public void SayingStoryOnStoriesReturnsToItsRoot(string spoken)
     {
         var nav = Furnished();
-        nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Your stories"));
+        nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Your story"));
 
         nav.Select(PanelTab.Stories);
         nav.GoTo(new NavCrumb("story:7", "The Long Drift"));
 
-        Assert.Equal("Back to Your stories.", PanelPhrases.Apply(spoken, nav));
+        Assert.Equal("Back to Your story.", PanelPhrases.Apply(spoken, nav));
         Assert.Equal(PanelTab.Stories, nav.Tab);
         Assert.True(nav.AtRoot);
     }
@@ -106,7 +106,7 @@ public class PanelPhrasesTests
     public void AStoryCommandDoesNotMoveThePanel(string spoken)
     {
         var nav = Furnished();
-        nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Your stories"));
+        nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Your story"));
 
         Assert.Null(PanelPhrases.Apply(spoken, nav));
         Assert.Equal(PanelTab.Transcript, nav.Tab);

@@ -398,11 +398,10 @@ Two things are different, because the target is:
   changes which page is drawn presses nothing, reads no binds and checks no foreground, so it
   works whether those rows are on or off.
 
-A page may also be one of the fixed pages one level below a tab's page: Story log, Short Story,
+A page may also be one of the fixed pages one level below a tab's page: Short Story,
 Catalogue and Story bench under Stories (the Story bench is there for every Commander); Suggestions, Activities and All lists under Checklist;
-Compare under Ships; Route under Engineers; Progress under Plan. Story log, Short Story and
-Suggestions open only while their buttons would: a story under way, a model and galaxy search, a
-suggestion waiting. A position on a tab's page agrees with the panel while one of these is open
+Compare under Ships; Route under Engineers; Progress under Plan. Short Story and
+Suggestions open only while their buttons would: a model and galaxy search, a suggestion waiting. A position on a tab's page agrees with the panel while one of these is open
 beside it.
 
 A position may instead name **Next tab** or **Previous tab**, the first two entries in the page list. A flip

@@ -8,9 +8,9 @@ public class AFixedSubPageIsADestinationTests
 {
     private static readonly NavCrumb Catalogue = new("stories", "Catalogue");
 
-    private static readonly NavCrumb StoryLog = new("messages", "Story log");
+    private static readonly NavCrumb ShortStory = new("adventure.ask", "Short Story");
 
-    private static PanelNavigator Furnished(Func<bool>? inAStory = null)
+    private static PanelNavigator Furnished(Func<bool>? canAsk = null)
     {
         var nav = new PanelNavigator();
 
@@ -18,7 +18,7 @@ public class AFixedSubPageIsADestinationTests
         nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Stories"));
         nav.Register(PanelTab.Navigation, new NavCrumb("routing.plan", "Plan"));
 
-        Assert.True(nav.Declare("adventures", StoryLog, inAStory ?? (() => true)));
+        Assert.True(nav.Declare("adventures", ShortStory, canAsk ?? (() => true)));
         Assert.True(nav.Declare("adventures", Catalogue));
         Assert.True(nav.Declare("routing.plan", new NavCrumb("routing.progress", "Progress")));
 
@@ -43,7 +43,7 @@ public class AFixedSubPageIsADestinationTests
         var nav = Furnished();
 
         nav.Select(PanelTab.Stories);
-        nav.Drill(StoryLog);
+        nav.Drill(ShortStory);
         nav.Drill(new NavCrumb("story.read.1", "A chapter"));
 
         Assert.True(nav.Show("stories"));
@@ -84,7 +84,7 @@ public class AFixedSubPageIsADestinationTests
         Assert.False(nav.Declare("adventures", new NavCrumb("conversation", "Conversation again")));
         Assert.False(nav.Declare("nowhere", new NavCrumb("orphan", "Orphan")));
 
-        nav.Register(PanelTab.Commander, new NavCrumb("messages", "A root named like a sub-page"));
+        nav.Register(PanelTab.Commander, new NavCrumb("adventure.ask", "A root named like a sub-page"));
 
         Assert.False(nav.Has(PanelTab.Commander));
         Assert.Equal(["Catalogue"], nav.Destinations.Where(page => page.Key == "stories").Select(page => page.Word));
@@ -93,11 +93,11 @@ public class AFixedSubPageIsADestinationTests
     [Fact]
     public void ASubPageThatCannotOpenIsListedButNotOpened()
     {
-        var nav = Furnished(inAStory: () => false);
+        var nav = Furnished(canAsk: () => false);
 
-        Assert.Contains(nav.Destinations, page => page.Key == "messages");
+        Assert.Contains(nav.Destinations, page => page.Key == "adventure.ask");
 
-        Assert.False(nav.Show("messages"));
+        Assert.False(nav.Show("adventure.ask"));
         Assert.Equal(PanelTab.Transcript, nav.Tab);
         Assert.Equal(["adventures"], nav.TrailOf(PanelTab.Stories).Select(crumb => crumb.Key));
     }
@@ -108,7 +108,7 @@ public class AFixedSubPageIsADestinationTests
         var nav = Furnished();
 
         Assert.Equal(
-            ["conversation", "adventures", "messages", "stories", "routing.plan", "routing.progress"],
+            ["conversation", "adventures", "adventure.ask", "stories", "routing.plan", "routing.progress"],
             nav.Destinations.Select(page => page.Key));
 
         var catalogue = nav.Destinations.Single(page => page.Key == "stories");

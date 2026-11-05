@@ -51,7 +51,6 @@ public sealed class SwitchPage : DialogPage
     /// <summary>The grey line under a sub-page that is not always there, by the sub-page's key.</summary>
     private static readonly IReadOnlyDictionary<string, string> Availability = new Dictionary<string, string>
     {
-        [Panel.MessagesView.Crumb.Key] = "Only while a story is running",
         [Panel.ChecklistPage.Suggestions.Key] = "Only while there are suggestions",
         [Panel.AdventuresPage.AskCrumb.Key] = "Only while D47's model and galaxy search are on",
     };

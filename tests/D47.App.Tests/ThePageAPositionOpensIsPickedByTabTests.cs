@@ -36,7 +36,7 @@ public class ThePageAPositionOpensIsPickedByTabTests
         new(PanelTab.Transcript, new NavCrumb("transcript.technical", "Technical")),
         new(PanelTab.Stories, Stories),
         new(PanelTab.Stories, Stories, Catalogue),
-        new(PanelTab.Stories, MessagesView.Crumb),
+        new(PanelTab.Stories, AdventuresPage.AskCrumb),
         new(PanelTab.Assets, new NavCrumb("assets.ships", "Ships")),
         new(PanelTab.Settings, new NavCrumb("settings", "Settings")),
     ];
@@ -104,7 +104,7 @@ public class ThePageAPositionOpensIsPickedByTabTests
         var rows = Rows(OpenPicker(shown));
 
         Assert.Equal(
-            ["Nothing", "Next tab", "Previous tab", "Technical", "Stories", "Catalogue", "Story log", "Ships", "Settings"],
+            ["Nothing", "Next tab", "Previous tab", "Technical", "Stories", "Catalogue", "Short Story", "Ships", "Settings"],
             rows.Select(row => row.Text));
         Assert.Equal(
             [null, null, null, "TRANSCRIPT", "STORIES", null, null, "ASSET MGMT", "SETTINGS"],
@@ -112,7 +112,7 @@ public class ThePageAPositionOpensIsPickedByTabTests
         Assert.Equal(["1", "3", "1", "1"], rows.Where(row => row.Head is not null).Select(row => row.HeadCount));
         Assert.Equal([false, false, false, false, false, true, false, false, false], rows.Select(row => row.Nested));
         Assert.Equal(
-            [null, null, null, null, null, null, "Only while a story is running", null, null],
+            [null, null, null, null, null, null, "Only while D47's model and galaxy search are on", null, null],
             rows.Select(row => row.Detail));
 
         shown.Window.Close();

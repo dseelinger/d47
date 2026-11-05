@@ -88,6 +88,67 @@ public sealed class StoryRunRecord(
         }
     }
 
+    /// <summary>Whether a line posted under <paramref name="adventureKey"/> goes to a stock story run's record.</summary>
+    public bool Keeps(string adventureKey)
+    {
+        ArgumentNullException.ThrowIfNull(adventureKey);
+
+        return RunOf(adventureKey) is not null;
+    }
+
+    /// <summary>The clip a recorded line kept, decrypted when it is in the Commander's own voice; null when it has none or it cannot be read.</summary>
+    public AudioClip? Clip(string? frontierId, Story run, StoryRunLine line)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        ArgumentNullException.ThrowIfNull(line);
+
+        if (line.Clip is not { } file)
+        {
+            return null;
+        }
+
+        var name = Path.GetFileName(file);
+
+        try
+        {
+            byte[]? bytes;
+
+            lock (_gate)
+            {
+                bytes = files.ReadBytes(Path.Combine(RunFolder(frontierId, run), name));
+            }
+
+            if (bytes is null)
+            {
+                return null;
+            }
+
+            if (MessageClips.IsProtected(name))
+            {
+                if (!protector.TryUnprotect(bytes, out var plain))
+                {
+                    return null;
+                }
+
+                bytes = plain;
+                name = name[..^MessageClips.ProtectedExtension.Length];
+            }
+
+            if (name.EndsWith(MessageClips.PlainExtension, StringComparison.OrdinalIgnoreCase))
+            {
+                using var stream = new MemoryStream(bytes);
+                return WavReader.Read(stream, line.Body);
+            }
+
+            return compressor?.Decompress(bytes, line.Body);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or WavFormatException or EndOfStreamException)
+        {
+            logger.LogWarning(ex, "Could not read the clip of message {Key}", line.Key);
+            return null;
+        }
+    }
+
     public void Posted(D47Message message, SpokenClip? spoken)
     {
         ArgumentNullException.ThrowIfNull(message);

@@ -8,19 +8,23 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Every run on the Story bench has **Open**, which shows that run's page: its state, length, chapters, clues and dates, then every line it has spoken, in order, in one section per chapter. Each line shows the speaker's picture and name, what kind of line it is, the time and the text, with **Play** when its clip was kept, own-voice clips included. **Jump to** scrolls the page to the chapter and beat you choose, and works in the headset. A run from before its lines were kept says so and shows each chapter's text instead.
+
+The Story log sub-tab is gone. The first Stories sub-tab is now called **Your story**. Endings waiting for your answer are at its top, with their answers, Play and Change voice, and under **Other lines** it lists the lines that belong to no stock story run, newest first, such as a Short Story's lines.
+
 The Stories tab has a Story bench for every Commander. It lists your stock-story runs as Active, Shelved, Finished and Stopped, with length, chapters, clues, when each was picked and the time of its last line. Switch to on a shelved run, or on No story, asks first and then shelves the active story. The Jump, Beats and Checkpoints testing sections still appear only with D47_STORY_BENCH=1.
 
 Each story now keeps its own Backstory. Shelving a story or switching it off saves the Backstory it had, edits included, and No story or switching the story off brings back your default, the one you had before your first story. Switching or picking the story again, or switching it on, brings its Backstory back. Abandoning or finishing a story still puts your default back, and erasing pilot data removes the default and the saved Backstories with the stories.
 
 Switching to another story now shelves the one you had instead of abandoning it. A shelved story's chapter under way is dropped, and the story waits switched off: no objectives, nudges or clues, no Guardian cores held back, and its days do not count. Its messages and its last two chapters are kept, and any number of stories can be shelved. Picking or switching back to a shelved story brings that same run back, paused, and **Resume** writes its chapter again from where you are. The Switch confirmation says so. **Abandon** still ends a story.
 
-Each time a stock story is picked, its lines and their spoken clips are now also kept in that run's own folder under `data\story-runs\`, with the clips compressed. This record has no 200-message limit, so a line that leaves the Story log is still kept there. Deleting your recording or a custom voice deletes the clips spoken in it there too, and erasing your pilot data deletes the records of the stories it removes. At start, a stock story run picked before this existed, and so with no record, gets one filled once from the lines already in your messages, clips included; Short Story lines are not copied and your messages are not changed.
+Each time a stock story is picked, its lines and their spoken clips are now also kept in that run's own folder under `data\story-runs\`, with the clips compressed. This record has no 200-message limit, so a line that leaves `data\messages.json` is still kept there. Deleting your recording or a custom voice deletes the clips spoken in it there too, and erasing your pilot data deletes the records of the stories it removes. At start, a stock story run picked before this existed, and so with no record, gets one filled once from the lines already in your messages, clips included; Short Story lines are not copied and your messages are not changed.
 
 The Story Bench (on while `D47_STORY_BENCH=1`) no longer has slots. The Slots section, New slot, Switch to and Back to my story are gone, and the bench always works on the story in the data folder, with Jump, Next beat and Checkpoints with Rewind unchanged. At the next start, the slot folders under `data\story-bench\` and `bench.json` are deleted; the checkpoints stay. Stories are rated and unused messages are cleaned up the same way with the bench on as off.
 
 Picking a story again now keeps the earlier run of it in `data/story.json` beside the new one. Before, the new pick replaced the old run, with its chapters and when it stopped. Chapter keys of the earlier run are not reused.
 
-The Story log now keeps the lines and clips of a story you abandoned or switched away from. Before, they were deleted when the story stopped. A stopped story's unanswered ending question is no longer listed as waiting for an answer.
+The lines and clips of a story you abandoned or switched away from are now kept. Before, they were deleted when the story stopped. A stopped story's unanswered ending question is no longer listed as waiting for an answer.
 
 d47 now says so when the ship you are in cannot dock at the station of the current dock objective, in a story chapter or a short story. Before, you learned it from the station's refusal after the flight. The line names the station, its largest pad and your ship, and the objective stays in place.
 

@@ -326,7 +326,7 @@ public sealed class VoicePipeline(
     }
 
     /// <summary>
-    /// A turn's speech in a story cast member's voice, with the member's own treatment and kept for the Story log, as
+    /// A turn's speech in a story cast member's voice, with the member's own treatment and kept with the story run's lines, as
     /// <see cref="AnnounceAsync(Announcement, VoiceSelection?)"/> speaks the member's lines; null when nothing can speak it.
     /// </summary>
     private SpeechPipeline? CastTurnSpeech(D47.Core.Stories.PinnedVoice pinned, string group, string? translation)

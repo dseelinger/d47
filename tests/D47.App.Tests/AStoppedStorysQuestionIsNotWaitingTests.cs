@@ -51,10 +51,10 @@ public class AStoppedStorysQuestionIsNotWaitingTests
     }
 
     [Fact]
-    public void AStoppedStorysQuestionDoesNotKeepTheStoryLogShown()
+    public void AStoppedStorysQuestionIsNotListedAsWaitingOnYourStory()
     {
-        var (surface, question) = Open(StoryState.Abandoned);
+        var (surface, _) = Open(StoryState.Abandoned);
 
-        Assert.False(AdventuresPage.InAStory(surface, surface.Messages!));
+        Assert.Empty(new MessagesView(surface.Messages!, new PanelNavigator(), surface).Log().Waiting);
     }
 }

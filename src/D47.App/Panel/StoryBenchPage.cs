@@ -20,7 +20,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     public const string PageName = "Story bench";
     public const string FinaleLabel = "Finale";
     public const string WritingNotice = "A chapter is being written. These buttons return once it is done.";
-    public const double ContentWidth = 900;
+    public const double ContentWidth = 1224;
 
     public static NavCrumb Crumb => new(RootKey, PageName);
 
@@ -140,6 +140,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     internal const string NoStoryName = "No story";
     internal const string NoStoryLine = "Every story shelved, your own Backstory back.";
     internal const string SwitchLabel = "Switch to";
+    internal const string OpenLabel = "Open";
     internal const string NoLine = "—";
     internal const string JumpNote = "Moves the story so the chosen clue, or the finale, is due now, and writes its chapter.";
     internal const string BeatsNote = "Next beat fires the waiting beat without its journal event.";
@@ -353,21 +354,27 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             Mono(LastLine(commander, run), ListRow.AsideSize, ThemeManager.AKey),
         };
 
-        Control end;
+        var end = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2 };
+        var open = Tile("OpenRun", OpenLabel, BeatButtonWidth, true);
+        open.Click += (_, _) => _nav.Drill(new NavCrumb(StoryRunPage.KeyOf(run), run.Title) { Level = StoryRunPage.Prefix });
 
         if (active)
         {
-            end = Chrome("Active", TypeScale.ControlLarge, ThemeManager.CyanKey, FontWeight.SemiBold);
+            var label = Chrome("Active", TypeScale.ControlLarge, ThemeManager.CyanKey, FontWeight.SemiBold);
+            label.Margin = new Thickness(0, 0, 14, 0);
+            end.Children.Add(label);
+            end.Children.Add(open);
         }
         else if (run.State == StoryState.Shelved)
         {
             var switchTo = Tile("SwitchTo", SwitchLabel, BeatButtonWidth, !busy);
             switchTo.Click += (_, _) => AskSwitch(commander, run);
-            end = switchTo;
+            end.Children.Add(open);
+            end.Children.Add(switchTo);
         }
         else
         {
-            end = new Border();
+            end.Children.Add(open);
         }
 
         return Line(cells, end, active);
