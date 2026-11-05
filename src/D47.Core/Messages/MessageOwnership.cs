@@ -8,7 +8,7 @@ public static class MessageOwnership
 {
     /// <summary>
     /// A story's clue, ending and line keys are owned while the catalog has the story and some Commander's record of it
-    /// is running, paused or finished. A chapter key listed by such a story is owned. Any other key is owned while some
+    /// is in any state. A chapter key listed by such a story is owned. Any other key is owned while some
     /// Commander has that adventure, unless the adventure is a chapter that no live story lists.
     /// </summary>
     public static bool Owned(string key, AdventureStore adventures, StoryStore stories, Func<StoryCatalog> catalog)
@@ -19,8 +19,7 @@ public static class MessageOwnership
         ArgumentNullException.ThrowIfNull(catalog);
 
         var live = stories.All()
-            .Where(entry => entry.Story.State is StoryState.Running or StoryState.Paused or StoryState.Finished
-                && catalog().Find(entry.Story.Id) is not null)
+            .Where(entry => catalog().Find(entry.Story.Id) is not null)
             .Select(entry => entry.Story)
             .ToList();
 

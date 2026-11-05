@@ -10,7 +10,7 @@ using Xunit;
 namespace D47.Core.Tests.Messages;
 
 [Trait("Category", "Integration")]
-public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
+public class AStoppedStoryKeepsItsMessagesTests : IDisposable
 {
     private static readonly DateTimeOffset Noon = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
 
@@ -52,7 +52,7 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
     [Theory]
     [InlineData(StoryState.Ended)]
     [InlineData(StoryState.Abandoned)]
-    public void AnAbandonedOrSwitchedStoryLosesItsMessagesAndNothingElse(StoryState state)
+    public void AnAbandonedOrSwitchedStoryKeepsItsMessages(StoryState state)
     {
         SaveChapter("chapter-1");
         _rig.Adventures.Save("F1", AdventureFixtures.LanternRoute());
@@ -65,8 +65,8 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
 
         Pick(state, "chapter-1");
 
-        Assert.Equal(5, Sweep());
-        Assert.Equal(["own", "unkeyed"], _rig.Messages.All.Select(message => message.Subject).Order());
+        Assert.Equal(0, Sweep());
+        Assert.Equal(7, _rig.Messages.All.Count);
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
     }
 
     [Fact]
-    public void FourAbandonedChaptersAndTheirMessagesAreGoneAtStartup()
+    public void FourAbandonedChaptersOfAnEndedStoryKeepOnlyTheOneItStillLists()
     {
         string[] chapters = ["my-own-mayday", "my-own-mayday-2", "my-own-mayday-3", "my-own-mayday-4"];
 
@@ -126,7 +126,7 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
 
         Pick(StoryState.Ended, "my-own-mayday-4");
 
-        Assert.Equal(4, Sweep());
-        Assert.Empty(_rig.Messages.All);
+        Assert.Equal(3, Sweep());
+        Assert.Equal("my-own-mayday-4", Assert.Single(_rig.Messages.All).AdventureKey);
     }
 }

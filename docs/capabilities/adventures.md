@@ -413,8 +413,8 @@ plays the clip it was spoken in; see [Spoken messages keep their clip](speech.md
 The messages live in `data/messages.json`. The file holds the most recent 200; past that the oldest read
 message goes first.
 
-Abandoning a story, or switching to another, removes the messages it posted: its objectives, nudges, clues,
-beacon scan and ending. A finished story keeps them. The messages of a short story you asked for stay
+Abandoning a story, or switching to another, keeps the messages it posted, as finishing one does: its objectives,
+nudges, clues, beacon scan and ending. An ending question from a stopped story is not listed as waiting for an answer. The messages of a short story you asked for stay
 when you abandon it.
 
 ### A nudge when a story stalls

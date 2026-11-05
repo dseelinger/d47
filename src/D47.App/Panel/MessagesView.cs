@@ -201,9 +201,14 @@ public sealed class MessagesView : UserControl
 
     private bool IsWaiting(D47Message message) => IsWaiting(message, _surface);
 
-    /// <summary>Whether a message offers answers and the shown Commander has not chosen one.</summary>
+    /// <summary>Whether a message offers answers, the shown Commander has not chosen one and the story is not stopped.</summary>
     internal static bool IsWaiting(D47Message message, AdventureSurface? surface) =>
-        message.Answers.Count > 0 && Chosen(message, surface) is null;
+        message.Answers.Count > 0 && Chosen(message, surface) is null && !Stopped(message, surface);
+
+    private static bool Stopped(D47Message message, AdventureSurface? surface) =>
+        message.AdventureKey is { } key
+        && key.StartsWith(StoryEnding.KeyPrefix, StringComparison.Ordinal)
+        && surface?.Stories?.Stories.Find(surface.Commander(), key[StoryEnding.KeyPrefix.Length..]) is { State: StoryState.Abandoned or StoryState.Ended };
 
     private string? StoryName(string key)
     {
