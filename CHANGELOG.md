@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A dock objective in a story chapter now checks the station's pads against the ship you will be flying at that point: the ship named by an earlier board objective in the chapter, otherwise the ship you are in. Before, it needed only the smallest pad in your fleet, so a chapter could send a Cutter pilot to a small-pad outpost.
+
 The New Community Goal watch now recognises GalNet articles that say pilots can "sign up at" a station, or that a faction is "recruiting" pilots. Before, it missed launches worded that way.
 
 Settings › Acting on the game › Macros and switches now saves and loads binding profiles with buttons: a name box and **Save** on the Saved binding profiles row, and a **Load** button beside **Delete** on each profile. Before, saving and loading were by voice only. Both are refused while Elite is running, and the reply shows on the row.

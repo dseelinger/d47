@@ -913,6 +913,8 @@ needs no permit and has a pad for the ship aboard. With none, the rows in the la
 chapter's first slot can only be mine or organic. When the position is unknown or the query
 fails, the draw is not gated. A redrawn slot after **Never ask this** follows the same gate.
 
+A dock objective's station must have a pad for the ship the Commander will be flying at that point in the chapter: the ship named by the latest earlier board objective in the same draft, otherwise the ship aboard when the chapter is written. The list of candidate stations is filtered on the ship aboard.
+
 The Frontline Solutions gate is checked beside it. `StoryDirector` asks the galaxy search for fixed stations within the same
 reach that list Frontline Solutions, and counts one that needs no permit, has a pad for the ship aboard and is in a system the
 galaxy search or the Commander's own reading puts at war or civil war. It is not skipped when the

@@ -2327,7 +2327,7 @@ public sealed class AdventureGenerator(
         foreach (var station in stations.Where(station =>
                      station.IsFixed
                      && !Closed(station.SystemName, station.SystemAddress, facts)
-                     && (facts.NeedsPad(facts.ThisShipOnly) is not { } pad || station.Admits(pad))
+                     && (facts.NeedsPad() is not { } pad || station.Admits(pad))
                      && (facts.ClosedMarketId is null || station.MarketId != facts.ClosedMarketId)))
         {
             if (open.Count >= most)
@@ -5113,6 +5113,9 @@ public sealed class AdventureGenerator(
         // The trigger the beat before this one stood on, or null where it was refused.
         AdventureTrigger? lastStood = null;
 
+        // The hull the Commander flies at the current beat: the latest accepted Board beat, else null for the ship aboard.
+        string? flown = null;
+
         // The beats of a chapter being rewritten that stay, which count toward the chapter's rules.
         IReadOnlyList<AdventureBeat> kept = ask.Rewrite is { } rewrite ? [.. rewrite.Chapter.Beats.Take(rewrite.From)] : [];
 
@@ -5261,7 +5264,7 @@ public sealed class AdventureGenerator(
 
                 if (problems.Count == 0 && beat.Kind == TriggerKind.MissionTaken && !string.IsNullOrWhiteSpace(written.Station))
                 {
-                    var place = await resolver.ResolveAsync(TriggerKind.Dock, beat.System, beat.Station, beat.Body, where, facts.NeedsPad(ask.ThisShipOnly), cancellationToken).ConfigureAwait(false);
+                    var place = await resolver.ResolveAsync(TriggerKind.Dock, beat.System, beat.Station, beat.Body, where, facts.NeedsPad(flown), cancellationToken).ConfigureAwait(false);
 
                     if (place.Trigger is { } docked)
                     {
@@ -5375,6 +5378,7 @@ public sealed class AdventureGenerator(
                 else
                 {
                     trigger = new AdventureTrigger { Kind = TriggerKind.Board, ShipType = symbol };
+                    flown = symbol;
                 }
             }
             else if (beat.Kind == TriggerKind.Rank)
@@ -5413,7 +5417,7 @@ public sealed class AdventureGenerator(
             else
             {
                 var resolution = await resolver.ResolveAsync(
-                    beat.Kind, beat.System, beat.Station, beat.Body, where, facts.NeedsPad(ask.ThisShipOnly), cancellationToken)
+                    beat.Kind, beat.System, beat.Station, beat.Body, where, facts.NeedsPad(flown), cancellationToken)
                     .ConfigureAwait(false);
 
                 if (resolution.Trigger is not { } place)
@@ -5442,7 +5446,7 @@ public sealed class AdventureGenerator(
                     else if (Closed(place.System, place.SystemAddress, facts))
                     {
                         var move = await resolver.NearestOpenAsync(
-                            place.Kind, place.System!, previousSystem, facts.RadiusLightYears, facts.NeedsPad(ask.ThisShipOnly),
+                            place.Kind, place.System!, previousSystem, facts.RadiusLightYears, facts.NeedsPad(flown),
                             (system, address) => Closed(system, address, facts), cancellationToken).ConfigureAwait(false);
 
                         Refuse(index, PermitRefusal(where, place.System!, move is null ? null : $"Move objective {offset + index + 1} to {move}; rewrite its lines for that place."));
@@ -6112,21 +6116,9 @@ public sealed class AdventureGenerator(
 
         private static string? PadOf(string? type) => EliteSpecifications.Ship(type)?.Pad;
 
-        /// <summary>
-        /// The smallest pad a dock beat's station must have: the current ship's when the story stays in it,
-        /// otherwise the smallest of any ship in the fleet. Null where a ship's pad is unknown.
-        /// </summary>
-        public PadSize? NeedsPad(bool thisShipOnly)
-        {
-            if (thisShipOnly || Fleet.Count == 0)
-            {
-                return ParsePad(Fleet.FirstOrDefault(f => f.Here).Pad ?? PadOf(Ship.Type));
-            }
-
-            var pads = Fleet.Select(f => ParsePad(f.Pad)).ToList();
-
-            return pads.Any(pad => pad is null) ? null : pads.Min();
-        }
+        /// <summary>The pad a dock beat's station must have for the hull flown there (null: the ship aboard); null where that pad is unknown.</summary>
+        public PadSize? NeedsPad(string? flownHull = null) =>
+            ParsePad(PadOf(flownHull ?? Ship.Type));
 
         private static PadSize? ParsePad(string? pad) =>
             Enum.TryParse<PadSize>(pad, ignoreCase: true, out var size) ? size : null;
