@@ -769,15 +769,23 @@ public sealed class PanelViewModel : INotifyPropertyChanged
             // A file, drawn as one, exactly as the log above is.
             TranscriptPage.RawJournal =>
                 [new TranscriptSegment(JournalRawText, Marker: false, TranscriptVoice.Ship)],
-            _ =>
+            _ => RunSegments(page, Text),
+        };
+    }
+
+    private List<TranscriptSegment> RunSegments(TranscriptPage page, Func<Run, string> text)
+    {
+        lock (_appendLock)
+        {
+            return
             [
                 .. _runs.Where(run => page != TranscriptPage.Conversation || !Hidden(run)).Select(run =>
                     new TranscriptSegment(
-                        Text(run), run.Marker, run.Voice, run.Speaker, run.SourceKey, run.Time,
+                        text(run), run.Marker, run.Voice, run.Speaker, run.SourceKey, run.Time,
                         run.Kind, run.ProposalId, run.Provenance, run.Picture, run.SettingKey,
                         run.Translation.Length > 0 ? run.Translation.ToString() : null, run.Origin))
-            ],
-        };
+            ];
+        }
     }
 
     private bool Hidden(Run run) =>

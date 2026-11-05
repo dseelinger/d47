@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+d47 no longer crashes when the transcript is redrawn while a reply is being added to it. Before, a reply being spoken could end the app with an index out of range error.
+
 The Journal File reading now has a line for a ship systems shutdown: "Ship systems shut down". Before, the event was not named anywhere in d47.
 
 The interdiction and piracy alarms are new sounds: rising, reverberant whoops that are louder than before. The interdiction alarm is three whoops, and the piracy alarm is two a fourth lower. Before, both were short soft chimes.
