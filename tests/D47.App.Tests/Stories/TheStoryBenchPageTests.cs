@@ -15,7 +15,7 @@ using Xunit;
 
 namespace D47.App.Tests.Stories;
 
-/// <summary>The Story bench page: present only while the bench is on, and each action redraws the Stories pages.</summary>
+/// <summary>The Story bench page's maintainer sections, present only while the bench is on.</summary>
 [Trait("Category", "Integration")]
 public sealed class TheStoryBenchPageTests
 {
@@ -167,12 +167,19 @@ public sealed class TheStoryBenchPageTests
     }
 
     [AvaloniaFact]
-    public void WithTheBenchOffThereIsNoWayToThePage()
+    public void WithTheBenchOffThePageHasNoMaintainerSections()
     {
         var rig = Build(benchOn: false);
 
-        Assert.DoesNotContain(rig.Panel.Nav.Roots(PanelTab.Stories), root => root.Key == StoryBenchPage.RootKey);
-        Assert.DoesNotContain(Drawn(rig.Panel), text => text.Contains("Story bench", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(rig.Panel.Nav.Roots(PanelTab.Stories), root => root.Key == StoryBenchPage.RootKey);
+
+        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = Drawn(rig.Panel);
+        Assert.Null(Find(rig.Panel, "Jump"));
+        Assert.DoesNotContain(StoryBenchPage.BenchFlag, drawn);
+        Assert.DoesNotContain(drawn, text => string.Equals(text, "Checkpoints", StringComparison.OrdinalIgnoreCase));
     }
 
     [AvaloniaFact]
@@ -184,6 +191,7 @@ public sealed class TheStoryBenchPageTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.NotNull(Find(rig.Panel, "Jump"));
+        Assert.Contains(StoryBenchPage.BenchFlag, Drawn(rig.Panel));
         Assert.Null(Find(rig.Panel, "NewSlot"));
         Assert.Null(Find(rig.Panel, "SwitchTo"));
         Assert.DoesNotContain(Drawn(rig.Panel), text => string.Equals(text, "Slots", StringComparison.OrdinalIgnoreCase));
@@ -261,7 +269,7 @@ public sealed class TheStoryBenchPageTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Single(Drawn(rig.Panel), text => string.Equals(text, StoryBenchPage.PageName, StringComparison.OrdinalIgnoreCase));
-        Assert.Contains("Test a story: jump ahead, fire beats, rewind a chapter.", Drawn(rig.Panel));
+        Assert.Contains(StoryBenchPage.SummaryText, Drawn(rig.Panel));
     }
 
     [AvaloniaFact]

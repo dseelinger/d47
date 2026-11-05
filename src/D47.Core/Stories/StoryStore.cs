@@ -87,6 +87,9 @@ public sealed class StoryStore
         }
     }
 
+    /// <summary>This Commander's story runs in any state, the most recently picked first.</summary>
+    public IReadOnlyList<Story> Runs(string? frontierId) => [.. For(frontierId).OrderByDescending(story => story.PickedAt)];
+
     /// <summary>The running or paused story, or null.</summary>
     public Story? Current(string? frontierId) => For(frontierId).FirstOrDefault(story => story.IsCurrent);
 

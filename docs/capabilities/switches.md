@@ -399,7 +399,7 @@ Two things are different, because the target is:
   works whether those rows are on or off.
 
 A page may also be one of the fixed pages one level below a tab's page: Story log, Short Story,
-Catalogue and Story bench under Stories; Suggestions, Activities and All lists under Checklist;
+Catalogue and Story bench under Stories (the Story bench is there for every Commander); Suggestions, Activities and All lists under Checklist;
 Compare under Ships; Route under Engineers; Progress under Plan. Story log, Short Story and
 Suggestions open only while their buttons would: a story under way, a model and galaxy search, a
 suggestion waiting. A position on a tab's page agrees with the panel while one of these is open

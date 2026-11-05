@@ -116,7 +116,8 @@ public sealed class TheBenchShowsHowFarAJumpedChapterHasGotTests
             Stories: director, Bench: bench);
 
         var look = AppLook.Put();
-        var page = new StoryBenchPage(surface, bench, director);
+        var nav = new PanelNavigator();
+        var page = new StoryBenchPage(surface, bench, director, nav, new PanelPrompts(nav, new Avalonia.Controls.Panel()));
         var window = new Window { Content = page, Width = 640, Height = 700 };
         window.Show();
         Dispatcher.UIThread.RunJobs();

@@ -418,6 +418,21 @@ Abandoning a story, or shelving it by switching to another, keeps the messages i
 nudges, clues, beacon scan and ending. An ending question from a stopped story is not listed as waiting for an answer. The messages of a short story you asked for stay
 when you abandon it.
 
+### Story bench
+
+Open **Story bench** on the Stories tab, after Short Story. It lists your stock-story runs in four groups:
+**Active**, **Shelved**, **Finished** and **Stopped**, the last naming whether the run was abandoned or ended.
+Short Stories are not listed. Each row shows the title and its state, then Length, Chapters, Clues (given out of
+total), Picked and Last line, the time of the newest line in the run's record, or a dash when the run has none.
+
+A shelved run has **Switch to**, and so does the **No story** row below the shelved runs. Either opens a
+confirmation naming the story to be shelved and what comes back. **Switch** shelves the active story and makes
+the chosen one active again, paused; on **No story** the active story is shelved and none is active. A chapter
+being written refuses the switch.
+
+With no runs the page says so and offers **Open the Catalogue**. Started with `D47_STORY_BENCH=1`, the Jump,
+Beats and Checkpoints sections for testing the active story follow the list; without it they are absent.
+
 ### A nudge when a story stalls
 
 When the next objective has waited through three play sessions and seven days since the last objective or nudge,

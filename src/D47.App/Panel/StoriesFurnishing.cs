@@ -68,12 +68,13 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
         }
 
         roots.Add(AdventuresPage.AskCrumb with { Help = help });
-        roots.Add(MessagesView.Crumb with { Help = help });
 
-        if (surface.Stories is not null && surface.Bench is not null)
+        if (surface.Stories is not null)
         {
             roots.Add(StoryBenchPage.Crumb with { Help = help });
         }
+
+        roots.Add(MessagesView.Crumb with { Help = help });
 
         host.Furnish(
             PanelTab.Stories,

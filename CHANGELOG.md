@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Stories tab has a Story bench for every Commander. It lists your stock-story runs as Active, Shelved, Finished and Stopped, with length, chapters, clues, when each was picked and the time of its last line. Switch to on a shelved run, or on No story, asks first and then shelves the active story. The Jump, Beats and Checkpoints testing sections still appear only with D47_STORY_BENCH=1.
+
 Each story now keeps its own Backstory. Shelving a story or switching it off saves the Backstory it had, edits included, and No story or switching the story off brings back your default, the one you had before your first story. Switching or picking the story again, or switching it on, brings its Backstory back. Abandoning or finishing a story still puts your default back, and erasing pilot data removes the default and the saved Backstories with the stories.
 
 Switching to another story now shelves the one you had instead of abandoning it. A shelved story's chapter under way is dropped, and the story waits switched off: no objectives, nudges or clues, no Guardian cores held back, and its days do not count. Its messages and its last two chapters are kept, and any number of stories can be shelved. Picking or switching back to a shelved story brings that same run back, paused, and **Resume** writes its chapter again from where you are. The Switch confirmation says so. **Abandon** still ends a story.

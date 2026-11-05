@@ -103,7 +103,7 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
 
         var bar = tab.Panel.Nav.Roots(PanelTab.Stories).Select(root => root.Word).ToList();
 
-        Assert.Equal(["Your stories", "Catalogue", "Short Story", "Story log"], bar);
+        Assert.Equal(["Your stories", "Catalogue", "Short Story", "Story bench", "Story log"], bar);
 
         tab.Window.Close();
     }

@@ -13,7 +13,7 @@ using D47.Core.Stories;
 
 namespace D47.App.Panel;
 
-/// <summary>The maintainer's page for testing stories: jumping the current story, firing beats and rewinding. Reachable only while the bench is on.</summary>
+/// <summary>The Commander's story runs, to switch between. While the bench is on it also jumps the current story, fires beats and rewinds.</summary>
 public sealed class StoryBenchPage : UserControl, IPageSummary
 {
     public const string RootKey = "stories.bench";
@@ -24,7 +24,9 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
 
     public static NavCrumb Crumb => new(RootKey, PageName);
 
-    public string Summary => "Test a story: jump ahead, fire beats, rewind a chapter.";
+    public const string SummaryText = "Your stories: switch between them, or play back every line.";
+
+    public string Summary => SummaryText;
 
     event EventHandler? IPageSummary.SummaryChanged
     {
@@ -37,18 +39,22 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     private const double Bar = 3;
 
     private readonly AdventureSurface _surface;
-    private readonly StoryBench _bench;
+    private readonly StoryBench? _bench;
     private readonly StoryDirector _director;
+    private readonly PanelNavigator _nav;
+    private readonly PanelPrompts _prompts;
     private readonly StackPanel _body = new() { Spacing = 28, MaxWidth = ContentWidth, HorizontalAlignment = HorizontalAlignment.Left };
     private readonly StatusLine _status = new();
     private bool _acting;
     private string? _jumpLabel;
 
-    public StoryBenchPage(AdventureSurface surface, StoryBench bench, StoryDirector director)
+    public StoryBenchPage(AdventureSurface surface, StoryBench? bench, StoryDirector director, PanelNavigator nav, PanelPrompts prompts)
     {
         _surface = surface;
         _bench = bench;
         _director = director;
+        _nav = nav;
+        _prompts = prompts;
 
         Content = new ScrollViewer
         {
@@ -63,7 +69,11 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _bench.CheckpointsChanged += OnChanged;
+        if (_bench is not null)
+        {
+            _bench.CheckpointsChanged += OnChanged;
+        }
+
         _director.Stories.Changed += OnChanged;
         _director.WritingChanged += OnChanged;
         _surface.Book.StirringChanged += OnChanged;
@@ -73,7 +83,11 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
-        _bench.CheckpointsChanged -= OnChanged;
+        if (_bench is not null)
+        {
+            _bench.CheckpointsChanged -= OnChanged;
+        }
+
         _director.Stories.Changed -= OnChanged;
         _director.WritingChanged -= OnChanged;
         _surface.Book.StirringChanged -= OnChanged;
@@ -96,6 +110,15 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             _body.Children.Add(WritingBlock(commander));
         }
 
+        _body.Children.Add(RunList(commander, busy));
+
+        if (_bench is null)
+        {
+            return;
+        }
+
+        _body.Children.Add(StarSystemPage.GroupHead(MaintainerHead, Mono(BenchFlag, TypeScale.Meta, ThemeManager.WarnKey)));
+
         var story = _director.Stories.Current(commander);
         var active = _surface.Book.Active(commander);
 
@@ -110,6 +133,14 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         _body.Children.Add(Section("Checkpoints", CheckpointsNote, null, CheckpointSection(commander, story, busy)));
     }
 
+    internal const string MaintainerHead = "Testing tools";
+    internal const string BenchFlag = "D47_STORY_BENCH=1";
+    internal const string NoRuns = "No stories yet. Pick one in the Catalogue, and every line it speaks is kept here to play back.";
+    internal const string OpenCatalogue = "Open the Catalogue";
+    internal const string NoStoryName = "No story";
+    internal const string NoStoryLine = "Every story shelved, your own Backstory back.";
+    internal const string SwitchLabel = "Switch to";
+    internal const string NoLine = "—";
     internal const string JumpNote = "Moves the story so the chosen clue, or the finale, is due now, and writes its chapter.";
     internal const string BeatsNote = "Next beat fires the waiting beat without its journal event.";
     internal const string CheckpointsNote = "One is taken as each chapter begins. Rewind restores it and pauses the story.";
@@ -207,6 +238,227 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         row.Bind(ListRow.SecondaryBrushProperty, Application.Current!.Resources.GetResourceObservable(secondaryKey));
     }
 
+    // ---- runs --------------------------------------------------------------------------------
+
+    private const string ColumnSpec = "*,96,84,84,108,150,Auto";
+
+    internal static string Day(DateTimeOffset at) => at.ToLocalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    internal static string Minute(DateTimeOffset at) => at.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+
+    internal static string StateLine(Story run) => run.State switch
+    {
+        StoryState.Running => "Running",
+        StoryState.Paused => "Paused",
+        StoryState.Shelved => $"Shelved {Day(run.OffSpans.Count > 0 ? run.OffSpans[^1].From : run.PickedAt)}"
+            + (run.Backstory is null ? string.Empty : " · Backstory saved"),
+        StoryState.Finished => $"Finished {Day(run.StoppedAt ?? run.PickedAt)}",
+        StoryState.Abandoned => $"Abandoned {Day(run.StoppedAt ?? run.PickedAt)}",
+        _ => $"Ended {Day(run.StoppedAt ?? run.PickedAt)}",
+    };
+
+    private string LastLine(string? commander, Story run)
+    {
+        var lines = _director.Records?.Read(commander, run);
+
+        return lines is { Count: > 0 } ? Minute(lines.Max(line => line.Sent)) : NoLine;
+    }
+
+    private StackPanel RunList(string? commander, bool busy)
+    {
+        var holder = new StackPanel { Spacing = 22 };
+        var runs = _director.Stories.Runs(commander);
+
+        if (runs.Count == 0)
+        {
+            holder.Children.Add(StarSystemPage.GroupHead("Your stories", string.Empty, "0"));
+            holder.Children.Add(AdventuresPage.Muted(NoRuns));
+
+            var open = Tile("OpenCatalogue", OpenCatalogue, ButtonWidth, true);
+            open.HorizontalAlignment = HorizontalAlignment.Left;
+            open.Click += (_, _) => _nav.SelectRoot(StoriesView.RootKey);
+            holder.Children.Add(open);
+            return holder;
+        }
+
+        holder.Children.Add(ColumnHeads());
+
+        var active = runs.Where(run => run.IsCurrent).ToList();
+        var shelved = runs.Where(run => run.State == StoryState.Shelved).ToList();
+        var finished = runs.Where(run => run.State == StoryState.Finished).ToList();
+        var stopped = runs.Where(run => run.State is StoryState.Abandoned or StoryState.Ended).ToList();
+
+        var groups = new List<(string Name, int Count, List<Control> Rows)>
+        {
+            ("Active", active.Count, [.. active.Select(run => RunRow(commander, run, busy, active: true))]),
+            ("Shelved", shelved.Count, [.. shelved.Select(run => RunRow(commander, run, busy, active: false))]),
+            ("Finished", finished.Count, [.. finished.Select(run => RunRow(commander, run, busy, active: false))]),
+            ("Stopped", stopped.Count, [.. stopped.Select(run => RunRow(commander, run, busy, active: false))]),
+        };
+
+        if (active.Count > 0)
+        {
+            groups[1].Rows.Add(NoStoryRow(commander, busy));
+        }
+
+        foreach (var (name, count, rows) in groups)
+        {
+            if (rows.Count == 0)
+            {
+                continue;
+            }
+
+            var group = new StackPanel { Spacing = 0 };
+            group.Children.Add(StarSystemPage.GroupHead(name, string.Empty, count.ToString(CultureInfo.InvariantCulture)));
+
+            foreach (var row in rows)
+            {
+                group.Children.Add(row);
+            }
+
+            holder.Children.Add(group);
+        }
+
+        return holder;
+    }
+
+    private static Grid ColumnHeads()
+    {
+        string[] heads = ["Story", "Length", "Chapters", "Clues", "Picked", "Last line"];
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(ColumnSpec), ColumnSpacing = 16, Margin = new Thickness(14, 0, 0, 0) };
+
+        for (var index = 0; index < heads.Length; index++)
+        {
+            var head = Chrome(heads[index], TypeScale.Meta, ThemeManager.GreyKey, FontWeight.SemiBold);
+            Grid.SetColumn(head, index);
+            grid.Children.Add(head);
+        }
+
+        return grid;
+    }
+
+    private Border RunRow(string? commander, Story run, bool busy, bool active)
+    {
+        var name = AdventuresPage.Text(run.Title, TypeScale.ControlLarge, ThemeManager.WhiteKey);
+        var state = AdventuresPage.Text(StateLine(run), TypeScale.Meta, active ? ThemeManager.CyanKey : ThemeManager.GreyKey);
+        var title = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { name, state } };
+
+        var cells = new Control[]
+        {
+            title,
+            Mono(run.Pacing.Name, ListRow.AsideSize, ThemeManager.AKey),
+            Mono(run.Chapters.Count.ToString(CultureInfo.InvariantCulture), ListRow.AsideSize, ThemeManager.AKey),
+            Mono($"{run.CluesGiven.ToString(CultureInfo.InvariantCulture)} / {run.Pacing.ClueDays.Count.ToString(CultureInfo.InvariantCulture)}", ListRow.AsideSize, ThemeManager.AKey),
+            Mono(Day(run.PickedAt), ListRow.AsideSize, ThemeManager.AKey),
+            Mono(LastLine(commander, run), ListRow.AsideSize, ThemeManager.AKey),
+        };
+
+        Control end;
+
+        if (active)
+        {
+            end = Chrome("Active", TypeScale.ControlLarge, ThemeManager.CyanKey, FontWeight.SemiBold);
+        }
+        else if (run.State == StoryState.Shelved)
+        {
+            var switchTo = Tile("SwitchTo", SwitchLabel, BeatButtonWidth, !busy);
+            switchTo.Click += (_, _) => AskSwitch(commander, run);
+            end = switchTo;
+        }
+        else
+        {
+            end = new Border();
+        }
+
+        return Line(cells, end, active);
+    }
+
+    private Border NoStoryRow(string? commander, bool busy)
+    {
+        var name = AdventuresPage.Text(NoStoryName, TypeScale.ControlLarge, ThemeManager.WhiteKey);
+        var line = AdventuresPage.Text(NoStoryLine, TypeScale.Meta, ThemeManager.GreyKey);
+        var title = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { name, line } };
+
+        var switchTo = Tile("SwitchToNoStory", SwitchLabel, BeatButtonWidth, !busy);
+        switchTo.Click += (_, _) => AskSwitch(commander, null);
+
+        return Line([title], switchTo, false);
+    }
+
+    private static Border Line(Control[] cells, Control end, bool active)
+    {
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(ColumnSpec), ColumnSpacing = 16, MinHeight = 60 };
+
+        for (var index = 0; index < cells.Length; index++)
+        {
+            Grid.SetColumn(cells[index], index);
+            cells[index].VerticalAlignment = VerticalAlignment.Center;
+            grid.Children.Add(cells[index]);
+        }
+
+        Grid.SetColumn(end, 6);
+        end.HorizontalAlignment = HorizontalAlignment.Right;
+        end.VerticalAlignment = VerticalAlignment.Center;
+        grid.Children.Add(end);
+
+        var content = new Border { Padding = new Thickness(9, 6, 0, 6), Child = grid };
+
+        return Row(content, first: false, barKey: active ? ThemeManager.CyanKey : null, groundKey: active ? ThemeManager.CyanGroundKey : null);
+    }
+
+    internal static string SwitchContext(Story? from, Story? to) =>
+        string.Join(
+            "\n",
+            new[]
+            {
+                from is null ? null : $"{from.Title} is shelved: its chapter under way is dropped and its clock stops. Its Backstory is kept with it.",
+                to is null
+                    ? "No story runs, and your own Backstory comes back."
+                    : $"{to.Title} comes back paused, with the Backstory you left it with. Resume writes its chapter again from where you are.",
+            }.Where(text => text is not null));
+
+    private void AskSwitch(string? drawnFor, Story? to)
+    {
+        if (!string.Equals(drawnFor, _surface.Commander(), StringComparison.Ordinal))
+        {
+            _status.Fail("The Commander changed. Open the page again.");
+            return;
+        }
+
+        var from = _director.Stories.Current(drawnFor);
+
+        _prompts.Choose(
+            new ChoiceRequest(
+                "stories.bench.switch",
+                PageName,
+                to is null ? $"Switch to {NoStoryName}?" : $"Switch to {to.Title}?",
+                SwitchContext(from, to),
+                [new ChoiceOption("switch", "Switch"), new ChoiceOption("cancel", "Cancel")],
+                null,
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (option.Key != "switch" || !string.Equals(drawnFor, _surface.Commander(), StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                var now = _surface.Now();
+
+                if (to is null)
+                {
+                    Act("Shelving the story…", () => Task.FromResult(_director.ShelveCurrent(drawnFor, now)), "Every story is shelved.");
+                }
+                else
+                {
+                    Act(
+                        $"Switching to {to.Title}…",
+                        () => _director.SwitchAsync(drawnFor, to.Id, now, CancellationToken.None),
+                        $"{to.Title} is your story again. Resume it to write its chapter.");
+                }
+            });
+    }
+
     // ---- beats -------------------------------------------------------------------------------
 
     internal static string Time(DateTimeOffset at) => at.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
@@ -299,7 +551,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             var name = beat.Title;
             next.Click += (_, _) => Act(
                 $"Stepping {name}…",
-                () => Task.FromResult(_bench.Step(commander, key, _surface.Now())),
+                () => Task.FromResult(_bench!.Step(commander, key, _surface.Now())),
                 $"Stepped {name}. It is said after the usual settle.");
 
             Grid.SetRow(notes, 1);
@@ -331,7 +583,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     {
         var holder = new StackPanel();
 
-        if (_bench.Checkpoints(commander) is not { Count: > 0 } checkpoints)
+        if (_bench!.Checkpoints(commander) is not { Count: > 0 } checkpoints)
         {
             holder.Children.Add(AdventuresPage.Muted(NoCheckpointsNotice));
             return holder;
@@ -362,7 +614,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             rewind.Classes.Add(Settings.SettingsView.DestructiveClass);
             rewind.Click += (_, _) => Act(
                 $"Rewinding to chapter {checkpoint.Chapter.ToString(CultureInfo.InvariantCulture)}…",
-                () => Task.FromResult(_bench.Rewind(checkpoint.Chapter, _surface.Now())),
+                () => Task.FromResult(_bench!.Rewind(checkpoint.Chapter, _surface.Now())),
                 $"Rewound to chapter {checkpoint.Chapter.ToString(CultureInfo.InvariantCulture)}. The story is paused; Resume begins the chapter again.");
 
             var grid = new Grid
