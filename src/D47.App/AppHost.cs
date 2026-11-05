@@ -255,6 +255,7 @@ public sealed class AppHost : IDisposable
             new MediaFoundationFileDecoder(),
             PlayOwnVoice,
             loggerFactory.CreateLogger<CustomVoiceDraft>());
+        ClipCompressor = new MediaFoundationClipCompressor(loggerFactory.CreateLogger<MediaFoundationClipCompressor>());
         CustomVoiceEditing = new Settings.CustomVoicesEditing(
             customVoices,
             _ownVoiceRecording,
@@ -823,6 +824,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The Commander's custom Chatterbox voices, listed where a voice is picked and never drawn for anyone else.</summary>
     internal CustomVoices CustomVoices { get; }
+
+    /// <summary>Compresses spoken clips for keeping, and reads them back.</summary>
+    internal IClipCompressor ClipCompressor { get; }
 
     /// <summary>
     /// The one thing that presses a key in the game, held only so that shutting down lets go of

@@ -50,7 +50,7 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
         }
     }
 
-    private static IWaveProvider Standardise(WaveStream reader, int channels)
+    internal static IWaveProvider Standardise(WaveStream reader, int channels)
     {
         var samples = reader.ToSampleProvider();
 
