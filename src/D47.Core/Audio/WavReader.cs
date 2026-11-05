@@ -32,6 +32,12 @@ public static class WavReader
     public static IPcmStream OpenStandard(Stream stream, string name) => PcmConverter.ToStandard(Open(stream, name));
 
     /// <summary>
+    /// The file read on demand, converted to <see cref="AudioFormat.Music"/>. Takes ownership of
+    /// <paramref name="stream"/>, which must be seekable.
+    /// </summary>
+    public static IPcmStream OpenMusic(Stream stream, string name) => PcmConverter.ToMusic(Open(stream, name));
+
+    /// <summary>
     /// Parses the header and returns the sample data as a stream read on demand. Takes ownership of
     /// <paramref name="stream"/>, which must be seekable.
     /// </summary>

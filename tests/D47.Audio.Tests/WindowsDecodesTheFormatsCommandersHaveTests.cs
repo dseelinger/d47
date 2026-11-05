@@ -63,7 +63,7 @@ public class WindowsDecodesTheFormatsCommandersHaveTests : IDisposable
     }
 
     [Fact]
-    public void AStreamedFileReadsToTheSameLengthAsADecodedOne()
+    public void AStreamedFileReadsToTwiceTheLengthOfADecodedOneBecauseItIsStereo()
     {
         var path = WriteTone("tone.wav", seconds: 0.25);
         var decoder = new MediaFoundationDecoder();
@@ -81,7 +81,7 @@ public class WindowsDecodesTheFormatsCommandersHaveTests : IDisposable
             total += read;
         }
 
-        Assert.Equal(whole, total);
+        Assert.Equal(whole * 2, total);
     }
 
     /// <summary>A file Windows cannot read is a reason to report, not an unhandled COM error.</summary>

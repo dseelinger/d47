@@ -43,14 +43,14 @@ public class DroppedInAudioIsConvertedOnLoadTests : IDisposable
     }
 
     [Fact]
-    public void AStereoMusicTrackStreamsInTheStandardFormat()
+    public void AStereoMusicTrackStreamsAt48KilohertzInStereo()
     {
         Write("music/general/wide.wav", WavWriter.ToBytes(Pcm(22_050 * 2, (_, _) => 500), new AudioFormat(22_050, 2)));
 
         using var stream = Assert.Single(Load().Music(Situations.General)).Open();
         var pcm = ReadAll(stream, chunk: 6);
 
-        Assert.InRange(pcm.Length / 2, 47_990, 48_010);
+        Assert.InRange(pcm.Length / 4, 47_990, 48_010);
         Assert.All(Samples(pcm), sample => Assert.Equal(500, sample));
     }
 

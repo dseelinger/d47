@@ -30,7 +30,7 @@ internal sealed class StreamSampleProvider : ISampleProvider, IDisposable
         _track = track;
         _logger = logger;
 
-        var format = AudioFormat.Standard;
+        var format = AudioFormat.Music;
 
         _buffer = new BufferedWaveProvider(new WaveFormat(format.SampleRate, 16, format.Channels))
         {
@@ -82,8 +82,8 @@ internal sealed class StreamSampleProvider : ISampleProvider, IDisposable
 
     private void Feed()
     {
-        var chunk = new byte[(int)(AudioFormat.Standard.SampleRate * Chunk.TotalSeconds) * AudioFormat.Standard.BytesPerFrame];
-        var ahead = (int)(AudioFormat.Standard.SampleRate * Ahead.TotalSeconds) * AudioFormat.Standard.BytesPerFrame;
+        var chunk = new byte[(int)(AudioFormat.Music.SampleRate * Chunk.TotalSeconds) * AudioFormat.Music.BytesPerFrame];
+        var ahead = (int)(AudioFormat.Music.SampleRate * Ahead.TotalSeconds) * AudioFormat.Music.BytesPerFrame;
 
         try
         {

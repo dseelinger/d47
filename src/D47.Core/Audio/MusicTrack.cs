@@ -1,6 +1,6 @@
 namespace D47.Core.Audio;
 
-/// <summary>48 kHz mono 16-bit PCM read on demand; Read returns 0 at the end.</summary>
+/// <summary>48 kHz stereo 16-bit PCM read on demand; Read returns 0 at the end.</summary>
 public interface IPcmStream : IDisposable
 {
     int Read(Span<byte> buffer);

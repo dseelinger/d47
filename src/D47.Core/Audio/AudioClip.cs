@@ -6,6 +6,9 @@ public sealed record AudioFormat(int SampleRate, int Channels)
     /// <summary>What the shipped cues are, and what TTS output is converted to.</summary>
     public static readonly AudioFormat Standard = new(48_000, 1);
 
+    /// <summary>What ambient music is streamed in.</summary>
+    public static readonly AudioFormat Music = new(48_000, 2);
+
     public int BytesPerFrame => Channels * 2;
 
     public TimeSpan DurationOf(int byteCount) =>

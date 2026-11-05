@@ -37,7 +37,7 @@ public class MusicIsReadFromDiskAsItPlaysTests : IDisposable
 
         using var stream = Assert.Single(library.Music(Situations.General)).Open();
 
-        Assert.Equal(Pcm(9, 8, 7, 6), ReadAll(stream));
+        Assert.Equal(Pcm(9, 9, 8, 8, 7, 7, 6, 6), ReadAll(stream));
     }
 
     [Fact]

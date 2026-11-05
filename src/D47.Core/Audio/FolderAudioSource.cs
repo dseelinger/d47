@@ -94,7 +94,7 @@ public sealed class FolderAudioSource : ICueSource
 
         if (!Decodes(path))
         {
-            return WavReader.OpenStandard(OpenFile(path), clipName);
+            return WavReader.OpenMusic(OpenFile(path), clipName);
         }
 
         try
@@ -103,7 +103,7 @@ public sealed class FolderAudioSource : ICueSource
         }
         catch (AudioDecodeException) when (IsWav(path))
         {
-            return WavReader.OpenStandard(OpenFile(path), clipName);
+            return WavReader.OpenMusic(OpenFile(path), clipName);
         }
     }
 

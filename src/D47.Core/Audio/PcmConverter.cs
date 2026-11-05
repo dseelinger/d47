@@ -75,6 +75,10 @@ public static class PcmConverter
     /// <summary>The stream itself when it is already standard. Takes ownership of <paramref name="source"/>.</summary>
     public static IPcmStream ToStandard(WavPcmStream source) =>
         source.Format == AudioFormat.Standard ? source : new ConvertingPcmStream(source);
+
+    /// <summary>The stream itself when it is already <see cref="AudioFormat.Music"/>. Takes ownership of <paramref name="source"/>.</summary>
+    public static IPcmStream ToMusic(WavPcmStream source) =>
+        source.Format == AudioFormat.Music ? source : new ConvertingPcmStream(source, AudioFormat.Music);
 }
 
 internal sealed class ConvertingPcmStream : IPcmStream
@@ -83,32 +87,41 @@ internal sealed class ConvertingPcmStream : IPcmStream
 
     private readonly WavPcmStream _source;
     private readonly int _channels;
+    private readonly int _outChannels;
 
-    /// <summary>Source samples per output sample.</summary>
+    /// <summary>Source frames per output frame.</summary>
     private readonly double _step;
 
     private readonly byte[] _raw;
-    private readonly float[] _mono = new float[Capacity];
+    private readonly float[] _frames;
     private int _count;
 
-    /// <summary>Where the next output sample falls, in <see cref="_mono"/> indices.</summary>
+    /// <summary>Where the next output frame falls, in <see cref="_frames"/> frame indices.</summary>
     private double _position;
 
     private bool _ended;
 
     public ConvertingPcmStream(WavPcmStream source)
+        : this(source, AudioFormat.Standard)
+    {
+    }
+
+    public ConvertingPcmStream(WavPcmStream source, AudioFormat target)
     {
         _source = source;
         _channels = source.Format.Channels;
-        _step = (double)source.Format.SampleRate / AudioFormat.Standard.SampleRate;
+        _outChannels = target.Channels;
+        _step = (double)source.Format.SampleRate / target.SampleRate;
         _raw = new byte[Capacity * source.Format.BytesPerFrame];
+        _frames = new float[Capacity * _outChannels];
     }
 
     public int Read(Span<byte> buffer)
     {
         var written = 0;
+        var frameBytes = _outChannels * 2;
 
-        while (written + 2 <= buffer.Length)
+        while (written + frameBytes <= buffer.Length)
         {
             var index = (int)_position;
 
@@ -123,15 +136,22 @@ internal sealed class ConvertingPcmStream : IPcmStream
                 break;
             }
 
-            var here = _mono[index];
-            var next = index + 1 < _count ? _mono[index + 1] : here;
-            var sample = here + ((next - here) * (_position - index));
+            var fraction = _position - index;
+            var next = index + 1 < _count ? index + 1 : index;
 
-            BinaryPrimitives.WriteInt16LittleEndian(
-                buffer[written..],
-                (short)Math.Round(Math.Clamp(sample, short.MinValue, short.MaxValue)));
+            for (var channel = 0; channel < _outChannels; channel++)
+            {
+                var here = _frames[(index * _outChannels) + channel];
+                var after = _frames[(next * _outChannels) + channel];
+                var sample = here + ((after - here) * fraction);
 
-            written += 2;
+                BinaryPrimitives.WriteInt16LittleEndian(
+                    buffer[written..],
+                    (short)Math.Round(Math.Clamp(sample, short.MinValue, short.MaxValue)));
+
+                written += 2;
+            }
+
             _position += _step;
         }
 
@@ -140,11 +160,11 @@ internal sealed class ConvertingPcmStream : IPcmStream
 
     public void Dispose() => _source.Dispose();
 
-    /// <summary>Drops the samples already passed and reads more frames behind the rest.</summary>
+    /// <summary>Drops the frames already passed and reads more behind the rest.</summary>
     private void Refill()
     {
         var spent = Math.Min((int)_position, _count);
-        Array.Copy(_mono, spent, _mono, 0, _count - spent);
+        Array.Copy(_frames, spent * _outChannels, _frames, 0, (_count - spent) * _outChannels);
         _count -= spent;
         _position -= spent;
 
@@ -159,14 +179,43 @@ internal sealed class ConvertingPcmStream : IPcmStream
 
         for (var offset = 0; offset < read; offset += frameBytes)
         {
-            var sum = 0;
+            var at = _count++ * _outChannels;
 
-            for (var channel = 0; channel < _channels; channel++)
+            if (_outChannels == 1)
             {
-                sum += BinaryPrimitives.ReadInt16LittleEndian(_raw.AsSpan(offset + (channel * 2)));
-            }
+                var sum = 0;
 
-            _mono[_count++] = (float)sum / _channels;
+                for (var channel = 0; channel < _channels; channel++)
+                {
+                    sum += Sample(offset, channel);
+                }
+
+                _frames[at] = (float)sum / _channels;
+            }
+            else if (_channels == 1)
+            {
+                _frames[at] = _frames[at + 1] = Sample(offset, 0);
+            }
+            else
+            {
+                float left = 0, right = 0;
+
+                for (var channel = 0; channel < _channels; channel += 2)
+                {
+                    left += Sample(offset, channel);
+                }
+
+                for (var channel = 1; channel < _channels; channel += 2)
+                {
+                    right += Sample(offset, channel);
+                }
+
+                _frames[at] = left / ((_channels + 1) / 2);
+                _frames[at + 1] = right / (_channels / 2);
+            }
         }
     }
+
+    private short Sample(int offset, int channel) =>
+        BinaryPrimitives.ReadInt16LittleEndian(_raw.AsSpan(offset + (channel * 2)));
 }

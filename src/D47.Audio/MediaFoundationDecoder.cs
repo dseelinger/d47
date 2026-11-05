@@ -5,8 +5,8 @@ using NAudio.Wave.SampleProviders;
 namespace D47.Audio;
 
 /// <summary>
-/// Any file Windows' Media Foundation codecs read, downmixed to mono and resampled to
-/// <see cref="AudioFormat.Standard"/>.
+/// Any file Windows' Media Foundation codecs read, resampled to 48 kHz: mono for <see cref="Decode"/>,
+/// stereo for <see cref="Open"/>.
 /// </summary>
 public sealed class MediaFoundationDecoder : IAudioDecoder
 {
@@ -19,7 +19,7 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
 
     public AudioClip Decode(string path, string name)
     {
-        using var stream = Open(path);
+        using var stream = Open(path, AudioFormat.Standard);
         using var pcm = new MemoryStream();
         var chunk = new byte[65_536];
         int read;
@@ -32,14 +32,16 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
         return new AudioClip(name, pcm.ToArray(), AudioFormat.Standard);
     }
 
-    public IPcmStream Open(string path)
+    public IPcmStream Open(string path) => Open(path, AudioFormat.Music);
+
+    private static PcmStream Open(string path, AudioFormat target)
     {
         MediaFoundationReader? reader = null;
 
         try
         {
             reader = new MediaFoundationReader(path);
-            return new PcmStream(reader, Standardise(reader));
+            return new PcmStream(reader, Standardise(reader, target.Channels));
         }
         catch (Exception ex) when (IsCodecFailure(ex))
         {
@@ -48,13 +50,21 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
         }
     }
 
-    private static IWaveProvider Standardise(WaveStream reader)
+    private static IWaveProvider Standardise(WaveStream reader, int channels)
     {
         var samples = reader.ToSampleProvider();
 
-        if (samples.WaveFormat.Channels > 1)
+        if (channels == 1 && samples.WaveFormat.Channels > 1)
         {
             samples = new Downmix(samples);
+        }
+        else if (channels == 2 && samples.WaveFormat.Channels == 1)
+        {
+            samples = new MonoToStereoSampleProvider(samples);
+        }
+        else if (channels == 2 && samples.WaveFormat.Channels > 2)
+        {
+            samples = new StereoFold(samples);
         }
 
         if (samples.WaveFormat.SampleRate != AudioFormat.Standard.SampleRate)
@@ -108,6 +118,50 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
         }
 
         public void Dispose() => reader.Dispose();
+    }
+
+    /// <summary>Averages the even-numbered channels into left and the odd-numbered into right.</summary>
+    internal sealed class StereoFold(ISampleProvider source) : ISampleProvider
+    {
+        private readonly int _channels = source.WaveFormat.Channels;
+        private float[] _frames = [];
+
+        public WaveFormat WaveFormat { get; } = WaveFormat.CreateIeeeFloatWaveFormat(source.WaveFormat.SampleRate, 2);
+
+        public int Read(float[] buffer, int offset, int count)
+        {
+            var outFrames = count / 2;
+            var wanted = outFrames * _channels;
+
+            if (_frames.Length < wanted)
+            {
+                _frames = new float[wanted];
+            }
+
+            var frames = source.Read(_frames, 0, wanted) / _channels;
+
+            for (var frame = 0; frame < frames; frame++)
+            {
+                float left = 0, right = 0;
+
+                for (var channel = 0; channel < _channels; channel++)
+                {
+                    if (channel % 2 == 0)
+                    {
+                        left += _frames[(frame * _channels) + channel];
+                    }
+                    else
+                    {
+                        right += _frames[(frame * _channels) + channel];
+                    }
+                }
+
+                buffer[offset + (frame * 2)] = left / ((_channels + 1) / 2);
+                buffer[offset + (frame * 2) + 1] = right / (_channels / 2);
+            }
+
+            return frames * 2;
+        }
     }
 
     /// <summary>Averages every channel into one.</summary>

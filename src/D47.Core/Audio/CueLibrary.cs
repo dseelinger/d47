@@ -42,8 +42,8 @@ public interface ICueSource
         return WavReader.ReadStandard(buffer, clipName);
     }
 
-    /// <summary>The clip in <see cref="AudioFormat.Standard"/>, read on demand.</summary>
-    IPcmStream Stream(string name, string clipName) => WavReader.OpenStandard(Open(name), clipName);
+    /// <summary>The clip in <see cref="AudioFormat.Music"/>, read on demand.</summary>
+    IPcmStream Stream(string name, string clipName) => WavReader.OpenMusic(Open(name), clipName);
 }
 
 /// <summary>The real one: the cues embedded in this assembly at build time.</summary>

@@ -224,8 +224,8 @@ clip.
 ### Your own sounds
 
 Drop audio files into `data/audio` beside the executable. `.mp3`, `.m4a`, `.aac`, `.wma`,
-`.flac` and `.wav` are read, at any sample rate and channel count; D47 converts them to 48 kHz
-mono as it loads them. The folders are created at startup whenever they are missing, and **Open audio folder** on
+`.flac` and `.wav` are read, at any sample rate and channel count; D47 keeps music in
+stereo at 48 kHz and converts every other sound to 48 kHz mono as it loads it. The folders are created at startup whenever they are missing, and **Open audio folder** on
 the **Audio folder** row, and at the foot of the **Your own audio** page, opens `data\audio` in Explorer:
 
 ```text
