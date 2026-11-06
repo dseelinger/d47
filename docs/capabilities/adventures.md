@@ -787,8 +787,8 @@ message.
 of every provider that speaks, then of every voice that provider lists, of either gender. The story's own
 voice is marked in the list. The story's text is not rewritten for the voice you choose. Each voice in the
 list can be played first; on a paid provider each sample is billed like any line. **Use the default**
-returns the character to the story's voice, or to the ship's provider for a character that is not pinned. A character that is not primary is listed nowhere until its
-first message arrives.
+returns the character to the story's voice, or to the ship's provider for a character that is not pinned. A character that is not primary is listed on Asset Mgmt › Characters and on the Story comms channel
+once the story introduces it.
 
 The choice is kept in `settings.json` under `storyVoices`, keyed `<story-id>.<cast-id>`, with
 `.for-man` or `.for-woman` for a character in two versions. Lines spoken through a paid provider count in

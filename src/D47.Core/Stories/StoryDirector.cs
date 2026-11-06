@@ -274,6 +274,27 @@ public sealed class StoryDirector(
     }
 
     /// <summary>
+    /// The current story's introduced cast as this Commander meets it, in the order introduced, primary or not; a member
+    /// with versions is left out while the Commander's gender is unset. Empty when no story is current or its hidden layer is not on disk.
+    /// </summary>
+    public IReadOnlyList<StoryCastMember> IntroducedCast(string? frontierId)
+    {
+        if (stories.Current(frontierId) is not { } story || Hidden(story.Id) is not { } secret)
+        {
+            return [];
+        }
+
+        var gender = Gender();
+        var title = catalog().Find(story.Id)?.Title ?? story.Id;
+
+        return [.. story.Introduced
+            .Select(id => secret.Cast.FirstOrDefault(member => string.Equals(member.Id, id, StringComparison.Ordinal)))
+            .OfType<StorySpeaker>()
+            .Where(member => member.Versions is null || CommanderGender.IsSet(gender))
+            .Select(member => Member(title, secret, member, gender))];
+    }
+
+    /// <summary>
     /// The cast member whose <see cref="Configuration.D47Settings.StoryVoices"/> key is <paramref name="key"/>, in any
     /// story whose hidden layer is on disk, or null.
     /// </summary>

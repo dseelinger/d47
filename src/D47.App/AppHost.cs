@@ -5358,12 +5358,7 @@ public sealed class AppHost : IDisposable
             return null;
         }
 
-        var cast = director.PrimaryCast(story.Id);
-
-        return new D47.App.Panel.RunningCast(
-            story.Id,
-            story.Title,
-            [.. story.Introduced.Select(id => cast.FirstOrDefault(member => member.Shown.Id == id)).OfType<D47.Core.Stories.StoryCastMember>()]);
+        return new D47.App.Panel.RunningCast(story.Id, story.Title, director.IntroducedCast(frontierId));
     }
 
     /// <summary>The line a story character's Play sample speaks after its name.</summary>

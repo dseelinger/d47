@@ -28,4 +28,13 @@ public sealed class ARecordedStoryMemberIsNotOnTheStoryChannelTests
 
         Assert.Equal(["wren"], inputs.StoryCast.Select(member => member.Id));
     }
+    [Fact]
+    public void ANonPrimaryMemberWhoIsNotRecordedIsOnTheStoryCast()
+    {
+        var member = Member("halle", false);
+        var nonPrimary = member with { Shown = member.Shown with { Primary = false } };
+        var story = new RunningCast("salt-road", "Salt Road", [nonPrimary]);
+
+        Assert.Equal(["halle"], CommsFeed.Inputs(null, [], story, []).StoryCast.Select(m => m.Id));
+    }
 }
