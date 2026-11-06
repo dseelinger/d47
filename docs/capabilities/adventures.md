@@ -527,7 +527,7 @@ chapter one, which then begins. D47 keeps the Backstory you had before as your d
 story's own words counts as none. Each story keeps the Backstory it had when you shelved it or switched it off, edits included. Act one ends when you scan the Guardian beacon nearest to you with the ship's data-link
 scanner; arriving in the beacon's system is not enough. The beacon's three pylons must be charged by laser
 or railgun fire, all within a few minutes, before the scan opens its core; the objective's hand-off says so. Before each act-one chapter D47 checks whether
-the ship you are in can reach that beacon: it can when a laser or railgun is fitted in any mount and either you own a fleet carrier or a fuel scoop is fitted. Jump range
+the ship you are flying or any ship you own can reach that beacon: a ship can when a laser or railgun is fitted in any mount and either you own a fleet carrier or a fuel scoop is fitted. A stored ship counts by its remembered loadout, and not while it is in transit. When only a stored ship can, the chapter ends at the beacon and its writer is told which ship and where it is parked, so the chapter can send you to swap into it. Jump range
 never decides it; a ship with a short range is told the trip is easier with a longer one. When it can, the
 chapter ends at the beacon. When it cannot, the chapter has no beacon objective, keeps to a session's
 flying, and works toward a ship that can make the trip; the chapter writer is told the beacon, its
@@ -1164,7 +1164,7 @@ page, in the window and on the VR big panel, wherever **Change objective** shows
 included. A short story does not get it. One press, or "write this chapter again", sets the chapter aside and writes it
 again from where you are; there is no question first, and the status line reads "Writing the chapter again…". It works
 on any step, the last included. Objectives already done stay done. A finale chapter keeps its destination, and a beacon
-chapter stays a beacon chapter aimed at the nearest beacon; it is refused when your ship cannot reach a beacon. It drops an
+chapter stays a beacon chapter aimed at the nearest beacon; it is refused when no ship you own can reach a beacon. It drops an
 open detour. It does not count toward the activity bar. The model is refused this tool.
 
 #### `rewrite_story_chapter`

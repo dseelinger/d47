@@ -1207,10 +1207,16 @@ public sealed class StoryDirector(
         }
 
         return story.BeaconScanAt is null
-            && BeaconReach.Of(here(), Game()?.Ship ?? ShipLoadout.Unknown, Game()?.Carrier.Owned == true) is { InReach: false, Why: { } why }
+            && Reach() is { InReach: false, Why: { } why }
             ? $"The ship you are in cannot reach a Guardian beacon: {why}."
             : null;
     }
+
+    /// <summary>Whether the nearest Guardian beacon is in reach of the ship flown or any ship the Commander owns.</summary>
+    private BeaconReach Reach() =>
+        Game() is { } game
+            ? BeaconReach.Of(here(), game.Ship, game.Carrier.Owned, game.Fleet, game.Loadouts)
+            : BeaconReach.Of(here(), ShipLoadout.Unknown, false);
 
     /// <summary>Writes and begins a detour adventure for <paramref name="story"/>; returns its key, or null when it could not be saved.</summary>
     private string? BeginDetour(string? frontierId, Story story, AdventureTrigger trigger, string title, string words, DateTimeOffset now)
@@ -2323,7 +2329,7 @@ public sealed class StoryDirector(
             ? new AdventureBeacon(address, trigger.System ?? GuardianCores.Beacons.GetValueOrDefault(address) ?? string.Empty, trigger.JumpRange)
             : null;
         var reach = story.BeaconScanAt is null && beaconBeat is null
-            ? BeaconReach.Of(here(), Game()?.Ship ?? ShipLoadout.Unknown, Game()?.Carrier.Owned == true)
+            ? Reach()
             : null;
         var game = Game();
         var previous = ChapterAt(frontierId, story, story.Chapters.Count - 2);
@@ -3550,7 +3556,7 @@ public sealed class StoryDirector(
         var keptDestination = rewriting && finaleChapter == 1 ? story.FinaleDestination : null;
         var stage = finaleChapter is null ? StoryClues.Stage(story) : StoryStage.Finale;
         var reach = story.BeaconScanAt is null
-            ? BeaconReach.Of(here(), Game()?.Ship ?? ShipLoadout.Unknown, Game()?.Carrier.Owned == true)
+            ? Reach()
             : null;
 
         var game = Game();
@@ -3640,7 +3646,7 @@ public sealed class StoryDirector(
                 now,
                 stage,
                 finaleChapter,
-                reach is { InReach: true } ? new AdventureBeacon(reach.Address, reach.System, reach.EasierWith) : null,
+                reach is { InReach: true } ? new AdventureBeacon(reach.Address, reach.System, reach.EasierWith, reach.SwapTo) : null,
                 reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why, reach.Unarmed, reach.Carrier, reach.EasierWith) : null,
                 reach?.InReach != false,
                 longHaul,

@@ -95,7 +95,7 @@ public sealed record AdventureHeading(string System, long SystemAddress, StarPos
 }
 
 /// <summary>The Guardian beacon system an act-one chapter ends at.</summary>
-public sealed record AdventureBeacon(long SystemAddress, string System, double? EasierWith = null);
+public sealed record AdventureBeacon(long SystemAddress, string System, double? EasierWith = null, string? SwapTo = null);
 
 /// <summary>The landable body a story's finale ends on, named in its first finale chapter.</summary>
 public sealed record AdventureDestination(long SystemAddress, string System, int BodyId, string Body)
@@ -3345,6 +3345,13 @@ public sealed class AdventureGenerator(
                 + $"scanning the Guardian beacon in {beacon.System} with the ship's data-link scanner after charging its three pylons with laser or railgun fire. That scan is when the "
                 + "Guardian cores come aboard. The reason to go is the public layer's beacon line. That objective may be farther "
                 + "than the reach; every other hop keeps to it.");
+
+            if (beacon.SwapTo is { } swap)
+            {
+                text.AppendLine(
+                    $"The ship the Commander is in cannot make the trip, but a ship they own can: {swap}. "
+                    + "Send the Commander to swap into that ship rather than to refit this one.");
+            }
         }
 
         AppendDestination(text, story, facts);

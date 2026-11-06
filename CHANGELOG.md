@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Before an act-one chapter, the Guardian beacon counts as in reach when any ship you own can make the trip, judged from its remembered loadout. When the ship you are flying cannot but a stored one can, the chapter ends at the beacon and tells you which ship to swap into and where it is parked, instead of sending you to refit.
+
 A story chapter with an objective written without a line now has that objective written again before you see it, instead of failing with "has no line".
 
 A finished or stopped story run can be deleted. **Delete** is on its row on the Story bench and on its page, and asks first, showing the run's lines and the clips on disk. **Delete run** removes the run, its lines and clips, its archived chapters and its local rating vote; the story stays in the Catalogue and picking it again starts a new run. The active run has no Delete. On a shelved run's page, Delete opens **Abandon it first**, and **Abandon** there ends the run so it can be deleted.
