@@ -453,7 +453,7 @@ failure shows the galaxy search's own sentence with **RETRY**. **REFRESH** asks 
 one-hour hold on a report, and the line under the faction's name says how old the report is. On the
 headset the field is behind **CHANGE FACTION**, and **BACK** returns without changing anything.
 
-A segment under the faction's name switches between two sections.
+A segment under the faction's name switches between four sections.
 
 - **Overview** shows government, allegiance, the systems the faction is present in and controls, the
   stations it controls, and how many systems have it in a war, civil war or election, active or
@@ -466,6 +466,16 @@ A segment under the faction's name switches between two sections.
   reading of a system is newer than the report's, the row uses it and the age reads
   `you saw it 2 hours ago`. A report over 30 days old reads `OLD REPORT` and its states turn grey.
   The desktop scrolls every row; the headset shows 25 to a page with **PREVIOUS** and **NEXT**.
+- **Conflicts** has one row per system where the faction has a war, civil war or election, active
+  before pending, then by system name. **Opponent** is the faction your own reading of the system
+  names; otherwise the one other faction in the same state; otherwise `One of 3 factions` with their
+  names under it (the first three, then `and N more`); and `Opponent not known yet` when no other
+  faction shows the state. **Days won** (ours – theirs) and **At stake** come from your own reading and
+  are `—` for a system you have not visited. The row count equals Overview's conflict count.
+- **Assets** lists the stations the faction controls: station, system, type, largest pad and distance
+  from arrival. The box finds a station or system name, the kind dropdown filters by the station types
+  the galaxy search reports (each with its count, largest first), and every heading sorts; a third
+  press returns to System, then station name. The headset shows 25 rows to a page.
 
 Supporter counts, influence history, results of finished conflicts and happiness outside systems you
 have visited are not shown, because no source gives them.

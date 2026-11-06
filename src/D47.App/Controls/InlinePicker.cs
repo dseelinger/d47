@@ -143,6 +143,9 @@ public sealed class InlinePicker : ContentControl
     /// <summary>Draws the value and the options in the mono face, for numbers.</summary>
     public bool Mono { get; set; }
 
+    /// <summary>Draws each option's detail in the mono face, as written.</summary>
+    public bool DetailMono { get; set; }
+
     /// <summary>The name the button is announced by.</summary>
     public string Label
     {
@@ -212,11 +215,11 @@ public sealed class InlinePicker : ContentControl
         {
             var aside = new TextBlock
             {
-                Text = detail.ToUpperInvariant(),
-                FontFamily = new FontFamily(Fonts.ChromeFamily),
-                FontSize = TypeScale.Caption,
-                FontWeight = FontWeight.SemiBold,
-                LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking,
+                Text = DetailMono ? detail : detail.ToUpperInvariant(),
+                FontFamily = new FontFamily(DetailMono ? Fonts.MonoFamily : Fonts.ChromeFamily),
+                FontSize = DetailMono ? TypeScale.Tip : TypeScale.Caption,
+                FontWeight = DetailMono ? FontWeight.Normal : FontWeight.SemiBold,
+                LetterSpacing = DetailMono ? 0 : TypeScale.Caption * Fonts.ChromeTracking,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(12, 0, 0, 0),
             };

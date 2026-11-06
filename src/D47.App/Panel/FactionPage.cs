@@ -72,8 +72,13 @@ public sealed class FactionPage : UserControl, IPageSummary
     public const string TableId = "Search.Faction";
     public const string HeadName = "FactionHead";
     public const string ProgressName = "FactionProgress";
+    public const string ConflictsHeadName = "FactionConflictsHead";
+    public const string AssetsHeadName = "FactionAssetsHead";
+    public const string AssetsFindName = "FactionAssetsFind";
+    public const string ConflictsTableId = "Search.Faction.Conflicts";
+    public const string AssetsTableId = "Search.Faction.Assets";
 
-    public static readonly IReadOnlyList<string> Sections = ["OVERVIEW", "SYSTEMS"];
+    public static readonly IReadOnlyList<string> Sections = ["OVERVIEW", "SYSTEMS", "CONFLICTS", "ASSETS"];
 
     private static readonly TimeSpan Budget = TimeSpan.FromSeconds(150);
 
@@ -98,6 +103,15 @@ public sealed class FactionPage : UserControl, IPageSummary
     private readonly Grid _systemsView = new() { RowDefinitions = new RowDefinitions("Auto,*") };
     private readonly SortHeader<FactionRow> _sortHeader;
     private readonly Func<DateTimeOffset> _now;
+    private readonly SortHeader<FactionConflict> _conflictHead = new(ConflictsHeadName, FactionConflicts.Heads);
+    private readonly SortHeader<FactionStation> _assetHead = new(AssetsHeadName, FactionAssets.Heads, FactionAssets.DefaultOrder);
+    private readonly Border _conflictsTable = new();
+    private readonly Border _assetsTable = new();
+    private readonly Grid _conflictsView = new() { RowDefinitions = new RowDefinitions("*,Auto") };
+    private readonly Grid _assetsView = new() { RowDefinitions = new RowDefinitions("Auto,*") };
+    private readonly TextBox _assetFind = SystemSearchPage.Field("find a station or system");
+    private readonly InlinePicker _assetKind = new() { Label = "Kind of station", ListMaxHeight = 400, DetailMono = true };
+    private readonly TextBlock _assetCount;
 
     private CancellationTokenSource? _fetch;
     private int _generation;
@@ -116,6 +130,11 @@ public sealed class FactionPage : UserControl, IPageSummary
     private FactionProgress? _progress;
     private string? _statusKey;
     private IReadOnlyList<FactionRow> _rows = [];
+    private IReadOnlyList<FactionConflict> _conflicts = [];
+    private IReadOnlyList<FactionStation> _stations = [];
+    private string _kind = FactionAssets.AllId;
+    private ScrollViewer? _conflictsScroll;
+    private ScrollViewer? _assetsScroll;
     private object? _seen;
 
     public FactionPage(GalaxySearchSurface searches, bool headset, string? faction = null)
@@ -129,6 +148,13 @@ public sealed class FactionPage : UserControl, IPageSummary
         {
             _page = 0;
             DrawSystems();
+        };
+
+        _conflictHead.Changed += DrawConflicts;
+        _assetHead.Changed += () =>
+        {
+            _page = 0;
+            DrawAssets();
         };
 
         _field.Name = FieldName;
@@ -212,6 +238,47 @@ public sealed class FactionPage : UserControl, IPageSummary
         _systemsView.Children.Add(toolbar);
         _systemsView.Children.Add(_table);
 
+        _assetCount = Chrome(string.Empty, TypeScale.Meta, FontWeight.Medium, ThemeManager.GreyKey);
+        _assetCount.HorizontalAlignment = HorizontalAlignment.Right;
+        _assetCount.VerticalAlignment = VerticalAlignment.Center;
+        _assetFind.Name = AssetsFindName;
+        _assetFind.Width = 340;
+        _assetFind.HorizontalAlignment = HorizontalAlignment.Left;
+        _assetFind.PlaceholderText = "Find a station or system";
+        _assetFind.TextChanged += (_, _) =>
+        {
+            _page = 0;
+            DrawAssets();
+        };
+        _assetKind.Width = 300;
+        _assetKind.HorizontalAlignment = HorizontalAlignment.Left;
+        _assetKind.VerticalAlignment = VerticalAlignment.Top;
+        _assetKind.Margin = new Thickness(12, 0, 0, 0);
+        _assetKind.Picked += (_, id) =>
+        {
+            _kind = id;
+            _page = 0;
+            DrawAssets();
+        };
+
+        var assetBar = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto,*"), Margin = new Thickness(0, 0, 0, 6) };
+        _assetFind.VerticalAlignment = VerticalAlignment.Top;
+        Grid.SetColumn(_assetKind, 1);
+        Grid.SetColumn(_assetCount, 2);
+        assetBar.Children.Add(_assetFind);
+        assetBar.Children.Add(_assetKind);
+        assetBar.Children.Add(_assetCount);
+        Grid.SetRow(_assetsTable, 1);
+        _assetsView.Children.Add(assetBar);
+        _assetsView.Children.Add(_assetsTable);
+
+        var conflictNote = CreditsKit.Line(FactionConflicts.NoteText, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey);
+        conflictNote.TextWrapping = TextWrapping.Wrap;
+        conflictNote.Margin = new Thickness(0, 8, 0, 0);
+        Grid.SetRow(conflictNote, 1);
+        _conflictsView.Children.Add(_conflictsTable);
+        _conflictsView.Children.Add(conflictNote);
+
         var top = new StackPanel
         {
             Spacing = 12,
@@ -272,7 +339,7 @@ public sealed class FactionPage : UserControl, IPageSummary
     /// <summary>The faction asked for last, or null before one is.</summary>
     public string? Faction => _faction;
 
-    /// <summary>The section showing, 0 for Overview and 1 for Systems.</summary>
+    /// <summary>The section showing: 0 Overview, 1 Systems, 2 Conflicts, 3 Assets.</summary>
     public int Section => _section;
 
     /// <summary>The rows the Systems table draws now: the page on the headset, every match on the desktop.</summary>
@@ -284,7 +351,7 @@ public sealed class FactionPage : UserControl, IPageSummary
     /// <summary>Opens the page on <paramref name="faction"/> and asks for its report.</summary>
     public void Show(string faction) => Choose(faction);
 
-    /// <summary>Opens the Systems section, as pressing its segment does.</summary>
+    /// <summary>Opens a section, as pressing its segment does.</summary>
     public void ShowSection(int section)
     {
         _sections.SelectedIndex = section;
@@ -445,9 +512,10 @@ public sealed class FactionPage : UserControl, IPageSummary
         var state = _searches.GameState?.Invoke();
         _seen = (_view, state?.Standings, state?.Squadron.IsMember, _searches.SquadronFaction?.Invoke(), state?.Location.StarSystem, PageKit.Minute(_now()));
 
-        _rows = _report is null
-            ? []
-            : FactionModel.Rows(_report, state?.Standings ?? SystemStandings.Empty);
+        var standings = state?.Standings ?? SystemStandings.Empty;
+        _rows = _report is null ? [] : FactionModel.Rows(_report, standings);
+        _conflicts = _report is null ? [] : FactionConflicts.Of(_report, standings);
+        _stations = _report is null ? [] : FactionAssets.Of(_report);
 
         var emptyLike = EmptyLike;
         var squadron = Squadron();
@@ -574,7 +642,7 @@ public sealed class FactionPage : UserControl, IPageSummary
 
             case FactionView.Answered when _report is not null:
                 var rows = Rows();
-                var statusKey = $"{rows.Count}";
+                var statusKey = $"{rows.Count}/{_conflicts.Count}/{_stations.Count}";
 
                 if (_statusKey != statusKey && !_headset)
                 {
@@ -583,6 +651,8 @@ public sealed class FactionPage : UserControl, IPageSummary
                     [
                         new ChoiceStatus($"Present in {rows.Count}", ChoiceTone.Grey),
                         new ChoiceStatus($"{rows.Count} systems", ChoiceTone.Grey),
+                        new ChoiceStatus($"{_conflicts.Count} {(_conflicts.Count == 1 ? "system" : "systems")}", ChoiceTone.Grey),
+                        new ChoiceStatus($"{_stations.Count} {(_stations.Count == 1 ? "station" : "stations")}", ChoiceTone.Grey),
                     ];
                 }
 
@@ -666,8 +736,25 @@ public sealed class FactionPage : UserControl, IPageSummary
             return;
         }
 
-        _content.Child = _systemsView;
-        DrawSystems();
+        switch (_section)
+        {
+            case 2:
+                _content.Child = _conflictsView;
+                RowsDrawn = 0;
+                DrawConflicts();
+                break;
+
+            case 3:
+                _content.Child = _assetsView;
+                RowsDrawn = 0;
+                DrawAssets();
+                break;
+
+            default:
+                _content.Child = _systemsView;
+                DrawSystems();
+                break;
+        }
     }
 
     private Control Overview()
@@ -845,7 +932,7 @@ public sealed class FactionPage : UserControl, IPageSummary
                 stack.Children.Add(RowView(row, layout, now, here));
             }
 
-            stack.Children.Add(Pager(sorted.Count));
+            stack.Children.Add(Pager(sorted.Count, DrawSystems));
             RowsDrawn = shown.Count;
             list = stack;
         }
@@ -866,9 +953,271 @@ public sealed class FactionPage : UserControl, IPageSummary
         Restore(scroll, offset);
     }
 
+    private static readonly TableColumn[] ConflictDesktopColumns =
+    [
+        new("System", ColumnFit.Fill) { Min = 160 },
+        new("Conflict", ColumnFit.Fixed) { Fixed = 150 },
+        new("Opponent", ColumnFit.Fill) { Min = 220 },
+        new("Days won", ColumnFit.Fixed) { Fixed = 120 },
+        new("At stake", ColumnFit.Fill) { Min = 220 },
+    ];
+
+    private static readonly TableColumn[] ConflictHeadsetColumns =
+    [
+        new("System", ColumnFit.Fill) { Min = 120 },
+        new("Conflict", ColumnFit.Fixed) { Fixed = 100 },
+        new("Opponent", ColumnFit.Fill) { Min = 170 },
+        new("Days won", ColumnFit.Fixed) { Fixed = 84 },
+        new("At stake", ColumnFit.Fill) { Min = 170 },
+    ];
+
+    private static readonly TableColumn[] AssetDesktopColumns =
+    [
+        new("Station", ColumnFit.Fill) { Min = 240 },
+        new("System", ColumnFit.Fill) { Min = 160 },
+        new("Type", ColumnFit.Fixed) { Fixed = 190 },
+        new("Pad", ColumnFit.Fixed) { Fixed = 80 },
+        new("Distance", ColumnFit.Fixed) { Fixed = 150 },
+    ];
+
+    private static readonly TableColumn[] AssetHeadsetColumns =
+    [
+        new("Station", ColumnFit.Fill) { Min = 170 },
+        new("System", ColumnFit.Fill) { Min = 120 },
+        new("Type", ColumnFit.Fixed) { Fixed = 140 },
+        new("Pad", ColumnFit.Fixed) { Fixed = 56 },
+        new("Distance", ColumnFit.Fixed) { Fixed = 104 },
+    ];
+
+    /// <summary>The header over a list of rows that scroll, with the headset's 25-row pages and the desktop's virtualised list.</summary>
+    private Control Body<T>(StackPanel top, IReadOnlyList<T> sorted, Func<T, Border> row, Action redraw)
+    {
+        _page = FactionModel.ClampPage(_page, sorted.Count);
+
+        if (_headset)
+        {
+            var shown = sorted.Skip(_page * FactionModel.PageSize).Take(FactionModel.PageSize).ToList();
+            var stack = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 0, 14, 0) };
+
+            foreach (var item in shown)
+            {
+                stack.Children.Add(row(item));
+            }
+
+            if (sorted.Count > FactionModel.PageSize)
+            {
+                stack.Children.Add(Pager(sorted.Count, redraw));
+            }
+
+            RowsDrawn = shown.Count;
+            return stack;
+        }
+
+        RowsDrawn = sorted.Count;
+
+        return new ItemsControl
+        {
+            ItemsPanel = new FuncTemplate<Avalonia.Controls.Panel?>(() => new VirtualizingStackPanel { }),
+            ItemTemplate = new FuncDataTemplate<T>((item, _) => item is null ? null : Spaced(row(item))),
+            ItemsSource = sorted,
+        };
+    }
+
+    private void DrawConflicts()
+    {
+        if (_report is null)
+        {
+            return;
+        }
+
+        var layout = new TableLayout(ConflictsTableId, _headset ? ConflictHeadsetColumns : ConflictDesktopColumns, _headset ? null : ColumnWidths, _headset ? 12 : 16);
+        var top = new StackPanel
+        {
+            Children = { CreditsKit.HeaderRow(_conflictHead, layout, i => i == 3 ? HorizontalAlignment.Right : HorizontalAlignment.Left) },
+        };
+
+        if (_conflicts.Count == 0)
+        {
+            RowsDrawn = 0;
+            var none = CreditsKit.Line(FactionConflicts.NoneText, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey);
+            none.Margin = new Thickness(0, 12, 0, 0);
+            top.Children.Add(none);
+            _conflictsTable.Child = top;
+            return;
+        }
+
+        var here = _searches.GameState?.Invoke()?.Location.StarSystem;
+        var list = Body(top, _conflicts, conflict => ConflictView(conflict, layout, here), DrawConflicts);
+        var offset = _keepScroll ? _conflictsScroll?.Offset : null;
+        _conflictsTable.Child = LoadoutPages.HeaderAndList(top, list, out var scroll);
+        _conflictsScroll = scroll;
+        Restore(scroll, offset);
+    }
+
+    private Border ConflictView(FactionConflict conflict, TableLayout layout, string? here)
+    {
+        var grid = layout.Row([]);
+
+        var name = CreditsKit.Line(
+            conflict.System,
+            Fonts.ChromeFamily,
+            TypeScale.ControlLarge,
+            string.Equals(conflict.System, here, StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
+        name.FontWeight = FontWeight.Medium;
+
+        var kind = new StackPanel
+        {
+            Children =
+            {
+                CreditsKit.Line(conflict.Type, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey),
+                Chrome(conflict.Status, TypeScale.MetaSmall, FontWeight.Medium, ThemeManager.GreyKey),
+            },
+        };
+
+        var days = conflict.Visited
+            ? CreditsKit.Mono(conflict.DaysText, TypeScale.ControlLarge, ThemeManager.WhiteKey, right: true)
+            : CreditsKit.Mono(FactionModel.Dash, TypeScale.ControlLarge, ThemeManager.GreyKey, right: true);
+
+        Control stake = conflict.Visited
+            ? new StackPanel
+            {
+                Children = { Stake("Ours: ", conflict.OurStake), Stake("Theirs: ", conflict.TheirStake) },
+            }
+            : CreditsKit.Line(FactionModel.Dash, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey);
+
+        CreditsKit.Place(grid, 0, CopyGlyph.Beside(name, conflict.System, Copy));
+        CreditsKit.Place(grid, 1, kind);
+        CreditsKit.Place(grid, 2, Opponent(conflict));
+        CreditsKit.Place(grid, 3, days);
+        CreditsKit.Place(grid, 4, stake);
+
+        var border = new Border { MinHeight = 50, Padding = new Thickness(12, 4), Child = grid };
+        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.TileKey);
+
+        return border;
+    }
+
+    private static Control Opponent(FactionConflict conflict)
+    {
+        switch (conflict.Kind)
+        {
+            case OpponentKind.Named:
+                return RoutingKit.Ink(conflict.Opponent, TypeScale.ControlLarge, ThemeManager.WhiteKey, wrap: true);
+
+            case OpponentKind.OneOf:
+                var names = RoutingKit.Ink(conflict.CandidateText, TypeScale.Meta, ThemeManager.GreyKey, wrap: true);
+                names.MaxWidth = double.PositiveInfinity;
+
+                return new StackPanel
+                {
+                    Children = { CreditsKit.Line(conflict.OneOfText, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey), names },
+                };
+
+            default:
+                return CreditsKit.Line(FactionConflicts.OpponentUnknownText, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey);
+        }
+    }
+
+    private static TextBlock Stake(string side, string name)
+    {
+        var line = new TextBlock { FontFamily = new FontFamily(Fonts.ProseFamily), FontSize = TypeScale.Small, TextWrapping = TextWrapping.Wrap };
+        var label = new Run(side);
+        var held = new Run(name.Length == 0 ? FactionModel.Dash : name);
+        label.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.GreyKey));
+        held.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(name.Length == 0 ? ThemeManager.GreyKey : ThemeManager.WhiteKey));
+        line.Inlines ??= [];
+        line.Inlines.Add(label);
+        line.Inlines.Add(held);
+
+        return line;
+    }
+
+    private void DrawAssets()
+    {
+        if (_report is null)
+        {
+            return;
+        }
+
+        var options = FactionAssets.Options(_stations);
+
+        if (options.All(option => option.Id != _kind))
+        {
+            _kind = FactionAssets.AllId;
+        }
+
+        var current = options.First(option => option.Id == _kind);
+        _assetKind.Show(
+            [.. options.Select(option => new InlinePickerOption(option.Id, option.Label, ThemeManager.WhiteKey, option.Count.ToString("N0", CultureInfo.InvariantCulture)))],
+            _kind,
+            current.Label,
+            ThemeManager.WhiteKey,
+            " · " + current.Count.ToString("N0", CultureInfo.InvariantCulture));
+
+        var matches = FactionAssets.Matching(_stations, _assetFind.Text, _kind);
+        var sorted = _assetHead.Sort(matches);
+        var here = _searches.GameState?.Invoke()?.Location.StarSystem;
+        _assetCount.Text = FactionAssets.CountText(matches.Count, _stations.Count);
+
+        var layout = new TableLayout(AssetsTableId, _headset ? AssetHeadsetColumns : AssetDesktopColumns, _headset ? null : ColumnWidths, _headset ? 12 : 16);
+        var top = new StackPanel
+        {
+            Children = { CreditsKit.HeaderRow(_assetHead, layout, i => i >= 3 ? HorizontalAlignment.Right : HorizontalAlignment.Left) },
+        };
+
+        if (sorted.Count == 0)
+        {
+            RowsDrawn = 0;
+            var none = CreditsKit.Line(FactionAssets.NoMatchText, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey);
+            none.Margin = new Thickness(0, 12, 0, 0);
+            top.Children.Add(none);
+            _assetsTable.Child = top;
+            return;
+        }
+
+        var list = Body(top, sorted, station => AssetView(station, layout, here), DrawAssets);
+        var offset = _keepScroll ? _assetsScroll?.Offset : null;
+        _assetsTable.Child = LoadoutPages.HeaderAndList(top, list, out var scroll);
+        _assetsScroll = scroll;
+        Restore(scroll, offset);
+    }
+
+    private Border AssetView(FactionStation station, TableLayout layout, string? here)
+    {
+        var grid = layout.Row([]);
+
+        var name = CreditsKit.Line(station.Name, Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
+        name.FontWeight = FontWeight.Medium;
+        var system = CreditsKit.Line(
+            station.System,
+            Fonts.ChromeFamily,
+            TypeScale.ControlLarge,
+            string.Equals(station.System, here, StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
+        system.FontWeight = FontWeight.Medium;
+
+        var type = FactionAssets.TypeLabel(station);
+        var pad = FactionAssets.PadLetter(station.LargestPad);
+
+        CreditsKit.Place(grid, 0, CopyGlyph.Beside(name, station.Name, Copy));
+        CreditsKit.Place(grid, 1, CopyGlyph.Beside(system, station.System, Copy));
+        CreditsKit.Place(grid, 2, CreditsKit.Line(type ?? FactionModel.Dash, Fonts.ProseFamily, TypeScale.ControlLarge, type is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey));
+        CreditsKit.Place(grid, 3, CreditsKit.Mono(pad ?? FactionModel.Dash, TypeScale.ControlLarge, pad is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey, right: true));
+        CreditsKit.Place(
+            grid,
+            4,
+            station.DistanceToArrival is { } distance
+                ? CreditsKit.Mono(FactionAssets.Distance(distance), TypeScale.ControlLarge, ThemeManager.AKey, right: true)
+                : CreditsKit.Mono(FactionModel.Dash, TypeScale.ControlLarge, ThemeManager.GreyKey, right: true));
+
+        var border = new Border { MinHeight = 50, Padding = new Thickness(12, 0), Child = grid };
+        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.TileKey);
+
+        return border;
+    }
+
     private static Border Spaced(Control row) => new() { Margin = new Thickness(0, 0, 0, Gaps.Tile), Child = row };
 
-    private Grid Pager(int total)
+    private Grid Pager(int total, Action redraw)
     {
         var readout = CreditsKit.Mono(FactionModel.PageReadout(_page, total), TypeScale.Tip, ThemeManager.GreyKey, right: false);
         readout.VerticalAlignment = VerticalAlignment.Center;
@@ -884,12 +1233,12 @@ public sealed class FactionPage : UserControl, IPageSummary
         previous.Click += (_, _) =>
         {
             _page--;
-            DrawSystems();
+            redraw();
         };
         next.Click += (_, _) =>
         {
             _page++;
-            DrawSystems();
+            redraw();
         };
 
         var tiles = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile, Children = { previous, next } };
