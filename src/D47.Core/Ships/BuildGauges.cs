@@ -145,8 +145,31 @@ public static partial class ShipGauges
         ShipLoadout? seen,
         IReadOnlyDictionary<string, double>? measured = null)
     {
+        return Gauges(build, seen, Parts(build, seen), measured);
+    }
+
+    /// <summary>What <see cref="BuildSearch"/> reads off one candidate build.</summary>
+    /// <param name="Mass">The unladen mass, or null where the hull's own mass is unknown.</param>
+    /// <param name="XenoDps">Sustained damage per second from the AX and Guardian weapons alone.</param>
+    internal sealed record SearchReading(BuildGauges Gauges, double? Mass, double XenoDps);
+
+    /// <summary>The gauges, the unladen mass and the anti-xeno damage, from one pass over the slots.</summary>
+    internal static SearchReading ReadForSearch(ShipBuild build, ShipLoadout? seen)
+    {
         var parts = Parts(build, seen);
 
+        return new SearchReading(
+            Gauges(build, seen, parts, null),
+            parts.Count == 0 ? null : Mass(build, parts, seen),
+            Damage(parts, XenoWeapons).Sustained);
+    }
+
+    private static BuildGauges Gauges(
+        ShipBuild build,
+        ShipLoadout? seen,
+        List<Part> parts,
+        IReadOnlyDictionary<string, double>? measured)
+    {
         if (parts.Count == 0)
         {
             return BuildGauges.Nothing(seen is null ? Unseen : "There is nothing in this ship yet.");

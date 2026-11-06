@@ -159,9 +159,15 @@ public static class BlueprintCatalogue
             : [];
 
     /// <summary>Every recipe a module can take, by the module's own specification.</summary>
-    public static IReadOnlyList<Blueprint>? For(ModuleSpecification? module)
+    public static IReadOnlyList<Blueprint>? For(ModuleSpecification? module) =>
+        module?.Type is { Length: > 0 } type ? ByType.GetOrAdd(type, Recipes) : null;
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, IReadOnlyList<Blueprint>?> ByType =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private static IReadOnlyList<Blueprint>? Recipes(string type)
     {
-        if (module is null || OfferedTo(module.Type) is not { } offered)
+        if (OfferedTo(type) is not { } offered)
         {
             return null;
         }
@@ -172,7 +178,7 @@ public static class BlueprintCatalogue
         return
         [
             .. Loaded.Value
-                .Where(recipe => recipe.ModuleTypes.Contains(module.Type, StringComparer.OrdinalIgnoreCase))
+                .Where(recipe => recipe.ModuleTypes.Contains(type, StringComparer.OrdinalIgnoreCase))
                 .Where(recipe => recipe.Symbols.Any(wanted.Contains))
                 .OrderBy(recipe => recipe.Name, StringComparer.Ordinal)
                 .ThenBy(recipe => recipe.Grade),

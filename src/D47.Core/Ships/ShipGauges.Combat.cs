@@ -7,6 +7,10 @@ public static partial class ShipGauges
 {
     private static readonly string[] Strength = ["Optimal Strength", "Optimal Multiplier"];
 
+    /// <summary>The AX and Guardian weapon types, the ones that count against Thargoids.</summary>
+    internal static readonly IReadOnlySet<string> XenoWeapons =
+        new HashSet<string>(["hexxc", "hexxm", "hexgg", "hexgp", "hexgs", "hextp"], StringComparer.OrdinalIgnoreCase);
+
     /// <summary>The hold in tons: what Elite reported, or what the racks would hold.</summary>
     private static double Hold(List<Part> parts, ShipLoadout? seen, bool modelled) =>
         !modelled && seen?.CargoCapacity is { } cargo ? cargo : Capacity(parts, "icr");
@@ -180,13 +184,14 @@ public static partial class ShipGauges
         return Math.Min(0.75, resistance);
     }
 
-    /// <summary>Raw and sustained damage per second across every weapon.</summary>
-    private static (double Raw, double Sustained) Damage(List<Part> parts)
+    /// <summary>Raw and sustained damage per second across every weapon, or only those of the types given.</summary>
+    private static (double Raw, double Sustained) Damage(List<Part> parts, IReadOnlySet<string>? types = null)
     {
         double raw = 0, draw = 0;
 
         foreach (var weapon in parts.Where(part => part.Spec.Type is { Length: > 0 } type
                                                    && char.ToLowerInvariant(type[0]) == 'h'
+                                                   && (types is null || types.Contains(type))
                                                    && part.Spec.Figure("damage per second") is not null))
         {
             var dps = weapon.Figure(
