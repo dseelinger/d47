@@ -20,10 +20,13 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
         [new SlotPlan("MainEngines", "Clean Drive Tuning", 3, Module: "Thrusters")]);
 
     private const string JumpFurther = """
-        {"kind":"goal","reply":"Range first, shields last.","changes":[
-          {"slot":"FrameShiftDrive","module":"Frame Shift Drive","class":5,"rating":"A","blueprint":"Increased FSD Range","grade":5,"experimental":"Mass Manager","reason":"The drive is the range."},
-          {"slot":"MainEngines","blueprint":"Dirty Drive Tuning","grade":2,"reason":"Lighter tuning, less mass."}]}
+        {"kind":"goal","goal":{"mode":"only","target":"exploration","weights":{},"profile":"bounty","floors":[],"mustHaves":[],"credits":null,"engineering":false}}
         """;
+
+    private const string Explained = """{"reply":"Range is up."}""";
+
+    private static readonly BuildGoal SearchedGoal = new(
+        new Dictionary<BuildRole, double>(), CombatProfile.Bounty, [], [], null, false, GoalMode.Only, BuildRole.Exploration);
 
     private static (ShipPlanAdvisor Advisor, ScriptedReplies Model) Advisor(CommanderGameState? state, params string[] replies)
     {
@@ -62,94 +65,127 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public async Task AGoalComesBackAsPerSlotChanges()
+    public async Task AGoalComesBackAsTheSearchsChangesAfterTwoRequests()
     {
-        var (advisor, _) = Advisor(null, JumpFurther);
+        var (advisor, model) = Advisor(null, JumpFurther, Explained);
 
-        var advice = await advisor.AdviseAsync(Python, [], "make it jump further, I don't care about the shields", TestContext.Current.CancellationToken);
+        var advice = await advisor.AdviseAsync(Python, [], "make it jump further, I don't care about the rest", TestContext.Current.CancellationToken);
+
+        var found = BuildSearch.Find(Python, null, SearchedGoal, CancellationToken.None);
 
         Assert.Equal(BuildRemarkKind.Goal, advice.Kind);
+        Assert.Equal(2, model.Requests.Count);
+        Assert.NotEmpty(advice.Changes);
+        Assert.Equal(found.Changes, advice.Changes);
         Assert.Empty(advice.Dropped);
-        Assert.Collection(
-            advice.Changes,
-            drive =>
-            {
-                Assert.Equal("FrameShiftDrive", drive.Slot);
-                Assert.Null(drive.Before);
-                Assert.Equal("Frame Shift Drive", drive.After.Module);
-                Assert.Equal("Increased FSD Range", drive.After.Blueprint);
-                Assert.Equal(5, drive.After.Grade);
-                Assert.Equal("Mass Manager", drive.After.Experimental);
-                Assert.Equal("The drive is the range.", drive.Reason);
-            },
-            engines =>
-            {
-                Assert.Equal("MainEngines", engines.Slot);
-                Assert.Equal(Python.For("MainEngines"), engines.Before);
-                Assert.Equal("Thrusters", engines.After.Module);
-                Assert.Equal("Dirty Drive Tuning", engines.After.Blueprint);
-                Assert.Equal(2, engines.After.Grade);
-                Assert.Equal("Lighter tuning, less mass.", engines.Reason);
-            });
+        Assert.StartsWith("Range is up.", advice.Reply, StringComparison.Ordinal);
+        Assert.Contains("no spending limit", advice.Reply, StringComparison.Ordinal);
+        Assert.Equal(GoalMode.Only, advice.Goal!.Mode);
+        Assert.Equal(BuildRole.Exploration, advice.Goal.Target);
     }
 
     [Fact]
-    public async Task AModuleThatDoesNotFitAndABlueprintThatDoesNotExistAreRefusedByNameAndAskedAgainOnce()
+    public async Task TheSecondRequestCarriesTheFiguresBeforeAndAfterAndNoRequestAsksTheModelToNameASlot()
     {
-        var (advisor, model) = Advisor(
-            null,
-            """
-            {"kind":"goal","reply":"Bigger engines.","changes":[
-              {"slot":"MainEngines","module":"Thrusters","class":8,"rating":"A","reason":"More thrust."},
-              {"slot":"FrameShiftDrive","module":"Frame Shift Drive","blueprint":"Dirty Drive Tuning","grade":5,"reason":"Faster."}]}
-            """,
-            JumpFurther);
+        var (advisor, model) = Advisor(null, JumpFurther, Explained);
 
-        var advice = await advisor.AdviseAsync(Python, [], "make it jump further", TestContext.Current.CancellationToken);
+        await advisor.AdviseAsync(Python, [], "make it jump further", TestContext.Current.CancellationToken);
 
-        Assert.Equal(2, model.Requests.Count);
-        Assert.Contains("MainEngines: 8A Thrusters does not fit Thrusters", model.Requests[1], StringComparison.Ordinal);
-        Assert.Contains("FrameShiftDrive: there is no blueprint called Dirty Drive Tuning for Frame Shift Drive", model.Requests[1], StringComparison.Ordinal);
-        Assert.Equal(2, model.Calls.Count);
-        Assert.All(model.Calls, call => Assert.Equal(("high-model", ThinkingEffort.High), call));
-        Assert.Equal(2, advice.Changes.Count);
-        Assert.Empty(advice.Dropped);
+        Assert.Contains("Figures before", model.Requests[1], StringComparison.Ordinal);
+        Assert.Contains("Figures after", model.Requests[1], StringComparison.Ordinal);
+        Assert.DoesNotContain("\"slot\"", model.Requests[0], StringComparison.Ordinal);
+        Assert.DoesNotContain("\"blueprint\"", model.Requests[0], StringComparison.Ordinal);
+        Assert.DoesNotContain("\"grade\"", model.Requests[0], StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task WhatStillFailsIsDroppedAndNamedInTheReply()
+    public async Task AGoalThatDoesNotSayHowMuchGetsTheQuestionAndOneRequest()
     {
-        const string Wrong = """
-            {"kind":"goal","reply":"Lighter drive.","changes":[
-              {"slot":"FrameShiftDrive","module":"Frame Shift Drive","class":5,"rating":"A","blueprint":"Increased FSD Range","grade":5,"reason":"Range."},
-              {"slot":"MainEngines","module":"Thrusters","class":8,"rating":"A","reason":"More thrust."}]}
-            """;
+        var (advisor, model) = Advisor(null, """
+            {"kind":"goal","ask":"Do you want range at the expense of everything else, or without giving up the rest?"}
+            """);
 
-        var (advisor, model) = Advisor(null, Wrong, Wrong, Wrong);
+        var advice = await advisor.AdviseAsync(Python, [], "more range", TestContext.Current.CancellationToken);
+
+        Assert.Single(model.Requests);
+        Assert.Empty(advice.Changes);
+        Assert.Null(advice.Goal);
+        Assert.Contains("expense of everything else", advice.Reply, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AFollowUpAmendsTheHeldGoal()
+    {
+        var (advisor, model) = Advisor(null, """
+            {"kind":"goal","goal":{"mode":"keep_rest","target":"cargo"}}
+            """, Explained);
+
+        var held = SearchedGoal with { Floors = [new BuildFloor(BuildFigure.LadenJump, 20)] };
+        var advice = await advisor.AdviseAsync(
+            Python,
+            [new BuildRemark("more range", "Done.", held)],
+            "a bit more cargo",
+            TestContext.Current.CancellationToken);
+
+        Assert.Contains("The goal held from this conversation", model.Requests[0], StringComparison.Ordinal);
+        Assert.Contains("\"mode\":\"only\"", model.Requests[0], StringComparison.Ordinal);
+        Assert.Equal(GoalMode.KeepRest, advice.Goal!.Mode);
+        Assert.Equal(BuildRole.Cargo, advice.Goal.Target);
+        Assert.Equal(BuildFigure.LadenJump, Assert.Single(advice.Goal.Floors).Figure);
+    }
+
+    [Fact]
+    public async Task AMustHaveTheTableDoesNotKnowIsDroppedAndNamed()
+    {
+        var (advisor, _) = Advisor(null, """
+            {"kind":"goal","goal":{"mode":"only","target":"exploration","mustHaves":["Fuel Scoop","Flux Capacitor"]}}
+            """, Explained);
+
+        var advice = await advisor.AdviseAsync(Python, [], "range, and fit a flux capacitor", TestContext.Current.CancellationToken);
+
+        Assert.Equal("Flux Capacitor", Assert.Single(advice.Dropped));
+        Assert.Equal(["Fuel Scoop"], advice.Goal!.MustHaves);
+        Assert.Contains("Flux Capacitor", advice.Reply, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ACreditAmountTheCommanderNamedLimitsTheSearch()
+    {
+        var (advisor, _) = Advisor(null, """
+            {"kind":"goal","goal":{"mode":"only","target":"exploration","credits":5000000}}
+            """, Explained);
+
+        var advice = await advisor.AdviseAsync(Python, [], "range for five million", TestContext.Current.CancellationToken);
+
+        Assert.Equal(5_000_000, advice.Goal!.Credits);
+        Assert.DoesNotContain("no spending limit", advice.Reply, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AGoalKeepsTheSearchsChangesWhenTheSecondRequestGivesNoReply()
+    {
+        var (advisor, _) = Advisor(null, JumpFurther, "not json");
 
         var advice = await advisor.AdviseAsync(Python, [], "make it jump further", TestContext.Current.CancellationToken);
 
-        Assert.Equal(2, model.Requests.Count);
-        Assert.Equal("FrameShiftDrive", Assert.Single(advice.Changes).Slot);
-        Assert.Contains("MainEngines", Assert.Single(advice.Dropped), StringComparison.Ordinal);
-        Assert.Contains("I left out the change to Thrusters", advice.Reply, StringComparison.Ordinal);
+        Assert.True(advice.Succeeded);
+        Assert.NotEmpty(advice.Changes);
+        Assert.StartsWith("I found", advice.Reply, StringComparison.Ordinal);
     }
 
     [Fact]
     public async Task TheProposalIsCostedByEngineeringPlanWithEveryChangeApplied()
     {
-        var (advisor, _) = Advisor(null, JumpFurther);
+        var (advisor, _) = Advisor(null, JumpFurther.Replace("\"engineering\":false", "\"engineering\":true", StringComparison.Ordinal), Explained);
 
         var advice = await advisor.AdviseAsync(Python, [], "make it jump further", TestContext.Current.CancellationToken);
 
+        var applied = advice.Changes.Aggregate(Python, (plan, change) => plan.With(change.After));
         var expected = EngineeringPlan.Cost(
             EngineeringPlan.Items(
                 ChecklistScope.Universal,
                 "python",
-                [
-                    new BuildRequest("MainEngines", "Dirty Drive Tuning", 2, null, "Thrusters"),
-                    new BuildRequest("FrameShiftDrive", "Increased FSD Range", 5, "Mass Manager", "Frame Shift Drive"),
-                ]),
+                [.. applied.Slots.Where(slot => slot.Blueprint is not null || slot.Grade > 0 || slot.Experimental is not null).Select(slot => slot.ToRequest())]),
             null);
 
         Assert.NotNull(advice.Cost);
@@ -195,22 +231,17 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
     [Fact]
     public async Task NoReplyNamesMoreThanThreeModules()
     {
-        var (advisor, _) = Advisor(null, """
-            {"kind":"goal","reply":"Fit a bigger Frame Shift Drive. Tune the Thrusters. Cool the Power Plant. Charge the Power Distributor. Lighten the Life Support. Lighten the Sensors.","changes":[
-              {"slot":"FrameShiftDrive","module":"Frame Shift Drive","class":5,"rating":"A","blueprint":"Increased FSD Range","grade":5,"reason":"Range."},
-              {"slot":"MainEngines","blueprint":"Dirty Drive Tuning","grade":5,"reason":"Speed."},
-              {"slot":"PowerPlant","module":"Power Plant","blueprint":"Low Emissions","grade":5,"reason":"Heat."},
-              {"slot":"PowerDistributor","module":"Power Distributor","blueprint":"Charge Enhanced","grade":5,"reason":"Recharge."},
-              {"slot":"LifeSupport","module":"Life Support","blueprint":"Lightweight","grade":5,"reason":"Mass."},
-              {"slot":"Radar","module":"Sensors","blueprint":"Light Weight Scanner","grade":5,"reason":"Mass."}]}
-            """);
+        var (advisor, _) = Advisor(
+            null,
+            """{"kind":"goal","goal":{"mode":"weighted","weights":{"combat":1,"exploration":1,"cargo":1}}}""",
+            """{"reply":"Fit a bigger Frame Shift Drive. Tune the Thrusters. Cool the Power Plant. Charge the Power Distributor. Lighten the Life Support. Lighten the Sensors."}""");
 
         var advice = await advisor.AdviseAsync(Python, [], "make it jump further", TestContext.Current.CancellationToken);
 
-        Assert.Equal(6, advice.Changes.Count);
+        Assert.True(advice.Changes.Count > ShipPlanAdvisor.MostModulesNamed);
         Assert.NotNull(advice.Reply);
         Assert.InRange(ShipPlanAdvisor.ModulesNamed(advice.Reply).Count, 1, ShipPlanAdvisor.MostModulesNamed);
-        Assert.EndsWith("6 slots change; they are on the ship's page.", advice.Reply, StringComparison.Ordinal);
+        Assert.EndsWith($"{advice.Changes.Count} slots change; they are on the ship's page.", advice.Reply, StringComparison.Ordinal);
     }
 
     [Fact]

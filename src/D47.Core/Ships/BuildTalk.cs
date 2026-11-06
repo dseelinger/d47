@@ -42,6 +42,9 @@ public sealed record TalkRound(
     public bool IsWorking => Advice is null;
 
     public bool Failed => Advice is { Succeeded: false };
+
+    /// <summary>The goal read from this remark, if it was a goal.</summary>
+    public BuildGoal? Goal => Advice?.Goal;
 }
 
 /// <summary>
@@ -160,7 +163,7 @@ public sealed class BuildTalk(
         var before = Exchange(buildId)
             .TakeWhile(earlier => earlier.Id != round.Id)
             .Where(earlier => earlier.Advice is { Succeeded: true })
-            .Select(earlier => new BuildRemark(earlier.Remark, earlier.Advice!.Reply))
+            .Select(earlier => new BuildRemark(earlier.Remark, earlier.Advice!.Reply, earlier.Goal))
             .ToList();
 
         BuildAdvice advice;

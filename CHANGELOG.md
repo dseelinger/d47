@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Asking to talk through a ship build for a goal, such as "make it jump further", now gets a proposal that d47 searches for rather than one the model chooses. The model reads the goal, d47 finds the changes and the model explains them. Where you do not say how far to go, it asks whether to maximise at the expense of everything else, maximise without giving up the rest, or any improvement. The goal is kept for the conversation, so "a bit more cargo" amends it. A module you name that d47 does not know is left out and named.
+
 Talking through a ship build now answers from figures d47 computes for the plan: jump range at three masses, power, shields, hull, resistances, damage and cargo, marked measured or modelled. For an owned ship whose plan differs from what is fitted, both sets are given, and the answer quotes them rather than working out its own.
 
 A new Search › Faction page, between Systems and Stations, shows where one minor faction is present and the state it is in. It opens on your squadron's faction, or empty with a field that suggests faction names. Overview counts the systems in each active state, and Systems lists every system with its influence, states, whether the faction controls it and how old the data is, using your own journal reading where it is newer. It works on the headset, where the table shows 25 systems a page. Choosing a minor faction in Find now opens this page instead of running a Systems search. Two more sections follow: Conflicts lists each system where the faction is in a war, civil war or election with the opponent, days won and what is at stake (from systems you have visited), and Assets lists the stations it controls, filterable by kind, searchable and sortable.

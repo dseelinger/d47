@@ -24,7 +24,7 @@ public enum BuildRemarkKind
 }
 
 /// <summary>One round of a conversation about a plan: what the Commander said and what the core answered.</summary>
-public sealed record BuildRemark(string Remark, string? Reply);
+public sealed record BuildRemark(string Remark, string? Reply, BuildGoal? Goal = null);
 
 /// <summary>One proposed change to one slot's plan. <see cref="Before"/> is null where the slot had no plan.</summary>
 public sealed record SlotChange(string Slot, SlotPlan? Before, SlotPlan After, string Reason);
@@ -32,6 +32,7 @@ public sealed record SlotChange(string Slot, SlotPlan? Before, SlotPlan After, s
 /// <summary>
 /// The answer to one remark about a plan. A proposal is never applied here; <see cref="Cost"/> is the plan
 /// with every change applied, computed by <see cref="EngineeringPlan"/>. <see cref="Code"/> names a refusal's cause.
+/// <see cref="Goal"/> is the goal read from a goal remark. <see cref="Dropped"/> names the must-haves left out.
 /// </summary>
 public sealed record BuildAdvice(
     BuildRemarkKind Kind,
@@ -40,7 +41,8 @@ public sealed record BuildAdvice(
     PlanCosting? Cost,
     IReadOnlyList<string> Dropped,
     string? Refusal = null,
-    string? Code = null)
+    string? Code = null,
+    BuildGoal? Goal = null)
 {
     public bool Succeeded => Refusal is null;
 }
@@ -78,27 +80,11 @@ public sealed class ShipPlanAdvisor(
         }
 
         var game = state();
-        var instruction = Instruction(build, game, exchange, remark);
-        var first = await AskJsonAsync(instruction, cancellationToken).ConfigureAwait(false);
+        var first = await AskJsonAsync(Instruction(build, game, exchange, remark), cancellationToken).ConfigureAwait(false);
 
         if (first is null || Read(first) is not { } answer)
         {
             return new BuildAdvice(BuildRemarkKind.Question, null, [], null, [], "The model's answer was not one I could read. Try again.", "unreadable");
-        }
-
-        var checkedChanges = Check(build, game, answer);
-
-        if (answer.Kind == BuildRemarkKind.Goal && checkedChanges.Any(change => change.Refusal is not null))
-        {
-            var again = await AskJsonAsync(
-                Retry(instruction, first, [.. checkedChanges.Where(change => change.Refusal is not null).Select(change => change.Refusal!)]),
-                cancellationToken).ConfigureAwait(false);
-
-            if (again is not null && Read(again) is { Kind: BuildRemarkKind.Goal } second)
-            {
-                answer = second;
-                checkedChanges = Check(build, game, second);
-            }
         }
 
         if (answer.Kind != BuildRemarkKind.Goal)
@@ -106,26 +92,44 @@ public sealed class ShipPlanAdvisor(
             return new BuildAdvice(answer.Kind, Limit(answer.Reply, []), [], null, []);
         }
 
-        var changes = checkedChanges.Where(change => change.Change is not null).Select(change => change.Change!).ToList();
-        var dropped = checkedChanges.Where(change => change.Refusal is not null).Select(change => change.Refusal!).ToList();
+        var read = answer.Goal is { } said ? Check(said, Held(exchange)) : null;
+
+        if (read is null)
+        {
+            return new BuildAdvice(BuildRemarkKind.Question, Limit(answer.Ask ?? AskHowMuch, []), [], null, []);
+        }
+
+        var credits = read.Goal.Credits ?? game?.Session.Balance;
+        var searched = read.Goal with { Credits = credits };
+        var result = BuildSearch.Find(build, FittedLoadout(build, game), searched, cancellationToken);
 
         var tail = new List<string>();
 
-        if (dropped.Count > 0)
+        if (read.Dropped.Count > 0)
         {
-            var said = checkedChanges.Where(change => change.Refusal is not null).Select(change => change.Said ?? "a slot").Distinct().ToList();
-
-            tail.Add($"I left out the {(said.Count == 1 ? "change" : "changes")} to {And(said)}, which the outfitting tables refused.");
+            tail.Add($"I left out {And(read.Dropped)}, which {(read.Dropped.Count == 1 ? "is" : "are")} not in my module table.");
         }
 
-        if (changes.Count > MostModulesNamed)
+        if (credits is null)
         {
-            tail.Add($"{changes.Count.ToString(CultureInfo.InvariantCulture)} slots change; they are on the ship's page.");
+            tail.Add("There is no spending limit, because you named no amount and your balance is not known.");
         }
 
-        var applied = changes.Aggregate(build, (plan, change) => plan.With(change.After));
+        if (result.Changes.Count > MostModulesNamed)
+        {
+            tail.Add($"{result.Changes.Count.ToString(CultureInfo.InvariantCulture)} slots change; they are on the ship's page.");
+        }
 
-        return new BuildAdvice(BuildRemarkKind.Goal, Limit(answer.Reply, tail), changes, Cost(applied, game), dropped);
+        var reply = await AskJsonAsync(Explanation(build, remark, searched, result), cancellationToken).ConfigureAwait(false);
+        var explained = reply is null ? null : Read(reply)?.Reply;
+
+        return new BuildAdvice(
+            BuildRemarkKind.Goal,
+            Limit(explained ?? Plainly(result), tail),
+            result.Changes,
+            Cost(result.Plan, game),
+            read.Dropped,
+            Goal: read.Goal);
     }
 
     private static string And(IReadOnlyList<string> items) => items.Count switch
@@ -133,6 +137,14 @@ public sealed class ShipPlanAdvisor(
         1 => items[0],
         _ => $"{string.Join(", ", items.Take(items.Count - 1))} and {items[^1]}",
     };
+
+    private const string AskHowMuch =
+        "How far should I take that: maximise it at the expense of everything else, maximise it without giving up the rest, or any improvement at all?";
+
+    /// <summary>The reply when the second call gives none.</summary>
+    private static string Plainly(BuildResult result) => result.Changes.Count == 0
+        ? "I found nothing that improves on the plan as it stands."
+        : $"I found {result.Changes.Count.ToString(CultureInfo.InvariantCulture)} {(result.Changes.Count == 1 ? "change" : "changes")} for that goal.";
 
     /// <summary>What <see cref="EngineeringPlan"/> says a build costs.</summary>
     public static PlanCosting Cost(ShipBuild build, CommanderGameState? state)
@@ -187,15 +199,18 @@ public sealed class ShipPlanAdvisor(
         text.AppendLine();
         text.AppendLine("Rules:");
         text.AppendLine("- " + Stories.PlainWords.Rule);
-        text.AppendLine("- A question or a critique is answered in the reply and proposes no changes.");
+        text.AppendLine("- A question or a critique is answered in the reply.");
         text.AppendLine(
-            "- A goal proposes changes, one per slot. Each change states the slot's whole plan after the "
-            + "change: the module, its class and rating (and mount for a weapon), the blueprint, the grade "
-            + "and the experimental effect. Omit module to keep the slot's planned module. Omit blueprint, "
-            + "grade or experimental for none.");
+            "- A goal is read, not answered: d47's own search finds the modules. Give the goal below. Never name a "
+            + "slot, a module class, a rating, a blueprint or a grade. Name a module only in mustHaves, and only one the "
+            + "Commander said.");
         text.AppendLine(
-            "- Use only slots, modules, blueprints and experimentals named below, spelt as they are here. "
-            + "A module must fit its slot's size, and a restricted slot takes only what it lists.");
+            "- If a goal remark does not say how far to take it, give \"ask\" and no goal: one question asking whether "
+            + "they mean to maximise it at the expense of everything else, maximise it without giving up the rest, or "
+            + "any improvement at all.");
+        text.AppendLine(
+            "- When a goal is already held below, a remark such as \"a bit more cargo\" changes it: give the whole "
+            + "goal again with that change made.");
         text.AppendLine(
             "- Materials, caps and engineer ranks are given below and are not yours to work out. Do not "
             + "quote material counts.");
@@ -205,13 +220,19 @@ public sealed class ShipPlanAdvisor(
         text.AppendLine(
             "- Quote the figures under \"What the plan does\" and do not work out others: jump range, power, "
             + "shields, hull, resistances, damage and cargo.");
-        text.AppendLine("- Nothing you propose is applied until the Commander accepts it.");
+        text.AppendLine("- Nothing is applied until the Commander accepts it.");
         text.AppendLine();
 
         Hull(text, build, state);
         Costing(text, Cost(build, state));
         Figures(text, build, state);
-        Blueprints(text, build);
+
+        if (Held(exchange) is { } held)
+        {
+            text.AppendLine("The goal held from this conversation:");
+            text.AppendLine(WriteGoal(held));
+            text.AppendLine();
+        }
 
         if (exchange.Count > 0)
         {
@@ -232,11 +253,86 @@ public sealed class ShipPlanAdvisor(
 
         text.AppendLine($"The Commander now says: {remark}");
         text.AppendLine();
-        text.AppendLine("Answer with one JSON object and nothing else:");
+        text.AppendLine("Answer with one JSON object and nothing else. For a question or a critique:");
+        text.AppendLine("{\"kind\":\"question|critique\",\"reply\":\"...\"}");
+        text.AppendLine("For a goal, with every value spelt as shown:");
         text.AppendLine(
-            "{\"kind\":\"question|critique|goal\",\"reply\":\"...\",\"changes\":[{\"slot\":\"MainEngines\","
-            + "\"module\":\"Thrusters\",\"class\":5,\"rating\":\"A\",\"mount\":null,\"blueprint\":\"Dirty Drive Tuning\","
-            + "\"grade\":5,\"experimental\":\"Drag Drives\",\"reason\":\"one line\"}]}");
+            "{\"kind\":\"goal\",\"goal\":{\"mode\":\"only|keep_rest|any_gain|weighted\","
+            + "\"target\":\"combat|exploration|cargo\",\"weights\":{\"combat\":0.5,\"exploration\":0.5,\"cargo\":0},"
+            + "\"profile\":\"bounty|conflict_zone|thargoid\","
+            + "\"floors\":[{\"figure\":\"laden_jump|unladen_jump|cargo|shields|hull|sustained_dps\",\"atLeast\":40}],"
+            + "\"mustHaves\":[\"Fuel Scoop\"],\"credits\":null,\"engineering\":false}}");
+        text.AppendLine(
+            "mode: only = the target alone; keep_rest = the target without lowering any other figure; any_gain = the "
+            + "fewest changes that raise the target at all; weighted = every role by its weight. target is required "
+            + "unless mode is weighted. credits is an amount the Commander named, else null.");
+        text.AppendLine("For a goal whose extent is not said: {\"kind\":\"goal\",\"ask\":\"the question\"}");
+
+        return text.ToString();
+    }
+
+    /// <summary>The second call: the reply, written from the search's result.</summary>
+    private static string Explanation(ShipBuild build, string remark, BuildGoal goal, BuildResult result)
+    {
+        var text = new StringBuilder();
+
+        text.AppendLine(
+            "d47 searched for a build that meets the Commander's goal. Write the reply that tells them what it found. "
+            + "You do not choose or change any module.");
+        text.AppendLine();
+        text.AppendLine("Rules:");
+        text.AppendLine("- " + Stories.PlainWords.Rule);
+        text.AppendLine(
+            $"- The reply is spoken aloud. It names at most {MostModulesNamed.ToString(CultureInfo.InvariantCulture)} "
+            + "modules and is a few sentences long.");
+        text.AppendLine("- Quote the figures below and do not work out others.");
+        text.AppendLine("- Nothing is applied until the Commander accepts it.");
+        text.AppendLine();
+        text.AppendLine($"Ship: {build.Describe()}.");
+        text.AppendLine($"The Commander said: {remark}");
+        text.AppendLine($"The goal as read: {WriteGoal(goal)}");
+        text.AppendLine();
+        text.AppendLine("Figures before (the plan as it stands):");
+
+        foreach (var line in FigureLines(result.StartGauges))
+        {
+            text.AppendLine("- " + line);
+        }
+
+        text.AppendLine("Figures after (the plan with every change):");
+
+        foreach (var line in FigureLines(result.Gauges))
+        {
+            text.AppendLine("- " + line);
+        }
+
+        text.AppendLine();
+        text.AppendLine("Changes:");
+
+        if (result.Changes.Count == 0)
+        {
+            text.AppendLine("- none");
+        }
+
+        foreach (var change in result.Changes)
+        {
+            text.AppendLine($"- {change.Slot}: {change.After.Describe()}" + (change.Reason.Length > 0 ? $" ({change.Reason})" : string.Empty));
+        }
+
+        text.AppendLine($"Cost of the changed modules: {result.Credits.ToString("N0", CultureInfo.InvariantCulture)} credits.");
+
+        if (result.Unmet is { } unmet)
+        {
+            text.AppendLine($"A floor is not met: {unmet.Figure} of at least {unmet.AtLeast.ToString(CultureInfo.InvariantCulture)}.");
+        }
+
+        if (result.Missing.Count > 0)
+        {
+            text.AppendLine($"Must-haves that did not fit: {string.Join(", ", result.Missing)}.");
+        }
+
+        text.AppendLine();
+        text.AppendLine("Answer with one JSON object and nothing else: {\"reply\":\"...\"}");
 
         return text.ToString();
     }
@@ -499,88 +595,21 @@ public sealed class ShipPlanAdvisor(
         text.AppendLine();
     }
 
-    /// <summary>The blueprints and experimentals of every module the hull takes.</summary>
-    private static void Blueprints(StringBuilder text, ShipBuild build)
-    {
-        var slots = EliteSpecifications.Slots(build.Hull);
-        var modules = slots
-            .SelectMany(EliteSpecifications.ModulesFor)
-            .GroupBy(module => module.Name, StringComparer.OrdinalIgnoreCase)
-            .Select(group => group.First())
-            .OrderBy(module => module.Name, StringComparer.OrdinalIgnoreCase);
-
-        text.AppendLine("Blueprints by module:");
-
-        foreach (var module in modules)
-        {
-            if (BlueprintCatalogue.For(module) is not { Count: > 0 } recipes)
-            {
-                continue;
-            }
-
-            var blueprints = recipes
-                .Where(recipe => recipe.Kind == BlueprintKind.Modification)
-                .GroupBy(recipe => recipe.Name, StringComparer.Ordinal)
-                .Select(group => Graded(group.Key, [.. group.Select(recipe => recipe.Grade).OfType<int>()]));
-
-            var experimentals = recipes
-                .Where(recipe => recipe.Kind == BlueprintKind.Experimental)
-                .Select(recipe => recipe.Name)
-                .Distinct(StringComparer.Ordinal)
-                .ToList();
-
-            // " | " because some blueprint names contain a comma.
-            text.AppendLine(experimentals.Count > 0
-                ? $"- {module.Name}: {string.Join(" | ", blueprints)}; experimentals: {string.Join(" | ", experimentals)}"
-                : $"- {module.Name}: {string.Join(" | ", blueprints)}");
-        }
-
-        text.AppendLine();
-    }
-
-    private static string Graded(string name, IReadOnlyList<int> grades) => grades.Count == 0
-        ? name
-        : grades.Min() == grades.Max()
-            ? $"{name} (grade {grades.Min().ToString(CultureInfo.InvariantCulture)})"
-            : $"{name} (grades {grades.Min().ToString(CultureInfo.InvariantCulture)}-{grades.Max().ToString(CultureInfo.InvariantCulture)})";
-
-    private static string Retry(string instruction, string previous, IReadOnlyList<string> refusals)
-    {
-        var text = new StringBuilder(instruction);
-
-        text.AppendLine();
-        text.AppendLine("Your previous answer:");
-        text.AppendLine(previous);
-        text.AppendLine();
-        text.AppendLine("These changes were refused:");
-
-        foreach (var refusal in refusals)
-        {
-            text.AppendLine($"- {refusal}");
-        }
-
-        text.AppendLine();
-        text.AppendLine("Answer again with the whole proposal, correcting or leaving out each refused change.");
-
-        return text.ToString();
-    }
-
     // ---- reading and checking the answer ---------------------------------------------------
 
-    private sealed record Answer(BuildRemarkKind Kind, string? Reply, IReadOnlyList<Proposed> Changes);
+    private sealed record Answer(BuildRemarkKind Kind, string? Reply, string? Ask, GoalRead? Goal);
 
-    private sealed record Proposed(
-        string Slot,
-        string? Module,
-        int? Class,
-        string? Rating,
-        string? Mount,
-        string? Blueprint,
-        int Grade,
-        string? Experimental,
-        string Reason);
+    private sealed record GoalRead(
+        GoalMode? Mode,
+        BuildRole? Target,
+        Dictionary<BuildRole, double> Weights,
+        CombatProfile? Profile,
+        List<BuildFloor> Floors,
+        List<string> MustHaves,
+        long? Credits,
+        bool? Engineering);
 
-    private sealed record Checked(SlotChange? Change, string? Refusal, string? Said = null);
+    private sealed record Checked(BuildGoal Goal, IReadOnlyList<string> Dropped);
 
     private static Answer? Read(string json)
     {
@@ -594,40 +623,19 @@ public sealed class ShipPlanAdvisor(
                 return null;
             }
 
-            var reply = Text(root, "reply");
-            var changes = new List<Proposed>();
-
-            if (root.TryGetProperty("changes", out var list) && list.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var item in list.EnumerateArray())
-                {
-                    if (item.ValueKind != JsonValueKind.Object || Text(item, "slot") is not { } slot)
-                    {
-                        continue;
-                    }
-
-                    changes.Add(new Proposed(
-                        slot,
-                        Text(item, "module"),
-                        Number(item, "class"),
-                        Text(item, "rating"),
-                        Text(item, "mount"),
-                        Text(item, "blueprint"),
-                        Number(item, "grade") ?? 0,
-                        Text(item, "experimental"),
-                        Text(item, "reason") ?? string.Empty));
-                }
-            }
+            var goal = root.TryGetProperty("goal", out var element) && element.ValueKind == JsonValueKind.Object
+                ? ReadGoal(element)
+                : null;
 
             var kind = Text(root, "kind")?.ToLowerInvariant() switch
             {
                 "critique" => BuildRemarkKind.Critique,
                 "goal" => BuildRemarkKind.Goal,
                 "question" => BuildRemarkKind.Question,
-                _ => changes.Count > 0 ? BuildRemarkKind.Goal : BuildRemarkKind.Question,
+                _ => goal is not null ? BuildRemarkKind.Goal : BuildRemarkKind.Question,
             };
 
-            return new Answer(kind, reply, changes);
+            return new Answer(kind, Text(root, "reply"), Text(root, "ask"), goal);
         }
         catch (JsonException)
         {
@@ -635,170 +643,181 @@ public sealed class ShipPlanAdvisor(
         }
     }
 
-    private static string? Text(JsonElement element, string name) =>
-        element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
-        && value.GetString() is { } text && !string.IsNullOrWhiteSpace(text)
-        && !string.Equals(text.Trim(), "none", StringComparison.OrdinalIgnoreCase)
-            ? text.Trim()
-            : null;
-
-    private static int? Number(JsonElement element, string name) =>
-        element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number)
-            ? number
-            : null;
-
-    /// <summary>Each proposed change against the hull's slots and the blueprint table.</summary>
-    private static List<Checked> Check(ShipBuild build, CommanderGameState? state, Answer answer)
+    private static GoalRead ReadGoal(JsonElement element)
     {
-        var fitted = Fitted(build, state);
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var checkedChanges = new List<Checked>();
+        var weights = new Dictionary<BuildRole, double>();
 
-        foreach (var proposed in answer.Changes)
+        if (element.TryGetProperty("weights", out var shares) && shares.ValueKind == JsonValueKind.Object)
         {
-            var result = Check(build, fitted, proposed);
-
-            if (result.Change is { } change && !seen.Add(change.Slot))
+            foreach (var share in shares.EnumerateObject())
             {
-                result = new Checked(null, $"{change.Slot}: proposed twice; only the first is kept.", result.Said);
-            }
-
-            checkedChanges.Add(result);
-        }
-
-        return checkedChanges;
-    }
-
-    private static Checked Check(ShipBuild build, IReadOnlyList<ShipModule>? fitted, Proposed proposed)
-    {
-        if (EliteSpecifications.Slot(build.Hull, proposed.Slot) is not { } slot)
-        {
-            return new Checked(null, $"{proposed.Slot}: not a slot on the {build.HullName}.", proposed.Slot);
-        }
-
-        var before = build.For(slot.Name);
-        var fits = EliteSpecifications.ModulesFor(slot);
-        string? moduleName;
-        string? variant;
-        IReadOnlyList<ModuleSpecification> candidates;
-
-        if (proposed.Module is { } named)
-        {
-            var sameName = fits.Where(module => string.Equals(module.Name, named, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            if (sameName.Count == 0)
-            {
-                return new Checked(null, $"{slot.Name}: {named} does not fit {slot.Describe()} (size {slot.Size.ToString(CultureInfo.InvariantCulture)}{(slot.Restrict.Count > 0 ? ", restricted" : string.Empty)}).", slot.Describe());
-            }
-
-            moduleName = sameName[0].Name;
-            variant = null;
-            candidates = sameName;
-
-            if (proposed.Class is not null || proposed.Rating is not null || proposed.Mount is not null)
-            {
-                var exact = sameName
-                    .Where(module => proposed.Class is null || module.Class == proposed.Class)
-                    .Where(module => proposed.Rating is null || string.Equals(module.Rating, proposed.Rating, StringComparison.OrdinalIgnoreCase))
-                    .Where(module => proposed.Mount is null || string.Equals(module.Mount, proposed.Mount, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-
-                if (exact.Count == 0)
+                if (Closed<BuildRole>(share.Name) is { } role
+                    && share.Value.ValueKind == JsonValueKind.Number
+                    && share.Value.TryGetDouble(out var weight)
+                    && double.IsFinite(weight)
+                    && weight > 0)
                 {
-                    var size = $"{proposed.Class?.ToString(CultureInfo.InvariantCulture)}{proposed.Rating}".Trim();
-
-                    return new Checked(null, $"{slot.Name}: {size} {named}{(proposed.Mount is { } mount ? $", {mount}" : string.Empty)} does not fit {slot.Describe()} (size {slot.Size.ToString(CultureInfo.InvariantCulture)}).", slot.Describe());
+                    weights[role] = weight;
                 }
-
-                candidates = exact;
-                variant = exact.Count == 1 ? exact[0].Symbol : null;
             }
         }
-        else
+
+        var floors = new List<BuildFloor>();
+
+        if (element.TryGetProperty("floors", out var list) && list.ValueKind == JsonValueKind.Array)
         {
-            moduleName = before?.Module;
-            variant = before?.Variant;
-            candidates = Planned(before, fits) ?? FittedSpec(fitted, slot.Name) ?? fits;
-        }
-
-        var label = moduleName ?? slot.Describe();
-        var recipes = candidates.SelectMany(module => BlueprintCatalogue.For(module) ?? []).ToList();
-
-        if (proposed.Grade is < 0 or > 5)
-        {
-            return new Checked(null, $"{slot.Name}: grade {proposed.Grade.ToString(CultureInfo.InvariantCulture)} is not a grade.", slot.Describe());
-        }
-
-        if (proposed.Blueprint is { } blueprint)
-        {
-            var grades = recipes
-                .Where(recipe => recipe.Kind == BlueprintKind.Modification
-                                 && string.Equals(recipe.Name, blueprint, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            if (grades.Count == 0)
+            foreach (var item in list.EnumerateArray())
             {
-                return new Checked(null, $"{slot.Name}: there is no blueprint called {blueprint} for {label}.", slot.Describe());
+                if (item.ValueKind == JsonValueKind.Object
+                    && Closed<BuildFigure>(Text(item, "figure")) is { } figure
+                    && item.TryGetProperty("atLeast", out var at)
+                    && at.ValueKind == JsonValueKind.Number
+                    && at.TryGetDouble(out var value)
+                    && double.IsFinite(value)
+                    && value > 0)
+                {
+                    floors.Add(new BuildFloor(figure, value));
+                }
             }
-
-            if (proposed.Grade > 0 && grades.All(recipe => recipe.Grade != proposed.Grade))
-            {
-                return new Checked(null, $"{slot.Name}: {blueprint} has no grade {proposed.Grade.ToString(CultureInfo.InvariantCulture)}.", slot.Describe());
-            }
-        }
-        else if (proposed.Grade > 0)
-        {
-            return new Checked(null, $"{slot.Name}: a grade needs a blueprint.", slot.Describe());
         }
 
-        if (proposed.Experimental is { } experimental
-            && !recipes.Any(recipe => recipe.Kind == BlueprintKind.Experimental
-                                      && string.Equals(recipe.Name, experimental, StringComparison.OrdinalIgnoreCase)))
+        var mustHaves = new List<string>();
+
+        if (element.TryGetProperty("mustHaves", out var wanted) && wanted.ValueKind == JsonValueKind.Array)
         {
-            return new Checked(null, $"{slot.Name}: there is no experimental called {experimental} for {label}.", slot.Describe());
+            mustHaves.AddRange(wanted.EnumerateArray()
+                .Where(item => item.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(item.GetString()))
+                .Select(item => item.GetString()!.Trim()));
         }
 
-        var after = new SlotPlan(
-            slot.Name,
-            Canonical(recipes, proposed.Blueprint, BlueprintKind.Modification),
-            proposed.Grade,
-            Canonical(recipes, proposed.Experimental, BlueprintKind.Experimental),
-            moduleName)
-        {
-            Variant = variant,
-            Priority = before?.Priority ?? 1,
-        };
+        long? credits = element.TryGetProperty("credits", out var money)
+            && money.ValueKind == JsonValueKind.Number
+            && money.TryGetInt64(out var amount)
+            && amount > 0
+                ? amount
+                : null;
 
-        return new Checked(new SlotChange(slot.Name, before, after, proposed.Reason), null, slot.Describe());
+        bool? engineering = element.TryGetProperty("engineering", out var engineered)
+            && engineered.ValueKind is JsonValueKind.True or JsonValueKind.False
+                ? engineered.GetBoolean()
+                : null;
+
+        return new GoalRead(
+            Closed<GoalMode>(Text(element, "mode")),
+            Closed<BuildRole>(Text(element, "target")),
+            weights,
+            Closed<CombatProfile>(Text(element, "profile")),
+            floors,
+            mustHaves,
+            credits,
+            engineering);
     }
 
-    /// <summary>The catalogue's own spelling of a name the model gave.</summary>
-    private static string? Canonical(IReadOnlyList<Blueprint> recipes, string? name, BlueprintKind kind) =>
-        name is null
-            ? null
-            : recipes.FirstOrDefault(recipe => recipe.Kind == kind && string.Equals(recipe.Name, name, StringComparison.OrdinalIgnoreCase))?.Name ?? name;
-
-    private static IReadOnlyList<ModuleSpecification>? Planned(SlotPlan? plan, IReadOnlyList<ModuleSpecification> fits)
+    /// <summary>The member of a closed list a name spells, ignoring case, spaces, hyphens and underscores.</summary>
+    private static T? Closed<T>(string? name)
+        where T : struct, Enum
     {
-        if (plan?.Variant is { Length: > 0 } variant && EliteSpecifications.Module(variant) is { } exact)
+        if (name is null)
         {
-            return [exact];
+            return null;
         }
 
-        if (plan?.Module is { Length: > 0 } module)
-        {
-            var named = fits.Where(spec => string.Equals(spec.Name, module, StringComparison.OrdinalIgnoreCase)).ToList();
+        var key = Squash(name);
 
-            return named.Count > 0 ? named : null;
+        foreach (var value in Enum.GetValues<T>())
+        {
+            if (Squash(value.ToString()) == key)
+            {
+                return value;
+            }
         }
 
         return null;
     }
 
-    private static IReadOnlyList<ModuleSpecification>? FittedSpec(IReadOnlyList<ShipModule>? fitted, string slot) =>
-        fitted?.FirstOrDefault(module => string.Equals(module.Slot, slot, StringComparison.OrdinalIgnoreCase)) is { } module
-        && EliteSpecifications.Module(module.Item) is { } spec
-            ? [spec]
+    private static string Squash(string text) =>
+        new([.. text.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant)]);
+
+    /// <summary>
+    /// A goal the search can run, or null where the extent is not said. What the remark did not give comes from
+    /// the goal held before it. A must-have is kept only where <see cref="EliteSpecifications"/> names that module.
+    /// </summary>
+    private static Checked? Check(GoalRead read, BuildGoal? held)
+    {
+        var mode = read.Mode ?? held?.Mode;
+        var target = read.Target ?? held?.Target;
+        var weights = read.Weights.Count > 0
+            ? read.Weights
+            : held is null ? [] : new Dictionary<BuildRole, double>(held.Weights);
+
+        if (mode is null
+            || (mode == GoalMode.Weighted && weights.Count == 0)
+            || (mode != GoalMode.Weighted && target is null))
+        {
+            return null;
+        }
+
+        var names = new List<string>();
+        var dropped = new List<string>();
+
+        foreach (var wanted in read.MustHaves.Count > 0 || held is null ? read.MustHaves : held.MustHaves)
+        {
+            var known = EliteSpecifications.Modules
+                .FirstOrDefault(module => !module.IsBulkhead && string.Equals(module.Name, wanted, StringComparison.OrdinalIgnoreCase))
+                ?.Name;
+
+            if (known is null)
+            {
+                if (!dropped.Contains(wanted, StringComparer.OrdinalIgnoreCase))
+                {
+                    dropped.Add(wanted);
+                }
+            }
+            else if (!names.Contains(known, StringComparer.OrdinalIgnoreCase))
+            {
+                names.Add(known);
+            }
+        }
+
+        var goal = new BuildGoal(
+            weights,
+            read.Profile ?? held?.Combat ?? CombatProfile.Bounty,
+            read.Floors.Count > 0 ? read.Floors : held?.Floors ?? [],
+            names,
+            read.Credits ?? held?.Credits,
+            read.Engineering ?? held?.Engineering ?? false,
+            mode.Value,
+            target);
+
+        return new Checked(goal, dropped);
+    }
+
+    private static BuildGoal? Held(IReadOnlyList<BuildRemark> exchange) =>
+        exchange.LastOrDefault(round => round.Goal is not null)?.Goal;
+
+    private static string WriteGoal(BuildGoal goal)
+    {
+        static string Snake(Enum value) =>
+            string.Concat(value.ToString().Select((c, i) => i > 0 && char.IsUpper(c) ? "_" + char.ToLowerInvariant(c) : char.ToLowerInvariant(c).ToString()));
+
+        return JsonSerializer.Serialize(new
+        {
+            mode = Snake(goal.Mode),
+            target = goal.Target is { } target ? Snake(target) : null,
+            weights = goal.Weights.ToDictionary(pair => Snake(pair.Key), pair => pair.Value),
+            profile = Snake(goal.Combat),
+            floors = goal.Floors.Select(floor => new { figure = Snake(floor.Figure), atLeast = floor.AtLeast }),
+            mustHaves = goal.MustHaves,
+            credits = goal.Credits,
+            engineering = goal.Engineering,
+        });
+    }
+
+    private static string? Text(JsonElement element, string name) =>
+        element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
+        && value.GetString() is { } text && !string.IsNullOrWhiteSpace(text)
+        && !string.Equals(text.Trim(), "none", StringComparison.OrdinalIgnoreCase)
+            ? text.Trim()
             : null;
 
     // ---- the three-module limit ------------------------------------------------------------

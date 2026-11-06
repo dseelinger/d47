@@ -219,14 +219,9 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     {
         var install = new MemoryInstall();
         var bench = Set(install);
-        var model = new ScriptedReplies("""
-            {"kind":"goal","reply":"Fit a bigger Frame Shift Drive. Tune the Thrusters. Cool the Power Plant. Charge the Power Distributor. Lighten the Life Support.","changes":[
-              {"slot":"FrameShiftDrive","module":"Frame Shift Drive","class":5,"rating":"A","blueprint":"Increased FSD Range","grade":5,"reason":"Range."},
-              {"slot":"MainEngines","blueprint":"Dirty Drive Tuning","grade":5,"reason":"Speed."},
-              {"slot":"PowerPlant","module":"Power Plant","blueprint":"Low Emissions","grade":5,"reason":"Heat."},
-              {"slot":"PowerDistributor","module":"Power Distributor","blueprint":"Charge Enhanced","grade":5,"reason":"Recharge."},
-              {"slot":"LifeSupport","module":"Life Support","blueprint":"Lightweight","grade":5,"reason":"Mass."}]}
-            """);
+        var model = new ScriptedReplies(
+            """{"kind":"goal","goal":{"mode":"weighted","weights":{"combat":1,"exploration":1,"cargo":1}}}""",
+            """{"reply":"Fit a bigger Frame Shift Drive. Tune the Thrusters. Cool the Power Plant. Charge the Power Distributor. Lighten the Life Support."}""");
 
         var advisor = new ShipPlanAdvisor(() => model, () => null, () => null, () => null, () => bench.Game.Active, null, null, NullLogger.Instance);
         var talk = new BuildTalk(bench.Ships, advisor.AdviseAsync, () => DateTimeOffset.UnixEpoch);
@@ -249,8 +244,36 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
 
         var round = Assert.Single(talk.Exchange(bench.BuildId));
         Assert.Equal(InputSource.Spoken, round.Source);
-        Assert.Equal(5, round.Advice!.Changes.Count);
+        Assert.NotEmpty(round.Advice!.Changes);
         Assert.Equal(before, Build(bench).Slots);
+    }
+
+    [Fact]
+    public async Task AGoalIsHeldWithTheExchangeAndForgottenOnClear()
+    {
+        var bench = Set(new MemoryInstall());
+        var goal = new BuildGoal(new Dictionary<BuildRole, double>(), CombatProfile.Bounty, [], [], null, false, GoalMode.Only, BuildRole.Cargo);
+        var seen = new List<BuildGoal?>();
+
+        var talk = new BuildTalk(
+            bench.Ships,
+            (build, exchange, _, _) =>
+            {
+                seen.Add(exchange.LastOrDefault(round => round.Goal is not null)?.Goal);
+                return Task.FromResult(new BuildAdvice(BuildRemarkKind.Goal, "Done.", [], null, [], Goal: goal));
+            },
+            () => DateTimeOffset.UnixEpoch);
+
+        await talk.AskAsync(bench.BuildId, "more cargo", InputSource.Typed, TestContext.Current.CancellationToken);
+        await talk.AskAsync(bench.BuildId, "a bit more", InputSource.Typed, TestContext.Current.CancellationToken);
+
+        Assert.Null(seen[0]);
+        Assert.Equal(goal, seen[1]);
+
+        Assert.True(talk.Clear(bench.BuildId));
+        await talk.AskAsync(bench.BuildId, "more cargo", InputSource.Typed, TestContext.Current.CancellationToken);
+
+        Assert.Null(seen[2]);
     }
 
     [Fact]

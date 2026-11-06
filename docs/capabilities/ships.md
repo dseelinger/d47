@@ -392,7 +392,10 @@ A ship's own page opens with **Talk through this build**. It is answered by the 
 - a critique, such as "is this build any good";
 - a goal, such as "make it jump further".
 
-A question or a critique gets an answer from the figures d47 computes for the plan: jump range, power, shields, hull, damage and cargo. A goal gets a **proposal**: one row per slot that would
+A question or a critique gets an answer from the figures d47 computes for the plan: jump range, power, shields, hull, damage and cargo. A goal gets a **proposal** that d47 found for the goal the model read from your remark: the model reads
+the goal, d47 searches for the modules, and the model explains the result. Where the remark does not say
+how far to take it, d47 asks whether you mean to maximise it at the expense of everything else, to maximise
+it without giving up the rest, or any improvement at all; your answer is your next remark. The proposal has one row per slot that would
 change, each with the slot's plan now, the plan proposed and a one-line reason, and **Accept** and
 **Reject** beside it. Above the rows is what the proposal costs with every change accepted: the
 engineer ranks it is locked behind and each material, held against needed.
@@ -409,8 +412,9 @@ rejected: the proposal was made against a plan that is no longer there, so ask a
 no ship's page is open. The reply names at most three modules; the full proposal is on the page.
 
 The exchange is kept for each ship until you press **Clear**, and is forgotten when Directive 47
-closes. Advice comes from your language model, so it needs one configured, and each remark costs
-one request, two where a proposed change is refused by the outfitting tables and sent back once.
+closes. The goal is held with it, so a later remark such as "a bit more cargo" amends it. Advice comes
+from your language model, so it needs one configured. A question or a critique costs one request, and a
+goal two: one to read it and one to explain the result.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
