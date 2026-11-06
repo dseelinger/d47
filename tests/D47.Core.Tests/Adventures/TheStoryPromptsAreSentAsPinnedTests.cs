@@ -77,11 +77,11 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
         Pinned("beats-short-story", await Sent(Short, 2, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats)));
 
     [Fact]
-    public async Task TheBeatsOfARewriteOfARefusedObjective()
+    public async Task TheLinesOfARewriteOfARefusedObjective()
     {
         var ask = Short with { Rewrite = new AdventureRewrite(LanternRoute(Accepted), 2) };
 
-        Pinned("beats-rewrite-refused", await Sent(ask, 0, Saying(AdventureGeneratorTests.GoodBeats)));
+        Pinned("lines-rewrite-refused", await Sent(ask, 0, positioned: true, Saying(Stories.PlannedChapterWorld.NewWords(speakers: false))));
     }
 
     [Fact]
@@ -108,10 +108,10 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
     public async Task ThePlainWordsCheckOfTheObjectives() =>
         Pinned("plain-beats", await Sent(Short, 4, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats), Saying("""{"objections": []}""")));
 
-    private static AdventureGenerator Generator(RoundScriptedLlmProvider provider)
+    private static AdventureGenerator Generator(RoundScriptedLlmProvider provider, bool positioned = false)
     {
         var state = AdventureGeneratorTests.State(1, []);
-        var galaxy = new AdventureGeneratorTests.Galaxy();
+        var galaxy = new AdventureGeneratorTests.Galaxy { Positioned = positioned };
         var catalogue = new Catalogue();
 
         return new AdventureGenerator(() => provider, () => null, () => "You are the ship.", () => "core", () => null, () => state, () => galaxy, () => catalogue, null, null, NullLogger.Instance);
@@ -127,12 +127,15 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
             ]);
     }
 
-    private static async Task<string> Sent(AdventureAsk ask, int request, params IReadOnlyList<LlmStreamEvent>[] rounds)
+    private static Task<string> Sent(AdventureAsk ask, int request, params IReadOnlyList<LlmStreamEvent>[] rounds) => Sent(ask, request, positioned: false, rounds);
+
+    /// <summary>The text of request <paramref name="request"/>; <paramref name="positioned"/> gives the galaxy the positions a planned rewrite needs.</summary>
+    private static async Task<string> Sent(AdventureAsk ask, int request, bool positioned, params IReadOnlyList<LlmStreamEvent>[] rounds)
     {
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
         var provider = new RoundScriptedLlmProvider([.. rounds, .. Enumerable.Repeat(Saying("{}"), 8)]);
 
-        await Generator(provider).GenerateAsync(ask, Now, CancellationToken.None);
+        await Generator(provider, positioned).GenerateAsync(ask, Now, CancellationToken.None);
 
         return provider.Requests[request].Prompt.History[0].Text;
     }

@@ -1138,8 +1138,10 @@ How much you like crime. At 0 no chapter, detour or short story asks you to comm
 A story chapter's current objective has a **Never ask this** button, on the chapter's page and on the Stories
 page, and a voice command: "never ask this", "this objective is not for me", "not for me" or "give me a different objective". The
 button asks "Write a different objective?" and, for an objective that asks for an activity, "This story won't ask
-you to collect bounties again." (or whichever activity it is). On yes the core writes new objectives from
-the current one to the end of the chapter. Objectives already done stay as they were, the chapter count and the
+you to collect bounties again." (or whichever activity it is). On yes d47 builds new objectives from the current
+one to the end of the chapter: as many as it replaces where the story's activities allow, with the same roles in
+the chapter, never at the refused objective's place and never for the refused activity. The core writes only their
+titles and lines. Objectives already done stay as they were, the chapter count and the
 clues do not change, and the new objectives count only what happens after you refused. A replacement arrive
 objective for a system you had already visited waits for your next arrival there. If the write fails, the objective
 stays as it was and the Stories page says why.
@@ -1167,7 +1169,8 @@ Beside **Never ask this**, a story chapter's current objective has a **Change ob
 page and on the Stories page, in the window and on the VR big panel. Say "change this objective" or "change the
 objective" to open the same page. The page asks "What would you rather do?" and takes your words by speech or
 keyboard. One short model call turns them into a detour: one objective of your own, to arrive or dock at a named
-place, or one activity with its count. The status line reads "Writing a different objective…" meanwhile, and the
+place, or one activity with its count. When your words give no count, d47 takes one from the activity's usual range
+for your ship. The status line reads "Writing a different objective…" meanwhile, and the
 answer comes back in seconds. D47 says its reply in its own voice, not as a story line, and shows it with three
 buttons:
 

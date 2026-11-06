@@ -74,6 +74,18 @@ public sealed record ChapterInputs
 
     public string? ChapterSize { get; init; }
 
+    /// <summary>
+    /// The functions of the objectives a rewrite replaces, in order: the plan aims for that many objectives and takes their labels.
+    /// Null for a new chapter.
+    /// </summary>
+    public IReadOnlyList<string>? Functions { get; init; }
+
+    /// <summary>Steps whose place no new step may use: a refused objective's system, station or body.</summary>
+    public IReadOnlyList<AdventureTrigger> Avoid { get; init; } = [];
+
+    /// <summary>The system a changed objective asks to travel to, which the plan's last stop arrives in; null for none.</summary>
+    public AdventureHeading? Heading { get; init; }
+
     /// <summary><see cref="ChapterTags"/> every place the chapter draws is limited to, where some candidate has them.</summary>
     public IReadOnlySet<string> Tags { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -113,7 +125,8 @@ public sealed record ChapterInputs
             Band = ChapterBand.Of(position, ask),
             Leg = ChapterPull.Of(ask, position),
             Base = ShipBases.Applies(ask) ? ShipBases.Of(ships, carrier.Owned, homeSystem) : null,
-            Refused = story?.Refused ?? [],
+            Refused = story?.Refused ?? ask.Barred ?? [],
+            Heading = ask.Rewrite?.Heading,
             ChapterSize = story?.ChapterSize,
         };
     }

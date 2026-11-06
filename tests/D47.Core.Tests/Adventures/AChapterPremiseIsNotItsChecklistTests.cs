@@ -24,7 +24,7 @@ public sealed class AChapterPremiseIsNotItsChecklistTests
     [InlineData("beats-new-chapter")]
     [InlineData("beats-next-chapter-after-failed")]
     [InlineData("beats-revise-remark")]
-    [InlineData("beats-rewrite-refused")]
+    [InlineData("lines-rewrite-refused")]
     [InlineData("repair-refused-draft")]
     public void EveryChapterPromptCarriesThePlainWordsRule(string prompt) =>
         Assert.Contains(PlainWords.Rule, Prompt(prompt), StringComparison.Ordinal);

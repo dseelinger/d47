@@ -15,10 +15,7 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
 
     private static readonly AdventureStory Chapter = new("s", "Title", "Public", "Hidden", Chapter: 1, DaysRunning: 3, DaysSinceBeacon: null);
 
-    /// <summary>An act-one chapter written again from its first objective: the only act-one chapter whose objectives the model writes.</summary>
-    private static readonly AdventureRewrite ActOneRewrite = new(AdventureFixtures.LanternRoute(), 0);
-
-    public static TheoryData<string> Variants => ["short", "cast", "beacon", "away", "finale", "switches"];
+    public static TheoryData<string> Variants => ["short", "cast", "finale", "switches"];
 
     [Theory]
     [MemberData(nameof(Variants))]
@@ -31,8 +28,8 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
         Assert.Equal(kinds.Count, kinds.Distinct().Count());
         Assert.Contains("conflict", kinds);
         Assert.Contains("faction", kinds);
-        Assert.Equal(variant == "beacon", kinds.Contains("beacon"));
-        Assert.Equal(variant == "away", kinds.Contains("reach"));
+        Assert.DoesNotContain("beacon", kinds);
+        Assert.DoesNotContain("reach", kinds);
     }
 
     [Theory]
@@ -268,8 +265,6 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
                 Cast = [new AdventureSpeaker("tess", "Tess", "A pilot")],
                 Due = [new StorySwitch("tess", true, "catalyst", false, 2)],
             }),
-            "beacon" => new AdventureAsk(Story: Chapter with { Beacon = new AdventureBeacon(1, "Beacon System") }, Rewrite: ActOneRewrite),
-            "away" => new AdventureAsk(Story: Chapter with { BeaconAway = new AdventureBeaconAway("Far System", 900, "too far") }, Rewrite: ActOneRewrite),
             "finale" => new AdventureAsk(Story: Chapter with { FinaleChapter = 1 }),
             "brief" => new AdventureAsk(Length: AdventureLength.Short, Brief: "Take me to a Cobra Mk III"),
             _ => new AdventureAsk(Length: AdventureLength.Short),

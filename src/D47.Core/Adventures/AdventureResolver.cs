@@ -414,6 +414,55 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
         }
     }
 
+    /// <summary>
+    /// A dock at the nearest open fixed station within <paramref name="reach"/> of <paramref name="system"/>, that system included:
+    /// not <see cref="ClosedMarketId"/>, with a pad for <paramref name="needsPad"/>, in a system <paramref name="closed"/> does not
+    /// shut, and not closed by war. Null when there is none or the galaxy search fails.
+    /// </summary>
+    public async Task<AdventureTrigger?> OpenDockNearAsync(
+        string system, double reach, PadSize? needsPad, Func<string?, long?, bool> closed, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(closed);
+
+        try
+        {
+            var query = StationQuery.Near(system, reach, 20) with
+            {
+                Size = 50,
+                MinPad = needsPad is PadSize.Medium or PadSize.Large ? needsPad : null,
+            };
+
+            var found = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
+
+            foreach (var station in found.Stations)
+            {
+                if (station.IsFixed
+                    && station.MarketId is { } market
+                    && market != ClosedMarketId
+                    && (needsPad is not { } pad || station.Admits(pad))
+                    && !closed(station.SystemName, station.SystemAddress)
+                    && !await ClosedByWarAsync(station, cancellationToken).ConfigureAwait(false))
+                {
+                    return new AdventureTrigger
+                    {
+                        Kind = TriggerKind.Dock,
+                        System = station.SystemName,
+                        SystemAddress = station.SystemAddress,
+                        Station = station.Name,
+                        MarketId = market,
+                        LargestPad = station.KnownPads.Count > 0 ? station.KnownPads[^1] : null,
+                    };
+                }
+            }
+
+            return null;
+        }
+        catch (GalaxyUnavailableException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>Light years between two systems, or null where either is unknown.</summary>
     public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
         CallAsync(() => galaxy.DistanceAsync(from, to, cancellationToken), cancellationToken);

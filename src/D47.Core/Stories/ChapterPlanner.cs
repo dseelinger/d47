@@ -197,8 +197,9 @@ public static class ChapterPlanner
         }
 
         var content = inputs.Slots.Count + (sight ? 1 : 0) + goals.Count + (end is null && landing is null ? 0 : 1) + (swap is null ? 0 : 1) + (last is null ? 0 : 1);
+        var rewriting = inputs.Functions is not null;
 
-        if (content == 0)
+        if (content == 0 && !rewriting)
         {
             return Refuse(ChapterRules.Count, "The chapter has no drawn activity, sight, Goals step or stop to plan.");
         }
@@ -208,9 +209,10 @@ public static class ChapterPlanner
             return Refuse(ChapterRules.Count, $"The chapter's content needs {content.ToString(CultureInfo.InvariantCulture)} objectives; it may hold {MostObjectives.ToString(CultureInfo.InvariantCulture)}.");
         }
 
-        var fewestStops = Math.Max(0, FewestObjectives - content);
-        var mostStops = Math.Max(fewestStops, Math.Min(inputs.Travels ? TravelObjectives - content : MostStops, MostObjectives - content));
-        var stops = fewestStops + random.Next(mostStops - fewestStops + 1);
+        // A rewrite needs one objective at least, and aims for as many as it replaces.
+        var fewestStops = Math.Max(0, (rewriting ? 1 : FewestObjectives) - content);
+        var mostStops = Math.Max(fewestStops, Math.Min(rewriting ? inputs.Functions!.Count - content : inputs.Travels ? TravelObjectives - content : MostStops, MostObjectives - content));
+        var stops = rewriting ? mostStops : fewestStops + random.Next(mostStops - fewestStops + 1);
 
         var middle = inputs.Slots.Select(slot => new Item(PlannedPurpose.Activity, slot)).ToList();
 
@@ -284,7 +286,7 @@ public static class ChapterPlanner
             built.Add((lastPurpose, [last]));
         }
 
-        var functions = ChapterFunctions.For(built.Count, inputs.Stage);
+        var functions = inputs.Functions is { } labels ? ChapterFunctions.Relabel(labels, built.Count) : ChapterFunctions.For(built.Count, inputs.Stage);
 
         return new ChapterPlanResult(
             new ChapterPlan([.. built.Select((objective, index) => new PlannedObjective(functions[index], objective.Steps, objective.Purpose))], inputs.Destination),
@@ -326,9 +328,21 @@ public static class ChapterPlanner
 
     private static ChapterPlanResult Refuse(string rule, string text) => new(null, new ChapterPlanRefusal(rule, text));
 
-    /// <summary>The last-stop rule the chapter is held to: closer to the finale's destination, the Sol band, or the home leg or pull; null for none.</summary>
+    /// <summary>
+    /// The last-stop rule the chapter is held to: the system a changed objective asks for, closer to the finale's destination, the Sol
+    /// band, or the home leg or pull; null for none.
+    /// </summary>
     private static EndRule? Ending(ChapterInputs inputs, ChapterPlaces places)
     {
+        if (inputs.Heading is { Home: false } heading && !string.Equals(heading.System, inputs.System, StringComparison.OrdinalIgnoreCase))
+        {
+            return new EndRule(PlannedPurpose.Leg, ChapterRules.Pull, ChapterArea.NotSearched, _ => true)
+            {
+                Asked = new AdventureTrigger { Kind = TriggerKind.Arrive, System = heading.System, SystemAddress = heading.SystemAddress },
+                AskedAt = heading.Position,
+            };
+        }
+
         if (inputs is { FinaleChapter: > 1, Destination: not null, Position: { } here } && places.DestinationAt is { } there
             && here.DistanceTo(there) is var away && away > inputs.Reach)
         {
@@ -361,7 +375,13 @@ public static class ChapterPlanner
         public bool Needed { get; init; }
     }
 
-    private sealed record EndRule(PlannedPurpose Purpose, string Rule, ChapterArea Area, Func<StarPosition, bool> Meets);
+    private sealed record EndRule(PlannedPurpose Purpose, string Rule, ChapterArea Area, Func<StarPosition, bool> Meets)
+    {
+        /// <summary>The arrival in the system a changed objective asks for, which is not held to the reach; null for any other rule.</summary>
+        public AdventureTrigger? Asked { get; init; }
+
+        public StarPosition AskedAt { get; init; }
+    }
 
     /// <summary>A place a step may go to, with what the draw weighs it by.</summary>
     private sealed record Stop(AdventureTrigger Trigger, StarPosition Position, IReadOnlyList<string> Tags, StationSummary? Station = null, bool Mission = false)
@@ -513,6 +533,13 @@ public static class ChapterPlanner
 
         public (List<AdventureTrigger>? Steps, ChapterPlanRefusal? Refusal) End(EndRule end)
         {
+            if (end.Asked is { } asked)
+            {
+                Move(new Stop(asked, end.AskedAt, TagsOf(asked.System!)));
+
+                return ([asked], null);
+            }
+
             var listed = end.Area.Stations.Select(DockAt).Concat(end.Area.Bodies.Select(body => BodyStop(TriggerKind.Land, body)));
             var candidates = listed.OfType<Stop>().Concat(Arrivals()).Concat(Docks()).Concat(Lands())
                 .Where(stop => end.Meets(stop.Position))
@@ -589,6 +616,7 @@ public static class ChapterPlanner
             {
                 (ChapterRules.Permit, "needs a permit the Commander may not hold or is a starter system", stop => !Closed(stop.System)),
                 (ChapterRules.ClosedMarket, "docks at a station whose docks are closed", stop => stop.Trigger.Kind != TriggerKind.Dock || !ClosedMarket(stop.Trigger.MarketId)),
+                (ChapterRules.Refused, "is the place of the objective refused", stop => !Avoided(stop.Trigger)),
                 (ChapterRules.Pad, "docks at a station with no pad for the ship", stop => stop.Station is null || inputs.NeedsPad(flown) is not { } pad || stop.Station.Admits(pad)),
                 (rule, "arrives in the system the Commander is already in, or uses a body already used", stop => Fresh(stop)),
                 (ChapterRules.Hop, $"is beyond the reach of {inputs.Reach.ToString("0", CultureInfo.InvariantCulture)} light years from the stop before", Within),
@@ -658,6 +686,16 @@ public static class ChapterPlanner
 
         private bool Closed(string name) =>
             PermitSystemTable.ClosedTo(name, inputs.Ranks, () => places.WasVisited(name));
+
+        /// <summary>Whether a step goes where an avoided step went: the same system for an arrive, station for a dock, or body.</summary>
+        private bool Avoided(AdventureTrigger trigger) =>
+            inputs.Avoid.Any(avoided => avoided.Kind switch
+            {
+                TriggerKind.Arrive => trigger.Kind == TriggerKind.Arrive && string.Equals(trigger.System, avoided.System, StringComparison.OrdinalIgnoreCase),
+                TriggerKind.Dock => trigger.Kind == TriggerKind.Dock && trigger.MarketId is { } market && market == avoided.MarketId,
+                TriggerKind.Land or TriggerKind.Scan or TriggerKind.Site => trigger.Kind is TriggerKind.Land or TriggerKind.Scan or TriggerKind.Site && BodyKey(trigger) == BodyKey(avoided),
+                _ => false,
+            });
 
         private bool ClosedMarket(long? market) =>
             market is { } id && (id == inputs.ClosedMarketId || places.ClosedMarkets.Contains(id));

@@ -20,14 +20,14 @@ public sealed partial class AdventureGenerator
     private const int SpineIndex = -2;
 
     /// <summary>
-    /// Whether a chapter's objectives are planned in code and only its words are written: a story chapter that is not a rewrite,
-    /// with drawn activities or in act one.
+    /// Whether a chapter's objectives are planned in code and only its words are written: any rewrite of a begun chapter or short
+    /// story, and a story chapter with drawn activities or in act one.
     /// </summary>
     internal static bool IsPlanned(AdventureAsk ask)
     {
         ArgumentNullException.ThrowIfNull(ask);
 
-        return ask is { Rewrite: null, Story.Slots.Count: > 0 } || (ask.Rewrite is null && Travels(ask));
+        return ask.Rewrite is not null || ask is { Story.Slots.Count: > 0 } || Travels(ask);
     }
 
     /// <summary>Whether a story chapter is an act-one chapter with no drawn activity, which travels and ends on the beacon or on reach.</summary>
@@ -84,10 +84,49 @@ public sealed partial class AdventureGenerator
 
     private async Task<AdventureOutcome> PlannedAsync(AdventureAsk ask, Facts facts, DateTimeOffset now, List<string> notes, long started, CancellationToken cancellationToken)
     {
-        var story = ask.Story!;
+        var story = ask.Story;
+        var rewrite = ask.Rewrite;
         var plan = ask.Plan;
+        IReadOnlyList<AdventureBeat>? after = null;
 
-        if (plan is null)
+        if (rewrite is not null)
+        {
+            if (rewrite is { Remark: not null, Constrained: false })
+            {
+                logger.LogInformation("Draft {Draft}, the Commander's words named no place or activity to plan from", ask.Draft);
+
+                return new AdventureOutcome(
+                    null,
+                    rewrite.Reply,
+                    rewrite.Unfound is { } unfound ? $"I could not find {unfound}. Name a system the galaxy search knows, or an activity." : rewrite.Reply ?? NamePlaceOrActivity,
+                    notes);
+            }
+
+            var replanned = await RewritePlanAsync(ask, facts, cancellationToken).ConfigureAwait(false);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return AdventureOutcome.Stopped;
+            }
+
+            if (replanned.Swapped is { } swapped)
+            {
+                logger.LogInformation("Draft {Draft}, the closed station's step was moved to {Station}; the objective keeps its words", ask.Draft, replanned.Moved);
+
+                return new AdventureOutcome(swapped, null, null, notes);
+            }
+
+            if (replanned.Plan is not { } remade)
+            {
+                logger.LogWarning("Draft {Draft}, the new objectives could not be planned under the {Rule} rule: {Refusal}", ask.Draft, replanned.Refusal!.Rule, replanned.Refusal.Text);
+
+                return new AdventureOutcome(null, null, NotPlanned + replanned.Refusal.Text, notes);
+            }
+
+            (plan, after) = (remade, replanned.After);
+            logger.LogInformation("Draft {Draft}, planned {Count} new objectives from objective {From}: {Plan}", ask.Draft, plan.Objectives.Count, rewrite.From + 1, Describe(plan));
+        }
+        else if (plan is null)
         {
             var places = await ChapterPlacesAsync(ask, cancellationToken).ConfigureAwait(false);
 
@@ -113,7 +152,7 @@ public sealed partial class AdventureGenerator
             logger.LogInformation("Draft {Draft}, writing the lines again against the same plan", ask.Draft);
         }
 
-        if (story.FinaleChapter == 1 && story.Destination is null && plan.Destination is { } chosen)
+        if (rewrite is null && story is { FinaleChapter: 1, Destination: null } && plan.Destination is { } chosen)
         {
             facts = await DestinationDistanceAsync(facts, chosen, cancellationToken).ConfigureAwait(false);
         }
@@ -121,7 +160,7 @@ public sealed partial class AdventureGenerator
         var away = ShipBases.Exempts(ask) && galaxy() is { } search ? await BaseAsync(search, ask, facts, cancellationToken).ConfigureAwait(false) : null;
 
         Enter(ask, WriteStage.Objectives);
-        var asked = await AskJsonAsync(LinesStep, LinesInstruction(ask, facts, plan, away, repair: null), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+        var asked = await AskJsonAsync(LinesStep, LinesInstruction(ask, facts, plan, away, repair: null, after), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
 
         if (asked.Json is null)
         {
@@ -135,8 +174,8 @@ public sealed partial class AdventureGenerator
             return Kept(Failed(null, "The model's lines were not something I could read.", notes, started, asked));
         }
 
-        var name = written.Name ?? string.Empty;
-        var spine = written.Spine ?? new AdventureSpine();
+        var name = rewrite?.Chapter.Name ?? written.Name ?? string.Empty;
+        var spine = rewrite is not null ? rewrite.Chapter.Spine ?? new AdventureSpine() : written.Spine ?? new AdventureSpine();
         var read = PlannedRead(plan, story, written);
         var heads = Heads(read.Beats);
         var fidelityPassed = new HashSet<int>();
@@ -194,7 +233,7 @@ public sealed partial class AdventureGenerator
 
             var round = ++rounds[kind];
             var repair = new LineRepair(read, name, spine, resolved.Refusals, unplainRaised);
-            var again = await AskJsonAsync(LineRepairStep, LinesInstruction(ask, facts, plan, away, repair), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+            var again = await AskJsonAsync(LineRepairStep, LinesInstruction(ask, facts, plan, away, repair, after), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
 
             if (cancellationToken.IsCancellationRequested)
             {
@@ -274,6 +313,28 @@ public sealed partial class AdventureGenerator
                 unusedRepair));
         }
 
+        if (rewrite is not null)
+        {
+            var chapter = rewrite.Chapter with { Beats = [.. rewrite.Chapter.Beats.Take(rewrite.From), .. Grouped(resolved), .. after ?? []] };
+
+            if (story?.Sights is { Count: > 0 } seen)
+            {
+                chapter = chapter with { Sight = SightSeen(seen, chapter.Beats) ?? chapter.Sight };
+            }
+
+            if (story is not null)
+            {
+                chapter = StoryAboard.Placed(chapter, story.Due ?? []);
+            }
+
+            if (AdventureValidation.Problems(chapter) is { Count: > 0 } rewriteProblems)
+            {
+                return Failed(null, string.Join(" ", rewriteProblems), notes, started);
+            }
+
+            return new AdventureOutcome(chapter, rewrite.Reply, null, notes) { Heading = rewrite.Heading };
+        }
+
         var adventure = new Adventure
         {
             Key = AdventureValidation.Key(name),
@@ -285,7 +346,7 @@ public sealed partial class AdventureGenerator
             OpeningLines = resolved.Opening,
             Beats = Grouped(resolved),
             Follows = ask.Chapter?.Previous.Key,
-            StoryId = story.Id,
+            StoryId = story!.Id,
             Aboard = Aboard(story, written.Aboard),
             OpeningBoards = written.OpeningBoards,
             OpeningLeaves = written.OpeningLeaves,
@@ -319,7 +380,8 @@ public sealed partial class AdventureGenerator
             }
         }
 
-        Resolved Coded() => Speakers(PlannedResolved(plan, read, name, spine), read, ask);
+        // A detour of one objective may have no line, as AdventureValidation.Problems allows.
+        Resolved Coded() => Speakers(PlannedResolved(plan, read, name, spine, rewrite is not null, rewrite is { Chapter.Detour: true, From: 0 } && plan.Objectives.Count == 1 && after is not { Count: > 0 }), read, ask);
 
         // The code checks first; the fidelity check only on a draft they pass, and the plain check only on one that passes both.
         // An objective a check has passed is not refused by that check again unless its words were written again since.
@@ -359,7 +421,9 @@ public sealed partial class AdventureGenerator
                 return coded with { Refusals = objections };
             }
 
-            var parts = SpineParts(name, spine).Select(part => part with { Index = SpineIndex }).Concat(BeatParts(read.Opening, read.Beats, 0, grouped: true)).ToList();
+            var parts = (rewrite is null ? SpineParts(name, spine).Select(part => part with { Index = SpineIndex }) : [])
+                .Concat(BeatParts(read.Opening, read.Beats, 0, grouped: true))
+                .ToList();
             var unplain = (await PlainAsync(ask, parts, cancellationToken).ConfigureAwait(false))
                 .Select(found => (found, part: parts.First(part => part.Name == found.Part)))
                 .Where(pair => !plainPassed.Contains(pair.part.Index!.Value))
@@ -401,7 +465,7 @@ public sealed partial class AdventureGenerator
     }
 
     /// <summary>The plan's steps in order, each a read beat carrying its trigger's fields, with the words written for its objective on the first step.</summary>
-    private static ReadAnswer PlannedRead(ChapterPlan plan, AdventureStory story, WrittenLines written)
+    private static ReadAnswer PlannedRead(ChapterPlan plan, AdventureStory? story, WrittenLines written)
     {
         var beats = new List<ReadBeat>();
 
@@ -452,7 +516,7 @@ public sealed partial class AdventureGenerator
     }
 
     /// <summary>A planned step as a read beat: the trigger's own fields, and for an event step the phrase its drawn slot is run by.</summary>
-    private static ReadBeat StepOf(AdventureTrigger trigger, AdventureStory story) =>
+    private static ReadBeat StepOf(AdventureTrigger trigger, AdventureStory? story) =>
         new(
             Untitled,
             null,
@@ -482,26 +546,27 @@ public sealed partial class AdventureGenerator
         };
 
     /// <summary>The drawn event slot an event step was planned from, or null.</summary>
-    private static DrawnActivity? SlotOf(AdventureTrigger trigger, AdventureStory story) =>
-        (story.Slots ?? []).FirstOrDefault(slot => slot.Kind == TriggerKind.Event && slot.Event == trigger.Event && slot.Where.Equals(trigger.Where));
+    private static DrawnActivity? SlotOf(AdventureTrigger trigger, AdventureStory? story) =>
+        (story?.Slots ?? []).FirstOrDefault(slot => slot.Kind == TriggerKind.Event && slot.Event == trigger.Event && slot.Where.Equals(trigger.Where));
 
     /// <summary>
     /// The plan's triggers with the words written for them, one beat per step, and a refusal for each objective with no title, line or
-    /// reason, each event step whose task is missing, too long or leaves out the phrase it is run by, and a missing name or spine.
+    /// reason, each event step whose task is missing, too long or leaves out the phrase it is run by, and, outside a rewrite, which
+    /// keeps the chapter's own, a missing name or spine. With <paramref name="linesOptional"/>, an objective with no line stands.
     /// </summary>
-    private static Resolved PlannedResolved(ChapterPlan plan, ReadAnswer read, string name, AdventureSpine spine)
+    private static Resolved PlannedResolved(ChapterPlan plan, ReadAnswer read, string name, AdventureSpine spine, bool rewriting = false, bool linesOptional = false)
     {
         var triggers = plan.Objectives.SelectMany(objective => objective.Steps).ToList();
         var heads = Heads(read.Beats);
         var beats = new List<AdventureBeat>();
         var refusals = new List<Refusal>();
 
-        if (string.IsNullOrWhiteSpace(name))
+        if (!rewriting && string.IsNullOrWhiteSpace(name))
         {
             refusals.Add(new Refusal("The chapter has no \"name\".", []) { Spine = true });
         }
 
-        if (new[] { spine.Premise, spine.Want, spine.Stake, spine.Turn, spine.Ending }.Any(string.IsNullOrWhiteSpace))
+        if (!rewriting && new[] { spine.Premise, spine.Want, spine.Stake, spine.Turn, spine.Ending }.Any(string.IsNullOrWhiteSpace))
         {
             refusals.Add(new Refusal("The spine is missing a field: \"premise\", \"want\", \"stake\", \"turn\" and \"ending\" each need a sentence.", []) { Spine = true });
         }
@@ -520,7 +585,7 @@ public sealed partial class AdventureGenerator
                     refusals.Add(new Refusal($"{where} has no title.", [index]));
                 }
 
-                if (beat.Lines.All(line => string.IsNullOrWhiteSpace(line.Text)))
+                if (!linesOptional && beat.Lines.All(line => string.IsNullOrWhiteSpace(line.Text)))
                 {
                     refusals.Add(new Refusal($"{where} has no line.", [index]));
                 }
@@ -660,7 +725,7 @@ public sealed partial class AdventureGenerator
             $"{(index + 1).ToString(CultureInfo.InvariantCulture)}. {objective.Function}: {string.Join(", then ", objective.Steps.Select(step => step.Describe()))}"));
 
     /// <summary>One step as the lines writer is told it: an event step by its drawn slot, any other by its trigger.</summary>
-    private static string StepLine(AdventureTrigger trigger, AdventureStory story) =>
+    private static string StepLine(AdventureTrigger trigger, AdventureStory? story) =>
         trigger.Kind == TriggerKind.Event && SlotOf(trigger, story) is { } slot ? EventSlotLine(slot) : trigger.Describe();
 
     /// <summary>The held mission whose destination a planned step goes to, or null.</summary>
@@ -672,27 +737,132 @@ public sealed partial class AdventureGenerator
             : null;
 
     /// <summary>What a planned objective is for, as the lines writer is told it; empty for a drawn activity or a story stop.</summary>
-    private static string PurposeLine(PlannedObjective objective, AdventureStory story) => objective.Purpose switch
+    private static string PurposeLine(PlannedObjective objective, AdventureStory? story) => objective.Purpose switch
     {
-        PlannedPurpose.Sight => " It goes to see one of the chapter's sights" + (story.Sights?.FirstOrDefault(sight => objective.Steps.Any(step => AtSight(sight, step))) is { } seen ? $": {seen.Name}." : "."),
-        PlannedPurpose.Goal => story.Goals?.FirstOrDefault(goal => goal.Objective is { } wanted && objective.Steps.Any(step => step.Kind == wanted.Kind)) is { } goal
+        PlannedPurpose.Sight => " It goes to see one of the chapter's sights" + (story?.Sights?.FirstOrDefault(sight => objective.Steps.Any(step => AtSight(sight, step))) is { } seen ? $": {seen.Name}." : "."),
+        PlannedPurpose.Goal => story?.Goals?.FirstOrDefault(goal => goal.Objective is { } wanted && objective.Steps.Any(step => step.Kind == wanted.Kind)) is { } goal
             ? $" It is the chapter's Goals objective, working the Commander's goal \"{goal.Name}\"."
             : " It is the chapter's Goals objective.",
         PlannedPurpose.Band => " It is the chapter's last stop, nearer Sol.",
         PlannedPurpose.Leg => " It is the chapter's last stop, on the way to where the chapter is heading.",
         PlannedPurpose.Closer => " It is the chapter's last stop, closer to the finale's destination.",
         PlannedPurpose.Destination => " It is the landing on the finale's destination, where the hidden layer's end takes place.",
-        PlannedPurpose.Swap => $" It is the swap into a ship the Commander owns that can make the trip to the Guardian beacon{(story.Beacon?.SwapTo is { } swap ? $": {swap}" : string.Empty)}.",
+        PlannedPurpose.Swap => $" It is the swap into a ship the Commander owns that can make the trip to the Guardian beacon{(story?.Beacon?.SwapTo is { } swap ? $": {swap}" : string.Empty)}.",
         PlannedPurpose.Beacon => " It is the Guardian beacon scan that ends act one, when the story's Guardian cores come aboard.",
         PlannedPurpose.Reach => " It is met once the Commander's ship can make the trip to the Guardian beacon.",
         _ => string.Empty,
     };
 
-    private static StoryCall LinesInstruction(AdventureAsk ask, Facts facts, ChapterPlan plan, BaseStep? away, LineRepair? repair)
+    /// <summary>
+    /// The lines call for <paramref name="plan"/>: a new chapter's words, or a rewrite's new objectives. <paramref name="after"/> holds the
+    /// objectives a rewrite that moved one objective keeps after it; it is null where the rewrite replaced every objective to the end.
+    /// </summary>
+    private static StoryCall LinesInstruction(AdventureAsk ask, Facts facts, ChapterPlan plan, BaseStep? away, LineRepair? repair, IReadOnlyList<AdventureBeat>? after = null)
     {
-        var story = ask.Story!;
+        var story = ask.Story;
+        var rewriting = ask.Rewrite is not null;
         var text = new StringBuilder();
         var task = plan.Objectives.Any(objective => objective.Steps.Any(step => step.Kind == TriggerKind.Event));
+
+        if (ask.Rewrite is { } rewrite)
+        {
+            AppendRewrite(text, ask, rewrite, facts, plan, after);
+            AppendAway(text, away, ask, facts);
+        }
+        else
+        {
+            AppendNewChapter(text, ask, facts, plan, away);
+        }
+
+        text.AppendLine();
+        text.AppendLine(rewriting
+            ? "The new objectives, in order and numbered from 1, each with its dramatic function and what the Commander does, step by step:"
+            : "The chapter's objectives, in order, each with its dramatic function and what the Commander does, step by step:");
+
+        foreach (var (objective, index) in plan.Objectives.Select((objective, index) => (objective, index)))
+        {
+            text.AppendLine($"{(index + 1).ToString(CultureInfo.InvariantCulture)}. {objective.Function}: {string.Join(", then ", objective.Steps.Select(step => StepLine(step, story)))}.{PurposeLine(objective, story)}");
+
+            foreach (var mission in objective.Steps.Select(step => MissionAt(step, facts)).OfType<Mission>().Distinct())
+            {
+                text.AppendLine(
+                    $"   This stop is the destination of a mission the Commander holds: {StoryMissionAsides.Describe(mission)}. Its lines may tie the mission to the story "
+                    + "but never change it: no new cargo, target, reward or deadline, and never ask the Commander to complete, fail or abandon it.");
+            }
+        }
+
+        text.AppendLine(
+            "The functions: the setup opens the chapter's want; a complication pushes against it; the "
+            + $"{ChapterFunctions.TurnAt(ChapterInputs.StageOf(story?.Stage))} is where the chapter stops being what it looked like; a setback costs the Commander something; "
+            + "the resolution's lines are the chapter's ending.");
+
+        if (!rewriting)
+        {
+            text.AppendLine(
+                "The spine is built on these objectives: the premise and the want are events that happen to the Commander and the cast, the want and the turn rest on what the "
+                + "Commander does at them, and the turn falls on the objective marked for it. Neither the premise nor the want lists the objectives.");
+        }
+
+        text.AppendLine();
+        text.Append(TriggerConfirms.Section([.. plan.Objectives.SelectMany(objective => objective.Steps).Select(step => step.Kind.ToString().ToLowerInvariant()).Distinct()], story: story is not null));
+        AppendLineRules(text, task);
+
+        var due = Due(ask, facts);
+        var switches = due.Count > 0
+            ? new StorySwitches([.. due.Where(entry => entry.Boards).Select(entry => entry.Id)], [.. due.Where(entry => !entry.Boards).Select(entry => entry.Id)], !rewriting)
+            : null;
+        IReadOnlyList<string>? speakers = story is null ? null : [.. Speakers(story)];
+
+        if (story is not null)
+        {
+            AppendSpeakers(text, story, due, opening: !rewriting, facts);
+        }
+
+        if (repair is not null)
+        {
+            AppendLineRepair(text, plan, repair, rewriting);
+            text.AppendLine();
+            text.AppendLine(
+                "Answer with one JSON object and nothing else: " + StoryAnswer.LineRepairsShape(task, repair.Opening, repair.OfSpine, switches, speakers is not null)
+                + ". \"objective\" is the number of an objective named above as unable to stand; give each of them, and no other.");
+
+            return new StoryCall(text.ToString(), StoryAnswer.LineRepairsSchema(speakers, task, repair.Opening, repair.OfSpine, switches));
+        }
+
+        if (ask.LastDraftRefused is { Length: > 0 } refused)
+        {
+            text.AppendLine();
+            text.AppendLine("An earlier draft of this chapter's words could not be used, for this reason. Write this draft so that it does not happen again:");
+            text.Append("- ").AppendLine(refused);
+        }
+
+        if (rewriting)
+        {
+            text.AppendLine();
+            text.AppendLine(
+                "Answer with one JSON object and nothing else: " + StoryAnswer.LineRepairsShape(task, opening: false, spine: false, switches, speakers is not null)
+                + ". \"objectives\" has one entry for each new objective above, numbered as above.");
+
+            return new StoryCall(text.ToString(), StoryAnswer.LineRepairsSchema(speakers, task, opening: false, spine: false, switches));
+        }
+
+        text.AppendLine();
+        text.AppendLine(
+            "Answer with one JSON object and nothing else: " + StoryAnswer.LinesShape(task, story!.Cast is { Count: > 0 }, switches)
+            + ". \"name\" is the chapter's title, a few words; \"premise\" is one paragraph; \"want\" is the outer goal; \"stake\" is the belief the chapter tests "
+            + "and what it would cost to be wrong; \"turn\" is where it stops being what it looked like; \"ending\" is what the last objective means; each under 600 characters. "
+            + "\"objectives\" has one entry for each objective above, numbered as above. \"reply\" is what you say to the Commander, in your own voice, as you hand "
+            + "them the chapter — one or two sentences, no summary of the plot.");
+
+        return new StoryCall(
+            text.ToString(),
+            StoryAnswer.LinesSchema([.. Speakers(story)], task, story.Cast is { Count: > 0 } members ? [.. members.Select(member => member.Id)] : null, switches));
+    }
+
+    /// <summary>A new chapter's head: what the call writes, the chapter before, a failed or set-aside draft, the facts, the story and its journey.</summary>
+    private static void AppendNewChapter(StringBuilder text, AdventureAsk ask, Facts facts, ChapterPlan plan, BaseStep? away)
+    {
+        var story = ask.Story!;
 
         text.AppendLine(
             "You are writing a chapter of a story the Commander will fly in Elite Dangerous, told by you as their companion. "
@@ -721,31 +891,11 @@ public sealed partial class AdventureGenerator
 
         AppendJourney(text, ask, facts, plan);
         AppendAway(text, away, ask, facts);
+    }
 
-        text.AppendLine();
-        text.AppendLine("The chapter's objectives, in order, each with its dramatic function and what the Commander does, step by step:");
-
-        foreach (var (objective, index) in plan.Objectives.Select((objective, index) => (objective, index)))
-        {
-            text.AppendLine($"{(index + 1).ToString(CultureInfo.InvariantCulture)}. {objective.Function}: {string.Join(", then ", objective.Steps.Select(step => StepLine(step, story)))}.{PurposeLine(objective, story)}");
-
-            foreach (var mission in objective.Steps.Select(step => MissionAt(step, facts)).OfType<Mission>().Distinct())
-            {
-                text.AppendLine(
-                    $"   This stop is the destination of a mission the Commander holds: {StoryMissionAsides.Describe(mission)}. Its lines may tie the mission to the story "
-                    + "but never change it: no new cargo, target, reward or deadline, and never ask the Commander to complete, fail or abandon it.");
-            }
-        }
-
-        text.AppendLine(
-            "The functions: the setup opens the chapter's want; a complication pushes against it; the "
-            + $"{ChapterFunctions.TurnAt(ChapterInputs.StageOf(story.Stage))} is where the chapter stops being what it looked like; a setback costs the Commander something; "
-            + "the resolution's lines are the chapter's ending.");
-        text.AppendLine(
-            "The spine is built on these objectives: the premise and the want are events that happen to the Commander and the cast, the want and the turn rest on what the "
-            + "Commander does at them, and the turn falls on the objective marked for it. Neither the premise nor the want lists the objectives.");
-        text.AppendLine();
-        text.Append(TriggerConfirms.Section([.. plan.Objectives.SelectMany(objective => objective.Steps).Select(step => step.Kind.ToString().ToLowerInvariant()).Distinct()], story: true));
+    /// <summary>The rules every line, reason, title and task of a planned objective is written to.</summary>
+    private static void AppendLineRules(StringBuilder text, bool task)
+    {
         text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier objectives' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. A line that sets up something for later makes sense when heard alone. The opening is said when the chapter begins and before the first objective; the last objective's lines are the ending. An objective's lines are spoken when its last step is done.");
         text.AppendLine(PlainWords.Rule + " Whoever says a line, it is written this way. Do not repeat the spine's premise, want, stake, turn or ending as a line.");
         text.AppendLine("A line never gives the Commander a task. The game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never \"ask the clerk\", \"find the pilot\" or \"see what their face does\". What the Commander does next is always the next objective, and the line may point them at it.");
@@ -763,43 +913,6 @@ public sealed partial class AdventureGenerator
                 "An objective with an event step also has a \"task\": a phrase of at most " + AdventureTrigger.MaxTaskLength.ToString(CultureInfo.InvariantCulture)
                 + " characters saying what the Commander does, such as \"analyse a Stratum sample\". Where the event is run by a phrase the Commander says, the task holds that phrase. Every other objective's task is null.");
         }
-
-        var due = Due(ask, facts);
-        var switches = due.Count > 0
-            ? new StorySwitches([.. due.Where(entry => entry.Boards).Select(entry => entry.Id)], [.. due.Where(entry => !entry.Boards).Select(entry => entry.Id)], true)
-            : null;
-
-        AppendSpeakers(text, story, due, opening: true, facts);
-
-        if (repair is not null)
-        {
-            AppendLineRepair(text, plan, repair);
-            text.AppendLine();
-            text.AppendLine(
-                "Answer with one JSON object and nothing else: " + StoryAnswer.LineRepairsShape(task, repair.Opening, repair.OfSpine, switches)
-                + ". \"objective\" is the number of an objective named above as unable to stand; give each of them, and no other.");
-
-            return new StoryCall(text.ToString(), StoryAnswer.LineRepairsSchema([.. Speakers(story)], task, repair.Opening, repair.OfSpine, switches));
-        }
-
-        if (ask.LastDraftRefused is { Length: > 0 } refused)
-        {
-            text.AppendLine();
-            text.AppendLine("An earlier draft of this chapter's words could not be used, for this reason. Write this draft so that it does not happen again:");
-            text.Append("- ").AppendLine(refused);
-        }
-
-        text.AppendLine();
-        text.AppendLine(
-            "Answer with one JSON object and nothing else: " + StoryAnswer.LinesShape(task, story.Cast is { Count: > 0 }, switches)
-            + ". \"name\" is the chapter's title, a few words; \"premise\" is one paragraph; \"want\" is the outer goal; \"stake\" is the belief the chapter tests "
-            + "and what it would cost to be wrong; \"turn\" is where it stops being what it looked like; \"ending\" is what the last objective means; each under 600 characters. "
-            + "\"objectives\" has one entry for each objective above, numbered as above. \"reply\" is what you say to the Commander, in your own voice, as you hand "
-            + "them the chapter — one or two sentences, no summary of the plot.");
-
-        return new StoryCall(
-            text.ToString(),
-            StoryAnswer.LinesSchema([.. Speakers(story)], task, story.Cast is { Count: > 0 } members ? [.. members.Select(member => member.Id)] : null, switches));
     }
 
     /// <summary>Where the chapter travels and why, as its words are to tell it: toward the finale's destination, a target, home, in the black or back toward Sol.</summary>
@@ -863,14 +976,22 @@ public sealed partial class AdventureGenerator
     }
 
     /// <summary>The draft's words, objective by objective, why some cannot stand, and which the answer writes again.</summary>
-    private static void AppendLineRepair(StringBuilder text, ChapterPlan plan, LineRepair repair)
+    private static void AppendLineRepair(StringBuilder text, ChapterPlan plan, LineRepair repair, bool rewriting)
     {
         var heads = Heads(repair.Read.Beats);
 
         text.AppendLine();
-        text.AppendLine("Your draft of the chapter's words:");
-        AppendSpine(text, repair.Name, repair.Spine);
-        text.AppendLine($"Opening: {Quoted(repair.Read.Opening)}");
+
+        if (rewriting)
+        {
+            text.AppendLine("Your draft of the new objectives' words:");
+        }
+        else
+        {
+            text.AppendLine("Your draft of the chapter's words:");
+            AppendSpine(text, repair.Name, repair.Spine);
+            text.AppendLine($"Opening: {Quoted(repair.Read.Opening)}");
+        }
 
         foreach (var (head, index) in heads.Select((head, index) => (head, index)))
         {

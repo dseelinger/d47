@@ -159,7 +159,7 @@ public sealed class DetourProposer(
             trigger = new AdventureTrigger
             {
                 Kind = kind,
-                Count = read.Count,
+                Count = read.Count ?? CountFor(kind, Blank(read.Mission), ask),
                 Faction = Blank(read.Faction),
                 MissionFamily = Blank(read.Mission),
                 Commodity = Blank(read.Commodity),
@@ -186,6 +186,15 @@ public sealed class DetourProposer(
         var step = new DetourStep(title ?? Capital(trigger.Describe()), trigger);
         return new DetourAnswer(string.IsNullOrWhiteSpace(read.Reply) ? Capital(trigger.Describe()) + "." : read.Reply.Trim(), step, []);
     }
+
+    /// <summary>
+    /// The count for an activity the Commander gave no number for, drawn within its <see cref="ChapterActivities"/> row's range; null
+    /// for a kind with no row, which is asked about instead.
+    /// </summary>
+    private int? CountFor(TriggerKind kind, string? family, DetourAsk ask) =>
+        ChapterActivities.Find(kind, family, null) is { } row
+            ? ChapterDraw.CountOf(row, state()?.Ship ?? ShipLoadout.Unknown, ChapterDraw.Seed(ask.Words.Trim(), ask.Exchange.Count))
+            : null;
 
     /// <summary>
     /// The arrive steps a question offers: the nearest systems of the faction or Power the answer names, otherwise the
@@ -301,7 +310,8 @@ public sealed class DetourProposer(
         text.AppendLine(
             "For a step: \"title\" is the objective in a few words; \"kind\" is one of " + string.Join(", ", Kinds) + ". "
             + "arrive needs \"system\", spelt as the game spells it. dock needs \"system\" and \"station\". "
-            + "Every other kind needs \"count\", and may name \"faction\", \"mission\" (the mission family) or \"commodity\". "
+            + "Every other kind may name \"faction\", \"mission\" (the mission family) or \"commodity\". \"count\" is the number they said, "
+            + "or null when they said none; d47 sets it then. "
             + "Use only a place they name or one listed above.");
         text.AppendLine(
             "Ask a question when they name neither a place nor an activity, such as \"something closer to home\" with no home set. "

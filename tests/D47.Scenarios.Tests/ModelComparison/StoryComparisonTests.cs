@@ -152,6 +152,7 @@ public partial class StoryComparisonTests
                     Slots = [new DrawnActivity(TriggerKind.Bounty, null, 3), new DrawnActivity(TriggerKind.Codex, null, 2), new DrawnActivity(TriggerKind.Mission, "Mission_Courier", 2)],
                 },
             },
+            "refused" => RefusedAsk,
             "actone" => ChapterAsk with { Chapter = null, Story = ChapterAsk.Story! with { Chapter = 1, Beacon = new AdventureBeacon(13872878396833, "IC 2391 Sector MX-T b3-6") } },
             "black" => ChapterAsk with { Story = ChapterAsk.Story! with { InTheBlack = true } },
             "toward" => ChapterAsk with { Reach = AdventureReach.Anywhere, Story = ChapterAsk.Story! with { InTheBlack = true, Toward = "Colonia" } },
@@ -594,6 +595,44 @@ public partial class StoryComparisonTests
         }
     }
 
+    /// <summary>
+    /// Chapter six with its bounty objective refused after the first objective was done: the objectives from the bounty
+    /// to the end are planned again and the model writes only their words.
+    /// </summary>
+    private static AdventureAsk RefusedAsk
+    {
+        get
+        {
+            var six = ChapterSixAsk;
+
+            static AdventureBeat Beat(string title, string function, AdventureTrigger trigger, string line) =>
+                new() { Title = title, Function = function, Trigger = trigger, Lines = [new AdventureLine { Text = line, Speaker = "ship" }] };
+
+            var chapter = six.Chapter!.Previous with
+            {
+                Key = "the-abandoned-station",
+                Name = "The Abandoned Station",
+                Beats =
+                [
+                    Beat("The Packet", "setup", new AdventureTrigger { Kind = TriggerKind.Mission, MissionFamily = "Mission_Courier", Count = 1 }, "One packet, addressed to a name in the ledger."),
+                    Beat("The Hunt", "complication", new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 4 }, "Four bounties, and the voice keeps the tally."),
+                    Beat("The Codex", "turn", new AdventureTrigger { Kind = TriggerKind.Codex, Count = 2 }, "Two codex entries the ledger already lists."),
+                    Beat("The Salvage", "resolution", new AdventureTrigger { Kind = TriggerKind.Salvage, Count = 2 }, "Two canisters, one with the ship's registry on it."),
+                ],
+            };
+
+            return six with
+            {
+                Story = six.Story! with
+                {
+                    DaysSinceBeacon = 20,
+                    Refused = ["bounty"],
+                    Slots = [new DrawnActivity(TriggerKind.Codex, null, 2), new DrawnActivity(TriggerKind.Salvage, null, 2)],
+                },
+                Rewrite = new AdventureRewrite(chapter, 1),
+            };
+        }
+    }
 
     /// <summary>The named effort, or for <c>Catalog</c> the story effort the app gives <paramref name="model"/>.</summary>
     private static ThinkingEffort EffortFor(string model, string effort) =>

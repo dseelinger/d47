@@ -185,11 +185,12 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
     [Fact]
     public async Task NeverAskThisCountsNothing()
     {
-        using var fixtures = AtTheBond(ABountyAndADock, NothingObjected);
+        using var fixtures = AtTheBond(PlannedChapterWorld.NewWords(), PlannedChapterWorld.NoObjections);
         var bars = Bars();
         fixtures.Director.Bars = bars;
+        fixtures.Galaxy.Positioned = true;
 
-        await fixtures.Director.RefuseBeatAsync("F1", TestContext.Current.CancellationToken);
+        Assert.Null(await fixtures.Director.RefuseBeatAsync("F1", TestContext.Current.CancellationToken));
 
         Assert.Equal(0, bars.Changed("F1", "bond"));
         Assert.Equal(["bond"], fixtures.Stories.Current("F1")!.Refused);

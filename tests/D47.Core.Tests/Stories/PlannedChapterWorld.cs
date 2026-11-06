@@ -110,6 +110,24 @@ internal static class PlannedChapterWorld
             })]),
         }.ToJsonString();
 
+    /// <summary>
+    /// A rewrite's lines answer: the words of new objectives 1 to <paramref name="count"/>, titled "New One" and on, each line spoken
+    /// by the ship, or a plain string where <paramref name="speakers"/> is false, as for a short story. Numbers past the plan's are ignored.
+    /// </summary>
+    public static string NewWords(int count = ChapterPlanner.MostObjectives, bool speakers = true) =>
+        new JsonObject
+        {
+            ["objectives"] = new JsonArray([.. Enumerable.Range(1, count).Select(number => (JsonNode)new JsonObject
+            {
+                ["objective"] = number,
+                ["title"] = $"New {char.ToUpperInvariant(Word(number)[0])}{Word(number)[1..]}",
+                ["reason"] = $"The broker's ledger sends the Commander on to new part {Word(number)}.",
+                ["lines"] = speakers
+                    ? new JsonArray(new JsonObject { ["text"] = $"The ledger's new page, the {Word(number)}, is open.", ["speaker"] = "ship" })
+                    : new JsonArray(JsonValue.Create($"The ledger's new page, the {Word(number)}, is open.")),
+            })]),
+        }.ToJsonString();
+
     public const string NoObjections = """{"objections": []}""";
 
     private static string Word(int number) => number switch

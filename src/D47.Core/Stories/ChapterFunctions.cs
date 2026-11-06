@@ -1,3 +1,5 @@
+using D47.Core.Adventures;
+
 namespace D47.Core.Stories;
 
 /// <summary>The dramatic function of each objective in a planned chapter.</summary>
@@ -49,6 +51,37 @@ public static class ChapterFunctions
         functions[count - 1] = Resolution;
 
         return functions;
+    }
+
+    /// <summary>
+    /// The functions of <paramref name="count"/> objectives that replace objectives labelled <paramref name="labels"/>: the labels
+    /// themselves when the counts match; with more, complications before the last label; with fewer, the last label kept and the
+    /// latest non-turning labels before it dropped first.
+    /// </summary>
+    public static IReadOnlyList<string> Relabel(IReadOnlyList<string> labels, int count)
+    {
+        ArgumentNullException.ThrowIfNull(labels);
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+
+        if (labels.Count == 0 || count == 0)
+        {
+            return Enumerable.Repeat(Complication, count).ToArray();
+        }
+
+        var kept = labels.ToList();
+
+        while (kept.Count < count)
+        {
+            kept.Insert(kept.Count - 1, Complication);
+        }
+
+        while (kept.Count > count)
+        {
+            var drop = kept.FindLastIndex(kept.Count - 2, kept.Count - 1, label => !AdventureStanding.IsTurning(label));
+            kept.RemoveAt(drop >= 0 ? drop : kept.Count - 2);
+        }
+
+        return kept;
     }
 
     /// <summary>The turn's function at <paramref name="stage"/>.</summary>

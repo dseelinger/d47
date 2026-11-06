@@ -200,6 +200,30 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     }
 
     [Fact]
+    public async Task ADetourWithNoCountSaidTakesOneWithinItsActivitysRange()
+    {
+        using var fixtures = AtTheBond();
+        var model = DetourFixtures.Give(fixtures, null, null, HuntBounties.Replace("\"count\": 2", "\"count\": null", StringComparison.Ordinal));
+        var row = ChapterActivities.Find(TriggerKind.Bounty, null, null)!;
+
+        var outcome = await fixtures.Director.ProposeDetourAsync("F1", "Hunt bounties.", null, TestContext.Current.CancellationToken);
+
+        Assert.InRange(outcome.Proposal!.Answer.Step!.Trigger.Count!.Value, row.Min, row.Max);
+        Assert.Contains("\"count\" is the number they said, or null when they said none; d47 sets it then.", model.Requests[0].Prompt.History[0].Text);
+    }
+
+    [Fact]
+    public async Task ADetourCountTheCommanderSaidIsKeptOutsideTheRange()
+    {
+        using var fixtures = AtTheBond();
+        DetourFixtures.Give(fixtures, null, null, HuntBounties);
+
+        var outcome = await fixtures.Director.ProposeDetourAsync("F1", "Hunt two bounties.", null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, outcome.Proposal!.Answer.Step!.Trigger.Count);
+    }
+
+    [Fact]
     public async Task AnActivityTheStoryRefusedIsNotProposed()
     {
         using var fixtures = AtTheBond();
@@ -397,7 +421,8 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     [Fact]
     public async Task AStoryThatMovedOnWhileTheRefusalWasWrittenKeepsItsObjective()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(PlannedChapterWorld.NewWords(), PlannedChapterWorld.NoObjections);
+        fixtures.Galaxy.Positioned = true;
         fixtures.WhileWriting = () => fixtures.Stories.Update("F1", Id, story => story with { Chapters = [.. story.Chapters, "chapter-three"] });
 
         Assert.Equal(

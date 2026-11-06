@@ -21,17 +21,11 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
 
     private static readonly DateTimeOffset DeniedAt = Now.AddMinutes(30);
 
-    private const string DockAtTheLantern = """
-        {"opening": "x", "reply": "ok", "beats": [
-          {"title": "Another Dock", "function": "catalyst", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": "Lantern Dock", "line": "Here instead."}
-        ]}
-        """;
+    /// <summary>A short story's new objective words, as plain lines, then the fidelity check's answer.</summary>
+    private static readonly string[] ShortWords = [PlannedChapterWorld.NewWords(speakers: false), PlannedChapterWorld.NoObjections];
 
-    private const string DockAtTheAnchorage = """
-        {"opening": "x", "reply": "ok", "beats": [
-          {"title": "Another Dock", "function": "catalyst", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Here instead."}
-        ]}
-        """;
+    /// <summary>A story chapter's new objective words, then the fidelity check's answer.</summary>
+    private static readonly string[] ChapterWords = [PlannedChapterWorld.NewWords(), PlannedChapterWorld.NoObjections];
 
     private static Adventure TwoBeats(string key, string? storyId, AdventureTrigger dock) => StoryFixtures.GeneratedChapter(key, key, storyId, DebtSpine,
         Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
@@ -76,7 +70,7 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
     public async Task DocksOfflineAtTheBeatsStationReplacesTheBeatAndKeepsTheBeatsDone()
     {
         var said = new List<string>();
-        using var fixtures = Standalone(said, DockAtTheAnchorage, Repairs.ReplacingAfter(1, DockAtTheLantern, 1));
+        using var fixtures = Standalone(said, ShortWords);
 
         var work = fixtures.Director.DockOffline(Denied(Anchorage, DeniedAt), "F1");
 
@@ -86,21 +80,21 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
         var adventure = fixtures.Book.Store.Find("F1", AdventureKey)!;
         var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
-        Assert.Equal(["The Lantern", "Another Dock"], adventure.Beats.Select(beat => beat.Title));
+        Assert.Equal(["The Lantern", "New One"], adventure.Beats.Select(beat => beat.Title));
         Assert.Equal(Lantern, adventure.Beats[0].Trigger.SystemAddress);
         Assert.Equal(LanternDock, adventure.Beats[1].Trigger.MarketId);
         Assert.DoesNotContain(adventure.Beats, beat => beat.Trigger.Station == "Maren Anchorage");
-        Assert.Contains("You wrote a short story the Commander is flying", prompt);
-        Assert.Contains("Maren Anchorage's docks are offline", prompt);
-        Assert.Equal(4, fixtures.Provider.CallCount);
-        Assert.Equal(["The docks at Maren Anchorage are offline.", "Someone there knows about the burst. Next: dock at Lantern Dock in Ossen's Lantern."], said);
+        Assert.Contains("You are writing new objectives for a short story the Commander is flying", prompt);
+        Assert.Contains("Maren Anchorage, has its docks offline, so d47 moved that objective to an open station", prompt);
+        Assert.Equal(3, fixtures.Provider.CallCount);
+        Assert.Equal(["The docks at Maren Anchorage are offline.", "The broker's ledger sends the Commander on to new part one. Next: dock at Lantern Dock in Ossen's Lantern."], said);
     }
 
     [Fact]
     public void ADenialAtAStationNoCurrentBeatNamesWritesNothing()
     {
         var said = new List<string>();
-        using var fixtures = Standalone(said, DockAtTheLantern);
+        using var fixtures = Standalone(said, ShortWords);
 
         Assert.Null(fixtures.Director.DockOffline(Denied(LanternDock, DeniedAt), "F1"));
         Assert.Empty(said);
@@ -111,7 +105,7 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
     public void ADenialFromBeforeTheAdventureBeganWritesNothing()
     {
         var said = new List<string>();
-        using var fixtures = Standalone(said, DockAtTheLantern);
+        using var fixtures = Standalone(said, ShortWords);
 
         Assert.Null(fixtures.Director.DockOffline(Denied(Anchorage, Now.AddDays(-1)), "F1"));
         Assert.Empty(said);
@@ -121,7 +115,7 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
     public async Task ASecondDenialWhileTheBeatIsWrittenWritesNothingMore()
     {
         var said = new List<string>();
-        using var fixtures = Standalone(said, DockAtTheLantern);
+        using var fixtures = Standalone(said, ShortWords);
 
         var first = fixtures.Director.DockOffline(Denied(Anchorage, DeniedAt), "F1");
         var second = fixtures.Director.DockOffline(Denied(Anchorage, DeniedAt.AddSeconds(5)), "F1");
@@ -136,11 +130,12 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
     public async Task ADenialAtTheStoryBeatsStationRewritesOnlyTheStory()
     {
         var said = new List<string>();
-        using var fixtures = BesideAStory(said, DockAtTheAnchorage);
+        using var fixtures = BesideAStory(said, ChapterWords);
 
         Assert.Null(await fixtures.Director.DockOffline(Denied(LanternDock, DeniedAt), "F1")!);
 
-        Assert.Equal("Another Dock", fixtures.Book.Store.Find("F1", ChapterKey)!.Beats[1].Title);
+        Assert.Equal("New One", fixtures.Book.Store.Find("F1", ChapterKey)!.Beats[1].Title);
+        Assert.Equal(Anchorage, fixtures.Book.Store.Find("F1", ChapterKey)!.Beats[1].Trigger.MarketId);
         Assert.Equal("The Dock", fixtures.Book.Store.Find("F1", AdventureKey)!.Beats[1].Title);
         Assert.Equal(3, fixtures.Provider.CallCount);
     }
@@ -149,12 +144,12 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
     public async Task ADenialAtTheStandaloneBeatsStationRewritesOnlyTheStandaloneAdventure()
     {
         var said = new List<string>();
-        using var fixtures = BesideAStory(said, DockAtTheLantern);
+        using var fixtures = BesideAStory(said, ShortWords);
 
         Assert.Null(await fixtures.Director.DockOffline(Denied(Anchorage, DeniedAt), "F1")!);
 
         Assert.Equal("The Dock", fixtures.Book.Store.Find("F1", ChapterKey)!.Beats[1].Title);
-        Assert.Equal("Another Dock", fixtures.Book.Store.Find("F1", AdventureKey)!.Beats[1].Title);
+        Assert.Equal("New One", fixtures.Book.Store.Find("F1", AdventureKey)!.Beats[1].Title);
         Assert.Equal(3, fixtures.Provider.CallCount);
     }
 }

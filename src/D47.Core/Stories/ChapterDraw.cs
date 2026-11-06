@@ -304,6 +304,15 @@ public static class ChapterDraw
         return rows[random.Weighted(values)];
     }
 
+    /// <summary>A count for <paramref name="row"/> drawn from <paramref name="seed"/> as the draw sets one: within its range, tons capped at the cargo capacity.</summary>
+    public static int CountOf(DrawableActivity row, ShipLoadout ship, uint seed)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(ship);
+
+        return Count(row, ship, new Random32(seed));
+    }
+
     private static int Count(DrawableActivity row, ShipLoadout ship, Random32 random)
     {
         var min = row.Min;

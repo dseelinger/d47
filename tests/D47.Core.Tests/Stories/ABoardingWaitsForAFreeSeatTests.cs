@@ -205,14 +205,10 @@ public sealed class ABoardingWaitsForAFreeSeatTests
     [Fact]
     public async Task AChapterRewrittenInASidewinderAsksForTheSeatsAHeldBoardingNeeds()
     {
-        const string BountyAndADock = """
-            {"opening": "x", "reply": "ok", "beats": [
-              {"title": "Another Way", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 2, "line": "Two more."},
-              {"title": "Home Again", "function": "finale", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
-            ]}
-            """;
-
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(BountyAndADock)), Rider);
+        using var fixtures = new StoryFixtures(
+            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NewWords()), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections)),
+            Rider);
+        fixtures.Galaxy.Positioned = true;
         fixtures.Director.Game = () => Loaded(0);
         fixtures.Stories.Save("F1", Picked with
         {

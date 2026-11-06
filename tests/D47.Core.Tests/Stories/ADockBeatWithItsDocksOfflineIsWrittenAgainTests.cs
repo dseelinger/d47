@@ -17,17 +17,8 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
 
     private static readonly DateTimeOffset DeniedAt = Now.AddMinutes(30);
 
-    private const string DockAtTheLantern = """
-        {"opening": "x", "reply": "ok", "beats": [
-          {"title": "Another Dock", "function": "catalyst", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": "Lantern Dock", "line": "Here instead."}
-        ]}
-        """;
-
-    private const string DockAtTheAnchorage = """
-        {"opening": "x", "reply": "ok", "beats": [
-          {"title": "Same Dock", "function": "catalyst", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Here again."}
-        ]}
-        """;
+    /// <summary>The moved objective's words, then the fidelity check's answer.</summary>
+    private static readonly string[] DockAtTheLantern = [PlannedChapterWorld.NewWords(), PlannedChapterWorld.NoObjections];
 
     /// <summary>A story on chapter two, the Lantern reached, waiting to dock at Maren Anchorage.</summary>
     private static StoryFixtures AtTheAnchorage(List<string> said, params string[] answers)
@@ -63,10 +54,10 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
 
         var chapter = fixtures.Book.Store.Find("F1", ChapterKey)!;
 
-        Assert.Equal(["The Lantern", "Another Dock"], chapter.Beats.Select(beat => beat.Title));
+        Assert.Equal(["The Lantern", "New One"], chapter.Beats.Select(beat => beat.Title));
         Assert.Equal(1001, chapter.Beats[1].Trigger.MarketId);
         Assert.Empty(fixtures.Stories.Current("F1")!.Refused);
-        Assert.Equal(["The docks at Maren Anchorage are offline.", "Someone there knows about the burst. Next: dock at Lantern Dock in Ossen's Lantern."], said);
+        Assert.Equal(["The docks at Maren Anchorage are offline.", "The broker's ledger sends the Commander on to new part one. Next: dock at Lantern Dock in Ossen's Lantern."], said);
         Assert.False(fixtures.Director.IsRewriting("F1"));
     }
 
@@ -116,20 +107,78 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
 
     [Trait("Category", "Integration")]
     [Fact]
-    public async Task TheReplacementDoesNotNameTheClosedStation()
+    public async Task TheClosedStationMovesToTheNearestOpenOneAndOnlyItsWordsAreWritten()
     {
         var said = new List<string>();
-        using var fixtures = AtTheAnchorage(said, DockAtTheAnchorage, Repairs.ReplacingAfter(1, DockAtTheLantern, 1));
+        using var fixtures = AtTheAnchorage(said, DockAtTheLantern);
 
         Assert.Null(await fixtures.Director.DockOffline(Denied(Anchorage, "DockOffline", DeniedAt), "F1")!);
 
-        var first = fixtures.Provider.Requests[0].Prompt.History[0].Text;
-        var second = fixtures.Provider.Requests[1].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
-        Assert.Contains("Maren Anchorage's docks are offline", first);
-        Assert.DoesNotContain("The beat the Commander refused", first);
-        Assert.Contains("docks at Maren Anchorage, whose docks are offline", second);
+        Assert.Equal(["story_line_repairs", "story_fidelity", "story_plain"], fixtures.Provider.Requests.Select(request => request.ResponseSchema?.Name));
+        Assert.Contains("Maren Anchorage, has its docks offline, so d47 moved that objective to an open station", prompt);
+        Assert.Contains("1. catalyst: dock at Lantern Dock in Ossen's Lantern.", prompt);
+        Assert.DoesNotContain("2. ", prompt[prompt.IndexOf("The new objectives", StringComparison.Ordinal)..]);
         Assert.Equal(1001, fixtures.Book.Store.Find("F1", ChapterKey)!.Beats[1].Trigger.MarketId);
+    }
+
+    [Trait("Category", "Integration")]
+    [Fact]
+    public async Task WithNoOpenStationFoundTheObjectivesArePlannedAgain()
+    {
+        var said = new List<string>();
+        using var fixtures = AtTheAnchorage(said, DockAtTheLantern);
+        fixtures.Galaxy.Positioned = true;
+        fixtures.Galaxy.WideStationsUnavailable = true;
+
+        Assert.Null(await fixtures.Director.DockOffline(Denied(Anchorage, "DockOffline", DeniedAt), "F1")!);
+
+        var chapter = fixtures.Book.Store.Find("F1", ChapterKey)!;
+
+        Assert.Contains("has its docks offline and no open station is within reach, so d47 built new objectives", fixtures.Provider.Requests[0].Prompt.History[0].Text);
+        Assert.Equal("New One", chapter.Beats[1].Title);
+        Assert.DoesNotContain(chapter.Beats.Skip(1), beat => beat.Trigger.MarketId == Anchorage);
+    }
+
+    [Trait("Category", "Integration")]
+    [Fact]
+    public async Task AClosedDockThatIsOneStepOfSeveralMovesThatStepAloneWithNoModelCall()
+    {
+        var said = new List<string>();
+        using var fixtures = StoryFixtures.ScriptedWith();
+
+        fixtures.SaveRunning(["chapter-one", ChapterKey]);
+
+        var bounty = new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 2 };
+        var hollow = new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Hollow, System = "Dyson's Hollow" };
+        var dock = new AdventureTrigger { Kind = TriggerKind.Dock, MarketId = Anchorage, System = "Dyson's Hollow", Station = "Maren Anchorage" };
+
+        Assert.Null(fixtures.Book.Write("F1", StoryFixtures.GeneratedChapter(ChapterKey, "The Anchorage", Id, DebtSpine,
+            Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
+            new AdventureBeat
+            {
+                Title = "The Anchorage",
+                Function = "catalyst",
+                Steps = [new BeatStep { Trigger = hollow }, new BeatStep { Trigger = dock }, new BeatStep { Trigger = bounty }],
+                Lines = [new AdventureLine { Text = "To one name." }],
+            })));
+        Assert.Null(fixtures.Book.Begin("F1", ChapterKey, Now));
+        fixtures.Book.Observe(Jump(Lantern, Now.AddMinutes(1)), "F1");
+        fixtures.Book.Observe(Jump(Hollow, Now.AddMinutes(2)), "F1");
+        fixtures.Director.Clock = () => DeniedAt;
+        fixtures.Director.Says += said.Add;
+
+        Assert.Equal(1, fixtures.Book.Standing("F1", ChapterKey)!.CurrentStep);
+        Assert.Null(await fixtures.Director.DockOffline(Denied(Anchorage, "DockOffline", DeniedAt), "F1")!);
+
+        var standing = fixtures.Book.Standing("F1", ChapterKey)!;
+
+        Assert.Equal(0, fixtures.Provider.CallCount);
+        Assert.Equal("The Anchorage", standing.CurrentBeat!.Title);
+        Assert.Equal(1, standing.CurrentStep);
+        Assert.Equal([TriggerKind.Arrive, TriggerKind.Dock, TriggerKind.Bounty], standing.CurrentBeat.Steps.Select(step => step.Trigger.Kind));
+        Assert.Equal(1001, standing.CurrentBeat.Steps[1].Trigger.MarketId);
     }
 
     [Fact]

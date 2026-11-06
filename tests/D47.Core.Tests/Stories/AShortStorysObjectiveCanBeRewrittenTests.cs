@@ -16,16 +16,15 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
 {
     private const string Key = "the-anchorage-run";
 
-    private const string NoPlace = """{"home": false, "system": null}""";
+    /// <summary>The change step's answer: bounties, with no count said.</summary>
+    private const string Bounty = """{"home": false, "system": null, "activity": "bounty", "count": null, "reply": "A bounty does the same."}""";
 
     private static readonly DateTimeOffset ChangedAt = Now.AddHours(1);
 
-    private const string ABountyAndADock = """
-        {"opening": "x", "reply": "A bounty does the same.", "beats": [
-          {"title": "Another Way", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 2, "line": "Two more."},
-          {"title": "Home Again", "function": "finale", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
-        ]}
-        """;
+    /// <summary>The new objectives' words, as a short story's plain lines.</summary>
+    private static readonly string NewWords = PlannedChapterWorld.NewWords(speakers: false);
+
+    private const string NoObjections = PlannedChapterWorld.NoObjections;
 
     private static Adventure ShortStory(string key, string? storyId = null) => StoryFixtures.GeneratedChapter(key, "The Anchorage Run", storyId, DebtSpine,
         Beat("The Lantern", "setup", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Scoop here."),
@@ -45,6 +44,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     {
         var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(answers.Select(answer => RoundScriptedLlmProvider.Saying(answer)).ToArray()), logger: logger);
 
+        fixtures.Galaxy.Positioned = true;
         Assert.Null(fixtures.Book.Write("F1", ShortStory(Key)));
         Assert.Null(fixtures.Book.Begin("F1", Key, Now));
         fixtures.Book.Observe(Jump(Lantern, Now.AddMinutes(1)), "F1");
@@ -62,7 +62,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     public async Task AShortStorysRemarkIsWrittenToTheLogOnce()
     {
         var lines = new List<string>();
-        using var fixtures = AtTheBond(new LogCapture(lines), NoPlace, ABountyAndADock);
+        using var fixtures = AtTheBond(new LogCapture(lines), Bounty, NewWords, NoObjections);
 
         await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, " I would rather hunt a bounty. ", [], TestContext.Current.CancellationToken);
 
@@ -83,7 +83,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     [Fact]
     public async Task ARemarkProducesAProposalAndChangesNothing()
     {
-        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
+        using var fixtures = AtTheBond(Bounty, NewWords, NoObjections);
 
         var outcome = await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
 
@@ -93,7 +93,8 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
         var ask = Assert.Single(fixtures.Asks);
 
         Assert.Equal("A bounty does the same.", proposal.Reply);
-        Assert.Equal(["Another Way", "Home Again"], proposal.Beats.Select(beat => beat.Title));
+        Assert.Equal(["New One", "New Two"], proposal.Beats.Select(beat => beat.Title));
+        Assert.Contains(proposal.Beats, beat => beat.Trigger is { Kind: TriggerKind.Bounty, Count: >= 3 and <= 8 });
         Assert.Same(proposal, fixtures.Director.AdventureProposal("F1", Key));
         Assert.Null(fixtures.Director.Detour("F1"));
         Assert.Equal(["The Lantern", "First Blood", "The Wing", "Home"], Titles(fixtures));
@@ -106,20 +107,20 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     [Fact]
     public async Task ApplyingReplacesTheCurrentObjectiveAndThoseAfterIt()
     {
-        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
+        using var fixtures = AtTheBond(Bounty, NewWords, NoObjections);
 
         await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
 
         Assert.Null(fixtures.Director.ApplyAdventureObjective("F1", Key));
-        Assert.Equal(["The Lantern", "First Blood", "Another Way", "Home Again"], Titles(fixtures));
-        Assert.Equal("Another Way", fixtures.Book.Standing("F1", Key)!.CurrentBeat!.Title);
+        Assert.Equal(["The Lantern", "First Blood", "New One", "New Two"], Titles(fixtures));
+        Assert.Equal("New One", fixtures.Book.Standing("F1", Key)!.CurrentBeat!.Title);
         Assert.Null(fixtures.Director.AdventureProposal("F1", Key));
     }
 
     [Fact]
     public async Task ApplyingAfterTheBeatChangedIsRefusedAndDropsTheProposal()
     {
-        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
+        using var fixtures = AtTheBond(Bounty, NewWords, NoObjections);
 
         await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
 
@@ -136,7 +137,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     [Fact]
     public async Task DiscardingDropsTheProposalAndChangesNothing()
     {
-        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
+        using var fixtures = AtTheBond(Bounty, NewWords, NoObjections);
 
         await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
         fixtures.Director.DiscardAdventureObjective("F1", Key);
@@ -149,7 +150,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     [Fact]
     public async Task AnAppliedChangeCountsTowardTheBarOfTheReplacedActivity()
     {
-        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
+        using var fixtures = AtTheBond(Bounty, NewWords, NoObjections);
         var bars = Bars();
 
         fixtures.Director.Bars = bars;
@@ -163,7 +164,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     [Fact]
     public async Task AReplacementAsksForNoneOfTheReplacedActivityAndCountsNothing()
     {
-        using var fixtures = AtTheBond(ABountyAndADock);
+        using var fixtures = AtTheBond(NewWords, NoObjections);
         var bars = Bars();
 
         for (var i = 0; i < ActivityBars.Threshold; i++)
@@ -180,25 +181,9 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
         Assert.Null(ask.Story);
         Assert.Null(ask.Rewrite!.Remark);
         Assert.Equal(["bond", "scan"], ask.Barred!.Order());
-        Assert.Equal(["The Lantern", "First Blood", "Another Way", "Home Again"], Titles(fixtures));
+        Assert.Equal(["The Lantern", "First Blood", "New One", "New Two"], Titles(fixtures));
+        Assert.DoesNotContain(fixtures.Book.Store.Find("F1", Key)!.Beats.Skip(2), beat => beat.Trigger.Kind is TriggerKind.Bond or TriggerKind.Scan);
         Assert.Equal(0, bars.Changed("F1", "bond"));
-    }
-
-    [Fact]
-    public async Task AReplacementWhoseDraftAsksForTheReplacedActivityIsNotUsed()
-    {
-        const string AgainBonds = """
-            {"opening": "x", "reply": "ok", "beats": [
-              {"title": "More Bonds", "function": "midpoint", "kind": "bond", "reason": "Someone there knows about the burst.", "count": 2, "line": "Two more."},
-              {"title": "Home Again", "function": "finale", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
-            ]}
-            """;
-
-        using var fixtures = AtTheBond(AgainBonds, AgainBonds, AgainBonds);
-
-        Assert.NotNull(await fixtures.Director.RefuseAdventureBeatAsync("F1", Key, TestContext.Current.CancellationToken));
-        Assert.Equal(["The Lantern", "First Blood", "The Wing", "Home"], Titles(fixtures));
-        Assert.False(fixtures.Director.IsRewriting("F1"));
     }
 
     [Fact]
@@ -296,7 +281,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     [Fact]
     public async Task AStoryThatMovedOnWhileTheProposalWasWrittenHoldsNone()
     {
-        using var fixtures = AtTheBond(NoPlace, ABountyAndADock);
+        using var fixtures = AtTheBond(Bounty, NewWords, NoObjections);
         fixtures.WhileWriting = () =>
         {
             for (var minute = 3; minute < 6; minute++)

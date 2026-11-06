@@ -237,7 +237,8 @@ internal sealed class StoryFixtures : IDisposable
 
         Book.Silenced = (commander, id, at) => Stories.Find(commander, id)?.WasOffAt(at) == true;
 
-        var generator = AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy());
+        Galaxy = new AdventureGeneratorTests.Galaxy();
+        var generator = AdventureGeneratorTests.Generator(provider, Galaxy);
 
         var catalog = new StoryCatalog([card ?? Card, Other], () => [secret, Secret with { Id = Other.Id }]);
 
@@ -287,6 +288,9 @@ internal sealed class StoryFixtures : IDisposable
     public List<string> WritingAgain { get; } = [];
 
     public RoundScriptedLlmProvider Provider { get; }
+
+    /// <summary>The galaxy the generator searches; set <see cref="AdventureGeneratorTests.Galaxy.Positioned"/> for a rewrite to find places to plan.</summary>
+    public AdventureGeneratorTests.Galaxy Galaxy { get; }
 
     public AdventureBook Book { get; }
 

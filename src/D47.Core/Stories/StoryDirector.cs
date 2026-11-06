@@ -1704,10 +1704,17 @@ public sealed class StoryDirector(
         var from = standing.Current;
         var setSight = standing.Adventure.Sight is not null && !(SightBeat(standing.Adventure) is { } sightBeat && sightBeat < from);
 
-        return standing.CurrentBeat is { Steps.Count: > 1 } && draft.Beats.ElementAtOrDefault(from)?.Steps.FirstOrDefault() is { } step
-            ? book.ReplaceStep(frontierId, key, from, standing.CurrentStep, step, Clock(), draft.Sight, setSight)
+        return standing.CurrentBeat is { Steps.Count: > 1 } current && draft.Beats.ElementAtOrDefault(from) is { } replaced
+            && OnlyStepMoved(current, replaced, standing.CurrentStep)
+            ? book.ReplaceStep(frontierId, key, from, standing.CurrentStep, replaced.Steps[standing.CurrentStep], Clock(), draft.Sight, setSight)
             : book.ReplaceBeats(frontierId, key, from, [.. draft.Beats.Skip(from)], Clock(), draft.Sight, setSight);
     }
+
+    /// <summary>Whether <paramref name="replaced"/> is <paramref name="current"/> with only the step at <paramref name="step"/> changed.</summary>
+    private static bool OnlyStepMoved(AdventureBeat current, AdventureBeat replaced, int step) =>
+        replaced.Steps.Count == current.Steps.Count
+        && step < current.Steps.Count
+        && current.Steps.Select((kept, index) => index == step || kept.Trigger == replaced.Steps[index].Trigger).All(same => same);
 
     private bool ClaimShortStory(string? frontierId, string key)
     {
@@ -2443,8 +2450,9 @@ public sealed class StoryDirector(
     }
 
     /// <summary>
-    /// The drawn activities a rewritten chapter is still built on: those its beats already hold, except the one at the beat
-    /// being replaced, which is drawn again when the Commander refused it. Null when the chapter holds none.
+    /// The drawn activities a rewritten chapter's new objectives are built on: those its objectives from the current one on hold,
+    /// except the current one's when it is replaced, which is drawn again, unlike any other activity of the chapter, when the Commander
+    /// refused it. Null when none is left.
     /// </summary>
     private async Task<IReadOnlyList<DrawnActivity>?> RewriteSlotsAsync(
         Story story, Adventure chapter, AdventureRewrite rewrite, CommanderGameState? game, AdventureChapter? previous, int number, int? finaleChapter,
@@ -2456,14 +2464,17 @@ public sealed class StoryDirector(
             .Select(step => (step.Trigger, step.Index, Row: ChapterActivities.Find(step.Trigger.Kind, step.Trigger.MissionFamily, step.Trigger.Organic)))
             .Where(slot => slot.Row is not null)
             .ToList();
+        var replacing = rewrite.ClosedMarketId is null;
         var others = held
-            .Where(slot => slot.Index != rewrite.From)
+            .Where(slot => slot.Index > rewrite.From || (slot.Index == rewrite.From && !replacing))
             .Select(slot => new DrawnActivity(slot.Row!.Kind, slot.Row.Family, slot.Trigger.Count ?? slot.Row.Min) { Organic = slot.Trigger.Organic, PlaceBefore = slot.Row.PlaceBefore })
             .ToList();
 
         if (rewrite is { Remark: null, ClosedMarketId: null } && held.Any(slot => slot.Index == rewrite.From))
         {
-            var refused = story.Refused.Concat(others.Select(slot => RefusedActivities.Key(slot.Kind, slot.Family)).OfType<string>()).ToList();
+            var refused = story.Refused
+                .Concat(held.Where(slot => slot.Index != rewrite.From).Select(slot => RefusedActivities.Key(slot.Row!.Kind, slot.Row.Family)).OfType<string>())
+                .ToList();
             var redrawn = ChapterDraw.Draw(
                 Weights(statistics),
                 game?.Ranks ?? RankState.Empty,

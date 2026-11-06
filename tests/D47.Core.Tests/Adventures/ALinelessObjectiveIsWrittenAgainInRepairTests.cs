@@ -132,19 +132,19 @@ public sealed class ALinelessObjectiveIsWrittenAgainInRepairTests
     public async Task ADetourOfOneObjectiveIsNotRefusedForHavingNoLine()
     {
         const string lineless = """
-            {"opening": "x", "reply": "Here it is.", "beats": [
-              {"title": "The Collectors", "function": "finale", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3}
+            {"objectives": [
+              {"objective": 1, "title": "The Collectors", "reason": "Someone there knows about the burst.", "lines": []}
             ]}
             """;
 
         var detour = AdventureFixtures.LanternRoute() with { Detour = true, Beats = [AdventureFixtures.LanternRoute().Beats[0]] };
-        var provider = new RoundScriptedLlmProvider(Saying(lineless));
+        var provider = new RoundScriptedLlmProvider(Saying(lineless), Saying(Stories.PlannedChapterWorld.NoObjections));
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), new RecordingLogger())
+        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy { Positioned = true }, new RecordingLogger())
             .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Rewrite: new AdventureRewrite(detour, 0)), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Empty(RepairPrompts(provider));
+        Assert.Single(provider.Requests, request => request.ResponseSchema?.Name == "story_line_repairs");
         Assert.Equal("The Collectors", Assert.Single(outcome.Draft!.Beats).Title);
     }
 

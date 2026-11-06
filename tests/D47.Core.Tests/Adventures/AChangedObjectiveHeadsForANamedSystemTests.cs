@@ -4,6 +4,7 @@ using D47.Core.Checklists;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Stories;
 using D47.Core.Tests.Conversation;
 using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -22,19 +23,18 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
 
     private static readonly StarPosition HomeAt = new(1100, 0, 0);
 
-    private const string GoHome = """{"home": true, "system": null}""";
+    private const string GoHome = """{"home": true, "system": null, "activity": null, "count": null, "reply": "Home it is."}""";
 
-    private const string NoPlace = """{"home": false, "system": null}""";
+    private const string NoPlace = """{"home": false, "system": null, "activity": null, "count": null, "reply": "Name a place or something to do."}""";
 
     private const string NothingObjected = """{"objections": []}""";
 
-    private static string Beats(bool heading, string system = "Waypoint") => $$"""
-        {"opening": "x", "reply": "Home it is.", "heading": {{(heading ? "true" : "false")}}, "beats": [
-          {"title": "The Way Back", "function": "midpoint", "kind": "arrive", "reason": "A courier there flies the home run.", "system": "{{system}}", "station": null, "body": null, "career": null, "rank": null, "line": "Halfway."},
-          {"title": "The Turn", "function": "all is lost", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
-          {"title": "The End", "function": "finale", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
-        ]}
-        """;
+    private static string GoTo(string system) => $$"""{"home": false, "system": "{{system}}", "activity": null, "count": null, "reply": "Off we go."}""";
+
+    private static string Hunt(string count) => $$"""{"home": false, "system": null, "activity": "bounty", "count": {{count}}, "reply": "Bounties it is."}""";
+
+    /// <summary>The new objectives' words, as a short story's plain lines.</summary>
+    private static readonly string Words = Stories.PlannedChapterWorld.NewWords(speakers: false);
 
     private static AdventureAsk Changing(string remark, AdventureStory? story = null) =>
         new(Length: story is null ? AdventureLength.Short : AdventureLength.Evening, Story: story, Rewrite: new AdventureRewrite(AdventureFixtures.LanternRoute(), 2, Remark: remark));
@@ -56,114 +56,66 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
     }
 
     [Fact]
-    public async Task GoingHomeFromFarAwayNamesTheHomeSystemAndListsPlacesOnTheWay()
+    public async Task GoingHomeFromFarAwayEndsTheNewObjectivesInTheHomeSystemInOneStep()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(GoHome), Saying(Beats(heading: true)), Saying(NothingObjected));
-        var galaxy = new Galaxy();
+        var provider = new RoundScriptedLlmProvider(Saying(GoHome), Saying(Words), Saying(NothingObjected));
 
-        await Generator(provider, galaxy, Here, home: HomeName).GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
+        var outcome = await Generator(provider, new Galaxy(), Here, home: HomeName).GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
 
         var step = provider.Requests[0].Prompt.History[0].Text;
         Assert.Equal("story_heading", provider.Requests[0].ResponseSchema?.Name);
         Assert.Contains($"- Home: {HomeName}.", step);
+        Assert.Contains("- bounty: collect bounties", step);
         Assert.Contains("The Commander now says: \"I want to go home\"", step);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
-        Assert.Contains($"The Commander has asked to go home. Their home system is {HomeName}, 1000 light years away: that is the place they mean, not any place in the story.", brief);
-        Assert.Contains($"The last place objective must be in {HomeName} itself", brief);
-        Assert.Contains($"Send the Commander straight there: the objective that goes to {HomeName} takes one step", brief);
-        Assert.Contains($"Never say that {HomeName} cannot be reached.", brief);
-        Assert.DoesNotContain("need not get all the way there", brief);
-        Assert.Contains("Halfway House", brief);
-        Assert.Contains("\"heading\": boolean", brief);
-        Assert.Contains("\"heading\"", provider.Requests[1].ResponseSchema!.SchemaJson);
-        Assert.Equal(1, galaxy.PositionedSearches);
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Equal(["story_heading", "story_line_repairs", "story_fidelity", "story_plain"], provider.Requests.Select(request => request.ResponseSchema?.Name));
+        Assert.Contains($"They asked to go to {HomeName}, and the last new objective arrives there.", provider.Requests[1].Prompt.History[0].Text);
+
+        var last = outcome.Draft!.Beats[^1];
+        Assert.Equal(TriggerKind.Arrive, Assert.Single(last.Steps).Trigger.Kind);
+        Assert.Equal(HomeName, last.Trigger.System);
+        Assert.Equal("Home it is.", outcome.Reply);
     }
 
     [Fact]
     public async Task AHomeSystemTypedInLowerCaseIsFoundInTheGameSpelling()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(GoHome), Saying(Beats(heading: true, HomeName)), Saying(NothingObjected));
+        var provider = new RoundScriptedLlmProvider(Saying(GoHome), Saying(Words), Saying(NothingObjected));
         var generator = Generator(provider, new Galaxy { ExactCaseOnly = true }, Here, home: "tavell's reach");
         generator.Systems = () => new Names();
 
         var outcome = await generator.GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
 
-        Assert.Contains($"Their home system is {HomeName}, 1000 light years away", provider.Requests[1].Prompt.History[0].Text);
         Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Equal(HomeName, outcome.Draft!.Beats[^1].Trigger.System);
         Assert.Equal(new AdventureHeading(HomeName, AdventureFixtures.Home, HomeAt) { AskedHome = true }, outcome.Heading);
     }
 
     [Fact]
-    public async Task AHeadingAnswerThatStopsShortOfTheSystemIsRefusedThroughRepair()
+    public async Task TheAskedSystemIsArrivedInHoweverLongTheLastHop()
     {
-        var provider = new RoundScriptedLlmProvider(
-            Saying(GoHome), Saying(Beats(heading: true)), Saying(Repairs.ReplacingAfter(2, Beats(heading: true), 1)), Saying(Repairs.ReplacingAfter(2, Beats(heading: true), 1)));
+        var provider = new RoundScriptedLlmProvider(Saying(GoTo(HomeName)), Saying(Words), Saying(NothingObjected));
 
-        var outcome = await Generator(provider, new Galaxy { FromTarget = 990 }, Here, home: HomeName).GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains($"The new objectives head for {HomeName}, and the last stop is 990 light years from it", outcome.Refusal);
-        Assert.Contains($"the last place objective must be in {HomeName} itself", outcome.Refusal);
-        Assert.Contains("the last stop is 990 light years from it", provider.Requests[2].Prompt.History[0].Text);
-        Assert.Null(outcome.Heading);
-    }
-
-    [Fact]
-    public async Task AHeadingAnswerThatEndsInTheSystemStandsHoweverLongTheLastHop()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(GoHome), Saying(Beats(heading: true, HomeName)), Saying(NothingObjected));
-
-        var outcome = await Generator(provider, new Galaxy { FromTarget = 900 }, Here, home: HomeName).GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
+        var outcome = await Generator(provider, new Galaxy(), Here, home: null).GenerateAsync(Changing("Take me to Tavell's Reach"), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(new AdventureHeading(HomeName, AdventureFixtures.Home, HomeAt) { AskedHome = true }, outcome.Heading);
-    }
-
-    private const string ByWayOfAStop = """
-        {"opening": "x", "reply": "Home it is.", "heading": true, "beats": [
-          {"title": "The Way Back", "function": "midpoint", "kind": "arrive", "reason": "A courier there flies the home run.", "system": "Waypoint", "station": null, "body": null, "career": null, "rank": null, "line": "Halfway.",
-           "then": [{"kind": "arrive", "reason": "Home.", "system": "Tavell's Reach", "station": null, "body": null}]},
-          {"title": "The Turn", "function": "all is lost", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
-          {"title": "The End", "function": "finale", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
-        ]}
-        """;
-
-    [Fact]
-    public async Task AnObjectiveThatStopsOnTheWayToTheAskedSystemIsRefusedThroughRepair()
-    {
-        var provider = new RoundScriptedLlmProvider(
-            Saying(GoHome), Saying(ByWayOfAStop), Saying(Repairs.ReplacingAfter(2, ByWayOfAStop, 1)), Saying(Repairs.ReplacingAfter(2, ByWayOfAStop, 1)));
-
-        var outcome = await Generator(provider, new Galaxy { FromTarget = 0 }, Here, home: HomeName).GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains($"The objective that ends in {HomeName} stops first at Waypoint; send the Commander straight to {HomeName}", outcome.Refusal);
-        Assert.Contains($"the objective that goes to {HomeName} takes one step", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Equal(new AdventureHeading(HomeName, AdventureFixtures.Home, HomeAt), outcome.Heading);
+        Assert.Equal(HomeName, outcome.Draft!.Beats[^1].Trigger.System);
+        Assert.True(Here.DistanceTo(HomeAt) > 100);
     }
 
     [Fact]
-    public async Task AnAnswerThatDoesNotHeadThereIsHeldToNoLegAndReportsNoDestination()
+    public async Task ASystemTheGalaxySearchDoesNotKnowIsSaidAndNothingIsPlanned()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(GoHome), Saying(Beats(heading: false)), Saying(NothingObjected));
-
-        var outcome = await Generator(provider, new Galaxy { FromTarget = 1000 }, Here, home: HomeName).GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Null(outcome.Heading);
-    }
-
-    [Fact]
-    public async Task ASystemTheGalaxySearchDoesNotKnowIsSaidAndNothingTravels()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying("""{"home": false, "system": "Nowhere Real"}"""), Saying(Beats(heading: false)), Saying(NothingObjected));
+        var provider = new RoundScriptedLlmProvider(Saying(GoTo("Nowhere Real")));
         var galaxy = new Galaxy();
 
         var outcome = await Generator(provider, galaxy, Here, home: HomeName).GenerateAsync(Changing("Take me to Nowhere Real"), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
-        Assert.Contains("The Commander asked to go to \"Nowhere Real\", which the galaxy search does not know as a star system", brief);
-        Assert.DoesNotContain("\"heading\": boolean", brief);
+        Assert.False(outcome.Succeeded);
+        Assert.Equal("I could not find Nowhere Real. Name a system the galaxy search knows, or an activity.", outcome.Refusal);
+        Assert.Single(provider.Requests);
         Assert.Equal(0, galaxy.PositionedSearches);
         Assert.Null(outcome.Heading);
     }
@@ -171,58 +123,76 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
     [Fact]
     public async Task ASystemTheGalaxySearchAnswersWith400IsSaidToBeUnknown()
     {
-        var provider = new RoundScriptedLlmProvider(Saying("""{"home": false, "system": "Alfi"}"""), Saying(Beats(heading: false)), Saying(NothingObjected));
-        var galaxy = new Galaxy { ExactCaseOnly = true };
+        var provider = new RoundScriptedLlmProvider(Saying(GoTo("Alfi")));
 
-        var outcome = await Generator(provider, galaxy, Here, home: HomeName).GenerateAsync(Changing("Take me to Alfi"), Now, CancellationToken.None);
+        var outcome = await Generator(provider, new Galaxy { ExactCaseOnly = true }, Here, home: HomeName).GenerateAsync(Changing("Take me to Alfi"), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
-        Assert.Contains("The Commander asked to go to \"Alfi\", which the galaxy search does not know as a star system", brief);
-        Assert.DoesNotContain("could not look up", brief);
+        Assert.Equal("I could not find Alfi. Name a system the galaxy search knows, or an activity.", outcome.Refusal);
         Assert.Null(outcome.Heading);
     }
 
     [Fact]
     public async Task AGalaxySearchThatIsDownIsNotSaidToKnowNoSuchSystem()
     {
-        var provider = new RoundScriptedLlmProvider(Saying("""{"home": false, "system": "Waypoint"}"""), Saying(Beats(heading: false)), Saying(NothingObjected));
-        var galaxy = new Galaxy { Down = true };
+        var provider = new RoundScriptedLlmProvider(Saying(GoTo("Waypoint")));
 
-        var outcome = await Generator(provider, galaxy, Here, home: HomeName).GenerateAsync(Changing("Take me to Waypoint"), Now, CancellationToken.None);
+        var outcome = await Generator(provider, new Galaxy { Down = true }, Here, home: HomeName).GenerateAsync(Changing("Take me to Waypoint"), Now, CancellationToken.None);
 
-        Assert.DoesNotContain("which the galaxy search does not know", provider.Requests[1].Prompt.History[0].Text);
+        Assert.DoesNotContain("could not find", outcome.Refusal);
+        Assert.Contains(outcome.Notes, note => note.Contains("could not look up Waypoint", StringComparison.Ordinal));
         Assert.Null(outcome.Heading);
     }
 
     [Fact]
-    public async Task ARemarkThatNamesNoPlaceRewritesAsBefore()
+    public async Task ARemarkThatNamesNoPlaceAndNoActivityPlansNothingAndSaysTheReply()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(NoPlace), Saying(Beats(heading: false)), Saying(NothingObjected));
+        var provider = new RoundScriptedLlmProvider(Saying(NoPlace));
         var galaxy = new Galaxy();
 
         var outcome = await Generator(provider, galaxy, Here, home: HomeName).GenerateAsync(Changing("Less combat, please"), Now, CancellationToken.None);
 
-        var brief = provider.Requests[1].Prompt.History[0].Text;
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.DoesNotContain("has asked to go", brief);
-        Assert.DoesNotContain("\"heading\"", brief);
+        Assert.False(outcome.Succeeded);
+        Assert.Equal("Name a place or something to do.", outcome.Refusal);
+        Assert.Single(provider.Requests);
         Assert.Equal(0, galaxy.PositionedSearches);
+    }
+
+    [Fact]
+    public async Task AnActivityWithTheCountTheCommanderSaidIsPlannedWithThatCount()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Hunt("12")), Saying(Words), Saying(NothingObjected));
+
+        var outcome = await Generator(provider, new Galaxy(), Here, home: HomeName).GenerateAsync(Changing("Let me hunt twelve bounties"), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.Null(outcome.Heading);
+        Assert.Contains(outcome.Draft!.Beats.Skip(2), beat => beat.Trigger is { Kind: TriggerKind.Bounty, Count: 12 });
+    }
+
+    [Fact]
+    public async Task AnActivityWithNoCountSaidTakesACountFromItsRow()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(Hunt("null")), Saying(Words), Saying(NothingObjected));
+        var row = ChapterActivities.Find(TriggerKind.Bounty, null, null)!;
+
+        var outcome = await Generator(provider, new Galaxy(), Here, home: HomeName).GenerateAsync(Changing("Let me hunt bounties"), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        var count = Assert.Single(outcome.Draft!.Beats.Skip(2), beat => beat.Trigger.Kind == TriggerKind.Bounty).Trigger.Count!.Value;
+        Assert.InRange(count, row.Min, row.Max);
     }
 
     [Fact]
     public async Task WithNoHomeSystemSetHomeIsTheNearerOfSolAndColonia()
     {
         var at = TowardColonia(2000);
-        var provider = new RoundScriptedLlmProvider(Saying(GoHome), Saying(Beats(heading: true)), Saying(NothingObjected));
+        var provider = new RoundScriptedLlmProvider(Saying(GoHome), Saying(Words), Saying(NothingObjected));
+        var galaxy = new Galaxy();
 
-        await Generator(provider, new Galaxy(), at, home: null).GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
+        await Generator(provider, galaxy, at, home: null).GenerateAsync(Changing("I want to go home"), Now, CancellationToken.None);
 
         Assert.Contains("- Home: they have set no home system.", provider.Requests[0].Prompt.History[0].Text);
-
-        var brief = provider.Requests[1].Prompt.History[0].Text;
-        Assert.Contains("has set no home system, so home is Colonia, the nearer of Sol and Colonia, 2000 light years away", brief);
-        Assert.Contains("or within 1000 light years of Colonia", brief);
+        Assert.True(galaxy.PositionedSearches > 0);
     }
 
     public static TheoryData<string, string> BoundChapters => new()
@@ -244,14 +214,16 @@ public sealed class AChangedObjectiveHeadsForANamedSystemTests
             _ => story with { InTheBlack = true, Toward = "Colonia" },
         };
 
-        var provider = new RoundScriptedLlmProvider(Saying(Beats(heading: false)), Saying(NothingObjected));
+        var provider = new RoundScriptedLlmProvider(Saying(NoPlace));
         var galaxy = new Galaxy();
 
         await Generator(provider, galaxy, Here, home: HomeName).GenerateAsync(Changing("Take me home", story), Now, CancellationToken.None);
 
-        Assert.Equal("story_beats", provider.Requests[0].ResponseSchema?.Name);
-        Assert.Contains($"If the Commander asks to go somewhere, the new objectives cannot take them there: {said}", provider.Requests[0].Prompt.History[0].Text);
+        Assert.Equal("story_heading", provider.Requests[0].ResponseSchema?.Name);
+        Assert.Contains("This chapter cannot travel somewhere new", provider.Requests[0].Prompt.History[0].Text);
+        Assert.DoesNotContain("- Home:", provider.Requests[0].Prompt.History[0].Text);
         Assert.Equal(0, galaxy.PositionedSearches);
+        Assert.NotEmpty(said);
     }
 
     private static StarPosition TowardColonia(double lightYears)

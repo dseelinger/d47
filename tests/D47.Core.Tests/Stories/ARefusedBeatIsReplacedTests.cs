@@ -19,19 +19,24 @@ public sealed class ARefusedBeatIsReplacedTests
 
     private static readonly DateTimeOffset RefusedAt = Now.AddHours(1);
 
-    private const string BountyAndADock = """
-        {"opening": "x", "reply": "ok", "beats": [
-          {"title": "Another Way", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 2, "line": "Two more."},
-          {"title": "Home Again", "function": "finale", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
-        ]}
-        """;
+    /// <summary>The new objectives' words, then the fidelity check's answer.</summary>
+    private static readonly string[] NewWords = [PlannedChapterWorld.NewWords(), PlannedChapterWorld.NoObjections];
 
-    private const string ArriveAgainThenABounty = """
-        {"opening": "x", "reply": "ok", "beats": [
-          {"title": "Back Again", "function": "midpoint", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Again."},
-          {"title": "Home Again", "function": "finale", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 1, "line": "Home."}
-        ]}
-        """;
+    /// <summary>A rewrite that puts an arrival at the Lantern and one bounty after the objectives kept, as the generator would.</summary>
+    private static AdventureOutcome ArriveAgainThenABounty(AdventureAsk ask) =>
+        new(
+            ask.Rewrite!.Chapter with
+            {
+                Beats =
+                [
+                    .. ask.Rewrite.Chapter.Beats.Take(ask.Rewrite.From),
+                    Beat("Back Again", "midpoint", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Lantern, System = "Ossen's Lantern" }, "Again."),
+                    Beat("Home Again", "finale", Counted(TriggerKind.Bounty, 1), "Home."),
+                ],
+            },
+            "ok",
+            null,
+            []);
 
     private static AdventureTrigger Counted(TriggerKind kind, int count, string? family = null) =>
         new() { Kind = kind, Count = count, MissionFamily = family };
@@ -52,8 +57,14 @@ public sealed class ARefusedBeatIsReplacedTests
         AdventureFixtures.Event($$"""{ "timestamp":"{{Stamp(Now.AddMinutes(3))}}", "event":"Bounty", "TotalReward":100 }"""),
     ];
 
-    private static StoryFixtures Fixtures(params string[] answers) =>
-        StoryFixtures.ScriptedWith(answers);
+    /// <summary>A fixture whose galaxy has the positions a rewrite's plan is measured by, answering each of <paramref name="answers"/> in turn.</summary>
+    private static StoryFixtures Fixtures(params string[] answers)
+    {
+        var fixtures = StoryFixtures.ScriptedWith(answers);
+
+        fixtures.Galaxy.Positioned = true;
+        return fixtures;
+    }
 
     /// <summary>A story on chapter two with two clues given, the chapter begun, and the first three beats flown.</summary>
     private static StoryFixtures AtTheBond(params string[] answers)
@@ -77,15 +88,16 @@ public sealed class ARefusedBeatIsReplacedTests
     [Fact]
     public async Task RefusingABondBeatKeepsTheBeatsDoneAndReplacesTheRest()
     {
-        using var fixtures = AtTheBond(BountyAndADock);
+        using var fixtures = AtTheBond(NewWords);
 
         Assert.Equal(3, fixtures.Book.Standing("F1", ChapterKey)!.Fired.Count);
         Assert.Null(await fixtures.Director.RefuseBeatAsync("F1", TestContext.Current.CancellationToken));
 
         var chapter = fixtures.Book.Store.Find("F1", ChapterKey)!;
 
-        Assert.Equal(["The Lantern", "First Blood", "Second Blood", "Another Way", "Home Again"], chapter.Beats.Select(beat => beat.Title));
-        Assert.Equal(TriggerKind.Bounty, chapter.Beats[3].Trigger.Kind);
+        Assert.Equal(["The Lantern", "First Blood", "Second Blood"], chapter.Beats.Take(3).Select(beat => beat.Title));
+        Assert.Equal("New One", chapter.Beats[3].Title);
+        Assert.DoesNotContain(chapter.Beats.Skip(3), beat => beat.Trigger.Kind == TriggerKind.Bond);
         Assert.Equal(3, chapter.RewrittenFrom);
         Assert.Equal(RefusedAt, chapter.RewrittenAt);
 
@@ -98,30 +110,32 @@ public sealed class ARefusedBeatIsReplacedTests
         var standing = fixtures.Book.Standing("F1", ChapterKey)!;
 
         Assert.Equal(3, standing.Fired.Count);
-        Assert.Equal("Another Way", standing.CurrentBeat!.Title);
+        Assert.Equal("New One", standing.CurrentBeat!.Title);
     }
 
     [Fact]
     public async Task TheWriterIsToldWhatWasDoneAndWhatWasRefused()
     {
-        using var fixtures = AtTheBond(BountyAndADock);
+        using var fixtures = AtTheBond(NewWords);
 
         Assert.Null(await fixtures.Director.RefuseBeatAsync("F1", TestContext.Current.CancellationToken));
 
         var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
+        Assert.Contains("They refused the objective they were on", prompt);
         Assert.Contains("The objectives the Commander has already done:", prompt);
         Assert.Contains("1. The Lantern", prompt);
         Assert.Contains("3. Second Blood", prompt);
-        Assert.Contains("The objective the Commander refused: The Wing", prompt);
-        Assert.Contains("exactly 2 objectives, which replace objective 4 to the end of the chapter", prompt);
-        Assert.Contains("refused these activities for this story, and no objective may ask for any of them: earn combat kill bonds", prompt);
+        Assert.Contains("The objective replaced: The Wing", prompt);
+        Assert.Contains("The new objectives, in order and numbered from 1", prompt);
     }
 
     [Fact]
     public async Task AReplacementArriveBeatWaitsForTheNextArrivalAfterTheRefusal()
     {
-        using var fixtures = AtTheBond(ArriveAgainThenABounty);
+        using var fixtures = AtTheBond();
+
+        fixtures.Answers = ArriveAgainThenABounty;
 
         // The Commander is at the Lantern when they refuse.
         fixtures.Book.Observe(Jump(Lantern, Now.AddMinutes(10)), "F1");
@@ -137,7 +151,9 @@ public sealed class ARefusedBeatIsReplacedTests
     [Fact]
     public async Task ReplayingTheJournalFromAcceptanceGivesTheStandingLiveGave()
     {
-        using var fixtures = AtTheBond(ArriveAgainThenABounty);
+        using var fixtures = AtTheBond();
+
+        fixtures.Answers = ArriveAgainThenABounty;
 
         var events = BeforeTheRefusal.Append(Jump(Lantern, Now.AddMinutes(10))).ToList();
 
@@ -162,8 +178,9 @@ public sealed class ARefusedBeatIsReplacedTests
     [Fact]
     public async Task APartlyCountedBeatStartsFromNothingWhenItsReplacementIsCounted()
     {
-        using var fixtures = AtTheBond(BountyAndADock);
+        using var fixtures = AtTheBond();
 
+        fixtures.Answers = ArriveAgainThenABounty;
         fixtures.Book.Observe(AdventureFixtures.Event($$"""{ "timestamp":"{{Stamp(Now.AddMinutes(20))}}", "event":"FactionKillBond", "Reward":5000, "AwardingFaction":"F", "VictimFaction":"V" }"""), "F1");
         Assert.Equal(1, fixtures.Book.Standing("F1", ChapterKey)!.Counted);
 
@@ -174,7 +191,7 @@ public sealed class ARefusedBeatIsReplacedTests
     [Fact]
     public async Task RefusingADockBeatRemembersNothing()
     {
-        using var fixtures = Fixtures(ArriveAgainThenABounty);
+        using var fixtures = Fixtures(NewWords);
 
         fixtures.SaveRunning(["chapter-one", ChapterKey]);
 
@@ -231,7 +248,7 @@ public sealed class ARefusedBeatIsReplacedTests
     [Fact]
     public async Task TheRefusedActivitiesAreKeptOnDisk()
     {
-        using var fixtures = AtTheBond(BountyAndADock);
+        using var fixtures = AtTheBond(NewWords);
 
         Assert.Null(await fixtures.Director.RefuseBeatAsync("F1", TestContext.Current.CancellationToken));
 

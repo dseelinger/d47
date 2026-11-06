@@ -87,6 +87,15 @@ public sealed record AdventureRewrite(
 
     /// <summary>The system the <see cref="Remark"/> named that the galaxy search does not know; null when it named none or it was found.</summary>
     public string? Unfound { get; init; }
+
+    /// <summary>The drawable activity the <see cref="Remark"/> asks for, with the count it said or one d47 set; null when it names none.</summary>
+    public DrawnActivity? Activity { get; init; }
+
+    /// <summary>What d47 says to the <see cref="Remark"/>, as the step that read it wrote it; null when it was not read.</summary>
+    public string? Reply { get; init; }
+
+    /// <summary>Whether the <see cref="Remark"/> was read into a place or an activity to plan the new objectives from.</summary>
+    public bool Constrained => Heading is not null || Activity is not null;
 }
 
 /// <summary>A system a changed objective may travel toward. <see cref="Home"/> is set when it is Sol or Colonia standing in for a home system the Commander has not set.</summary>
@@ -515,9 +524,9 @@ public sealed partial class AdventureGenerator(
 
         var (started, facts, notes) = opened;
 
-        if (ask.Rewrite is { Remark: { } said } changing && !string.IsNullOrWhiteSpace(said) && ChapterPull.MayHead(ask.Story))
+        if (ask.Rewrite is { Remark: { } said } changing && !string.IsNullOrWhiteSpace(said))
         {
-            ask = ask with { Rewrite = await HeadingAsync(ask, changing, facts, notes, cancellationToken).ConfigureAwait(false) };
+            ask = ask with { Rewrite = await ChangeAsync(ask, changing, facts, notes, cancellationToken).ConfigureAwait(false) };
 
             if (cancellationToken.IsCancellationRequested)
             {
@@ -535,26 +544,12 @@ public sealed partial class AdventureGenerator(
             }
         }
 
-        if (IsPlanned(ask) && (PlansActOne || !Travels(ask)))
+        if (ask.Rewrite is not null || (IsPlanned(ask) && (PlansActOne || !Travels(ask))))
         {
             return await PlannedAsync(ask, facts, now, notes, started, cancellationToken).ConfigureAwait(false);
         }
 
         var (notable, candidates) = await PlacesAsync(ask, facts, notes, cancellationToken).ConfigureAwait(false);
-
-        if (ask.Rewrite is { } rewrite)
-        {
-            Enter(ask, WriteStage.Objectives);
-            var spoken = rewrite.Chapter.Spine ?? new AdventureSpine();
-            var tail = await AskJsonAsync(
-                BeatsStep,
-                BeatsInstruction(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, repair: null, draft: null, rewrite.Exchange, rewrite.Remark),
-                BeatsOutputCeiling,
-                ask.Progress,
-                cancellationToken).ConfigureAwait(false);
-
-            return await FinishAsync(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, tail, previous: null, now, notes, started, cancellationToken).ConfigureAwait(false);
-        }
 
         string name;
         AdventureSpine spine;
@@ -2042,24 +2037,39 @@ public sealed partial class AdventureGenerator(
     }
 
     /// <summary>
-    /// The rewrite with the place its remark asks to travel to, found by the galaxy search, or with the system it named that the
-    /// search does not know; unchanged when the remark names no place or the place could not be looked up.
+    /// The rewrite with its remark read into constraints: the place it asks to travel to, found by the galaxy search, or the system it
+    /// named that the search does not know; the drawable activity it asks for, with the count it said or one d47 sets; and the reply.
+    /// Unchanged when the remark could not be read. A place is read only where <see cref="ChapterPull.MayHead"/> allows one.
     /// </summary>
-    private async Task<AdventureRewrite> HeadingAsync(AdventureAsk ask, AdventureRewrite rewrite, Facts facts, List<string> notes, CancellationToken cancellationToken)
+    private async Task<AdventureRewrite> ChangeAsync(AdventureAsk ask, AdventureRewrite rewrite, Facts facts, List<string> notes, CancellationToken cancellationToken)
     {
         var home = HomeSystem?.Invoke() is { } set && !string.IsNullOrWhiteSpace(set) ? set.Trim() : null;
-        var asked = await AskJsonAsync(HeadingStep, HeadingInstruction(rewrite, facts, home), HeadingOutputCeiling, ask.Progress, cancellationToken, ThinkingEffort.Low).ConfigureAwait(false);
+        var heads = ChapterPull.MayHead(ask.Story);
+        var drawable = Drawable(ask);
+        var asked = await AskJsonAsync(HeadingStep, HeadingInstruction(rewrite, facts, home, heads, drawable), HeadingOutputCeiling, ask.Progress, cancellationToken, ThinkingEffort.Low).ConfigureAwait(false);
 
         if ((asked.Json is null ? null : ReadHeading(asked.Json)) is not { } read)
         {
-            logger.LogInformation("Draft {Draft}, heading step not read: {Why}", ask.Draft, asked.Why);
+            logger.LogInformation("Draft {Draft}, the change step was not read: {Why}", ask.Draft, asked.Why);
             return rewrite;
         }
 
-        var (system, standIn) = read.Home ? (home ?? HomeLeg.TargetFrom(facts.Position), home is null) : (read.System, false);
+        rewrite = rewrite with { Reply = read.Reply };
+
+        if (read.Activity is { } id && drawable.FirstOrDefault(choice => choice.Id == id) is { } chosen)
+        {
+            var row = chosen.Row;
+            var count = read.Count is > 0 and var said
+                ? said
+                : ChapterDraw.CountOf(row, state()?.Ship ?? ShipLoadout.Unknown, ChapterDraw.Seed(rewrite.Chapter.Key, rewrite.From, rewrite.Step));
+
+            rewrite = rewrite with { Activity = new DrawnActivity(row.Kind, row.Family, count) { Organic = row.Organic, PlaceBefore = row.PlaceBefore } };
+        }
+
+        var (system, standIn) = !heads ? (null, false) : read.Home ? (home ?? HomeLeg.TargetFrom(facts.Position), home is null) : (read.System, false);
         logger.LogInformation(
-            "Draft {Draft}, heading step answered home {Home}, system {System}; the home system is {HomeSystem}, so the place is {Place}",
-            ask.Draft, read.Home, read.System ?? "none", home ?? "not set", system ?? "none");
+            "Draft {Draft}, the change step answered home {Home}, system {System}, activity {Activity}, count {Count}; the place is {Place}",
+            ask.Draft, read.Home, read.System ?? "none", read.Activity ?? "none", read.Count?.ToString(CultureInfo.InvariantCulture) ?? "none", system ?? "none");
 
         if (system is null || galaxy() is not { } search)
         {
@@ -2085,6 +2095,29 @@ public sealed partial class AdventureGenerator(
         return rewrite with { Unfound = system };
     }
 
+    /// <summary>A drawable activity a changed objective may ask for, by the id the change step names it with.</summary>
+    private sealed record DrawableChoice(string Id, DrawableActivity Row, string Phrase);
+
+    /// <summary>The activities a changed objective may ask for: every row of <see cref="ChapterActivities"/> not refused or barred, and no crime when the Commander refused crime.</summary>
+    private static IReadOnlyList<DrawableChoice> Drawable(AdventureAsk ask)
+    {
+        var refused = ask.Story?.Refused ?? ask.Barred ?? [];
+
+        return
+        [
+            .. ChapterActivities.All
+                .Where(row => !RefusedActivities.Refuses(refused, row.Kind, row.Family)
+                    && !(ask.CrimeRefused && row.Kind == TriggerKind.Mission && (MissionFamilies.IsIllegal(row.Family) || CrimeObjectives.IsFamily(row.Family))))
+                .Select(row => (Row: row, Key: RefusedActivities.Key(row.Kind, row.Family)))
+                .Where(pair => pair.Key is not null)
+                .Select(pair => new DrawableChoice(
+                    pair.Row.Organic is { } organic ? $"{pair.Key}:{(organic ? "organic" : "cartographic")}" : pair.Key!,
+                    pair.Row,
+                    RefusedActivities.Phrase(pair.Key!) + (pair.Row.Organic is { } kind ? (kind ? ", organic data" : ", cartographic data") : string.Empty)))
+                .DistinctBy(choice => choice.Id, StringComparer.Ordinal),
+        ];
+    }
+
     /// <summary>A system named in any case, as the galaxy search spells it, with its address and position; null when the search does not know it.</summary>
     private async Task<(string Name, long Address, StarPosition Position)?> LookUpAsync(IGalaxyService search, string system, Facts facts, CancellationToken cancellationToken)
     {
@@ -2106,37 +2139,60 @@ public sealed partial class AdventureGenerator(
         return null;
     }
 
-    private static StoryCall HeadingInstruction(AdventureRewrite rewrite, Facts facts, string? home)
+    private static StoryCall HeadingInstruction(AdventureRewrite rewrite, Facts facts, string? home, bool heads, IReadOnlyList<DrawableChoice> drawable)
     {
         var text = new StringBuilder();
+        var current = rewrite.Chapter.Beats[rewrite.From];
 
         text.AppendLine(
-            "The Commander is flying a story and wants to change the objective they were on. Read what they said and decide whether it "
-            + "asks to travel to a particular place. Do not judge whether going there suits the story; say only where, if anywhere, they ask to go.");
+            "The Commander is flying a story and wants to change the objective they were on. Read what they said into what d47 builds the new "
+            + "objectives from: the place they ask to travel to, the activity they ask for, and how many times when they say a number. "
+            + "Do not judge whether it suits the story, and do not choose a place or an activity they did not ask for.");
         text.AppendLine();
-        text.AppendLine("Places they may mean without naming a system:");
-        text.AppendLine(home is null ? "- Home: they have set no home system." : $"- Home: {home}.");
+        text.AppendLine($"The objective they are changing: {current.Steps[Math.Min(rewrite.Step, current.Steps.Count - 1)].Trigger.Describe()}.");
 
-        if (facts.Carrier is { Owned: true, StarSystem: { Length: > 0 } carrier })
+        if (heads)
         {
-            text.AppendLine($"- Their fleet carrier: in {carrier}.");
+            text.AppendLine();
+            text.AppendLine("Places they may mean without naming a system:");
+            text.AppendLine(home is null ? "- Home: they have set no home system." : $"- Home: {home}.");
+
+            if (facts.Carrier is { Owned: true, StarSystem: { Length: > 0 } carrier })
+            {
+                text.AppendLine($"- Their fleet carrier: in {carrier}.");
+            }
+
+            text.AppendLine("- Sol: the centre of the bubble, populated space.");
+            text.AppendLine("- Colonia: the settled region 22,000 light years from Sol.");
+            text.AppendLine($"- Where they are now: {facts.System ?? "unknown"}.");
         }
 
-        text.AppendLine("- Sol: the centre of the bubble, populated space.");
-        text.AppendLine("- Colonia: the settled region 22,000 light years from Sol.");
-        text.AppendLine($"- Where they are now: {facts.System ?? "unknown"}.");
+        text.AppendLine();
+        text.AppendLine("The activities they may ask for, by id:");
+
+        foreach (var choice in drawable)
+        {
+            text.AppendLine($"- {choice.Id}: {choice.Phrase}");
+        }
+
         AppendExchange(text, rewrite.Exchange, rewrite.Remark);
         text.AppendLine();
         text.AppendLine(
-            "Answer with one JSON object and nothing else: " + StoryAnswer.HeadingShape + ". \"home\" is true when they ask to go home. "
-            + "Otherwise \"system\" is the star system they ask to go to, spelt as the game spells it: one they name, or the system of a place above that they mean. "
-            + "\"home\" is false and \"system\" is null when they name no place to go, such as when they ask for less combat or a different activity.");
+            "Answer with one JSON object and nothing else: " + StoryAnswer.HeadingShape([.. drawable.Select(choice => choice.Id)]) + ". "
+            + (heads
+                ? "\"home\" is true when they ask to go home. Otherwise \"system\" is the star system they ask to go to, spelt as the game spells it: one they name, "
+                  + "or the system of a place above that they mean. \"home\" is false and \"system\" is null when they name no place to go. "
+                : "This chapter cannot travel somewhere new, so \"home\" is false and \"system\" is null. ")
+            + "\"activity\" is the id of the activity above they ask for, or null when they ask for none of them. "
+            + "\"count\" is the number they said for it, or null when they said none; d47 sets the count then. "
+            + "\"reply\" is what you say to the Commander, in your own voice, in one or two sentences: what the new objectives will have them do, "
+            + "or, when they named no place and no activity above, ask them to name one. Your reply never states the hidden story.");
 
-        return new StoryCall(text.ToString(), StoryAnswer.HeadingSchema());
+        return new StoryCall(text.ToString(), StoryAnswer.HeadingSchema([.. drawable.Select(choice => choice.Id)]));
     }
 
-    /// <summary>The heading step's answer: the system the remark names and whether it asks to go home; null when it cannot be read.</summary>
-    private static (string? System, bool Home)? ReadHeading(string json)
+    /// <summary>The change step's answer, or null when it cannot be read.</summary>
+    private static (string? System, bool Home, string? Activity, int? Count, string? Reply)? ReadHeading(string json)
     {
         try
         {
@@ -2150,13 +2206,19 @@ public sealed partial class AdventureGenerator(
 
             var system = Text(root, "system");
 
-            return (string.IsNullOrWhiteSpace(system) ? null : system.Trim(), root.TryGetProperty("home", out var home) && home.ValueKind == JsonValueKind.True);
+            return (
+                string.IsNullOrWhiteSpace(system) ? null : system.Trim(),
+                root.TryGetProperty("home", out var home) && home.ValueKind == JsonValueKind.True,
+                Text(root, "activity") is { Length: > 0 } activity ? activity.Trim() : null,
+                Integer(root, "count"),
+                Text(root, "reply") is { Length: > 0 } reply ? reply.Trim() : null);
         }
         catch (JsonException)
         {
             return null;
         }
     }
+
 
     /// <summary>The facts with the light years from the Commander to the story's destination, when it has one and both can be measured.</summary>
     private Task<Facts> DestinationDistanceAsync(Facts facts, AdventureAsk ask, CancellationToken cancellationToken) =>
@@ -2392,12 +2454,17 @@ public sealed partial class AdventureGenerator(
     /// The places a drawn chapter of <paramref name="ask"/> may use, with the facts <see cref="ChapterPlanner"/> reads, searched only as
     /// far as the chapter needs. Searches that do not depend on each other run together.
     /// </summary>
-    public async Task<ChapterPlaces> ChapterPlacesAsync(AdventureAsk ask, CancellationToken cancellationToken)
+    public Task<ChapterPlaces> ChapterPlacesAsync(AdventureAsk ask, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(ask);
 
+        return ChapterPlacesAsync(ask, ask.Story?.Slots ?? [], cancellationToken);
+    }
+
+    /// <summary>The places a chapter of <paramref name="ask"/> may use for <paramref name="slots"/>; a rewrite also gathers stations for its stops.</summary>
+    private async Task<ChapterPlaces> ChapterPlacesAsync(AdventureAsk ask, IReadOnlyList<DrawnActivity> slots, CancellationToken cancellationToken)
+    {
         var facts = Facts.Of(state(), ask);
-        var slots = ask.Story?.Slots ?? [];
         var sights = ask.Story?.Sights ?? [];
         var used = UsedSystems(ask.Chapter, ask.Story?.Id);
         var notes = Enumerable.Range(0, 14).Select(_ => new List<string>()).ToArray();
@@ -2413,7 +2480,7 @@ public sealed partial class AdventureGenerator(
         var crime = !ask.CrimeRefused && slots.Any(slot => slot.Kind == TriggerKind.Mission && (MissionFamilies.IsIllegal(slot.Family) || CrimeObjectives.IsFamily(slot.Family)));
         var war = slots.Any(slot => slot.Kind is TriggerKind.Bond or TriggerKind.Conflict);
         var supply = slots.Any(slot => slot.Kind is TriggerKind.Map or TriggerKind.Signal or TriggerKind.Organic);
-        var docks = Travels(ask) || slots.Any(slot => slot.PlaceBefore || (ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic) is { } row && ChapterActivities.NeedsStation(row)));
+        var docks = Travels(ask) || ask.Rewrite is not null || slots.Any(slot => slot.PlaceBefore || (ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic) is { } row && ChapterActivities.NeedsStation(row)));
 
         var anarchyTask = crime ? AnarchyAsync(search, facts, here, cancellationToken, notes[1]) : Task.FromResult<IReadOnlyList<SystemSummary>>([]);
         var sitesTask = SitesAsync(search, facts, here, cancellationToken, notes[2]);

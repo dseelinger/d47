@@ -93,7 +93,7 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
     {
         const string Key = "the-hard-way";
 
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextBeats)));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NewWords()), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections)));
         fixtures.WritesDrawnChapters = true;
         fixtures.SaveRunning(["chapter-one", Key], 2);
 
@@ -109,12 +109,11 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
 
         await fixtures.Director.RefuseBeatAsync("F1", TestContext.Current.CancellationToken);
 
-        var slots = Assert.Single(fixtures.Asks).Story!.Slots!;
+        // The bounty was done before the refusal, so it is not planned again; the redraw is neither it nor the refused bond.
+        var slot = Assert.Single(Assert.Single(fixtures.Asks).Story!.Slots!);
 
-        Assert.Equal(2, slots.Count);
-        Assert.Equal(new DrawnActivity(TriggerKind.Bounty, null, 1), slots[0]);
-        Assert.NotEqual(TriggerKind.Bond, slots[1].Kind);
-        Assert.NotEqual(TriggerKind.Bounty, slots[1].Kind);
+        Assert.NotEqual(TriggerKind.Bond, slot.Kind);
+        Assert.NotEqual(TriggerKind.Bounty, slot.Kind);
     }
 
     [Trait("Category", "Integration")]

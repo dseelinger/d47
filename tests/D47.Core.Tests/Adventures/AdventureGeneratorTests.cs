@@ -480,6 +480,14 @@ public sealed class AdventureGeneratorTests
 
         public List<BodyQuery> BodyQueries { get; } = [];
 
+        /// <summary>
+        /// Whether stations and bodies carry star positions, about Oppi at x = 3.7: the Lantern 8 light years on, the Hollow 12 and
+        /// the two closed systems 30. Off, the chapter planner finds no place it can measure a hop to.
+        /// </summary>
+        public bool Positioned { get; set; }
+
+        private static StarPosition Along(double lightYears) => new(3.6875 + lightYears, -44.625, 131);
+
         /// <summary>Stations returned alongside the three every search knows.</summary>
         public IReadOnlyList<StationSummary> Extra { get; init; } = [];
 
@@ -525,10 +533,10 @@ public sealed class AdventureGeneratorTests
 
             IReadOnlyList<StationSummary> all =
             [
-                new() { Name = "Lantern Dock", SystemName = "Ossen's Lantern", SystemAddress = AdventureFixtures.Lantern, MarketId = 1001, Distance = 8, HasLargePad = false, Type = "Outpost" },
-                new() { Name = "Maren Anchorage", SystemName = "Dyson's Hollow", SystemAddress = AdventureFixtures.Hollow, MarketId = AdventureFixtures.Anchorage, Distance = 12, HasLargePad = true, Type = "Coriolis Starport" },
-                new() { Name = "Jameson Memorial", SystemName = "Shinrarta Dezhra", SystemAddress = 3932277478106, MarketId = 128666762, Distance = 30, HasLargePad = true, Type = "Orbis Starport" },
-                new() { Name = "Starter Port", SystemName = "HIP 97950", SystemAddress = 3932277478107, MarketId = 128666763, Distance = 30, HasLargePad = true, Type = "Orbis Starport" },
+                new() { Name = "Lantern Dock", SystemName = "Ossen's Lantern", SystemAddress = AdventureFixtures.Lantern, MarketId = 1001, Distance = 8, HasLargePad = false, Type = "Outpost", Position = Positioned ? Along(8) : null },
+                new() { Name = "Maren Anchorage", SystemName = "Dyson's Hollow", SystemAddress = AdventureFixtures.Hollow, MarketId = AdventureFixtures.Anchorage, Distance = 12, HasLargePad = true, Type = "Coriolis Starport", Position = Positioned ? Along(12) : null },
+                new() { Name = "Jameson Memorial", SystemName = "Shinrarta Dezhra", SystemAddress = 3932277478106, MarketId = 128666762, Distance = 30, HasLargePad = true, Type = "Orbis Starport", Position = Positioned ? Along(30) : null },
+                new() { Name = "Starter Port", SystemName = "HIP 97950", SystemAddress = 3932277478107, MarketId = 128666763, Distance = 30, HasLargePad = true, Type = "Orbis Starport", Position = Positioned ? Along(30) : null },
                 .. Extra,
             ];
 
@@ -551,7 +559,7 @@ public sealed class AdventureGeneratorTests
 
             IReadOnlyList<BodySummary> all =
             [
-                new() { Name = "Ossen's Lantern 2 a", SystemName = "Ossen's Lantern", SystemAddress = AdventureFixtures.Lantern, BodyId = 6, Distance = 8, IsLandable = true },
+                new() { Name = "Ossen's Lantern 2 a", SystemName = "Ossen's Lantern", SystemAddress = AdventureFixtures.Lantern, BodyId = 6, Distance = 8, IsLandable = true, Position = Positioned ? Along(8) : null },
             ];
 
             var bodies = query.SystemNames.Count > 0
