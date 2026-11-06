@@ -5121,6 +5121,9 @@ public sealed class AdventureGenerator(
 
         beats = MeetSlots(beats, kept, ask.Story?.Slots, unmet);
 
+        // A detour of one objective may have no line, as AdventureValidation.Problems allows.
+        var onlyObjectiveOfADetour = ask.Rewrite?.Chapter.Detour == true && kept.Count + beats.Count(beat => !beat.Continues) == 1;
+
         var finale = ask.Story?.FinaleChapter;
         var (destination, unnamed) = finale == 1 && ask.Story!.Destination is null
             ? await DestinationAsync(named, facts, ask.Story!, resolver, cancellationToken).ConfigureAwait(false)
@@ -5147,6 +5150,11 @@ public sealed class AdventureGenerator(
             lastStood = null;
             AdventureTrigger? trigger = null;
             IReadOnlyList<BeatOption> options = [];
+
+            if (!beat.Continues && beat.Lines.All(line => string.IsNullOrWhiteSpace(line.Text)) && !onlyObjectiveOfADetour)
+            {
+                Refuse(index, $"{where} has no line.");
+            }
 
             if (beat.Kind == TriggerKind.Beacon)
             {

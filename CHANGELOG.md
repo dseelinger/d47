@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter with an objective written without a line now has that objective written again before you see it, instead of failing with "has no line".
+
 A finished or stopped story run can be deleted. **Delete** is on its row on the Story bench and on its page, and asks first, showing the run's lines and the clips on disk. **Delete run** removes the run, its lines and clips, its archived chapters and its local rating vote; the story stays in the Catalogue and picking it again starts a new run. The active run has no Delete. On a shelved run's page, Delete opens **Abandon it first**, and **Abandon** there ends the run so it can be deleted.
 
 A story run's line whose clip was not kept now has **Play**, and says it will be spoken again in the speaker's current voice. Played, alone or in Play all, it is synthesised in the voice the speaker has now and the new clip is kept in the run's record, so it is made once; it costs what speaking any line costs. During Play all the next such line is made while the line before it plays, and the bar reads **Speaking again** with a gauge. A line that cannot be spoken, with no voice provider, a provider that fails, or a voice you asked to forget, is shown for reading for half a second a word, at least four seconds, with a countdown and a **No voice for this line** notice giving the provider's error, and then Play all moves on.
