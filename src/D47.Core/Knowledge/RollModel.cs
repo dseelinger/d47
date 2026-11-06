@@ -37,6 +37,70 @@ public static class RollModel
     }
 
     /// <summary>
+    /// A resistance after a roll, as a fraction. The recipe's change is a share of the damage still taken,
+    /// so 0.4 with +50% is 1 - 0.6 x 0.5 = 0.7.
+    /// </summary>
+    /// <param name="stock">The module's own resistance as a fraction, or null for none.</param>
+    /// <param name="attribute">"Kinetic Resistance", "Thermal Resistance" and so on.</param>
+    public static double Resistance(
+        double? stock,
+        string attribute,
+        ModuleSpecification? module,
+        string? blueprint,
+        int grade,
+        string? experimental)
+    {
+        var offered = BlueprintCatalogue.For(module);
+        var modification = Modification(offered, blueprint, grade);
+        var effect = Experimental(offered, experimental);
+
+        return 1
+               - (1 - (stock ?? 0))
+               * (1 - ResistanceChange(modification, attribute))
+               * (1 - ResistanceChange(effect, attribute));
+    }
+
+    /// <summary>
+    /// A recipe's change to one resistance. Where it lists "All Resistances" that figure applies to each
+    /// of the four and the per-type lines are not added: a Reinforced Shields roll measured in the
+    /// journals lands its thermal resistance with the same change as its kinetic.
+    /// </summary>
+    private static double ResistanceChange(Blueprint? recipe, string attribute)
+    {
+        var all = Proportion(recipe, "All Resistances");
+
+        return all != 0 ? all : Proportion(recipe, attribute);
+    }
+
+    /// <summary>
+    /// A boost after a roll, where the boost is a fraction added to 1: a booster's shield boost or a
+    /// bulkhead's hull boost. 0.2 with +38% is 1.2 x 1.38 - 1.
+    /// </summary>
+    /// <param name="attributes">The names the recipes use for it; each recipe states one.</param>
+    public static double? Boost(
+        double? stock,
+        IReadOnlyList<string> attributes,
+        ModuleSpecification? module,
+        string? blueprint,
+        int grade,
+        string? experimental)
+    {
+        if (stock is not { } figure)
+        {
+            return null;
+        }
+
+        var offered = BlueprintCatalogue.For(module);
+        var modification = Modification(offered, blueprint, grade);
+        var effect = Experimental(offered, experimental);
+
+        return (1 + figure)
+               * (1 + attributes.Sum(name => Proportion(modification, name)))
+               * (1 + attributes.Sum(name => Proportion(effect, name)))
+               - 1;
+    }
+
+    /// <summary>
     /// The modification row for one blueprint at one grade, out of the recipes this module can actually
     /// take.
     /// </summary>

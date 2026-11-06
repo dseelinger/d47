@@ -74,6 +74,34 @@ public sealed record PowerGauge(
 /// <param name="Kind">Measured or modelled.</param>
 public sealed record JumpGauge(double Best, double Middle, double Worst, FigureKind Kind);
 
+/// <summary>The four damage types a defence resists, each as a fraction: 0.4 is 40% less damage taken.</summary>
+public sealed record ResistanceSet(double Kinetic, double Thermal, double Explosive, double Caustic);
+
+/// <summary>
+/// What a build can take and give, as the game computes it. A planned roll lands on the figure
+/// <c>Blueprints.tsv</c> gives for its grade, so a modelled figure is the best that grade can do.
+/// </summary>
+/// <param name="Shields">Megajoules, or null where no shield generator is fitted or planned.</param>
+/// <param name="Hull">Hull strength, or null where the hull or its bulkhead is unknown.</param>
+/// <param name="ShieldResistance">Null where there is no shield generator.</param>
+/// <param name="HullResistance">Null where there is no bulkhead.</param>
+/// <param name="RawDps">The sum of each weapon's damage per second.</param>
+/// <param name="SustainedDps">
+/// <paramref name="RawDps"/> scaled down where the weapons draw more than the distributor's weapons
+/// recharge; the capacitor's starting charge is ignored.
+/// </param>
+/// <param name="Cargo">The hold, in tons.</param>
+/// <param name="Kind">Measured or modelled.</param>
+public sealed record CombatGauge(
+    double? Shields,
+    double? Hull,
+    ResistanceSet? ShieldResistance,
+    ResistanceSet? HullResistance,
+    double RawDps,
+    double SustainedDps,
+    double Cargo,
+    FigureKind Kind);
+
 /// <summary>
 /// The two gauges at the head of a ship's slot list, and what d47 could not work out (Phase 38).
 /// </summary>
@@ -85,12 +113,15 @@ public sealed record JumpGauge(double Best, double Middle, double Worst, FigureK
 /// </param>
 public sealed record BuildGauges(PowerGauge? Power, JumpGauge? Jump, int Unmodelled, string? Silent)
 {
+    /// <summary>Shields, hull, resistances, damage and hold.</summary>
+    public CombatGauge? Combat { get; init; }
+
     /// <summary>Nothing to draw, and the reason.</summary>
     public static BuildGauges Nothing(string why) => new(null, null, 0, why);
 }
 
 /// <summary>The arithmetic behind the two gauges (Phase 38, "A build you can watch").</summary>
-public static class ShipGauges
+public static partial class ShipGauges
 {
     /// <summary>
     /// What a Commander is told when the ship has never been boarded — the same fact
@@ -128,7 +159,10 @@ public static class ShipGauges
             Power(parts, kind, measured, build.PriorityMoves),
             Jump(build, parts, seen, kind, modelled),
             parts.Count(part => part.IsVague),
-            null);
+            null)
+        {
+            Combat = Combat(build, parts, seen, kind, modelled),
+        };
     }
 
     /// <summary>
@@ -308,7 +342,7 @@ public static class ShipGauges
             : Mass(build, parts, seen);
 
         var tank = !modelled && seen?.FuelCapacity is { } fuel ? fuel : Capacity(parts, "cft");
-        var hold = !modelled && seen?.CargoCapacity is { } cargo ? cargo : Capacity(parts, "icr");
+        var hold = Hold(parts, seen, modelled);
 
         if (unladen is not { } empty || empty <= 0)
         {
@@ -426,23 +460,50 @@ public static class ShipGauges
         /// The blueprint table's name for the same thing — "Power Draw".
         /// </param>
         /// <param name="stock">The unengineered figure off the module's own row.</param>
-        public double? Figure(string label, string attribute, double? stock)
+        public double? Figure(string label, string attribute, double? stock, double scale = 1) =>
+            Figure(label, [attribute], stock, scale);
+
+        /// <summary>
+        /// As above where a roll names the figure more than one way. <paramref name="scale"/> divides the
+        /// measured value, which Elite writes in percent for multipliers and resistances.
+        /// </summary>
+        public double? Figure(string label, IReadOnlyList<string> attributes, double? stock, double scale = 1)
         {
             if (Plan is { } plan)
             {
-                return RollModel.Apply(stock, attribute, Spec, plan.Blueprint, plan.Grade, plan.Experimental);
+                return attributes.Aggregate(
+                    stock,
+                    (figure, attribute) =>
+                        RollModel.Apply(figure, attribute, Spec, plan.Blueprint, plan.Grade, plan.Experimental));
             }
 
+            return Measured(label, scale) ?? stock;
+        }
+
+        /// <summary>One resistance as a fraction; zero where the module has none.</summary>
+        public double Resistance(string label, string attribute, double? stock) =>
+            Plan is { } plan
+                ? RollModel.Resistance(stock, attribute, Spec, plan.Blueprint, plan.Grade, plan.Experimental)
+                : Measured(label, 100) ?? stock ?? 0;
+
+        /// <summary>A boost as a fraction added to 1, such as a booster's shield boost.</summary>
+        public double? Boost(string label, IReadOnlyList<string> attributes, double? stock) =>
+            Plan is { } plan
+                ? RollModel.Boost(stock, attributes, Spec, plan.Blueprint, plan.Grade, plan.Experimental)
+                : Measured(label, 100) ?? stock;
+
+        private double? Measured(string label, double scale)
+        {
             foreach (var modifier in Fitted?.Modifiers ?? [])
             {
                 if (string.Equals(modifier.Label, label, StringComparison.OrdinalIgnoreCase)
                     && modifier.Value is { } value)
                 {
-                    return value;
+                    return value / scale;
                 }
             }
 
-            return stock;
+            return null;
         }
     }
 }
