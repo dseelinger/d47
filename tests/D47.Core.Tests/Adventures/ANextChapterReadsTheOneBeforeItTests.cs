@@ -1,6 +1,7 @@
-using D47.Core.Storage;
+﻿using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Adventures.AdventureFixtures;
@@ -16,9 +17,14 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
 
-    private const string Spine = SecondColumnSpine;
+    private static RoundScriptedLlmProvider Provider() =>
+        new(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.ShortLines()), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
 
-    private const string Beats = SecondColumnBeats;
+    private static string Prompt(RoundScriptedLlmProvider provider) =>
+        provider.Requests.First(request => request.ResponseSchema?.Name == "story_lines").Prompt.History[0].Text;
+
+    private static Task<AdventureOutcome> Write(RoundScriptedLlmProvider provider, AdventureAsk ask) =>
+        PlannedChapterWorld.Generator(provider, PlannedChapterWorld.Roomy()).GenerateAsync(ask with { CrimeRefused = true }, Now, CancellationToken.None);
 
     private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-next-chapter", Guid.NewGuid().ToString("N"));
 
@@ -75,14 +81,13 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
         Assert.NotNull(chapter);
         Assert.Equal(["first", "second"], chapter.Earlier.Select(adventure => adventure.Key));
 
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+        var provider = Provider();
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: chapter), Now, CancellationToken.None);
+        var outcome = await Write(provider, new AdventureAsk(Length: AdventureLength.Evening, Chapter: chapter));
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var prompt = provider.Requests[0].Prompt.History[0].Text;
+        var prompt = Prompt(provider);
 
         // What the Commander did in the previous chapter, and nothing of its wording.
         Assert.Contains("Objectives: " + string.Join("; ", LanternRoute().Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")), prompt);
@@ -111,44 +116,34 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
     }
 
     [Fact]
-    public async Task TheChapterPromptsNameWhatTheCommanderDidAndOfferEveryActivity()
+    public async Task TheChapterPromptNamesWhatTheCommanderDid()
     {
         var bounties = new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 3 };
         var third = Third() with { Beats = [.. Third().Beats, Beat("The Ledger", "finale", bounties, "Three names.")] };
         var chapter = AdventureChapter.Of([First(), Second(), third], "third");
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+        var provider = Provider();
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: chapter), Now, CancellationToken.None);
+        var outcome = await Write(provider, new AdventureAsk(Length: AdventureLength.Evening, Chapter: chapter));
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var spine = provider.Requests[0].Prompt.History[0].Text;
-        Assert.DoesNotContain("The only things they can do", spine);
-        Assert.Contains("the Commander does the game's activities", spine);
-        Assert.Contains($"What those objectives asked for: 1. {LanternRoute().Beats[0].Trigger.Describe()}", spine);
-        Assert.Contains($"6. {bounties.Describe()}", spine);
-        Assert.Contains("Vary what the Commander does. The last chapters asked them to collect bounties.", spine);
-
-        var beats = provider.Requests[2].Prompt.History[0].Text;
-        Assert.Contains("The counted kinds, in no order of preference:", beats);
-        Assert.Contains("Vary what the Commander does. The last chapters asked them to collect bounties.", beats);
-        Assert.Contains("Mission_Smuggle", beats);
-        Assert.Contains("Mission_PassengerVIP", beats);
+        var prompt = Prompt(provider);
+        Assert.DoesNotContain("The only things they can do", prompt);
+        Assert.Contains($"What those objectives asked for: 1. {LanternRoute().Beats[0].Trigger.Describe()}", prompt);
+        Assert.Contains($"6. {bounties.Describe()}", prompt);
     }
 
     [Fact]
     public async Task APreviousChapterWithNothingRecordedIsNotGivenItsWrittenLines()
     {
         var chapter = AdventureChapter.Of([Third() with { Told = [], Follows = null }], "third");
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+        var provider = Provider();
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: chapter), Now, CancellationToken.None);
+        var outcome = await Write(provider, new AdventureAsk(Length: AdventureLength.Evening, Chapter: chapter));
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var prompt = provider.Requests[0].Prompt.History[0].Text;
+        var prompt = Prompt(provider);
         Assert.DoesNotContain("What was written to be said as they flew it", prompt);
         Assert.DoesNotContain($"- {LanternRoute().Beats[0].Line}", prompt);
         Assert.DoesNotContain("chapters came before it", prompt);
@@ -158,15 +153,14 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
     public async Task AStockStoryChapterIsToldToFollowTheStoryLayersAndStageBeats()
     {
         var chapter = AdventureChapter.Of([Third()], "third");
-        var story = new AdventureStory("s", "S", "public layer text", "hidden layer text", 2, 10, 3);
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+        var story = new AdventureStory("s", "S", "public layer text", "hidden layer text", 2, 10, 3, Slots: [PlannedChapterWorld.Bounty]);
+        var provider = Provider();
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: chapter, Story: story), Now, CancellationToken.None);
+        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(PlannedChapterWorld.Ask(story) with { Chapter = chapter }, Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var prompt = provider.Requests[0].Prompt.History[0].Text;
+        var prompt = Prompt(provider);
         Assert.Contains("from the story's public and hidden layers and the beat-sheet lines for its stage", prompt);
         Assert.Contains("public layer text", prompt);
         Assert.Contains("hidden layer text", prompt);
@@ -175,14 +169,13 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
     [Fact]
     public async Task AnOrdinaryAskIsNotAChapter()
     {
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+        var provider = Provider();
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        var outcome = await Write(provider, new AdventureAsk(Length: AdventureLength.Evening));
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.Null(outcome.Draft!.Follows);
-        Assert.DoesNotContain("next chapter", provider.Requests[0].Prompt.History[0].Text);
+        Assert.DoesNotContain("next chapter", Prompt(provider));
     }
 
     [Fact]

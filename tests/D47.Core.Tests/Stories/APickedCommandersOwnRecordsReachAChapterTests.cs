@@ -1,4 +1,5 @@
 using D47.Core.Adventures;
+using D47.Core.Goals;
 using D47.Core.Journal;
 using D47.Core.Stories;
 using D47.Core.Tests.Adventures;
@@ -13,14 +14,6 @@ namespace D47.Core.Tests.Stories;
 public sealed class APickedCommandersOwnRecordsReachAChapterTests
 {
     private const string Picked = "F735466";
-
-    private const string ChieftainBeats = """
-        {"opening": "Again.", "reply": "Here.", "beats": [
-          {"title": "The Hull", "function": "setup", "kind": "board", "reason": "Someone there knows about the burst.", "ship": "Alliance Chieftain", "line": "Sign for it."},
-          {"title": "The Bounties", "function": "midpoint", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Paid."},
-          {"title": "The Ore", "function": "finale", "kind": "mine", "reason": "Someone there knows about the burst.", "count": 20, "line": "Refined."}
-        ]}
-        """;
 
     private static readonly FleetRegistry Fleet = new()
     {
@@ -46,6 +39,7 @@ public sealed class APickedCommandersOwnRecordsReachAChapterTests
         store.Apply(Event("""{ "timestamp":"2026-10-12T09:00:00Z", "event":"Commander", "FID":"F100", "Name":"ARLO KESTREL" }"""));
         store.Apply(Event("""{ "timestamp":"2026-10-12T09:00:01Z", "event":"Location", "StarSystem":"Oppi", "SystemAddress":3382387380970, "StarPos":[3.68750,-44.62500,131.00000], "Docked":false }"""));
         store.Pick(new CommanderIdentity(Picked, "JOHN DEPARAGON"));
+        store.Active!.Location = PlannedChapterWorld.State().Location;
 
         return store;
     }
@@ -106,15 +100,16 @@ public sealed class APickedCommandersOwnRecordsReachAChapterTests
 
     private static (AdventureOutcome Result, int Requests) Generate(GameStateStore store)
     {
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ChieftainBeats), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ChieftainBeats, 1)), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ChieftainBeats, 1)));
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines()), RoundScriptedLlmProvider.Saying(NothingObjected));
+        var board = new GoalClimbStep("ship", "Fly an Alliance Chieftain")
+        {
+            Objective = new AdventureTrigger { Kind = TriggerKind.Board, ShipType = "typex" },
+        };
 
-        var generator = new AdventureGenerator(
-            () => provider, () => null, () => "You are the ship.", () => "core", () => null,
-            () => store.Active, () => new AdventureGeneratorTests.Galaxy(), () => null, null, null, NullLogger.Instance);
+        var generator = PlannedChapterWorld.Generator(provider, state: () => store.Active);
 
         var result = generator.GenerateAsync(
-            new AdventureAsk(AdventureReach.Session, Story: new AdventureStory(Id, Card.Title, Card.Describe(), Secret.Secret, 1, 10, 5)),
+            new AdventureAsk(AdventureReach.Session, Story: new AdventureStory(Id, Card.Title, Card.Describe(), Secret.Secret, 3, 10, 5, Goals: [board])),
             Now,
             CancellationToken.None).GetAwaiter().GetResult();
 

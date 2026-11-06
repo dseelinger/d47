@@ -27,7 +27,7 @@ public sealed class TheStoryOpensOneReactionASessionTests
         $$"""{ "timestamp":"{{at.UtcDateTime:yyyy-MM-ddTHH:mm:ssZ}}", "event":"LoadGame", "FID":"F1", "Commander":"Test" }""");
 
     private static StoryFixtures Picking() => new(
-        new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)),
+        new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())),
         WithAPrimaryMember);
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class TheStoryOpensOneReactionASessionTests
     public async Task AStoryWithNoPrimaryCastTakesNoReaction()
     {
         using var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
         fixtures.Director.TakeOpening("F1");

@@ -37,21 +37,11 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         ],
     };
 
-    private const string BeatsWithSpeakers = """
-        {"opening": "A voice on the open channel.", "openingSpeaker": "narrator", "reply": "Here it is.", "beats": [
-          {"title": "The Mayday", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Anyone. Please.", "speaker": "caller"},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name.", "speaker": "ship"},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
-        ]}
-        """;
+    private static readonly string BeatsWithSpeakers =
+        Written("A voice on the open channel.", "narrator", ("Anyone. Please.", "caller"), ("To one name.", "ship"), ("Scan it.", null));
 
-    private const string BeatsWithAStranger = """
-        {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here.", "speaker": "stranger"},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
-        ]}
-        """;
+    private static readonly string BeatsWithAStranger =
+        Written("Factory settings, holding.", null, ("Scoop here.", "stranger"), ("To one name.", null), ("Scan it.", null));
 
     [Fact]
     public void TheShipsLineIsTheCoreAboards()
@@ -113,7 +103,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
     [Fact]
     public async Task ChangingTheGenderMidStoryChangesTheVoiceFromTheNextLine()
     {
-        using var fixtures = new StoryFixtures(Scripted(BeatsToTheBeacon), Versioned);
+        using var fixtures = new StoryFixtures(Scripted(Lines()), Versioned);
         var gender = CommanderGender.Man;
         fixtures.Director.Gender = () => gender;
 
@@ -128,7 +118,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
     [Fact]
     public async Task TheDirectorVoicesEachClueByItsSpeaker()
     {
-        using var fixtures = new StoryFixtures(Scripted(BeatsToTheBeacon));
+        using var fixtures = new StoryFixtures(Scripted(Lines()));
         fixtures.Director.Aboard = () => PersonaCatalog.Kex;
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
@@ -190,36 +180,30 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
     [Fact]
     public async Task AChapterLineNamingASpeakerTheStoryDoesNotHaveIsRefused()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsWithAStranger, Repairs.Replacing(BeatsWithAStranger, 1), Repairs.Replacing(BeatsWithAStranger, 1))));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(BeatsWithAStranger, Rewritten(1, "Scoop here.", "stranger"), Rewritten(1, "Scoop here.", "stranger"))));
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal((3 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 2, fixtures.Provider.CallCount);
+        Assert.Equal((1 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts, fixtures.Provider.CallCount);
     }
 
-    private const string BeatsWhereHarrowNamesHimself = """
-        {"opening": "A voice on the open channel.", "openingSpeaker": "narrator", "reply": "Here it is.", "beats": [
-          {"title": "The Mayday", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Harrow keeps a quiet office.", "speaker": "harrow"},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name.", "speaker": "ship"},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
-        ]}
-        """;
+    private static readonly string BeatsWhereHarrowNamesHimself =
+        Written("A voice on the open channel.", "narrator", ("Harrow keeps a quiet office.", "harrow"), ("To one name.", "ship"), ("Scan it.", null));
 
     [Fact]
     public async Task ACastLineThatNamesItsOwnSpeakerIsRefusedThenPassesWhenRewritten()
     {
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine),
                 RoundScriptedLlmProvider.Saying(BeatsWhereHarrowNamesHimself),
-                RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsWhereHarrowNamesHimself.Replace("Harrow keeps a quiet office.", "I keep a quiet office.", StringComparison.Ordinal), 1))),
+                RoundScriptedLlmProvider.Saying(Rewritten(1, "I keep a quiet office.", "harrow"))),
             Cast);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
-        var rewritePrompt = fixtures.Provider.Requests[3].Prompt.History[0].Text;
+        var rewritePrompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
 
         Assert.Contains("A line names its own speaker: \"Harrow\" in objective 1", rewritePrompt, StringComparison.Ordinal);
         Assert.Equal("harrow", chapter.Beats[0].Speaker);
@@ -231,10 +215,9 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
     {
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine),
                 RoundScriptedLlmProvider.Saying(BeatsWhereHarrowNamesHimself),
-                RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsWhereHarrowNamesHimself, 1)),
-                RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsWhereHarrowNamesHimself, 1))),
+                RoundScriptedLlmProvider.Saying(Rewritten(1, "Harrow keeps a quiet office.", "harrow")),
+                RoundScriptedLlmProvider.Saying(Rewritten(1, "Harrow keeps a quiet office.", "harrow"))),
             Cast);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
@@ -257,17 +240,17 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
 
         Assert.Equal("harrow", chapter.Beats[0].Speaker);
-        Assert.Equal(5, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
     public async Task TheChapterWriterIsToldToWriteCastLinesInTheirOwnWordsAndEveryLinePlainly()
     {
-        using var fixtures = new StoryFixtures(Scripted(BeatsToTheBeacon));
+        using var fixtures = new StoryFixtures(Scripted(Lines()));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        var prompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
         Assert.Contains("is that person's own words, in the first person", prompt, StringComparison.Ordinal);
         Assert.Contains(PlainWords.Rule, prompt, StringComparison.Ordinal);
@@ -276,12 +259,12 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
     [Fact]
     public async Task TheChapterWriterIsToldTheSpeakersAndThatAStockCoreDoesNotTellTheStory()
     {
-        using var fixtures = new StoryFixtures(Scripted(BeatsToTheBeacon));
+        using var fixtures = new StoryFixtures(Scripted(Lines()));
         fixtures.Director.Aboard = () => PersonaCatalog.Covas;
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        var prompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
         Assert.Contains("\"dock-hand\": Ren — A tired dock hand, short words.", prompt, StringComparison.Ordinal);
         Assert.Contains("a \"ship\" line is read by the narrator", prompt, StringComparison.Ordinal);
@@ -302,20 +285,21 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var handOff = Assert.Single(said, announcement => announcement.Key == $"{AdventureCallout.HandOffPrefix}{chapter}.0");
 
         Assert.Equal("Anyone. Please.", line.Text);
-        Assert.StartsWith("Someone there knows about the burst. Next: dock at Maren Anchorage", handOff.Text, StringComparison.Ordinal);
+        Assert.StartsWith("The broker's ledger points the Commander onward to part two. Next: land on Ossen's Lantern 2 a", handOff.Text, StringComparison.Ordinal);
         Assert.Equal(VoiceRole.Narrator, handOff.Voice);
     }
 
-    private const string OpeningWithARecording = """
-        {"opening": [
-          {"text": "This is Harrow. Two seven four, minus eleven, plus forty-one.", "speaker": "harrow"},
-          {"text": "The recorder plays the same four seconds on every start of the drive.", "speaker": "narrator"}
-        ], "reply": "Here it is.", "beats": [
-          {"title": "The Mayday", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Anyone. Please.", "speaker": "caller"},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name.", "speaker": "ship"},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
-        ]}
-        """;
+    private static readonly string OpeningWithARecording = PlannedChapterWorld.Lines(
+        ChapterPlanner.MostObjectives,
+        (number, objective) => objective["lines"] = number switch
+        {
+            1 => new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject { ["text"] = "Anyone. Please.", ["speaker"] = "caller" }),
+            2 => new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject { ["text"] = "To one name.", ["speaker"] = "ship" }),
+            _ => new System.Text.Json.Nodes.JsonArray(System.Text.Json.Nodes.JsonValue.Create("Scan it.")),
+        },
+        answer => answer["opening"] = new System.Text.Json.Nodes.JsonArray(
+            new System.Text.Json.Nodes.JsonObject { ["text"] = "This is Harrow. Two seven four, minus eleven, plus forty-one.", ["speaker"] = "harrow" },
+            new System.Text.Json.Nodes.JsonObject { ["text"] = "The recorder plays the same four seconds on every start of the drive.", ["speaker"] = "narrator" }));
 
     [Fact]
     public async Task AnOpeningCanPlayACastMembersRecordingAndThenNarrate()
@@ -329,7 +313,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.True(reopened.Poll());
         var chapter = reopened.Find("F1", key)!;
 
-        Assert.Equal(5, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
         Assert.Equal(["harrow", StorySpeaker.Narrator], chapter.OpeningLines.Select(line => line.Speaker));
         Assert.Equal("This is Harrow. Two seven four, minus eleven, plus forty-one.", chapter.Opening);
         Assert.Equal(StorySpeaker.Narrator, chapter.SpeakerOf(-1, 1));
@@ -359,16 +343,15 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var naming = OpeningWithARecording.Replace("This is Harrow. Two seven four", "Harrow left this. Two seven four", StringComparison.Ordinal);
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine),
                 RoundScriptedLlmProvider.Saying(naming),
-                RoundScriptedLlmProvider.Saying(Repairs.ReplacingOpening(naming)),
-                RoundScriptedLlmProvider.Saying(Repairs.ReplacingOpening(naming))),
+                RoundScriptedLlmProvider.Saying(RewrittenOpening("Harrow left this. Two seven four, minus eleven, plus forty-one.", "harrow")),
+                RoundScriptedLlmProvider.Saying(RewrittenOpening("Harrow left this. Two seven four, minus eleven, plus forty-one.", "harrow"))),
             Cast);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
-        var rewritePrompt = fixtures.Provider.Requests[3].Prompt.History[0].Text;
+        var rewritePrompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
 
         Assert.Contains("A line names its own speaker: \"Harrow\" in the opening", rewritePrompt, StringComparison.Ordinal);
         Assert.Equal(StorySpeaker.Narrator, chapter.OpeningSpeaker);
@@ -389,7 +372,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
 
         Assert.Equal("harrow", chapter.Beats[0].Speaker);
-        Assert.Equal(5, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -398,10 +381,9 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var possessive = BeatsWhereHarrowNamesHimself.Replace("Harrow keeps a quiet office.", "This is Harrow's last log.", StringComparison.Ordinal);
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine),
                 RoundScriptedLlmProvider.Saying(possessive),
-                RoundScriptedLlmProvider.Saying(Repairs.Replacing(possessive, 1)),
-                RoundScriptedLlmProvider.Saying(Repairs.Replacing(possessive, 1))),
+                RoundScriptedLlmProvider.Saying(Rewritten(1, "This is Harrow's last log.", "harrow")),
+                RoundScriptedLlmProvider.Saying(Rewritten(1, "This is Harrow's last log.", "harrow"))),
             Cast);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
@@ -414,18 +396,16 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
     [Fact]
     public async Task TheChapterWriterIsToldToPlayWhatACastMemberSaysRatherThanReportIt()
     {
-        using var fixtures = new StoryFixtures(Scripted(BeatsToTheBeacon));
+        using var fixtures = new StoryFixtures(Scripted(Lines()));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        var prompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
         Assert.Contains("that person's words are a line of their own, given to them; never report what they say in another speaker's line", prompt, StringComparison.Ordinal);
         Assert.Contains("The opening and each objective have one to three lines", prompt, StringComparison.Ordinal);
         Assert.Contains("\"opening\": [{\"text\": string, \"speaker\": string}]", prompt, StringComparison.Ordinal);
     }
 
-    private static RoundScriptedLlmProvider Scripted(string beats) => new(
-        RoundScriptedLlmProvider.Saying(Spine),
-        RoundScriptedLlmProvider.Saying(beats));
+    private static RoundScriptedLlmProvider Scripted(string lines) => new(RoundScriptedLlmProvider.Saying(lines));
 }

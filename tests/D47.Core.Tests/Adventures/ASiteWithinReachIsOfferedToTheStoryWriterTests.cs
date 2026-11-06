@@ -1,211 +1,150 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Storage;
+using D47.Core.Stories;
 using D47.Core.Tests.Conversation;
 using D47.Core.Tests.Journal;
+using D47.Core.Tests.Stories;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
 
 namespace D47.Core.Tests.Adventures;
 
-/// <summary>The writer is offered the unvisited Guardian sites and tourist beacons within reach, and a site objective must name one of them.</summary>
+/// <summary>The unvisited Guardian sites, tourist beacons and generation ships within reach are gathered for the chapter planner, which may stop a travelling chapter at one.</summary>
 public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
 {
-    private static readonly DateTimeOffset Now = new(2026, 8, 22, 12, 0, 0, TimeSpan.Zero);
-
     private const long FarReach = 2870300000002;
 
     private static readonly BodySummary GuardianBody = new()
     {
-        Name = "Dyson's Hollow 3 b",
-        SystemName = "Dyson's Hollow",
-        SystemAddress = AdventureFixtures.Hollow,
+        Name = "Fixture Beta 3 b",
+        SystemName = "Fixture Beta",
+        SystemAddress = 3,
         BodyId = 9,
-        Distance = 12,
+        Distance = 20,
+        Position = new StarPosition(120, 0, 0),
         IsLandable = true,
     };
 
     private static readonly string Tsv = string.Join(
         "\n",
         SignalIndex.Header,
-        $"{AdventureFixtures.Lantern}\tOssen's Lantern\t10\t-40\t125\tTouristBeacon\tLantern Watch\t2026-10-10",
+        "3\tFixture Beta\t120\t0\t0\tTouristBeacon\tLantern Watch\t2026-10-10",
         $"{FarReach}\tFar Reach\t900\t0\t0\tTouristBeacon\tToo Far\t2026-10-10") + "\n";
 
-    private const string GuardianBeats = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Ruins", "function": "setup", "kind": "site", "reason": "The survey flagged a structure there.", "system": "Dyson's Hollow", "body": "Dyson's Hollow 3 b", "filter": "guardian", "line": "Stone older than the colonies."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
+    private static readonly string GenerationTsv = string.Join(
+        "\n",
+        SignalIndex.Header,
+        "3\tFixture Beta\t120\t0\t0\tMegaship\tGeneration Ship Lycaon\t2026-10-01",
+        "3\tFixture Beta\t120\t0\t0\tMegaship\tGeneration Ship Lycaon\t2026-10-10",
+        "3\tFixture Beta\t120\t0\t0\tMegaship\tMegaship Cobra Wanderer\t2026-10-10") + "\n";
 
-    private const string UnlistedBeats = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Ruins", "function": "setup", "kind": "site", "reason": "The survey flagged a structure there.", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "filter": "guardian", "line": "Stone older than the colonies."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
-
-    [Fact]
-    public async Task BothPromptsListEachSiteAndTheSchemaOffersSite()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats));
-
-        await Generator(provider, bodies: [GuardianBody], index: Source(Tsv)).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        foreach (var request in new[] { provider.Requests[0], provider.Requests[2] })
-        {
-            var instruction = request.Prompt.History[0].Text;
-
-            Assert.Contains("Sites within reach", instruction);
-            Assert.Contains("- Guardian site: Dyson's Hollow 3 b, in Dyson's Hollow (12 ly)", instruction);
-            Assert.Contains("- Tourist beacon in Ossen's Lantern (", instruction);
-            Assert.DoesNotContain("Lantern Watch", instruction);
-            Assert.DoesNotContain("Too Far", instruction);
-        }
-
-        Assert.Contains("\"site\"", provider.Requests[2].ResponseSchema!.SchemaJson);
-        Assert.Contains("- \"site\":", provider.Requests[2].Prompt.History[0].Text);
-    }
+    private static readonly uint[] Seeds = [.. Enumerable.Range(1, 40).Select(seed => (uint)seed)];
 
     [Fact]
     public async Task OnlyALandableGuardianBodyIsOffered()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats));
-        var galaxy = new AdventureGeneratorTests.Galaxy { GuardianBodies = [GuardianBody with { Name = "Dyson's Hollow 4", IsLandable = false }, GuardianBody] };
+        var galaxy = new PlannedChapterWorld.Galaxy();
+        galaxy.GuardianBodies.AddRange([GuardianBody with { Name = "Fixture Beta 4", IsLandable = false }, GuardianBody]);
 
-        await Generator(provider, bodies: [], index: null, galaxy: galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        var places = await Places(galaxy, index: null);
 
         Assert.Contains(galaxy.BodyQueries, query => query.Signal == "Guardian" && query.Landable == true);
-
-        foreach (var request in new[] { provider.Requests[0], provider.Requests[2] })
-        {
-            var instruction = request.Prompt.History[0].Text;
-
-            Assert.Contains("- Guardian site: Dyson's Hollow 3 b,", instruction);
-            Assert.DoesNotContain("Dyson's Hollow 4", instruction);
-        }
+        var site = Assert.Single(places.Sites);
+        Assert.Equal((AdventureTrigger.GuardianSite, "Fixture Beta 3 b", 9), (site.Filter, site.Name, site.BodyId));
     }
 
     [Fact]
     public async Task WithOnlyNonLandableGuardianBodiesNoSiteIsOffered()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats));
+        var galaxy = new PlannedChapterWorld.Galaxy();
+        galaxy.GuardianBodies.Add(GuardianBody with { IsLandable = false });
 
-        await Generator(provider, bodies: [GuardianBody with { IsLandable = false }], index: null).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.All(provider.Requests, request => Assert.DoesNotContain("Sites within reach", request.Prompt.History[0].Text));
-        Assert.DoesNotContain("\"site\"", provider.Requests[2].ResponseSchema!.SchemaJson);
+        Assert.Empty((await Places(galaxy, index: null)).Sites);
     }
 
     [Fact]
-    public async Task WithNoSiteTheSectionAndTheKindAreLeftOutAndTheNotesSayWhy()
+    public async Task WithNoSiteTheIndexNoteIsLogged()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats));
+        var logger = new RecordingLogger();
 
-        var outcome = await Generator(provider, bodies: [], index: null).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        var places = await Places(new PlannedChapterWorld.Galaxy(), index: null, logger: logger);
 
-        Assert.All(provider.Requests, request => Assert.DoesNotContain("Sites within reach", request.Prompt.History[0].Text));
-        Assert.DoesNotContain("\"site\"", provider.Requests[2].ResponseSchema!.SchemaJson);
-        Assert.Contains("The signal index is off, so no tourist beacon or generation ship was offered.", outcome.Notes);
+        Assert.Empty(places.Sites);
+        Assert.Contains(logger.Lines, line => line.Contains("The signal index is off, so no tourist beacon or generation ship was offered.", StringComparison.Ordinal));
     }
 
     [Fact]
-    public async Task ADraftNamingAListedGuardianSiteStandsOnThatBody()
+    public async Task ATouristBeaconWithinReachIsOfferedAndOneBeyondItIsNot()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(GuardianBeats));
+        var places = await Places(new PlannedChapterWorld.Galaxy(), index: Source(Tsv));
 
-        var outcome = await Generator(provider, bodies: [GuardianBody], index: null).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        var trigger = outcome.Draft!.Beats[0].Trigger;
-        Assert.Equal(TriggerKind.Site, trigger.Kind);
-        Assert.Equal(AdventureTrigger.GuardianSite, trigger.Filter);
-        Assert.Equal(AdventureFixtures.Hollow, trigger.SystemAddress);
-        Assert.Equal(9, trigger.BodyId);
-        Assert.Equal("Dyson's Hollow 3 b", trigger.Body);
-        Assert.NotNull(outcome.Draft.Beats[0].Reason);
+        var site = Assert.Single(places.Sites);
+        Assert.Equal((AdventureTrigger.TouristSite, "Fixture Beta"), (site.Filter, site.System));
     }
-
-    [Fact]
-    public async Task ADraftNamingAListedTouristBeaconStandsOnItsSystemAndName()
-    {
-        const string beats = """
-            {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Watch", "function": "setup", "kind": "site", "reason": "A beacon there has been logging visitors.", "system": "Ossen's Lantern", "body": null, "filter": "tourist", "line": "It logs every visitor."},
-              {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-            ]}
-            """;
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(beats));
-
-        var outcome = await Generator(provider, bodies: [], index: Source(Tsv)).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        var trigger = outcome.Draft!.Beats[0].Trigger;
-        Assert.Equal(AdventureTrigger.TouristSite, trigger.Filter);
-        Assert.Equal(AdventureFixtures.Lantern, trigger.SystemAddress);
-        Assert.Null(trigger.SiteName);
-    }
-
-    private static readonly string GenerationTsv = string.Join(
-        "\n",
-        SignalIndex.Header,
-        $"{AdventureFixtures.Lantern}\tOssen's Lantern\t10\t-40\t125\tMegaship\tGeneration Ship Lycaon\t2026-10-01",
-        $"{AdventureFixtures.Lantern}\tOssen's Lantern\t10\t-40\t125\tMegaship\tGeneration Ship Lycaon\t2026-10-10",
-        $"{AdventureFixtures.Lantern}\tOssen's Lantern\t10\t-40\t125\tMegaship\tMegaship Cobra Wanderer\t2026-10-10") + "\n";
 
     [Fact]
     public async Task AGenerationShipIsListedOnceAndOtherMegashipsAreNot()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats));
+        var places = await Places(new PlannedChapterWorld.Galaxy(), index: Source(GenerationTsv));
 
-        await Generator(provider, bodies: [], index: Source(GenerationTsv)).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        foreach (var request in new[] { provider.Requests[0], provider.Requests[2] })
-        {
-            var instruction = request.Prompt.History[0].Text;
-
-            Assert.Single(instruction.Split('\n'), line => line.StartsWith("- Generation ship: Generation Ship Lycaon, in Ossen's Lantern", StringComparison.Ordinal));
-            Assert.DoesNotContain("Cobra Wanderer", instruction);
-        }
+        var site = Assert.Single(places.Sites);
+        Assert.Equal((AdventureTrigger.GenerationSite, "Generation Ship Lycaon"), (site.Filter, site.Name));
     }
 
     [Fact]
-    public async Task ADraftNamingAListedGenerationShipStandsOnItsSystemAndName()
+    public async Task ASiteInAVisitedSystemIsNotOffered()
     {
-        const string beats = """
-            {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Ship", "function": "setup", "kind": "site", "reason": "A generation ship drifts there.", "system": "Ossen's Lantern", "body": null, "filter": "generation", "line": "It has been travelling for centuries."},
-              {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-            ]}
-            """;
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(beats));
+        const string root = "C:/d47-test/visits";
+        var files = new MemoryFileSystem();
+        files.WriteBytes(
+            Path.Combine(root, "4700", VisitedStarsCache.FileName),
+            VisitedStarsCacheIsReadFromItsBytesTests.File(512, [(3L, 2, VisitedStarsCacheIsReadFromItsBytesTests.Second)]));
+        var galaxy = new PlannedChapterWorld.Galaxy();
+        galaxy.GuardianBodies.Add(GuardianBody);
 
-        var outcome = await Generator(provider, bodies: [], index: Source(GenerationTsv)).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        var places = await Places(galaxy, index: Source(Tsv), visited: new VisitedStarsBook(root, files));
 
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        var trigger = outcome.Draft!.Beats[0].Trigger;
-        Assert.Equal(AdventureTrigger.GenerationSite, trigger.Filter);
-        Assert.Equal(AdventureFixtures.Lantern, trigger.SystemAddress);
-        Assert.Equal("Generation Ship Lycaon", trigger.SiteName);
+        Assert.Empty(places.Sites);
+    }
+
+    [Fact]
+    public async Task WithTheIndexOffNothingIsRequestedFromIt()
+    {
+        var source = Source(Tsv);
+
+        await Places(new PlannedChapterWorld.Galaxy(), index: source, indexOn: false);
+
+        Assert.Equal(0, source.Requests);
+    }
+
+    [Fact]
+    public void AListedTouristBeaconStandsOnItsSystemWithNoName()
+    {
+        var site = new ChapterSite(AdventureTrigger.TouristSite, "Fixture Beta", 3, new StarPosition(120, 0, 0), "Lantern Watch");
+
+        Assert.All(Stops(site), step => Assert.Equal(new AdventureTrigger { Kind = TriggerKind.Site, Filter = AdventureTrigger.TouristSite, SystemAddress = 3, System = "Fixture Beta" }, step));
+    }
+
+    [Fact]
+    public void AListedGenerationShipStandsOnItsSystemAndName()
+    {
+        var site = new ChapterSite(AdventureTrigger.GenerationSite, "Fixture Beta", 3, new StarPosition(120, 0, 0), "Generation Ship Lycaon");
+
+        Assert.All(Stops(site), step => Assert.Equal(new AdventureTrigger { Kind = TriggerKind.Site, Filter = AdventureTrigger.GenerationSite, SystemAddress = 3, System = "Fixture Beta", SiteName = "Generation Ship Lycaon" }, step));
     }
 
     [Fact]
     public async Task TheFidelityCheckReadsAGuardianSiteObjectiveAsTheGuardianSiteAlone()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(GuardianBeats), Saying("""{"objections": []}"""));
+        var galaxy = new PlannedChapterWorld.Galaxy();
+        galaxy.GuardianBodies.Add(GuardianBody);
 
-        var outcome = await Generator(provider, bodies: [GuardianBody], index: Source(Tsv)).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-
-        var confirms = ConfirmsLines(provider.Requests[3].Prompt.History[0].Text).First();
+        var confirms = await FidelityConfirms(galaxy, index: null);
 
         Assert.Contains("Guardian site on that body", confirms);
         Assert.DoesNotContain("tourist", confirms, StringComparison.OrdinalIgnoreCase);
@@ -214,20 +153,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
     [Fact]
     public async Task TheFidelityCheckReadsATouristSiteObjectiveAsTheBeaconScanAlone()
     {
-        const string beats = """
-            {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Watch", "function": "setup", "kind": "site", "reason": "A beacon there has been logging visitors.", "system": "Ossen's Lantern", "body": null, "filter": "tourist", "line": "It logs every visitor."},
-              {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-            ]}
-            """;
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(beats), Saying("""{"objections": []}"""));
-
-        var outcome = await Generator(provider, bodies: [GuardianBody], index: Source(Tsv)).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-
-        var confirms = ConfirmsLines(provider.Requests[3].Prompt.History[0].Text).First();
+        var confirms = await FidelityConfirms(new PlannedChapterWorld.Galaxy(), index: Source(Tsv));
 
         Assert.Contains("tourist beacon in that system was scanned", confirms);
         Assert.DoesNotContain("Guardian", confirms);
@@ -243,79 +169,63 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
         Assert.Contains("\"tourist\" filter", section);
     }
 
-    private static IEnumerable<string> ConfirmsLines(string prompt) =>
-        prompt.Split('\n').Where(line => line.TrimStart().StartsWith("Confirms:", StringComparison.Ordinal));
-
-    [Fact]
-    public async Task ADraftNamingAnUnlistedSiteIsRefusedAndTheRepairNamesTheListedOnes()
+    private static IEnumerable<AdventureTrigger> Stops(ChapterSite site)
     {
-        var provider = new RoundScriptedLlmProvider(
-            Saying(AdventureGeneratorTests.Spine),
-            Saying(UnlistedBeats),
-            Saying(Repairs.Replacing(GuardianBeats, 1)));
+        var inputs = PlannerWorld.Inputs() with
+        {
+            Beacon = new AdventureBeacon(13872878396833, "IC 2391 Sector MX-T b3-6", EasierWith: 18),
+            Stage = StoryStage.ActOne,
+        };
+        var places = PlannerWorld.Places() with { Sites = [site] };
 
-        var outcome = await Generator(provider, bodies: [GuardianBody], index: null).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        var steps = Seeds.SelectMany(seed => PlannerWorld.Steps(PlannerWorld.Planned(inputs, places, seed))).Where(step => step.Kind == TriggerKind.Site).ToList();
 
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        var repair = provider.Requests[3].Prompt.History[0].Text;
-        Assert.Contains("Objective 1 (The Ruins) is a \"site\" objective that is not one of the sites listed within reach.", repair);
-        Assert.Contains("Guardian site Dyson's Hollow 3 b (\"filter\": \"guardian\", \"system\": \"Dyson's Hollow\", \"body\": \"Dyson's Hollow 3 b\")", repair);
-        Assert.Equal(TriggerKind.Site, outcome.Draft!.Beats[0].Trigger.Kind);
+        Assert.NotEmpty(steps);
+
+        return steps;
     }
 
-    [Fact]
-    public async Task ASiteInAVisitedSystemIsNotOffered()
+    private static AdventureAsk Travelling(int chapter) => PlannedChapterWorld.Ask(
+        new AdventureStory("fixture-story", "Fixture Story", "Public", "Hidden", Chapter: chapter, DaysRunning: 0, DaysSinceBeacon: null, Stage: "Act One")
+        {
+            Beacon = new AdventureBeacon(13872878396833, "IC 2391 Sector MX-T b3-6", EasierWith: 18),
+        });
+
+    /// <summary>The "Confirms" line the fidelity check is given for the site objective of a planned travelling chapter.</summary>
+    private static async Task<string> FidelityConfirms(PlannedChapterWorld.Galaxy galaxy, Index? index)
     {
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats));
-        const string root = "C:/d47-test/visits";
-        var files = new MemoryFileSystem();
-        files.WriteBytes(
-            Path.Combine(root, "1", VisitedStarsCache.FileName),
-            VisitedStarsCacheIsReadFromItsBytesTests.File(
-                512,
-                [
-                    (AdventureFixtures.Hollow, 2, VisitedStarsCacheIsReadFromItsBytesTests.Second),
-                    (AdventureFixtures.Lantern, 1, VisitedStarsCacheIsReadFromItsBytesTests.Fifth),
-                ]));
+        for (var chapter = 1; chapter <= 60; chapter++)
+        {
+            var ask = Travelling(chapter);
+            var places = await Generator(null, galaxy, index).ChapterPlacesAsync(ask, TestContext.Current.CancellationToken);
+            var plan = ChapterPlanner.Plan(ChapterInputs.Of(PlannedChapterWorld.State(), ask), places, AdventureGenerator.PlanSeed(ask)).Plan;
 
-        await Generator(provider, bodies: [GuardianBody], index: Source(Tsv), visited: new VisitedStarsBook(root, files))
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+            if (plan is null || !PlannerWorld.Steps(plan).Any(step => step.Kind == TriggerKind.Site))
+            {
+                continue;
+            }
 
-        Assert.All(provider.Requests, request => Assert.DoesNotContain("Sites within reach", request.Prompt.History[0].Text));
+            var provider = new RoundScriptedLlmProvider(Saying(PlannedChapterWorld.Lines(plan.Objectives.Count)), Saying(PlannedChapterWorld.NoObjections));
+            var outcome = await Generator(provider, galaxy, index).GenerateAsync(ask, new DateTimeOffset(2026, 11, 6, 12, 0, 0, TimeSpan.Zero), TestContext.Current.CancellationToken);
+
+            Assert.True(outcome.Succeeded, outcome.Refusal);
+
+            var prompt = provider.Requests.First(request => request.ResponseSchema?.Name == "story_fidelity").Prompt.History[0].Text;
+
+            return prompt.Split('\n')
+                .Where(line => line.TrimStart().StartsWith("Confirms:", StringComparison.Ordinal))
+                .First(line => line.Contains("site", StringComparison.OrdinalIgnoreCase) || line.Contains("beacon", StringComparison.OrdinalIgnoreCase));
+        }
+
+        throw new InvalidOperationException("No seed planned a site step.");
     }
 
-    [Fact]
-    public async Task WithTheIndexOffNothingIsRequestedFromIt()
+    private static Task<ChapterPlaces> Places(PlannedChapterWorld.Galaxy galaxy, Index? index, bool indexOn = true, VisitedStarsBook? visited = null, ILogger? logger = null) =>
+        Generator(null, galaxy, index, indexOn, visited, logger).ChapterPlacesAsync(PlannedChapterWorld.Ask(), TestContext.Current.CancellationToken);
+
+    private static AdventureGenerator Generator(ILlmProvider? provider, PlannedChapterWorld.Galaxy galaxy, Index? index, bool indexOn = true, VisitedStarsBook? visited = null, ILogger? logger = null)
     {
-        var source = Source(Tsv);
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats));
-
-        await Generator(provider, bodies: [], index: source, indexOn: false).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.Equal(0, source.Requests);
-    }
-
-    [Fact]
-    public void ADrawnChapterOffersSiteBesideItsSlots()
-    {
-        var kinds = StoryAnswer.Kinds([], beacon: false, reach: false, board: false, site: true, [TriggerKind.Bounty]);
-
-        Assert.Contains("site", kinds);
-        Assert.Contains("bounty", kinds);
-        Assert.DoesNotContain("sell", kinds);
-        Assert.DoesNotContain("site", StoryAnswer.Kinds([], beacon: false, reach: false, board: false, site: false, [TriggerKind.Bounty]));
-    }
-
-    private static AdventureGenerator Generator(
-        ILlmProvider provider,
-        IReadOnlyList<BodySummary> bodies,
-        Index? index,
-        bool indexOn = true,
-        VisitedStarsBook? visited = null,
-        AdventureGeneratorTests.Galaxy? galaxy = null)
-    {
-        var state = AdventureGeneratorTests.State(1, []);
-        galaxy ??= new AdventureGeneratorTests.Galaxy { GuardianBodies = bodies };
+        var state = PlannedChapterWorld.State();
 
         return new AdventureGenerator(
             () => provider,
@@ -328,12 +238,9 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
             () => null,
             null,
             null,
-            NullLogger.Instance,
+            logger ?? NullLogger.Instance,
             signalIndex: () => indexOn ? index : null,
-            visited: visited)
-        {
-            PlansShortStories = false,
-        };
+            visited: visited);
     }
 
     private static Index Source(string tsv) => new(SignalIndex.Read(new StringReader(tsv)));

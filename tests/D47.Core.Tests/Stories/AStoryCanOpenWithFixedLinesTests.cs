@@ -20,7 +20,7 @@ public sealed class AStoryCanOpenWithFixedLinesTests
     private static readonly StorySecret WithOpening = Secret with { Opening = Opening };
 
     private static RoundScriptedLlmProvider Picks(int picks) => new(
-        [.. Enumerable.Range(0, picks).SelectMany(_ => new[] { RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsElsewhere) })]);
+        [.. Enumerable.Range(0, picks).SelectMany(_ => new[] { RoundScriptedLlmProvider.Saying(Lines()) })]);
 
     [Trait("Category", "Integration")]
     [Fact]

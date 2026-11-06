@@ -22,11 +22,11 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
     private static IReadOnlyList<D47.Core.Conversation.LlmStreamEvent>[] Rounds(params string[] rounds) =>
         [.. rounds.Select(round => RoundScriptedLlmProvider.Saying(round))];
 
-    /// <summary>A story on its third chapter with that chapter's first objective done, so it waits on its last; <paramref name="after"/> are the rounds after.</summary>
+    /// <summary>A story on its third chapter with that chapter's first objective done; <paramref name="after"/> are the rounds after.</summary>
     private static async Task<(StoryFixtures Fixtures, string Chapter)> OnChapterThree(params string[] after)
     {
         var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(Rounds(
-            [Spine, BeatsToTheBeacon, NothingObjected, NextSpine, NextBeats, NothingObjected, NextSpine, NextBeats, NothingObjected, .. after])));
+            [Lines(), NothingObjected, NextLines, NothingObjected, NextLines, NothingObjected, .. after])));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
         fixtures.Finish("F1", fixtures.Stories.Current("F1")!.CurrentChapter!, Now);
@@ -38,8 +38,8 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
         Assert.Equal(3, story.Chapters.Count);
 
         var chapter = fixtures.Book.Store.Find("F1", story.CurrentChapter!)!;
-        fixtures.Book.Observe(AdventureFixtures.Jump(chapter.Beats[0].Trigger.SystemAddress!.Value, Third.AddMinutes(1)), "F1");
-        Assert.Equal(chapter.Beats.Count - 1, fixtures.Book.Standing("F1", chapter.Key)!.Current);
+        fixtures.Fire("F1", chapter.Key, chapter.Beats[0].Trigger, Third.AddMinutes(1));
+        Assert.Equal(1, fixtures.Book.Standing("F1", chapter.Key)!.Current);
 
         return (fixtures, chapter.Key);
     }
@@ -47,7 +47,7 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
     [Fact]
     public async Task TheChapterIsWrittenAgainAtTheSameNumberAndToldTheCommanderAskedForIt()
     {
-        var (fixtures, third) = await OnChapterThree(NextSpine, NextBeats, NothingObjected);
+        var (fixtures, third) = await OnChapterThree(NextLines, NothingObjected);
         using var _ = fixtures;
         var barsPath = Path.Combine(MemoryInstall.FakeRoot, "activity-bars.json");
         fixtures.Director.Bars = new ActivityBars(barsPath, fixtures.Files, NullLogger.Instance);
@@ -59,7 +59,7 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
 
         var marked = fixtures.Stories.Current("F1")!;
         Assert.Equal(third, marked.Rewrite!.Chapter);
-        Assert.Equal(["The Lantern Again"], marked.Rewrite.Done);
+        Assert.Equal(["Part one"], marked.Rewrite.Done);
         Assert.True(fixtures.Book.Store.Find("F1", third)!.IsSetAside);
         Assert.DoesNotContain(fixtures.Book.Drain(), moment => moment.IsFailure);
 
@@ -81,12 +81,12 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
         Assert.Equal(3, ask.Story!.Chapter);
         Assert.Null(ask.Failed);
         Assert.Equal(third, ask.SetAside!.Chapter.Previous.Key);
-        Assert.Equal(["The Lantern Again"], ask.SetAside.Done);
+        Assert.Equal(["Part one"], ask.SetAside.Done);
         Assert.Null(ask.SetAside.Words);
 
         var prompts = fixtures.Provider.Requests.Skip(requests).Select(request => request.Prompt.History[0].Text).ToList();
         Assert.Contains(prompts, prompt => prompt.Contains("The Commander asked for this chapter to be written again from where they are now", StringComparison.Ordinal));
-        Assert.Contains(prompts, prompt => prompt.Contains("Objectives already done: The Lantern Again", StringComparison.Ordinal));
+        Assert.Contains(prompts, prompt => prompt.Contains("Objectives already done: Part one", StringComparison.Ordinal));
         Assert.DoesNotContain(prompts, prompt => prompt.Contains("to go somewhere else", StringComparison.Ordinal));
         Assert.DoesNotContain(prompts, prompt => prompt.Contains("Why they set it aside", StringComparison.Ordinal));
 
@@ -96,7 +96,7 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
     [Fact]
     public async Task EachRewriteAtTheSameNumberGetsADifferentDraw()
     {
-        var (fixtures, _) = await OnChapterThree(NextSpine, NextBeats, NothingObjected, NextSpine, NextBeats, NothingObjected);
+        var (fixtures, _) = await OnChapterThree(NextLines, NothingObjected, NextLines, NothingObjected);
         using var __ = fixtures;
 
         Assert.Null(fixtures.Director.RewriteChapter("F1", Third.AddMinutes(2)));
@@ -120,7 +120,7 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
     [Fact]
     public async Task FinaleChapterOneKeepsItsDestination()
     {
-        var (fixtures, third) = await OnChapterThree(NextSpine, NextBeatsNamingTheEnd, NothingObjected);
+        var (fixtures, third) = await OnChapterThree(NextLines, NothingObjected);
         using var _ = fixtures;
         var destination = new AdventureDestination(1_234_567, "Ossen's Lantern", 9, "Ossen's Lantern 3 b");
         fixtures.Stories.Update("F1", Id, story => story with { FinaleFrom = 3, FinaleDestination = destination });
@@ -139,7 +139,7 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
     [Fact]
     public async Task ABeaconChapterIsWrittenAgainTowardTheBeaconNearestTheCommanderNow()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(Rounds(Spine, BeatsToTheBeacon, NothingObjected, NextSpine, NextBeatsWithABeacon, NothingObjected)));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(Rounds(Lines(), NothingObjected, NextLines, NothingObjected)));
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
         var first = fixtures.Stories.Current("F1")!.CurrentChapter!;
         Assert.Equal(BeaconAddress, fixtures.Asks[^1].Story!.Beacon!.SystemAddress);
@@ -166,7 +166,7 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
     [Fact]
     public async Task AShipThatCannotReachABeaconIsRefused()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(Rounds(Spine, BeatsToTheBeacon, NothingObjected)));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(Rounds(Lines(), NothingObjected)));
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
         var first = fixtures.Stories.Current("F1")!.CurrentChapter!;
         fixtures.Director.Game = () => Flying(7.6, scoop: false);
@@ -184,7 +184,7 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
     [Fact]
     public async Task ARewriteDuringADetourDropsTheDetourAndWritesTheChapterItSetAside()
     {
-        var (fixtures, third) = await OnChapterThree(NextSpine, NextBeats, NothingObjected);
+        var (fixtures, third) = await OnChapterThree(NextLines, NothingObjected);
         using var _ = fixtures;
         var arrive = new AdventureTrigger { Kind = TriggerKind.Arrive, System = "Detour Star", SystemAddress = DetourAddress };
         Assert.Null(fixtures.Director.SetDetour("F1", arrive, "Fit a scoop", "I need a fuel scoop first.", Third.AddMinutes(2)));
@@ -204,7 +204,7 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
         Assert.Equal(3, story.Chapters.Count);
         Assert.NotEqual(third, story.CurrentChapter);
         Assert.Equal(third, fixtures.Asks[^1].SetAside!.Chapter.Previous.Key);
-        Assert.Equal(["The Lantern Again"], fixtures.Asks[^1].SetAside!.Done);
+        Assert.Equal(["Part one"], fixtures.Asks[^1].SetAside!.Done);
         Assert.Null(fixtures.Asks[^1].SetAside!.Words);
     }
 
@@ -216,7 +216,7 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
         Assert.Null(fixtures.Director.RewriteChapter("F1", Third.AddMinutes(2)));
         var marker = fixtures.Stories.Current("F1")!.Rewrite!;
 
-        using var reopened = new StoryFixtures(new RoundScriptedLlmProvider(Rounds(NextSpine, NextBeats, NothingObjected)), reopening: fixtures);
+        using var reopened = new StoryFixtures(new RoundScriptedLlmProvider(Rounds(NextLines, NothingObjected)), reopening: fixtures);
         reopened.Book.Store.Poll();
 
         var reloaded = reopened.Stories.Current("F1")!.Rewrite!;
@@ -231,7 +231,7 @@ public sealed class AChapterCanBeWrittenAgainFromHereTests
         Assert.Equal(1, story.Rewrites);
         Assert.Equal(3, story.Chapters.Count);
         Assert.NotEqual(third, story.CurrentChapter);
-        Assert.Equal(["The Lantern Again"], reopened.Asks[^1].SetAside!.Done);
+        Assert.Equal(["Part one"], reopened.Asks[^1].SetAside!.Done);
     }
 
     [Fact]

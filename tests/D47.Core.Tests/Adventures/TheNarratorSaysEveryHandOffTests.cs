@@ -1,4 +1,4 @@
-using D47.Core.Audio;
+﻿using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Adventures;
 using D47.Core.Journal;
@@ -118,10 +118,10 @@ public sealed class TheNarratorSaysEveryHandOffTests
     [Fact]
     public void TheChapterPromptsReasonRuleAsksForThirdPersonNarration()
     {
-        using var stream = typeof(TheNarratorSaysEveryHandOffTests).Assembly.GetManifestResourceStream("Prompts.beats-short-story.txt")!;
+        using var stream = typeof(TheNarratorSaysEveryHandOffTests).Assembly.GetManifestResourceStream("Prompts.lines-short-story.txt")!;
         var prompt = new StreamReader(stream).ReadToEnd();
 
-        Assert.Contains("write it in the third person, about the Commander, and never as \"I\", \"me\" or \"we\"", prompt, StringComparison.Ordinal);
-        Assert.Contains("It never speaks to the Commander, and never offers or asks.", prompt, StringComparison.Ordinal);
+        Assert.Contains("write it in the third person, about the Commander, never as \"I\", \"me\" or \"we\"", prompt, StringComparison.Ordinal);
+        Assert.Contains("never speaks to the Commander, and never offers or asks.", prompt, StringComparison.Ordinal);
     }
 }

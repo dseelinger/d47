@@ -3,7 +3,6 @@ using D47.Core.Goals;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Stories;
-using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
 using D47.Core.Tests.Stories;
 using Xunit;
@@ -156,22 +155,13 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
     [Fact]
     public async Task TheWriterIsToldBothGoalsAndOneStoryLineForThem()
     {
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsWithTheTradeRankOnly),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsWithTheTradeRankOnly, 2)),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsWithTheTradeRankOnly, 2)));
         var trade = new GoalClimbStep("rank.trade", "Elite V in Trade")
         {
             Objective = new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Trade", Rank = 8 },
         };
 
-        var outcome = await Generate(provider, [CombatRank, trade]);
-        var prompt = provider.Requests[2].Prompt.History[0].Text;
+        var prompt = await LinesPrompt([CombatRank, trade], [PlannedChapterWorld.Bounty]);
 
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("has no objective for its Goals step: a \"rank\" objective for Combat Rank 2 of 13, Novice", outcome.Refusal);
-        Assert.DoesNotContain("for Trade Rank", outcome.Refusal);
         Assert.Contains("works the Commander's goal \"Elite V in Combat\"", prompt);
         Assert.Contains("works the Commander's goal \"Elite V in Trade\"", prompt);
         Assert.Contains("works both goals, \"Elite V in Combat\" and \"Elite V in Trade\", in one story line", prompt);
@@ -219,23 +209,6 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
         Assert.Contains("The drawn activities work the Commander's goal \"Elite V in Exploration\".", prompt);
         Assert.DoesNotContain("both goals", prompt);
     }
-
-    private const string BeatsWithTheTradeRankOnly = """
-        {"opening": "Again.", "reply": "Here.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "The Turn", "function": "turn", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
-          {"title": "The Bounties", "function": "resolution", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Paid."}
-        ]}
-        """;
-
-    private static Task<AdventureOutcome> Generate(RoundScriptedLlmProvider provider, IReadOnlyList<GoalClimbStep> goals, IReadOnlyList<DrawnActivity>? slots = null) =>
-        AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy()).GenerateAsync(
-            new AdventureAsk(
-                AdventureReach.Session,
-                AdventureLength.Short,
-                Story: new AdventureStory(Id, Card.Title, Card.Describe(), Secret.Secret, 3, 10, 5, Slots: slots, Goals: goals)),
-            Now,
-            CancellationToken.None);
 
     /// <summary>The prompt of the lines call that writes a planned chapter working <paramref name="goals"/> through <paramref name="slots"/>.</summary>
     private static async Task<string> LinesPrompt(IReadOnlyList<GoalClimbStep> goals, IReadOnlyList<DrawnActivity> slots)

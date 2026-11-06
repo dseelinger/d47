@@ -85,12 +85,14 @@ public sealed class AStoryCanSpendSpansInTheBlackTests
     [Fact]
     public async Task TheObjectivesPromptSaysTheChapterIsInTheBlackInPlaceOfTheBand()
     {
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsElsewhere));
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines()), RoundScriptedLlmProvider.Saying(NothingObjected));
 
-        await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
+        var outcome = await PlannedChapterWorld.Generator(provider)
+            .GenerateAsync(PlannedChapterWorld.Ask(PlannedChapterWorld.Story with { InTheBlack = true }), Now, CancellationToken.None);
 
-        var brief = provider.Requests[2].Prompt.History[0].Text;
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+
+        var brief = provider.Requests[0].Prompt.History[0].Text;
         Assert.Contains("This chapter of the story takes place in the black.", brief, StringComparison.Ordinal);
         Assert.DoesNotContain("outside the bubble", brief, StringComparison.Ordinal);
     }
@@ -128,7 +130,7 @@ public sealed class AStoryCanSpendSpansInTheBlackTests
 
     private static StoryFixtures FarOutWithAStoredTarget(StorySecret secret)
     {
-        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats)), secret);
+        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextLines)), secret);
         var game = Loaded(1_000_000);
 
         game.Apply(AdventureFixtures.Event(

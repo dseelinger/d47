@@ -1,8 +1,10 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Stories;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -22,22 +24,9 @@ public sealed class ALaterChapterHeadsForTheChosenDestinationTests
 
     private static readonly AdventureHeading Chosen = new(Target, 1234, There);
 
-    private static readonly AdventureStory Chapter = new("s", "S", "public", "hidden", 4, 10, 3) { Chosen = Chosen };
+    private static readonly AdventureStory Chapter = new("s", "S", "public", "hidden", 4, 10, 3, Slots: [PlannedChapterWorld.Bounty]) { Chosen = Chosen };
 
     private static readonly AdventureAsk ChosenAsk = new(Reach: AdventureReach.Anywhere, Story: Chapter);
-
-    private const string Spine = """
-        {"name": "The Long Way", "premise": "A way out.", "want": "To get there.",
-         "stake": "Whether the ship lasts.", "turn": "The road is shorter.", "ending": "It is done."}
-        """;
-
-    private const string Beats = """
-        {"opening": "A road.", "reply": "Here it is.", "beats": [
-          {"title": "The Arrival", "function": "setup", "kind": "arrive", "reason": "Someone there knows the way.", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Here."},
-          {"title": "The Turn", "function": "turn", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
-          {"title": "The End", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
-        ]}
-        """;
 
     [Fact]
     public void AChosenDestinationIsALegTheCommanderAskedFor()
@@ -68,43 +57,22 @@ public sealed class ALaterChapterHeadsForTheChosenDestinationTests
     }
 
     [Fact]
-    public async Task TheBeatsPromptSaysTheCommanderAskedToHeadForItAndListsItsPlaces()
+    public async Task TheChapterPromptSaysTheCommanderAskedToHeadForIt()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var provider = new RoundScriptedLlmProvider(Saying(PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives)), Saying(PlannedChapterWorld.NoObjections));
 
-        await Generator(provider, new Galaxy(), Here).GenerateAsync(ChosenAsk, Now, CancellationToken.None);
+        var outcome = await Generator(provider, new Galaxy(), Here).GenerateAsync(ChosenAsk, Now, CancellationToken.None);
 
-        var brief = provider.Requests[2].Prompt.History[0].Text;
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        var brief = provider.Requests.First(request => request.ResponseSchema?.Name == "story_lines").Prompt.History[0].Text;
         Assert.Contains($"The Commander asked to head for {Target}, 5000 light years away, and has not got there.", brief);
-        Assert.Contains($"light years nearer {Target}", brief);
-        Assert.Contains("Halfway House", brief);
         Assert.DoesNotContain("turned down", brief);
         Assert.DoesNotContain("outside the bubble", brief);
     }
 
-    [Fact]
-    public async Task ALastStopThreeQuartersOfAReachNearerPasses()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
-
-        var outcome = await Generator(provider, new Galaxy { FromTarget = 3500 }, Here).GenerateAsync(ChosenAsk, Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task ALastStopShortOfThatIsRefusedWithTheCommandersRequest()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats), Saying(Repairs.Replacing(Beats, 1)), Saying(Repairs.Replacing(Beats, 1)));
-
-        var outcome = await Generator(provider, new Galaxy { FromTarget = 4900 }, Here).GenerateAsync(ChosenAsk, Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains($"the Commander asked to head for {Target}", outcome.Refusal);
-    }
-
     private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, StarPosition at)
     {
+        galaxy.At = at;
         var store = new GameStateStore();
 
         foreach (var line in new[]
@@ -138,6 +106,9 @@ public sealed class ALaterChapterHeadsForTheChosenDestinationTests
     {
         public double FromTarget { get; init; } = 5000;
 
+        /// <summary>Where the Commander is; stations to stop at lie toward the target from it.</summary>
+        public StarPosition At { get; set; }
+
         public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             var named = string.Equals(query.ReferenceSystem, "Ossen's Lantern", StringComparison.OrdinalIgnoreCase)
@@ -150,8 +121,18 @@ public sealed class ALaterChapterHeadsForTheChosenDestinationTests
         public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(to == Target ? FromTarget : 12);
 
-        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(new StationSearchResult(query.ReferenceSystem, 1, [WaypointStation]));
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<StationSummary> found = query.ReferencePosition is { } waypoint
+                ? [WaypointStation with { Position = waypoint }]
+                : [.. Enumerable.Range(1, 6).Select(index => new StationSummary
+                {
+                    Name = $"Stop Port {index}", SystemName = $"Stop {index}", SystemAddress = 6000 + index, MarketId = 6100 + index,
+                    Position = new StarPosition(At.X + (index * 10), 0, 0), Type = "Coriolis Starport", LargePads = 2,
+                })];
+
+            return Task.FromResult(new StationSearchResult(query.ReferenceSystem, found.Count, found));
+        }
 
         private static readonly StationSummary WaypointStation = new()
         {

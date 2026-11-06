@@ -134,7 +134,7 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
 
     private static StoryFixtures Scanned()
     {
-        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats)));
+        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextLines)));
 
         fixtures.Stories.Save("F1", new Story
         {
@@ -197,6 +197,7 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
             using var fixtures = Scanned();
             fixtures.Director.Game = () => Flying();
             fixtures.Director.Galaxy = () => null;
+            fixtures.Director.Ratings = () => null;
             fixtures.Stories.Save("F1", fixtures.Stories.Current("F1")! with { Id = Id, PickedAt = Now.AddDays(-30 - attempt) });
 
             await fixtures.Director.WriteNextAsync("F1", Now, CancellationToken.None);
@@ -230,8 +231,7 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
 
         var galaxy = new Stations([]);
 
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextBeats)));
-        fixtures.WritesDrawnChapters = true;
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NewWords()), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections)));
         fixtures.Director.Game = () => Flying();
         fixtures.Director.Galaxy = () => galaxy;
         fixtures.SaveRunning(["chapter-one", Key], 2);

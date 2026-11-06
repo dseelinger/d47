@@ -53,28 +53,4 @@ public sealed class ARankObjectiveAcceptsANavyTests
         Assert.Equal("reach Federal Navy Rank 14 of 14, Admiral", new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Federation", Rank = 14 }.Describe());
     }
 
-    [Fact]
-    public async Task ANavyAlreadyAtTheTopIsRefusedNamingItsTopRank()
-    {
-        const string navy = """
-            {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Imperial Navy", "rank": 14, "line": "The freight is delivered."}
-            ]}
-            """;
-
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine),
-            RoundScriptedLlmProvider.Saying(navy),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(navy, 2)),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(navy, 2)));
-
-        var generator = AdventureGeneratorTests.Generator(
-            provider, new AdventureGeneratorTests.Galaxy(), 1, """{ "timestamp":"2026-08-22T11:00:02Z", "event":"Promotion", "Empire":14 }""");
-
-        var outcome = await generator.GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Accepted.AddHours(1), CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("where the Commander is already Imperial Navy Rank 14 of 14, King", outcome.Refusal);
-    }
 }

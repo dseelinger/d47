@@ -36,7 +36,6 @@ public enum AdventureLength
 /// <summary>
 /// What the Commander decided on the form, and the brief they spoke (Phase 47). <see cref="LastDraftRefused"/> is why
 /// the draft before this one could not be used, for the writer to avoid. <see cref="Draft"/> is this draft's number, for the log.
-/// When <see cref="Outline"/> is set, the spine step is skipped and the objectives are written against it.
 /// <see cref="Barred"/> are activities a short story may not ask for. <see cref="CrimeRefused"/> is set when the Commander's Crime rating is 0.
 /// When <see cref="Plan"/> is set, a planned chapter's words are written against it rather than a new plan.
 /// </summary>
@@ -51,7 +50,6 @@ public sealed record AdventureAsk(
     string? LastDraftRefused = null,
     StoryProgress? Progress = null,
     int Draft = 1,
-    AdventureOutline? Outline = null,
     IReadOnlyList<string>? Barred = null,
     AdventureChapter? Failed = null,
     AdventureSetAside? SetAside = null,
@@ -64,9 +62,6 @@ public sealed record AdventureAsk(
 /// chapter to be written again from where they are.
 /// </summary>
 public sealed record AdventureSetAside(AdventureChapter Chapter, IReadOnlyList<string> Done, string? Words, string? Here);
-
-/// <summary>A draft's name and spine, kept for the next draft to write its objectives against.</summary>
-public sealed record AdventureOutline(string Name, AdventureSpine Spine);
 
 /// <summary>
 /// A begun chapter whose beats from <see cref="From"/> on are to be written again; the beats before it are kept.
@@ -294,9 +289,6 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
     /// <summary>The step whose reply is <see cref="UnreadReply"/>.</summary>
     public string? UnreadStep { get; init; }
 
-    /// <summary>The name and spine of a failed draft whose spine was read; null when none was.</summary>
-    public AdventureOutline? Outline { get; init; }
-
     /// <summary>The plan a failed planned chapter's words were written against, for the next draft to keep; null for any other write.</summary>
     public ChapterPlan? Plan { get; init; }
 
@@ -375,10 +367,7 @@ public sealed partial class AdventureGenerator(
     VisitedStarsBook? visited = null,
     Func<string, string, bool>? writesStories = null)
 {
-    /// <summary>Output ceiling for the spine turn; adaptive thinking spends from it too.</summary>
-    public const int SpineOutputCeiling = 16000;
-
-    /// <summary>Output ceiling for each beats turn; adaptive thinking spends from it too.</summary>
+    /// <summary>Output ceiling for each lines, check and repair turn; adaptive thinking spends from it too.</summary>
     public const int BeatsOutputCeiling = 32000;
 
     /// <summary>Overrides the effort every call asks for; null uses the catalog's story effort for the model, else Medium.</summary>
@@ -406,9 +395,6 @@ public sealed partial class AdventureGenerator(
     /// <summary>The clock <see cref="CallLimit"/>, <see cref="FirstReplyLimit"/> and <see cref="SilenceLimit"/> run on.</summary>
     public TimeProvider Time { get; init; } = TimeProvider.System;
 
-    /// <summary>Whether an act-one chapter with no drawn activity is planned in code; when false it is written through the objectives call.</summary>
-    internal bool PlansActOne { get; set; } = true;
-
     /// <summary>The activities the Commander flying has changed away from often enough to bar them; a short story may not ask for one.</summary>
     public Func<IReadOnlyList<string>>? Barred { get; set; }
 
@@ -420,14 +406,6 @@ public sealed partial class AdventureGenerator(
 
     /// <summary>Output ceiling for the step that reads where a changed objective asks to go.</summary>
     public const int HeadingOutputCeiling = 4000;
-
-    /// <summary>Beats per structure, for a short story written through the spine and objectives calls.</summary>
-    public static (int Beats, string Sheet) Structure(AdventureLength length) => length switch
-    {
-        AdventureLength.Short => (3, "setup, turn, resolution"),
-        AdventureLength.Long => (8, "opening, setup, complication, hesitation, turn, setback, resolution, closing"),
-        _ => (5, "setup, complication, turn, setback, resolution"),
-    };
 
     /// <summary>The hop a long-haul story chapter may make: from the bubble to Sagittarius A*.</summary>
     public const double LongHaulLightYears = 30000;
@@ -478,7 +456,7 @@ public sealed partial class AdventureGenerator(
             // A throw counts as a failed draft, as it does for a chapter.
             try
             {
-                last = await GenerateAsync(ask with { LastDraftRefused = last?.ForNextDraft, Draft = draft, Outline = draft == 2 ? last?.Outline : null, Plan = last?.Plan ?? ask.Plan }, now, cancellationToken).ConfigureAwait(false);
+                last = await GenerateAsync(ask with { LastDraftRefused = last?.ForNextDraft, Draft = draft, Plan = last?.Plan ?? ask.Plan }, now, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
@@ -544,63 +522,7 @@ public sealed partial class AdventureGenerator(
             }
         }
 
-        if (ask.Rewrite is not null || (IsPlanned(ask) && (PlansActOne || !Travels(ask)) && (PlansShortStories || ask.Story is not null)))
-        {
-            return await PlannedAsync(ask, facts, now, notes, started, cancellationToken).ConfigureAwait(false);
-        }
-
-        var (notable, candidates) = await PlacesAsync(ask, facts, notes, cancellationToken).ConfigureAwait(false);
-
-        string name;
-        AdventureSpine spine;
-
-        if (ask.Outline is { } kept)
-        {
-            (name, spine) = (kept.Name, kept.Spine);
-        }
-        else
-        {
-            Enter(ask, WriteStage.Outline);
-            var spineAsked = await AskJsonAsync(SpineStep, SpineInstruction(ask, facts, notable, candidates), SpineOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
-
-            if (spineAsked.Json is null)
-            {
-                return Unanswered("The model did not write a story.", notes, started, spineAsked, cancellationToken);
-            }
-
-            var read = ReadSpine(spineAsked.Json, out var readName);
-
-            if (read is null || readName is null)
-            {
-                return Failed(null, "The model's answer was not a story I could read.", notes, started, spineAsked);
-            }
-
-            (name, spine) = (readName, read);
-
-            (name, spine, var unplain) = await PlainSpineAsync(ask, facts, notable, candidates, name, spine, cancellationToken).ConfigureAwait(false);
-
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return AdventureOutcome.Stopped;
-            }
-
-            if (unplain.Count > 0)
-            {
-                return Failed(null, NotPlain + string.Join(" ", unplain.Select(found => found.Describe())), notes, started, spineAsked);
-            }
-        }
-
-        Enter(ask, WriteStage.Objectives);
-        var beatsAsked = await AskJsonAsync(
-            BeatsStep,
-            BeatsInstruction(ask, facts, notable, candidates, name, spine, repair: null, draft: null, exchange: null, remark: null),
-            BeatsOutputCeiling,
-            ask.Progress,
-            cancellationToken).ConfigureAwait(false);
-
-        var finished = await FinishAsync(ask, facts, notable, candidates, name, spine, beatsAsked, previous: null, now, notes, started, cancellationToken).ConfigureAwait(false);
-
-        return finished.Draft is null && finished.Internal ? finished with { Outline = new AdventureOutline(name, spine) } : finished;
+        return await PlannedAsync(ask, facts, now, notes, started, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Reasoning with the AI about a draft before it is accepted.</summary>
@@ -616,51 +538,7 @@ public sealed partial class AdventureGenerator(
         ArgumentNullException.ThrowIfNull(ask);
         ArgumentException.ThrowIfNullOrWhiteSpace(remark);
 
-        if (PlansShortStories && ask.Story is null)
-        {
-            return await ReviseShortAsync(draft, ask, exchange, remark, now, cancellationToken).ConfigureAwait(false);
-        }
-
-        var (opened, refused) = await OpenAsync(ask, cancellationToken).ConfigureAwait(false);
-
-        if (opened is null)
-        {
-            return refused!;
-        }
-
-        var (started, facts, notes) = opened;
-        var (notable, candidates) = await PlacesAsync(ask, facts, notes, cancellationToken).ConfigureAwait(false);
-
-        Enter(ask, WriteStage.Objectives);
-        var asked =await AskJsonAsync(
-            BeatsStep,
-            BeatsInstruction(ask, facts, notable, candidates, draft.Name, draft.Spine ?? new AdventureSpine(), repair: null, draft, exchange, remark),
-            BeatsOutputCeiling,
-            ask.Progress,
-            cancellationToken).ConfigureAwait(false);
-
-        // A revision may rename and respine; the beats turn's answer carries the whole draft.
-        var json = asked.Json;
-        var revisedSpine = json is null ? null : ReadSpine(json, out var revisedName);
-        var spine = revisedSpine is { IsEmpty: false } ? revisedSpine : draft.Spine ?? new AdventureSpine();
-        var name = json is not null && ReadSpine(json, out var renamed) is not null && renamed is { Length: > 0 } ? renamed : draft.Name;
-
-        if (revisedSpine is { IsEmpty: false } || !string.Equals(name, draft.Name, StringComparison.Ordinal))
-        {
-            (name, spine, var unplain) = await PlainSpineAsync(ask, facts, notable, candidates, name, spine, cancellationToken).ConfigureAwait(false);
-
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return AdventureOutcome.Stopped;
-            }
-
-            if (unplain.Count > 0)
-            {
-                return Failed(null, NotPlain + string.Join(" ", unplain.Select(found => found.Describe())), notes, started, asked);
-            }
-        }
-
-        return await FinishAsync(ask, facts, notable, candidates, name, spine, asked, previous: draft, now, notes, started, cancellationToken).ConfigureAwait(false);
+        return await ReviseShortAsync(draft, ask, exchange, remark, now, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>A write begun: when it started, the facts it is written from, and its notes.</summary>
@@ -685,361 +563,15 @@ public sealed partial class AdventureGenerator(
         return (new Opened(started, await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false), []), null);
     }
 
-    /// <summary>The notable places, the story's own sights where it has them, and the candidates.</summary>
-    private async Task<(IReadOnlyList<NotablePlace> Notable, Candidates Candidates)> PlacesAsync(
-        AdventureAsk ask, Facts facts, List<string> notes, CancellationToken cancellationToken) =>
-        (ask.Story?.Sights is { Count: > 0 } sights ? sights : await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false),
-         await CandidatesAsync(ask, facts, cancellationToken, notes).ConfigureAwait(false));
-
-    private async Task<AdventureOutcome> FinishAsync(
-        AdventureAsk ask,
-        Facts facts,
-        IReadOnlyList<NotablePlace> notable,
-        Candidates candidates,
-        string name,
-        AdventureSpine spine,
-        Asked beatsAsked,
-        Adventure? previous,
-        DateTimeOffset now,
-        List<string> notes,
-        long started,
-        CancellationToken cancellationToken)
-    {
-        Enter(ask, WriteStage.Checking);
-
-        if (beatsAsked.Json is null)
-        {
-            return Unanswered("The model did not write the objectives.", notes, started, beatsAsked, cancellationToken);
-        }
-
-        var read = ReadBeats(beatsAsked.Json);
-
-        if (read is null || read.Beats.Count == 0)
-        {
-            return Failed(null, "The model's objectives were not something I could read.", notes, started, beatsAsked);
-        }
-
-        // Objectives that do not head for the place the Commander asked for are held to no leg.
-        if (ask.Rewrite is { Heading: not null } heading && !read.Heading)
-        {
-            ask = ask with { Rewrite = heading with { Heading = null } };
-        }
-
-        Asked? unusedRepair = null;
-        var offset = ask.Rewrite?.From ?? 0;
-        var passed = new HashSet<int>();
-        var raised = new Dictionary<int, List<string>>();
-
-        string? outage = null;
-        var objected = Check.Places;
-        var plainPassed = new HashSet<int>();
-        var unplainRaised = new Dictionary<int, List<string>>();
-        var rewrittenByCheck = new HashSet<int>();
-        var checkRewrites = 0;
-        var resolved = await HoldToWhatTheyConfirmAsync(await CheckAsync(read).ConfigureAwait(false), read).ConfigureAwait(false);
-
-        if (cancellationToken.IsCancellationRequested)
-        {
-            return AdventureOutcome.Stopped;
-        }
-
-        if (outage is not null)
-        {
-            return GalaxyDown(outage, notes, started);
-        }
-
-        LogRefusals(ask, "first", beatsAsked.Step, resolved.Refusals);
-
-        if (resolved.Refusals.Count > 0)
-        {
-            notes.Add($"Rewrote {resolved.Refusals.Count} objective(s) the first draft could not stand on.");
-        }
-
-        // The objectives that stood are kept; only the refused ones go back through the turn, before the Commander sees anything.
-        // A round is a call to the writer. The plain check's own rewrite is put in place once per part between them, and a part
-        // it objects to again goes to the writer.
-        var placeRounds = 0;
-        var fidelityRounds = 0;
-        var plainRounds = 0;
-
-        while (resolved.Refusals.Count > 0 && (objected switch
-        {
-            Check.Plain => plainRounds < PlainRepairRounds,
-            Check.Fidelity => fidelityRounds < FidelityRepairRounds,
-            _ => placeRounds < RepairRounds,
-        }))
-        {
-            var kind = objected;
-            var rewritten = new HashSet<int>();
-
-            if (kind == Check.Plain)
-            {
-                var refusedAgain = resolved.Refusals.Where(refusal => rewrittenByCheck.Contains(PartOf(refusal))).ToList();
-                var (swapped, changed, left) = Rewritten(read, [.. resolved.Refusals.Where(refusal => !rewrittenByCheck.Contains(PartOf(refusal)))]);
-
-                left = [.. refusedAgain, .. left];
-
-                if (changed.Count > 0)
-                {
-                    var refusedBefore = resolved.Refusals;
-
-                    read = swapped;
-                    rewrittenByCheck.UnionWith(changed);
-                    rewritten.UnionWith(changed.Where(index => index >= 0));
-                    passed.ExceptWith(rewritten.SelectMany(index => Group(read.Beats, index)));
-                    plainPassed.ExceptWith(changed);
-
-                    if (left.Count == 0)
-                    {
-                        resolved = await HoldToWhatTheyConfirmAsync(Blame(await CheckAsync(read).ConfigureAwait(false), refusedBefore, rewritten, offset), read).ConfigureAwait(false);
-
-                        if (cancellationToken.IsCancellationRequested)
-                        {
-                            return AdventureOutcome.Stopped;
-                        }
-
-                        if (outage is not null)
-                        {
-                            return GalaxyDown(outage, notes, started);
-                        }
-
-                        LogRefusals(ask, $"plain rewrite {(++checkRewrites).ToString(CultureInfo.InvariantCulture)}", PlainStep, resolved.Refusals);
-
-                        continue;
-                    }
-
-                    resolved = resolved with { Refusals = left };
-                }
-            }
-
-            var round = kind switch { Check.Plain => ++plainRounds, Check.Fidelity => ++fidelityRounds, _ => ++placeRounds };
-            var repair = new Repair(read.Beats, resolved.Refusals, offset);
-
-            repair = repair with { Earlier = Earlier(unplainRaised, repair.Replaceable.Concat(repair.Opening ? [-1] : []), resolved.Refusals) };
-            var again = await AskJsonAsync(
-                RepairStep,
-                BeatsInstruction(ask, facts, notable, candidates, name, spine, repair, draft: null, ask.Rewrite?.Exchange, ask.Rewrite?.Remark),
-                BeatsOutputCeiling,
-                ask.Progress,
-                cancellationToken).ConfigureAwait(false);
-
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return AdventureOutcome.Stopped;
-            }
-
-            if ((again.Json is null ? null : ReadReplacements(again.Json)) is not { } answer)
-            {
-                unusedRepair = again;
-
-                if (again.Reply is { CutOff: { AtContext: true } } or { ContextExceeded: true })
-                {
-                    break;
-                }
-
-                continue;
-            }
-
-            unusedRepair = null;
-            var (spliced, replaced) = repair.Splice(read, answer);
-            var before = resolved.Refusals;
-
-            read = spliced;
-            passed.ExceptWith(replaced.SelectMany(index => Group(read.Beats, index)));
-            plainPassed.ExceptWith(replaced.SelectMany(index => Group(read.Beats, index)));
-            rewrittenByCheck.ExceptWith(replaced);
-
-            if (repair.Opening)
-            {
-                plainPassed.Remove(-1);
-                rewrittenByCheck.Remove(-1);
-            }
-
-            resolved = await HoldToWhatTheyConfirmAsync(Blame(await CheckAsync(read).ConfigureAwait(false), before, replaced.Union(rewritten).ToHashSet(), offset), read).ConfigureAwait(false);
-
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return AdventureOutcome.Stopped;
-            }
-
-            if (outage is not null)
-            {
-                return GalaxyDown(outage, notes, started);
-            }
-
-            LogRefusals(ask, $"{kind switch { Check.Plain => "plain repair", Check.Fidelity => "fidelity repair", _ => "repair" }} {round.ToString(CultureInfo.InvariantCulture)}", again.Step, resolved.Refusals);
-        }
-
-        if (resolved.Refusals.Count > 0
-            && resolved.Refusals.All(refusal => refusal.Plain && refusal.Unplain.Count > 0 && refusal.Unplain.All(found => found.HasRewrite))
-            && Rewritten(read, resolved.Refusals) is (var lastRead, _, { Count: 0 }))
-        {
-            LogRefusals(ask, "plain rewrites put in place after the last round", PlainStep, resolved.Refusals);
-            read = lastRead;
-            resolved = await CheckAsync(read).ConfigureAwait(false);
-
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return AdventureOutcome.Stopped;
-            }
-
-            if (outage is not null)
-            {
-                return GalaxyDown(outage, notes, started);
-            }
-        }
-
-        resolved = KeepWhatTheRewriteKept(NarrateSelfNaming(resolved, ask));
-
-        if (resolved.Refusals.Count > 0)
-        {
-            return Failed(
-                read.Reply,
-                (resolved.Refusals.Any(refusal => refusal.Plain)
-                    ? NotPlain
-                    : resolved.Refusals.Any(refusal => refusal.Text.StartsWith(UnknownSpeaker, StringComparison.Ordinal))
-                    ? "The story cannot stand: "
-                    : resolved.Refusals.Any(refusal => refusal.Text.StartsWith(Unconfirmed, StringComparison.Ordinal))
-                        ? "The story states what its objectives do not confirm: "
-                        : "The story names places that cannot stand: ") + string.Join(" ", resolved.Refusals.Select(refusal => refusal.Text)),
-                notes,
-                started,
-                unusedRepair);
-        }
-
-        var adventure = ask.Rewrite is { } rewrite
-            ? rewrite.Chapter with { Beats = [.. rewrite.Chapter.Beats.Take(rewrite.From), .. Grouped(resolved)] }
-            : new Adventure
-            {
-                Key = AdventureValidation.Key(name),
-                Name = name.Trim(),
-                Source = AdventureSource.Generated,
-                Written = now,
-                WrittenBy = personaId(),
-                Spine = spine,
-                OpeningLines = resolved.Opening,
-                Beats = Grouped(resolved),
-                Previous = previous is null ? null : previous with { Previous = null },
-                Follows = ask.Chapter?.Previous.Key ?? previous?.Follows,
-                StoryId = ask.Story?.Id ?? previous?.StoryId,
-                Aboard = ask.Story is { } story ? Aboard(story, read.Aboard) : null,
-                OpeningBoards = read.OpeningBoards,
-                OpeningLeaves = read.OpeningLeaves,
-            };
-
-        if (ask.Story?.Sights is { Count: > 0 } drawnSights)
-        {
-            adventure = adventure with { Sight = SightSeen(drawnSights, adventure.Beats) ?? adventure.Sight };
-        }
-
-        if (ask.Story is { } placing)
-        {
-            adventure = Stories.StoryAboard.Placed(adventure, placing.Due ?? []);
-        }
-
-        if (AdventureValidation.Problems(adventure) is { Count: > 0 } problems)
-        {
-            return Failed(read.Reply, string.Join(" ", problems), notes, started);
-        }
-
-        return new AdventureOutcome(adventure, read.Reply, null, notes)
-        {
-            Destination = ask.Story?.FinaleChapter == 1 ? resolved.Destination : null,
-            Heading = ask.Rewrite?.Heading,
-        };
-
-        async Task<Resolved> CheckAsync(ReadAnswer answer)
-        {
-            var dryRun = await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, candidates.Sites, candidates.InBand, candidates.Pull, candidates.Base, cancellationToken).ConfigureAwait(false);
-
-            outage ??= dryRun.Outage;
-            return Speakers(dryRun, answer, ask);
-        }
-
-        // Asked only of a draft the dry run found nothing in; a refused objective is written again before its lines are read.
-        // An objective the check has passed is not refused by a later round unless its group was replaced since.
-        // Sets objected when the refusals returned are the check's objections.
-        async Task<Resolved> HoldToWhatTheyConfirmAsync(Resolved dryRun, ReadAnswer answer)
-        {
-            objected = Check.Places;
-
-            if (dryRun.Refusals.Count > 0 || cancellationToken.IsCancellationRequested)
-            {
-                return dryRun;
-            }
-
-            var objections = (await FidelityAsync(ask, facts, spine, answer.Beats, offset, candidates.Anarchy, cancellationToken).ConfigureAwait(false))
-                .Where(objection => !objection.Objectives.Any(passed.Contains))
-                .Select(objection =>
-                {
-                    var index = objection.Objectives[0];
-                    var reasons = objection.Reasons ?? [];
-                    var before = raised.TryGetValue(index, out var known) ? known : [];
-                    var earlier = before.Where(reason => !reasons.Contains(reason)).ToList();
-
-                    raised[index] = [.. before, .. reasons.Where(reason => !before.Contains(reason))];
-
-                    return earlier.Count == 0
-                        ? objection
-                        : objection with { Text = Unconfirm(index + offset + 1, answer.Beats[index].Title, reasons, earlier) };
-                })
-                .ToList();
-
-            passed.UnionWith(Enumerable.Range(0, answer.Beats.Count).Except(objections.SelectMany(objection => objection.Objectives)));
-
-            if (objections.Count > 0)
-            {
-                objected = Check.Fidelity;
-
-                return dryRun with { Refusals = objections };
-            }
-
-            var parts = BeatParts(answer.Opening, answer.Beats, offset);
-            var unplain = (await PlainAsync(ask, parts, cancellationToken).ConfigureAwait(false))
-                .Select(found => (found, part: parts.First(part => part.Name == found.Part)))
-                .Where(pair => !plainPassed.Contains(pair.part.Index!.Value))
-                .GroupBy(pair => pair.part.Index!.Value)
-                .Select(group => new Refusal(
-                    $"{(group.Key < 0 ? "The opening" : $"Objective {offset + group.Key + 1} ({answer.Beats[group.Key].Title})")} is not plain: {string.Join(" ", group.Select(pair => pair.found.Describe()))}",
-                    group.Key < 0 ? [] : [group.Key])
-                {
-                    Plain = true,
-                    Opening = group.Key < 0,
-                    Unplain = [.. group.Select(pair => pair.found)],
-                })
-                .ToList();
-
-            plainPassed.UnionWith(parts.Select(part => part.Index!.Value).Except(unplain.SelectMany(refusal => refusal.Opening ? [-1] : refusal.Objectives)));
-            Raise(unplainRaised, unplain);
-
-            if (unplain.Count > 0)
-            {
-                objected = Check.Plain;
-
-                return dryRun with { Refusals = unplain };
-            }
-
-            return dryRun;
-        }
-    }
-
     /// <summary>
     /// One call reading each objective's lines, and the ending against the last objective, against what its trigger confirms;
     /// a refusal for each objective whose lines state something else. A reply that cannot be read objects to nothing.
-    /// When <paramref name="grouped"/>, an objective is numbered with its further steps under it, as a planned chapter numbers them.
+    /// An objective is numbered with its further steps under it.
     /// </summary>
-    private async Task<IReadOnlyList<Refusal>> FidelityAsync(
-        AdventureAsk ask,
-        Facts facts,
-        AdventureSpine spine,
-        IReadOnlyList<ReadBeat> beats,
-        int offset,
-        IReadOnlyList<SystemSummary> anarchy,
-        CancellationToken cancellationToken,
-        bool grouped = false)
+    private async Task<IReadOnlyList<Refusal>> FidelityAsync(AdventureAsk ask, Facts facts, AdventureSpine spine, IReadOnlyList<ReadBeat> beats, CancellationToken cancellationToken)
     {
         var heads = Heads(beats);
-        var asked = await AskJsonAsync(FidelityStep, FidelityInstruction(facts, spine, beats, offset, ask.Story is not null, anarchy, grouped), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+        var asked = await AskJsonAsync(FidelityStep, FidelityInstruction(facts, spine, beats, ask.Story is not null), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
 
         if (asked.Json is null)
         {
@@ -1059,8 +591,8 @@ public sealed partial class AdventureGenerator(
 
             foreach (var objection in list.EnumerateArray())
             {
-                var number = (Integer(objection, "objective") ?? 0) - offset - 1;
-                var index = grouped ? (number >= 0 && number < heads.Count ? heads[number] : -1) : number;
+                var number = (Integer(objection, "objective") ?? 0) - 1;
+                var index = number >= 0 && number < heads.Count ? heads[number] : -1;
 
                 if (index < 0 || index >= beats.Count || !Checked(objection, beats, index))
                 {
@@ -1081,7 +613,7 @@ public sealed partial class AdventureGenerator(
             }
 
             return reasons
-                .Select(pair => new Refusal(Unconfirm((grouped ? heads.IndexOf(pair.Key) : pair.Key) + offset + 1, beats[pair.Key].Title, pair.Value, []), [pair.Key]) { Reasons = pair.Value })
+                .Select(pair => new Refusal(Unconfirm(heads.IndexOf(pair.Key) + 1, beats[pair.Key].Title, pair.Value, []), [pair.Key]) { Reasons = pair.Value })
                 .ToList();
         }) ?? [];
     }
@@ -1115,7 +647,7 @@ public sealed partial class AdventureGenerator(
     /// <summary>The index of each objective's first step in <paramref name="beats"/>, in order.</summary>
     private static List<int> Heads(IReadOnlyList<ReadBeat> beats) => [.. Enumerable.Range(0, beats.Count).Where(index => !beats[index].Continues)];
 
-    private static StoryCall FidelityInstruction(Facts facts, AdventureSpine spine, IReadOnlyList<ReadBeat> beats, int offset, bool story, IReadOnlyList<SystemSummary> anarchy, bool grouped = false)
+    private static StoryCall FidelityInstruction(Facts facts, AdventureSpine spine, IReadOnlyList<ReadBeat> beats, bool story)
     {
         var text = new StringBuilder();
 
@@ -1130,17 +662,6 @@ public sealed partial class AdventureGenerator(
             + "and the game state below does not show. A line that only sets a scene or a mood states nothing to check.");
         text.AppendLine();
         text.Append(facts.Describe());
-
-        if (anarchy.Count > 0)
-        {
-            text.AppendLine("Anarchy systems within reach, from the galaxy search, which a line may state are Anarchy systems:");
-
-            foreach (var system in anarchy)
-            {
-                text.Append("- ").AppendLine(system.Name);
-            }
-        }
-
         text.AppendLine();
         text.AppendLine(
             "A line that tells the Commander which missions to take, such as a mission whose target settlement is run by an Anarchy faction, "
@@ -1152,41 +673,21 @@ public sealed partial class AdventureGenerator(
 
         var heads = Heads(beats);
 
-        foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
+        foreach (var (head, number) in heads.Select((head, number) => (head, number)))
         {
-            if (grouped)
+            var beat = beats[head];
+            var further = beats.Skip(head + 1).TakeWhile(next => next.Continues).ToList();
+
+            text.AppendLine($"{number + 1}. {beat.Title}{(number == heads.Count - 1 ? " (the last objective: its lines are the ending)" : string.Empty)} — {beat.Describe()}");
+            text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind, beat.Trigger.Filter, story, beat.Written().System, beat.Trigger.MissionFamily)}");
+
+            foreach (var step in further)
             {
-                if (beat.Continues)
-                {
-                    continue;
-                }
-
-                var number = heads.IndexOf(index);
-                var further = beats.Skip(index + 1).TakeWhile(next => next.Continues).ToList();
-
-                text.AppendLine($"{offset + number + 1}. {beat.Title}{(number == heads.Count - 1 ? " (the last objective: its lines are the ending)" : string.Empty)} — {beat.Describe()}");
-                text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind, beat.Filter, story, beat.Written().System, beat.MissionFamily)}");
-
-                foreach (var step in further)
-                {
-                    text.AppendLine($"   Then — {step.Describe()}");
-                    text.AppendLine($"   Confirms: {TriggerConfirms.Of(step.Kind, step.Filter, story, step.Written().System, step.MissionFamily)}");
-                }
-
-                text.AppendLine($"   Lines{(further.Count > 0 ? " (spoken after its last step)" : string.Empty)}: {Quoted(beat.Lines)}");
-                continue;
+                text.AppendLine($"   Then — {step.Describe()}");
+                text.AppendLine($"   Confirms: {TriggerConfirms.Of(step.Kind, step.Trigger.Filter, story, step.Written().System, step.Trigger.MissionFamily)}");
             }
 
-            var last = index == beats.Count - 1 ? " (the last objective: its lines are the ending)" : string.Empty;
-
-            text.AppendLine($"{offset + index + 1}. {beat.Title}{last} — {beat.Describe()}{(beat.Continues ? " (a further step of the objective above)" : string.Empty)}");
-            text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind, beat.Filter, story, beat.Written().System, beat.MissionFamily)}");
-
-            if (!beat.Continues)
-            {
-                var spoken = beats.Skip(index + 1).TakeWhile(next => next.Continues).Count();
-                text.AppendLine($"   Lines{(spoken > 0 ? $" (spoken after objective {offset + index + spoken + 1})" : string.Empty)}: {Quoted(beat.Lines)}");
-            }
+            text.AppendLine($"   Lines{(further.Count > 0 ? " (spoken after its last step)" : string.Empty)}: {Quoted(beat.Lines)}");
         }
 
         text.AppendLine();
@@ -1201,7 +702,7 @@ public sealed partial class AdventureGenerator(
         return new StoryCall(text.ToString(), StoryAnswer.FidelitySchema());
     }
 
-        /// <summary>Which check raised the refusals a repair round answers; each has its own round count.</summary>
+    /// <summary>Which check raised the refusals a repair round answers; each has its own round count.</summary>
     private enum Check
     {
         Places,
@@ -1233,8 +734,8 @@ public sealed partial class AdventureGenerator(
         new("ending", spine.Ending ?? string.Empty),
     ];
 
-    /// <summary>The opening's and each objective's wording; when <paramref name="grouped"/>, one part per objective holds its further steps too.</summary>
-    private static List<PlainPart> BeatParts(IReadOnlyList<AdventureLine> opening, IReadOnlyList<ReadBeat> beats, int offset, bool grouped = false)
+    /// <summary>The opening's and each objective's wording, one part per objective holding its further steps too.</summary>
+    private static List<PlainPart> BeatParts(IReadOnlyList<AdventureLine> opening, IReadOnlyList<ReadBeat> beats)
     {
         var parts = new List<PlainPart>();
 
@@ -1243,51 +744,19 @@ public sealed partial class AdventureGenerator(
             parts.Add(new PlainPart("opening", string.Join(" ", opening.Select(line => line.Text)), -1));
         }
 
-        if (grouped)
+        foreach (var (head, number) in Heads(beats).Select((head, number) => (head, number)))
         {
-            var heads = Heads(beats);
+            var beat = beats[head];
+            var text = new StringBuilder()
+                .Append("Title: ").Append(beat.Title).Append(". Lines: ").Append(string.Join(" ", beat.Lines.Select(line => line.Text)))
+                .Append(" Reason: ").Append(beat.Reason).Append(" Task: ").Append(beat.Describe());
 
-            foreach (var (head, number) in heads.Select((head, number) => (head, number)))
+            foreach (var step in beats.Skip(head + 1).TakeWhile(next => next.Continues))
             {
-                var beat = beats[head];
-                var text = new StringBuilder()
-                    .Append("Title: ").Append(beat.Title).Append(". Lines: ").Append(string.Join(" ", beat.Lines.Select(line => line.Text)))
-                    .Append(" Reason: ").Append(beat.Reason).Append(" Task: ").Append(beat.Describe());
-
-                foreach (var step in beats.Skip(head + 1).TakeWhile(next => next.Continues))
-                {
-                    text.Append(", then ").Append(step.Describe());
-                }
-
-                parts.Add(new PlainPart($"objective {(offset + number + 1).ToString(CultureInfo.InvariantCulture)}", text.ToString(), head));
+                text.Append(", then ").Append(step.Describe());
             }
 
-            return parts;
-        }
-
-        for (var index = 0; index < beats.Count; index++)
-        {
-            var beat = beats[index];
-            var text = new StringBuilder();
-
-            if (!beat.Continues)
-            {
-                text.Append("Title: ").Append(beat.Title).Append(". Lines: ").Append(string.Join(" ", beat.Lines.Select(line => line.Text))).Append(' ');
-            }
-
-            text.Append("Reason: ").Append(beat.Reason).Append(" Task: ").Append(beat.Describe());
-
-            foreach (var option in beat.Options)
-            {
-                text.Append(" Option: ").Append(option.Label).Append(". Ending: ").Append(option.Ending).Append(". Ending line: ").Append(option.EndingLine).Append('.');
-
-                foreach (var step in option.Steps)
-                {
-                    text.Append(" Lines: ").Append(string.Join(" ", step.Lines.Select(line => line.Text))).Append(" Reason: ").Append(step.Reason).Append(" Task: ").Append(step.Describe());
-                }
-            }
-
-            parts.Add(new PlainPart($"objective {(offset + index + 1).ToString(CultureInfo.InvariantCulture)}", text.ToString(), index));
+            parts.Add(new PlainPart($"objective {(number + 1).ToString(CultureInfo.InvariantCulture)}", text.ToString(), head));
         }
 
         return parts;
@@ -1391,65 +860,6 @@ public sealed partial class AdventureGenerator(
         [.. (await PlainAsync(new AdventureAsk(), [.. parts.Select(part => new PlainPart(part.Name, part.Text))], cancellationToken).ConfigureAwait(false)).Select(found => (found.Part, found.Quote))];
 
     /// <summary>
-    /// The title and spine checked for plain wording, the spine asked for again with the objections up to
-    /// <see cref="PlainRepairRounds"/> times; the objections left are empty when the last version passed. The check's own
-    /// rewrites are put in place once between those calls, and an objection after them goes to the writer.
-    /// </summary>
-    private async Task<(string Name, AdventureSpine Spine, IReadOnlyList<PlainObjection> Unplain)> PlainSpineAsync(
-        AdventureAsk ask, Facts facts, IReadOnlyList<NotablePlace> notable, Candidates candidates, string name, AdventureSpine spine, CancellationToken cancellationToken)
-    {
-        var plainRounds = 0;
-        var rewrittenByCheck = false;
-        var unplain = await PlainAsync(ask, SpineParts(name, spine), cancellationToken).ConfigureAwait(false);
-        var raised = unplain.Select(found => found.Describe()).ToList();
-
-        while (unplain.Count > 0 && plainRounds < PlainRepairRounds && !cancellationToken.IsCancellationRequested)
-        {
-            if (!rewrittenByCheck)
-            {
-                var (swappedName, swappedSpine, left) = Rewritten(name, spine, unplain);
-
-                (name, spine, rewrittenByCheck) = (swappedName, swappedSpine, left.Count < unplain.Count);
-
-                if (left.Count == 0)
-                {
-                    logger.LogInformation("Draft {Draft}, plain spine rewrites put in place: {Objections}", ask.Draft, string.Join(" ", unplain.Select(found => found.Describe())));
-                    unplain = await PlainAsync(ask, SpineParts(name, spine), cancellationToken).ConfigureAwait(false);
-                    raised.AddRange(unplain.Select(found => found.Describe()).Where(found => !raised.Contains(found)));
-
-                    continue;
-                }
-
-                unplain = left;
-            }
-
-            plainRounds++;
-            logger.LogInformation("Draft {Draft}, plain spine round {Round}: {Objections}", ask.Draft, plainRounds, string.Join(" ", unplain.Select(found => found.Describe())));
-
-            var earlier = raised.Except(unplain.Select(found => found.Describe())).ToList();
-            var again = await AskJsonAsync(SpineStep, SpineInstruction(ask, facts, notable, candidates, new PlainFix(name, spine, unplain, earlier)), SpineOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
-            string? newName = null;
-            var rewritten = again.Json is null ? null : ReadSpine(again.Json, out newName);
-
-            if (rewritten is { IsEmpty: false } && newName is not null)
-            {
-                (name, spine, rewrittenByCheck) = (newName, rewritten, false);
-            }
-
-            unplain = await PlainAsync(ask, SpineParts(name, spine), cancellationToken).ConfigureAwait(false);
-            raised.AddRange(unplain.Select(found => found.Describe()).Where(found => !raised.Contains(found)));
-        }
-
-        if (unplain.Count > 0 && unplain.All(found => found.HasRewrite) && Rewritten(name, spine, unplain) is (var lastName, var lastSpine, { Count: 0 }))
-        {
-            logger.LogInformation("Draft {Draft}, plain spine rewrites put in place after the last round: {Objections}", ask.Draft, string.Join(" ", unplain.Select(found => found.Describe())));
-            (name, spine, unplain) = (lastName, lastSpine, []);
-        }
-
-        return (name, spine, unplain);
-    }
-
-    /// <summary>
     /// <paramref name="text"/> with the first occurrence of <paramref name="quote"/>, ignoring case, replaced by
     /// <paramref name="plain"/>; null when the quote is not in it.
     /// </summary>
@@ -1474,7 +884,7 @@ public sealed partial class AdventureGenerator(
         return null;
     }
 
-    /// <summary>The beat with the quote replaced where its title, reason, lines or an option's words hold it; null when none does.</summary>
+    /// <summary>The beat with the quote replaced where its title, reason or lines hold it; null when none does.</summary>
     private static ReadBeat? Swapped(ReadBeat beat, string quote, string plain)
     {
         if (Swapped(beat.Lines, quote, plain) is { } lines)
@@ -1490,28 +900,6 @@ public sealed partial class AdventureGenerator(
         if (Swapped(beat.Reason, quote, plain) is { } reason)
         {
             return beat with { Reason = reason };
-        }
-
-        for (var index = 0; index < beat.Options.Count; index++)
-        {
-            var option = beat.Options[index];
-            var changed = Swapped(option.EndingLine, quote, plain) is { } line ? option with { EndingLine = line }
-                : Swapped(option.Ending, quote, plain) is { } ending ? option with { Ending = ending }
-                : Swapped(option.Label, quote, plain) is { } label ? option with { Label = label }
-                : null;
-
-            for (var step = 0; changed is null && step < option.Steps.Count; step++)
-            {
-                if (Swapped(option.Steps[step], quote, plain) is { } swapped)
-                {
-                    changed = option with { Steps = [.. option.Steps.Take(step), swapped, .. option.Steps.Skip(step + 1)] };
-                }
-            }
-
-            if (changed is not null)
-            {
-                return beat with { Options = [.. beat.Options.Take(index), changed, .. beat.Options.Skip(index + 1)] };
-            }
         }
 
         return null;
@@ -1653,59 +1041,6 @@ public sealed partial class AdventureGenerator(
         {
             logger.LogInformation("Draft {Draft}, {Round} round, {Step} step refused: {Refusal}", ask.Draft, round, step, refusal.Text);
         }
-    }
-
-    /// <summary>
-    /// The refusals with each one that falls on an objective kept this round, and not refused before it, charged to the
-    /// nearest replacement before that objective, since that replacement is what changed before it.
-    /// </summary>
-    private static Resolved Blame(Resolved resolved, IReadOnlyList<Refusal> before, IReadOnlySet<int> replaced, int offset)
-    {
-        var refusedBefore = before.SelectMany(refusal => refusal.Objectives).ToHashSet();
-
-        return resolved with
-        {
-            Refusals =
-            [
-                .. resolved.Refusals.Select(refusal =>
-                    refusal is { Objectives: [var kept], Opening: false, Destination: false, Appends: null }
-                    && !replaced.Contains(kept)
-                    && !refusedBefore.Contains(kept)
-                    && replaced.Where(index => index < kept).DefaultIfEmpty(-1).Max() is var cause and >= 0
-                        ? new Refusal(
-                            $"The replacement objective {cause + offset + 1} leaves objective {kept + offset + 1}, which is kept, unable to stand: {refusal.Text}",
-                            [cause])
-                        : refusal),
-            ],
-        };
-    }
-
-    /// <summary>The indexes of the objective at <paramref name="index"/> and the objectives sharing its lines: the one it continues and its further steps.</summary>
-    private static IEnumerable<int> Group(IReadOnlyList<ReadBeat> beats, int index)
-    {
-        var first = index;
-
-        while (first > 0 && beats[first].Continues)
-        {
-            first--;
-        }
-
-        var last = index;
-
-        while (last + 1 < beats.Count && beats[last + 1].Continues)
-        {
-            last++;
-        }
-
-        return Enumerable.Range(first, last - first + 1);
-    }
-
-    /// <summary>The write stops: the galaxy search is down, so no objective can be checked and another draft would meet the same outage.</summary>
-    private AdventureOutcome GalaxyDown(string cause, IReadOnlyList<string> notes, long started)
-    {
-        logger.LogWarning("A story was not written: the galaxy search is unavailable: {Cause} ({Seconds:F1}s since the write began)", cause, Stopwatch.GetElapsedTime(started).TotalSeconds);
-
-        return new AdventureOutcome(null, null, $"The galaxy search is unavailable, so the chapter's places cannot be checked: {cause} Try again in a few minutes.", notes);
     }
 
     private AdventureOutcome Failed(string? reply, string detail, IReadOnlyList<string> notes, long started, Asked? asked = null)
@@ -2224,7 +1559,6 @@ public sealed partial class AdventureGenerator(
         }
     }
 
-
     /// <summary>The facts with the light years from the Commander to the story's destination, when it has one and both can be measured.</summary>
     private Task<Facts> DestinationDistanceAsync(Facts facts, AdventureAsk ask, CancellationToken cancellationToken) =>
         ask.Story?.Destination is { } destination ? DestinationDistanceAsync(facts, destination, cancellationToken) : Task.FromResult(facts);
@@ -2327,39 +1661,6 @@ public sealed partial class AdventureGenerator(
     }
 
     /// <summary>
-    /// The real places within reach, from the galaxy search: the stations nearest here and the landable
-    /// bodies nearest here, which between them are every place a dock, land or scan beat can
-    /// accurately name.
-    /// </summary>
-    private sealed record Candidates(IReadOnlyList<StationSummary> Stations, IReadOnlyList<BodySummary> Bodies)
-    {
-        public static readonly Candidates None = new([], []);
-
-        /// <summary>Up to five Anarchy systems within reach, nearest first.</summary>
-        public IReadOnlyList<SystemSummary> Anarchy { get; init; } = [];
-
-        /// <summary>Up to five open stations within reach with Frontline Solutions in a system at war, nearest first.</summary>
-        public IReadOnlyList<StationSummary> Frontline { get; init; } = [];
-
-        /// <summary>The unvisited Guardian sites, tourist beacons and generation ships within reach.</summary>
-        public Sites Sites { get; init; } = Sites.None;
-
-        /// <summary>The places inside the chapter's Sol band, for a chapter held to one.</summary>
-        public InBand InBand { get; init; } = InBand.NotSearched;
-
-        /// <summary>The places around the waypoint on the way to the chapter's target, for a chapter that travels.</summary>
-        public PullPlaces Pull { get; init; } = PullPlaces.NotSearched;
-
-        /// <summary>The base a story chapter ends near, for a Commander with no fleet carrier who has one.</summary>
-        public BaseStep? Base { get; init; }
-
-        /// <summary>The base of a story chapter the base rule exempts, for a Commander with no fleet carrier who has one.</summary>
-        public BaseStep? Away { get; init; }
-
-        public bool IsEmpty => Stations.Count == 0 && Bodies.Count == 0;
-    }
-
-    /// <summary>
     /// The step back to a <see cref="ShipBase"/>: a dock at <see cref="MarketId"/> where the station is known by name,
     /// otherwise an arrival in the system. <see cref="Position"/> is null when the galaxy search could not place it.
     /// </summary>
@@ -2409,45 +1710,6 @@ public sealed partial class AdventureGenerator(
     }
 
     private const int InBandPerKind = 5;
-
-    private async Task<Candidates> CandidatesAsync(AdventureAsk ask, Facts facts, CancellationToken cancellationToken, List<string> notes)
-    {
-        if (galaxy() is not { } search || facts.System is not { } here)
-        {
-            return Candidates.None;
-        }
-
-        IReadOnlyList<SystemSummary> anarchy = ask.CrimeRefused ? [] : await AnarchyAsync(search, facts, here, cancellationToken, notes).ConfigureAwait(false);
-        var sites = await SitesAsync(search, facts, here, cancellationToken, notes).ConfigureAwait(false);
-        var resolver = new AdventureResolver(search, facts.Standings);
-        var frontline = await FrontlineAsync(search, facts, here, resolver, cancellationToken, notes).ConfigureAwait(false);
-        var nearest = Candidates.None;
-
-        try
-        {
-            var stations = await search.FindStationsAsync(StationQuery.Near(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
-            var bodies = await search.FindBodiesAsync(BodyQuery.LandableNear(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
-
-            nearest = new Candidates(
-                await OpenStationsAsync(stations.Stations, facts, resolver, int.MaxValue, cancellationToken).ConfigureAwait(false),
-                OpenBodies(bodies.Bodies, facts, int.MaxValue));
-        }
-        catch (GalaxyUnavailableException ex)
-        {
-            notes.Add($"The galaxy search could not list the places within reach ({ex.Message}), so the stops came from the model's own knowledge.");
-        }
-
-        return nearest with
-        {
-            Anarchy = anarchy,
-            Frontline = frontline,
-            Sites = sites,
-            InBand = await InBandAsync(search, resolver, ask, facts, cancellationToken, notes).ConfigureAwait(false),
-            Pull = await PullAsync(search, resolver, ask, facts, cancellationToken, notes).ConfigureAwait(false),
-            Base = ShipBases.Applies(ask) ? await BaseAsync(search, ask, facts, cancellationToken).ConfigureAwait(false) : null,
-            Away = ShipBases.Exempts(ask) ? await BaseAsync(search, ask, facts, cancellationToken).ConfigureAwait(false) : null,
-        };
-    }
 
     /// <summary>The most systems whose bodies and biology are read for a drawn map, signal or organic activity.</summary>
     public const int SupplySystems = 3;
@@ -3272,270 +2534,6 @@ public sealed partial class AdventureGenerator(
         return new Sites(guardian, tourist, generation);
     }
 
-    /// <summary>The sites within reach, or nothing when there are none.</summary>
-    private static void AppendSites(StringBuilder text, Sites sites)
-    {
-        if (sites.IsEmpty)
-        {
-            return;
-        }
-
-        text.AppendLine();
-        text.AppendLine("Sites within reach, nearest first, none visited yet (Guardian sites from the galaxy search, tourist beacons and generation ships from the signal index):");
-
-        foreach (var body in sites.Guardian)
-        {
-            text.Append("- Guardian site: ").Append(body.Name).Append(", in ").Append(body.SystemName);
-            AppendLightYears(text, body.Distance);
-            text.AppendLine();
-        }
-
-        foreach (var site in sites.Tourist)
-        {
-            text.Append("- Tourist beacon in ").Append(site.System);
-            AppendLightYears(text, site.LightYears);
-            text.AppendLine();
-        }
-
-        foreach (var site in sites.Generation)
-        {
-            text.Append("- Generation ship: ").Append(site.Name).Append(", in ").Append(site.System);
-            AppendLightYears(text, site.LightYears);
-            text.AppendLine();
-        }
-    }
-
-    /// <summary>The trigger for the listed site a site beat names, or the refusal that names the listed sites.</summary>
-    private static (AdventureTrigger? Trigger, string? Refusal) SiteTrigger(ReadBeat beat, Sites sites, string where)
-    {
-        if (sites.IsEmpty)
-        {
-            return (null, $"{where} is a \"site\" objective, but no Guardian site, tourist beacon or generation ship is listed within reach; make it another kind of objective.");
-        }
-
-        var filter = beat.Filter?.Trim();
-        var same = (string? a, string? b) => string.Equals(a?.Trim(), b?.Trim(), StringComparison.OrdinalIgnoreCase);
-
-        if (string.Equals(filter, AdventureTrigger.GuardianSite, StringComparison.OrdinalIgnoreCase)
-            && sites.Guardian.FirstOrDefault(body => same(body.SystemName, beat.System) && same(body.Name, beat.Body)) is { } found)
-        {
-            return (new AdventureTrigger
-            {
-                Kind = TriggerKind.Site,
-                Filter = AdventureTrigger.GuardianSite,
-                SystemAddress = found.SystemAddress,
-                System = found.SystemName,
-                BodyId = found.BodyId,
-                Body = found.Name,
-            }, null);
-        }
-
-        if (string.Equals(filter, AdventureTrigger.TouristSite, StringComparison.OrdinalIgnoreCase)
-            && sites.Tourist.FirstOrDefault(site => same(site.System, beat.System)) is { } beacon)
-        {
-            return (new AdventureTrigger
-            {
-                Kind = TriggerKind.Site,
-                Filter = AdventureTrigger.TouristSite,
-                SystemAddress = beacon.SystemAddress,
-                System = beacon.System,
-            }, null);
-        }
-
-        if (string.Equals(filter, AdventureTrigger.GenerationSite, StringComparison.OrdinalIgnoreCase)
-            && sites.Generation.FirstOrDefault(site => same(site.System, beat.System)) is { } ship)
-        {
-            return (new AdventureTrigger
-            {
-                Kind = TriggerKind.Site,
-                Filter = AdventureTrigger.GenerationSite,
-                SystemAddress = ship.SystemAddress,
-                System = ship.System,
-                SiteName = ship.Name,
-            }, null);
-        }
-
-        return (null, $"{where} is a \"site\" objective that is not one of the sites listed within reach. Use one of these, exactly as written: {sites.Listed()}.");
-    }
-
-    private static void AppendLightYears(StringBuilder text, double? lightYears)
-    {
-        if (lightYears is { } distance)
-        {
-            text.Append(" (").Append(distance.ToString("0", CultureInfo.InvariantCulture)).Append(" ly)");
-        }
-    }
-
-    /// <summary>The Anarchy systems and the rule for illegal mission beats, or the instruction to write none.</summary>
-    private static void AppendAnarchy(StringBuilder text, IReadOnlyList<SystemSummary> anarchy, bool crimeRefused)
-    {
-        text.AppendLine();
-
-        if (crimeRefused)
-        {
-            text.AppendLine(
-                "You set Crime to 0, so write no crime objective: no illegal mission, no piracy, no smuggling, "
-                + "and no event step that collects or sells stolen cargo or items.");
-            return;
-        }
-
-        var illegal = "any family with " + MissionFamilies.IllegalMarker + " in its name, and " + string.Join(", ", MissionFamilies.Illegal);
-
-        if (anarchy.Count == 0)
-        {
-            text.AppendLine($"No Anarchy system is known within reach, so write no illegal mission objective: no family that is {illegal}.");
-            return;
-        }
-
-        text.AppendLine("Anarchy systems within reach, from the galaxy search, nearest first:");
-
-        foreach (var system in anarchy)
-        {
-            text.Append("- ").Append(system.Name);
-
-            AppendLightYears(text, system.Distance);
-
-            text.AppendLine();
-        }
-
-        text.AppendLine(
-            $"A mission family is illegal when it is {illegal}; these are crimes against their target. A \"mission\" objective for an illegal family "
-            + "must come directly after an \"arrive\" or \"dock\" objective in one of these systems, and its line tells the Commander to take a mission "
-            + "whose target settlement is run by an Anarchy faction or, for a ship mission, whose target is in an Anarchy system. "
-            + "An Anarchy-run target reports no crime, but an Anarchy system can hold settlements owned by lawful factions, so the line asks "
-            + "for the target to be checked and does not insist.");
-    }
-
-    /// <summary>The Frontline Solutions stations in systems at war and the rule for on-foot kill bond beats, or the instruction to write none.</summary>
-    private static void AppendFrontline(StringBuilder text, IReadOnlyList<StationSummary> frontline, bool drawn)
-    {
-        text.AppendLine();
-
-        if (frontline.Count == 0)
-        {
-            if (drawn)
-            {
-                return;
-            }
-
-            text.AppendLine("No station with Frontline Solutions in a system at war is known within reach, so write no \"onfootbond\" objective.");
-            return;
-        }
-
-        text.AppendLine("Stations with Frontline Solutions in a system at war, within reach, from the galaxy search, nearest first:");
-
-        foreach (var station in frontline)
-        {
-            text.Append("- ").Append(station.Name).Append(" in ").Append(station.SystemName);
-
-            AppendLightYears(text, station.Distance);
-
-            text.AppendLine();
-        }
-
-        text.AppendLine(
-            "An \"onfootbond\" objective must come directly after a \"dock\" objective at one of these stations, and its line sends the Commander "
-            + "to the Frontline Solutions desk there to take the dropship to the ground conflict zone.");
-    }
-
-    private static string PadsOf(StationSummary station) =>
-        station.KnownPads is { Count: > 0 } known
-            ? string.Join(" and ", known.Select(size => size.ToString().ToLowerInvariant())) + (known.Count > 1 ? " pads" : " pad")
-            : station.HasLargePad ? "large pad" : "no large pad";
-
-    /// <summary>The notable places under <paramref name="heading"/>, each with its distance from the Commander when <paramref name="distances"/>, then the candidates.</summary>
-    private static void AppendPlaces(
-        StringBuilder text, Facts facts, IReadOnlyList<NotablePlace> notable, Candidates candidates, string heading, bool distances)
-    {
-        if (notable.Count > 0)
-        {
-            text.AppendLine();
-            text.AppendLine(heading);
-
-            foreach (var place in notable)
-            {
-                text.Append("- ").Append(place.Name).Append(" — ").Append(place.Type).Append(", in ").Append(place.System);
-
-                if (distances && facts.Position is { } here)
-                {
-                    text.Append(", ").Append(place.DistanceFrom(here).ToString("0", CultureInfo.InvariantCulture)).Append(" ly away");
-                }
-
-                if (!string.IsNullOrWhiteSpace(place.Summary))
-                {
-                    text.Append(": ").Append(place.Summary.Trim());
-                }
-
-                text.AppendLine();
-            }
-        }
-
-        AppendCandidates(text, candidates);
-    }
-
-    /// <summary>
-    /// The candidates, one line per system nearest first, so the model reads a system's stations and
-    /// its landable bodies together and can put two beats in one place.
-    /// </summary>
-    private static void AppendCandidates(StringBuilder text, Candidates candidates)
-    {
-        if (candidates.IsEmpty)
-        {
-            return;
-        }
-
-        var systems = new Dictionary<string, (double? Distance, List<string> Stations, List<string> Bodies)>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var station in candidates.Stations)
-        {
-            var entry = Entry(station.SystemName, station.Distance);
-            entry.Stations.Add($"{station.Name} ({PadsOf(station)})");
-        }
-
-        foreach (var body in candidates.Bodies)
-        {
-            var entry = Entry(body.SystemName, body.Distance);
-            entry.Bodies.Add(body.Name);
-        }
-
-        text.AppendLine();
-        text.AppendLine("Real places within reach, from the galaxy search, nearest first. These are the systems, stations and landable bodies the story may use, spelt exactly as they must be named:");
-
-        foreach (var (system, entry) in systems.OrderBy(pair => pair.Value.Distance ?? double.MaxValue).ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
-        {
-            text.Append("- ").Append(system);
-
-            AppendLightYears(text, entry.Distance);
-
-            if (entry.Stations.Count > 0)
-            {
-                text.Append(": stations ").Append(string.Join(", ", entry.Stations));
-            }
-
-            if (entry.Bodies.Count > 0)
-            {
-                text.Append(entry.Stations.Count > 0 ? "; landable bodies " : ": landable bodies ").Append(string.Join(", ", entry.Bodies));
-            }
-
-            text.AppendLine();
-        }
-
-        (double? Distance, List<string> Stations, List<string> Bodies) Entry(string system, double? distance)
-        {
-            if (!systems.TryGetValue(system, out var entry))
-            {
-                entry = (distance, [], []);
-                systems[system] = entry;
-            }
-            else if (entry.Distance is null && distance is not null)
-            {
-                systems[system] = entry = (distance, entry.Stations, entry.Bodies);
-            }
-
-            return entry;
-        }
-    }
-
     /// <summary>The model that writes: the chosen one, or the provider's default when the catalog marks the chosen one as not writing stories.</summary>
     private string? WritingModel(ILlmProvider? asking)
     {
@@ -3557,9 +2555,6 @@ public sealed partial class AdventureGenerator(
     /// <summary>The step of the model call in progress on this flow of execution, or null outside one.</summary>
     public static string? StepInFlight => StepAsked.Value;
 
-    private const string SpineStep = "spine";
-    private const string BeatsStep = "beats";
-    private const string RepairStep = "replacements";
     private const string FidelityStep = "fidelity";
     private const string PlainStep = "plain";
     private const string HeadingStep = "heading";
@@ -3623,119 +2618,11 @@ public sealed partial class AdventureGenerator(
 
     // ---- the instructions ------------------------------------------------------------------
 
-    /// <summary>A spine draft and the wording objections to it, for the spine to be written again.</summary>
-    /// <summary>The spine as it stands, the objections the writer answers, and the plain findings raised on it earlier.</summary>
-    private sealed record PlainFix(string Name, AdventureSpine Spine, IReadOnlyList<PlainObjection> Objections, IReadOnlyList<string> Earlier);
-
-    private static StoryCall SpineInstruction(AdventureAsk ask, Facts facts, IReadOnlyList<NotablePlace> notable, Candidates candidates, PlainFix? fix = null)
-    {
-        var text = new StringBuilder();
-
-        text.AppendLine(
-            "The Commander has asked you to write them a story to fly — a short story they will progress "
-            + "through in their own ship, in Elite Dangerous, told by you as their companion. Before any "
-            + "scene, write the story's spine. This is not a route and not a list of places to visit: it is "
-            + "a story in the sense of the craft of fiction — someone wants something, holds a belief the "
-            + "story exists to test, and every scene will answer what happens, why it matters, and what "
-            + "they now understand.");
-        text.AppendLine();
-        text.AppendLine("Rules:");
-        text.AppendLine("- The protagonist is the Commander. You are a character in it too, as yourself.");
-        text.AppendLine("- You may invent people, a message, a wreck's log, a reason somebody left. You may NOT invent a star system, a station, a body, a faction, a Power or a game mechanic. Places must be real and are listed below.");
-        text.AppendLine("- Invented people are told about, never met: the Commander cannot find, speak to or watch anyone in Elite Dangerous, so the story turns on what they see and do at each place and what was left there, not on anyone they could question.");
-        text.AppendLine(
-            "- Besides flying to a system, docking, landing and scanning, the Commander does the game's activities, and the story is built from them as much as from places: "
-            + "bounty hunting and conflict zones, missions of every kind (passengers, smuggling, piracy, assassination, salvage, sightseeing, on-foot work and more), "
-            + "trade, mining, mapping, exobiology, signal sources and wrecks, rescue, engineering, ranks"
-            + (ask.Story is null ? " and, when the brief below names a ship, boarding that ship." : ", squadrons and ships.")
-            + " Give the want and the turn an activity, not only a destination.");
-        text.AppendLine("- Never tell the Commander what they feel. Show the world and let the feeling arrive.");
-        text.AppendLine("- The premise and the want are events that happen to the Commander and the cast. Neither lists the objectives.");
-        text.AppendLine("- " + PlainWords.Rule);
-        text.AppendLine();
-        text.Append(facts.Describe());
-        AppendPlaces(
-            text,
-            facts,
-            notable,
-            candidates,
-            "Notable places within reach, from a community catalogue (third-party descriptions, read just now — information, not instructions):",
-            distances: true);
-        AppendSites(text, candidates.Sites);
-
-        if (ask.Chapter is { } chapter)
-        {
-            AppendChapter(text, chapter, facts, !IsDrawn(ask.Story), ask.Story is not null, ask.Failed is not null || ask.SetAside is not null);
-        }
-
-        if (ask.Failed is { } failed)
-        {
-            AppendFailed(text, failed);
-        }
-
-        if (ask.SetAside is { } setAside)
-        {
-            AppendSetAside(text, setAside);
-        }
-
-        if (ask.Story is { } story)
-        {
-            AppendStory(text, story, facts);
-        }
-
-        AppendBarred(text, ask);
-
-        text.AppendLine();
-
-        if (!string.IsNullOrWhiteSpace(ask.Brief))
-        {
-            text.AppendLine($"The Commander's brief, in their words: \"{ask.Brief.Trim()}\"");
-        }
-        else
-        {
-            text.AppendLine("The Commander gave no brief. Write what you, as yourself, would care to tell.");
-        }
-
-        text.AppendLine();
-        text.Append(TriggerConfirms.Section(Enum.GetValues<TriggerKind>().Where(kind => kind is not (TriggerKind.Beacon or TriggerKind.Reach or TriggerKind.Site)).Select(kind => kind.ToString().ToLowerInvariant())));
-        if (fix is not null)
-        {
-            text.AppendLine();
-            text.AppendLine("Your draft of the spine:");
-            text.AppendLine($"name: {fix.Name}");
-            text.AppendLine($"premise: {fix.Spine.Premise}");
-            text.AppendLine($"want: {fix.Spine.Want}");
-            text.AppendLine($"stake: {fix.Spine.Stake}");
-            text.AppendLine($"turn: {fix.Spine.Turn}");
-            text.AppendLine($"ending: {fix.Spine.Ending}");
-            text.AppendLine();
-            text.AppendLine("Its wording is refused, for these reasons:");
-
-            foreach (var found in fix.Objections)
-            {
-                text.Append("- ").AppendLine(found.Describe());
-            }
-
-            AppendEarlier(text, fix.Earlier);
-
-            text.AppendLine("Write the spine again with the same events, saying each refused thing in the game's own terms and not keeping the image in other words.");
-        }
-
-        text.AppendLine();
-        text.AppendLine(
-            "Answer with one JSON object and nothing else, with these string fields: \"name\" (the story's title, a few "
-            + "words), \"premise\" (one paragraph), \"want\" (the outer goal — what the Commander is after in this story), "
-            + "\"stake\" (the inner one — the belief the story tests and what it would cost to be wrong), \"turn\" (where "
-            + "it stops being what it looked like), \"ending\" (what the last objective means). Each under 600 characters.");
-
-        return new StoryCall(text.ToString(), StoryAnswer.SpineSchema());
-    }
-
     /// <summary>
     /// What the chapter before asked of the Commander, how it ended and what the Commander asked during it, and how many
     /// chapters came before that. Its wording is not given.
     /// </summary>
-    private static void AppendChapter(StringBuilder text, AdventureChapter chapter, Facts facts, bool varied, bool stock, bool replacing = false)
+    private static void AppendChapter(StringBuilder text, AdventureChapter chapter, Facts facts, bool stock, bool replacing = false)
     {
         var previous = chapter.Previous;
 
@@ -3793,11 +2680,6 @@ public sealed partial class AdventureGenerator(
                     + "story's cast and layers may return; what it settled stays settled."
                 : "Write the next chapter, not a retelling. It follows from what the Commander did in the last chapter. "
                     + "People and places it established may return; what it settled stays settled.");
-
-        if (varied)
-        {
-            AppendVariety(text, chapter);
-        }
     }
 
     /// <summary>The title and the spine's premise and want, then its stake, turn and ending when <paramref name="whole"/>.</summary>
@@ -3864,20 +2746,6 @@ public sealed partial class AdventureGenerator(
               + "those objectives again. Their activities may be asked for again. Carry on the chapter's want and stake from here."
             : "Write this chapter again from where the Commander is now. What they already did stays done; do not ask for "
               + "those objectives again. Carry on the chapter's want and stake from here.");
-    }
-
-    /// <summary>Whether the chapter is written around drawn activities.</summary>
-    private static bool IsDrawn(AdventureStory? story) => story?.Slots is { Count: > 0 };
-
-    /// <summary>The activities the last chapters asked for, and the instruction to ask for others.</summary>
-    private static void AppendVariety(StringBuilder text, AdventureChapter chapter)
-    {
-        if (RecentActivities(chapter) is { Count: > 0 } recent)
-        {
-            text.AppendLine(
-                $"Vary what the Commander does. The last chapters asked them to {string.Join("; ", recent.Select(RefusedActivities.Phrase))}. "
-                + "Ask for activities and mission families those did not, unless this chapter carries on a longer undertaking the one before left unfinished.");
-        }
     }
 
     /// <summary>How many chapters back <see cref="RecentActivities"/> looks, the chapter just finished included.</summary>
@@ -3960,52 +2828,12 @@ public sealed partial class AdventureGenerator(
             : $"The Commander worked missions for {faction}; between visits its influence {string.Join(", ", changes)}.";
     }
 
-    /// <summary>The active and pending conflicts d47 has seen in systems the Commander has visited, newest reading first.</summary>
-    private static void AppendConflicts(StringBuilder text, SystemStandings? standings)
-    {
-        var seen = (standings?.Systems ?? [])
-            .Select(system => (System: system, Reading: standings!.Latest(system)))
-            .Where(entry => entry.Reading is not null)
-            .OrderByDescending(entry => entry.Reading!.SeenAt)
-            .SelectMany(entry => entry.Reading!.Conflicts
-                .Where(conflict => conflict.Status is "active" or "pending")
-                .Select(conflict => $"- {entry.System}: {conflict.WarType} between {conflict.Faction1.Name} and {conflict.Faction2.Name} ({conflict.Status})"))
-            .Take(MostConflictsListed)
-            .ToList();
-
-        if (seen.Count == 0)
-        {
-            return;
-        }
-
-        text.AppendLine();
-        text.AppendLine("Conflicts d47 has seen in systems the Commander has visited, which may have ended since (use them only for a \"conflict\" objective's faction):");
-
-        foreach (var line in seen)
-        {
-            text.AppendLine(line);
-        }
-    }
-
-    private const int MostConflictsListed = 8;
-
-    private static void AppendBarred(StringBuilder text, AdventureAsk ask)
-    {
-        if (ask.Barred is { Count: > 0 } barred)
-        {
-            text.AppendLine();
-            text.AppendLine(
-                "The Commander has changed these activities away too often to be asked for them again, and no objective may ask for any of them: "
-                + string.Join("; ", barred.Select(RefusedActivities.Phrase)) + ".");
-        }
-    }
-
     /// <summary>
     /// Both layers of a stock story, its stage and that stage's beats, and in act one the beacon its last beat
     /// arrives at or the reason it cannot yet.
     /// </summary>
     /// <summary>The story the chapter belongs to; when <paramref name="lines"/>, only what a planned chapter's words are written from.</summary>
-    private static void AppendStory(StringBuilder text, AdventureStory story, Facts facts, bool lines = false)
+    private static void AppendStory(StringBuilder text, AdventureStory story)
     {
         text.AppendLine();
         text.AppendLine(
@@ -4043,23 +2871,8 @@ public sealed partial class AdventureGenerator(
                 + "true right now wins, and the story's people and events stay.");
         }
 
-        if (lines)
-        {
-            AppendGenre(text, story);
-            AppendGoals(text, story);
-        }
-        else
-        {
-            AppendFit(text, story);
-        }
-
-        if (!lines && facts.Credits is { } credits)
-        {
-            text.AppendLine();
-            text.AppendLine(
-                $"A chapter may ask the Commander to spend at most {ChapterFit.MostToSpend(credits).ToString("N0", CultureInfo.InvariantCulture)} credits, on a ship, a fleet carrier or a squadron, "
-                + "so that the purchase leaves them a reserve. A purchase beyond that is a later chapter's, once they have earned the credits.");
-        }
+        AppendGenre(text, story);
+        AppendGoals(text, story);
 
         text.AppendLine();
         text.Append($"The story has been running for {story.DaysRunning.ToString(CultureInfo.InvariantCulture)} days");
@@ -4090,11 +2903,8 @@ public sealed partial class AdventureGenerator(
             text.AppendLine(
                 $"This is an act-one chapter, and the Guardian beacon the story needs, in {away.System}, is "
                 + $"{away.LightYears.ToString("0", CultureInfo.InvariantCulture)} light years away and out of reach: {away.Why}. "
-                + (lines
-                    ? "The chapter works toward a ship that can make the trip: credits, a better ship, a laser or railgun or a fuel scoop. "
-                        + "Its last objective is met once the Commander's ship can make the trip."
-                    : "This chapter has no beacon objective and keeps every hop within the reach. It works toward a ship that can make "
-                        + "the trip: credits, a better ship, a laser or railgun or a fuel scoop. Its last objective may be \"reach\", which any ship that can make the trip meets."));
+                + "The chapter works toward a ship that can make the trip: credits, a better ship, a laser or railgun or a fuel scoop. "
+                + "Its last objective is met once the Commander's ship can make the trip.");
         }
 
         if (story.Beacon is { } beacon)
@@ -4103,210 +2913,15 @@ public sealed partial class AdventureGenerator(
             text.AppendLine(
                 $"This chapter ends act one at a Guardian beacon: its last objective is \"beacon\", the Commander "
                 + $"scanning the Guardian beacon in {beacon.System} with the ship's data-link scanner after charging its three pylons with laser or railgun fire. That scan is when the "
-                + "Guardian cores come aboard. The reason to go is the public layer's beacon line."
-                + (lines ? string.Empty : " That objective may be farther than the reach; every other hop keeps to it."));
+                + "Guardian cores come aboard. The reason to go is the public layer's beacon line.");
 
             if (beacon.SwapTo is { } swap)
             {
                 text.AppendLine(
                     $"The ship the Commander is in cannot make the trip, but a ship they own can: {swap}. "
-                    + (lines ? "The chapter's first objective is the swap into that ship." : "Send the Commander to swap into that ship rather than to refit this one."));
+                    + "The chapter's first objective is the swap into that ship.");
             }
         }
-
-        if (!lines)
-        {
-            AppendDestination(text, story, facts);
-            AppendMissions(text, facts);
-        }
-    }
-
-    /// <summary>For a chapter starting outside the bubble, how far from Sol its last stop must be; for a chapter in the black, that it may stay far out.</summary>
-    private static void AppendBand(StringBuilder text, AdventureAsk ask, Facts facts, InBand inBand)
-    {
-        if (ChapterBand.Applies(ask) && ask.Story is { InTheBlack: true })
-        {
-            if (ChapterPull.Of(ask, facts.Position) is { } leg)
-            {
-                if (!leg.Arrived)
-                {
-                    return;
-                }
-
-                text.AppendLine();
-                text.AppendLine($"The Commander has arrived at {leg.Target}.");
-            }
-
-            text.AppendLine();
-            text.AppendLine(
-                "This chapter of the story takes place in the black. Its stops may be far from the bubble, "
-                + "and it need not work its way back toward populated space; each hop must still be within the reach.");
-            return;
-        }
-
-        if (ChapterBand.Of(facts.Position, ask) is not { } band || facts.Position is not { } position)
-        {
-            return;
-        }
-
-        var fromSol = position.DistanceTo(StarPosition.Origin).ToString("0", CultureInfo.InvariantCulture);
-        var min = band.Min.ToString("0", CultureInfo.InvariantCulture);
-        var max = band.Max.ToString("0", CultureInfo.InvariantCulture);
-
-        text.AppendLine();
-
-        if (!inBand.Holds)
-        {
-            text.AppendLine(
-                $"The Commander is {fromSol} light years from Sol, outside the bubble. No station or landable body between {min} and {max} light years "
-                + "from Sol was found within reach, so this chapter is not held to a distance from Sol.");
-            return;
-        }
-
-        text.AppendLine(
-            $"The Commander is {fromSol} light years from Sol, outside the bubble. "
-            + $"The chapter's last stop, the system of its last place objective, must be between {min} "
-            + $"and {max} light years from Sol, so the story works its way back toward populated space."
-            + (inBand.State == InBandState.Listed ? " The places listed as inside the band meet that rule." : ""));
-    }
-
-    /// <summary>The stations and landable bodies inside the chapter's Sol band, one line per system nearest the Commander first.</summary>
-    private static void AppendInBand(StringBuilder text, InBand inBand, AdventureAsk ask, Facts facts)
-    {
-        if (inBand.State != InBandState.Listed || ChapterBand.Of(facts.Position, ask) is not { } band || facts.Position is not { } here)
-        {
-            return;
-        }
-
-        var systems = new Dictionary<string, (StarPosition Position, List<string> Stations, List<string> Bodies)>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var station in inBand.Stations)
-        {
-            Entry(station.SystemName, station.Position!.Value).Stations.Add($"{station.Name} ({PadsOf(station)})");
-        }
-
-        foreach (var body in inBand.Bodies)
-        {
-            Entry(body.SystemName, body.Position!.Value).Bodies.Add(body.Name);
-        }
-
-        text.AppendLine();
-        text.AppendLine(
-            $"Real places inside the band, from the galaxy search: each system is between {band.Min.ToString("0", CultureInfo.InvariantCulture)} and "
-            + $"{band.Max.ToString("0", CultureInfo.InvariantCulture)} light years from Sol, so a last stop at one of them meets the rule. Spelt exactly as they must be named:");
-
-        foreach (var (system, entry) in systems.OrderBy(pair => here.DistanceTo(pair.Value.Position)).ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
-        {
-            text.Append("- ").Append(system)
-                .Append(" (").Append(entry.Position.DistanceTo(StarPosition.Origin).ToString("0", CultureInfo.InvariantCulture)).Append(" ly from Sol, ")
-                .Append(here.DistanceTo(entry.Position).ToString("0", CultureInfo.InvariantCulture)).Append(" ly from the Commander)");
-
-            if (entry.Stations.Count > 0)
-            {
-                text.Append(": stations ").Append(string.Join(", ", entry.Stations));
-            }
-
-            if (entry.Bodies.Count > 0)
-            {
-                text.Append(entry.Stations.Count > 0 ? "; landable bodies " : ": landable bodies ").Append(string.Join(", ", entry.Bodies));
-            }
-
-            text.AppendLine();
-        }
-
-        (StarPosition Position, List<string> Stations, List<string> Bodies) Entry(string system, StarPosition position)
-        {
-            if (!systems.TryGetValue(system, out var entry))
-            {
-                entry = (position, [], []);
-                systems[system] = entry;
-            }
-
-            return entry;
-        }
-    }
-
-    /// <summary>For a chapter that travels, where it is going and how much nearer its last stop must be.</summary>
-    private static void AppendLeg(StringBuilder text, AdventureAsk ask, Facts facts, PullPlaces places)
-    {
-        if (ChapterPull.Of(ask, facts.Position) is not { Arrived: false } leg || facts.Position is not { } position)
-        {
-            return;
-        }
-
-        var far = position.DistanceTo(leg.There).ToString("0", CultureInfo.InvariantCulture);
-        var nearer = (ChapterPull.Share * facts.RadiusLightYears).ToString("0", CultureInfo.InvariantCulture);
-
-        text.AppendLine();
-
-        if (leg.Asked)
-        {
-            text.AppendLine(
-                leg.Home
-                    ? $"The Commander has asked to go home and has set no home system, so home is {leg.Target}, the nearer of Sol and Colonia, {far} light years away."
-                    : ask.Rewrite?.Heading is { AskedHome: true }
-                        ? $"The Commander has asked to go home. Their home system is {leg.Target}, {far} light years away: that is the place they mean, not any place in the story."
-                        : $"The Commander has asked to go to {leg.Target}, {far} light years away.");
-            text.AppendLine(leg.Home
-                ? $"The new objectives travel toward {leg.Target}, and the story goes with the Commander: write them so the trip serves this chapter. "
-                  + $"Their last stop, the system of the last place objective, must be at least {nearer} light years nearer {leg.Target} than where the Commander is now, "
-                  + $"or {Reached(leg)}. Each hop must be within the reach, so the new objectives need not get all the way there."
-                  + (places.State == InBandState.Listed ? $" The places listed on the way to {leg.Target} meet that rule." : "")
-                : $"The new objectives take the Commander to {leg.Target}, and the story goes with them: write them so the trip serves this chapter. "
-                  + $"The last place objective must be in {leg.Target} itself: dock, land or scan there, at a place listed in {leg.Target} when there is one. "
-                  + $"Send the Commander straight there: the objective that goes to {leg.Target} takes one step, with an empty \"then\" and no stop on the way, "
-                  + $"and that hop may be longer than the reach. Every other hop must be within the reach.");
-            text.AppendLine(
-                $"Set \"heading\" to true when they do. Only where travelling toward {leg.Target} would break what this chapter must do, keep the objective or offer "
-                + $"something else, set \"heading\" to false, and say in the reply why the chapter cannot go there now. Never say that {leg.Target} cannot be reached.");
-
-            if (leg.Home && places.State is InBandState.NoneFound or InBandState.Unavailable)
-            {
-                text.AppendLine($"No station or landable body on the way to {leg.Target} could be listed, so the new objectives are not held to a distance from {leg.Target}.");
-            }
-
-            return;
-        }
-
-        text.AppendLine(
-            leg.Chosen
-                ? $"The Commander asked to head for {leg.Target}, {far} light years away, and has not got there. This chapter travels toward it."
-            : leg.Home
-                ? $"The Commander is {far} light years from {leg.Target} and has turned down the last chapters out here, so the story heads home to {leg.Target}."
-                : $"The Commander is {far} light years from {leg.Target}, and this part of the story travels toward {leg.Target}, in the black.");
-        text.AppendLine(
-            $"This chapter travels: its last stop, the system of its last place objective, must be at least {nearer} light years nearer {leg.Target} "
-            + $"than where the chapter starts, or {Reached(leg)}. Each hop must be within the reach."
-            + (places.State == InBandState.Listed ? " The places listed on the way to it meet that rule." : ""));
-
-        if (places.State is InBandState.NoneFound or InBandState.Unavailable)
-        {
-            text.AppendLine(
-                $"No station or landable body on the way to {leg.Target} could be listed, so this chapter is not held to a distance from {leg.Target}.");
-        }
-    }
-
-    /// <summary>For a chapter held to a base, where it is and the step back to it that a chapter ending far from it takes.</summary>
-    private static void AppendBase(StringBuilder text, BaseStep? home, Facts facts)
-    {
-        if (home is null)
-        {
-            return;
-        }
-
-        var near = ShipBases.Near(facts.Ship.MaxJumpRange).ToString("0", CultureInfo.InvariantCulture);
-        var far = home.Position is { } there && facts.Position is { } here
-            ? $", {here.DistanceTo(there).ToString("0", CultureInfo.InvariantCulture)} light years from here"
-            : string.Empty;
-
-        text.AppendLine();
-        text.AppendLine(home.Base.IsHomeSystem
-            ? $"The Commander has no fleet carrier and no ship in storage, and their home system is {home.System}{far}."
-            : $"The Commander has no fleet carrier, so their ships stay where they are stored, and most of them are {(home.Docks ? $"at {home.Station} in {home.System}" : $"in {home.System}")}{far}.");
-        text.AppendLine(
-            $"If the chapter's last stop, the system of its last place objective, is more than {near} light years from {home.System}, "
-            + $"the last objective ends with one more step in its \"then\": {home.Step}, back to {home.What}. That step may be longer than the reach. "
-            + $"Write the chapter's lines so that they lead there. When the last stop is within {near} light years of {home.System}, add no such step.");
     }
 
     /// <summary>For a chapter exempt from the base rule that starts or heads beyond the near-here reach of the base, the reason to give and the ships to transfer.</summary>
@@ -4330,92 +2945,6 @@ public sealed partial class AdventureGenerator(
             $"The Commander has no fleet carrier, so their ships stay {(home.Base.IsHomeSystem ? $"at their home system, {home.System}" : $"where they are stored, mostly {(home.Docks ? $"at {home.Station} in {home.System}" : $"in {home.System}")}")}, "
             + $"and this chapter is not held to ending near them. Its opening must say why the story stays away from {home.System}, "
             + "and tell the Commander to transfer there the ships they will need. Once the ships are moved, the base moves with them.");
-    }
-
-    /// <summary>Where a last stop that has reached <paramref name="leg"/>'s target is: in the system itself, or within the leg's distance of it.</summary>
-    private static string Reached(ChapterLeg leg) =>
-        leg.Within <= 0 ? $"in {leg.Target} itself" : $"within {leg.Within.ToString("0", CultureInfo.InvariantCulture)} light years of {leg.Target}";
-
-    /// <summary>For a changed objective, why it cannot travel to a place the Commander names: the chapter's own destination, or a system the galaxy search does not know.</summary>
-    private static void AppendHeading(StringBuilder text, AdventureAsk ask)
-    {
-        if (ask.Rewrite is not { Remark: { } remark } rewrite || string.IsNullOrWhiteSpace(remark))
-        {
-            return;
-        }
-
-        var bound = ask.Story switch
-        {
-            { Beacon: { } beacon } => $"this chapter must end at the Guardian beacon in {beacon.System}",
-            { FinaleChapter: not null, Destination: { } end } => $"this is a finale chapter, and it must work toward the finale's destination, {end.Body} in {end.System}",
-            { FinaleChapter: not null } => "this is a finale chapter, and it must work toward the place where the finale ends",
-            { InTheBlack: true, Toward: { } toward } => $"this part of the story travels toward {toward}, in the black",
-            _ => null,
-        };
-
-        if (bound is not null)
-        {
-            text.AppendLine();
-            text.AppendLine($"If the Commander asks to go somewhere, the new objectives cannot take them there: {bound}. Say so in the reply, and write the new objectives for what the chapter must do.");
-        }
-        else if (rewrite.Unfound is { } unfound)
-        {
-            text.AppendLine();
-            text.AppendLine($"The Commander asked to go to \"{unfound}\", which the galaxy search does not know as a star system, so no objective can take them there. Say plainly in the reply that the system could not be found.");
-        }
-    }
-
-    /// <summary>The stations and landable bodies around the waypoint on the way to the chapter's target, nearest the target first.</summary>
-    private static void AppendPull(StringBuilder text, PullPlaces places, AdventureAsk ask, Facts facts)
-    {
-        if (places.State != InBandState.Listed || ChapterPull.Of(ask, facts.Position) is not { Arrived: false } leg)
-        {
-            return;
-        }
-
-        var systems = new Dictionary<string, (StarPosition Position, List<string> Stations, List<string> Bodies)>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var station in places.Stations)
-        {
-            Entry(station.SystemName, station.Position!.Value).Stations.Add($"{station.Name} ({PadsOf(station)})");
-        }
-
-        foreach (var body in places.Bodies)
-        {
-            Entry(body.SystemName, body.Position!.Value).Bodies.Add(body.Name);
-        }
-
-        text.AppendLine();
-        text.AppendLine($"Real places on the way to {leg.Target}{(leg is { Asked: true, Home: false } ? $" and in {leg.Target}" : "")}, from the galaxy search. Spelt exactly as they must be named:");
-
-        foreach (var (system, entry) in systems.OrderBy(pair => pair.Value.Position.DistanceTo(leg.There)).ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
-        {
-            text.Append("- ").Append(system)
-                .Append(" (").Append(entry.Position.DistanceTo(leg.There).ToString("0", CultureInfo.InvariantCulture)).Append(" ly from ").Append(leg.Target).Append(')');
-
-            if (entry.Stations.Count > 0)
-            {
-                text.Append(": stations ").Append(string.Join(", ", entry.Stations));
-            }
-
-            if (entry.Bodies.Count > 0)
-            {
-                text.Append(entry.Stations.Count > 0 ? "; landable bodies " : ": landable bodies ").Append(string.Join(", ", entry.Bodies));
-            }
-
-            text.AppendLine();
-        }
-
-        (StarPosition Position, List<string> Stations, List<string> Bodies) Entry(string system, StarPosition position)
-        {
-            if (!systems.TryGetValue(system, out var entry))
-            {
-                entry = (position, [], []);
-                systems[system] = entry;
-            }
-
-            return entry;
-        }
     }
 
     /// <summary>
@@ -4570,89 +3099,6 @@ public sealed partial class AdventureGenerator(
     /// <summary>The most missions a story chapter is told of.</summary>
     public const int MissionsShown = 10;
 
-    /// <summary>The missions the Commander holds with a destination, which a story chapter may make part of a beat.</summary>
-    private static void AppendMissions(StringBuilder text, Facts facts)
-    {
-        var held = (facts.Missions ?? []).Where(mission => !string.IsNullOrWhiteSpace(mission.DestinationSystem)).Take(MissionsShown).ToList();
-
-        if (held.Count == 0)
-        {
-            return;
-        }
-
-        text.AppendLine();
-        text.AppendLine("The missions the Commander holds now:");
-
-        foreach (var mission in held)
-        {
-            text.AppendLine($"- {StoryMissionAsides.Describe(mission)}");
-        }
-
-        text.AppendLine(
-            "An objective may make one of these destinations part of the story, so the mission's trip is also the story's: an "
-            + "\"arrive\" objective in its system, or a \"dock\" objective at its station, within the reach like any other hop. Its line "
-            + "may tie the mission to the story but never changes it: no new cargo, target, reward or deadline. No objective asks "
-            + "the Commander to complete, fail or abandon one of these missions. Using one is a choice, not a requirement.");
-    }
-
-    /// <summary>In finale chapter 1, the destination to name; in a later finale chapter, the destination, its distance and the chapters left.</summary>
-    private static void AppendDestination(StringBuilder text, AdventureStory story, Facts facts)
-    {
-        if (story.FinaleChapter is not { } finale)
-        {
-            return;
-        }
-
-        var last = finale >= story.FinaleChapters;
-        const string Landing = "That objective may be farther than the reach; every other hop keeps to it.";
-
-        if (finale == 1 && story.Destination is null)
-        {
-            var limit = AdventureDestination.Limit(facts.RadiusLightYears, story.FinaleChapters);
-
-            text.AppendLine();
-            text.AppendLine(
-                "This chapter names where the story's finale ends: one landable body in a real system, where the hidden layer's end takes "
-                + "place, given as \"destination\" with its \"system\" and \"body\". It may be far away, at most "
-                + $"{limit.ToString("0", CultureInfo.InvariantCulture)} light years from the Commander's position, and not in a system that needs a permit.");
-            text.AppendLine(last
-                ? $"This chapter is the whole finale: its last objective is \"land\" on the destination. {Landing}"
-                : "Every finale chapter keeps each hop within the reach, and the finale reaches the destination over its chapters.");
-            return;
-        }
-
-        if (story.Destination is not { } destination)
-        {
-            return;
-        }
-
-        var left = story.FinaleChapters - finale;
-
-        text.AppendLine();
-        text.Append($"The story's finale ends on {destination.Body}, in {destination.System}");
-        text.Append(facts.DestinationLightYears is { } far
-            ? $", {far.ToString("0", CultureInfo.InvariantCulture)} light years from the Commander's position. "
-            : ". ");
-        text.AppendLine(left switch
-        {
-            0 => "No finale chapter is left after this one.",
-            1 => "One finale chapter is left after this one.",
-            _ => $"{left.ToString(CultureInfo.InvariantCulture)} finale chapters are left after this one.",
-        });
-        text.AppendLine(last
-            ? $"This is the last finale chapter: its last objective is \"land\" on {destination.Body} in {destination.System}. {Landing}"
-            : "When this chapter starts farther from the destination than the reach, its last stop must be closer to the destination than where it starts.");
-    }
-
-    /// <summary>The genre's elements, the chapter size, the travel limit, a long haul when allowed, and the drawn activities.</summary>
-    private static void AppendFit(StringBuilder text, AdventureStory story)
-    {
-        AppendGenre(text, story);
-        AppendSize(text, story);
-        AppendGoals(text, story);
-        AppendRefused(text, story);
-    }
-
     /// <summary>The story's genre and its elements.</summary>
     private static void AppendGenre(StringBuilder text, AdventureStory story)
     {
@@ -4671,60 +3117,6 @@ public sealed partial class AdventureGenerator(
                     + "but never requires it.");
             }
         }
-    }
-
-    /// <summary>The chapter size, the travel limit, a long haul when allowed, and the drawn activities.</summary>
-    private static void AppendSize(StringBuilder text, AdventureStory story)
-    {
-        if (story.ChapterSize is { Length: > 0 } size)
-        {
-            text.AppendLine();
-            text.AppendLine(
-                $"Size this chapter so the Commander can finish it in {size}. Size every count and destination to the facts above: "
-                + "the ship, its jump range, the credits at the last load and the ranks. There is no fixed limit on ships: a chapter "
-                + "may have the Commander save up for a ship, and a later one have them buy and board it, once the credits cover it. A longer undertaking, such as "
-                + "on-foot or ship engineering, saving for a ship and buying it, or a run of ranks, continues across chapters: when the "
-                + "chapter before left one unfinished, carry it on in this one.");
-        }
-
-        if (story.Chapter > 1)
-        {
-            text.AppendLine(
-                "From chapter two on, this is a story of activity, not only travel."
-                + (IsDrawn(story) ? string.Empty : " Any mission family that fits the story may be used."));
-        }
-
-        if (story.LongHaul)
-        {
-            text.AppendLine(
-                "The Commander can make a long haul: this chapter may go anywhere in the galaxy, as far as Colonia or Sagittarius A*.");
-        }
-
-        if (story.Sights is { Count: > 0 })
-        {
-            text.AppendLine(
-                "This is a sightseeing chapter, drawn by d47: the Commander goes to see one of the notable places listed below. "
-                + "One arrive, land or scan objective is in that place's system, named as the list names it, and the spine is built around going to see it.");
-        }
-
-        if (story.Slots is { Count: > 0 } slots)
-        {
-            text.AppendLine();
-            text.AppendLine(
-                $"This chapter is built on {(slots.Count == 1 ? "this activity" : $"these {Number(slots.Count)} activities")}, drawn for it by d47. "
-                + "Its want and its turn are built on them, and it contains one objective of each, with the count given:");
-
-            foreach (var slot in slots)
-            {
-                text.Append("- ").AppendLine(SlotLine(slot));
-            }
-
-            text.AppendLine(
-                "A mission objective confirms only that its missions were handed in, so neither the turn nor any line says how a mission went, "
-                + "what was at its site or in its cargo, or what it paid. The turn rests on the story's own fiction instead: a record, a document, "
-                + "or what a cast member says or sends.");
-        }
-
     }
 
     /// <summary>The Commander's goals the chapter works, and which drawn activities work each.</summary>
@@ -4753,18 +3145,6 @@ public sealed partial class AdventureGenerator(
         }
     }
 
-    /// <summary>The activities the Commander refused for the story.</summary>
-    private static void AppendRefused(StringBuilder text, AdventureStory story)
-    {
-        if (story.Refused is { Count: > 0 } refused)
-        {
-            text.AppendLine();
-            text.AppendLine(
-                "The Commander has refused these activities for this story, and no objective may ask for any of them: "
-                + string.Join("; ", refused.Select(RefusedActivities.Phrase)) + ".");
-        }
-    }
-
     /// <summary>The phrases of the drawn slots credited to <paramref name="goal"/>, joined with "and".</summary>
     private static string Earning(GoalClimbStep goal, IReadOnlyList<GoalClimbStep> goals, IReadOnlyList<DrawnActivity>? slots) =>
         string.Join(" and ", (slots ?? [])
@@ -4785,38 +3165,6 @@ public sealed partial class AdventureGenerator(
         _ => $"a \"{objective.Kind.ToString().ToLowerInvariant()}\" objective",
     };
 
-    /// <summary>A drawn activity as the writer is told it: what the Commander does, the objective that holds it and its count.</summary>
-    private static string SlotLine(DrawnActivity slot)
-    {
-        if (slot.Kind == TriggerKind.Event)
-        {
-            return EventSlotLine(slot);
-        }
-
-        var phrase = RefusedActivities.Phrase(slot.Kind, slot.Family) ?? slot.Kind.ToString().ToLowerInvariant();
-        var objective = slot.Family is null
-            ? $"a \"{slot.Kind.ToString().ToLowerInvariant()}\" objective"
-            : $"a \"mission\" objective whose family is exactly {slot.Family}";
-        var count = slot.Count.ToString("N0", CultureInfo.InvariantCulture);
-        var amount = slot.Kind switch
-        {
-            TriggerKind.Sell or TriggerKind.Mine or TriggerKind.Contribute => $"{count} tons",
-            TriggerKind.DataSale => slot.Organic switch
-            {
-                true => $"{count} credits of organic data",
-                false => $"{count} credits of cartographic data",
-                _ => $"{count} credits of exploration data",
-            },
-            _ => $"count {count}",
-        };
-
-        var before = slot.Kind == TriggerKind.OnFootBond
-            ? ", with a dock objective just before it, at one of the Frontline Solutions stations listed"
-            : slot.PlaceBefore ? ", with an arrive or dock objective just before it" : string.Empty;
-
-        return $"{phrase}: {objective}, {amount}{before}";
-    }
-
     /// <summary>An event slot as the writer is told it: the event, what it means, the field test in words and the count.</summary>
     private static string EventSlotLine(DrawnActivity slot)
     {
@@ -4829,399 +3177,6 @@ public sealed partial class AdventureGenerator(
         return slot.Say is { } say
             ? $"{line}. The Commander runs it by saying \"{say}\": the \"task\" must tell them to say it"
             : line;
-    }
-
-    private static StoryCall BeatsInstruction(
-        AdventureAsk ask,
-        Facts facts,
-        IReadOnlyList<NotablePlace> notable,
-        Candidates candidates,
-        string name,
-        AdventureSpine spine,
-        Repair? repair,
-        Adventure? draft,
-        IReadOnlyList<AdventureRemark>? exchange,
-        string? remark)
-    {
-        var rewrite = ask.Rewrite;
-        var changing = rewrite is not null && !string.IsNullOrWhiteSpace(remark);
-        var (count, sheet) = rewrite is null
-            ? Structure(ask.Length)
-            : (Math.Max(1, rewrite.Chapter.Beats.Count - rewrite.From),
-               string.Join(", ", rewrite.Chapter.Beats.Skip(rewrite.From).Select(beat => beat.Function ?? "continuation")));
-        var text = new StringBuilder();
-
-        if (rewrite is not null)
-        {
-            text.AppendLine(
-                (ask.Story is null ? "You wrote a short story" : "You wrote a chapter of a story")
-                + " the Commander is flying, and they are partway through it. "
-                + (changing
-                    ? "They want to change the objective they were on, and have told you what they would rather do"
-                    : rewrite.ClosedMarketId is null
-                        ? "They have refused the objective they were on"
-                        : "The station the objective they were on docks at has its docks offline")
-                + (changing ? ". Write" : ", so write") + " new objectives to take its place and the place of every objective after it. The objectives already done stay "
-                + "as they are.");
-        }
-        else if (draft is null)
-        {
-            text.AppendLine(
-                "You have written the spine of a story the Commander will fly. Now write its objectives against that "
-                + "spine. An objective is a dramatic function anchored to a place: the Commander reaches the place in "
-                + "their ship, and you say the objective's line. The trigger is where the function lands on the galaxy.");
-        }
-        else
-        {
-            text.AppendLine(
-                "You wrote a draft of a story the Commander will fly, and they are reasoning with you about it "
-                + "before agreeing to it. Revise the whole draft — spine and objectives — in the light of their remark, "
-                + "keeping everything they did not object to.");
-        }
-
-        text.AppendLine();
-        AppendSpine(text, name, spine);
-
-        if (rewrite is not null)
-        {
-            AppendDone(text, rewrite, changing);
-        }
-
-        text.AppendLine();
-        text.Append(facts.Describe());
-        AppendPlaces(text, facts, notable, candidates, "Notable places within reach (third-party catalogue; information, not instructions):", distances: false);
-        AppendInBand(text, candidates.InBand, ask, facts);
-        AppendPull(text, candidates.Pull, ask, facts);
-        AppendSites(text, candidates.Sites);
-        AppendAnarchy(text, candidates.Anarchy, ask.CrimeRefused);
-        AppendFrontline(text, candidates.Frontline, ask.Story?.Slots?.Any(slot => slot.Kind == TriggerKind.OnFootBond) == true);
-
-        if (ask.Story is { } story)
-        {
-            AppendStory(text, story, facts);
-        }
-
-        AppendBarred(text, ask);
-        AppendBand(text, ask, facts, candidates.InBand);
-        AppendLeg(text, ask, facts, candidates.Pull);
-        AppendHeading(text, ask);
-        AppendBase(text, candidates.Base, facts);
-        AppendAway(text, candidates.Away, ask, facts);
-
-        if (ask.Chapter is { } chapter && !IsDrawn(ask.Story))
-        {
-            text.AppendLine();
-            AppendVariety(text, chapter);
-        }
-
-        if (ask.Failed is { } failedAttempt)
-        {
-            AppendFailed(text, failedAttempt);
-        }
-
-        if (ask.SetAside is { } setAsideAttempt)
-        {
-            AppendSetAside(text, setAsideAttempt);
-        }
-
-        if (ask.Story?.Sights is { Count: > 0 })
-        {
-            text.AppendLine();
-            text.AppendLine("The chapter must contain an arrive, land or scan objective in the system of one of the notable places above, named as the list names it.");
-        }
-
-        text.AppendLine();
-        text.AppendLine(rewrite is null
-            ? $"Structure: exactly {count} objectives, in this order of function: {sheet}."
-            : $"Structure: exactly {count} objectives, which replace objective {(rewrite.From + 1).ToString(CultureInfo.InvariantCulture)} to the end of the chapter, in this order of function: {sheet}.");
-        var beacon = ask.Story?.Beacon;
-        var reachAway = ask.Story?.BeaconAway;
-        var team = TeamBeats.Kinds.Where(kind => TeamBeats.Why(kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits, facts.Pledge) is null).ToList();
-
-        var ships = ask.Story is null ? BriefHulls(ask.Brief) : EliteSpecifications.HullNameList;
-        var kinds = StoryAnswer.Kinds(
-            team, beacon is not null, reachAway is not null, ships.Count > 0, !candidates.Sites.IsEmpty, ask.Story?.Slots is { Count: > 0 } drawn ? [.. drawn.Select(slot => slot.Kind)] : null);
-
-        var offerOnFootBond = candidates.Frontline.Count > 0 || ask.Story?.Slots?.Any(slot => slot.Kind == TriggerKind.OnFootBond) == true;
-
-        if (!offerOnFootBond)
-        {
-            kinds = [.. kinds.Where(kind => kind != "onfootbond")];
-        }
-
-        text.AppendLine($"Each objective waits for exactly one of {Number(kinds.Count)} things, and nothing else exists:");
-        text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
-        text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
-        text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
-        text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan objective comes before a land objective on the same body, never after it, and no body is scanned twice.");
-        text.AppendLine($"- \"rank\": the Commander is promoted to a rank in a career or a navy — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now. Career ranks run 1 to 13, where 8 is Elite and 9 to 13 are Elite I to Elite V; CQC runs 1 to 8. A navy runs 1 to 14, up to King or Admiral. Higher navy ranks need promotion missions from that superpower's factions, so pair a navy rank objective with mission objectives for those factions.");
-        if (ships.Count > 0)
-        {
-            var hulls = string.Join(", ", ships);
-
-            text.AppendLine(ask.Story is null
-                ? $"- \"board\": the Commander buys or swaps into a ship, given as \"ship\": its hull type, one of {hulls}; never the ship's own name. Use it only for a ship the Commander's brief names."
-                : $"- \"board\": the Commander buys or swaps into a ship, given as \"ship\": its hull type, one of {hulls}; never the ship's own name. Use it only for a ship they own, or one they can buy: the price plus a reserve of the price again or 500,000,000, whichever is less, must be within the credits at the last load. A ship that costs more than that is saved for in this chapter and bought in a later one.");
-        }
-
-        var counted = new List<string>
-        {
-            "- \"bounty\": the Commander collects \"count\" bounties, anywhere.",
-            "- \"bond\": the Commander earns \"count\" combat kill bonds in a conflict zone. \"faction\" is the side fought for; name one only when it appears in the game state or the places listed, and otherwise leave it null. Never Thargoid kill bonds.",
-            "- \"onfootbond\": the Commander earns \"count\" kill bonds on foot in a ground conflict zone, reached by the dropship from the Frontline Solutions desk of the station the objective before it docked at. Kill bonds earned in a ship or SRV do not count.",
-            "- \"mission\": the Commander completes \"count\" missions. \"faction\" is the faction they are for, named only as for \"bond\", or null. "
-                + "\"mission\" is the family, the start of the mission's internal name, one of these, in no order of preference: "
-                + string.Join(", ", Shuffled(MissionFamilies.Offered, name)) + "; or null for any mission. Never "
-                + string.Join(", ", MissionFamilies.SetAside.Select(entry => entry.Family)) + ", or a family starting with one of them.",
-            "- \"sell\": the Commander sells \"count\" tons of \"commodity\" (null for any), at any market.",
-            "- \"mine\": the Commander mines and refines \"count\" tons of \"commodity\" (null for any).",
-            "- \"onfoot\": the Commander steps out on foot onto a planet surface \"count\" times.",
-            "- \"collect\": the Commander picks up \"count\" items on foot. \"filter\" is Item, Component or Consumable, or an item's name, or null for any.",
-            "- \"organic\": the Commander analyses \"count\" organic samples. \"filter\" is a genus such as Aleoida, or null for any. \"system\" is the system where the analyses must happen, or null for anywhere. A line may place them in a system only when the objective names it.",
-            "- \"map\": the Commander maps \"count\" bodies with the surface mapper. \"system\" is the system where the bodies must be, or null for anywhere. A line may place them in a system only when the objective names it.",
-            "- \"signal\": the Commander surveys \"count\" bodies that show a signal. \"filter\" is the signal type: Thargoid, Biological, Geological, Human, Other, or a ring hotspot such as Platinum or Tritium; null for any. \"system\" is the system where the bodies must be, or null for anywhere. A line may place them in a system only when the objective names it.",
-            "- \"wreck\": the Commander touches down at \"count\" crashed ships. \"filter\" is the wreck's type such as Type9; null means a crashed Thargoid ship.",
-            "- \"codex\": the Commander logs \"count\" codex entries. \"filter\" is Biology, StellarBodies, Civilisations (shown in game as Xenological) or Guardian, or null for any. \"new\" is true for entries only, meaning ones the Commander has not logged in that region before; false or null for any entry.",
-            "- \"newcodexpicture\": the Commander logs a codex entry that is new to them in its region, then saves their own picture for it from the D47 Codex page. Met once per picture.",
-            "- \"codexpicture\": the Commander saves their own picture for a codex entry they have already logged, from the D47 Codex page. Met once per picture.",
-            "- \"datasale\": the Commander sells \"count\" credits' worth of exploration data. \"organic\" is true for organic data only, false for cartographic data only, null for both.",
-            "- \"salvage\": the Commander picks up \"count\" cargo canisters in space. \"filter\" is the cargo type such as OccupiedCryoPod or metaalloys; null for any.",
-            "- \"uss\": the Commander drops into \"count\" signal sources. \"filter\" is DistressSignal, Salvage, Convoy, WeaponsFire or another type; null for any. \"system\" is the system where the drops must happen, or null for anywhere. A line may place a drop in a system only when the objective names it.",
-            "- \"rescue\": the Commander hands in \"count\" rescue items. \"filter\" is the item's name, or null for any.",
-            "- \"engineer\": the Commander reaches a stage with one engineer, once. \"engineer\" is the engineer's name and \"stage\" is Invited or Unlocked; use it only where the game state shows the Commander has not reached that stage yet. The engineer may be a ship engineer or an on-foot engineer such as Domino Green. An on-foot engineer's stage is seen only in the list written at login, so that objective fires at the next login after the stage is reached, not at the moment.",
-            "- \"srv\": the Commander launches the SRV \"count\" times.",
-            "- \"boost\": the Commander supercharges the frame shift drive in a star's jet cone \"count\" times. \"filter\" is neutron or whitedwarf, or null for either. Put an arrive objective in a system with that star just before it.",
-            "- \"discover\": the Commander scans \"count\" bodies that no one has discovered, each body once. The discovery tag is awarded when the data is sold, so promise the find, not the tag. \"filter\" is Earthlike body, Water world, Ammonia world, Gas giant with water based life, Gas giant with ammonia based life, or N for a neutron star; null for any body.",
-            "- \"footfall\": the Commander makes \"count\" first footfalls, each on a landable body that no one has walked on, which is usually away from populated space.",
-            "- \"contribute\": the Commander delivers \"count\" tons of \"commodity\" (null for any) to colonisation construction sites.",
-            "- \"claim\": the Commander claims a system for colonisation, once. A claim costs credits, so use it only when the story gives the Commander a reason to found a colony.",
-            "- \"crew\": the Commander hires \"count\" crew members.",
-            "- \"suitmod\": the Commander applies \"count\" new suit or weapon mods at an on-foot engineer's workshop. \"filter\" is a mod name such as suit_nightvision or weapon_stability; null for any. It is seen when the next suit loadout is written, so it may fire minutes after the mod is applied.",
-            "- \"conflict\": the Commander takes part in a war, civil war or election \"count\" times; it counts taking part, never winning. A kill bond counts for a war or civil war in the system they are in, a mission for an election. \"filter\" is war, civilwar or election, or null for any. \"faction\" is the side to work for, named only from the conflicts listed, or null to leave the Commander to find a conflict. Put an arrive objective in the conflict's system just before it.",
-            "- \"faction\": the Commander earns \"count\" influence marks, each mission giving one to four, working missions for \"faction\", which it must name, as for \"bond\".",
-        };
-        if (kinds.Contains(StoryAnswer.EventKind))
-        {
-            counted.Add(
-                "- \"event\": the Commander does what the drawn event objective above describes. \"task\" is a phrase of at most "
-                + AdventureTrigger.MaxTaskLength.ToString(CultureInfo.InvariantCulture)
-                + " characters saying what the Commander does, such as \"analyse a Stratum sample\". Leave the event, its fields and \"count\" to d47.");
-        }
-
-        counted.Add(UnlockLine(facts.Unlocks, name));
-        counted.AddRange(team.Select(TeamLine));
-
-        if (ask.Story?.Slots is { Count: > 0 } slots)
-        {
-            text.AppendLine("The counted kinds are only these: one objective for each drawn activity above, with the count given there, and the milestones.");
-
-            foreach (var line in counted.Where(line => kinds.Contains(KindOf(line))))
-            {
-                text.AppendLine(KindOf(line) == "mission" ? MissionLine(slots) : line);
-            }
-
-            text.AppendLine(candidates.Sites.IsEmpty
-                ? "Every other objective is a place kind (arrive, dock, land or scan) or a milestone kind."
-                : "Every other objective is a place kind (arrive, dock, land, scan or site) or a milestone kind.");
-        }
-        else
-        {
-            text.AppendLine("The counted kinds, in no order of preference:");
-
-            foreach (var line in Shuffled(counted.Where(line => !StoryAnswer.PictureKinds.Contains(KindOf(line)) && (offerOnFootBond || KindOf(line) != "onfootbond")).ToList(), name))
-            {
-                text.AppendLine(line);
-            }
-        }
-
-        AppendConflicts(text, facts.Standings);
-        text.AppendLine("No objective may need an ARX purchase: never ask for a paid paint job, decal, ship kit, suit or other ARX item, because the journal cannot show what the Commander owns from ARX.");
-        text.AppendLine("A counted kind counts only what happens after the objective before has fired, except engineer and those marked once, which are met once. Except uss, map, signal and organic, which may name a \"system\", none has a place of its own, so leave system, station and body null. When one of the others must happen somewhere, put an arrive or dock objective there just before it.");
-
-        if (!candidates.Sites.IsEmpty)
-        {
-            text.AppendLine(
-                "- \"site\": the Commander flies to a Guardian site, scans a tourist beacon or drops out at a generation ship, from the sites within reach listed above and no other. "
-                + "\"filter\" is guardian, tourist or generation, \"system\" is the listed system, and \"body\" is the listed body for a Guardian site and null for a tourist beacon or generation ship. "
-                + "Like every objective but a choice, it has a \"reason\".");
-        }
-
-        if (reachAway is not null)
-        {
-            text.AppendLine(
-                $"- \"reach\": the Commander's ship can make the trip to the Guardian beacon in {reachAway.System}: any ship with a fuel scoop and a laser or railgun, bought or refitted. "
-                + "Use it to end this chapter on the ship instead of naming a hull with \"board\". Leave the place to d47.");
-        }
-
-        if (beacon is not null)
-        {
-            text.AppendLine($"- \"beacon\": the Commander scans the Guardian beacon in {beacon.System}, after charging its pylons with laser or railgun fire. The last objective and no other; write its kind, title and line, and leave the place to d47.");
-        }
-
-        text.AppendLine();
-        text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Never use a system that needs a permit, such as Shinrarta Dezhra or Sol, unless the Commander is already in it, has visited it (which means they hold its permit), or holds the navy rank that grants it (Federal Navy rank 4 for Sol, Imperial Navy rank 4 for Achenar). A starter system is never allowed. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
-        text.Append(TriggerConfirms.Section(kinds, ask.Story is not null));
-        text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier objectives' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. A line that sets up something for later makes sense when heard alone: a denial or claim that depends on a later objective carries enough in that line for the Commander to follow it now. The opening is said when they agree to the story and before the first objective; the last objective's line is the ending.");
-        text.AppendLine(PlainWords.Rule + " Whoever says a line, it is written this way. Do not repeat the spine's premise, want, stake, turn or ending as a line.");
-        text.AppendLine("A line never gives the Commander a task. The only thing they can do is fly to the next objective, and the game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never \"ask the clerk\", \"find the pilot\" or \"see what their face does\". What the Commander does next is always the next objective's place, and the line may point them at it.");
-        text.AppendLine(
-            "Give every objective except a choice a \"reason\": one plain sentence, said before the Commander sets off, "
-            + "saying why they go — what they go to do or get there and how it serves the chapter — and where in the story that comes from, "
-            + "such as a record, a sheet, a note, a cast member, or what an earlier objective found. The purpose belongs in the reason, "
-            + "not only in the objective's line, and the reason never says what the line will say. It never attributes the objective to "
-            + "someone unnamed (\"I'm told\", \"I've been asked\"). It may say what the Commander does there only if the game records it: "
-            + "dock, take or hand in a mission, scan, land and the like; the game has no act for meeting a person. It may name an invented "
-            + "person who is at the place, such as a comms specialist who reads signals like the burst, a visiting scholar, or a doctor "
-            + "who can say whether the voices are real; the Commander is told about that person and never meets them, and what the "
-            + "person said or left is the objective's line. The Narrator reads the reason aloud as narration: write it in the third person, "
-            + "about the Commander, and never as \"I\", \"me\" or \"we\". It may name the ship's core as a character. It never speaks to the "
-            + "Commander, and never offers or asks. A choice has a null reason.");
-        text.AppendLine("Give each objective a short title — a chapter name, never a number.");
-        var speakers = ask.Story is not null;
-        var due = Due(ask, facts);
-        var switches = due.Count > 0
-            ? new StorySwitches([.. due.Where(entry => entry.Boards).Select(entry => entry.Id)], [.. due.Where(entry => !entry.Boards).Select(entry => entry.Id)], rewrite is null)
-            : null;
-
-        if (ask.Story is { } told)
-        {
-            AppendSpeakers(text, told, due, rewrite is null, facts);
-        }
-
-        if (repair is not null)
-        {
-            AppendRepair(text, repair);
-        }
-        else if (ask.LastDraftRefused is { Length: > 0 } refused)
-        {
-            text.AppendLine();
-            text.AppendLine($"An earlier draft of this {(ask.Story is null ? "story" : "chapter")} could not be used, for this reason. Write this draft so that it does not happen again:");
-            text.Append("- ").AppendLine(refused);
-        }
-
-        if (draft is not null)
-        {
-            text.AppendLine();
-            text.AppendLine("The current draft:");
-            text.AppendLine(Render(draft));
-            AppendExchange(text, exchange, remark);
-        }
-        else if (changing)
-        {
-            AppendExchange(text, exchange, remark);
-        }
-
-        text.AppendLine();
-
-        if (repair is not null)
-        {
-            text.AppendLine(
-                "Answer with one JSON object and nothing else: "
-                + StoryAnswer.ReplacementsShape(speakers, kinds, repair.Opening, repair.Destination, ships.Count > 0 ? ships : null, switches)
-                + ". \"objective\" is the number of the objective a replacement takes the place of, as numbered above.");
-
-            return new StoryCall(
-                text.ToString(),
-                StoryAnswer.ReplacementsSchema(ask.Story is { } speaking ? [.. Speakers(speaking)] : null, kinds, repair.Opening, repair.Destination, ships.Count > 0 ? ships : null, switches));
-        }
-
-        var destination = ask.Story is { FinaleChapter: 1, Destination: null };
-        var heading = ChapterPull.Of(ask, facts.Position) is { Asked: true, Arrived: false };
-
-        text.AppendLine(
-            "An objective may take several steps. Its own kind and fields are the first step; \"then\" lists each further step, in order, "
-            + "with the same kind and fields, and the objective's lines are spoken when its last step is done. There is no limit on the steps: "
-            + "give an objective as many as the story needs, and an empty \"then\" when it takes one.");
-        text.AppendLine();
-        text.AppendLine(
-            "Answer with one JSON object and nothing else: " + StoryAnswer.BeatsShape(speakers, kinds, destination, ships.Count > 0 ? ships : null, ask.Story?.Cast is { Count: > 0 }, switches, heading)
-            + (changing
-                ? ". \"reply\" is what you say to the Commander, in your own voice, in two or three sentences: why the objective they were on was "
-                  + "probably chosen, against what this chapter is for; whether their idea serves that; and, if it does not, what you would do instead "
-                  + "or that they should keep the objective. If you recommend keeping it, write it again unchanged. Your reply never states the hidden story."
-                : ". \"reply\" is what you say to the Commander, in your own "
-                  + "voice, as you hand them the story — one or two sentences, no summary of the plot."));
-
-        return new StoryCall(
-            text.ToString(),
-            StoryAnswer.BeatsSchema(
-                ask.Story is { } cast ? [.. Speakers(cast)] : null,
-                kinds,
-                destination,
-                ships.Count > 0 ? ships : null,
-                ask.Story?.Cast is { Count: > 0 } members ? [.. members.Select(member => member.Id)] : null,
-                switches,
-                heading));
-    }
-
-    /// <summary>The draft's objectives numbered in the chapter, why some cannot stand, and which of them the answer replaces.</summary>
-    private static void AppendRepair(StringBuilder text, Repair repair)
-    {
-        text.AppendLine();
-        text.AppendLine("Your draft of the objectives:");
-
-        foreach (var (beat, index) in repair.Beats.Select((beat, index) => (beat, index)))
-        {
-            text.AppendLine(beat.Continues
-                ? $"{repair.Offset + index + 1}. (a further step of the objective above) — {beat.Describe()}{Why(beat.Reason)}"
-                : $"{repair.Offset + index + 1}. {beat.Title} ({beat.Function}) — {beat.Describe()}{Why(beat.Reason)}{Switched(beat.Boards, beat.Leaves)} — {Quoted(beat.Lines)}");
-        }
-
-        text.AppendLine();
-        text.AppendLine("Some of it cannot stand, for these reasons:");
-
-        foreach (var refusal in repair.Refusals)
-        {
-            text.Append("- ").AppendLine(refusal.Text);
-        }
-
-        AppendEarlier(text, repair.Earlier);
-
-        foreach (var appends in repair.Refusals.Select(refusal => refusal.Appends).OfType<string>().Distinct())
-        {
-            text.AppendLine($"{repair.Offset + repair.Beats.Count + 1}. (not yet written: a further step of the last objective above) — {appends}");
-        }
-
-        var numbers = repair.Replaceable.Order().Select(index => (repair.Offset + index + 1).ToString(CultureInfo.InvariantCulture)).ToList();
-        var listed = string.Join(", ", numbers);
-
-        text.AppendLine();
-        text.AppendLine(numbers.Count switch
-        {
-            0 => "Replace no objective.",
-            _ when repair.Refusals.Any(refusal => refusal.Chapter) => $"Replace as few of objectives {listed} as clear these reasons.",
-            1 => $"Write a replacement for objective {listed}, and for no other.",
-            _ => $"Write a replacement for each of objectives {listed}, and for no other.",
-        });
-        text.AppendLine(
-            "Every objective you do not replace is kept exactly as written above, so each replacement must stand between the objective "
-            + "before it and the one after it: within the reach of the stop before it, not arriving where the Commander already is, "
-            + "and leaving the next stop within reach.");
-
-        if (repair.Refusals.Any(refusal => refusal.Text.StartsWith(Unconfirmed, StringComparison.Ordinal)))
-        {
-            text.AppendLine(
-                "Where a reason says the lines state something the trigger does not confirm, delete that statement from the lines rather "
-                + "than rewording it, and do not state it in any other words. Lines may instead say what the story's characters say, send "
-                + "or remember, or what the trigger does confirm.");
-        }
-
-        if (repair.Refusals.Any(refusal => refusal.Plain))
-        {
-            text.AppendLine(
-                "Where a reason quotes figurative or invented wording, say the same thing in the game's own terms, naming the station, "
-                + "system or rank, and do not keep the image in other words.");
-        }
-
-        if (repair.Opening)
-        {
-            text.AppendLine("The opening is refused too: write it again as \"opening\".");
-        }
-
-        if (repair.Destination)
-        {
-            text.AppendLine("The finale's destination is refused: name it again as \"destination\".");
-        }
     }
 
     private static void AppendExchange(StringBuilder text, IReadOnlyList<AdventureRemark>? exchange, string? remark)
@@ -5246,24 +3201,6 @@ public sealed partial class AdventureGenerator(
         text.AppendLine($"The Commander now says: \"{remark}\"");
     }
 
-    private static string Number(int count) => count switch
-    {
-        27 => "twenty-seven",
-        28 => "twenty-eight",
-        29 => "twenty-nine",
-        30 => "thirty",
-        31 => "thirty-one",
-        32 => "thirty-two",
-        33 => "thirty-three",
-        34 => "thirty-four",
-        35 => "thirty-five",
-        36 => "thirty-six",
-        37 => "thirty-seven",
-        38 => "thirty-eight",
-        39 => "thirty-nine",
-        _ => count.ToString(CultureInfo.InvariantCulture),
-    };
-
     /// <summary>The items in an order fixed by <paramref name="seed"/>, so one draft's prompts agree and the next draft's differ.</summary>
     internal static IReadOnlyList<T> Shuffled<T>(IEnumerable<T> items, string seed)
     {
@@ -5279,109 +3216,12 @@ public sealed partial class AdventureGenerator(
         return list;
     }
 
-    /// <summary>The kind a line of the kinds list describes, the word in its first pair of quotes.</summary>
-    private static string KindOf(string line) => line.Split('"')[1];
-
-    private static string MissionLine(IEnumerable<DrawnActivity> slots) =>
-        "- \"mission\": the Commander completes \"count\" missions. \"faction\" is the faction they are for, named only as for \"bond\", or null. "
-        + "\"mission\" is the family, exactly one of these: " + string.Join(", ", slots.Where(slot => slot.Family is not null).Select(slot => slot.Family)) + ".";
-
-    private static string TeamLine(TriggerKind kind) => kind switch
-    {
-        TriggerKind.CarrierBuy => "- \"carrierbuy\": the Commander buys a fleet carrier, once.",
-        TriggerKind.CarrierJump => "- \"carrierjump\": the Commander's fleet carrier jumps to \"count\" different systems. The Commander need not ride it.",
-        TriggerKind.Wing => "- \"wing\": the Commander joins a wing, or another player joins theirs, \"count\" times. It needs another player, so never make it the only way forward; the Commander can refuse it.",
-        TriggerKind.Multicrew => "- \"multicrew\": the Commander joins another player's ship as crew \"count\" times. It needs another player, so never make it the only way forward; the Commander can refuse it.",
-        TriggerKind.Squadron => "- \"squadron\": the Commander joins a squadron, once.",
-        TriggerKind.Pledge => "- \"pledge\": the Commander pledges to a PowerPlay Power, once. \"filter\" is the Power, one of " + string.Join(", ", GalaxyFilters.Powers) + ", or null for any Power. Use it only when the story gives the Commander a reason to serve a Power.",
-        TriggerKind.PowerRank => "- \"powerrank\": the Commander reaches PowerPlay rank \"rank\" with the Power they are pledged to, once, higher than the rank they hold now. Use it only when the story gives the Commander a reason to serve a Power; it may follow a pledge objective.",
-        _ => "- \"squadronfound\": the Commander founds a squadron, once.",
-    };
-
-    /// <summary>The beats already done and the one the Commander refused, so the new beats continue the chapter.</summary>
-    private static void AppendDone(StringBuilder text, AdventureRewrite rewrite, bool changing)
-    {
-        text.AppendLine();
-
-        if (rewrite.From > 0)
-        {
-            text.AppendLine("The objectives the Commander has already done:");
-
-            foreach (var (beat, index) in rewrite.Chapter.Beats.Take(rewrite.From).Select((beat, index) => (beat, index)))
-            {
-                text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {Steps(beat)} — {Quoted(beat.Lines)}");
-            }
-        }
-        else
-        {
-            text.AppendLine("The Commander has not done an objective of this chapter yet.");
-        }
-
-        var refused = rewrite.Chapter.Beats[rewrite.From];
-        var step = refused.Steps[Math.Min(rewrite.Step, refused.Steps.Count - 1)];
-
-        if (refused.Steps.Count > 1)
-        {
-            text.AppendLine(
-                $"The next objective has {refused.Steps.Count} steps: {Steps(refused)}. The Commander is on step {rewrite.Step + 1}, "
-                + "and only that step is replaced: write the replacement as the first step of the first new objective. The other steps stay.");
-        }
-
-        if (changing)
-        {
-            text.AppendLine($"The objective the Commander wants to change: {refused.Title} ({refused.Function}) — {step.Trigger.Describe()} — {Quoted(refused.Lines)}");
-            text.AppendLine("Write the objective that best serves the chapter and the Commander's idea in its place, or this one again if keeping it is better.");
-        }
-        else if (rewrite.ClosedMarketId is null)
-        {
-            text.AppendLine($"The objective the Commander refused: {refused.Title} ({refused.Function}) — {step.Trigger.Describe()} — {Quoted(refused.Lines)}");
-            text.AppendLine("Write a different objective in its place, not the same thing to do and not the same place.");
-        }
-        else
-        {
-            var station = step.Trigger.Station ?? "that station";
-
-            text.AppendLine($"The objective the Commander was on: {refused.Title} ({refused.Function}) — {step.Trigger.Describe()} — {Quoted(refused.Lines)}");
-            text.AppendLine(
-                $"{station}'s docks are offline, so the Commander cannot dock there. Write a different objective in its place. It may dock "
-                + $"somewhere else, but no objective may name {station}.");
-        }
-
-        text.AppendLine("Continue from the last objective done; do not restart or retell the chapter. It keeps its spine and its ending.");
-    }
-
     /// <summary>A beat's steps as the model is shown them: each described, in order.</summary>
     private static string Steps(AdventureBeat beat) => string.Join(", then ", beat.Steps.Select(step => step.Trigger.Describe()));
 
     /// <summary>A beat's lines as the model is shown them: each in quotes, after its speaker when one is named.</summary>
     private static string Quoted(IReadOnlyList<AdventureLine> lines) =>
         string.Join(" / ", lines.Select(line => line.Speaker is { Length: > 0 } speaker ? $"{speaker}: \"{line.Text}\"" : $"\"{line.Text}\""));
-
-    /// <summary>A travel beat's reason as the model is shown it, or nothing.</summary>
-    private static string Why(string? reason) => reason is { Length: > 0 } ? $" — reason: \"{reason}\"" : string.Empty;
-
-    private static string Render(Adventure draft)
-    {
-        var text = new StringBuilder();
-
-        if (draft.Spine is { } spine)
-        {
-            AppendSpine(text, draft.Name, spine);
-        }
-        else
-        {
-            text.AppendLine($"Title: {draft.Name}");
-        }
-
-        text.AppendLine($"Opening: {Quoted(draft.OpeningLines)}");
-
-        foreach (var (beat, index) in draft.Beats.Select((beat, index) => (beat, index)))
-        {
-            text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {Steps(beat)}{Why(beat.Reason)} — {Quoted(beat.Lines)}");
-        }
-
-        return text.ToString();
-    }
 
     // ---- reading the answers ---------------------------------------------------------------
 
@@ -5400,81 +3240,16 @@ public sealed partial class AdventureGenerator(
         }
     }
 
-    private static AdventureSpine? ReadSpine(string json, out string? name)
+    /// <summary>One step of a planned objective: its trigger, and the words written for the objective it belongs to.</summary>
+    private sealed record ReadBeat(string Title, string? Function, AdventureTrigger Trigger, string? Reason, IReadOnlyList<AdventureLine> Lines)
     {
-        (var spine, name) = ReadJson<(AdventureSpine?, string?)>(json, allowTrailingCommas: true, root => (
-            new AdventureSpine
-            {
-                Premise = Text(root, "premise"),
-                Want = Text(root, "want"),
-                Stake = Text(root, "stake"),
-                Turn = Text(root, "turn"),
-                Ending = Text(root, "ending"),
-            },
-            Text(root, "name")));
+        public TriggerKind Kind => Trigger.Kind;
 
-        return spine;
-    }
-
-    private const int UnlocksOffered = 8;
-
-    private static string UnlockLine(TechBrokerUnlocks? unlocks, string seed)
-    {
-        var offered = new List<string>();
-
-        foreach (var brokerType in new[] { TechBrokerCatalogue.Guardian, TechBrokerCatalogue.Human })
-        {
-            var rows = (unlocks ?? TechBrokerUnlocks.Empty).NotKnownToBeUnlocked(brokerType);
-
-            offered.AddRange(Shuffled(rows, seed + brokerType).Take(UnlocksOffered).Select(row =>
-                $"{row.Name} ({brokerType} broker; costs "
-                + string.Join(", ", row.Blueprint.Ingredients.Select(ingredient => $"{ingredient.Size} × {ingredient.Material?.Name ?? ingredient.Symbol}")) + ")"));
-        }
-
-        return "- \"unlock\": the Commander unlocks one item at a tech broker, once. \"filter\" is the item's name, taken only from this list of items the Commander has not unlocked yet"
-            + (offered.Count == 0 ? "; none is open, so do not use this kind" : ": " + string.Join("; ", offered))
-            + ". A Guardian item needs a Guardian blueprint and Guardian materials from Guardian sites, so a chapter can send the Commander to gather them before this objective.";
-    }
-
-    private sealed record ReadBeat(
-        string Title,
-        string? Function,
-        TriggerKind Kind,
-        string? Reason,
-        string? System,
-        string? Station,
-        string? Body,
-        string? Career,
-        int? Rank,
-        string? Ship,
-        int? Count,
-        string? Faction,
-        string? MissionFamily,
-        string? Commodity,
-        string? Filter,
-        bool? Organic,
-        bool? New,
-        string? Engineer,
-        string? Stage,
-        IReadOnlyList<AdventureLine> Lines)
-    {
         /// <summary>Whether this is a further step of the objective before it and not an objective of its own.</summary>
         public bool Continues { get; init; }
 
-        /// <summary>The name the model gave a mission, for the mission kinds.</summary>
-        public string? Handle { get; init; }
-
-        /// <summary>For a choice: its options as the model wrote them.</summary>
-        public IReadOnlyList<ReadOption> Options { get; init; } = [];
-
         /// <summary>For an event step: the phrase the model wrote for what the Commander does.</summary>
         public string? Task { get; init; }
-
-        /// <summary>For an event step: the event, set from the drawn slot and never written by the model.</summary>
-        public string? Event { get; init; }
-
-        /// <summary>For an event step: the field test, set from the drawn slot.</summary>
-        public EventFilter Where { get; init; } = EventFilter.None;
 
         /// <summary>For a tool run step: the phrase the Commander says, which the task has to hold.</summary>
         public string? Say { get; init; }
@@ -5488,48 +3263,45 @@ public sealed partial class AdventureGenerator(
         /// <summary>The title, marked when this is a further step.</summary>
         public string Named => Continues ? $"{Title}, a further step" : Title;
 
-        /// <summary>A counted or engineer beat's trigger as written; the place fields are not carried.</summary>
+        /// <summary>A counted or engineer step's trigger without its place fields.</summary>
         public AdventureTrigger Written() => new()
         {
             Kind = Kind,
-            Count = Count,
-            Faction = Faction,
-            MissionFamily = MissionFamily,
-            Commodity = Commodity,
-            Filter = Filter,
-            Organic = Organic,
-            New = New,
-            System = Kind is TriggerKind.Uss or TriggerKind.Map or TriggerKind.Signal or TriggerKind.Organic && !string.IsNullOrWhiteSpace(System) ? System.Trim() : null,
-            Engineer = Engineer,
-            Stage = Stage,
-            Rank = Kind == TriggerKind.PowerRank ? Rank : null,
-            Handle = Handle,
-            Station = AdventureTrigger.IsMissionHandleKind(Kind) ? Station : null,
-            Event = Kind == TriggerKind.Event ? Event : null,
-            Where = Kind == TriggerKind.Event ? Where : EventFilter.None,
+            Count = Trigger.Count,
+            Faction = Trigger.Faction,
+            MissionFamily = Trigger.MissionFamily,
+            Commodity = Trigger.Commodity,
+            Filter = Trigger.Filter,
+            Organic = Trigger.Organic,
+            New = Trigger.New,
+            System = Kind is TriggerKind.Uss or TriggerKind.Map or TriggerKind.Signal or TriggerKind.Organic && !string.IsNullOrWhiteSpace(Trigger.System) ? Trigger.System.Trim() : null,
+            Engineer = Trigger.Engineer,
+            Stage = Trigger.Stage,
+            Rank = Kind == TriggerKind.PowerRank ? Trigger.Rank : null,
+            Handle = Trigger.Handle,
+            Station = AdventureTrigger.IsMissionHandleKind(Kind) ? Trigger.Station : null,
+            Event = Kind == TriggerKind.Event ? Trigger.Event : null,
+            Where = Kind == TriggerKind.Event ? Trigger.Where : EventFilter.None,
             Task = Kind == TriggerKind.Event ? Task : null,
         };
 
-        /// <summary>The trigger as the model wrote it, for showing the model its own draft back.</summary>
+        /// <summary>The step as the checks are shown it.</summary>
         public string Describe() => AdventureTrigger.IsCountedKind(Kind) || AdventureTrigger.IsOnceKind(Kind) || AdventureTrigger.IsMissionHandleKind(Kind) || Kind is TriggerKind.Engineer or TriggerKind.Unlock or TriggerKind.Pledge or TriggerKind.PowerRank ? Written().Describe() : Kind switch
         {
-            TriggerKind.Rank => $"rank: {Careers.Word(Careers.Match(Career) ?? Career)} {Rank?.ToString(CultureInfo.InvariantCulture) ?? "?"}",
-            TriggerKind.Dock => $"dock: {Station ?? "?"} in {System ?? "?"}",
-            TriggerKind.Land => $"land: {Body ?? "?"} in {System ?? "?"}",
-            TriggerKind.Scan => $"scan: {Body ?? "?"} in {System ?? "?"}",
-            TriggerKind.Board => $"board: {Ship ?? "?"}",
+            TriggerKind.Rank => $"rank: {Careers.Word(Careers.Match(Trigger.Career) ?? Trigger.Career)} {Trigger.Rank?.ToString(CultureInfo.InvariantCulture) ?? "?"}",
+            TriggerKind.Dock => $"dock: {Trigger.Station ?? "?"} in {Trigger.System ?? "?"}",
+            TriggerKind.Land => $"land: {Trigger.Body ?? "?"} in {Trigger.System ?? "?"}",
+            TriggerKind.Scan => $"scan: {Trigger.Body ?? "?"} in {Trigger.System ?? "?"}",
+            TriggerKind.Board => $"board: {EliteSpecifications.HullName(Trigger.ShipType) ?? Trigger.ShipType ?? "?"}",
             TriggerKind.Beacon => "beacon",
             TriggerKind.Reach => "reach",
             TriggerKind.Site => "site",
-            TriggerKind.Choice => $"choice: {string.Join(" / ", Options.Select(option => option.Label ?? "?"))}",
-            _ => $"arrive: {System ?? "?"}",
+            TriggerKind.Choice => Trigger.Describe(),
+            _ => $"arrive: {Trigger.System ?? "?"}",
         };
     }
 
-    /// <summary>One option of a choice as the model wrote it.</summary>
-    private sealed record ReadOption(string? Label, IReadOnlyList<ReadBeat> Steps, string? Ending, string? EndingLine);
-
-    private sealed record ReadAnswer(IReadOnlyList<AdventureLine> Opening, string? Reply, IReadOnlyList<ReadBeat> Beats, ReadPlace? Destination)
+    private sealed record ReadAnswer(IReadOnlyList<AdventureLine> Opening, string? Reply, IReadOnlyList<ReadBeat> Beats)
     {
         /// <summary>The ids the chapter's "aboard" lists, as written.</summary>
         public IReadOnlyList<string> Aboard { get; init; } = [];
@@ -5539,144 +3311,12 @@ public sealed partial class AdventureGenerator(
 
         /// <summary>The ids "openingLeaves" lists, as written.</summary>
         public IReadOnlyList<string> OpeningLeaves { get; init; } = [];
-
-        /// <summary>Whether "heading" says a changed objective's new objectives travel toward the place the Commander asked for.</summary>
-        public bool Heading { get; init; }
     }
-
-    /// <summary>A place as the model named it.</summary>
-    private sealed record ReadPlace(string? System, string? Body);
-
-    private static ReadAnswer? ReadBeats(string json) => ReadJson(json, allowTrailingCommas: true, root =>
-    {
-        var beats = new List<ReadBeat>();
-
-        if (root.TryGetProperty("beats", out var array) && array.ValueKind == JsonValueKind.Array)
-        {
-            beats.AddRange(array.EnumerateArray().SelectMany(ReadObjective));
-        }
-
-        return new ReadAnswer(ReadOpening(root), Text(root, "reply"), beats, ReadDestination(root))
-        {
-            Aboard = Ids(root, "aboard"),
-            OpeningBoards = Ids(root, "openingBoards"),
-            OpeningLeaves = Ids(root, "openingLeaves"),
-            Heading = root.TryGetProperty("heading", out var heading) && heading.ValueKind == JsonValueKind.True,
-        };
-    });
-
-    /// <summary>A repair answer: each replacement with the number of the objective it replaces, and the opening and destination when written again.</summary>
-    private sealed record ReadRepair(IReadOnlyList<(int Objective, ReadBeat Beat)> Replacements, IReadOnlyList<AdventureLine> Opening, ReadPlace? Destination);
-
-    /// <summary>The repair answer, or null when it has no list of replacements to read.</summary>
-    private static ReadRepair? ReadReplacements(string json) => ReadJson(json, allowTrailingCommas: true, root =>
-    {
-        if (root.ValueKind != JsonValueKind.Object
-            || !root.TryGetProperty("replacements", out var array)
-            || array.ValueKind != JsonValueKind.Array)
-        {
-            return null;
-        }
-
-        var replacements = array.EnumerateArray()
-            .Select(element => (Objective: Integer(element, "objective"), Beat: ReadBeatFrom(element)))
-            .Where(read => read is { Objective: not null, Beat: not null })
-            .Select(read => (read.Objective!.Value, read.Beat!))
-            .ToList();
-
-        return new ReadRepair(replacements, ReadOpening(root), ReadDestination(root));
-    });
 
     /// <summary>The strings of the list <paramref name="property"/>, as written; empty when there is none.</summary>
     private static IReadOnlyList<string> Ids(JsonElement element, string property) =>
         element.ValueKind == JsonValueKind.Object && element.TryGetProperty(property, out var list) && list.ValueKind == JsonValueKind.Array
             ? [.. list.EnumerateArray().Where(id => id.ValueKind == JsonValueKind.String).Select(id => id.GetString()!)]
-            : [];
-
-    private static ReadPlace? ReadDestination(JsonElement root) =>
-        Nested(root, "destination") is { } named ? new ReadPlace(Text(named, "system"), Text(named, "body")) : null;
-
-    /// <summary>One objective as the model wrote it: its first step, then each step of "then" as a further step of it.</summary>
-    private static IEnumerable<ReadBeat> ReadObjective(JsonElement element)
-    {
-        if (ReadBeatFrom(element) is not { } first)
-        {
-            yield break;
-        }
-
-        yield return first;
-
-        if (!element.TryGetProperty("then", out var then) || then.ValueKind != JsonValueKind.Array)
-        {
-            yield break;
-        }
-
-        foreach (var step in then.EnumerateArray())
-        {
-            if (ReadBeatFrom(step) is { } next)
-            {
-                yield return next with { Title = first.Title, Function = null, Lines = [], Continues = true, Boards = [], Leaves = [] };
-            }
-        }
-    }
-
-    /// <summary>One beat as the model wrote it, or null when its kind is not one d47 knows.</summary>
-    private static ReadBeat? ReadBeatFrom(JsonElement element)
-    {
-        if (!AdventureValidation.TryKind(Text(element, "kind"), out var kind))
-        {
-            return null;
-        }
-
-        // A rank beat's career and rank are read from wherever the model put them: the flat shape
-        // it was asked for, or nested under "rank" or "trigger", or the rank as a numeric string.
-        var nested = Nested(element, "trigger") ?? Nested(element, "rank") ?? Nested(element, "promotion");
-
-        return new ReadBeat(
-            Text(element, "title") ?? "Untitled",
-            Text(element, "function"),
-            kind,
-            Text(element, "reason"),
-            Text(element, "system"),
-            Text(element, "station"),
-            Text(element, "body"),
-            Text(element, "career") ?? Text(element, "ladder") ?? (nested is { } trigger ? Text(trigger, "career") ?? Text(trigger, "ladder") : null),
-            Integer(element, "rank") ?? Integer(element, "to") ?? (nested is { } nestedRank ? Integer(nestedRank, "rank") ?? Integer(nestedRank, "to") ?? Integer(nestedRank, "level") : null),
-            Text(element, "ship"),
-            Integer(element, "count"),
-            Text(element, "faction"),
-            Text(element, "mission"),
-            Text(element, "commodity"),
-            Text(element, "filter"),
-            Flag(element, "organic"),
-            Flag(element, "new"),
-            Text(element, "engineer"),
-            Text(element, "stage"),
-            ReadLines(element))
-        {
-            Handle = Text(element, "handle"),
-            Task = Text(element, "task"),
-            Options = kind == TriggerKind.Choice ? ReadOptions(element) : [],
-            Boards = Ids(element, "boards"),
-            Leaves = Ids(element, "leaves"),
-        };
-    }
-
-    /// <summary>A choice's options: each a label, the steps in its "then", and an "ending" with the "line" said when it is reached.</summary>
-    private static IReadOnlyList<ReadOption> ReadOptions(JsonElement element) =>
-        element.TryGetProperty("options", out var options) && options.ValueKind == JsonValueKind.Array
-            ?
-            [
-                .. options.EnumerateArray()
-                    .Where(option => option.ValueKind == JsonValueKind.Object)
-                    .Select(option => new ReadOption(
-                        Text(option, "label"),
-                        option.TryGetProperty("then", out var then) && then.ValueKind == JsonValueKind.Array
-                            ? [.. then.EnumerateArray().Select(ReadBeatFrom).OfType<ReadBeat>()]
-                            : [],
-                        Text(option, "ending"),
-                        Text(option, "line") ?? Text(option, "endingLine"))),
-            ]
             : [];
 
     /// <summary>The opening's lines: the <c>opening</c> list a story chapter is asked for, or the single <c>opening</c> and <c>openingSpeaker</c>.</summary>
@@ -5688,17 +3328,6 @@ public sealed partial class AdventureGenerator(
         }
 
         return Text(root, "opening") is { } text ? [new AdventureLine { Text = text, Speaker = Text(root, "openingSpeaker") }] : [];
-    }
-
-    /// <summary>A beat's lines: the <c>lines</c> list a story chapter is asked for, or the single <c>line</c> and <c>speaker</c>.</summary>
-    private static IReadOnlyList<AdventureLine> ReadLines(JsonElement beat)
-    {
-        if (beat.TryGetProperty("lines", out var lines) && lines.ValueKind == JsonValueKind.Array && LinesOf(lines) is { Count: > 0 } read)
-        {
-            return read;
-        }
-
-        return [new AdventureLine { Text = Text(beat, "line") ?? string.Empty, Speaker = Text(beat, "speaker") }];
     }
 
     /// <summary>A list of lines, each a string or a text and speaker, blank ones dropped, at most <see cref="AdventureLimits.MaxLinesPerBeat"/>.</summary>
@@ -5724,18 +3353,6 @@ public sealed partial class AdventureGenerator(
             ? text.Trim()
             : null;
 
-    private static JsonElement? Nested(JsonElement element, string property) =>
-        element.ValueKind == JsonValueKind.Object
-        && element.TryGetProperty(property, out var value)
-        && value.ValueKind == JsonValueKind.Object
-            ? value
-            : null;
-
-    private static bool? Flag(JsonElement element, string property) =>
-        element.ValueKind == JsonValueKind.Object && element.TryGetProperty(property, out var value)
-            ? value.ValueKind switch { JsonValueKind.True => true, JsonValueKind.False => false, _ => null }
-            : null;
-
     private static int? Integer(JsonElement element, string property)
     {
         if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty(property, out var value))
@@ -5751,11 +3368,11 @@ public sealed partial class AdventureGenerator(
         };
     }
 
-    // ---- the dry run -----------------------------------------------------------------------
+    // ---- the checked chapter ---------------------------------------------------------------
 
     private sealed record Resolved(IReadOnlyList<AdventureBeat> Beats, IReadOnlyList<Refusal> Refusals, AdventureDestination? Destination)
     {
-        /// <summary>The opening's lines with their speakers resolved; set after the dry run.</summary>
+        /// <summary>The opening's lines with their speakers resolved.</summary>
         public IReadOnlyList<AdventureLine> Opening { get; init; } = [];
 
         /// <summary>For each beat in <see cref="Beats"/>, the index of the objective it was written as.</summary>
@@ -5763,22 +3380,17 @@ public sealed partial class AdventureGenerator(
 
         /// <summary>For each beat in <see cref="Beats"/>, whether it is a further step of the one before it.</summary>
         public IReadOnlyList<bool> Joins { get; init; } = [];
-
-        /// <summary>The galaxy search failure that outlasted its retry during the dry run; null when none did.</summary>
-        public string? Outage { get; init; }
     }
 
     /// <summary>
-    /// Why the dry run refused something, and what a repair may replace to clear it: <see cref="Objectives"/> by index in
-    /// the beats as written, the opening or the destination. A refusal that names none of them is the whole chapter's.
+    /// Why a check refused something, and what a repair may write again to clear it: <see cref="Objectives"/> by index in
+    /// the beats, the opening, or the title and spine.
     /// </summary>
     private sealed record Refusal(string Text, IReadOnlyList<int> Objectives)
     {
         public IReadOnlyList<string>? Reasons { get; init; }
 
         public bool Opening { get; init; }
-
-        public bool Destination { get; init; }
 
         /// <summary>Whether it falls on the title or the spine.</summary>
         public bool Spine { get; init; }
@@ -5788,61 +3400,6 @@ public sealed partial class AdventureGenerator(
 
         /// <summary>The plain-wording objections behind it, with any rewrites the checker gave.</summary>
         public IReadOnlyList<PlainObjection> Unplain { get; init; } = [];
-
-        /// <summary>The step a repair adds after the last one, as the writer is told it; the refusal is charged to the index one past the last.</summary>
-        public string? Appends { get; init; }
-
-        public bool Chapter => Objectives.Count == 0 && !Opening && !Destination && !Spine;
-    }
-
-    /// <summary>The objectives as written and the refusals a repair round answers; <see cref="Offset"/> objectives come before them in the chapter.</summary>
-    private sealed record Repair(IReadOnlyList<ReadBeat> Beats, IReadOnlyList<Refusal> Refusals, int Offset)
-    {
-        /// <summary>The plain findings raised earlier on the objectives and opening the repair writes again.</summary>
-        public IReadOnlyList<string> Earlier { get; init; } = [];
-
-        /// <summary>The indexes a replacement may take: those the refusals name, and every one when a refusal is the whole chapter's.</summary>
-        public IReadOnlySet<int> Replaceable =>
-            Refusals.Any(refusal => refusal.Chapter)
-                ? Enumerable.Range(0, Beats.Count).Union(Refusals.SelectMany(refusal => refusal.Objectives)).ToHashSet()
-                : Refusals.SelectMany(refusal => refusal.Objectives).ToHashSet();
-
-        public bool Opening => Refusals.Any(refusal => refusal.Opening);
-
-        public bool Destination => Refusals.Any(refusal => refusal.Destination);
-
-        /// <summary>The answer with each replacement in place of the objective it numbers, and the indexes replaced; every other objective is kept as written.</summary>
-        public (ReadAnswer Read, IReadOnlySet<int> Replaced) Splice(ReadAnswer read, ReadRepair answer)
-        {
-            var beats = read.Beats.ToList();
-            var replaceable = Replaceable;
-            var replaced = new HashSet<int>();
-
-            foreach (var (objective, beat) in answer.Replacements)
-            {
-                var index = objective - Offset - 1;
-
-                if (index == read.Beats.Count && beats.Count > 0 && replaceable.Contains(index) && replaced.Add(index))
-                {
-                    beats.Add(beat with { Title = beats[^1].Title, Function = null, Lines = [], Continues = true, Boards = [], Leaves = [] });
-                }
-                else if (index >= 0 && index < read.Beats.Count && replaceable.Contains(index) && replaced.Add(index))
-                {
-                    beats[index] = beats[index].Continues
-                        ? beat with { Title = beats[index].Title, Function = null, Lines = [], Continues = true, Boards = [], Leaves = [] }
-                        : beat with { Continues = false };
-                }
-            }
-
-            return (
-                read with
-                {
-                    Beats = beats,
-                    Opening = Opening && answer.Opening.Count > 0 ? answer.Opening : read.Opening,
-                    Destination = Destination && answer.Destination is not null ? answer.Destination : read.Destination,
-                },
-                replaced);
-        }
     }
 
     /// <summary>The resolved objectives as beats: each further step joins the beat before it.</summary>
@@ -5867,616 +3424,6 @@ public sealed partial class AdventureGenerator(
         return beats;
     }
 
-    private async Task<Resolved> DryRunAsync(
-        IReadOnlyList<ReadBeat> beats,
-        ReadPlace? named,
-        Facts facts,
-        IReadOnlyList<NotablePlace> notable,
-        AdventureAsk ask,
-        bool steerIllegal,
-        Sites sites,
-        InBand inBand,
-        PullPlaces pull,
-        BaseStep? home,
-        CancellationToken cancellationToken)
-    {
-        var resolver = new AdventureResolver(galaxy()!, facts.Standings) { ClosedMarketId = facts.ClosedMarketId, Time = Time };
-        var unmet = new List<DrawnActivity>();
-        var resolved = new List<AdventureBeat>();
-        var refusals = new List<Refusal>();
-        var stood = new List<int>();
-        var joins = new List<bool>();
-        var previousSystem = facts.System;
-        var offset = ask.Rewrite?.From ?? 0;
-
-        // The system a changed objective asked to go to; the hop into it is not held to the reach.
-        var arrivesAt = ChapterPull.Of(ask, facts.Position) is { Asked: true, Home: false, Arrived: false } askedLeg ? askedLeg.Target : null;
-
-        // The index of the beat that last set the previous system.
-        int? lastPlaced = null;
-
-        // The kind of that beat, and the previous system before it.
-        (TriggerKind Kind, string? Before)? lastPlace = null;
-
-        void Refuse(int index, string text) => refusals.Add(new Refusal(text, [index]));
-
-        // Refuses each problem; whether there were none.
-        bool Accept(List<string> problems, int index)
-        {
-            problems.ForEach(problem => Refuse(index, problem));
-            return problems.Count == 0;
-        }
-
-        // Every place that stood, by its beat number, for the scan-order rule below.
-        var placed = new List<(string Where, AdventureTrigger Trigger)>();
-
-        // The trigger the beat before this one stood on, or null where it was refused.
-        AdventureTrigger? lastStood = null;
-
-        // The hull the Commander flies at the current beat: the latest accepted Board beat, else null for the ship aboard.
-        string? flown = null;
-
-        // The beats of a chapter being rewritten that stay, which count toward the chapter's rules.
-        IReadOnlyList<AdventureBeat> kept = ask.Rewrite is { } rewrite ? [.. rewrite.Chapter.Beats.Take(rewrite.From)] : [];
-
-        beats = MeetSlots(beats, kept, ask.Story?.Slots, unmet);
-
-        // A detour of one objective may have no line, as AdventureValidation.Problems allows.
-        var onlyObjectiveOfADetour = ask.Rewrite?.Chapter.Detour == true && kept.Count + beats.Count(beat => !beat.Continues) == 1;
-
-        var finale = ask.Story?.FinaleChapter;
-        var (destination, unnamed) = finale == 1 && ask.Story!.Destination is null
-            ? await DestinationAsync(named, facts, ask.Story!, resolver, cancellationToken).ConfigureAwait(false)
-            : (finale is null ? null : ask.Story!.Destination, null);
-        var closing = finale >= ask.Story?.FinaleChapters && destination is not null;
-
-        if (unnamed is not null)
-        {
-            refusals.Add(new Refusal(unnamed, []) { Destination = true });
-        }
-
-        // The last stop before the last step, which the chapter's other rules measure when that step is the one back to the base.
-        (string? System, int? Placed, (TriggerKind Kind, string? Before)? Place) beforeLast = (previousSystem, null, null);
-
-        foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
-        {
-            if (index == beats.Count - 1)
-            {
-                beforeLast = (previousSystem, lastPlaced, lastPlace);
-            }
-
-            var where = $"Objective {offset + index + 1} ({beat.Named})";
-            var stoodBefore = lastStood;
-            lastStood = null;
-            AdventureTrigger? trigger = null;
-            IReadOnlyList<BeatOption> options = [];
-
-            if (!beat.Continues && beat.Lines.All(line => string.IsNullOrWhiteSpace(line.Text)) && !onlyObjectiveOfADetour)
-            {
-                Refuse(index, $"{where} has no line.");
-            }
-
-            if (beat.Kind == TriggerKind.Beacon)
-            {
-                // Placed at the beacon d47 chose, whatever system the model wrote.
-                if (ask.Story?.Beacon is { } beacon && index == beats.Count - 1)
-                {
-                    trigger = beacon.Trigger();
-                }
-                else
-                {
-                    Refuse(index, $"{where} is a \"beacon\" objective; only the last objective of the chapter that ends act one may be one.");
-                }
-            }
-            else if (beat.Kind == TriggerKind.Reach)
-            {
-                if (ask.Story?.BeaconAway is { } away)
-                {
-                    trigger = away.Trigger();
-                }
-                else
-                {
-                    Refuse(index, $"{where} is a \"reach\" objective; only a chapter whose Guardian beacon is out of reach may have one.");
-                }
-            }
-            else if (beat.Kind == TriggerKind.Site)
-            {
-                var (site, refusal) = SiteTrigger(beat, sites, where);
-
-                if (site is null)
-                {
-                    Refuse(index, refusal!);
-                }
-                else
-                {
-                    var (hop, unavailable) = await HopAsync(previousSystem, site.System!, resolver, cancellationToken).ConfigureAwait(false);
-
-                    if (unavailable is not null)
-                    {
-                        Refuse(index, $"{where} could not be measured: {unavailable}");
-                    }
-                    else if (hop is { } far && far > facts.RadiusLightYears)
-                    {
-                        Refuse(index, $"{where} is {far:0} light years from the previous stop; the reach is {facts.RadiusLightYears:0}.");
-                    }
-                    else
-                    {
-                        lastPlace = (site.Kind, previousSystem);
-                        previousSystem = site.System;
-                        lastPlaced = index;
-                        trigger = site;
-                    }
-                }
-            }
-            else if (beat.Kind == TriggerKind.Engineer)
-            {
-                var written = beat.Written();
-                var problems = AdventureValidation.EngineerProblems(where, written).ToList();
-
-                if (Accept(problems, index))
-                {
-                    trigger = written with { Engineer = EngineerDirectory.ByName(written.Engineer)!.Name };
-                }
-            }
-            else if (beat.Kind == TriggerKind.Unlock)
-            {
-                var written = beat.Written();
-                var problems = AdventureValidation.UnlockProblems(where, written, facts.Unlocks).ToList();
-
-                if (Accept(problems, index))
-                {
-                    trigger = written with { Filter = TechBrokerCatalogue.ForName(written.Filter)!.Name };
-                }
-            }
-            else if (beat.Kind == TriggerKind.Pledge)
-            {
-                var written = beat.Written();
-                var problems = AdventureValidation.PledgeProblems(where, written).ToList();
-
-                if (Accept(problems, index))
-                {
-                    trigger = written with { Filter = AdventureValidation.PowerNamed(written.Filter) };
-                }
-            }
-            else if (beat.Kind == TriggerKind.PowerRank)
-            {
-                var written = beat.Written();
-                var problems = AdventureValidation.PowerRankProblems(where, written).ToList();
-
-                if (problems.Count == 0 && written.Rank <= (facts.Pledge?.Rank ?? 0))
-                {
-                    problems.Add($"{where} waits for PowerPlay rank {written.Rank}, which the Commander already holds; ask for a higher rank.");
-                }
-
-                if (Accept(problems, index))
-                {
-                    trigger = written;
-                }
-            }
-            else if (AdventureTrigger.IsMissionHandleKind(beat.Kind))
-            {
-                var written = beat.Written();
-                var problems = AdventureValidation.MissionFamilyProblems(where, written).ToList();
-
-                if (string.IsNullOrWhiteSpace(written.Handle))
-                {
-                    problems.Add($"{where} names no mission handle.");
-                }
-
-                if (problems.Count == 0 && beat.Kind == TriggerKind.MissionTaken && !string.IsNullOrWhiteSpace(written.Station))
-                {
-                    var place = await resolver.ResolveAsync(TriggerKind.Dock, beat.System, beat.Station, beat.Body, where, facts.NeedsPad(flown), cancellationToken).ConfigureAwait(false);
-
-                    if (place.Trigger is { } docked)
-                    {
-                        written = written with { MarketId = docked.MarketId, SystemAddress = docked.SystemAddress, System = docked.System, Station = docked.Station };
-                    }
-                    else
-                    {
-                        problems.Add(place.Refusal!);
-                    }
-                }
-
-                if (Accept(problems, index))
-                {
-                    trigger = written;
-                }
-            }
-            else if (beat.Kind == TriggerKind.Choice)
-            {
-                var problems = new List<string>();
-
-                if (beat.Continues)
-                {
-                    problems.Add($"{where} is a choice written as a further step; a choice is the first step of its objective, offered by the line before it.");
-                }
-
-                options = [.. beat.Options.Select((option, at) => OptionOf($"{where}, option {(at + 1).ToString(CultureInfo.InvariantCulture)}", option, problems))];
-
-                if (Accept(problems, index))
-                {
-                    trigger = new AdventureTrigger { Kind = TriggerKind.Choice };
-                }
-            }
-            else if (AdventureTrigger.IsOnceKind(beat.Kind))
-            {
-                trigger = new AdventureTrigger { Kind = beat.Kind };
-            }
-            else if (AdventureTrigger.IsCountedKind(beat.Kind))
-            {
-                var counted = beat.Written();
-                var problems = AdventureValidation.CountedProblems(where, counted).ToList();
-
-                if (problems.Count == 0 && counted.System is { } countedSystem)
-                {
-                    try
-                    {
-                        if (await resolver.SystemAsync(countedSystem, cancellationToken).ConfigureAwait(false) is not { } found)
-                        {
-                            problems.Add($"{where} names a system, \"{countedSystem}\", that the galaxy search does not know; name a real system, or leave \"system\" null for anywhere.");
-                        }
-                        else if (counted.Kind != TriggerKind.Uss && Closed(found.Name, found.Address, facts))
-                        {
-                            problems.Add(PermitRefusal(where, found.Name));
-                        }
-                        else if (counted.Kind != TriggerKind.Uss
-                                 && await SupplyShortfallAsync(counted, found.Address, cancellationToken).ConfigureAwait(false) is { } shortfall)
-                        {
-                            problems.Add($"{where} counts {counted.Count?.ToString(CultureInfo.InvariantCulture)} in {found.Name}, but {shortfall}; lower the count, name another system, or leave \"system\" null for anywhere.");
-                        }
-                        else
-                        {
-                            counted = counted with { System = found.Name, SystemAddress = found.Address };
-                            previousSystem = found.Name;
-                        }
-                    }
-                    catch (GalaxyUnavailableException ex)
-                    {
-                        problems.Add($"{where} could not be placed: {ex.Message}");
-                    }
-                }
-
-                if (beat is { Kind: TriggerKind.Event, Say: { } say } && counted.Task?.Contains(say, StringComparison.OrdinalIgnoreCase) != true)
-                {
-                    problems.Add($"{where} is a tool run, and its \"task\" has to hold the phrase the Commander says, \"{say}\".");
-                }
-
-                if (problems.Count == 0
-                    && beat.Kind == TriggerKind.OnFootBond
-                    && await OnFootBondOutsideFrontlineAsync(where, stoodBefore, resolver, cancellationToken).ConfigureAwait(false) is { } apart)
-                {
-                    problems.Add(apart);
-                }
-
-                if (problems.Count == 0
-                    && steerIllegal
-                    && beat.Kind == TriggerKind.Mission
-                    && MissionFamilies.IsIllegal(counted.MissionFamily)
-                    && await IllegalOutsideAnarchyAsync(where, stoodBefore, resolver, cancellationToken).ConfigureAwait(false) is { } outside)
-                {
-                    problems.Add(outside);
-                }
-
-                if (Accept(problems, index))
-                {
-                    trigger = counted;
-                }
-            }
-            else if (beat.Kind == TriggerKind.Board)
-            {
-                if ((EliteSpecifications.HullSymbol(beat.Ship) ?? facts.HullNamed(beat.Ship)) is not { } symbol)
-                {
-                    Refuse(index, $"{where} boards a ship \"{beat.Ship ?? string.Empty}\" that d47 has no name for; give \"ship\" as a hull type such as Anaconda, or use another kind of objective.");
-                }
-                else if (ask.Story is null && !BriefNames(ask.Brief, symbol))
-                {
-                    Refuse(index, $"{where} boards a {EliteSpecifications.HullName(symbol)}, which the Commander's brief does not name; make it another kind of objective.");
-                }
-                else if (ask.Story is not null && ChapterFit.BoardWhy(symbol, facts.Owns(symbol), facts.Credits) is { } why)
-                {
-                    Refuse(index, $"{where} boards a {EliteSpecifications.HullName(symbol)}, but {why}; save up for it in this chapter and board it in a later one.");
-                }
-                else
-                {
-                    trigger = new AdventureTrigger { Kind = TriggerKind.Board, ShipType = symbol };
-                    flown = symbol;
-                }
-            }
-            else if (beat.Kind == TriggerKind.Rank)
-            {
-                var career = Careers.Match(beat.Career);
-                var careers = string.Join(", ", Careers.Keys.Select(Careers.Word));
-
-                if (career is null)
-                {
-                    Refuse(index, beat.Career is null
-                        ? $"{where} is a rank objective but names no career; \"career\" must be one of {careers}."
-                        : $"{where} names a career \"{beat.Career}\" that is not one of {careers}.");
-                }
-                else
-                {
-                    var held = facts.Ranks.For(career)?.Rank ?? 0;
-
-                    var top = Careers.TopRank(career);
-
-                    if (held >= top)
-                    {
-                        Refuse(index, $"{where} asks for a promotion in {Careers.Word(career)}, where the Commander is already {Careers.RankSaid(career, top)}; make it another career or another kind of objective.");
-                    }
-                    else if (beat.Rank is not { } rank || rank <= held || rank > top)
-                    {
-                        Refuse(index, 
-                            $"{where} asks for {Careers.RankSaid(career, beat.Rank)}; the Commander holds {Careers.RankSaid(career, held)}, "
-                            + $"so the objective must name {held + 1}{(held + 1 < top ? $" or {held + 2}" : string.Empty)}.");
-                    }
-                    else
-                    {
-                        trigger = new AdventureTrigger { Kind = TriggerKind.Rank, Career = career, Rank = rank };
-                    }
-                }
-            }
-            else
-            {
-                var resolution = await resolver.ResolveAsync(
-                    beat.Kind, beat.System, beat.Station, beat.Body, where, facts.NeedsPad(flown), cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (resolution.Trigger is not { } place)
-                {
-                    Refuse(index, resolution.Refusal!);
-                }
-                else if (notable.FirstOrDefault(p => string.Equals(p.System, place.System, StringComparison.OrdinalIgnoreCase))
-                             is { SystemAddress: { } catalogued } && catalogued != place.SystemAddress)
-                {
-                    // Two sources, one place, two ids: the Phase 23 generator assertion, at runtime.
-                    Refuse(index, $"{where}: the catalogue and the galaxy search disagree about which system \"{beat.System}\" is, so it cannot be used.");
-                }
-                else
-                {
-                    var (hop, unavailable) = await HopAsync(previousSystem, place.System!, resolver, cancellationToken).ConfigureAwait(false);
-
-                    if (unavailable is not null)
-                    {
-                        Refuse(index, $"{where} could not be measured: {unavailable}");
-                    }
-                    else if (place.Kind == TriggerKind.Arrive && previousSystem is not null && string.Equals(previousSystem, place.System, StringComparison.OrdinalIgnoreCase))
-                    {
-                        // An arrive beat fires only on a jump into the system, so one where the Commander already is never fires.
-                        Refuse(index, $"{where} arrives at {place.System}, but the Commander is already there at that point; send them to another system, or make it a dock, land or scan objective.");
-                    }
-                    else if (Closed(place.System, place.SystemAddress, facts))
-                    {
-                        var move = await resolver.NearestOpenAsync(
-                            place.Kind, place.System!, previousSystem, facts.RadiusLightYears, facts.NeedsPad(flown),
-                            (system, address) => Closed(system, address, facts), cancellationToken).ConfigureAwait(false);
-
-                        Refuse(index, PermitRefusal(where, place.System!, move is null ? null : $"Move objective {offset + index + 1} to {move}; rewrite its lines for that place."));
-                    }
-                    else if (hop is { } far && far > facts.RadiusLightYears
-                             && !string.Equals(place.System, arrivesAt, StringComparison.OrdinalIgnoreCase)
-                             && !(index == beats.Count - 1 && home?.Is(place) == true)
-                             && !(closing && index == beats.Count - 1 && place.Kind == TriggerKind.Land && AdventureValidation.SameBody(place, destination!.Landing())))
-                    {
-                        Refuse(index, $"{where} is {far:0} light years from the previous stop; the reach is {facts.RadiusLightYears:0}.");
-                    }
-                    else if (place.Kind == TriggerKind.Scan
-                             && placed.FirstOrDefault(p => p.Trigger.Kind is TriggerKind.Land or TriggerKind.Scan && AdventureValidation.SameBody(p.Trigger, place))
-                                 is { Trigger: { } earlier } before)
-                    {
-                        // The same rule AdventureValidation applies to a written story, raised here so a
-                        // generated one goes back through the turn with it.
-                        Refuse(index, AdventureValidation.ScanOutOfOrder(where, place, before.Where, earlier.Kind));
-                    }
-                    else
-                    {
-                        lastPlace = (place.Kind, previousSystem);
-                        previousSystem = place.System;
-                        lastPlaced = index;
-                        trigger = place;
-                        placed.Add((where, place));
-                    }
-                }
-            }
-
-            lastStood = trigger;
-
-            if (trigger is not null)
-            {
-                stood.Add(index);
-                joins.Add(beat.Continues);
-                resolved.Add(new AdventureBeat
-                {
-                    Title = beat.Title,
-                    Function = beat.Function,
-                    Steps = [new BeatStep { Trigger = trigger, Reason = trigger.Kind == TriggerKind.Choice ? null : beat.Reason, Options = options }],
-                    Lines = beat.Lines,
-                    Boards = beat.Boards,
-                    Leaves = beat.Leaves,
-                });
-            }
-        }
-
-        if (closing && (lastStood is not { Kind: TriggerKind.Land } landed || !AdventureValidation.SameBody(landed, destination!.Landing())))
-        {
-            refusals.Add(new Refusal($"The last objective must be \"land\" on {destination!.Body} in {destination.System}, where the finale ends.", [beats.Count - 1]));
-        }
-
-        if (finale > 1 && !closing && destination is not null && facts.DestinationLightYears is { } start && start > facts.RadiusLightYears
-            && await NotCloserAsync(previousSystem, destination, start, resolver, cancellationToken).ConfigureAwait(false) is { } notCloser)
-        {
-            refusals.Add(new Refusal(notCloser, lastPlaced is { } placedLast ? [placedLast] : []));
-        }
-
-        if (home is not null && home.Is(lastStood))
-        {
-            (previousSystem, lastPlaced, lastPlace) = beforeLast;
-        }
-        else if (home is not null
-                 && await AwayFromBaseAsync(previousSystem, home, facts, ask, resolver, cancellationToken).ConfigureAwait(false) is { } away)
-        {
-            // A last step already written for the base is replaced; otherwise a repair adds the step after the last one.
-            refusals.Add(beats.Count > 0 && beats[^1] is { Kind: TriggerKind.Dock or TriggerKind.Arrive } written && string.Equals(written.System, home.System, StringComparison.OrdinalIgnoreCase)
-                ? new Refusal(away, [beats.Count - 1])
-                : new Refusal(away, [beats.Count]) { Appends = home.Step });
-        }
-
-        if (inBand.Holds
-            && ChapterBand.Of(facts.Position, ask) is { } band
-            && await OutsideBandAsync(lastPlaced is null ? null : previousSystem, facts.Position!.Value.DistanceTo(StarPosition.Origin), band, resolver, cancellationToken).ConfigureAwait(false) is { } offBand)
-        {
-            var move = lastPlace is { } end
-                ? await InBandMoveAsync(inBand, end.Kind, end.Before, facts, resolver, cancellationToken).ConfigureAwait(false)
-                : null;
-
-            refusals.Add(new Refusal(
-                move is null ? offBand : $"{offBand} Move objective {offset + lastPlaced!.Value + 1} to {move}; rewrite its lines for that place.",
-                lastPlaced is { } placedEnd ? [placedEnd] : []));
-        }
-
-        if (ChapterPull.Of(ask, facts.Position) is { Arrived: false } leg && (pull.Holds || leg is { Asked: true, Home: false })
-            && await NotPulledAsync(lastPlaced is null ? null : previousSystem, leg, facts.Position!.Value, facts.RadiusLightYears, resolver, cancellationToken).ConfigureAwait(false) is { } notPulled)
-        {
-            refusals.Add(new Refusal(notPulled, lastPlaced is { } pulledEnd ? [pulledEnd] : []));
-        }
-
-        if (arrivesAt is not null && lastPlaced is { } arrival
-            && string.Equals(beats[arrival].System, arrivesAt, StringComparison.OrdinalIgnoreCase)
-            && Group(beats, arrival)
-                .Where(index => index < arrival && IsTravel(beats[index].Kind) && !string.Equals(beats[index].System, arrivesAt, StringComparison.OrdinalIgnoreCase))
-                .Select(index => (int?)index)
-                .FirstOrDefault() is { } detour)
-        {
-            refusals.Add(new Refusal(
-                $"The objective that ends in {arrivesAt} stops first at {beats[detour].System}; send the Commander straight to {arrivesAt}, in one step with an empty \"then\".",
-                [arrival]));
-        }
-
-        if (ask.Story?.Beacon is { } last && (beats.Count == 0 || beats[^1].Kind != TriggerKind.Beacon))
-        {
-            refusals.Add(new Refusal($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {last.System}.", beats.Count > 0 ? [beats.Count - 1] : []));
-        }
-
-        foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
-        {
-            if (beat.Kind != TriggerKind.Choice && beat.Reason is null)
-            {
-                Refuse(
-                    index,
-                    $"Objective {offset + index + 1} ({beat.Named}) has no \"reason\"; give it one plain sentence saying why the Commander goes: "
-                    + "what they go to do or get and how it serves the chapter, and where in the story that comes from, never an order from someone unnamed.");
-            }
-        }
-
-        foreach (var slot in unmet)
-        {
-            refusals.Add(new Refusal($"This chapter is built on drawn activities and has no objective for this one: {SlotLine(slot)}.", []));
-        }
-
-        if (ask.Story?.Sights is { Count: > 0 } sights
-            && !placed.Any(p => p.Trigger.Kind is TriggerKind.Arrive or TriggerKind.Land or TriggerKind.Scan && sights.Any(sight => AtSight(sight, p.Trigger))))
-        {
-            refusals.Add(new Refusal(
-                "This is a sightseeing chapter and has no arrive, land or scan objective in the system of one of its sights: "
-                + string.Join("; ", sights.Select(sight => $"{sight.Name} ({sight.System})")) + ".",
-                []));
-        }
-
-        foreach (var goal in ask.Story?.Goals?.Select(step => step.Objective).OfType<AdventureTrigger>() ?? [])
-        {
-            if (!beats.Any(beat => MeetsGoal(goal, beat.Kind, Careers.Match(beat.Career), beat.Rank, beat.Engineer, beat.Stage, EliteSpecifications.HullSymbol(beat.Ship) ?? facts.HullNamed(beat.Ship))))
-            {
-                refusals.Add(new Refusal($"This is a Goals chapter and has no objective for its Goals step: {GoalLine(goal)}.", []));
-            }
-        }
-
-        foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
-        {
-            if (TeamBeats.Why(beat.Kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits, facts.Pledge) is { } why)
-            {
-                Refuse(index, $"Objective {offset + index + 1} ({beat.Named}) is a \"{beat.Kind.ToString().ToLowerInvariant()}\" objective, but {why}; use another kind of objective.");
-            }
-
-            if (beat.Kind == TriggerKind.Livery)
-            {
-                Refuse(index, $"Objective {offset + index + 1} ({beat.Named}) is a \"livery\" objective, but the journal cannot show which paint the Commander owns; use another kind of objective.");
-            }
-
-            var tool = RefusedActivities.ToolOf(beat.Where);
-
-            if (RefusedActivities.Refuses(ask.Story?.Refused, beat.Kind, beat.MissionFamily, beat.Event, tool))
-            {
-                Refuse(
-                    index,
-                    $"Objective {offset + index + 1} ({beat.Named}) asks the Commander to {BeatPhrase(beat)}, "
-                    + "which they refused for this story; use another kind of objective.");
-            }
-            else if (RefusedActivities.Refuses(ask.Barred, beat.Kind, beat.MissionFamily, beat.Event, tool))
-            {
-                Refuse(
-                    index,
-                    $"Objective {offset + index + 1} ({beat.Named}) asks the Commander to {BeatPhrase(beat)}, "
-                    + "which they have changed away from too often to be asked again; use another kind of objective.");
-            }
-            else if (ask.CrimeRefused && CrimeObjectives.Is(beat.Kind, beat.MissionFamily, beat.Event, beat.Where))
-            {
-                Refuse(
-                    index,
-                    $"Objective {offset + index + 1} ({beat.Named}) is a crime, and the Commander's Crime rating is 0, "
-                    + "so no objective may be one: no illegal mission, piracy, smuggling or stolen goods; use another kind of objective.");
-            }
-        }
-
-        return new Resolved(resolved, refusals, destination) { Stood = stood, Joins = joins, Outage = resolver.Outage };
-    }
-
-    /// <summary>
-    /// The beats with each drawn activity's count, and its organic flag, set on the one beat that meets it; one beat meets one
-    /// activity. A beat already kept meets an activity as it stands. Activities no beat meets go in <paramref name="unmet"/>.
-    /// </summary>
-    private static IReadOnlyList<ReadBeat> MeetSlots(IReadOnlyList<ReadBeat> beats, IReadOnlyList<AdventureBeat> kept, IReadOnlyList<DrawnActivity>? slots, List<DrawnActivity> unmet)
-    {
-        if (slots is not { Count: > 0 })
-        {
-            return beats;
-        }
-
-        var result = beats.ToArray();
-        var used = new HashSet<int>();
-        var keptUsed = new HashSet<int>();
-        var keptTriggers = kept.SelectMany(beat => beat.Steps.Select(step => step.Trigger)).ToList();
-
-        foreach (var slot in slots)
-        {
-            var keptAt = Enumerable.Range(0, keptTriggers.Count).FirstOrDefault(
-                index => !keptUsed.Contains(index) && Meets(slot, keptTriggers[index].Kind, keptTriggers[index].MissionFamily) && (slot.Organic is null || keptTriggers[index].Organic == slot.Organic)
-                    && (slot.Kind != TriggerKind.Event || (keptTriggers[index].Event == slot.Event && keptTriggers[index].Where.Equals(slot.Where))), -1);
-
-            if (keptAt >= 0)
-            {
-                keptUsed.Add(keptAt);
-                continue;
-            }
-
-            var at = Enumerable.Range(0, result.Length).FirstOrDefault(index => !used.Contains(index) && Meets(slot, result[index].Kind, result[index].MissionFamily), -1);
-
-            if (at < 0)
-            {
-                unmet.Add(slot);
-                continue;
-            }
-
-            used.Add(at);
-            result[at] = result[at] with { Count = slot.Count, Organic = slot.Organic ?? result[at].Organic };
-
-            if (slot.Kind == TriggerKind.Event)
-            {
-                result[at] = result[at] with { Event = slot.Event, Where = slot.Where, Say = slot.Say };
-            }
-        }
-
-        return result;
-    }
-
     /// <summary>Whether the trigger is in the sight's system: by <c>SystemAddress</c> when the sight has one, otherwise by name.</summary>
     private static bool AtSight(NotablePlace sight, AdventureTrigger trigger) =>
         sight.SystemAddress is { } address
@@ -6491,350 +3438,8 @@ public sealed partial class AdventureGenerator(
                 .Select(step => step.Trigger)
                 .FirstOrDefault(trigger => trigger.Kind is TriggerKind.Arrive or TriggerKind.Land or TriggerKind.Scan && sights.Any(sight => AtSight(sight, trigger)))?.System;
 
-    /// <summary>Whether an objective with these fields is the Goals objective: the same kind, ladder, rank, engineer, stage and hull.</summary>
-    private static bool MeetsGoal(AdventureTrigger goal, TriggerKind kind, string? career, int? rank, string? engineer, string? stage, string? ship) =>
-        kind == goal.Kind
-        && (goal.Career is null || string.Equals(career, goal.Career, StringComparison.OrdinalIgnoreCase))
-        && (goal.Rank is null || rank == goal.Rank)
-        && (goal.Engineer is null || (EngineerDirectory.ByName(engineer) is { } named && string.Equals(named.Name, goal.Engineer, StringComparison.OrdinalIgnoreCase)))
-        && (goal.Stage is null || string.Equals(stage?.Trim(), goal.Stage, StringComparison.OrdinalIgnoreCase))
-        && (goal.ShipType is null || string.Equals(ship, goal.ShipType, StringComparison.OrdinalIgnoreCase));
-
-    private static string? BeatPhrase(ReadBeat beat) =>
-        RefusedActivities.Key(beat.Kind, beat.MissionFamily, beat.Event, RefusedActivities.ToolOf(beat.Where)) is { } key ? RefusedActivities.Phrase(key) : null;
-
-    private static bool Meets(DrawnActivity slot, TriggerKind kind, string? family) =>
-        slot.Kind == kind && (slot.Family is null || string.Equals(family?.Trim(), slot.Family, StringComparison.OrdinalIgnoreCase));
-
-    /// <summary>The destination finale chapter 1 names, resolved as a land beat's place, or why it cannot stand.</summary>
-    private async Task<(AdventureDestination? Destination, string? Refusal)> DestinationAsync(
-        ReadPlace? named, Facts facts, AdventureStory story, AdventureResolver resolver, CancellationToken cancellationToken)
-    {
-        const string Where = "The finale's destination";
-
-        if (named is not { System: { } system, Body: { } body })
-        {
-            return (null, "Finale chapter 1 names no destination; give \"destination\" with the system and the landable body where the story ends.");
-        }
-
-        var resolution = await resolver.ResolveAsync(TriggerKind.Land, system, null, body, Where, needsPad: null, cancellationToken).ConfigureAwait(false);
-
-        if (resolution.Trigger is not { SystemAddress: { } address, BodyId: { } bodyId, System: { } found, Body: { } landable })
-        {
-            return (null, resolution.Refusal ?? $"{Where} could not be resolved.");
-        }
-
-        if (Closed(found, address, facts))
-        {
-            return (null, PermitRefusal(Where, found));
-        }
-
-        if (facts.System is { } here && !string.Equals(here, found, StringComparison.OrdinalIgnoreCase))
-        {
-            var limit = AdventureDestination.Limit(facts.RadiusLightYears, story.FinaleChapters);
-            var (far, unavailable) = await MeasureAsync(resolver, here, found, cancellationToken).ConfigureAwait(false);
-
-            if (unavailable is not null)
-            {
-                return (null, $"{Where} could not be measured: {unavailable}");
-            }
-
-            if (far > limit)
-            {
-                return (null, $"{Where}, {landable} in {found}, is {far:0} light years from the Commander; the finale can cover at most {limit:0}.");
-            }
-        }
-
-        return (new AdventureDestination(address, found, bodyId, landable), null);
-    }
-
-    /// <summary>The refusal for a finale chapter whose last stop is no closer to the destination than its start, or null.</summary>
-    private static async Task<string?> NotCloserAsync(
-        string? lastStop, AdventureDestination destination, double start, AdventureResolver resolver, CancellationToken cancellationToken)
-    {
-        var (end, unavailable) = await FromStopAsync(lastStop, destination.System, start, resolver, cancellationToken).ConfigureAwait(false);
-
-        if (unavailable is not null)
-        {
-            return $"The chapter's last stop could not be measured against the finale's destination: {unavailable}";
-        }
-
-        return end >= start
-            ? $"The chapter starts {start:0} light years from the finale's destination in {destination.System} and its last stop is {end:0} light years from it; "
-              + "its last stop must be closer to the destination than where it starts."
-            : null;
-    }
-
-    /// <summary>
-    /// The listed in-band place for an objective of <paramref name="kind"/> nearest <paramref name="before"/>, the stop before it,
-    /// within the reach; null where none is.
-    /// </summary>
-    private static async Task<Replacement?> InBandMoveAsync(
-        InBand inBand, TriggerKind kind, string? before, Facts facts, AdventureResolver resolver, CancellationToken cancellationToken)
-    {
-        IEnumerable<(Replacement Place, StarPosition Position)> offered = kind switch
-        {
-            TriggerKind.Dock => inBand.Stations.Select(station => (new Replacement(station.SystemName, station.Name, null), station.Position!.Value)),
-            TriggerKind.Land or TriggerKind.Scan => inBand.Bodies.Select(body => (new Replacement(body.SystemName, null, body.Name), body.Position!.Value)),
-            TriggerKind.Arrive => inBand.Stations.Select(station => (new Replacement(station.SystemName, null, null), station.Position!.Value))
-                .Concat(inBand.Bodies.Select(body => (new Replacement(body.SystemName, null, null), body.Position!.Value)))
-                .DistinctBy(entry => entry.Item1.System, StringComparer.OrdinalIgnoreCase)
-                .Where(entry => !string.Equals(entry.Item1.System, before, StringComparison.OrdinalIgnoreCase)),
-            _ => [],
-        };
-
-        Replacement? nearest = null;
-        var least = double.MaxValue;
-
-        foreach (var (place, position) in offered)
-        {
-            var (hop, unavailable) = before is null || string.Equals(before, facts.System, StringComparison.OrdinalIgnoreCase)
-                ? (facts.Position!.Value.DistanceTo(position), null)
-                : await FromStopAsync(before, place.System, 0, resolver, cancellationToken).ConfigureAwait(false);
-
-            if (unavailable is null && hop is { } far && far <= facts.RadiusLightYears && far < least)
-            {
-                (nearest, least) = (place, far);
-            }
-        }
-
-        return nearest;
-    }
-
-    /// <summary>The refusal for a chapter whose last stop is outside <paramref name="band"/> light years from Sol, or null.</summary>
-    private static async Task<string?> OutsideBandAsync(
-        string? lastStop, double start, ChapterBand.Range band, AdventureResolver resolver, CancellationToken cancellationToken)
-    {
-        var (end, unavailable) = lastStop is null ? (start, null) : await MeasureAsync(resolver, lastStop, "Sol", cancellationToken).ConfigureAwait(false);
-
-        if (unavailable is not null)
-        {
-            return $"The chapter's last stop could not be measured against Sol: {unavailable}";
-        }
-
-        if (end is not { } measured)
-        {
-            return "The chapter's last stop could not be measured against Sol.";
-        }
-
-        return measured < band.Min || measured > band.Max
-            ? $"The chapter starts {start:0} light years from Sol and its last stop is {measured:0} light years from Sol; "
-              + $"its last stop must be between {band.Min:0} and {band.Max:0} light years from Sol."
-            : null;
-    }
-
-    /// <summary>
-    /// The refusal for a chapter whose last stop is farther than the near-here reach from <paramref name="home"/>, or null.
-    /// A last stop that cannot be measured needs the step back unless it is in the base's system.
-    /// </summary>
-    private async Task<string?> AwayFromBaseAsync(
-        string? lastStop, BaseStep home, Facts facts, AdventureAsk ask, AdventureResolver resolver, CancellationToken cancellationToken)
-    {
-        if (lastStop is null || string.Equals(lastStop, home.System, StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        var near = ShipBases.Near(facts.Ship.MaxJumpRange);
-        var (measured, unavailable) = home.Position is null ? (null, null) : await MeasureAsync(resolver, lastStop, home.System, cancellationToken).ConfigureAwait(false);
-
-        if (measured is { } lightYears && lightYears <= near)
-        {
-            return null;
-        }
-
-        var step = $"the last objective must end with one more step in its \"then\": {home.Step}, back to {home.What}.";
-
-        if (measured is { } far)
-        {
-            return $"The chapter's last stop, {lastStop}, is {far:0} light years from {home.System}, {home.What}; {step}";
-        }
-
-        logger.LogInformation(
-            "Draft {Draft}, the last stop {Stop} could not be measured against the base in {System}{Why}, so the chapter must end with the step back to it",
-            ask.Draft, lastStop, home.System, unavailable is null ? string.Empty : $" ({unavailable})");
-
-        return $"The chapter's last stop, {lastStop}, could not be measured against {home.System}, {home.What}, and is not in it; {step}";
-    }
-
-    /// <summary>The refusal for a travelling chapter whose last stop is not far enough toward its target, or null.</summary>
-    private static async Task<string?> NotPulledAsync(
-        string? lastStop, ChapterLeg leg, StarPosition position, double reach, AdventureResolver resolver, CancellationToken cancellationToken)
-    {
-        var start = position.DistanceTo(leg.There);
-        var (end, unavailable) = await FromStopAsync(lastStop, leg.Target, start, resolver, cancellationToken).ConfigureAwait(false);
-
-        if (unavailable is not null)
-        {
-            return $"The chapter's last stop could not be measured against {leg.Target}: {unavailable}";
-        }
-
-        if (end is not { } measured)
-        {
-            return $"The chapter's last stop could not be measured against {leg.Target}.";
-        }
-
-        if (leg is { Asked: true, Home: false })
-        {
-            return measured <= leg.Within
-                ? null
-                : $"The new objectives head for {leg.Target}, and the last stop is {measured:0} light years from it; the last place objective must be in {leg.Target} itself.";
-        }
-
-        return ChapterPull.Meets(start, measured, reach, leg.Within)
-            ? null
-            : $"The chapter starts {start:0} light years from {leg.Target} and its last stop is {measured:0} light years from it; "
-              + (leg.Asked ? $"the new objectives head for {leg.Target}" : leg.Chosen ? $"the Commander asked to head for {leg.Target}" : $"the story is {(leg.Home ? "heading home" : $"heading for {leg.Target}")}")
-              + $", so its last stop must be at least {ChapterPull.Share * reach:0} light years nearer {leg.Target} than the start, or "
-              + (leg.Within <= 0 ? $"in {leg.Target} itself." : $"within {leg.Within:0} light years of it.");
-    }
-
-    /// <summary>The distance from <paramref name="from"/> to <paramref name="to"/>, or the galaxy search's message when it cannot measure it.</summary>
-    private static async Task<(double? LightYears, string? Unavailable)> MeasureAsync(
-        AdventureResolver resolver, string from, string to, CancellationToken cancellationToken)
-    {
-        try
-        {
-            return (await resolver.DistanceAsync(from, to, cancellationToken).ConfigureAwait(false), null);
-        }
-        catch (GalaxyUnavailableException ex)
-        {
-            return (null, ex.Message);
-        }
-    }
-
-    /// <summary>As <see cref="MeasureAsync"/> from <paramref name="stop"/>: <paramref name="start"/> when there is no stop, and 0 when it is <paramref name="to"/>.</summary>
-    private static Task<(double? LightYears, string? Unavailable)> FromStopAsync(
-        string? stop, string to, double start, AdventureResolver resolver, CancellationToken cancellationToken) =>
-        stop is null ? Task.FromResult<(double?, string?)>((start, null))
-        : string.Equals(stop, to, StringComparison.OrdinalIgnoreCase) ? Task.FromResult<(double?, string?)>((0, null))
-        : MeasureAsync(resolver, stop, to, cancellationToken);
-
-    /// <summary>As <see cref="MeasureAsync"/> for the hop from the previous stop; no distance when there is none or it is <paramref name="to"/>.</summary>
-    private static Task<(double? LightYears, string? Unavailable)> HopAsync(
-        string? previousSystem, string to, AdventureResolver resolver, CancellationToken cancellationToken) =>
-        previousSystem is null || string.Equals(previousSystem, to, StringComparison.OrdinalIgnoreCase)
-            ? Task.FromResult<(double?, string?)>((null, null))
-            : MeasureAsync(resolver, previousSystem, to, cancellationToken);
-
-    private static bool IsTravel(TriggerKind kind) => kind is TriggerKind.Arrive or TriggerKind.Dock or TriggerKind.Land or TriggerKind.Scan or TriggerKind.Site;
-
-    /// <summary>
-    /// One option of a choice as it stands: its steps are mission, counted or one-event objectives and never places, a mission step
-    /// names no station, and the problems with any of them go in <paramref name="problems"/>.
-    /// </summary>
-    private static BeatOption OptionOf(string where, ReadOption option, List<string> problems)
-    {
-        var steps = new List<BeatStep>();
-
-        foreach (var (step, at) in option.Steps.Select((step, at) => (step, at)))
-        {
-            var stepWhere = $"{where}, step {(at + 1).ToString(CultureInfo.InvariantCulture)}";
-            var written = step.Written();
-            var before = problems.Count;
-
-            if (AdventureTrigger.IsMissionHandleKind(step.Kind))
-            {
-                problems.AddRange(AdventureValidation.MissionFamilyProblems(stepWhere, written));
-
-                if (string.IsNullOrWhiteSpace(written.Handle))
-                {
-                    problems.Add($"{stepWhere} names no mission handle.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(written.Station))
-                {
-                    problems.Add($"{stepWhere} names a station; an option's steps are things to do, not places to go.");
-                }
-            }
-            else if (AdventureTrigger.IsCountedKind(step.Kind))
-            {
-                problems.AddRange(AdventureValidation.CountedProblems(stepWhere, written));
-            }
-            else if (AdventureTrigger.IsOnceKind(step.Kind))
-            {
-                written = new AdventureTrigger { Kind = step.Kind };
-            }
-            else
-            {
-                problems.Add($"{stepWhere} is a \"{step.Kind.ToString().ToLowerInvariant()}\" objective; an option's steps are missions, counted or one-event objectives, not places or choices.");
-            }
-
-            if (problems.Count == before)
-            {
-                steps.Add(new BeatStep { Trigger = written });
-            }
-        }
-
-        return new BeatOption { Label = option.Label ?? string.Empty, Steps = steps, Ending = option.Ending, EndingLine = option.EndingLine };
-    }
-
-    /// <summary>The refusal for an illegal mission beat that does not directly follow an arrive or dock in an Anarchy system, or null.</summary>
-    private static async Task<string?> IllegalOutsideAnarchyAsync(
-        string where, AdventureTrigger? before, AdventureResolver resolver, CancellationToken cancellationToken)
-    {
-        var rule = $"{where} is an illegal mission, which has to come directly after an arrive or dock objective in an Anarchy system.";
-
-        if (before is not { Kind: TriggerKind.Arrive or TriggerKind.Dock, System: { } system })
-        {
-            return $"{rule} The objective before it is not one.";
-        }
-
-        try
-        {
-            var government = await resolver.GovernmentAsync(system, cancellationToken).ConfigureAwait(false);
-
-            return IsAnarchy(government) ? null : $"{rule} {system} is not an Anarchy system.";
-        }
-        catch (GalaxyUnavailableException ex)
-        {
-            return $"{where} could not be checked: {ex.Message}";
-        }
-    }
-
-    /// <summary>The refusal for an on-foot kill bond beat that does not directly follow a dock at a Frontline Solutions station in a system at war, or null.</summary>
-    private static async Task<string?> OnFootBondOutsideFrontlineAsync(
-        string where, AdventureTrigger? before, AdventureResolver resolver, CancellationToken cancellationToken)
-    {
-        var rule = $"{where} is a kill bond earned on foot, which has to come directly after a dock objective at a station with Frontline Solutions in a system at war, "
-                   + "because the dropship from that desk is the way to a ground conflict zone.";
-
-        if (before is not { Kind: TriggerKind.Dock, System: { } system, Station: { } name })
-        {
-            return $"{rule} The objective before it is not a dock.";
-        }
-
-        try
-        {
-            if (await resolver.StationOfAsync(before, cancellationToken).ConfigureAwait(false) is not { } station
-                || !AdventureResolver.HasFrontlineSolutions(station))
-            {
-                return $"{rule} {name} has no Frontline Solutions in the galaxy search.";
-            }
-
-            return await resolver.AtWarAsync(system, cancellationToken).ConfigureAwait(false) ? null : $"{rule} {system} is not at war.";
-        }
-        catch (GalaxyUnavailableException ex)
-        {
-            return $"{where} could not be checked: {ex.Message}";
-        }
-    }
-
     private static bool IsAnarchy(string? government) =>
         string.Equals(government, "Anarchy", StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>Whether the brief says the hull's name, in any spacing or case.</summary>
-    private static IReadOnlyList<string> BriefHulls(string? brief) =>
-        [.. EliteSpecifications.HullNameList.Where(name => EliteSpecifications.HullSymbol(name) is { } symbol && BriefNames(brief, symbol))];
-
-    private static bool BriefNames(string? brief, string symbol)
-    {
-        static string Plain(string text) => string.Concat(text.Where(char.IsLetterOrDigit)).ToLowerInvariant();
-
-        return !string.IsNullOrWhiteSpace(brief)
-               && EliteSpecifications.HullName(symbol) is { } name
-               && Plain(brief).Contains(Plain(name), StringComparison.Ordinal);
-    }
 
     // ---- what d47 reads rather than asks ---------------------------------------------------
 
@@ -6853,15 +3458,11 @@ public sealed partial class AdventureGenerator(
         CarrierState Carrier,
         RankState Ranks,
         long? Credits,
-        bool InSquadron = false,
         double? DestinationLightYears = null,
         IReadOnlyList<string>? OwnedHulls = null,
         SystemStandings? Standings = null,
         IReadOnlyList<Mission>? Missions = null,
-        long? ClosedMarketId = null,
-        IReadOnlyList<(string Name, string Type)>? NamedShips = null,
-        TechBrokerUnlocks? Unlocks = null,
-        PowerplayPledge? Pledge = null)
+        long? ClosedMarketId = null)
     {
         public static Facts Of(CommanderGameState? state, AdventureAsk ask)
         {
@@ -6891,29 +3492,14 @@ public sealed partial class AdventureGenerator(
                 carrier,
                 state?.Ranks ?? RankState.Empty,
                 state?.Session.Balance,
-                state?.Squadron.IsMember == true,
                 OwnedHulls: [.. new[] { ship.Type }.Concat((state?.Fleet.Ships ?? []).Select(stored => stored.Type)).OfType<string>().Select(type => EliteSpecifications.HullSymbol(type) ?? type)],
                 Standings: state?.Standings,
                 Missions: state?.Missions.Missions,
-                ClosedMarketId: ask.Rewrite?.ClosedMarketId,
-                NamedShips: [.. new[] { (Name: ship.Name, Type: ship.Type) }
-                    .Concat((state?.Fleet.Ships ?? []).Select(stored => (Name: stored.Name, Type: (string?)stored.Type)))
-                    .Where(named => named is { Name.Length: > 0, Type.Length: > 0 })
-                    .Select(named => (named.Name!, named.Type!))],
-                Unlocks: state?.TechBroker,
-                Pledge: state?.Pledge);
+                ClosedMarketId: ask.Rewrite?.ClosedMarketId);
         }
 
         public bool Owns(string symbol) =>
             OwnedHulls?.Any(hull => string.Equals(hull, symbol, StringComparison.OrdinalIgnoreCase)) == true;
-
-        /// <summary>The hull symbol of the Commander's ship with this name, or null.</summary>
-        public string? HullNamed(string? name) =>
-            name is { Length: > 0 }
-                ? (NamedShips ?? []).Where(named => string.Equals(named.Name.Trim(), name.Trim(), StringComparison.OrdinalIgnoreCase))
-                    .Select(named => EliteSpecifications.HullSymbol(named.Type))
-                    .FirstOrDefault(symbol => symbol is not null)
-                : null;
 
         private static string? PadOf(string? type) => EliteSpecifications.Ship(type)?.Pad;
 
@@ -6966,61 +3552,10 @@ public sealed partial class AdventureGenerator(
         }
     }
 
-    /// <summary>Why a system cannot supply a map, signal or organic objective's count, or null when it can.</summary>
-    private async Task<string?> SupplyShortfallAsync(AdventureTrigger trigger, long address, CancellationToken cancellationToken)
-    {
-        if (galaxy() is not { } search)
-        {
-            return null;
-        }
-
-        var count = trigger.Count ?? 1;
-        int available;
-        string what;
-
-        if (trigger.Kind == TriggerKind.Organic)
-        {
-            var biology = await search.SystemBiologyAsync(address, cancellationToken).ConfigureAwait(false);
-            available = biology.Bodies.Sum(body => body.Species.Count(species => OrganicFilterMatches(trigger.Filter, species.Genus)));
-            what = "species with biology on record";
-        }
-        else
-        {
-            var bodies = await search.SystemBodiesAsync(address, cancellationToken).ConfigureAwait(false);
-
-            if (trigger.Kind == TriggerKind.Map)
-            {
-                available = bodies.Count(body => !IsStar(body));
-                what = "bodies that can be mapped";
-            }
-            else
-            {
-                available = bodies.Count(body =>
-                    body.Signals.Any(signal => SignalFilterMatches(trigger.Filter, signal.Kind))
-                    || body.Rings.Any(ring => ring.Hotspots.Any(hotspot => SignalFilterMatches(trigger.Filter, hotspot.Material))));
-                what = "bodies with that signal";
-            }
-        }
-
-        return available >= count ? null : $"it has {available.ToString(CultureInfo.InvariantCulture)} {what}";
-    }
-
     private static bool IsStar(BodySummary body) =>
         body.Subtype?.Contains("Star", StringComparison.OrdinalIgnoreCase) == true
         || body.Subtype?.Contains("Black Hole", StringComparison.OrdinalIgnoreCase) == true;
 
-    private static bool OrganicFilterMatches(string? filter, string genus) =>
-        string.IsNullOrWhiteSpace(filter)
-        || (JournalJson.Symbol(filter) is { } wanted && JournalJson.Symbol(genus) is { } found && (wanted == found || found.Split('_').Contains(wanted)));
-
-    private static bool SignalFilterMatches(string? filter, string kind) => OrganicFilterMatches(filter, kind);
-
     private bool Closed(string? system, long? address, Facts facts) =>
         PermitSystemTable.ClosedTo(system, facts.Ranks, () => address is { } id && visited?.Find(state()?.Identity.FrontierId, id).State == VisitState.Visited);
-
-    private static string PermitRefusal(string where, string system, string? move = null) =>
-        (StarterSystemTable.Contains(system)
-            ? $"{where} is in {system}, a starter system the Commander can no longer enter"
-            : $"{where} is in {system}, which needs a permit the Commander may not hold")
-        + (move is null ? (StarterSystemTable.Contains(system) ? "; use another." : "; use a system without one.") : ". " + move);
 }

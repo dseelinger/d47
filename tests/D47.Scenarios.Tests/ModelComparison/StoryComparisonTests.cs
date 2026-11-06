@@ -157,7 +157,7 @@ public partial class StoryComparisonTests
             "black" => ChapterAsk with { Story = ChapterAsk.Story! with { InTheBlack = true } },
             "toward" => ChapterAsk with { Reach = AdventureReach.Anywhere, Story = ChapterAsk.Story! with { InTheBlack = true, Toward = "Colonia" } },
             "home" => ChapterAsk with { Reach = AdventureReach.Anywhere, Story = ChapterAsk.Story! with { Home = "Sol" } },
-            _ => ChapterAsk,
+            _ => ChapterAsk with { Story = ChapterAsk.Story! with { Beacon = new AdventureBeacon(13872878396833, "IC 2391 Sector MX-T b3-6") } },
         };
         var signals = Env("D47_COMPARE_SIGNALS") is { } signalsFile ? new SignalIndexFile(signalsFile) : null;
         var lastRefused = Env("D47_COMPARE_LAST_REFUSED");

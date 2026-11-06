@@ -161,11 +161,9 @@ public sealed class ABoardingWaitsForAFreeSeatTests
         var unspanned = Cast(Member("rider", "setUp"));
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine),
-                RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+                RoundScriptedLlmProvider.Saying(Lines()),
                 RoundScriptedLlmProvider.Saying(NothingObjected),
-                RoundScriptedLlmProvider.Saying(NextSpine),
-                RoundScriptedLlmProvider.Saying(NextBeats),
+                RoundScriptedLlmProvider.Saying(NextLines),
                 RoundScriptedLlmProvider.Saying(NothingObjected)),
             unspanned);
         fixtures.Director.Game = () => Loaded(0);
@@ -188,8 +186,7 @@ public sealed class ABoardingWaitsForAFreeSeatTests
     {
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine),
-                RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+                RoundScriptedLlmProvider.Saying(Lines()),
                 RoundScriptedLlmProvider.Saying(NothingObjected)),
             Cast(Member("rider", "setUp")));
         fixtures.Director.Game = () => Loaded(0);

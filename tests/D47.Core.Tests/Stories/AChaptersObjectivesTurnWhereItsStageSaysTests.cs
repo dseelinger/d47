@@ -49,9 +49,9 @@ public sealed class AChaptersObjectivesTurnWhereItsStageSaysTests
 
     [Fact]
     public void FiveObjectivesFollowTheEveningSheet() =>
-        Assert.Equal(AdventureGenerator.Structure(AdventureLength.Evening).Sheet, string.Join(", ", ChapterFunctions.For(5, StoryStage.FunAndGames)));
+        Assert.Equal("setup, complication, turn, setback, resolution", string.Join(", ", ChapterFunctions.For(5, StoryStage.FunAndGames)));
 
     [Fact]
     public void ThreeObjectivesFollowTheShortSheet() =>
-        Assert.Equal(AdventureGenerator.Structure(AdventureLength.Short).Sheet, string.Join(", ", ChapterFunctions.For(3, StoryStage.FunAndGames)));
+        Assert.Equal("setup, turn, resolution", string.Join(", ", ChapterFunctions.For(3, StoryStage.FunAndGames)));
 }

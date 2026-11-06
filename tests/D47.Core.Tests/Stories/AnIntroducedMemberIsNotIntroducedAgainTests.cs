@@ -79,15 +79,10 @@ public sealed class AnIntroducedMemberIsNotIntroducedAgainTests
     [Fact]
     public async Task ChapterOneLeavesTheIntroductionToTheStorysOpening()
     {
-        var beats = """
-            {"opening": "A voice on the open channel.", "openingSpeaker": "narrator", "reply": "Here it is.", "beats": [
-              {"title": "Yard Paint", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "lines": [{"text": "Still here.", "speaker": "caller"}]},
-              {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
-            ]}
-            """;
-
         using var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(StoryFixtures.Spine), RoundScriptedLlmProvider.Saying(beats)),
+            new RoundScriptedLlmProvider(
+                RoundScriptedLlmProvider.Saying(StoryFixtures.Written("A voice on the open channel.", "narrator", ("Still here.", Caller))),
+                RoundScriptedLlmProvider.Saying(StoryFixtures.NothingObjected)),
             WithRoles with { Opening = [new StoryLine("Anyone. Please.", Caller)] });
 
         Assert.Null(await fixtures.Director.PickAsync("F1", StoryFixtures.Id, StoryFixtures.Now, CancellationToken.None));

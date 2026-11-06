@@ -1,4 +1,4 @@
-using D47.Core.Callouts;
+﻿using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Reminders;
 using D47.Core.Stories;
@@ -133,8 +133,7 @@ public class AnOperationIsNotANewSessionTests
     public async Task AStoryCountsOneSessionNotThree()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+            RoundScriptedLlmProvider.Saying(Lines())));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Start.AddHours(-1), CancellationToken.None));
 

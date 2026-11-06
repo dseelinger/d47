@@ -1,4 +1,4 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Storage;
 using D47.Core.Tests.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -15,19 +15,6 @@ public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
 
     private const string Reason = "A comms specialist there reads signals like the burst.";
 
-    private const string Spine = """
-        {"name": "The Missing Freight", "premise": "Freight went missing on the way to Maren Anchorage.", "want": "To find the missing freight.",
-         "stake": "Whether a debt can be owed to nobody.", "turn": "The freight was never loaded.", "ending": "The freight is found and delivered."}
-        """;
-
-    private const string GoodBeats = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "The freight's last beacon ping came from here.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "A comms specialist there reads signals like the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
-
     private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-adventure-reason", Guid.NewGuid().ToString("N"));
 
     public void Dispose()
@@ -39,40 +26,30 @@ public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
     }
 
     [Fact]
-    public async Task ATravelBeatWithNoReasonGoesBackThroughTheTurn()
+    public async Task AnObjectiveWithNoReasonGoesBackToTheWriterForItsWords()
     {
-        const string noReason = """
-            {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "The freight's last beacon ping came from here.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "  ", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-            ]}
-            """;
-
+        var ask = Stories.PlannedChapterWorld.Ask();
+        var plan = await Stories.PlannedChapterWorld.PlanAsync(ask);
         var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(noReason),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 2)),
-            RoundScriptedLlmProvider.Saying(Stories.StoryFixtures.NothingObjected));
+            RoundScriptedLlmProvider.Saying(Stories.PlannedChapterWorld.Lines(plan.Objectives.Count, (number, objective) =>
+            {
+                if (number == 2)
+                {
+                    objective["reason"] = "  ";
+                }
+            })),
+            RoundScriptedLlmProvider.Saying(Stories.PlannedChapterWorld.Repair(2)),
+            RoundScriptedLlmProvider.Saying(Stories.PlannedChapterWorld.NoObjections));
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        var outcome = await Stories.PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, TestContext.Current.CancellationToken);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(6, provider.CallCount);
+        Assert.Equal("story_line_repairs", provider.Requests[1].ResponseSchema?.Name);
 
-        var first = provider.Requests[2].Prompt.History[0].Text;
-        Assert.Contains("\"reason\": string|null", first);
-        Assert.Contains("the Commander is told about that person and never meets them", first);
-        Assert.Contains("A line never gives the Commander a task.", first);
-
-        var refusals = provider.Requests[3].Prompt.History[0].Text.Split("cannot stand")[1];
-        Assert.Contains("Objective 2 (The Anchorage) has no \"reason\";", refusals);
-        Assert.DoesNotContain("Objective 1 (The Lantern)", refusals);
-        Assert.DoesNotContain("Objective 3", refusals);
-
-        Assert.Equal(Reason, outcome.Draft!.Beats[1].Reason);
-        Assert.Equal("Someone there knows about the burst.", outcome.Draft.Beats[2].Reason);
+        var refusals = provider.Requests[1].Prompt.History[0].Text;
+        Assert.Contains("Objective 2", refusals);
+        Assert.Contains("has no \"reason\"", refusals);
+        Assert.Equal("The broker's ledger points the Commander onward to part two again.", outcome.Draft!.Beats[1].Reason);
     }
 
     [Fact]

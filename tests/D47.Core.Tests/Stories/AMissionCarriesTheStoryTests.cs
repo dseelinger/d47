@@ -134,18 +134,19 @@ public sealed class AMissionCarriesTheStoryTests
     [Fact]
     public async Task TheChapterWriterIsToldTheMissionsHeld()
     {
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsElsewhere));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines()), RoundScriptedLlmProvider.Saying(NothingObjected)));
 
-        await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), 1, AcceptLine(7, Now))
-            .GenerateAsync(
-                new AdventureAsk(AdventureReach.Session, AdventureLength.Short, Story: new AdventureStory(Id, Card.Title, Card.Describe(), Secret.Secret, 2, 10, 5)),
-                Now,
-                CancellationToken.None);
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+
+        // The act-one chapter's first stop is an arrival at Dyson's Hollow, where the mission goes.
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines()), RoundScriptedLlmProvider.Saying(NothingObjected));
+
+        await AdventureGeneratorTests.Generator(provider, fixtures.Galaxy, 1, AcceptLine(7, Now))
+            .GenerateAsync(fixtures.Asks[0], Now, CancellationToken.None);
 
         var prompt = provider.Requests[0].Prompt.History[0].Text;
 
-        Assert.Contains("The missions the Commander holds now:\n- Courier 7 for Ossen Union, to Maren Anchorage, Dyson's Hollow", prompt.ReplaceLineEndings("\n"));
-        Assert.Contains("an \"arrive\" objective in its system, or a \"dock\" objective at its station", prompt);
+        Assert.Contains("This stop is the destination of a mission the Commander holds: Courier 7 for Ossen Union, to Maren Anchorage, Dyson's Hollow", prompt);
     }
 
     private static CalloutContext Lull(DateTimeOffset now, CommanderGameState state) =>

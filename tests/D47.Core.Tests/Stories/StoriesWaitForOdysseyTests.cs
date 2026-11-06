@@ -12,11 +12,9 @@ namespace D47.Core.Tests.Stories;
 public sealed class StoriesWaitForOdysseyTests
 {
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(
-        RoundScriptedLlmProvider.Saying(Spine),
-        RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+        RoundScriptedLlmProvider.Saying(Lines()),
         RoundScriptedLlmProvider.Saying(NothingObjected),
-        RoundScriptedLlmProvider.Saying(NextSpine),
-        RoundScriptedLlmProvider.Saying(NextBeats),
+        RoundScriptedLlmProvider.Saying(NextLines),
         RoundScriptedLlmProvider.Saying(NothingObjected)));
 
     [Fact]

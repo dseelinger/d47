@@ -28,7 +28,7 @@ public sealed class ADetourSetsItsChapterAsideTests
     private static async Task<(StoryFixtures Fixtures, string Chapter)> OnChapterThree(params string[] rewrite)
     {
         var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(Rounds(
-            [Spine, BeatsToTheBeacon, NothingObjected, NextSpine, NextBeats, NothingObjected, NextSpine, NextBeats, NothingObjected, .. rewrite])));
+            [Lines(), NothingObjected, NextLines, NothingObjected, NextLines, NothingObjected, .. rewrite])));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
         fixtures.Finish("F1", fixtures.Stories.Current("F1")!.CurrentChapter!, Now);
@@ -40,7 +40,7 @@ public sealed class ADetourSetsItsChapterAsideTests
         Assert.Equal(3, story.Chapters.Count);
 
         var chapter = fixtures.Book.Store.Find("F1", story.CurrentChapter!)!;
-        fixtures.Book.Observe(AdventureFixtures.Jump(chapter.Beats[0].Trigger.SystemAddress!.Value, Third.AddMinutes(1)), "F1");
+        fixtures.Fire("F1", chapter.Key, chapter.Beats[0].Trigger, Third.AddMinutes(1));
         Assert.Equal(1, fixtures.Book.Standing("F1", chapter.Key)!.Current);
 
         return (fixtures, chapter.Key);
@@ -76,8 +76,7 @@ public sealed class ADetourSetsItsChapterAsideTests
         Assert.DoesNotContain(fixtures.Book.Drain(), moment => moment.IsFailure);
 
         // The set-aside chapter's next objective no longer counts, and no chapter is written while the detour is open.
-        var dock = setAside.Adventure.Beats[1].Trigger;
-        fixtures.Book.Observe(AdventureFixtures.Docked(dock.MarketId!.Value, Third.AddMinutes(3)), "F1");
+        fixtures.Book.Observe(StoryFixtures.Flown(setAside.Adventure.Beats[1].Trigger, Third.AddMinutes(3))!, "F1");
         Assert.Equal(1, fixtures.Book.Standing("F1", third)!.Current);
         Assert.Null(fixtures.Director.Tick("F1", Third.AddMinutes(4)));
         Assert.Equal(asks, fixtures.Asks.Count);
@@ -88,12 +87,13 @@ public sealed class ADetourSetsItsChapterAsideTests
     [Fact]
     public async Task TheFiredDetourWritesTheChapterAgainAtTheSameNumber()
     {
-        var (fixtures, third) = await OnChapterThree(NextSpine, NextBeats, NothingObjected);
+        var (fixtures, third) = await OnChapterThree(NextLines, NothingObjected);
         using var _ = fixtures;
         var before = fixtures.Stories.Current("F1")!;
 
         Assert.Null(fixtures.Director.SetDetour("F1", Arrive, "Fit a scoop", Words, Third.AddMinutes(2)));
         var detour = fixtures.Stories.Current("F1")!.Detour!;
+        var asked = fixtures.Provider.Requests.Count;
 
         fixtures.Book.Observe(AdventureFixtures.Jump(DetourAddress, Third.AddMinutes(10), "Detour Star"), "F1");
         Assert.Null(await fixtures.Director.Tick("F1", Third.AddMinutes(11))!);
@@ -114,12 +114,12 @@ public sealed class ADetourSetsItsChapterAsideTests
         Assert.Equal(3, ask.Story!.Chapter);
         Assert.Null(ask.Failed);
         Assert.Equal(third, ask.SetAside!.Chapter.Previous.Key);
-        Assert.Equal(["The Lantern Again"], ask.SetAside.Done);
+        Assert.Equal(["Part one"], ask.SetAside.Done);
         Assert.Equal(Words, ask.SetAside.Words);
 
-        var prompts = fixtures.Provider.Requests.Skip(15).Select(request => request.Prompt.History[0].Text).ToList();
+        var prompts = fixtures.Provider.Requests.Skip(asked).Select(request => request.Prompt.History[0].Text).ToList();
         Assert.Contains(prompts, prompt => prompt.Contains("set an earlier version of this chapter aside to go somewhere else", StringComparison.Ordinal));
-        Assert.Contains(prompts, prompt => prompt.Contains("Objectives already done: The Lantern Again", StringComparison.Ordinal));
+        Assert.Contains(prompts, prompt => prompt.Contains("Objectives already done: Part one", StringComparison.Ordinal));
         Assert.DoesNotContain(prompts, prompt => prompt.Contains("failed", StringComparison.OrdinalIgnoreCase) && prompt.Contains("earlier attempt", StringComparison.Ordinal));
         Assert.DoesNotContain(prompts, prompt => prompt.Contains("Write the next chapter, not a retelling", StringComparison.Ordinal));
     }
@@ -127,7 +127,7 @@ public sealed class ADetourSetsItsChapterAsideTests
     [Fact]
     public async Task ADetourInAFinaleChapterKeepsThatFinaleChapter()
     {
-        var (fixtures, third) = await OnChapterThree(NextSpine, NextBeatsNamingTheEnd, NothingObjected);
+        var (fixtures, third) = await OnChapterThree(NextLines, NothingObjected);
         using var _ = fixtures;
         fixtures.Stories.Update("F1", Id, story => story with { FinaleFrom = 3 });
         Assert.Equal(1, fixtures.Stories.Current("F1")!.FinaleChapter);
@@ -155,7 +155,7 @@ public sealed class ADetourSetsItsChapterAsideTests
         Assert.Null(fixtures.Director.SetDetour("F1", Arrive, "Fit a scoop", Words, Third.AddMinutes(2)));
         var detour = fixtures.Stories.Current("F1")!.Detour!;
 
-        using var reopened = new StoryFixtures(new RoundScriptedLlmProvider(Rounds(NextSpine, NextBeats, NothingObjected)), reopening: fixtures);
+        using var reopened = new StoryFixtures(new RoundScriptedLlmProvider(Rounds(NextLines, NothingObjected)), reopening: fixtures);
         reopened.Book.Store.Poll();
         reopened.Director.ArchiveChapters();
 
@@ -176,7 +176,7 @@ public sealed class ADetourSetsItsChapterAsideTests
         Assert.Null(story.Detour);
         Assert.Equal(3, story.Chapters.Count);
         Assert.NotEqual(third, story.CurrentChapter);
-        Assert.Equal(["The Lantern Again"], reopened.Asks[^1].SetAside!.Done);
+        Assert.Equal(["Part one"], reopened.Asks[^1].SetAside!.Done);
     }
 
     [Fact]
@@ -203,7 +203,7 @@ public sealed class ADetourSetsItsChapterAsideTests
     [Fact]
     public async Task ADetourNoLongerOnFilePausesTheStoryAndResumeWritesTheChapterAgain()
     {
-        var (fixtures, third) = await OnChapterThree(NextSpine, NextBeats, NothingObjected);
+        var (fixtures, third) = await OnChapterThree(NextLines, NothingObjected);
         using var _ = fixtures;
         Assert.Null(fixtures.Director.SetDetour("F1", Arrive, "Fit a scoop", Words, Third.AddMinutes(2)));
         var asks = fixtures.Asks.Count;

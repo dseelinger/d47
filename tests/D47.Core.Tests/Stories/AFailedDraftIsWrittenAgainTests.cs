@@ -13,15 +13,17 @@ namespace D47.Core.Tests.Stories;
 /// </summary>
 public sealed class AFailedDraftIsWrittenAgainTests
 {
+    private static readonly string Stranger = Written("Factory settings, holding.", null, ("Scoop here.", "stranger"));
+
     [Fact]
     public async Task ASecondDraftIsToldWhyTheFirstFailedAndBegins()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsElsewhere),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsElsewhere, 2)),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsElsewhere, 2)),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+            RoundScriptedLlmProvider.Saying(Stranger),
+            RoundScriptedLlmProvider.Saying(Rewritten(1, "Scoop here.", "stranger")),
+            RoundScriptedLlmProvider.Saying(Rewritten(1, "Scoop here.", "stranger")),
+            RoundScriptedLlmProvider.Saying(Lines()),
+            RoundScriptedLlmProvider.Saying(NothingObjected)));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
@@ -30,11 +32,11 @@ public sealed class AFailedDraftIsWrittenAgainTests
         Assert.Equal([StoryDirector.WritingAgainLine(2, told: true)], fixtures.WritingAgain);
 
         Assert.Null(fixtures.Asks[0].LastDraftRefused);
-        Assert.Contains("The last objective must be \"beacon\"", fixtures.Asks[1].LastDraftRefused);
+        Assert.Contains("stranger", fixtures.Asks[1].LastDraftRefused);
 
-        var beats = fixtures.Provider.Requests[5].Prompt.History[0].Text;
-        Assert.Contains("An earlier draft of this chapter could not be used", beats);
-        Assert.Contains("The last objective must be \"beacon\"", beats);
+        var second = fixtures.Provider.Requests[1 + AdventureGenerator.RepairRounds].Prompt.History[0].Text;
+        Assert.Contains("An earlier draft of this chapter's words could not be used", second);
+        Assert.Contains("stranger", second);
     }
 
     [Trait("Category", "Integration")]
@@ -55,7 +57,7 @@ public sealed class AFailedDraftIsWrittenAgainTests
     [Fact]
     public async Task TheWriteStopsAfterTheLastDraftFails()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsElsewhere, Repairs.Replacing(BeatsElsewhere, 2), Repairs.Replacing(BeatsElsewhere, 2))));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Stranger, Rewritten(1, "Scoop here.", "stranger"), Rewritten(1, "Scoop here.", "stranger"))));
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
@@ -100,8 +102,7 @@ public sealed class AFailedDraftIsWrittenAgainTests
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying("No JSON here."),
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+            RoundScriptedLlmProvider.Saying(Lines())));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
@@ -109,49 +110,4 @@ public sealed class AFailedDraftIsWrittenAgainTests
         Assert.Null(fixtures.Asks[1].LastDraftRefused);
     }
 
-    [Fact]
-    public async Task ASecondDraftKeepsTheOutlineOfAFirstWhoseObjectivesNeverCameBack()
-    {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying("No JSON here."),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
-
-        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
-
-        Assert.Equal(6, fixtures.Provider.CallCount);
-        Assert.Null(fixtures.Asks[0].Outline);
-        Assert.NotNull(fixtures.Asks[1].Outline);
-    }
-
-    [Fact]
-    public async Task AThirdDraftWritesANewOutline()
-    {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying("No JSON here."),
-            RoundScriptedLlmProvider.Saying("No JSON here."),
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
-
-        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
-
-        Assert.Equal(9, fixtures.Provider.CallCount);
-        Assert.NotNull(fixtures.Asks[1].Outline);
-        Assert.Null(fixtures.Asks[2].Outline);
-    }
-
-    [Fact]
-    public async Task ASecondDraftWritesANewOutlineWhenTheFirstOneWasUnreadable()
-    {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying("""{"name": 3}"""),
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
-
-        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
-
-        Assert.Equal(6, fixtures.Provider.CallCount);
-        Assert.Null(fixtures.Asks[1].Outline);
-    }
 }

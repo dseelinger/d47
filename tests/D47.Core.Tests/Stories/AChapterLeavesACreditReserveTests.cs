@@ -22,16 +22,6 @@ public sealed class AChapterLeavesACreditReserveTests
         Assert.Equal(5_500_000_000, ChapterFit.Needed(ChapterFit.FleetCarrierPrice));
     }
 
-    [Theory]
-    [InlineData(100_000_000, 50_000_000)]
-    [InlineData(1_000_000_000, 500_000_000)]
-    [InlineData(5_600_000_000, 5_100_000_000)]
-    public void TheWriterIsToldTheMostItMayAskTheCommanderToSpend(long credits, long most)
-    {
-        Assert.Equal(most, ChapterFit.MostToSpend(credits));
-        Assert.True(ChapterFit.Needed(most) <= credits);
-    }
-
     [Fact]
     public void AHullTheCommanderCannotAffordIsRefusedAndAnOwnedOneIsNot()
     {

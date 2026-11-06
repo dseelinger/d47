@@ -61,8 +61,8 @@ public sealed class TheFinaleWaitsForTheCommanderToArriveTests
     private static StoryFixtures At(StorySecret secret, StarPosition? position, bool finale = true)
     {
         var fixtures = new StoryFixtures(finale
-            ? new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeatsNamingTheEnd), RoundScriptedLlmProvider.Saying(NothingObjected))
-            : new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats)), secret);
+            ? new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextLines), RoundScriptedLlmProvider.Saying(NothingObjected))
+            : new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextLines)), secret);
         var game = Loaded(1_000_000);
 
         if (position is { } at)

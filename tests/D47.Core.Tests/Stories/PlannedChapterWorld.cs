@@ -1,4 +1,4 @@
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Journal;
@@ -28,6 +28,34 @@ internal static class PlannedChapterWorld
         Cast: [new AdventureSpeaker("mara", "Mara Venn", "A salvage broker.")]);
 
     public static AdventureAsk Ask(AdventureStory? story = null) => new(AdventureReach.Session, Story: story ?? Story);
+
+    /// <summary>A galaxy around Fixture Prime with enough stations and bodies within a session's reach for a long short story's stops.</summary>
+    public static Galaxy Roomy()
+    {
+        var galaxy = new Galaxy();
+
+        for (var index = 0; index < 6; index++)
+        {
+            galaxy.MoreStations.Add(new StationSummary
+            {
+                Name = $"Roomy Port {index}", SystemName = $"Roomy {index}", SystemAddress = 900 + index, MarketId = 9000 + index,
+                Position = new StarPosition(130 + (index * 10), 0, 0), Type = "Coriolis Starport", LargePads = 2,
+            });
+            galaxy.MoreBodies.Add(new BodySummary
+            {
+                Name = $"Roomy Rock {index} 1", SystemName = $"Roomy Rock {index}", SystemAddress = 950 + index, BodyId = 1,
+                Position = new StarPosition(130 + (index * 10), 10, 0), IsLandable = true,
+            });
+        }
+
+        return galaxy;
+    }
+
+    /// <summary>A short story's lines answer for up to eight objectives, each line a plain string.</summary>
+    public static string ShortLines() => Lines(
+        ChapterPlanner.MostObjectives,
+        (number, objective) => objective["lines"] = new JsonArray(JsonValue.Create($"Page {number} of the ledger is open.")),
+        answer => answer["opening"] = "A ledger sits in the hold.");
 
     /// <summary>The Commander's state; without <paramref name="position"/>, the location carries no star position.</summary>
     public static CommanderGameState State(bool position = true)
@@ -215,6 +243,12 @@ internal static class PlannedChapterWorld
         /// <summary>Extra landable bodies every body search returns.</summary>
         public List<BodySummary> MoreBodies { get; } = [];
 
+        /// <summary>The bodies a search for the Guardian surface signal returns.</summary>
+        public List<BodySummary> GuardianBodies { get; } = [];
+
+        /// <summary>Every body search made.</summary>
+        public List<BodyQuery> BodyQueries { get; } = [];
+
         public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken)
         {
             Searches++;
@@ -263,8 +297,9 @@ internal static class PlannedChapterWorld
         public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
         {
             Searches++;
+            BodyQueries.Add(query);
 
-            return Task.FromResult(query.Signal is null ? new BodySearchResult(query.ReferenceSystem, 1 + MoreBodies.Count, [Beta, .. MoreBodies]) : new BodySearchResult(query.ReferenceSystem, 0, []));
+            return Task.FromResult(query.Signal is null ? new BodySearchResult(query.ReferenceSystem, 1 + MoreBodies.Count, [Beta, .. MoreBodies]) : new BodySearchResult(query.ReferenceSystem, GuardianBodies.Count, GuardianBodies));
         }
 
         public override Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) =>

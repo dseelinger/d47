@@ -32,8 +32,7 @@ public sealed class TheCommandersNotesFollowACastMembersWhoTests
     public async Task TheMemberAnsweringCarriesTheNotesKeptForThemInThisStory()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(StoryFixtures.Spine),
-            RoundScriptedLlmProvider.Saying(StoryFixtures.BeatsToTheBeacon),
+            RoundScriptedLlmProvider.Saying(StoryFixtures.Lines()),
             RoundScriptedLlmProvider.Saying(StoryFixtures.NothingObjected)));
         fixtures.Director.CastNotes = (fid, storyId, castId) => (fid, storyId, castId) == ("F1", StoryFixtures.Id, "dock-hand") ? Notes : null;
 

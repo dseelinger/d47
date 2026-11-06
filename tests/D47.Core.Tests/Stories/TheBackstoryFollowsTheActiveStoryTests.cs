@@ -13,8 +13,7 @@ public sealed class TheBackstoryFollowsTheActiveStoryTests
     private static StoryFixtures Fixtures(int writes = 2) => new(new RoundScriptedLlmProvider(
         [.. Enumerable.Range(0, writes).SelectMany(_ => new[]
         {
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+            RoundScriptedLlmProvider.Saying(Lines()),
             RoundScriptedLlmProvider.Saying(NothingObjected),
         })]));
 

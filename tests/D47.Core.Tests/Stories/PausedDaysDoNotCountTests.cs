@@ -49,7 +49,7 @@ public sealed class PausedDaysDoNotCountTests
     [Fact]
     public async Task AnAbandonedChapterStopsTheClockUntilResume()
     {
-        using var fixtures = StoryFixtures.ScriptedWith(Spine, BeatsToTheBeacon);
+        using var fixtures = StoryFixtures.ScriptedWith(Lines());
 
         await fixtures.PickAndScanTheBeaconAsync(Now);
 

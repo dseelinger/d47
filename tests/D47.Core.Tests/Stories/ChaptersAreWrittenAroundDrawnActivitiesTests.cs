@@ -12,22 +12,6 @@ namespace D47.Core.Tests.Stories;
 /// <summary>A chapter before the scan is drawn nothing and written as before; a drawn chapter is planned around its activities, and a refused one is drawn again.</summary>
 public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
 {
-    private const string SpineText = """
-        {"name": "The Long Way", "premise": "A debt.", "want": "To pay it.", "stake": "Whether it can be.", "turn": "It is owed.", "ending": "Forgiven."}
-        """;
-
-    private static AdventureAsk Chapter(IReadOnlyList<DrawnActivity>? slots, AdventureChapter? previous = null) =>
-        new(Chapter: previous, Story: new AdventureStory("s", "S", "public", "hidden", 3, 40, 20, Slots: slots));
-
-    private static async Task<(AdventureOutcome Outcome, RoundScriptedLlmProvider Provider)> Written(AdventureAsk ask, params string[] answers)
-    {
-        var provider = new RoundScriptedLlmProvider([.. answers.Select(answer => RoundScriptedLlmProvider.Saying(answer))]);
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(ask, Now, TestContext.Current.CancellationToken);
-
-        return (outcome, provider);
-    }
-
     private static string PromptOf(RoundScriptedLlmProvider provider, int round) => provider.Requests[round].Prompt.History[0].Text;
 
     [Fact]
@@ -67,26 +51,6 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
         Assert.DoesNotContain("destination", PromptOf(provider, 0).Split("Answer with one JSON object")[^1]);
     }
 
-    [Fact]
-    public async Task AChapterWithNoDrawnActivitiesIsWrittenAsBefore()
-    {
-        var previous = new Adventure
-        {
-            Key = "before",
-            Name = "Before",
-            Source = AdventureSource.Generated,
-            Written = Now,
-            Beats = [Beat("Blood", "setup", new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 2 }, "Two.")],
-        };
-        var chapter = new AdventureChapter(previous, []);
-
-        var (_, plain) = await Written(Chapter(null, chapter), SpineText);
-
-        Assert.Contains("Vary what the Commander does", PromptOf(plain, 0));
-        Assert.DoesNotContain("drawn for it by d47", PromptOf(plain, 0));
-        Assert.Contains("The counted kinds, in no order of preference", PromptOf(plain, 2));
-    }
-
     [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusedSlotsObjectiveIsDrawnAgainForThatSlotOnly()
@@ -94,7 +58,6 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
         const string Key = "the-hard-way";
 
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NewWords()), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections)));
-        fixtures.WritesDrawnChapters = true;
         fixtures.SaveRunning(["chapter-one", Key], 2);
 
         Assert.Null(fixtures.Book.Write("F1", StoryFixtures.GeneratedChapter(Key, "The Hard Way", Id, new AdventureSpine { Premise = "A debt.", Want = "To pay it.", Stake = "Whether it can be.", Turn = "It is owed.", Ending = "Forgiven." },
@@ -120,7 +83,7 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
     [Fact]
     public async Task AChapterBeforeTheScanIsDrawnNothing()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(StoryFixtures.Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())));
         fixtures.Director.Game = () => Loaded(1_000_000);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));

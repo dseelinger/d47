@@ -168,7 +168,7 @@ public sealed class AGoalsStoryFollowsGoalsProgressTests
     {
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats), RoundScriptedLlmProvider.Saying(NothingObjected)),
+                RoundScriptedLlmProvider.Saying(NextLines), RoundScriptedLlmProvider.Saying(NothingObjected)),
             card: Card with { Length = "2-weeks", Goals = true });
         IReadOnlyList<GoalStanding> goals = [Arc("a", 0, 2), Arc("b", 1, 2)];
         fixtures.Director.Goals = () => goals;

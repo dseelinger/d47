@@ -84,8 +84,8 @@ public sealed class TheCommandersCastVoiceIsTheOneSpokenTests
     public void TheDirectorSpeaksTheChoiceAndUseTheDefaultBringsThePinnedVoiceBack()
     {
         using var fixtures = new StoryFixtures(new Conversation.RoundScriptedLlmProvider(
-            Conversation.RoundScriptedLlmProvider.Saying(Spine),
-            Conversation.RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+            Conversation.RoundScriptedLlmProvider.Saying(Lines()),
+            Conversation.RoundScriptedLlmProvider.Saying(NothingObjected)));
 
         IReadOnlyDictionary<string, StoryVoiceChoice> choices = Chose(DockHand, TtsProviderCatalog.ElevenLabsId, "JBFqnCBsd6RMkjVDRZzb");
         fixtures.Director.Choices = () => choices;

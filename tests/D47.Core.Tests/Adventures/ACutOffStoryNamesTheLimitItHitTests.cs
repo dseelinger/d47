@@ -1,25 +1,21 @@
 ﻿using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>
-/// A beats reply that stops at a token limit, as Gemma 4 E4B in LM Studio at its default 8192-token context does:
-/// 6084 prompt tokens and 2108 reply tokens fill the context long before the beats ceiling (#1240).
+/// A lines reply that stops at a token limit, as Gemma 4 E4B in LM Studio at its default 8192-token context does:
+/// 6084 prompt tokens and 2108 reply tokens fill the context long before the lines ceiling (#1240).
 /// </summary>
 public sealed class ACutOffStoryNamesTheLimitItHitTests
 {
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 12, 0, 0, TimeSpan.Zero);
 
-    private const string Spine = """
-        {"name": "The Missing Freight", "premise": "Freight went missing on the way to Maren Anchorage.", "want": "To find the missing freight.",
-         "stake": "Whether a debt can be owed to nobody.", "turn": "The freight was never loaded.", "ending": "The freight is found and delivered."}
-        """;
-
-    private const string CutOffBeats = """{"opening": "Somebody is paying.", "beats": [{"title": "The Lantern", "objective": {"kind": "dock" """;
+    private const string CutOffLines = """{"name": "The Broker's Ledger", "objectives": [{"objective": 1, "title": "Part One", "lines": [{"text": "The ledger" """;
 
     [Fact]
     public async Task AReplyStoppedShortOfTheCeilingBlamesTheEndpointsContext()
@@ -35,7 +31,7 @@ public sealed class ACutOffStoryNamesTheLimitItHitTests
         Assert.DoesNotContain(log.Entries, entry => entry.Message.Contains("spent the whole", StringComparison.Ordinal));
 
         var notWritten = Assert.Single(log.Entries, entry => entry.Message.StartsWith("A story was not written", StringComparison.Ordinal)).Message;
-        Assert.Contains("beats step", notWritten);
+        Assert.Contains("lines step", notWritten);
         Assert.Contains("cut off at the endpoint's context after 6084 prompt and 2108 reply tokens", notWritten);
     }
 
@@ -92,13 +88,14 @@ public sealed class ACutOffStoryNamesTheLimitItHitTests
         Assert.Equal(AdventureOutcome.NotWritten, outcome.Message);
     }
 
-    private static Task<AdventureOutcome> Write(LlmUsage beatsUsage, ILogger log)
+    private static async Task<AdventureOutcome> Write(LlmUsage linesUsage, ILogger log)
     {
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            [new LlmStreamEvent.TextDelta(CutOffBeats), new LlmStreamEvent.Completed(beatsUsage, LlmStopReason.MaxTokens)]);
+        var ask = PlannedChapterWorld.Ask();
+        var provider = new RoundScriptedLlmProvider([new LlmStreamEvent.TextDelta(CutOffLines), new LlmStreamEvent.Completed(linesUsage, LlmStopReason.MaxTokens)]);
+        var state = PlannedChapterWorld.State();
+        var galaxy = new PlannedChapterWorld.Galaxy();
+        var generator = new AdventureGenerator(() => provider, () => null, () => "You are the ship.", () => "core", () => null, () => state, () => galaxy, () => null, null, null, log);
 
-        return AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), log)
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        return await generator.GenerateAsync(ask, Now, CancellationToken.None);
     }
 }

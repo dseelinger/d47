@@ -4,23 +4,28 @@ What a line may state as fact: an objective fires when its trigger is seen in th
 List an objective only where its lines state, as fact, one of the three checked things that its objective does not confirm and the game state below does not show. A line that only sets a scene or a mood states nothing to check.
 
 What is true right now, read from the Commander's journal:
-- Position: Oppi.
-- Reach: near here — about 80 light years, the longest one hop may be. A place farther away is reached over several hops.
-- Ranks held: Combat Rank 1 of 13, Mostly Harmless, Trade Rank 7 of 13, Tycoon, Exploration Rank 5 of 13, Pathfinder, Mercenary Rank 0 of 13, Defenceless, Exobiology Rank 0 of 13, Directionless, CQC Rank 0 of 8, Helpless, Imperial Navy Rank 1 of 14, Outsider, Federal Navy Rank 1 of 14, Recruit.
+- Position: Fixture Prime.
+- Reach: a session's flying — about 300 light years, the longest one hop may be. A place farther away is reached over several hops.
+- Ships the Commander owns, any of which the story may send them to fetch: Python (medium pad, aboard).
+- Jump range of the ship aboard: 22.5 light years.
+- Credits at the last load: 40,000,000.
+- Ranks held: Combat Rank 3 of 13, Competent, Trade Rank 4 of 13, Merchant, Exploration Rank 5 of 13, Pathfinder, Mercenary Rank 0 of 13, Defenceless, Exobiology Rank 0 of 13, Directionless, CQC Rank 0 of 8, Helpless, no Imperial Navy rank, no Federal Navy rank.
 
 A line that tells the Commander which missions to take, such as a mission whose target settlement is run by an Anarchy faction, states nothing to check. A line that says the missions' targets were Anarchy-run is still a claim about how a mission went.
 
-The story's ending: The freight is found and delivered.
+The story's ending: The ledger is closed.
 
 Objectives:
-1. The Lantern — arrive: Ossen's Lantern
+1. Part one — pick up 5 cargo canisters
+   Confirms: cargo canisters were picked up in space — not what they held beyond the cargo type named, or whose they were
+   Lines: "Page 1 of the ledger is open."
+2. Part two — save your own picture for one known codex entry
+   Confirms: a picture the Commander chose was saved for a codex entry — not what the picture shows
+   Lines: "Page 2 of the ledger is open."
+3. Part three (the last objective: its lines are the ending) — arrive: Fixture Beta
    Confirms: the ship arrived in that system — not why, what is there, or what the Commander did on the way
-   Lines: "Scoop here."
-2. The Tour — complete one sightseeing mission
-   Confirms: a sightseeing mission was handed in, so its passengers were taken to the sights it listed — not what they made of them
-   Lines: "Take the tourists round."
-3. The Freight Delivered (the last objective: its lines are the ending) — rank: Trade 8
-   Confirms: a promotion to at least that rank in that career — not how it was earned
-   Lines: "The freight is delivered."
+   Then — complete 3 on foot production heist missions
+   Confirms: missions of this family were handed in, as many as the objective counts, wherever they were taken or flown — not their targets, the targets' standing, how they went, what was at their sites or in their cargo, or what they paid
+   Lines (spoken after its last step): "Page 3 of the ledger is open."
 
 Answer with one JSON object and nothing else: {"objections": [{"objective": number, "quote": string, "kind": "action" | "history" | "event" | "fiction", "reason": string}]}. "objective" is the objective's number; "quote" is the words of its lines that make the statement, copied exactly; "kind" is "action" for what the Commander did, "history" for where the Commander has been or their history with a place, "event" for how a game event went, and "fiction" for anything the cast say, send, offer, remember or own, a record in the story, or an opinion; "reason" is one plain sentence saying what the lines state that the trigger does not confirm. Use an empty list when every objective stands.

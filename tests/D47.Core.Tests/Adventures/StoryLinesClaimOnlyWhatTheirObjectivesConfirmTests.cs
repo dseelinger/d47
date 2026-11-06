@@ -1,7 +1,8 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Tests.Conversation;
 using D47.Core.Tests.Stories;
 using Xunit;
+using static D47.Core.Tests.Stories.PlannedChapterWorld;
 
 namespace D47.Core.Tests.Adventures;
 
@@ -10,26 +11,17 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 20, 12, 0, 0, TimeSpan.Zero);
 
-    private const string NothingObjected = """{"objections": []}""";
+    private const string SecondObjected = """{"objections": [{"objective": 2, "quote": "another page", "kind": "history", "reason": "it says the Commander has read the ledger before."}]}""";
 
-    private const string SecondObjected = """{"objections": [{"objective": 2, "quote": "one name", "kind": "history", "reason": "it says the Commander has docked there before."}]}""";
+    private static async Task<(AdventureOutcome Outcome, RoundScriptedLlmProvider Provider)> Write(params string[] after)
+    {
+        var ask = Ask();
+        var plan = await PlanAsync(ask);
+        var provider = new RoundScriptedLlmProvider([RoundScriptedLlmProvider.Saying(Lines(plan.Objectives.Count)), .. after.Select(reply => RoundScriptedLlmProvider.Saying(reply))]);
+        var outcome = await Generator(provider).GenerateAsync(ask, Now, TestContext.Current.CancellationToken);
 
-    private const string QuietDock = """
-        {"replacements": [
-          {"objective": 2, "title": "The Quiet Dock", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "One name, at a dock."}
-        ]}
-        """;
-
-    private static RoundScriptedLlmProvider Scripted(params string[] after) =>
-        new([
-            RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine),
-            RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.GoodBeats),
-            .. after.Select(reply => RoundScriptedLlmProvider.Saying(reply)),
-        ]);
-
-    private static Task<AdventureOutcome> Write(RoundScriptedLlmProvider provider) =>
-        AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        return (outcome, provider);
+    }
 
     [Trait("Category", "Gate")]
     [Fact]
@@ -42,113 +34,69 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
     }
 
     [Fact]
-    public async Task TheSpinePromptCarriesTheEntryForEveryKind()
-    {
-        var provider = Scripted(NothingObjected);
-
-        await Write(provider);
-
-        var prompt = provider.Requests[0].Prompt.History[0].Text;
-
-        Assert.Contains(TriggerConfirms.Rule, prompt);
-
-        foreach (var kind in Enum.GetValues<TriggerKind>().Where(kind => kind is not (TriggerKind.Beacon or TriggerKind.Reach or TriggerKind.Site)))
-        {
-            Assert.Contains($"- \"{kind.ToString().ToLowerInvariant()}\": {TriggerConfirms.Of(kind)}", prompt);
-        }
-    }
-
-    [Fact]
-    public async Task TheBeatsPromptCarriesTheEntryForEveryKindItOffers()
-    {
-        var provider = Scripted(NothingObjected);
-
-        await Write(provider);
-
-        var prompt = provider.Requests[2].Prompt.History[0].Text;
-        var offered = Enum.GetValues<TriggerKind>()
-            .Select(kind => kind.ToString().ToLowerInvariant())
-            .Where(word => prompt.Contains($"\n- \"{word}\": the Commander", StringComparison.Ordinal))
-            .ToList();
-
-        Assert.Contains(TriggerConfirms.Rule, prompt);
-        Assert.True(offered.Count > 20, "The prompt offers few kinds.");
-        Assert.All(offered, word => Assert.Contains($"- \"{word}\": {TriggerConfirms.Of(word)}", prompt));
-    }
-
-    [Fact]
     public async Task TheFidelityCallShowsEachObjectiveItsEntryAndTheEnding()
     {
-        var provider = Scripted(NothingObjected);
-
-        var outcome = await Write(provider);
+        var (outcome, provider) = await Write(NoObjections);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(5, provider.CallCount);
+        Assert.Equal(3, provider.Requests.Count);
 
-        var prompt = provider.Requests[3].Prompt.History[0].Text;
+        var prompt = provider.Requests[1].Prompt.History[0].Text;
 
+        Assert.Equal("story_fidelity", provider.Requests[1].ResponseSchema?.Name);
         Assert.Contains(TriggerConfirms.Rule, prompt);
-        Assert.Contains($"Confirms: {TriggerConfirms.Of(TriggerKind.Dock)}", prompt);
-        Assert.Contains("\"Scoop here.\"", prompt);
+        Assert.Contains($"Confirms: {TriggerConfirms.Of(TriggerKind.Bounty)}", prompt);
+        Assert.Contains("\"The ledger has another page, the one.\"", prompt);
         Assert.Contains("(the last objective: its lines are the ending)", prompt);
-        Assert.Equal("story_fidelity", provider.Requests[3].ResponseSchema?.Name);
     }
 
     [Fact]
     public async Task AnObjectiveTheFidelityCallNamesIsWrittenAgainAndTheOthersStand()
     {
-        var provider = Scripted(SecondObjected, QuietDock, NothingObjected);
-
-        var outcome = await Write(provider);
+        var (outcome, provider) = await Write(SecondObjected, Repair(2), NoObjections);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(7, provider.CallCount);
+        Assert.Equal("story_line_repairs", provider.Requests[2].ResponseSchema?.Name);
 
-        var repair = provider.Requests[4].Prompt.History[0].Text;
+        var repair = provider.Requests[2].Prompt.History[0].Text;
 
-        Assert.Contains("Objective 2 (The Anchorage) states something its trigger does not confirm: it says the Commander has docked there before.", repair);
-        Assert.Contains("Write a replacement for objective 2, and for no other.", repair);
-        Assert.Contains("delete that statement from the lines rather than rewording it", repair);
-        Assert.Equal(["The Lantern", "The Quiet Dock", "The Freight Delivered"], outcome.Draft!.Beats.Select(beat => beat.Title));
+        Assert.Contains("it says the Commander has read the ledger before.", repair);
+        Assert.Equal(["Part one", "Part two Again", "Part three"], outcome.Draft!.Beats.Take(3).Select(beat => beat.Title));
     }
 
     [Fact]
     public async Task AnObjectiveTheCheckPassedIsNotRefusedByALaterRound()
     {
-        var provider = Scripted(
+        var (outcome, _) = await Write(
             SecondObjected,
-            QuietDock,
-            """{"objections": [{"objective": 1, "quote": "Scoop here", "kind": "action", "reason": "it says the Commander was paid."}, {"objective": 3, "quote": "The freight is delivered", "kind": "event", "reason": "it says no beacon was scanned."}]}""");
-
-        var outcome = await Write(provider);
+            Repair(2),
+            """{"objections": [{"objective": 1, "quote": "another page", "kind": "action", "reason": "it says the Commander was paid."}, {"objective": 3, "quote": "another page", "kind": "event", "reason": "it says no beacon was scanned."}]}""");
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(7, provider.CallCount);
-        Assert.Equal(["The Lantern", "The Quiet Dock", "The Freight Delivered"], outcome.Draft!.Beats.Select(beat => beat.Title));
+        Assert.Equal(["Part one", "Part two Again", "Part three"], outcome.Draft!.Beats.Take(3).Select(beat => beat.Title));
     }
 
     [Theory]
     [InlineData("""{"objections": [{"objective": 2, "quote": "To one name", "kind": "fiction", "reason": "a record in the story."}]}""")]
     [InlineData("""{"objections": [{"objective": 2, "quote": "The hold took in the canisters", "kind": "action", "reason": "words the lines do not hold."}]}""")]
     [InlineData("""{"objections": [{"objective": 2, "kind": "action", "reason": "no quote."}]}""")]
+    [InlineData("""{"objections": [{"objective": 2, "quote": "another page", "kind": "fiction", "reason": "a record in the story."}]}""")]
     public async Task AnObjectionThatQuotesNoCheckedStatementInTheLinesIsDropped(string objected)
     {
-        var provider = Scripted(objected);
-
-        var outcome = await Write(provider);
+        var (outcome, provider) = await Write(objected);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(5, provider.CallCount);
+        Assert.Equal(3, provider.Requests.Count);
     }
 
     [Fact]
     public async Task AnObjectionThatOutlastsTheRepairsFailsAsAFidelityRefusal()
     {
-        var outcome = await Write(Scripted(SecondObjected, QuietDock, SecondObjected, QuietDock, SecondObjected));
+        const string again = """{"objections": [{"objective": 2, "quote": "legible now", "kind": "history", "reason": "it says the Commander has read the ledger before."}]}""";
+        var (outcome, _) = await Write(SecondObjected, Repair(2), again, Repair(2), again);
 
         Assert.False(outcome.Succeeded);
-        Assert.StartsWith("The story states what its objectives do not confirm: Fidelity check: Objective 2 (The Quiet Dock)", outcome.Refusal);
+        Assert.StartsWith("The story states what its objectives do not confirm: Fidelity check: Objective 2 (Part two Again)", outcome.Refusal);
     }
 
     [Fact]
@@ -158,27 +106,26 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
         {
             Beacon = new AdventureBeacon(13872878396833, "IC 2391 Sector MX-T b3-6"),
         };
-        var ask = PlannedChapterWorld.Ask(story);
-        var plan = await PlannedChapterWorld.PlanAsync(ask);
+        var ask = Ask(story);
+        var plan = await PlanAsync(ask);
         var provider = new RoundScriptedLlmProvider([
-            RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Lines(plan.Objectives.Count)),
-            RoundScriptedLlmProvider.Saying(NothingObjected),
+            RoundScriptedLlmProvider.Saying(Lines(plan.Objectives.Count)),
+            RoundScriptedLlmProvider.Saying(NoObjections),
         ]);
 
-        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, CancellationToken.None);
+        var outcome = await Generator(provider).GenerateAsync(ask, Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.Equal(TriggerKind.Beacon, outcome.Draft!.Beats[^1].Steps[^1].Trigger.Kind);
         Assert.Contains("the story's Guardian cores came aboard", TriggerConfirms.Of(TriggerKind.Beacon, story: true));
         Assert.DoesNotContain("cores", TriggerConfirms.Of(TriggerKind.Beacon));
-        Assert.Contains($"- \"beacon\": {TriggerConfirms.Of(TriggerKind.Beacon, story: true)}", provider.Requests[0].Prompt.History[0].Text);
         Assert.Contains($"Confirms: {TriggerConfirms.Of(TriggerKind.Beacon, story: true)}", provider.Requests[1].Prompt.History[0].Text);
     }
 
     [Fact]
     public async Task AFidelityReplyThatCannotBeReadObjectsToNothing()
     {
-        var outcome = await Write(Scripted("not json"));
+        var (outcome, _) = await Write("not json");
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
     }

@@ -13,7 +13,7 @@ public sealed class NoNameTokenReachesTheCommanderTests
     public async Task TheChapterWriterReadsTheResolvedName()
     {
         using var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)),
+            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())),
             Versioned);
         fixtures.Director.Gender = () => CommanderGender.Woman;
 
@@ -30,7 +30,7 @@ public sealed class NoNameTokenReachesTheCommanderTests
     public async Task TheHiddenBriefHoldsNoToken()
     {
         using var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)),
+            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())),
             Versioned);
         fixtures.Director.Gender = () => CommanderGender.Man;
 

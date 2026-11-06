@@ -146,11 +146,9 @@ public sealed class AJumpMakesAChosenClueDueNowTests
     public async Task TheDirectorWritesTheNextChapterInPlaceOfTheCurrentOne()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+            RoundScriptedLlmProvider.Saying(Lines()),
             RoundScriptedLlmProvider.Saying(NothingObjected),
-            RoundScriptedLlmProvider.Saying(NextSpine),
-            RoundScriptedLlmProvider.Saying(NextBeats),
+            RoundScriptedLlmProvider.Saying(NextLines),
             RoundScriptedLlmProvider.Saying(NothingObjected)));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));

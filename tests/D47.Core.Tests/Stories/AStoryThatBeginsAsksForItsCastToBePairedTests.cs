@@ -10,8 +10,7 @@ namespace D47.Core.Tests.Stories;
 public sealed class AStoryThatBeginsAsksForItsCastToBePairedTests
 {
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(
-        RoundScriptedLlmProvider.Saying(Spine),
-        RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+        RoundScriptedLlmProvider.Saying(Lines())));
 
     [Fact]
     public async Task PickingAStorySaysItBegan()

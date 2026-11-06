@@ -21,7 +21,7 @@ public sealed class AShortStoryOpensAfterANarratedScanTests
     private static readonly StorySecret WithScan = Secret with { Scan = new("The data link completes.", StorySpeaker.Narrator) };
 
     private static StoryFixtures Week() => new(
-        new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsElsewhere)),
+        new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())),
         WithScan,
         WeekCard);
 
@@ -120,7 +120,7 @@ public sealed class AShortStoryOpensAfterANarratedScanTests
     public async Task AMonthWaitsForARealScan()
     {
         using var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)),
+            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())),
             card: Card with { Length = StoryPacing.OneMonth.Key })
         {
             Here = BeyondTheBeacon(10),

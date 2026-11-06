@@ -11,8 +11,7 @@ namespace D47.Core.Tests.Persona;
 public sealed class PausingAStoryGivesTheCoresBackTests
 {
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(
-        RoundScriptedLlmProvider.Saying(Spine),
-        RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+        RoundScriptedLlmProvider.Saying(Lines())));
 
     private static async Task<StoryFixtures> Picked()
     {

@@ -1,8 +1,9 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Knowledge;
-using D47.Core.Tests.Conversation;
+using D47.Core.Journal;
+using D47.Core.Stories;
+using D47.Core.Tests.Stories;
 using Xunit;
-using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
 
 namespace D47.Core.Tests.Adventures;
 
@@ -64,29 +65,24 @@ public sealed class CarriersMegashipsAndConstructionSitesAreNeverStoryStopsTests
     }
 
     [Fact]
-    public async Task TheCandidatesInThePromptLeaveOutCarriersMegashipsAndConstructionSites()
+    public async Task TheStationSearchForCandidatesIsFixedOnlyAndNoCarrierMegashipOrConstructionSiteIsPlannedAsADock()
     {
         var galaxy = new AdventureGeneratorTests.Galaxy { Extra = NotStops };
-        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats));
 
-        await AdventureGeneratorTests.Generator(provider, galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        foreach (var request in provider.Requests)
-        {
-            var instruction = request.Prompt.History[0].Text;
-
-            if (!instruction.StartsWith("You are checking", StringComparison.Ordinal))
-            {
-                Assert.Contains("- Dyson's Hollow (12 ly): stations Maren Anchorage (large pad)" + Environment.NewLine, instruction);
-            }
-
-            foreach (var station in NotStops)
-            {
-                Assert.DoesNotContain(station.Name, instruction);
-            }
-        }
+        await AdventureGeneratorTests.Generator(null!, galaxy).ChapterPlacesAsync(PlannedChapterWorld.Ask(), CancellationToken.None);
 
         Assert.True(Assert.Single(galaxy.StationQueries, query => query.MaxDistance > 1 && query.Services.Count == 0).FixedOnly);
+
+        var places = PlannerWorld.Places() with
+        {
+            Stations = [.. PlannerWorld.Places().Stations, .. NotStops.Select(station => station with { SystemName = "Fixture Alpha", SystemAddress = 2, Position = new StarPosition(110, 0, 0) })],
+        };
+        var inputs = PlannerWorld.Inputs(new DrawnActivity(TriggerKind.Sell, null, 20) { PlaceBefore = true });
+
+        for (uint seed = 1; seed <= 40; seed++)
+        {
+            Assert.DoesNotContain(PlannerWorld.Steps(PlannerWorld.Planned(inputs, places, seed)), step => step.Kind == TriggerKind.Dock && NotStops.Any(station => station.Name == step.Station));
+        }
     }
 
     private static StationSummary Station(string name, string? type) => new()

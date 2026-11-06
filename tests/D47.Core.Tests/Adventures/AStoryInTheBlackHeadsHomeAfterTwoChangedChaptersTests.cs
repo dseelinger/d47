@@ -1,8 +1,10 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Stories;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -16,22 +18,15 @@ public sealed class AStoryInTheBlackHeadsHomeAfterTwoChangedChaptersTests
 
     private static readonly StarPosition InTheBlack = new(3000, 0, 0);
 
-    private static readonly AdventureStory Chapter = new("s", "S", "public", "hidden", 2, 10, 3) { Home = "Sol" };
+    private static readonly AdventureStory Chapter = new("s", "S", "public", "hidden", 2, 10, 3, Slots: [PlannedChapterWorld.Bounty]) { Home = "Sol" };
 
     private static readonly AdventureAsk HomeAsk = new(Reach: AdventureReach.Anywhere, Story: Chapter);
 
-    private const string Spine = """
-        {"name": "The Long Way", "premise": "A way back.", "want": "To get home.",
-         "stake": "Whether the ship lasts.", "turn": "The road is shorter.", "ending": "It is done."}
-        """;
+    private static RoundScriptedLlmProvider Provider() =>
+        new(Saying(PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives)), Saying(PlannedChapterWorld.NoObjections));
 
-    private const string Beats = """
-        {"opening": "A road.", "reply": "Here it is.", "beats": [
-          {"title": "The Arrival", "function": "setup", "kind": "arrive", "reason": "Someone there knows the way.", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Here."},
-          {"title": "The Turn", "function": "turn", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
-          {"title": "The End", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
-        ]}
-        """;
+    private static string Prompt(RoundScriptedLlmProvider provider) =>
+        provider.Requests.First(request => request.ResponseSchema?.Name == "story_lines").Prompt.History[0].Text;
 
     [Fact]
     public void ACommander3000LightYearsFromSolAndColoniaHeadsForSol() => Assert.Equal("Sol", HomeLeg.TargetFrom(InTheBlack));
@@ -75,67 +70,43 @@ public sealed class AStoryInTheBlackHeadsHomeAfterTwoChangedChaptersTests
     }
 
     [Fact]
-    public async Task TheChapterHeadingHomeIsToldWhereItGoesAndHowFar()
+    public async Task TheChapterHeadingHomeIsToldHowFarItIsFromSol()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var provider = Provider();
 
-        await Generator(provider, new Galaxy(), 3000).GenerateAsync(HomeAsk, Now, CancellationToken.None);
+        var outcome = await Generator(provider, new Galaxy(), 3000).GenerateAsync(HomeAsk, Now, CancellationToken.None);
 
-        var brief = provider.Requests[2].Prompt.History[0].Text;
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        var brief = Prompt(provider);
         Assert.Contains("3000 light years from Sol", brief);
         Assert.Contains("the story heads home to Sol", brief);
-        Assert.Contains("at least 1125 light years nearer Sol", brief);
         Assert.DoesNotContain("outside the bubble", brief);
-    }
-
-    [Fact]
-    public async Task ALastStopThreeQuartersOfAReachNearerThanTheStartPasses()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
-
-        var outcome = await Generator(provider, new Galaxy { FromSol = 1875 }, 3000).GenerateAsync(HomeAsk, Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task ALastStopLessThanThreeQuartersOfAReachNearerIsRefusedWithTheTarget()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats), Saying(Repairs.Replacing(Beats, 1)), Saying(Repairs.Replacing(Beats, 1)));
-
-        var outcome = await Generator(provider, new Galaxy { FromSol = 2000 }, 3000).GenerateAsync(HomeAsk, Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("its last stop is 2000 light years from it", outcome.Refusal);
-        Assert.Contains("heading home", outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task ALastStopWithin1000LightYearsOfTheTargetPasses()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
-
-        var outcome = await Generator(provider, new Galaxy { FromSol = 900 }, 1900).GenerateAsync(HomeAsk, Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
     }
 
     [Fact]
     public async Task AFinaleChapterIsNotSentHome()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var provider = Provider();
 
-        await Generator(provider, new Galaxy(), 3000).GenerateAsync(new AdventureAsk(Story: Chapter with { FinaleChapter = 2 }), Now, CancellationToken.None);
+        var outcome = await Generator(provider, new Galaxy(), 3000).GenerateAsync(new AdventureAsk(Story: Chapter with { FinaleChapter = 2 }), Now, CancellationToken.None);
 
-        Assert.DoesNotContain("heads home", provider.Requests[2].Prompt.History[0].Text);
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.DoesNotContain("heads home", Prompt(provider));
     }
 
-    private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, double lightYears) =>
-        AdventureGeneratorTests.Generator(provider, galaxy, Now, $"{lightYears},0,0");
+    private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, double lightYears)
+    {
+        galaxy.At = lightYears;
+
+        return AdventureGeneratorTests.Generator(provider, galaxy, Now, $"{lightYears},0,0");
+    }
 
     internal sealed class Galaxy : StubGalaxyService
     {
         public double FromSol { get; init; } = 1400;
+
+        /// <summary>Where the Commander is along the x axis; stations to stop at lie toward Sol from it.</summary>
+        public double At { get; set; }
 
         public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
@@ -149,8 +120,18 @@ public sealed class AStoryInTheBlackHeadsHomeAfterTwoChangedChaptersTests
         public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(to == "Sol" ? FromSol : 12);
 
-        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(new StationSearchResult(query.ReferenceSystem, 1, [WaypointStation]));
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<StationSummary> found = query.ReferencePosition is { } waypoint
+                ? [WaypointStation with { Position = waypoint }]
+                : [.. Enumerable.Range(1, 6).Select(index => new StationSummary
+                {
+                    Name = $"Stop Port {index}", SystemName = $"Stop {index}", SystemAddress = 6000 + index, MarketId = 6100 + index,
+                    Position = new StarPosition(At - (index * 10), 0, 0), Type = "Coriolis Starport", LargePads = 2,
+                })];
+
+            return Task.FromResult(new StationSearchResult(query.ReferenceSystem, found.Count, found));
+        }
 
         private static readonly StationSummary WaypointStation = new()
         {

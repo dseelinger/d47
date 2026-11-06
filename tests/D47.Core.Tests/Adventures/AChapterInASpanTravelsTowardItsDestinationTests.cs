@@ -1,10 +1,13 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Checklists;
 using D47.Core.Tests.Conversation;
 using D47.Core.Tests.Knowledge;
+using D47.Core.Stories;
+using D47.Core.Tests.Stories;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
@@ -17,20 +20,13 @@ public sealed class AChapterInASpanTravelsTowardItsDestinationTests
 
     private static readonly StarPosition Colonia = ExpeditionKit.Colonia;
 
-    private static readonly AdventureStory InASpan = new("s", "S", "public", "hidden", 2, 10, 3) { InTheBlack = true, Toward = "Colonia" };
+    private static readonly AdventureStory InASpan = new("s", "S", "public", "hidden", 2, 10, 3, Slots: [PlannedChapterWorld.Bounty]) { InTheBlack = true, Toward = "Colonia" };
 
-    private const string Spine = """
-        {"name": "The Long Way", "premise": "A way out.", "want": "To get there.",
-         "stake": "Whether the ship lasts.", "turn": "The road is shorter.", "ending": "It is done."}
-        """;
+    private static RoundScriptedLlmProvider Provider() =>
+        new(Saying(PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives)), Saying(PlannedChapterWorld.NoObjections));
 
-    private const string Beats = """
-        {"opening": "A road.", "reply": "Here it is.", "beats": [
-          {"title": "The Arrival", "function": "setup", "kind": "arrive", "reason": "Someone there knows the way.", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Here."},
-          {"title": "The Turn", "function": "turn", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Turn."},
-          {"title": "The End", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
-        ]}
-        """;
+    private static string Prompt(RoundScriptedLlmProvider provider) =>
+        provider.Requests.First(request => request.ResponseSchema?.Name == "story_lines").Prompt.History[0].Text;
 
     [Fact]
     public void TheWaypointIs85PercentOfTheReachAlongTheLine()
@@ -68,74 +64,52 @@ public sealed class AChapterInASpanTravelsTowardItsDestinationTests
         Assert.Null(ChapterPull.Of(new AdventureAsk(Story: InASpan with { Toward = null }), Out(2000)));
 
     [Fact]
-    public async Task AChapterIsToldWhereItGoesAndOfferedAPlaceOnTheWay()
+    public async Task AChapterIsToldHowFarItIsFromWhereItGoes()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var provider = Provider();
 
-        await Generator(provider, new Galaxy(), Out(2000)).GenerateAsync(new AdventureAsk(Reach: AdventureReach.Anywhere, Story: InASpan), Now, CancellationToken.None);
+        var outcome = await Generator(provider, new Galaxy(), Out(2000)).GenerateAsync(new AdventureAsk(Reach: AdventureReach.Anywhere, Story: InASpan), Now, CancellationToken.None);
 
-        var brief = provider.Requests[2].Prompt.History[0].Text;
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+
+        var brief = Prompt(provider);
         Assert.Contains("2000 light years from Colonia", brief);
-        Assert.Contains("at least 1125 light years nearer Colonia", brief);
-        Assert.Contains("Halfway House", brief);
         Assert.DoesNotContain("may be far from the bubble", brief);
     }
 
     [Fact]
-    public async Task ALastStopFarEnoughTowardTheDestinationPasses()
+    public async Task WhenTheWaypointSearchFindsNothingTheChapterIsNotRefusedAndTheLogSaysWhy()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var provider = Provider();
 
-        var outcome = await Generator(provider, new Galaxy { FromColonia = 875 }, Out(2000)).GenerateAsync(new AdventureAsk(Reach: AdventureReach.Anywhere, Story: InASpan), Now, CancellationToken.None);
+        var logger = new RecordingLogger();
+        var outcome = await Generator(provider, new Galaxy { FromColonia = 1900, NoPlaces = true }, Out(2000), logger).GenerateAsync(new AdventureAsk(Reach: AdventureReach.Anywhere, Story: InASpan), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task ALastStopNotFarEnoughTowardTheDestinationIsRefused()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats), Saying(Repairs.Replacing(Beats, 1)), Saying(Repairs.Replacing(Beats, 1)));
-
-        var outcome = await Generator(provider, new Galaxy { FromColonia = 1500 }, Out(2000)).GenerateAsync(new AdventureAsk(Reach: AdventureReach.Anywhere, Story: InASpan), Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("its last stop is 1500 light years from it", outcome.Refusal);
-        Assert.Contains("heading for Colonia", outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task WhenTheWaypointSearchFindsNothingTheChapterIsNotRefusedAndSaysWhy()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
-
-        var outcome = await Generator(provider, new Galaxy { FromColonia = 1900, NoPlaces = true }, Out(2000)).GenerateAsync(new AdventureAsk(Reach: AdventureReach.Anywhere, Story: InASpan), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Contains(outcome.Notes, note => note.Contains("No station or landable body was found near the point on the way to Colonia"));
-        Assert.Contains("is not held to a distance from Colonia", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains(logger.Lines, line => line.Contains("No station or landable body was found near the point on the way to Colonia", StringComparison.Ordinal));
     }
 
     [Fact]
     public async Task AChapterThatHasArrivedIsToldSoAndIsNotRefused()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var provider = Provider();
 
         var outcome = await Generator(provider, new Galaxy { FromColonia = 900 }, Out(800)).GenerateAsync(new AdventureAsk(Reach: AdventureReach.Anywhere, Story: InASpan), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Contains("has arrived at Colonia", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains("has arrived at Colonia", Prompt(provider));
     }
 
     [Fact]
     public async Task ASpanWithNoDestinationIsToldItMayBeFarFromTheBubbleAndNotRefused()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var provider = Provider();
 
         var outcome = await Generator(provider, new Galaxy { FromColonia = 1900 }, Out(2000))
             .GenerateAsync(new AdventureAsk(Reach: AdventureReach.Anywhere, Story: InASpan with { Toward = null }), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Contains("may be far from the bubble", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains("may be far from the bubble", Prompt(provider));
     }
 
     private static StarPosition Out(double lightYears)
@@ -145,8 +119,9 @@ public sealed class AChapterInASpanTravelsTowardItsDestinationTests
         return new StarPosition(Colonia.X * (1 - scale), Colonia.Y * (1 - scale), Colonia.Z * (1 - scale));
     }
 
-    private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, StarPosition at)
+    private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, StarPosition at, ILogger? logger = null)
     {
+        galaxy.Here = at;
         var store = new GameStateStore();
 
         foreach (var line in new[]
@@ -173,7 +148,7 @@ public sealed class AChapterInASpanTravelsTowardItsDestinationTests
             () => null,
             null,
             null,
-            NullLogger.Instance);
+            logger ?? NullLogger.Instance);
     }
 
     private sealed class Galaxy : StubGalaxyService
@@ -181,6 +156,9 @@ public sealed class AChapterInASpanTravelsTowardItsDestinationTests
         public double FromColonia { get; init; } = 1400;
 
         public bool NoPlaces { get; init; }
+
+        /// <summary>Where the Commander is; stations to stop at lie around it.</summary>
+        public StarPosition Here { get; set; }
 
         private static readonly StationSummary WaypointStation = new()
         {
@@ -199,8 +177,18 @@ public sealed class AChapterInASpanTravelsTowardItsDestinationTests
         public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             Task.FromResult<double?>(to == "Colonia" ? FromColonia : 12);
 
-        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(new StationSearchResult(query.ReferenceSystem, NoPlaces || query.ReferencePosition is null ? 0 : 1, NoPlaces || query.ReferencePosition is null ? [] : [WaypointStation]));
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<StationSummary> found = query.ReferencePosition is null
+                ? [.. Enumerable.Range(1, 6).Select(index => new StationSummary
+                {
+                    Name = $"Stop Port {index}", SystemName = $"Stop {index}", SystemAddress = 6000 + index, MarketId = 6100 + index,
+                    Position = new StarPosition(Here.X + (index * 10), Here.Y, Here.Z), Type = "Coriolis Starport", LargePads = 2,
+                })]
+                : NoPlaces ? [] : [WaypointStation with { Position = query.ReferencePosition }];
+
+            return Task.FromResult(new StationSearchResult(query.ReferenceSystem, found.Count, found));
+        }
 
         public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));

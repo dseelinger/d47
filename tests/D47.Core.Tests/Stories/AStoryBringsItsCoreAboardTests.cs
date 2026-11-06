@@ -9,8 +9,7 @@ namespace D47.Core.Tests.Stories;
 public sealed class AStoryBringsItsCoreAboardTests
 {
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(
-        RoundScriptedLlmProvider.Saying(Spine),
-        RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+        RoundScriptedLlmProvider.Saying(Lines())));
 
     [Trait("Category", "Integration")]
     [Fact]

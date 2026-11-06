@@ -14,26 +14,13 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
 {
     private const string FirstPersonOpening = "Sidewinder, still in yard paint, and nobody aboard to talk to but me.";
 
-    private const string Beats = """
-        {"opening": "A voice on the open channel.", "openingSpeaker": "narrator", "reply": "Here it is.", "beats": [
-          {"title": "Yard Paint", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "lines": [
-            {"text": "NARRATED", "speaker": "narrator"},
-            {"text": "CAST", "speaker": "dock-hand"}
-          ]},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "lines": [{"text": "SHIP", "speaker": "ship"}]},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
-        ]}
-        """;
+    private const string Opened = "A voice on the open channel.";
 
-    private static string Written(string narrated = "The yard lights stay on.", string cast = "Nobody. Go.", string ship = "To one name.", string opening = "A voice on the open channel.") =>
-        Beats
-            .Replace("NARRATED", narrated, StringComparison.Ordinal)
-            .Replace("CAST", cast, StringComparison.Ordinal)
-            .Replace("SHIP", ship, StringComparison.Ordinal)
-            .Replace("A voice on the open channel.", opening, StringComparison.Ordinal);
+    private static string Written(string narrated = "The yard lights stay on.", string cast = "Nobody. Go.", string ship = "To one name.", string opening = Opened, bool openingSpeaker = true) =>
+        WrittenInFull(opening, openingSpeaker ? "narrator" : null, [(narrated, "narrator"), (cast, "dock-hand")], [(ship, "ship")]);
 
     private static RoundScriptedLlmProvider Scripted(params string[] answers) =>
-        new([RoundScriptedLlmProvider.Saying(Spine), .. answers.Select(answer => RoundScriptedLlmProvider.Saying(answer))]);
+        new([.. answers.Select(answer => RoundScriptedLlmProvider.Saying(answer))]);
 
     private static async Task<(StoryFixtures Fixtures, string? Refusal)> PickAsync(RoundScriptedLlmProvider provider, bool stock = false)
     {
@@ -58,7 +45,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
 
         Assert.Null(refusal);
 
-        var prompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
         Assert.Contains("who tells the story in the third person from outside the cockpit, never says \"I\", \"me\" or \"we\"", prompt, StringComparison.Ordinal);
         Assert.Contains("never speaks to the Commander, and never offers, asks or waits for anything", prompt, StringComparison.Ordinal);
@@ -73,7 +60,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
         Assert.Null(refusal);
         Assert.Contains(
             "it is the narrator's line and follows the same rule",
-            fixtures.Provider.Requests[2].Prompt.History[0].Text,
+            fixtures.Provider.Requests[0].Prompt.History[0].Text,
             StringComparison.Ordinal);
     }
 
@@ -82,15 +69,15 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
     {
         var (fixtures, refusal) = await PickAsync(Scripted(
             Written(narrated: "Nobody aboard but me, and I'll say so."),
-            Repairs.Replacing(Written(narrated: "Nobody is aboard but the Commander."), 1),
+            Rewritten(1, "Nobody is aboard but the Commander.", "narrator"),
             NothingObjected));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(6, fixtures.Provider.Requests.Count);
+        Assert.Equal(4, fixtures.Provider.Requests.Count);
         Assert.Contains(
             "The narrator speaks as itself: Objective 1 is read by the narrator",
-            fixtures.Provider.Requests[3].Prompt.History[0].Text,
+            fixtures.Provider.Requests[1].Prompt.History[0].Text,
             StringComparison.Ordinal);
         Assert.Equal("Nobody is aboard but the Commander.", Chapter(fixtures).Beats[0].Lines[0].Text);
     }
@@ -98,26 +85,26 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
     [Fact]
     public async Task ANarratorOpeningInTheFirstPersonIsRefusedAsTheOpening()
     {
-        var (fixtures, refusal) = await PickAsync(Scripted(Written(opening: FirstPersonOpening), Repairs.ReplacingOpening(Written())));
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(opening: FirstPersonOpening), RewrittenOpening(Opened, "narrator")));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Contains("The narrator speaks as itself: The opening is read", fixtures.Provider.Requests[3].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Contains("The narrator speaks as itself: The opening is read", fixtures.Provider.Requests[1].Prompt.History[0].Text, StringComparison.Ordinal);
         Assert.Equal("A voice on the open channel.", Chapter(fixtures).Opening);
     }
 
     [Fact]
     public async Task AnOpeningWithNoSpeakerIsTheShipsSoItIsTheNarratorsOnlyWithAStockCore()
     {
-        var noSpeaker = Written(opening: FirstPersonOpening).Replace("\"openingSpeaker\": \"narrator\", ", string.Empty, StringComparison.Ordinal);
+        var noSpeaker = Written(opening: FirstPersonOpening, openingSpeaker: false);
 
         var (own, _) = await PickAsync(Scripted(noSpeaker, NothingObjected));
         using var ownFixtures = own;
-        var (stock, _) = await PickAsync(Scripted(noSpeaker, Repairs.ReplacingOpening(Written()), NothingObjected), stock: true);
+        var (stock, _) = await PickAsync(Scripted(noSpeaker, RewrittenOpening(Opened, "narrator"), NothingObjected), stock: true);
         using var stockFixtures = stock;
 
-        Assert.Equal(5, ownFixtures.Provider.Requests.Count);
-        Assert.Equal(6, stockFixtures.Provider.Requests.Count);
+        Assert.Equal(3, ownFixtures.Provider.Requests.Count);
+        Assert.Equal(4, stockFixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -125,16 +112,16 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
     {
         var ship = Written(ship: "We should get to the anchorage.");
 
-        var (stock, stockRefusal) = await PickAsync(Scripted(ship, Repairs.Replacing(Written(), 2), NothingObjected), stock: true);
+        var (stock, stockRefusal) = await PickAsync(Scripted(ship, Rewritten(2, "To one name.", "ship"), NothingObjected), stock: true);
         using var stockFixtures = stock;
         var (own, ownRefusal) = await PickAsync(Scripted(ship, NothingObjected));
         using var ownFixtures = own;
 
         Assert.Null(stockRefusal);
         Assert.Null(ownRefusal);
-        Assert.Equal(6, stockFixtures.Provider.Requests.Count);
-        Assert.Contains("The narrator speaks as itself: Objective 2 is read", stockFixtures.Provider.Requests[3].Prompt.History[0].Text, StringComparison.Ordinal);
-        Assert.Equal(5, ownFixtures.Provider.Requests.Count);
+        Assert.Equal(4, stockFixtures.Provider.Requests.Count);
+        Assert.Contains("The narrator speaks as itself: Objective 2 is read", stockFixtures.Provider.Requests[1].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Equal(3, ownFixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -144,7 +131,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(5, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
         Assert.Equal("dock-hand", Chapter(fixtures).Beats[0].Lines[1].Speaker);
     }
 
@@ -155,28 +142,28 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(5, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
     public async Task ACurlyApostropheDoesNotHideTheFirstPerson()
     {
-        var (fixtures, refusal) = await PickAsync(Scripted(Written(narrated: "Standing by. I’ll play it."), Repairs.Replacing(Written(), 1), NothingObjected));
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(narrated: "Standing by. I’ll play it."), Rewritten(1, "Standing by.", "narrator"), NothingObjected));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(6, fixtures.Provider.Requests.Count);
+        Assert.Equal(4, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
     public async Task ANarratorLineStillInTheFirstPersonAfterTheRewriteStillYieldsAChapter()
     {
         var stubborn = Written(narrated: "Nobody aboard but me.");
-        var (fixtures, refusal) = await PickAsync(Scripted(stubborn, Repairs.Replacing(stubborn, 1), Repairs.Replacing(stubborn, 1)));
+        var (fixtures, refusal) = await PickAsync(Scripted(stubborn, Rewritten(1, "Nobody aboard but me.", "narrator"), Rewritten(1, "Nobody aboard but me.", "narrator")));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(3 + AdventureGenerator.RepairRounds, fixtures.Provider.Requests.Count);
+        Assert.Equal(1 + AdventureGenerator.RepairRounds, fixtures.Provider.Requests.Count);
         Assert.Equal("Nobody aboard but me.", Chapter(fixtures).Beats[0].Lines[0].Text);
         Assert.Equal(StorySpeaker.Narrator, Chapter(fixtures).Beats[0].Lines[0].Speaker);
     }

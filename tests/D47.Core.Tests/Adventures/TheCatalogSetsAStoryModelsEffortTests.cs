@@ -1,9 +1,10 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Catalog;
 using D47.Core.Conversation;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using static D47.Core.Tests.Adventures.AdventureFixtures;
 
 namespace D47.Core.Tests.Adventures;
 
@@ -20,8 +21,8 @@ public sealed class TheCatalogSetsAStoryModelsEffortTests
     {
         var provider = Scripted();
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), Names(ThinkingEffort.Low))
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        var outcome = await Generator(provider, Names(ThinkingEffort.Low))
+            .GenerateAsync(Short, Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.All(provider.Requests, request => Assert.Equal(ThinkingEffort.Low, request.Effort));
@@ -31,10 +32,9 @@ public sealed class TheCatalogSetsAStoryModelsEffortTests
     public async Task AChapterAsksForTheEffortTheCatalogNames()
     {
         var provider = Scripted();
-        var chapter = AdventureChapter.Of([LanternRoute(Accepted) with { Key = "first", Spine = new AdventureSpine { Premise = "First premise." } }], "first");
-
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), Names(ThinkingEffort.High))
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: chapter), Now, CancellationToken.None);
+        
+        var outcome = await Generator(provider, Names(ThinkingEffort.High))
+            .GenerateAsync(PlannedChapterWorld.Ask(), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.All(provider.Requests, request => Assert.Equal(ThinkingEffort.High, request.Effort));
@@ -45,8 +45,8 @@ public sealed class TheCatalogSetsAStoryModelsEffortTests
     {
         var provider = Scripted();
 
-        await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), Names(null))
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        await Generator(provider, Names(null))
+            .GenerateAsync(Short, Now, CancellationToken.None);
 
         Assert.All(provider.Requests, request => Assert.Equal(ThinkingEffort.Medium, request.Effort));
     }
@@ -56,8 +56,8 @@ public sealed class TheCatalogSetsAStoryModelsEffortTests
     {
         var provider = Scripted();
 
-        await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), Names(ThinkingEffort.Low), ThinkingEffort.High)
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        await Generator(provider, Names(ThinkingEffort.Low), ThinkingEffort.High)
+            .GenerateAsync(Short, Now, CancellationToken.None);
 
         Assert.All(provider.Requests, request => Assert.Equal(ThinkingEffort.High, request.Effort));
     }
@@ -68,12 +68,12 @@ public sealed class TheCatalogSetsAStoryModelsEffortTests
         var provider = Scripted();
         (string, string)? asked = null;
 
-        await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), (id, model) =>
+        await Generator(provider, (id, model) =>
             {
                 asked = (id, model);
                 return null;
             })
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+            .GenerateAsync(Short, Now, CancellationToken.None);
 
         Assert.Equal(("anthropic", "story-model"), asked);
     }
@@ -107,7 +107,32 @@ public sealed class TheCatalogSetsAStoryModelsEffortTests
         return json[..start] + "\"traits\": " + traits + json[(end + 1)..];
     }
 
+    private static readonly AdventureAsk Short = new(AdventureReach.Session, AdventureLength.Evening);
+
     private static RoundScriptedLlmProvider Scripted() => new(
-        RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine),
-        RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.GoodBeats));
+        RoundScriptedLlmProvider.Saying(PlannedChapterWorld.ShortLines()),
+        RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
+
+    private static AdventureGenerator Generator(ILlmProvider provider, Func<string, string, ThinkingEffort?> storyEffort, ThinkingEffort? effort = null)
+    {
+        var state = PlannedChapterWorld.State();
+        var galaxy = PlannedChapterWorld.Roomy();
+
+        return new AdventureGenerator(
+            () => provider,
+            () => "story-model",
+            () => "You are the ship.",
+            () => "core",
+            () => null,
+            () => state,
+            () => galaxy,
+            () => null,
+            null,
+            null,
+            NullLogger.Instance,
+            storyEffort)
+        {
+            Effort = effort,
+        };
+    }
 }

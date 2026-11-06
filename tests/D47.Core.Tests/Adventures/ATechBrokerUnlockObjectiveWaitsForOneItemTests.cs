@@ -70,64 +70,6 @@ public class ATechBrokerUnlockObjectiveWaitsForOneItemTests
     }
 
     [Fact]
-    public async Task ACommanderWhoHasUnlockedTheBoosterIsNotOfferedIt()
-    {
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine), RoundScriptedLlmProvider.Saying(Beats(Remaining)));
-        var generator = AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), 1, UnlockEverythingGuardianBut(Remaining));
-
-        var outcome = await generator.GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        var beats = provider.Requests[2].Prompt.History[0].Text;
-        Assert.Contains($"{Remaining} (guardian broker; costs", beats);
-        Assert.DoesNotContain($"{Booster} (", beats);
-    }
-
-    [Fact]
-    public async Task ADraftNamingAnUnlockedItemIsRefused()
-    {
-        var beats = Beats(Booster);
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine),
-            RoundScriptedLlmProvider.Saying(beats),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(beats, 2)),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(beats, 2)));
-        var generator = AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), 1, BoosterUnlock);
-
-        var outcome = await generator.GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("unlocks the Guardian FSD Booster, which the Commander has already unlocked", outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task ADraftNamingNoSuchItemIsRefused()
-    {
-        var beats = Beats("Warp Drive");
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine),
-            RoundScriptedLlmProvider.Saying(beats),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(beats, 2)),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(beats, 2)));
-
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("names the tech broker item \"Warp Drive\"", outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task ADraftNamingAnOpenItemIsStoredUnderTheCataloguesName()
-    {
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine), RoundScriptedLlmProvider.Saying(Beats("guardian fsd booster")));
-
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(Booster, Assert.Single(outcome.Draft!.Beats, beat => beat.Trigger.Kind == TriggerKind.Unlock).Trigger.Filter);
-    }
-
-    [Fact]
     public void AnUnknownRowIsRefusedByTheFileCheck()
     {
         Assert.Single(AdventureValidation.UnlockProblems("Objective 1", Unlock("Warp Drive"), null));

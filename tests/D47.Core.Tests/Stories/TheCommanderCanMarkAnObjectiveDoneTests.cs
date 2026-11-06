@@ -33,28 +33,28 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
         }
     }
 
-    /// <summary>Chapter one picked and the Lantern reached, waiting on the dock at the Anchorage.</summary>
-    private static async Task<(StoryFixtures Fixtures, string Key)> AtTheDock()
+    /// <summary>Chapter one picked and Dyson's Hollow reached, waiting on the landing on Ossen's Lantern 2 a.</summary>
+    private static async Task<(StoryFixtures Fixtures, string Key)> AtTheLanding()
     {
-        var fixtures = Fixtures(Spine, BeatsToTheBeacon);
+        var fixtures = Fixtures(Lines());
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, TestContext.Current.CancellationToken));
 
         var key = Assert.Single(fixtures.Stories.Current("F1")!.Chapters);
         Settle(fixtures, Now);
-        fixtures.Book.Observe(Jump(Lantern, Now.AddMinutes(1)), "F1");
+        fixtures.Book.Observe(Jump(Hollow, Now.AddMinutes(1)), "F1");
         Settle(fixtures, Now.AddMinutes(1));
 
-        Assert.Equal(TriggerKind.Dock, fixtures.Book.Standing("F1", key)!.CurrentBeat!.Trigger.Kind);
+        Assert.Equal(TriggerKind.Land, fixtures.Book.Standing("F1", key)!.CurrentBeat!.Trigger.Kind);
         return (fixtures, key);
     }
 
     private static Adventure ShortStory(string key, string name) => LanternRoute() with { Key = key, Name = name, StoryId = null };
 
     [Fact]
-    public async Task MarkingADockBeatDoneFiresItAndItsLinesAreTold()
+    public async Task MarkingALandingBeatDoneFiresItAndItsLinesAreTold()
     {
-        var (fixtures, key) = await AtTheDock();
+        var (fixtures, key) = await AtTheLanding();
         using var _ = fixtures;
 
         Assert.Null(fixtures.Director.MarkObjectiveDone("F1", Now.AddMinutes(5)));
@@ -71,7 +71,7 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
     [Fact]
     public async Task AMarkedBeatStaysFiredAfterARestart()
     {
-        var (fixtures, key) = await AtTheDock();
+        var (fixtures, key) = await AtTheLanding();
         using var _ = fixtures;
 
         Assert.Null(fixtures.Director.MarkObjectiveDone("F1", key, Now.AddMinutes(5)));
@@ -84,7 +84,7 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
         var journal = Path.Combine(Path.GetDirectoryName(fixtures.AdventuresPath)!, "Journal.2026-09-30T120000.01.log");
         fixtures.Files.WriteText(
             journal,
-            string.Join('\n', new[] { Commander("F1", Now.AddMinutes(-1)), Jump(Lantern, Now.AddMinutes(1)) }.Select(e => e.Raw.GetRawText())) + "\n");
+            string.Join('\n', new[] { Commander("F1", Now.AddMinutes(-1)), Jump(Hollow, Now.AddMinutes(1)) }.Select(e => e.Raw.GetRawText())) + "\n");
         restarted.CatchUp([journal]);
 
         var standing = restarted.Standing("F1", key)!;
@@ -95,7 +95,7 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
     [Fact]
     public async Task MarkingAChaptersLastBeatDoneMovesTheStoryOn()
     {
-        using var fixtures = Fixtures(Spine, BeatsToTheBeacon, NothingObjected, NextSpine, NextBeats, NothingObjected, NextSpine, NextBeats, NothingObjected);
+        using var fixtures = Fixtures(Lines(), NothingObjected, NextLines, NothingObjected, NextLines, NothingObjected);
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, TestContext.Current.CancellationToken));
 
         fixtures.Finish("F1", Assert.Single(fixtures.Stories.Current("F1")!.Chapters), Now);
@@ -104,10 +104,12 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
 
         var second = fixtures.Stories.Current("F1")!.Chapters[1];
 
-        Assert.Null(fixtures.Director.MarkObjectiveDone("F1", second, Now.AddDays(1).AddMinutes(1)));
-        Settle(fixtures, Now.AddDays(1).AddMinutes(1));
-        Assert.Null(fixtures.Director.MarkObjectiveDone("F1", second, Now.AddDays(1).AddMinutes(2)));
-        Settle(fixtures, Now.AddDays(1).AddMinutes(2));
+        var objectives = fixtures.Book.Store.Find("F1", second)!.Beats.Count;
+        for (var mark = 1; mark <= objectives; mark++)
+        {
+            Assert.Null(fixtures.Director.MarkObjectiveDone("F1", second, Now.AddDays(1).AddMinutes(mark)));
+            Settle(fixtures, Now.AddDays(1).AddMinutes(mark));
+        }
 
         Assert.True(fixtures.Book.Standing("F1", second)!.IsDone);
 
@@ -118,10 +120,11 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
     [Fact]
     public async Task ABeaconScanIsRefusedWithTheReasonAndTheBenchCanStillStepIt()
     {
-        var (fixtures, key) = await AtTheDock();
+        var (fixtures, key) = await AtTheLanding();
         using var _ = fixtures;
 
-        fixtures.Book.Observe(Docked(Anchorage, Now.AddMinutes(2)), "F1");
+        var landing = fixtures.Book.Standing("F1", key)!.CurrentBeat!.Trigger;
+        fixtures.Book.Observe(Touchdown(landing.SystemAddress!.Value, landing.BodyId!.Value, Now.AddMinutes(2)), "F1");
         Settle(fixtures, Now.AddMinutes(2));
         Assert.Equal(TriggerKind.Beacon, fixtures.Book.Standing("F1", key)!.CurrentBeat!.Trigger.Kind);
 
@@ -172,7 +175,7 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
     [Fact]
     public async Task ByVoiceWithTheStoryPausedItRefusesRatherThanMarkTheShortStory()
     {
-        var (fixtures, key) = await AtTheDock();
+        var (fixtures, key) = await AtTheLanding();
         using var _ = fixtures;
 
         Assert.Null(fixtures.Book.Write("F1", ShortStory("the-anchorage-run", "The Anchorage Run")));
@@ -189,7 +192,7 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
     [Fact]
     public async Task ByVoiceWithTheChapterFinishedItSaysTheStoryIsNotWaiting()
     {
-        using var fixtures = Fixtures(Spine, BeatsToTheBeacon);
+        using var fixtures = Fixtures(Lines());
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, TestContext.Current.CancellationToken));
 
         fixtures.Finish("F1", Assert.Single(fixtures.Stories.Current("F1")!.Chapters), Now);
@@ -200,7 +203,7 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
     [Fact]
     public async Task AChapterIsNotMarkedWhileTheGameRunsWithoutOdyssey()
     {
-        var (fixtures, key) = await AtTheDock();
+        var (fixtures, key) = await AtTheLanding();
         using var _ = fixtures;
 
         fixtures.Director.Observe(OdysseySupport.LoadGame(Now.AddMinutes(2), odyssey: false), "F1");
@@ -212,7 +215,7 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
     [Fact]
     public async Task APageMarkIsRefusedWhenTheStoryHasMovedOnFromThatBeat()
     {
-        var (fixtures, key) = await AtTheDock();
+        var (fixtures, key) = await AtTheLanding();
         using var _ = fixtures;
 
         Assert.Equal("The story has moved on from that objective.", fixtures.Director.MarkObjectiveDone("F1", key, Now.AddMinutes(5), beat: 0));
@@ -222,7 +225,7 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
     [Fact]
     public async Task TheLogbookShowsAMarkedBeatAsTheCommandersAndABenchStepAsTheBench()
     {
-        var (fixtures, key) = await AtTheDock();
+        var (fixtures, key) = await AtTheLanding();
         using var _ = fixtures;
 
         Assert.Null(fixtures.Director.MarkObjectiveDone("F1", key, Now.AddMinutes(5)));

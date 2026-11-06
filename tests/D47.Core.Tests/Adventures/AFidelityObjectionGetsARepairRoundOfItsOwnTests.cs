@@ -1,5 +1,7 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
+using D47.Core.Stories;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Xunit;
 
 namespace D47.Core.Tests.Adventures;
@@ -9,108 +11,50 @@ public sealed class AFidelityObjectionGetsARepairRoundOfItsOwnTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 27, 12, 0, 0, TimeSpan.Zero);
 
-    private const string NothingObjected = """{"objections": []}""";
-
-    private const string SecondObjected = """{"objections": [{"objective": 2, "quote": "one name", "kind": "history", "reason": "it says the Commander has docked there before."}]}""";
-
-    private const string QuietDock = """
-        {"replacements": [
-          {"objective": 2, "title": "The Quiet Dock", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "One name, at a dock."}
-        ]}
-        """;
-
-    private const string LostHop = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Lost Hop", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Nowhere Reached", "line": "To one name."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
-
-    private const string StillLost = """
-        {"replacements": [
-          {"objective": 2, "title": "The Lost Hop", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Nowhere Reached", "line": "To one name."}
-        ]}
-        """;
-
-    private const string Sightseeing = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Tour", "function": "turn", "kind": "mission", "reason": "Someone there knows about the burst.", "count": 1, "mission": "{{family}}", "line": "Take the tourists round."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
-
     private const string SightsConfirmed = "a sightseeing mission was handed in, so its passengers were taken to the sights it listed — not what they made of them";
 
-    private static Task<AdventureOutcome> Write(RoundScriptedLlmProvider provider) =>
-        AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+    private static string Objected(string quote, string reason, string kind = "history") =>
+        $$"""{"objections": [{"objective": 2, "quote": "{{quote}}", "kind": "{{kind}}", "reason": "{{reason}}"}]}""";
 
-    private static RoundScriptedLlmProvider Scripted(params string[] after) =>
-        new([
-            RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine),
-            RoundScriptedLlmProvider.Saying(LostHop),
-            .. after.Select(reply => RoundScriptedLlmProvider.Saying(reply)),
-        ]);
+    private static readonly string FirstObjected = Objected("another page", "it says the Commander has read the ledger before.");
 
-    [Fact]
-    public async Task AnObjectionAfterTwoPlaceRoundsIsRepairedOnceMore()
+    private static readonly string RepairedObjected = Objected("legible now", "it says the Commander moored.", "action");
+
+    private static async Task<(AdventureOutcome Outcome, RoundScriptedLlmProvider Provider)> Write(params string[] after)
     {
-        var provider = Scripted(StillLost, QuietDock, SecondObjected, QuietDock, NothingObjected);
+        var ask = PlannedChapterWorld.Ask();
+        var plan = await PlannedChapterWorld.PlanAsync(ask);
+        var provider = new RoundScriptedLlmProvider([RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Lines(plan.Objectives.Count)), .. after.Select(reply => RoundScriptedLlmProvider.Saying(reply))]);
+        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, TestContext.Current.CancellationToken);
 
-        var outcome = await Write(provider);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(9, provider.CallCount);
-        Assert.Contains("Write a replacement for objective 2, and for no other.", provider.Requests[6].Prompt.History[0].Text);
-        Assert.Equal(["The Lantern", "The Quiet Dock", "The Freight Delivered"], outcome.Draft!.Beats.Select(beat => beat.Title));
+        return (outcome, provider);
     }
-
-    [Fact]
-    public async Task AnObjectionThatStandsAfterItsRoundFailsTheChapter()
-    {
-        var provider = Scripted(StillLost, QuietDock, SecondObjected, QuietDock, SecondObjected);
-
-        var outcome = await Write(provider);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Equal(9, provider.CallCount);
-        Assert.StartsWith("The story states what its objectives do not confirm:", outcome.Refusal);
-    }
-
-    private const string TwoObjected = """
-        {"objections": [
-          {"objective": 2, "quote": "one name", "kind": "history", "reason": "it says the Commander has docked there before."},
-          {"objective": 2, "quote": "at a dock", "kind": "event", "reason": "it says how the hop went."}
-        ]}
-        """;
-
-    private const string DockObjected = """{"objections": [{"objective": 2, "quote": "at a dock", "kind": "action", "reason": "it says the Commander moored."}]}""";
 
     [Fact]
     public async Task AnObjectionToTheRepairGetsASecondRepairRoundAndIsWrittenWhenItPasses()
     {
-        var provider = Scripted(StillLost, QuietDock, SecondObjected, QuietDock, DockObjected, QuietDock, NothingObjected);
-
-        var outcome = await Write(provider);
+        var (outcome, provider) = await Write(FirstObjected, PlannedChapterWorld.Repair(2), RepairedObjected, PlannedChapterWorld.Repair(2), PlannedChapterWorld.NoObjections);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(11, provider.CallCount);
+        Assert.Equal(["story_lines", "story_fidelity", "story_line_repairs", "story_fidelity", "story_line_repairs", "story_fidelity", "story_plain"], provider.Requests.Select(request => request.ResponseSchema?.Name));
     }
 
     [Fact]
     public async Task TwoObjectionsToOneObjectiveBothReachTheRepairPrompt()
     {
-        var provider = Scripted(StillLost, QuietDock, TwoObjected, QuietDock, NothingObjected);
-
-        var outcome = await Write(provider);
+        const string two = """
+            {"objections": [
+              {"objective": 2, "quote": "another page", "kind": "history", "reason": "it says the Commander has read the ledger before."},
+              {"objective": 2, "quote": "the two", "kind": "event", "reason": "it says how the hop went."}
+            ]}
+            """;
+        var (outcome, provider) = await Write(two, PlannedChapterWorld.Repair(2), PlannedChapterWorld.NoObjections);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var repair = provider.Requests[6].Prompt.History[0].Text;
+        var repair = provider.Requests[2].Prompt.History[0].Text;
 
-        Assert.Contains("it says the Commander has docked there before.", repair);
+        Assert.Contains("it says the Commander has read the ledger before.", repair);
         Assert.Contains("it says how the hop went.", repair);
         Assert.Single(System.Text.RegularExpressions.Regex.Matches(repair, @"- .*Objective 2 [(]"));
     }
@@ -118,26 +62,12 @@ public sealed class AFidelityObjectionGetsARepairRoundOfItsOwnTests
     [Fact]
     public async Task AnObjectionFromAnEarlierRoundIsListedAgainInTheNextRepairPrompt()
     {
-        var provider = Scripted(StillLost, QuietDock, SecondObjected, QuietDock, DockObjected, QuietDock, NothingObjected);
+        var (_, provider) = await Write(FirstObjected, PlannedChapterWorld.Repair(2), RepairedObjected, PlannedChapterWorld.Repair(2), PlannedChapterWorld.NoObjections);
 
-        await Write(provider);
-
-        var second = provider.Requests[8].Prompt.History[0].Text;
+        var second = provider.Requests[4].Prompt.History[0].Text;
 
         Assert.Contains("it says the Commander moored.", second);
-        Assert.Contains("Earlier rounds also objected: it says the Commander has docked there before.", second);
-    }
-
-    [Fact]
-    public async Task APlaceRefusalStillGetsOnlyThePlaceRounds()
-    {
-        var provider = Scripted(StillLost, StillLost);
-
-        var outcome = await Write(provider);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Equal(5, provider.CallCount);
-        Assert.StartsWith("The story names places that cannot stand:", outcome.Refusal);
+        Assert.Contains("Earlier rounds also objected: it says the Commander has read the ledger before.", second);
     }
 
     [Fact]
@@ -153,15 +83,19 @@ public sealed class AFidelityObjectionGetsARepairRoundOfItsOwnTests
     [InlineData("Mission_Courier", false)]
     public async Task TheFidelityPromptShowsTheTextForTheObjectivesFamily(string family, bool sightseeing)
     {
+        var story = PlannedChapterWorld.Story with { Slots = [new DrawnActivity(TriggerKind.Mission, family, 1)] };
+        var ask = PlannedChapterWorld.Ask(story);
+        var plan = await PlannedChapterWorld.PlanAsync(ask);
         var provider = new RoundScriptedLlmProvider([
-            RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine),
-            RoundScriptedLlmProvider.Saying(Sightseeing.Replace("{{family}}", family, StringComparison.Ordinal)),
-            RoundScriptedLlmProvider.Saying(NothingObjected),
+            RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Lines(plan.Objectives.Count)),
+            RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections),
         ]);
 
-        await Write(provider);
+        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, TestContext.Current.CancellationToken);
 
-        var fidelity = provider.Requests.Select(request => request.Prompt.History[0].Text).First(text => text.Contains("Confirms:", StringComparison.Ordinal));
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+
+        var fidelity = provider.Requests.First(request => request.ResponseSchema?.Name == "story_fidelity").Prompt.History[0].Text;
 
         Assert.Equal(sightseeing, fidelity.Contains($"Confirms: {SightsConfirmed}", StringComparison.Ordinal));
         Assert.Equal(!sightseeing, fidelity.Contains($"Confirms: {TriggerConfirms.Of(TriggerKind.Mission)}", StringComparison.Ordinal));

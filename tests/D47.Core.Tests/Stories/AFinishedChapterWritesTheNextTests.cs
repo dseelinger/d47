@@ -9,11 +9,9 @@ namespace D47.Core.Tests.Stories;
 public sealed class AFinishedChapterWritesTheNextTests
 {
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(
-        RoundScriptedLlmProvider.Saying(Spine),
-        RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+        RoundScriptedLlmProvider.Saying(Lines()),
         RoundScriptedLlmProvider.Saying(NothingObjected),
-        RoundScriptedLlmProvider.Saying(NextSpine),
-        RoundScriptedLlmProvider.Saying(NextBeats),
+        RoundScriptedLlmProvider.Saying(NextLines),
         RoundScriptedLlmProvider.Saying(NothingObjected)));
 
     [Fact]
@@ -41,7 +39,7 @@ public sealed class AFinishedChapterWritesTheNextTests
         Assert.Equal(Id, next.StoryId);
         Assert.True(next.IsActive);
 
-        var prompt = fixtures.Provider.Requests[5].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[3].Prompt.History[0].Text;
         Assert.Contains("chapter 2 of \"The Test Story\"", prompt);
         Assert.Contains("This story is the next chapter of one the Commander has already flown to its end.", prompt);
         Assert.Contains("running for 3 days", prompt);

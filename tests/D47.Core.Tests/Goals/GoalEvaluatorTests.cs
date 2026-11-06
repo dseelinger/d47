@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using D47.Core.Goals;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -71,6 +71,14 @@ public class GoalEvaluatorTests
 
         Assert.True(standing.IsDone);
         Assert.Contains("Elite V", standing.Note, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ANavyGoalIsDoneAtTheTopOfItsOwnLadder()
+    {
+        var standing = Evaluate("rank.empire", State(Event("Promotion", "\"Empire\":14")), null);
+
+        Assert.True(standing.IsDone);
     }
 
     [Fact]

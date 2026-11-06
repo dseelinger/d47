@@ -1,6 +1,10 @@
+using System.Text.Json.Nodes;
 using D47.Core.Adventures;
+using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Stories;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Xunit;
 
 namespace D47.Core.Tests.Adventures;
@@ -8,44 +12,35 @@ namespace D47.Core.Tests.Adventures;
 /// <summary>An activity the Commander has changed away from five times is not asked for in a short story.</summary>
 public sealed class AShortStoryCannotAskForABarredActivityTests
 {
-    private const string Spine = """
-        {"name": "The Long Way", "premise": "A debt.", "want": "To pay it.", "stake": "Whether it can be.", "turn": "It is owed.", "ending": "Forgiven."}
-        """;
-
-    private const string Beats = """
-        {"opening": "x", "reply": "ok", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Job", "function": "finale", "kind": "mission", "reason": "Someone there knows about the burst.", "count": 2, "mission": "Mission_Courier", "line": "Do it."}
-        ]}
-        """;
-
-    private static RoundScriptedLlmProvider Provider() => new(
-        RoundScriptedLlmProvider.Saying(Spine),
-        RoundScriptedLlmProvider.Saying(Beats),
-        RoundScriptedLlmProvider.Saying(Repairs.Replacing(Beats, 2)),
-        RoundScriptedLlmProvider.Saying(Repairs.Replacing(Beats, 2)));
-
-    [Fact]
-    public async Task ADraftWithABarredActivityIsRefused()
-    {
-        var provider = Provider();
-        var generator = AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy());
-        generator.Barred = () => ["mission:Mission_Courier"];
-
-        var outcome = await generator.GenerateAsync(new AdventureAsk(), AdventureFixtures.Accepted, TestContext.Current.CancellationToken);
-
-        Assert.Null(outcome.Draft);
-        Assert.Contains("complete courier missions, which they have changed away from too often", outcome.Refusal);
-        Assert.Contains("no objective may ask for any of them: complete courier missions", provider.Requests[0].Prompt.History[0].Text);
-    }
-
     [Fact]
     public async Task ADraftWithoutABarIsWritten()
     {
-        var generator = AdventureGeneratorTests.Generator(Provider(), new AdventureGeneratorTests.Galaxy());
+        var galaxy = new PlannedChapterWorld.Galaxy();
 
-        var outcome = await generator.GenerateAsync(new AdventureAsk(), AdventureFixtures.Accepted, TestContext.Current.CancellationToken);
+        for (var index = 0; index < 6; index++)
+        {
+            galaxy.MoreStations.Add(new StationSummary
+            {
+                Name = $"Roomy Port {index}", SystemName = $"Roomy {index}", SystemAddress = 900 + index, MarketId = 9000 + index,
+                Position = new StarPosition(130 + (index * 10), 0, 0), Type = "Coriolis Starport", LargePads = 2,
+            });
+            galaxy.MoreBodies.Add(new BodySummary
+            {
+                Name = $"Roomy Rock {index} 1", SystemName = $"Roomy Rock {index}", SystemAddress = 950 + index, BodyId = 1,
+                Position = new StarPosition(130 + (index * 10), 10, 0), IsLandable = true,
+            });
+        }
 
+        var lines = PlannedChapterWorld.Lines(
+            ChapterPlanner.MostObjectives,
+            (number, objective) => objective["lines"] = new JsonArray(JsonValue.Create($"Page {number} of the ledger is open.")),
+            answer => answer["opening"] = "A ledger sits in the hold.");
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(lines), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
+        var generator = PlannedChapterWorld.Generator(provider, galaxy);
+
+        var outcome = await generator.GenerateAsync(new AdventureAsk(AdventureReach.Session, AdventureLength.Evening), AdventureFixtures.Accepted, TestContext.Current.CancellationToken);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.NotNull(outcome.Draft);
     }
 }

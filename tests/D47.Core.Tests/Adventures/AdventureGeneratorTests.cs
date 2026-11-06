@@ -1,4 +1,6 @@
 ﻿using D47.Core.Adventures;
+using D47.Core.Stories;
+using D47.Core.Tests.Stories;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -14,57 +16,16 @@ public sealed class AdventureGeneratorTests
 {
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 12, 0, 0, TimeSpan.Zero);
 
-    internal const string Spine = """
-        {"name": "The Missing Freight", "premise": "Freight went missing on the way to Maren Anchorage.", "want": "To find the missing freight.",
-         "stake": "Whether a debt can be owed to nobody.", "turn": "The freight was never loaded.", "ending": "The freight is found and delivered."}
-        """;
-
-    /// <summary>
-    /// Three beats, every place real and within reach, the career written as the person rather than the
-    /// ladder.
-    /// </summary>
-    internal const string GoodBeats = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "body": null, "career": null, "rank": null, "line": "To one name."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
-
-    /// <summary>The same story with its middle beat a Colonia-distance hop on a "near here" ask.</summary>
-    private const string FarBeats = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Scoop here."},
-          {"title": "Where The Freight Went", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Colonia", "station": null, "body": null, "career": null, "rank": null, "line": "Twenty-two thousand light years."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trade", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
-
     [Fact]
-    public async Task TheModelIsHandedTheRealPlacesWithinReach()
+    public async Task TheRealPlacesWithinReachAreGatheredForThePlanner()
     {
         var galaxy = new Galaxy();
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(GoodBeats));
 
-        var outcome = await Generator(provider, galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        var places = await Generator(null!, galaxy).ChapterPlacesAsync(new AdventureAsk(Length: AdventureLength.Short), CancellationToken.None);
 
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(5, provider.CallCount);
-
-        // Both turns see the same list: the spine is anchored to real places before the beats are.
-        foreach (var request in new[] { provider.Requests[0], provider.Requests[2] })
-        {
-            var instruction = request.Prompt.History[0].Text;
-            Assert.Contains("Real places within reach", instruction);
-            Assert.Contains("- Dyson's Hollow (12 ly): stations Maren Anchorage (large pad)", instruction);
-            Assert.Contains("- Ossen's Lantern (8 ly): stations Lantern Dock (no large pad); landable bodies Ossen's Lantern 2 a", instruction);
-        }
-
-        // Nearest first, whichever list a system came from.
-        var beats = provider.Requests[2].Prompt.History[0].Text;
-        Assert.True(beats.IndexOf("- Ossen's Lantern (8 ly)", StringComparison.Ordinal) < beats.IndexOf("- Dyson's Hollow (12 ly)", StringComparison.Ordinal));
-
-        // The lists were asked for within the reach, and the bodies had to be landable.
+        Assert.Contains(places.Stations, station => station.Name == "Maren Anchorage");
+        Assert.Contains(places.Stations, station => station.Name == "Lantern Dock");
+        Assert.Contains(places.Bodies, body => body.Name == "Ossen's Lantern 2 a");
         var stations = Assert.Single(galaxy.StationQueries, query => query.MaxDistance > 1 && query.Services.Count == 0);
         Assert.Equal("Oppi", stations.ReferenceSystem);
         Assert.Equal(80, stations.MaxDistance);
@@ -75,175 +36,64 @@ public sealed class AdventureGeneratorTests
         Assert.Equal(80, guardian.MaxDistance);
     }
 
-    /// <summary>
-    /// Both turns are told that invented people are told about and never met, and that a line never
-    /// sets the Commander a task.
-    /// </summary>
     [Fact]
     public async Task PeopleAreToldAboutAndNeverMet()
     {
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(GoodBeats));
+        var ask = PlannedChapterWorld.Ask();
+        var plan = await PlannedChapterWorld.PlanAsync(ask);
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Lines(plan.Objectives.Count)), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
 
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var spine = provider.Requests[0].Prompt.History[0].Text;
-        Assert.Contains("Invented people are told about, never met", spine);
-        Assert.Contains("cannot find, speak to or watch anyone", spine);
-
-        var beats = provider.Requests[2].Prompt.History[0].Text;
-        Assert.Contains("A line never gives the Commander a task.", beats);
-        Assert.Contains("never \"ask the clerk\"", beats);
+        var lines = provider.Requests[0].Prompt.History[0].Text;
+        Assert.Contains("A line never gives the Commander a task.", lines);
+        Assert.Contains("never \"ask the clerk\"", lines);
 
         Assert.Contains("nobody in it can be met, spoken to or watched", AdventureContext.Label);
         Assert.Contains("Asked what to do next, say where the next objective is", AdventureContext.Label);
     }
 
- /// <summary>Every generation turn asks for no warmth, the refusal pass included.</summary>
+    /// <summary>Every generation turn asks for no warmth, the repair and the checks included.</summary>
     [Fact]
     public async Task EveryGenerationTurnAsksForNoWarmth()
     {
+        const string objection = """{"objections": [{"objective": 1, "quote": "The ledger has another page, the one.", "kind": "action", "reason": "The objective does not confirm a page."}]}""";
+        var ask = PlannedChapterWorld.Ask();
+        var plan = await PlannedChapterWorld.PlanAsync(ask);
         var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(FarBeats),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 2)));
+            RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Lines(plan.Objectives.Count)),
+            RoundScriptedLlmProvider.Saying(objection),
+            RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Repair(1)),
+            RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
 
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(6, provider.CallCount);
-
-        Assert.All(
-            provider.Requests,
-            request => Assert.Equal(LlmSampling.Adventure, request.Sampling));
-
+        Assert.Contains(provider.Requests, request => request.ResponseSchema?.Name == "story_line_repairs");
+        Assert.All(provider.Requests, request => Assert.Equal(LlmSampling.Adventure, request.Sampling));
         Assert.Equal(0.0, provider.Requests[0].Sampling.Temperature);
     }
 
     [Fact]
-    public async Task TheRefusalPassIsShownTheDraftItIsFixing()
+    public void NoBodyIsScannedAfterALandingOnItOrLandedOnTwice()
     {
-        var galaxy = new Galaxy();
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(FarBeats),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 2)));
+        var inputs = PlannerWorld.Inputs(PlannerWorld.Bounty, PlannerWorld.Codex, PlannerWorld.Salvage);
+        var bodies = 0;
 
-        var outcome = await Generator(provider, galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        for (uint seed = 1; seed <= 60; seed++)
+        {
+            var onBodies = PlannerWorld.Steps(PlannerWorld.Planned(inputs, PlannerWorld.Places(), seed))
+                .Where(step => step.Kind is TriggerKind.Land or TriggerKind.Scan)
+                .Select(step => (step.System, step.BodyId))
+                .ToList();
 
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(6, provider.CallCount);
-        Assert.Contains(outcome.Notes, note => note.StartsWith("Rewrote 1 objective", StringComparison.Ordinal));
+            bodies += onBodies.Count;
+            Assert.Equal(onBodies.Distinct().Count(), onBodies.Count);
+        }
 
-        var retry = provider.Requests[3].Prompt.History[0].Text;
-        Assert.Contains("Your draft of the objectives:", retry);
-        Assert.Contains("1. The Lantern (setup) — arrive: Ossen's Lantern — reason: \"Someone there knows about the burst.\" — \"Scoop here.\"", retry);
-        Assert.Contains("2. Where The Freight Went (turn) — arrive: Colonia", retry);
-        Assert.Contains("3. The Freight Delivered (resolution) — rank: Trade 8", retry);
-        Assert.Contains("Objective 2 (Where The Freight Went) is 21886 light years from the previous stop; the reach is 80.", retry);
-        Assert.Contains("Write a replacement for objective 2, and for no other.", retry);
-        Assert.Contains("Every objective you do not replace is kept exactly as written above", retry);
-
-        // What survived is the first draft with the replacement in place of objective 2.
-        Assert.Equal(["The Lantern", "The Anchorage", "The Freight Delivered"], outcome.Draft!.Beats.Select(beat => beat.Title));
-    }
-
-    /// <summary>A scan of a body the story has already landed on is refused in the dry run, so it goes back through the turn with the reason rather than reaching the Commander as a story that cannot finish.</summary>
-    [Fact]
-    public async Task AScanAfterALandingOnTheSameBodyGoesBackThroughTheTurn()
-    {
-        const string landThenScan = """
-            {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Consignee", "function": "turn", "kind": "land", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "line": "Dust."},
-              {"title": "Disposition", "function": "resolution", "kind": "scan", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a", "line": "Four hundred tonnes."}
-            ]}
-            """;
-
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(landThenScan),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 3)));
-
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(6, provider.CallCount);
-        Assert.Contains(
-            "Objective 3 (Disposition) scans Ossen's Lantern 2 a after Objective 2 (The Consignee) lands on it; a body is scanned on the way in, before any landing, so the scan must come before the landing or be of another body.",
-            provider.Requests[3].Prompt.History[0].Text);
-    }
-
-    [Fact]
-    public async Task ACareerIsReadAsTheLadderHoweverTheModelSaidIt()
-    {
-        var galaxy = new Galaxy();
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(GoodBeats));
-
-        var outcome = await Generator(provider, galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        var rank = outcome.Draft!.Beats[2].Trigger;
-        Assert.Equal(TriggerKind.Rank, rank.Kind);
-        Assert.Equal("Trade", rank.Career);
-        Assert.Equal(8, rank.Rank);
-    }
-
-    [Fact]
-    public async Task ARankBeatNestedUnderItsOwnKeyStillReads()
-    {
-        const string nested = """
-            {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "rank": {"career": "Trade", "rank": "8"}, "line": "The freight is delivered."}
-            ]}
-            """;
-
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(nested));
-
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal("Trade", outcome.Draft!.Beats[1].Trigger.Career);
-        Assert.Equal(8, outcome.Draft.Beats[1].Trigger.Rank);
-    }
-
-    private const string BoardBeats = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Hull", "function": "turn", "kind": "board", "reason": "Someone there knows about the burst.", "ship": "Cobra Mk III", "line": "Sign for it."}
-        ]}
-        """;
-
-    [Fact]
-    public async Task AShipBeatStandsWhenTheBriefNamesTheShip()
-    {
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BoardBeats));
-
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(
-            new AdventureAsk(Length: AdventureLength.Short, Brief: "a story that ends with me in a cobra mkiii"), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        var board = outcome.Draft!.Beats[1].Trigger;
-        Assert.Equal(TriggerKind.Board, board.Kind);
-        Assert.Equal("cobramkiii", board.ShipType);
-    }
-
-    [Fact]
-    public async Task AShipBeatTheBriefDidNotNameGoesBackThroughTheTurn()
-    {
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BoardBeats),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 2)));
-
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(
-            new AdventureAsk(Length: AdventureLength.Short, Brief: "a quiet trading story"), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(6, provider.CallCount);
-        Assert.Contains("which the Commander's brief does not name", provider.Requests[3].Prompt.History[0].Text);
+        Assert.True(bodies > 0);
     }
 
     private static string EngineerBeats(string engineer) => $$"""
@@ -252,94 +102,6 @@ public sealed class AdventureGeneratorTests
           {"title": "The Workshop", "function": "resolution", "kind": "engineer", "reason": "Someone there knows about the burst.", "engineer": "{{engineer}}", "stage": "Unlocked", "line": "She lets you in."}
         ]}
         """;
-
-    [Fact]
-    public async Task AnEngineerObjectiveNamingNobodyIsRefusedWithTheEngineersListed()
-    {
-        var unknown = EngineerBeats("Felicity Farsier-Jones");
-
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(unknown),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(unknown, 2)),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(unknown, 2)));
-
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("names the engineer \"Felicity Farsier-Jones\"; the engineers are", outcome.Refusal);
-        Assert.Contains("Felicity Farseer", outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task AnEngineerObjectiveIsStoredUnderTheCataloguesName()
-    {
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(EngineerBeats("Farseer")));
-
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal("Felicity Farseer", Assert.Single(outcome.Draft!.Beats, beat => beat.Trigger.Kind == TriggerKind.Engineer).Trigger.Engineer);
-    }
-
-    [Fact]
-    public async Task AnOnFootEngineerObjectivePasses()
-    {
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(EngineerBeats("Domino Green")));
-
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task ARankBeatWithNoCareerIsRefusedInWordsTheModelCanActOn()
-    {
-        const string careerless = """
-            {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "rank": 8, "line": "The freight is delivered."}
-            ]}
-            """;
-
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(careerless),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(careerless, 2)),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(careerless, 2)));
-
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("Objective 2 (The Freight Delivered) is a rank objective but names no career; \"career\" must be one of Combat, Trade, Exploration, Mercenary, Exobiology, CQC, Imperial Navy, Federal Navy.", outcome.Refusal);
-        Assert.DoesNotContain("\"\"", outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task APromotionWhereTheCommanderIsAlreadyEliteVIsRefusedAsSuch()
-    {
-        const string elite = """
-            {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-              {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-              {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Combat", "rank": 8, "line": "The freight is delivered."}
-            ]}
-            """;
-
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(elite),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(elite, 2)),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(elite, 2)));
-
-        var outcome = await Generator(provider, new Galaxy(), combat: 13).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("where the Commander is already Combat Rank 13 of 13, Elite V; make it another career or another kind of objective", outcome.Refusal);
-    }
 
     [Fact]
     public void CareersMatchThePersonAsWellAsTheLadder()
@@ -372,10 +134,7 @@ public sealed class AdventureGeneratorTests
             () => null,
             null,
             null,
-            logger)
-        {
-            PlansShortStories = false,
-        };
+            logger);
     }
 
     /// <summary>As the first overload, asking for the effort <paramref name="storyEffort"/> names for the model, unless <paramref name="effort"/> overrides it.</summary>
@@ -398,7 +157,6 @@ public sealed class AdventureGeneratorTests
             storyEffort)
         {
             Effort = effort,
-            PlansShortStories = false,
         };
     }
 
@@ -421,7 +179,6 @@ public sealed class AdventureGeneratorTests
             logger)
         {
             Time = time,
-            PlansShortStories = false,
         };
     }
 
@@ -444,7 +201,6 @@ public sealed class AdventureGeneratorTests
             NullLogger.Instance)
         {
             Time = time ?? TimeProvider.System,
-            PlansShortStories = false,
         };
     }
 

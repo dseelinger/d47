@@ -10,28 +10,14 @@ namespace D47.Core.Tests.Stories;
 [Trait("Category", "Integration")]
 public sealed class ARecordingIsPlayedWhereItIsMentionedTests
 {
-    private const string Beats = """
-        {"opening": "OPENING", "openingSpeaker": "narrator", "reply": "Here it is.", "beats": [
-          {"title": "Yard Paint", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "lines": [
-            {"text": "NARRATED", "speaker": "narrator"},
-            {"text": "Nobody. Go.", "speaker": "dock-hand"}
-          ]},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "lines": [{"text": "ALONE", "speaker": "narrator"}]},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
-        ]}
-        """;
-
     private static string Written(
         string opening = "A stock Sidewinder sits on a small pad.",
         string narrated = "The yard lights stay on.",
         string alone = "The anchorage is quiet.") =>
-        Beats
-            .Replace("OPENING", opening, StringComparison.Ordinal)
-            .Replace("NARRATED", narrated, StringComparison.Ordinal)
-            .Replace("ALONE", alone, StringComparison.Ordinal);
+        WrittenInFull(opening, "narrator", [(narrated, "narrator"), ("Nobody. Go.", "dock-hand")], [(alone, "narrator")]);
 
     private static RoundScriptedLlmProvider Scripted(params string[] answers) =>
-        new([RoundScriptedLlmProvider.Saying(Spine), .. answers.Select(answer => RoundScriptedLlmProvider.Saying(answer))]);
+        new([.. answers.Select(answer => RoundScriptedLlmProvider.Saying(answer))]);
 
     private static async Task<(StoryFixtures Fixtures, string? Refusal)> PickAsync(RoundScriptedLlmProvider provider)
     {
@@ -52,7 +38,7 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
         Assert.Null(refusal);
         Assert.Contains(
             "never say one was played, or played before the story began, without them",
-            fixtures.Provider.Requests[2].Prompt.History[0].Text,
+            fixtures.Provider.Requests[0].Prompt.History[0].Text,
             StringComparison.Ordinal);
     }
 
@@ -61,15 +47,15 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
     {
         var (fixtures, refusal) = await PickAsync(Scripted(
             Written(alone: "The first recording has been played twice, and stopped halfway both times."),
-            Repairs.Replacing(Written(alone: "The anchorage is quiet."), 2),
+            Rewritten(2, "The anchorage is quiet.", "narrator"),
             NothingObjected));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(6, fixtures.Provider.Requests.Count);
+        Assert.Equal(4, fixtures.Provider.Requests.Count);
         Assert.Contains(
             "A recording is mentioned and not played: Objective 2",
-            fixtures.Provider.Requests[3].Prompt.History[0].Text,
+            fixtures.Provider.Requests[1].Prompt.History[0].Text,
             StringComparison.Ordinal);
         Assert.Equal("The anchorage is quiet.", Chapter(fixtures).Beats[1].Lines[0].Text);
     }
@@ -77,11 +63,11 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
     [Fact]
     public async Task AnOpeningThatPlaysARecordingIsRefusedAsTheOpening()
     {
-        var (fixtures, refusal) = await PickAsync(Scripted(Written(opening: "The first recording has been played twice."), Repairs.ReplacingOpening(Written())));
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(opening: "The first recording has been played twice."), RewrittenOpening("A stock Sidewinder sits on a small pad.", "narrator")));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Contains("A recording is mentioned and not played: The opening", fixtures.Provider.Requests[3].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Contains("A recording is mentioned and not played: The opening", fixtures.Provider.Requests[1].Prompt.History[0].Text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -91,7 +77,7 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(5, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -101,7 +87,7 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(5, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -111,18 +97,18 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(5, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
     public async Task ARecordingStillUnplayedAfterTheRewriteStillYieldsAChapter()
     {
         var stubborn = Written(alone: "A message is heard over comms.");
-        var (fixtures, refusal) = await PickAsync(Scripted(stubborn, Repairs.Replacing(stubborn, 2), Repairs.Replacing(stubborn, 2)));
+        var (fixtures, refusal) = await PickAsync(Scripted(stubborn, Rewritten(2, "A message is heard over comms.", "narrator"), Rewritten(2, "A message is heard over comms.", "narrator")));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(3 + AdventureGenerator.RepairRounds, fixtures.Provider.Requests.Count);
+        Assert.Equal(1 + AdventureGenerator.RepairRounds, fixtures.Provider.Requests.Count);
         Assert.Equal("A message is heard over comms.", Chapter(fixtures).Beats[1].Lines[0].Text);
     }
 }

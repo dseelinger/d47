@@ -15,9 +15,6 @@ public sealed partial class AdventureGenerator
     private const string BriefStep = "brief";
     private const string ShortNotPlanned = "The short story could not be planned: ";
 
-    /// <summary>Whether a short story's objectives are planned in code; when false it is written through the spine and objectives calls.</summary>
-    internal bool PlansShortStories { get; set; } = true;
-
     /// <summary>The Commander's career weights a short story's activities are drawn by; null weighs every career evenly, and Crime at 0 when the ask refuses crime.</summary>
     public Func<CareerWeights>? Weights { get; set; }
 
@@ -404,7 +401,7 @@ public sealed partial class AdventureGenerator
 
         if (ask.Chapter is { } chapter)
         {
-            AppendChapter(text, chapter, facts, varied: false, stock: false, ask.Failed is not null);
+            AppendChapter(text, chapter, facts, stock: false, ask.Failed is not null);
         }
 
         if (ask.Failed is { } failed)

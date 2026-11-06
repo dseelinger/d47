@@ -171,7 +171,7 @@ public sealed partial class AdventureGenerator
 
         if (ask.Story is { } story)
         {
-            AppendStory(text, story, facts, lines: true);
+            AppendStory(text, story);
 
             if (story.FinaleChapter is not null)
             {

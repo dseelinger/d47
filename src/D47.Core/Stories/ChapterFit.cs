@@ -49,9 +49,6 @@ public static class ChapterFit
     /// <summary>Credits at the last load that a purchase needs: the price plus a reserve of the price or <see cref="ReserveCap"/>, whichever is less, or the threshold where that is higher.</summary>
     public static long Needed(long price, long threshold = 0) => Math.Max(threshold, price + Math.Min(price, ReserveCap));
 
-    /// <summary>The most a chapter may ask the Commander to spend with this many credits at the last load.</summary>
-    public static long MostToSpend(long credits) => credits >= 2 * ReserveCap ? credits - ReserveCap : Math.Max(0, credits / 2);
-
     /// <summary>Why a beat boarding this hull cannot stand, or null when the Commander owns it or the credits cover it.</summary>
     public static string? BoardWhy(string symbol, bool owned, long? credits)
     {

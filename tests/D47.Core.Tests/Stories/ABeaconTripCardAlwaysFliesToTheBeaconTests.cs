@@ -21,11 +21,10 @@ public sealed class ABeaconTripCardAlwaysFliesToTheBeaconTests
         StoppedAt = Now.AddDays(-1),
     };
 
-    private static StoryFixtures Fixtures(StoryCard card, string beats) => new(
+    private static StoryFixtures Fixtures(StoryCard card) => new(
         new RoundScriptedLlmProvider(
         [
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(beats),
+            RoundScriptedLlmProvider.Saying(Lines()),
             RoundScriptedLlmProvider.Saying(NothingObjected),
         ]),
         card: card);
@@ -34,7 +33,7 @@ public sealed class ABeaconTripCardAlwaysFliesToTheBeaconTests
     public async Task TheFlagMakesTheStoryFlyWithAScanOnRecord()
     {
         var card = Card with { Length = StoryPacing.ThreeMonths.Key, BeaconTrip = true };
-        using var fixtures = Fixtures(card, BeatsToTheBeacon);
+        using var fixtures = Fixtures(card);
         fixtures.Stories.Save("F1", OnRecord());
 
         Assert.False(fixtures.Director.Remembers("F1", card));
@@ -52,7 +51,7 @@ public sealed class ABeaconTripCardAlwaysFliesToTheBeaconTests
     public async Task TheSameStoryWithoutTheFlagOpensRemembered()
     {
         var card = Card with { Length = StoryPacing.ThreeMonths.Key };
-        using var fixtures = Fixtures(card, BeatsElsewhere);
+        using var fixtures = Fixtures(card);
         fixtures.Stories.Save("F1", OnRecord());
 
         Assert.True(fixtures.Director.Remembers("F1", card));

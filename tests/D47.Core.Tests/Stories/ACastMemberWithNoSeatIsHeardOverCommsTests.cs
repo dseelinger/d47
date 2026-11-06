@@ -110,7 +110,6 @@ public sealed class ACastMemberWithNoSeatIsHeardOverCommsTests
     }
 
     private static RoundScriptedLlmProvider Scripted() => new(
-        RoundScriptedLlmProvider.Saying(Spine),
-        RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+        RoundScriptedLlmProvider.Saying(Lines()),
         RoundScriptedLlmProvider.Saying(NothingObjected));
 }

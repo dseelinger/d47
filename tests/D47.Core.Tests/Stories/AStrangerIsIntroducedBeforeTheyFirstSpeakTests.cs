@@ -36,22 +36,20 @@ public sealed class AStrangerIsIntroducedBeforeTheyFirstSpeakTests
         ],
     };
 
-    private const string BeatsWithTheCaller = """
-        {"opening": "A voice on the open channel.", "openingSpeaker": "narrator", "reply": "Here it is.", "beats": [
-          {"title": "Yard Paint", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "lines": [
-            {"text": "Anyone. Please.", "speaker": "caller"},
-            {"text": "The channel hisses, and the yard lights stay on.", "speaker": "narrator"},
-            {"text": "Still here. Still waiting.", "speaker": "caller"}
-          ]},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "lines": [{"text": "You came.", "speaker": "caller"}]},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
-        ]}
-        """;
+    private static readonly string LinesWithTheCaller = WrittenInFull(
+        "A voice on the open channel.",
+        "narrator",
+        [
+            ("Anyone. Please.", Caller),
+            ("The channel hisses, and the yard lights stay on.", "narrator"),
+            ("Still here. Still waiting.", Caller),
+        ],
+        [("You came.", Caller)]);
 
     private static StoryFixtures Picked()
     {
         var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsWithTheCaller)),
+            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(LinesWithTheCaller), RoundScriptedLlmProvider.Saying(NothingObjected)),
             WithRoles);
 
         Assert.Null(fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None).GetAwaiter().GetResult());

@@ -99,7 +99,7 @@ public sealed class ACastMemberAboardIsHeardInTheCockpitTests
     public async Task TheChapterWriterIsToldWhoIsAboardAndTheChapterRecordsThem()
     {
         var always = Secret with { Cast = [.. Secret.Cast, Rider with { Aboard = [new(null, null)] }] };
-        using var fixtures = new StoryFixtures(Scripted(BeatsToTheBeacon), always);
+        using var fixtures = new StoryFixtures(Scripted(Lines()), always);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
@@ -113,15 +113,18 @@ public sealed class ACastMemberAboardIsHeardInTheCockpitTests
     public async Task AChaptersAboardHoldsForThatChapterOnly()
     {
         var unspanned = Secret with { Cast = [.. Secret.Cast, Rider with { Aboard = null }] };
-        var boarding = BeatsToTheBeacon.Replace(
-            "\"reply\": \"Here it is.\",", "\"reply\": \"Here it is.\", \"aboard\": [\"RIDER\", \"stranger\", \"ship\"],", StringComparison.Ordinal);
+        var boarding = PlannedChapterWorld.Lines(
+            ChapterPlanner.MostObjectives,
+            whole: answer =>
+            {
+                answer["name"] = "The First Light";
+                answer["aboard"] = new System.Text.Json.Nodes.JsonArray("RIDER", "stranger", "ship");
+            });
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine),
                 RoundScriptedLlmProvider.Saying(boarding),
                 RoundScriptedLlmProvider.Saying(NothingObjected),
-                RoundScriptedLlmProvider.Saying(NextSpine),
-                RoundScriptedLlmProvider.Saying(NextBeats),
+                RoundScriptedLlmProvider.Saying(NextLines),
                 RoundScriptedLlmProvider.Saying(NothingObjected)),
             unspanned);
 
@@ -143,9 +146,8 @@ public sealed class ACastMemberAboardIsHeardInTheCockpitTests
         Assert.Equal(0.3, fixtures.Director.LineVoice("F1", "rider")!.Pinned!.Link);
     }
 
-    private static RoundScriptedLlmProvider Scripted(string beats) => new(
-        RoundScriptedLlmProvider.Saying(Spine),
-        RoundScriptedLlmProvider.Saying(beats),
+    private static RoundScriptedLlmProvider Scripted(string lines) => new(
+        RoundScriptedLlmProvider.Saying(lines),
         RoundScriptedLlmProvider.Saying(NothingObjected));
 
     /// <summary>A hidden entry sealed as the story release seals it, with unset fields left out.</summary>

@@ -232,13 +232,15 @@ public sealed class ARefusedBeatIsReplacedTests
     [Fact]
     public async Task TheBeaconScanThatEndsActOneCannotBeRefused()
     {
-        using var fixtures = StoryFixtures.ScriptedWith(Spine, BeatsToTheBeacon);
+        using var fixtures = StoryFixtures.ScriptedWith(Lines(), NothingObjected);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, TestContext.Current.CancellationToken));
 
         var key = Assert.Single(fixtures.Stories.Current("F1")!.Chapters);
-        fixtures.Book.Observe(Jump(Lantern, Now.AddMinutes(1)), "F1");
-        fixtures.Book.Observe(Docked(Anchorage, Now.AddMinutes(2)), "F1");
+        var steps = fixtures.Book.Store.Find("F1", key)!.Beats.SelectMany(beat => beat.Steps).Select(step => step.Trigger).ToList();
+
+        fixtures.Fire("F1", key, steps[0], Now.AddMinutes(1));
+        fixtures.Fire("F1", key, steps[1], Now.AddMinutes(2));
 
         Assert.Equal(TriggerKind.Beacon, fixtures.Book.Standing("F1", key)!.CurrentBeat!.Trigger.Kind);
         Assert.Null(fixtures.Director.RefusableBeat("F1"));

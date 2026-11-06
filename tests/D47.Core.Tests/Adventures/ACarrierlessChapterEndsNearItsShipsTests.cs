@@ -1,9 +1,11 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Stories;
 using D47.Core.Tests.Conversation;
 using D47.Core.Tests.Knowledge;
+using D47.Core.Tests.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
@@ -14,31 +16,19 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
 
-    private static readonly AdventureStory Chapter = new("s", "S", "public", "hidden", 1, 10, 3);
+    private static readonly AdventureStory Chapter = new("s", "S", "public", "hidden", 1, 10, 3, Slots: [PlannedChapterWorld.Bounty]);
 
     private const string BaseSystem = "Hale's Berth";
 
     private const long BaseMarket = 7001;
 
-    private const string Spine = """
-        {"name": "The Long Way", "premise": "A way back.", "want": "To get home.",
-         "stake": "Whether the ship lasts.", "turn": "The road is shorter.", "ending": "It is done."}
-        """;
+    private static RoundScriptedLlmProvider Provider() =>
+        new(Saying(PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives)), Saying(PlannedChapterWorld.NoObjections));
 
-    private const string Beats = """
-        {"opening": "A road.", "reply": "Here it is.", "beats": [
-          {"title": "The Arrival", "function": "setup", "kind": "dock", "reason": "Someone there knows the way.", "system": "Ossen's Lantern", "station": "Lantern Hub", "body": null, "career": null, "rank": null, "line": "Here."},
-          {"title": "The End", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done."}
-        ]}
-        """;
+    private static void Succeeded(AdventureOutcome outcome) => Assert.True(outcome.Succeeded, outcome.Refusal);
 
-    private const string BackToBase = """
-        {"opening": "A road.", "reply": "Here it is.", "beats": [
-          {"title": "The Arrival", "function": "setup", "kind": "dock", "reason": "Someone there knows the way.", "system": "Ossen's Lantern", "station": "Lantern Hub", "body": null, "career": null, "rank": null, "line": "Here."},
-          {"title": "The End", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "Done.",
-           "then": [{"kind": "dock", "reason": "The ships are there.", "system": "Hale's Berth", "station": "Berth Station", "body": null}]}
-        ]}
-        """;
+    private static string Prompt(RoundScriptedLlmProvider provider) =>
+        provider.Requests.First(request => request.ResponseSchema?.Name == "story_lines").Prompt.History[0].Text;
 
     private static StoredShip Ship(int id, string system, long? market, bool inTransit = false) =>
         new(id, "cobramkiii", null, system) { MarketId = market, InTransit = inTransit };
@@ -127,11 +117,11 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
     [Fact]
     public async Task AnExemptChapterFarFromTheBaseTellsTheWriterToExplainAndTransfer()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var provider = Provider();
 
-        await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
+        Succeeded(await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None));
 
-        var brief = provider.Requests[2].Prompt.History[0].Text;
+        var brief = Prompt(provider);
         Assert.Contains("Its opening must say why the story stays away from Hale's Berth", brief);
         Assert.Contains(TransferLine, brief);
         Assert.Contains("Once the ships are moved, the base moves with them.", brief);
@@ -140,167 +130,100 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
     [Fact]
     public async Task AnExemptChapterWithinTheReachOfTheBaseIsNotTold()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var provider = Provider();
 
-        await Generator(provider, new Galaxy(), lightYears: 480).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
+        Succeeded(await Generator(provider, new Galaxy { At = 480 }, lightYears: 480).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None));
 
-        Assert.DoesNotContain(TransferLine, provider.Requests[2].Prompt.History[0].Text);
+        Assert.DoesNotContain(TransferLine, Prompt(provider));
     }
 
     [Fact]
     public async Task AnExemptChapterWithAFleetCarrierIsNotTold()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var provider = Provider();
 
-        await Generator(provider, new Galaxy(), carrier: true).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
+        Succeeded(await Generator(provider, new Galaxy(), carrier: true).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None));
 
-        Assert.DoesNotContain(TransferLine, provider.Requests[2].Prompt.History[0].Text);
+        Assert.DoesNotContain(TransferLine, Prompt(provider));
     }
 
     [Fact]
     public async Task AnExemptChapterWithNoBaseIsNotTold()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var provider = Provider();
 
-        await Generator(provider, new Galaxy(), stored: false).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None);
+        Succeeded(await Generator(provider, new Galaxy(), stored: false).GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None));
 
-        Assert.DoesNotContain(TransferLine, provider.Requests[2].Prompt.History[0].Text);
+        Assert.DoesNotContain(TransferLine, Prompt(provider));
     }
 
     [Fact]
     public async Task AChapterHeldToTheBaseIsNotToldToTransfer()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(BackToBase));
+        var provider = Provider();
 
-        await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
+        Succeeded(await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None));
 
-        Assert.DoesNotContain(TransferLine, provider.Requests[2].Prompt.History[0].Text);
+        Assert.DoesNotContain(TransferLine, Prompt(provider));
     }
 
     [Fact]
-    public async Task TheObjectivesPromptNamesTheBaseAndTheStepBackToIt()
+    public void WithNoStoredShipTheStepIsAnArrivalInTheHomeSystem()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(BackToBase));
+        var inputs = PlannerWorld.Inputs(PlannerWorld.Bounty) with { Base = new ShipBase("Fixture Home", null, null, 0) };
+        var places = PlannerWorld.Places() with { Base = new ChapterBase("Fixture Home", 70, null, null, new StarPosition(700, 0, 0)) };
 
-        await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
+        foreach (var seed in new uint[] { 1, 2, 3, 4, 5 })
+        {
+            var last = PlannerWorld.Planned(inputs, places, seed).Objectives[^1].Steps[^1];
 
-        var brief = provider.Requests[2].Prompt.History[0].Text;
-        Assert.Contains("most of them are at Berth Station in Hale's Berth, 500 light years from here.", brief);
-        Assert.Contains("is more than 80 light years from Hale's Berth, the last objective ends with one more step in its \"then\": \"dock\" at Berth Station in Hale's Berth", brief);
+            Assert.Equal(TriggerKind.Arrive, last.Kind);
+            Assert.Equal("Fixture Home", last.System);
+        }
     }
 
     [Fact]
-    public async Task AChapterEndingFarFromTheBaseWithoutTheStepIsRefusedNamingTheBase()
+    public void WhenTheBaseCannotBePlacedAChapterEndingElsewhereStillEndsAtIt()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats), Saying(Repairs.Replacing(Beats, 2)), Saying(Repairs.Replacing(Beats, 2)));
+        var inputs = PlannerWorld.Inputs(PlannerWorld.Bounty) with { Base = new ShipBase("Fixture Home", 7000, "Home Port", 3) };
+        var places = PlannerWorld.Places() with { Base = new ChapterBase("Fixture Home", 70, "Home Port", 7000, null) };
 
-        var outcome = await Generator(provider, new Galaxy { FromBase = 200 }).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
+        foreach (var seed in new uint[] { 1, 2, 3, 4, 5 })
+        {
+            var last = PlannerWorld.Planned(inputs, places, seed).Objectives[^1].Steps[^1];
 
-        Assert.False(outcome.Succeeded);
-        Assert.Contains(
-            "The chapter's last stop, Ossen's Lantern, is 200 light years from Hale's Berth, where most of the Commander's stored ships are; "
-            + "the last objective must end with one more step in its \"then\": \"dock\" at Berth Station in Hale's Berth",
-            outcome.Refusal);
+            Assert.Equal(TriggerKind.Dock, last.Kind);
+            Assert.Equal(7000, last.MarketId);
+        }
     }
 
     [Fact]
-    public async Task AChapterEndingFarFromTheBaseEndsDockedAtTheBasesMarket()
+    public void TheSolBandMeasuresTheStopBeforeTheStepBackToTheBase()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(BackToBase));
+        var start = new StarPosition(1000, 0, 0);
+        var inputs = PlannerWorld.Inputs(PlannerWorld.Bounty) with
+        {
+            Position = start,
+            Band = ChapterBand.Of(start)!.Value,
+            Reach = 300,
+            Base = new ShipBase("Fixture Home", 7000, "Home Port", 3),
+        };
+        var places = new ChapterPlaces
+        {
+            Systems = [PlannerWorld.Place(PlannerWorld.Start, 1, 1000), PlannerWorld.Place("Fixture Out", 2, 980), PlannerWorld.Place("Fixture Mid", 3, 1060)],
+            InBand = new ChapterArea(ChapterAreaState.Listed, [PlannerWorld.Station("Band Port", "Fixture Band", 4, 400, 800)], [PlannerWorld.Body("Fixture Band 1", "Fixture Band", 4, 1, 800)]),
+            Base = new ChapterBase("Fixture Home", 70, "Home Port", 7000, new StarPosition(0, 0, 0)),
+        };
 
-        var outcome = await Generator(provider, new Galaxy { FromBase = 200 }).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
+        foreach (var seed in new uint[] { 1, 2, 3, 4, 5 })
+        {
+            var plan = PlannerWorld.Planned(inputs, places, seed);
+            var steps = plan.Objectives[^1].Steps;
 
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        var last = outcome.Draft!.Beats[^1].Steps[^1].Trigger;
-        Assert.Equal(TriggerKind.Dock, last.Kind);
-        Assert.Equal(BaseMarket, last.MarketId);
-    }
-
-    [Fact]
-    public async Task ARepairThatAddsTheStepBackToTheBaseStands()
-    {
-        const string AddsTheStep = """
-            {"replacements": [{"objective": 3, "title": "The End", "function": null, "kind": "dock", "reason": "The ships are there.",
-              "system": "Hale's Berth", "station": "Berth Station", "body": null, "career": null, "rank": null, "line": null}]}
-            """;
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats), Saying(AddsTheStep));
-
-        var outcome = await Generator(provider, new Galaxy { FromBase = 200 }).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
-
-        var repair = provider.Requests[3].Prompt.History[0].Text;
-        Assert.Contains("3. (not yet written: a further step of the last objective above) — \"dock\" at Berth Station in Hale's Berth", repair);
-        Assert.Contains("Write a replacement for objective 3, and for no other.", repair);
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        var steps = outcome.Draft!.Beats[^1].Steps;
-        Assert.Equal([TriggerKind.Rank, TriggerKind.Dock], steps.Select(step => step.Trigger.Kind));
-        Assert.Equal(BaseMarket, steps[^1].Trigger.MarketId);
-    }
-
-    [Fact]
-    public async Task AChapterEndingWithinTheNearHereReachOfTheBaseIsNotChanged()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
-
-        var outcome = await Generator(provider, new Galaxy { FromBase = 50 }).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Single(outcome.Draft!.Beats[^1].Steps);
-        Assert.Equal(TriggerKind.Rank, outcome.Draft.Beats[^1].Steps[0].Trigger.Kind);
-    }
-
-    [Fact]
-    public async Task WhenTheSearchCannotPlaceTheBaseAChapterEndingElsewhereNeedsTheStep()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats), Saying(Repairs.Replacing(Beats, 2)), Saying(Repairs.Replacing(Beats, 2)));
-
-        var outcome = await Generator(provider, new Galaxy { FromBase = 10, PlacesBase = false }).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("could not be measured against Hale's Berth", outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task WithAFleetCarrierTheChapterIsNotHeldToABase()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
-
-        var outcome = await Generator(provider, new Galaxy { FromBase = 200 }, carrier: true).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.DoesNotContain("back to where most of the Commander's stored ships are", provider.Requests[2].Prompt.History[0].Text);
-    }
-
-    [Fact]
-    public async Task AnExemptChapterIsNotHeldToTheBaseInItsPromptOrItsDraft()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
-
-        var outcome = await Generator(provider, new Galaxy { FromBase = 200 })
-            .GenerateAsync(new AdventureAsk(Story: Chapter with { FinaleChapter = 2, FinaleChapters = 4 }), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.DoesNotContain("back to where most of the Commander's stored ships are", provider.Requests[2].Prompt.History[0].Text);
-    }
-
-    [Fact]
-    public async Task WithNoStoredShipTheStepIsAnArrivalInTheHomeSystem()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats), Saying(Repairs.Replacing(Beats, 2)), Saying(Repairs.Replacing(Beats, 2)));
-
-        var outcome = await Generator(provider, new Galaxy { FromBase = 200 }, stored: false, home: "hale's berth").GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
-
-        Assert.Contains("their home system is Hale's Berth", provider.Requests[2].Prompt.History[0].Text);
-        Assert.Contains("\"arrive\" in Hale's Berth, back to the Commander's home system.", outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task TheSolBandMeasuresTheStopBeforeTheStepBackToTheBase()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(BackToBase));
-
-        var outcome = await Generator(provider, new Galaxy { FromBase = 200 }, lightYears: 588).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
+            Assert.Equal(PlannedPurpose.Band, plan.Objectives[^1].Purpose);
+            Assert.Equal(7000, steps[^1].MarketId);
+            Assert.Equal("Fixture Band", steps[^2].System);
+        }
     }
 
     private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, double lightYears = 0, bool carrier = false, bool stored = true, string? home = null)
@@ -382,6 +305,9 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
         /// <summary>Light years from any other system to the base.</summary>
         public double FromBase { get; init; } = 200;
 
+        /// <summary>Where the Commander is along the x axis; stations to stop at lie beyond it.</summary>
+        public double At { get; init; }
+
         /// <summary>Whether a position lookup knows the base's system.</summary>
         public bool PlacesBase { get; init; } = true;
 
@@ -415,7 +341,11 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
                 { StationName: "Berth Station" } => [BerthStation],
                 { StationName: null, ReferenceSystem: { } system } when IsBase(system) => [BerthStation],
                 { ReferencePosition: not null } => [AChapterOutsideTheBubbleWorksTowardSolTests.Galaxy.HarbourPoint],
-                _ => [],
+                _ => [.. Enumerable.Range(1, 6).Select(index => new StationSummary
+                {
+                    Name = $"Stop Port {index}", SystemName = $"Stop {index}", SystemAddress = 6000 + index, MarketId = 6100 + index,
+                    Position = new StarPosition(At + (index * 5), 0, 0), Type = "Coriolis Starport", LargePads = 2,
+                })],
             };
 
             return Task.FromResult(new StationSearchResult(query.ReferenceSystem, found.Count, found));

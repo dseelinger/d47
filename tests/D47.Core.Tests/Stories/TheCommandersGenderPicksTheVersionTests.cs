@@ -14,7 +14,7 @@ public sealed class TheCommandersGenderPicksTheVersionTests
     private static StoryFixtures Running(string? gender, out string? refusal)
     {
         var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)),
+            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())),
             Versioned);
 
         fixtures.Director.Gender = () => gender;

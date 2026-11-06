@@ -137,7 +137,7 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
     public async Task TheDirectorReadsTheCarrierFromTheGameState()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)))
+            RoundScriptedLlmProvider.Saying(Lines())))
         {
             Here = BeyondTheBeacon(686),
         };
@@ -153,11 +153,9 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
     public async Task ActOneRunsUntilTheShipHasAScoopAndAWeapon()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsElsewhere),
+            RoundScriptedLlmProvider.Saying(Lines()),
             RoundScriptedLlmProvider.Saying(NothingObjected),
-            RoundScriptedLlmProvider.Saying(NextSpine),
-            RoundScriptedLlmProvider.Saying(NextBeatsWithABeacon),
+            RoundScriptedLlmProvider.Saying(NextLines),
             RoundScriptedLlmProvider.Saying(NothingObjected)))
         {
             Here = BeyondTheBeacon(686),
@@ -196,6 +194,6 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
 
         Assert.Equal(TriggerKind.Beacon, second.Beats[^1].Trigger.Kind);
         Assert.Equal(28, second.Beats[^1].Trigger.JumpRange);
-        Assert.Contains(Secret.Beats.BreakIntoTwo!, fixtures.Provider.Requests[5].Prompt.History[0].Text);
+        Assert.Contains(Secret.Beats.BreakIntoTwo!, fixtures.Provider.Requests[3].Prompt.History[0].Text);
     }
 }

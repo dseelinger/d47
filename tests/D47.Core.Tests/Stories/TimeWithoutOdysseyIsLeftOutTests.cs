@@ -23,7 +23,7 @@ public sealed class TimeWithoutOdysseyIsLeftOutTests
     [Fact]
     public async Task TenDaysWithoutThenTenWithCountsTen()
     {
-        using var fixtures = StoryFixtures.ScriptedWith(Spine, BeatsToTheBeacon);
+        using var fixtures = StoryFixtures.ScriptedWith(Lines());
 
         await fixtures.PickAndScanTheBeaconAsync(Now);
 

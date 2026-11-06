@@ -84,7 +84,7 @@ public sealed class BeaconReachCountsTheCommandersOtherShipsTests
     public async Task TheDirectorTellsTheChapterWriterWhichStoredShipToSwapInto()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)))
+            RoundScriptedLlmProvider.Saying(Lines())))
         {
             Here = BeyondTheBeacon(686),
         };

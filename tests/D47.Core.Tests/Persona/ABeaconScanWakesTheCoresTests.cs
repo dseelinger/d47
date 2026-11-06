@@ -14,8 +14,7 @@ public sealed class ABeaconScanWakesTheCoresTests
     public async Task ThePickerShowsAHeldCoreLockedNamesTheStoryAndRefusesIt()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+            RoundScriptedLlmProvider.Saying(Lines())));
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var install = new MemoryInstall();
@@ -51,8 +50,7 @@ public sealed class ABeaconScanWakesTheCoresTests
     public async Task ThePickerShowsTheStockCoreWhileTheChosenOneIsHeld()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+            RoundScriptedLlmProvider.Saying(Lines())));
 
         var install = new MemoryInstall();
         var surface = TestSurface.For(install, personas: new PersonaHost(cores: fixtures.Cores("F1")));

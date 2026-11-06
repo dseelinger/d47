@@ -1,4 +1,4 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -14,19 +14,6 @@ internal static class AdventureFixtures
     public const long Veyl = 2871004117263;
     public const long Home = 2869440911642;
     public const long Anchorage = 3700481092;
-
-    public const string SecondColumnSpine = """
-        {"name": "The Second Column", "premise": "The ledger has a sequel.", "want": "To find who signed.",
-         "stake": "Whether a name is a debt.", "turn": "The name was hers.", "ending": "It is paid."}
-        """;
-
-    public const string SecondColumnBeats = """
-        {"opening": "Somebody is paying again.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
 
     public static readonly DateTimeOffset Accepted = new(2026, 8, 22, 19, 43, 50, TimeSpan.Zero);
 

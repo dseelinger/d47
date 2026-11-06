@@ -22,9 +22,9 @@ public sealed class AChapterWithACallPastItsLimitIsOverLimitTests
     }
 
     [Fact]
-    public void ASpineCallThatRanTwoHundredAndOneSecondsIsOverItsLimit()
+    public void ASixteenThousandTokenCallThatRanTwoHundredAndOneSecondsIsOverItsLimit()
     {
-        Assert.Equal("over limit", StoryComparisonTests.OutcomeOf(false, true, [Call("claude-sonnet-5-5", 201, AdventureGenerator.SpineOutputCeiling)]));
+        Assert.Equal("over limit", StoryComparisonTests.OutcomeOf(false, true, [Call("claude-sonnet-5-5", 201, 16000)]));
     }
 
     [Fact]

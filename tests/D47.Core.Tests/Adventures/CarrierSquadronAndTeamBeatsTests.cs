@@ -1,21 +1,15 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Journal;
-using D47.Core.Tests.Conversation;
+using D47.Core.Goals;
+using D47.Core.Stories;
 using Xunit;
 using static D47.Core.Tests.Adventures.AdventureFixtures;
+using static D47.Core.Tests.Stories.PlannerWorld;
 
 namespace D47.Core.Tests.Adventures;
 
 public class CarrierSquadronAndTeamBeatsTests
 {
-    private const string Spine = """
-        {"name": "The Long Way", "premise": "A debt.", "want": "To pay it.", "stake": "Whether it can be.", "turn": "It is owed.", "ending": "Forgiven."}
-        """;
-
-    private const string Startup = """{ "timestamp":"2026-08-22T11:00:40Z", "event":"SquadronStartup", "SquadronName":"S", "CurrentRank":1 }""";
-
-    private const string Buy = """{ "timestamp":"2026-08-22T11:00:50Z", "event":"CarrierBuy", "CarrierType":"FleetCarrier", "CarrierID":5, "Callsign":"AAA-111" }""";
-
     private static AdventureStanding Fold(AdventureTrigger beat, params string[] events) =>
         FoldCounting(beat, "The Beat", events);
 
@@ -116,85 +110,19 @@ public class CarrierSquadronAndTeamBeatsTests
         Assert.False(Next("""{ "timestamp":"2026-10-01T10:07:00Z", "event":"KickedFromSquadron", "SquadronName":"X" }""").IsMember);
     }
 
-    private static string Beats(string kind) => $$"""
-        {"opening": "x", "reply": "ok", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Job", "function": "finale", "kind": "{{kind}}", "reason": "Someone there knows about the burst.", "count": 1, "line": "Do it."}
-        ]}
-        """;
-
-    private static string LoadGame(long credits) =>
-        $$"""{ "timestamp":"2026-08-22T11:00:30Z", "event":"LoadGame", "Credits":{{credits}} }""";
-
-    private static async Task<(AdventureOutcome Outcome, string Brief)> Written(string kind, params string[] events)
-    {
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(Beats(kind)),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(Beats(kind), 2)),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(Beats(kind), 2)));
-
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), 1, events)
-            .GenerateAsync(
-                new AdventureAsk(Story: new AdventureStory("s", "S", "public", "hidden", 1, 10, null)),
-                Accepted,
-                TestContext.Current.CancellationToken);
-
-        return (outcome, provider.Requests[2].Prompt.History[0].Text);
-    }
-
     [Fact]
-    public async Task ACarrierBuyChapterIsWrittenWithTheCreditsAndRefusedWithout()
+    public void ATeamStepOfAGoalIsPlannedOnlyWhereTheCommanderCanDoIt()
     {
-        var rich = await Written("carrierbuy", LoadGame(10_472_082_550));
-        var poor = await Written("carrierbuy", LoadGame(6_000_000_000));
+        AdventureTrigger Step(TriggerKind kind) => new() { Kind = kind };
+        var buy = new GoalClimbStep("carrier", "Carrier") { Objective = Step(TriggerKind.CarrierBuy) };
+        var found = new GoalClimbStep("squadron", "Squadron") { Objective = Step(TriggerKind.SquadronFound) };
+        var rich = Inputs(Bounty) with { Credits = 10_472_082_550, Goals = [buy] };
 
-        Assert.NotNull(rich.Outcome.Draft);
-        Assert.Contains("\"carrierbuy\"", rich.Brief);
-        Assert.Null(poor.Outcome.Draft);
-        Assert.Contains("fewer than 7,000,000,000 credits", poor.Outcome.Refusal);
-        Assert.DoesNotContain("\"carrierbuy\"", poor.Brief);
-    }
-
-    [Fact]
-    public async Task ACarrierBuyChapterIsRefusedOnceACarrierIsOwned()
-    {
-        var owner = await Written("carrierbuy", LoadGame(10_472_082_550), Buy);
-
-        Assert.Null(owner.Outcome.Draft);
-        Assert.Contains("already owns a fleet carrier", owner.Outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task ASquadronChapterIsRefusedAfterASquadronStartup()
-    {
-        var member = await Written("squadron", LoadGame(1_000), Startup);
-        var found = await Written("squadronfound", LoadGame(50_000_000), Startup);
-        var free = await Written("squadron", LoadGame(1_000));
-
-        Assert.Null(member.Outcome.Draft);
-        Assert.Null(found.Outcome.Draft);
-        Assert.Contains("already in a squadron", found.Outcome.Refusal);
-        Assert.NotNull(free.Outcome.Draft);
-    }
-
-    [Fact]
-    public async Task AFoundingChapterNeedsTwentyMillionCredits()
-    {
-        var poor = await Written("squadronfound", LoadGame(19_999_999));
-        var able = await Written("squadronfound", LoadGame(20_000_000));
-
-        Assert.Null(poor.Outcome.Draft);
-        Assert.NotNull(able.Outcome.Draft);
-    }
-
-    [Fact]
-    public async Task TheWriterIsToldTheCommanderCanRefuseAWingBeat()
-    {
-        var wing = await Written("wing", LoadGame(1_000));
-
-        Assert.NotNull(wing.Outcome.Draft);
-        Assert.Contains("the Commander can refuse it", wing.Brief);
-        Assert.DoesNotContain("\"carrierjump\"", wing.Brief);
+        Assert.NotNull(ChapterPlanner.Plan(rich, Places(), 3).Plan);
+        Assert.Equal(ChapterRules.Team, ChapterPlanner.Plan(rich with { Carrier = new CarrierState { CallSign = "AAA-111" } }, Places(), 3).Refusal?.Rule);
+        Assert.Equal(ChapterRules.Team, ChapterPlanner.Plan(rich with { Credits = 6_000_000_000 }, Places(), 3).Refusal?.Rule);
+        Assert.NotNull(ChapterPlanner.Plan(Inputs(Bounty) with { Credits = 20_000_000, Goals = [found] }, Places(), 3).Plan);
+        Assert.Equal(ChapterRules.Team, ChapterPlanner.Plan(Inputs(Bounty) with { Credits = 19_999_999, Goals = [found] }, Places(), 3).Refusal?.Rule);
+        Assert.Equal(ChapterRules.Team, ChapterPlanner.Plan(Inputs(Bounty) with { Credits = 50_000_000, InSquadron = true, Goals = [found] }, Places(), 3).Refusal?.Rule);
     }
 }

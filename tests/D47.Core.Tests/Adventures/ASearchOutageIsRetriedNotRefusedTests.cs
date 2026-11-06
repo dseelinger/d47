@@ -1,4 +1,4 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Knowledge;
 using D47.Core.Tests.Conversation;
 using Xunit;
@@ -8,52 +8,6 @@ namespace D47.Core.Tests.Adventures;
 public sealed class ASearchOutageIsRetriedNotRefusedTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 22, 12, 0, 0, TimeSpan.Zero);
-
-    private const string Spine = """
-        {"name": "The Missing Freight", "premise": "Freight went missing on the way to Maren Anchorage.", "want": "To find the missing freight.",
-         "stake": "Whether a debt can be owed to nobody.", "turn": "The freight was never loaded.", "ending": "The freight is found and delivered."}
-        """;
-
-    private const string Beats = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
-
-    [Fact]
-    public async Task OneFailureIsRetriedAndTheChapterIsWrittenWithNoRepairCall()
-    {
-        var time = new ManualTime();
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
-        var galaxy = new AdventureGeneratorTests.Galaxy { StationOutages = 1 };
-        var generator = AdventureGeneratorTests.Generator(provider, galaxy, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, time);
-
-        var outcome = await PumpAsync(generator.GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None), time);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(5, provider.CallCount);
-    }
-
-    [Fact]
-    public async Task ASecondFailureStopsTheWriteWithTheOutageAndStartsNoFurtherDraft()
-    {
-        var time = new ManualTime();
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
-        var galaxy = new AdventureGeneratorTests.Galaxy { StationOutages = 2 };
-        var generator = AdventureGeneratorTests.Generator(provider, galaxy, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, time);
-        var again = 0;
-
-        var outcome = await PumpAsync(generator.DraftAsync(new AdventureAsk(Length: AdventureLength.Short), Now, _ => again++, CancellationToken.None), time);
-
-        Assert.Null(outcome.Draft);
-        Assert.False(outcome.Redraftable);
-        Assert.Contains("galaxy search is unavailable", outcome.Message);
-        Assert.Contains("The station search reported a server error.", outcome.Message);
-        Assert.Equal(3, provider.CallCount);
-        Assert.Equal(0, again);
-    }
 
     [Fact]
     public async Task AFailedLookupIsRetriedAfterTheDelayAndLeavesNoOutage()

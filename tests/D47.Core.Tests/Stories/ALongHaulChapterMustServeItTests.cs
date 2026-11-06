@@ -53,7 +53,7 @@ public sealed class ALongHaulChapterMustServeItTests
     {
         var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsElsewhere), RoundScriptedLlmProvider.Saying(NothingObjected)),
+                RoundScriptedLlmProvider.Saying(Lines()), RoundScriptedLlmProvider.Saying(NothingObjected)),
             card: Card with { Length = StoryPacing.ThreeMonths.Key, Goals = goals });
 
         fixtures.Stories.Save("F1", new Story
@@ -69,6 +69,12 @@ public sealed class ALongHaulChapterMustServeItTests
             StoppedAt = Now.AddDays(-1),
         });
         fixtures.Director.Game = () => Loaded(300_000_000);
+
+        if (goals)
+        {
+            fixtures.Director.Ratings = () => null;
+        }
+
         return fixtures;
     }
 

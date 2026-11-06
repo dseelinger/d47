@@ -22,8 +22,7 @@ public sealed class TheChapterWriterIsToldWhoIsOnTheCarrierTests
     {
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine),
-                RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+                RoundScriptedLlmProvider.Saying(Lines()),
                 RoundScriptedLlmProvider.Saying(NothingObjected)),
             secret);
 

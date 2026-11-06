@@ -1,5 +1,7 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Journal;
+using D47.Core.Stories;
+using D47.Core.Tests.Stories;
 using D47.Core.Tests.Conversation;
 using Xunit;
 using static D47.Core.Tests.Adventures.AdventureFixtures;
@@ -25,25 +27,6 @@ public sealed class ASignalSourceObjectiveCanNameItsSystemTests
 
     private static JournalEvent Drop(DateTimeOffset at) =>
         Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"USSDrop", "USSType":"$USS_Type_Salvage;", "USSThreat":0 }""");
-
-    private static string BeatsWithDropIn(string? system) => $$"""
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Drop", "function": "turn", "kind": "uss", "reason": "Someone there knows about the burst.", "count": 1, "system": {{(system is null ? "null" : $"\"{system}\"")}}, "line": "Drop in."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
-
-    private static RoundScriptedLlmProvider Scripted(string beats, params string[] after) =>
-        new([
-            RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine),
-            RoundScriptedLlmProvider.Saying(beats),
-            .. after.Select(reply => RoundScriptedLlmProvider.Saying(reply)),
-        ]);
-
-    private static Task<AdventureOutcome> Write(RoundScriptedLlmProvider provider) =>
-        AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
     [Fact]
     public void ADropAfterArrivingInTheNamedSystemFires()
@@ -86,37 +69,15 @@ public sealed class ASignalSourceObjectiveCanNameItsSystemTests
     }
 
     [Fact]
-    public async Task ADraftedDropNamingASystemResolvesToThatSystemsAddress()
+    public async Task ADropInAPlannedChapterNamesNoSystem()
     {
-        var outcome = await Write(Scripted(BeatsWithDropIn("Dyson's Hollow"), NothingObjected));
+        var story = PlannedChapterWorld.Story with { Slots = [new DrawnActivity(TriggerKind.Uss, null, 1)] };
+        var plan = await PlannedChapterWorld.PlanAsync(PlannedChapterWorld.Ask(story));
 
-        Assert.True(outcome.Succeeded, outcome.Refusal);
+        var drop = plan.Objectives.SelectMany(objective => objective.Steps).Single(step => step.Kind == TriggerKind.Uss);
 
-        var trigger = outcome.Draft!.Beats[1].Trigger;
-
-        Assert.Equal(TriggerKind.Uss, trigger.Kind);
-        Assert.Equal(Hollow, trigger.SystemAddress);
-        Assert.Equal("Dyson's Hollow", trigger.System);
-    }
-
-    [Fact]
-    public async Task ADraftedDropNamingNoSystemKeepsNoAddress()
-    {
-        var outcome = await Write(Scripted(BeatsWithDropIn(null), NothingObjected));
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Null(outcome.Draft!.Beats[1].Trigger.SystemAddress);
-    }
-
-    [Fact]
-    public async Task ADropNamingASystemTheSearchDoesNotKnowIsRefusedWithAReasonToActOn()
-    {
-        var provider = Scripted(BeatsWithDropIn("Nowhere Atall"), Repairs.Replacing(BeatsWithDropIn("Dyson's Hollow"), 2), NothingObjected);
-
-        var outcome = await Write(provider);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Contains("names a system, \"Nowhere Atall\", that the galaxy search does not know", provider.Requests[3].Prompt.History[0].Text);
+        Assert.Null(drop.System);
+        Assert.Null(drop.SystemAddress);
     }
 
     [Fact]

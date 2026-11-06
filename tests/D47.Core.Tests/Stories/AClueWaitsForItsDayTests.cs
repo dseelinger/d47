@@ -76,7 +76,7 @@ public sealed class AClueWaitsForItsDayTests
     [Fact]
     public async Task TheDirectorCountsSessionsAndMarksAClueGiven()
     {
-        using var fixtures = StoryFixtures.ScriptedWith(Spine, BeatsToTheBeacon);
+        using var fixtures = StoryFixtures.ScriptedWith(Lines());
 
         await fixtures.PickAndScanTheBeaconAsync(Now);
 

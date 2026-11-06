@@ -1,4 +1,4 @@
-using D47.Core.Storage;
+﻿using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Journal;
@@ -106,120 +106,99 @@ internal sealed class StoryFixtures : IDisposable
         ],
     };
 
-    public const string Spine = """
-        {"name": "The First Light", "premise": "A stock voice asks for something.", "want": "To see a beacon.",
-         "stake": "Whether a tool can want.", "turn": "It asked before.", "ending": "It is answered."}
-        """;
+    /// <summary>
+    /// A planned chapter's lines answer, named <paramref name="name"/>: words for objectives 1 to <see cref="ChapterPlanner.MostObjectives"/>,
+    /// each line spoken by the ship, so it fits any plan; the generator ignores numbers past the plan's.
+    /// </summary>
+    public static string Lines(string name = "The First Light") =>
+        PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives, whole: answer => answer["name"] = name);
+
+    /// <summary>
+    /// The career ratings a fixture's Commander has: exploration only, whose drawn activities the fixture galaxy can place, and
+    /// Crime at 0. A test that draws other activities sets <see cref="StoryDirector.Ratings"/> itself.
+    /// </summary>
+    public static readonly D47.Core.Configuration.CareerRatingSettings Explorer = new()
+    {
+        Combat = 0, Trading = 0, Mining = 0, Exploration = 100, Exobiology = 0, Passengers = 0, SearchAndRescue = 0, Crime = 0,
+    };
+
+    /// <summary>
+    /// A lines answer whose opening is <paramref name="opening"/>, spoken by <paramref name="openingSpeaker"/> (a plain string with none),
+    /// and whose objective N is spoken as <paramref name="lines"/>[N - 1]; a line with no speaker is a plain string. Objectives past
+    /// the lines given are spoken by the ship, up to <see cref="ChapterPlanner.MostObjectives"/>.
+    /// </summary>
+    public static string Written(string opening, string? openingSpeaker, params (string Text, string? Speaker)[] lines) =>
+        WrittenInFull(opening, openingSpeaker, [.. lines.Select(line => new[] { line })]);
+
+    /// <summary>As <see cref="Written"/>, with objective N spoken as every line of <paramref name="objectives"/>[N - 1].</summary>
+    public static string WrittenInFull(string opening, string? openingSpeaker, params (string Text, string? Speaker)[][] objectives) =>
+        PlannedChapterWorld.Lines(
+            ChapterPlanner.MostObjectives,
+            (number, objective) =>
+            {
+                if (number <= objectives.Length)
+                {
+                    objective["lines"] = new System.Text.Json.Nodes.JsonArray([.. objectives[number - 1].Select(line => Line(line.Text, line.Speaker))]);
+                }
+            },
+            answer =>
+            {
+                answer["name"] = "The First Light";
+                answer["opening"] = openingSpeaker is null
+                    ? System.Text.Json.Nodes.JsonValue.Create(opening)
+                    : new System.Text.Json.Nodes.JsonArray(Line(opening, openingSpeaker));
+            });
+
+    /// <summary>A line-repair answer writing objective <paramref name="objective"/> again as one line, and the opening when it is given.</summary>
+    public static string Rewritten(int objective, string text, string? speaker, (string Text, string? Speaker)? opening = null)
+    {
+        var answer = new System.Text.Json.Nodes.JsonObject
+        {
+            ["objectives"] = new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject
+            {
+                ["objective"] = objective,
+                ["title"] = "Part Again",
+                ["reason"] = "The broker's ledger points the Commander onward again.",
+                ["lines"] = new System.Text.Json.Nodes.JsonArray(Line(text, speaker)),
+            }),
+        };
+
+        if (opening is { } first)
+        {
+            answer["opening"] = new System.Text.Json.Nodes.JsonArray(Line(first.Text, first.Speaker));
+        }
+
+        return answer.ToJsonString();
+    }
+
+    /// <summary>A line-repair answer writing only the opening again, as one line.</summary>
+    public static string RewrittenOpening(string text, string? speaker) =>
+        new System.Text.Json.Nodes.JsonObject
+        {
+            ["objectives"] = new System.Text.Json.Nodes.JsonArray(),
+            ["opening"] = new System.Text.Json.Nodes.JsonArray(Line(text, speaker)),
+        }.ToJsonString();
+
+    private static System.Text.Json.Nodes.JsonNode Line(string text, string? speaker) =>
+        speaker is null
+            ? System.Text.Json.Nodes.JsonValue.Create(text)
+            : new System.Text.Json.Nodes.JsonObject { ["text"] = text, ["speaker"] = speaker };
+
+    /// <summary>The second chapter's lines answer.</summary>
+    public static string NextLines => Lines("The Second Light");
+
+    /// <summary>The lines for a third chapter, named apart from the first two.</summary>
+    public static string ThirdLines => Lines("The Third Light");
 
     /// <summary>The fidelity step's answer when no objective states more than its trigger confirms.</summary>
     public const string NothingObjected = """{"objections": []}""";
-
-    public const string BeatsToTheBeacon = """
-        {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
-        ]}
-        """;
-
-    /// <summary>Chapter one with a beacon beat before its last, which also ends at the beacon.</summary>
-    public const string BeatsWithAnEarlyBeacon = """
-        {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
-          {"title": "Too Soon", "function": "setup", "kind": "beacon", "reason": "Someone there knows about the burst.", "line": "Not yet."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "line": "Scan it."}
-        ]}
-        """;
-
-    /// <summary>A beacon written by the model in the old form, as an arrival.</summary>
-    public const string BeatsArrivingAtTheBeacon = """
-        {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Beacon", "function": "resolution", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "IC 2391 Sector MX-T b3-6", "line": "Scan it."}
-        ]}
-        """;
-
-    /// <summary>Beats that arrive, do each drawn activity once with its count, and dock.</summary>
-    public static string BeatsMeeting(IEnumerable<DrawnActivity> slots)
-    {
-        var beats = new System.Text.Json.Nodes.JsonArray
-        {
-            new System.Text.Json.Nodes.JsonObject
-            {
-                ["title"] = "The Lantern", ["function"] = "setup", ["kind"] = "arrive", ["reason"] = "Someone there knows about the burst.",
-                ["system"] = "Ossen's Lantern", ["line"] = "Scoop here.",
-            },
-        };
-
-        foreach (var slot in slots)
-        {
-            var beat = new System.Text.Json.Nodes.JsonObject
-            {
-                ["title"] = $"The {slot.Kind}", ["function"] = "turn", ["kind"] = slot.Kind.ToString().ToLowerInvariant(), ["reason"] = "Someone there knows about the burst.", ["count"] = slot.Count, ["line"] = "Do it.",
-            };
-
-            if (slot.Family is not null)
-            {
-                beat["mission"] = slot.Family;
-            }
-
-            if (slot.Organic is { } organic)
-            {
-                beat["organic"] = organic;
-            }
-
-            beats.Add(beat);
-        }
-
-        beats.Add(new System.Text.Json.Nodes.JsonObject
-        {
-            ["title"] = "The Anchorage", ["function"] = "resolution", ["kind"] = "dock", ["reason"] = "Someone there knows about the burst.",
-            ["system"] = "Dyson's Hollow", ["station"] = "Maren Anchorage", ["line"] = "To one name.",
-        });
-
-        return new System.Text.Json.Nodes.JsonObject { ["opening"] = "Again.", ["reply"] = "Here.", ["beats"] = beats }.ToJsonString();
-    }
-
-    public const string BeatsElsewhere = """
-        {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "resolution", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."}
-        ]}
-        """;
-
-    public const string NextSpine = """
-        {"name": "The Second Light", "premise": "The voice asks again.", "want": "To answer.",
-         "stake": "Whether it was a question.", "turn": "It was a name.", "ending": "It is kept."}
-        """;
-
-    public const string NextBeatsWithABeacon = """
-        {"opening": "Again.", "reply": "Here.", "beats": [
-          {"title": "The Lantern Again", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "The Beacon Again", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "line": "Again."}
-        ]}
-        """;
-
-    public const string NextBeats = """
-        {"opening": "Again.", "reply": "Here.", "beats": [
-          {"title": "The Lantern Again", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "The Anchorage Again", "function": "resolution", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
-        ]}
-        """;
-
-    /// <summary><see cref="NextBeats"/> written as finale chapter 1, naming the finale's destination.</summary>
-    public const string NextBeatsNamingTheEnd = """
-        {"opening": "Again.", "reply": "Here.", "destination": {"system": "Ossen's Lantern", "body": "Ossen's Lantern 2 a"}, "beats": [
-          {"title": "The Lantern Again", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "The Anchorage Again", "function": "resolution", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
-        ]}
-        """;
 
     private readonly string _folder = Path.Combine(MemoryInstall.FakeRoot, "d47-stories", Guid.NewGuid().ToString("N"));
 
     public IFileSystem Files { get; } = new MemoryFileSystem();
 
     /// <summary>With <paramref name="reopening"/>, opens that fixture's files as a restart would, with a new book and director.</summary>
-    public StoryFixtures(RoundScriptedLlmProvider provider, StorySecret? secret = null, StoryCard? card = null, Microsoft.Extensions.Logging.ILogger? logger = null, StoryFixtures? reopening = null)
+    public StoryFixtures(RoundScriptedLlmProvider provider, StorySecret? secret = null, StoryCard? card = null, Microsoft.Extensions.Logging.ILogger? logger = null, StoryFixtures? reopening = null, IReadOnlyList<D47.Core.Knowledge.StationSummary>? stations = null)
     {
         secret ??= Secret;
 
@@ -237,7 +216,7 @@ internal sealed class StoryFixtures : IDisposable
 
         Book.Silenced = (commander, id, at) => Stories.Find(commander, id)?.WasOffAt(at) == true;
 
-        Galaxy = new AdventureGeneratorTests.Galaxy();
+        Galaxy = new AdventureGeneratorTests.Galaxy { Positioned = true, SystemBodies = [], SystemBiology = [], Extra = stations ?? [] };
         var generator = AdventureGeneratorTests.Generator(provider, Galaxy);
 
         var catalog = new StoryCatalog([card ?? Card, Other], () => [secret, Secret with { Id = Other.Id }]);
@@ -260,11 +239,7 @@ internal sealed class StoryFixtures : IDisposable
                     return Written(Task.FromResult(answers(ask)));
                 }
 
-                var sent = WritesDrawnChapters || ask.Story is null ? ask : ask with { Story = ask.Story with { Slots = null, Goals = null, Sights = null } };
-
-                generator.PlansActOne = PlansActOne;
-
-                return Written(generator.GenerateAsync(sent, now, cancellationToken));
+                return Written(generator.GenerateAsync(ask, now, cancellationToken));
             },
             () => Here,
             backstory => Backstory = backstory,
@@ -272,17 +247,15 @@ internal sealed class StoryFixtures : IDisposable
         {
             Backstory = () => Backstory,
             Archive = StoryChapterArchive.Open(Files, ArchivePath, NullLogger<StoryChapterArchive>.Instance),
+            Ratings = () => Explorer,
         };
 
         Director.WritingAgain += WritingAgain.Add;
     }
 
-    /// <summary>
-    /// The rounds for a chapter whose every draft fails after its first round, which is the spine. Draft 2 reuses draft 1's
-    /// spine, so it has no spine round.
-    /// </summary>
+    /// <summary>The rounds for a chapter whose every draft fails: the same rounds once for each draft.</summary>
     public static IReadOnlyList<LlmStreamEvent>[] EveryDraft(params string[] rounds) =>
-        [.. Enumerable.Range(1, StoryDirector.Drafts).SelectMany(draft => draft == 2 ? rounds.Skip(1) : rounds).Select(round => RoundScriptedLlmProvider.Saying(round))];
+        [.. Enumerable.Range(1, StoryDirector.Drafts).SelectMany(_ => rounds).Select(round => RoundScriptedLlmProvider.Saying(round))];
 
     /// <summary>What the director said before each draft after the first, oldest first.</summary>
     public List<string> WritingAgain { get; } = [];
@@ -302,18 +275,6 @@ internal sealed class StoryFixtures : IDisposable
 
     /// <summary>Where the Commander is, for the nearest beacon.</summary>
     public StarPosition Here { get; set; } = BeyondTheBeacon(10);
-
-    /// <summary>
-    /// Whether the writer is sent the activities drawn for a chapter. Off, a chapter is written as if none were drawn, because a
-    /// scripted model's answers cannot meet activities it does not know; <see cref="Asks"/> holds the drawn activities either way.
-    /// </summary>
-    public bool WritesDrawnChapters { get; set; }
-
-    /// <summary>
-    /// Whether an act-one chapter is planned in code. Off, it is written through the objectives call, because a scripted model's
-    /// answers are objectives rather than the words of a plan.
-    /// </summary>
-    public bool PlansActOne { get; set; }
 
     /// <summary>Every chapter the director asked to have written, oldest first.</summary>
     public List<AdventureAsk> Asks { get; } = [];
@@ -452,27 +413,49 @@ internal sealed class StoryFixtures : IDisposable
         Director.Observe(BeaconFixture.DataPoint(), "F1");
     }
 
-    /// <summary>Flies every beat of a begun chapter so it is done; the director sees a beacon scan, as in the app.</summary>
+    /// <summary>
+    /// Flies every beat of a begun chapter so it is done: a place step through its journal event, any other step fired as the bench
+    /// fires it. The director sees a beacon scan, as in the app.
+    /// </summary>
     public void Finish(string frontierId, string key, DateTimeOffset from)
     {
         var chapter = Book.Store.Find(frontierId, key)!;
         var at = from;
 
-        foreach (var beat in chapter.Beats)
+        foreach (var trigger in chapter.Beats.SelectMany(beat => beat.Steps).Select(step => step.Trigger))
         {
             at = at.AddMinutes(1);
+            Fire(frontierId, key, trigger, at);
+        }
+    }
 
-            Book.Observe(
-                beat.Trigger.Kind == TriggerKind.Dock
-                    ? AdventureFixtures.Docked(beat.Trigger.MarketId!.Value, at)
-                    : AdventureFixtures.Jump(beat.Trigger.SystemAddress!.Value, at),
-                frontierId);
+    /// <summary>The journal event that meets <paramref name="trigger"/>, or null for a kind no single event meets.</summary>
+    public static JournalEvent? Flown(AdventureTrigger trigger, DateTimeOffset at) => trigger.Kind switch
+    {
+        TriggerKind.Dock => AdventureFixtures.Docked(trigger.MarketId!.Value, at),
+        TriggerKind.Land => AdventureFixtures.Touchdown(trigger.SystemAddress!.Value, trigger.BodyId!.Value, at),
+        TriggerKind.Scan => AdventureFixtures.Scan(trigger.SystemAddress!.Value, trigger.BodyId!.Value, at),
+        TriggerKind.Arrive or TriggerKind.Beacon => AdventureFixtures.Jump(trigger.SystemAddress!.Value, at),
+        _ => null,
+    };
 
-            if (beat.Trigger.Kind == TriggerKind.Beacon)
-            {
-                Book.Observe(DataScanned(at.AddSeconds(30)), frontierId);
-                ScanBeacon(frontierId, beat.Trigger.SystemAddress!.Value, at.AddSeconds(30));
-            }
+    /// <summary>Meets the chapter's current step: through the journal where one event meets it, otherwise as a bench step.</summary>
+    public void Fire(string frontierId, string key, AdventureTrigger trigger, DateTimeOffset at)
+    {
+        if (Flown(trigger, at) is { } flown)
+        {
+            Book.Observe(flown, frontierId);
+        }
+        else
+        {
+            Book.Quiet(frontierId, key);
+            Assert.Null(Book.Step(frontierId, key, at));
+        }
+
+        if (trigger.Kind == TriggerKind.Beacon)
+        {
+            Book.Observe(DataScanned(at.AddSeconds(30)), frontierId);
+            ScanBeacon(frontierId, trigger.SystemAddress!.Value, at.AddSeconds(30));
         }
     }
 

@@ -167,32 +167,39 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
     }
 
     [Fact]
-    public async Task AnAnswersSwitchIsReadOntoItsObjectiveThroughTheThenJoin()
+    public async Task AnAnswersSwitchIsReadOntoItsObjective()
     {
-        const string answer = """
-            {"opening": "Again.", "reply": "Here.", "openingBoards": [], "beats": [
-              {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back.",
-               "boards": ["dock-hand"], "leaves": ["rider"], "then": []},
-              {"title": "The Ore", "function": "finale", "kind": "mine", "reason": "Someone there knows about the burst.", "count": 20, "line": "Refined.", "boards": ["RIDER"], "leaves": ["rider"],
-               "then": [{"kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "boards": ["rider"]}]}
-            ]}
-            """;
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(answer), RoundScriptedLlmProvider.Saying(NothingObjected));
-
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy()).GenerateAsync(
-            new AdventureAsk(
-                AdventureReach.Session,
-                Story: new AdventureStory(Id, Card.Title, Card.Describe(), Secret.Secret, 2, 10, 5)
+        var answer = PlannedChapterWorld.Lines(
+            ChapterPlanner.MostObjectives,
+            (number, objective) =>
+            {
+                if (number == 1)
                 {
-                    Due = [new StorySwitch("rider", true, "setUp"), new StorySwitch("rider", false, "midpoint")],
-                }),
-            Now,
-            CancellationToken.None);
+                    objective["boards"] = new JsonArray("dock-hand");
+                    objective["leaves"] = new JsonArray("rider");
+                }
+                else if (number == 2)
+                {
+                    objective["boards"] = new JsonArray("RIDER");
+                    objective["leaves"] = new JsonArray("rider");
+                }
+            });
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(answer), RoundScriptedLlmProvider.Saying(NothingObjected));
+        var story = PlannedChapterWorld.Story with
+        {
+            Cast =
+            [
+                .. PlannedChapterWorld.Story.Cast!,
+                new AdventureSpeaker("rider", "Vale", "A courier riding along."),
+                new AdventureSpeaker("dock-hand", "Ren", "A dock hand."),
+            ],
+            Due = [new StorySwitch("rider", true, "setUp"), new StorySwitch("rider", false, "midpoint")],
+        };
+
+        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(PlannedChapterWorld.Ask(story), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
         var beats = outcome.Draft!.Beats;
-        Assert.Equal(2, beats[1].Steps.Count);
         Assert.Equal(["rider"], beats[1].Boards);
         Assert.Empty(beats[0].Boards);
         Assert.All(beats, beat => Assert.Empty(beat.Leaves));
@@ -201,14 +208,21 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
     [Fact]
     public async Task ABoardingOnAFiredObjectiveIsHeardInTheCockpitAndOpensTheNextChapter()
     {
-        var boarding = BeatsToTheBeacon.Replace("\"line\": \"Scoop here.\"}", "\"line\": \"Scoop here.\", \"boards\": [\"rider\"]}", StringComparison.Ordinal);
+        var boarding = PlannedChapterWorld.Lines(
+            ChapterPlanner.MostObjectives,
+            (number, objective) =>
+            {
+                if (number == 1)
+                {
+                    objective["boards"] = new JsonArray("rider");
+                }
+            },
+            answer => answer["name"] = "The First Light");
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine),
                 RoundScriptedLlmProvider.Saying(boarding),
                 RoundScriptedLlmProvider.Saying(NothingObjected),
-                RoundScriptedLlmProvider.Saying(NextSpine),
-                RoundScriptedLlmProvider.Saying(NextBeats),
+                RoundScriptedLlmProvider.Saying(NextLines),
                 RoundScriptedLlmProvider.Saying(NothingObjected)),
             Riding);
 
@@ -218,8 +232,8 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
         var chapter = fixtures.Book.Store.Find("F1", first)!;
         Assert.Empty(chapter.Aboard!);
         Assert.Equal(["rider"], chapter.Beats[0].Boards);
-        Assert.Contains("\"boards\": [\"rider\"]", fixtures.Provider.Requests[2].Prompt.History[0].Text, StringComparison.Ordinal);
-        Assert.Contains("Vale (\"rider\") comes aboard at the setUp beat.", fixtures.Provider.Requests[2].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Contains("\"boards\": [\"rider\"]", fixtures.Provider.Requests[0].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Contains("Vale (\"rider\") comes aboard at the setUp beat.", fixtures.Provider.Requests[0].Prompt.History[0].Text, StringComparison.Ordinal);
 
         var reopened = new AdventureStore(fixtures.AdventuresPath, fixtures.Files, NullLogger<AdventureStore>.Instance);
         Assert.True(reopened.Poll());
@@ -244,7 +258,7 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
         Assert.Null(story.Boarded);
         Assert.DoesNotContain("\"boarded\"", fixtures.Files.ReadText(fixtures.StoryPath)!, StringComparison.Ordinal);
         Assert.Equal(["rider"], fixtures.Book.Store.Find("F1", story.CurrentChapter!)!.Aboard);
-        Assert.Contains("Aboard the Commander's ship as this chapter opens: Vale.", fixtures.Provider.Requests[7].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.Contains("Aboard the Commander's ship as this chapter opens: Vale.", fixtures.Provider.Requests[3].Prompt.History[0].Text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -253,19 +267,17 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
         var unspanned = Riding with { Cast = [.. Secret.Cast, Rider with { Aboard = [new("setUp", null)] }] };
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine),
-                RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+                RoundScriptedLlmProvider.Saying(Lines()),
                 RoundScriptedLlmProvider.Saying(NothingObjected),
-                RoundScriptedLlmProvider.Saying(NextSpine),
-                RoundScriptedLlmProvider.Saying(NextBeats),
+                RoundScriptedLlmProvider.Saying(NextLines),
                 RoundScriptedLlmProvider.Saying(NothingObjected)),
             unspanned);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var first = fixtures.Stories.Current("F1")!.CurrentChapter!;
-        Assert.Equal(["rider"], Ids(Beat(fixtures.Provider.Requests[2].ResponseSchema!), "boards"));
-        Assert.False(Beat(fixtures.Provider.Requests[2].ResponseSchema!).TryGetProperty("leaves", out _));
+        Assert.Equal(["rider"], Ids(Beat(fixtures.Provider.Requests[0].ResponseSchema!), "boards"));
+        Assert.False(Beat(fixtures.Provider.Requests[0].ResponseSchema!).TryGetProperty("leaves", out _));
 
         fixtures.Finish("F1", first, Now);
         Assert.Null(await fixtures.Director.Tick("F1", Now.AddDays(3))!);
@@ -274,8 +286,8 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
         Assert.Equal(2, story.Chapters.Count);
         Assert.Equal([new StorySwitch("rider", true, "setUp")], story.Switched);
         Assert.Equal(["rider"], fixtures.Book.Store.Find("F1", story.CurrentChapter!)!.Aboard);
-        Assert.False(Beat(fixtures.Provider.Requests[7].ResponseSchema!).TryGetProperty("boards", out _));
-        Assert.DoesNotContain("openingBoards", fixtures.Provider.Requests[7].ResponseSchema!.SchemaJson, StringComparison.Ordinal);
+        Assert.False(Beat(fixtures.Provider.Requests[3].ResponseSchema!).TryGetProperty("boards", out _));
+        Assert.DoesNotContain("openingBoards", fixtures.Provider.Requests[3].ResponseSchema!.SchemaJson, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -343,7 +355,7 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
     }
 
     private static JsonElement Beat(D47.Core.Conversation.LlmResponseSchema schema) =>
-        JsonDocument.Parse(schema.SchemaJson).RootElement.GetProperty("properties").GetProperty("beats").GetProperty("items").GetProperty("properties");
+        JsonDocument.Parse(schema.SchemaJson).RootElement.GetProperty("properties").GetProperty("objectives").GetProperty("items").GetProperty("properties");
 
     private static IEnumerable<string?> Ids(JsonElement beat, string name) =>
         beat.GetProperty(name).GetProperty("items").GetProperty("enum").EnumerateArray().Select(id => id.GetString());

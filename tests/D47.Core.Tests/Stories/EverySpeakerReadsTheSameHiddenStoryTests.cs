@@ -13,7 +13,7 @@ public sealed class EverySpeakerReadsTheSameHiddenStoryTests
     [Fact]
     public async Task TheChapterWriterReadsTheDirectorsHiddenLayer()
     {
-        using var fixtures = StoryFixtures.ScriptedWith(Spine, BeatsToTheBeacon);
+        using var fixtures = StoryFixtures.ScriptedWith(Lines());
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 

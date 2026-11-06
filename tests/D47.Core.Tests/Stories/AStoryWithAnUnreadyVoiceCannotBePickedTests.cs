@@ -25,8 +25,7 @@ public sealed class AStoryWithAnUnreadyVoiceCannotBePickedTests
     internal static StoryFixtures Fixtures(StorySecret secret, Func<CastVoicesHere> here, List<(string Title, string Message)> posted)
     {
         var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)), secret);
+            RoundScriptedLlmProvider.Saying(Lines())), secret);
 
         fixtures.Director.VoicesHere = here;
         fixtures.Director.VoicesNotReady += (title, message) => posted.Add((title, message));
@@ -96,7 +95,7 @@ public sealed class AStoryWithAnUnreadyVoiceCannotBePickedTests
         var ready = true;
         var posted = new List<(string Title, string Message)>();
         using var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())));
 
         fixtures.Director.VoicesHere = () => new CastVoicesHere(Kokoro: ready, Chatterbox: true, OwnRecording: true);
         fixtures.Director.VoicesNotReady += (title, message) => posted.Add((title, message));

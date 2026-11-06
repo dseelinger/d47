@@ -1,5 +1,6 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Xunit;
 using static D47.Core.Tests.Adventures.AdventureFixtures;
 
@@ -10,9 +11,14 @@ public sealed class AFailedShortStoryIsWrittenAgainTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
 
-    private const string Spine = SecondColumnSpine;
+    private static RoundScriptedLlmProvider Provider() =>
+        new(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.ShortLines()), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
 
-    private const string Beats = SecondColumnBeats;
+    private static string Prompt(RoundScriptedLlmProvider provider) =>
+        provider.Requests.First(request => request.ResponseSchema?.Name == "story_lines").Prompt.History[0].Text;
+
+    private static Task<AdventureOutcome> Write(RoundScriptedLlmProvider provider, AdventureAsk ask) =>
+        PlannedChapterWorld.Generator(provider, PlannedChapterWorld.Roomy()).GenerateAsync(ask with { CrimeRefused = true }, Now, CancellationToken.None);
 
     private static Adventure First() => LanternRoute(Accepted) with
     {
@@ -34,20 +40,19 @@ public sealed class AFailedShortStoryIsWrittenAgainTests
     public async Task TheNextChapterFollowsWhatCameBeforeTheFailedOneAndCarriesWhyItFailed()
     {
         var all = new[] { First(), Failed() };
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+        var provider = Provider();
 
         var ask = new AdventureAsk(
-            Length: AdventureLength.Short,
+            Length: AdventureLength.Evening,
             Chapter: AdventureChapter.Of(all, "first"),
             Failed: AdventureChapter.Of(all, "second"));
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(ask, Now, CancellationToken.None);
+        var outcome = await Write(provider, ask);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.Equal("first", outcome.Draft!.Follows);
 
-        var prompt = provider.Requests[0].Prompt.History[0].Text;
+        var prompt = Prompt(provider);
         Assert.Contains("An earlier attempt at this chapter failed", prompt);
         Assert.Contains("Title: The Second Chapter", prompt);
         Assert.Contains("Why it failed: At \"The Lantern\" the Commander did what ruled it out: collect one bounty.", prompt);
@@ -78,14 +83,13 @@ public sealed class AFailedShortStoryIsWrittenAgainTests
             ],
             Ending = new AdventureEnding("Gone to ground", Accepted.AddMinutes(4), "At \"The Survey\" the Commander chose to flee and did it."),
         };
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+        var provider = Provider();
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: AdventureChapter.Of([ended], "first")), Now, CancellationToken.None);
+        var outcome = await Write(provider, new AdventureAsk(Length: AdventureLength.Evening, Chapter: AdventureChapter.Of([ended], "first")));
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var prompt = provider.Requests[0].Prompt.History[0].Text;
+        var prompt = Prompt(provider);
         Assert.Contains("It ended in the ending \"Gone to ground\", one of its own: At \"The Survey\" the Commander chose to flee and did it. Write the next chapter from that ending.", prompt);
         Assert.DoesNotContain("Nobody follows.", prompt);
     }
@@ -94,13 +98,12 @@ public sealed class AFailedShortStoryIsWrittenAgainTests
     public async Task AFailedFirstChapterIsWrittenAgainWithNothingBeforeIt()
     {
         var failed = Failed() with { Follows = null };
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+        var provider = Provider();
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Failed: AdventureChapter.Of([failed], "second")), Now, CancellationToken.None);
+        var outcome = await Write(provider, new AdventureAsk(Length: AdventureLength.Evening, Failed: AdventureChapter.Of([failed], "second")));
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.Null(outcome.Draft!.Follows);
-        Assert.Contains("An earlier attempt at this chapter failed", provider.Requests[0].Prompt.History[0].Text);
+        Assert.Contains("An earlier attempt at this chapter failed", Prompt(provider));
     }
 }

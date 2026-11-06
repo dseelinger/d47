@@ -13,7 +13,7 @@ public sealed class AChapterIsWrittenToItsGenreTests
     public async Task ABuddyLoveBriefNamesItsThreeElements()
     {
         using var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)),
+            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())),
             card: Card with { Genre = "Buddy Love" });
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
@@ -26,28 +26,16 @@ public sealed class AChapterIsWrittenToItsGenreTests
 
     [Trait("Category", "Integration")]
     [Fact]
-    public async Task TheBriefStatesTheChapterSizeAndCarriesOnAnUnfinishedUndertaking()
+    public async Task TheAskStatesTheChapterSizeAndTheBriefNamesTheGenresElements()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var brief = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
-        Assert.Contains("Size this chapter so the Commander can finish it in one to three play sessions.", brief);
-        Assert.Contains("when the chapter before left one unfinished, carry it on in this one.", brief);
+        Assert.Equal("one to three play sessions", fixtures.Asks[0].Story!.ChapterSize);
         Assert.Contains("Whydunit, and every chapter keeps its three elements in play: a detective, a secret, a dark turn.", brief);
-    }
-
-    [Trait("Category", "Integration")]
-    [Fact]
-    public async Task AStoryShorterThanThreeMonthsHasOneSessionChapters()
-    {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats)), card: Card with { Length = "2-weeks" });
-
-        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
-
-        Assert.Contains("Size this chapter so the Commander can finish it in one play session.", fixtures.Provider.Requests[0].Prompt.History[0].Text);
     }
 
     [Fact]

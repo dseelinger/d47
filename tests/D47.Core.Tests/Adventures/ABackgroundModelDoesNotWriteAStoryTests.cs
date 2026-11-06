@@ -1,7 +1,8 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Catalog;
 using D47.Core.Conversation;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using static D47.Core.Tests.Adventures.AdventureFixtures;
@@ -16,14 +17,16 @@ public sealed class ABackgroundModelDoesNotWriteAStoryTests
 
     private static async Task<IReadOnlyList<LlmRequest>> Written(string providerId, string conversationModel)
     {
+        var ask = PlannedChapterWorld.Ask();
+        var plan = await PlannedChapterWorld.PlanAsync(ask);
         var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine),
-            RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.GoodBeats))
+            RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Lines(plan.Objectives.Count)),
+            RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections))
         {
             Id = providerId,
             DefaultModel = ModelCatalog.Embedded.DefaultFor(providerId)!,
         };
-        var state = AdventureGeneratorTests.State(1, []);
+        var state = PlannedChapterWorld.State();
         var generator = new AdventureGenerator(
             () => provider,
             () => conversationModel,
@@ -31,7 +34,7 @@ public sealed class ABackgroundModelDoesNotWriteAStoryTests
             () => "core",
             () => null,
             () => state,
-            () => new AdventureGeneratorTests.Galaxy(),
+            () => new PlannedChapterWorld.Galaxy(),
             () => null,
             null,
             null,
@@ -39,13 +42,8 @@ public sealed class ABackgroundModelDoesNotWriteAStoryTests
             (id, model) => ModelCatalog.Embedded.TraitsFor(id, model).StoryEffort,
             null,
             null,
-            (id, model) => ModelCatalog.Embedded.TraitsFor(id, model).WritesStories)
-        {
-            PlansShortStories = false,
-        };
-        var chapter = AdventureChapter.Of([LanternRoute(Accepted) with { Key = "first", Spine = new AdventureSpine { Premise = "First premise." } }], "first");
-
-        var outcome = await generator.GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: chapter), Now, CancellationToken.None);
+            (id, model) => ModelCatalog.Embedded.TraitsFor(id, model).WritesStories);
+        var outcome = await generator.GenerateAsync(ask, Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
         return provider.Requests;

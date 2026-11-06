@@ -27,25 +27,20 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
         ],
     };
 
-    private const string BeatsWithTwoLines = """
-        {"opening": "A voice on the open channel.", "openingSpeaker": "narrator", "reply": "Here it is.", "beats": [
-          {"title": "Yard Paint", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "lines": [
-            {"text": "Anyone. Please.", "speaker": "caller"},
-            {"text": "The channel hisses, and the yard lights stay on.", "speaker": "narrator"}
-          ]},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "lines": [{"text": "To one name.", "speaker": "ship"}]},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scan it."}
-        ]}
-        """;
+    private static string BeatsWithTwoLines(string caller = "caller", string narrator = "narrator") => WrittenInFull(
+        "A voice on the open channel.",
+        "narrator",
+        [("Anyone. Please.", caller), ("The channel hisses, and the yard lights stay on.", narrator)],
+        [("To one name.", "ship")]);
 
-    private static RoundScriptedLlmProvider Scripted(string beats) => new(
-        RoundScriptedLlmProvider.Saying(Spine),
-        RoundScriptedLlmProvider.Saying(beats));
+    private static RoundScriptedLlmProvider Scripted(string lines) => new(
+        RoundScriptedLlmProvider.Saying(lines),
+        RoundScriptedLlmProvider.Saying(NothingObjected));
 
     [Fact]
     public async Task TheCastLineAndTheNarratorLineAreSaidInOrderInTwoVoicesAndPostedAsTwoMessages()
     {
-        using var fixtures = new StoryFixtures(Scripted(BeatsWithTwoLines), Cast);
+        using var fixtures = new StoryFixtures(Scripted(BeatsWithTwoLines()), Cast);
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var key = fixtures.Stories.Current("F1")!.CurrentChapter!;
@@ -60,7 +55,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
             said.Select(announcement => announcement.Key));
         Assert.Equal("Anyone. Please.", said[0].Text);
         Assert.Equal("The channel hisses, and the yard lights stay on.", said[1].Text);
-        Assert.StartsWith("Someone there knows about the burst. Next: dock at Maren Anchorage", said[2].Text, StringComparison.Ordinal);
+        Assert.StartsWith("The broker's ledger points the Commander onward to part two. Next: land on Ossen's Lantern 2 a", said[2].Text, StringComparison.Ordinal);
         Assert.Equal(VoiceRole.Narrator, said[2].Voice);
 
         var voices = said.Take(2)
@@ -86,7 +81,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
     [Fact]
     public async Task ABeatsLinesAreReadBackFromDiskUnchanged()
     {
-        using var fixtures = new StoryFixtures(Scripted(BeatsWithTwoLines), Cast);
+        using var fixtures = new StoryFixtures(Scripted(BeatsWithTwoLines()), Cast);
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var key = fixtures.Stories.Current("F1")!.CurrentChapter!;
@@ -119,23 +114,22 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
     [Fact]
     public async Task AnUnknownSpeakerInALaterLineIsRefused()
     {
-        var stranger = BeatsWithTwoLines.Replace("\"speaker\": \"narrator\"}", "\"speaker\": \"stranger\"}", StringComparison.Ordinal);
+        var stranger = BeatsWithTwoLines(narrator: "stranger");
+        var again = Rewritten(1, "Anyone. Please.", "stranger");
         using var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(EveryDraft(Spine, stranger, Repairs.Replacing(stranger, 1), Repairs.Replacing(stranger, 1))),
+            new RoundScriptedLlmProvider(EveryDraft(stranger, again, again)),
             Cast);
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal((3 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 2, fixtures.Provider.CallCount);
+        Assert.Equal((1 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts, fixtures.Provider.CallCount);
     }
 
     [Fact]
     public async Task ALineGivenToACastMembersFirstNameTakesTheirId()
     {
-        var named = BeatsWithTwoLines.Replace("\"speaker\": \"caller\"}", "\"speaker\": \"the CALLER\"}", StringComparison.Ordinal)
-            .Replace("\"speaker\": \"narrator\"}", "\"speaker\": \"ren\"}", StringComparison.Ordinal);
-        using var fixtures = new StoryFixtures(Scripted(named), Cast);
+        using var fixtures = new StoryFixtures(Scripted(BeatsWithTwoLines("the CALLER", "ren")), Cast);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
@@ -155,8 +149,8 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
                 new StorySpeaker { Id = "mara-quill", Name = "Mara Quill", Who = "A broker.", Provider = StorySpeaker.Kokoro, Voice = "bm_lewis" },
             ],
         };
-        var beats = BeatsWithTwoLines.Replace("\"speaker\": \"caller\"}", "\"speaker\": \"Mara\"}", StringComparison.Ordinal);
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, beats, beats)), twins);
+        var again = Rewritten(1, "Anyone. Please.", "Mara");
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(BeatsWithTwoLines("Mara"), again, again)), twins);
 
         Assert.Equal(StoryDirector.NoDraftStood, await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
     }
@@ -164,11 +158,11 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
     [Fact]
     public async Task TheChapterWriterIsAskedForALineListSpokenInOrder()
     {
-        using var fixtures = new StoryFixtures(Scripted(BeatsWithTwoLines), Cast);
+        using var fixtures = new StoryFixtures(Scripted(BeatsWithTwoLines()), Cast);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        var prompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
         Assert.Contains("\"lines\": [{\"text\": string, \"speaker\": string}]", prompt, StringComparison.Ordinal);
         Assert.Contains("The opening and each objective have one to three lines, spoken in the order given.", prompt, StringComparison.Ordinal);

@@ -22,7 +22,7 @@ public sealed class EveryIntroducedCastMemberIsListedTests
     public async Task BothIntroducedMembersAreListedInIntroductionOrderAndAnUnmetOneIsNot()
     {
         using var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)),
+            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())),
             Cast());
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));

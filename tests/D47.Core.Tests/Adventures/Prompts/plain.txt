@@ -5,11 +5,15 @@ Write plainly. Say what happens in the game's own terms: name the station, the s
 List a phrase only where it breaks that rule. "figurative" is a metaphor or an image standing for a game thing or event, such as a rank called a line in a book, or a closing line that counts books. "invented" is a feature a game system does not have, such as an address line on a Powerplay rank. A real object in the story, such as a logbook, a note or a station's door, is not an objection.
 
 Parts:
-[title] The Missing Freight
-[premise] Freight went missing on the way to Maren Anchorage.
-[want] To find the missing freight.
-[stake] Whether a debt can be owed to nobody.
-[turn] The freight was never loaded.
-[ending] The freight is found and delivered.
+[title] The Broker's Ledger
+[premise] A salvage broker's ledger turns up in the Commander's hold.
+[want] To find who wrote the last page.
+[stake] Whether the broker can be trusted.
+[turn] The last page is in the broker's hand.
+[ending] The ledger is closed.
+[opening] A ledger sits in the hold.
+[objective 1] Title: Part one. Lines: Page 1 of the ledger is open. Reason: The broker's ledger points the Commander onward to part one. Task: pick up 5 cargo canisters
+[objective 2] Title: Part two. Lines: Page 2 of the ledger is open. Reason: The broker's ledger points the Commander onward to part two. Task: save your own picture for one known codex entry
+[objective 3] Title: Part three. Lines: Page 3 of the ledger is open. Reason: The broker's ledger points the Commander onward to part three. Task: arrive: Fixture Beta, then complete 3 on foot production heist missions
 
 Answer with one JSON object and nothing else: {"objections": [{"part": string, "quote": string, "kind": "figurative" | "invented", "reason": string, "plain": string}]}. "part" is the name in brackets; "quote" is the words that break the rule, copied exactly from that part; "reason" is one plain sentence saying what they stand for or what the game does not have; "plain" is the quoted words written again in the game's own terms, to be put in their place as they stand, so they fit the sentence around them and state nothing the part did not. For "invented", give "" for "plain". Use an empty list when every part is plain.

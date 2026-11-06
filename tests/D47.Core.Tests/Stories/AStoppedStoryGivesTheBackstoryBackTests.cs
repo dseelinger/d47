@@ -12,8 +12,7 @@ public sealed class AStoppedStoryGivesTheBackstoryBackTests
     private static StoryFixtures Fixtures(int stories = 1) => new(new RoundScriptedLlmProvider(
         [.. Enumerable.Range(0, stories).SelectMany(_ => new[]
         {
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+            RoundScriptedLlmProvider.Saying(Lines()),
             RoundScriptedLlmProvider.Saying(NothingObjected),
         })]));
 

@@ -38,7 +38,7 @@ public sealed class AFailedStoryChapterIsReplacedTests
     [Fact]
     public async Task TheFirstChapterFailsAndAnotherTakesItsPlace()
     {
-        using var fixtures = Fixtures(Spine, BeatsToTheBeacon, NothingObjected, Spine, BeatsToTheBeacon, NothingObjected);
+        using var fixtures = Fixtures(Lines(), NothingObjected, Lines(), NothingObjected);
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var first = Assert.Single(fixtures.Stories.Current("F1")!.Chapters);
@@ -65,7 +65,7 @@ public sealed class AFailedStoryChapterIsReplacedTests
     [Fact]
     public async Task ALaterChapterFailsAndTheFinaleDoesNotAdvance()
     {
-        using var fixtures = Fixtures(Spine, BeatsToTheBeacon, NothingObjected, NextSpine, NextBeats, NothingObjected, NextSpine, NextBeats, NothingObjected);
+        using var fixtures = Fixtures(Lines(), NothingObjected, NextLines, NothingObjected, NextLines, NothingObjected);
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var first = Assert.Single(fixtures.Stories.Current("F1")!.Chapters);
@@ -77,6 +77,8 @@ public sealed class AFailedStoryChapterIsReplacedTests
         FailOnBounty(fixtures, failed);
 
         var failedAt = Now.AddDays(3).AddMinutes(1);
+        var failedTitle = fixtures.Book.Store.Find("F1", failed)!.Beats[0].Title;
+        var asked = fixtures.Provider.Requests.Count;
         fixtures.Book.Observe(BountyAt(failedAt), "F1");
 
         await Replace(fixtures, failedAt.AddMinutes(1));
@@ -95,9 +97,9 @@ public sealed class AFailedStoryChapterIsReplacedTests
         var ask = fixtures.Asks[^1];
         Assert.Equal(first, ask.Chapter!.Previous.Key);
         Assert.Equal(failed, ask.Failed!.Previous.Key);
-        Assert.Contains("The Lantern Again", ask.Failed.Previous.Ending!.Reason);
+        Assert.Contains(failedTitle, ask.Failed.Previous.Ending!.Reason);
 
-        var prompts = fixtures.Provider.Requests.Skip(10).Select(request => request.Prompt.History[0].Text).ToList();
+        var prompts = fixtures.Provider.Requests.Skip(asked).Select(request => request.Prompt.History[0].Text).ToList();
         Assert.Contains(prompts, prompt => prompt.Contains("An earlier attempt at this chapter failed", StringComparison.Ordinal));
         Assert.DoesNotContain(prompts, prompt => prompt.Contains("Write the next chapter, not a retelling", StringComparison.Ordinal));
     }

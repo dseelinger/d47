@@ -271,14 +271,14 @@ objective counted in tons or credits says it at each quarter of the count, and t
 is left to the beat's own line. These
 mission families are set aside, and no objective uses or counts them: `Mission_Massacre_Skimmer`,
 `Mission_DisableMegaship`, `Mission_RS_` and `Mission_DS_`.
-A story steers illegal missions to Anarchy space but does not enforce it. The steer does not apply when Crime is 0: the writer is told to write no crime objective and is given no Anarchy systems. Illegal families are any whose name contains `Illegal`, `Mission_OnFoot_Heist` and `Mission_OnFoot_Sabotage`. The chapter writer is given up to five Anarchy systems within reach and must put an illegal mission objective directly after an arrive or dock objective in one of them, or use no illegal family when none is in reach. Any completion of the family still counts, whatever its target. While an illegal mission objective is current, approaching the target settlement of a live mission of that family, when a faction other than Anarchy runs it, makes d47 say once per mission that the job is a crime there.
+A story steers illegal missions to Anarchy space but does not enforce it. With Crime at 0 no crime objective is drawn. Illegal families are any whose name contains `Illegal`, `Mission_OnFoot_Heist` and `Mission_OnFoot_Sabotage`. The planner puts an illegal mission objective directly after an arrive or dock objective in an Anarchy system within reach, and refuses the chapter's plan when none is in reach. Any completion of the family still counts, whatever its target. While an illegal mission objective is current, approaching the target settlement of a live mission of that family, when a faction other than Anarchy runs it, makes d47 say once per mission that the job is a crime there.
 
-The chapter writer is also given a **Sites within reach** section: up to three Guardian sites, landable bodies with a Guardian surface signal found by the galaxy search, up to three tourist beacons and up to three generation ships (megaships named `Generation Ship …`) from the signal index, nearest first. A site in a system the Commander has already visited is left out. The tourist beacons and generation ships are listed only while the **Signal index** setting is on, which fetches the index when a chapter is written as it does for a signal search; with it off the section lists Guardian sites alone, and with none of them it is left out and the writer is not offered the `site` objective. A `site` objective must name a listed site by `filter` (`guardian`, `tourist` or `generation`), `system` and, for a Guardian site, `body`; any other site is refused and the repair round names the listed ones. A site counts as a place toward the limit on travel objectives in a chapter.
+The planner is given the sites within reach: up to three Guardian sites, landable bodies with a Guardian surface signal found by the galaxy search, up to three tourist beacons and up to three generation ships (megaships named `Generation Ship …`) from the signal index, nearest first. A site in a system the Commander has already visited is left out. The tourist beacons and generation ships are found only while the **Signal index** setting is on, which fetches the index when a chapter is written as it does for a signal search; with it off only Guardian sites are found. In an act-one travel chapter the planner may make one of these sites a stop, which counts toward the chapter's stops; with none found it plans no `site` objective. The writer writes only the site objective's words.
 A suit mod or livery change is seen when the next `SuitLoadout` or `Loadout` is written, so the objective may fire some minutes after the change. A suit, weapon or ship with no earlier loadout is only remembered: its first loadout counts nothing. A livery objective names no paint job, kit or decal. New drafts never ask for one, because the journal cannot show which paint the Commander owns, and the resolve step refuses one; a stored adventure with a livery objective still loads and counts. The first `CarrierLocation` seen for a carrier sets the baseline and counts nothing; a squadron carrier's is ignored. No objective may need an ARX purchase, because the journal cannot show one; the chapter writer is told so.
 
 **Conflict and faction objectives.** A conflict objective counts taking part, not winning: a conflict lasts days and other players move it. The side is the faction the first counted contribution went to, and contributions to the other side do not count. A bond in a system with no active or pending conflict does not count. d47 reads the conflicts from the `Conflicts` of `FSDJump`, `Location` and `CarrierJump`, as they stood when the Commander last arrived, so a war that began after that arrival is not seen until the next one. When a later arrival shows the conflict ended (an empty `Status`), the standing records whether the side with more `WonDays` was the Commander's, and the next chapter's brief says so. For a faction objective, the next chapter's brief says whether the faction's influence rose or fell between two visits a day apart. The writer is told both kinds and up to eight active or pending conflicts in systems the Commander has visited; a conflict objective may name no faction and leave the Commander to find one. A faction objective counts mission marks only; trade, data sales and bounties do not count as faction work.
 
-**Carrier, squadron and team objectives.** The chapter writer is told about a kind only where the Commander can do it, and a chapter that contains one it was not told about is refused:
+**Carrier, squadron and team objectives.** The planner builds a kind only where the Commander can do it, and refuses a Goals step of a kind the Commander cannot do:
 
 | Kind | Allowed when |
 |---|---|
@@ -893,8 +893,8 @@ session's flying. Below the credits, the writer is not told it exists.
 which is a `board` into a hull they do not own, `carrierbuy` or `squadronfound`, is allowed only when the
 credits at the last load cover the price plus a reserve: the price again or 500,000,000, whichever is less.
 Where a fixed threshold above is higher, it applies. A hull already owned is allowed at any balance, and a
-hull with no price in d47's table is refused unless owned. The writer is told the most the chapter may ask
-the Commander to spend, and a chapter that asks for more is refused and written again. Saving up and buying therefore fall in separate
+hull with no price in d47's table is refused unless owned. The planner refuses a Goals step that would spend past
+the reserve. Saving up and buying therefore fall in separate
 chapters. In a chapter built on drawn activities a purchase comes only from its Goals step, which is held to the same reserve.
 
 **The reach limits one hop.** A chapter's reach is the longest one hop may be, not how far the chapter
@@ -921,8 +921,7 @@ beacon scan works back over several chapters. The writer is told how far you are
 must fall in: a chapter starting 588 light years out has a last stop between 288 and 488. The last stop is the system
 of the chapter's last place objective, and a chapter with none counts as ending where it started. A chapter built on
 drawn activities is built inside this rule, the home leg and the base rule below, with its last stop drawn from places
-that meet them. A chapter whose objectives the model writes is refused and repaired as before:
-a draft outside the band is refused and goes back through the repair rounds, as does one whose last stop Galaxy search cannot measure. The
+that meet them. The
 rule does not apply to a chapter that ends at the beacon, a finale chapter, a rewrite or a short story, or to a chapter
 that starts within 500 light years, or to a chapter in the black (below). The chapter also keeps one of its two place
 objectives for this stop.
@@ -1009,9 +1008,8 @@ On each adventures tick, when the current dock objective of the running chapter 
 The Frontline Solutions gate is checked beside it. `StoryDirector` asks the galaxy search for fixed stations within the same
 reach that list Frontline Solutions, and counts one that needs no permit, has a pad for the ship aboard and is in a system the
 galaxy search or the Commander's own reading puts at war or civil war. It is not skipped when the
-position is unknown or the query fails: with no station checked, onfootbond is never drawn. A drawn onfootbond slot asks for
-a dock objective just before it, at a listed Frontline Solutions station, and the dry run refuses an onfootbond objective that
-does not directly follow a dock at such a station.
+position is unknown or the query fails: with no station checked, onfootbond is never drawn. A drawn onfootbond slot is
+planned with a dock objective just before it, at a station with Frontline Solutions in a system at war.
 
 A row weighs its career's weight, and a quarter of that when the last three chapters asked for it. `CareerWeights.From`
 reads the ratings of 0 to 100; while every rating but Crime's is still 50, a career with activity in `Statistics`
@@ -1178,8 +1176,7 @@ stays as it was and the Stories page says why.
 
 The activity is remembered for the rest of the story. A refusal is kept under the objective's kind, and for a
 mission under the kind and the mission family, so refusing a `Mission_Massacre` objective still allows a
-`Mission_Courier` one. Every later chapter's writer is told which activities are refused, and a chapter
-with an objective for one is refused and rewritten. The Stories page lists them. An objective that names a place
+`Mission_Courier` one. A refused activity is not drawn again for the rest of the story. The Stories page lists them. An objective that names a place
 (arrive, dock, land, scan, board, rank) is replaced and not remembered. The Guardian beacon scan that
 ends act one cannot be refused. A refusal cannot be taken back.
 

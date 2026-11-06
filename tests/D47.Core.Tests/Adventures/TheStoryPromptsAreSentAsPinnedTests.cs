@@ -1,10 +1,8 @@
-using System.Globalization;
+﻿using System.Globalization;
 using D47.Core.Adventures;
 using D47.Core.Conversation;
-using D47.Core.Journal;
-using D47.Core.Knowledge;
-using Microsoft.Extensions.Logging.Abstractions;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Xunit;
 using static D47.Core.Tests.Adventures.AdventureFixtures;
 using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
@@ -16,34 +14,13 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 30, 12, 0, 0, TimeSpan.Zero);
 
-    private const string LostHop = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Lost Hop", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Nowhere Reached", "line": "To one name."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
+    private const string Plain = """{"objections": []}""";
 
-    private const string Sightseeing = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Tour", "function": "turn", "kind": "mission", "reason": "Someone there knows about the burst.", "count": 1, "mission": "Mission_Sightseeing", "line": "Take the tourists round."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
+    private const string Objection = """{"objections": [{"objective": 2, "quote": "of the ledger", "kind": "history", "reason": "it says the Commander has read the ledger before."}]}""";
 
-    private const string StillLost = """
-        {"replacements": [
-          {"objective": 2, "title": "The Lost Hop", "function": "turn", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Nowhere Reached", "line": "To one name."}
-        ]}
-        """;
+    private static readonly AdventureStory Stock = PlannedChapterWorld.Story with { Chapter = 2, DaysSinceBeacon = null };
 
-    private static readonly AdventureStory Stock = new(
-        "s", "The Missing Freight", "Freight went missing on the way to Maren Anchorage.", "The freight was never loaded.",
-        Chapter: 2, DaysRunning: 9, DaysSinceBeacon: null,
-        Cast: [new AdventureSpeaker("tess", "Tess", "A pilot who keeps the books.")]);
-
-    private static AdventureAsk Short => new(Length: AdventureLength.Short);
+    private static AdventureAsk Short => new(AdventureReach.Session, AdventureLength.Short);
 
     private static Adventure Earlier() => LanternRoute(Accepted) with { Key = "first", Name = "The First Chapter" };
 
@@ -56,91 +33,58 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
     };
 
     [Fact]
-    public async Task TheSpine() =>
-        Pinned("spine", await Sent(Short, 0, Saying(AdventureGeneratorTests.Spine)));
+    public async Task TheLinesOfANewChapterOfAStockStory() =>
+        Pinned("lines-new-chapter", await Sent(new AdventureAsk(AdventureReach.Session, Story: Stock), "story_lines", Saying(PlannedChapterWorld.NewWords())));
 
     [Fact]
-    public async Task TheBeatsOfANewChapterOfAStockStory() =>
-        Pinned("beats-new-chapter", await Sent(new AdventureAsk(Story: Stock), 2, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats)));
-
-    [Fact]
-    public async Task TheBeatsOfTheNextChapterAfterAFailedOne()
+    public async Task TheLinesOfTheNextChapterAfterAFailedOne()
     {
         var all = new[] { Earlier(), Failed() };
-        var ask = Short with { Chapter = AdventureChapter.Of(all, "first"), Failed = AdventureChapter.Of(all, "second") };
+        var ask = new AdventureAsk(AdventureReach.Session, Story: Stock) with { Chapter = AdventureChapter.Of(all, "first"), Failed = AdventureChapter.Of(all, "second") };
 
-        Pinned("beats-next-chapter-after-failed", await Sent(ask, 2, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats)));
+        Pinned("lines-next-chapter-after-failed", await Sent(ask, "story_lines", Saying(PlannedChapterWorld.NewWords())));
     }
 
     [Fact]
-    public async Task TheBeatsOfAShortStory() =>
-        Pinned("beats-short-story", await Sent(Short, 2, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats)));
+    public async Task TheLinesOfAShortStory() =>
+        Pinned("lines-short-story", await Sent(Short, "story_lines", Saying(PlannedChapterWorld.ShortLines())));
 
     [Fact]
     public async Task TheLinesOfARewriteOfARefusedObjective()
     {
         var ask = Short with { Rewrite = new AdventureRewrite(LanternRoute(Accepted), 2) };
 
-        Pinned("lines-rewrite-refused", await Sent(ask, 0, positioned: true, Saying(Stories.PlannedChapterWorld.NewWords(speakers: false))));
+        Pinned("lines-rewrite-refused", await Sent(ask, "story_line_repairs", Saying(PlannedChapterWorld.NewWords(speakers: false))));
     }
 
     [Fact]
-    public async Task TheBeatsOfARevisionFromTheCommandersRemark()
+    public async Task TheLinesOfARevisionFromTheCommandersRemark()
     {
         var exchange = new[] { new AdventureRemark("Make it shorter.", "It is three objectives now.") };
 
-        Pinned("beats-revise-remark", await Revised(LanternRoute(Accepted), Short, exchange, "Fewer docks, please."));
+        Pinned("lines-revise-remark", await Revised(LanternRoute(Accepted), Short, exchange, "Fewer docks, please."));
     }
 
     [Fact]
-    public async Task TheRepairTurnAfterARefusedDraft() =>
-        Pinned("repair-refused-draft", await Sent(Short, 3, Saying(AdventureGeneratorTests.Spine), Saying(LostHop), Saying(StillLost)));
+    public async Task TheRepairTurnAfterARefusedLine() =>
+        Pinned("line-repairs", await Sent(Short, "story_line_repairs", Saying(PlannedChapterWorld.ShortLines()), Saying(Objection), Saying(PlannedChapterWorld.Repair(2))));
 
     [Fact]
     public async Task TheFidelityCheck() =>
-        Pinned("fidelity", await Sent(Short, 3, Saying(AdventureGeneratorTests.Spine), Saying(Sightseeing), Saying("""{"objections": []}""")));
+        Pinned("fidelity", await Sent(Short, "story_fidelity", Saying(PlannedChapterWorld.ShortLines()), Saying(Plain)));
 
     [Fact]
-    public async Task ThePlainWordsCheckOfTheSpine() =>
-        Pinned("plain-spine", await Sent(Short, 1, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats)));
+    public async Task ThePlainWordsCheck() =>
+        Pinned("plain", await Sent(Short, "story_plain", Saying(PlannedChapterWorld.ShortLines()), Saying(Plain), Saying(Plain)));
 
-    [Fact]
-    public async Task ThePlainWordsCheckOfTheObjectives() =>
-        Pinned("plain-beats", await Sent(Short, 4, Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats), Saying("""{"objections": []}""")));
-
-    private static AdventureGenerator Generator(RoundScriptedLlmProvider provider, bool positioned = false)
-    {
-        var state = AdventureGeneratorTests.State(1, []);
-        var galaxy = new AdventureGeneratorTests.Galaxy { Positioned = positioned };
-        var catalogue = new Catalogue();
-
-        return new AdventureGenerator(() => provider, () => null, () => "You are the ship.", () => "core", () => null, () => state, () => galaxy, () => catalogue, null, null, NullLogger.Instance)
-        {
-            PlansShortStories = false,
-        };
-    }
-
-    private sealed class Catalogue : INotablePlacesService
-    {
-        public Task<IReadOnlyList<NotablePlace>> NearAsync(StarPosition from, double radiusLightYears, int limit, CancellationToken cancellationToken) =>
-            Task.FromResult<IReadOnlyList<NotablePlace>>(
-            [
-                new("The Quiet Field", "Geological site", "Quiet Field", 1, new StarPosition(3.6875, -44.625, 161)) { Summary = "A basin of glass spires." },
-                new("Veyl Cairn", "Ruin", "Cairn of Veyl", 2, new StarPosition(43.6875, -44.625, 131)),
-            ]);
-    }
-
-    private static Task<string> Sent(AdventureAsk ask, int request, params IReadOnlyList<LlmStreamEvent>[] rounds) => Sent(ask, request, positioned: false, rounds);
-
-    /// <summary>The text of request <paramref name="request"/>; <paramref name="positioned"/> gives the galaxy the positions a planned rewrite needs.</summary>
-    private static async Task<string> Sent(AdventureAsk ask, int request, bool positioned, params IReadOnlyList<LlmStreamEvent>[] rounds)
+    private static async Task<string> Sent(AdventureAsk ask, string schema, params IReadOnlyList<LlmStreamEvent>[] rounds)
     {
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-        var provider = new RoundScriptedLlmProvider([.. rounds, .. Enumerable.Repeat(Saying("{}"), 8)]);
+        var provider = new RoundScriptedLlmProvider([.. rounds, .. Enumerable.Repeat(Saying("{}"), 8)]) { ScriptsPlainChecks = true };
 
-        await Generator(provider, positioned).GenerateAsync(ask, Now, CancellationToken.None);
+        await PlannedChapterWorld.Generator(provider, PlannedChapterWorld.Roomy()).GenerateAsync(ask, Now, CancellationToken.None);
 
-        return provider.Requests[request].Prompt.History[0].Text;
+        return provider.Requests.First(request => request.ResponseSchema?.Name == schema).Prompt.History[0].Text;
     }
 
     private static async Task<string> Revised(Adventure draft, AdventureAsk ask, IReadOnlyList<AdventureRemark> exchange, string remark)
@@ -148,9 +92,9 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
         var provider = new RoundScriptedLlmProvider([.. Enumerable.Repeat(Saying("{}"), 8)]);
 
-        await Generator(provider).ReviseAsync(draft, ask, exchange, remark, Now, CancellationToken.None);
+        await PlannedChapterWorld.Generator(provider, PlannedChapterWorld.Roomy()).ReviseAsync(draft, ask, exchange, remark, Now, CancellationToken.None);
 
-        return provider.Requests[0].Prompt.History[0].Text;
+        return provider.Requests.First(request => request.ResponseSchema?.Name == "story_lines").Prompt.History[0].Text;
     }
 
     private static void Pinned(string name, string sent)

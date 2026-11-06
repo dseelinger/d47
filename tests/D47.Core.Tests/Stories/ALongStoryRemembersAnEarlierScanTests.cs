@@ -18,12 +18,11 @@ public sealed class ALongStoryRemembersAnEarlierScanTests
 
     private static readonly StoryCard ThreeMonths = Card with { Length = StoryPacing.ThreeMonths.Key };
 
-    /// <summary>Fixtures whose provider writes chapter one <paramref name="picks"/> times, with <paramref name="beats"/>, which by default have no beacon objective.</summary>
-    private static StoryFixtures Fixtures(int picks = 1, StoryCard? card = null, string beats = BeatsElsewhere) => new(
+    /// <summary>Fixtures whose provider writes chapter one <paramref name="picks"/> times.</summary>
+    private static StoryFixtures Fixtures(int picks = 1, StoryCard? card = null) => new(
         new RoundScriptedLlmProvider([.. Enumerable.Range(0, picks).SelectMany(_ => new[]
         {
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(beats),
+            RoundScriptedLlmProvider.Saying(Lines()),
             RoundScriptedLlmProvider.Saying(NothingObjected),
         })]),
         card: card ?? ThreeMonths);
@@ -95,7 +94,7 @@ public sealed class ALongStoryRemembersAnEarlierScanTests
     [Fact]
     public async Task NarratedShortStoriesAloneLeaveTheTripToFly()
     {
-        using var fixtures = Fixtures(beats: BeatsToTheBeacon);
+        using var fixtures = Fixtures();
         fixtures.Stories.Save("F1", OnRecord(StoryState.Finished) with
         {
             Length = StoryPacing.OneWeek.Key,
@@ -198,7 +197,7 @@ public sealed class ALongStoryRemembersAnEarlierScanTests
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         Assert.DoesNotContain("The beacon calls.", fixtures.Stories.Current("F1")!.PublicLayer, StringComparison.Ordinal);
-        Assert.All(new[] { fixtures.Provider.Requests[0], fixtures.Provider.Requests[2] }, request => Assert.Contains(RememberedSentence, request.Prompt.History[0].Text, StringComparison.Ordinal));
+        Assert.Contains(RememberedSentence, fixtures.Provider.Requests[0].Prompt.History[0].Text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -220,7 +219,7 @@ public sealed class ALongStoryRemembersAnEarlierScanTests
     [Fact]
     public async Task AForgottenScanSendsTheNextLongStoryToABeacon()
     {
-        using var fixtures = Fixtures(beats: BeatsToTheBeacon);
+        using var fixtures = Fixtures();
         fixtures.Stories.Save("F1", OnRecord(StoryState.Finished, BeaconAddress));
         fixtures.Stories.SetBeaconForgotten("F1", true);
 
@@ -238,7 +237,7 @@ public sealed class ALongStoryRemembersAnEarlierScanTests
     [Fact]
     public async Task ARealScanClearsTheForgottenScanAndTheNextStoryIsRemembered()
     {
-        using var fixtures = Fixtures(picks: 2, beats: BeatsToTheBeacon);
+        using var fixtures = Fixtures(picks: 2);
         fixtures.Stories.Save("F1", OnRecord(StoryState.Finished, BeaconAddress));
         fixtures.Stories.SetBeaconForgotten("F1", true);
 

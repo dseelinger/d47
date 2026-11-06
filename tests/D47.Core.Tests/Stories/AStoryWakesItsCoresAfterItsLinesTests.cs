@@ -23,7 +23,7 @@ public sealed class AStoryWakesItsCoresAfterItsLinesTests
     };
 
     private static StoryFixtures Week() => new(
-        new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsElsewhere)),
+        new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines())),
         OpensAndScans,
         Card with { Length = StoryPacing.OneWeek.Key });
 
@@ -31,8 +31,7 @@ public sealed class AStoryWakesItsCoresAfterItsLinesTests
     {
         var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine),
-                RoundScriptedLlmProvider.Saying(BeatsElsewhere),
+                RoundScriptedLlmProvider.Saying(Lines()),
                 RoundScriptedLlmProvider.Saying(NothingObjected)),
             Secret with { Opening = Opening },
             Card with { Length = StoryPacing.ThreeMonths.Key });

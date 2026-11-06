@@ -29,7 +29,7 @@ public sealed class ALongHaulStoryDrawsSightseeingChaptersTests
     {
         var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsElsewhere), RoundScriptedLlmProvider.Saying(NothingObjected)),
+                RoundScriptedLlmProvider.Saying(Lines()), RoundScriptedLlmProvider.Saying(NothingObjected)),
             secret: Secret with { Id = id },
             card: Card with { Id = id, Length = StoryPacing.ThreeMonths.Key });
 

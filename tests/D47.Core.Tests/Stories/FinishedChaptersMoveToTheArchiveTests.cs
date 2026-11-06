@@ -15,23 +15,24 @@ namespace D47.Core.Tests.Stories;
 /// </summary>
 public sealed class FinishedChaptersMoveToTheArchiveTests
 {
-    private static string NamedSpine(string name, string premise) =>
-        $$"""
-        {"name": "{{name}}", "premise": "{{premise}}", "want": "To see a beacon.",
-         "stake": "Whether a tool can want.", "turn": "It asked before.", "ending": "It is answered."}
-        """;
+    private static string NamedLines(string name, string premise) =>
+        PlannedChapterWorld.Lines(
+            ChapterPlanner.MostObjectives,
+            whole: answer =>
+            {
+                answer["name"] = name;
+                answer["premise"] = premise;
+            });
 
     /// <summary>
     /// The rounds for chapters one to <paramref name="chapters"/>, each named "{prefix} n" with the premise
-    /// <paramref name="premise"/>, or "{prefix} premise n." without one. Chapter one's beats are <paramref name="first"/>,
-    /// the trip to the beacon by default.
+    /// <paramref name="premise"/>, or "{prefix} premise n." without one.
     /// </summary>
-    private static IEnumerable<IReadOnlyList<LlmStreamEvent>> Rounds(int chapters, string prefix = "Chapter", string? premise = null, string first = BeatsToTheBeacon)
+    private static IEnumerable<IReadOnlyList<LlmStreamEvent>> Rounds(int chapters, string prefix = "Chapter", string? premise = null)
     {
         for (var number = 1; number <= chapters; number++)
         {
-            yield return RoundScriptedLlmProvider.Saying(NamedSpine($"{prefix} {number}", premise ?? $"{prefix} premise {number}."));
-            yield return RoundScriptedLlmProvider.Saying(number == 1 ? first : NextBeats);
+            yield return RoundScriptedLlmProvider.Saying(NamedLines($"{prefix} {number}", premise ?? $"{prefix} premise {number}."));
             yield return RoundScriptedLlmProvider.Saying(NothingObjected);
         }
     }
@@ -95,8 +96,8 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
         using var fixtures = Fixtures(15);
         await FlyTo(fixtures, 15);
 
-        // Chapter n's spine is request 5(n − 1).
-        var prompt = fixtures.Provider.Requests[70].Prompt.History[0].Text;
+        // A chapter makes three requests: its lines, the fidelity check and the plain check.
+        var prompt = fixtures.Provider.Requests[^3].Prompt.History[0].Text;
 
         Assert.DoesNotContain("Title: Chapter 14", prompt);
         Assert.DoesNotContain("Chapter premise", prompt);
@@ -138,10 +139,9 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
         [
             .. Rounds(3, "Old"),
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsElsewhere),
+            RoundScriptedLlmProvider.Saying(Lines()),
             RoundScriptedLlmProvider.Saying(NothingObjected),
-            .. Rounds(4, "Old", "A new premise.", first: BeatsElsewhere),
+            .. Rounds(4, "Old", "A new premise."),
         ]));
 
         await FlyTo(fixtures, 3);
@@ -157,7 +157,7 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
 
         // The rerun's chapters carry the earlier run's names, and so its keys.
         var story = fixtures.Stories.Current("F1")!;
-        var prompt = fixtures.Provider.Requests[^5].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[^3].Prompt.History[0].Text;
 
         var onFile = StoryChaptersOnFile(fixtures)
             .GroupBy(key => fixtures.Book.Store.Find("F1", key)!.StoryId!)

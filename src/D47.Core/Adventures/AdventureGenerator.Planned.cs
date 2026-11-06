@@ -19,17 +19,6 @@ public sealed partial class AdventureGenerator
     /// <summary>The index <see cref="PlainPart"/> and the plain-check bookkeeping give the title and the spine.</summary>
     private const int SpineIndex = -2;
 
-    /// <summary>
-    /// Whether a chapter's objectives are planned in code and only its words are written: any rewrite of a begun chapter or short
-    /// story, a short story, and a story chapter with drawn activities or in act one.
-    /// </summary>
-    internal static bool IsPlanned(AdventureAsk ask)
-    {
-        ArgumentNullException.ThrowIfNull(ask);
-
-        return ask.Rewrite is not null || ask.Story is null || ask is { Story.Slots.Count: > 0 } || Travels(ask);
-    }
-
     /// <summary>Whether a story chapter is an act-one chapter with no drawn activity, which travels and ends on the beacon or on reach.</summary>
     internal static bool Travels(AdventureAsk ask)
     {
@@ -411,7 +400,7 @@ public sealed partial class AdventureGenerator
                 return coded;
             }
 
-            var objections = (await FidelityAsync(ask, facts, spine, read.Beats, 0, [], cancellationToken, grouped: true).ConfigureAwait(false))
+            var objections = (await FidelityAsync(ask, facts, spine, read.Beats, cancellationToken).ConfigureAwait(false))
                 .Where(objection => !objection.Objectives.Any(fidelityPassed.Contains))
                 .Select(objection =>
                 {
@@ -438,7 +427,7 @@ public sealed partial class AdventureGenerator
             }
 
             var parts = (rewrite is null ? SpineParts(name, spine).Select(part => part with { Index = SpineIndex }) : [])
-                .Concat(BeatParts(read.Opening, read.Beats, 0, grouped: true))
+                .Concat(BeatParts(read.Opening, read.Beats))
                 .ToList();
             var unplain = (await PlainAsync(ask, parts, cancellationToken).ConfigureAwait(false))
                 .Select(found => (found, part: parts.First(part => part.Name == found.Part)))
@@ -499,7 +488,7 @@ public sealed partial class AdventureGenerator
             }
         }
 
-        return new ReadAnswer(written.Opening, written.Reply, beats, null)
+        return new ReadAnswer(written.Opening, written.Reply, beats)
         {
             Aboard = written.Aboard,
             OpeningBoards = written.OpeningBoards,
@@ -531,33 +520,10 @@ public sealed partial class AdventureGenerator
         return read with { Beats = beats };
     }
 
-    /// <summary>A planned step as a read beat: the trigger's own fields, and for an event step the phrase its drawn slot is run by.</summary>
+    /// <summary>A planned step as a read beat: the trigger, and for an event step the phrase its drawn slot is run by.</summary>
     private static ReadBeat StepOf(AdventureTrigger trigger, AdventureStory? story) =>
-        new(
-            Untitled,
-            null,
-            trigger.Kind,
-            null,
-            trigger.System,
-            trigger.Station,
-            trigger.Body,
-            trigger.Career,
-            trigger.Rank,
-            EliteSpecifications.HullName(trigger.ShipType) ?? trigger.ShipType,
-            trigger.Count,
-            trigger.Faction,
-            trigger.MissionFamily,
-            trigger.Commodity,
-            trigger.Filter,
-            trigger.Organic,
-            trigger.New,
-            trigger.Engineer,
-            trigger.Stage,
-            [])
+        new(Untitled, null, trigger, null, [])
         {
-            Handle = trigger.Handle,
-            Event = trigger.Event,
-            Where = trigger.Where,
             Say = trigger.Kind == TriggerKind.Event ? SlotOf(trigger, story)?.Say : null,
         };
 
@@ -902,7 +868,7 @@ public sealed partial class AdventureGenerator
 
         if (ask.Chapter is { } chapter)
         {
-            AppendChapter(text, chapter, facts, varied: false, stock: true, ask.Failed is not null || ask.SetAside is not null);
+            AppendChapter(text, chapter, facts, stock: true, ask.Failed is not null || ask.SetAside is not null);
         }
 
         if (ask.Failed is { } failed)
@@ -917,7 +883,7 @@ public sealed partial class AdventureGenerator
 
         text.AppendLine();
         text.Append(facts.Describe());
-        AppendStory(text, story, facts, lines: true);
+        AppendStory(text, story);
 
         AppendJourney(text, ask, facts, plan);
         AppendAway(text, away, ask, facts);

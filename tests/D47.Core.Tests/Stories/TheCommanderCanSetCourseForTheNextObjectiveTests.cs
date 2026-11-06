@@ -36,7 +36,7 @@ public sealed class TheCommanderCanSetCourseForTheNextObjectiveTests
     [Fact]
     public async Task AStockStoryChaptersObjectiveNamesItsSystem()
     {
-        using var fixtures = Fixtures(Spine, BeatsToTheBeacon);
+        using var fixtures = Fixtures(Lines());
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, TestContext.Current.CancellationToken));
         Settle(fixtures, Now);
         fixtures.Book.Observe(Jump(Lantern, Now.AddMinutes(1)), "F1");
@@ -103,7 +103,7 @@ public sealed class TheCommanderCanSetCourseForTheNextObjectiveTests
     [Fact]
     public async Task APausedStockStoryIsToldToResume()
     {
-        using var fixtures = Fixtures(Spine, BeatsToTheBeacon);
+        using var fixtures = Fixtures(Lines());
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, TestContext.Current.CancellationToken));
         Assert.Null(fixtures.Director.SetOn("F1", false, Now.AddMinutes(3)));
 

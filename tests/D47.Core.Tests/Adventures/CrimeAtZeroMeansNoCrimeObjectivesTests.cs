@@ -1,19 +1,14 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Stories;
-using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Xunit;
-using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
 
 namespace D47.Core.Tests.Adventures;
 
 public sealed class CrimeAtZeroMeansNoCrimeObjectivesTests
 {
-    private static readonly DateTimeOffset Now = IllegalMissionsAreSteeredToAnarchyTests.Now;
-
-    private static string Spine => IllegalMissionsAreSteeredToAnarchyTests.Spine;
-
     private static EventFilter Test(string field, string value) => new([new EventField(field, value)]);
 
     [Theory]
@@ -39,57 +34,24 @@ public sealed class CrimeAtZeroMeansNoCrimeObjectivesTests
     public void AMissionIsACrimeWhenItsFamilyIs(string family, bool crime) =>
         Assert.Equal(crime, CrimeObjectives.Is(new AdventureTrigger { Kind = TriggerKind.Mission, MissionFamily = family }));
 
-    [Theory]
-    [InlineData("Mission_Piracy")]
-    [InlineData("Mission_Smuggle")]
-    [InlineData("Mission_OnFoot_Heist_Covert")]
-    public async Task ACrimeObjectiveIsRefusedAndGoesToARepairRound(string family)
-    {
-        var beats = IllegalMissionsAreSteeredToAnarchyTests.Beats("Dyson's Hollow", family);
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(beats), Saying(Repairs.Replacing(beats, 2)), Saying(Repairs.Replacing(beats, 2)));
-
-        var outcome = await Generate(provider, new AdventureAsk(Length: AdventureLength.Short, CrimeRefused: true));
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("Objective 2 (The Job) is a crime, and the Commander's Crime rating is 0", outcome.Refusal);
-        Assert.True(provider.Requests.Count >= 3);
-    }
-
-    [Theory]
-    [InlineData("Mission_Piracy")]
-    [InlineData("Mission_OnFoot_Heist_Covert")]
-    public async Task WithCrimeAtOneOrMoreACrimeObjectiveStandsAsBefore(string family)
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(IllegalMissionsAreSteeredToAnarchyTests.Beats("Dyson's Hollow", family)));
-
-        var outcome = await Generate(provider, new AdventureAsk(Length: AdventureLength.Short));
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-    }
-
     [Fact]
-    public async Task AMissionThatIsNotACrimeStandsWithCrimeAtZero()
+    public async Task AShortStoryWithCrimeRefusedPlansNoCrimeMissionAndStillPlansOtherMissions()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(IllegalMissionsAreSteeredToAnarchyTests.Beats("Dyson's Hollow", "Mission_OnFoot_Assassination")));
+        var generator = PlannedChapterWorld.Generator(null);
+        var families = new List<string>();
 
-        var outcome = await Generate(provider, new AdventureAsk(Length: AdventureLength.Short, CrimeRefused: true));
+        for (var seed = 1u; seed <= 200; seed++)
+        {
+            var planned = await generator.ShortPlanAsync(new AdventureAsk(AdventureReach.Session, AdventureLength.Short, CrimeRefused: true), AdventureGenerator.ShortWants.None, seed, TestContext.Current.CancellationToken);
 
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-    }
+            if (planned.Plan is { } plan)
+            {
+                families.AddRange(plan.Objectives.SelectMany(objective => objective.Steps).Where(step => step.Kind == TriggerKind.Mission).Select(step => step.MissionFamily!));
+            }
+        }
 
-    [Fact]
-    public async Task WithCrimeRefusedTheWriterIsToldSoAndGivenNoAnarchySystems()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(IllegalMissionsAreSteeredToAnarchyTests.Beats("Ossen's Lantern", "Mission_OnFoot_Assassination")));
-
-        await Generate(provider, new AdventureAsk(Length: AdventureLength.Short, CrimeRefused: true));
-
-        var brief = provider.Requests[2].Prompt.History[0].Text;
-        Assert.Contains("You set Crime to 0, so write no crime objective", brief);
-        Assert.Contains("piracy", brief);
-        Assert.Contains("stolen cargo", brief);
-        Assert.DoesNotContain("Anarchy systems within reach", brief);
-        Assert.DoesNotContain("Dyson's Hollow", brief);
+        Assert.NotEmpty(families);
+        Assert.DoesNotContain(families, family => MissionFamilies.IsIllegal(family) || CrimeObjectives.IsFamily(family));
     }
 
     [Fact]
@@ -109,6 +71,4 @@ public sealed class CrimeAtZeroMeansNoCrimeObjectivesTests
         Assert.DoesNotContain(events, slot => CrimeObjectives.Is(TriggerKind.Event, null, slot.Event, slot.Where));
     }
 
-    private static Task<AdventureOutcome> Generate(RoundScriptedLlmProvider provider, AdventureAsk ask) =>
-        IllegalMissionsAreSteeredToAnarchyTests.Generator(provider, new IllegalMissionsAreSteeredToAnarchyTests.Galaxy()).GenerateAsync(ask, Now, CancellationToken.None);
 }

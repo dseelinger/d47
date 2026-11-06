@@ -15,6 +15,11 @@ public sealed class ALaterChapterKeepsTheChosenDestinationTests
 {
     private static readonly AdventureHeading Chosen = new("Tau Ceti", 1234, new StarPosition(5300, 0, 0));
 
+    private static readonly D47.Core.Knowledge.StationSummary WayDock = new()
+    {
+        Name = "Way Dock", SystemName = "Tau Way", SystemAddress = 1235, MarketId = 777, Distance = 1450, HasLargePad = true, Type = "Coriolis Starport", Position = new StarPosition(1450, -44, 131),
+    };
+
     private static readonly AdventureHeading Colonia = new("Colonia", 99, ExpeditionKit.Colonia, Home: true);
 
     [Fact]
@@ -82,7 +87,7 @@ public sealed class ALaterChapterKeepsTheChosenDestinationTests
     public async Task ABeaconChapterIgnoresItAndKeepsIt()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToTheBeacon), RoundScriptedLlmProvider.Saying(NothingObjected)));
+            RoundScriptedLlmProvider.Saying(Lines()), RoundScriptedLlmProvider.Saying(NothingObjected)));
         fixtures.Director.Game = () => Flying(7.6, scoop: true);
         fixtures.Stories.Save("F1", new Story { Id = Id, Title = Card.Title, PublicLayer = Card.Describe(), PickedAt = Now.AddDays(-1), ChosenDestination = Chosen });
 
@@ -98,7 +103,7 @@ public sealed class ALaterChapterKeepsTheChosenDestinationTests
     public async Task AFinaleChapterIgnoresItAndKeepsIt()
     {
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeatsNamingTheEnd), RoundScriptedLlmProvider.Saying(NothingObjected)));
+            RoundScriptedLlmProvider.Saying(NextLines), RoundScriptedLlmProvider.Saying(NothingObjected)));
         fixtures.Stories.Save("F1", new Story
         {
             Id = Id,
@@ -120,7 +125,10 @@ public sealed class ALaterChapterKeepsTheChosenDestinationTests
 
     private static StoryFixtures At(StarPosition position, long address, AdventureHeading chosen, StorySecret? secret = null, string? homeTarget = null)
     {
-        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats)), secret);
+        var fixtures = new StoryFixtures(
+            new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextLines), RoundScriptedLlmProvider.Saying(NothingObjected)),
+            secret,
+            stations: [WayDock]);
         var game = Loaded(1_000_000);
 
         game.Apply(AdventureFixtures.Event(

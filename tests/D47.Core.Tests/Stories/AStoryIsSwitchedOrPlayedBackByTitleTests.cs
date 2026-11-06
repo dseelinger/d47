@@ -18,8 +18,7 @@ public sealed class AStoryIsSwitchedOrPlayedBackByTitleTests
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(
         [.. Enumerable.Range(0, 2).SelectMany(_ => new[]
         {
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+            RoundScriptedLlmProvider.Saying(Lines()),
             RoundScriptedLlmProvider.Saying(NothingObjected),
         })]));
 

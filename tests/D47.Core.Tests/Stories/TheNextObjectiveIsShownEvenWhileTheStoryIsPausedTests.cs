@@ -18,7 +18,7 @@ public sealed class TheNextObjectiveIsShownEvenWhileTheStoryIsPausedTests
     [Fact]
     public async Task ARunningStockStoryShowsItsChapterUnderTheStorysTitle()
     {
-        using var fixtures = Fixtures(Spine, BeatsToTheBeacon);
+        using var fixtures = Fixtures(Lines());
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, TestContext.Current.CancellationToken));
 
         var shown = fixtures.Director.CurrentObjective("F1");
@@ -32,7 +32,7 @@ public sealed class TheNextObjectiveIsShownEvenWhileTheStoryIsPausedTests
     [Fact]
     public async Task APausedStockStoryIsStillShownAndFlaggedPaused()
     {
-        using var fixtures = Fixtures(Spine, BeatsToTheBeacon);
+        using var fixtures = Fixtures(Lines());
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, TestContext.Current.CancellationToken));
         Assert.Null(fixtures.Director.SetOn("F1", false, Now.AddMinutes(3)));
 

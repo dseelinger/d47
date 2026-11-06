@@ -1,24 +1,14 @@
 using D47.Core.Adventures;
-using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
-using D47.Core.Tests.Conversation;
-using D47.Core.Tests.Knowledge;
-using Microsoft.Extensions.Logging.Abstractions;
+using D47.Core.Stories;
 using Xunit;
-using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
+using static D47.Core.Tests.Stories.PlannerWorld;
 
 namespace D47.Core.Tests.Adventures;
 
 public sealed class IllegalMissionsAreSteeredToAnarchyTests
 {
-    internal static readonly DateTimeOffset Now = new(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
-
-    internal const string Spine = """
-        {"name": "The Quiet Job", "premise": "A job is owed.", "want": "To finish it.",
-         "stake": "Whether it can be paid for.", "turn": "The payer is the target.", "ending": "It is done."}
-        """;
-
     [Theory]
     [InlineData("Mission_OnFoot_AssassinationIllegal_Covert_MB")]
     [InlineData("Mission_OnFoot_Heist_Covert_MB")]
@@ -36,145 +26,16 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
     public void AnyOtherMissionIsNot(string? name) => Assert.False(MissionFamilies.IsIllegal(name));
 
     [Fact]
-    public async Task AnIllegalMissionAfterAnArriveInDemocracyIsRefused()
+    public void AChapterWithoutAnIllegalMissionPassesWhereverItArrives()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats("Ossen's Lantern")), Saying(Repairs.Replacing(Beats("Ossen's Lantern"), 2)), Saying(Repairs.Replacing(Beats("Ossen's Lantern"), 2)));
+        var slot = new DrawnActivity(TriggerKind.Mission, "Mission_OnFoot_Assassination", 2) { PlaceBefore = true };
 
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("Objective 2 (The Job) is an illegal mission", outcome.Refusal);
-        Assert.Contains("Ossen's Lantern is not an Anarchy system", outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task AnIllegalMissionAfterAnArriveInAnarchyPasses()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats("Dyson's Hollow")));
-
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task AnIllegalMissionThatDoesNotFollowAPlaceIsRefused()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats(null)), Saying(Repairs.Replacing(Beats(null), 1)), Saying(Repairs.Replacing(Beats(null), 1)));
-
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("The objective before it is not one", outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task TheWriterIsHandedTheAnarchySystemsAndTheRule()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats("Dyson's Hollow")));
-
-        await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        var brief = provider.Requests[2].Prompt.History[0].Text;
-        Assert.Contains("Anarchy systems within reach, from the galaxy search, nearest first:", brief);
-        Assert.Contains("- Dyson's Hollow (5 ly)", brief);
-        Assert.DoesNotContain("- Ossen's Lantern (5 ly)", brief);
-        Assert.Contains("directly after an \"arrive\" or \"dock\" objective in one of these systems", brief);
-        Assert.Contains("an Anarchy system can hold settlements owned by lawful factions", brief);
-    }
-
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task WithNoAnarchySystemKnownTheWriterIsToldToUseNoIllegalMissionAndNothingIsRefused(bool searchFails)
-    {
-        var galaxy = new Galaxy { AnarchyInReach = false, AnarchySearchFails = searchFails };
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats("Ossen's Lantern")));
-
-        var outcome = await Generator(provider, galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        var brief = provider.Requests[2].Prompt.History[0].Text;
-        Assert.Contains("No Anarchy system is known within reach, so write no illegal mission objective", brief);
-        Assert.DoesNotContain("Anarchy systems within reach, from the galaxy search", brief);
-
-        // The rule is not checked, so the draft stands.
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task AChapterWithoutAnIllegalMissionPassesWhereverItArrives()
-    {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats("Ossen's Lantern", "Mission_OnFoot_Assassination")));
-
-        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-    }
-
-    /// <summary>Arrive in <paramref name="system"/> (or open with the mission when null), then a mission, then a rank.</summary>
-    internal static string Beats(string? system, string family = "Mission_OnFoot_Heist_Covert")
-    {
-        var arrive = system is null
-            ? string.Empty
-            : $$"""{"title": "The Arrival", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "{{system}}", "station": null, "body": null, "career": null, "rank": null, "line": "Here."},""";
-
-        return $$"""
-            {"opening": "A job.", "reply": "Here it is.", "beats": [
-              {{arrive}}
-              {"title": "The Job", "function": "turn", "kind": "mission", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": null, "rank": null, "count": 1, "faction": null, "mission": "{{family}}", "line": "Take the job."},
-              {"title": "The Quiet Job Ends", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "system": null, "station": null, "body": null, "career": "Trader", "rank": 8, "line": "It is done."}
-            ]}
-            """;
-    }
-
-    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy) =>
-        AdventureGeneratorTests.Generator(provider, galaxy, Now, "3.68750,-44.62500,131.00000");
-
-    /// <summary>Oppi and Ossen's Lantern run by Democracy, Dyson's Hollow by Anarchy.</summary>
-    internal sealed class Galaxy : StubGalaxyService
-    {
-        private static readonly (string Name, long Address, string Government)[] Systems =
-        [
-            ("Oppi", 3382387380970, "Democracy"),
-            ("Ossen's Lantern", AdventureFixtures.Lantern, "Democracy"),
-            ("Dyson's Hollow", AdventureFixtures.Hollow, "Anarchy"),
-        ];
-
-        public bool AnarchyInReach { get; init; } = true;
-
-        public bool AnarchySearchFails { get; init; }
-
-        public override Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        foreach (var seed in new uint[] { 1, 2, 3, 4, 5 })
         {
-            if (query.Criteria.Any(criterion => criterion.Filter.Name == "government"))
-            {
-                if (AnarchySearchFails)
-                {
-                    throw new GalaxyUnavailableException("the service is down");
-                }
+            var objective = Planned(Inputs(slot), Places(), seed).Objectives.Single(objective => objective.Purpose == PlannedPurpose.Activity);
 
-                var found = AnarchyInReach
-                    ? Systems.Where(system => system.Government == "Anarchy").Select(Summary).ToList()
-                    : [];
-
-                return Task.FromResult(new GalaxySearchResult(query.ReferenceSystem, found.Count, found));
-            }
-
-            var named = Systems.Where(system => string.Equals(system.Name, query.ReferenceSystem, StringComparison.OrdinalIgnoreCase)).Select(Summary).ToList();
-
-            return Task.FromResult(new GalaxySearchResult(query.ReferenceSystem, named.Count, named));
+            Assert.True(objective.Steps[0].Kind is TriggerKind.Arrive or TriggerKind.Dock);
+            Assert.Equal("Mission_OnFoot_Assassination", objective.Steps[1].MissionFamily);
         }
-
-        private static SystemSummary Summary((string Name, long Address, string Government) system) =>
-            new() { Name = system.Name, SystemAddress = system.Address, Government = system.Government, Distance = 5 };
-
-        public override Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(12);
-
-        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(new StationSearchResult(query.ReferenceSystem, 0, []));
-
-        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));
-
     }
 }

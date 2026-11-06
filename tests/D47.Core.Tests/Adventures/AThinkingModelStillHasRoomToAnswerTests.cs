@@ -10,9 +10,6 @@ public sealed class AThinkingModelStillHasRoomToAnswerTests
     private const int Floor = 16000;
 
     [Fact]
-    public void TheSpineTurnCeilingIsAtLeastTheFloor() => Assert.True(AdventureGenerator.SpineOutputCeiling >= Floor);
-
-    [Fact]
     public void TheBeatsTurnCeilingIsAtLeastTheFloor() => Assert.True(AdventureGenerator.BeatsOutputCeiling >= Floor);
 
     [Fact]

@@ -49,8 +49,8 @@ public sealed class AMemberWithNoRoleIsNotIntroducedTests
     {
         using var fixtures = new StoryFixtures(
             new Conversation.RoundScriptedLlmProvider(
-                Conversation.RoundScriptedLlmProvider.Saying(Spine),
-                Conversation.RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)),
+                Conversation.RoundScriptedLlmProvider.Saying(Lines()),
+                Conversation.RoundScriptedLlmProvider.Saying(NothingObjected)),
             Secret with { Cast = [Secret.Cast[0] with { Primary = true }] });
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));

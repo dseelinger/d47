@@ -1,4 +1,4 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Callouts;
 using D47.Core.Tests.Conversation;
 using Xunit;
@@ -12,60 +12,21 @@ public sealed class EveryObjectiveStatesWhyTheCommanderGoesTests
 
     private const string Reason = "The third sheet's receipt was stamped in Dyson's Hollow, where the freight was last logged.";
 
-    private const string Spine = """
-        {"name": "The Missing Freight", "premise": "Freight went missing on the way to Maren Anchorage.", "want": "To find the missing freight.",
-         "stake": "Whether a debt can be owed to nobody.", "turn": "The freight was never loaded.", "ending": "The freight is found and delivered."}
-        """;
-
-    private const string GoodBeats = $$"""
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "The freight's last beacon ping came from here.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "A comms specialist there reads signals like the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "{{Reason}}", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
-
-    private const string RankWithoutReason = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "The freight's last beacon ping came from here.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "A comms specialist there reads signals like the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "The freight is delivered."}
-        ]}
-        """;
-
     [Fact]
-    public async Task ACountedObjectiveWithoutAReasonIsRefused()
+    public async Task AnObjectivesReasonSurvivesIntoTheDraftAndItsHandOff()
     {
+        var ask = Stories.PlannedChapterWorld.Ask();
+        var plan = await Stories.PlannedChapterWorld.PlanAsync(ask);
         var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(RankWithoutReason),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 3)),
-            RoundScriptedLlmProvider.Saying(Stories.StoryFixtures.NothingObjected));
+            RoundScriptedLlmProvider.Saying(Stories.PlannedChapterWorld.Lines(plan.Objectives.Count, (number, objective) => objective["reason"] = Reason)),
+            RoundScriptedLlmProvider.Saying(Stories.PlannedChapterWorld.NoObjections));
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        var outcome = await Stories.PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, TestContext.Current.CancellationToken);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        var refusals = provider.Requests[3].Prompt.History[0].Text.Split("cannot stand")[1];
-        Assert.Contains("Objective 3 (The Freight Delivered) has no \"reason\"", refusals);
-        Assert.DoesNotContain("Objective 1 (The Lantern)", refusals);
-    }
-
-    [Fact]
-    public async Task ACountedObjectivesReasonSurvivesResolvingAndIsInItsHandOff()
-    {
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(GoodBeats),
-            RoundScriptedLlmProvider.Saying(Stories.StoryFixtures.NothingObjected));
-
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        var rank = outcome.Draft!.Beats[2];
-        Assert.Equal(Reason, rank.Reason);
-        Assert.StartsWith(Reason, rank.HandOff());
+        var objective = outcome.Draft!.Beats[0];
+        Assert.Equal(Reason, objective.Reason);
+        Assert.StartsWith(Reason, objective.HandOff());
     }
 
     [Fact]

@@ -1,6 +1,8 @@
-using System.Globalization;
+﻿using System.Globalization;
 using D47.Core.Adventures;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
+using D47.Core.Stories;
 using D47.Core.Tests.Conversation;
 using Xunit;
 using static D47.Core.Tests.Adventures.AdventureFixtures;
@@ -24,7 +26,7 @@ public class ConflictAndFactionBeatsTests
         $$"""{ "WarType":"{{warType}}", "Status":"{{status}}", "Faction1":{ "Name":"{{Gold}}", "Stake":"", "WonDays":{{goldDays}} }, "Faction2":{ "Name":"{{Labour}}", "Stake":"", "WonDays":{{labourDays}} } }""";
 
     private static string Jump(string system, long address, string? conflict = null) =>
-        $$"""{ "timestamp":"@", "event":"FSDJump", "StarSystem":"{{system}}", "SystemAddress":{{address}}, "StarPos":[0,0,0], "Factions":[ { "Name":"{{Labour}}", "Influence":0.4 } ]{{(conflict is null ? string.Empty : $", \"Conflicts\":[ {conflict} ]")}} }""";
+        $$"""{ "timestamp":"@", "event":"FSDJump", "StarSystem":"{{system}}", "SystemAddress":{{address}}, "StarPos":[3.6875,-44.625,131], "Factions":[ { "Name":"{{Labour}}", "Influence":0.4 } ]{{(conflict is null ? string.Empty : $", \"Conflicts\":[ {conflict} ]")}} }""";
 
     private static string Bond(string awarding) =>
         $$"""{ "timestamp":"@", "event":"FactionKillBond", "Reward":10000, "AwardingFaction":"{{awarding}}", "VictimFaction":"X" }""";
@@ -206,14 +208,32 @@ public class ConflictAndFactionBeatsTests
         Assert.Equal("earn 10 influence marks for " + Labour, new AdventureTrigger { Kind = TriggerKind.Faction, Count = 10, Faction = Labour }.Describe());
     }
 
+    private static AdventureGeneratorTests.Galaxy Galaxy() => new()
+    {
+        Positioned = true,
+        Extra =
+        [
+            .. Enumerable.Range(0, 8).Select(index => new StationSummary
+            {
+                Name = $"Roomy Port {index}", SystemName = $"Roomy {index}", SystemAddress = 900 + index, MarketId = 9000 + index,
+                Position = new StarPosition(3.6875 + 10 + (index * 3), -44.625, 131), Type = "Coriolis Starport", LargePads = 2,
+            }),
+        ],
+        SystemBodies = [.. Enumerable.Range(1, 12).Select(id => new BodySummary { Name = $"Body {id}", SystemName = "Any", BodyId = id, Subtype = "Rocky body" })],
+        SystemBiology = [],
+    };
+
     private static async Task<string> BriefFor(AdventureChapter chapter, params string[] events)
     {
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Spine));
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Stories.PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives)),
+            RoundScriptedLlmProvider.Saying(Stories.PlannedChapterWorld.NoObjections));
 
-        await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), 1, events)
-            .GenerateAsync(new AdventureAsk(Chapter: chapter), Accepted, TestContext.Current.CancellationToken);
+        var outcome = await AdventureGeneratorTests.Generator(provider, Galaxy(), 1, events)
+            .GenerateAsync(new AdventureAsk(Chapter: chapter, CrimeRefused: true), Accepted, TestContext.Current.CancellationToken);
 
-        return provider.Requests[0].Prompt.History[0].Text;
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        return provider.Requests.First(request => request.ResponseSchema?.Name == "story_lines").Prompt.History[0].Text;
     }
 
     private static AdventureChapter Finished(AdventureTrigger beat, params ConflictPart[] parts) =>
@@ -233,7 +253,7 @@ public class ConflictAndFactionBeatsTests
     public async Task TheNextChaptersBriefSaysWhetherAFactionsInfluenceRoseBetweenVisits()
     {
         static string Visit(string day, double influence) =>
-            $$"""{ "timestamp":"2026-08-{{day}}T10:00:00Z", "event":"FSDJump", "StarSystem":"Havalokul", "SystemAddress":111, "StarPos":[0,0,0], "Factions":[ { "Name":"Labour of Havalokul", "Influence":{{influence.ToString(CultureInfo.InvariantCulture)}} } ] }""";
+            $$"""{ "timestamp":"2026-08-{{day}}T10:00:00Z", "event":"FSDJump", "StarSystem":"Havalokul", "SystemAddress":111, "StarPos":[3.6875,-44.625,131], "Factions":[ { "Name":"Labour of Havalokul", "Influence":{{influence.ToString(CultureInfo.InvariantCulture)}} } ] }""";
 
         var beat = new AdventureTrigger { Kind = TriggerKind.Faction, Count = 10, Faction = Labour };
 
@@ -242,35 +262,5 @@ public class ConflictAndFactionBeatsTests
 
         Assert.Contains($"worked missions for {Labour}; between visits its influence rose by 6.0 points in Havalokul", rose);
         Assert.Contains("has not seen its influence on two visits a day apart", unseen);
-    }
-
-    [Fact]
-    public async Task TheWriterIsToldTheKindsAndTheConflictsItCanSee()
-    {
-        const string Beats = """
-            {"opening": "x", "reply": "ok", "beats": [{"title": "The Work", "function": "finale", "kind": "conflict", "reason": "Someone there knows about the burst.", "count": 3, "faction": "Labour of Havalokul", "line": "Fight."}]}
-            """;
-
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(Beats),
-            RoundScriptedLlmProvider.Saying(Beats));
-
-        var outcome = await AdventureGeneratorTests.Generator(
-                provider,
-                new AdventureGeneratorTests.Galaxy(),
-                1,
-                Jump("Havalokul", 111, CivilWar).Replace("@", "2026-08-22T11:02:00Z", StringComparison.Ordinal))
-            .GenerateAsync(new AdventureAsk(), Accepted, TestContext.Current.CancellationToken);
-
-        var brief = provider.Requests[2].Prompt.History[0].Text;
-
-        Assert.NotNull(outcome.Draft);
-        Assert.Contains("\"conflict\"", brief);
-        Assert.Contains("\"faction\"", brief);
-        Assert.Contains($"- Havalokul: civilwar between {Gold} and {Labour} (active)", brief);
-
-        var written = Assert.Single(outcome.Draft.Beats).Trigger;
-        Assert.Equal((TriggerKind.Conflict, 3, Labour), (written.Kind, written.Count, written.Faction));
     }
 }

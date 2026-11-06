@@ -1,6 +1,7 @@
 ﻿using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -165,16 +166,16 @@ public sealed class StoryProgressTests
     }
 
     [Fact]
-    public async Task AShortStoryReportsItsFourStagesThenIsDone()
+    public async Task AShortStoryReportsItsStagesThenIsDone()
     {
         var progress = new StoryProgress(TimeProvider.System);
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine), RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.GoodBeats));
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.ShortLines()), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .DraftAsync(new AdventureAsk(Length: AdventureLength.Short, Progress: progress), Now, null, CancellationToken.None);
+        var outcome = await PlannedChapterWorld.Generator(provider, PlannedChapterWorld.Roomy())
+            .DraftAsync(new AdventureAsk(AdventureReach.Session, AdventureLength.Evening, Progress: progress), Now, null, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal([WriteStage.Places, WriteStage.Outline, WriteStage.Objectives, WriteStage.Checking], progress.Visited);
+        Assert.Equal([WriteStage.Places, WriteStage.Objectives, WriteStage.Checking], progress.Visited);
         Assert.Equal(1, progress.Fill);
     }
 
@@ -183,13 +184,17 @@ public sealed class StoryProgressTests
     {
         using var cancel = new CancellationTokenSource();
         var log = new RecordingLogger();
+        var state = PlannedChapterWorld.State();
+        var galaxy = PlannedChapterWorld.Roomy();
+        var generator = new AdventureGenerator(() => new CancellingLlmProvider(cancel), () => null, () => "You are the ship.", () => "core", () => null, () => state, () => galaxy, () => null, null, null, log);
 
-        var outcome = await AdventureGeneratorTests.Generator(new CancellingLlmProvider(cancel), new AdventureGeneratorTests.Galaxy(), log)
-            .DraftAsync(new AdventureAsk(Length: AdventureLength.Short), Now, null, cancel.Token);
+        var outcome = await generator.DraftAsync(new AdventureAsk(AdventureReach.Session, AdventureLength.Evening), Now, null, cancel.Token);
 
         Assert.Same(AdventureOutcome.Stopped, outcome);
         Assert.Null(outcome.Refusal);
-        Assert.DoesNotContain(log.Entries, entry => entry.Level >= LogLevel.Warning);
+        Assert.DoesNotContain(
+            log.Entries,
+            entry => entry.Level >= LogLevel.Warning && !entry.Message.StartsWith("The galaxy search could not list the stations within reach of a story for the mission family", StringComparison.Ordinal));
     }
 
     [Fact]

@@ -1,6 +1,7 @@
-using System.Globalization;
+﻿using System.Globalization;
 using D47.Core.Adventures;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Xunit;
 using static D47.Core.Tests.Adventures.AdventureFixtures;
 
@@ -8,9 +9,15 @@ namespace D47.Core.Tests.Adventures;
 
 public sealed class TheChapterWriterIsToldWhatHappenedTests
 {
-    private const string Spine = SecondColumnSpine;
+    private static RoundScriptedLlmProvider Provider() =>
+        new(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.ShortLines()), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
 
-    private const string Beats = SecondColumnBeats;
+    private static string Prompt(RoundScriptedLlmProvider provider) =>
+        provider.Requests.First(request => request.ResponseSchema?.Name == "story_lines").Prompt.History[0].Text;
+
+    private static Task<AdventureOutcome> Write(RoundScriptedLlmProvider provider, AdventureChapter chapter) =>
+        PlannedChapterWorld.Generator(provider, PlannedChapterWorld.Roomy())
+            .GenerateAsync(new AdventureAsk(AdventureReach.Session, AdventureLength.Evening, Chapter: chapter, CrimeRefused: true), Accepted, CancellationToken.None);
 
     private const string Died =
         """{ "timestamp":"@", "event":"Died", "KillerName":"CMDR Secret", "KillerShip":"federation_gunship", "KillerRank":"Dangerous" }""";
@@ -116,14 +123,13 @@ public sealed class TheChapterWriterIsToldWhatHappenedTests
     {
         var notables = Fold([Died, Resurrect, Interdicted, Bounty(2500)]).Notables;
         var chapter = AdventureChapter.Of([LanternRoute() with { Key = "first", Name = "The First Chapter" }], "first")! with { Notables = notables };
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+        var provider = Provider();
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: chapter), Accepted, CancellationToken.None);
+        var outcome = await Write(provider, chapter);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var prompt = provider.Requests[0].Prompt.History[0].Text;
+        var prompt = Prompt(provider);
 
         Assert.Contains("What the Commander did while they flew that chapter, newest first:", prompt);
         Assert.Contains("destroyed by a dangerous", prompt);
@@ -141,11 +147,10 @@ public sealed class TheChapterWriterIsToldWhatHappenedTests
     public async Task WithNothingNotableThePromptHasNoSection()
     {
         var chapter = AdventureChapter.Of([LanternRoute() with { Key = "first" }], "first");
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+        var provider = Provider();
 
-        await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: chapter), Accepted, CancellationToken.None);
+        await Write(provider, chapter!);
 
-        Assert.DoesNotContain("What the Commander did while", provider.Requests[0].Prompt.History[0].Text);
+        Assert.DoesNotContain("What the Commander did while", Prompt(provider));
     }
 }

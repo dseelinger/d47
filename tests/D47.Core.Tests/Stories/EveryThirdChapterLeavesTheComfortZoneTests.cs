@@ -43,9 +43,9 @@ public sealed class EveryThirdChapterLeavesTheComfortZoneTests
     {
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats), RoundScriptedLlmProvider.Saying(NothingObjected),
-                RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats), RoundScriptedLlmProvider.Saying(NothingObjected),
-                RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats), RoundScriptedLlmProvider.Saying(NothingObjected)),
+                RoundScriptedLlmProvider.Saying(NextLines), RoundScriptedLlmProvider.Saying(NothingObjected),
+                RoundScriptedLlmProvider.Saying(NextLines), RoundScriptedLlmProvider.Saying(NothingObjected),
+                RoundScriptedLlmProvider.Saying(NextLines), RoundScriptedLlmProvider.Saying(NothingObjected)),
             card: Card with { Length = "2-weeks" });
         CommanderGameState? game = null;
         fixtures.Director.Game = () => game;
@@ -56,6 +56,7 @@ public sealed class EveryThirdChapterLeavesTheComfortZoneTests
         Assert.Null(await fixtures.Director.WriteNextAsync("F1", Now.AddDays(1), CancellationToken.None));
         fixtures.Finish("F1", fixtures.Stories.Current("F1")!.Chapters[^1], Now.AddDays(1));
         game = Loaded(1_000_000, statistics: Statistics, modules: Cabin);
+        fixtures.Director.Ratings = () => null;
         await fixtures.Director.WriteNextAsync("F1", Now.AddDays(2), CancellationToken.None);
 
         var first = fixtures.Asks[2].Story!.Slots![0];

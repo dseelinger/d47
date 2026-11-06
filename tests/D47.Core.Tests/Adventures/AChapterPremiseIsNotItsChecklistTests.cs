@@ -1,9 +1,9 @@
-using D47.Core.Stories;
+﻿using D47.Core.Stories;
 using Xunit;
 
 namespace D47.Core.Tests.Adventures;
 
-/// <summary>The spine and line prompts keep the premise off the objective list and the lines plain.</summary>
+/// <summary>The lines prompts keep the premise off the objective list and the lines plain.</summary>
 public sealed class AChapterPremiseIsNotItsChecklistTests
 {
     private static string Prompt(string name)
@@ -15,23 +15,22 @@ public sealed class AChapterPremiseIsNotItsChecklistTests
     }
 
     [Fact]
-    public void TheSpineKeepsThePremiseAndWantOffTheObjectives() =>
-        Assert.Contains("Neither lists the objectives.", Prompt("spine"), StringComparison.Ordinal);
+    public void TheLinesPromptKeepsThePremiseAndWantOffTheObjectives() =>
+        Assert.Contains("Neither the premise nor the want lists the objectives.", Prompt("lines-new-chapter"), StringComparison.Ordinal);
 
     [Theory]
-    [InlineData("spine")]
-    [InlineData("beats-short-story")]
-    [InlineData("beats-new-chapter")]
-    [InlineData("beats-next-chapter-after-failed")]
-    [InlineData("beats-revise-remark")]
+    [InlineData("lines-short-story")]
+    [InlineData("lines-new-chapter")]
+    [InlineData("lines-next-chapter-after-failed")]
+    [InlineData("lines-revise-remark")]
     [InlineData("lines-rewrite-refused")]
-    [InlineData("repair-refused-draft")]
+    [InlineData("line-repairs")]
     public void EveryChapterPromptCarriesThePlainWordsRule(string prompt) =>
         Assert.Contains(PlainWords.Rule, Prompt(prompt), StringComparison.Ordinal);
 
     [Theory]
-    [InlineData("beats-short-story")]
-    [InlineData("beats-new-chapter")]
+    [InlineData("lines-short-story")]
+    [InlineData("lines-new-chapter")]
     public void ThePlacesAreCalledByNameAndSetUpsMakeSenseAlone(string prompt)
     {
         var text = Prompt(prompt);

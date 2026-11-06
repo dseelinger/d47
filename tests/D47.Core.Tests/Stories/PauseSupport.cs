@@ -12,7 +12,7 @@ internal static class PauseSupport
 {
     public static StoryFixtures Picked(out string chapter)
     {
-        var fixtures = StoryFixtures.ScriptedWith(Spine, BeatsToTheBeacon);
+        var fixtures = StoryFixtures.ScriptedWith(Lines());
 
         Assert.Null(fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None).GetAwaiter().GetResult());
         chapter = Assert.Single(fixtures.Stories.Current("F1")!.Chapters);

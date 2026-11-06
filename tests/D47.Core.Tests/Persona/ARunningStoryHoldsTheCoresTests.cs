@@ -10,8 +10,7 @@ namespace D47.Core.Tests.Persona;
 public sealed class ARunningStoryHoldsTheCoresTests
 {
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(
-        RoundScriptedLlmProvider.Saying(Spine),
-        RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+        RoundScriptedLlmProvider.Saying(Lines())));
 
     private static readonly PersonaSettings Kex = new() { Id = "kex" };
 

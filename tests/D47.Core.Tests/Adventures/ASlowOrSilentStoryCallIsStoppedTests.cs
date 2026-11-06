@@ -1,6 +1,7 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Stories;
+using D47.Core.Tests.Stories;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -27,7 +28,7 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
         Assert.True(outcome.Redraftable);
         Assert.True(outcome.Unanswered);
         var warning = SingleWarning(log);
-        Assert.Contains("spine step", warning);
+        Assert.Contains("lines step", warning);
         Assert.Contains("TimedOut: no first text or thinking arrived for 90 s; stopped after 90.0 s", warning);
     }
 
@@ -38,8 +39,8 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
         var provider = new ClockedLlmProvider(
             time,
             local: false,
-            [new(TimeSpan.FromSeconds(60), new LlmStreamEvent.TextDelta(AdventureGeneratorTests.Spine)), new(TimeSpan.Zero, Completed)],
-            Says(AdventureGeneratorTests.GoodBeats));
+            [new(TimeSpan.FromSeconds(60), new LlmStreamEvent.TextDelta(PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives))), new(TimeSpan.Zero, Completed)],
+            Says(PlannedChapterWorld.NoObjections));
 
         var outcome = await Generate(provider, new RecordingLogger(), time);
 
@@ -67,27 +68,28 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
     }
 
     [Fact]
-    public async Task ACloudSpineCallStillThinkingAtThreeMinutesTwentyIsStopped()
+    public async Task ACloudBriefCallStillThinkingAtTwoMinutesTenIsStoppedAtOneTwenty()
     {
         var time = new ManualTime();
-        var provider = new ClockedLlmProvider(time, local: false, ThinksThenSays(TimeSpan.FromSeconds(10), 21, AdventureGeneratorTests.Spine));
+        var provider = new ClockedLlmProvider(time, local: false, ThinksThenSays(TimeSpan.FromSeconds(10), 13, NoBrief));
         var log = new RecordingLogger();
 
-        var outcome = await Generate(provider, log, time);
+        await GenerateShort(provider, log, time);
 
-        Assert.True(outcome.Redraftable);
-        Assert.Contains("TimedOut: a cloud call may run for 200 s; stopped after 200.0 s", SingleWarning(log));
+        Assert.Contains(
+            log.Lines,
+            line => line.Contains("the brief step was not read", StringComparison.Ordinal) && line.Contains("TimedOut: a cloud call may run for 120 s; stopped after 120.0 s", StringComparison.Ordinal));
     }
 
     [Fact]
-    public async Task ACloudSpineCallStillThinkingAtTwoMinutesTenIsNotStopped()
+    public async Task ACloudLinesCallStillThinkingAtTwoMinutesTenIsNotStopped()
     {
         var time = new ManualTime();
         var provider = new ClockedLlmProvider(
             time,
             local: false,
-            ThinksThenSays(TimeSpan.FromSeconds(10), 13, AdventureGeneratorTests.Spine),
-            Says(AdventureGeneratorTests.GoodBeats));
+            ThinksThenSays(TimeSpan.FromSeconds(10), 13, PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives)),
+            Says(PlannedChapterWorld.NoObjections));
 
         var outcome = await Generate(provider, new RecordingLogger(), time);
 
@@ -95,31 +97,13 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
     }
 
     [Fact]
-    public async Task ACloudBeatsCallStillThinkingAtTwoMinutesTenIsNotStopped()
+    public async Task ACloudLinesCallStillThinkingAtSixHundredAndSixtySecondsIsStoppedAtFourHundred()
     {
         var time = new ManualTime();
         var provider = new ClockedLlmProvider(
             time,
             local: false,
-            Says(AdventureGeneratorTests.Spine),
-            ThinksThenSays(TimeSpan.FromSeconds(10), 13, AdventureGeneratorTests.GoodBeats));
-
-        var outcome = await Generate(provider, new RecordingLogger(), time);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task ACloudBeatsCallStillThinkingAtSixHundredAndSixtySecondsIsStoppedAtFourHundred()
-    {
-        var time = new ManualTime();
-        var provider = new ClockedLlmProvider(
-            time,
-            local: false,
-            Says(AdventureGeneratorTests.Spine),
-            ThinksThenSays(TimeSpan.FromSeconds(10), 41, AdventureGeneratorTests.GoodBeats),
-            Says(AdventureGeneratorTests.Spine),
-            Says(AdventureGeneratorTests.GoodBeats));
+            ThinksThenSays(TimeSpan.FromSeconds(10), 41, PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives)));
         var log = new RecordingLogger();
 
         await Generate(provider, log, time);
@@ -136,8 +120,8 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
         var provider = new ClockedLlmProvider(
             time,
             local: true,
-            [new(TimeSpan.FromMinutes(10), new LlmStreamEvent.TextDelta(AdventureGeneratorTests.Spine)), new(TimeSpan.Zero, Completed)],
-            Says(AdventureGeneratorTests.GoodBeats));
+            [new(TimeSpan.FromMinutes(10), new LlmStreamEvent.TextDelta(PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives))), new(TimeSpan.Zero, Completed)],
+            Says(PlannedChapterWorld.NoObjections));
 
         var outcome = await Generate(provider, new RecordingLogger(), time);
 
@@ -152,8 +136,8 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
         var provider = new ClockedLlmProvider(
             time,
             local: true,
-            ThinksThenSays(TimeSpan.FromSeconds(25), 8, AdventureGeneratorTests.Spine),
-            Says(AdventureGeneratorTests.GoodBeats));
+            ThinksThenSays(TimeSpan.FromSeconds(25), 8, PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives)),
+            Says(PlannedChapterWorld.NoObjections));
         var log = new RecordingLogger();
 
         var outcome = await Generate(provider, log, time);
@@ -169,8 +153,8 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
         var provider = new ClockedLlmProvider(
             time,
             local: false,
-            ThinksThenSays(TimeSpan.FromSeconds(29), 4, AdventureGeneratorTests.Spine),
-            Says(AdventureGeneratorTests.GoodBeats));
+            ThinksThenSays(TimeSpan.FromSeconds(29), 4, PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives)),
+            Says(PlannedChapterWorld.NoObjections));
 
         var outcome = await Generate(provider, new RecordingLogger(), time);
 
@@ -181,14 +165,14 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
     public async Task ATimedOutFirstDraftIsWrittenAgain()
     {
         var time = new ManualTime();
-        var provider = new ClockedLlmProvider(time, local: false, Stalls, Says(AdventureGeneratorTests.Spine), Says(AdventureGeneratorTests.GoodBeats), Says("""{"objections": []}"""));
+        var provider = new ClockedLlmProvider(time, local: false, Stalls, Says(PlannedChapterWorld.Lines(ChapterPlanner.MostObjectives)), Says(PlannedChapterWorld.NoObjections));
         var again = new List<string>();
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), new RecordingLogger(), time)
-            .DraftAsync(new AdventureAsk(Length: AdventureLength.Short), Now, again.Add, CancellationToken.None);
+        var outcome = await Generator(provider, new RecordingLogger(), time)
+            .DraftAsync(PlannedChapterWorld.Ask(), Now, again.Add, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(6, provider.Calls);
+        Assert.Equal(4, provider.Calls);
         Assert.Equal([StoryDirector.WritingAgainLine(2, told: false)], again);
     }
 
@@ -218,9 +202,25 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
     private static IReadOnlyList<Step> ThinksThenSays(TimeSpan gap, int count, string text) =>
         [.. Enumerable.Repeat(new Step(gap, new LlmStreamEvent.ThinkingDelta("Hmm.")), count), .. Says(text)];
 
+    private const string NoBrief = """{"home": false, "system": null, "activities": [], "ship": null, "changes": false}""";
+
+    private static AdventureGenerator Generator(ILlmProvider provider, ILogger log, TimeProvider time, PlannedChapterWorld.Galaxy? galaxy = null)
+    {
+        var state = PlannedChapterWorld.State();
+        galaxy ??= new PlannedChapterWorld.Galaxy();
+
+        return new AdventureGenerator(() => provider, () => null, () => "You are the ship.", () => "core", () => null, () => state, () => galaxy, () => null, null, null, log)
+        {
+            Time = time,
+        };
+    }
+
     private static Task<AdventureOutcome> Generate(ILlmProvider provider, ILogger log, TimeProvider time) =>
-        AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), log, time)
-            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        Generator(provider, log, time).GenerateAsync(PlannedChapterWorld.Ask(), Now, CancellationToken.None);
+
+    private static Task<AdventureOutcome> GenerateShort(ILlmProvider provider, ILogger log, TimeProvider time) =>
+        Generator(provider, log, time, PlannedChapterWorld.Roomy())
+            .GenerateAsync(new AdventureAsk(AdventureReach.Session, AdventureLength.Evening, Brief: "A grim bounty hunt."), Now, CancellationToken.None);
 
     private static string SingleWarning(RecordingLogger log) =>
         Assert.Single(log.Entries, entry => entry.Level == LogLevel.Warning).Message;

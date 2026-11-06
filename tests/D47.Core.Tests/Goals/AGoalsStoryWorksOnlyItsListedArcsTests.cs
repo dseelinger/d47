@@ -137,7 +137,7 @@ public sealed class AGoalsStoryWorksOnlyItsListedArcsTests
     {
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats), RoundScriptedLlmProvider.Saying(NothingObjected)),
+                RoundScriptedLlmProvider.Saying(NextLines), RoundScriptedLlmProvider.Saying(NothingObjected)),
             card: Card with { Length = "2-weeks", Goals = true, GoalArcs = Careers });
         IReadOnlyList<GoalStanding> goals = Standings(0.5, 0);
         fixtures.Director.Goals = () => goals;
