@@ -203,10 +203,16 @@ public partial class StoryComparisonTests
         Log($"done; spent ${meter.Spent:0.0000}");
     }
 
+    /// <summary>Attempts after the first when a write ends on a transient provider failure.</summary>
+    internal const int Retries = 2;
+
+    /// <summary>The wait before each retry.</summary>
+    internal static readonly TimeSpan RetryWait = TimeSpan.FromSeconds(30);
+
     /// <summary>"over limit" when a chapter was written but a call ran past what the app allows it.</summary>
-    internal static string OutcomeOf(bool capped, bool succeeded, IEnumerable<MeteredRequest> requests) =>
+    internal static string OutcomeOf(bool capped, bool succeeded, IEnumerable<MeteredRequest> requests, bool providerFailed = false) =>
         capped ? "cap"
-        : !succeeded ? "not written"
+        : !succeeded ? (providerFailed ? "provider failed" : "not written")
         : requests.Any(request => request.RanOverLimit) ? "over limit"
         : "written";
 
@@ -223,9 +229,51 @@ public partial class StoryComparisonTests
         string kind,
         string label,
         string? drafts,
-        ISignalIndexSource? signals = null)
+        ISignalIndexSource? signals = null,
+        TimeProvider? time = null,
+        Func<Task<AdventureOutcome>>? generate = null)
     {
+        time ??= TimeProvider.System;
 
+        var clock = Stopwatch.StartNew();
+        var retries = 0;
+        var calls = new List<(MeteredRequest Request, string Step)>();
+
+        while (true)
+        {
+            var attempt = await AttemptAsync(meter, model, effort, persona, world, galaxy, places, ask, signals, generate);
+            calls.AddRange(attempt.Metered.Select((request, at) => (request, at < Steps.Length ? Steps[at] : $"call {at + 1}")));
+
+            var providerFailed = attempt.Outcome?.Succeeded != true
+                                 && attempt.Thrown is null
+                                 && attempt.Metered.LastOrDefault() is { Transient: true };
+            var capped = calls.Any(call => call.Request.Failure?.Contains(" cap.", StringComparison.Ordinal) == true);
+
+            if (providerFailed && !capped && retries < Retries)
+            {
+                retries++;
+                await Task.Delay(RetryWait, time, Token).ConfigureAwait(false);
+                continue;
+            }
+
+            return Record(attempt, calls, retries, providerFailed, capped, clock.Elapsed.TotalSeconds, model, effort, run, ask, kind, label, drafts, galaxy, places);
+        }
+    }
+
+    private sealed record Attempt(AdventureOutcome? Outcome, string? Thrown, string? Stack, IReadOnlyList<MeteredRequest> Metered, RecordingLogger Log);
+
+    private static async Task<Attempt> AttemptAsync(
+        MeteredLlmProvider.MeteredView meter,
+        string model,
+        ThinkingEffort effort,
+        Persona persona,
+        ScenarioWorld world,
+        TimedGalaxy? galaxy,
+        TimedNotablePlaces? places,
+        AdventureAsk ask,
+        ISignalIndexSource? signals,
+        Func<Task<AdventureOutcome>>? generate)
+    {
         var log = new RecordingLogger();
         var generator = new AdventureGenerator(
             () => meter,
@@ -248,14 +296,13 @@ public partial class StoryComparisonTests
             SilenceLimit = Timeout.InfiniteTimeSpan,
         };
 
-        var clock = Stopwatch.StartNew();
         AdventureOutcome? outcome = null;
         string? thrown = null;
         string? stack = null;
 
         try
         {
-            outcome = await generator.GenerateAsync(ask, DateTimeOffset.Now, Token).ConfigureAwait(false);
+            outcome = await (generate?.Invoke() ?? generator.GenerateAsync(ask, DateTimeOffset.Now, Token)).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -263,11 +310,30 @@ public partial class StoryComparisonTests
             stack = exception.ToString();
         }
 
-        var total = clock.Elapsed.TotalSeconds;
-        var metered = meter.Drain();
+        return new Attempt(outcome, thrown, stack, meter.Drain(), log);
+    }
+
+    private static StoryRecord Record(
+        Attempt last,
+        List<(MeteredRequest Request, string Step)> calls,
+        int retries,
+        bool providerFailed,
+        bool capped,
+        double total,
+        string model,
+        ThinkingEffort effort,
+        int run,
+        AdventureAsk ask,
+        string kind,
+        string label,
+        string? drafts,
+        TimedGalaxy? galaxy,
+        TimedNotablePlaces? places)
+    {
+        var (outcome, thrown, stack, _, log) = last;
+        var metered = calls.Select(call => call.Request).ToList();
         var warnings = log.Entries.Where(entry => entry.Level >= LogLevel.Warning).Select(entry => entry.Message).ToList();
         var reason = warnings.FirstOrDefault(warning => warning.StartsWith("A story was not written", StringComparison.Ordinal));
-        var capped = metered.Any(request => request.Failure?.Contains(" cap.", StringComparison.Ordinal) == true);
         var draftFile = drafts is null
             ? null
             : Path.Combine(
@@ -298,7 +364,7 @@ public partial class StoryComparisonTests
                 rounds = notWritten ? RefusalRounds(log) : null,
                 replies = stack is null && !notWritten
                     ? null
-                    : metered.Select((request, at) => new { step = at < Steps.Length ? Steps[at] : $"call {at + 1}", reply = request.Text }).ToList(),
+                    : calls.Select(call => new { step = call.Step, reply = call.Request.Text }).ToList(),
             },
             DraftJson));
         }
@@ -310,7 +376,8 @@ public partial class StoryComparisonTests
             Model = model,
             Effort = effort.ToString(),
             Run = run,
-            Outcome = OutcomeOf(capped, outcome?.Succeeded == true, metered),
+            Outcome = OutcomeOf(capped, outcome?.Succeeded == true, metered, providerFailed),
+            Retries = retries,
             FailingStep = reason is null ? null : StepNamed().Match(reason) is { Success: true } match ? match.Groups[1].Value : null,
             Reason = reason,
             Refusal = outcome?.Refusal,
@@ -324,8 +391,8 @@ public partial class StoryComparisonTests
             NotablePlacesSeconds = places?.Seconds ?? 0,
             Calls =
             [
-                .. metered.Select((request, at) => new StoryCall(
-                    at < Steps.Length ? Steps[at] : $"call {at + 1}",
+                .. calls.Select(call => call.Request).Zip(calls.Select(call => call.Step), (request, step) => new StoryCall(
+                    step,
                     request.Milliseconds / 1000.0,
                     request.Usage.InputTokens,
                     request.Usage.CacheCreationInputTokens,

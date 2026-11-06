@@ -205,9 +205,14 @@ part of a build or a `dotnet test` run. The keys come from the installed app's e
 D47_COMPARE=1 D47_COMPARE_PARALLEL=1 D47_COMPARE_STORY_MODELS=claude-sonnet-5-5,gpt-6.1-sol D47_COMPARE_STORY_EFFORTS=Catalog D47_COMPARE_RUNS=3 D47_COMPARE_CAP=6.00 D47_COMPARE_OUT=<scratchpad>/compare D47_COMPARE_JOURNALS=<journals folder> D47_COMPARE_SECRETS_FROM="$LOCALAPPDATA/Programs/d47"   dotnet test tests/D47.Scenarios.Tests --filter "FullyQualifiedName~StoryChaptersAgainstEachModelAndEffort"
 ```
 
-The pass mark is 6 of 6 chapters written (`"outcome":"written"` in `chapters.jsonl`); `"over limit"` is a failure. Below it, do
-not commit: stop and report the refusals from the files in `drafts`. The commit message gives the
-number written for each model and the run's wall time.
+A chapter whose write ends on a transient provider failure (a 5xx, a 408, a 429, or a request that never
+reached the server) is started again up to twice, 30 seconds apart. One that still ends that way is
+recorded as `"provider failed"` and is left out of the count.
+
+The pass mark is every chapter that is not `"provider failed"` written (`"outcome":"written"` in
+`chapters.jsonl`); `"over limit"` and `"not written"` are failures. Below it, do not commit: stop and report the
+refusals from the files in `drafts`. A run where any chapter is `"provider failed"` is reported with how many, and
+the commit message gives the number written out of the number counted for each model and the run's wall time.
 
 ## The changelog
 

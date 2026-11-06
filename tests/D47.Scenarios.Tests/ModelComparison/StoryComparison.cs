@@ -34,8 +34,14 @@ public sealed record StoryRecord
 
     public required int Run { get; init; }
 
-    /// <summary>"written", "not written", "over limit" when a call ran past its <c>CallLimitFor</c>, or "cap" when the budget stopped a request.</summary>
+    /// <summary>
+    /// "written", "not written", "provider failed" when every attempt ended on a transient provider failure,
+    /// "over limit" when a call ran past its <c>CallLimitFor</c>, or "cap" when the budget stopped a request.
+    /// </summary>
     public required string Outcome { get; init; }
+
+    /// <summary>Times the write was started again after a transient provider failure.</summary>
+    public int Retries { get; init; }
 
     /// <summary>The step the #1239 warning names, or null when it names none.</summary>
     public string? FailingStep { get; init; }
