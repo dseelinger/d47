@@ -123,7 +123,7 @@ internal sealed class OpenAiEndpoint : IDisposable
                 ($"{Host} has nothing at {BaseUrl}. Check the endpoint — it should include the version "
                  + $"segment, as in http://127.0.0.1:11434/v1.{said}", false),
 
-            >= HttpStatusCode.InternalServerError => ($"{Host} reported a server error; it should clear shortly.", true),
+            >= HttpStatusCode.InternalServerError => ($"{Host} reported a server error (HTTP {(int)status}); it should clear shortly.{said}", true),
             _ => ($"{Host} refused the request{(said.Length > 0 ? said : $" with status {(int)status}.")}", false),
         };
     }
