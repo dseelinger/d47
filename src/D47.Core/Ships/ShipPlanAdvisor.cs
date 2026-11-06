@@ -21,6 +21,9 @@ public enum BuildRemarkKind
 
     /// <summary>"Make it jump further", which produces a proposal.</summary>
     Goal,
+
+    /// <summary>"Which ship is best for these roles with this much", which names hulls and proposes nothing.</summary>
+    BestShip,
 }
 
 /// <summary>One round of a conversation about a plan: what the Commander said and what the core answered.</summary>
@@ -87,6 +90,11 @@ public sealed class ShipPlanAdvisor(
             return new BuildAdvice(BuildRemarkKind.Question, null, [], null, [], "The model's answer was not one I could read. Try again.", "unreadable");
         }
 
+        if (answer.Kind == BuildRemarkKind.BestShip)
+        {
+            return await BestShipAsync(answer, exchange, game, cancellationToken).ConfigureAwait(false);
+        }
+
         if (answer.Kind != BuildRemarkKind.Goal)
         {
             return new BuildAdvice(answer.Kind, Limit(answer.Reply, []), [], null, []);
@@ -131,6 +139,45 @@ public sealed class ShipPlanAdvisor(
             read.Dropped,
             Goal: read.Goal);
     }
+
+    private static async Task<BuildAdvice> BestShipAsync(
+        Answer answer,
+        IReadOnlyList<BuildRemark> exchange,
+        CommanderGameState? game,
+        CancellationToken cancellationToken)
+    {
+        var read = answer.Goal is { Weights.Count: > 0 } said ? Check(said with { Mode = GoalMode.Weighted }, null) : null;
+
+        if (read is null)
+        {
+            return new BuildAdvice(BuildRemarkKind.Question, Limit(answer.Ask ?? AskWhichRoles, []), [], null, []);
+        }
+
+        var credits = read.Goal.Credits ?? game?.Session.Balance;
+        var ranks = game?.Ranks ?? RankState.Empty;
+        var owned = BestShip.Owned(game);
+
+        var result = await Task.Run(
+            () => BestShip.Choose(EliteSpecifications.Ships, read.Goal, ranks, owned, credits, cancellationToken),
+            cancellationToken).ConfigureAwait(false);
+
+        var tail = new List<string>();
+
+        if (read.Dropped.Count > 0)
+        {
+            tail.Add($"I left out {And(read.Dropped)}, which {(read.Dropped.Count == 1 ? "is" : "are")} not in my module table.");
+        }
+
+        return new BuildAdvice(
+            BuildRemarkKind.BestShip,
+            string.Join(" ", new[] { BestShip.Say(result, read.Goal, credits, game?.Session.Balance is not null) }.Concat(tail)),
+            [],
+            null,
+            read.Dropped);
+    }
+
+    private const string AskWhichRoles =
+        "Which of combat, exploration and cargo is the ship for, and how much of each?";
 
     private static string And(IReadOnlyList<string> items) => items.Count switch
     {
@@ -195,7 +242,7 @@ public sealed class ShipPlanAdvisor(
         text.AppendLine(
             "The Commander is asking you about their plan for one ship in Elite Dangerous. Decide which "
             + "kind of remark it is: \"question\" (about a slot or a choice in the plan), \"critique\" (how "
-            + "good the plan is), or \"goal\" (something they want the ship to do better).");
+            + "good the plan is), \"goal\" (something they want the ship to do better), or \"best_ship\" (which hull suits some roles and a budget).");
         text.AppendLine();
         text.AppendLine("Rules:");
         text.AppendLine("- " + Stories.PlainWords.Rule);
@@ -204,6 +251,10 @@ public sealed class ShipPlanAdvisor(
             "- A goal is read, not answered: d47's own search finds the modules. Give the goal below. Never name a "
             + "slot, a module class, a rating, a blueprint or a grade. Name a module only in mustHaves, and only one the "
             + "Commander said.");
+        text.AppendLine(
+            "- A remark asking which ship, or which hull, is best for some roles with some money is \"best_ship\": give the "
+            + "roles as weights, the profile, floors, mustHaves, credits and engineering, with no mode and no target. If it "
+            + "names no role, give \"ask\" and no goal: one question asking which roles. d47 names the hulls.");
         text.AppendLine(
             "- If a goal remark does not say how far to take it, give \"ask\" and no goal: one question asking whether "
             + "they mean to maximise it at the expense of everything else, maximise it without giving up the rest, or "
@@ -266,6 +317,9 @@ public sealed class ShipPlanAdvisor(
             "mode: only = the target alone; keep_rest = the target without lowering any other figure; any_gain = the "
             + "fewest changes that raise the target at all; weighted = every role by its weight. target is required "
             + "unless mode is weighted. credits is an amount the Commander named, else null.");
+        text.AppendLine(
+            "For which ship is best: {\"kind\":\"best_ship\",\"goal\":{\"weights\":{\"combat\":0.5,\"exploration\":0.5,\"cargo\":0},"
+            + "\"profile\":\"bounty\",\"floors\":[],\"mustHaves\":[],\"credits\":null,\"engineering\":false}}");
         text.AppendLine("For a goal whose extent is not said: {\"kind\":\"goal\",\"ask\":\"the question\"}");
 
         return text.ToString();
@@ -631,6 +685,7 @@ public sealed class ShipPlanAdvisor(
             {
                 "critique" => BuildRemarkKind.Critique,
                 "goal" => BuildRemarkKind.Goal,
+                "best-ship" or "best_ship" or "bestship" => BuildRemarkKind.BestShip,
                 "question" => BuildRemarkKind.Question,
                 _ => goal is not null ? BuildRemarkKind.Goal : BuildRemarkKind.Question,
             };

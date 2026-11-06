@@ -144,12 +144,14 @@ public static class ShipsCapability
                 Name = "talk_about_build",
                 Exercise =
                     "Open a ship's page under Ships and ask D47 to make the build jump further. The reply critiques "
-                    + "the build, and any changes it suggests appear on that page without being applied.",
+                    + "the build, and any changes it suggests appear on that page without being applied. Ask \"which ship "
+                    + "is best for exploring and hauling with fifty million\" and it names up to three hulls with their "
+                    + "costs, and proposes nothing.",
                 Description =
                     "Pass the Commander's remark about a ship's build to the build adviser: a question about "
-                    + "a slot, a request for a critique, or a goal such as making it jump further. It answers "
-                    + "for the ship open on the Ships page, else the one being flown, and proposes changes on "
-                    + "that ship's page without applying any.",
+                    + "a slot, a request for a critique, a goal such as making it jump further, or which hull "
+                    + "best suits roles and a budget. It answers for the ship open on the Ships page, else the "
+                    + "one being flown, and proposes changes on that ship's page without applying any.",
                 Parameters =
                 [
                     ToolParameter.Text("remark", "The Commander's words.", required: true),

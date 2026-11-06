@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Ask "which ship is best for exploring and hauling with fifty million" while talking through a build, and D47 names up to three hulls, best first, with what each costs and its figures for those roles. It leaves out hulls you cannot buy, including those behind a navy rank you do not hold, and prices every module at full cost so the figure is the most it would be. It proposes nothing; plan one of the hulls next.
+
 Asking to talk through a ship build for a goal, such as "make it jump further", now gets a proposal that d47 searches for rather than one the model chooses. The model reads the goal, d47 finds the changes and the model explains them. Where you do not say how far to go, it asks whether to maximise at the expense of everything else, maximise without giving up the rest, or any improvement. The goal is kept for the conversation, so "a bit more cargo" amends it. A module you name that d47 does not know is left out and named.
 
 Talking through a ship build now answers from figures d47 computes for the plan: jump range at three masses, power, shields, hull, resistances, damage and cargo, marked measured or modelled. For an owned ship whose plan differs from what is fitted, both sets are given, and the answer quotes them rather than working out its own.

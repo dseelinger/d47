@@ -390,7 +390,8 @@ A ship's own page opens with **Talk through this build**. It is answered by the 
 
 - a question about one slot, such as "why that thruster";
 - a critique, such as "is this build any good";
-- a goal, such as "make it jump further".
+- a goal, such as "make it jump further";
+- which ship is best for these roles with this much, such as "which ship is best for exploring and hauling with fifty million".
 
 A question or a critique gets an answer from the figures d47 computes for the plan: jump range, power, shields, hull, damage and cargo. A goal gets a **proposal** that d47 found for the goal the model read from your remark: the model reads
 the goal, d47 searches for the modules, and the model explains the result. Where the remark does not say
@@ -416,6 +417,15 @@ closes. The goal is held with it, so a later remark such as "a bit more cargo" a
 from your language model, so it needs one configured. A question or a critique costs one request, and a
 goal two: one to read it and one to explain the result.
 
+Asking which ship is best names at most three hulls, best first, each with its cost and the figures for
+the roles you named. d47 leaves out hulls you cannot buy: those without a price, early-adoption and
+ARX-only hulls, and hulls behind a navy rank you do not hold. It searches each remaining hull from empty,
+pricing every module at full cost with nothing back for stock modules, so a cost is the most it would be;
+a hull you already own costs nothing for the hull. A hull is kept only when the hull, its modules and the
+5% rebuy reserve fit the amount you named, else your balance. Each role is compared across all the hulls
+kept. The answer costs one request, proposes nothing and holds no goal; to plan one of the hulls, say so
+next.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
@@ -430,9 +440,9 @@ from a phrase, and never from the model.
 #### `talk_about_build`
 
 Pass the Commander's remark about a ship's build to the build adviser: a question about a slot, a
-request for a critique, or a goal such as making it jump further. It answers for the ship open on
-the Ships page, else the one being flown, and proposes changes on that ship's page without applying
-any.
+request for a critique, a goal such as making it jump further, or which hull best suits roles and a
+budget. It answers for the ship open on the Ships page, else the one being flown, and proposes changes
+on that ship's page without applying any.
 
 ```json
 {"type":"object","properties":{"remark":{"type":"string","description":"The Commander\u0027s words."}},"required":["remark"],"additionalProperties":false}

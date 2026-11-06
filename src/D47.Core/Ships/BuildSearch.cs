@@ -27,9 +27,13 @@ public static class BuildSearch
     public static (double Survivability, double Damage) CombatMix(CombatProfile profile) =>
         profile == CombatProfile.Bounty ? (0.5, 0.5) : (0.6, 0.4);
 
-    /// <summary>The best build the search reaches; <paramref name="cancellationToken"/> is checked before each build is read.</summary>
+    /// <summary>
+    /// The best build the search reaches; <paramref name="cancellationToken"/> is checked before each build is read.
+    /// With <paramref name="fillCoreInternals"/>, each empty core internal slot is first given its stock module,
+    /// priced as bought.
+    /// </summary>
     public static BuildResult Find(
-        ShipBuild start, ShipLoadout? seen, BuildGoal goal, CancellationToken cancellationToken)
+        ShipBuild start, ShipLoadout? seen, BuildGoal goal, CancellationToken cancellationToken, bool fillCoreInternals = false)
     {
         ArgumentNullException.ThrowIfNull(start);
         ArgumentNullException.ThrowIfNull(goal);
@@ -39,8 +43,46 @@ public static class BuildSearch
             throw new ArgumentException($"A goal in {goal.Mode} mode needs a target role.", nameof(goal));
         }
 
-        return new Search(start, seen, goal, cancellationToken).Run();
+        return new Search(start, seen, goal, cancellationToken).Run(fillCoreInternals);
     }
+
+    /// <summary>The figures each role scores, read from a build with no seen loadout.</summary>
+    internal sealed record RoleFigures(double LadenJump, double Cargo, double Survivability, double Damage);
+
+    internal static RoleFigures FiguresOf(ShipBuild build, CombatProfile profile)
+    {
+        var reading = ShipGauges.ReadForSearch(build, null);
+
+        return new RoleFigures(
+            reading.Gauges.Jump?.Worst ?? 0,
+            reading.Gauges.Combat?.Cargo ?? 0,
+            Survivability(profile, reading),
+            Damage(profile, reading));
+    }
+
+    private static double Survivability(CombatProfile profile, ShipGauges.SearchReading reading) =>
+        reading.Gauges.Combat is not { } combat
+            ? 0
+            : Effective(profile, combat.Shields, combat.ShieldResistance) + Effective(profile, combat.Hull, combat.HullResistance);
+
+    private static double Effective(CombatProfile profile, double? strength, ResistanceSet? resistance)
+    {
+        if (strength is not { } points || points <= 0)
+        {
+            return 0;
+        }
+
+        var resisted = resistance is null
+            ? 0
+            : profile == CombatProfile.Thargoid
+                ? (resistance.Caustic + resistance.Thermal) / 2
+                : (resistance.Kinetic + resistance.Thermal + resistance.Explosive) / 3;
+
+        return points / Math.Max(0.05, 1 - resisted);
+    }
+
+    private static double Damage(CombatProfile profile, ShipGauges.SearchReading reading) =>
+        profile == CombatProfile.Thargoid ? reading.XenoDps : reading.Gauges.Combat?.SustainedDps ?? 0;
 
     private const double Tolerance = 1e-9;
 
@@ -153,7 +195,7 @@ public static class BuildSearch
             thrusters = LightestFirst(MainEngines);
         }
 
-        public BuildResult Run()
+        public BuildResult Run(bool fillCoreInternals)
         {
             var first = Evaluate(start, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
 
@@ -162,7 +204,7 @@ public static class BuildSearch
                 return Result(first);
             }
 
-            var placed = PlaceMustHaves(first);
+            var placed = PlaceMustHaves(fillCoreInternals ? FillCoreInternals(first) : first);
 
             var found = goal.Mode switch
             {
@@ -520,6 +562,39 @@ public static class BuildSearch
             return candidate;
         }
 
+        /// <summary>
+        /// Each empty core internal slot given its stock module: the slot's own class at E, else the cheapest at that
+        /// class, else the cheapest offered.
+        /// </summary>
+        private Candidate FillCoreInternals(Candidate candidate)
+        {
+            var modules = Modules(candidate.Build);
+            var filled = false;
+
+            for (var index = 0; index < slots.Count; index++)
+            {
+                var slot = slots[index];
+
+                if (slot.Layout.Kind != ShipSlotKind.Core || modules[index] is not null || slot.Offers.Count == 0)
+                {
+                    continue;
+                }
+
+                var sized = slot.Offers.Where(module => module.Class == slot.Layout.Size).ToList();
+                var stock = sized.FirstOrDefault(module => string.Equals(module.Rating, "E", StringComparison.OrdinalIgnoreCase))
+                            ?? Cheapest(sized)
+                            ?? Cheapest(slot.Offers)!;
+
+                candidate = Apply(candidate, slot.Name, PlanFor(candidate.Build, slot.Name, stock), "Fills an empty core internal slot.");
+                filled = true;
+            }
+
+            return filled ? Repaired(candidate) : candidate;
+        }
+
+        private static ModuleSpecification? Cheapest(IEnumerable<ModuleSpecification> modules) =>
+            modules.OrderBy(module => module.Cost ?? long.MaxValue).ThenBy(module => module.Symbol, StringComparer.Ordinal).FirstOrDefault();
+
         /// <summary>Each must-have in the smallest slot that takes it, at the cheapest variant that fits.</summary>
         private Candidate PlaceMustHaves(Candidate candidate)
         {
@@ -757,29 +832,9 @@ public static class BuildSearch
         }
 
         /// <summary>Shields plus hull, each divided by the damage it still takes over the profile's mix.</summary>
-        private double Survivability(ShipGauges.SearchReading reading) =>
-            reading.Gauges.Combat is not { } combat
-                ? 0
-                : Effective(combat.Shields, combat.ShieldResistance) + Effective(combat.Hull, combat.HullResistance);
+        private double Survivability(ShipGauges.SearchReading reading) => BuildSearch.Survivability(goal.Combat, reading);
 
-        private double Effective(double? strength, ResistanceSet? resistance)
-        {
-            if (strength is not { } points || points <= 0)
-            {
-                return 0;
-            }
-
-            var resisted = resistance is null
-                ? 0
-                : goal.Combat == CombatProfile.Thargoid
-                    ? (resistance.Caustic + resistance.Thermal) / 2
-                    : (resistance.Kinetic + resistance.Thermal + resistance.Explosive) / 3;
-
-            return points / Math.Max(0.05, 1 - resisted);
-        }
-
-        private double Damage(ShipGauges.SearchReading reading) =>
-            goal.Combat == CombatProfile.Thargoid ? reading.XenoDps : reading.Gauges.Combat?.SustainedDps ?? 0;
+        private double Damage(ShipGauges.SearchReading reading) => BuildSearch.Damage(goal.Combat, reading);
 
         private static double Ratio(double figure, double best) => best > 0 ? figure / best : 0;
 
