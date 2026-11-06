@@ -86,6 +86,15 @@ public sealed record ChapterInputs
     /// <summary>The system a changed objective asks to travel to, which the plan's last stop arrives in; null for none.</summary>
     public AdventureHeading? Heading { get; init; }
 
+    /// <summary>The fewest and most objectives a short story holds; null for a story chapter, which the planner's own limits hold.</summary>
+    public (int Fewest, int Most)? Objectives { get; init; }
+
+    /// <summary>A short story's length, which labels its objectives; null for a story chapter.</summary>
+    public AdventureLength? Length { get; init; }
+
+    /// <summary>The board into a ship the Commander's brief names, first in the plan; null for none.</summary>
+    public AdventureTrigger? Board { get; init; }
+
     /// <summary><see cref="ChapterTags"/> every place the chapter draws is limited to, where some candidate has them.</summary>
     public IReadOnlySet<string> Tags { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 

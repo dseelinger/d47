@@ -2503,151 +2503,17 @@ public sealed class StoryDirector(
             ? family => RefusedActivities.Key(TriggerKind.Mission, family) is { } key && ledger.LastDone(key) is null
             : null;
 
-    /// <summary>
-    /// Whether a fixed station with a pad for the ship aboard, in a system needing no permit, lies within the chapter's reach.
-    /// True when it cannot be told: no galaxy search, no known position, or the query failed.
-    /// </summary>
-    private async Task<bool> StationsInReachAsync(CommanderGameState? game, CancellationToken cancellationToken)
-    {
-        if (Galaxy?.Invoke() is not { } search || game?.Location.StarSystem is not { Length: > 0 } system)
-        {
-            return true;
-        }
+    private Task<bool> StationsInReachAsync(CommanderGameState? game, CancellationToken cancellationToken) =>
+        DrawGates.StationsInReachAsync(Galaxy?.Invoke(), game, logger, cancellationToken);
 
-        var ship = game.Ship;
-        PadSize? pad = Enum.TryParse<PadSize>(EliteSpecifications.Ship(ship.Type)?.Pad, ignoreCase: true, out var size) ? size : null;
+    private Task<bool> FrontlineInReachAsync(CommanderGameState? game, CancellationToken cancellationToken) =>
+        DrawGates.FrontlineInReachAsync(Galaxy?.Invoke(), game, logger, cancellationToken);
 
-        try
-        {
-            var found = await search
-                .FindStationsAsync(StationQuery.Near(system, AdventureGenerator.Radius(AdventureReach.Session, ship.MaxJumpRange, game.Carrier.Owned), 20), cancellationToken)
-                .ConfigureAwait(false);
+    private Task<bool> WarInReachAsync(CommanderGameState? game, CancellationToken cancellationToken) =>
+        DrawGates.WarInReachAsync(Galaxy?.Invoke(), game, logger, cancellationToken);
 
-            return found.Stations.Any(station =>
-                station.IsFixed && !PermitSystemTable.Locked(station.SystemName) && (pad is not { } needed || station.Admits(needed)));
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            logger.LogWarning(ex, "The galaxy search could not list the stations within reach of a story chapter, so its activities are not gated on them");
-            return true;
-        }
-    }
-
-    /// <summary>
-    /// Whether an open fixed station with Frontline Solutions, in a system at war, lies within the chapter's reach.
-    /// False when it cannot be told: no galaxy search, no known position, or the query failed.
-    /// </summary>
-    private async Task<bool> FrontlineInReachAsync(CommanderGameState? game, CancellationToken cancellationToken)
-    {
-        if (Galaxy?.Invoke() is not { } search || game?.Location.StarSystem is not { Length: > 0 } system)
-        {
-            return false;
-        }
-
-        var ship = game.Ship;
-        PadSize? pad = Enum.TryParse<PadSize>(EliteSpecifications.Ship(ship.Type)?.Pad, ignoreCase: true, out var size) ? size : null;
-        var resolver = new AdventureResolver(search, game.Standings);
-
-        try
-        {
-            var radius = AdventureGenerator.Radius(AdventureReach.Session, ship.MaxJumpRange, game.Carrier.Owned);
-            var found = await search.FindStationsAsync(AdventureResolver.FrontlineNear(system, radius, 20), cancellationToken).ConfigureAwait(false);
-
-            foreach (var station in found.Stations.Where(station =>
-                         station.IsFixed && !PermitSystemTable.Locked(station.SystemName) && (pad is not { } needed || station.Admits(needed))))
-            {
-                if (await resolver.FrontlineAtWarAsync(station, cancellationToken).ConfigureAwait(false))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            logger.LogWarning(ex, "The galaxy search could not list the Frontline Solutions stations within reach of a story chapter, so on-foot kill bonds are not drawn");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Whether a system at war or in civil war lies within the chapter's reach.
-    /// False when it cannot be told: no galaxy search, no known position, or the query failed.
-    /// </summary>
-    private async Task<bool> WarInReachAsync(CommanderGameState? game, CancellationToken cancellationToken)
-    {
-        if (Galaxy?.Invoke() is not { } search || game?.Location.StarSystem is not { Length: > 0 } system)
-        {
-            return false;
-        }
-
-        var radius = AdventureGenerator.Radius(AdventureReach.Session, game.Ship.MaxJumpRange, game.Carrier.Owned);
-        var requested = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["distance"] = $"0-{radius.ToString("0", System.Globalization.CultureInfo.InvariantCulture)}",
-            ["faction_state"] = "War,Civil War",
-        };
-
-        if (!GalaxyQuery.TryParse(system, requested, 20, out var query, out _))
-        {
-            return false;
-        }
-
-        try
-        {
-            var found = await search.SearchAsync(query, cancellationToken).ConfigureAwait(false);
-
-            return found.Systems.Any(candidate => candidate.AtWar);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            logger.LogWarning(ex, "The galaxy search could not list the systems at war within reach of a story chapter, so space kill bonds are not drawn");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// The state-gated mission families with a ranked station in the chapter's reach whose system has a faction in a required state.
-    /// Empty when it cannot be told: no galaxy search, no known position, or the query failed.
-    /// </summary>
-    private async Task<IReadOnlySet<string>> StateFamiliesInReachAsync(CommanderGameState? game, CancellationToken cancellationToken)
-    {
-        var inReach = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        if (Galaxy?.Invoke() is not { } search || game?.Location.StarSystem is not { Length: > 0 } system)
-        {
-            return inReach;
-        }
-
-        var radius = AdventureGenerator.Radius(AdventureReach.Session, game.Ship.MaxJumpRange, game.Carrier.Owned);
-
-        foreach (var family in ChapterActivities.StateGatedFamilies)
-        {
-            var names = MissionCatalogue.All.Where(name => string.Equals(name.Family, family, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            if (!MissionStationQuery.TryParse(system, names, radius, out var query, out _))
-            {
-                continue;
-            }
-
-            try
-            {
-                var scan = await search.FindMissionStationsAsync(query, cancellationToken).ConfigureAwait(false);
-
-                if (MissionStationRanking.Rank(query, scan, MissionStationQuery.Size).Any(candidate => candidate.MatchingStates > 0))
-                {
-                    inReach.Add(family);
-                }
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                logger.LogWarning(ex, "The galaxy search could not list the stations within reach of a story chapter for the mission family {Family}, so it is not drawn", family);
-            }
-        }
-
-        return inReach;
-    }
+    private Task<IReadOnlySet<string>> StateFamiliesInReachAsync(CommanderGameState? game, CancellationToken cancellationToken) =>
+        DrawGates.StateFamiliesInReachAsync(Galaxy?.Invoke(), game, logger, cancellationToken);
 
     /// <summary>The place objectives a finale chapter must already have: the landing of the last one, or the stop nearer the destination.</summary>
     private static int FixedPlaces(Story story, int? finaleChapter) =>
@@ -2655,6 +2521,9 @@ public sealed class StoryDirector(
 
     /// <summary>Whether the Commander's Crime rating is 0, so no chapter, detour or short story may ask for a crime.</summary>
     public bool CrimeRefused() => Ratings() is { Crime: <= 0 };
+
+    /// <summary>The career weights the activity draw reads now: the Career ratings, and the Commander's statistics where they are unset.</summary>
+    public CareerWeights CurrentWeights() => Weights(Game()?.Statistics ?? CareerStatistics.Empty);
 
     private CareerWeights Weights(CareerStatistics statistics)
     {

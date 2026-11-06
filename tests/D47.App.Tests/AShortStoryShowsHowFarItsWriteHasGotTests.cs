@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -35,7 +35,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var (panel, _, _, _, model, clock, _) = Open();
 
         Press(panel, "Go");
-        Until(() => model.Asked == 3, 10, 20);
+        Until(() => model.Asked == 1, 10, 20);
         clock.Advance(TimeSpan.FromSeconds(27));
         Reopen(panel);
 
@@ -57,7 +57,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var (panel, _, _, _, model, clock, _) = Open();
 
         Press(panel, "Go");
-        Until(() => model.Asked == 3, 10, 20);
+        Until(() => model.Asked == 1, 10, 20);
         clock.Advance(TimeSpan.FromSeconds(10));
         Reopen(panel);
         var before = Fill(panel);
@@ -80,7 +80,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var headset = Panel(surface);
 
         Press(desktop, "Go");
-        Until(() => model.Asked == 3, 10, 20);
+        Until(() => model.Asked == 1, 10, 20);
         headset.Nav.SelectRoot(AdventuresPage.AskKey);
         Dispatcher.UIThread.RunJobs();
 
@@ -95,7 +95,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var (panel, book, surface, said, model, _, _) = Open();
 
         Press(panel, "Go");
-        Until(() => model.Asked == 3, 10, 20);
+        Until(() => model.Asked == 1, 10, 20);
         panel.Nav.SelectRoot(AdventuresPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
@@ -120,7 +120,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var (panel, book, surface, said, model, _, logged) = Open();
 
         Press(panel, "Go");
-        Until(() => model.Asked == 3, 10, 20);
+        Until(() => model.Asked == 1, 10, 20);
         Press(panel, "Stop");
 
         Assert.False(Progress(panel).IsVisible);
@@ -144,10 +144,10 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         var paths = new AppPaths(TestSurface.MemoryFolder("d47-short-story-progress"));
         var store = new AdventureStore(Path.Combine(paths.Data, "adventures.json"), TestSurface.FilesFor(paths), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
-        var state = AdventuresTabTests.State();
-        IGalaxyService galaxy = new AdventuresTabTests.Galaxy();
+        var state = ShortStoryWorld.State();
+        IGalaxyService galaxy = new ShortStoryWorld.Galaxy();
         var said = new List<string>();
-        var model = new HoldingModel(AdventuresTabTests.Spine, AdventuresTabTests.NoObjections, AdventuresTabTests.Beats, AdventuresTabTests.NoObjections, AdventuresTabTests.NoObjections);
+        var model = new HoldingModel(ShortStoryWorld.Lines, AdventuresTabTests.NoObjections, AdventuresTabTests.NoObjections);
         var clock = new Clock();
         var logged = new RecordingLogger();
 
@@ -223,7 +223,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         public void Advance(TimeSpan by) => Interlocked.Add(ref _ticks, by.Ticks);
     }
 
-    /// <summary>Answers each round in turn; the third round, the objectives, waits for <see cref="Release"/> or the token.</summary>
+    /// <summary>Answers each round in turn; the first round, the story's words, waits for <see cref="Release"/> or the token.</summary>
     private sealed class HoldingModel(params string[] replies) : ILlmProvider
     {
         private readonly TaskCompletionSource _hold = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -256,7 +256,7 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         {
             var round = Interlocked.Increment(ref _asked) - 1;
 
-            if (round == 2)
+            if (round == 0)
             {
                 try
                 {

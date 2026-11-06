@@ -171,7 +171,10 @@ public sealed class OnFootKillBondsAreSentToAFrontlineDeskTests
             () => null,
             null,
             null,
-            NullLogger.Instance);
+            NullLogger.Instance)
+        {
+            PlansShortStories = false,
+        };
     }
 
     /// <summary>

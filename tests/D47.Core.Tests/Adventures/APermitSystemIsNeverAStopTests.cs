@@ -190,7 +190,10 @@ public sealed class APermitSystemIsNeverAStopTests
             () => provider, () => null, () => "You are the ship.", () => "core", () => null, () => state,
             () => new AdventureGeneratorTests.Galaxy(), () => null, null, null,
             Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance,
-            visited: new VisitedStarsBook(root, files));
+            visited: new VisitedStarsBook(root, files))
+        {
+            PlansShortStories = false,
+        };
 
         var outcome = await generator.GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 

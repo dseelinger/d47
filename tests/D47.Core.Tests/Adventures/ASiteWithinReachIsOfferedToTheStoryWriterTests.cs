@@ -330,7 +330,10 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
             null,
             NullLogger.Instance,
             signalIndex: () => indexOn ? index : null,
-            visited: visited);
+            visited: visited)
+        {
+            PlansShortStories = false,
+        };
     }
 
     private static Index Source(string tsv) => new(SignalIndex.Read(new StringReader(tsv)));

@@ -421,7 +421,7 @@ public sealed partial class AdventureGenerator(
     /// <summary>Output ceiling for the step that reads where a changed objective asks to go.</summary>
     public const int HeadingOutputCeiling = 4000;
 
-    /// <summary>Beats per structure.</summary>
+    /// <summary>Beats per structure, for a short story written through the spine and objectives calls.</summary>
     public static (int Beats, string Sheet) Structure(AdventureLength length) => length switch
     {
         AdventureLength.Short => (3, "setup, turn, resolution"),
@@ -478,7 +478,7 @@ public sealed partial class AdventureGenerator(
             // A throw counts as a failed draft, as it does for a chapter.
             try
             {
-                last = await GenerateAsync(ask with { LastDraftRefused = last?.ForNextDraft, Draft = draft, Outline = draft == 2 ? last?.Outline : null }, now, cancellationToken).ConfigureAwait(false);
+                last = await GenerateAsync(ask with { LastDraftRefused = last?.ForNextDraft, Draft = draft, Outline = draft == 2 ? last?.Outline : null, Plan = last?.Plan ?? ask.Plan }, now, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
@@ -544,7 +544,7 @@ public sealed partial class AdventureGenerator(
             }
         }
 
-        if (ask.Rewrite is not null || (IsPlanned(ask) && (PlansActOne || !Travels(ask))))
+        if (ask.Rewrite is not null || (IsPlanned(ask) && (PlansActOne || !Travels(ask)) && (PlansShortStories || ask.Story is not null)))
         {
             return await PlannedAsync(ask, facts, now, notes, started, cancellationToken).ConfigureAwait(false);
         }
@@ -615,6 +615,11 @@ public sealed partial class AdventureGenerator(
         ArgumentNullException.ThrowIfNull(draft);
         ArgumentNullException.ThrowIfNull(ask);
         ArgumentException.ThrowIfNullOrWhiteSpace(remark);
+
+        if (PlansShortStories && ask.Story is null)
+        {
+            return await ReviseShortAsync(draft, ask, exchange, remark, now, cancellationToken).ConfigureAwait(false);
+        }
 
         var (opened, refused) = await OpenAsync(ask, cancellationToken).ConfigureAwait(false);
 
@@ -2461,7 +2466,7 @@ public sealed partial class AdventureGenerator(
         return ChapterPlacesAsync(ask, ask.Story?.Slots ?? [], cancellationToken);
     }
 
-    /// <summary>The places a chapter of <paramref name="ask"/> may use for <paramref name="slots"/>; a rewrite also gathers stations for its stops.</summary>
+    /// <summary>The places a chapter of <paramref name="ask"/> may use for <paramref name="slots"/>; a rewrite and a short story also gather stations for their stops.</summary>
     private async Task<ChapterPlaces> ChapterPlacesAsync(AdventureAsk ask, IReadOnlyList<DrawnActivity> slots, CancellationToken cancellationToken)
     {
         var facts = Facts.Of(state(), ask);
@@ -2480,7 +2485,7 @@ public sealed partial class AdventureGenerator(
         var crime = !ask.CrimeRefused && slots.Any(slot => slot.Kind == TriggerKind.Mission && (MissionFamilies.IsIllegal(slot.Family) || CrimeObjectives.IsFamily(slot.Family)));
         var war = slots.Any(slot => slot.Kind is TriggerKind.Bond or TriggerKind.Conflict);
         var supply = slots.Any(slot => slot.Kind is TriggerKind.Map or TriggerKind.Signal or TriggerKind.Organic);
-        var docks = Travels(ask) || ask.Rewrite is not null || slots.Any(slot => slot.PlaceBefore || (ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic) is { } row && ChapterActivities.NeedsStation(row)));
+        var docks = Travels(ask) || ask.Rewrite is not null || ask.Story is null || slots.Any(slot => slot.PlaceBefore || (ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic) is { } row && ChapterActivities.NeedsStation(row)));
 
         var anarchyTask = crime ? AnarchyAsync(search, facts, here, cancellationToken, notes[1]) : Task.FromResult<IReadOnlyList<SystemSummary>>([]);
         var sitesTask = SitesAsync(search, facts, here, cancellationToken, notes[2]);

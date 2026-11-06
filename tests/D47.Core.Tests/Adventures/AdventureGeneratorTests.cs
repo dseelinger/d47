@@ -372,7 +372,10 @@ public sealed class AdventureGeneratorTests
             () => null,
             null,
             null,
-            logger);
+            logger)
+        {
+            PlansShortStories = false,
+        };
     }
 
     /// <summary>As the first overload, asking for the effort <paramref name="storyEffort"/> names for the model, unless <paramref name="effort"/> overrides it.</summary>
@@ -395,6 +398,7 @@ public sealed class AdventureGeneratorTests
             storyEffort)
         {
             Effort = effort,
+            PlansShortStories = false,
         };
     }
 
@@ -417,6 +421,7 @@ public sealed class AdventureGeneratorTests
             logger)
         {
             Time = time,
+            PlansShortStories = false,
         };
     }
 
@@ -439,6 +444,7 @@ public sealed class AdventureGeneratorTests
             NullLogger.Instance)
         {
             Time = time ?? TimeProvider.System,
+            PlansShortStories = false,
         };
     }
 

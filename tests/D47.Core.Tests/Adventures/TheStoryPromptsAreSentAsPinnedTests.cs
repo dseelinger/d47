@@ -114,7 +114,10 @@ public sealed class TheStoryPromptsAreSentAsPinnedTests
         var galaxy = new AdventureGeneratorTests.Galaxy { Positioned = positioned };
         var catalogue = new Catalogue();
 
-        return new AdventureGenerator(() => provider, () => null, () => "You are the ship.", () => "core", () => null, () => state, () => galaxy, () => catalogue, null, null, NullLogger.Instance);
+        return new AdventureGenerator(() => provider, () => null, () => "You are the ship.", () => "core", () => null, () => state, () => galaxy, () => catalogue, null, null, NullLogger.Instance)
+        {
+            PlansShortStories = false,
+        };
     }
 
     private sealed class Catalogue : INotablePlacesService

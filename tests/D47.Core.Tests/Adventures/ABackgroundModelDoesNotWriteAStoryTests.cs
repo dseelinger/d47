@@ -39,7 +39,10 @@ public sealed class ABackgroundModelDoesNotWriteAStoryTests
             (id, model) => ModelCatalog.Embedded.TraitsFor(id, model).StoryEffort,
             null,
             null,
-            (id, model) => ModelCatalog.Embedded.TraitsFor(id, model).WritesStories);
+            (id, model) => ModelCatalog.Embedded.TraitsFor(id, model).WritesStories)
+        {
+            PlansShortStories = false,
+        };
         var chapter = AdventureChapter.Of([LanternRoute(Accepted) with { Key = "first", Spine = new AdventureSpine { Premise = "First premise." } }], "first");
 
         var outcome = await generator.GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: chapter), Now, CancellationToken.None);

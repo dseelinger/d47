@@ -896,9 +896,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
             lengthHint.Text = length switch
             {
-                AdventureLength.Short => "Three objectives: setup, turn, resolution.",
-                AdventureLength.Long => "Eight objectives or more.",
-                _ => "Five objectives: setup, complication, turn, setback, resolution.",
+                AdventureLength.Short => "Three or four objectives.",
+                AdventureLength.Long => "Six to eight objectives, with an opening and a closing.",
+                _ => "Four to six objectives.",
             };
 
             shipHint.Text = thisShipOnly ? "Only the ship you are flying now." : "Any ship you own may be part of it.";

@@ -40,6 +40,9 @@ public enum PlannedPurpose
 
     /// <summary>The last objective of an act-one chapter whose beacon is out of reach: a ship that can make the trip.</summary>
     Reach,
+
+    /// <summary>The board into the ship a short story's brief names, first in the story.</summary>
+    Ship,
 }
 
 /// <summary>One objective of a planned chapter: its function, its steps in order with places resolved and counts set, and what it is for.</summary>
@@ -196,22 +199,26 @@ public static class ChapterPlanner
             return Refuse(ChapterRules.Finale, $"No place on the way to the finale's destination in {inputs.Destination!.System} was found, so the chapter cannot end closer to it.");
         }
 
-        var content = inputs.Slots.Count + (sight ? 1 : 0) + goals.Count + (end is null && landing is null ? 0 : 1) + (swap is null ? 0 : 1) + (last is null ? 0 : 1);
+        var board = swap is null ? inputs.Board : null;
+        var content = inputs.Slots.Count + (sight ? 1 : 0) + goals.Count + (end is null && landing is null ? 0 : 1) + (swap is null ? 0 : 1) + (board is null ? 0 : 1) + (last is null ? 0 : 1);
         var rewriting = inputs.Functions is not null;
+        var most = inputs.Objectives?.Most ?? MostObjectives;
 
-        if (content == 0 && !rewriting)
+        if (content == 0 && !rewriting && inputs.Objectives is null)
         {
             return Refuse(ChapterRules.Count, "The chapter has no drawn activity, sight, Goals step or stop to plan.");
         }
 
-        if (content > MostObjectives)
+        if (content > most)
         {
-            return Refuse(ChapterRules.Count, $"The chapter's content needs {content.ToString(CultureInfo.InvariantCulture)} objectives; it may hold {MostObjectives.ToString(CultureInfo.InvariantCulture)}.");
+            return Refuse(ChapterRules.Count, $"The chapter's content needs {content.ToString(CultureInfo.InvariantCulture)} objectives; it may hold {most.ToString(CultureInfo.InvariantCulture)}.");
         }
 
-        // A rewrite needs one objective at least, and aims for as many as it replaces.
-        var fewestStops = Math.Max(0, (rewriting ? 1 : FewestObjectives) - content);
-        var mostStops = Math.Max(fewestStops, Math.Min(rewriting ? inputs.Functions!.Count - content : inputs.Travels ? TravelObjectives - content : MostStops, MostObjectives - content));
+        // A rewrite needs one objective at least, and aims for as many as it replaces; a short story's count is drawn from its range.
+        var fewestStops = Math.Max(0, (rewriting ? 1 : inputs.Objectives?.Fewest ?? FewestObjectives) - content);
+        var mostStops = Math.Max(fewestStops, Math.Min(
+            rewriting ? inputs.Functions!.Count - content : inputs.Objectives is { } range ? range.Most - content : inputs.Travels ? TravelObjectives - content : MostStops,
+            most - content));
         var stops = rewriting ? mostStops : fewestStops + random.Next(mostStops - fewestStops + 1);
 
         var middle = inputs.Slots.Select(slot => new Item(PlannedPurpose.Activity, slot)).ToList();
@@ -232,6 +239,11 @@ public static class ChapterPlanner
         if (swap is not null)
         {
             built.Add((PlannedPurpose.Swap, [planning.Swap(swap)]));
+        }
+
+        if (board is not null)
+        {
+            built.Add((PlannedPurpose.Ship, [planning.Goal(board)]));
         }
 
         foreach (var item in middle)
@@ -286,7 +298,9 @@ public static class ChapterPlanner
             built.Add((lastPurpose, [last]));
         }
 
-        var functions = inputs.Functions is { } labels ? ChapterFunctions.Relabel(labels, built.Count) : ChapterFunctions.For(built.Count, inputs.Stage);
+        var functions = inputs.Functions is { } labels
+            ? ChapterFunctions.Relabel(labels, built.Count)
+            : inputs.Length == AdventureLength.Long ? ChapterFunctions.Long(built.Count) : ChapterFunctions.For(built.Count, inputs.Stage);
 
         return new ChapterPlanResult(
             new ChapterPlan([.. built.Select((objective, index) => new PlannedObjective(functions[index], objective.Steps, objective.Purpose))], inputs.Destination),

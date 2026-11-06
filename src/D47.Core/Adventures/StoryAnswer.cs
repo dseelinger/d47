@@ -23,6 +23,7 @@ internal static class StoryAnswer
     internal const string PlainName = "story_plain";
     internal const string LinesName = "story_lines";
     internal const string LineRepairsName = "story_line_repairs";
+    internal const string BriefName = "story_brief";
 
     internal static readonly IReadOnlyList<string> SpineFields = ["name", "premise", "want", "stake", "turn", "ending"];
 
@@ -174,6 +175,49 @@ internal static class StoryAnswer
             ("reply", Text()),
         ]).ToJsonString());
 
+    /// <summary>The brief step's answer as the instruction states it; <paramref name="revising"/> adds the "changes" flag.</summary>
+    internal static string BriefShape(IReadOnlyList<string> activities, IReadOnlyList<string> ships, bool revising) =>
+        "{\"home\": boolean, \"system\": string|null, \"activities\": [{\"activity\": " + string.Join("|", activities.Select(id => $"\"{id}\""))
+        + ", \"count\": number|null}], \"ship\": " + string.Join("|", ships.Select(ship => $"\"{ship}\"")) + "|null"
+        + (revising ? ", \"leaveOut\": [" + string.Join("|", activities.Select(id => $"\"{id}\"")) + "], \"changes\": boolean" : string.Empty) + "}";
+
+    /// <summary>
+    /// The schema of the step that reads a short story's brief, or the Commander's remark on a draft, into constraints: whether they
+    /// ask to go home, the system they name, the <paramref name="activities"/> they ask for with any count said, the one of
+    /// <paramref name="ships"/> they name, and with <paramref name="revising"/> the activities they ask to drop and whether the latest
+    /// remark changes any of them.
+    /// </summary>
+    internal static LlmResponseSchema BriefSchema(IReadOnlyList<string> activities, IReadOnlyList<string> ships, bool revising)
+    {
+        var answer = new List<(string, JsonNode)>
+        {
+            ("home", new JsonObject { ["type"] = "boolean" }),
+            ("system", Maybe("string")),
+            ("activities", new JsonObject
+            {
+                ["type"] = "array",
+                ["items"] = Object(
+                [
+                    ("activity", new JsonObject { ["type"] = "string", ["enum"] = new JsonArray([.. activities.Select(id => (JsonNode)JsonValue.Create(id)!)]) }),
+                    ("count", Maybe("integer")),
+                ]),
+            }),
+            ("ship", new JsonObject { ["type"] = new JsonArray("string", "null"), ["enum"] = new JsonArray([.. ships.Select(ship => (JsonNode)JsonValue.Create(ship)!), null]) }),
+        };
+
+        if (revising)
+        {
+            answer.Add(("leaveOut", new JsonObject
+            {
+                ["type"] = "array",
+                ["items"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray([.. activities.Select(id => (JsonNode)JsonValue.Create(id)!)]) },
+            }));
+            answer.Add(("changes", new JsonObject { ["type"] = "boolean" }));
+        }
+
+        return new LlmResponseSchema(BriefName, Object(answer).ToJsonString());
+    }
+
     /// <summary>The answer's JSON shape as the instruction states it; <paramref name="heading"/> adds a changed objective's "heading" flag.</summary>
     internal static string BeatsShape(
         bool speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null, bool aboard = false, StorySwitches? switches = null, bool heading = false) =>
@@ -262,17 +306,17 @@ internal static class StoryAnswer
     /// A planned chapter's answer as the instruction states it: the spine, the opening and reply, and the words of each objective
     /// by number; <paramref name="task"/> adds an event step's "task".
     /// </summary>
-    internal static string LinesShape(bool task, bool aboard, StorySwitches? switches) =>
+    internal static string LinesShape(bool task, bool aboard, StorySwitches? switches, bool speakers = true) =>
         "{" + string.Join(", ", SpineFields.Select(field => $"\"{field}\": string"))
-        + ", \"opening\": " + OpeningShape(speakers: true)
-        + ", \"reply\": string, \"objectives\": [" + ObjectiveWordsShape(task, switches) + "]"
+        + ", \"opening\": " + OpeningShape(speakers)
+        + ", \"reply\": string, \"objectives\": [" + ObjectiveWordsShape(task, switches, speakers) + "]"
         + (aboard ? ", \"aboard\": [string]" : string.Empty)
         + (switches is { Opening: true } ? SwitchesShape(switches, "openingBoards", "openingLeaves") : string.Empty) + "}";
 
     /// <summary>A planned chapter's repair answer as the instruction states it: the objectives written again, and the opening and the spine only when asked for.</summary>
     internal static string LineRepairsShape(bool task, bool opening, bool spine, StorySwitches? switches, bool speakers = true) =>
         "{\"objectives\": [" + ObjectiveWordsShape(task, switches, speakers) + "]"
-        + (opening ? ", \"opening\": " + OpeningShape(speakers: true) : string.Empty)
+        + (opening ? ", \"opening\": " + OpeningShape(speakers) : string.Empty)
         + (spine ? ", " + string.Join(", ", SpineFields.Select(field => $"\"{field}\": string")) : string.Empty) + "}";
 
     private static string ObjectiveWordsShape(bool task, StorySwitches? switches, bool speakers = true) =>
@@ -283,12 +327,13 @@ internal static class StoryAnswer
     /// <summary>
     /// The schema of a planned chapter's answer: the spine, the opening and reply, and each objective's number, title, reason and
     /// lines, with the task where <paramref name="task"/> and the boardings and leavings due. It has no field for a place, a kind or a count.
+    /// With no <paramref name="speakers"/>, as for a short story, the opening is a string and each line is a string.
     /// </summary>
-    internal static LlmResponseSchema LinesSchema(IReadOnlyList<string> speakers, bool task, IReadOnlyList<string>? cast = null, StorySwitches? switches = null)
+    internal static LlmResponseSchema LinesSchema(IReadOnlyList<string>? speakers, bool task, IReadOnlyList<string>? cast = null, StorySwitches? switches = null)
     {
         var answer = new List<(string, JsonNode)>(SpineFields.Select(field => (field, (JsonNode)Text())))
         {
-            ("opening", Lines(speakers)),
+            ("opening", speakers is not null ? Lines(speakers) : Text()),
             ("reply", Text()),
             ("objectives", new JsonObject { ["type"] = "array", ["items"] = Object(ObjectiveWords(speakers, task, switches)) }),
         };
@@ -317,9 +362,9 @@ internal static class StoryAnswer
             ("objectives", new JsonObject { ["type"] = "array", ["items"] = Object(ObjectiveWords(speakers, task, switches)) }),
         };
 
-        if (opening && speakers is not null)
+        if (opening)
         {
-            answer.Add(("opening", Lines(speakers)));
+            answer.Add(("opening", speakers is not null ? Lines(speakers) : Text()));
         }
 
         if (spine)

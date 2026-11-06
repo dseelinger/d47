@@ -19,6 +19,15 @@ public static class ChapterFunctions
 
     public const string Resolution = "resolution";
 
+    public const string Opening = "opening";
+
+    public const string Hesitation = "hesitation";
+
+    public const string Closing = "closing";
+
+    /// <summary>Fewest objectives <see cref="Long"/> labels with an opening, a hesitation and a closing.</summary>
+    public const int FewestLong = 6;
+
     /// <summary>
     /// The functions of <paramref name="count"/> objectives in order: setup first and resolution last; objective
     /// round(0.6 × (count − 1)) + 1 is the turn, named for <paramref name="stage"/>; the objective after it is setback unless
@@ -51,6 +60,24 @@ public static class ChapterFunctions
         functions[count - 1] = Resolution;
 
         return functions;
+    }
+
+    /// <summary>
+    /// The functions of a long short story's <paramref name="count"/> objectives: opening first and closing last, around
+    /// <see cref="For"/>'s labels for the rest with a hesitation just before the turn. Below <see cref="FewestLong"/>, <see cref="For"/>'s.
+    /// </summary>
+    public static IReadOnlyList<string> Long(int count)
+    {
+        if (count < FewestLong)
+        {
+            return For(count, StoryStage.FunAndGames);
+        }
+
+        var inner = For(count - 3, StoryStage.FunAndGames).ToList();
+
+        inner.Insert(inner.IndexOf(Turn), Hesitation);
+
+        return [Opening, .. inner, Closing];
     }
 
     /// <summary>

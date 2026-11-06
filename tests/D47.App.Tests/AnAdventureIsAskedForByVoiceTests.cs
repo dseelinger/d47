@@ -25,17 +25,22 @@ public class AnAdventureIsAskedForByVoiceTests
 {
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 20, 0, 0, TimeSpan.Zero);
 
+    /// <summary>The brief step's answer for a brief that names no place, activity or ship.</summary>
+    private const string NothingAsked = """{"home": false, "system": null, "activities": [], "ship": null}""";
+
+    /// <param name="brief">Whether the story is asked for with a brief, which is read before the story's words are written.</param>
     private static (PanelView Panel, AdventureBook Book, AdventureCapability.AdventureDesk Desk, RecordingModel? Model) Open(
-        bool canAsk, Task? hold = null)
+        bool canAsk, Task? hold = null, bool brief = true)
     {
         var paths = new AppPaths(TempFolders.Create("d47-ask-by-voice-tests"));
         paths.EnsureCreated();
 
         var store = new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
-        var state = AdventuresTabTests.State();
-        var model = canAsk ? RecordingModel.Replying(hold ?? Task.CompletedTask, AdventuresTabTests.Spine, AdventuresTabTests.NoObjections, AdventuresTabTests.Beats, AdventuresTabTests.NoObjections, AdventuresTabTests.NoObjections) : null;
-        IGalaxyService? galaxy = canAsk ? new AdventuresTabTests.Galaxy() : null;
+        var state = ShortStoryWorld.State();
+        string[] replies = [.. brief ? [NothingAsked] : Array.Empty<string>(), ShortStoryWorld.Lines, AdventuresTabTests.NoObjections, AdventuresTabTests.NoObjections];
+        var model = canAsk ? RecordingModel.Replying(hold ?? Task.CompletedTask, replies) : null;
+        IGalaxyService? galaxy = canAsk ? new ShortStoryWorld.Galaxy() : null;
 
         var generator = new AdventureGenerator(
             () => model, () => null, () => null, () => null, () => null, () => state,
@@ -113,10 +118,12 @@ public class AnAdventureIsAskedForByVoiceTests
         Assert.True(book.Store.Find("F1", "the-missing-freight")?.IsDraft);
         Assert.Equal(AdventuresPage.ReadPrefix + "the-missing-freight", panel.Nav.Trail[^1].Key);
 
-        var spine = model!.Asked[0];
-        Assert.Contains("The Commander's brief, in their words: \"a lighthouse nobody tends\"", spine, StringComparison.Ordinal);
-        Assert.Contains("Reach: a session's flying", spine, StringComparison.Ordinal);
-        Assert.Contains(AdventureGenerator.Structure(AdventureLength.Short).Sheet, model.Asked[2], StringComparison.Ordinal);
+        Assert.Contains("Their brief: \"a lighthouse nobody tends\"", model!.Asked[0], StringComparison.Ordinal);
+
+        var lines = model.Asked[1];
+        Assert.Contains("The Commander's brief, in their words, which sets the story's theme and mood: \"a lighthouse nobody tends\"", lines, StringComparison.Ordinal);
+        Assert.Contains("Reach: a session's flying", lines, StringComparison.Ordinal);
+        Assert.InRange(book.Store.Find("F1", "the-missing-freight")!.Beats.Count, 3, 4);
     }
 
     [AvaloniaFact]
@@ -135,6 +142,7 @@ public class AnAdventureIsAskedForByVoiceTests
         Assert.Equal(["Near here", "A session's flying", "Anywhere", "Short", "An evening", "Long"], options);
         Assert.Equal(["Length", "Reach"], panel.GetVisualDescendants().OfType<Segment>().Select(AutomationProperties.GetName).Order());
         Assert.Contains("Optional. Press it to say it, or type it.", drawn);
+        Assert.Contains("Four to six objectives.", drawn);
 
         using var frame = TopLevel.GetTopLevel(panel)!.CaptureRenderedFrame()!;
         frame.SaveCapture("short-story-ask-ready.png");
@@ -165,7 +173,7 @@ public class AnAdventureIsAskedForByVoiceTests
     [AvaloniaFact]
     public void ClearEmptiesTheBriefWithoutOpeningTheEntryAndGoThenAsksWithNone()
     {
-        var (panel, book, _, model) = Open(canAsk: true);
+        var (panel, book, _, model) = Open(canAsk: true, brief: false);
 
         panel.Tab = PanelTab.Stories;
         panel.Nav.SelectRoot(AdventuresPage.AskKey);
@@ -232,7 +240,7 @@ public class AnAdventureIsAskedForByVoiceTests
         hold.SetResult();
         Until(() => book.Store.Find("F1", "the-missing-freight") is not null);
 
-        Assert.Equal(5, model!.Asked.Count);
+        Assert.Equal(4, model!.Asked.Count);
         Assert.Single(book.Store.For("F1"));
     }
 

@@ -22,7 +22,8 @@ public sealed class ChaptersWrittenTogetherKeepTheirOwnRecordsTests
         var meter = new MeteredLlmProvider(stub, null, 100m);
         var world = new ScenarioWorld();
         var persona = PersonaCatalog.Resolve("warden");
-        var ask = new AdventureAsk(AdventureReach.NearHere, AdventureLength.Short);
+        // The brief step is the one call each write makes: with no Commander location nothing can be planned after it.
+        var ask = new AdventureAsk(AdventureReach.NearHere, AdventureLength.Short, Brief: "A quiet run.");
 
         var one = Stopwatch.StartNew();
         _ = await Write(meter, models[0], persona, world, ask);

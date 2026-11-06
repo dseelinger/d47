@@ -138,10 +138,11 @@ public sealed class AChapterEndingOnAProviderFailureIsWrittenAgainTests
             meter, Model, ThinkingEffort.Medium, 1, PersonaCatalog.Resolve("warden"), new ScenarioWorld(), new TimedGalaxy(new UnusedGalaxy()), null,
             new AdventureAsk(AdventureReach.NearHere, AdventureLength.Short), "chapter", "", null, time: time, generate: generate);
 
+    /// <summary>A short story with a brief, so the brief step is the call the provider fails before anything is planned.</summary>
     private static Task<StoryRecord> WriteWithTheGeneratorAsync(MeteredLlmProvider.MeteredView meter, TimeProvider time) =>
         StoryComparisonTests.WriteOneAsync(
             meter, Model, ThinkingEffort.Medium, 1, PersonaCatalog.Resolve("warden"), new ScenarioWorld(), new TimedGalaxy(new UnusedGalaxy()), null,
-            new AdventureAsk(AdventureReach.NearHere, AdventureLength.Short), "chapter", "", null, time: time);
+            new AdventureAsk(AdventureReach.NearHere, AdventureLength.Short, Brief: "A quiet run."), "chapter", "", null, time: time);
 
     private sealed class UnusedGalaxy : StubGalaxyService, IGalaxyService
     {

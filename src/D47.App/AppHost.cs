@@ -3071,6 +3071,7 @@ public sealed class AppHost : IDisposable
         adventureGenerator.Barred = () => stores.ActivityBars.Barred(gameState.Active?.Identity.FrontierId);
         adventureGenerator.HomeSystem = () => settings.Current.Callouts.HomeSystem;
         adventureGenerator.Systems = () => services.StarSystems;
+        adventureGenerator.Weights = storyDirector.CurrentWeights;
 
         // After the startup catch-up, so each chapter moved keeps when its beats fired.
         storyDirector.ArchiveChapters();

@@ -21,13 +21,13 @@ public sealed partial class AdventureGenerator
 
     /// <summary>
     /// Whether a chapter's objectives are planned in code and only its words are written: any rewrite of a begun chapter or short
-    /// story, and a story chapter with drawn activities or in act one.
+    /// story, a short story, and a story chapter with drawn activities or in act one.
     /// </summary>
     internal static bool IsPlanned(AdventureAsk ask)
     {
         ArgumentNullException.ThrowIfNull(ask);
 
-        return ask.Rewrite is not null || ask is { Story.Slots.Count: > 0 } || Travels(ask);
+        return ask.Rewrite is not null || ask.Story is null || ask is { Story.Slots.Count: > 0 } || Travels(ask);
     }
 
     /// <summary>Whether a story chapter is an act-one chapter with no drawn activity, which travels and ends on the beacon or on reach.</summary>
@@ -82,7 +82,7 @@ public sealed partial class AdventureGenerator
         public IReadOnlyList<string> Earlier => AdventureGenerator.Earlier(Raised, Heads.Concat(Opening ? [-1] : []).Concat(OfSpine ? [SpineIndex] : []), Refusals);
     }
 
-    private async Task<AdventureOutcome> PlannedAsync(AdventureAsk ask, Facts facts, DateTimeOffset now, List<string> notes, long started, CancellationToken cancellationToken)
+    private async Task<AdventureOutcome> PlannedAsync(AdventureAsk ask, Facts facts, DateTimeOffset now, List<string> notes, long started, CancellationToken cancellationToken, ShortRevision? revision = null)
     {
         var story = ask.Story;
         var rewrite = ask.Rewrite;
@@ -128,20 +128,29 @@ public sealed partial class AdventureGenerator
         }
         else if (plan is null)
         {
-            var places = await ChapterPlacesAsync(ask, cancellationToken).ConfigureAwait(false);
+            ChapterPlanResult planned;
+
+            if (story is null)
+            {
+                planned = await ShortPlanAsync(ask, facts, now, notes, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                var places = await ChapterPlacesAsync(ask, cancellationToken).ConfigureAwait(false);
+
+                planned = ChapterPlanner.Plan(ChapterInputs.Of(state(), ask, HomeSystem?.Invoke()), places, PlanSeed(ask));
+            }
 
             if (cancellationToken.IsCancellationRequested)
             {
                 return AdventureOutcome.Stopped;
             }
 
-            var planned = ChapterPlanner.Plan(ChapterInputs.Of(state(), ask, HomeSystem?.Invoke()), places, PlanSeed(ask));
-
             if (planned.Plan is not { } made)
             {
                 logger.LogWarning("Draft {Draft}, the chapter could not be planned under the {Rule} rule: {Refusal}", ask.Draft, planned.Refusal!.Rule, planned.Refusal.Text);
 
-                return new AdventureOutcome(null, null, NotPlanned + planned.Refusal.Text, notes);
+                return new AdventureOutcome(null, null, (story is null ? ShortNotPlanned : NotPlanned) + planned.Refusal.Text, notes);
             }
 
             plan = made;
@@ -160,7 +169,7 @@ public sealed partial class AdventureGenerator
         var away = ShipBases.Exempts(ask) && galaxy() is { } search ? await BaseAsync(search, ask, facts, cancellationToken).ConfigureAwait(false) : null;
 
         Enter(ask, WriteStage.Objectives);
-        var asked = await AskJsonAsync(LinesStep, LinesInstruction(ask, facts, plan, away, repair: null, after), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+        var asked = await AskJsonAsync(LinesStep, LinesInstruction(ask, facts, plan, away, repair: null, after, revision), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
 
         if (asked.Json is null)
         {
@@ -233,7 +242,7 @@ public sealed partial class AdventureGenerator
 
             var round = ++rounds[kind];
             var repair = new LineRepair(read, name, spine, resolved.Refusals, unplainRaised);
-            var again = await AskJsonAsync(LineRepairStep, LinesInstruction(ask, facts, plan, away, repair, after), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+            var again = await AskJsonAsync(LineRepairStep, LinesInstruction(ask, facts, plan, away, repair, after, revision), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
 
             if (cancellationToken.IsCancellationRequested)
             {
@@ -345,19 +354,26 @@ public sealed partial class AdventureGenerator
             Spine = spine,
             OpeningLines = resolved.Opening,
             Beats = Grouped(resolved),
-            Follows = ask.Chapter?.Previous.Key,
-            StoryId = story!.Id,
-            Aboard = Aboard(story, written.Aboard),
-            OpeningBoards = written.OpeningBoards,
-            OpeningLeaves = written.OpeningLeaves,
+            Follows = revision is not null ? revision.Draft.Follows : ask.Chapter?.Previous.Key,
         };
 
-        if (story.Sights is { Count: > 0 } sights)
+        if (story is not null)
         {
-            adventure = adventure with { Sight = SightSeen(sights, adventure.Beats) ?? adventure.Sight };
-        }
+            adventure = adventure with
+            {
+                StoryId = story.Id,
+                Aboard = Aboard(story, written.Aboard),
+                OpeningBoards = written.OpeningBoards,
+                OpeningLeaves = written.OpeningLeaves,
+            };
 
-        adventure = StoryAboard.Placed(adventure, story.Due ?? []);
+            if (story.Sights is { Count: > 0 } sights)
+            {
+                adventure = adventure with { Sight = SightSeen(sights, adventure.Beats) ?? adventure.Sight };
+            }
+
+            adventure = StoryAboard.Placed(adventure, story.Due ?? []);
+        }
 
         if (AdventureValidation.Problems(adventure) is { Count: > 0 } problems)
         {
@@ -366,7 +382,7 @@ public sealed partial class AdventureGenerator
 
         return new AdventureOutcome(adventure, read.Reply, null, notes)
         {
-            Destination = story.FinaleChapter == 1 ? plan.Destination : null,
+            Destination = story?.FinaleChapter == 1 ? plan.Destination : null,
         };
 
         AdventureOutcome Kept(AdventureOutcome outcome) => outcome.Draft is null && outcome.Internal ? outcome with { Plan = plan } : outcome;
@@ -750,6 +766,7 @@ public sealed partial class AdventureGenerator
         PlannedPurpose.Swap => $" It is the swap into a ship the Commander owns that can make the trip to the Guardian beacon{(story?.Beacon?.SwapTo is { } swap ? $": {swap}" : string.Empty)}.",
         PlannedPurpose.Beacon => " It is the Guardian beacon scan that ends act one, when the story's Guardian cores come aboard.",
         PlannedPurpose.Reach => " It is met once the Commander's ship can make the trip to the Guardian beacon.",
+        PlannedPurpose.Ship => " It is the board into the ship the Commander asked to fly.",
         _ => string.Empty,
     };
 
@@ -757,7 +774,7 @@ public sealed partial class AdventureGenerator
     /// The lines call for <paramref name="plan"/>: a new chapter's words, or a rewrite's new objectives. <paramref name="after"/> holds the
     /// objectives a rewrite that moved one objective keeps after it; it is null where the rewrite replaced every objective to the end.
     /// </summary>
-    private static StoryCall LinesInstruction(AdventureAsk ask, Facts facts, ChapterPlan plan, BaseStep? away, LineRepair? repair, IReadOnlyList<AdventureBeat>? after = null)
+    private static StoryCall LinesInstruction(AdventureAsk ask, Facts facts, ChapterPlan plan, BaseStep? away, LineRepair? repair, IReadOnlyList<AdventureBeat>? after = null, ShortRevision? revision = null)
     {
         var story = ask.Story;
         var rewriting = ask.Rewrite is not null;
@@ -768,6 +785,10 @@ public sealed partial class AdventureGenerator
         {
             AppendRewrite(text, ask, rewrite, facts, plan, after);
             AppendAway(text, away, ask, facts);
+        }
+        else if (story is null)
+        {
+            AppendShortStory(text, ask, facts, revision);
         }
         else
         {
@@ -795,6 +816,13 @@ public sealed partial class AdventureGenerator
             "The functions: the setup opens the chapter's want; a complication pushes against it; the "
             + $"{ChapterFunctions.TurnAt(ChapterInputs.StageOf(story?.Stage))} is where the chapter stops being what it looked like; a setback costs the Commander something; "
             + "the resolution's lines are the chapter's ending.");
+
+        if (plan.Objectives.Any(objective => objective.Function == ChapterFunctions.Opening))
+        {
+            text.AppendLine(
+                "The opening objective sets the scene before the setup; the hesitation is where the Commander could still turn back, just before the turn; "
+                + "the closing comes after the resolution and leaves the Commander with what the story meant.");
+        }
 
         if (!rewriting)
         {
@@ -832,7 +860,7 @@ public sealed partial class AdventureGenerator
         if (ask.LastDraftRefused is { Length: > 0 } refused)
         {
             text.AppendLine();
-            text.AppendLine("An earlier draft of this chapter's words could not be used, for this reason. Write this draft so that it does not happen again:");
+            text.AppendLine($"An earlier draft of this {(story is null ? "story" : "chapter")}'s words could not be used, for this reason. Write this draft so that it does not happen again:");
             text.Append("- ").AppendLine(refused);
         }
 
@@ -846,17 +874,19 @@ public sealed partial class AdventureGenerator
             return new StoryCall(text.ToString(), StoryAnswer.LineRepairsSchema(speakers, task, opening: false, spine: false, switches));
         }
 
+        var what = story is null ? "story" : "chapter";
+
         text.AppendLine();
         text.AppendLine(
-            "Answer with one JSON object and nothing else: " + StoryAnswer.LinesShape(task, story!.Cast is { Count: > 0 }, switches)
-            + ". \"name\" is the chapter's title, a few words; \"premise\" is one paragraph; \"want\" is the outer goal; \"stake\" is the belief the chapter tests "
+            "Answer with one JSON object and nothing else: " + StoryAnswer.LinesShape(task, story?.Cast is { Count: > 0 }, switches, speakers is not null)
+            + $". \"name\" is the {what}'s title, a few words; \"premise\" is one paragraph; \"want\" is the outer goal; \"stake\" is the belief the {what} tests "
             + "and what it would cost to be wrong; \"turn\" is where it stops being what it looked like; \"ending\" is what the last objective means; each under 600 characters. "
             + "\"objectives\" has one entry for each objective above, numbered as above. \"reply\" is what you say to the Commander, in your own voice, as you hand "
-            + "them the chapter — one or two sentences, no summary of the plot.");
+            + $"them the {what} — one or two sentences, no summary of the plot.");
 
         return new StoryCall(
             text.ToString(),
-            StoryAnswer.LinesSchema([.. Speakers(story)], task, story.Cast is { Count: > 0 } members ? [.. members.Select(member => member.Id)] : null, switches));
+            StoryAnswer.LinesSchema(speakers, task, story?.Cast is { Count: > 0 } members ? [.. members.Select(member => member.Id)] : null, switches));
     }
 
     /// <summary>A new chapter's head: what the call writes, the chapter before, a failed or set-aside draft, the facts, the story and its journey.</summary>

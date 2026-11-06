@@ -165,12 +165,13 @@ labelled rows, each with a default, so pressing *Go* on an untouched form is a c
 - **Reach** — how far the story may go: *near here*, *a session's flying*, *anywhere*. Turned into
   light years by what you can actually move — your ship's jump range, or your carrier's if you have
   one.
-- **Length** — which structure. *Short* is three objectives, setup and turn and resolution. *An evening*
-  is five. *Long* is eight or more. The count follows from the structure rather than the other way
-  round.
+- **Length** — how many objectives. *Short* is three or four: setup, turn and resolution, and a complication
+  when there are four. *An evening* is four to six. *Long* is six to eight, and adds an opening first, a
+  hesitation just before the turn and a closing last. The count within the range is drawn when the story is
+  planned (see [A short story planned in code](#short-stories-planned)).
 - **Ship** — *this ship only*, or *anything I own*. Shown only when you have a choice.
 
-Each row has a grey hint under it that changes with the choice, such as how many light years a leg of the story may run. And one optional thing said: a brief — a theme, a mood, a place it must include. Empty is fine. The brief row is a tile showing the brief; press it to say or type one, and press *Clear* beside it to empty it.
+Each row has a grey hint under it that changes with the choice, such as how many light years a leg of the story may run. And one optional thing said: a brief — a theme, a mood, a place to end in, things to do, a ship to fly. Empty is fine. D47 builds the objectives from any place, activity or ship the brief names, and the AI writes the story's words in its theme and mood. The brief row is a tile showing the brief; press it to say or type one, and press *Clear* beside it to empty it.
 
 Say "ask for a short story" and D47 opens this form and the entry for the brief. Say the brief, or
 press **Done** with it empty, and it asks with the form as it stands, as *Go* does. When a language model or galaxy
@@ -920,7 +921,7 @@ beacon scan works back over several chapters. The writer is told how far you are
 must fall in: a chapter starting 588 light years out has a last stop between 288 and 488. The last stop is the system
 of the chapter's last place objective, and a chapter with none counts as ending where it started. A chapter built on
 drawn activities is built inside this rule, the home leg and the base rule below, with its last stop drawn from places
-that meet them. Short stories are still written by the model and refused and repaired as before:
+that meet them. A chapter whose objectives the model writes is refused and repaired as before:
 a draft outside the band is refused and goes back through the repair rounds, as does one whose last stop Galaxy search cannot measure. The
 rule does not apply to a chapter that ends at the beacon, a finale chapter, a rewrite or a short story, or to a chapter
 that starts within 500 light years, or to a chapter in the black (below). The chapter also keeps one of its two place
@@ -1044,10 +1045,39 @@ leaves room for one fewer place objective in the draw. Then:
 Chapter one, and an act-one chapter that ends at the beacon, are planned in code with no drawn activity: one to four places
 the Commander arrives at, docks at, lands on or scans, a Guardian site within reach among them, and the beacon scan last. When only a
 stored ship can make the trip, boarding it comes first. Chapter one when the beacon is out of reach is planned the same way and ends on
-the reach objective. A short story and a chapter written again with **Write chapter again** are written by the model, which writes their objectives. When you refuse an objective that
+the reach objective. A chapter written again with **Write chapter again** is written by the model, which writes its objectives. When you refuse an objective that
 held a drawn activity, only that activity is drawn again, without the refused one or the chapter's other activities, and
 the seed includes the index of the replaced objective. The chapter's activities are read back from its objectives, so
 nothing extra is stored.
+
+### A short story planned in code {#short-stories-planned}
+
+A short story is planned by the same planner and draw as a story chapter. The model writes only its words.
+
+- **The brief.** When you gave one, one short model call reads it into three things from closed lists: the system the
+  story ends in (home, your carrier's system, Sol, Colonia or a system you name, found by the galaxy search), the
+  activities you ask for, each with the count you said, and a ship you ask to fly. With no brief there is no such call.
+- **The activities.** The ones the brief asks for come first; one with no count said takes one from the activity's usual
+  range for your ship. `ChapterDraw.Draw` draws the rest from your **Career ratings**, or from your statistics where
+  they are unset, up to three activities in all, never one you barred, never a crime with Crime at 0, and only what the
+  galaxy search finds within a session's reach of you.
+- **The count.** Code draws the number of objectives within the length's range. Story stops at places within reach fill it
+  after the activities, and the labels come from code: setup, complication, turn, setback and resolution, and for *Long*
+  the opening, the hesitation and the closing as well.
+- **The ship.** A ship the brief names is boarded first, unless it is the ship you are in, **This ship only** is chosen,
+  or you cannot afford it with the credit reserve a Goals story keeps.
+- **The place.** A system the brief names is the last objective, an arrival there however far it is.
+- **The words.** One model call writes the title, spine, opening, reply and each objective's title, reason and lines,
+  given your brief for its theme and mood. Its answer has no field for a place, a kind or a count. The code checks and
+  the fidelity and plain-wording checks read them as for a chapter. A draft written again keeps the same objectives.
+
+The Sol band, the home leg and the base rule do not hold a short story. Where no plan stands, D47 says
+"The short story could not be planned:" and the rule that stopped it, and writes no other draft.
+
+**Change something** on a draft reads your brief and what you have said about the draft with the same call, the
+where they differ, the latest thing you said counts. A remark that asks for a place, an activity or a ship, or to drop an activity, plans the
+objectives again from all of it, never drawing an activity you asked to drop. Any other remark, such as "make it
+darker", keeps every objective exactly as it is and writes the words again in the light of what you said.
 
 ### A Goals story {#goals-stories}
 

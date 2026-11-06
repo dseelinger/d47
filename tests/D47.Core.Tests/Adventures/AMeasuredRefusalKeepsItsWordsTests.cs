@@ -242,7 +242,10 @@ public sealed class AMeasuredRefusalKeepsItsWordsTests
     }
 
     private static AdventureGenerator Generator(ILlmProvider provider, IGalaxyService galaxy, CommanderGameState state) =>
-        new(() => provider, () => null, () => "You are the ship.", () => "core", () => null, () => state, () => galaxy, () => null, null, null, NullLogger.Instance);
+        new(() => provider, () => null, () => "You are the ship.", () => "core", () => null, () => state, () => galaxy, () => null, null, null, NullLogger.Instance)
+        {
+            PlansShortStories = false,
+        };
 
     /// <summary>A galaxy whose distance to <paramref name="to"/>, from <paramref name="from"/> where it is given, comes from <paramref name="distance"/>; every other call goes to <paramref name="inner"/>.</summary>
     private sealed class Measuring(IGalaxyService inner, string to, Func<double?> distance, string? from = null) : IGalaxyService

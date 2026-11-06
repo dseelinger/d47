@@ -79,7 +79,8 @@ public class AdventuresTabTests
             Assert.Null(book.Write("F1", adventure));
         }
 
-        var state = State();
+        // A story written here is planned, which measures every hop from the Commander's position.
+        var state = provider is null ? State() : ShortStoryWorld.State();
         var said = new List<string>();
 
         var generator = new AdventureGenerator(
@@ -337,7 +338,7 @@ public class AdventuresTabTests
     [AvaloniaFact]
     public void AnOfferedStoryOpensItsReadingLevelOnAWideStrip()
     {
-        var (panel, book, said) = Open(1400, new ScriptedModel(Spine, NoObjections, Beats, NoObjections, NoObjections), new Galaxy());
+        var (panel, book, said) = Open(1400, new ScriptedModel(ShortStoryWorld.Lines, NoObjections, NoObjections), new ShortStoryWorld.Galaxy());
 
         Assert.Equal(3, panel.GetVisualDescendants().OfType<DrillView>().Single().Panes);
 
@@ -372,21 +373,8 @@ public class AdventuresTabTests
         Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Accept"));
     }
 
-    internal const string Spine = """
-        {"name": "The Missing Freight", "premise": "Freight went missing on the way to Maren Anchorage.", "want": "To find the freight.",
-         "stake": "Whether a debt can be owed to nobody.", "turn": "It was never loaded.", "ending": "The freight is found and delivered."}
-        """;
-
     /// <summary>The fidelity and plain-wording checks' answer when nothing is objected to.</summary>
     internal const string NoObjections = """{"objections": []}""";
-
-    internal const string Beats = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Freight Delivered", "function": "resolution", "kind": "rank", "reason": "Someone there knows about the burst.", "career": "Trade", "rank": 1, "line": "The freight is delivered."}
-        ]}
-        """;
 
     /// <summary>One reply per request, in order; a third request is the test's failure, not a repeat.</summary>
     private sealed class ScriptedModel(params string[] replies) : ILlmProvider
