@@ -6,7 +6,8 @@ namespace D47.Core.Tests.Adventures;
 
 /// <summary>
 /// A figurative phrase the checker rewrites is put in place and the draft checked again with no writer round; an invented feature,
-/// or a rewrite that fails a later check, goes back to the writer.
+/// or a rewrite that fails a later check, goes back to the writer, as does a part the plain check refuses again after its own
+/// rewrite, with every finding raised on it.
 /// </summary>
 public sealed class APlainRewriteIsPutInPlaceBeforeTheWriterIsAskedTests
 {
@@ -106,5 +107,36 @@ public sealed class APlainRewriteIsPutInPlaceBeforeTheWriterIsAskedTests
         Assert.Equal(6, provider.CallCount);
         Assert.Equal("Freight went missing from Ossen's Lantern.", outcome.Draft!.Spine!.Premise);
         Assert.Contains("[premise] Freight went missing from Ossen's Lantern.", provider.Requests[2].Prompt.History[0].Text);
+    }
+
+    [Fact]
+    public async Task ALineThePlainCheckRefusesAgainAfterItsOwnRewriteGoesToTheWriterWithEveryFinding()
+    {
+        const string RewriteRefused = """{"objections": [{"part": "objective 2", "quote": "the trader at Maren Anchorage", "kind": "figurative", "reason": "it names no trader.", "plain": "the broker"}]}""";
+
+        var provider = Scripted(AdventureGeneratorTests.Spine, Plain, AdventureGeneratorTests.GoodBeats, Plain, LineRewritten, Plain, RewriteRefused, PlainDock, Plain, Plain);
+
+        var outcome = await Write(provider);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        var repair = Assert.Single(provider.Requests, request => request.Prompt.History[0].Text.Contains("Some of it cannot stand", StringComparison.Ordinal)).Prompt.History[0].Text;
+        Assert.Contains("\"the trader at Maren Anchorage\" is figurative", repair);
+        Assert.Contains("\"To one name\" is figurative", repair);
+        Assert.Equal("Dock at Maren Anchorage.", outcome.Draft!.Beats[1].Lines[0].Text);
+    }
+
+    [Fact]
+    public async Task APremiseThePlainCheckRefusesAgainAfterItsOwnRewriteGoesToTheWriterWithEveryFinding()
+    {
+        const string RewriteRefused = """{"objections": [{"part": "premise", "quote": "Freight went missing", "kind": "figurative", "reason": "it says not whose freight.", "plain": "Cargo was lost"}]}""";
+
+        var provider = Scripted(FigurativeSpine, PremiseRewritten, RewriteRefused, AdventureGeneratorTests.Spine, Plain, AdventureGeneratorTests.GoodBeats, Plain, Plain);
+
+        var outcome = await Write(provider);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        var again = Assert.Single(provider.Requests, request => request.Prompt.History[0].Text.Contains("Its wording is refused", StringComparison.Ordinal)).Prompt.History[0].Text;
+        Assert.Contains("\"Freight went missing\" is figurative", again);
+        Assert.Contains("\"A ledger will not balance\" is figurative", again);
     }
 }

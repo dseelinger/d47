@@ -21,6 +21,8 @@ internal static class StoryAnswer
     internal const string FidelityName = "story_fidelity";
     internal const string HeadingName = "story_heading";
     internal const string PlainName = "story_plain";
+    internal const string LinesName = "story_lines";
+    internal const string LineRepairsName = "story_line_repairs";
 
     internal static readonly IReadOnlyList<string> SpineFields = ["name", "premise", "want", "stake", "turn", "ending"];
 
@@ -242,6 +244,95 @@ internal static class StoryAnswer
         }
 
         return new LlmResponseSchema(BeatsName, Object(answer).ToJsonString());
+    }
+
+    /// <summary>
+    /// A planned chapter's answer as the instruction states it: the spine, the opening and reply, and the words of each objective
+    /// by number; <paramref name="task"/> adds an event step's "task".
+    /// </summary>
+    internal static string LinesShape(bool task, bool aboard, StorySwitches? switches) =>
+        "{" + string.Join(", ", SpineFields.Select(field => $"\"{field}\": string"))
+        + ", \"opening\": " + OpeningShape(speakers: true)
+        + ", \"reply\": string, \"objectives\": [" + ObjectiveWordsShape(task, switches) + "]"
+        + (aboard ? ", \"aboard\": [string]" : string.Empty)
+        + (switches is { Opening: true } ? SwitchesShape(switches, "openingBoards", "openingLeaves") : string.Empty) + "}";
+
+    /// <summary>A planned chapter's repair answer as the instruction states it: the objectives written again, and the opening and the spine only when asked for.</summary>
+    internal static string LineRepairsShape(bool task, bool opening, bool spine, StorySwitches? switches) =>
+        "{\"objectives\": [" + ObjectiveWordsShape(task, switches) + "]"
+        + (opening ? ", \"opening\": " + OpeningShape(speakers: true) : string.Empty)
+        + (spine ? ", " + string.Join(", ", SpineFields.Select(field => $"\"{field}\": string")) : string.Empty) + "}";
+
+    private static string ObjectiveWordsShape(bool task, StorySwitches? switches) =>
+        "{\"objective\": number, \"title\": string, \"reason\": string, \"lines\": [{\"text\": string, \"speaker\": string}]"
+        + (task ? ", \"task\": string|null" : string.Empty)
+        + SwitchesShape(switches, "boards", "leaves") + "}";
+
+    /// <summary>
+    /// The schema of a planned chapter's answer: the spine, the opening and reply, and each objective's number, title, reason and
+    /// lines, with the task where <paramref name="task"/> and the boardings and leavings due. It has no field for a place, a kind or a count.
+    /// </summary>
+    internal static LlmResponseSchema LinesSchema(IReadOnlyList<string> speakers, bool task, IReadOnlyList<string>? cast = null, StorySwitches? switches = null)
+    {
+        var answer = new List<(string, JsonNode)>(SpineFields.Select(field => (field, (JsonNode)Text())))
+        {
+            ("opening", Lines(speakers)),
+            ("reply", Text()),
+            ("objectives", new JsonObject { ["type"] = "array", ["items"] = Object(ObjectiveWords(speakers, task, switches)) }),
+        };
+
+        if (cast is { Count: > 0 })
+        {
+            answer.Add(("aboard", IdList(cast)));
+        }
+
+        if (switches is { Opening: true })
+        {
+            answer.AddRange(Switches(switches, "openingBoards", "openingLeaves"));
+        }
+
+        return new LlmResponseSchema(LinesName, Object(answer).ToJsonString());
+    }
+
+    /// <summary>The schema of a planned chapter's repair answer: the objectives written again, and the opening and the spine only when asked for.</summary>
+    internal static LlmResponseSchema LineRepairsSchema(IReadOnlyList<string> speakers, bool task, bool opening, bool spine, StorySwitches? switches = null)
+    {
+        var answer = new List<(string, JsonNode)>
+        {
+            ("objectives", new JsonObject { ["type"] = "array", ["items"] = Object(ObjectiveWords(speakers, task, switches)) }),
+        };
+
+        if (opening)
+        {
+            answer.Add(("opening", Lines(speakers)));
+        }
+
+        if (spine)
+        {
+            answer.AddRange(SpineFields.Select(field => (field, (JsonNode)Text())));
+        }
+
+        return new LlmResponseSchema(LineRepairsName, Object(answer).ToJsonString());
+    }
+
+    private static List<(string, JsonNode)> ObjectiveWords(IReadOnlyList<string> speakers, bool task, StorySwitches? switches)
+    {
+        var words = new List<(string, JsonNode)>
+        {
+            ("objective", new JsonObject { ["type"] = "integer" }),
+            ("title", Text()),
+            ("reason", Text()),
+            ("lines", Lines(speakers)),
+        };
+
+        if (task)
+        {
+            words.Add(("task", Maybe("string")));
+        }
+
+        words.AddRange(Switches(switches, "boards", "leaves"));
+
+        return words;
     }
 
     /// <summary>The schema of a repair answer: each replacement is a beat with the number of the objective it replaces.</summary>

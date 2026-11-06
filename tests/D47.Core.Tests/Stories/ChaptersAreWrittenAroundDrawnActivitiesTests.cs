@@ -1,4 +1,3 @@
-using System.Text.Json;
 using D47.Core.Adventures;
 using D47.Core.Stories;
 using D47.Core.Tests.Adventures;
@@ -10,20 +9,12 @@ using static D47.Core.Tests.Stories.TheFinaleEndsWhereItsFirstChapterSaidTests;
 
 namespace D47.Core.Tests.Stories;
 
-/// <summary>A chapter after the beacon scan is written around three activities drawn before its spine, and the resolve step holds it to them.</summary>
+/// <summary>A chapter before the scan is drawn nothing and written as before; a drawn chapter is planned around its activities, and a refused one is drawn again.</summary>
 public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
 {
     private const string SpineText = """
         {"name": "The Long Way", "premise": "A debt.", "want": "To pay it.", "stake": "Whether it can be.", "turn": "It is owed.", "ending": "Forgiven."}
         """;
-
-    private static readonly DrawnActivity Bounties = new(TriggerKind.Bounty, null, 5);
-
-    private static readonly DrawnActivity Courier = new(TriggerKind.Mission, "Mission_Courier", 3);
-
-    private static readonly DrawnActivity Signals = new(TriggerKind.Signal, null, 2);
-
-    private static readonly DrawnActivity[] Three = [Bounties, Courier, Signals];
 
     private static AdventureAsk Chapter(IReadOnlyList<DrawnActivity>? slots, AdventureChapter? previous = null) =>
         new(Chapter: previous, Story: new AdventureStory("s", "S", "public", "hidden", 3, 40, 20, Slots: slots));
@@ -39,95 +30,25 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
 
     private static string PromptOf(RoundScriptedLlmProvider provider, int round) => provider.Requests[round].Prompt.History[0].Text;
 
-    private static IReadOnlyList<string> KindsOf(RoundScriptedLlmProvider provider, int round) =>
-        JsonDocument.Parse(provider.Requests[round].ResponseSchema!.SchemaJson).RootElement
-            .GetProperty("properties").GetProperty("beats").GetProperty("items").GetProperty("properties").GetProperty("kind").GetProperty("enum")
-            .EnumerateArray().Select(kind => kind.GetString()!).ToList();
-
     [Fact]
-    public async Task TheSpineAndTheObjectivesNameTheSameDrawnActivities()
-    {
-        var (outcome, provider) = await Written(Chapter(Three), SpineText, BeatsMeeting(Three));
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-
-        foreach (var round in new[] { 0, 2 })
-        {
-            var prompt = PromptOf(provider, round);
-
-            Assert.Contains("a \"bounty\" objective, count 5", prompt);
-            Assert.Contains("a \"mission\" objective whose family is exactly Mission_Courier, count 3", prompt);
-            Assert.Contains("a \"signal\" objective, count 2", prompt);
-        }
-
-        Assert.Contains("Its want and its turn are built on them", PromptOf(provider, 0));
-    }
-
-    [Fact]
-    public async Task TheObjectivesSchemaHasNoCountedKindOutsideTheSlots()
-    {
-        var (_, provider) = await Written(Chapter(Three), SpineText, BeatsMeeting(Three));
-        string[] placesAndMilestones = ["arrive", "dock", "land", "scan", "rank", "board", "engineer", "crew", "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "claim", "unlock"];
-
-        var kinds = KindsOf(provider, 2);
-
-        Assert.Equal(["bounty", "mission", "signal"], kinds.Except(placesAndMilestones).Order());
-        Assert.Contains("engineer", kinds);
-        Assert.Contains("crew", kinds);
-        Assert.DoesNotContain("livery", kinds);
-        Assert.DoesNotContain("onfoot", PromptOf(provider, 2).Split('\n').Where(line => line.StartsWith("- \"", StringComparison.Ordinal)).Select(line => line.Split('"')[1]));
-    }
-
-    [Fact]
-    public async Task ADraftMissingASlotGetsARepairRoundNamingItAndFailsIfItStaysMissing()
-    {
-        var without = BeatsMeeting([Bounties, Signals]);
-        var (outcome, provider) = await Written(Chapter(Three), SpineText, without, Repairs.Replacing(without, 2), Repairs.Replacing(without, 2));
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("has no objective for this one: ", PromptOf(provider, 3));
-        Assert.Contains("a \"mission\" objective whose family is exactly Mission_Courier, count 3", PromptOf(provider, 3));
-        Assert.Contains("has no objective for this one: ", outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task AMetSlotsObjectiveCarriesTheDrawnCount()
-    {
-        var wrongCounts = BeatsMeeting(Three.Select(slot => slot with { Count = 9 }));
-        var (outcome, _) = await Written(Chapter(Three), SpineText, wrongCounts);
-
-        Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal([5, 3, 2], outcome.Draft!.Beats.Where(beat => beat.Trigger.Kind is TriggerKind.Bounty or TriggerKind.Mission or TriggerKind.Signal).Select(beat => beat.Trigger.Count));
-    }
-
-    [Fact]
-    public async Task OneObjectiveMeetsOnlyOneSlot()
-    {
-        var twoBounties = BeatsMeeting([Bounties]);
-        var (outcome, _) = await Written(Chapter([Bounties, Bounties with { Count = 7 }]), SpineText, twoBounties, Repairs.Replacing(twoBounties, 2), Repairs.Replacing(twoBounties, 2));
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("has no objective for this one", outcome.Refusal);
-    }
-
-    [Fact]
-    public async Task ALastFinaleChapterWhoseDrawIncludesAnIllegalFamilyIsWrittenAndPasses()
+    public async Task ALastFinaleChapterWhoseDrawIncludesAnIllegalFamilyIsWrittenAndLandsOnTheDestination()
     {
         var heist = new DrawnActivity(TriggerKind.Mission, "Mission_OnFoot_Heist", 2) { PlaceBefore = true };
-        var ask = Ask(finale: 4, destination: new AdventureDestination(Galaxy.Address("Edge Moon"), "Edge Moon", 1, "Edge Moon 1 a"));
-        ask = ask with { Story = ask.Story! with { Slots = [heist] } };
-        var beats = $$"""
-            {"opening": "Go.", "reply": "Here.", "beats": [
-              {{Arrive("Kestrel")}},
-              {"title": "The Heist", "function": "turn", "kind": "mission", "reason": "Someone there knows about the burst.", "count": 2, "mission": "Mission_OnFoot_Heist", "line": "Do it."},
-              {{Land("Edge Moon", "Edge Moon 1 a")}}
-            ]}
-            """;
+        var destination = new AdventureDestination(9001, "Edge Moon", 1, "Edge Moon 1 a");
+        var ask = PlannedChapterWorld.Ask(PlannedChapterWorld.Story with { Slots = [heist], FinaleChapter = 4, FinaleChapters = 4, Destination = destination });
+        var plan = await PlannedChapterWorld.PlanAsync(ask);
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Lines(plan.Objectives.Count)), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
 
-        var outcome = await Write(ask, beats);
+        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, TestContext.Current.CancellationToken);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(TriggerKind.Land, outcome.Draft!.Beats[^1].Trigger.Kind);
+        Assert.Equal(destination.Landing(), outcome.Draft!.Beats[^1].Steps[^1].Trigger);
+
+        var steps = outcome.Draft.Beats.SelectMany(beat => beat.Steps).Select(step => step.Trigger).ToList();
+        var at = steps.FindIndex(step => step.MissionFamily == "Mission_OnFoot_Heist");
+
+        Assert.Equal(2, steps[at].Count);
+        Assert.Equal("Fixture Beta", steps[at - 1].System);
     }
 
     [Fact]
@@ -144,14 +65,10 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
         var chapter = new AdventureChapter(previous, []);
 
         var (_, plain) = await Written(Chapter(null, chapter), SpineText);
-        var (_, drawn) = await Written(Chapter(Three, chapter), SpineText, BeatsMeeting(Three));
 
         Assert.Contains("Vary what the Commander does", PromptOf(plain, 0));
         Assert.DoesNotContain("drawn for it by d47", PromptOf(plain, 0));
-        Assert.DoesNotContain("Vary what the Commander does", PromptOf(drawn, 0));
-        Assert.DoesNotContain("Vary what the Commander does", PromptOf(drawn, 2));
         Assert.Contains("The counted kinds, in no order of preference", PromptOf(plain, 2));
-        Assert.DoesNotContain("in no order of preference", PromptOf(drawn, 2));
     }
 
     [Trait("Category", "Integration")]

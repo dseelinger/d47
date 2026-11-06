@@ -3449,12 +3449,12 @@ public sealed class StoryDirector(
                 // A throw counts as a failure, so the tick does not start another paid write on every pass.
                 try
                 {
-                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, draft == 2 ? attempt.Outline : null, stationsInReach, frontlineInReach, stateFamiliesInReach, warInReach, cancellationToken).ConfigureAwait(false);
+                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, draft == 2 ? attempt.Outline : null, attempt.Plan, stationsInReach, frontlineInReach, stateFamiliesInReach, warInReach, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Writing a story chapter failed");
-                    attempt = new Attempt(AdventureOutcome.NotWritten, Retry: !cancellationToken.IsCancellationRequested);
+                    attempt = new Attempt(AdventureOutcome.NotWritten, Retry: !cancellationToken.IsCancellationRequested, Plan: attempt.Plan);
                 }
 
                 if (!attempt.Retry)
@@ -3522,11 +3522,11 @@ public sealed class StoryDirector(
             : " No draft came back that time, and a fault like that does not usually repeat.");
     }
 
-    /// <summary>One draft's result: the refusal or null, whether another draft may succeed, and what to tell it.</summary>
-    private sealed record Attempt(string? Refusal, bool Retry = false, string? Detail = null, AdventureOutline? Outline = null);
+    /// <summary>One draft's result: the refusal or null, whether another draft may succeed, what to tell it, and the plan every later draft keeps.</summary>
+    private sealed record Attempt(string? Refusal, bool Retry = false, string? Detail = null, AdventureOutline? Outline = null, ChapterPlan? Plan = null);
 
     private async Task<Attempt> WriteAsync(
-        string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, AdventureOutline? outline, bool stationsInReach, bool frontlineInReach, IReadOnlySet<string>? stateFamiliesInReach, bool warInReach, CancellationToken cancellationToken)
+        string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, AdventureOutline? outline, ChapterPlan? plan, bool stationsInReach, bool frontlineInReach, IReadOnlySet<string>? stateFamiliesInReach, bool warInReach, CancellationToken cancellationToken)
     {
         if (stories.Current(frontierId) is not { State: StoryState.Running } story)
         {
@@ -3690,14 +3690,15 @@ public sealed class StoryDirector(
             Outline: outline,
             Failed: setAside ? null : failed,
             SetAside: setAside && failed is not null ? SetAsideAsk(story, failed, game?.Location.StarSystem) : null,
-            CrimeRefused: CrimeRefused());
+            CrimeRefused: CrimeRefused(),
+            Plan: plan);
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
         if (outcome.Draft is not { } draft)
         {
             return outcome.Internal
-                ? new(outcome.Message, Retry: outcome.Redraftable, Detail: outcome.ForNextDraft, Outline: outcome.Outline)
+                ? new(outcome.Message, Retry: outcome.Redraftable, Detail: outcome.ForNextDraft, Outline: outcome.Outline, Plan: outcome.Plan)
                 : new(outcome.Message ?? "Nothing came back.");
         }
 

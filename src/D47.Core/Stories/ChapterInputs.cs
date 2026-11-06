@@ -45,6 +45,14 @@ public sealed record ChapterInputs
 
     public AdventureDestination? Destination { get; init; }
 
+    /// <summary>The finale chapter this is, from 1; null outside the finale.</summary>
+    public int? FinaleChapter { get; init; }
+
+    public int FinaleChapters { get; init; }
+
+    /// <summary>Whether this is the last finale chapter, which lands on the destination.</summary>
+    public bool Closing => FinaleChapter is { } finale && finale >= FinaleChapters && Destination is not null;
+
     /// <summary>The distance from Sol the last stop must fall in; null where no band applies.</summary>
     public ChapterBand.Range? Band { get; init; }
 
@@ -92,6 +100,8 @@ public sealed record ChapterInputs
             Goals = story?.Goals ?? [],
             Beacon = story?.Beacon,
             Destination = story?.Destination,
+            FinaleChapter = story?.FinaleChapter,
+            FinaleChapters = story?.FinaleChapters ?? 0,
             Band = ChapterBand.Of(position, ask),
             Leg = ChapterPull.Of(ask, position),
             Base = ShipBases.Applies(ask) ? ShipBases.Of(ships, carrier.Owned, homeSystem) : null,

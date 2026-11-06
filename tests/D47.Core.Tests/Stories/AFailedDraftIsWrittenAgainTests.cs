@@ -1,3 +1,4 @@
+using D47.Core.Adventures;
 using D47.Core.Stories;
 using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
@@ -34,6 +35,21 @@ public sealed class AFailedDraftIsWrittenAgainTests
         var beats = fixtures.Provider.Requests[5].Prompt.History[0].Text;
         Assert.Contains("An earlier draft of this chapter could not be used", beats);
         Assert.Contains("The last objective must be \"beacon\"", beats);
+    }
+
+    [Trait("Category", "Integration")]
+    [Fact]
+    public async Task EveryLaterDraftIsWrittenAgainstThePlanTheFirstReturned()
+    {
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider());
+        var plan = new ChapterPlan([new PlannedObjective(ChapterFunctions.Resolution, [new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 2 }], PlannedPurpose.Activity)], null);
+        fixtures.Answers = ask => new AdventureOutcome(null, null, "The lines could not be read.", []) { Internal = true, Plan = ask.Plan ?? plan };
+
+        Assert.Equal(StoryDirector.NoDraftStood, await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+
+        Assert.Equal(StoryDirector.Drafts, fixtures.Asks.Count);
+        Assert.Null(fixtures.Asks[0].Plan);
+        Assert.All(fixtures.Asks.Skip(1), ask => Assert.Same(plan, ask.Plan));
     }
 
     [Fact]

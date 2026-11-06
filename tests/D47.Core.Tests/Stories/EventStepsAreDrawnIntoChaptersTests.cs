@@ -1,10 +1,7 @@
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using D47.Core.Adventures;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Stories;
-using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
 using Xunit;
 using static D47.Core.Tests.Adventures.AdventureFixtures;
@@ -16,10 +13,6 @@ namespace D47.Core.Tests.Stories;
 public sealed class EventStepsAreDrawnIntoChaptersTests
 {
     private const int Seeds = 1000;
-
-    private const string SpineText = """
-        {"name": "The Long Way", "premise": "A debt.", "want": "To pay it.", "stake": "Whether it can be.", "turn": "It is owed.", "ending": "Forgiven."}
-        """;
 
     private const string EventRows = "journal\tDocked\tyes\t\t\tThe ship docked.\n"
         + "journal\tAsteroidCracked\tyes\tMiningKit\tMining\tA motherlode asteroid was broken up.\n"
@@ -167,99 +160,59 @@ public sealed class EventStepsAreDrawnIntoChaptersTests
 
     private static readonly DrawnActivity Bounties = new(TriggerKind.Bounty, null, 5);
 
-    private static AdventureAsk Chapter(IReadOnlyList<DrawnActivity>? slots) =>
-        new(Story: new AdventureStory("s", "S", "public", "hidden", 3, 40, 20, Slots: slots));
+    private static AdventureAsk Chapter(params DrawnActivity[] slots) => PlannedChapterWorld.Ask(PlannedChapterWorld.Story with { Slots = slots });
 
-    private static string BeatsWith(string? task, params DrawnActivity[] others)
+    /// <summary>The chapter written with the task each answer gives the event objective, the last answer followed by no fidelity objection.</summary>
+    private static async Task<(AdventureOutcome Outcome, RoundScriptedLlmProvider Provider)> Written(AdventureAsk ask, params string?[] tasks)
     {
-        var beats = new JsonArray
-        {
-            new JsonObject
-            {
-                ["title"] = "The Lantern", ["function"] = "setup", ["kind"] = "arrive", ["reason"] = "Someone there knows about the burst.",
-                ["system"] = "Ossen's Lantern", ["line"] = "Scoop here.",
-            },
-        };
-
-        foreach (var other in others)
-        {
-            beats.Add(new JsonObject { ["title"] = "The Bounty", ["function"] = "turn", ["kind"] = "bounty", ["reason"] = "Someone there knows about the burst.", ["count"] = other.Count, ["line"] = "Do it." });
-        }
-
-        if (task is not null)
-        {
-            beats.Add(new JsonObject { ["title"] = "The Task", ["function"] = "turn", ["kind"] = "event", ["reason"] = "Someone there knows about the burst.", ["task"] = task, ["count"] = 9, ["line"] = "Do it." });
-        }
-
-        beats.Add(new JsonObject
-        {
-            ["title"] = "The Anchorage", ["function"] = "resolution", ["kind"] = "dock", ["reason"] = "Someone there knows about the burst.",
-            ["system"] = "Dyson's Hollow", ["station"] = "Maren Anchorage", ["line"] = "To one name.",
-        });
-
-        return new JsonObject { ["opening"] = "Again.", ["reply"] = "Here.", ["beats"] = beats }.ToJsonString();
-    }
-
-    private static async Task<(AdventureOutcome Outcome, RoundScriptedLlmProvider Provider)> Written(AdventureAsk ask, params string[] answers)
-    {
-        var provider = new RoundScriptedLlmProvider([.. answers.Select(answer => RoundScriptedLlmProvider.Saying(answer))]);
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(ask, Now, TestContext.Current.CancellationToken);
+        var plan = await PlannedChapterWorld.PlanAsync(ask);
+        var at = plan.Objectives.Select((objective, index) => (objective, index)).FirstOrDefault(pair => pair.objective.Steps.Any(step => step.Kind == TriggerKind.Event)).index + 1;
+        var provider = new RoundScriptedLlmProvider(
+        [
+            .. tasks.Select(task => RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Lines(plan.Objectives.Count, (number, objective) => objective["task"] = number == at ? task : null))),
+            RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections),
+        ]);
+        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, TestContext.Current.CancellationToken);
 
         return (outcome, provider);
     }
 
     private static string PromptOf(RoundScriptedLlmProvider provider, int round) => provider.Requests[round].Prompt.History[0].Text;
 
-    private static IReadOnlyList<string> KindsOf(RoundScriptedLlmProvider provider, int round) =>
-        JsonDocument.Parse(provider.Requests[round].ResponseSchema!.SchemaJson).RootElement
-            .GetProperty("properties").GetProperty("beats").GetProperty("items").GetProperty("properties").GetProperty("kind").GetProperty("enum")
-            .EnumerateArray().Select(kind => kind.GetString()!).ToList();
-
-    private static bool HasTask(RoundScriptedLlmProvider provider, int round) =>
-        JsonDocument.Parse(provider.Requests[round].ResponseSchema!.SchemaJson).RootElement
-            .GetProperty("properties").GetProperty("beats").GetProperty("items").GetProperty("properties").TryGetProperty("task", out _);
+    private static bool HasTask(RoundScriptedLlmProvider provider, int round) => PlannedChapterWorld.Properties(provider.Requests[round].ResponseSchema!.SchemaJson).Contains("task");
 
     private static string Described(string name) =>
         StepEventCatalogue.Default.Drawable.First(row => row.Event == name).Description.TrimEnd('.');
 
     [Fact]
-    public async Task TheBeatsPromptHoldsTheEventSlotLineAndOffersEvent()
+    public async Task TheLinesPromptHoldsTheEventSlotLineAndAsksForATask()
     {
-        var (outcome, provider) = await Written(Chapter([Bounties, Docking]), SpineText, BeatsWith("dock at five stations", Bounties));
+        var (outcome, provider) = await Written(Chapter(Bounties, Docking), "dock at two stations");
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-
-        foreach (var round in new[] { 0, 2 })
-        {
-            Assert.Contains($"an \"event\" objective for the event Docked: {Described("Docked")}, count 2", PromptOf(provider, round));
-        }
-
-        Assert.Contains("event", KindsOf(provider, 2));
-        Assert.True(HasTask(provider, 2));
-        Assert.Contains("\"event\": the Commander does what the drawn event objective above describes", PromptOf(provider, 2));
+        Assert.Contains($"an \"event\" objective for the event Docked: {Described("Docked")}, count 2", PromptOf(provider, 0));
+        Assert.True(HasTask(provider, 0));
+        Assert.Contains("An objective with an event step also has a \"task\"", PromptOf(provider, 0));
     }
 
     [Fact]
-    public async Task AChapterWithoutAnEventSlotDoesNotMentionEventAsAKind()
+    public async Task AChapterWithoutAnEventSlotAsksForNoTask()
     {
-        var (_, provider) = await Written(Chapter([Bounties]), SpineText, BeatsWith(null, Bounties));
+        var (_, provider) = await Written(Chapter(Bounties), [null]);
 
-        Assert.DoesNotContain("event", KindsOf(provider, 2));
-        Assert.False(HasTask(provider, 2));
-        Assert.DoesNotContain("\"event\"", PromptOf(provider, 2));
-        Assert.DoesNotContain("\"task\"", PromptOf(provider, 2));
+        Assert.False(HasTask(provider, 0));
+        Assert.DoesNotContain("\"task\"", PromptOf(provider, 0));
     }
 
     [Fact]
-    public async Task AnEventAnswerBecomesAnEventStepWithTheSlotsEventFieldsAndCount()
+    public async Task AnEventObjectiveCarriesTheSlotsEventFieldsAndCountAndTheWrittenTask()
     {
         var slot = Docking with { Where = new EventFilter([new EventField("StationType", "Orbis")]) };
-        var (outcome, _) = await Written(Chapter([Bounties, slot]), SpineText, BeatsWith("dock at two Orbis stations", Bounties));
+        var (outcome, _) = await Written(Chapter(Bounties, slot), "dock at two Orbis stations");
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
 
-        var trigger = Assert.Single(outcome.Draft!.Beats, beat => beat.Trigger.Kind == TriggerKind.Event).Trigger;
+        var trigger = Assert.Single(outcome.Draft!.Beats.SelectMany(beat => beat.Steps), step => step.Trigger.Kind == TriggerKind.Event).Trigger;
 
         Assert.Equal("Docked", trigger.Event);
         Assert.Equal(slot.Where, trigger.Where);
@@ -268,34 +221,33 @@ public sealed class EventStepsAreDrawnIntoChaptersTests
     }
 
     [Fact]
-    public async Task AnAnswerThatLeavesTheEventSlotUnmetIsRepaired()
-    {
-        var without = BeatsWith(null, Bounties);
-        var (outcome, provider) = await Written(Chapter([Bounties, Docking]), SpineText, without, Repairs.Replacing(without, 2), Repairs.Replacing(without, 2));
-
-        Assert.False(outcome.Succeeded);
-        Assert.Contains("has no objective for this one: an \"event\" objective for the event Docked", PromptOf(provider, 3));
-    }
-
-    [Fact]
     public async Task AToolRunStepsHandOffHoldsTheToolsFirstCommandPhrase()
     {
-        var (outcome, provider) = await Written(Chapter([Bounties, Logging]), SpineText, BeatsWith("say \"log this\" to note it", Bounties));
+        var (outcome, provider) = await Written(Chapter(Bounties, Logging), "say \"log this\" to note it");
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Contains("The Commander runs it by saying \"log this\": the \"task\" must tell them to say it", PromptOf(provider, 2));
+        Assert.Contains("The Commander runs it by saying \"log this\": the \"task\" must tell them to say it", PromptOf(provider, 0));
 
-        var step = Assert.Single(outcome.Draft!.Beats, beat => beat.Trigger.Kind == TriggerKind.Event);
+        var step = Assert.Single(outcome.Draft!.Beats.SelectMany(beat => beat.Steps), step => step.Trigger.Kind == TriggerKind.Event);
 
         Assert.Equal(1, step.Trigger.Count);
         Assert.Contains("log this", step.HandOff());
     }
 
     [Fact]
-    public async Task AToolRunTaskThatLeavesOutThePhraseIsRefused()
+    public async Task AToolRunTaskThatLeavesOutThePhraseIsWrittenAgain()
     {
-        var answer = BeatsWith("note something in the log", Bounties);
-        var (outcome, _) = await Written(Chapter([Bounties, Logging]), SpineText, answer, Repairs.Replacing(answer, 2), Repairs.Replacing(answer, 2));
+        var (outcome, provider) = await Written(Chapter(Bounties, Logging), "note something in the log", "say \"log this\" to note it");
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Equal("story_line_repairs", provider.Requests[1].ResponseSchema!.Name);
+        Assert.Contains("has to hold the phrase the Commander says, \"log this\"", PromptOf(provider, 1));
+    }
+
+    [Fact]
+    public async Task AToolRunTaskThatStillLeavesOutThePhraseIsRefused()
+    {
+        var (outcome, _) = await Written(Chapter(Bounties, Logging), "note something in the log", "note something in the log", "note something in the log");
 
         Assert.False(outcome.Succeeded);
         Assert.Contains("has to hold the phrase the Commander says, \"log this\"", outcome.Refusal);

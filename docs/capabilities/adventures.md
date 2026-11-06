@@ -76,24 +76,24 @@ nav_order: 115
 <p class="intro">A story you fly, told by the core, moved along by your own journal.</p>
 <section>
 <h2><span class="num">1</span> A story, not a list of stops.</h2>
-<svg viewBox="0 0 880 300" role="img" aria-label="A spine of premise, want, stake, turn and ending, with objectives hung on real places">
+<svg viewBox="0 0 880 300" role="img" aria-label="Objectives built by D47 on real places, with the spine and the lines written against them">
  <rect x="20" y="20" width="360" height="216" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="52" y="58" font-size="19" font-weight="800" fill="var(--accent)">THE SPINE</text>
- <text x="52" y="96" font-size="16" fill="var(--text)">what it is about</text>
- <text x="52" y="126" font-size="16" fill="var(--text)">what you want in it</text>
- <text x="52" y="156" font-size="16" fill="var(--text)">what is really at stake</text>
- <text x="52" y="186" font-size="16" fill="var(--text)">where it turns</text>
- <text x="52" y="216" font-size="16" fill="var(--text)">what the end means</text>
+ <text x="52" y="58" font-size="19" font-weight="800" fill="var(--accent)">THE OBJECTIVES</text>
+ <text x="52" y="96" font-size="16" fill="var(--text)">built by D47</text>
+ <text x="52" y="126" font-size="16" fill="var(--text)">what you do</text>
+ <text x="52" y="156" font-size="16" fill="var(--text)">where you do it</text>
+ <text x="52" y="186" font-size="16" fill="var(--text)">how many times</text>
+ <text x="52" y="216" font-size="16" fill="var(--text)">in what order</text>
  <line x1="398" y1="128" x2="428" y2="128" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
  <polygon points="442,128 426,120 426,136" fill="var(--accent-muted)"/>
  <rect x="458" y="20" width="402" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="484" y="56" font-size="16" fill="var(--text)">an objective, standing on a real place</text>
+ <text x="484" y="56" font-size="16" fill="var(--text)">the spine, written against them</text>
  <rect x="458" y="92" width="402" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="484" y="128" font-size="16" fill="var(--text)">an objective, standing on a real place</text>
+ <text x="484" y="128" font-size="16" fill="var(--text)">each objective's reason and lines</text>
  <rect x="458" y="164" width="402" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="484" y="200" font-size="16" fill="var(--text)">an objective, standing on a real place</text>
- <text x="440" y="268" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">The shape is written first. The places are where that shape can stand.</text>
- <text x="440" y="294" text-anchor="middle" font-size="16" fill="var(--text-muted)">Which is why D47 is never asked for five stops — it is asked for a story.</text>
+ <text x="484" y="200" font-size="16" fill="var(--text)">the opening, before the first</text>
+ <text x="440" y="268" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">D47 builds the objectives on places that exist. The AI writes the story they tell.</text>
+ <text x="440" y="294" text-anchor="middle" font-size="16" fill="var(--text-muted)">From the beacon scan on, the AI writes only the words, never a place or a count.</text>
 </svg>
 </section>
 <section>
@@ -190,7 +190,7 @@ follows it. The AI reads what the finished one asked you to do, how it ended and
 and how many chapters came before. The new chapter follows from what you did and from the story, not from how the last
 one was worded. The draft card says which story it follows, and it is accepted, flown and checked like any other.
 
-Every chapter's wording is checked before it is shown, in a new draft and in a draft you ask to have changed. The title, the story's premise and ending, the objectives' titles, reasons and lines, a choice's options and endings, and the opening are read against the plain-language rule. A metaphor is rewritten in plain words where the check can do so, and the chapter is checked again. A feature the game does not have, or a rewrite that does not pass, is sent back to be written again. A chapter that still fails the check after its rounds is thrown away and written again.
+Every chapter's wording is checked before it is shown, in a new draft and in a draft you ask to have changed. The title, the story's premise and ending, the objectives' titles, reasons and lines, a choice's options and endings, and the opening are read against the plain-language rule. A metaphor is rewritten in plain words where the check can do so, and the chapter is checked again. A feature the game does not have, or a rewrite that does not pass, is sent back to be written again. The check's own rewrite of a part is put in place once between the writer's rounds; a part it refuses again goes back to the writer, which is told every finding raised on that part. A chapter that still fails the check after its rounds is thrown away and written again. In a chapter built on drawn activities (see [A chapter planned in code](#drawn-chapters)) the check reads the title, spine, opening and lines together. A repair writes only the lines of the objectives it names, and a chapter written again has only its words written again, against the same objectives.
 
 #### `ask_for_adventure`
 
@@ -860,9 +860,10 @@ complication in play. In a Buddy Love story the partner exists only in the ficti
 hiring a crew member but never requires it.
 
 **Your ship and credits.** The writer is told your position, your ships, the jump range of the one you
-are in, your credits at the last load, your fleet carrier and your ranks, and sizes counts and
-destinations to them. There is no fixed limit on ships: a chapter may have you save up for one, and a
-later chapter have you buy and board it. A chapter is sized to finish in one to three play sessions, or
+are in, your credits at the last load, your fleet carrier and your ranks. In a chapter built on drawn
+activities, d47 sets the counts and the stops; such a chapter has you buy a ship only where its Goals step
+asks for one. In any other chapter the writer sizes counts and destinations to these facts, and may have you
+save up for a ship and a later chapter have you buy and board it. A chapter is sized to finish in one to three play sessions, or
 in one session in a story shorter than three months. A longer undertaking, such as engineering, saving
 for a ship or a run of ranks, carries on across chapters.
 
@@ -872,7 +873,8 @@ have as many arrive, dock, land or scan objectives as it needs.
 **Steps.** An objective can take several steps, in order, each with its own place or activity. The objective's
 lines are spoken when its last step is done. After any earlier step your core says it was done and what the next
 step is, for example "Next: collect 3 bounties." Change objective, Mark done and Never ask this act on the step you
-are on. A chapter has as many steps as its story needs.
+are on. A chapter has as many steps as its story needs. In a chapter built on drawn activities, d47 builds the
+steps: the place an activity needs comes first in its objective, and a sight beyond reach is reached through stops on the way.
 
 **The long haul.** A chapter keeps to a session's flying unless you had 250,000,000 credits or more at
 the last load, or own a Caspian Explorer, and the story is three months long or more. Then the chapter
@@ -881,7 +883,7 @@ and only when the chapter draws a discovery, map, footfall or organic activity o
 Exploration or Exobiologist rank. A chapter may also be a sightseeing chapter: with notable places on, a long-haul story's chapter after the beacon scan
 and before the finale, other than one heading home, is drawn as one with a chance that grows with your Exploration
 record and falls after a sightseeing chapter. It is offered up to eight notable places from the catalogue, none in a
-system an earlier chapter of the story sent you to, and must have an arrive, land or scan objective at one. That
+system an earlier chapter of the story sent you to, and d47 builds an arrive, land or scan objective at one. That
 chapter goes anywhere. Outside the bubble the offered places are only those in the Sol band above. Changing the
 objective of a sightseeing chapter whose sight is still ahead gives another sight. Any other chapter keeps to a
 session's flying. Below the credits, the writer is not told it exists.
@@ -892,7 +894,7 @@ credits at the last load cover the price plus a reserve: the price again or 500,
 Where a fixed threshold above is higher, it applies. A hull already owned is allowed at any balance, and a
 hull with no price in d47's table is refused unless owned. The writer is told the most the chapter may ask
 the Commander to spend, and a chapter that asks for more is refused and written again. Saving up and buying therefore fall in separate
-chapters.
+chapters. In a chapter built on drawn activities a purchase comes only from its Goals step, which is held to the same reserve.
 
 **The reach limits one hop.** A chapter's reach is the longest one hop may be, not how far the chapter
 goes: a farther place is reached over several hops.
@@ -906,14 +908,18 @@ story. Each later finale chapter's writer is told the destination, how far it is
 finale chapters are left. A finale chapter between the first and the last that starts more than one
 reach from the destination must end closer to it than it started. The last finale chapter's last objective
 is a land objective on the destination, and that one objective may be farther than the reach. A 3-day story's one
-finale chapter both names the destination and lands on it.
+finale chapter both names the destination and lands on it. In a later finale chapter built on drawn activities, d47
+builds the stop closer to the destination from places found on the way to it, and the landing on the destination; where
+no place on the way is found, the chapter is not written.
 
 **Outside the bubble.** A story chapter that starts more than 500 light years from Sol
 (`StarPosition.Origin`) must end 100 to 300 light years nearer Sol than it started, so a Commander left far out by the
 beacon scan works back over several chapters. The writer is told how far you are from Sol and the band its last stop
 must fall in: a chapter starting 588 light years out has a last stop between 288 and 488. The last stop is the system
-of the chapter's last place objective, and a chapter with none counts as ending where it started. A draft outside the
-band is refused and goes back through the repair rounds, as does one whose last stop Galaxy search cannot measure. The
+of the chapter's last place objective, and a chapter with none counts as ending where it started. A chapter built on
+drawn activities is built inside this rule, the home leg and the base rule below, with its last stop drawn from places
+that meet them. Act-one chapters and short stories are still written by the model and refused and repaired as before:
+a draft outside the band is refused and goes back through the repair rounds, as does one whose last stop Galaxy search cannot measure. The
 rule does not apply to a chapter that ends at the beacon, a finale chapter, a rewrite or a short story, or to a chapter
 that starts within 500 light years, or to a chapter in the black (below). The chapter also keeps one of its two place
 objectives for this stop.
@@ -1011,24 +1017,30 @@ the gates. The rest are drawn without replacement, with no two slots in one care
 left. Conflict and every illegal family need a place objective just before them; at most two place objectives may
 be in a chapter, counting those the chapter already has. Tons for sell and mine are 10 to 40, capped at the cargo capacity.
 
-### A chapter written around its drawn activities {#drawn-chapters}
+### A chapter planned in code {#drawn-chapters}
 
-A story chapter written after the beacon scan is drawn three activities before its spine is written. `StoryDirector`
+A story chapter written after the beacon scan is drawn three activities, and d47 builds its objectives from them. `StoryDirector`
 calls `ChapterDraw.Draw` with the Commander's ratings, ranks, ship and `Statistics` from the last loaded Commander's game
 state, the activities the last three chapters asked for, and the activities the story refuses. A last finale chapter
 already has a land objective, and a finale chapter after the first already has a stop nearer the destination, so each
-leaves room for one fewer place objective in the draw. The chapter is written to its activities:
+leaves room for one fewer place objective in the draw. Then:
 
-- The spine prompt and the objectives prompt both list the three activities with their counts, and the spine prompt
-  says the chapter's want and turn are built on them.
-- The objectives prompt offers, as counted kinds, only the three activities and the milestone kinds: engineer, crew
-  and the team kinds that apply. A mission activity names its family exactly. The schema's `kind` enum is narrowed to
-  match. The shuffled kind lists and the "Vary what the Commander does" line are not sent.
-- The resolve step needs one objective for each activity, of its kind and, for a mission, its exact family. The
-  objective's count is set to the drawn count, whatever the model wrote. An activity no objective meets goes through the
-  repair rounds like any other refusal, and the chapter fails if it is still missing after the last round.
+- `AdventureGenerator.ChapterPlacesAsync` gathers the places the chapter's activities need, and `ChapterPlanner.Plan`
+  builds every objective: one for each activity with its drawn count, the place before it where the activity needs one,
+  the sight, the Goals step, the last stop the Sol band, the home leg, the finale or the base holds the chapter to, and up
+  to two story stops, three to eight objectives in all. Each objective's function (setup, complication, turn, setback,
+  resolution) is set by code; the turn is named midpoint or all is lost at those stages.
+- One model call writes the words against that plan: the chapter's title and spine, the opening, the reply, and for each
+  objective its title, reason, one to three lines, the task of an event step, and any boardings and leavings. It is told
+  each objective in plain words, the stage and its lines, both layers, the genre, the cast, how the previous chapter's spine
+  said it ends, and any mission held whose destination is a stop. Its answer has no field for a kind, a place or a count.
+- Code checks the words first: each objective has a title, a line and a reason, an event step's task holds its
+  phrase, and every line has one of the story's speakers. Then the fidelity and plain-wording checks read them. A repair writes the lines again for the
+  objectives named, against the same plan, and a draft that still fails is written again with the same plan.
+- Where no plan stands, the write fails with the rule that stopped it and is not written again.
 
-A chapter before the beacon scan, and a short story, are written without drawn activities. When you refuse an objective that
+A chapter before the beacon scan, and a short story, are written without drawn activities, and the model writes their objectives.
+Finale chapter 1 with no destination yet is also written by the model, which names the destination. When you refuse an objective that
 held a drawn activity, only that activity is drawn again, without the refused one or the chapter's other activities, and
 the seed includes the index of the replaced objective. The chapter's activities are read back from its objectives, so
 nothing extra is stored.
@@ -1455,7 +1467,8 @@ mission gets this once, from the first of three places to speak about it:
 
 The aside never changes a mission: its name, giver, destination, cargo, reward and deadline are said as
 the game gives them. The chapter writer is told the missions you hold, and may make one's destination
-system an arrive objective or its station a dock objective, so the mission's trip is also the story's. No objective asks
+system an arrive objective or its station a dock objective, so the mission's trip is also the story's. In a chapter
+built on drawn activities, d47 may make one mission's destination a stop, and the writer is told that mission. No objective asks
 you to complete, fail or abandon a mission. While the story is paused or switched off, missions get no
 aside, and a mission taken meanwhile gets its aside once the story is back.
 

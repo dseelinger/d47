@@ -254,6 +254,11 @@ internal sealed class StoryFixtures : IDisposable
                     throw new HttpRequestException("The provider went away.");
                 }
 
+                if (Answers is { } answers)
+                {
+                    return Written(Task.FromResult(answers(ask)));
+                }
+
                 var sent = WritesDrawnChapters || ask.Story is null ? ask : ask with { Story = ask.Story with { Slots = null, Goals = null, Sights = null } };
 
                 return Written(generator.GenerateAsync(sent, now, cancellationToken));
@@ -318,6 +323,9 @@ internal sealed class StoryFixtures : IDisposable
 
     /// <summary>Whether the next write throws rather than reaching the model.</summary>
     public bool Throws { get; set; }
+
+    /// <summary>When set, answers each write in place of the generator.</summary>
+    public Func<AdventureAsk, AdventureOutcome>? Answers { get; set; }
 
     public string StoryPath => Path.Combine(_folder, "story.json");
 

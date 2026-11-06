@@ -25,6 +25,12 @@ public enum PlannedPurpose
 
     /// <summary>The last stop on the home leg or toward the chapter's target.</summary>
     Leg,
+
+    /// <summary>The last stop of a finale chapter that starts beyond reach of the finale's destination: closer to it than the start.</summary>
+    Closer,
+
+    /// <summary>The last finale chapter's landing on the finale's destination.</summary>
+    Destination,
 }
 
 /// <summary>One objective of a planned chapter: its function, its steps in order with places resolved and counts set, and what it is for.</summary>
@@ -61,6 +67,7 @@ public static class ChapterRules
     public const string Band = "band";
     public const string HomeLeg = "home leg";
     public const string Pull = "pull";
+    public const string Finale = "finale";
     public const string Reserve = "credit reserve";
     public const string Team = "team";
 }
@@ -151,8 +158,15 @@ public static class ChapterPlanner
 
         var random = new Random32(seed);
         var sight = places.Sights.Count > 0;
-        var end = Ending(inputs, places);
-        var content = inputs.Slots.Count + (sight ? 1 : 0) + goals.Count + (end is null ? 0 : 1);
+        var landing = inputs.Closing ? inputs.Destination!.Landing() : null;
+        var end = landing is null ? Ending(inputs, places) : null;
+
+        if (end is { Purpose: PlannedPurpose.Closer, Area.State: ChapterAreaState.NoneFound or ChapterAreaState.Unavailable })
+        {
+            return Refuse(ChapterRules.Finale, $"No place on the way to the finale's destination in {inputs.Destination!.System} was found, so the chapter cannot end closer to it.");
+        }
+
+        var content = inputs.Slots.Count + (sight ? 1 : 0) + goals.Count + (end is null && landing is null ? 0 : 1);
 
         if (content == 0)
         {
@@ -220,6 +234,11 @@ public static class ChapterPlanner
             built.Add((end.Purpose, steps!));
         }
 
+        if (landing is not null)
+        {
+            built.Add((PlannedPurpose.Destination, [landing]));
+        }
+
         if (built.Count > 0 && planning.BackToBase() is { } back)
         {
             built[^1].Steps.Add(back);
@@ -234,9 +253,15 @@ public static class ChapterPlanner
 
     private static ChapterPlanResult Refuse(string rule, string text) => new(null, new ChapterPlanRefusal(rule, text));
 
-    /// <summary>The last-stop rule the chapter is held to: the Sol band, or the home leg or pull; null for none.</summary>
+    /// <summary>The last-stop rule the chapter is held to: closer to the finale's destination, the Sol band, or the home leg or pull; null for none.</summary>
     private static EndRule? Ending(ChapterInputs inputs, ChapterPlaces places)
     {
+        if (inputs is { FinaleChapter: > 1, Destination: not null, Position: { } here } && places.DestinationAt is { } there
+            && here.DistanceTo(there) is var away && away > inputs.Reach)
+        {
+            return new EndRule(PlannedPurpose.Closer, ChapterRules.Finale, places.Pull, position => position.DistanceTo(there) < away);
+        }
+
         if (inputs.Band is { } band && places.InBand.State != ChapterAreaState.NoneFound)
         {
             return new EndRule(PlannedPurpose.Band, ChapterRules.Band, places.InBand, position =>
@@ -407,7 +432,12 @@ public static class ChapterPlanner
             var candidates = listed.OfType<Stop>().Concat(Arrivals()).Concat(Docks()).Concat(Lands())
                 .Where(stop => end.Meets(stop.Position))
                 .DistinctBy(stop => (stop.Trigger.Kind, stop.System, stop.Trigger.MarketId, stop.Trigger.BodyId));
-            var what = end.Purpose == PlannedPurpose.Band ? "a place inside the Sol band" : "a place far enough toward the chapter's target";
+            var what = end.Purpose switch
+            {
+                PlannedPurpose.Band => "a place inside the Sol band",
+                PlannedPurpose.Closer => "a place closer to the finale's destination than the chapter's start",
+                _ => "a place far enough toward the chapter's target",
+            };
             var (stop, refusal) = Draw(candidates, end.Rule, what);
 
             if (stop is null)

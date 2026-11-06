@@ -21,14 +21,6 @@ public sealed class EveryThirdChapterLeavesTheComfortZoneTests
     /// <summary>A passenger cabin, which the passenger missions are drawn only for.</summary>
     private const string Cabin = """{"Slot":"Slot02_Size3","Item":"int_passengercabin_size3_class1","On":true}""";
 
-    private const string BeatsWithoutPassengers = """
-        {"opening": "Again.", "reply": "Here.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
-          {"title": "Any Mission", "function": "turn", "kind": "mission", "reason": "Someone there knows about the burst.", "count": 2, "mission": null, "line": "Work."},
-          {"title": "The Bounties", "function": "resolution", "kind": "bounty", "reason": "Someone there knows about the burst.", "count": 3, "line": "Paid."}
-        ]}
-        """;
-
     [Fact]
     public void TheCommandersFiguresPickPassengerMissions()
     {
@@ -64,34 +56,25 @@ public sealed class EveryThirdChapterLeavesTheComfortZoneTests
         Assert.Null(await fixtures.Director.WriteNextAsync("F1", Now.AddDays(1), CancellationToken.None));
         fixtures.Finish("F1", fixtures.Stories.Current("F1")!.Chapters[^1], Now.AddDays(1));
         game = Loaded(1_000_000, statistics: Statistics, modules: Cabin);
-        fixtures.WritesDrawnChapters = true;
         await fixtures.Director.WriteNextAsync("F1", Now.AddDays(2), CancellationToken.None);
 
         var first = fixtures.Asks[2].Story!.Slots![0];
 
         Assert.Equal(TriggerKind.Mission, first.Kind);
         Assert.StartsWith("Mission_Passenger", first.Family);
-        Assert.Contains($"whose family is exactly {first.Family}", fixtures.Provider.Requests[10].Prompt.History[0].Text);
     }
 
     [Fact]
-    public async Task AComfortChapterWithoutAPassengerMissionIsRefused()
+    public async Task AComfortChaptersPassengerMissionIsAnObjectiveOfItsPlan()
     {
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsWithoutPassengers), RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsWithoutPassengers, 1)), RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsWithoutPassengers, 1)));
         var passengers = new DrawnActivity(TriggerKind.Mission, "Mission_PassengerVIP", 2);
+        var ask = PlannedChapterWorld.Ask(PlannedChapterWorld.Story with { Slots = [passengers] });
+        var plan = await PlannedChapterWorld.PlanAsync(ask);
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Lines(plan.Objectives.Count)), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy()).GenerateAsync(
-            new AdventureAsk(
-                AdventureReach.Session,
-                AdventureLength.Short,
-                Story: new AdventureStory(Id, Card.Title, Card.Describe(), Secret.Secret, 3, 10, 5, Slots: [passengers])),
-            Now,
-            CancellationToken.None);
+        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, CancellationToken.None);
 
-        Assert.Contains(
-            "has no objective for this one: ",
-            outcome.Refusal);
-        Assert.Contains("a \"mission\" objective whose family is exactly Mission_PassengerVIP, count 2", outcome.Refusal);
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Contains(outcome.Draft!.Beats.SelectMany(beat => beat.Steps), step => step.Trigger is { Kind: TriggerKind.Mission, MissionFamily: "Mission_PassengerVIP", Count: 2 });
     }
 }

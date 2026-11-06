@@ -9,6 +9,7 @@ using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Persona;
 using D47.Core.Storage;
+using D47.Core.Stories;
 using D47.Core.Tests;
 using D47.Knowledge;
 using Microsoft.Extensions.Logging;
@@ -143,6 +144,14 @@ public partial class StoryComparisonTests
         var chapterAsk = Env("D47_COMPARE_CHAPTER") switch
         {
             "6" => ChapterSixAsk,
+            "drawn" => ChapterSixAsk with
+            {
+                Story = ChapterSixAsk.Story! with
+                {
+                    DaysSinceBeacon = 20,
+                    Slots = [new DrawnActivity(TriggerKind.Bounty, null, 3), new DrawnActivity(TriggerKind.Codex, null, 2), new DrawnActivity(TriggerKind.Mission, "Mission_Courier", 2)],
+                },
+            },
             "black" => ChapterAsk with { Story = ChapterAsk.Story! with { InTheBlack = true } },
             "toward" => ChapterAsk with { Reach = AdventureReach.Anywhere, Story = ChapterAsk.Story! with { InTheBlack = true, Toward = "Colonia" } },
             "home" => ChapterAsk with { Reach = AdventureReach.Anywhere, Story = ChapterAsk.Story! with { Home = "Sol" } },

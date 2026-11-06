@@ -5,6 +5,7 @@ using D47.Core.Knowledge;
 using D47.Core.Stories;
 using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Xunit;
 using static D47.Core.Tests.Stories.StoryFixtures;
 
@@ -179,10 +180,7 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
     [Fact]
     public async Task TwoDrawStepsAreToldWhichActivitiesWorkEach()
     {
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsWithTheTradeRankOnly));
-
-        await Generate(provider, [Explore, Trade], [new DrawnActivity(TriggerKind.Map, null, 2), new DrawnActivity(TriggerKind.Sell, null, 40)]);
-        var prompt = provider.Requests[2].Prompt.History[0].Text;
+        var prompt = await LinesPrompt([Explore, Trade], [new DrawnActivity(TriggerKind.Map, null, 2), new DrawnActivity(TriggerKind.Sell, null, 40)]);
 
         Assert.Contains("The drawn activities to map bodies with the surface mapper work the Commander's goal \"Elite V in Exploration\".", prompt);
         Assert.Contains("The drawn activities to sell cargo work the Commander's goal \"Elite V in Trade\".", prompt);
@@ -204,10 +202,7 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
     {
         var empire = new GoalClimbStep("rank.empire", "Duke in the Imperial Navy") { Draw = "Empire" };
         var federation = new GoalClimbStep("rank.federation", "Admiral in the Federal Navy") { Draw = "Federation" };
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsWithTheTradeRankOnly));
-
-        await Generate(provider, [empire, federation], [Mission("Mission_Courier"), Mission("Mission_Delivery"), Mission("Mission_Collect")]);
-        var lines = provider.Requests[2].Prompt.History[0].Text.Split('\n');
+        var lines = (await LinesPrompt([empire, federation], [Mission("Mission_Courier"), Mission("Mission_Delivery"), Mission("Mission_Collect")])).Split('\n');
         var courier = RefusedActivities.Phrase(TriggerKind.Mission, "Mission_Courier")!;
         var delivery = RefusedActivities.Phrase(TriggerKind.Mission, "Mission_Delivery")!;
         var collect = RefusedActivities.Phrase(TriggerKind.Mission, "Mission_Collect")!;
@@ -219,10 +214,7 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
     [Fact]
     public async Task AOneStepChapterIsWrittenAsBefore()
     {
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsWithTheTradeRankOnly));
-
-        await Generate(provider, [Explore], [new DrawnActivity(TriggerKind.Map, null, 2)]);
-        var prompt = provider.Requests[2].Prompt.History[0].Text;
+        var prompt = await LinesPrompt([Explore], [new DrawnActivity(TriggerKind.Map, null, 2)]);
 
         Assert.Contains("The drawn activities work the Commander's goal \"Elite V in Exploration\".", prompt);
         Assert.DoesNotContain("both goals", prompt);
@@ -244,6 +236,20 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
                 Story: new AdventureStory(Id, Card.Title, Card.Describe(), Secret.Secret, 3, 10, 5, Slots: slots, Goals: goals)),
             Now,
             CancellationToken.None);
+
+    /// <summary>The prompt of the lines call that writes a planned chapter working <paramref name="goals"/> through <paramref name="slots"/>.</summary>
+    private static async Task<string> LinesPrompt(IReadOnlyList<GoalClimbStep> goals, IReadOnlyList<DrawnActivity> slots)
+    {
+        var ask = PlannedChapterWorld.Ask(PlannedChapterWorld.Story with { Slots = slots, Goals = goals });
+        var plan = await PlannedChapterWorld.PlanAsync(ask);
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Lines(plan.Objectives.Count)), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
+        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Equal("story_lines", provider.Requests[0].ResponseSchema!.Name);
+
+        return provider.Requests[0].Prompt.History[0].Text;
+    }
 
     private static DrawnActivity Mission(string family) => new(TriggerKind.Mission, family, 2);
 

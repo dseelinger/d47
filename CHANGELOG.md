@@ -8,6 +8,10 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter after the beacon scan is now built by D47: it chooses each objective's place, count and order from the activities drawn for the chapter, and the AI writes only the chapter's title and spine, its opening, and each objective's reason and lines, in one call. When a check refuses some of the words, only those words are written again, and a chapter written again keeps the same objectives. The last finale chapter lands on the story's destination, and a finale chapter before it ends closer to the destination. Act-one chapters, the first finale chapter, short stories and changed objectives are written as before.
+
+When the wording check refuses words in a chapter that it has already rewritten itself, the AI writes them again and is told everything refused in them, so fewer chapters fail the check.
+
 Your story no longer lists Other lines. It shows only Waiting for your answer. Short Story lines and the Narrator's free replies are still kept, but are not listed anywhere in the app.
 
 Ask "how is my squadron's faction doing" or say "faction report", or "faction report for" and a faction's name, and D47 answers without the model: its government and allegiance, the systems it is present in and controls, up to three conflicts with their opponents, the three controlled systems where its influence is lowest, and how many systems are in Retreat or Expansion. Where you have seen a system since Spansh's report, the answer uses your own reading.

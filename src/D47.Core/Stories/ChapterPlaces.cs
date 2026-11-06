@@ -86,8 +86,11 @@ public sealed record ChapterPlaces
     /// <summary>The places inside the chapter's Sol band.</summary>
     public ChapterArea InBand { get; init; } = ChapterArea.NotSearched;
 
-    /// <summary>The places around the waypoint of a travelling chapter.</summary>
+    /// <summary>The places around the waypoint of a travelling chapter, or of a finale chapter on the way to its destination.</summary>
     public ChapterArea Pull { get; init; } = ChapterArea.NotSearched;
+
+    /// <summary>Where the finale's destination is; null outside the finale or where unknown.</summary>
+    public StarPosition? DestinationAt { get; init; }
 
     public ChapterBase? Base { get; init; }
 

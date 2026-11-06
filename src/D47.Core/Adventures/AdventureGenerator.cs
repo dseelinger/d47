@@ -38,6 +38,7 @@ public enum AdventureLength
 /// the draft before this one could not be used, for the writer to avoid. <see cref="Draft"/> is this draft's number, for the log.
 /// When <see cref="Outline"/> is set, the spine step is skipped and the objectives are written against it.
 /// <see cref="Barred"/> are activities a short story may not ask for. <see cref="CrimeRefused"/> is set when the Commander's Crime rating is 0.
+/// When <see cref="Plan"/> is set, a planned chapter's words are written against it rather than a new plan.
 /// </summary>
 public sealed record AdventureAsk(
     AdventureReach Reach = AdventureReach.NearHere,
@@ -54,7 +55,8 @@ public sealed record AdventureAsk(
     IReadOnlyList<string>? Barred = null,
     AdventureChapter? Failed = null,
     AdventureSetAside? SetAside = null,
-    bool CrimeRefused = false);
+    bool CrimeRefused = false,
+    ChapterPlan? Plan = null);
 
 /// <summary>
 /// A chapter the Commander set aside, to be written again: the chapter, the titles of its objectives already done, the
@@ -262,6 +264,9 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
     /// <summary>The name and spine of a failed draft whose spine was read; null when none was.</summary>
     public AdventureOutline? Outline { get; init; }
 
+    /// <summary>The plan a failed planned chapter's words were written against, for the next draft to keep; null for any other write.</summary>
+    public ChapterPlan? Plan { get; init; }
+
     /// <summary>What the next draft is told was wrong with this one; null when no answer came back to be wrong.</summary>
     public string? ForNextDraft => Unanswered ? null : Refusal;
 
@@ -320,7 +325,7 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
 /// Writes an adventure with the model, once, for a person to agree to (Phase 47, "Written, generated or
 /// imported, and each records how it arrived").
 /// </summary>
-public sealed class AdventureGenerator(
+public sealed partial class AdventureGenerator(
     Func<ILlmProvider?> provider,
     Func<string?> model,
     Func<string?> persona,
@@ -501,6 +506,11 @@ public sealed class AdventureGenerator(
                     logger.LogWarning("Draft {Draft}, the Commander's position is unknown, so the new objectives are not sent toward {System}", ask.Draft, heading.System);
                 }
             }
+        }
+
+        if (IsPlanned(ask))
+        {
+            return await PlannedAsync(ask, facts, now, notes, started, cancellationToken).ConfigureAwait(false);
         }
 
         var (notable, candidates) = await PlacesAsync(ask, facts, notes, cancellationToken).ConfigureAwait(false);
@@ -696,6 +706,9 @@ public sealed class AdventureGenerator(
         string? outage = null;
         var objected = Check.Places;
         var plainPassed = new HashSet<int>();
+        var unplainRaised = new Dictionary<int, List<string>>();
+        var rewrittenByCheck = new HashSet<int>();
+        var checkRewrites = 0;
         var resolved = await HoldToWhatTheyConfirmAsync(await CheckAsync(read).ConfigureAwait(false), read).ConfigureAwait(false);
 
         if (cancellationToken.IsCancellationRequested)
@@ -716,6 +729,8 @@ public sealed class AdventureGenerator(
         }
 
         // The objectives that stood are kept; only the refused ones go back through the turn, before the Commander sees anything.
+        // A round is a call to the writer. The plain check's own rewrite is put in place once per part between them, and a part
+        // it objects to again goes to the writer.
         var placeRounds = 0;
         var fidelityRounds = 0;
         var plainRounds = 0;
@@ -728,18 +743,21 @@ public sealed class AdventureGenerator(
         }))
         {
             var kind = objected;
-            var round = kind switch { Check.Plain => ++plainRounds, Check.Fidelity => ++fidelityRounds, _ => ++placeRounds };
             var rewritten = new HashSet<int>();
 
             if (kind == Check.Plain)
             {
-                var (swapped, changed, left) = Rewritten(read, resolved.Refusals);
+                var refusedAgain = resolved.Refusals.Where(refusal => rewrittenByCheck.Contains(PartOf(refusal))).ToList();
+                var (swapped, changed, left) = Rewritten(read, [.. resolved.Refusals.Where(refusal => !rewrittenByCheck.Contains(PartOf(refusal)))]);
+
+                left = [.. refusedAgain, .. left];
 
                 if (changed.Count > 0)
                 {
                     var refusedBefore = resolved.Refusals;
 
                     read = swapped;
+                    rewrittenByCheck.UnionWith(changed);
                     rewritten.UnionWith(changed.Where(index => index >= 0));
                     passed.ExceptWith(rewritten.SelectMany(index => Group(read.Beats, index)));
                     plainPassed.ExceptWith(changed);
@@ -758,7 +776,7 @@ public sealed class AdventureGenerator(
                             return GalaxyDown(outage, notes, started);
                         }
 
-                        LogRefusals(ask, $"plain rewrite {round.ToString(CultureInfo.InvariantCulture)}", PlainStep, resolved.Refusals);
+                        LogRefusals(ask, $"plain rewrite {(++checkRewrites).ToString(CultureInfo.InvariantCulture)}", PlainStep, resolved.Refusals);
 
                         continue;
                     }
@@ -767,7 +785,10 @@ public sealed class AdventureGenerator(
                 }
             }
 
+            var round = kind switch { Check.Plain => ++plainRounds, Check.Fidelity => ++fidelityRounds, _ => ++placeRounds };
             var repair = new Repair(read.Beats, resolved.Refusals, offset);
+
+            repair = repair with { Earlier = Earlier(unplainRaised, repair.Replaceable.Concat(repair.Opening ? [-1] : []), resolved.Refusals) };
             var again = await AskJsonAsync(
                 RepairStep,
                 BeatsInstruction(ask, facts, notable, candidates, name, spine, repair, draft: null, ask.Rewrite?.Exchange, ask.Rewrite?.Remark),
@@ -799,10 +820,12 @@ public sealed class AdventureGenerator(
             read = spliced;
             passed.ExceptWith(replaced.SelectMany(index => Group(read.Beats, index)));
             plainPassed.ExceptWith(replaced.SelectMany(index => Group(read.Beats, index)));
+            rewrittenByCheck.ExceptWith(replaced);
 
             if (repair.Opening)
             {
                 plainPassed.Remove(-1);
+                rewrittenByCheck.Remove(-1);
             }
 
             resolved = await HoldToWhatTheyConfirmAsync(Blame(await CheckAsync(read).ConfigureAwait(false), before, replaced.Union(rewritten).ToHashSet(), offset), read).ConfigureAwait(false);
@@ -960,6 +983,7 @@ public sealed class AdventureGenerator(
                 .ToList();
 
             plainPassed.UnionWith(parts.Select(part => part.Index!.Value).Except(unplain.SelectMany(refusal => refusal.Opening ? [-1] : refusal.Objectives)));
+            Raise(unplainRaised, unplain);
 
             if (unplain.Count > 0)
             {
@@ -975,6 +999,7 @@ public sealed class AdventureGenerator(
     /// <summary>
     /// One call reading each objective's lines, and the ending against the last objective, against what its trigger confirms;
     /// a refusal for each objective whose lines state something else. A reply that cannot be read objects to nothing.
+    /// When <paramref name="grouped"/>, an objective is numbered with its further steps under it, as a planned chapter numbers them.
     /// </summary>
     private async Task<IReadOnlyList<Refusal>> FidelityAsync(
         AdventureAsk ask,
@@ -983,9 +1008,11 @@ public sealed class AdventureGenerator(
         IReadOnlyList<ReadBeat> beats,
         int offset,
         IReadOnlyList<SystemSummary> anarchy,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool grouped = false)
     {
-        var asked = await AskJsonAsync(FidelityStep, FidelityInstruction(facts, spine, beats, offset, ask.Story is not null, anarchy), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+        var heads = Heads(beats);
+        var asked = await AskJsonAsync(FidelityStep, FidelityInstruction(facts, spine, beats, offset, ask.Story is not null, anarchy, grouped), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
 
         if (asked.Json is null)
         {
@@ -1005,7 +1032,8 @@ public sealed class AdventureGenerator(
 
             foreach (var objection in list.EnumerateArray())
             {
-                var index = (Integer(objection, "objective") ?? 0) - offset - 1;
+                var number = (Integer(objection, "objective") ?? 0) - offset - 1;
+                var index = grouped ? (number >= 0 && number < heads.Count ? heads[number] : -1) : number;
 
                 if (index < 0 || index >= beats.Count || !Checked(objection, beats, index))
                 {
@@ -1026,7 +1054,7 @@ public sealed class AdventureGenerator(
             }
 
             return reasons
-                .Select(pair => new Refusal(Unconfirm(pair.Key + offset + 1, beats[pair.Key].Title, pair.Value, []), [pair.Key]) { Reasons = pair.Value })
+                .Select(pair => new Refusal(Unconfirm((grouped ? heads.IndexOf(pair.Key) : pair.Key) + offset + 1, beats[pair.Key].Title, pair.Value, []), [pair.Key]) { Reasons = pair.Value })
                 .ToList();
         }) ?? [];
     }
@@ -1057,7 +1085,10 @@ public sealed class AdventureGenerator(
         return Letters(string.Join(" ", beats[head].Lines.Select(line => line.Text))).Contains(quoted, StringComparison.Ordinal);
     }
 
-    private static StoryCall FidelityInstruction(Facts facts, AdventureSpine spine, IReadOnlyList<ReadBeat> beats, int offset, bool story, IReadOnlyList<SystemSummary> anarchy)
+    /// <summary>The index of each objective's first step in <paramref name="beats"/>, in order.</summary>
+    private static List<int> Heads(IReadOnlyList<ReadBeat> beats) => [.. Enumerable.Range(0, beats.Count).Where(index => !beats[index].Continues)];
+
+    private static StoryCall FidelityInstruction(Facts facts, AdventureSpine spine, IReadOnlyList<ReadBeat> beats, int offset, bool story, IReadOnlyList<SystemSummary> anarchy, bool grouped = false)
     {
         var text = new StringBuilder();
 
@@ -1092,8 +1123,33 @@ public sealed class AdventureGenerator(
         text.AppendLine();
         text.AppendLine("Objectives:");
 
+        var heads = Heads(beats);
+
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
+            if (grouped)
+            {
+                if (beat.Continues)
+                {
+                    continue;
+                }
+
+                var number = heads.IndexOf(index);
+                var further = beats.Skip(index + 1).TakeWhile(next => next.Continues).ToList();
+
+                text.AppendLine($"{offset + number + 1}. {beat.Title}{(number == heads.Count - 1 ? " (the last objective: its lines are the ending)" : string.Empty)} — {beat.Describe()}");
+                text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind, beat.Filter, story, beat.Written().System, beat.MissionFamily)}");
+
+                foreach (var step in further)
+                {
+                    text.AppendLine($"   Then — {step.Describe()}");
+                    text.AppendLine($"   Confirms: {TriggerConfirms.Of(step.Kind, step.Filter, story, step.Written().System, step.MissionFamily)}");
+                }
+
+                text.AppendLine($"   Lines{(further.Count > 0 ? " (spoken after its last step)" : string.Empty)}: {Quoted(beat.Lines)}");
+                continue;
+            }
+
             var last = index == beats.Count - 1 ? " (the last objective: its lines are the ending)" : string.Empty;
 
             text.AppendLine($"{offset + index + 1}. {beat.Title}{last} — {beat.Describe()}{(beat.Continues ? " (a further step of the objective above)" : string.Empty)}");
@@ -1150,13 +1206,36 @@ public sealed class AdventureGenerator(
         new("ending", spine.Ending ?? string.Empty),
     ];
 
-    private static List<PlainPart> BeatParts(IReadOnlyList<AdventureLine> opening, IReadOnlyList<ReadBeat> beats, int offset)
+    /// <summary>The opening's and each objective's wording; when <paramref name="grouped"/>, one part per objective holds its further steps too.</summary>
+    private static List<PlainPart> BeatParts(IReadOnlyList<AdventureLine> opening, IReadOnlyList<ReadBeat> beats, int offset, bool grouped = false)
     {
         var parts = new List<PlainPart>();
 
         if (opening.Count > 0)
         {
             parts.Add(new PlainPart("opening", string.Join(" ", opening.Select(line => line.Text)), -1));
+        }
+
+        if (grouped)
+        {
+            var heads = Heads(beats);
+
+            foreach (var (head, number) in heads.Select((head, number) => (head, number)))
+            {
+                var beat = beats[head];
+                var text = new StringBuilder()
+                    .Append("Title: ").Append(beat.Title).Append(". Lines: ").Append(string.Join(" ", beat.Lines.Select(line => line.Text)))
+                    .Append(" Reason: ").Append(beat.Reason).Append(" Task: ").Append(beat.Describe());
+
+                foreach (var step in beats.Skip(head + 1).TakeWhile(next => next.Continues))
+                {
+                    text.Append(", then ").Append(step.Describe());
+                }
+
+                parts.Add(new PlainPart($"objective {(offset + number + 1).ToString(CultureInfo.InvariantCulture)}", text.ToString(), head));
+            }
+
+            return parts;
         }
 
         for (var index = 0; index < beats.Count; index++)
@@ -1241,47 +1320,97 @@ public sealed class AdventureGenerator(
         }) ?? [];
     }
 
+    /// <summary>The part a plain refusal is on: <see cref="SpineIndex"/> for the title and spine, -1 for the opening, else its objective's index.</summary>
+    private static int PartOf(Refusal refusal) => refusal.Spine ? SpineIndex : refusal.Opening ? -1 : refusal.Objectives[0];
+
+    /// <summary>Adds each plain refusal's findings to those raised on its part.</summary>
+    private static void Raise(Dictionary<int, List<string>> raised, IEnumerable<Refusal> unplain)
+    {
+        foreach (var refusal in unplain)
+        {
+            var found = raised.TryGetValue(PartOf(refusal), out var known) ? known : raised[PartOf(refusal)] = [];
+
+            found.AddRange(refusal.Unplain.Select(objection => objection.Describe()).Where(described => !found.Contains(described)));
+        }
+    }
+
+    /// <summary>The plain findings raised earlier on <paramref name="parts"/> that <paramref name="refusals"/> do not repeat.</summary>
+    private static IReadOnlyList<string> Earlier(IReadOnlyDictionary<int, List<string>> raised, IEnumerable<int> parts, IReadOnlyList<Refusal> refusals)
+    {
+        var now = refusals.SelectMany(refusal => refusal.Unplain).Select(found => found.Describe()).ToHashSet();
+
+        return [.. parts.SelectMany(part => raised.TryGetValue(part, out var found) ? found : []).Where(found => !now.Contains(found)).Distinct()];
+    }
+
+    /// <summary>The plain-wording findings raised earlier on the words a repair writes again, listed so the new words do not bring them back.</summary>
+    private static void AppendEarlier(StringBuilder text, IReadOnlyList<string> earlier)
+    {
+        if (earlier.Count == 0)
+        {
+            return;
+        }
+
+        text.AppendLine();
+        text.AppendLine("Earlier checks of these words also refused the following. The words written again must not bring any of them back, in these words or others:");
+
+        foreach (var found in earlier)
+        {
+            text.Append("- ").AppendLine(found);
+        }
+    }
+
     /// <summary>The plain-wording check on named pieces of text, as each objection's part and the words it quotes.</summary>
     public async Task<IReadOnlyList<(string Part, string Quote)>> PlainObjectionsAsync(IReadOnlyList<(string Name, string Text)> parts, CancellationToken cancellationToken) =>
         [.. (await PlainAsync(new AdventureAsk(), [.. parts.Select(part => new PlainPart(part.Name, part.Text))], cancellationToken).ConfigureAwait(false)).Select(found => (found.Part, found.Quote))];
 
     /// <summary>
     /// The title and spine checked for plain wording, the spine asked for again with the objections up to
-    /// <see cref="PlainRepairRounds"/> times; the objections left are empty when the last version passed.
+    /// <see cref="PlainRepairRounds"/> times; the objections left are empty when the last version passed. The check's own
+    /// rewrites are put in place once between those calls, and an objection after them goes to the writer.
     /// </summary>
     private async Task<(string Name, AdventureSpine Spine, IReadOnlyList<PlainObjection> Unplain)> PlainSpineAsync(
         AdventureAsk ask, Facts facts, IReadOnlyList<NotablePlace> notable, Candidates candidates, string name, AdventureSpine spine, CancellationToken cancellationToken)
     {
         var plainRounds = 0;
+        var rewrittenByCheck = false;
         var unplain = await PlainAsync(ask, SpineParts(name, spine), cancellationToken).ConfigureAwait(false);
+        var raised = unplain.Select(found => found.Describe()).ToList();
 
         while (unplain.Count > 0 && plainRounds < PlainRepairRounds && !cancellationToken.IsCancellationRequested)
         {
+            if (!rewrittenByCheck)
+            {
+                var (swappedName, swappedSpine, left) = Rewritten(name, spine, unplain);
+
+                (name, spine, rewrittenByCheck) = (swappedName, swappedSpine, left.Count < unplain.Count);
+
+                if (left.Count == 0)
+                {
+                    logger.LogInformation("Draft {Draft}, plain spine rewrites put in place: {Objections}", ask.Draft, string.Join(" ", unplain.Select(found => found.Describe())));
+                    unplain = await PlainAsync(ask, SpineParts(name, spine), cancellationToken).ConfigureAwait(false);
+                    raised.AddRange(unplain.Select(found => found.Describe()).Where(found => !raised.Contains(found)));
+
+                    continue;
+                }
+
+                unplain = left;
+            }
+
             plainRounds++;
             logger.LogInformation("Draft {Draft}, plain spine round {Round}: {Objections}", ask.Draft, plainRounds, string.Join(" ", unplain.Select(found => found.Describe())));
 
-            var (swappedName, swappedSpine, left) = Rewritten(name, spine, unplain);
-            (name, spine) = (swappedName, swappedSpine);
-
-            if (left.Count == 0)
-            {
-                unplain = await PlainAsync(ask, SpineParts(name, spine), cancellationToken).ConfigureAwait(false);
-
-                continue;
-            }
-
-            unplain = left;
-
-            var again = await AskJsonAsync(SpineStep, SpineInstruction(ask, facts, notable, candidates, new PlainFix(name, spine, unplain)), SpineOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+            var earlier = raised.Except(unplain.Select(found => found.Describe())).ToList();
+            var again = await AskJsonAsync(SpineStep, SpineInstruction(ask, facts, notable, candidates, new PlainFix(name, spine, unplain, earlier)), SpineOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
             string? newName = null;
             var rewritten = again.Json is null ? null : ReadSpine(again.Json, out newName);
 
             if (rewritten is { IsEmpty: false } && newName is not null)
             {
-                (name, spine) = (newName, rewritten);
+                (name, spine, rewrittenByCheck) = (newName, rewritten, false);
             }
 
             unplain = await PlainAsync(ask, SpineParts(name, spine), cancellationToken).ConfigureAwait(false);
+            raised.AddRange(unplain.Select(found => found.Describe()).Where(found => !raised.Contains(found)));
         }
 
         if (unplain.Count > 0 && unplain.All(found => found.HasRewrite) && Rewritten(name, spine, unplain) is (var lastName, var lastSpine, { Count: 0 }))
@@ -2264,7 +2393,19 @@ public sealed class AdventureGenerator(
         var stationsTask = docks ? NearStationsAsync(search, facts, here, Resolver(), cancellationToken, notes[4]) : Task.FromResult<IReadOnlyList<StationSummary>>([]);
         var bodiesTask = NearBodiesAsync(search, facts, here, cancellationToken, notes[5]);
         var inBandTask = InBandAsync(search, Resolver(), ask, facts, cancellationToken, notes[6]);
-        var pullTask = PullAsync(search, Resolver(), ask, facts, cancellationToken, notes[7]);
+        var destinationAt = ask.Story is { FinaleChapter: > 1, Destination: { } destination }
+            ? await DestinationPositionAsync(search, destination, cancellationToken).ConfigureAwait(false)
+            : null;
+        var pullTask = PullAsync(
+            search,
+            Resolver(),
+            ask,
+            facts,
+            cancellationToken,
+            notes[7],
+            destinationAt is { } there && facts.Position is { } start && start.DistanceTo(there) > facts.RadiusLightYears
+                ? new ChapterLeg(ask.Story!.Destination!.System, there, Home: false, Arrived: false)
+                : null);
         var baseTask = ShipBases.Applies(ask) ? BaseAsync(search, ask, facts, cancellationToken) : Task.FromResult<BaseStep?>(null);
         var sightTask = AroundSightsAsync(search, sights, facts, Resolver(), docks, cancellationToken, notes[8]);
         var missionsTask = MissionStopsAsync(search, facts, cancellationToken, notes[9]);
@@ -2382,6 +2523,7 @@ public sealed class AdventureGenerator(
             Missions = missions,
             Visited = seen,
             Used = used,
+            DestinationAt = destinationAt,
         };
 
         static ChapterArea Area(InBandState state, IReadOnlyList<StationSummary> stations, IReadOnlyList<BodySummary> bodies) => new(
@@ -2664,10 +2806,24 @@ public sealed class AdventureGenerator(
     }
 
     /// <summary>For a chapter that travels, the open stations and landable bodies nearest the waypoint on the way to its target.</summary>
-    private async Task<PullPlaces> PullAsync(
-        IGalaxyService search, AdventureResolver resolver, AdventureAsk ask, Facts facts, CancellationToken cancellationToken, List<string> notes)
+    /// <summary>Where the finale's destination is, from the galaxy search; null where it cannot say.</summary>
+    private static async Task<StarPosition?> DestinationPositionAsync(IGalaxyService search, AdventureDestination destination, CancellationToken cancellationToken)
     {
-        if (ChapterPull.Of(ask, facts.Position) is not { Arrived: false } leg || facts.Position is not { } start)
+        try
+        {
+            return await search.PositionAsync(destination.System, cancellationToken).ConfigureAwait(false);
+        }
+        catch (GalaxyUnavailableException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>The places around the waypoint toward <paramref name="toward"/>, or toward the chapter's own leg when it is null.</summary>
+    private async Task<PullPlaces> PullAsync(
+        IGalaxyService search, AdventureResolver resolver, AdventureAsk ask, Facts facts, CancellationToken cancellationToken, List<string> notes, ChapterLeg? toward = null)
+    {
+        if ((toward ?? ChapterPull.Of(ask, facts.Position)) is not { Arrived: false } leg || facts.Position is not { } start)
         {
             return PullPlaces.NotSearched;
         }
@@ -3297,7 +3453,8 @@ public sealed class AdventureGenerator(
     // ---- the instructions ------------------------------------------------------------------
 
     /// <summary>A spine draft and the wording objections to it, for the spine to be written again.</summary>
-    private sealed record PlainFix(string Name, AdventureSpine Spine, IReadOnlyList<PlainObjection> Objections);
+    /// <summary>The spine as it stands, the objections the writer answers, and the plain findings raised on it earlier.</summary>
+    private sealed record PlainFix(string Name, AdventureSpine Spine, IReadOnlyList<PlainObjection> Objections, IReadOnlyList<string> Earlier);
 
     private static StoryCall SpineInstruction(AdventureAsk ask, Facts facts, IReadOnlyList<NotablePlace> notable, Candidates candidates, PlainFix? fix = null)
     {
@@ -3387,6 +3544,8 @@ public sealed class AdventureGenerator(
             {
                 text.Append("- ").AppendLine(found.Describe());
             }
+
+            AppendEarlier(text, fix.Earlier);
 
             text.AppendLine("Write the spine again with the same events, saying each refused thing in the game's own terms and not keeping the image in other words.");
         }
@@ -3674,7 +3833,8 @@ public sealed class AdventureGenerator(
     /// Both layers of a stock story, its stage and that stage's beats, and in act one the beacon its last beat
     /// arrives at or the reason it cannot yet.
     /// </summary>
-    private static void AppendStory(StringBuilder text, AdventureStory story, Facts facts)
+    /// <summary>The story the chapter belongs to; when <paramref name="lines"/>, only what a planned chapter's words are written from.</summary>
+    private static void AppendStory(StringBuilder text, AdventureStory story, Facts facts, bool lines = false)
     {
         text.AppendLine();
         text.AppendLine(
@@ -3712,9 +3872,17 @@ public sealed class AdventureGenerator(
                 + "true right now wins, and the story's people and events stay.");
         }
 
-        AppendFit(text, story);
+        if (lines)
+        {
+            AppendGenre(text, story);
+            AppendGoals(text, story);
+        }
+        else
+        {
+            AppendFit(text, story);
+        }
 
-        if (facts.Credits is { } credits)
+        if (!lines && facts.Credits is { } credits)
         {
             text.AppendLine();
             text.AppendLine(
@@ -3772,8 +3940,11 @@ public sealed class AdventureGenerator(
             }
         }
 
-        AppendDestination(text, story, facts);
-        AppendMissions(text, facts);
+        if (!lines)
+        {
+            AppendDestination(text, story, facts);
+            AppendMissions(text, facts);
+        }
     }
 
     /// <summary>For a chapter starting outside the bubble, how far from Sol its last stop must be; for a chapter in the black, that it may stay far out.</summary>
@@ -4302,6 +4473,15 @@ public sealed class AdventureGenerator(
     /// <summary>The genre's elements, the chapter size, the travel limit, a long haul when allowed, and the drawn activities.</summary>
     private static void AppendFit(StringBuilder text, AdventureStory story)
     {
+        AppendGenre(text, story);
+        AppendSize(text, story);
+        AppendGoals(text, story);
+        AppendRefused(text, story);
+    }
+
+    /// <summary>The story's genre and its elements.</summary>
+    private static void AppendGenre(StringBuilder text, AdventureStory story)
+    {
         if (story.Genre is { Length: > 0 } genre)
         {
             text.AppendLine();
@@ -4317,7 +4497,11 @@ public sealed class AdventureGenerator(
                     + "but never requires it.");
             }
         }
+    }
 
+    /// <summary>The chapter size, the travel limit, a long haul when allowed, and the drawn activities.</summary>
+    private static void AppendSize(StringBuilder text, AdventureStory story)
+    {
         if (story.ChapterSize is { Length: > 0 } size)
         {
             text.AppendLine();
@@ -4367,6 +4551,11 @@ public sealed class AdventureGenerator(
                 + "or what a cast member says or sends.");
         }
 
+    }
+
+    /// <summary>The Commander's goals the chapter works, and which drawn activities work each.</summary>
+    private static void AppendGoals(StringBuilder text, AdventureStory story)
+    {
         if (story.Goals is { Count: > 0 } goals)
         {
             text.AppendLine();
@@ -4388,7 +4577,11 @@ public sealed class AdventureGenerator(
                     $"The chapter works both goals, \"{goals[0].Name}\" and \"{goals[1].Name}\", in one story line: its want and its turn give the Commander one reason for both.");
             }
         }
+    }
 
+    /// <summary>The activities the Commander refused for the story.</summary>
+    private static void AppendRefused(StringBuilder text, AdventureStory story)
+    {
         if (story.Refused is { Count: > 0 } refused)
         {
             text.AppendLine();
@@ -4807,6 +5000,8 @@ public sealed class AdventureGenerator(
         {
             text.Append("- ").AppendLine(refusal.Text);
         }
+
+        AppendEarlier(text, repair.Earlier);
 
         foreach (var appends in repair.Refusals.Select(refusal => refusal.Appends).OfType<string>().Distinct())
         {
@@ -5411,6 +5606,9 @@ public sealed class AdventureGenerator(
 
         public bool Destination { get; init; }
 
+        /// <summary>Whether it falls on the title or the spine.</summary>
+        public bool Spine { get; init; }
+
         /// <summary>Whether the plain-wording check raised it.</summary>
         public bool Plain { get; init; }
 
@@ -5420,12 +5618,15 @@ public sealed class AdventureGenerator(
         /// <summary>The step a repair adds after the last one, as the writer is told it; the refusal is charged to the index one past the last.</summary>
         public string? Appends { get; init; }
 
-        public bool Chapter => Objectives.Count == 0 && !Opening && !Destination;
+        public bool Chapter => Objectives.Count == 0 && !Opening && !Destination && !Spine;
     }
 
     /// <summary>The objectives as written and the refusals a repair round answers; <see cref="Offset"/> objectives come before them in the chapter.</summary>
     private sealed record Repair(IReadOnlyList<ReadBeat> Beats, IReadOnlyList<Refusal> Refusals, int Offset)
     {
+        /// <summary>The plain findings raised earlier on the objectives and opening the repair writes again.</summary>
+        public IReadOnlyList<string> Earlier { get; init; } = [];
+
         /// <summary>The indexes a replacement may take: those the refusals name, and every one when a refusal is the whole chapter's.</summary>
         public IReadOnlySet<int> Replaceable =>
             Refusals.Any(refusal => refusal.Chapter)
