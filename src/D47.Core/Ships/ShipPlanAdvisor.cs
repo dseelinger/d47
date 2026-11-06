@@ -202,11 +202,15 @@ public sealed class ShipPlanAdvisor(
         text.AppendLine(
             $"- The reply is spoken aloud. It names at most {MostModulesNamed.ToString(CultureInfo.InvariantCulture)} "
             + "modules and is a few sentences long.");
+        text.AppendLine(
+            "- Quote the figures under \"What the plan does\" and do not work out others: jump range, power, "
+            + "shields, hull, resistances, damage and cargo.");
         text.AppendLine("- Nothing you propose is applied until the Commander accepts it.");
         text.AppendLine();
 
         Hull(text, build, state);
         Costing(text, Cost(build, state));
+        Figures(text, build, state);
         Blueprints(text, build);
 
         if (exchange.Count > 0)
@@ -340,7 +344,10 @@ public sealed class ShipPlanAdvisor(
     }
 
     /// <summary>The modules fitted to this build's own ship, or null where none have been seen.</summary>
-    private static IReadOnlyList<ShipModule>? Fitted(ShipBuild build, CommanderGameState? state)
+    private static IReadOnlyList<ShipModule>? Fitted(ShipBuild build, CommanderGameState? state) =>
+        FittedLoadout(build, state)?.Modules;
+
+    private static ShipLoadout? FittedLoadout(ShipBuild build, CommanderGameState? state)
     {
         if (build.ShipId is not { } shipId || state is null)
         {
@@ -349,10 +356,113 @@ public sealed class ShipPlanAdvisor(
 
         if (state.Ship is { IsKnown: true } live && live.ShipId == shipId)
         {
-            return live.Modules;
+            return live;
         }
 
-        return state.Loadouts.For(shipId)?.Loadout.Modules;
+        return state.Loadouts.For(shipId)?.Loadout;
+    }
+
+    /// <summary>The figures d47 computes for the plan, and for what is fitted where the two differ.</summary>
+    private static void Figures(StringBuilder text, ShipBuild build, CommanderGameState? state)
+    {
+        text.AppendLine("What the plan does (computed by d47; measured means read off the game, modelled means worked out from the plan):");
+
+        var loadout = FittedLoadout(build, state);
+        var planned = FigureLines(ShipGauges.Read(build, loadout));
+
+        if (planned.Count == 0)
+        {
+            text.AppendLine("- no figures: nothing in the plan or the ship can be totalled");
+            text.AppendLine();
+            return;
+        }
+
+        if (loadout is null)
+        {
+            foreach (var line in planned)
+            {
+                text.AppendLine("- " + line);
+            }
+
+            text.AppendLine();
+            return;
+        }
+
+        var fitted = FigureLines(ShipGauges.Read(new ShipBuild(build.CommanderFid, build.Id, build.Hull, build.ShipId), loadout));
+
+        if (planned.SequenceEqual(fitted))
+        {
+            foreach (var line in planned)
+            {
+                text.AppendLine("- " + line);
+            }
+        }
+        else
+        {
+            text.AppendLine("As planned:");
+
+            foreach (var line in planned)
+            {
+                text.AppendLine("- " + line);
+            }
+
+            text.AppendLine("As fitted now:");
+
+            foreach (var line in fitted)
+            {
+                text.AppendLine("- " + line);
+            }
+        }
+
+        text.AppendLine();
+    }
+
+    private static List<string> FigureLines(BuildGauges gauges)
+    {
+        var lines = new List<string>();
+
+        string N(double value, string format = "0.##") => value.ToString(format, CultureInfo.InvariantCulture);
+        string Percent(double value) => N(value * 100, "0.#") + "%";
+        string Set(ResistanceSet set) =>
+            $"kinetic {Percent(set.Kinetic)}, thermal {Percent(set.Thermal)}, explosive {Percent(set.Explosive)}, caustic {Percent(set.Caustic)}";
+
+        if (gauges.Jump is { } jump)
+        {
+            lines.Add(
+                $"jump range ({jump.Kind.ToString().ToLowerInvariant()}): {N(jump.Best)} ly with one jump's fuel and no cargo, "
+                + $"{N(jump.Middle)} ly with a full tank, {N(jump.Worst)} ly with a full tank and a full hold");
+        }
+
+        if (gauges.Power is { } power)
+        {
+            var capacity = power.Capacity is { } made ? $"{N(made)} MW capacity" : "no power plant seen";
+
+            lines.Add(
+                $"power ({power.Kind.ToString().ToLowerInvariant()}): {N(power.Deployed)} MW deployed, {N(power.Retracted)} MW retracted, {capacity}"
+                + (power.Overage is { } over ? $"; over by {N(over)} MW" : string.Empty));
+        }
+
+        if (gauges.Combat is { } combat)
+        {
+            var kind = combat.Kind.ToString().ToLowerInvariant();
+
+            if (combat.Shields is { } shields)
+            {
+                lines.Add($"shields ({kind}): {N(shields)} MJ"
+                    + (combat.ShieldResistance is { } shieldSet ? $"; damage resisted: {Set(shieldSet)}" : string.Empty));
+            }
+
+            if (combat.Hull is { } hull)
+            {
+                lines.Add($"hull ({kind}): {N(hull)}"
+                    + (combat.HullResistance is { } hullSet ? $"; damage resisted: {Set(hullSet)}" : string.Empty));
+            }
+
+            lines.Add($"damage ({kind}): {N(combat.RawDps)} per second raw, {N(combat.SustainedDps)} sustained");
+            lines.Add($"cargo ({kind}): {N(combat.Cargo)} t");
+        }
+
+        return lines;
     }
 
     private static void Costing(StringBuilder text, PlanCosting costing)

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Talking through a ship build now answers from figures d47 computes for the plan: jump range at three masses, power, shields, hull, resistances, damage and cargo, marked measured or modelled. For an owned ship whose plan differs from what is fitted, both sets are given, and the answer quotes them rather than working out its own.
+
 A new Search › Faction page, between Systems and Stations, shows where one minor faction is present and the state it is in. It opens on your squadron's faction, or empty with a field that suggests faction names. Overview counts the systems in each active state, and Systems lists every system with its influence, states, whether the faction controls it and how old the data is, using your own journal reading where it is newer. It works on the headset, where the table shows 25 systems a page. Choosing a minor faction in Find now opens this page instead of running a Systems search. Two more sections follow: Conflicts lists each system where the faction is in a war, civil war or election with the opponent, days won and what is at stake (from systems you have visited), and Assets lists the stations it controls, filterable by kind, searchable and sortable.
 
 The BGS work page and "what's my BGS work" put your squadron's faction first. The page groups its work into the squadron faction, other factions in its systems, and everywhere else, and leaves out empty groups. While you are in a squadron whose faction D47 does not know yet, the page says how it learns it.

@@ -241,6 +241,26 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
         Assert.Contains(D47.Core.Stories.PlainWords.Rule, ShipPlanAdvisor.Instruction(new ShipBuild("F1", "plain", "sidewinder", null, null, []), null, [], "is this build any good"), StringComparison.Ordinal);
 
     [Fact]
+    public void ThePromptGivesTheFiguresDComputesForThePlan()
+    {
+        var build = new ShipBuild("F1", "figures", "python", null, "Figures",
+        [
+            new SlotPlan("Slot04_Size5") { Variant = "int_shieldgenerator_size5_class5" },
+            new SlotPlan("LargeHardpoint1") { Variant = "hpt_pulselaser_fixed_large" },
+            new SlotPlan("Slot01_Size6") { Variant = "int_cargorack_size5_class1" },
+        ]);
+
+        var prompt = ShipPlanAdvisor.Instruction(build, null, [], "is this build any good");
+        var combat = ShipGauges.Read(build, null).Combat!;
+
+        Assert.Contains("What the plan does (computed by d47", prompt, StringComparison.Ordinal);
+        Assert.Contains("shields (modelled): " + combat.Shields!.Value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + " MJ", prompt, StringComparison.Ordinal);
+        Assert.Contains("damage (modelled): 18.12 per second raw", prompt, StringComparison.Ordinal);
+        Assert.Contains("cargo (modelled): " + combat.Cargo.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + " t", prompt, StringComparison.Ordinal);
+        Assert.Contains("do not work out others", prompt, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ThePromptForTheLargestBuildIsMeasured()
     {
         var hull = EliteSpecifications.Ships.MaxBy(ship => EliteSpecifications.Slots(ship.Symbol).Count)!;

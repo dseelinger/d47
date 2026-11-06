@@ -392,7 +392,7 @@ A ship's own page opens with **Talk through this build**. It is answered by the 
 - a critique, such as "is this build any good";
 - a goal, such as "make it jump further".
 
-A question or a critique gets an answer. A goal gets a **proposal**: one row per slot that would
+A question or a critique gets an answer from the figures d47 computes for the plan: jump range, power, shields, hull, damage and cargo. A goal gets a **proposal**: one row per slot that would
 change, each with the slot's plan now, the plan proposed and a one-line reason, and **Accept** and
 **Reject** beside it. Above the rows is what the proposal costs with every change accepted: the
 engineer ranks it is locked behind and each material, held against needed.
