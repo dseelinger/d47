@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Ask "how is my squadron's faction doing" or say "faction report", or "faction report for" and a faction's name, and D47 answers without the model: its government and allegiance, the systems it is present in and controls, up to three conflicts with their opponents, the three controlled systems where its influence is lowest, and how many systems are in Retreat or Expansion. Where you have seen a system since Spansh's report, the answer uses your own reading.
+
 Ask "which ship is best for exploring and hauling with fifty million" while talking through a build, and D47 names up to three hulls, best first, with what each costs and its figures for those roles. It leaves out hulls you cannot buy, including those behind a navy rank you do not hold, and prices every module at full cost so the figure is the most it would be. It proposes nothing; plan one of the hulls next.
 
 Asking to talk through a ship build for a goal, such as "make it jump further", now gets a proposal that d47 searches for rather than one the model chooses. The model reads the goal, d47 finds the changes and the model explains them. Where you do not say how far to go, it asks whether to maximise at the expense of everything else, maximise without giving up the rest, or any improvement. The goal is kept for the conversation, so "a bit more cargo" amends it. A module you name that d47 does not know is left out and named.

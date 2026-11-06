@@ -642,6 +642,27 @@ public static class GalaxyCapability
             },
             new ToolDefinition
             {
+                Name = FactionReportTool,
+                Exercise =
+                    "Say \"faction report\". The reply gives the squadron faction's government, allegiance, "
+                    + "systems, up to three conflicts, its three weakest controlled systems, and its retreats and "
+                    + "expansions.",
+                Description =
+                    "How a minor faction is doing: government, allegiance, systems present and controlled, conflicts, "
+                    + "its lowest influence where it controls, and retreats and expansions. Defaults to the "
+                    + "squadron's faction.",
+                Parameters =
+                [
+                    ToolParameter.Text(
+                        "faction",
+                        "The minor faction's exact name. Defaults to the squadron's faction."),
+                ],
+                Commands = [.. FactionReportQuestions.Select(phrase => new ToolCommandPhrase(phrase))],
+                Handler = (arguments, cancellationToken) => FactionReportAsync(
+                    galaxy, gameState, squadronFactions, arguments, cancellationToken),
+            },
+            new ToolDefinition
+            {
                 Name = SetSquadronFactionTool,
                 Exercise =
                     "Say \"my squadron's faction is\" followed by the name of a minor faction. The reply says "
@@ -699,6 +720,45 @@ public static class GalaxyCapability
     };
 
     public const string SetSquadronFactionTool = "set_squadron_faction";
+
+    public const string FactionReportTool = "get_faction_report";
+
+    private static readonly string[] FactionReportQuestions = ["how is my squadron's faction doing", "faction report"];
+
+    private static async Task<ToolResult> FactionReportAsync(
+        IGalaxyService? galaxy,
+        Func<Journal.CommanderGameState?>? gameState,
+        SquadronFactions? squadronFactions,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        var state = gameState?.Invoke();
+        var faction = arguments.TryGetString("faction", out var named) && !string.IsNullOrWhiteSpace(named)
+            ? named.Trim()
+            : Journal.SquadronFactionResolver.Resolve(state, squadronFactions);
+
+        if (faction is null)
+        {
+            return ToolResult.Ok(
+                "D47 doesn't know your squadron's faction yet. Name one, or say 'my squadron's faction is' and its name.");
+        }
+
+        if (galaxy is null)
+        {
+            return ToolResult.Error(Unavailable);
+        }
+
+        try
+        {
+            var report = await galaxy.FactionAsync(faction, cancellationToken).ConfigureAwait(false);
+
+            return ToolResult.Ok(FactionReportAnswer.Describe(report, state?.Standings ?? Journal.SystemStandings.Empty));
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
+    }
 
     public const string SuggestHomeSystemTool = "suggest_home_system";
 

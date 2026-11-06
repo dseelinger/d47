@@ -1631,6 +1631,32 @@ public sealed class TurnLoop(
             yield break;
         }
 
+        // 0. A faction's name in a report request, which no declared phrase can carry.
+        if (capabilities.Find(Capabilities.Builtin.GalaxyCapability.Id) is not null
+            && FactionReportPhrase.Read(input) is { } reportFaction)
+        {
+            routing.Handled = true;
+            yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
+
+            var reported = await capabilities
+                .InvokeAsync(
+                    Capabilities.Builtin.GalaxyCapability.FactionReportTool,
+                    new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["faction"] = reportFaction }),
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            Said(reported.Spoken, input);
+
+            yield return new TurnEvent.TextDelta(reported.Spoken);
+            yield return new TurnEvent.Completed(new TurnResult(
+                reported.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
+                TurnRoute.ActionCommand,
+                reported.Spoken,
+                Effort: null,
+                Cost: null));
+            yield break;
+        }
+
         // 0. A binding profile name, which no declared phrase can carry.
         if (capabilities.Find(Capabilities.Builtin.BindingProfilesCapability.Id) is not null
             && Input.BindingProfilePhrase.Read(input) is { } profile)

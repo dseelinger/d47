@@ -880,6 +880,28 @@ Leaving the squadron or joining another one returns no faction until the journal
 "Checking a faction name needs galaxy search, which is not available."
 ```
 
+#### `get_faction_report`
+
+How a minor faction is doing, from the rows the Faction page draws. It defaults to the squadron's
+faction and fetches the faction's report from Spansh, which is held for an hour. A system the
+Commander has seen since Spansh's report answers from that reading.
+
+```json
+{"type":"object","properties":{"faction":{"type":"string","description":"The minor faction\u0027s exact name. Defaults to the squadron\u0027s faction."}},"required":[],"additionalProperties":false}
+```
+
+Say "how is my squadron's faction doing" or "faction report" for the squadron's faction, or
+"faction report for Hutton Truckers" for another. No language model is involved. The answer gives
+the government and allegiance, the systems present and controlled, the conflicts active or pending
+(three named and the rest counted), the three controlled systems with the lowest influence, and how
+many systems have Retreat and Expansion. A count of zero is not said. While an uncached report loads,
+the Thinking cue and the thinking bed play, as on every turn.
+
+```csharp
+"Hutton Truckers: government Democracy, allegiance Federation. Present in 12 systems, controls 5. Conflicts: War in Sol against Hutton Truckers; War in Alpha against one of 3 factions; War in Beta, opponent not known yet, pending; and 2 more. Lowest influence where it controls: Delta 5%, Beta 12%, Alpha 46%. Retreat in 2 systems. Expansion in 1 system."
+"D47 doesn't know your squadron's faction yet. Name one, or say 'my squadron's faction is' and its name."
+```
+
 #### `find_nearest_station`
 
 Where to buy a named module or ship, nearest first. A rare good is answered from a table instead,
