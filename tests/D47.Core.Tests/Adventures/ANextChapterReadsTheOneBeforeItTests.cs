@@ -96,7 +96,7 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
         Assert.DoesNotContain("Third want.", prompt);
         Assert.DoesNotContain("Third stake.", prompt);
         Assert.DoesNotContain("Third turn.", prompt);
-        Assert.DoesNotContain("Third ending.", prompt);
+        Assert.Contains("How its spine said it ends: Third ending.", prompt);
         Assert.DoesNotContain("The beacon still runs, said aloud.", prompt);
         Assert.DoesNotContain("the belief that chapter left open", prompt);
 

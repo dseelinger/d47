@@ -173,11 +173,11 @@ public static class StoryClues
     /// their sealed keys.
     /// </summary>
     public static IReadOnlyList<(string Key, string Line)> Beats(
-        StoryBeats beats, StoryPacing pacing, StoryStage stage, bool beaconInReach = true, int? finaleChapter = null)
+        StoryBeats beats, StoryPacing pacing, StoryStage stage, bool beaconInReach = true, int? finaleChapter = null, bool laterActOne = false)
     {
         ArgumentNullException.ThrowIfNull(beats);
 
-        var keys = BeatKeys(pacing, stage, beaconInReach, finaleChapter);
+        var keys = BeatKeys(pacing, stage, beaconInReach, finaleChapter, laterActOne);
 
         return
         [
@@ -190,11 +190,21 @@ public static class StoryClues
     /// <summary>
     /// The sealed keys of the beats <see cref="Beats"/> hands out. Act one stops before <c>breakIntoTwo</c> while the
     /// beacon is out of reach; the last finale chapter adds <c>finalImage</c>. A short sheet has only the beats of
-    /// the stages its length reaches.
+    /// the stages its length reaches. A <paramref name="laterActOne"/> chapter skips the act-one beats an earlier
+    /// chapter had, down to the last one when none follow.
     /// </summary>
-    public static IReadOnlyList<string> BeatKeys(StoryPacing pacing, StoryStage stage, bool beaconInReach, int? finaleChapter)
+    public static IReadOnlyList<string> BeatKeys(StoryPacing pacing, StoryStage stage, bool beaconInReach, int? finaleChapter, bool laterActOne = false)
     {
         ArgumentNullException.ThrowIfNull(pacing);
+
+        if (laterActOne && stage == StoryStage.ActOne)
+        {
+            var all = BeatKeys(pacing, stage, beaconInReach, finaleChapter);
+            var firstOnly = new[] { "openingImage", "themeStated", "setUp", "catalyst" };
+            var rest = all.Where(key => !firstOnly.Contains(key, StringComparer.Ordinal)).ToList();
+
+            return rest.Count > 0 ? rest : [all[^1]];
+        }
 
         var last = finaleChapter >= pacing.FinaleChapters;
 

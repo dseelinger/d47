@@ -3020,6 +3020,11 @@ public sealed class AdventureGenerator(
             text.AppendLine($"It ended in the ending \"{reached.Name}\", one of its own: {reached.Reason} Write the next chapter from that ending.");
         }
 
+        if (previous.Spine?.Ending is { Length: > 0 } meant)
+        {
+            text.AppendLine($"How its spine said it ends: {meant}");
+        }
+
         text.AppendLine("Objectives: " + string.Join("; ", previous.Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")));
         text.AppendLine("What those objectives asked for: " + string.Join("; ", previous.Beats.Select((beat, index) => $"{index + 1}. {string.Join(", then ", beat.Steps.Select(step => step.Trigger.Describe()))}")));
 

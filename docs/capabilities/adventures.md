@@ -1381,7 +1381,9 @@ and for chapter one after a narrated scan, and Break into Two with no clue yet; 
 | 1 year | 1–8 | 9 | 10–12 | 13 | 14 |
 
 Each chapter's writer is told the stage and given that stage's lines from the objective sheet, and nothing from
-later stages. The full sheet has all fifteen objectives. The short sheet has only the objectives of the stages its
+later stages. A second or later act-one chapter is not given the act-one lines an earlier chapter already had: it gets the lines
+after Catalyst (Debate, and Break into Two once the beacon is in reach), or the last act-one line when none follow.
+The writer of any next chapter is also told how the previous chapter's spine said it ends. The full sheet has all fifteen objectives. The short sheet has only the objectives of the stages its
 length reaches: Opening Image and Catalyst in act one, Break into Two once the beacon is in reach, then
 Fun and Games, Midpoint and All Is Lost where the length has them, the Finale, and the Final Image in the
 last finale chapter. A 3-day story's objectives are Opening Image, Catalyst, Break into Two, Midpoint, Finale

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A second chapter of a story still in act one now continues from where the first left off, instead of opening on the same scene, call and reveal. It is not handed the opening, set-up and catalyst beats again, and the writer is told how the previous chapter's spine said it ends.
+
 A server error from an OpenAI-style provider now gives its HTTP status and the reason the provider sent, where it sent one.
 
 Before an act-one chapter, the Guardian beacon counts as in reach when any ship you own can make the trip, judged from its remembered loadout. When the ship you are flying cannot but a stored one can, the chapter ends at the beacon and tells you which ship to swap into and where it is parked, instead of sending you to refit.

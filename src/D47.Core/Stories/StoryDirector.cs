@@ -2325,6 +2325,7 @@ public sealed class StoryDirector(
         var number = story.Chapters.Count;
         var finaleChapter = story.FinaleChapter;
         var stage = finaleChapter is null ? StoryClues.Stage(before) : StoryStage.Finale;
+        var laterActOne = stage == StoryStage.ActOne && before.Chapters.Count > 0;
         var beaconBeat = chapter.Beats[^1].Steps[^1].Trigger is { Kind: TriggerKind.Beacon, SystemAddress: { } address } trigger
             ? new AdventureBeacon(address, trigger.System ?? GuardianCores.Beacons.GetValueOrDefault(address) ?? string.Empty, trigger.JumpRange)
             : null;
@@ -2374,7 +2375,8 @@ public sealed class StoryDirector(
                 slots,
                 finaleChapter is null ? null : story.FinaleDestination,
                 hull: game?.Ship.Type,
-                inTheBlack: StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter)),
+                inTheBlack: StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne)),
+                laterActOne: laterActOne,
                 sights: sightseeing ? sights : null),
             Rewrite: rewrite,
             CrimeRefused: CrimeRefused());
@@ -3555,6 +3557,7 @@ public sealed class StoryDirector(
         var finaleChapter = number - finaleFrom + 1;
         var keptDestination = rewriting && finaleChapter == 1 ? story.FinaleDestination : null;
         var stage = finaleChapter is null ? StoryClues.Stage(story) : StoryStage.Finale;
+        var laterActOne = stage == StoryStage.ActOne && story.Chapters.Count - (replacing ? 1 : 0) > 0;
         var reach = story.BeaconScanAt is null
             ? Reach()
             : null;
@@ -3562,8 +3565,8 @@ public sealed class StoryDirector(
         var game = Game();
         var sinceBeacon = SinceBeacon(frontierId, story) + (replacing ? 0 : 1);
         var beaconChapter = reach is { InReach: true };
-        var inTheBlack = StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter));
-        var toward = inTheBlack && story.BeaconScanAt is not null ? StoryBlack.Toward(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter)) : null;
+        var inTheBlack = StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne));
+        var toward = inTheBlack && story.BeaconScanAt is not null ? StoryBlack.Toward(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne)) : null;
         var pulled = finaleChapter is null && !beaconChapter && ChapterPull.Pulls(toward, game?.Location.StarPos);
         var home = inTheBlack ? null : HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, replacing ? story.Chapters.SkipLast(1).ToList() : story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
         var chosen = story.ChosenDestination;
@@ -3633,7 +3636,7 @@ public sealed class StoryDirector(
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
             && (story.BeaconScanAt is null || finaleChapter is not null || homeLeg is not null || heading is not null || pulled || ChapterFit.ServesLongHaul(slots, [.. goals.Select(goal => goal.Objective).OfType<AdventureTrigger>()], sightseeing));
 
-        var opening = Opening(frontierId, story, secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter), game?.Ship.Type);
+        var opening = Opening(frontierId, story, secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne), game?.Ship.Type);
 
         var ask = new AdventureAsk(
             longHaul || homeLeg is not null || heading is not null || pulled ? AdventureReach.Anywhere : AdventureReach.Session,
@@ -3658,7 +3661,8 @@ public sealed class StoryDirector(
                 inTheBlack,
                 sightseeing ? sights : null,
                 toward,
-                heading),
+                heading,
+                laterActOne: laterActOne),
             LastDraftRefused: lastDraftRefused,
             Progress: Progress(frontierId),
             Draft: draftNumber,
@@ -3771,7 +3775,8 @@ public sealed class StoryDirector(
         bool inTheBlack = false,
         IReadOnlyList<NotablePlace>? sights = null,
         string? toward = null,
-        AdventureHeading? chosen = null)
+        AdventureHeading? chosen = null,
+        bool laterActOne = false)
     {
         var card = catalog().Find(story.Id);
 
@@ -3786,7 +3791,7 @@ public sealed class StoryDirector(
             beacon,
             card?.Level,
             StoryClues.StageName(stage),
-            StoryClues.Beats(secret.Beats, story.Pacing, stage, beaconInReach, finaleChapter),
+            StoryClues.Beats(secret.Beats, story.Pacing, stage, beaconInReach, finaleChapter, laterActOne),
             finaleChapter,
             away,
             story.Pacing.Name,
@@ -3805,7 +3810,7 @@ public sealed class StoryDirector(
             story.BeaconsRemembered > 0,
             goals,
             StoryAboard.BySpan(secret, story),
-            StoryAboard.Due(secret, story, StoryClues.BeatKeys(story.Pacing, stage, beaconInReach, finaleChapter), hull),
+            StoryAboard.Due(secret, story, StoryClues.BeatKeys(story.Pacing, stage, beaconInReach, finaleChapter, laterActOne), hull),
             sights)
         {
             OnComms = StoryAboard.Seatless(secret, StoryAboard.BySpan(secret, story), StoryAboard.BySpan(secret, story), hull),
