@@ -24,4 +24,24 @@ public sealed class ADraftNotWrittenListsEachRoundsRefusalsTests
         Assert.Equal(("first", "beats", "Line two is unspoken."), Read(rounds[0]));
         Assert.Equal(("repair 1", "replacements", "Line two\nis still unspoken."), Read(rounds[1]));
     }
+
+    [Fact]
+    public void EveryPlainSpineRoundIsListedWithItsObjections()
+    {
+        var log = new RecordingLogger();
+        log.LogInformation("Draft {Draft}, plain spine round {Round}: {Objections}", 1, 1, "The goal is vague.");
+        log.LogInformation("Draft {Draft}, plain spine round {Round}: {Objections}", 1, 2, "The goal is\nstill vague.");
+
+        var rounds = JsonSerializer.SerializeToElement(StoryComparisonTests.RefusalRounds(log)).EnumerateArray().ToList();
+
+        Assert.Equal(2, rounds.Count);
+        Assert.Equal(("1", "plain", "The goal is vague."), Read(rounds[0]));
+        Assert.Equal(("2", "plain", "The goal is\nstill vague."), Read(rounds[1]));
+    }
+
+    [Fact]
+    public void NoCallIsInFlightOutsideTheGenerator()
+    {
+        Assert.Null(D47.Core.Adventures.AdventureGenerator.StepInFlight);
+    }
 }

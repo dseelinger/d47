@@ -70,7 +70,8 @@ public sealed record MeteredRequest(
     long LongestSilenceMilliseconds = 0,
     int MaxOutputTokens = 0,
     string? Text = null,
-    bool? Transient = null)
+    bool? Transient = null,
+    string? Step = null)
 {
     /// <summary>True when the app would have stopped this request for running past <see cref="AdventureGenerator.CallLimitFor"/>.</summary>
     public bool RanOverLimit =>
@@ -156,6 +157,7 @@ public sealed class MeteredLlmProvider : ILlmProvider
             throw new BudgetSpentException(Spent, _cap);
         }
 
+        var step = AdventureGenerator.StepInFlight;
         var clock = Stopwatch.StartNew();
         LlmUsage? usage = null;
         string? failure = null;
@@ -179,7 +181,7 @@ public sealed class MeteredLlmProvider : ILlmProvider
                     failure = failed.Message;
                     transient = failed.Transient;
                     var failedAt = clock.ElapsedMilliseconds;
-                    Record(sink, request.Model, usage ?? LlmUsage.None, failedAt, failure, stopReason, firstOutput, Math.Max(longestSilence, failedAt - lastOutput), request.MaxOutputTokens, text.ToString(), transient);
+                    Record(sink, request.Model, usage ?? LlmUsage.None, failedAt, failure, stopReason, firstOutput, Math.Max(longestSilence, failedAt - lastOutput), request.MaxOutputTokens, text.ToString(), transient, step);
                     recorded = true;
                     break;
                 case LlmStreamEvent.TextDelta or LlmStreamEvent.ThinkingDelta:
@@ -204,12 +206,12 @@ public sealed class MeteredLlmProvider : ILlmProvider
         }
 
         var elapsed = clock.ElapsedMilliseconds;
-        Record(sink, request.Model, usage ?? LlmUsage.None, elapsed, failure, stopReason, firstOutput, Math.Max(longestSilence, elapsed - lastOutput), request.MaxOutputTokens, text.ToString(), transient);
+        Record(sink, request.Model, usage ?? LlmUsage.None, elapsed, failure, stopReason, firstOutput, Math.Max(longestSilence, elapsed - lastOutput), request.MaxOutputTokens, text.ToString(), transient, step);
     }
 
     private void Record(
         List<MeteredRequest> sink,
-        string model, LlmUsage usage, long milliseconds, string? failure, LlmStopReason? stopReason, long? firstOutput, long longestSilence, int maxOutputTokens, string text, bool? transient)
+        string model, LlmUsage usage, long milliseconds, string? failure, LlmStopReason? stopReason, long? firstOutput, long longestSilence, int maxOutputTokens, string text, bool? transient, string? step)
     {
         var price = PublishedPrices.For(model, usage)
                     ?? throw new InvalidOperationException($"No published price for {model}; refusing to run unpriced.");
@@ -219,7 +221,7 @@ public sealed class MeteredLlmProvider : ILlmProvider
         lock (_gate)
         {
             _spent += dollars;
-            sink.Add(new MeteredRequest(model, usage, dollars, milliseconds, failure, stopReason, firstOutput, longestSilence, maxOutputTokens, text, transient));
+            sink.Add(new MeteredRequest(model, usage, dollars, milliseconds, failure, stopReason, firstOutput, longestSilence, maxOutputTokens, text, transient, step));
 
             if (_ledger is not null)
             {

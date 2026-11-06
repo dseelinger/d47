@@ -2819,6 +2819,11 @@ public sealed class AdventureGenerator(
             local: provider() is { RunsOnThisMachine: true },
             chapter: ask.Story is not null));
 
+    private static readonly AsyncLocal<string?> StepAsked = new();
+
+    /// <summary>The step of the model call in progress on this flow of execution, or null outside one.</summary>
+    public static string? StepInFlight => StepAsked.Value;
+
     private const string SpineStep = "spine";
     private const string BeatsStep = "beats";
     private const string RepairStep = "replacements";
@@ -2838,6 +2843,7 @@ public sealed class AdventureGenerator(
 
     private async Task<Asked> AskJsonAsync(string step, StoryCall call, int budget, StoryProgress? progress, CancellationToken cancellationToken, ThinkingEffort? effort = null)
     {
+        StepAsked.Value = step;
         var asking = provider();
         var chosen = model() ?? asking?.DefaultModel ?? "no model";
         var reply = await FlavourTurn.AskForAsync(

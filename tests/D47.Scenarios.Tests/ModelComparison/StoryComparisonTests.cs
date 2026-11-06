@@ -242,7 +242,7 @@ public partial class StoryComparisonTests
         while (true)
         {
             var attempt = await AttemptAsync(meter, model, effort, persona, world, galaxy, places, ask, signals, generate);
-            calls.AddRange(attempt.Metered.Select((request, at) => (request, at < Steps.Length ? Steps[at] : $"call {at + 1}")));
+            calls.AddRange(attempt.Metered.Select((request, at) => (request, request.Step ?? (at < Steps.Length ? Steps[at] : $"call {at + 1}"))));
 
             var providerFailed = attempt.Outcome?.Succeeded != true
                                  && attempt.Thrown is null
@@ -605,10 +605,16 @@ public partial class StoryComparisonTests
     internal static List<object> RefusalRounds(RecordingLogger log) =>
     [
         .. log.Entries
-            .Select(entry => RefusalLogged().Match(entry.Message))
-            .Where(match => match.Success)
-            .Select(match => (object)new { round = match.Groups[1].Value, step = match.Groups[2].Value, refusal = match.Groups[3].Value }),
+            .Select(entry => RefusalLogged().Match(entry.Message) is { Success: true } refused
+                ? (object)new { round = refused.Groups[1].Value, step = refused.Groups[2].Value, refusal = refused.Groups[3].Value }
+                : PlainSpineLogged().Match(entry.Message) is { Success: true } plain
+                    ? new { round = plain.Groups[1].Value, step = "plain", refusal = plain.Groups[2].Value }
+                    : null)
+            .OfType<object>(),
     ];
+
+    [GeneratedRegex(@"^Draft .*?, plain spine round (\d+): (.*)$", RegexOptions.Singleline)]
+    private static partial Regex PlainSpineLogged();
 
     [GeneratedRegex(@"^Draft .*?, (.+?) round, (.+?) step refused: (.*)$", RegexOptions.Singleline)]
     private static partial Regex RefusalLogged();
