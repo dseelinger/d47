@@ -178,7 +178,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         if (crumb.Key.StartsWith(StoryRunPage.Prefix, StringComparison.Ordinal) && _surface.Stories is { } runs)
         {
             return StoryRunPage.Find(runs, _surface.Commander(), crumb.Key) is { } run
-                ? new StoryRunPage(_surface, runs, _entries, run, _headset, _prompts, _nav)
+                ? OpenedRunPage(new StoryRunPage(_surface, runs, _entries, run, _headset, _prompts, _nav), crumb.Key)
                 : Muted(StoryRunPage.GoneText);
         }
 
@@ -695,6 +695,46 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         var refusal = StoriesView.RewriteChapter(_surface, drawnFor);
         _surface.Say(refusal ?? "Writing the chapter again…");
         return refusal;
+    }
+
+    private string? _playOnOpen;
+
+    private StoryRunPage OpenedRunPage(StoryRunPage page, string key)
+    {
+        if (_playOnOpen == key)
+        {
+            _playOnOpen = null;
+            page.PlayFromStart();
+        }
+
+        return page;
+    }
+
+    /// <summary>Opens the newest recorded run called <paramref name="title"/> and plays it from its first line; returns why it cannot, or null.</summary>
+    internal string? PlayRunByVoice(string title)
+    {
+        if (_surface.Stories is not { } director
+            || D47.Core.Stories.StoryRunVoice.Recorded(director, _surface.Commander(), title) is not { } run)
+        {
+            return $"No story called {title} has lines to play back.";
+        }
+
+        if (_surface.RunPlayer is null)
+        {
+            return "Story playback is not available.";
+        }
+
+        _prompts.Abandon();
+        _nav.Show(StoryBenchPage.RootKey);
+        _playOnOpen = StoryRunPage.KeyOf(run);
+
+        if (!_nav.Drill(new NavCrumb(_playOnOpen, run.Title) { Level = StoryRunPage.Prefix }))
+        {
+            _playOnOpen = null;
+            return "The story's page could not be opened.";
+        }
+
+        return null;
     }
 
     /// <summary>Shows the Stories tab and sets the story chapter aside to be written again; returns why it cannot, or null.</summary>

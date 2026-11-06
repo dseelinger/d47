@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using D47.Core.Configuration;
+using D47.Core.Conversation;
 using D47.Core.Stories;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -13,6 +14,14 @@ public static class AdventureCapability
     public const string PauseTool = "pause_story";
 
     public const string ResumeTool = "resume_story";
+
+    public const string SwitchStoryTool = "switch_story";
+
+    public const string PlayStoryTool = "play_story";
+
+    public const string SwitchStoryPhrase = "switch to the story ";
+
+    public const string PlayStoryPhrase = "play back ";
 
     public const string AnswerEndingTool = "answer_story_ending";
 
@@ -68,6 +77,30 @@ public static class AdventureCapability
         public Func<bool, string?> Set { get; set; } = _ => NoStory;
     }
 
+    /// <summary>One story title the Commander has runs under, and what can be done with the newest run of it.</summary>
+    public sealed record StoryRunTitle(string Title, bool Shelved, bool Recorded);
+
+    /// <summary>"Switch to the story X" and "play back X", one per title the Commander has a run of that can be switched to or played.</summary>
+    public static IEnumerable<DynamicCommand> RunPhrases(AdventureDesk desk)
+    {
+        ArgumentNullException.ThrowIfNull(desk);
+
+        foreach (var run in desk.Titles())
+        {
+            var arguments = new Dictionary<string, string>(StringComparer.Ordinal) { ["title"] = run.Title };
+
+            if (run.Shelved)
+            {
+                yield return new DynamicCommand(SwitchStoryPhrase + run.Title, Id, SwitchStoryTool, arguments);
+            }
+
+            if (run.Recorded)
+            {
+                yield return new DynamicCommand(PlayStoryPhrase + run.Title, Id, PlayStoryTool, arguments);
+            }
+        }
+    }
+
     /// <summary>Answers a finished story's ending by the option's position, one from the first, or null when there is one option.</summary>
     public sealed class EndingAnswer
     {
@@ -105,6 +138,14 @@ public static class AdventureCapability
 
         /// <summary>Opens the Short Story page and the brief entry whose commit presses Go.</summary>
         public Func<string?> Ask { get; set; } = () => "The Short Story page is not available.";
+
+        public Func<IReadOnlyList<StoryRunTitle>> Titles { get; set; } = () => [];
+
+        /// <summary>Switches to the newest shelved run with this title, returning a refusal or null.</summary>
+        public Func<string, CancellationToken, Task<string?>> Switch { get; set; } = (_, _) => Task.FromResult<string?>(NoStory);
+
+        /// <summary>Opens the newest recorded run with this title and plays it from the first line, returning a refusal or null.</summary>
+        public Func<string, string?> PlayRun { get; set; } = _ => "The Stories page is not available.";
 
         /// <summary>Opens the entry that takes the Commander's words for a different objective.</summary>
         public Func<string?> ChangeObjective { get; set; } = () => NoStory;
@@ -289,6 +330,8 @@ public static class AdventureCapability
             "what's happened in the story so far",
             "accept the ending",
             "choose ending two",
+            "switch to the story <title>",
+            "play back <title>",
             "this objective is not for me",
             RefuseBeatPhrase,
             ChangeObjectivePhrase,
@@ -477,6 +520,28 @@ public static class AdventureCapability
                         + "the second. The reply carries the story on with that option. The phrase is "
                         + "live only while an offer is open. The model cannot do this: it is refused "
                         + "if it asks.",
+                },
+            RunTool(
+                SwitchStoryTool,
+                "Switch the Commander's story to a shelved one by title, as Switch to does on the Story bench: the running story is shelved and the named one comes back paused. The Commander's choice alone.",
+                (title, token) => (desk ?? new AdventureDesk()).Switch(title, token))
+                with
+                {
+                    Exercise =
+                        "With a shelved story on the Story bench, say \"switch to the story\" followed by its title. "
+                        + "The running story is shelved and the named one is your story again, paused. The model cannot do "
+                        + "this: it is refused if it asks.",
+                },
+            RunTool(
+                PlayStoryTool,
+                "Open a story run's page and play its kept lines from the first, as Play all does. The Commander's choice alone.",
+                (title, _) => Task.FromResult((desk ?? new AdventureDesk()).PlayRun(title)))
+                with
+                {
+                    Exercise =
+                        "Say \"play back\" followed by the title of a story that has kept lines. The run's page opens "
+                        + "on the Stories tab and Play all starts from the first line. The model cannot do this: it is "
+                        + "refused if it asks.",
                 },
             Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft short story.", ["change the short story", "change the adventure"], "What should change?", desk, d => d.Change)
                 with
@@ -703,6 +768,23 @@ public static class AdventureCapability
             recapper is not null && await recapper.Write(cancellationToken).ConfigureAwait(false) is { } said
                 ? ToolResult.Ok(said) with { SpokenBy = new ToolSpeaker(Audio.VoiceRole.Narrator, Persona.NarratorLine.Name) }
                 : ToolResult.Error(StoryRecap.NoStory),
+    };
+
+    private static ToolDefinition RunTool(string name, string description, Func<string, CancellationToken, Task<string?>> act) => new()
+    {
+        Name = name,
+        Description = description,
+        Parameters = [ToolParameter.Text("title", "The story's title.", required: true)],
+
+        // The Commander's act; the model is refused.
+        Protected = true,
+        RefusalExample = name == SwitchStoryTool ? "switch to the story <title>" : "play back <title>",
+        Handler = async (arguments, token) =>
+            !arguments.TryGetString("title", out var title) || string.IsNullOrWhiteSpace(title)
+                ? ToolResult.Error("Which story?")
+                : await act(title, token).ConfigureAwait(false) is { } refusal
+                    ? ToolResult.Error(refusal)
+                    : ToolResult.Ok(name == SwitchStoryTool ? $"{title} is your story again. Resume it to write its chapter." : $"Playing back {title}."),
     };
 
     private static ToolDefinition Draft(

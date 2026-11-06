@@ -437,6 +437,8 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         return _beat >= 0 && section?.Entries.FirstOrDefault(entry => entry.Beat == _beat) is { } beat ? beat : section?.Entries.FirstOrDefault();
     }
 
+    internal void PlayFromStart() => PlayAllFrom(_entriesInOrder.FirstOrDefault());
+
     /// <summary>Plays the run's lines in page order from <paramref name="entry"/>.</summary>
     internal void PlayAllFrom(StoryRunEntry? entry)
     {

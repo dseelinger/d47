@@ -2753,6 +2753,7 @@ public sealed class AppHost : IDisposable
         // phrases that take up a clipboard offer.
         IEnumerable<DynamicCommand> OtherDynamicCommands() =>
             services.ClipboardOffer.Phrases()
+                .Concat(AdventureCapability.RunPhrases(services.AdventureDesk))
                 .Concat(stores.HandInOffer.Phrases())
                 .Concat(stores.NeutronOffer.Phrases())
 
@@ -3127,6 +3128,9 @@ public sealed class AppHost : IDisposable
         services.ObjectiveCourse.Resolve = () => storyDirector.ObjectiveSystem(gameState.Active?.Identity.FrontierId);
         services.StoryChoice.IsOpen = () => storyDirector.ChoiceOpen(gameState.Active?.Identity.FrontierId);
         services.StoryChoice.Choose = option => storyDirector.Choose(gameState.Active?.Identity.FrontierId, option, DateTimeOffset.Now);
+        services.AdventureDesk.Titles = () => D47.Core.Stories.StoryRunVoice.Titles(storyDirector, gameState.Active?.Identity.FrontierId);
+        services.AdventureDesk.Switch = (title, cancellationToken) => D47.Core.Stories.StoryRunVoice.SwitchAsync(
+            storyDirector, gameState.Active?.Identity.FrontierId, title, DateTimeOffset.Now, cancellationToken);
         services.AdventureDesk.HasDraft = () => adventureBook.Standings(gameState.Active?.Identity.FrontierId).Any(standing => standing.Adventure.IsDraft);
 
         stores.StoryClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);

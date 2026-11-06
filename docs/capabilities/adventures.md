@@ -480,6 +480,12 @@ sent is not withdrawn. The story stays in the Catalogue, and picking it again st
 deleted. **Delete** on a shelved run's page opens **Abandon it first**, because a shelved story can come back; **Abandon**
 there abandons the run, and it can be deleted afterwards. Deletion cannot be undone.
 
+By voice, "switch to the story" and a shelved run's title does what **Switch to** does, without the confirmation, and
+"play back" and a title opens the page of the newest run with kept lines under that title and starts **Play all** from
+its first line. "Switch to the story" is the whole phrase: "switch to" alone also switches cores, Commanders, tabs and
+the game, so a story called after a core still switches by this phrase. Where a title has several runs the newest is meant.
+Both are the Commander's alone, and the model is refused them.
+
 With no runs the page says so and offers **Open the Catalogue**. Started with `D47_STORY_BENCH=1`, the Jump,
 Beats and Checkpoints sections for testing the active story follow the list; without it they are absent.
 
@@ -1294,6 +1300,22 @@ switch is kept in `data/story.json`, so it lasts across restarts. Say "resume th
 **Story on** to bring it back.
 
 Both phrases are the model-free router's, and the model is refused them.
+
+#### `switch_story`
+
+Switch the Commander's story to a shelved one by title, as Switch to does on the Story bench: the running story is shelved and the named one comes back paused. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{"title":{"type":"string","description":"The story\u0027s title."}},"required":["title"],"additionalProperties":false}
+```
+
+#### `play_story`
+
+Open a story run's page and play its kept lines from the first, as Play all does. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{"title":{"type":"string","description":"The story\u0027s title."}},"required":["title"],"additionalProperties":false}
+```
 
 #### `pause_story`
 
