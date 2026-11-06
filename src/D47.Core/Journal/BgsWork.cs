@@ -42,10 +42,16 @@ public sealed record BgsWork
 
     private ImmutableDictionary<long, string> Names { get; init; } = ImmutableDictionary<long, string>.Empty;
 
+    private ImmutableDictionary<long, ImmutableArray<string>> Factions { get; init; } = ImmutableDictionary<long, ImmutableArray<string>>.Empty;
+
     public bool IsKnown => Entries.Count > 0 || !Names.IsEmpty;
 
     /// <summary>The name of a system by address, or null when none has been seen.</summary>
     public string? NameOf(long address) => Names.GetValueOrDefault(address);
+
+    /// <summary>The faction names in the newest <c>Factions</c> list seen for a system, or empty when none has been seen.</summary>
+    public IReadOnlyList<string> FactionsIn(long systemAddress) =>
+        Factions.TryGetValue(systemAddress, out var names) ? names : [];
 
     /// <summary>The start of the period to report: the BGS tick when it is known, otherwise the 24 hours before <paramref name="now"/>.</summary>
     public static DateTimeOffset PeriodStart(DateTimeOffset? tick, DateTimeOffset now) => tick ?? now - TimeSpan.FromHours(24);
@@ -81,10 +87,11 @@ public sealed record BgsWork
         }
 
         var names = live.Names.Aggregate(Names, (all, pair) => all.SetItem(pair.Key, pair.Value));
+        var factions = live.Factions.Aggregate(Factions, (all, pair) => all.SetItem(pair.Key, pair.Value));
 
         if (Entries.Count == 0)
         {
-            return live with { Names = names };
+            return live with { Names = names, Factions = factions };
         }
 
         var last = Entries[^1].At;
@@ -92,7 +99,7 @@ public sealed record BgsWork
         var newer = live.Entries.Where(entry => entry.At > last);
         var sameSecond = live.Entries.Where(entry => entry.At == last).Skip(atLast);
 
-        return new BgsWork { Entries = Trimmed([.. Entries, .. sameSecond, .. newer]), Station = live.Station, Names = names };
+        return new BgsWork { Entries = Trimmed([.. Entries, .. sameSecond, .. newer]), Station = live.Station, Names = names, Factions = factions };
     }
 
     private BgsWork Located(JournalEvent journalEvent)
@@ -105,6 +112,19 @@ public sealed record BgsWork
             && !string.Equals(Names.GetValueOrDefault(address), name, StringComparison.Ordinal))
         {
             result = result with { Names = Names.SetItem(address, name) };
+        }
+
+        if (journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump"
+            && journalEvent.Long("SystemAddress") is { } system
+            && journalEvent.Raw.TryGetProperty("Factions", out _))
+        {
+            var present = journalEvent.Items("Factions")
+                .Select(faction => faction.String("Name"))
+                .OfType<string>()
+                .Where(name => name.Length > 0)
+                .ToImmutableArray();
+
+            result = result with { Factions = result.Factions.SetItem(system, present) };
         }
 
         return journalEvent.Kind switch
