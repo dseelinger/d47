@@ -274,6 +274,8 @@ public partial class StoryComparisonTests
                 drafts,
                 $"{(label.Length > 0 ? label + "-" : "")}{(kind == "chapter" ? "chapter" : "story")}-{model.Replace('/', '_')}-{effort}-{run}-{DateTimeOffset.Now:HHmmss}.json");
 
+        var notWritten = outcome?.Succeeded != true;
+
         if (draftFile is not null)
         {
             File.WriteAllText(draftFile, JsonSerializer.Serialize(
@@ -293,7 +295,10 @@ public partial class StoryComparisonTests
                 contextMessage = outcome?.ContextMessage,
                 notes = outcome?.Notes,
                 exception = stack,
-                replies = stack is null ? null : metered.Select(request => request.Text).ToList(),
+                rounds = notWritten ? RefusalRounds(log) : null,
+                replies = stack is null && !notWritten
+                    ? null
+                    : metered.Select((request, at) => new { step = at < Steps.Length ? Steps[at] : $"call {at + 1}", reply = request.Text }).ToList(),
             },
             DraftJson));
         }
@@ -528,6 +533,18 @@ public partial class StoryComparisonTests
 
         return Steps.Length * price.DollarsFor(usage);
     }
+
+    /// <summary>Each refusal the generator logged, in order, with its round and step.</summary>
+    internal static List<object> RefusalRounds(RecordingLogger log) =>
+    [
+        .. log.Entries
+            .Select(entry => RefusalLogged().Match(entry.Message))
+            .Where(match => match.Success)
+            .Select(match => (object)new { round = match.Groups[1].Value, step = match.Groups[2].Value, refusal = match.Groups[3].Value }),
+    ];
+
+    [GeneratedRegex(@"^Draft .*?, (.+?) round, (.+?) step refused: (.*)$", RegexOptions.Singleline)]
+    private static partial Regex RefusalLogged();
 
     [GeneratedRegex(@"at the (.+?) step by ")]
     private static partial Regex StepNamed();
