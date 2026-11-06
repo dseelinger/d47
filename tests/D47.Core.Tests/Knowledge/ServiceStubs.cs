@@ -34,6 +34,9 @@ public class StubGalaxyService : IGalaxyService
         MissionStationQuery query,
         CancellationToken cancellationToken) =>
         throw new NotSupportedException();
+
+    public virtual Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
 }
 
 /// <summary>Every member throws; a fake overrides the ones its test uses.</summary>

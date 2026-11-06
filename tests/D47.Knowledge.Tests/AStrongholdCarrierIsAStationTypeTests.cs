@@ -130,6 +130,9 @@ public class AStrongholdCarrierIsAStationTypeTests
 
         public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
+
+        public Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 
     private static async Task<StationSearchResult> Run(StationSearch search)

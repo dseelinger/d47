@@ -281,5 +281,8 @@ public sealed class AMeasuredRefusalKeepsItsWordsTests
 
         public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
             inner.SystemBiologyAsync(systemAddress, cancellationToken);
+
+        public Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken) =>
+            inner.FactionAsync(faction, cancellationToken);
     }
 }

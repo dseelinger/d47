@@ -104,4 +104,19 @@ public sealed class GalaxySearchNames(IGalaxyService inner) : IGalaxyService
 
         return scan;
     }
+
+    public async Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken)
+    {
+        var report = await inner.FactionAsync(faction, cancellationToken).ConfigureAwait(false);
+
+        lock (_gate)
+        {
+            foreach (var system in report.Systems)
+            {
+                _names.Add(system.Name);
+            }
+        }
+
+        return report;
+    }
 }

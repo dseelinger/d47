@@ -170,6 +170,9 @@ public sealed class TimedGalaxy(IGalaxyService inner) : Timed, IGalaxyService
 
     public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
         TimeAsync(() => inner.FindMissionStationsAsync(query, cancellationToken));
+
+    public Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken) =>
+        TimeAsync(() => inner.FactionAsync(faction, cancellationToken));
 }
 
 public sealed class TimedNotablePlaces(INotablePlacesService inner) : Timed, INotablePlacesService

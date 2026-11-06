@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -165,6 +166,61 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             budget: TimeSpan.FromSeconds(35)).ConfigureAwait(false);
 
         return SpanshResponse.ReadMissionStations(document!);
+    }
+
+    /// <summary>How long a faction report is answered from memory.</summary>
+    public static readonly TimeSpan FactionReportLifetime = TimeSpan.FromMinutes(60);
+
+    private readonly ConcurrentDictionary<string, (DateTimeOffset At, FactionReport Report)> _factions =
+        new(StringComparer.Ordinal);
+
+    public async Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(faction);
+
+        if (_factions.TryGetValue(faction, out var held) && _now() - held.At < FactionReportLifetime)
+        {
+            return held.Report;
+        }
+
+        var seen = new HashSet<long>();
+        var found = new List<FactionPageSystem>();
+        var taken = 0;
+
+        for (var page = 0; ; page++)
+        {
+            using var content = new StringContent(SpanshRequest.Faction(faction, page), Encoding.UTF8, "application/json");
+            using var document = await SendAsync(
+                _logger,
+                token => _http.PostAsync("api/systems/search", content, token),
+                "the faction search",
+                cancellationToken,
+                budget: TimeSpan.FromSeconds(35)).ConfigureAwait(false);
+
+            var read = SpanshResponse.ReadFactionPage(document!, faction);
+
+            found.AddRange(read.Systems.Where(entry => entry.System.SystemAddress is not { } address || seen.Add(address)));
+
+            taken += read.Read;
+
+            if (read.Read == 0 || taken >= read.Total)
+            {
+                break;
+            }
+        }
+
+        var latest = found.OrderByDescending(entry => entry.System.ReportedAt ?? DateTimeOffset.MinValue).FirstOrDefault();
+
+        var report = new FactionReport(
+            latest?.Faction ?? faction,
+            latest?.Government,
+            latest?.Allegiance,
+            [.. found.Select(entry => entry.System)],
+            [.. found.SelectMany(entry => entry.Stations)]);
+
+        _factions[faction] = (_now(), report);
+
+        return report;
     }
 
     public async Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken)

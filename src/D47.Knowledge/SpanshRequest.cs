@@ -454,6 +454,49 @@ internal static class SpanshRequest
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
+    /// <summary>The largest page a systems search returns.</summary>
+    public const int FactionPageSize = 500;
+
+    /// <summary>
+    /// One page, counted from 0, of the systems where a faction is present, sorted by name so that pages do
+    /// not overlap. The name is matched exactly, case included.
+    /// </summary>
+    public static string Faction(string faction, int page)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+
+        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false }))
+        {
+            writer.WriteStartObject();
+            writer.WriteStartObject("filters");
+            writer.WriteStartArray("minor_faction_presences");
+            writer.WriteStartObject();
+            writer.WriteStartObject("name");
+            writer.WriteStartArray("value");
+            writer.WriteStringValue(faction);
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+
+            writer.WriteStartArray("sort");
+            writer.WriteStartObject();
+            writer.WriteStartObject("name");
+            writer.WriteString("direction", "asc");
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+
+            writer.WriteNumber("size", FactionPageSize);
+            writer.WriteNumber("page", page);
+
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
     /// <summary>The systems an Exploited, Fortified or Stronghold state covers within a distance, nearest first.</summary>
     public static string PowerplayNear(string referenceSystem, double lightYears)
     {

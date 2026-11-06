@@ -567,6 +567,90 @@ internal static class SpanshResponse
             systems);
     }
 
+    /// <summary>
+    /// One page of a faction search: each system with the faction's presence there and the stations it controls.
+    /// A system's <c>bodies</c> are never read.
+    /// </summary>
+    public static FactionPage ReadFactionPage(JsonDocument document, string faction)
+    {
+        var root = document.RootElement;
+        var systems = new List<FactionPageSystem>();
+        var read = 0;
+
+        foreach (var result in root.Items("results"))
+        {
+            read++;
+
+            if (String(result, "name") is not { } name)
+            {
+                continue;
+            }
+
+            var presences = result.Items("minor_faction_presences")
+                .Where(presence => presence.ValueKind == JsonValueKind.Object && String(presence, "name") is not null)
+                .ToList();
+
+            if (presences.FirstOrDefault(presence => String(presence, "name") == faction) is not
+                { ValueKind: JsonValueKind.Object } own)
+            {
+                continue;
+            }
+
+            var system = new FactionSystem
+            {
+                Name = name,
+                SystemAddress = Integer(result, "id64"),
+                Population = Integer(result, "population"),
+                Influence = Number(own, "influence"),
+                ActiveStates = Strings(own, "active_states"),
+                PendingStates = Strings(own, "pending_states"),
+                RecoveringStates = Strings(own, "recovering_states"),
+                Controls = String(result, "controlling_minor_faction") == faction,
+                Others =
+                [
+                    .. presences
+                        .Where(presence => String(presence, "name") != faction)
+                        .Select(presence => new FactionNeighbour(String(presence, "name")!, Number(presence, "influence"))
+                        {
+                            ActiveStates = Strings(presence, "active_states"),
+                            PendingStates = Strings(presence, "pending_states"),
+                        }),
+                ],
+                ReportedAt = Timestamp(result, "updated_at"),
+            };
+
+            systems.Add(new FactionPageSystem(
+                system,
+                String(own, "name")!,
+                String(own, "government"),
+                String(own, "allegiance"),
+                [.. result.Items("stations")
+                    .Where(station => station.ValueKind == JsonValueKind.Object
+                        && String(station, "name") is not null
+                        && String(station, "controlling_minor_faction") == faction)
+                    .Select(station => new FactionStation(
+                        String(station, "name")!,
+                        String(station, "type"),
+                        LargestPad(station),
+                        Number(station, "distance_to_arrival"),
+                        name))]));
+        }
+
+        return new FactionPage(
+            root.TryGetProperty("count", out var count) && count.TryGetInt32(out var total) ? total : read,
+            read,
+            systems);
+    }
+
+    private static PadSize? LargestPad(JsonElement station) =>
+        Count(station, "large_pads") > 0 || Boolean(station, "has_large_pad") ? PadSize.Large
+        : Count(station, "medium_pads") > 0 ? PadSize.Medium
+        : Count(station, "small_pads") > 0 ? PadSize.Small
+        : null;
+
+    private static IReadOnlyList<string> Strings(JsonElement element, string name) =>
+        [.. element.Items(name).Where(item => item.ValueKind == JsonValueKind.String).Select(item => item.GetString()!)];
+
     /// <summary>A systems search writes a station's services as plain names, where a station search writes objects.</summary>
     private static IReadOnlyList<string> ReadServiceNames(JsonElement station) =>
         [.. station.Items("services")
@@ -892,3 +976,16 @@ internal static class SpanshResponse
     private static bool Boolean(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.True;
 }
+
+/// <summary>One page of a faction search.</summary>
+/// <param name="Total">How many systems match across every page.</param>
+/// <param name="Read">How many results this page held.</param>
+internal sealed record FactionPage(int Total, int Read, IReadOnlyList<FactionPageSystem> Systems);
+
+/// <summary>One system of a faction search, with the faction as that system's report describes it.</summary>
+internal sealed record FactionPageSystem(
+    FactionSystem System,
+    string Faction,
+    string? Government,
+    string? Allegiance,
+    IReadOnlyList<FactionStation> Stations);

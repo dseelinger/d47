@@ -154,6 +154,12 @@ public interface IGalaxyService
 
     /// <summary>The nearest systems whose factions match a mission type's states or governments, with their stations.</summary>
     Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Every system a minor faction is present in, by its exact name. It can take several large requests, so
+    /// await it from the pool and never on the tick thread.
+    /// </summary>
+    Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken);
 }
 
 /// <summary>The service could not answer.</summary>

@@ -100,4 +100,7 @@ public sealed class StationPowerFilter(IGalaxyService inner, Func<PowerplayPledg
     public Task<MissionStationScan> FindMissionStationsAsync(
         MissionStationQuery query, CancellationToken cancellationToken) =>
         inner.FindMissionStationsAsync(query, cancellationToken);
+
+    public Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken) =>
+        inner.FactionAsync(faction, cancellationToken);
 }
