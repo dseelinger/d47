@@ -973,7 +973,7 @@ public sealed class StoriesView : UserControl, IPageSummary
         }
 
         var cast = new StackPanel { Spacing = 8, Margin = new Thickness(0, 4, 0, 0) };
-        ShowCast(cast, card.Id);
+        ShowCast(cast, card.Id, commander);
         page.Children.Add(cast);
 
         var withoutOdyssey = _director.WithoutOdyssey(commander);
@@ -990,7 +990,7 @@ public sealed class StoriesView : UserControl, IPageSummary
             page.Children.Add(GenderChoice(() =>
             {
                 gated?.IsEnabled = !withoutOdyssey && _director.VoicesMissing(card.Id).Count == 0;
-                ShowCast(cast, card.Id);
+                ShowCast(cast, card.Id, commander);
             }));
         }
 
@@ -1207,12 +1207,20 @@ public sealed class StoriesView : UserControl, IPageSummary
         return section;
     }
 
-    /// <summary>The Cast section: each primary member with its picture, name and voice, and the controls that change them.</summary>
-    private void ShowCast(StackPanel holder, string storyId)
+    /// <summary>
+    /// The Cast section: each primary member with its picture, name and voice, and the controls that change them. On the
+    /// Commander's current story, the introduced members who are not primary follow.
+    /// </summary>
+    private void ShowCast(StackPanel holder, string storyId, string? commander)
     {
         holder.Children.Clear();
 
         var members = _director.PrimaryCast(storyId);
+
+        if (_director.Stories.Current(commander) is { } current && string.Equals(current.Id, storyId, StringComparison.Ordinal))
+        {
+            members = [.. members, .. _director.IntroducedCast(commander).Where(member => !member.Shown.Primary)];
+        }
 
         if (members.Count == 0)
         {
@@ -1243,7 +1251,7 @@ public sealed class StoriesView : UserControl, IPageSummary
             if (_surface.CastVoices is { } voices)
             {
                 buttons.Add(Act("Play sample", () => voices.PlaySample(member.Shown, member.Speaks)));
-                buttons.Add(Act("Change voice", () => CastVoiceChooser.Open(_prompts, voices, member.Key, () => ShowCast(holder, storyId))));
+                buttons.Add(Act("Change voice", () => CastVoiceChooser.Open(_prompts, voices, member.Key, () => ShowCast(holder, storyId, commander))));
             }
 
             if (_surface.Pictures is { } pictures)

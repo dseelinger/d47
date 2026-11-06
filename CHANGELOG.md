@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+On the page of the story you are playing, the Cast section now also lists the characters the story has introduced, after the main cast, each with Change voice and Change picture.
+
 Story chapters and short stories are no longer written by GPT-6 Luna or Claude Haiku 5.5. When one of them is the chosen model, the provider's default model (GPT-6.1 Sol or Claude Sonnet 5.5) writes the story instead, which costs more. Conversation and background chatter keep the model you chose.
 
 A story chapter whose outline or objectives still had a figurative phrase after the last rewording round now takes the plain wording the check offered for it, instead of failing as "not written plainly". A phrase the check gave no plain wording for still fails.

@@ -783,7 +783,7 @@ refused, with the same list, until the voice is back.
 ### Cast voices {#cast-voices}
 
 A story's card page has a **Cast** section listing its primary characters, and no one else, before you
-pick the story and while it runs. A character in two versions is listed once **Your Commander is** is set,
+pick the story. While it runs, the characters it has introduced follow them. A character in two versions is listed once **Your Commander is** is set,
 as your version. Each row shows the character's picture, name, their role (who they are to you in the
 story, such as "The search-and-rescue coordinator at Ebbrells Watch"), and the provider and voice it speaks in,
 with "(the story's voice)" while it is the one it speaks in without your choice: the story's pinned voice, or
