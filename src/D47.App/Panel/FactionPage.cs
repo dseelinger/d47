@@ -513,8 +513,8 @@ public sealed class FactionPage : UserControl, IPageSummary
         _seen = (_view, state?.Standings, state?.Squadron.IsMember, _searches.SquadronFaction?.Invoke(), state?.Location.StarSystem, PageKit.Minute(_now()));
 
         var standings = state?.Standings ?? SystemStandings.Empty;
-        _rows = _report is null ? [] : FactionModel.Rows(_report, standings);
-        _conflicts = _report is null ? [] : FactionConflicts.Of(_report, standings);
+        _rows = _report is null ? [] : FactionRows.Of(_report, standings);
+        _conflicts = _report is null ? [] : FactionConflictRows.Of(_report, standings);
         _stations = _report is null ? [] : FactionAssets.Of(_report);
 
         var emptyLike = EmptyLike;

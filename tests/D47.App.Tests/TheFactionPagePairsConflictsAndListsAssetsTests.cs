@@ -53,7 +53,7 @@ public sealed class TheFactionPagePairsConflictsAndListsAssetsTests
     {
         var report = Report(Sys("Alpha", active: ["War"], others: [Other("Red", ["War"]), Other("Blue", ["Boom"])]));
 
-        var row = Assert.Single(FactionConflicts.Of(report, SystemStandings.Empty));
+        var row = Assert.Single(FactionConflictRows.Of(report, SystemStandings.Empty));
 
         Assert.Equal((OpponentKind.Named, "Red", false), (row.Kind, row.Opponent, row.Visited));
     }
@@ -63,7 +63,7 @@ public sealed class TheFactionPagePairsConflictsAndListsAssetsTests
     {
         var report = Report(Sys("Alpha", active: ["War"], others: [Other("Red", ["War"]), Other("Blue", ["War"]), Other("Green", ["War"])]));
 
-        var row = Assert.Single(FactionConflicts.Of(report, SystemStandings.Empty));
+        var row = Assert.Single(FactionConflictRows.Of(report, SystemStandings.Empty));
 
         Assert.Equal(OpponentKind.OneOf, row.Kind);
         Assert.Equal("One of 3 factions", row.OneOfText);
@@ -75,7 +75,7 @@ public sealed class TheFactionPagePairsConflictsAndListsAssetsTests
     {
         var report = Report(Sys("Alpha", active: ["War"], others: [Other("A", ["War"]), Other("B", ["War"]), Other("C", ["War"]), Other("D", ["War"])]));
 
-        var row = Assert.Single(FactionConflicts.Of(report, SystemStandings.Empty));
+        var row = Assert.Single(FactionConflictRows.Of(report, SystemStandings.Empty));
 
         Assert.Equal("A · B · C and 1 more", row.CandidateText);
     }
@@ -85,7 +85,7 @@ public sealed class TheFactionPagePairsConflictsAndListsAssetsTests
     {
         var report = Report(Sys("Alpha", pending: ["Election"], others: [Other("Red"), Other("Blue", ["Boom"])]));
 
-        var row = Assert.Single(FactionConflicts.Of(report, SystemStandings.Empty));
+        var row = Assert.Single(FactionConflictRows.Of(report, SystemStandings.Empty));
 
         Assert.Equal((OpponentKind.Unknown, false), (row.Kind, row.Active));
         Assert.Equal("Opponent not known yet", FactionConflicts.OpponentUnknownText);
@@ -97,7 +97,7 @@ public sealed class TheFactionPagePairsConflictsAndListsAssetsTests
         var report = Report(Sys("Alpha", active: ["War"], others: [Other("Red", ["War"]), Other("Blue", ["War"])]));
         var standings = Saw("Alpha", "2026-11-05T10:00:00Z", Conflict("active", Us, "Hub", 1, "Blue", "Camp", 2), "Red", "Blue");
 
-        var row = Assert.Single(FactionConflicts.Of(report, standings));
+        var row = Assert.Single(FactionConflictRows.Of(report, standings));
 
         Assert.Equal((OpponentKind.Named, "Blue", true), (row.Kind, row.Opponent, row.Visited));
         Assert.Equal("1 – 2", row.DaysText);
@@ -111,7 +111,7 @@ public sealed class TheFactionPagePairsConflictsAndListsAssetsTests
         var both = Conflict("active", "Red", "x", 0, "Green", "y", 0) + "," + Conflict("active", "Blue", "Dock", 3, Us, "Port", 4);
         var standings = Saw("Alpha", "2026-11-05T10:00:00Z", both, "Red", "Blue", "Green");
 
-        var row = Assert.Single(FactionConflicts.Of(report, standings));
+        var row = Assert.Single(FactionConflictRows.Of(report, standings));
 
         Assert.Equal("Blue", row.Opponent);
         Assert.Equal("4 – 3", row.DaysText);
@@ -128,10 +128,10 @@ public sealed class TheFactionPagePairsConflictsAndListsAssetsTests
             Sys("Alpha", active: ["War"]),
             Sys("Echo", active: ["Boom"]));
 
-        var rows = FactionConflicts.Of(report, SystemStandings.Empty);
+        var rows = FactionConflictRows.Of(report, SystemStandings.Empty);
 
         Assert.Equal(["Alpha", "Charlie", "Bravo", "Delta"], rows.Select(r => r.System));
-        Assert.Equal(rows.Count, FactionModel.Overview(report, FactionModel.Rows(report, SystemStandings.Empty)).InConflict);
+        Assert.Equal(rows.Count, FactionModel.Overview(report, FactionRows.Of(report, SystemStandings.Empty)).InConflict);
     }
 
     [Fact]

@@ -55,7 +55,7 @@ public sealed class TheFactionPageCountsItsSystemsTests
             Sys("C", active: ["Boom"]),
             Sys("D", active: ["Expansion"], pending: ["Election"]));
 
-        var overview = FactionModel.Overview(report, FactionModel.Rows(report, SystemStandings.Empty));
+        var overview = FactionModel.Overview(report, FactionRows.Of(report, SystemStandings.Empty));
 
         Assert.Equal(4, overview.Present);
         Assert.Equal(["Boom"], overview.Groups[0].States.Select(s => s.Name));
@@ -82,7 +82,7 @@ public sealed class TheFactionPageCountsItsSystemsTests
             Sys("C", active: ["Expansion"], pending: ["Boom"]),
             Sys("D", active: ["War"]));
 
-        var overview = FactionModel.Overview(report, FactionModel.Rows(report, SystemStandings.Empty));
+        var overview = FactionModel.Overview(report, FactionRows.Of(report, SystemStandings.Empty));
 
         Assert.Equal(3, overview.InConflict);
     }
@@ -105,7 +105,7 @@ public sealed class TheFactionPageCountsItsSystemsTests
         var report = Report(Sys("Alpha", 0.2, ["Boom"], reported: Now.AddDays(-9)));
         var standings = Saw("Alpha", "kestrel reach compact", 0.45, "2026-11-06T10:00:00Z", "{\"State\":\"War\"}");
 
-        var row = Assert.Single(FactionModel.Rows(report, standings));
+        var row = Assert.Single(FactionRows.Of(report, standings));
 
         Assert.True(row.OwnReading);
         Assert.Equal(0.45, row.Influence);
@@ -120,7 +120,7 @@ public sealed class TheFactionPageCountsItsSystemsTests
         var report = Report(Sys("Alpha", 0.2, ["Boom"], reported: Now.AddMinutes(-5)));
         var standings = Saw("Alpha", "Kestrel Reach Compact", 0.45, "2026-11-06T10:00:00Z", string.Empty);
 
-        var row = Assert.Single(FactionModel.Rows(report, standings));
+        var row = Assert.Single(FactionRows.Of(report, standings));
 
         Assert.False(row.OwnReading);
         Assert.Equal(0.2, row.Influence);
@@ -133,7 +133,7 @@ public sealed class TheFactionPageCountsItsSystemsTests
         var report = Report(Sys("Alpha", 0.2, ["Boom"], reported: Now.AddDays(-9)));
         var standings = Saw("Alpha", "Kestrel Reach Compact", 0.45, "2026-11-06T10:00:00Z", "{\"State\":\"War\"}");
 
-        var overview = FactionModel.Overview(report, FactionModel.Rows(report, standings));
+        var overview = FactionModel.Overview(report, FactionRows.Of(report, standings));
 
         Assert.Equal(1, overview.InConflict);
         Assert.Empty(overview.Groups[0].States);
@@ -146,13 +146,13 @@ public sealed class TheFactionPageCountsItsSystemsTests
     {
         var report = Report(Sys("Alpha", reported: Now.AddDays(-days)));
 
-        Assert.Equal(old, FactionModel.IsOld(Assert.Single(FactionModel.Rows(report, SystemStandings.Empty)), Now));
+        Assert.Equal(old, FactionModel.IsOld(Assert.Single(FactionRows.Of(report, SystemStandings.Empty)), Now));
     }
 
     [Fact]
     public void RowsComeMostInfluenceFirstAndThirdPressReturnsToThat()
     {
-        var rows = FactionModel.Rows(Report(Sys("Low", 0.1), Sys("High", 0.7), Sys("Mid", 0.4)), SystemStandings.Empty);
+        var rows = FactionRows.Of(Report(Sys("Low", 0.1), Sys("High", 0.7), Sys("Mid", 0.4)), SystemStandings.Empty);
         var head = Header();
 
         Assert.Equal(["High", "Mid", "Low"], head.Sort(rows).Select(r => r.System));
@@ -169,7 +169,7 @@ public sealed class TheFactionPageCountsItsSystemsTests
     [Fact]
     public void SystemsWithNoStateSortLastAndControllingSystemsFirst()
     {
-        var rows = FactionModel.Rows(
+        var rows = FactionRows.Of(
             Report(Sys("Plain", 0.5), Sys("Boomer", 0.4, ["Boom"], controls: true), Sys("Warrior", 0.3, ["War"])),
             SystemStandings.Empty);
         var head = Header();
@@ -187,7 +187,7 @@ public sealed class TheFactionPageCountsItsSystemsTests
     [Fact]
     public void UpdatedSortsNewestFirstOnTheFirstPress()
     {
-        var rows = FactionModel.Rows(
+        var rows = FactionRows.Of(
             Report(
                 Sys("Old", reported: Now.AddDays(-40)),
                 Sys("New", reported: Now.AddMinutes(-3)),
@@ -203,7 +203,7 @@ public sealed class TheFactionPageCountsItsSystemsTests
     [Fact]
     public void ASearchKeepsTheSystemsWhoseNameContainsIt()
     {
-        var rows = FactionModel.Rows(Report(Sys("Hollin Reach"), Sys("Varnek 4"), Sys("Tessaly Drift")), SystemStandings.Empty);
+        var rows = FactionRows.Of(Report(Sys("Hollin Reach"), Sys("Varnek 4"), Sys("Tessaly Drift")), SystemStandings.Empty);
 
         Assert.Equal(["Hollin Reach"], FactionModel.Matching(rows, " hollin ").Select(r => r.System));
         Assert.Equal("1 OF 3 SYSTEMS", FactionModel.CountText(1, 3));
