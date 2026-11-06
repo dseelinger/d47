@@ -34,6 +34,9 @@ public sealed record ModelTraits
 
     /// <summary>The thinking effort story calls use for this model, or null for the default.</summary>
     public ThinkingEffort? StoryEffort { get; init; }
+
+    /// <summary>Whether the model may write story chapters and short stories; false sends them to the provider's default model.</summary>
+    public bool WritesStories { get; init; } = true;
 }
 
 /// <summary>One model in the catalog.</summary>
@@ -325,6 +328,7 @@ public sealed class ModelCatalog
         StoryEffort = element.TryGetProperty("storyEffort", out var story) && story.ValueKind is JsonValueKind.String
             ? ThinkingEffortRange.Parse(story.GetString())
             : null,
+        WritesStories = !element.TryGetProperty("writesStories", out var writes) || writes.ValueKind is not JsonValueKind.False,
     };
 
     private static bool OptionalBool(JsonElement element, string name) =>

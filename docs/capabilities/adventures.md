@@ -577,7 +577,7 @@ core you choose afterwards stays; the story does not bring its own back. Pausing
 the story leaves the core aboard as it is.
 
 One story runs at a time, kept in `data/story.json`. When a story is picked again, the earlier run stays in `data/story.json`. A story needs a language model and galaxy search,
-the same as asking for a short story.
+the same as asking for a short story. A chapter or short story is written by the provider's default model when the chosen model is GPT-6 Luna or Claude Haiku 5.5.
 
 Stories need Elite Dangerous: Odyssey, because most chapters use it: on-foot missions, settlements,
 exobiology and suits. D47 reads the `Odyssey` flag on each `LoadGame`. When the last one says

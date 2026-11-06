@@ -3025,7 +3025,8 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Core.Adventures.AdventureGenerator>(),
             (providerId, chosen) => ModelCatalogSource.Shared.TraitsFor(providerId, chosen).StoryEffort,
             () => services.SignalIndexStore,
-            services.VisitedStars);
+            services.VisitedStars,
+            (providerId, chosen) => ModelCatalogSource.Shared.TraitsFor(providerId, chosen).WritesStories);
 
         // A stock story picked on the Stories page; each chapter is an adventure the generator writes.
         var storyDirector = new D47.Core.Stories.StoryDirector(

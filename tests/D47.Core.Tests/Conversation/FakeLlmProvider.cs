@@ -82,11 +82,11 @@ public sealed class RoundScriptedLlmProvider(params IReadOnlyList<LlmStreamEvent
 
     public int CallCount => _requests.Count;
 
-    public string Id => "anthropic";
+    public string Id { get; init; } = "anthropic";
 
     public string DisplayName => "Rounds";
 
-    public string DefaultModel => "claude-opus-5";
+    public string DefaultModel { get; init; } = "claude-opus-5";
 
     private const string PlainCheckMarker = "You are checking the wording of a draft";
 

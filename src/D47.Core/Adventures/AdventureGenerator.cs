@@ -334,7 +334,8 @@ public sealed class AdventureGenerator(
     ILogger logger,
     Func<string, string, ThinkingEffort?>? storyEffort = null,
     Func<ISignalIndexSource?>? signalIndex = null,
-    VisitedStarsBook? visited = null)
+    VisitedStarsBook? visited = null,
+    Func<string, string, bool>? writesStories = null)
 {
     /// <summary>Output ceiling for the spine turn; adaptive thinking spends from it too.</summary>
     public const int SpineOutputCeiling = 16000;
@@ -2841,9 +2842,19 @@ public sealed class AdventureGenerator(
         }
     }
 
+    /// <summary>The model that writes: the chosen one, or the provider's default when the catalog marks the chosen one as not writing stories.</summary>
+    private string? WritingModel(ILlmProvider? asking)
+    {
+        var chosen = model();
+
+        return asking is { RunsOnThisMachine: false } && chosen is not null && writesStories is not null && !writesStories(asking.Id, chosen)
+            ? asking.DefaultModel
+            : chosen;
+    }
+
     private void Enter(AdventureAsk ask, WriteStage stage) =>
         ask.Progress?.Enter(stage, StoryPace.For(
-            model() ?? provider()?.DefaultModel,
+            WritingModel(provider()) ?? provider()?.DefaultModel,
             local: provider() is { RunsOnThisMachine: true },
             chapter: ask.Story is not null));
 
@@ -2873,10 +2884,11 @@ public sealed class AdventureGenerator(
     {
         StepAsked.Value = step;
         var asking = provider();
-        var chosen = model() ?? asking?.DefaultModel ?? "no model";
+        var writing = WritingModel(asking);
+        var chosen = writing ?? asking?.DefaultModel ?? "no model";
         var reply = await FlavourTurn.AskForAsync(
             asking,
-            model(),
+            writing,
             persona(),
             aboutMe(),
             call.Text,

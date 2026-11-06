@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Story chapters and short stories are no longer written by GPT-6 Luna or Claude Haiku 5.5. When one of them is the chosen model, the provider's default model (GPT-6.1 Sol or Claude Sonnet 5.5) writes the story instead, which costs more. Conversation and background chatter keep the model you chose.
+
 A story chapter whose outline or objectives still had a figurative phrase after the last rewording round now takes the plain wording the check offered for it, instead of failing as "not written plainly". A phrase the check gave no plain wording for still fails.
 
 A story chapter's parts are now called objectives throughout, so Save the Cat names belong only to the story. An evening chapter's objectives are setup, complication, turn, setback and resolution, and a long one's are opening, setup, complication, hesitation, turn, setback, resolution and closing. The Story bench section is **Objectives** with a **Next objective** button, and a chapter's header reads, for example, "Story chapter 2 · Fun and Games · Objective 3 of 5", naming the story's current stage. Chapters saved with the old words still count as turning.
