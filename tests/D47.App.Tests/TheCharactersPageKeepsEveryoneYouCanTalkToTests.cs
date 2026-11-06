@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -23,14 +23,16 @@ namespace D47.App.Tests;
 public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
 {
     private sealed record Surface(
-        Window Window, CharactersPage Page, CharacterStore Store, SettingsService Settings, PanelNavigator Nav, IDisposable Look);
+        Window Window, CharactersPage Page, CharacterStore Store, SettingsService Settings, PanelNavigator Nav, IDisposable Look, PanelPrompts Prompts);
 
     private static Surface Open(
         bool big = false,
         RunningCast? story = null,
         Func<string, string, CancellationToken, Task<double?>>? distance = null,
         Func<string, Task<bool>>? copy = null,
-        bool carrier = false)
+        bool carrier = false,
+        CastVoiceSurface? voices = null,
+        Func<RunningCast?>? storyNow = null)
     {
         var look = AppLook.Put();
         var settings = TestSurface.Settings();
@@ -68,8 +70,9 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
         var host = new CharactersHost(
             () => store,
             settings,
-            _ => story,
-            distance ?? ((_, _, _) => Task.FromResult<double?>(112.6)));
+            _ => storyNow?.Invoke() ?? story,
+            distance ?? ((_, _, _) => Task.FromResult<double?>(112.6)),
+            voices);
 
         var nav = new PanelNavigator();
         nav.Register(PanelTab.Assets, new NavCrumb(CharactersPage.RootKey, "Characters"));
@@ -87,7 +90,7 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        return new Surface(window, page, store, settings, nav, look);
+        return new Surface(window, page, store, settings, nav, look, prompts);
     }
 
     private static void Close(Surface surface)
@@ -372,6 +375,63 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
 
         Close(surface);
     }
+
+    [AvaloniaFact]
+    public void AStoryCastMembersVoiceFaceOpensTheProviderPickerAndAStoredChoiceShowsAfterTheRedraw()
+    {
+        var chosen = new PinnedVoice("edge", "gale") { Key = "salt-road.wren" };
+        StoryCastMember? now = Member(chosen, "Gale");
+        var keys = new List<string>();
+
+        var voices = new CastVoiceSurface(
+            _ => now,
+            (key, provider, voice, _) =>
+            {
+                keys.Add(key);
+                now = Member(new PinnedVoice("edge", "voice"), null);
+            },
+            (_, _) => Task.FromResult(D47.Core.Audio.VoiceCatalogue.Of([])),
+            (_, _) => { },
+            _ => null);
+
+        var surface = Open(
+            story: Story(),
+            voices: voices,
+            storyNow: () => new RunningCast("salt-road", "Salt Road", [now!]));
+        surface.Page.Select("story:wren");
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(Text(surface.Page), line => line.Contains("Gale", StringComparison.Ordinal));
+
+        Press(surface.Page, CharactersPage.VoiceName);
+
+        var crumb = surface.Nav.Trail[^1];
+        Assert.Equal("story.voice.salt-road.wren.provider", crumb.Key);
+
+        var picker = surface.Prompts.Build(crumb)!;
+        var picked = new Window { Content = picker, Width = 900, Height = 520 };
+        picked.Show();
+        Dispatcher.UIThread.RunJobs();
+        picker.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "DefaultButton")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        picked.Close();
+
+        Assert.Equal(["salt-road.wren"], keys);
+        Assert.Contains(Text(surface.Page), line => line.Contains("(the story's voice)", StringComparison.Ordinal));
+
+        Close(surface);
+    }
+
+    private static StoryCastMember Member(PinnedVoice speaks, string? name) => new(
+        "salt-road",
+        "Salt Road",
+        new StorySpeakerShown("wren", "Wren Calloway", "edge", "voice", "salt-road.wren") { Primary = true },
+        new PinnedVoice("edge", "voice"),
+        speaks)
+    {
+        SpeaksName = name,
+    };
 
     [AvaloniaFact]
     public void TheCarrierWhereLineEndsInAGlyphThatCopiesItsSystem()

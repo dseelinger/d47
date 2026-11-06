@@ -268,16 +268,7 @@ public partial class MainWindow : Window
                     new StoryFilterMemory(host.ViewState),
                     host.SpeakerPictures,
                     host.PlayMessage,
-                    new CastVoiceSurface(
-                        key => host.Stories?.CastMember(key),
-                        host.ChooseCastVoice,
-                        host.Speech.CastVoicesAsync,
-                        host.PlayCastSample,
-                        host.Speech.CastVoiceFailure,
-                        () => host.Settings.Current,
-                        host.Settings.HoldsSecret,
-                        (providerId, voiceId, token) => host.Auditions?.AuditionCastPreviewAsync(providerId, voiceId, token)
-                            ?? Task.CompletedTask),
+                    host.CastVoices,
                     host.StoryRatings,
                     commanderSwitched,
                     host.Narration.Recap,

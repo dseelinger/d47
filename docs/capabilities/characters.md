@@ -36,7 +36,7 @@ nav_order: 164
 </section>
 <section>
 <h2><span class="num">2</span> Who owns a value decides who edits it.</h2>
-<p class="body">The captain's and tower's names and voices are settings, the same for every Commander on this PC. A story sets its own cast's names, voices and pictures. Your notes on either stay yours.</p>
+<p class="body">The captain's and tower's names and voices are settings, the same for every Commander on this PC. A story sets its own cast's names; you can change their voices and pictures. Your notes on either stay yours.</p>
 </section>
 <section>
 <h2><span class="num">3</span> Where they are decides how they sound.</h2>
@@ -69,9 +69,9 @@ Each character's page has the same rows:
 
 | Row | Your character | Captain and tower | Story cast |
 |---|---|---|---|
-| Picture | change or use the default | change or use the default | shown |
+| Picture | change or use the default | change or use the default | change or use the default |
 | Name | text box | the setting `speech.carrierCaptainName` or `speech.towerName` | read-only |
-| Voice | voice picker | the setting `speech.carrierCaptainVoice` or `speech.towerVoice` | read-only |
+| Voice | voice picker | the setting `speech.carrierCaptainVoice` or `speech.towerVoice` | the story's voice, or one you choose, kept under `storyVoices` |
 | Personality notes | up to 600 characters | up to 600 characters | up to 600 characters |
 | Where | Aboard, or a system | the carrier's callsign, system and distance | Aboard, set by the story |
 

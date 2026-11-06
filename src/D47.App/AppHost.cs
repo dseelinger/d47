@@ -5347,7 +5347,22 @@ public sealed class AppHost : IDisposable
         () => Characters,
         Settings,
         RunningCast,
-        GatedDistance(Settings, () => Galaxy));
+        GatedDistance(Settings, () => Galaxy),
+        CastVoices);
+
+    private D47.App.Panel.CastVoiceSurface? _castVoices;
+
+    /// <summary>What the panel may do about a story character's voice, shared by the window and the headset.</summary>
+    public D47.App.Panel.CastVoiceSurface CastVoices => _castVoices ??= new D47.App.Panel.CastVoiceSurface(
+        key => Stories?.CastMember(key),
+        ChooseCastVoice,
+        Speech.CastVoicesAsync,
+        PlayCastSample,
+        Speech.CastVoiceFailure,
+        () => Settings.Current,
+        Settings.HoldsSecret,
+        (providerId, voiceId, token) => Auditions?.AuditionCastPreviewAsync(providerId, voiceId, token)
+            ?? Task.CompletedTask);
 
     /// <summary>The story store, for the cast the running story has introduced.</summary>
     public D47.Core.Stories.StoryStore? StoryStore { get; set; }

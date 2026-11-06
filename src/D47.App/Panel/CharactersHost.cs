@@ -10,8 +10,10 @@ public sealed record RunningCast(string StoryId, string Title, IReadOnlyList<Sto
 /// <summary>What Asset Mgmt › Characters reads from the app, shared by the window and the headset.</summary>
 /// <param name="Story">The running story's introduced cast for a Commander, or null when none is running.</param>
 /// <param name="Distance">Light years between two systems, or null when unknown.</param>
+/// <param name="CastVoices">Changes a story cast member's voice, or null when the host offers none.</param>
 public sealed record CharactersHost(
     Func<CharacterStore> Store,
     SettingsService Settings,
     Func<string?, RunningCast?> Story,
-    Func<string, string, CancellationToken, Task<double?>> Distance);
+    Func<string, string, CancellationToken, Task<double?>> Distance,
+    CastVoiceSurface? CastVoices = null);

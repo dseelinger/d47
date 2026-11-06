@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Input;
@@ -462,6 +462,9 @@ public sealed class CharactersPage : UserControl, IPageSummary
             case Kind.Custom when _portraits is { } portraits:
                 body = new PictureChooser(portraits.Pictures, entry.Character!.Picture, PictureSize);
                 break;
+            case Kind.Story when _portraits is { } portraits:
+                body = new PictureChooser(portraits.Pictures, entry.Member!.Shown.Picture, PictureSize);
+                break;
             case Kind.Story:
                 body = StoryPicture(entry.Member!);
                 break;
@@ -764,12 +767,22 @@ public sealed class CharactersPage : UserControl, IPageSummary
         if (entry.Kind == Kind.Story)
         {
             var member = entry.Member!;
-            var provider = TtsProviderCatalog.Selected(member.Speaks.ProviderId);
-            var voice = member.SpeaksName
-                ?? (member.Speaks.IsCrewVoice ? "The crew voice"
-                    : provider.VoiceIdsAreOpaque ? $"A {provider.Name} voice" : member.Speaks.VoiceId);
+            var castFace = Face(CastVoiceChooser.Describe(member), null, readOnly: _host.CastVoices is null);
+            castFace.Name = VoiceName;
 
-            var stack = new StackPanel { Children = { Face(voice, provider.Name, readOnly: true), Inset($"The story sets {entry.Name}'s name, voice, picture and who they are. Your notes are added to that.") } };
+            if (_host.CastVoices is { } voices)
+            {
+                castFace.Click += (_, _) => CastVoiceChooser.Open(_prompts, voices, member.Key, Draw);
+            }
+
+            var stack = new StackPanel { Children = { castFace } };
+
+            if (member.Speaks.Key is { } pinned && _host.CastVoices?.Failure(pinned) is { } failed)
+            {
+                stack.Children.Add(Inset($"The chosen voice failed, so the story's own spoke instead: {failed}"));
+            }
+
+            stack.Children.Add(Inset($"The story sets {entry.Name}'s name and who they are. The voice and picture are the same for every Commander on this PC; your notes are yours alone."));
             return Row("Voice", stack);
         }
 
