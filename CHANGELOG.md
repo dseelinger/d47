@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-A story chapter after the beacon scan is now built by D47: it chooses each objective's place, count and order from the activities drawn for the chapter, and the AI writes only the chapter's title and spine, its opening, and each objective's reason and lines, in one call. When a check refuses some of the words, only those words are written again, and a chapter written again keeps the same objectives. The last finale chapter lands on the story's destination, and a finale chapter before it ends closer to the destination. Act-one chapters, the first finale chapter, short stories and changed objectives are written as before.
+A story chapter after the beacon scan is now built by D47: it chooses each objective's place, count and order from the activities drawn for the chapter, and the AI writes only the chapter's title and spine, its opening, and each objective's reason and lines, in one call. When a check refuses some of the words, only those words are written again, and a chapter written again keeps the same objectives. The first finale chapter chooses the story's destination in code: a landable body in no permit system, no farther than the story's limit and, when one exists, at least half of it away. The last finale chapter lands on the destination, and a finale chapter before it ends closer to the destination. Act-one chapters, short stories and changed objectives are written as before.
 
 When the wording check refuses words in a chapter that it has already rewritten itself, the AI writes them again and is told everything refused in them, so fewer chapters fail the check.
 

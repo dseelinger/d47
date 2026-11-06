@@ -2132,9 +2132,12 @@ public sealed partial class AdventureGenerator(
     }
 
     /// <summary>The facts with the light years from the Commander to the story's destination, when it has one and both can be measured.</summary>
-    private async Task<Facts> DestinationDistanceAsync(Facts facts, AdventureAsk ask, CancellationToken cancellationToken)
+    private Task<Facts> DestinationDistanceAsync(Facts facts, AdventureAsk ask, CancellationToken cancellationToken) =>
+        ask.Story?.Destination is { } destination ? DestinationDistanceAsync(facts, destination, cancellationToken) : Task.FromResult(facts);
+
+    private async Task<Facts> DestinationDistanceAsync(Facts facts, AdventureDestination destination, CancellationToken cancellationToken)
     {
-        if (ask.Story?.Destination is not { } destination || facts.System is not { } here || galaxy() is not { } search)
+        if (facts.System is not { } here || galaxy() is not { } search)
         {
             return facts;
         }
@@ -2370,7 +2373,7 @@ public sealed partial class AdventureGenerator(
         var slots = ask.Story?.Slots ?? [];
         var sights = ask.Story?.Sights ?? [];
         var used = UsedSystems(ask.Chapter, ask.Story?.Id);
-        var notes = Enumerable.Range(0, 12).Select(_ => new List<string>()).ToArray();
+        var notes = Enumerable.Range(0, 13).Select(_ => new List<string>()).ToArray();
         var notableTask = NotableAsync(facts, cancellationToken, notes[0]);
 
         if (galaxy() is not { } search || facts.System is not { } here)
@@ -2396,6 +2399,7 @@ public sealed partial class AdventureGenerator(
         var destinationAt = ask.Story is { FinaleChapter: > 1, Destination: { } destination }
             ? await DestinationPositionAsync(search, destination, cancellationToken).ConfigureAwait(false)
             : null;
+        var destinationsTask = DestinationBodiesAsync(search, ask, facts, cancellationToken, notes[12]);
         var pullTask = PullAsync(
             search,
             Resolver(),
@@ -2411,7 +2415,7 @@ public sealed partial class AdventureGenerator(
         var missionsTask = MissionStopsAsync(search, facts, cancellationToken, notes[9]);
         var warTask = war ? AtWarNearAsync(search, facts, here, cancellationToken, notes[10]) : Task.FromResult<IReadOnlyList<SystemSummary>>([]);
 
-        await Task.WhenAll(notableTask, warTask, anarchyTask, sitesTask, frontlineTask, stationsTask, bodiesTask, inBandTask, pullTask, baseTask, sightTask, missionsTask).ConfigureAwait(false);
+        await Task.WhenAll(notableTask, warTask, anarchyTask, sitesTask, frontlineTask, stationsTask, bodiesTask, inBandTask, pullTask, baseTask, sightTask, missionsTask, destinationsTask).ConfigureAwait(false);
 
         var notable = notableTask.Result;
         var anarchy = anarchyTask.Result;
@@ -2524,6 +2528,7 @@ public sealed partial class AdventureGenerator(
             Visited = seen,
             Used = used,
             DestinationAt = destinationAt,
+            Destinations = destinationsTask.Result,
         };
 
         static ChapterArea Area(InBandState state, IReadOnlyList<StationSummary> stations, IReadOnlyList<BodySummary> bodies) => new(
@@ -2536,6 +2541,51 @@ public sealed partial class AdventureGenerator(
             },
             stations,
             bodies);
+    }
+
+    /// <summary>Points searched around for finale chapter 1's destination.</summary>
+    private const int DestinationPoints = 6;
+
+    /// <summary>
+    /// For finale chapter 1 with no destination, the open landable bodies around points between half the limit and the limit from
+    /// the Commander, in directions drawn from the chapter's seed; empty otherwise.
+    /// </summary>
+    private async Task<IReadOnlyList<BodySummary>> DestinationBodiesAsync(
+        IGalaxyService search, AdventureAsk ask, Facts facts, CancellationToken cancellationToken, List<string> notes)
+    {
+        if (ask.Story is not { FinaleChapter: 1, Destination: null } story || facts.Position is not { } start)
+        {
+            return [];
+        }
+
+        var limit = AdventureDestination.Limit(facts.RadiusLightYears, story.FinaleChapters);
+        var random = new Random32(PlanSeed(ask));
+        var radius = Math.Max(facts.RadiusLightYears, limit / DestinationPoints);
+        var points = Enumerable.Range(0, DestinationPoints).Select(_ =>
+        {
+            var away = limit * (0.5 + (0.5 * random.NextDouble()));
+            var angle = 2 * Math.PI * random.NextDouble();
+
+            return new StarPosition(start.X + (away * Math.Cos(angle)), start.Y, start.Z + (away * Math.Sin(angle)));
+        }).ToList();
+
+        var found = await Task.WhenAll(points.Select(async point =>
+        {
+            try
+            {
+                var result = await search.FindBodiesAsync(BodyQuery.LandableNear(point, radius, PlacesPerSight), cancellationToken).ConfigureAwait(false);
+
+                return (Bodies: OpenBodies(result.Bodies.Where(body => body.Position is not null), facts, int.MaxValue), Failure: (string?)null);
+            }
+            catch (GalaxyUnavailableException ex)
+            {
+                return (Bodies: (IReadOnlyList<BodySummary>)[], Failure: ex.Message);
+            }
+        })).ConfigureAwait(false);
+
+        notes.AddRange(found.Select(point => point.Failure).OfType<string>().Distinct().Select(failure => $"The galaxy search could not list landable bodies for the finale's destination ({failure})."));
+
+        return [.. found.SelectMany(point => point.Bodies).DistinctBy(body => (body.SystemAddress, body.BodyId, body.Name))];
     }
 
     /// <summary>A system's gathered supply, or the note saying why it could not be read.</summary>

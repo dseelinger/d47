@@ -92,6 +92,9 @@ public sealed record ChapterPlaces
     /// <summary>Where the finale's destination is; null outside the finale or where unknown.</summary>
     public StarPosition? DestinationAt { get; init; }
 
+    /// <summary>For finale chapter 1 with no destination, the landable bodies found around points between half the limit and the limit from the Commander.</summary>
+    public IReadOnlyList<BodySummary> Destinations { get; init; } = [];
+
     public ChapterBase? Base { get; init; }
 
     public IReadOnlyList<ChapterMissionStop> Missions { get; init; } = [];

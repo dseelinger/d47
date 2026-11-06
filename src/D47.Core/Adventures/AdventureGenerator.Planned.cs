@@ -21,13 +21,13 @@ public sealed partial class AdventureGenerator
 
     /// <summary>
     /// Whether a chapter's objectives are planned in code and only its words are written: a story chapter with drawn
-    /// activities that is not a rewrite, other than finale chapter 1 with no destination yet.
+    /// activities that is not a rewrite.
     /// </summary>
     internal static bool IsPlanned(AdventureAsk ask)
     {
         ArgumentNullException.ThrowIfNull(ask);
 
-        return ask is { Rewrite: null, Story: { Slots.Count: > 0 } story } && !(story.FinaleChapter == 1 && story.Destination is null);
+        return ask is { Rewrite: null, Story.Slots.Count: > 0 };
     }
 
     /// <summary>The seed a chapter's plan is drawn from: the story and chapter, and the chapter it replaces when it replaces one.</summary>
@@ -103,6 +103,11 @@ public sealed partial class AdventureGenerator
         else
         {
             logger.LogInformation("Draft {Draft}, writing the lines again against the same plan", ask.Draft);
+        }
+
+        if (story.FinaleChapter == 1 && story.Destination is null && plan.Destination is { } chosen)
+        {
+            facts = await DestinationDistanceAsync(facts, chosen, cancellationToken).ConfigureAwait(false);
         }
 
         var away = ShipBases.Exempts(ask) && galaxy() is { } search ? await BaseAsync(search, ask, facts, cancellationToken).ConfigureAwait(false) : null;

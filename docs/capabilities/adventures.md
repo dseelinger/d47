@@ -899,11 +899,13 @@ chapters. In a chapter built on drawn activities a purchase comes only from its 
 **The reach limits one hop.** A chapter's reach is the longest one hop may be, not how far the chapter
 goes: a farther place is reached over several hops.
 
-**The finale's destination.** Finale chapter 1 names where the story ends: a landable body in a real
-system, resolved as a land objective's place is, with no permit needed. It may be at most five hops at the
+**The finale's destination.** d47 chooses where the story ends when it plans finale chapter 1: a landable body in a real
+system, with no permit needed, drawn by the chapter's seed. d47 looks around points between half the limit and the limit from you,
+favours notable places and the story's sights, and favours systems you have not visited. It picks a nearer body only when none lies
+between half the limit and the limit. It may be at most five hops at the
 chapter's reach from you for each finale chapter after the first, and at least five: with a reach of 360
-light years, 1,800 light years in a story with two finale chapters and 5,400 in one with four. A finale
-chapter 1 with no destination, or one that does not stand, is refused. The destination is kept on the
+light years, 1,800 light years in a story with two finale chapters and 5,400 in one with four. Where no landable body is found, finale
+chapter 1 is refused. The destination is kept on the
 story. Each later finale chapter's writer is told the destination, how far it is from you and how many
 finale chapters are left. A finale chapter between the first and the last that starts more than one
 reach from the destination must end closer to it than it started. The last finale chapter's last objective

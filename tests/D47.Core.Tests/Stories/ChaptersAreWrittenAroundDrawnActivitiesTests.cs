@@ -52,6 +52,22 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
     }
 
     [Fact]
+    public async Task AFirstFinaleChapterWithNoDestinationIsPlannedAndKeepsTheOneCodeChose()
+    {
+        var ask = PlannedChapterWorld.Ask(PlannedChapterWorld.Story with { FinaleChapter = 1, FinaleChapters = 1 });
+        var plan = await PlannedChapterWorld.PlanAsync(ask);
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Lines(plan.Objectives.Count)), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
+
+        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, TestContext.Current.CancellationToken);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.NotNull(plan.Destination);
+        Assert.Equal(plan.Destination, outcome.Destination);
+        Assert.Equal(plan.Destination!.Landing(), outcome.Draft!.Beats[^1].Steps[^1].Trigger);
+        Assert.DoesNotContain("destination", PromptOf(provider, 0).Split("Answer with one JSON object")[^1]);
+    }
+
+    [Fact]
     public async Task AChapterWithNoDrawnActivitiesIsWrittenAsBefore()
     {
         var previous = new Adventure

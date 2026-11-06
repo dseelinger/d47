@@ -157,6 +157,20 @@ public static class ChapterPlanner
         }
 
         var random = new Random32(seed);
+
+        if (inputs is { FinaleChapter: 1, Destination: null })
+        {
+            var (chosen, at, why) = ChooseDestination(inputs, places, random);
+
+            if (chosen is null)
+            {
+                return Refuse(ChapterRules.Finale, why!);
+            }
+
+            inputs = inputs with { Destination = chosen };
+            places = places with { DestinationAt = at };
+        }
+
         var sight = places.Sights.Count > 0;
         var landing = inputs.Closing ? inputs.Destination!.Landing() : null;
         var end = landing is null ? Ending(inputs, places) : null;
@@ -249,6 +263,39 @@ public static class ChapterPlanner
         return new ChapterPlanResult(
             new ChapterPlan([.. built.Select((objective, index) => new PlannedObjective(functions[index], objective.Steps, objective.Purpose))], inputs.Destination),
             null);
+    }
+
+    /// <summary>
+    /// The landable body finale chapter 1 ends the story on: no permit, within the limit, drawn by weight from those at least half the
+    /// limit away, or from the nearer ones when none is.
+    /// </summary>
+    private static (AdventureDestination? Destination, StarPosition? At, string? Refusal) ChooseDestination(ChapterInputs inputs, ChapterPlaces places, Random32 random)
+    {
+        var here = inputs.Position!.Value;
+        var limit = AdventureDestination.Limit(inputs.Reach, inputs.FinaleChapters);
+        var open = places.Destinations
+            .Where(body => body is { IsLandable: true, Position: not null, BodyId: not null, SystemAddress: not null }
+                && body.Position.Value.DistanceTo(here) <= limit
+                && !PermitSystemTable.ClosedTo(body.SystemName, inputs.Ranks, () => places.WasVisited(body.SystemName)))
+            .ToList();
+
+        if (open.Count == 0)
+        {
+            return (null, null, $"No landable body without a permit was found within {limit.ToString("0", CultureInfo.InvariantCulture)} light years for the finale's destination.");
+        }
+
+        var far = open.Where(body => body.Position!.Value.DistanceTo(here) >= limit / 2).ToList();
+        var pool = far.Count > 0 ? far : open;
+        var picked = pool[random.Weighted([.. pool.Select(body =>
+        {
+            var weight = places.Notable.Concat(places.Sights).Any(place => place.SystemAddress is { } address ? address == body.SystemAddress : string.Equals(place.System, body.SystemName, StringComparison.OrdinalIgnoreCase))
+                ? NotableFactor
+                : 1.0;
+
+            return places.WasVisited(body.SystemName) ? weight / UnvisitedFactor : weight;
+        })])];
+
+        return (new AdventureDestination(picked.SystemAddress!.Value, picked.SystemName, picked.BodyId!.Value, picked.Name), picked.Position, null);
     }
 
     private static ChapterPlanResult Refuse(string rule, string text) => new(null, new ChapterPlanRefusal(rule, text));
