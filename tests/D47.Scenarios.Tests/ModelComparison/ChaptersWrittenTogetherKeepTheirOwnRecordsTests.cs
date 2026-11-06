@@ -17,7 +17,7 @@ public sealed class ChaptersWrittenTogetherKeepTheirOwnRecordsTests
     [Fact]
     public async Task SixCombinationsAtOnceEachRecordOnlyTheirOwnRequestsInAboutOneChaptersTime()
     {
-        string[] models = ["claude-sonnet-5-5", "claude-haiku-5-5", "claude-opus-5-5", "gpt-6.1-sol", "gpt-6-luna", "gpt-5.6-terra"];
+        string[] models = ["claude-sonnet-5-5", "claude-haiku-5-5", "claude-opus-5-5", "gpt-6.1-sol", "gpt-6-astra", "gpt-5.6-terra"];
         var stub = new DelayedProvider();
         var meter = new MeteredLlmProvider(stub, null, 100m);
         var world = new ScenarioWorld();

@@ -45,6 +45,7 @@ public static class PublishedPrices
         "claude-opus-5-5" => FromCatalog(4m, 20m),
         "gpt-6.1-sol" => FromCatalog(2m, 10m),
         "gpt-6-luna" => FromCatalog(0.10m, 0.50m),
+        "gpt-6-astra" => FromCatalog(10m, 50m),
         "gpt-5.6-terra" => FromCatalog(2m, 12m),
         _ when ModelComparisonTests.LocalModels.Contains(model, StringComparer.Ordinal) => OnThisMachine,
         _ => null,

@@ -27,7 +27,7 @@ namespace D47.Scenarios.Tests.ModelComparison;
 public partial class StoryComparisonTests
 {
     private static readonly string[] DefaultModels =
-        ["claude-sonnet-5-5", "claude-haiku-5-5", "claude-opus-5-5", "gpt-6.1-sol", "gpt-6-luna", "gpt-5.6-terra"];
+        ["claude-sonnet-5-5", "claude-opus-5-5", "gpt-6.1-sol", "gpt-6-astra", "gpt-5.6-terra"];
 
     private static readonly ThinkingEffort[] DefaultEfforts = [ThinkingEffort.Low, ThinkingEffort.Medium, ThinkingEffort.High];
 
