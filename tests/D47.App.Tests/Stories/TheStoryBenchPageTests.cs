@@ -303,6 +303,32 @@ public sealed class TheStoryBenchPageTests
     }
 
     [AvaloniaFact]
+    public void TheBeatSheetShowsBeatNamesWithoutTheBenchFlagAndNotWithoutAStory()
+    {
+        var rig = Build(benchOn: false);
+
+        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
+        Dispatcher.UIThread.RunJobs();
+
+        var sheet = StoryClues.BeatSheet(rig.Stories.Current("F1")!);
+        var drawn = Drawn(rig.Panel);
+
+        Assert.Contains(drawn, text => string.Equals(text, StoryBenchPage.BeatSheetHead, StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(drawn, text => string.Equals(text, StoryBenchPage.BeatSheetCount(sheet), StringComparison.OrdinalIgnoreCase));
+
+        foreach (var beat in sheet)
+        {
+            Assert.Contains(drawn, text => string.Equals(text, beat.Name, StringComparison.Ordinal));
+        }
+
+        rig.Stories.RemovePickedBy("F1", Now);
+        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(Drawn(rig.Panel), text => string.Equals(text, StoryBenchPage.BeatSheetHead, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [AvaloniaFact]
     public void TheJumpSectionShowsTheStoryInFourTiles()
     {
         var rig = Build(benchOn: true);

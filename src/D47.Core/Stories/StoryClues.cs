@@ -21,6 +21,17 @@ public enum StoryStage
     Finale,
 }
 
+/// <summary>Where a beat stands against the story's current stage.</summary>
+public enum StoryBeatState
+{
+    Reached,
+    Current,
+    Later,
+}
+
+/// <summary>A beat on the story's sheet: its key, name, 1-based number in story order and state.</summary>
+public sealed record StoryBeatStanding(string Key, string Name, int Number, StoryBeatState State);
+
 /// <summary>When the hidden layer's clues are spoken, and the hidden layer as every speaker reads it.</summary>
 public static class StoryClues
 {
@@ -167,6 +178,66 @@ public static class StoryClues
         StoryStage.DarkNightOfTheSoul => "Dark Night of the Soul",
         _ => "Finale",
     };
+
+    /// <summary>A beat's name as the Story bench shows it, by its sealed key; the key itself when unknown.</summary>
+    public static string BeatName(string key) => key switch
+    {
+        "openingImage" => "Opening Image",
+        "themeStated" => "Theme Stated",
+        "setUp" => "Set-Up",
+        "catalyst" => "Catalyst",
+        "debate" => "Debate",
+        "breakIntoTwo" => "Break into Two",
+        "bStory" => "B Story",
+        "funAndGames" => "Fun and Games",
+        "midpoint" => "Midpoint",
+        "badGuysCloseIn" => "Bad Guys Close In",
+        "allIsLost" => "All Is Lost",
+        "darkNightOfTheSoul" => "Dark Night of the Soul",
+        "breakIntoThree" => "Break into Three",
+        "finale" => "Finale",
+        "finalImage" => "Final Image",
+        _ => key,
+    };
+
+    /// <summary>
+    /// Every beat the story's length has, in story order, each reached, current or later. A beat belongs to the first
+    /// stage that hands it out; <c>finalImage</c> belongs to the last finale chapter. Names only, never the beat's line.
+    /// </summary>
+    public static IReadOnlyList<StoryBeatStanding> BeatSheet(Story story)
+    {
+        ArgumentNullException.ThrowIfNull(story);
+
+        var pacing = story.Pacing;
+        var stage = Stage(story);
+        var firstStage = new Dictionary<string, StoryStage>(StringComparer.Ordinal);
+
+        foreach (var each in Enum.GetValues<StoryStage>())
+        {
+            foreach (var key in BeatKeys(pacing, each, true, pacing.FinaleChapters))
+            {
+                firstStage.TryAdd(key, each);
+            }
+        }
+
+        var now = stage == StoryStage.Finale
+            ? BeatKeys(pacing, stage, true, story.FinaleChapter).ToHashSet(StringComparer.Ordinal)
+            : [.. BeatKeys(pacing, stage, true, null)];
+        var have = pacing.BeatKeys.ToHashSet(StringComparer.Ordinal);
+        var sheet = new List<StoryBeatStanding>();
+
+        foreach (var key in StoryBeats.Keys.Where(have.Contains))
+        {
+            var own = firstStage[key];
+            var state = own < stage
+                ? StoryBeatState.Reached
+                : own == stage && now.Contains(key) ? StoryBeatState.Current : StoryBeatState.Later;
+
+            sheet.Add(new StoryBeatStanding(key, BeatName(key), sheet.Count + 1, state));
+        }
+
+        return sheet;
+    }
 
     /// <summary>
     /// The beat-sheet lines the chapter writer gets at a stage of a story paced by <paramref name="pacing"/>, by

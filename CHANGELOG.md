@@ -14,6 +14,8 @@ A story chapter whose outline or objectives still had a figurative phrase after 
 
 A story chapter's parts are now called objectives throughout, so Save the Cat names belong only to the story. An evening chapter's objectives are setup, complication, turn, setback and resolution, and a long one's are opening, setup, complication, hesitation, turn, setback, resolution and closing. The Story bench section is **Objectives** with a **Next objective** button, and a chapter's header reads, for example, "Story chapter 2 · Fun and Games · Objective 3 of 5", naming the story's current stage. Chapters saved with the old words still count as turning.
 
+The Story bench now has a **Beat sheet** section under the run list, shown whenever a story is active. It lists every beat the story's length has, by name and in story order, each marked Reached, Current or Later, with a count such as `8 / 15 reached`. Only the names show, not what each beat holds.
+
 Every character the running story has introduced is now listed under its name on Asset Mgmt › Characters and held on the Story comms channel, whether or not the story marks them primary. Before, a character who was not primary appeared in neither.
 
 A second chapter of a story still in act one now continues from where the first left off, instead of opening on the same scene, call and reveal. It is not handed the opening, set-up and catalyst beats again, and the writer is told how the previous chapter's spine said it ends.

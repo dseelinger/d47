@@ -432,6 +432,14 @@ confirmation naming the story to be shelved and what comes back. **Switch** shel
 the chosen one active again, paused; on **No story** the active story is shelved and none is active. A chapter
 being written refuses the switch.
 
+Under the run list, whenever a story is active, the **Beat sheet** section lists every beat the story's length has, in
+story order, five to a row, by number and name: Opening Image, Theme Stated, Set-Up, Catalyst, Debate, Break into Two,
+B Story, Fun and Games, Midpoint, Bad Guys Close In, All Is Lost, Dark Night of the Soul, Break into Three, Finale and
+Final Image. A short story has fewer: a week runs from 01 Opening Image to 07 Final Image. Each beat reads **✓ Reached**
+once its stage has passed, **Current** while the story is at its stage, and **Later** before that; Final Image stays
+Later until the last finale chapter begins. The count at the right reads, for example, `8 / 15 REACHED`. Only names are
+shown, never a beat's line. With no active story the section is not shown.
+
 **Open** on any run shows that run's page one level below the Story bench, named by the story's title. A strip gives its state,
 length, chapters so far, clues given, and the days it was picked and last spoke. Below it are every line the run's
 record holds, in order, in one section per chapter with the chapter's name and the day of its first line. A clue,

@@ -112,6 +112,11 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
 
         _body.Children.Add(RunList(commander, busy));
 
+        if (_director.Stories.Current(commander) is { } running)
+        {
+            _body.Children.Add(BeatSheetSection(running));
+        }
+
         if (_bench is null)
         {
             return;
@@ -133,6 +138,22 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         _body.Children.Add(Section("Checkpoints", CheckpointsNote, null, CheckpointSection(commander, story, busy)));
     }
 
+    internal const string BeatSheetHead = "Beat sheet";
+    internal const string BeatSheetColumns = "*,*,*,*,*";
+
+    internal static string BeatSheetNote(Story story) =>
+        $"{story.Title} · {story.Pacing.Name}. A beat is reached once its stage has passed.";
+
+    internal static string BeatSheetCount(IReadOnlyList<StoryBeatStanding> sheet) =>
+        $"{sheet.Count(beat => beat.State == StoryBeatState.Reached).ToString(CultureInfo.InvariantCulture)} / {sheet.Count.ToString(CultureInfo.InvariantCulture)} reached";
+
+    internal static string BeatStateWord(StoryBeatState state) => state switch
+    {
+        StoryBeatState.Reached => "✓ Reached",
+        StoryBeatState.Current => "Current",
+        _ => "Later",
+    };
+
     internal const string MaintainerHead = "Testing tools";
     internal const string BenchFlag = "D47_STORY_BENCH=1";
     internal const string NoRuns = "No stories yet. Pick one in the Catalogue, and every line it speaks is kept here to play back.";
@@ -152,6 +173,47 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     internal const string StirringNotice = "Next objective returns once D47 has said the last one.";
 
     internal const string NothingUnderWay = "No story or Short Story is running. Jump, objectives and checkpoints show here once one starts.";
+
+    private static StackPanel BeatSheetSection(Story story)
+    {
+        var sheet = StoryClues.BeatSheet(story);
+        var head = StarSystemPage.GroupHead(BeatSheetHead, BeatSheetNote(story), BeatSheetCount(sheet));
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(BeatSheetColumns), ColumnSpacing = 2, RowSpacing = 2 };
+        var rows = (sheet.Count + 4) / 5;
+
+        for (var row = 0; row < rows; row++)
+        {
+            grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        }
+
+        for (var index = 0; index < sheet.Count; index++)
+        {
+            var cell = BeatCell(sheet[index]);
+            Grid.SetColumn(cell, index % 5);
+            Grid.SetRow(cell, index / 5);
+            grid.Children.Add(cell);
+        }
+
+        return new StackPanel { Spacing = 8, Children = { head, grid } };
+    }
+
+    private static Border BeatCell(StoryBeatStanding beat)
+    {
+        var current = beat.State == StoryBeatState.Current;
+        var later = beat.State == StoryBeatState.Later;
+        var stateKey = current ? ThemeManager.CyanKey : later ? ThemeManager.GreyKey : ThemeManager.BlueKey;
+        var numberKey = current ? ThemeManager.CyanKey : ThemeManager.GreyKey;
+
+        var top = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+        top.Children.Add(Mono(beat.Number.ToString("00", CultureInfo.InvariantCulture), TypeScale.Meta, numberKey));
+        top.Children.Add(Chrome(BeatStateWord(beat.State), 11, stateKey, FontWeight.SemiBold));
+
+        var name = AdventuresPage.Text(beat.Name, 15, later ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
+        var content = new StackPanel { Spacing = 4, Margin = new Thickness(9, 10, 12, 10), MinHeight = 44, Children = { top, name } };
+        var cell = Row(content, first: true, barKey: current ? ThemeManager.CyanKey : null, groundKey: current ? ThemeManager.CyanGroundKey : ThemeManager.SlabKey, ruleKey: null);
+        cell.Name = $"Beat_{beat.Key}";
+        return cell;
+    }
 
     private static StackPanel Section(string name, string? note, Control? end, Control body)
     {
