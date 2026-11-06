@@ -43,7 +43,8 @@ public static class JournalCapability
         OutstandingCrimes? crimes = null,
         Func<GameStatus>? liveStatus = null,
         Func<DateTimeOffset?>? bgsTick = null,
-        Func<LiveRoute?>? liveRoute = null)
+        Func<LiveRoute?>? liveRoute = null,
+        Knowledge.SquadronFactions? squadronFactions = null)
     {
         var state = history ?? (() => HistoryState.Done);
         var plotted = route ?? (() => NavRoute.None);
@@ -396,7 +397,7 @@ public static class JournalCapability
                     ],
                     Commands = Asking(BgsWorkQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
-                        DescribeBgsWork(gameState, arguments, bgsTick?.Invoke(), now?.Invoke() ?? DateTimeOffset.UtcNow))),
+                        DescribeBgsWork(gameState, arguments, bgsTick?.Invoke(), now?.Invoke() ?? DateTimeOffset.UtcNow, squadronFactions))),
                 },
                 new ToolDefinition
                 {
@@ -2497,7 +2498,7 @@ public static class JournalCapability
     }
 
     private static string DescribeBgsWork(
-        GameStateStore gameState, ToolArguments arguments, DateTimeOffset? tick, DateTimeOffset now)
+        GameStateStore gameState, ToolArguments arguments, DateTimeOffset? tick, DateTimeOffset now, Knowledge.SquadronFactions? squadronFactions = null)
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
@@ -2508,6 +2509,7 @@ public static class JournalCapability
         var work = active.BgsWork;
         var faction = arguments.Text("faction")?.Trim();
         var system = arguments.Text("system")?.Trim();
+        var squadronFaction = SquadronFactionResolver.Resolve(active, squadronFactions);
 
         var pairs = work.Entries
             .Where(entry => entry.At >= from)
@@ -2515,7 +2517,8 @@ public static class JournalCapability
             .Where(group => faction is null || string.Equals(group.Key.Faction, faction, StringComparison.OrdinalIgnoreCase))
             .Where(group => system is null
                 || string.Equals(work.NameOf(group.Key.SystemAddress), system, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(group => group.Count())
+            .OrderBy(group => squadronFaction is null ? 0 : (int)work.GroupOf(group.Key.SystemAddress, group.Key.Faction, squadronFaction))
+            .ThenByDescending(group => group.Count())
             .ToList();
 
         var tickTime = tick is { } at ? at.UtcDateTime.ToString("HH:mm", CultureInfo.InvariantCulture) : null;
@@ -2545,7 +2548,12 @@ public static class JournalCapability
                 kinds.Add(InfluenceClause(across));
             }
 
-            report.AppendLine($"{pair.Key.Faction} in {place}: {string.Join("; ", kinds)}.");
+            var lead = squadronFaction is not null
+                && work.GroupOf(pair.Key.SystemAddress, pair.Key.Faction, squadronFaction) == SquadronWorkGroup.Squadron
+                    ? "For your squadron's faction, "
+                    : string.Empty;
+
+            report.AppendLine($"{lead}{pair.Key.Faction} in {place}: {string.Join("; ", kinds)}.");
         }
 
         if (pairs.Count > named.Count)

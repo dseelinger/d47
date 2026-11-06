@@ -187,6 +187,7 @@ public partial class App(AppHost? host) : Application
                     Ships = host.Ships,
                     GameState = () => host.GameState.Active,
                     BgsTick = () => host.BgsTick?.Last,
+                    SquadronFactions = host.SquadronFactions,
                     HistoryState = () => host.History.State,
                     OnFoot = host.OnFootPlans,
                     EngineersMemory = new Panel.EngineerDirectoryMemory(host.ViewState),

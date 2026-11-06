@@ -315,11 +315,13 @@ lookup, so the numbers are the ones you would recognise.
 work"*, *"what have I done for the BGS"*. It comes from the last seven days of your journals, so it
 survives a restart. With no tick time it covers the last 24 hours and says so, naming the BGS tick
 time setting in Galaxy. At most three system and faction pairs are named, the one with the most
-entries first, and the rest are counted:
+entries first, and the rest are counted. When d47 knows your squadron's faction, its work comes
+first and is introduced as "for your squadron's faction", then work for other factions in that
+faction's systems, then everything else, each in order of entries:
 
 ```text
 Since the BGS tick at 16:14 UTC, 3 hours ago:
-Diamond Frogs in HIP 97704: missions +5 and -1; bounties 117,480 credits; trade 2,400,000 credits sold for 310,000 profit; cartography 506,832 credits; influence 23.1% before the tick, 24.0% when you were there at 18:02 UTC.
+For your squadron's faction, Diamond Frogs in HIP 97704: missions +5 and -1; bounties 117,480 credits; trade 2,400,000 credits sold for 310,000 profit; cartography 506,832 credits; influence 23.1% before the tick, 24.0% when you were there at 18:02 UTC.
 and 4 more factions.
 ```
 

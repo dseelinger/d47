@@ -220,7 +220,11 @@ public partial class MainWindow : Window
             Panel.EnableStanding(() => host.GameState.Active);
             Panel.EnableStatistics(() => host.GameState.Active);
             Panel.EnableSession(() => host.GameState.Active);
-            Panel.EnableBgsWork(() => host.GameState.Active, () => host.BgsTick?.Last, () => DateTimeOffset.UtcNow);
+            Panel.EnableBgsWork(
+                () => host.GameState.Active,
+                () => host.BgsTick?.Last,
+                () => DateTimeOffset.UtcNow,
+                () => D47.Core.Journal.SquadronFactionResolver.Resolve(host.GameState.Active, host.SquadronFactions));
             FollowServerStatus(host.ServerStatus);
             Panel.EnableCombatStats(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
             Panel.EnableCredits(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);

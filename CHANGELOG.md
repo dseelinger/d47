@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The BGS work page and "what's my BGS work" put your squadron's faction first. The page groups its work into the squadron faction, other factions in its systems, and everywhere else, and leaves out empty groups. While you are in a squadron whose faction D47 does not know yet, the page says how it learns it.
+
 D47 now learns your squadron's faction from the journal. Elite flags it whenever you are in one of its systems, so "set my squadron's faction" is only needed until then. Suggesting a home system uses the journal's faction first and the one you named second, and naming a faction the journal has already shown is answered with the one Elite shows.
 
 Say "switch to the story" and a shelved story's title to make it your story again, as **Switch to** on the Story bench does without the confirmation, or "play back" and a title to open that story's page and play its lines from the first. Both are yours alone, not the model's.

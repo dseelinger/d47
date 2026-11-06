@@ -10,6 +10,9 @@ using D47.Core.Journal;
 
 namespace D47.App.Panel;
 
+/// <summary>The rows of one squadron group on the BGS work page.</summary>
+public sealed record BgsWorkGroup(string Title, IReadOnlyList<BgsWorkRow> Rows);
+
 /// <summary>One system and faction in the BGS work table; a null figure is nothing in the period.</summary>
 public sealed record BgsWorkRow(
     long SystemAddress,
@@ -52,6 +55,12 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         "D47 doesn't know when the BGS last ticked, so this shows the last 24 hours. "
         + "It counts from the tick and shows influence once the tick time has been read.";
 
+    public const string UnknownFactionLabel = "Squadron faction unknown";
+
+    public const string UnknownFactionText =
+        "D47 learns your squadron's faction when you are in one of its systems. "
+        + "You can also say 'my squadron's faction is' and its name.";
+
     private const string Dash = "—";
     private const int InfluenceColumn = 5;
 
@@ -86,12 +95,14 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
     private readonly ColumnWidthMemory? _columnWidths;
     private readonly SortHeader<BgsWorkRow> _head = new("BgsWorkHead", Heads);
     private readonly StackPanel _body = new();
+    private readonly Func<string?> _squadronFaction;
 
     private BgsWork? _seenWork;
     private SystemStandings? _seenStandings;
     private DateTimeOffset? _seenTick;
     private string? _seenSystem;
     private long _seenMinute;
+    private string? _seenFaction;
     private string _query = string.Empty;
 
     public BgsWorkPage(
@@ -100,8 +111,10 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         Func<DateTimeOffset> now,
         bool headset = false,
         ColumnWidthMemory? columnWidths = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        Func<string?>? squadronFaction = null)
     {
+        _squadronFaction = squadronFaction ?? (() => null);
         _copy = copy;
         _state = state;
         _tick = tick;
@@ -140,6 +153,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
             && ReferenceEquals(state?.Standings, _seenStandings)
             && _tick() == _seenTick
             && state?.Location.StarSystem == _seenSystem
+            && _squadronFaction() == _seenFaction
             && PageKit.Minute(_now()) == _seenMinute)
         {
             return false;
@@ -162,6 +176,20 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
                 .GroupBy(entry => (entry.SystemAddress, entry.Faction))
                 .Select(group => RowOf(group.Key.SystemAddress, group.Key.Faction, [.. group], work, tick, standings))
                 .OrderByDescending(row => row.Count),
+        ];
+    }
+
+    /// <summary>The rows in the three squadron groups, in order, leaving out any group with no rows.</summary>
+    public static IReadOnlyList<BgsWorkGroup> Groups(IReadOnlyList<BgsWorkRow> rows, BgsWork work, string squadronFaction)
+    {
+        var titles = new[] { $"For {squadronFaction}", "Other factions in its systems", "Elsewhere" };
+
+        return
+        [
+            .. rows
+                .GroupBy(row => work.GroupOf(row.SystemAddress, row.Faction, squadronFaction))
+                .OrderBy(group => group.Key)
+                .Select(group => new BgsWorkGroup(titles[(int)group.Key], [.. group])),
         ];
     }
 
@@ -284,6 +312,8 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         _seenTick = tick;
         _seenSystem = state?.Location.StarSystem;
         _seenMinute = PageKit.Minute(now);
+        var squadronFaction = _squadronFaction();
+        _seenFaction = squadronFaction;
 
         var summary = SummaryText(tick);
 
@@ -308,14 +338,23 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
             _body.Children.Add(UnknownTick());
         }
 
+        if (squadronFaction is null && state?.Squadron.IsMember == true)
+        {
+            _body.Children.Add(UnknownFaction());
+        }
+
         var count = all.Count == shown.Count
             ? Plural(all.Count, "faction")
             : $"{shown.Count} of {Plural(all.Count, "faction")}";
 
+        var headed = squadronFaction is not null && shown.Count > 0
+            ? Groups(shown, work, squadronFaction)[0]
+            : null;
+
         _body.Children.Add(StarSystemPage.GroupHead(
-            tick is null ? "Last 24 hours" : "Since the tick",
+            headed?.Title ?? (tick is null ? "Last 24 hours" : "Since the tick"),
             Description(tick, now),
-            count));
+            headed is null ? count : Plural(headed.Rows.Count, "faction")));
 
         if (all.Count == 0)
         {
@@ -330,7 +369,23 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
             return;
         }
 
-        _body.Children.Add(Table(shown, tick is not null, state?.Location.StarSystem));
+        if (squadronFaction is null)
+        {
+            _body.Children.Add(Table(shown, tick is not null, state?.Location.StarSystem));
+            return;
+        }
+
+        var groups = Groups(shown, work, squadronFaction);
+
+        for (var i = 0; i < groups.Count; i++)
+        {
+            if (i > 0)
+            {
+                _body.Children.Add(StarSystemPage.GroupHead(groups[i].Title, string.Empty, Plural(groups[i].Rows.Count, "faction")));
+            }
+
+            _body.Children.Add(Table(groups[i].Rows, tick is not null, state?.Location.StarSystem));
+        }
     }
 
     private TextBlock Description(DateTimeOffset? tick, DateTimeOffset now)
@@ -350,6 +405,13 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
 
         return note;
     }
+
+    private static Notice UnknownFaction() => new(NoticeLevel.Warning)
+    {
+        Label = UnknownFactionLabel,
+        Text = UnknownFactionText,
+        Margin = new Thickness(0, 0, 0, 14),
+    };
 
     private Notice UnknownTick()
     {

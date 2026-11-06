@@ -527,6 +527,8 @@ public sealed class AppHost : IDisposable
     /// <summary>The time of the last BGS tick d47 has read.</summary>
     public BgsTickWatch? BgsTick { get; private set; }
 
+    public D47.Core.Knowledge.SquadronFactions? SquadronFactions { get; private set; }
+
     public GalNetWatch? GalNet { get; private set; }
 
     public ServerStatusWatch? ServerStatus { get; private set; }
@@ -3351,6 +3353,7 @@ public sealed class AppHost : IDisposable
         stores.Callouts.Silenced += debrief.NoteSilenced;
         host.Logbook = services.Logbook;
         host.Goals = (stores.GoalBook, stores.BackfillGoals);
+        host.SquadronFactions = stores.SquadronFactions;
         host.Activities = stores.Activities;
         host.Adventures = (stores.AdventureBook, crew.AdventureGenerator);
         host.Stories = storyDirector;

@@ -53,6 +53,19 @@ public sealed record BgsWork
     public IReadOnlyList<string> FactionsIn(long systemAddress) =>
         Factions.TryGetValue(systemAddress, out var names) ? names : [];
 
+    /// <summary>Where work for <paramref name="faction"/> in a system falls relative to the squadron faction.</summary>
+    public SquadronWorkGroup GroupOf(long systemAddress, string faction, string squadronFaction)
+    {
+        if (string.Equals(faction, squadronFaction, StringComparison.OrdinalIgnoreCase))
+        {
+            return SquadronWorkGroup.Squadron;
+        }
+
+        return FactionsIn(systemAddress).Any(name => string.Equals(name, squadronFaction, StringComparison.OrdinalIgnoreCase))
+            ? SquadronWorkGroup.SquadronSystems
+            : SquadronWorkGroup.Elsewhere;
+    }
+
     /// <summary>The start of the period to report: the BGS tick when it is known, otherwise the 24 hours before <paramref name="now"/>.</summary>
     public static DateTimeOffset PeriodStart(DateTimeOffset? tick, DateTimeOffset now) => tick ?? now - TimeSpan.FromHours(24);
 
@@ -248,4 +261,12 @@ public sealed record BgsWork
 
     private static BgsEntry[] Trimmed(BgsEntry[] entries, DateTimeOffset newest) =>
         [.. entries.Where(entry => entry.At > newest - Kept).OrderBy(entry => entry.At)];
+}
+
+/// <summary>The three groups BGS work falls into when the squadron faction is known, in display order.</summary>
+public enum SquadronWorkGroup
+{
+    Squadron,
+    SquadronSystems,
+    Elsewhere,
 }

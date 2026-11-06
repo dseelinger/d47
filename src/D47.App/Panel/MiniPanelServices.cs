@@ -30,6 +30,8 @@ public sealed record MiniPanelServices
 
     public Func<DateTimeOffset?>? BgsTick { get; init; }
 
+    public D47.Core.Knowledge.SquadronFactions? SquadronFactions { get; init; }
+
     public Func<D47.Core.Journal.HistoryState>? HistoryState { get; init; }
 
     public D47.Core.Loadout.OnFootPlanService? OnFoot { get; init; }
@@ -128,7 +130,11 @@ public sealed record MiniPanelServices
             view.EnableStanding(gameState);
             view.EnableStatistics(gameState);
             view.EnableSession(gameState);
-            view.EnableBgsWork(gameState, BgsTick ?? (() => null), () => DateTimeOffset.UtcNow);
+            view.EnableBgsWork(
+                gameState,
+                BgsTick ?? (() => null),
+                () => DateTimeOffset.UtcNow,
+                () => D47.Core.Journal.SquadronFactionResolver.Resolve(gameState(), SquadronFactions));
             view.EnableCombatStats(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
             view.EnableCredits(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
             view.EnableCodex(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow, CodexPictures);

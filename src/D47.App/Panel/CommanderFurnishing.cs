@@ -177,11 +177,12 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     public void EnableBgsWork(
         Func<D47.Core.Journal.CommanderGameState?> state,
         Func<DateTimeOffset?> tick,
-        Func<DateTimeOffset> now)
+        Func<DateTimeOffset> now,
+        Func<string?>? squadronFaction = null)
     {
         var headset = host.Headset;
 
-        _bgsWorkBuild = _ => _bgsWork = new BgsWorkPage(state, tick, now, headset, host.ColumnWidths, host.Copy);
+        _bgsWorkBuild = _ => _bgsWork = new BgsWorkPage(state, tick, now, headset, host.ColumnWidths, host.Copy, squadronFaction);
 
         DeclareLedger(new NavCrumb(BgsWorkPage.PageKey, "BGS work"));
     }

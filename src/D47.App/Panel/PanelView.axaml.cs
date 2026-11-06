@@ -647,8 +647,12 @@ public partial class PanelView : UserControl, IPanelTabHost
     public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableSession(state);
 
     /// <summary>Gives this surface Commander › Ledgers › BGS work.</summary>
-    public void EnableBgsWork(Func<D47.Core.Journal.CommanderGameState?> state, Func<DateTimeOffset?> tick, Func<DateTimeOffset> now) =>
-        _commander.EnableBgsWork(state, tick, now);
+    public void EnableBgsWork(
+        Func<D47.Core.Journal.CommanderGameState?> state,
+        Func<DateTimeOffset?> tick,
+        Func<DateTimeOffset> now,
+        Func<string?>? squadronFaction = null) =>
+        _commander.EnableBgsWork(state, tick, now, squadronFaction);
 
     /// <summary>Gives this surface Commander › Ledgers › Combat stats.</summary>
     public void EnableCombatStats(Func<D47.Core.Journal.CommanderGameState?> state, Func<D47.Core.Journal.HistoryState> history, Func<DateTimeOffset> now) =>

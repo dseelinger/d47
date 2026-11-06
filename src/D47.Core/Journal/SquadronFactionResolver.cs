@@ -15,4 +15,10 @@ public static class SquadronFactionResolver
             ? null
             : sightings.For(squadron.Key) ?? (string.IsNullOrWhiteSpace(stored) ? null : stored);
     }
+
+    /// <summary>The squadron faction for the Commander in <paramref name="state"/>, reading the stored name from <paramref name="store"/>.</summary>
+    public static string? Resolve(CommanderGameState? state, Knowledge.SquadronFactions? store) =>
+        state is null
+            ? null
+            : Resolve(state.SquadronFactions, state.Squadron, store?.For(state.Identity.FrontierId, state.Squadron));
 }
