@@ -404,6 +404,16 @@ public sealed class AdventureGenerator(
         };
     }
 
+    /// <summary>The longest one hop of a chapter of <paramref name="ask"/> may be: a long haul's, or the <see cref="Radius"/> of its reach.</summary>
+    public static double ReachOf(AdventureAsk ask, StarPosition? position, double? jumpRange, bool carrier)
+    {
+        ArgumentNullException.ThrowIfNull(ask);
+
+        return ask is { Reach: AdventureReach.Anywhere, Story: { LongHaul: true, Home: null } } && ChapterPull.Of(ask, position) is not { Arrived: false }
+            ? LongHaulLightYears
+            : Radius(ask.Reach, jumpRange, carrier);
+    }
+
     /// <summary>
     /// A short story in up to <see cref="StoryDirector.Drafts"/> drafts, as a chapter is written: an internal failure
     /// is written again, told what was wrong, with <paramref name="writingAgain"/> raised before each later draft.
@@ -2212,6 +2222,363 @@ public sealed class AdventureGenerator(
             Away = ShipBases.Exempts(ask) ? await BaseAsync(search, ask, facts, cancellationToken).ConfigureAwait(false) : null,
         };
     }
+
+    /// <summary>The most systems whose bodies and biology are read for a drawn map, signal or organic activity.</summary>
+    public const int SupplySystems = 3;
+
+    /// <summary>The most stations, and the most landable bodies, searched for around a sight.</summary>
+    public const int PlacesPerSight = 10;
+
+    /// <summary>
+    /// The places a drawn chapter of <paramref name="ask"/> may use, with the facts <see cref="ChapterPlanner"/> reads, searched only as
+    /// far as the chapter needs. Searches that do not depend on each other run together.
+    /// </summary>
+    public async Task<ChapterPlaces> ChapterPlacesAsync(AdventureAsk ask, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(ask);
+
+        var facts = Facts.Of(state(), ask);
+        var slots = ask.Story?.Slots ?? [];
+        var sights = ask.Story?.Sights ?? [];
+        var used = UsedSystems(ask.Chapter, ask.Story?.Id);
+        var notes = Enumerable.Range(0, 12).Select(_ => new List<string>()).ToArray();
+        var notableTask = NotableAsync(facts, cancellationToken, notes[0]);
+
+        if (galaxy() is not { } search || facts.System is not { } here)
+        {
+            return ChapterPlaces.None with { Notable = await notableTask.ConfigureAwait(false), Sights = sights, Used = used };
+        }
+
+        AdventureResolver Resolver() => new(search, facts.Standings) { ClosedMarketId = facts.ClosedMarketId, Time = Time };
+
+        var crime = !ask.CrimeRefused && slots.Any(slot => slot.Kind == TriggerKind.Mission && (MissionFamilies.IsIllegal(slot.Family) || CrimeObjectives.IsFamily(slot.Family)));
+        var war = slots.Any(slot => slot.Kind is TriggerKind.Bond or TriggerKind.Conflict);
+        var supply = slots.Any(slot => slot.Kind is TriggerKind.Map or TriggerKind.Signal or TriggerKind.Organic);
+        var docks = slots.Any(slot => slot.PlaceBefore || (ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic) is { } row && ChapterActivities.NeedsStation(row)));
+
+        var anarchyTask = crime ? AnarchyAsync(search, facts, here, cancellationToken, notes[1]) : Task.FromResult<IReadOnlyList<SystemSummary>>([]);
+        var sitesTask = SitesAsync(search, facts, here, cancellationToken, notes[2]);
+        var frontlineTask = slots.Any(slot => slot.Kind == TriggerKind.OnFootBond)
+            ? FrontlineAsync(search, facts, here, Resolver(), cancellationToken, notes[3])
+            : Task.FromResult<IReadOnlyList<StationSummary>>([]);
+        var stationsTask = docks ? NearStationsAsync(search, facts, here, Resolver(), cancellationToken, notes[4]) : Task.FromResult<IReadOnlyList<StationSummary>>([]);
+        var bodiesTask = NearBodiesAsync(search, facts, here, cancellationToken, notes[5]);
+        var inBandTask = InBandAsync(search, Resolver(), ask, facts, cancellationToken, notes[6]);
+        var pullTask = PullAsync(search, Resolver(), ask, facts, cancellationToken, notes[7]);
+        var baseTask = ShipBases.Applies(ask) ? BaseAsync(search, ask, facts, cancellationToken) : Task.FromResult<BaseStep?>(null);
+        var sightTask = AroundSightsAsync(search, sights, facts, Resolver(), docks, cancellationToken, notes[8]);
+        var missionsTask = MissionStopsAsync(search, facts, cancellationToken, notes[9]);
+        var warTask = war ? AtWarNearAsync(search, facts, here, cancellationToken, notes[10]) : Task.FromResult<IReadOnlyList<SystemSummary>>([]);
+
+        await Task.WhenAll(notableTask, warTask, anarchyTask, sitesTask, frontlineTask, stationsTask, bodiesTask, inBandTask, pullTask, baseTask, sightTask, missionsTask).ConfigureAwait(false);
+
+        var notable = notableTask.Result;
+        var anarchy = anarchyTask.Result;
+        var sites = sitesTask.Result;
+        var frontline = frontlineTask.Result;
+        var inBand = inBandTask.Result;
+        var pull = pullTask.Result;
+        var home = baseTask.Result;
+        var (missions, missionStations, closedMarkets) = missionsTask.Result;
+
+        var stations = stationsTask.Result.Concat(frontline).Concat(inBand.Stations).Concat(pull.Stations).Concat(sightTask.Result.Stations).Concat(missionStations)
+            .DistinctBy(station => (station.MarketId, station.Name))
+            .ToList();
+        var bodies = bodiesTask.Result.Concat(sites.Guardian).Concat(inBand.Bodies).Concat(pull.Bodies).Concat(sightTask.Result.Bodies)
+            .DistinctBy(body => (body.SystemAddress, body.BodyId, body.Name))
+            .ToList();
+
+        var listed = new List<(string Name, long? Address, StarPosition? Position)>();
+
+        listed.AddRange(stations.Select(station => (station.SystemName, station.SystemAddress, station.Position)));
+        listed.AddRange(bodies.Select(body => (body.SystemName, body.SystemAddress, body.Position)));
+        listed.AddRange(anarchy.Concat(warTask.Result).Select(system => (system.Name, system.SystemAddress, system.Position)));
+        listed.AddRange(sites.Tourist.Concat(sites.Generation).Select(site => (site.System, (long?)site.SystemAddress, (StarPosition?)null)));
+        listed.AddRange(notable.Concat(sights).Select(place => (place.System, place.SystemAddress, (StarPosition?)place.Position)));
+        listed.AddRange(missions.Select(stop => (stop.System, stop.SystemAddress, stop.Position)));
+
+        if (home is not null)
+        {
+            listed.Add((home.System, home.SystemAddress, home.Position));
+        }
+
+        var places = listed
+            .GroupBy(place => place.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(group => (Name: group.First().Name, Address: group.Select(place => place.Address).FirstOrDefault(address => address is not null), Position: group.Select(place => place.Position).FirstOrDefault(at => at is not null)))
+            .ToList();
+        var nearest = places
+            .Where(place => place.Position is not null && facts.Position is not null)
+            .OrderBy(place => facts.Position!.Value.DistanceTo(place.Position!.Value))
+            .ToList();
+        var atWar = frontline.Select(station => station.SystemName).Concat(warTask.Result.Select(system => system.Name)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var supplied = supply
+            ? await Task.WhenAll(nearest.Where(place => place.Address is not null && !Closed(place.Name, place.Address, facts)).Take(SupplySystems).Select(async place =>
+            {
+                try
+                {
+                    var found = search.SystemBodiesAsync(place.Address!.Value, cancellationToken);
+                    var biology = search.SystemBiologyAsync(place.Address!.Value, cancellationToken);
+
+                    await Task.WhenAll(found, biology).ConfigureAwait(false);
+
+                    return new Supply(
+                        place.Name,
+                        found.Result.Count(body => !IsStar(body)),
+                        found.Result.Count(body => body.Signals.Count > 0 || body.Rings.Any(ring => ring.Hotspots.Count > 0)),
+                        biology.Result.Bodies.Sum(body => body.Species.Count),
+                        null);
+                }
+                catch (GalaxyUnavailableException ex)
+                {
+                    return new Supply(place.Name, null, null, null, $"The galaxy search could not list the bodies of {place.Name} ({ex.Message}), so no map, signal or organic activity is held to it.");
+                }
+            })).ConfigureAwait(false)
+            : [];
+
+        notes[11].AddRange(supplied.Select(found => found.Note).OfType<string>());
+
+        var frontierId = state()?.Identity.FrontierId;
+        var anarchyNames = anarchy.Select(system => system.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var systems = places.Select(place =>
+        {
+            var system = new ChapterSystem(place.Name, place.Address, place.Position)
+            {
+                Government = anarchyNames.Contains(place.Name) ? "Anarchy" : null,
+                AtWar = atWar.Contains(place.Name),
+            };
+
+            return supplied.FirstOrDefault(found => string.Equals(found.System, place.Name, StringComparison.OrdinalIgnoreCase)) is { } read
+                ? system with { Mappable = read.Mappable, Signals = read.Signals, Species = read.Species }
+                : system;
+        }).ToList();
+        var seen = places
+            .Where(place => place.Address is { } known && visited?.Find(frontierId, known).State == VisitState.Visited)
+            .Select(place => place.Name)
+            .ToList();
+
+        foreach (var note in notes.SelectMany(list => list))
+        {
+            logger.LogInformation("Chapter places: {Note}", note);
+        }
+
+        return new ChapterPlaces
+        {
+            Systems = systems,
+            Stations = stations,
+            Bodies = bodies,
+            ClosedMarkets = closedMarkets,
+            Sites =
+            [
+                .. sites.Guardian.Select(body => new ChapterSite(AdventureTrigger.GuardianSite, body.SystemName, body.SystemAddress!.Value, body.Position, body.Name)),
+                .. sites.Tourist.Select(site => new ChapterSite(AdventureTrigger.TouristSite, site.System, site.SystemAddress, null, site.Name)),
+                .. sites.Generation.Select(site => new ChapterSite(AdventureTrigger.GenerationSite, site.System, site.SystemAddress, null, site.Name)),
+            ],
+            Notable = notable,
+            Sights = sights,
+            InBand = Area(inBand.State, inBand.Stations, inBand.Bodies),
+            Pull = Area(pull.State, pull.Stations, pull.Bodies),
+            Base = home is { } step ? new ChapterBase(step.System, step.SystemAddress, step.Station, step.MarketId, step.Position) : null,
+            Missions = missions,
+            Visited = seen,
+            Used = used,
+        };
+
+        static ChapterArea Area(InBandState state, IReadOnlyList<StationSummary> stations, IReadOnlyList<BodySummary> bodies) => new(
+            state switch
+            {
+                InBandState.Listed => ChapterAreaState.Listed,
+                InBandState.NoneFound => ChapterAreaState.NoneFound,
+                InBandState.Unavailable => ChapterAreaState.Unavailable,
+                _ => ChapterAreaState.NotSearched,
+            },
+            stations,
+            bodies);
+    }
+
+    /// <summary>A system's gathered supply, or the note saying why it could not be read.</summary>
+    private sealed record Supply(string System, int? Mappable, int? Signals, int? Species, string? Note);
+
+    /// <summary>A mission held's destination as gathered: the stop, the station it docks at, whether war closed it, or the note saying why it could not be placed.</summary>
+    private sealed record MissionRead(ChapterMissionStop? Stop, StationSummary? Station, bool Closed, string? Note);
+
+    /// <summary>Up to 20 systems at war or in civil war within reach of <paramref name="here"/>, by the search the chapter draw gates a bond on.</summary>
+    private async Task<IReadOnlyList<SystemSummary>> AtWarNearAsync(
+        IGalaxyService search, Facts facts, string here, CancellationToken cancellationToken, List<string> notes)
+    {
+        var requested = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["distance"] = $"0-{facts.RadiusLightYears.ToString("0", CultureInfo.InvariantCulture)}",
+            ["faction_state"] = "War,Civil War",
+        };
+
+        if (!GalaxyQuery.TryParse(here, requested, size: 20, out var query, out _))
+        {
+            return [];
+        }
+
+        try
+        {
+            var found = await search.SearchAsync(query, cancellationToken).ConfigureAwait(false);
+
+            return [.. found.Systems.Where(system => system.AtWar && !Closed(system.Name, system.SystemAddress, facts))];
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            notes.Add($"The galaxy search could not list the systems at war within reach ({ex.Message}), so no bond or conflict has a place.");
+            return [];
+        }
+    }
+
+    /// <summary>The open stations within reach of <paramref name="here"/>, nearest first.</summary>
+    private async Task<IReadOnlyList<StationSummary>> NearStationsAsync(
+        IGalaxyService search, Facts facts, string here, AdventureResolver resolver, CancellationToken cancellationToken, List<string> notes)
+    {
+        try
+        {
+            var found = await search.FindStationsAsync(StationQuery.Near(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
+
+            return await OpenStationsAsync(found.Stations, facts, resolver, int.MaxValue, cancellationToken).ConfigureAwait(false);
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            notes.Add($"The galaxy search could not list the stations within reach ({ex.Message}).");
+            return [];
+        }
+    }
+
+    /// <summary>The open landable bodies within reach of <paramref name="here"/>, nearest first.</summary>
+    private async Task<IReadOnlyList<BodySummary>> NearBodiesAsync(
+        IGalaxyService search, Facts facts, string here, CancellationToken cancellationToken, List<string> notes)
+    {
+        try
+        {
+            var found = await search.FindBodiesAsync(BodyQuery.LandableNear(here, facts.RadiusLightYears, 20), cancellationToken).ConfigureAwait(false);
+
+            return OpenBodies(found.Bodies, facts, int.MaxValue);
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            notes.Add($"The galaxy search could not list the landable bodies within reach ({ex.Message}).");
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// The landable bodies, and the open stations when the chapter docks, around each sight within reach; when none is, around each
+    /// point a hop apart on the way to the nearest, up to <see cref="ChapterPlanner.MostSightHops"/> of them.
+    /// </summary>
+    private async Task<(IReadOnlyList<StationSummary> Stations, IReadOnlyList<BodySummary> Bodies)> AroundSightsAsync(
+        IGalaxyService search, IReadOnlyList<NotablePlace> sights, Facts facts, AdventureResolver resolver, bool docks, CancellationToken cancellationToken, List<string> notes)
+    {
+        var stations = new List<StationSummary>();
+        var bodies = new List<BodySummary>();
+
+        if (sights.Count == 0 || facts.Position is not { } start)
+        {
+            return (stations, bodies);
+        }
+
+        var reach = facts.RadiusLightYears;
+        var near = sights.Where(sight => sight.DistanceFrom(start) <= reach).Select(sight => (Centre: sight.Position, Radius: reach)).ToList();
+
+        if (near.Count == 0 && sights.MinBy(sight => sight.DistanceFrom(start)) is { } nearest)
+        {
+            var at = start;
+
+            for (var hop = 0; hop < ChapterPlanner.MostSightHops && at.DistanceTo(nearest.Position) > reach; hop++)
+            {
+                at = ChapterPull.Waypoint(at, nearest.Position, reach);
+                near.Add((at, ChapterPull.PlacesWithin * reach));
+            }
+
+            near.Add((nearest.Position, reach));
+        }
+
+        foreach (var (centre, radius) in near)
+        {
+            try
+            {
+                if (docks)
+                {
+                    var found = await search.FindStationsAsync(StationQuery.Near(centre, radius, PlacesPerSight), cancellationToken).ConfigureAwait(false);
+
+                    stations.AddRange(await OpenStationsAsync(found.Stations.Where(station => station.Position is not null), facts, resolver, int.MaxValue, cancellationToken).ConfigureAwait(false));
+                }
+
+                var landable = await search.FindBodiesAsync(BodyQuery.LandableNear(centre, radius, PlacesPerSight), cancellationToken).ConfigureAwait(false);
+
+                bodies.AddRange(OpenBodies(landable.Bodies.Where(body => body.Position is not null), facts, int.MaxValue));
+            }
+            catch (GalaxyUnavailableException ex)
+            {
+                notes.Add($"The galaxy search could not list places on the way to a sight ({ex.Message}).");
+            }
+        }
+
+        return (stations, bodies);
+    }
+
+    /// <summary>The destinations of missions held within twice the reach, the stations they name, and which of those war has closed.</summary>
+    private async Task<(IReadOnlyList<ChapterMissionStop> Stops, IReadOnlyList<StationSummary> Stations, IReadOnlyList<long> Closed)> MissionStopsAsync(
+        IGalaxyService search, Facts facts, CancellationToken cancellationToken, List<string> notes)
+    {
+        var held = (facts.Missions ?? []).Where(mission => mission.DestinationSystem is { Length: > 0 }).ToList();
+
+        if (held.Count == 0 || facts.Position is not { } start)
+        {
+            return ([], [], []);
+        }
+
+        var read = await Task.WhenAll(held.Select(async mission =>
+        {
+            var destination = mission.DestinationSystem!;
+            var resolver = new AdventureResolver(search, facts.Standings) { ClosedMarketId = facts.ClosedMarketId, Time = Time };
+
+            try
+            {
+                if (await search.PositionAsync(destination, cancellationToken).ConfigureAwait(false) is not { } at || start.DistanceTo(at) > 2 * facts.RadiusLightYears)
+                {
+                    return new MissionRead(null, null, false, null);
+                }
+
+                var station = mission.DestinationStation is { Length: > 0 } named
+                    ? await resolver.StationOfAsync(new AdventureTrigger { Kind = TriggerKind.Dock, System = destination, Station = named }, cancellationToken).ConfigureAwait(false)
+                    : null;
+                var address = station?.SystemAddress ?? (await resolver.SystemAsync(destination, cancellationToken).ConfigureAwait(false))?.Address;
+                var closed = station is not null && await resolver.ClosedByWarAsync(station, cancellationToken).ConfigureAwait(false);
+
+                return new MissionRead(
+                    new ChapterMissionStop(mission.Id, station?.SystemName ?? destination, address, at, station?.Name, station?.MarketId),
+                    station is { MarketId: not null } ? station with { Position = station.Position ?? at } : null,
+                    closed,
+                    null);
+            }
+            catch (GalaxyUnavailableException ex)
+            {
+                return new MissionRead(null, null, false, $"The galaxy search could not place the destination of mission {mission.Id} in {destination} ({ex.Message}), so it is not a stop.");
+            }
+        })).ConfigureAwait(false);
+
+        notes.AddRange(read.Select(found => found.Note).OfType<string>());
+
+        return (
+            [.. read.Select(found => found.Stop).OfType<ChapterMissionStop>()],
+            [.. read.Select(found => found.Station).OfType<StationSummary>()],
+            [.. read.Where(found => found.Closed && found.Station?.MarketId is not null).Select(found => found.Station!.MarketId!.Value)]);
+    }
+
+    /// <summary>The systems the chapters before this one in story <paramref name="storyId"/> placed a step in, oldest first.</summary>
+    private static IReadOnlyList<string> UsedSystems(AdventureChapter? chapter, string? storyId) =>
+        chapter is null || storyId is null
+            ? []
+            : [.. chapter.Earlier.Append(chapter.Previous)
+                .Where(adventure => string.Equals(adventure.StoryId, storyId, StringComparison.OrdinalIgnoreCase))
+                .SelectMany(adventure => adventure.Beats)
+                .SelectMany(beat => beat.Steps)
+                .Select(step => step.Trigger.System)
+                .OfType<string>()
+                .Distinct(StringComparer.OrdinalIgnoreCase)];
 
     /// <summary>
     /// The step back to the Commander's base for a story chapter held to one or exempt from one, or null. A station known only by its market id is
@@ -6148,7 +6515,7 @@ public sealed class AdventureGenerator(
             return new Facts(
                 state?.Location.StarSystem,
                 state?.Location.StarPos,
-                ask is { Reach: AdventureReach.Anywhere, Story: { LongHaul: true, Home: null } } && ChapterPull.Of(ask, state?.Location.StarPos) is not { Arrived: false } ? LongHaulLightYears : Radius(ask.Reach, ship.MaxJumpRange, carrier.Owned),
+                ReachOf(ask, state?.Location.StarPos, ship.MaxJumpRange, carrier.Owned),
                 ask.Reach,
                 ask.ThisShipOnly,
                 ship,

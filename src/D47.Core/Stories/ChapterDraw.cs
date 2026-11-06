@@ -248,7 +248,7 @@ public static class ChapterDraw
                 (Enum.TryParse<Career>(candidate.Row.Career, out var career) ? weights.Weight(career) : 1)
                 * (recent.Contains(RefusedActivities.Key(TriggerKind.Event, null, candidate.Row.Event, candidate.Tool) ?? string.Empty, StringComparer.OrdinalIgnoreCase) ? RecentFactor : 1))
             .ToList();
-        var chosen = pool[Weighted(values, random)];
+        var chosen = pool[random.Weighted(values)];
 
         if (chosen.Tool is not null)
         {
@@ -301,32 +301,7 @@ public static class ChapterDraw
     {
         var values = rows.Select(row => weights.Weight(row.Career) * (WasRecent(row, recent) ? RecentFactor : 1)).ToList();
 
-        return rows[Weighted(values, random)];
-    }
-
-    /// <summary>An index drawn in proportion to <paramref name="values"/>, or uniformly when they sum to zero or less.</summary>
-    private static int Weighted(IReadOnlyList<double> values, Random32 random)
-    {
-        var total = values.Sum();
-
-        if (total <= 0)
-        {
-            return random.Next(values.Count);
-        }
-
-        var point = random.NextDouble() * total;
-
-        for (var index = 0; index < values.Count; index++)
-        {
-            point -= values[index];
-
-            if (point < 0)
-            {
-                return index;
-            }
-        }
-
-        return values.Count - 1;
+        return rows[random.Weighted(values)];
     }
 
     private static int Count(DrawableActivity row, ShipLoadout ship, Random32 random)
@@ -343,27 +318,5 @@ public static class ChapterDraw
         return row.IsCredits
             ? min + (random.Next(((max - min) / ChapterActivities.CreditStep) + 1) * ChapterActivities.CreditStep)
             : min + random.Next(max - min + 1);
-    }
-
-    /// <summary>A generator whose sequence is fixed by its seed.</summary>
-    private sealed class Random32(uint seed)
-    {
-        private uint state = seed;
-
-        public int Next(int bound) => (int)(NextUInt() % (uint)bound);
-
-        public double NextDouble() => NextUInt() / 4294967296.0;
-
-        private uint NextUInt()
-        {
-            state += 0x9E3779B9u;
-
-            var value = state;
-
-            value = (value ^ (value >> 16)) * 0x85EBCA6Bu;
-            value = (value ^ (value >> 13)) * 0xC2B2AE35u;
-
-            return value ^ (value >> 16);
-        }
     }
 }

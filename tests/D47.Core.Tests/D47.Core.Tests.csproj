@@ -17,6 +17,7 @@
     <EmbeddedResource Include="..\fixtures\journal\*.log" LogicalName="Fixtures.journal.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\fixtures\kills\*.log" LogicalName="Fixtures.kills.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\fixtures\missions\*.log" LogicalName="Fixtures.missions.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\fixtures\planner\*.log" LogicalName="Fixtures.planner.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\fixtures\music\*.log" LogicalName="Fixtures.music.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\fixtures\routes\*.log" LogicalName="Fixtures.routes.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\fixtures\scenes\*.log" LogicalName="Fixtures.scenes.%(Filename)%(Extension)" />

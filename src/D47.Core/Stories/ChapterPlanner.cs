@@ -1,0 +1,623 @@
+using System.Globalization;
+using D47.Core.Adventures;
+using D47.Core.Journal;
+using D47.Core.Knowledge;
+
+namespace D47.Core.Stories;
+
+/// <summary>What a planned objective is in the chapter for.</summary>
+public enum PlannedPurpose
+{
+    /// <summary>A drawn activity, with the place that hosts it as its first step where it needs one.</summary>
+    Activity,
+
+    /// <summary>The sightseeing chapter's sight.</summary>
+    Sight,
+
+    /// <summary>An extra story stop at a drawn place.</summary>
+    Stop,
+
+    /// <summary>The chapter's Goals step.</summary>
+    Goal,
+
+    /// <summary>The last stop inside the Sol band.</summary>
+    Band,
+
+    /// <summary>The last stop on the home leg or toward the chapter's target.</summary>
+    Leg,
+}
+
+/// <summary>One objective of a planned chapter: its function, its steps in order with places resolved and counts set, and what it is for.</summary>
+public sealed record PlannedObjective(string Function, IReadOnlyList<AdventureTrigger> Steps, PlannedPurpose Purpose);
+
+/// <summary>A drawn chapter's objectives in order, and the destination it carries when it has one.</summary>
+public sealed record ChapterPlan(IReadOnlyList<PlannedObjective> Objectives, AdventureDestination? Destination);
+
+/// <summary>Why no plan stands: the rule no candidate met, from <see cref="ChapterRules"/>, and a sentence for the log.</summary>
+public sealed record ChapterPlanRefusal(string Rule, string Text);
+
+/// <summary>A plan, or the refusal that stopped it.</summary>
+public sealed record ChapterPlanResult(ChapterPlan? Plan, ChapterPlanRefusal? Refusal)
+{
+    public bool Succeeded => Plan is not null;
+}
+
+/// <summary>The names of the rules a planned chapter is held to, as a refusal names them.</summary>
+public static class ChapterRules
+{
+    public const string Position = "position";
+    public const string Count = "count";
+    public const string Refused = "refused";
+    public const string Hop = "hop";
+    public const string Pad = "pad";
+    public const string Permit = "permit";
+    public const string ClosedMarket = "closed market";
+    public const string Anarchy = "anarchy";
+    public const string Frontline = "frontline";
+    public const string War = "war";
+    public const string PlaceBefore = "place before";
+    public const string Sight = "sight";
+    public const string Stop = "story stop";
+    public const string Band = "band";
+    public const string HomeLeg = "home leg";
+    public const string Pull = "pull";
+    public const string Reserve = "credit reserve";
+    public const string Team = "team";
+}
+
+/// <summary>Builds a drawn chapter's whole objective list from gathered places, with no galaxy search, model or clock.</summary>
+public static class ChapterPlanner
+{
+    /// <summary>Most objectives a planned chapter holds.</summary>
+    public const int MostObjectives = 8;
+
+    /// <summary>Fewest objectives a planned chapter holds, so that it has a turn.</summary>
+    public const int FewestObjectives = 3;
+
+    /// <summary>Most extra story stops a chapter adds to its content.</summary>
+    public const int MostStops = 2;
+
+    /// <summary>Most stops a sightseeing objective makes on the way to a sight beyond reach.</summary>
+    public const int MostSightHops = 3;
+
+    /// <summary>Weight a notable place, a site's system or a sight's system is multiplied by.</summary>
+    public const double NotableFactor = 3;
+
+    /// <summary>Weight a system the Commander has not visited is multiplied by.</summary>
+    public const double UnvisitedFactor = 2;
+
+    /// <summary>Weight a mission held's destination is multiplied by.</summary>
+    public const double MissionFactor = 3;
+
+    /// <summary>Draws a plan makes before it refuses, each from a seed derived from the one given.</summary>
+    public const int Attempts = 8;
+
+    /// <summary>
+    /// A chapter's objectives for <paramref name="inputs"/> over <paramref name="places"/>; the same arguments give the same plan.
+    /// A draw whose earlier picks leave a later rule no place is drawn again from a derived seed, up to <see cref="Attempts"/>
+    /// times; the first draw's refusal is returned when none stands.
+    /// </summary>
+    public static ChapterPlanResult Plan(ChapterInputs inputs, ChapterPlaces places, uint seed)
+    {
+        ChapterPlanResult? first = null;
+
+        for (var attempt = 0; attempt < Attempts; attempt++)
+        {
+            var result = Draw(inputs, places, unchecked(seed + ((uint)attempt * 0x9E3779B9u)));
+
+            if (result.Succeeded)
+            {
+                return result;
+            }
+
+            first ??= result;
+        }
+
+        return first!;
+    }
+
+    private static ChapterPlanResult Draw(ChapterInputs inputs, ChapterPlaces places, uint seed)
+    {
+        ArgumentNullException.ThrowIfNull(inputs);
+        ArgumentNullException.ThrowIfNull(places);
+
+        if (inputs.Position is null)
+        {
+            return Refuse(ChapterRules.Position, "The Commander's position is unknown, so no hop can be measured.");
+        }
+
+        foreach (var slot in inputs.Slots)
+        {
+            if (RefusedActivities.Refuses(inputs.Refused, slot.Kind, slot.Family, slot.Event, RefusedActivities.ToolOf(slot.Where)))
+            {
+                return Refuse(ChapterRules.Refused, $"The drawn activity {RefusedActivities.Key(slot.Kind, slot.Family, slot.Event)} was refused for this story.");
+            }
+        }
+
+        var goals = inputs.Goals.Select(step => step.Objective).OfType<AdventureTrigger>().ToList();
+
+        foreach (var goal in goals)
+        {
+            if (goal is { Kind: TriggerKind.Board, ShipType: { } symbol } && ChapterFit.BoardWhy(symbol, inputs.Owns(symbol), inputs.Credits) is { } why)
+            {
+                return Refuse(ChapterRules.Reserve, $"The Goals step boards a hull the Commander cannot buy yet: {why}.");
+            }
+
+            if (TeamBeats.Why(goal.Kind, inputs.Carrier.Owned, inputs.InSquadron, inputs.Credits, inputs.Pledge) is { } team)
+            {
+                return Refuse(ChapterRules.Team, $"The Goals step is a {goal.Kind.ToString().ToLowerInvariant()} objective, but {team}.");
+            }
+        }
+
+        var random = new Random32(seed);
+        var sight = places.Sights.Count > 0;
+        var end = Ending(inputs, places);
+        var content = inputs.Slots.Count + (sight ? 1 : 0) + goals.Count + (end is null ? 0 : 1);
+
+        if (content == 0)
+        {
+            return Refuse(ChapterRules.Count, "The chapter has no drawn activity, sight, Goals step or stop to plan.");
+        }
+
+        if (content > MostObjectives)
+        {
+            return Refuse(ChapterRules.Count, $"The chapter's content needs {content.ToString(CultureInfo.InvariantCulture)} objectives; it may hold {MostObjectives.ToString(CultureInfo.InvariantCulture)}.");
+        }
+
+        var fewestStops = Math.Max(0, FewestObjectives - content);
+        var mostStops = Math.Min(MostStops, MostObjectives - content);
+        var stops = fewestStops + random.Next(mostStops - fewestStops + 1);
+
+        var middle = inputs.Slots.Select(slot => new Item(PlannedPurpose.Activity, slot)).ToList();
+
+        if (sight)
+        {
+            middle.Insert(random.Next(middle.Count + 1), new Item(PlannedPurpose.Sight, null));
+        }
+
+        for (var stop = 0; stop < stops; stop++)
+        {
+            middle.Insert(random.Next(middle.Count + 1), new Item(PlannedPurpose.Stop, null) { Needed = stop < fewestStops });
+        }
+
+        var planning = new Planning(inputs, places, random);
+        var built = new List<(PlannedPurpose Purpose, List<AdventureTrigger> Steps)>();
+
+        foreach (var item in middle)
+        {
+            var (steps, refusal) = item.Purpose switch
+            {
+                PlannedPurpose.Activity => planning.Activity(item.Slot!),
+                PlannedPurpose.Sight => planning.Sight(),
+                _ => planning.Stop(item.Needed),
+            };
+
+            if (refusal is not null)
+            {
+                return new ChapterPlanResult(null, refusal);
+            }
+
+            if (steps is not null)
+            {
+                built.Add((item.Purpose, steps));
+            }
+        }
+
+        foreach (var goal in goals)
+        {
+            built.Add((PlannedPurpose.Goal, [planning.Goal(goal)]));
+        }
+
+        if (end is not null)
+        {
+            var (steps, refusal) = planning.End(end);
+
+            if (refusal is not null)
+            {
+                return new ChapterPlanResult(null, refusal);
+            }
+
+            built.Add((end.Purpose, steps!));
+        }
+
+        if (built.Count > 0 && planning.BackToBase() is { } back)
+        {
+            built[^1].Steps.Add(back);
+        }
+
+        var functions = ChapterFunctions.For(built.Count, inputs.Stage);
+
+        return new ChapterPlanResult(
+            new ChapterPlan([.. built.Select((objective, index) => new PlannedObjective(functions[index], objective.Steps, objective.Purpose))], inputs.Destination),
+            null);
+    }
+
+    private static ChapterPlanResult Refuse(string rule, string text) => new(null, new ChapterPlanRefusal(rule, text));
+
+    /// <summary>The last-stop rule the chapter is held to: the Sol band, or the home leg or pull; null for none.</summary>
+    private static EndRule? Ending(ChapterInputs inputs, ChapterPlaces places)
+    {
+        if (inputs.Band is { } band && places.InBand.State != ChapterAreaState.NoneFound)
+        {
+            return new EndRule(PlannedPurpose.Band, ChapterRules.Band, places.InBand, position =>
+                position.DistanceTo(StarPosition.Origin) is var fromSol && fromSol >= band.Min && fromSol <= band.Max);
+        }
+
+        if (inputs.Leg is { Arrived: false } leg && inputs.Position is { } start
+            && (places.Pull.State == ChapterAreaState.Listed || leg is { Asked: true, Home: false }))
+        {
+            var from = start.DistanceTo(leg.There);
+
+            return new EndRule(PlannedPurpose.Leg, leg.Home ? ChapterRules.HomeLeg : ChapterRules.Pull, places.Pull, position =>
+                leg is { Asked: true, Home: false }
+                    ? position.DistanceTo(leg.There) <= leg.Within
+                    : ChapterPull.Meets(from, position.DistanceTo(leg.There), inputs.Reach, leg.Within));
+        }
+
+        return null;
+    }
+
+    private sealed record Item(PlannedPurpose Purpose, DrawnActivity? Slot)
+    {
+        /// <summary>For a story stop: whether the chapter needs it to reach <see cref="FewestObjectives"/>.</summary>
+        public bool Needed { get; init; }
+    }
+
+    private sealed record EndRule(PlannedPurpose Purpose, string Rule, ChapterArea Area, Func<StarPosition, bool> Meets);
+
+    /// <summary>A place a step may go to, with what the draw weighs it by.</summary>
+    private sealed record Stop(AdventureTrigger Trigger, StarPosition Position, IReadOnlyList<string> Tags, StationSummary? Station = null, bool Mission = false)
+    {
+        public string System => Trigger.System!;
+    }
+
+    /// <summary>One plan being built: where the Commander is after each step, and what has been used.</summary>
+    private sealed class Planning(ChapterInputs inputs, ChapterPlaces places, Random32 random)
+    {
+        private readonly HashSet<string> bodies = new(StringComparer.OrdinalIgnoreCase);
+
+        private string? system = inputs.System;
+
+        private StarPosition position = inputs.Position!.Value;
+
+        private string? flown;
+
+        private bool missionUsed;
+
+        public (List<AdventureTrigger>? Steps, ChapterPlanRefusal? Refusal) Activity(DrawnActivity slot)
+        {
+            var activity = new AdventureTrigger
+            {
+                Kind = slot.Kind,
+                Count = slot.Count,
+                MissionFamily = slot.Family,
+                Organic = slot.Organic,
+                Event = slot.Event,
+                Where = slot.Where,
+            };
+
+            if (slot.Kind is TriggerKind.Map or TriggerKind.Signal or TriggerKind.Organic)
+            {
+                if (Supplied(slot) is { } supplied)
+                {
+                    Move(supplied);
+                    activity = activity with { System = supplied.System, SystemAddress = supplied.Trigger.SystemAddress };
+                }
+
+                return ([activity], null);
+            }
+
+            var (rule, what, tag, docksOnly) = slot switch
+            {
+                { Kind: TriggerKind.OnFootBond } => (ChapterRules.Frontline, "a station with Frontline Solutions in a system at war, for a kill bond on foot", ChapterTags.Frontline, true),
+                { Kind: TriggerKind.Bond or TriggerKind.Conflict } => (ChapterRules.War, "a system at war, for a conflict", ChapterTags.War, false),
+                { Kind: TriggerKind.Mission } when MissionFamilies.IsIllegal(slot.Family) || CrimeObjectives.IsFamily(slot.Family) => (ChapterRules.Anarchy, "an Anarchy system, for an illegal mission", ChapterTags.Anarchy, false),
+                { PlaceBefore: true } => (ChapterRules.PlaceBefore, "a place before the activity", (string?)null, false),
+                _ => (null, null, null, false),
+            };
+
+            if (rule is null)
+            {
+                return ([activity], null);
+            }
+
+            var candidates = docksOnly ? Docks() : Arrivals().Concat(Docks());
+            var (host, refusal) = Draw(candidates.Where(stop => tag is null || stop.Tags.Contains(tag)), rule!, what!);
+
+            if (host is null)
+            {
+                return (null, refusal);
+            }
+
+            Move(host);
+
+            return ([host.Trigger, activity], null);
+        }
+
+        /// <summary>A stop at one of the sights; when none is within reach, first the stops on the way to the nearest, each the listed place within reach nearest it.</summary>
+        public (List<AdventureTrigger>? Steps, ChapterPlanRefusal? Refusal) Sight()
+        {
+            var steps = new List<AdventureTrigger>();
+
+            if (places.Sights.All(sight => position.DistanceTo(sight.Position) > inputs.Reach))
+            {
+                var target = places.Sights.MinBy(sight => position.DistanceTo(sight.Position))!.Position;
+
+                for (var hop = 0; hop < MostSightHops && position.DistanceTo(target) > inputs.Reach; hop++)
+                {
+                    var left = position.DistanceTo(target);
+                    var way = Arrivals().Concat(Lands())
+                        .Where(stop => !places.Sights.Any(sight => AtSight(sight, stop.Trigger)) && !Closed(stop.System) && Fresh(stop) && Within(stop) && stop.Position.DistanceTo(target) < left)
+                        .MinBy(stop => stop.Position.DistanceTo(target));
+
+                    if (way is null)
+                    {
+                        break;
+                    }
+
+                    Move(way);
+                    steps.Add(way.Trigger);
+                }
+            }
+
+            var sights = Arrivals().Concat(Lands()).Concat(Scans()).Where(stop => places.Sights.Any(sight => AtSight(sight, stop.Trigger)));
+            var (stop, refusal) = Draw(sights, ChapterRules.Sight, "the system of one of the chapter's sights");
+
+            if (stop is null)
+            {
+                return (null, refusal);
+            }
+
+            Move(stop);
+            steps.Add(stop.Trigger);
+
+            return (steps, null);
+        }
+
+        public (List<AdventureTrigger>? Steps, ChapterPlanRefusal? Refusal) Stop(bool needed)
+        {
+            var candidates = Arrivals().Concat(Docks()).Concat(Lands()).Concat(Scans()).Concat(missionUsed ? [] : MissionStops())
+                .Where(stop => !places.Sights.Any(sight => AtSight(sight, stop.Trigger)));
+            var (stop, refusal) = Draw(candidates, ChapterRules.Stop, "a place for a story stop");
+
+            if (stop is null)
+            {
+                return (null, needed ? refusal : null);
+            }
+
+            Move(stop);
+            missionUsed |= stop.Mission;
+
+            return ([stop.Trigger], null);
+        }
+
+        public AdventureTrigger Goal(AdventureTrigger goal)
+        {
+            if (goal is { Kind: TriggerKind.Board, ShipType: { } symbol })
+            {
+                flown = symbol;
+            }
+
+            return goal;
+        }
+
+        public (List<AdventureTrigger>? Steps, ChapterPlanRefusal? Refusal) End(EndRule end)
+        {
+            var listed = end.Area.Stations.Select(DockAt).Concat(end.Area.Bodies.Select(body => BodyStop(TriggerKind.Land, body)));
+            var candidates = listed.OfType<Stop>().Concat(Arrivals()).Concat(Docks()).Concat(Lands())
+                .Where(stop => end.Meets(stop.Position))
+                .DistinctBy(stop => (stop.Trigger.Kind, stop.System, stop.Trigger.MarketId, stop.Trigger.BodyId));
+            var what = end.Purpose == PlannedPurpose.Band ? "a place inside the Sol band" : "a place far enough toward the chapter's target";
+            var (stop, refusal) = Draw(candidates, end.Rule, what);
+
+            if (stop is null)
+            {
+                return (null, refusal);
+            }
+
+            Move(stop);
+
+            return ([stop.Trigger], null);
+        }
+
+        /// <summary>The step back to the base, when the chapter is held to one and its last stop is beyond the near-here reach of it; otherwise null.</summary>
+        public AdventureTrigger? BackToBase()
+        {
+            if (inputs.Base is null || places.Base is not { } home || string.Equals(system, home.System, StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            if (home.Position is { } at && position.DistanceTo(at) <= ShipBases.Near(inputs.Ship.MaxJumpRange))
+            {
+                return null;
+            }
+
+            return home is { Station: { } station, MarketId: { } market }
+                ? new AdventureTrigger { Kind = TriggerKind.Dock, System = home.System, SystemAddress = home.SystemAddress, Station = station, MarketId = market }
+                : new AdventureTrigger { Kind = TriggerKind.Arrive, System = home.System, SystemAddress = home.SystemAddress };
+        }
+
+        /// <summary>The system a map, signal or organic activity is held to: one whose gathered supply meets its count; null for anywhere.</summary>
+        private Stop? Supplied(DrawnActivity slot)
+        {
+            var supplied = places.Systems
+                .Where(found => Supply(found, slot.Kind) >= slot.Count && found.Position is not null)
+                .Select(found => new Stop(new AdventureTrigger { Kind = TriggerKind.Arrive, System = found.Name, SystemAddress = found.Address }, found.Position!.Value, TagsOf(found.Name)))
+                .Where(stop => !Closed(stop.System) && Within(stop))
+                .ToList();
+
+            return supplied.Count == 0 ? null : Pick(supplied);
+        }
+
+        private static int? Supply(ChapterSystem found, TriggerKind kind) => kind switch
+        {
+            TriggerKind.Map => found.Mappable,
+            TriggerKind.Signal => found.Signals,
+            _ => found.Species,
+        };
+
+        /// <summary>
+        /// One of <paramref name="candidates"/> that passes every place rule, drawn by weight; or the refusal naming
+        /// <paramref name="rule"/> when none matched it, or the place rule that removed the last of them.
+        /// </summary>
+        private (Stop? Stop, ChapterPlanRefusal? Refusal) Draw(IEnumerable<Stop> candidates, string rule, string what)
+        {
+            var left = candidates.ToList();
+
+            if (left.Count == 0)
+            {
+                return (null, new ChapterPlanRefusal(rule, $"No place is {what}."));
+            }
+
+            var filters = new (string Rule, string Why, Func<Stop, bool> Keeps)[]
+            {
+                (ChapterRules.Permit, "needs a permit the Commander may not hold or is a starter system", stop => !Closed(stop.System)),
+                (ChapterRules.ClosedMarket, "docks at a station whose docks are closed", stop => stop.Trigger.Kind != TriggerKind.Dock || !ClosedMarket(stop.Trigger.MarketId)),
+                (ChapterRules.Pad, "docks at a station with no pad for the ship", stop => stop.Station is null || inputs.NeedsPad(flown) is not { } pad || stop.Station.Admits(pad)),
+                (rule, "arrives in the system the Commander is already in, or uses a body already used", stop => Fresh(stop)),
+                (ChapterRules.Hop, $"is beyond the reach of {inputs.Reach.ToString("0", CultureInfo.InvariantCulture)} light years from the stop before", Within),
+            };
+
+            foreach (var (filter, why, keeps) in filters)
+            {
+                left = [.. left.Where(keeps)];
+
+                if (left.Count == 0)
+                {
+                    return (null, new ChapterPlanRefusal(filter, $"Every place that is {what} {why}."));
+                }
+            }
+
+            if (inputs.Tags.Count > 0 && left.Where(stop => inputs.Tags.All(stop.Tags.Contains)).ToList() is { Count: > 0 } tagged)
+            {
+                left = tagged;
+            }
+
+            return (Pick(left), null);
+        }
+
+        private Stop Pick(List<Stop> stops) => stops[random.Weighted([.. stops.Select(Weight)])];
+
+        private double Weight(Stop stop)
+        {
+            var weight = 1.0;
+
+            if (Notable(stop))
+            {
+                weight *= NotableFactor;
+            }
+
+            if (!places.WasVisited(stop.System))
+            {
+                weight *= UnvisitedFactor;
+            }
+
+            if (stop.Mission)
+            {
+                weight *= MissionFactor;
+            }
+
+            if (places.WasUsed(stop.System))
+            {
+                weight *= ChapterDraw.RecentFactor;
+            }
+
+            return weight;
+        }
+
+        private bool Notable(Stop stop) =>
+            places.Notable.Concat(places.Sights).Any(place => AtSight(place, stop.Trigger))
+            || places.Sites.Any(site => site.SystemAddress == stop.Trigger.SystemAddress || string.Equals(site.System, stop.System, StringComparison.OrdinalIgnoreCase));
+
+        private bool Fresh(Stop stop) =>
+            stop.Trigger.Kind switch
+            {
+                TriggerKind.Arrive => !string.Equals(stop.System, system, StringComparison.OrdinalIgnoreCase),
+                TriggerKind.Land or TriggerKind.Scan => !bodies.Contains(BodyKey(stop.Trigger)),
+                _ => true,
+            };
+
+        private bool Within(Stop stop) =>
+            string.Equals(stop.System, system, StringComparison.OrdinalIgnoreCase) || position.DistanceTo(stop.Position) <= inputs.Reach;
+
+        private bool Closed(string name) =>
+            PermitSystemTable.ClosedTo(name, inputs.Ranks, () => places.WasVisited(name));
+
+        private bool ClosedMarket(long? market) =>
+            market is { } id && (id == inputs.ClosedMarketId || places.ClosedMarkets.Contains(id));
+
+        private void Move(Stop stop)
+        {
+            system = stop.System;
+            position = stop.Position;
+
+            if (stop.Trigger.Kind is TriggerKind.Land or TriggerKind.Scan)
+            {
+                bodies.Add(BodyKey(stop.Trigger));
+            }
+        }
+
+        private static string BodyKey(AdventureTrigger trigger) => $"{trigger.SystemAddress?.ToString(CultureInfo.InvariantCulture) ?? trigger.System}|{trigger.BodyId?.ToString(CultureInfo.InvariantCulture) ?? trigger.Body}";
+
+        private IEnumerable<Stop> Arrivals() =>
+            places.Systems
+                .Where(found => found.Position is not null)
+                .Select(found => (found.Name, found.Address, Position: found.Position!.Value))
+                .Concat(places.Stations.Where(station => station.Position is not null).Select(station => (Name: station.SystemName, Address: station.SystemAddress, Position: station.Position!.Value)))
+                .Concat(places.Bodies.Where(body => body.Position is not null).Select(body => (Name: body.SystemName, Address: body.SystemAddress, Position: body.Position!.Value)))
+                .Concat(places.Sights.Concat(places.Notable).Select(place => (Name: place.System, Address: place.SystemAddress, place.Position)))
+                .DistinctBy(found => found.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(found => new Stop(new AdventureTrigger { Kind = TriggerKind.Arrive, System = found.Name, SystemAddress = found.Address }, found.Position, TagsOf(found.Name)));
+
+        private IEnumerable<Stop> Docks() => places.Stations.Select(DockAt).OfType<Stop>();
+
+        private Stop? DockAt(StationSummary station) =>
+            station is { Position: { } at, MarketId: not null, IsFixed: true }
+                ? new Stop(
+                    new AdventureTrigger
+                    {
+                        Kind = TriggerKind.Dock,
+                        MarketId = station.MarketId,
+                        SystemAddress = station.SystemAddress,
+                        System = station.SystemName,
+                        Station = station.Name,
+                        LargestPad = station.KnownPads.Count > 0 ? station.KnownPads[^1] : null,
+                    },
+                    at,
+                    [.. TagsOf(station.SystemName), .. AdventureResolver.HasFrontlineSolutions(station) && places.System(station.SystemName)?.AtWar == true ? [ChapterTags.Frontline] : Array.Empty<string>()],
+                    station)
+                : null;
+
+        private IEnumerable<Stop> Lands() => places.Bodies.Select(body => BodyStop(TriggerKind.Land, body)).OfType<Stop>();
+
+        private IEnumerable<Stop> Scans() => places.Bodies.Select(body => BodyStop(TriggerKind.Scan, body)).OfType<Stop>();
+
+        private Stop? BodyStop(TriggerKind kind, BodySummary body) =>
+            body is { Position: { } at, BodyId: not null, SystemAddress: not null } && (kind == TriggerKind.Scan || body.IsLandable)
+                ? new Stop(new AdventureTrigger { Kind = kind, SystemAddress = body.SystemAddress, BodyId = body.BodyId, System = body.SystemName, Body = body.Name }, at, TagsOf(body.SystemName))
+                : null;
+
+        private IEnumerable<Stop> MissionStops() =>
+            places.Missions
+                .Where(stop => stop.Position is not null)
+                .Select(stop => new Stop(
+                    stop is { Station: { } station, MarketId: { } market }
+                        ? new AdventureTrigger { Kind = TriggerKind.Dock, System = stop.System, SystemAddress = stop.SystemAddress, Station = station, MarketId = market }
+                        : new AdventureTrigger { Kind = TriggerKind.Arrive, System = stop.System, SystemAddress = stop.SystemAddress },
+                    stop.Position!.Value,
+                    TagsOf(stop.System),
+                    places.Stations.FirstOrDefault(listed => stop.MarketId is not null && listed.MarketId == stop.MarketId),
+                    Mission: true));
+
+        private IReadOnlyList<string> TagsOf(string name) =>
+            places.System(name) is { } found
+                ? [.. string.Equals(found.Government, "Anarchy", StringComparison.OrdinalIgnoreCase) ? [ChapterTags.Anarchy] : Array.Empty<string>(), .. found.AtWar ? [ChapterTags.War] : Array.Empty<string>()]
+                : [];
+
+        private static bool AtSight(NotablePlace sight, AdventureTrigger trigger) =>
+            sight.SystemAddress is { } address
+                ? trigger.SystemAddress == address
+                : string.Equals(sight.System, trigger.System, StringComparison.OrdinalIgnoreCase);
+    }
+}
