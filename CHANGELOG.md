@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+D47 now learns your squadron's faction from the journal. Elite flags it whenever you are in one of its systems, so "set my squadron's faction" is only needed until then. Suggesting a home system uses the journal's faction first and the one you named second, and naming a faction the journal has already shown is answered with the one Elite shows.
+
 Say "switch to the story" and a shelved story's title to make it your story again, as **Switch to** on the Story bench does without the confirmation, or "play back" and a title to open that story's page and play its lines from the first. Both are yours alone, not the model's.
 
 On Asset Mgmt › Characters, a story cast member's voice and picture can now be changed, in the window and on the headset's big panel: press the voice to pick a provider and voice, and use **Change picture** or **Use the default** for the picture. The name stays the story's.

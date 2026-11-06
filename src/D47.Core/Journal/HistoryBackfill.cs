@@ -129,6 +129,9 @@ public sealed class HistoryBackfill
     /// <summary>Each Commander's tech broker unlocks.</summary>
     public IReadOnlyDictionary<string, TechBrokerUnlocks>? TechBroker { get; private set; }
 
+    /// <summary>Each Commander's squadron faction sightings.</summary>
+    public IReadOnlyDictionary<string, SquadronFactionSightings>? SquadronFactions { get; private set; }
+
     /// <summary>Each Commander found in the journals, by Frontier id.</summary>
     public IReadOnlyDictionary<string, CommanderSighting>? Commanders { get; private set; }
 
@@ -247,6 +250,14 @@ public sealed class HistoryBackfill
                     FileSystem,
                     Directory,
                     Loggers.CreateLogger(nameof(UnlockEvidenceBackfill)),
+                    cancellation));
+
+            SquadronFactions = Timed(
+                "squadron faction backfill",
+                () => SquadronFactionBackfill.FromHistory(
+                    FileSystem,
+                    Files(),
+                    Loggers.CreateLogger(nameof(SquadronFactionBackfill)),
                     cancellation));
 
             TechBroker = Timed(

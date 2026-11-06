@@ -138,6 +138,9 @@ public sealed class GameStateStore
     /// </summary>
     public Func<string, UnlockEvidence?>? RestoreEvidence { get; init; }
 
+    /// <summary>The squadron faction sightings this Commander's journals hold, merged into what is known.</summary>
+    public Func<string, SquadronFactionSightings?>? RestoreSquadronFactions { get; init; }
+
     /// <summary>The tech broker unlocks this Commander's older journals show, merged into what is known.</summary>
     public Func<string, TechBrokerUnlocks?>? RestoreTechBroker { get; init; }
 
@@ -411,6 +414,7 @@ public sealed class GameStateStore
                 (v.Reputation.With(c.Reputation), v.Contributions.With(c.Contributions), v.Tallies.With(c.Tallies))),
         // The other way round from the rest: the live unlocks take the restored ones.
         Part<TechBrokerUnlocks>(s => s.RestoreTechBroker, v => v.IsKnown, (c, v) => c.TechBroker = v, (c, v) => c.TechBroker = c.TechBroker.With(v)),
+        Part<SquadronFactionSightings>(s => s.RestoreSquadronFactions, v => v.IsKnown, (c, v) => c.SquadronFactions = v, (c, v) => c.SquadronFactions = c.SquadronFactions.With(v)),
         new Restorer(Credits, Credits),
     ];
 }

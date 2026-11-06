@@ -88,6 +88,8 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
         Line(day + "T09:25:30", "\"event\":\"MiningRefined\",\"Type\":\"$platinum_name;\",\"Type_Localised\":\"Platinum\""),
         Line(day + "T09:25:40", "\"event\":\"DockSRV\",\"SRVType\":\"mev_rhino\""),
         Line(day + "T09:25:50", "\"event\":\"FSSAllBodiesFound\",\"SystemAddress\":1,\"SystemName\":\"Sol\",\"Count\":8"),
+        Line(day + "T09:25:55", "\"event\":\"SquadronStartup\",\"SquadronName\":\"Greybeards\",\"SquadronID\":7,\"CurrentRank\":1"),
+        Line(day + "T09:25:56", "\"event\":\"Location\",\"StarSystem\":\"Sol\",\"Factions\":[{\"Name\":\"Sol Workers\",\"SquadronFaction\":true}]"),
         Line(day + "T09:26:00", "\"event\":\"FSDJump\",\"StarSystem\":\"Sol\",\"SystemAddress\":1,\"StarPos\":[0.0,0.0,0.0],\"JumpDist\":5.0"),
     ];
 

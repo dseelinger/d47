@@ -130,6 +130,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>What each body's own scan said, and when it was first footfalled (#202).</summary>
     public BodyScans Scans { get; private set; } = BodyScans.Empty;
 
+    /// <summary>The faction each of their squadrons was seen backing.</summary>
+    public SquadronFactionSightings SquadronFactions { get; internal set; } = SquadronFactionSightings.Empty;
+
     /// <summary>The tech broker rows they are known to have unlocked.</summary>
     public TechBrokerUnlocks TechBroker { get; internal set; } = TechBrokerUnlocks.Empty;
 
@@ -211,6 +214,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(Carrier), "your carrier", state => state.Carrier),
         new(nameof(SquadronCarrier), "your squadron's carrier", state => state.SquadronCarrier),
         new(nameof(Squadron), "your squadron", state => state.Squadron),
+        new(nameof(SquadronFactions), "your squadron's faction", state => state.SquadronFactions),
         new(nameof(Wing), "your wing", state => state.Wing),
         new(nameof(Fleet), "your stored ships", state => state.Fleet),
         new(nameof(Modules), "your stored modules", state => state.Modules),
@@ -307,6 +311,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
             Carrier = CarrierState.None;
             Colonisation = ColonisationSites.Empty;
             TechBroker = TechBrokerUnlocks.Empty;
+            SquadronFactions = SquadronFactionSightings.Empty;
             CycleMerits = PowerplayCycleMerits.None;
             return;
         }
@@ -328,6 +333,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Carrier = Carrier.Apply(journalEvent);
         SquadronCarrier = SquadronCarrier.Apply(journalEvent);
         Squadron = Squadron.Apply(journalEvent);
+        SquadronFactions = SquadronFactions.Apply(journalEvent, Squadron);
         Wing = Wing.Apply(journalEvent, Identity.Name);
         // After Location, for the reason Colonisation below is: storing a ship happens wherever the Commander
         // is standing, and neither ShipyardSwap nor ShipyardBuy names a place.

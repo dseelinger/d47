@@ -789,7 +789,7 @@ Under an hour, the answer gives minutes instead of hours.
 
 Suggest up to three systems the Commander could make their home, each with its reason and its two
 strongest careers. It takes no parameters. It reads the Commander's claimed systems, pledged Power,
-stored squadron faction and career ratings, searches around their position, and ranks what it finds.
+squadron faction, read from the journal or stored, and career ratings, searches around their position, and ranks what it finds.
 It does not set the home system; the Commander asks for that after hearing the suggestion.
 
 ```json
@@ -804,7 +804,7 @@ The answer names which case applied, in this order:
 4. **Power**: strongholds of the pledged Power, and its capital.
 5. **Interests**: populated systems within 200 light years, chosen by the careers the Commander rates highest.
 
-When the Commander is in a squadron with no stored minor faction, the answer says the squadron case
+When the Commander is in a squadron whose faction d47 does not know, the answer says the squadron case
 was skipped so the model can ask for the faction.
 
 ```csharp
@@ -814,7 +814,9 @@ was skipped so the model can ask for the faction.
 #### `set_squadron_faction`
 
 Store the minor faction the Commander says their squadron backs, for the squadron they are in now.
-Only the Commander can set it; the model cannot.
+Only the Commander can set it; the model cannot. d47 also reads the squadron's faction from the
+journal whenever the Commander is in one of its systems, and the phrase sets it until then. Once the
+journal has shown it, that faction is the one d47 uses.
 
 ```json
 {"type":"object","properties":{"faction":{"type":"string","description":"The minor faction\u0027s exact name, as the Commander said it."}},"required":["faction"],"additionalProperties":false}
@@ -824,10 +826,11 @@ Say "my squadron's faction is Hutton Truckers", "my squadron's minor faction is 
 "our squadron's faction is Hutton Truckers". No language model is involved. d47 asks Spansh whether
 a minor faction with that name exists, and stores it only if one does. It is kept for the
 Commander who is flying, under the squadron's ID, or under its name when the journal gave no ID.
-Leaving the squadron or joining another one returns no faction until one is named for that squadron.
+Leaving the squadron or joining another one returns no faction until the journal shows it or one is named.
 
 ```csharp
 "Your squadron's minor faction is Hutton Truckers."
+"Elite names Hutton Truckers as your squadron's faction, so D47 uses that."
 "I found no minor faction called Hutton Trukers, so I have not stored it."
 "Checking a faction name needs galaxy search, which is not available."
 ```

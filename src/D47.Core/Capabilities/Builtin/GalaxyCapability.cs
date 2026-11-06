@@ -808,7 +808,9 @@ public static class GalaxyCapability
         var rating = settings.Current.CareerRatings;
         var power = state?.Pledge.Power is { Length: > 0 } pledged && PowerCapitals.TryGet(pledged, out _) ? pledged : null;
         var member = state?.Squadron.IsMember == true;
-        var faction = member && state is not null ? squadronFactions?.For(state.Identity.FrontierId, state.Squadron) : null;
+        var faction = member && state is not null
+            ? Journal.SquadronFactionResolver.Resolve(state.SquadronFactions, state.Squadron, squadronFactions?.For(state.Identity.FrontierId, state.Squadron))
+            : null;
         var claims = state?.Colonisation.Claims ?? [];
 
         var request = new HomeSystemRequest
@@ -952,9 +954,14 @@ public static class GalaxyCapability
                 .FirstOrDefault(name => string.Equals(name, spelled, StringComparison.OrdinalIgnoreCase))
                 ?? spelled;
 
-            return store.Set(frontierId, state.Squadron, exact)
-                ? ToolResult.Ok($"Your squadron's minor faction is {exact}.")
-                : ToolResult.Error("I couldn't save that squadron faction.");
+            if (!store.Set(frontierId, state.Squadron, exact))
+            {
+                return ToolResult.Error("I couldn't save that squadron faction.");
+            }
+
+            return state.SquadronFactions.For(state.Squadron.Key) is { } sighted
+                ? ToolResult.Ok($"Elite names {sighted} as your squadron's faction, so D47 uses that.")
+                : ToolResult.Ok($"Your squadron's minor faction is {exact}.");
         }
         catch (GalaxyUnavailableException ex)
         {
