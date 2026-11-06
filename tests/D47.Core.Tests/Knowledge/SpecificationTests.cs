@@ -240,6 +240,41 @@ public class SpecificationTests
         Assert.Null(drive.KineticResistance);
     }
 
+    [Fact]
+    public void AShieldBoosterAndEachReinforcementCarryTheFiguresCoriolisGivesThem()
+    {
+        var booster = EliteSpecifications.Module("hpt_shieldbooster_size0_class5");
+        var hull = EliteSpecifications.Module("int_hullreinforcement_size5_class2");
+        var alloy = EliteSpecifications.Module("int_metaalloyhullreinforcement_size5_class2");
+        var guardianHull = EliteSpecifications.Module("int_guardianhullreinforcement_size5_class2");
+        var guardianShield = EliteSpecifications.Module("int_guardianshieldreinforcement_size5_class2");
+
+        Assert.Equal(0.2, booster!.Figure("shield boost"));
+        Assert.Equal(0.0, booster.KineticResistance);
+        Assert.Equal(390, hull!.Figure("hull added"));
+        Assert.Equal(0.025, hull.KineticResistance);
+        Assert.Equal(0.0, hull.CausticResistance);
+        Assert.Equal(351, alloy!.Figure("hull added"));
+        Assert.Equal(0.03, alloy.CausticResistance);
+        Assert.Equal(488, guardianHull!.Figure("hull added"));
+        Assert.Equal(0.02, guardianHull.ThermalResistance);
+        Assert.Equal(0.05, guardianHull.CausticResistance);
+        Assert.Equal(215, guardianShield!.Figure("shield added"));
+    }
+
+    [Theory]
+    [InlineData("int_shieldgenerator_size5_class5")]
+    [InlineData("int_shieldgenerator_size1_class3_fast")]
+    [InlineData("int_shieldgenerator_size5_class5_strong")]
+    public void EveryKindOfShieldGeneratorCarriesItsResistances(string symbol)
+    {
+        var generator = EliteSpecifications.Module(symbol);
+
+        Assert.Equal(0.4, generator!.KineticResistance);
+        Assert.Equal(-0.2, generator.ThermalResistance);
+        Assert.Equal(0.5, generator.ExplosiveResistance);
+    }
+
     // ---- Names that tell things apart --------------------------------------------------------
 
     [Fact]

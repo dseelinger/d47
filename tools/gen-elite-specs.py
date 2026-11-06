@@ -180,6 +180,9 @@ FIGURES = {
     "minmul": "multiplier at minimum",
     "optmul": "multiplier at optimal",
     "maxmul": "multiplier at maximum",
+    "shieldboost": "shield boost",
+    "hullreinforcement": "hull added",
+    "shieldaddition": "shield added",
     "spinup": "spin-up",
     "duration": "duration",
 
@@ -205,6 +208,10 @@ FIGURES = {
     "bays": "fighter bays",
     "passengers": "passengers",
 }
+
+# The coriolis groups whose resistances are written to the resistance columns: shield generators,
+# shield boosters and the hull and shield reinforcement packages.
+RESISTANCE_GROUPS = {"sg", "bsg", "psg", "sb", "hr", "mahr", "ghrp", "gsrp"}
 
 # Figures whose coriolis key means something else on other kinds: `time` is a limpet controller's
 # lifetime outside life support. Keyed by coriolis's `grp`.
@@ -604,8 +611,11 @@ def build_modules(
                     number(module.get("fuelpower")),
                     number(module.get("fuelmul")),
 
-                    # And only a bulkhead carries these five. See build_bulkheads.
-                    "", "", "", "", "",
+                    # A bulkhead's five are written by build_bulkheads. Here only the shield
+                    # and reinforcement groups carry them, and no hull boost.
+                    "",
+                    *(number(module.get(key)) if module.get("grp") in RESISTANCE_GROUPS else ""
+                      for key in ("kinres", "thermres", "explres", "causres")),
 
                     # Filled from EDSY in main(), where the join happens.
                     "", "", "",
