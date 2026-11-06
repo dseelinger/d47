@@ -54,7 +54,7 @@ public class OtherPowersStrongholdCarriersAreLeftOutTests
         public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken) =>
+        public Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken, bool refresh = false, IProgress<FactionProgress>? progress = null) =>
             throw new NotSupportedException();
     }
 

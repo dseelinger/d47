@@ -174,11 +174,11 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
     private readonly ConcurrentDictionary<string, (DateTimeOffset At, FactionReport Report)> _factions =
         new(StringComparer.Ordinal);
 
-    public async Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken)
+    public async Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken, bool refresh = false, IProgress<FactionProgress>? progress = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(faction);
 
-        if (_factions.TryGetValue(faction, out var held) && _now() - held.At < FactionReportLifetime)
+        if (!refresh && _factions.TryGetValue(faction, out var held) && _now() - held.At < FactionReportLifetime)
         {
             return held.Report;
         }
@@ -202,6 +202,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             found.AddRange(read.Systems.Where(entry => entry.System.SystemAddress is not { } address || seen.Add(address)));
 
             taken += read.Read;
+            progress?.Report(new FactionProgress(Math.Min(taken, read.Total), read.Total));
 
             if (read.Read == 0 || taken >= read.Total)
             {
@@ -216,7 +217,10 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             latest?.Government,
             latest?.Allegiance,
             [.. found.Select(entry => entry.System)],
-            [.. found.SelectMany(entry => entry.Stations)]);
+            [.. found.SelectMany(entry => entry.Stations)])
+        {
+            FetchedAt = _now(),
+        };
 
         _factions[faction] = (_now(), report);
 

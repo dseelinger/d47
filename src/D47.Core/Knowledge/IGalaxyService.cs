@@ -157,9 +157,9 @@ public interface IGalaxyService
 
     /// <summary>
     /// Every system a minor faction is present in, by its exact name. It can take several large requests, so
-    /// await it from the pool and never on the tick thread.
+    /// await it from the pool and never on the tick thread. A report is held for an hour unless <paramref name="refresh"/> is set; <paramref name="progress"/> hears each page as it is read.
     /// </summary>
-    Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken);
+    Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken, bool refresh = false, IProgress<FactionProgress>? progress = null);
 }
 
 /// <summary>The service could not answer.</summary>

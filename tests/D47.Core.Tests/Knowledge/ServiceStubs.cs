@@ -35,7 +35,7 @@ public class StubGalaxyService : IGalaxyService
         CancellationToken cancellationToken) =>
         throw new NotSupportedException();
 
-    public virtual Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken) =>
+    public virtual Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken, bool refresh = false, IProgress<FactionProgress>? progress = null) =>
         throw new NotSupportedException();
 }
 

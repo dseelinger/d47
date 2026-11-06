@@ -7,7 +7,11 @@ public sealed record FactionReport(
     string? Government,
     string? Allegiance,
     IReadOnlyList<FactionSystem> Systems,
-    IReadOnlyList<FactionStation> Stations);
+    IReadOnlyList<FactionStation> Stations)
+{
+    /// <summary>When the service built this report, or null when it did not say.</summary>
+    public DateTimeOffset? FetchedAt { get; init; }
+}
 
 /// <summary>One system the faction is present in.</summary>
 public sealed record FactionSystem
@@ -52,3 +56,6 @@ public sealed record FactionStation(
     PadSize? LargestPad,
     double? DistanceToArrival,
     string System);
+
+/// <summary>How many of the faction's systems a fetch has read, of the total the service reports.</summary>
+public readonly record struct FactionProgress(int Read, int Total);

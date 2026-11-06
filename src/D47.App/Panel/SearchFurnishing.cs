@@ -23,6 +23,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private SystemSearchPage? _systems;
     private StationSearchPage? _stations;
     private OutfittingSearchPage? _outfitting;
+    private FactionPage? _faction;
     private BodySearchPage? _bodies;
     private SignalSearchPage? _signals;
     private RareGoodsPage? _rares;
@@ -38,6 +39,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private string? _pendingName;
     private (long Address, string? Station)? _pendingAddress;
     private string? _pendingFaction;
+    private string? _pendingFactionPage;
     private string? _stationSeek;
     private string? _systemEntry;
     private readonly Dictionary<GalaxySearchKind, SearchHistoryEntry> _pending = [];
@@ -58,6 +60,12 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         if (surface.Searches is not null)
         {
             roots.Add(new NavCrumb(SystemSearchPage.RootKey, "Systems") { Help = GalaxyCapability.Id });
+
+            if (surface.Searches.Faction is not null)
+            {
+                roots.Add(new NavCrumb(FactionPage.RootKey, "Faction") { Help = GalaxyCapability.Id });
+            }
+
             roots.Add(new NavCrumb(StationSearchPage.RootKey, "Stations") { Help = GalaxyCapability.Id });
             roots.Add(new NavCrumb(OutfittingSearchPage.RootKey, "Outfitting") { Help = GalaxyCapability.Id });
             roots.Add(new NavCrumb(BodySearchPage.RootKey, "Bodies") { Help = GalaxyCapability.Id });
@@ -90,6 +98,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             && SystemStationPage.IsKey(stationTrail[^1].Key)
             && station.Tick();
         redrawn |= _systems is { } systems && host.Nav.RootKeyOf(PanelTab.Search) == SystemSearchPage.RootKey && systems.Tick();
+        redrawn |= _faction is { } faction && host.Nav.RootKeyOf(PanelTab.Search) == FactionPage.RootKey && faction.Tick();
         redrawn |= _stations is { } stations && host.Nav.RootKeyOf(PanelTab.Search) == StationSearchPage.RootKey && stations.Tick();
         redrawn |= _outfitting is { } outfitting && host.Nav.RootKeyOf(PanelTab.Search) == OutfittingSearchPage.RootKey && outfitting.Tick();
         redrawn |= _bodies is { } bodies && host.Nav.RootKeyOf(PanelTab.Search) == BodySearchPage.RootKey && bodies.Tick();
@@ -131,12 +140,22 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         ApplyPending();
     }
 
-    /// <summary>Opens Search › Systems and runs it with <paramref name="faction"/> as a faction present.</summary>
+    /// <summary>Opens Search › Faction on <paramref name="faction"/>; a surface with no faction report runs the Systems search with it as a faction present.</summary>
     public void OpenFaction(string faction)
     {
         ClearPending();
-        _pendingFaction = faction;
-        host.Nav.Show(SystemSearchPage.RootKey);
+
+        if (_surface?.Searches?.Faction is not null)
+        {
+            _pendingFactionPage = faction;
+            host.Nav.Show(FactionPage.RootKey);
+        }
+        else
+        {
+            _pendingFaction = faction;
+            host.Nav.Show(SystemSearchPage.RootKey);
+        }
+
         ApplyPending();
     }
 
@@ -149,6 +168,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         _pendingName = null;
         _pendingAddress = null;
         _pendingFaction = null;
+        _pendingFactionPage = null;
         _stationSeek = null;
     }
 
@@ -225,6 +245,14 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             ApplyPending();
 
             return _systems;
+        }
+
+        if (crumb.Key == FactionPage.RootKey && surface.Searches is { Faction: not null } factionSearches)
+        {
+            var open = _pendingFactionPage;
+            _pendingFactionPage = null;
+
+            return _faction = new FactionPage(factionSearches, host.Headset, open) { ColumnWidths = host.ColumnWidths, Copy = host.Copy };
         }
 
         if (crumb.Key == StationSearchPage.RootKey && surface.Searches is { } stationSearches)
@@ -473,6 +501,12 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             {
                 target.OpenSystem(at.Address);
             }
+        }
+
+        if (_pendingFactionPage is { } factionName && _faction is { } factionPage)
+        {
+            _pendingFactionPage = null;
+            factionPage.Show(factionName);
         }
 
         if (_pendingFaction is { } faction && _systems is { } search)

@@ -101,6 +101,6 @@ public sealed class StationPowerFilter(IGalaxyService inner, Func<PowerplayPledg
         MissionStationQuery query, CancellationToken cancellationToken) =>
         inner.FindMissionStationsAsync(query, cancellationToken);
 
-    public Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken) =>
-        inner.FactionAsync(faction, cancellationToken);
+    public Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken, bool refresh = false, IProgress<FactionProgress>? progress = null) =>
+        inner.FactionAsync(faction, cancellationToken, refresh, progress);
 }

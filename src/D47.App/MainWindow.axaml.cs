@@ -439,6 +439,9 @@ public partial class MainWindow : Window
                         History = host.SearchHistory,
                         PrefixNames = systems.PrefixNamesAsync,
                         FactionNames = systems.FactionNamesAsync,
+                        Faction = host.Galaxy is { } galaxy ? (name, refresh, progress, token) => galaxy.FactionAsync(name, token, refresh, progress) : null,
+                        SquadronFaction = () => D47.Core.Journal.SquadronFactionResolver.Resolve(host.GameState.Active, host.SquadronFactions),
+                        GameState = () => host.GameState.Active,
                         PledgedPower = () => host.GameState.Active?.Pledge is { IsPledged: true, Power: { Length: > 0 } power } ? power : null,
                     },
                 };

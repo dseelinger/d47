@@ -105,9 +105,9 @@ public sealed class GalaxySearchNames(IGalaxyService inner) : IGalaxyService
         return scan;
     }
 
-    public async Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken)
+    public async Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken, bool refresh = false, IProgress<FactionProgress>? progress = null)
     {
-        var report = await inner.FactionAsync(faction, cancellationToken).ConfigureAwait(false);
+        var report = await inner.FactionAsync(faction, cancellationToken, refresh, progress).ConfigureAwait(false);
 
         lock (_gate)
         {

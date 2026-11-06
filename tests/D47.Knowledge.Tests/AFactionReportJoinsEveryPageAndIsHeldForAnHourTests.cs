@@ -115,4 +115,41 @@ public class AFactionReportJoinsEveryPageAndIsHeldForAnHourTests
 
         Assert.Equal(2, answer.Bodies.Count);
     }
+
+    [Fact]
+    public async Task ARefreshAsksAgainWithinTheHourAndTheReportSaysWhenItWasBuilt()
+    {
+        var answer = new FactionAnswer(FactionAnswer.Recorded());
+        using var service = Service(answer);
+
+        var first = await service.FactionAsync(Faction, TestContext.Current.CancellationToken);
+
+        _now = Start.AddMinutes(10);
+        var held = await service.FactionAsync(Faction, TestContext.Current.CancellationToken);
+        var fresh = await service.FactionAsync(Faction, TestContext.Current.CancellationToken, refresh: true);
+
+        Assert.Equal(Start, first.FetchedAt);
+        Assert.Equal(Start, held.FetchedAt);
+        Assert.Equal(Start.AddMinutes(10), fresh.FetchedAt);
+        Assert.Equal(2, answer.Bodies.Count);
+    }
+
+    [Fact]
+    public async Task EachPageReadReportsHowManySystemsAreInSoFar()
+    {
+        var answer = new FactionAnswer(FactionAnswer.TwoPages());
+        using var service = Service(answer);
+        var heard = new List<FactionProgress>();
+
+        await service.FactionAsync(Faction, TestContext.Current.CancellationToken, progress: new Immediate(heard));
+
+        Assert.Equal(2, heard.Count);
+        Assert.True(heard[0].Read < heard[1].Read);
+        Assert.Equal(heard[1].Total, heard[1].Read);
+    }
+
+    private sealed class Immediate(List<FactionProgress> heard) : IProgress<FactionProgress>
+    {
+        public void Report(FactionProgress value) => heard.Add(value);
+    }
 }

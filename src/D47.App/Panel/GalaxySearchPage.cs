@@ -41,6 +41,15 @@ public sealed record GalaxySearchSurface(
 
     /// <summary>The Power the Commander is pledged to, or null for none.</summary>
     public Func<string?>? PledgedPower { get; init; }
+
+    /// <summary>Asks for one minor faction's report, holding it for an hour unless refreshed; null for no faction page.</summary>
+    public Func<string, bool, IProgress<FactionProgress>, CancellationToken, Task<FactionReport>>? Faction { get; init; }
+
+    /// <summary>The minor faction the Commander's squadron backs, or null when it is not known.</summary>
+    public Func<string?>? SquadronFaction { get; init; }
+
+    /// <summary>The Commander's game state, for their own readings of a system and their squadron.</summary>
+    public Func<D47.Core.Journal.CommanderGameState?>? GameState { get; init; }
 }
 
 /// <summary>What a search page draws where the answer goes.</summary>

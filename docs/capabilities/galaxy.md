@@ -439,6 +439,41 @@ form. Picking one fills the form and runs it. The button reads "Choose a saved s
 one, then shows the search you picked until you change a field, press CLEAR, or another search
 arrives. While one of your own searches is shown, **FORGET THIS SEARCH** sits under the dropdown.
 
+### The Faction search page {#faction-page}
+
+**Faction** sits between Systems and Stations on the Search tab. It shows where one minor faction is
+present and the state it is in. It opens on your squadron's faction when D47 knows it, and otherwise
+empty, with the **FACTION** field focused and listing faction names as you type. Choosing a minor
+faction in Find opens the page on it. A line under the field says whether the faction shown is your
+squadron's.
+
+The page asks the galaxy search for every system the faction is present in, which takes several large
+requests, so it runs off the tick thread and shows `SEARCHING` with how many systems it has read. A
+failure shows the galaxy search's own sentence with **RETRY**. **REFRESH** asks again past the
+one-hour hold on a report, and the line under the faction's name says how old the report is. On the
+headset the field is behind **CHANGE FACTION**, and **BACK** returns without changing anything.
+
+A segment under the faction's name switches between two sections.
+
+- **Overview** shows government, allegiance, the systems the faction is present in and controls, the
+  stations it controls, and how many systems have it in a war, civil war or election, active or
+  pending. Under them, four groups (Economy, Security, Conflict, Other) count the systems in each
+  active state, largest first, with each count's share of the systems present. A state no system is in
+  is left out.
+- **Systems** has one row per system: influence, active, pending and recovering states, whether the
+  faction controls it, and how old the data is. Every heading sorts, a third press returns to
+  Influence, most first, and the box above the table filters by system name. Where your own journal
+  reading of a system is newer than the report's, the row uses it and the age reads
+  `you saw it 2 hours ago`. A report over 30 days old reads `OLD REPORT` and its states turn grey.
+  The desktop scrolls every row; the headset shows 25 to a page with **PREVIOUS** and **NEXT**.
+
+Supporter counts, influence history, results of finished conflicts and happiness outside systems you
+have visited are not shown, because no source gives them.
+
+```csharp
+Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationToken, bool refresh = false, IProgress<FactionProgress>? progress = null);
+```
+
 ### Quick searches {#quick-searches}
 
 Eleven fixed searches run by phrase with no model involved, measured from the Commander's own
