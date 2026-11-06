@@ -14,10 +14,9 @@ using Xunit;
 namespace D47.App.Tests.Stories;
 
 /// <summary>
-/// The Stories tab has no Story log: Your story shows Waiting for your answer at the top, and under it every line no stock
-/// story run keeps, newest first.
+/// The Stories tab has no Story log: Your story shows Waiting for your answer at the top and no other line from the messages.
 /// </summary>
-public sealed class YourStoryListsWaitingFirstAndOtherLinesLastTests
+public sealed class YourStoryListsOnlyWaitingLinesTests
 {
     private static readonly DateTimeOffset Now = new(2026, 11, 5, 20, 0, 0, TimeSpan.Zero);
 
@@ -88,47 +87,26 @@ public sealed class YourStoryListsWaitingFirstAndOtherLinesLastTests
     }
 
     [AvaloniaFact]
-    public void WaitingForYourAnswerIsAtTheTopWithItsAnswersAndOtherLinesAreBelow()
+    public void WaitingForYourAnswerIsDrawnWithItsAnswersAndNoOtherLineIs()
     {
         var tab = Open((stories, messages) =>
         {
             stories.Save("F1", Running(StoryState.Finished));
             messages.Post("shipwright", "My Own Mayday", "A short story line.", Now.AddHours(-2), "my-own-mayday");
+            messages.Post(MessageStore.Narrator, "Loose line", "Untied.", Now.AddHours(-1));
             messages.Post(
                 MessageStore.Narrator, StoryFixture.Story.Title, "Choose.", Now.AddHours(-1), StoryEnding.Key(StoryFixture.Story.Id),
                 [new MessageAnswer("stay", "Stay"), new MessageAnswer("go", "Go")]);
         });
 
         var drawn = Drawn(tab.Panel);
-        var waiting = IndexOf(drawn, MessagesView.WaitingHeading);
-        var other = IndexOf(drawn, MessagesView.OtherHeading);
 
-        Assert.Equal(0, drawn.Take(waiting).Count(text => text.Equals(MessagesView.OtherHeading, StringComparison.OrdinalIgnoreCase)));
-        Assert.True(waiting >= 0, "no waiting section");
-        Assert.True(other > waiting, "Other lines is not below Waiting for your answer");
+        Assert.True(IndexOf(drawn, MessagesView.WaitingHeading) >= 0, "no waiting section");
         Assert.Contains("Stay", drawn, StringComparer.OrdinalIgnoreCase);
         Assert.Contains("Go", drawn, StringComparer.OrdinalIgnoreCase);
-        Assert.Contains("My Own Mayday", drawn.Skip(other));
-
-        tab.Window.Close();
-    }
-
-    [AvaloniaFact]
-    public void ALineAStoryRunKeepsIsLeftForTheRunsPage()
-    {
-        var tab = Open((stories, messages) =>
-        {
-            stories.Save("F1", Running());
-            messages.Post(MessageStore.Narrator, "Kept by the run", "A story line.", Now.AddHours(-2), StoryLines.Key(StoryFixture.Story.Id));
-            messages.Post(MessageStore.Narrator, "Loose line", "Untied.", Now.AddHours(-1));
-            messages.Post(MessageStore.Narrator, "Unresolved line", "Of a story never picked.", Now, StoryLines.Key("a-story-never-picked"));
-        });
-
-        var drawn = Drawn(tab.Panel);
-        var other = IndexOf(drawn, MessagesView.OtherHeading);
-
-        Assert.DoesNotContain("Kept by the run", drawn);
-        Assert.True(IndexOf(drawn, "Unresolved line") > other && IndexOf(drawn, "Loose line") > IndexOf(drawn, "Unresolved line"));
+        Assert.DoesNotContain("My Own Mayday", drawn);
+        Assert.DoesNotContain("Loose line", drawn);
+        Assert.DoesNotContain("Other lines", drawn, StringComparer.OrdinalIgnoreCase);
 
         tab.Window.Close();
     }

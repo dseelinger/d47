@@ -404,12 +404,10 @@ Reject the Commander's draft short story and remove it, as the Decline button do
 
 Every objective said is also kept as a written message, from whoever said it, so a line said during a fight
 is not lost. A stock story's lines are listed on that run's page on the **Story bench**, below. **Your story**,
-the first sub-tab of the Stories tab, lists the rest.
+the first sub-tab of the Stories tab, lists the endings waiting for your answer, and nothing else from the messages.
 
-At its top, **Waiting for your answer** shows each story ending still waiting for your choice, with its
-answers, **Play** and **Change voice**. At its foot, **Other lines** lists every message that belongs to no
-stock story run, newest first: a Short Story's lines, lines tied to no story, and lines of a story that is no
-longer on file. Unread lines are bold, and opening a line marks it read. A message that was spoken has a
+**Waiting for your answer** shows each story ending still waiting for your choice, with its
+answers, **Play** and **Change voice**. A message that was spoken has a
 **Play** button that plays the clip it was spoken in; see [Spoken messages keep their clip](speech.md#kept-clips).
 
 The messages live in `data/messages.json`. The file holds the most recent 200; past that the oldest read
@@ -780,7 +778,7 @@ Kokoro download.
 
 The **Local voice** and **Chatterbox voice** download rows, in Settings › Providers › Speech synthesis, appear while a downloaded
 story's cast needs them and the model is not downloaded, even when no slot uses that provider. A pick tried anyway is refused, and the ship
-posts one message to Your story listing the same things.
+posts one message listing the same things. Your story does not list it.
 
 If a voice a running story needs stops being ready, for example because the recording was deleted, the
 story is paused within a few seconds, its chapter stops, and the message is posted again. **Resume** is

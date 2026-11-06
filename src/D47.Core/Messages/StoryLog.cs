@@ -2,23 +2,16 @@ using D47.Core.Stories;
 
 namespace D47.Core.Messages;
 
-/// <summary>What Your story lists from the messages: lines waiting for an answer, then the lines of no stock story run, both newest first.</summary>
-public sealed record StoryLog(IReadOnlyList<D47Message> Waiting, IReadOnlyList<D47Message> Other)
+/// <summary>What Your story lists from the messages: the lines waiting for an answer, newest first.</summary>
+public sealed record StoryLog(IReadOnlyList<D47Message> Waiting)
 {
-    /// <summary>
-    /// Splits <paramref name="messages"/>. <paramref name="waiting"/> picks the lines shown first; <paramref name="ofARun"/>
-    /// picks the lines a stock story run's record keeps, which its page on the Story bench shows instead.
-    /// </summary>
-    public static StoryLog Of(IEnumerable<D47Message> messages, Func<D47Message, bool> ofARun, Func<D47Message, bool> waiting)
+    /// <summary>Picks the lines of <paramref name="messages"/> that <paramref name="waiting"/> accepts, newest first.</summary>
+    public static StoryLog Of(IEnumerable<D47Message> messages, Func<D47Message, bool> waiting)
     {
         ArgumentNullException.ThrowIfNull(messages);
-        ArgumentNullException.ThrowIfNull(ofARun);
         ArgumentNullException.ThrowIfNull(waiting);
 
-        var newestFirst = messages.OrderByDescending(message => message.Sent).ToList();
-        var waitingNow = newestFirst.Where(waiting).ToList();
-
-        return new StoryLog(waitingNow, [.. newestFirst.Except(waitingNow).Where(message => !ofARun(message))]);
+        return new StoryLog([.. messages.OrderByDescending(message => message.Sent).Where(waiting)]);
     }
 
     /// <summary>The story a line, ending, reaction or clue key belongs to; null for any other key, a chapter's included.</summary>

@@ -20,7 +20,7 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// The card's reading page lists the story's primary cast, and no one else, each with its voice, Play sample and Change
-/// voice; a message from any cast member, primary or not, carries Change voice (#737).
+/// voice; a waiting message from any cast member, primary or not, carries Change voice (#737).
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
@@ -129,19 +129,15 @@ public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
         var (surface, _, _) = Open(paths);
 
         var messages = new MessageStore(Path.Combine(paths.Data, "messages.json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
-        var fromQuill = messages.Post("Quill", "The Test Story", "Your account is overdrawn.", DateTimeOffset.Now, cast: $"{StoryFixture.Story.Id}.teller");
-        var fromShip = messages.Post("archivist", "The Test Story", "A song.", DateTimeOffset.Now);
+        var answers = new[] { new MessageAnswer("stay", "Stay") };
+        messages.Post("Quill", "The Test Story", "Your account is overdrawn.", DateTimeOffset.Now, cast: $"{StoryFixture.Story.Id}.teller", answers: answers);
+        messages.Post("archivist", "The Test Story", "A song.", DateTimeOffset.Now.AddMinutes(1), answers: answers);
 
         var view = new MessagesView(messages, new PanelNavigator(), surface, new PanelPrompts(new PanelNavigator(), new Avalonia.Controls.Panel()));
+        var waiting = view.Waiting(view.Log())!;
+        using var window = new DisposableWindow(Show(waiting, "message-change-voice.png"));
 
-        var quill = view.Build(new NavCrumb(MessagesView.ReadPrefix + fromQuill.Key, "The Test Story"))!;
-        using (new DisposableWindow(Show(quill, "message-change-voice.png")))
-        {
-            Assert.Contains("Change voice", Buttons(quill));
-        }
-
-        var ship = view.Build(new NavCrumb(MessagesView.ReadPrefix + fromShip.Key, "The Test Story"))!;
-        Assert.DoesNotContain("Change voice", Buttons(ship));
+        Assert.Equal(1, Buttons(waiting).Count(label => label == "Change voice"));
     }
 
     [Trait("Category", "Integration")]

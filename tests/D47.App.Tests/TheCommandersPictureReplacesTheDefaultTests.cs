@@ -23,7 +23,7 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// A picture the Commander picks is scaled to 1024 px on its longer side and kept as a PNG in data\pictures, where
-/// every message with that picture reads it ahead of the story's own; Use the default deletes it. A file that does
+/// every message with that picture reads it ahead of the story's own. A file that does
 /// not decode is refused and writes nothing.
 /// </summary>
 [Trait("Category", "Integration")]
@@ -101,69 +101,4 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
         Assert.Contains("10 MB", PictureImport.Save(_files, source, "huge.png", target), StringComparison.Ordinal);
         Assert.Null(_files.Stat(target));
     }
-
-    [AvaloniaFact]
-    [Trait("Category", "Integration")]
-    public void TheMessageShowsTheCommandersPictureUntilTheDefaultIsChosen()
-    {
-        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(TestSurface.Settings().Current.Ui.Theme);
-
-        var paths = new AppPaths(TempFolders.Create("d47-cast-picture"));
-        var pictures = new SpeakerPictures(_files, paths);
-        _files.WriteBytes(pictures.Default(Picture), Jpeg(300, 300, Colors.DarkOrange));
-
-        var messages = new MessageStore(Path.Combine(paths.Data, "messages.json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
-        var earlier = messages.Post("Juno", "Ride Along", "You did not see me.", DateTimeOffset.Now.AddDays(-1), picture: Picture);
-        var later = messages.Post("Juno", "Ride Along", "Still here.", DateTimeOffset.Now, picture: Picture);
-
-        using (var chosen = new MemoryStream(Jpeg(2000, 1000, Colors.SteelBlue)))
-        {
-            Assert.Null(PictureImport.Save(_files, chosen, "mine.jpg", pictures.Chosen(Picture)));
-        }
-
-        var view = new MessagesView(messages, new PanelNavigator(), AdventureFixture.Surface(paths) with { Pictures = pictures });
-
-        Assert.Equal(new PixelSize(1024, 512), Shown(view, earlier).PixelSize);
-        var page = view.Build(new NavCrumb(MessagesView.ReadPrefix + later.Key, "Ride Along"))!;
-        Assert.Equal(new PixelSize(1024, 512), ShownIn(page).PixelSize);
-
-        var window = new Window
-        {
-            Content = page,
-            Width = 640,
-            Height = 600,
-            Background = (IBrush)Application.Current!.Resources[ThemeManager.BgKey]!,
-        };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.SaveCapture("message-cast-picture-chosen.png");
-        }
-
-        var image = page.GetVisualDescendants().OfType<Image>().Single();
-        Assert.True(image.Bounds.Width <= 240);
-
-        page.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Use the default"))
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.Null(_files.Stat(pictures.Chosen(Picture)));
-        Assert.Equal(new PixelSize(300, 300), ShownIn(page).PixelSize);
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.SaveCapture("message-cast-picture-default.png");
-        }
-
-        window.Close();
-        Assert.Equal(new PixelSize(300, 300), Shown(view, earlier).PixelSize);
-    }
-
-    private static Bitmap Shown(MessagesView view, D47Message message) =>
-        ShownIn(view.Build(new NavCrumb(MessagesView.ReadPrefix + message.Key, message.Subject))!);
-
-    private static Bitmap ShownIn(Control page) =>
-        (Bitmap)page.GetLogicalDescendants().OfType<Image>().Single().Source!;
 }

@@ -15,14 +15,10 @@ using D47.Core.Stories;
 
 namespace D47.App.Panel;
 
-/// <summary>The story lines kept in Messages: the Waiting for your answer and Other lines lists on Your story, and one line read.</summary>
+/// <summary>The story lines kept in Messages: the Waiting for your answer list on Your story.</summary>
 public sealed class MessagesView
 {
     public const string WaitingHeading = "Waiting for your answer";
-
-    public const string OtherHeading = "Other lines";
-
-    public const string ReadPrefix = "message.read.";
 
     private readonly MessageStore _store;
     private readonly PanelNavigator _nav;
@@ -37,54 +33,6 @@ public sealed class MessagesView
         _nav = nav;
         _surface = surface;
         _entries = entries;
-    }
-
-    /// <summary>The page for a reading crumb; opening it marks the message read.</summary>
-    public Control? Build(NavCrumb crumb)
-    {
-        if (!crumb.Key.StartsWith(ReadPrefix, StringComparison.Ordinal))
-        {
-            return null;
-        }
-
-        var key = crumb.Key[ReadPrefix.Length..];
-        var message = _store.All.FirstOrDefault(other => other.Key == key);
-
-        if (message is null)
-        {
-            return AdventuresPage.Muted("That line is gone.");
-        }
-
-        _store.MarkRead(key);
-
-        var page = new StackPanel { Margin = new Thickness(14), Spacing = 8 };
-        page.Children.Add(AdventuresPage.Text(message.Subject, TypeScale.Body));
-        page.Children.Add(AdventuresPage.Text(Caption(message), TypeScale.Small, ThemeManager.GreyKey));
-
-        var changeVoice = ChangeVoice(message);
-
-        if (_surface?.Pictures is { } pictures && SpeakerPictures.OfMessage(message) is { } picture && pictures.Find(picture) is not null)
-        {
-            page.Children.Add(new PictureChooser(pictures, picture, 240, null, changeVoice is null ? [] : [changeVoice]));
-        }
-        else if (changeVoice is not null)
-        {
-            page.Children.Add(changeVoice);
-        }
-
-        page.Children.Add(AdventuresPage.Text(message.Body, TypeScale.Body));
-
-        if (message.Clip is not null && _surface?.PlayMessage is { } play)
-        {
-            page.Children.Add(Playing(message, play));
-        }
-
-        if (message.Answers.Count > 0)
-        {
-            page.Children.Add(Answering(message));
-        }
-
-        return new ScrollViewer { Content = page, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto };
     }
 
     /// <summary>Change voice, for a message from a story cast member; null for any other sender.</summary>
@@ -186,12 +134,8 @@ public sealed class MessagesView
     private static string Caption(D47Message message) =>
         $"{Sender(message.From)} — {message.Sent.ToLocalTime().ToString("d MMM HH:mm", CultureInfo.CurrentCulture)}";
 
-    /// <summary>Whether a line belongs to a stock story run, whose page on the Story bench lists it instead.</summary>
-    private bool OfARun(D47Message message) =>
-        message.AdventureKey is { } key && _surface?.Stories?.Records?.Keeps(key) == true;
-
-    /// <summary>The lines waiting for an answer and the lines of no story run, as Your story lists them.</summary>
-    public StoryLog Log() => StoryLog.Of(_store.All, OfARun, IsWaiting);
+    /// <summary>The lines waiting for an answer, as Your story lists them.</summary>
+    public StoryLog Log() => StoryLog.Of(_store.All, IsWaiting);
 
     /// <summary>Waiting for your answer: each line with its answers, Play and Change voice; null when nothing waits.</summary>
     public Control? Waiting(StoryLog log)
@@ -239,53 +183,6 @@ public sealed class MessagesView
             ThemeInk.Bind(block, Border.BorderBrushProperty, ThemeManager.AKey);
             ThemeInk.Bind(block, Border.BackgroundProperty, ThemeManager.TileKey);
             holder.Children.Add(block);
-        }
-
-        return holder;
-    }
-
-    /// <summary>Other lines, newest first, each opening its own page; null when there are none.</summary>
-    public Control? Other(StoryLog log)
-    {
-        ArgumentNullException.ThrowIfNull(log);
-
-        if (log.Other.Count == 0)
-        {
-            return null;
-        }
-
-        var holder = new StackPanel { Spacing = 2 };
-        holder.Children.Add(StarSystemPage.GroupHead(OtherHeading, string.Empty, log.Other.Count.ToString(CultureInfo.InvariantCulture)));
-
-        foreach (var message in log.Other)
-        {
-            var subject = AdventuresPage.Text(message.Subject, TypeScale.Body);
-            subject.FontWeight = message.Read ? FontWeight.Normal : FontWeight.Bold;
-
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 14 };
-            grid.Children.Add(new StackPanel
-            {
-                Spacing = 2,
-                Children = { subject, AdventuresPage.Text(Caption(message), TypeScale.Small, ThemeManager.GreyKey) },
-            });
-
-            if (message.Clip is not null && _surface?.PlayMessage is { } play)
-            {
-                var playing = Playing(message, play);
-                Grid.SetColumn(playing, 1);
-                grid.Children.Add(playing);
-            }
-
-            var row = ListRow.Dress(new Border
-            {
-                Child = grid,
-                Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
-            });
-
-            var key = message.Key;
-            var crumb = message.Subject;
-            ListRow.Opens(row, () => _nav.Drill(new NavCrumb(ReadPrefix + key, crumb) { Level = ReadPrefix }));
-            holder.Children.Add(row);
         }
 
         return holder;

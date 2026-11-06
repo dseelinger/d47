@@ -170,11 +170,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             return BuildAsk(follows: crumb.Key[NextPrefix.Length..]);
         }
 
-        if (Inbox() is { } inbox && crumb.Key.StartsWith(MessagesView.ReadPrefix, StringComparison.Ordinal))
-        {
-            return inbox.Build(crumb);
-        }
-
         if (crumb.Key.StartsWith(StoryRunPage.Prefix, StringComparison.Ordinal) && _surface.Stories is { } runs)
         {
             return StoryRunPage.Find(runs, _surface.Commander(), crumb.Key) is { } run
@@ -262,12 +257,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         foreach (var standing in live.Concat(unbegun))
         {
             _list.Children.Add(Card(standing));
-        }
-
-        if (log is not null && _inbox!.Other(log) is { } other)
-        {
-            other.Margin = new Thickness(0, 22, 0, 0);
-            _list.Children.Add(other);
         }
     }
 
