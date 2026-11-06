@@ -31,6 +31,15 @@ public enum PlannedPurpose
 
     /// <summary>The last finale chapter's landing on the finale's destination.</summary>
     Destination,
+
+    /// <summary>The board into an owned ship that can make the trip to the Guardian beacon, first in the chapter.</summary>
+    Swap,
+
+    /// <summary>The Guardian beacon scan that ends act one.</summary>
+    Beacon,
+
+    /// <summary>The last objective of an act-one chapter whose beacon is out of reach: a ship that can make the trip.</summary>
+    Reach,
 }
 
 /// <summary>One objective of a planned chapter: its function, its steps in order with places resolved and counts set, and what it is for.</summary>
@@ -83,6 +92,9 @@ public static class ChapterPlanner
 
     /// <summary>Most extra story stops a chapter adds to its content.</summary>
     public const int MostStops = 2;
+
+    /// <summary>Most objectives an act-one travel chapter holds, its stops included.</summary>
+    public const int TravelObjectives = 5;
 
     /// <summary>Most stops a sightseeing objective makes on the way to a sight beyond reach.</summary>
     public const int MostSightHops = 3;
@@ -174,13 +186,17 @@ public static class ChapterPlanner
         var sight = places.Sights.Count > 0;
         var landing = inputs.Closing ? inputs.Destination!.Landing() : null;
         var end = landing is null ? Ending(inputs, places) : null;
+        var swap = inputs.Beacon?.Swap();
+        var (last, lastPurpose) = inputs.Beacon is { } beacon
+            ? (beacon.Trigger(), PlannedPurpose.Beacon)
+            : inputs.BeaconAway is { } away ? (away.Trigger(), PlannedPurpose.Reach) : ((AdventureTrigger?)null, PlannedPurpose.Reach);
 
         if (end is { Purpose: PlannedPurpose.Closer, Area.State: ChapterAreaState.NoneFound or ChapterAreaState.Unavailable })
         {
             return Refuse(ChapterRules.Finale, $"No place on the way to the finale's destination in {inputs.Destination!.System} was found, so the chapter cannot end closer to it.");
         }
 
-        var content = inputs.Slots.Count + (sight ? 1 : 0) + goals.Count + (end is null && landing is null ? 0 : 1);
+        var content = inputs.Slots.Count + (sight ? 1 : 0) + goals.Count + (end is null && landing is null ? 0 : 1) + (swap is null ? 0 : 1) + (last is null ? 0 : 1);
 
         if (content == 0)
         {
@@ -193,7 +209,7 @@ public static class ChapterPlanner
         }
 
         var fewestStops = Math.Max(0, FewestObjectives - content);
-        var mostStops = Math.Min(MostStops, MostObjectives - content);
+        var mostStops = Math.Max(fewestStops, Math.Min(inputs.Travels ? TravelObjectives - content : MostStops, MostObjectives - content));
         var stops = fewestStops + random.Next(mostStops - fewestStops + 1);
 
         var middle = inputs.Slots.Select(slot => new Item(PlannedPurpose.Activity, slot)).ToList();
@@ -210,6 +226,11 @@ public static class ChapterPlanner
 
         var planning = new Planning(inputs, places, random);
         var built = new List<(PlannedPurpose Purpose, List<AdventureTrigger> Steps)>();
+
+        if (swap is not null)
+        {
+            built.Add((PlannedPurpose.Swap, [planning.Swap(swap)]));
+        }
 
         foreach (var item in middle)
         {
@@ -256,6 +277,11 @@ public static class ChapterPlanner
         if (built.Count > 0 && planning.BackToBase() is { } back)
         {
             built[^1].Steps.Add(back);
+        }
+
+        if (last is not null)
+        {
+            built.Add((lastPurpose, [last]));
         }
 
         var functions = ChapterFunctions.For(built.Count, inputs.Stage);
@@ -448,7 +474,7 @@ public static class ChapterPlanner
 
         public (List<AdventureTrigger>? Steps, ChapterPlanRefusal? Refusal) Stop(bool needed)
         {
-            var candidates = Arrivals().Concat(Docks()).Concat(Lands()).Concat(Scans()).Concat(missionUsed ? [] : MissionStops())
+            var candidates = Arrivals().Concat(Docks()).Concat(Lands()).Concat(Scans()).Concat(missionUsed ? [] : MissionStops()).Concat(inputs.Travels ? Sites() : [])
                 .Where(stop => !places.Sights.Any(sight => AtSight(sight, stop.Trigger)));
             var (stop, refusal) = Draw(candidates, ChapterRules.Stop, "a place for a story stop");
 
@@ -461,6 +487,18 @@ public static class ChapterPlanner
             missionUsed |= stop.Mission;
 
             return ([stop.Trigger], null);
+        }
+
+        /// <summary>The board into the ship that can make the trip; later hops are measured from where it is parked, when that is known.</summary>
+        public AdventureTrigger Swap(AdventureTrigger board)
+        {
+            if (places.SwapAt is { } parked)
+            {
+                system = inputs.Beacon?.SwapSystem;
+                position = parked;
+            }
+
+            return Goal(board);
         }
 
         public AdventureTrigger Goal(AdventureTrigger goal)
@@ -611,7 +649,7 @@ public static class ChapterPlanner
             stop.Trigger.Kind switch
             {
                 TriggerKind.Arrive => !string.Equals(stop.System, system, StringComparison.OrdinalIgnoreCase),
-                TriggerKind.Land or TriggerKind.Scan => !bodies.Contains(BodyKey(stop.Trigger)),
+                TriggerKind.Land or TriggerKind.Scan or TriggerKind.Site => !bodies.Contains(BodyKey(stop.Trigger)),
                 _ => true,
             };
 
@@ -629,7 +667,7 @@ public static class ChapterPlanner
             system = stop.System;
             position = stop.Position;
 
-            if (stop.Trigger.Kind is TriggerKind.Land or TriggerKind.Scan)
+            if (stop.Trigger.Kind is TriggerKind.Land or TriggerKind.Scan or TriggerKind.Site)
             {
                 bodies.Add(BodyKey(stop.Trigger));
             }
@@ -674,6 +712,20 @@ public static class ChapterPlanner
             body is { Position: { } at, BodyId: not null, SystemAddress: not null } && (kind == TriggerKind.Scan || body.IsLandable)
                 ? new Stop(new AdventureTrigger { Kind = kind, SystemAddress = body.SystemAddress, BodyId = body.BodyId, System = body.SystemName, Body = body.Name }, at, TagsOf(body.SystemName))
                 : null;
+
+        /// <summary>The Guardian sites, tourist beacons and generation ships within reach whose position is known, each as a site step.</summary>
+        private IEnumerable<Stop> Sites() =>
+            places.Sites
+                .Select(site => (Site: site, At: site.Position ?? places.System(site.System)?.Position))
+                .Where(found => found.At is not null && (found.Site.Filter != AdventureTrigger.GuardianSite || found.Site.BodyId is not null))
+                .Select(found => new Stop(SiteStep(found.Site), found.At!.Value, TagsOf(found.Site.System)));
+
+        private static AdventureTrigger SiteStep(ChapterSite site) => site.Filter switch
+        {
+            AdventureTrigger.GuardianSite => new AdventureTrigger { Kind = TriggerKind.Site, Filter = site.Filter, SystemAddress = site.SystemAddress, System = site.System, BodyId = site.BodyId, Body = site.Name },
+            AdventureTrigger.GenerationSite => new AdventureTrigger { Kind = TriggerKind.Site, Filter = site.Filter, SystemAddress = site.SystemAddress, System = site.System, SiteName = site.Name },
+            _ => new AdventureTrigger { Kind = TriggerKind.Site, Filter = site.Filter, SystemAddress = site.SystemAddress, System = site.System },
+        };
 
         private IEnumerable<Stop> MissionStops() =>
             places.Missions

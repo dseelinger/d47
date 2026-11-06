@@ -152,6 +152,7 @@ public partial class StoryComparisonTests
                     Slots = [new DrawnActivity(TriggerKind.Bounty, null, 3), new DrawnActivity(TriggerKind.Codex, null, 2), new DrawnActivity(TriggerKind.Mission, "Mission_Courier", 2)],
                 },
             },
+            "actone" => ChapterAsk with { Chapter = null, Story = ChapterAsk.Story! with { Chapter = 1, Beacon = new AdventureBeacon(13872878396833, "IC 2391 Sector MX-T b3-6") } },
             "black" => ChapterAsk with { Story = ChapterAsk.Story! with { InTheBlack = true } },
             "toward" => ChapterAsk with { Reach = AdventureReach.Anywhere, Story = ChapterAsk.Story! with { InTheBlack = true, Toward = "Colonia" } },
             "home" => ChapterAsk with { Reach = AdventureReach.Anywhere, Story = ChapterAsk.Story! with { Home = "Sol" } },

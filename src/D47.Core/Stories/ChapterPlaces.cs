@@ -34,7 +34,11 @@ public sealed record ChapterSystem(string Name, long? Address, StarPosition? Pos
 }
 
 /// <summary>A Guardian site, tourist beacon or generation ship within reach.</summary>
-public sealed record ChapterSite(string Filter, string System, long SystemAddress, StarPosition? Position, string Name);
+public sealed record ChapterSite(string Filter, string System, long SystemAddress, StarPosition? Position, string Name)
+{
+    /// <summary>The body a Guardian site is on; null for a tourist beacon or a generation ship.</summary>
+    public int? BodyId { get; init; }
+}
 
 /// <summary>The base a chapter ends near: a station when <see cref="MarketId"/> is known, otherwise the system.</summary>
 public sealed record ChapterBase(string System, long? SystemAddress, string? Station, long? MarketId, StarPosition? Position);
@@ -96,6 +100,9 @@ public sealed record ChapterPlaces
     public IReadOnlyList<BodySummary> Destinations { get; init; } = [];
 
     public ChapterBase? Base { get; init; }
+
+    /// <summary>Where the ship an act-one chapter swaps into is parked; null where there is no swap or the system's position is unknown.</summary>
+    public StarPosition? SwapAt { get; init; }
 
     public IReadOnlyList<ChapterMissionStop> Missions { get; init; } = [];
 

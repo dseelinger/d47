@@ -3424,16 +3424,17 @@ public sealed class StoryDirector(
         try
         {
             var attempt = new Attempt(null);
-            var stationsInReach = stories.Current(frontierId) is { BeaconScanAt: not null } running
+            var drawing = stories.Current(frontierId) is { } running && (running.BeaconScanAt is not null || running.Chapters.Count > 0);
+            var stationsInReach = drawing
                 ? await StationsInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
                 : true;
-            var frontlineInReach = stories.Current(frontierId) is { BeaconScanAt: not null }
+            var frontlineInReach = drawing
                 ? await FrontlineInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
                 : true;
-            var stateFamiliesInReach = stories.Current(frontierId) is { BeaconScanAt: not null }
+            var stateFamiliesInReach = drawing
                 ? await StateFamiliesInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
                 : null;
-            var warInReach = stories.Current(frontierId) is { BeaconScanAt: not null }
+            var warInReach = drawing
                 ? await WarInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
                 : true;
 
@@ -3625,7 +3626,7 @@ public sealed class StoryDirector(
                 Engineers?.Invoke(),
                 row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused, frontlineInReach, stateFamiliesInReach, warInReach))
             : [];
-        var slots = story.BeaconScanAt is null
+        var slots = !Draws(story.BeaconScanAt is not null, number, finaleChapter, reach)
             ? null
             : ChapterDraw.Draw(
                 Weights(statistics),
@@ -3670,7 +3671,7 @@ public sealed class StoryDirector(
                 now,
                 stage,
                 finaleChapter,
-                reach is { InReach: true } ? new AdventureBeacon(reach.Address, reach.System, reach.EasierWith, reach.SwapTo) : null,
+                reach is { InReach: true } ? new AdventureBeacon(reach.Address, reach.System, reach.EasierWith, reach.SwapTo) { SwapHull = reach.SwapHull, SwapSystem = reach.SwapSystem } : null,
                 reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why, reach.Unarmed, reach.Carrier, reach.EasierWith) : null,
                 reach?.InReach != false,
                 longHaul,
@@ -3854,6 +3855,13 @@ public sealed class StoryDirector(
 
     private bool FinaleDue(Story story, DateTimeOffset now) =>
         StoryClues.FinaleDue(story, now, story.GoalsAtPick is not null && GoalClimb.AllDone(GoalsOf(story.Id)));
+
+    /// <summary>
+    /// Whether chapter <paramref name="number"/> draws activities: every chapter after the beacon scan, and before it an act-one
+    /// chapter from chapter two on whose beacon is out of reach. Chapter one and a chapter that ends on the beacon travel.
+    /// </summary>
+    internal static bool Draws(bool scanned, int number, int? finaleChapter, BeaconReach? reach) =>
+        scanned || (finaleChapter is null && number > 1 && reach is { InReach: false });
 
     /// <summary>The story's chapters written since the beacon scan; none before it.</summary>
     private int SinceBeacon(string? frontierId, Story story) => story.BeaconScanAt is { } scanned

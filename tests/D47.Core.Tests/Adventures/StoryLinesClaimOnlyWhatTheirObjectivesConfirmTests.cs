@@ -1,5 +1,6 @@
 using D47.Core.Adventures;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Stories;
 using Xunit;
 
 namespace D47.Core.Tests.Adventures;
@@ -16,14 +17,6 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
     private const string QuietDock = """
         {"replacements": [
           {"objective": 2, "title": "The Quiet Dock", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "One name, at a dock."}
-        ]}
-        """;
-
-    private const string BeaconBeats = """
-        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
-          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
-          {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
-          {"title": "The Beacon", "function": "resolution", "kind": "beacon", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "The cores are aboard."}
         ]}
         """;
 
@@ -161,25 +154,25 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
     [Fact]
     public async Task AStockStorysBeaconConfirmsItsCoresComeAboard()
     {
-        var provider = new RoundScriptedLlmProvider([
-            RoundScriptedLlmProvider.Saying(AdventureGeneratorTests.Spine),
-            RoundScriptedLlmProvider.Saying(BeaconBeats),
-            RoundScriptedLlmProvider.Saying(NothingObjected),
-        ]);
-        var story = new AdventureStory("s", "S", "Public", "Hidden", Chapter: 1, DaysRunning: 3, DaysSinceBeacon: null)
+        var story = new AdventureStory("s", "S", "Public", "Hidden", Chapter: 1, DaysRunning: 3, DaysSinceBeacon: null, Stage: "Act One")
         {
             Beacon = new AdventureBeacon(13872878396833, "IC 2391 Sector MX-T b3-6"),
         };
+        var ask = PlannedChapterWorld.Ask(story);
+        var plan = await PlannedChapterWorld.PlanAsync(ask);
+        var provider = new RoundScriptedLlmProvider([
+            RoundScriptedLlmProvider.Saying(PlannedChapterWorld.Lines(plan.Objectives.Count)),
+            RoundScriptedLlmProvider.Saying(NothingObjected),
+        ]);
 
-        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
-            .GenerateAsync(new AdventureAsk(Story: story), Now, CancellationToken.None);
+        var outcome = await PlannedChapterWorld.Generator(provider).GenerateAsync(ask, Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-
+        Assert.Equal(TriggerKind.Beacon, outcome.Draft!.Beats[^1].Steps[^1].Trigger.Kind);
         Assert.Contains("the story's Guardian cores came aboard", TriggerConfirms.Of(TriggerKind.Beacon, story: true));
         Assert.DoesNotContain("cores", TriggerConfirms.Of(TriggerKind.Beacon));
-        Assert.Contains($"- \"beacon\": {TriggerConfirms.Of(TriggerKind.Beacon, story: true)}", provider.Requests[2].Prompt.History[0].Text);
-        Assert.Contains($"Confirms: {TriggerConfirms.Of(TriggerKind.Beacon, story: true)}", provider.Requests[3].Prompt.History[0].Text);
+        Assert.Contains($"- \"beacon\": {TriggerConfirms.Of(TriggerKind.Beacon, story: true)}", provider.Requests[0].Prompt.History[0].Text);
+        Assert.Contains($"Confirms: {TriggerConfirms.Of(TriggerKind.Beacon, story: true)}", provider.Requests[1].Prompt.History[0].Text);
     }
 
     [Fact]

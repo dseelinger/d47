@@ -20,14 +20,22 @@ public sealed partial class AdventureGenerator
     private const int SpineIndex = -2;
 
     /// <summary>
-    /// Whether a chapter's objectives are planned in code and only its words are written: a story chapter with drawn
-    /// activities that is not a rewrite.
+    /// Whether a chapter's objectives are planned in code and only its words are written: a story chapter that is not a rewrite,
+    /// with drawn activities or in act one.
     /// </summary>
     internal static bool IsPlanned(AdventureAsk ask)
     {
         ArgumentNullException.ThrowIfNull(ask);
 
-        return ask is { Rewrite: null, Story.Slots.Count: > 0 };
+        return ask is { Rewrite: null, Story.Slots.Count: > 0 } || (ask.Rewrite is null && Travels(ask));
+    }
+
+    /// <summary>Whether a story chapter is an act-one chapter with no drawn activity, which travels and ends on the beacon or on reach.</summary>
+    internal static bool Travels(AdventureAsk ask)
+    {
+        ArgumentNullException.ThrowIfNull(ask);
+
+        return ask.Story is { FinaleChapter: null, Slots: null or { Count: 0 } } story && (story.Beacon is not null || story.BeaconAway is not null);
     }
 
     /// <summary>The seed a chapter's plan is drawn from: the story and chapter, and the chapter it replaces when it replaces one.</summary>
@@ -674,6 +682,9 @@ public sealed partial class AdventureGenerator
         PlannedPurpose.Leg => " It is the chapter's last stop, on the way to where the chapter is heading.",
         PlannedPurpose.Closer => " It is the chapter's last stop, closer to the finale's destination.",
         PlannedPurpose.Destination => " It is the landing on the finale's destination, where the hidden layer's end takes place.",
+        PlannedPurpose.Swap => $" It is the swap into a ship the Commander owns that can make the trip to the Guardian beacon{(story.Beacon?.SwapTo is { } swap ? $": {swap}" : string.Empty)}.",
+        PlannedPurpose.Beacon => " It is the Guardian beacon scan that ends act one, when the story's Guardian cores come aboard.",
+        PlannedPurpose.Reach => " It is met once the Commander's ship can make the trip to the Guardian beacon.",
         _ => string.Empty,
     };
 

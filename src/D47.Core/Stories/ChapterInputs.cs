@@ -41,7 +41,14 @@ public sealed record ChapterInputs
 
     public IReadOnlyList<GoalClimbStep> Goals { get; init; } = [];
 
+    /// <summary>The Guardian beacon an act-one chapter ends on; null where it ends on none.</summary>
     public AdventureBeacon? Beacon { get; init; }
+
+    /// <summary>The Guardian beacon an act-one chapter cannot reach yet, which it ends on a reach objective for; null otherwise.</summary>
+    public AdventureBeaconAway? BeaconAway { get; init; }
+
+    /// <summary>Whether this is an act-one chapter with no drawn activity: it travels, and ends on the beacon or on reach.</summary>
+    public bool Travels => Slots.Count == 0 && FinaleChapter is null && (Beacon is not null || BeaconAway is not null);
 
     public AdventureDestination? Destination { get; init; }
 
@@ -98,7 +105,8 @@ public sealed record ChapterInputs
             Stage = StageOf(story?.Stage),
             Slots = story?.Slots ?? [],
             Goals = story?.Goals ?? [],
-            Beacon = story?.Beacon,
+            Beacon = story?.FinaleChapter is null ? story?.Beacon : null,
+            BeaconAway = story?.FinaleChapter is null ? story?.BeaconAway : null,
             Destination = story?.Destination,
             FinaleChapter = story?.FinaleChapter,
             FinaleChapters = story?.FinaleChapters ?? 0,

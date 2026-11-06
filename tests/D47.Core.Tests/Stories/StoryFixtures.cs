@@ -261,6 +261,8 @@ internal sealed class StoryFixtures : IDisposable
 
                 var sent = WritesDrawnChapters || ask.Story is null ? ask : ask with { Story = ask.Story with { Slots = null, Goals = null, Sights = null } };
 
+                generator.PlansActOne = PlansActOne;
+
                 return Written(generator.GenerateAsync(sent, now, cancellationToken));
             },
             () => Here,
@@ -302,6 +304,12 @@ internal sealed class StoryFixtures : IDisposable
     /// scripted model's answers cannot meet activities it does not know; <see cref="Asks"/> holds the drawn activities either way.
     /// </summary>
     public bool WritesDrawnChapters { get; set; }
+
+    /// <summary>
+    /// Whether an act-one chapter is planned in code. Off, it is written through the objectives call, because a scripted model's
+    /// answers are objectives rather than the words of a plan.
+    /// </summary>
+    public bool PlansActOne { get; set; }
 
     /// <summary>Every chapter the director asked to have written, oldest first.</summary>
     public List<AdventureAsk> Asks { get; } = [];

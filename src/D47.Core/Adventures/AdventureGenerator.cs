@@ -97,7 +97,20 @@ public sealed record AdventureHeading(string System, long SystemAddress, StarPos
 }
 
 /// <summary>The Guardian beacon system an act-one chapter ends at.</summary>
-public sealed record AdventureBeacon(long SystemAddress, string System, double? EasierWith = null, string? SwapTo = null);
+public sealed record AdventureBeacon(long SystemAddress, string System, double? EasierWith = null, string? SwapTo = null)
+{
+    /// <summary>The hull symbol of the owned ship <see cref="SwapTo"/> names; null when it names none.</summary>
+    public string? SwapHull { get; init; }
+
+    /// <summary>The system the owned ship <see cref="SwapTo"/> names is parked in; null when unknown.</summary>
+    public string? SwapSystem { get; init; }
+
+    /// <summary>The beacon scan the chapter ends on.</summary>
+    public AdventureTrigger Trigger() => new() { Kind = TriggerKind.Beacon, SystemAddress = SystemAddress, System = System, JumpRange = EasierWith };
+
+    /// <summary>The board into the owned ship that can make the trip; null when the ship flown can.</summary>
+    public AdventureTrigger? Swap() => SwapHull is { } hull ? new AdventureTrigger { Kind = TriggerKind.Board, ShipType = hull } : null;
+}
 
 /// <summary>The landable body a story's finale ends on, named in its first finale chapter.</summary>
 public sealed record AdventureDestination(long SystemAddress, string System, int BodyId, string Body)
@@ -113,7 +126,18 @@ public sealed record AdventureDestination(long SystemAddress, string System, int
 }
 
 /// <summary>The Guardian beacon an act-one chapter works toward but cannot reach, and why.</summary>
-public sealed record AdventureBeaconAway(string System, double LightYears, string Why, bool Unarmed = false, bool Carrier = false, double? EasierWith = null);
+public sealed record AdventureBeaconAway(string System, double LightYears, string Why, bool Unarmed = false, bool Carrier = false, double? EasierWith = null)
+{
+    /// <summary>The objective met by any ship that can make the trip.</summary>
+    public AdventureTrigger Trigger() => new()
+    {
+        Kind = TriggerKind.Reach,
+        System = System,
+        JumpRange = Carrier ? null : EasierWith,
+        Unarmed = Unarmed,
+        Carrier = Carrier ? true : null,
+    };
+}
 
 /// <summary>An activity a chapter must contain one beat of.</summary>
 public sealed record AdventureActivity(string Name, TriggerKind Kind, string? MissionFamily = null);
@@ -373,6 +397,9 @@ public sealed partial class AdventureGenerator(
     /// <summary>The clock <see cref="CallLimit"/>, <see cref="FirstReplyLimit"/> and <see cref="SilenceLimit"/> run on.</summary>
     public TimeProvider Time { get; init; } = TimeProvider.System;
 
+    /// <summary>Whether an act-one chapter with no drawn activity is planned in code; when false it is written through the objectives call.</summary>
+    internal bool PlansActOne { get; set; } = true;
+
     /// <summary>The activities the Commander flying has changed away from often enough to bar them; a short story may not ask for one.</summary>
     public Func<IReadOnlyList<string>>? Barred { get; set; }
 
@@ -508,7 +535,7 @@ public sealed partial class AdventureGenerator(
             }
         }
 
-        if (IsPlanned(ask))
+        if (IsPlanned(ask) && (PlansActOne || !Travels(ask)))
         {
             return await PlannedAsync(ask, facts, now, notes, started, cancellationToken).ConfigureAwait(false);
         }
@@ -2373,7 +2400,7 @@ public sealed partial class AdventureGenerator(
         var slots = ask.Story?.Slots ?? [];
         var sights = ask.Story?.Sights ?? [];
         var used = UsedSystems(ask.Chapter, ask.Story?.Id);
-        var notes = Enumerable.Range(0, 13).Select(_ => new List<string>()).ToArray();
+        var notes = Enumerable.Range(0, 14).Select(_ => new List<string>()).ToArray();
         var notableTask = NotableAsync(facts, cancellationToken, notes[0]);
 
         if (galaxy() is not { } search || facts.System is not { } here)
@@ -2386,7 +2413,7 @@ public sealed partial class AdventureGenerator(
         var crime = !ask.CrimeRefused && slots.Any(slot => slot.Kind == TriggerKind.Mission && (MissionFamilies.IsIllegal(slot.Family) || CrimeObjectives.IsFamily(slot.Family)));
         var war = slots.Any(slot => slot.Kind is TriggerKind.Bond or TriggerKind.Conflict);
         var supply = slots.Any(slot => slot.Kind is TriggerKind.Map or TriggerKind.Signal or TriggerKind.Organic);
-        var docks = slots.Any(slot => slot.PlaceBefore || (ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic) is { } row && ChapterActivities.NeedsStation(row)));
+        var docks = Travels(ask) || slots.Any(slot => slot.PlaceBefore || (ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic) is { } row && ChapterActivities.NeedsStation(row)));
 
         var anarchyTask = crime ? AnarchyAsync(search, facts, here, cancellationToken, notes[1]) : Task.FromResult<IReadOnlyList<SystemSummary>>([]);
         var sitesTask = SitesAsync(search, facts, here, cancellationToken, notes[2]);
@@ -2413,9 +2440,10 @@ public sealed partial class AdventureGenerator(
         var baseTask = ShipBases.Applies(ask) ? BaseAsync(search, ask, facts, cancellationToken) : Task.FromResult<BaseStep?>(null);
         var sightTask = AroundSightsAsync(search, sights, facts, Resolver(), docks, cancellationToken, notes[8]);
         var missionsTask = MissionStopsAsync(search, facts, cancellationToken, notes[9]);
+        var swapTask = ask.Story is { FinaleChapter: null, Beacon.SwapSystem: { } parked } ? SwapPositionAsync(search, parked, cancellationToken, notes[13]) : Task.FromResult<StarPosition?>(null);
         var warTask = war ? AtWarNearAsync(search, facts, here, cancellationToken, notes[10]) : Task.FromResult<IReadOnlyList<SystemSummary>>([]);
 
-        await Task.WhenAll(notableTask, warTask, anarchyTask, sitesTask, frontlineTask, stationsTask, bodiesTask, inBandTask, pullTask, baseTask, sightTask, missionsTask, destinationsTask).ConfigureAwait(false);
+        await Task.WhenAll(notableTask, warTask, anarchyTask, sitesTask, frontlineTask, stationsTask, bodiesTask, inBandTask, pullTask, baseTask, sightTask, missionsTask, destinationsTask, swapTask).ConfigureAwait(false);
 
         var notable = notableTask.Result;
         var anarchy = anarchyTask.Result;
@@ -2515,7 +2543,7 @@ public sealed partial class AdventureGenerator(
             ClosedMarkets = closedMarkets,
             Sites =
             [
-                .. sites.Guardian.Select(body => new ChapterSite(AdventureTrigger.GuardianSite, body.SystemName, body.SystemAddress!.Value, body.Position, body.Name)),
+                .. sites.Guardian.Select(body => new ChapterSite(AdventureTrigger.GuardianSite, body.SystemName, body.SystemAddress!.Value, body.Position, body.Name) { BodyId = body.BodyId }),
                 .. sites.Tourist.Select(site => new ChapterSite(AdventureTrigger.TouristSite, site.System, site.SystemAddress, null, site.Name)),
                 .. sites.Generation.Select(site => new ChapterSite(AdventureTrigger.GenerationSite, site.System, site.SystemAddress, null, site.Name)),
             ],
@@ -2529,6 +2557,7 @@ public sealed partial class AdventureGenerator(
             Used = used,
             DestinationAt = destinationAt,
             Destinations = destinationsTask.Result,
+            SwapAt = swapTask.Result,
         };
 
         static ChapterArea Area(InBandState state, IReadOnlyList<StationSummary> stations, IReadOnlyList<BodySummary> bodies) => new(
@@ -2541,6 +2570,26 @@ public sealed partial class AdventureGenerator(
             },
             stations,
             bodies);
+    }
+
+    /// <summary>Where the system an act-one chapter's swap is parked in is, or null with a note when it cannot be found.</summary>
+    private static async Task<StarPosition?> SwapPositionAsync(IGalaxyService search, string system, CancellationToken cancellationToken, List<string> notes)
+    {
+        try
+        {
+            if (await search.PositionAsync(system, cancellationToken).ConfigureAwait(false) is { } at)
+            {
+                return at;
+            }
+
+            notes.Add($"The galaxy search does not know {system}, where the ship to swap into is parked, so the chapter's hops are measured from the Commander.");
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            notes.Add($"The galaxy search could not find {system}, where the ship to swap into is parked ({ex.Message}), so the chapter's hops are measured from the Commander.");
+        }
+
+        return null;
     }
 
     /// <summary>Points searched around for finale chapter 1's destination.</summary>
@@ -3969,8 +4018,11 @@ public sealed partial class AdventureGenerator(
             text.AppendLine(
                 $"This is an act-one chapter, and the Guardian beacon the story needs, in {away.System}, is "
                 + $"{away.LightYears.ToString("0", CultureInfo.InvariantCulture)} light years away and out of reach: {away.Why}. "
-                + "This chapter has no beacon objective and keeps every hop within the reach. It works toward a ship that can make "
-                + "the trip: credits, a better ship, a laser or railgun or a fuel scoop. Its last objective may be \"reach\", which any ship that can make the trip meets.");
+                + (lines
+                    ? "The chapter works toward a ship that can make the trip: credits, a better ship, a laser or railgun or a fuel scoop. "
+                        + "Its last objective is met once the Commander's ship can make the trip."
+                    : "This chapter has no beacon objective and keeps every hop within the reach. It works toward a ship that can make "
+                        + "the trip: credits, a better ship, a laser or railgun or a fuel scoop. Its last objective may be \"reach\", which any ship that can make the trip meets."));
         }
 
         if (story.Beacon is { } beacon)
@@ -3979,14 +4031,14 @@ public sealed partial class AdventureGenerator(
             text.AppendLine(
                 $"This chapter ends act one at a Guardian beacon: its last objective is \"beacon\", the Commander "
                 + $"scanning the Guardian beacon in {beacon.System} with the ship's data-link scanner after charging its three pylons with laser or railgun fire. That scan is when the "
-                + "Guardian cores come aboard. The reason to go is the public layer's beacon line. That objective may be farther "
-                + "than the reach; every other hop keeps to it.");
+                + "Guardian cores come aboard. The reason to go is the public layer's beacon line."
+                + (lines ? string.Empty : " That objective may be farther than the reach; every other hop keeps to it."));
 
             if (beacon.SwapTo is { } swap)
             {
                 text.AppendLine(
                     $"The ship the Commander is in cannot make the trip, but a ship they own can: {swap}. "
-                    + "Send the Commander to swap into that ship rather than to refit this one.");
+                    + (lines ? "The chapter's first objective is the swap into that ship." : "Send the Commander to swap into that ship rather than to refit this one."));
             }
         }
 
@@ -5837,7 +5889,7 @@ public sealed partial class AdventureGenerator(
                 // Placed at the beacon d47 chose, whatever system the model wrote.
                 if (ask.Story?.Beacon is { } beacon && index == beats.Count - 1)
                 {
-                    trigger = new AdventureTrigger { Kind = TriggerKind.Beacon, SystemAddress = beacon.SystemAddress, System = beacon.System, JumpRange = beacon.EasierWith };
+                    trigger = beacon.Trigger();
                 }
                 else
                 {
@@ -5848,14 +5900,7 @@ public sealed partial class AdventureGenerator(
             {
                 if (ask.Story?.BeaconAway is { } away)
                 {
-                    trigger = new AdventureTrigger
-                    {
-                        Kind = TriggerKind.Reach,
-                        System = away.System,
-                        JumpRange = away.Carrier ? null : away.EasierWith,
-                        Unarmed = away.Unarmed,
-                        Carrier = away.Carrier ? true : null,
-                    };
+                    trigger = away.Trigger();
                 }
                 else
                 {

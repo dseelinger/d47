@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Persona;
 
 namespace D47.Core.Stories;
@@ -10,6 +11,12 @@ namespace D47.Core.Stories;
 /// </summary>
 public sealed record BeaconReach(long Address, string System, double LightYears, bool InReach, string? Why, bool Unarmed = false, bool Carrier = false, double? EasierWith = null, string? SwapTo = null)
 {
+    /// <summary>The hull symbol of the stored ship <see cref="SwapTo"/> names; null when it names none.</summary>
+    public string? SwapHull { get; init; }
+
+    /// <summary>The system the stored ship <see cref="SwapTo"/> names is parked in; null when it names none or the system is unknown.</summary>
+    public string? SwapSystem { get; init; }
+
     /// <summary>The most jumps a trip to the beacon takes with the jump range <see cref="RangeNeeded"/> gives.</summary>
     public const int MostJumps = 20;
 
@@ -84,7 +91,7 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
 
         return stored is null
             ? flown
-            : flown with { InReach = true, Why = null, Unarmed = false, EasierWith = null, SwapTo = Parked(stored) };
+            : flown with { InReach = true, Why = null, Unarmed = false, EasierWith = null, SwapTo = Parked(stored), SwapHull = EliteSpecifications.HullSymbol(stored.Type) ?? stored.Type, SwapSystem = stored.HasSystem ? stored.StarSystem : null };
     }
 
     private static string Parked(StoredShip stored)

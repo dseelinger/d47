@@ -93,7 +93,7 @@ nav_order: 115
  <rect x="458" y="164" width="402" height="60" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="484" y="200" font-size="16" fill="var(--text)">the opening, before the first</text>
  <text x="440" y="268" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">D47 builds the objectives on places that exist. The AI writes the story they tell.</text>
- <text x="440" y="294" text-anchor="middle" font-size="16" fill="var(--text-muted)">From the beacon scan on, the AI writes only the words, never a place or a count.</text>
+ <text x="440" y="294" text-anchor="middle" font-size="16" fill="var(--text-muted)">From chapter one on, the AI writes only the words, never a place or a count.</text>
 </svg>
 </section>
 <section>
@@ -539,10 +539,10 @@ chapter one, which then begins. D47 keeps the Backstory you had before as your d
 story's own words counts as none. Each story keeps the Backstory it had when you shelved it or switched it off, edits included. Act one ends when you scan the Guardian beacon nearest to you with the ship's data-link
 scanner; arriving in the beacon's system is not enough. The beacon's three pylons must be charged by laser
 or railgun fire, all within a few minutes, before the scan opens its core; the objective's hand-off says so. Before each act-one chapter D47 checks whether
-the ship you are flying or any ship you own can reach that beacon: a ship can when a laser or railgun is fitted in any mount and either you own a fleet carrier or a fuel scoop is fitted. A stored ship counts by its remembered loadout, and not while it is in transit. When only a stored ship can, the chapter ends at the beacon and its writer is told which ship and where it is parked, so the chapter can send you to swap into it. Jump range
+the ship you are flying or any ship you own can reach that beacon: a ship can when a laser or railgun is fitted in any mount and either you own a fleet carrier or a fuel scoop is fitted. A stored ship counts by its remembered loadout, and not while it is in transit. When only a stored ship can, the chapter ends at the beacon and its first objective is boarding that ship; d47 measures the chapter's later stops from the system where it is parked. Jump range
 never decides it; a ship with a short range is told the trip is easier with a longer one. When it can, the
 chapter ends at the beacon. When it cannot, the chapter has no beacon objective, keeps to a session's
-flying, and works toward a ship that can make the trip; the chapter writer is told the beacon, its
+flying, works toward a ship that can make the trip, and ends on an objective met once your ship can make it; the chapter writer is told the beacon, its
 distance, and whether the missing fuel scoop, the missing laser or railgun or both stand in the way. The chapter's last line is said before
 the core wakes, in the voice that was aboard. Each chapter is a story on this tab. When one finishes, the next is written from it
 and begins. **Switch** shelves the running story and picks another; it never abandons one.
@@ -867,8 +867,8 @@ save up for a ship and a later chapter have you buy and board it. A chapter is s
 in one session in a story shorter than three months. A longer undertaking, such as engineering, saving
 for a ship or a run of ranks, carries on across chapters.
 
-**Activity, not only travel.** From chapter two on, a chapter is a story of activity, not only travel. It may
-have as many arrive, dock, land or scan objectives as it needs.
+**Activity, not only travel.** Chapter one, and a chapter that ends at the beacon, travel: their objectives are places.
+From chapter two on, every other chapter is built on drawn activities.
 
 **Steps.** An objective can take several steps, in order, each with its own place or activity. The objective's
 lines are spoken when its last step is done. After any earlier step your core says it was done and what the next
@@ -920,7 +920,7 @@ beacon scan works back over several chapters. The writer is told how far you are
 must fall in: a chapter starting 588 light years out has a last stop between 288 and 488. The last stop is the system
 of the chapter's last place objective, and a chapter with none counts as ending where it started. A chapter built on
 drawn activities is built inside this rule, the home leg and the base rule below, with its last stop drawn from places
-that meet them. Act-one chapters and short stories are still written by the model and refused and repaired as before:
+that meet them. Short stories are still written by the model and refused and repaired as before:
 a draft outside the band is refused and goes back through the repair rounds, as does one whose last stop Galaxy search cannot measure. The
 rule does not apply to a chapter that ends at the beacon, a finale chapter, a rewrite or a short story, or to a chapter
 that starts within 500 light years, or to a chapter in the black (below). The chapter also keeps one of its two place
@@ -1021,7 +1021,7 @@ be in a chapter, counting those the chapter already has. Tons for sell and mine 
 
 ### A chapter planned in code {#drawn-chapters}
 
-A story chapter written after the beacon scan is drawn three activities, and d47 builds its objectives from them. `StoryDirector`
+A story chapter from chapter two on is drawn three activities, and d47 builds its objectives from them; a chapter that ends at the beacon is drawn none. `StoryDirector`
 calls `ChapterDraw.Draw` with the Commander's ratings, ranks, ship and `Statistics` from the last loaded Commander's game
 state, the activities the last three chapters asked for, and the activities the story refuses. A last finale chapter
 already has a land objective, and a finale chapter after the first already has a stop nearer the destination, so each
@@ -1030,7 +1030,7 @@ leaves room for one fewer place objective in the draw. Then:
 - `AdventureGenerator.ChapterPlacesAsync` gathers the places the chapter's activities need, and `ChapterPlanner.Plan`
   builds every objective: one for each activity with its drawn count, the place before it where the activity needs one,
   the sight, the Goals step, the last stop the Sol band, the home leg, the finale or the base holds the chapter to, and up
-  to two story stops, three to eight objectives in all. Each objective's function (setup, complication, turn, setback,
+  to two story stops, three to eight objectives in all. In act one, a chapter whose beacon is out of reach ends on the reach objective. Each objective's function (setup, complication, turn, setback,
   resolution) is set by code; the turn is named midpoint or all is lost at those stages.
 - One model call writes the words against that plan: the chapter's title and spine, the opening, the reply, and for each
   objective its title, reason, one to three lines, the task of an event step, and any boardings and leavings. It is told
@@ -1041,8 +1041,10 @@ leaves room for one fewer place objective in the draw. Then:
   objectives named, against the same plan, and a draft that still fails is written again with the same plan.
 - Where no plan stands, the write fails with the rule that stopped it and is not written again.
 
-A chapter before the beacon scan, and a short story, are written without drawn activities, and the model writes their objectives.
-Finale chapter 1 with no destination yet is also written by the model, which names the destination. When you refuse an objective that
+Chapter one, and an act-one chapter that ends at the beacon, are planned in code with no drawn activity: one to four places
+the Commander arrives at, docks at, lands on or scans, a Guardian site within reach among them, and the beacon scan last. When only a
+stored ship can make the trip, boarding it comes first. Chapter one when the beacon is out of reach is planned the same way and ends on
+the reach objective. A short story and a chapter written again with **Write chapter again** are written by the model, which writes their objectives. When you refuse an objective that
 held a drawn activity, only that activity is drawn again, without the refused one or the chapter's other activities, and
 the seed includes the index of the replaced objective. The chapter's activities are read back from its objectives, so
 nothing extra is stored.
