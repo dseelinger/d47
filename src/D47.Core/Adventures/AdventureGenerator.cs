@@ -809,6 +809,25 @@ public sealed class AdventureGenerator(
             LogRefusals(ask, $"{kind switch { Check.Plain => "plain repair", Check.Fidelity => "fidelity repair", _ => "repair" }} {round.ToString(CultureInfo.InvariantCulture)}", again.Step, resolved.Refusals);
         }
 
+        if (resolved.Refusals.Count > 0
+            && resolved.Refusals.All(refusal => refusal.Plain && refusal.Unplain.Count > 0 && refusal.Unplain.All(found => found.HasRewrite))
+            && Rewritten(read, resolved.Refusals) is (var lastRead, _, { Count: 0 }))
+        {
+            LogRefusals(ask, "plain rewrites put in place after the last round", PlainStep, resolved.Refusals);
+            read = lastRead;
+            resolved = await CheckAsync(read).ConfigureAwait(false);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return AdventureOutcome.Stopped;
+            }
+
+            if (outage is not null)
+            {
+                return GalaxyDown(outage, notes, started);
+            }
+        }
+
         resolved = KeepWhatTheRewriteKept(NarrateSelfNaming(resolved, ask));
 
         if (resolved.Refusals.Count > 0)
@@ -1105,6 +1124,9 @@ public sealed class AdventureGenerator(
         public string? Plain { get; init; }
 
         public string Describe() => $"{Part}: \"{Quote}\" is {(Kind == "invented" ? "a feature the game does not have" : "figurative")}; {Reason}";
+
+        /// <summary>Whether the checker gave a rewrite that differs from the quoted words.</summary>
+        public bool HasRewrite => Plain is { Length: > 0 } plain && !string.Equals(plain, Quote.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 
     private static List<PlainPart> SpineParts(string name, AdventureSpine spine) =>
@@ -1249,6 +1271,12 @@ public sealed class AdventureGenerator(
             }
 
             unplain = await PlainAsync(ask, SpineParts(name, spine), cancellationToken).ConfigureAwait(false);
+        }
+
+        if (unplain.Count > 0 && unplain.All(found => found.HasRewrite) && Rewritten(name, spine, unplain) is (var lastName, var lastSpine, { Count: 0 }))
+        {
+            logger.LogInformation("Draft {Draft}, plain spine rewrites put in place after the last round: {Objections}", ask.Draft, string.Join(" ", unplain.Select(found => found.Describe())));
+            (name, spine, unplain) = (lastName, lastSpine, []);
         }
 
         return (name, spine, unplain);

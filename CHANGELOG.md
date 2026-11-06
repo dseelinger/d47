@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter whose outline or objectives still had a figurative phrase after the last rewording round now takes the plain wording the check offered for it, instead of failing as "not written plainly". A phrase the check gave no plain wording for still fails.
+
 Every character the running story has introduced is now listed under its name on Asset Mgmt › Characters and held on the Story comms channel, whether or not the story marks them primary. Before, a character who was not primary appeared in neither.
 
 A second chapter of a story still in act one now continues from where the first left off, instead of opening on the same scene, call and reveal. It is not handed the opening, set-up and catalyst beats again, and the writer is told how the previous chapter's spine said it ends.
