@@ -2,8 +2,63 @@ using System.Collections.Immutable;
 
 namespace D47.Core.Journal;
 
-/// <summary>One minor faction's share of a system. <paramref name="Influence"/> is a fraction, 0.0 to 1.0.</summary>
-public sealed record FactionInfluence(string Name, double Influence);
+/// <summary>An ordered list of state names that compares by its items.</summary>
+public sealed class StateNames : IReadOnlyList<string>, IEquatable<StateNames>
+{
+    public static readonly StateNames None = new([]);
+
+    private readonly string[] _names;
+
+    public StateNames(IEnumerable<string> names)
+    {
+        ArgumentNullException.ThrowIfNull(names);
+        _names = [.. names];
+    }
+
+    public int Count => _names.Length;
+
+    public string this[int index] => _names[index];
+
+    public IEnumerator<string> GetEnumerator() => ((IEnumerable<string>)_names).GetEnumerator();
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public bool Equals(StateNames? other) => other is not null && _names.SequenceEqual(other._names);
+
+    public override bool Equals(object? obj) => Equals(obj as StateNames);
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        foreach (var name in _names)
+        {
+            hash.Add(name);
+        }
+
+        return hash.ToHashCode();
+    }
+}
+
+/// <summary>
+/// One minor faction's share of a system, with its government, allegiance, localised happiness and the names
+/// of its states. <paramref name="Influence"/> is a fraction, 0.0 to 1.0. A field the journal omits is empty.
+/// </summary>
+public sealed record FactionInfluence(
+    string Name,
+    double Influence,
+    string Government = "",
+    string Allegiance = "",
+    string Happiness = "",
+    StateNames? ActiveStates = null,
+    StateNames? PendingStates = null,
+    StateNames? RecoveringStates = null)
+{
+    public StateNames ActiveStates { get; init; } = ActiveStates ?? StateNames.None;
+
+    public StateNames PendingStates { get; init; } = PendingStates ?? StateNames.None;
+
+    public StateNames RecoveringStates { get; init; } = RecoveringStates ?? StateNames.None;
+}
 
 /// <summary>One side of a conflict. <paramref name="Stake"/> is empty when the side holds nothing at stake.</summary>
 public sealed record ConflictSide(string Name, string Stake, int WonDays);
@@ -134,9 +189,8 @@ public sealed record SystemStandings
         }
 
         var factions = journalEvent.Items("Factions")
-            .Select(faction => (Name: faction.String("Name"), Influence: faction.Double("Influence")))
-            .Where(pair => pair.Name is not null && pair.Influence is not null)
-            .Select(pair => new FactionInfluence(pair.Name!, pair.Influence!.Value))
+            .Select(Faction)
+            .OfType<FactionInfluence>()
             .ToList();
 
         var conflicts = journalEvent.Items("Conflicts")
@@ -190,6 +244,22 @@ public sealed record SystemStandings
             ? held.SetItem(held.Count - 1, reading)
             : [last, reading];
     }
+
+    private static FactionInfluence? Faction(System.Text.Json.JsonElement raw) =>
+        raw.String("Name") is { } name && raw.Double("Influence") is { } influence
+            ? new FactionInfluence(
+                name,
+                influence,
+                raw.String("Government") ?? string.Empty,
+                raw.String("Allegiance") ?? string.Empty,
+                raw.String("Happiness_Localised") ?? string.Empty,
+                StatesOf(raw, "ActiveStates"),
+                StatesOf(raw, "PendingStates"),
+                StatesOf(raw, "RecoveringStates"))
+            : null;
+
+    private static StateNames StatesOf(System.Text.Json.JsonElement raw, string property) =>
+        new(raw.Items(property).Select(state => state.String("State")).OfType<string>());
 
     private static SystemConflict? Conflict(System.Text.Json.JsonElement raw)
     {
