@@ -129,7 +129,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         }
 
         _body.Children.Add(Section("Jump", JumpNote, null, JumpSection(commander, story, busy)));
-        _body.Children.Add(Section("Beats", BeatsNote, null, BeatSection(commander, active, busy)));
+        _body.Children.Add(Section("Objectives", BeatsNote, null, BeatSection(commander, active, busy)));
         _body.Children.Add(Section("Checkpoints", CheckpointsNote, null, CheckpointSection(commander, story, busy)));
     }
 
@@ -143,15 +143,15 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     internal const string OpenLabel = "Open";
     internal const string NoLine = "—";
     internal const string JumpNote = "Moves the story so the chosen clue, or the finale, is due now, and writes its chapter.";
-    internal const string BeatsNote = "Next beat fires the waiting beat without its journal event.";
+    internal const string BeatsNote = "Next objective fires the waiting objective without its journal event.";
     internal const string CheckpointsNote = "One is taken as each chapter begins. Rewind restores it and pauses the story.";
     internal const string UnderWayHead = "Jump · Beats · Checkpoints";
     internal const string NoBeatsNotice = "No chapter or Short Story is under way.";
     internal const string NoStoryNotice = "No story is running.";
     internal const string NoCheckpointsNotice = "No checkpoints yet.";
-    internal const string StirringNotice = "Next beat returns once D47 has said the last one.";
+    internal const string StirringNotice = "Next objective returns once D47 has said the last one.";
 
-    internal const string NothingUnderWay = "No story or Short Story is running. Jump, beats and checkpoints show here once one starts.";
+    internal const string NothingUnderWay = "No story or Short Story is running. Jump, objectives and checkpoints show here once one starts.";
 
     private static StackPanel Section(string name, string? note, Control? end, Control body)
     {
@@ -481,6 +481,9 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
 
     internal static string Time(DateTimeOffset at) => at.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
 
+    internal static string HeaderText(string kind, string? stage, string? step) =>
+        string.Join(" · ", new[] { kind, stage, step }.Where(part => part is not null));
+
     private StackPanel BeatSection(string? commander, IReadOnlyList<AdventureStanding> active, bool busy)
     {
         var holder = new StackPanel { Spacing = 12 };
@@ -491,7 +494,9 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             return holder;
         }
 
-        var chapters = _director.Stories.Current(commander)?.Chapters ?? [];
+        var current = _director.Stories.Current(commander);
+        var chapters = current?.Chapters ?? [];
+        var stage = current is null ? null : StoryClues.StageName(StoryClues.Stage(current));
 
         foreach (var standing in active)
         {
@@ -504,7 +509,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             var heading = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Margin = new Thickness(0, 6, 0, 8) };
             Inks(heading, ThemeManager.WhiteKey, ThemeManager.GreyKey);
             heading.Children.Add(ListRow.Name(new TextBlock { Text = adventure.Name, TextWrapping = TextWrapping.Wrap }));
-            heading.Children.Add(Chrome(standing.Step() is { } step ? $"{kind} · {step}" : kind, ListRow.AsideSize, ThemeManager.AKey));
+            heading.Children.Add(Chrome(HeaderText(kind, number >= 0 ? stage : null, standing.Step()), ListRow.AsideSize, ThemeManager.AKey));
 
             var ladder = new StackPanel { Spacing = 2 };
             var stirring = _surface.Book.IsStirring(commander, adventure.Key);
@@ -564,7 +569,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
                 notes.Children.Add(AdventuresPage.Text(StirringNotice, TypeScale.ControlLarge, ThemeManager.Grey2Key));
             }
 
-            var next = Tile("NextBeat", "Next beat", BeatButtonWidth, !busy && !stirring);
+            var next = Tile("NextBeat", "Next objective", BeatButtonWidth, !busy && !stirring);
             var key = adventure.Key;
             var name = beat.Title;
             next.Click += (_, _) => Act(

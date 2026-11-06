@@ -1273,8 +1273,7 @@ it, since both belong to this callout.
 
 #### Backstory reminder {#backstory-nudge}
 
-After an objective whose function is a midpoint, a turn or
-"all is lost", one more plain line says the story has turned and your Backstory still describes
+After an objective whose function is a turn or a setback, one more plain line says the story has turned and your Backstory still describes
 where it began. It is said only when a Backstory is set and only if the objective itself was said. No model is called and nothing writes to your Backstory.
 
 While an objective is between firing and being said, the Stories tab shows that the core is

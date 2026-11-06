@@ -811,7 +811,7 @@ public sealed record AdventureBeat
     /// <summary>The chapter's name, which is what the card shows.</summary>
     public required string Title { get; init; }
 
-    /// <summary>Its place in the structure — setup, catalyst, midpoint, all is lost, finale.</summary>
+    /// <summary>Its place in the structure — setup, complication, turn, setback, resolution.</summary>
     public string? Function { get; init; }
 
     /// <summary>What the Commander does to reach this beat, in order; the beat fires when its last step does.</summary>

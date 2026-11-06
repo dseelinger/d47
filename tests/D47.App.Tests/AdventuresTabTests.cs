@@ -164,10 +164,10 @@ public class AdventuresTabTests
         Assert.Contains(drawn, text => text.Contains("THE LANTERN ROUTE"));
         Assert.Contains(drawn, text => text.Contains("YOURS") && text.Contains("LANTERN"));
         Assert.Contains(drawn, text => text.Contains("WRITTEN BY ARCHIVIST") && text.Contains("WAITING FOR YOUR YES"));
-        Assert.Contains(drawn, text => text.Contains("STEP 1 OF 2"));
+        Assert.Contains(drawn, text => text.Contains("OBJECTIVE 1 OF 2"));
         Assert.Contains(drawn, text => text.Contains("Next: arrive at Ossen's Lantern"));
 
-        // A draft has no step: it is not being flown, and "Step 1 of 2" on a story nobody has agreed to reads
+        // A draft has no step: it is not being flown, and "Objective 1 of 2" on a story nobody has agreed to reads
         // as one already under way.
         Assert.DoesNotContain(drawn, text => text.Contains("THE DRAFT") && text.Contains("STEP"));
         Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Change something"));
@@ -238,7 +238,7 @@ public class AdventuresTabTests
         var drawn = Drawn(panel);
 
         Assert.Contains(drawn, text => text.Contains("Scoop here."));
-        Assert.Contains(drawn, text => text.Contains("Step 2 of 2"));
+        Assert.Contains(drawn, text => text.Contains("Objective 2 of 2"));
 
  // What to do next, headed "Next" and phrased as an instruction.
         Assert.Contains(drawn, text => text.Contains("Next"));
@@ -557,9 +557,9 @@ public class AdventuresTabTests
 
         var drawn = Visible(panel);
 
-        Assert.Contains(drawn, text => text == "THE LANTERN ROUTE ·\u00A0Step\u00A02\u00A0of\u00A02");
+        Assert.Contains(drawn, text => text == "THE LANTERN ROUTE ·\u00A0Objective\u00A02\u00A0of\u00A02");
 
-        var title = Top(panel, "THE LANTERN ROUTE ·\u00A0Step\u00A02\u00A0of\u00A02");
+        var title = Top(panel, "THE LANTERN ROUTE ·\u00A0Objective\u00A02\u00A0of\u00A02");
         var next = Top(panel, "Next: Dock at Maren Anchorage in Dyson's Hollow.");
         var newest = Top(panel, "Nobody I can name yet.");
         var older = Top(panel, "The lantern is still turning.");

@@ -215,10 +215,10 @@ public class AdventureTellingTests
     {
         var book = Wired();
 
-        Assert.Equal("Step 1 of 5", book.Standing("F1", "the-lantern-route")!.Step());
+        Assert.Equal("Objective 1 of 5", book.Standing("F1", "the-lantern-route")!.Step());
 
         book.Observe(Jump(Lantern, Accepted.AddMinutes(1)), "F1");
-        Assert.Equal("Step 2 of 5", book.Standing("F1", "the-lantern-route")!.Step());
+        Assert.Equal("Objective 2 of 5", book.Standing("F1", "the-lantern-route")!.Step());
 
         foreach (var journalEvent in WholeRoute(Accepted.AddMinutes(1)))
         {
@@ -228,7 +228,7 @@ public class AdventureTellingTests
         var done = book.Standing("F1", "the-lantern-route")!;
 
         Assert.True(done.IsDone);
-        Assert.Equal("Step 5 of 5", done.Step());
+        Assert.Equal("Objective 5 of 5", done.Step());
     }
 
     /// <summary>A story nobody has agreed to has no step: a count on it would read as one under way.</summary>

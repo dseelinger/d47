@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Stories;
 
-/// <summary>The story bench: Jump, Next beat and Checkpoints with Rewind, over the story in the data folder. Built only while the App has the bench on.</summary>
+/// <summary>The story bench: Jump, Next objective and Checkpoints with Rewind, over the story in the data folder. Built only while the App has the bench on.</summary>
 public sealed partial class StoryBench
 {
     /// <summary>The folder under the data folder that holds the checkpoints.</summary>

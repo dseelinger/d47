@@ -201,7 +201,7 @@ public sealed record AdventureStanding
         var of = Adventure.Beats.Count;
         var at = Math.Min(Fired.Count + (IsDone && Ended is null ? 0 : 1), of);
 
-        return $"Step {at.ToString(CultureInfo.InvariantCulture)} of {of.ToString(CultureInfo.InvariantCulture)}";
+        return $"Objective {at.ToString(CultureInfo.InvariantCulture)} of {of.ToString(CultureInfo.InvariantCulture)}";
     }
 
     /// <summary>What the Commander did to reach where they are — the last beat's trigger, in words.</summary>
@@ -272,10 +272,10 @@ public sealed record AdventureStanding
     private string? CurrentBeatTitle() =>
         Current < Adventure.Beats.Count ? Adventure.Beats[Current].Title : null;
 
-    /// <summary>Whether a beat's function marks the story turning: the same words as <see cref="TurnReached"/>, plus "all is lost".</summary>
+    /// <summary>Whether a beat's function marks the story turning: the same words as <see cref="TurnReached"/>, plus "all is lost" and "setback".</summary>
     public static bool IsTurning(string? function) =>
         function is not null
-        && new[] { "midpoint", "turn", "all is lost" }.Any(word => function.Contains(word, StringComparison.OrdinalIgnoreCase));
+        && new[] { "midpoint", "turn", "all is lost", "setback" }.Any(word => function.Contains(word, StringComparison.OrdinalIgnoreCase));
 
     private bool FunctionReached(params string[] functions)
     {

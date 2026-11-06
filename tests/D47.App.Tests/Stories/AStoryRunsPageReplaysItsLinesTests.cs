@@ -229,7 +229,7 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         var chapter = rows.FindIndex(row => row is StoryRunSection { Number: 2 });
         Assert.InRange(FromTop(page, chapter), -1, 1);
 
-        Pick(page, StoryRunPage.BeatPickerName, "Beat 2 · Silence");
+        Pick(page, StoryRunPage.BeatPickerName, "Objective 2 · Silence");
         var beat = rows.FindIndex(row => row is StoryRunEntry entry && entry.Line.Body == "ch2 Silence 0");
         Assert.InRange(FromTop(page, beat), -1, 1);
 
@@ -445,7 +445,7 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         var page = Opened(rig);
 
         Pick(page, StoryRunPage.ChapterPickerName, "Chapter 2 · Static from Ross");
-        Pick(page, StoryRunPage.BeatPickerName, "Beat 2 · Silence");
+        Pick(page, StoryRunPage.BeatPickerName, "Objective 2 · Silence");
         Press(Named(page, "PlayAllFromJump"));
 
         Assert.Equal("ch2 Silence 0", rig.Player.Now!.Line.Body);

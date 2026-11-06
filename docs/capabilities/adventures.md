@@ -436,13 +436,13 @@ being written refuses the switch.
 length, chapters so far, clues given, and the days it was picked and last spoke. Below it are every line the run's
 record holds, in order, in one section per chapter with the chapter's name and the day of its first line. A clue,
 reaction, ending or other story line said between chapters is listed under the chapter before it. Each line shows
-the speaker's picture and name, its kind (Chapter beat, Clue, Reaction, Ending or Story line), the time and the
-text, and **Play**. Play plays a kept clip as a message's Play does, a clip in your own voice included. **Jump to** has two lists that open in the page: **Chapter**, then **Beat** within that chapter.
+the speaker's picture and name, its kind (Objective, Clue, Reaction, Ending or Story line), the time and the
+text, and **Play**. Play plays a kept clip as a message's Play does, a clip in your own voice included. **Jump to** has two lists that open in the page: **Chapter**, then **Objective** within that chapter.
 Choosing one scrolls the page to it. A run from before the record was kept says **No lines kept** and shows each
 chapter's text as it was told instead.
 
 **Play all**, on every line and at the end of the Jump to row, plays the run's lines in order from that line, or from
-the chosen chapter or beat. The line playing is marked **▶ Playing** on a cyan
+the chosen chapter or objective. The line playing is marked **▶ Playing** on a cyan
 ground, and a bar under Jump to shows the speaker's picture, **Playing 23 of 142** with the speaker's name, the line,
 and **Pause**, **Skip** and **Stop**. While it plays, other speech is silenced: an answer, a callout or radio chatter
 from anywhere else is dropped, not saved for later. Music, ambience and cues play as usual. A danger alert pauses

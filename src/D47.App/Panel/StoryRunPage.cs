@@ -23,7 +23,7 @@ public sealed class StoryRunPage : UserControl, IPageSummary
 
     public const string JumpLabel = "Jump to";
     public const string ChapterLabel = "Chapter";
-    public const string BeatLabel = "Beat";
+    public const string BeatLabel = "Objective";
     public const string NoLinesLabel = "No lines kept";
     public const string NoLinesText = "Lines from before this version were not kept, so there is nothing to play. Each chapter's text was kept, and is below.";
     public const string GoneText = "That story run is no longer on file.";
@@ -387,8 +387,8 @@ public sealed class StoryRunPage : UserControl, IPageSummary
 
     internal static string BeatName(StoryRunSection section, int beat) =>
         section.Chapter?.Beats.ElementAtOrDefault(beat) is { } found
-            ? $"Beat {(beat + 1).ToString(CultureInfo.InvariantCulture)} · {found.Title}"
-            : $"Beat {(beat + 1).ToString(CultureInfo.InvariantCulture)}";
+            ? $"Objective {(beat + 1).ToString(CultureInfo.InvariantCulture)} · {found.Title}"
+            : $"Objective {(beat + 1).ToString(CultureInfo.InvariantCulture)}";
 
     private static List<int> BeatsOf(StoryRunSection section) =>
         [.. section.Entries.Select(entry => entry.Beat).Where(beat => beat >= 0).Distinct().Order()];

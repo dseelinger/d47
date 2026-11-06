@@ -112,6 +112,36 @@ public sealed class TheStoryBenchPageTests
         Assert.Null(Find(rig.Panel, "NextBeat"));
     }
 
+    [Fact]
+    public void AChapterHeaderNamesTheStoryStageBetweenChapterAndObjective()
+    {
+        Assert.Equal("Story chapter 2 · Fun and Games · Objective 3 of 5", StoryBenchPage.HeaderText("Story chapter 2", "Fun and Games", "Objective 3 of 5"));
+        Assert.Equal("Short Story · Objective 1 of 3", StoryBenchPage.HeaderText("Short Story", null, "Objective 1 of 3"));
+    }
+
+    [AvaloniaFact]
+    public void AStoryChapterHeaderNamesTheStoryStage()
+    {
+        var rig = Build(benchOn: true);
+        rig.Book.Write("F1", new Adventure
+        {
+            Key = "one",
+            Name = "The First Chapter",
+            Source = AdventureSource.Generated,
+            StoryId = StoryFixture.Story.Id,
+            Opening = "Begins.",
+            Beats = [Beat("The Lantern", "setup", 1001), Beat("The Survey", "complication", 1002), Beat("The Anchorage", "resolution", 1003)],
+        });
+        Assert.Null(rig.Book.Begin("F1", "one", Now));
+        rig.Book.Drain();
+
+        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
+        Dispatcher.UIThread.RunJobs();
+
+        var stage = StoryClues.StageName(StoryClues.Stage(rig.Stories.Current("F1")!));
+        Assert.Contains($"Story chapter 1 · {stage} · Objective 1 of 3", Drawn(rig.Panel), StringComparer.OrdinalIgnoreCase);
+    }
+
     [AvaloniaFact]
     public void AShortStoryListsItsBeatsAndNextBeatStepsTheWaitingOne()
     {
@@ -123,7 +153,7 @@ public sealed class TheStoryBenchPageTests
 
         var drawn = Drawn(rig.Panel);
         Assert.Contains(drawn, text => string.Equals(text, "The Lantern Route", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(drawn, text => text.StartsWith("Short Story · Step", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(drawn, text => text.StartsWith("Short Story · Objective", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(drawn, text => string.Equals(text, "Waiting", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(drawn, text => string.Equals(text, "setup", StringComparison.OrdinalIgnoreCase));
         Assert.Contains("The Lantern", drawn);

@@ -35,7 +35,7 @@ From chapter two on, this is a story of activity, not only travel. Any mission f
 The story has been running for 9 days, and the Commander has not yet scanned a Guardian beacon.
 Never write a line that states the hidden story. A chapter may echo a clue the Commander has had.
 
-Structure: exactly 5 objectives, in this order of function: setup, catalyst, midpoint, all is lost, finale.
+Structure: exactly 5 objectives, in this order of function: setup, complication, turn, setback, resolution.
 Each objective waits for exactly one of thirty-seven things, and nothing else exists:
 - "arrive": the Commander's ship arrives in a named star system.
 - "dock": the Commander docks at a named station in a named system.

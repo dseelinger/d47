@@ -97,6 +97,16 @@ public class AnAllIsLostBeatNudgesTheBackstoryTests : BackstoryNudgeTestBase
         Assert.False(AdventureStanding.IsTurning("finale"));
         Assert.False(AdventureStanding.IsTurning(null));
     }
+
+    [Theory]
+    [InlineData("setback")]
+    [InlineData("midpoint")]
+    [InlineData("turn")]
+    [InlineData("all is lost")]
+    public void ASetbackAndEveryOldTurningWordMarkTheStoryTurning(string function)
+    {
+        Assert.True(AdventureStanding.IsTurning(function));
+    }
 }
 
 public class NoNudgeWithoutABackstoryTests : BackstoryNudgeTestBase

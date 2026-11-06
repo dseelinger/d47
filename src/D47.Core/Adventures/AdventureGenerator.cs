@@ -26,10 +26,10 @@ public enum AdventureLength
     /// <summary>Setup, turn, resolution.</summary>
     Short,
 
-    /// <summary>Setup, catalyst, midpoint, all is lost, finale.</summary>
+    /// <summary>Setup, complication, turn, setback, resolution.</summary>
     Evening,
 
-    /// <summary>The sheet: eight or more.</summary>
+    /// <summary>Opening, setup, complication, hesitation, turn, setback, resolution, closing.</summary>
     Long,
 }
 
@@ -383,8 +383,8 @@ public sealed class AdventureGenerator(
     public static (int Beats, string Sheet) Structure(AdventureLength length) => length switch
     {
         AdventureLength.Short => (3, "setup, turn, resolution"),
-        AdventureLength.Long => (8, "opening image, setup, catalyst, debate, midpoint, all is lost, finale, final image"),
-        _ => (5, "setup, catalyst, midpoint, all is lost, finale"),
+        AdventureLength.Long => (8, "opening, setup, complication, hesitation, turn, setback, resolution, closing"),
+        _ => (5, "setup, complication, turn, setback, resolution"),
     };
 
     /// <summary>The hop a long-haul story chapter may make: from the bubble to Sagittarius A*.</summary>

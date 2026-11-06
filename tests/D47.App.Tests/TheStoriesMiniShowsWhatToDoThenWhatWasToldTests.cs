@@ -29,7 +29,7 @@ public class TheStoriesMiniShowsWhatToDoThenWhatWasToldTests
         public StoryDirector Director => Surface.Stories!;
     }
 
-    private const string Title = "THE FIRST LIGHT ·\u00A0Step\u00A01\u00A0of\u00A01";
+    private const string Title = "THE FIRST LIGHT ·\u00A0Objective\u00A01\u00A0of\u00A01";
 
     private static Mini Open(
         Func<AdventureAsk, DateTimeOffset, CancellationToken, Task<AdventureOutcome>>? write = null, SpeakerPortraits? portraits = null)
@@ -242,7 +242,7 @@ public class TheStoriesMiniShowsWhatToDoThenWhatWasToldTests
         Assert.True(Until(() => Block(mini, said => said.StartsWith("TRAVEL TO ANLAVE", StringComparison.OrdinalIgnoreCase)) is not null));
 
         var title = Said(Block(mini, said => said.StartsWith("TRAVEL TO ANLAVE", StringComparison.OrdinalIgnoreCase))!);
-        Assert.EndsWith("Step 1 of 1", title);
+        Assert.EndsWith("Objective 1 of 1", title);
         Assert.Null(Block(mini, said => said.StartsWith("THE FIRST LIGHT", StringComparison.Ordinal)));
         Assert.NotNull(Block(mini, said => said.StartsWith("Next: ", StringComparison.Ordinal) && said.Contains("Anlave", StringComparison.Ordinal)));
 

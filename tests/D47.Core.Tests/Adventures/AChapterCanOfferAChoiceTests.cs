@@ -474,7 +474,7 @@ public sealed class AChapterCanOfferAChoiceTests
         _book.Choose("F1", Key, 1, At(3));
         _book.Observe(Mission("MissionAbandoned", 4), "F1");
 
-        Assert.Equal("Step 2 of 3", Standing().Step());
+        Assert.Equal("Objective 2 of 3", Standing().Step());
         Assert.Equal("ended: Gone to ground", Standing().Place());
     }
 

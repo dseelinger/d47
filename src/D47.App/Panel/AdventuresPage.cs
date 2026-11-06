@@ -869,7 +869,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             {
                 AdventureLength.Short => "Three objectives: setup, turn, resolution.",
                 AdventureLength.Long => "Eight objectives or more.",
-                _ => "Five objectives: setup, catalyst, midpoint, all is lost, finale.",
+                _ => "Five objectives: setup, complication, turn, setback, resolution.",
             };
 
             shipHint.Text = thisShipOnly ? "Only the ship you are flying now." : "Any ship you own may be part of it.";

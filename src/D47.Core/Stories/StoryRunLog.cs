@@ -18,7 +18,7 @@ public sealed record StoryRunSection(int Number, string? Key, string? Name, Adve
 /// <summary>A run's recorded lines in chapter sections, for its page on the Story bench.</summary>
 public static class StoryRunLog
 {
-    public const string ChapterBeat = "Chapter beat";
+    public const string ChapterBeat = "Objective";
     public const string Clue = "Clue";
     public const string Reaction = "Reaction";
     public const string Ending = "Ending";
