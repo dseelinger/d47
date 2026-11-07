@@ -361,15 +361,15 @@ internal sealed class StoryFixtures : IDisposable
         return beacon with { Z = beacon.Z + lightYears };
     }
 
-    public static JournalEvent DataScanned(DateTimeOffset at) =>
-        AdventureFixtures.Event($$"""{ "timestamp":"{{AdventureFixtures.Stamp(at)}}", "event":"DataScanned", "Type":"$Datascan_AncientBeacon;" }""");
+    public static JournalEvent AncientKey(DateTimeOffset at) =>
+        AdventureFixtures.Event($$"""{ "timestamp":"{{AdventureFixtures.Stamp(at)}}", "event":"CollectCargo", "Type":"ancientkey", "Count":1, "Stolen":false }""");
 
     /// <summary>Jumps to a beacon system and data-links there; returns what the scan woke.</summary>
     public CoreWaking? ScanBeacon(string frontierId, long address, DateTimeOffset at)
     {
         Director.Observe(AdventureFixtures.Jump(address, at), frontierId);
 
-        return Director.Observe(DataScanned(at), frontierId);
+        return Director.Observe(AncientKey(at), frontierId);
     }
 
     /// <summary>A fixture over a provider that answers each of <paramref name="answers"/> in turn.</summary>
@@ -410,7 +410,7 @@ internal sealed class StoryFixtures : IDisposable
         Assert.Null(await Director.PickAsync("F1", Id, now, CancellationToken.None));
 
         Director.Observe(BeaconFixture.JumpTo(Beacon, BeaconAddress), "F1");
-        Director.Observe(BeaconFixture.DataPoint(), "F1");
+        Director.Observe(BeaconFixture.AncientKey(), "F1");
     }
 
     /// <summary>
@@ -454,7 +454,7 @@ internal sealed class StoryFixtures : IDisposable
 
         if (trigger.Kind == TriggerKind.Beacon)
         {
-            Book.Observe(DataScanned(at.AddSeconds(30)), frontierId);
+            Book.Observe(AncientKey(at.AddSeconds(30)), frontierId);
             ScanBeacon(frontierId, trigger.SystemAddress!.Value, at.AddSeconds(30));
         }
     }

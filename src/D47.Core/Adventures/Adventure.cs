@@ -377,7 +377,7 @@ public sealed record AdventureTrigger
         TriggerKind.Rank => $"reach {Careers.RankSaid(Career, Rank)}",
         TriggerKind.Board => $"board {Article(Knowledge.EliteSpecifications.HullName(ShipType) ?? ShipType ?? "an unknown ship")}",
         TriggerKind.Reach => $"fit out a ship that can reach the beacon in {System?.Trim() ?? "the Guardian beacon's system"}",
-        TriggerKind.Beacon => $"scan the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}",
+        TriggerKind.Beacon => $"collect the Ancient Key at the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}",
         TriggerKind.Site => Filter switch
         {
             GuardianSite => $"fly to the Guardian site on {Body ?? Address(SystemAddress, BodyId)}{In()}",
@@ -450,7 +450,7 @@ public sealed record AdventureTrigger
             TriggerKind.Rank => $"reached {Careers.RankSaid(Career, Rank)}",
             TriggerKind.Board => ShipType is null ? null : $"boarded {Article(Knowledge.EliteSpecifications.HullName(ShipType) ?? ShipType)}",
             TriggerKind.Reach => Named(System) is { } system ? $"fitted out a ship that can reach the beacon in {system}" : null,
-            TriggerKind.Beacon => (Named(System) ?? BeaconName(SystemAddress)) is { } system ? $"scanned the Guardian beacon in {system}" : null,
+            TriggerKind.Beacon => (Named(System) ?? BeaconName(SystemAddress)) is { } system ? $"collected the Ancient Key at the Guardian beacon in {system}" : null,
             TriggerKind.Site => Filter switch
             {
                 GuardianSite => Named(Body) is { } body ? $"flew to the Guardian site on {body}{In()}" : null,
@@ -637,7 +637,7 @@ public sealed record AdventureTrigger
         TriggerKind.Scan =>
             $"Next: {Describe()} — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before.",
         TriggerKind.Beacon =>
-            $"Next: scan the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}. Charge its three pylons with laser or railgun fire, all within a few minutes, then data-link scan the core it opens. It releases an Ancient Key, which needs a cargo scoop or collector limpet and 1 t of free cargo.{EasierWith()}",
+            $"Next: collect the Ancient Key at the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}. Charge its three pylons with laser or railgun fire, all within a few minutes, then data-link scan the core it opens. It releases the key; collecting it completes the objective, and it needs a cargo scoop or collector limpet and 1 t of free cargo.{EasierWith()}",
         TriggerKind.Site when Filter == TouristSite => $"Next: {Describe()} with the ship's data-link scanner.",
         TriggerKind.Reach when Carrier == true =>
             $"Next: fit a laser or railgun to the ship you take to the beacon in {System?.Trim() ?? "the Guardian beacon's system"}. Its pylons are charged by weapon fire before it can be scanned.",

@@ -128,7 +128,7 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
         Settle(fixtures, Now.AddMinutes(2));
         Assert.Equal(TriggerKind.Beacon, fixtures.Book.Standing("F1", key)!.CurrentBeat!.Trigger.Kind);
 
-        const string Refusal = $"The beacon scan is the one objective the journal has to show. Scan the beacon in {Beacon}.";
+        const string Refusal = $"The Ancient Key is the one objective the journal has to show. Collect the Ancient Key at the beacon in {Beacon}.";
 
         Assert.Equal(Refusal, fixtures.Director.MarkObjectiveDone("F1", Now.AddMinutes(5)));
         Assert.Equal(Refusal, fixtures.Director.MarkDoneRefusal("F1", key));

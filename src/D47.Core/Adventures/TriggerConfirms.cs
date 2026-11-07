@@ -13,7 +13,7 @@ internal static class TriggerConfirms
         [TriggerKind.Scan] = "that body was scanned — not what the scan found beyond what the game state lists",
         [TriggerKind.Rank] = "a promotion to at least that rank in that career — not how it was earned",
         [TriggerKind.Board] = "the Commander bought or swapped into that hull — not the ship's name, history or previous owner",
-        [TriggerKind.Beacon] = "data was scanned from a Guardian beacon in that system — not what the data says",
+        [TriggerKind.Beacon] = "the Ancient Key was collected at a Guardian beacon in that system — not what the data says",
         [TriggerKind.Bounty] = "bounties were collected, anywhere — not who the targets were, their crimes or their number beyond the count",
         [TriggerKind.Bond] = "kill bonds were earned in a conflict zone, optionally for one faction — not who was killed, who won or whether a fight was broken off",
         [TriggerKind.OnFootBond] = "kill bonds were earned on foot in a ground conflict zone — not who was killed, who won or whether a fight was broken off",
@@ -64,7 +64,7 @@ internal static class TriggerConfirms
         [TriggerKind.Event] = "that event happened as many times as the count, with those fields — not why, where, or what followed",
     };
 
-    private const string StockBeacon = "data was scanned from a Guardian beacon in that system, and the story's Guardian cores came aboard with it — not what the data says";
+    private const string StockBeacon = "the Ancient Key was collected at a Guardian beacon in that system, and the story's Guardian cores came aboard with it — not what the data says";
 
     /// <summary>What a line may state as fact and what is the story's own; the story prompts and the fidelity check carry it verbatim.</summary>
     internal const string Rule =

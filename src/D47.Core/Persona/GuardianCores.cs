@@ -120,14 +120,17 @@ public sealed class GuardianCores(Func<CoreHold>? hold = null)
     }
 
     /// <summary>
-    /// Whether this event is a Guardian beacon scan, given the system the Commander is in. <c>DataScanned</c> names
-    /// no system, so the system is the caller's.
+    /// Whether this event is the Ancient Key collected at a Guardian beacon, given the system the Commander is in.
+    /// <c>CollectCargo</c> names no system, so the system is the caller's.
     /// </summary>
     public static bool IsBeaconScan(JournalEvent journalEvent, long? systemAddress)
     {
         ArgumentNullException.ThrowIfNull(journalEvent);
 
-        return journalEvent.Kind == "DataScanned" && systemAddress is { } address && Beacons.ContainsKey(address);
+        return journalEvent.Kind == "CollectCargo"
+            && string.Equals(journalEvent.Raw.String("Type"), "ancientkey", StringComparison.OrdinalIgnoreCase)
+            && systemAddress is { } address
+            && Beacons.ContainsKey(address);
     }
 
     /// <summary>Whether the event is a scan of a tourist beacon.</summary>

@@ -24,9 +24,9 @@ public sealed class ChapterOneEndsAtABeaconTests
     }
 
     [Fact]
-    public void AScanInAnyOfTheTwentyEightSystemsCountsAsABeaconScan()
+    public void TheKeyInAnyOfTheTwentyEightSystemsCountsAsABeaconScan()
     {
-        var scan = AdventureFixtures.Event("""{ "timestamp":"2026-09-30T12:00:00Z", "event":"DataScanned", "Type":"$Datascan_AncientBeacon;" }""");
+        var scan = AdventureFixtures.Event("""{ "timestamp":"2026-09-30T12:00:00Z", "event":"CollectCargo", "Type":"ANCIENTKEY" }""");
 
         Assert.True(GuardianCores.IsBeaconScan(scan, 84926173882));
         Assert.True(GuardianCores.IsBeaconScan(scan, 319849220451));
@@ -54,7 +54,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         Assert.Equal(BeaconAddress, chapter.Beats[^1].Trigger.SystemAddress);
         Assert.Equal(Beacon, chapter.Beats[^1].Trigger.System);
         Assert.Equal(
-            $"Next: scan the Guardian beacon in {Beacon}. Charge its three pylons with laser or railgun fire, all within a few minutes, then data-link scan the core it opens. It releases an Ancient Key, which needs a cargo scoop or collector limpet and 1 t of free cargo.",
+            $"Next: collect the Ancient Key at the Guardian beacon in {Beacon}. Charge its three pylons with laser or railgun fire, all within a few minutes, then data-link scan the core it opens. It releases the key; collecting it completes the objective, and it needs a cargo scoop or collector limpet and 1 t of free cargo.",
             chapter.Beats[^1].Trigger.HandOff());
 
         var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
@@ -62,6 +62,6 @@ public sealed class ChapterOneEndsAtABeaconTests
         Assert.Contains("chapter 1 of \"The Test Story\"", prompt);
         Assert.Contains(Card.InYourWords, prompt);
         Assert.Contains(Secret.Secret, prompt);
-        Assert.Contains($"scan the Guardian beacon in {Beacon}", prompt);
+        Assert.Contains($"collect the Ancient Key at the Guardian beacon in {Beacon}", prompt);
     }
 }

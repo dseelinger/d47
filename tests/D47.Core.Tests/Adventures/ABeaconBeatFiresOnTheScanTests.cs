@@ -32,8 +32,11 @@ public sealed class ABeaconBeatFiresOnTheScanTests
         AcceptedAt = acceptedAt,
     };
 
-    private static JournalEvent DataScanned(DateTimeOffset at, string type = "$Datascan_AncientBeacon;") =>
-        Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"DataScanned", "Type":"{{type}}" }""");
+    private static JournalEvent DataScanned(DateTimeOffset at) =>
+        Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"DataScanned", "Type":"$Datascan_AncientPylon;" }""");
+
+    private static JournalEvent AncientKey(DateTimeOffset at) =>
+        Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"CollectCargo", "Type":"ancientkey", "Count":1 }""");
 
     private static AdventureStanding Run(Adventure adventure, IEnumerable<JournalEvent> events) =>
         events.Aggregate(AdventureFold.Start(adventure), AdventureFold.Apply);
@@ -47,7 +50,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests
         Assert.Equal(TriggerKind.Beacon, arrived.CurrentBeat!.Trigger.Kind);
         Assert.False(arrived.IsDone);
 
-        var scanned = AdventureFold.Apply(arrived, DataScanned(Accepted.AddMinutes(3)));
+        var scanned = AdventureFold.Apply(arrived, AncientKey(Accepted.AddMinutes(3)));
 
         Assert.True(scanned.IsDone);
         Assert.Equal(Accepted.AddMinutes(3), scanned.FinishedAt);
@@ -59,13 +62,22 @@ public sealed class ABeaconBeatFiresOnTheScanTests
         var elsewhere = Run(ChapterOne(Accepted),
         [
             Jump(Lantern, Accepted.AddMinutes(1)),
-            DataScanned(Accepted.AddMinutes(2)),
+            AncientKey(Accepted.AddMinutes(2)),
             Jump(OtherBeacon, Accepted.AddMinutes(3)),
-            DataScanned(Accepted.AddMinutes(4)),
+            AncientKey(Accepted.AddMinutes(4)),
         ]);
 
         Assert.Equal(1, elsewhere.Current);
         Assert.False(elsewhere.IsDone);
+    }
+
+    [Fact]
+    public void AScanWithoutTheKeyDoesNotFireIt()
+    {
+        var arrived = Run(ChapterOne(Accepted), [Jump(Lantern, Accepted.AddMinutes(1)), Jump(Beacon, Accepted.AddMinutes(2)), DataScanned(Accepted.AddMinutes(3))]);
+
+        Assert.Equal(1, arrived.Current);
+        Assert.False(arrived.IsDone);
     }
 
     [Fact]
@@ -76,7 +88,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests
             Beats = [Beat("The Beacon", "resolution", new AdventureTrigger { Kind = TriggerKind.Beacon, SystemAddress = Beacon }, "Scan it.")],
         };
 
-        var standing = Run(chapter, [Location(Beacon, Accepted.AddMinutes(-5)), DataScanned(Accepted.AddMinutes(1))]);
+        var standing = Run(chapter, [Location(Beacon, Accepted.AddMinutes(-5)), AncientKey(Accepted.AddMinutes(1))]);
 
         Assert.True(standing.IsDone);
     }
@@ -96,7 +108,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests
 
         Assert.Null(book.Begin("F1", "chapter-one", Accepted));
 
-        book.Observe(DataScanned(Accepted.AddMinutes(1)), "F1");
+        book.Observe(AncientKey(Accepted.AddMinutes(1)), "F1");
 
         Assert.True(book.Standing("F1", "chapter-one")!.IsDone);
     }
@@ -110,7 +122,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests
             Location(Lantern, Accepted.AddMinutes(-5)),
             Jump(Lantern, Accepted.AddMinutes(1)),
             Jump(Beacon, Accepted.AddMinutes(2)),
-            DataScanned(Accepted.AddMinutes(3)),
+            AncientKey(Accepted.AddMinutes(3)),
         ];
 
         var path = Path.Combine(_folder, "Journal.2026-08-22T194000.01.log");
@@ -148,7 +160,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests
         Assert.False(new AdventureTrigger { Kind = TriggerKind.Beacon }.IsResolved);
 
         Assert.Equal(
-            "scan the Guardian beacon in IC 2391 Sector MX-T b3-6",
+            "collect the Ancient Key at the Guardian beacon in IC 2391 Sector MX-T b3-6",
             new AdventureTrigger { Kind = TriggerKind.Beacon, SystemAddress = Beacon }.Describe());
     }
 
@@ -189,9 +201,10 @@ public sealed class ABeaconBeatFiresOnTheScanTests
             Assert.DoesNotContain("\"DataScanned\"", source);
         }
 
-        Assert.True(GuardianCores.IsBeaconScan(DataScanned(Accepted), Beacon));
-        Assert.False(GuardianCores.IsBeaconScan(DataScanned(Accepted), Lantern));
-        Assert.False(GuardianCores.IsBeaconScan(DataScanned(Accepted), null));
+        Assert.True(GuardianCores.IsBeaconScan(AncientKey(Accepted), Beacon));
+        Assert.False(GuardianCores.IsBeaconScan(AncientKey(Accepted), Lantern));
+        Assert.False(GuardianCores.IsBeaconScan(AncientKey(Accepted), null));
+        Assert.False(GuardianCores.IsBeaconScan(DataScanned(Accepted), Beacon));
         Assert.False(GuardianCores.IsBeaconScan(Jump(Beacon, Accepted), Beacon));
     }
 }

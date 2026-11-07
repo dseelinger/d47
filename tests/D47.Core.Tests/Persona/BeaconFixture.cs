@@ -4,7 +4,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
-/// <summary><c>tests/fixtures/beacons</c>: a data point scanned elsewhere, then a jump to a beacon and a scan there.</summary>
+/// <summary><c>tests/fixtures/beacons</c>: a data point scanned elsewhere, then a jump to a beacon and the Ancient Key collected there.</summary>
 internal static class BeaconFixture
 {
     /// <summary>The events before the jump to the beacon system.</summary>
@@ -23,6 +23,9 @@ internal static class BeaconFixture
 
     public static JournalEvent JumpTo(string system, long address) => Event(
         $$"""{ "timestamp":"2026-09-30T13:00:00Z", "event":"FSDJump", "StarSystem":"{{system}}", "SystemAddress":{{address}} }""");
+
+    public static JournalEvent AncientKey() => Event(
+        """{ "timestamp":"2026-09-30T13:05:00Z", "event":"CollectCargo", "Type":"ancientkey", "Count":1, "Stolen":false }""");
 
     public static JournalEvent DataPoint() => Event(
         """{ "timestamp":"2026-09-30T13:05:00Z", "event":"DataScanned", "Type":"$Datascan_DataPoint;" }""");

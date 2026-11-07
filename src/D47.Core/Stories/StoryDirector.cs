@@ -1691,8 +1691,8 @@ public sealed class StoryDirector(
 
         if (standing.CurrentTrigger is { Kind: TriggerKind.Beacon } beacon)
         {
-            return "The beacon scan is the one objective the journal has to show. "
-                   + (string.IsNullOrWhiteSpace(beacon.System) ? "Scan the beacon." : $"Scan the beacon in {beacon.System}.");
+            return "The Ancient Key is the one objective the journal has to show. "
+                   + (string.IsNullOrWhiteSpace(beacon.System) ? "Collect the Ancient Key at the beacon." : $"Collect the Ancient Key at the beacon in {beacon.System}.");
         }
 
         return null;

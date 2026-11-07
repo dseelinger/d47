@@ -182,12 +182,12 @@ damage, and its own memory of talking to you.
 A new install starts on **COVAS**, the ship's factory voice assistant: plain, courteous, and with
 no Guardian history. Every Guardian core can be chosen from the start.
 
-A stock story that is running and switched on holds the Guardian cores back until you scan a
-Guardian beacon with the ship's data-link scanner while it runs. Meanwhile COVAS speaks, the held
+A stock story that is running and switched on holds the Guardian cores back until you collect the
+Ancient Key at a Guardian beacon while it runs. Meanwhile COVAS speaks, the held
 cores show **LOCKED** in the picker, and choosing one names the story and says why. Your chosen core
-stays chosen in settings and is aboard again as soon as the hold lifts. D47 recognises the scan by
-the system you are in, not by the scan itself: any `DataScanned` event in one of these systems
-counts.
+stays chosen in settings and is aboard again as soon as the hold lifts. D47 recognises the key by
+the system you are in: a `CollectCargo` event of `ancientkey` in one of these systems counts. A
+`DataScanned` event does not, and neither does a key collected anywhere else.
 
 | System | id64 |
 |---|---|

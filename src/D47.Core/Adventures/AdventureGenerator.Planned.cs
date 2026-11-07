@@ -730,7 +730,7 @@ public sealed partial class AdventureGenerator
         PlannedPurpose.Closer => " It is the chapter's last stop, closer to the finale's destination.",
         PlannedPurpose.Destination => " It is the landing on the finale's destination, where the hidden layer's end takes place.",
         PlannedPurpose.Swap => $" It is the swap into a ship the Commander owns that can make the trip to the Guardian beacon{(story?.Beacon?.SwapTo is { } swap ? $": {swap}" : string.Empty)}.",
-        PlannedPurpose.Beacon => " It is the Guardian beacon scan that ends act one, when the story's Guardian cores come aboard.",
+        PlannedPurpose.Beacon => " It is collecting the Ancient Key at the Guardian beacon, which ends act one, when the story's Guardian cores come aboard.",
         PlannedPurpose.Reach => " It is met once the Commander's ship can make the trip to the Guardian beacon.",
         PlannedPurpose.Ship => " It is the board into the ship the Commander asked to fly.",
         _ => string.Empty,

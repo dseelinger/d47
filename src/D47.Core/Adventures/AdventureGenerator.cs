@@ -2912,7 +2912,7 @@ public sealed partial class AdventureGenerator(
             text.AppendLine();
             text.AppendLine(
                 $"This chapter ends act one at a Guardian beacon: its last objective is \"beacon\", the Commander "
-                + $"scanning the Guardian beacon in {beacon.System} with the ship's data-link scanner after charging its three pylons with laser or railgun fire. That scan is when the "
+                + $"collecting the Ancient Key at the Guardian beacon in {beacon.System} after charging its three pylons with laser or railgun fire and scanning its core. Collecting the key is when the "
                 + "Guardian cores come aboard. The reason to go is the public layer's beacon line.");
 
             if (beacon.SwapTo is { } swap)

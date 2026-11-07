@@ -184,7 +184,7 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
         var before = _stories.Current("F1");
 
         _director.Observe(AdventureFixtures.Jump(StoryFixtures.BeaconAddress, Now.AddHours(3)), "F1");
-        var woke = _director.Observe(DataScanned(Now.AddHours(3)), "F1");
+        var woke = _director.Observe(AncientKey(Now.AddHours(3)), "F1");
 
         Assert.Null(woke);
         Assert.Equal(before, _stories.Current("F1"));

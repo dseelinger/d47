@@ -213,7 +213,7 @@ Every trigger is a comparison on a structured field rather than on a name:
 | Scan a body | system and body ids | the body's name |
 | Reach a rank | career and a number | any rank word |
 | Board a ship | the hull's type | the ship's name |
-| Scan a Guardian beacon | a data-link scan (its three pylons are charged with laser or railgun fire first) while in a Guardian beacon system's id | the scan's type, or any name |
+| Collect the Ancient Key at a Guardian beacon | a `CollectCargo` of `ancientkey` while in a Guardian beacon system's id (the beacon's three pylons are charged with laser or railgun fire and its core scanned first) | a `DataScanned` alone, or the key collected in any other system |
 | Fit out a ship that can reach the beacon | a `Loadout` whose modules include a fuel scoop and a laser or railgun (`hpt_pulselaser`, `hpt_beamlaser` or `hpt_railgun`), or a `CarrierBuy`; `MaxJumpRange` is never read, and a range stored in the objective is only the figure in its "easier with" sentence. For a fleet carrier owner a `Loadout` with a laser or railgun meets it. An `FSDJump`, `Location` or `CarrierJump` into the beacon's system, or a `CarrierBuy`, also meets it, in any ship, unless the ship had no laser or railgun when the chapter was written. Only a chapter whose Guardian beacon is out of reach has one | the ship's hull or name |
 | Collect bounties | `Bounty` events | anything else |
 | Earn kill bonds | `FactionKillBond` events, optionally for one `AwardingFaction` | the faction fought |
@@ -537,9 +537,8 @@ the page of your running story; changing it there takes effect from the story's 
 
 **Pick** makes the card's words your Backstory until the story stops, and has the core write
 chapter one, which then begins. D47 keeps the Backstory you had before as your default; a Backstory that is some
-story's own words counts as none. Each story keeps the Backstory it had when you shelved it or switched it off, edits included. Act one ends when you scan the Guardian beacon nearest to you with the ship's data-link
-scanner; arriving in the beacon's system is not enough. The beacon's three pylons must be charged by laser
-or railgun fire, all within a few minutes, before the scan opens its core; the objective's hand-off says so. Before each act-one chapter D47 checks whether
+story's own words counts as none. Each story keeps the Backstory it had when you shelved it or switched it off, edits included. Act one ends when you collect the Ancient Key at the Guardian beacon nearest to you; arriving in the beacon's system is not enough. The beacon's three pylons must be charged by laser
+or railgun fire, all within a few minutes, before the scan opens its core and releases the key; the objective's hand-off says so. Before each act-one chapter D47 checks whether
 the ship you are flying or any ship you own can reach that beacon: a ship can when a laser or railgun is fitted in any mount and either you own a fleet carrier or a fuel scoop is fitted. A stored ship counts by its remembered loadout, and not while it is in transit. When only a stored ship can, the chapter ends at the beacon and its first objective is boarding that ship; d47 measures the chapter's later stops from the system where it is parked. Jump range
 never decides it; a ship with a short range is told the trip is easier with a longer one. When it can, the
 chapter ends at the beacon. When it cannot, the chapter has no beacon objective, keeps to a session's
@@ -1261,8 +1260,8 @@ or use the button. With no story under way it marks the one short story under wa
 and asks you to press **Mark done** on the page of the one you mean. A chapter is not marked while the game runs without
 Odyssey.
 
-The Guardian beacon scan cannot be marked done: d47 says "The beacon scan is the one objective the journal has to show.
-Scan the beacon in" and the beacon's system. An objective to fit out a ship for the trip can be marked. A marked
+The Guardian beacon objective cannot be marked done: d47 says "The Ancient Key is the one objective the journal has to show.
+Collect the Ancient Key at the beacon in" and the beacon's system. An objective to fit out a ship for the trip can be marked. A marked
 objective stays fired after a restart, and the logbook names it as marked done by the Commander. Marking does not bar
 the activity or count toward a bar. The model is refused this tool.
 
