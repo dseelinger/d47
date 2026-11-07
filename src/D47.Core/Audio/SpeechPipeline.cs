@@ -118,6 +118,12 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// <summary>The picture name of the speaker, carried on every request, or null.</summary>
     private readonly string? _picture;
 
+    /// <summary>
+    /// Where each voice's leveller ended, when every rendered clip is levelled ahead of <see cref="_colour"/> or
+    /// <see cref="_running"/>; or null for the voice at the level the provider sent it.
+    /// </summary>
+    private readonly SpeechLevels? _levels;
+
     /// <summary><param name="Text"> The written form: no delivery direction in it, ever.</summary>
     /// <param name="Text">The written form: no delivery direction in it, ever.</param>
     /// <param name="Directed">
@@ -126,7 +132,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// </param>
     /// <param name="Clip">The whole clip, coloured; null when <paramref name="Arriving"/> is set.</param>
     /// <param name="Arriving">
-    /// The clip still arriving, uncoloured or through <see cref="_running"/>; null when <paramref name="Clip"/> is set.
+    /// The clip still arriving, as the provider sends it or through the running filters; null when <paramref name="Clip"/> is set.
     /// </param>
     private sealed record Spoken(string Text, string Directed, AudioClip? Clip, ArrivingClip? Arriving);
 
@@ -153,7 +159,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         string? voiceRow = null,
         string? picture = null,
         string? utteranceCaption = null,
-        bool queue = true)
+        bool queue = true,
+        SpeechLevels? levels = null)
     {
         _arbiter = arbiter;
         _queue = queue;
@@ -173,6 +180,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _kept = keep ? [] : null;
         _voiceRow = voiceRow;
         _picture = picture;
+        _levels = levels;
         _utteranceCaption = utteranceCaption is { Length: > 0 } ? utteranceCaption : null;
 
         // Shut up has to reach synthesis, not just the queue.
@@ -377,8 +385,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
     }
 
     /// <summary>
-    /// A clip still arriving is queued as it arrives, through a fresh running filter where there is one, or as it is
-    /// when uncoloured. Anything else is awaited whole and coloured, which gives the bytes the filter would.
+    /// A clip still arriving is queued as it arrives, through the leveller and a fresh running filter where there are
+    /// any, or as it is. Anything else is awaited whole, levelled and coloured, which gives the bytes the filters would.
     /// </summary>
     private async Task<Spoken> ArrivedAsync(
         string sentence,
@@ -387,16 +395,29 @@ public sealed class SpeechPipeline : IAsyncDisposable
         ArrivingClip arriving,
         long started)
     {
+        var leveller = _levels?.For(_tts.Id, _voice.VoiceId);
+
         if ((_running is not null || _colour is null) && !arriving.IsComplete)
         {
             _ = NoteWhenWholeAsync(sentence, spoken, arriving, started);
-            return new Spoken(sentence, directed, Clip: null, _running is null ? arriving : arriving.Through(_running()));
+
+            IPcmFilter? filter = (leveller, _running) switch
+            {
+                (null, null) => null,
+                (null, { } running) => running(),
+                ({ } level, null) => level,
+                ({ } level, { } running) => new SeriesPcmFilter(level, running()),
+            };
+
+            return new Spoken(sentence, directed, Clip: null, filter is null ? arriving : arriving.Through(filter));
         }
 
         var clip = await arriving.Whole.ConfigureAwait(false);
         Note(sentence, spoken, arriving, started);
 
-        return new Spoken(sentence, directed, _colour is null ? clip : _colour(clip), Arriving: null);
+        var levelled = leveller is null ? clip : leveller.Run(clip);
+
+        return new Spoken(sentence, directed, _colour is null ? levelled : _colour(levelled), Arriving: null);
     }
 
     /// <summary>Notes an arriving clip once it is whole; one that fails part-way counts as a failure.</summary>

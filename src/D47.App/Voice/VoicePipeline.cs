@@ -33,6 +33,9 @@ public sealed class VoicePipeline(
     /// </summary>
     private readonly SpokenAddress _address = new(clock ?? SystemWallClock.Instance);
 
+    /// <summary>Where each voice's leveller ended, so a voice's next clip in any pipeline here starts at the gain its last one ended at.</summary>
+    public SpeechLevels Levels { get; } = new();
+
     /// <summary>The Commander's name, so the address rule knows the surname to recognise.</summary>
     public string? CommanderName
     {
@@ -234,7 +237,8 @@ public sealed class VoicePipeline(
                                 running: Running(role, colour, signal),
                                 voiceRow: SpeechCapability.VoiceRowFor(role),
                                 picture: Picture,
-                                utteranceCaption: translation);
+                                utteranceCaption: translation,
+                                levels: Levels);
                             speech.SynthesisFailed += OnSynthesisFailed;
                             speech.VoiceRejected += OnVoiceRejected;
                         }
@@ -360,7 +364,8 @@ public sealed class VoicePipeline(
             running: D47.Core.Stories.CastVoice.Running(pinned),
             voiceRow: SpeechCapability.VoiceRowFor(SpeakingAs),
             picture: Picture,
-            utteranceCaption: translation);
+            utteranceCaption: translation,
+            levels: Levels);
 
         // A member in the crew voice speaks through the slot, so its failures count against the slot; a pinned voice's do not.
         if (crew)
@@ -470,7 +475,8 @@ public sealed class VoicePipeline(
             guardianTreated: IsGuardianTreated(role, colour),
             keep: true,
             voiceRow: SpeechCapability.VoiceRowFor(role),
-            queue: false);
+            queue: false,
+            levels: Levels);
 
         speech.SynthesisFailed += said => failure ??= said.Text;
         speech.Push(text);
@@ -523,7 +529,8 @@ public sealed class VoicePipeline(
             running: running,
             voiceRow: SpeechCapability.VoiceRowFor(role),
             picture: picture,
-            utteranceCaption: utteranceCaption);
+            utteranceCaption: utteranceCaption,
+            levels: Levels);
 
         if (!pinned)
         {

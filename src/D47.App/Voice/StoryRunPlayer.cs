@@ -407,6 +407,8 @@ public sealed class StoryRunPlayer
     /// <summary>Queues <paramref name="clip"/> as line <paramref name="index"/>, unless playback moved on or paused.</summary>
     private bool Queue(long generation, int index, AudioClip clip)
     {
+        var levelled = SpeechLeveller.Apply(clip);
+
         lock (_gate)
         {
             if (generation != _generation || _now is not { IsPaused: false } now)
@@ -419,7 +421,7 @@ public sealed class StoryRunPlayer
             _queued = new AudioRequest
             {
                 Channel = AudioChannel.Speech,
-                Clip = clip,
+                Clip = levelled,
                 Group = Group,
                 Caption = line.Body,
                 Picture = PictureOf(line),

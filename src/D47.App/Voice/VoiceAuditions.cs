@@ -75,7 +75,7 @@ internal sealed class VoiceAuditions
         _audio.Enqueue(new AudioRequest
         {
             Channel = AudioChannel.Speech,
-            Clip = clip,
+            Clip = SpeechLeveller.Apply(clip),
             Group = Group,
             Caption = clip.Name,
         });
@@ -122,7 +122,7 @@ internal sealed class VoiceAuditions
         _audio.Enqueue(new AudioRequest
         {
             Channel = AudioChannel.Speech,
-            Clip = clip,
+            Clip = SpeechLeveller.Apply(clip),
             Group = Group,
         });
     }
@@ -211,11 +211,12 @@ internal sealed class VoiceAuditions
         cancellationToken.ThrowIfCancellationRequested();
 
         var colour = GuardianVoice.ColourFor(speech, _personas.Current.VoiceHint.Gender);
+        var levelled = SpeechLeveller.Apply(clip);
 
         _audio.Enqueue(new AudioRequest
         {
             Channel = AudioChannel.Speech,
-            Clip = colour is null ? clip : colour(clip),
+            Clip = colour is null ? levelled : colour(levelled),
             Group = Group,
             Caption = clip.Name,
         });
@@ -231,7 +232,7 @@ internal sealed class VoiceAuditions
         _audio.Enqueue(new AudioRequest
         {
             Channel = AudioChannel.Speech,
-            Clip = CovasVoice.Apply(StandInVoice.Clip),
+            Clip = CovasVoice.Apply(SpeechLeveller.Apply(StandInVoice.Clip)),
             Group = Group,
             Caption = StandInVoice.Clip.Name,
         });

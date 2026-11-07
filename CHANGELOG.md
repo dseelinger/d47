@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A voice quieter than the others is now raised to the same loudness, so a story character with a quiet voice is heard as clearly as the rest of the cast. This covers what is spoken, messages and story lines played again, and voice samples. A voice already at that loudness or louder is not turned down.
+
 A chapter's page now has **Change voice** under each line spoken by a story character, primary or not. It opens the same provider and voice picker as the Waiting for your answer list. Lines by the Narrator or the ship have none.
 
 **Mark done** now works on a story's Guardian beacon objective. Marking it records the beacon scan on the story, so its Guardian cores come aboard as they would from a real scan. Use it when Elite does not write the event.

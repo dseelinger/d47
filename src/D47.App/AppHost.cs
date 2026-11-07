@@ -5221,7 +5221,7 @@ public sealed class AppHost : IDisposable
         Audio.Enqueue(new AudioRequest
         {
             Channel = AudioChannel.Speech,
-            Clip = PcmConverter.ToStandard(clip),
+            Clip = SpeechLeveller.Apply(clip),
             Group = MessagePlaybackGroup,
             Caption = message.Body,
             Picture = D47.Core.Interface.SpeakerPictures.OfMessage(message),
@@ -5257,7 +5257,7 @@ public sealed class AppHost : IDisposable
         Audio.Enqueue(new AudioRequest
         {
             Channel = AudioChannel.Speech,
-            Clip = clip,
+            Clip = SpeechLeveller.Apply(clip),
             Group = MessagePlaybackGroup,
             Caption = line.Body,
             Picture = StoryRunPlayer.PictureOf(line),

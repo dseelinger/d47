@@ -467,7 +467,7 @@ public sealed class SpeechClients : IDisposable
             _audio.Enqueue(new AudioRequest
             {
                 Channel = AudioChannel.Speech,
-                Clip = clip,
+                Clip = SpeechLeveller.Apply(clip),
                 Group = VoiceAuditions.Group,
                 Caption = clip.Name,
             });

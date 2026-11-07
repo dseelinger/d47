@@ -198,6 +198,14 @@ bed sits at `0.35`, the sound cues at `1`, and music at `0.2`.
 Speech, alerts and overheard chatter have no duck row. A row that does not apply is absent rather
 than greyed out.
 
+### Every voice at one loudness
+
+A voice that is quieter than the rest is raised to the same level, so one quiet voice among a
+story's cast can be heard as well as the others. A voice at that level or louder is left alone.
+The pauses between words are not raised. This applies to every voice and every provider, whether
+it is spoken now, replayed from a message or a story line, or played as a sample in a voice picker.
+It has no setting.
+
 ### What you hear if you never touch it
 
 Ambient music and overheard chatter arrive at half level, and music ducks to `0.2`.
